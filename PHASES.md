@@ -70,16 +70,17 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.10 | Encrypt | Password protect with user/owner passwords |
 | 1.3.11 | Decrypt | Remove password protection (requires password) |
 | 1.3.12 | Watermark | Text or image watermark on specified pages |
+| 1.3.13 | E-Signature | Local crypto signing and DocuSign API integration |
 
 #### Group C — Extraction
 | # | Task | Notes |
 |---|---|---|
-| 1.3.13 | Extract text | Plain text output per page or full document |
-| 1.3.14 | Extract images | Save embedded images to files |
-| 1.3.15 | Render pages | Render pages to PNG/JPEG at specified DPI |
-| 1.3.16 | Images → PDF | Convert image files into a PDF document |
-| 1.3.17 | Search | Find text occurrences with page/position info |
-| 1.3.18 | Compare | Diff two PDFs, report structural/content differences |
+| 1.3.14 | Extract text | Plain text output per page or full document |
+| 1.3.15 | Extract images | Save embedded images to files |
+| 1.3.16 | Render pages | Render pages to PNG/JPEG at specified DPI |
+| 1.3.17 | Images → PDF | Convert image files into a PDF document |
+| 1.3.18 | Search | Find text occurrences with page/position info |
+| 1.3.19 | Compare | Diff two PDFs, report structural/content differences |
 
 ---
 
@@ -158,6 +159,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 2.2.8 | `pdf_extract_text` tool | |
 | 2.2.9 | `pdf_extract_images` tool | |
 | 2.2.10 | `pdf_search` tool | |
+| 2.2.11 | `pdf_sign` tool | DocuSign / Local Signatures |
 | 2.2.11 | `pdf_watermark` tool | |
 | 2.2.12 | `pdf_encrypt` / `pdf_decrypt` tools | |
 | 2.2.13 | `pdf_metadata` tool | Read and write metadata |
