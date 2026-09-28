@@ -1,0 +1,17 @@
+You are tasked with implementing the second batch of Phase 1.3 Group A (Page Manipulation) operations. This is Phase 1, Task 6 (P1-T6).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+We are adding more operations to the `paperpilot-pdf` crate, relying on the `LopdfDocument` base.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+- Create `paperpilot-pdf/src/operations/extract.rs` implementing `PdfOperation` for `ExtractPagesOperation` (pulls specific pages into a new PDF).
+- Create `paperpilot-pdf/src/operations/delete.rs` implementing `PdfOperation` for `DeletePagesOperation`.
+- Create `paperpilot-pdf/src/operations/reorder.rs` implementing `PdfOperation` for `ReorderPagesOperation` (reorders pages based on an index array).
+- Ensure all operations return `paperpilot_core::error::OperationResult`.
+- Add robust `#[cfg(test)]` unit tests for each implementation.
+
+Commit message must be: "jules: implement extract, delete, and reorder page operations"

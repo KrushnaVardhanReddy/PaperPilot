@@ -1,0 +1,16 @@
+You are tasked with implementing the third batch of Phase 1.3 Group A (Page Manipulation) operations. This is Phase 1, Task 7 (P1-T7).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+We are finalizing the Page Manipulation group in the `paperpilot-pdf` crate using `lopdf`.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+- Create `paperpilot-pdf/src/operations/rotate.rs` implementing `PdfOperation` for `RotatePagesOperation` (rotate 90/180/270 degrees).
+- Create `paperpilot-pdf/src/operations/crop.rs` implementing `PdfOperation` for `CropPagesOperation` (trim the page margins/content box).
+- Ensure all operations return `paperpilot_core::error::OperationResult`.
+- Add robust `#[cfg(test)]` unit tests for each implementation.
+
+Commit message must be: "jules: implement rotate and crop page operations"

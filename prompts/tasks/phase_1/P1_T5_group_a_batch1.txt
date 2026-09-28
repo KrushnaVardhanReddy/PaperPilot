@@ -1,0 +1,20 @@
+You are tasked with implementing the first batch of Phase 1.3 Group A (Page Manipulation) operations. This is Phase 1, Task 5 (P1-T5).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+We are building the implementation of `PdfDocument` and `PdfOperation` using the `lopdf` crate. These operations happen in the `paperpilot-pdf` crate.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+- Add `lopdf` as a dependency in `paperpilot-pdf/Cargo.toml`.
+- Add `paperpilot-core` as a path dependency.
+- Create `paperpilot-pdf/src/document.rs` with `LopdfDocument` struct implementing `PdfDocument`.
+- Create `paperpilot-pdf/src/operations/merge.rs` implementing `PdfOperation` for `MergeOperation`.
+- Create `paperpilot-pdf/src/operations/split.rs` implementing `PdfOperation` for `SplitOperation`.
+- Create `paperpilot-pdf/src/operations/burst.rs` implementing `PdfOperation` for `BurstOperation`.
+- Ensure all operations return `paperpilot_core::error::OperationResult`.
+- Add robust `#[cfg(test)]` unit tests for each implementation.
+
+Commit message must be: "jules: implement lopdf engine and merge/split/burst operations"
