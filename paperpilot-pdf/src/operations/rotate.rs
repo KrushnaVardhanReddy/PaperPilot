@@ -21,6 +21,7 @@ impl PdfOperation for RotatePagesOperation {
                 PdfError::UnsupportedOperation("Document is not a LopdfDocument".to_string())
             })?;
 
+        #[allow(clippy::manual_is_multiple_of)]
         if self.degrees % 90 != 0 {
             return Err(PdfError::UnsupportedOperation(
                 "Rotation must be a multiple of 90 degrees".to_string(),
