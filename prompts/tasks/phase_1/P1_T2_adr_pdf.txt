@@ -1,0 +1,25 @@
+You are tasked with choosing and documenting the PDF library decision for PaperPilot. This is Phase 1, Task 2 (P1-T2).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+
+PaperPilot is an open-source document automation platform. The PDF engine is the most critical technical decision. We need an Architecture Decision Record (ADR) to document why we chose the specific combination of Rust PDF libraries.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+
+- Create an Architecture Decision Record (ADR) file at `docs/adr/0001-pdf-engine-selection.md`.
+- Evaluate `lopdf` vs `pdfium-render` vs `printpdf` vs `qpdf` based on their strengths and weaknesses.
+- Document the chosen approach: Use `pdfium-render` for rendering and text extraction, and `lopdf` for structural operations (merge, split, page manipulation).
+- Note that both libraries must be abstracted behind PaperPilot traits so the underlying library can be swapped in the future.
+- Use a standard ADR Markdown format (Title, Status, Context, Decision, Consequences).
+
+════════════════════════════════════════════════════════════════
+WIKI DOCUMENTATION
+════════════════════════════════════════════════════════════════
+
+- You MUST create or update the relevant markdown files in the `wiki/` directory to document this architectural decision. You can link to the ADR from a new `wiki/architecture.md` file.
+
+Commit message must be: "jules: add ADR for PDF engine selection"

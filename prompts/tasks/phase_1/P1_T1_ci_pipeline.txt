@@ -1,0 +1,30 @@
+You are tasked with setting up the CI pipeline and Linting for PaperPilot. This is Phase 1, Task 1 (P1-T1).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+
+This is a Rust workspace project with multiple crates (paperpilot-core, paperpilot-pdf, paperpilot-cli).
+We need a robust GitHub Actions workflow to ensure code quality and prevent broken builds from being merged.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+
+- Create a GitHub Actions workflow file at `.github/workflows/rust.yml`.
+- The workflow should trigger on `push` to the `main` branch and on `pull_request`.
+- Use the latest stable Rust toolchain.
+- Run three steps for the Cargo workspace:
+  1. `cargo fmt --all -- --check`
+  2. `cargo clippy --all-targets --all-features -- -D warnings`
+  3. `cargo test --all-targets --all-features`
+- Do not modify existing Rust code, just add the workflow file.
+
+════════════════════════════════════════════════════════════════
+WIKI DOCUMENTATION
+════════════════════════════════════════════════════════════════
+
+- You MUST create or update a markdown file in the `wiki/` directory (e.g., `wiki/01-CI-Pipeline.md`) documenting this CI pipeline.
+- Include a brief explanation of the checks performed (formatting, clippy lints, and tests).
+
+Commit message must be: "jules: set up rust CI pipeline"
