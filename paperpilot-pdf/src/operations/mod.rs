@@ -19,3 +19,7 @@ pub mod signature;
 pub mod redact;
 pub mod flatten;
 pub mod pdf_a;
+pub mod render;
+pub mod compare;
+pub mod ocr;
+pub mod bates;
