@@ -215,20 +215,22 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 2.2.1 | `pdf_merge` tool | |
-| 2.2.2 | `pdf_split` tool | |
-| 2.2.3 | `pdf_extract_pages` tool | |
-| 2.2.4 | `pdf_delete_pages` tool | |
-| 2.2.5 | `pdf_reorder_pages` tool | |
-| 2.2.6 | `pdf_rotate` tool | |
-| 2.2.7 | `pdf_compress` tool | |
-| 2.2.8 | `pdf_extract_text` tool | |
-| 2.2.9 | `pdf_extract_images` tool | |
-| 2.2.10 | `pdf_search` tool | |
-| 2.2.11 | `pdf_sign` tool | DocuSign / Local Signatures |
-| 2.2.12 | `pdf_watermark` tool | |
-| 2.2.13 | `pdf_encrypt` / `pdf_decrypt` tools | |
-| 2.2.14 | `pdf_metadata` tool | Read and write metadata |
+| 2.2.1 | `pdf_merge` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.2 | `pdf_split` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.3 | `pdf_extract_pages` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.4 | `pdf_delete_pages` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.5 | `pdf_reorder_pages` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.6 | `pdf_rotate` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.7 | `pdf_crop` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.8 | `pdf_burst` tool ⏳ | Delegated to Jules (Session 2435568152568408465) |
+| 2.2.9 | `pdf_compress` tool | |
+| 2.2.10 | `pdf_extract_text` tool | |
+| 2.2.11 | `pdf_extract_images` tool | |
+| 2.2.12 | `pdf_search` tool | |
+| 2.2.13 | `pdf_sign` tool | DocuSign / Local Signatures |
+| 2.2.14 | `pdf_watermark` tool | |
+| 2.2.15 | `pdf_encrypt` / `pdf_decrypt` tools | |
+| 2.2.16 | `pdf_metadata` tool | Read and write metadata |
 
 ---
 
