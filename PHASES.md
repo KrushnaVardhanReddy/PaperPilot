@@ -284,8 +284,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 3.2.1 | App layout and navigation ✅ | Merged (Session 6096383570980483046) |
 | 3.2.2 | File drop zone ✅ | Merged (Session 6096383570980483046) |
-| 3.2.3 | Document list | Show loaded files with name, size, page count |
-| 3.2.4 | Settings panel | AI provider config, output directory, preferences |
+| 3.2.3 | Document list ✅ | Merged (Session 11119733351266944393) |
+| 3.2.4 | Settings panel ✅ | Merged (Session 11119733351266944393) |
 | 3.2.5 | Notification / toast system ✅ | Merged (Session 6096383570980483046) |
 
 ---
@@ -307,8 +307,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.4.1 | Operation panel | Right-side panel with operation options |
-| 3.4.2 | Merge UI | Select files, set order, run |
+| 3.4.1 | Operation panel ✅ | Merged (Session 11119733351266944393) |
+| 3.4.2 | Merge UI ✅ | Merged (Session 11119733351266944393) |
 | 3.4.3 | Split UI | Choose split points or ranges |
 | 3.4.4 | Compress UI | Quality/size tradeoff slider |
 | 3.4.5 | Rotate UI | Select pages, choose angle |
