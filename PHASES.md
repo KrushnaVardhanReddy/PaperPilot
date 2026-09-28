@@ -683,6 +683,7 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.2b.7 | Output routing | Route processed files back to S3/GCS/local/SFTP |
 | 8.2b.8 | API key management | Issue, rotate, and revoke API keys per org/team |
 | 8.2b.9 | Rate limiting & quotas | Per-org throttling to prevent abuse on cloud tier |
+| 8.2b.10 | Load testing & concurrency profiling | Benchmark orchestrator with 10,000+ concurrent pipeline runs to guarantee zero deadlocks and predictable memory usage |
 
 ---
 
