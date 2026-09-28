@@ -590,3 +590,123 @@ If working solo or as a small team, this is the suggested order for the first 4 
 | 4 | 1.4 Tests + 1.5 CLI — ship a working `paperpilot` binary |
 
 After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (Desktop) in parallel from week 5.
+
+---
+
+## Phase 8 — Growth Platform
+
+**Goal:** Transform PaperPilot from a standalone tool into a community-driven ecosystem with a plugin registry, workflow builder, watch folder daemon, and SDK libraries.
+
+**[BLOCKED BY Phase 3 — needs working desktop UI]**
+**[Can run in parallel with Phase 6 and Phase 7]**
+
+---
+
+### 8.1 — Plugin System `[PARALLEL within group]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.1.1 | Define `PdfPlugin` trait | Plugins are just `PdfOperation` implementors with metadata |
+| 8.1.2 | Plugin discovery & loading | Load `.so`/`.dylib`/`.dll` plugins at runtime from `~/.paperpilot/plugins/` |
+| 8.1.3 | Plugin registry website | Searchable public registry of community plugins |
+| 8.1.4 | Plugin packaging CLI | `paperpilot plugin pack` and `paperpilot plugin publish` commands |
+| 8.1.5 | Plugin sandboxing | Restrict filesystem and network access per plugin policy |
+
+---
+
+### 8.2 — Workflow / Recipe Builder `[BLOCKED BY Phase 3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.2.1 | Recipe schema | JSON/TOML format: ordered list of operations with parameters |
+| 8.2.2 | CLI recipe execution | `paperpilot run recipe.toml --input file.pdf` |
+| 8.2.3 | Visual recipe builder (GUI) | Drag-and-drop pipeline builder in the Tauri desktop app |
+| 8.2.4 | Recipe sharing | Export/import recipe files; community recipe library |
+| 8.2.5 | Enterprise private recipes | Org-scoped recipe libraries, access controlled |
+
+---
+
+### 8.3 — Watch Folder Daemon `[BLOCKED BY 1.5 CLI]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.3.1 | `paperpilot watch` command | Monitor directory for new files using `notify` crate |
+| 8.3.2 | Auto-apply recipe on new files | Trigger a recipe automatically on each new file |
+| 8.3.3 | Daemon mode (`--daemon`) | Run as background service / system daemon |
+| 8.3.4 | systemd / launchd / Windows Service support | Native OS service integration |
+| 8.3.5 | Watch folder + webhook | Fire webhook on each processed file |
+
+---
+
+### 8.4 — SDK Libraries `[BLOCKED BY Phase 2 MCP]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.4.1 | Python SDK (`paperpilot-py`) | PyPI package wrapping the MCP interface |
+| 8.4.2 | JavaScript / Node SDK (`paperpilot-js`) | npm package |
+| 8.4.3 | Go SDK (`paperpilot-go`) | Go module |
+| 8.4.4 | SDK documentation site | Auto-generated API docs for all SDKs |
+
+---
+
+### 8.5 — No-Code Integrations `[BLOCKED BY 8.4]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.5.1 | Zapier integration | Official PaperPilot app in Zapier marketplace |
+| 8.5.2 | Make.com (Integromat) integration | Official module |
+| 8.5.3 | n8n community node | Self-hostable automation integration |
+
+---
+
+### 8.6 — Contributor Revenue Sharing System `[BLOCKED BY Phase 7]`
+
+| # | Task | Notes |
+|---|---|---|
+| 8.6.1 | Contribution scoring algorithm | Weight PRs, reviews, docs, plugin publishes |
+| 8.6.2 | Contributor registration portal | GitHub OAuth + payment info (Stripe / Wise) + tax form |
+| 8.6.3 | Quarterly automated payouts | Calculate scores, split pool, pay out via Stripe Connect |
+| 8.6.4 | Public transparency dashboard | Show pool size, scores, and payout amounts publicly |
+| 8.6.5 | Plugin usage attribution | Track plugin downloads by Enterprise customers → plugin author earns |
+
+---
+
+### 8.7 — Document Intelligence Dashboard `[BLOCKED BY Phase 6]`
+
+**Goal:** Give Enterprise admins a full-picture view of how PaperPilot is being used across their org.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.7.1 | Job history log | Searchable, filterable table of all operations (who, what, when, result) |
+| 8.7.2 | Operation analytics | Bar/line charts: most-used operations, busiest hours, file sizes |
+| 8.7.3 | Error rate tracking | Failure heatmaps, top error types, most problematic file types |
+| 8.7.4 | User activity reports | Per-user operation volume (for compliance audits) |
+| 8.7.5 | Dashboard export | Export reports to PDF or CSV on a schedule |
+
+---
+
+### 8.8 — Browser Extension `[BLOCKED BY Phase 2 MCP]`
+
+**Goal:** Capture PDFs directly from the web browser and send them to PaperPilot for processing.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.8.1 | Chrome / Edge extension | Right-click any PDF link → "Open in PaperPilot" |
+| 8.8.2 | Firefox extension | Same functionality |
+| 8.8.3 | Deep link to desktop app | Extension calls `paperpilot://open?url=...` to launch the desktop app |
+| 8.8.4 | "Save & Process" flow | Download PDF from web → apply recipe → save locally |
+
+---
+
+### 8.9 — Mobile Companion App `[BLOCKED BY Phase 8.4 SDKs]`
+
+**Goal:** Lightweight iOS and Android app for viewing processing results, approving signed documents, and monitoring job status.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.9.1 | Job status viewer | See live status of running/queued jobs from your phone |
+| 8.9.2 | Push notifications | Get notified when a long job completes or fails |
+| 8.9.3 | Document approval flow | Review and approve or reject a signed PDF from mobile |
+| 8.9.4 | Quick scan → PDF | Capture a physical document with camera and send to PaperPilot for OCR |
+
+
