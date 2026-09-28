@@ -95,7 +95,9 @@ fn test_decrypt() {
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
     let encrypt_dict = lopdf::Dictionary::new();
     let encrypt_id = doc.inner.add_object(encrypt_dict);
-    doc.inner.trailer.set("Encrypt", lopdf::Object::Reference(encrypt_id));
+    doc.inner
+        .trailer
+        .set("Encrypt", lopdf::Object::Reference(encrypt_id));
 
     assert!(doc.inner.trailer.has(b"Encrypt"));
 
@@ -130,7 +132,15 @@ fn test_redact() {
     let output_path = temp_dir.path().join("redacted.pdf");
 
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
-    let op = RedactOperation::new(1, BoundingBox { x: 10.0, y: 10.0, width: 100.0, height: 100.0 });
+    let op = RedactOperation::new(
+        1,
+        BoundingBox {
+            x: 10.0,
+            y: 10.0,
+            width: 100.0,
+            height: 100.0,
+        },
+    );
 
     assert!(op.execute(&mut doc).is_ok());
     assert!(doc.save(&output_path).is_ok());
@@ -151,11 +161,28 @@ fn test_metadata() {
 
     // Reload and check metadata
     let loaded = LopdfDocument::load(&output_path).unwrap();
-    let trailer_info_ref = loaded.inner.trailer.get(b"Info").unwrap().as_reference().unwrap();
-    let info_dict = loaded.inner.get_object(trailer_info_ref).unwrap().as_dict().unwrap();
+    let trailer_info_ref = loaded
+        .inner
+        .trailer
+        .get(b"Info")
+        .unwrap()
+        .as_reference()
+        .unwrap();
+    let info_dict = loaded
+        .inner
+        .get_object(trailer_info_ref)
+        .unwrap()
+        .as_dict()
+        .unwrap();
 
-    assert_eq!(info_dict.get(b"Title").unwrap().as_str().unwrap(), b"New Title");
-    assert_eq!(info_dict.get(b"Author").unwrap().as_str().unwrap(), b"John Doe");
+    assert_eq!(
+        info_dict.get(b"Title").unwrap().as_str().unwrap(),
+        b"New Title"
+    );
+    assert_eq!(
+        info_dict.get(b"Author").unwrap().as_str().unwrap(),
+        b"John Doe"
+    );
 }
 
 #[test]
@@ -180,7 +207,10 @@ fn test_flatten_stub() {
     let res = op.execute(&mut doc);
     assert!(res.is_err());
     if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(msg, "Flattening interactive forms not yet supported natively");
+        assert_eq!(
+            msg,
+            "Flattening interactive forms not yet supported natively"
+        );
     } else {
         panic!("Expected UnsupportedOperation");
     }
@@ -231,7 +261,8 @@ fn test_watermark_multipage() {
     let temp_dir = tempdir().unwrap();
     let output_path = temp_dir.path().join("watermarked_multi.pdf");
 
-    let mut doc = LopdfDocument::load(&get_multi_page_pdf_path()).expect("Failed to load multi_page.pdf");
+    let mut doc =
+        LopdfDocument::load(&get_multi_page_pdf_path()).expect("Failed to load multi_page.pdf");
     let initial_pages = doc.page_count().unwrap();
     assert!(initial_pages > 1, "Expected multi-page PDF");
 
@@ -248,10 +279,19 @@ fn test_redact_multipage() {
     let temp_dir = tempdir().unwrap();
     let output_path = temp_dir.path().join("redacted_multi.pdf");
 
-    let mut doc = LopdfDocument::load(&get_multi_page_pdf_path()).expect("Failed to load multi_page.pdf");
+    let mut doc =
+        LopdfDocument::load(&get_multi_page_pdf_path()).expect("Failed to load multi_page.pdf");
 
     // Redact on page 2
-    let op = RedactOperation::new(2, BoundingBox { x: 10.0, y: 10.0, width: 100.0, height: 100.0 });
+    let op = RedactOperation::new(
+        2,
+        BoundingBox {
+            x: 10.0,
+            y: 10.0,
+            width: 100.0,
+            height: 100.0,
+        },
+    );
     assert!(op.execute(&mut doc).is_ok());
     assert!(doc.save(&output_path).is_ok());
 }
