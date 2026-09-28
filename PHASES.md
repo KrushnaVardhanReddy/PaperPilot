@@ -117,8 +117,8 @@ Write tests alongside each operation, not after.
 | # | Task | Notes |
 |---|---|---|
 | 1.4.1 | Unit tests per operation | Each operation tested in isolation |
-| 1.4.2 | Round-trip tests | `split → merge` should reproduce original structure |
-| 1.4.3 | Fixture-based integration tests | Run all operations against the test corpus |
+| 1.4.2 | Round-trip tests ⏳ | Delegated to Jules (Integration Suites) |
+| 1.4.3 | Fixture-based integration tests ⏳ | Delegated to Jules (Integration Suites) |
 | 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
 | 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
 | 1.4.6 | PDF Validation layer | Pre-flight checks before every operation: magic bytes, encryption, page range bounds, file size, output path writability |
