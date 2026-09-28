@@ -121,6 +121,7 @@ Write tests alongside each operation, not after.
 | 1.4.3 | Fixture-based integration tests | Run all operations against the test corpus |
 | 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
 | 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
+| 1.4.6 | PDF Validation layer | Pre-flight checks before every operation: magic bytes, encryption, page range bounds, file size, output path writability |
 
 ---
 
@@ -143,9 +144,13 @@ Write tests alongside each operation, not after.
 | 1.5.11 | `watermark` command | |
 | 1.5.12 | `encrypt` / `decrypt` commands | |
 | 1.5.13 | `search` command | |
-| 1.5.14 | Progress output | Print progress to stderr for long operations |
-| 1.5.15 | JSON output mode | `--json` flag for scripting/piping |
-| 1.5.16 | CLI integration tests | Spawn binary, check outputs |
+| 1.5.14 | `validate` command | Pre-flight checks: magic bytes, encryption, corruption, page bounds |
+| 1.5.15 | Progress output | Print progress to stderr for long operations |
+| 1.5.16 | JSON output mode | `--json` flag for scripting/piping |
+| 1.5.17 | Webhook support | `--webhook <url>` fires HTTP POST on completion or failure |
+| 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
+| 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
+| 1.5.20 | CLI integration tests | Spawn binary, check outputs |
 
 ---
 
