@@ -144,10 +144,10 @@ Write tests alongside each operation, not after.
 | 1.5.11 | `watermark` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
 | 1.5.12 | `encrypt` / `decrypt` commands ⏳ | Delegated to Jules (Session 3094407989243688221) |
 | 1.5.13 | `search` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.14 | `validate` command | Pre-flight checks: magic bytes, encryption, corruption, page bounds |
-| 1.5.15 | Progress output | Print progress to stderr for long operations |
-| 1.5.16 | JSON output mode | `--json` flag for scripting/piping |
-| 1.5.17 | Webhook support | `--webhook <url>` fires HTTP POST on completion or failure |
+| 1.5.14 | `validate` command ⏳ | Delegated to Jules (Session 18441140336993201035) |
+| 1.5.15 | Progress output ⏳ | Delegated to Jules (Session 18441140336993201035) |
+| 1.5.16 | JSON output mode ⏳ | Delegated to Jules (Session 18441140336993201035) |
+| 1.5.17 | Webhook support ⏳ | Delegated to Jules (Session 18441140336993201035) |
 | 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
 | 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
 | 1.5.20 | CLI integration tests | Spawn binary, check outputs |

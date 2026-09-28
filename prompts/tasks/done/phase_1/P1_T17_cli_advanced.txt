@@ -1,0 +1,19 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T17: ADVANCED CLI (WEBHOOKS)                      |
+================================================================================
+
+OBJECTIVE:
+Add enterprise features to `paperpilot-cli`: a `validate` subcommand, a `--json` global flag, and a `--webhook <url>` global flag.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-cli/Cargo.toml` (Add `reqwest` with `blocking` feature, and `serde_json`)
+2. `paperpilot-cli/src/cli.rs` (Add `validate` subcommand, `json: bool`, and `webhook: Option<String>` to global struct)
+3. `paperpilot-cli/src/commands/validate.rs`
+4. `paperpilot-cli/src/main.rs` (Implement global JSON/Webhook handler logic at the end of the `execute` match)
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `--json`: When true, the CLI should output a serialized JSON object to stdout indicating success/failure, operation name, and error message if applicable.
+2. `--webhook`: When provided, `POST` that exact JSON payload to the URL using `reqwest::blocking::Client`. Ignore timeout/network errors on the webhook (don't panic, just log them if not in JSON mode).
+3. The `validate` subcommand simply attempts to parse the PDF. If it fails, report corruption. If it succeeds, report success.
