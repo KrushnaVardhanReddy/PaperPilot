@@ -66,18 +66,18 @@ All operations are independent of each other and can be built in parallel once t
 #### Group B — Document Operations
 | # | Task | Notes |
 |---|---|---|
-| 1.3.9 | Compress | Reduce file size (image downsampling, stream compression) |
-| 1.3.10 | Repair | Attempt to recover malformed PDFs |
-| 1.3.11 | Metadata read/write | Title, author, dates, custom fields |
-| 1.3.12 | Encrypt | Password protect with user/owner passwords |
-| 1.3.13 | Decrypt | Remove password protection (requires password) |
-| 1.3.14 | Watermark | Text or image watermark on specified pages |
-| 1.3.15 | E-Signature | Local crypto signing and DocuSign API integration |
-| 1.3.16 | Redact | Permanently remove/black-out sensitive text and images |
-| 1.3.17 | Linearize | Optimize PDF for fast web open (streaming/first-page-first) |
-| 1.3.18 | Flatten | Convert annotations/form fields to static page content |
-| 1.3.19 | PDF/A conversion | Convert to ISO archival format (PDF/A-1b, PDF/A-2b) |
-| 1.3.20 | Header/Footer | Add/edit page headers and footers with text or page numbers |
+| 1.3.9 | Compress ⏳ | Delegated to Jules (Session 6923800200121241243) |
+| 1.3.10 | Repair ⏳ | Delegated to Jules (Session 6923800200121241243) |
+| 1.3.11 | Metadata read/write ⏳ | Delegated to Jules (Session 2384599268814762867) |
+| 1.3.12 | Encrypt ⏳ | Delegated to Jules (Session 2384599268814762867) |
+| 1.3.13 | Decrypt ⏳ | Delegated to Jules (Session 2384599268814762867) |
+| 1.3.14 | Watermark ⏳ | Delegated to Jules (Session 8470929282963705394) |
+| 1.3.15 | E-Signature ⏳ | Delegated to Jules (Session 12850003959773306225) |
+| 1.3.16 | Redact ⏳ | Delegated to Jules (Session 12850003959773306225) |
+| 1.3.17 | Linearize ⏳ | Delegated to Jules (Session 6923800200121241243) |
+| 1.3.18 | Flatten ⏳ | Delegated to Jules (Session 12850003959773306225) |
+| 1.3.19 | PDF/A conversion ⏳ | Delegated to Jules (Session 12850003959773306225) |
+| 1.3.20 | Header/Footer ⏳ | Delegated to Jules (Session 8470929282963705394) |
 | 1.3.21 | Bates numbering | Sequential legal stamping on pages (e.g. SMITH0001) |
 
 #### Group C — Extraction & Search
