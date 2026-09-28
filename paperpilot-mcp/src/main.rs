@@ -1,32 +1,12 @@
 use rmcp::serve_server;
-use rmcp::handler::server::ServerHandler;
-use std::future::Future;
-use rmcp::model::{CallToolResponse, CallToolResult};
 
-#[derive(Clone)]
-struct MyServer;
-
-impl ServerHandler for MyServer {
-    fn call_tool(
-        &self,
-        request: rmcp::model::CallToolRequestParams,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<CallToolResponse, rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_ {
-        let _ = context;
-        async move {
-            if request.name == "hello" {
-                Ok(CallToolResponse::Complete(CallToolResult::success(vec![
-                    rmcp::model::ContentBlock::text("hello world")
-                ])))
-            } else {
-                Err(rmcp::ErrorData::invalid_params("Tool not found", None))
-            }
-        }
-    }
-}
+mod error;
+mod schema;
+mod server;
 
 #[tokio::main]
 async fn main() {
-    let t = rmcp::transport::stdio();
-    serve_server(MyServer, t).await.unwrap();
+    let server_impl = server::PaperPilotMcpServer::new();
+    let transport = rmcp::transport::stdio();
+    serve_server(server_impl, transport).await.unwrap();
 }
