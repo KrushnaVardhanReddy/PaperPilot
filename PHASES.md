@@ -60,27 +60,53 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.4 | Delete pages | Remove pages by number/range |
 | 1.3.5 | Reorder pages | Reorder by providing new page index array |
 | 1.3.6 | Rotate pages | 90/180/270 degrees, specific pages or all |
+| 1.3.7 | Crop pages | Trim page margins/content box |
+| 1.3.8 | Burst | Split every page into its own individual PDF file |
 
 #### Group B — Document Operations
 | # | Task | Notes |
 |---|---|---|
-| 1.3.7 | Compress | Reduce file size (image downsampling, stream compression) |
-| 1.3.8 | Repair | Attempt to recover malformed PDFs |
-| 1.3.9 | Metadata read/write | Title, author, dates, custom fields |
-| 1.3.10 | Encrypt | Password protect with user/owner passwords |
-| 1.3.11 | Decrypt | Remove password protection (requires password) |
-| 1.3.12 | Watermark | Text or image watermark on specified pages |
-| 1.3.13 | E-Signature | Local crypto signing and DocuSign API integration |
+| 1.3.9 | Compress | Reduce file size (image downsampling, stream compression) |
+| 1.3.10 | Repair | Attempt to recover malformed PDFs |
+| 1.3.11 | Metadata read/write | Title, author, dates, custom fields |
+| 1.3.12 | Encrypt | Password protect with user/owner passwords |
+| 1.3.13 | Decrypt | Remove password protection (requires password) |
+| 1.3.14 | Watermark | Text or image watermark on specified pages |
+| 1.3.15 | E-Signature | Local crypto signing and DocuSign API integration |
+| 1.3.16 | Redact | Permanently remove/black-out sensitive text and images |
+| 1.3.17 | Linearize | Optimize PDF for fast web open (streaming/first-page-first) |
+| 1.3.18 | Flatten | Convert annotations/form fields to static page content |
+| 1.3.19 | PDF/A conversion | Convert to ISO archival format (PDF/A-1b, PDF/A-2b) |
+| 1.3.20 | Header/Footer | Add/edit page headers and footers with text or page numbers |
+| 1.3.21 | Bates numbering | Sequential legal stamping on pages (e.g. SMITH0001) |
 
-#### Group C — Extraction
+#### Group C — Extraction & Search
+| # | Task | Notes |
+|---|---|
+| 1.3.22 | Extract text | Plain text output per page or full document |
+| 1.3.23 | Extract images | Save embedded images to files |
+| 1.3.24 | Render pages | Render pages to PNG/JPEG at specified DPI |
+| 1.3.25 | Images → PDF | Convert image files into a PDF document |
+| 1.3.26 | Search | Find text occurrences with page/position info |
+| 1.3.27 | Compare | Diff two PDFs, report structural/content differences |
+| 1.3.28 | Bookmarks | Read/write PDF outline (table of contents) |
+| 1.3.29 | OCR | Convert scanned/image PDFs to searchable text (via Tesseract) |
+
+#### Group D — Conversion
 | # | Task | Notes |
 |---|---|---|
-| 1.3.14 | Extract text | Plain text output per page or full document |
-| 1.3.15 | Extract images | Save embedded images to files |
-| 1.3.16 | Render pages | Render pages to PNG/JPEG at specified DPI |
-| 1.3.17 | Images → PDF | Convert image files into a PDF document |
-| 1.3.18 | Search | Find text occurrences with page/position info |
-| 1.3.19 | Compare | Diff two PDFs, report structural/content differences |
+| 1.3.30 | PDF → Word (DOCX) | Export PDF content to editable Word document |
+| 1.3.31 | PDF → Excel (XLSX) | Export table content to spreadsheet |
+| 1.3.32 | PDF → PowerPoint (PPTX) | Export PDF slides to PPTX |
+| 1.3.33 | PDF → HTML | Export to HTML for web viewing |
+| 1.3.34 | PDF → Markdown | Export to clean Markdown text |
+
+#### Group E — Forms
+| # | Task | Notes |
+|---|---|---|
+| 1.3.35 | AcroForm read | Read form field values from interactive PDF forms |
+| 1.3.36 | AcroForm fill | Fill and flatten PDF form fields programmatically |
+| 1.3.37 | Form field creation | Add text/checkbox/dropdown form fields to any PDF |
 
 ---
 
