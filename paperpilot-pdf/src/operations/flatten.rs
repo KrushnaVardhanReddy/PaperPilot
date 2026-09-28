@@ -44,7 +44,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         LopdfDocument { inner }
     }
@@ -57,7 +59,10 @@ mod tests {
         let result = op.execute(&mut doc);
         assert!(result.is_err());
         if let Err(PdfError::UnsupportedOperation(msg)) = result {
-            assert_eq!(msg, "Flattening interactive forms not yet supported natively");
+            assert_eq!(
+                msg,
+                "Flattening interactive forms not yet supported natively"
+            );
         } else {
             panic!("Expected UnsupportedOperation error");
         }
