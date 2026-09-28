@@ -119,7 +119,12 @@ fn test_rotate_fixture() {
     assert_eq!(result_doc.page_count().unwrap(), 1);
 
     let page_id = *result_doc.inner.get_pages().get(&1).unwrap();
-    let dict = result_doc.inner.get_object(page_id).unwrap().as_dict().unwrap();
+    let dict = result_doc
+        .inner
+        .get_object(page_id)
+        .unwrap()
+        .as_dict()
+        .unwrap();
     let rotate = dict.get(b"Rotate").unwrap().as_i64().unwrap();
     assert_eq!(rotate, 90);
 }
@@ -142,7 +147,12 @@ fn test_crop_fixture() {
 
     let result_doc = LopdfDocument::load(&out_path).unwrap();
     let page_id = *result_doc.inner.get_pages().get(&1).unwrap();
-    let dict = result_doc.inner.get_object(page_id).unwrap().as_dict().unwrap();
+    let dict = result_doc
+        .inner
+        .get_object(page_id)
+        .unwrap()
+        .as_dict()
+        .unwrap();
     let crop_box = dict.get(b"CropBox").unwrap().as_array().unwrap();
 
     let get_val = |obj: &lopdf::Object| {
