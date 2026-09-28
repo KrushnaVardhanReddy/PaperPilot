@@ -1,0 +1,35 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T8: GROUP B OPS (BATCH 1)                         |
+================================================================================
+
+OBJECTIVE:
+Implement the first batch of Group B PDF operations: Compress, Repair, and Linearize.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/compress.rs`
+2. `paperpilot-pdf/src/operations/repair.rs`
+3. `paperpilot-pdf/src/operations/linearize.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: The struct is defined simply as `pub struct LopdfDocument { pub inner: lopdf::Document }`.
+   - It is NOT wrapped in a `RefCell` or `Rc`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. To mutate it, just use `let inner = &mut doc.inner;`.
+2. Test Initialization: In your `#[cfg(test)]` blocks, when wrapping a raw `lopdf::Document`, instantiate it exactly like this:
+   `LopdfDocument { inner: doc }` (DO NOT use `LopdfDocument::new(doc)` because `new()` takes 0 arguments).
+3. Downcasting: Always downcast the incoming `PdfDocument` trait object like this:
+   `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(PdfError::UnsupportedOperation(...))?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `CompressOperation`: Implement `PdfOperation`. 
+   - Feature: `lopdf::Document` has a built-in `.compress()` method that compresses object streams. Use it.
+2. `RepairOperation`: Implement `PdfOperation`.
+   - Feature: `lopdf` handles basic cross-reference repairs automatically upon `load()`. For this operation, you can simply iterate over objects and remove orphaned/invalid objects, or just do a no-op that relies on the save cycle to rewrite a clean XRef table.
+3. `LinearizeOperation`: Implement `PdfOperation`. 
+   - Feature: Reorder the PDF cross-reference table for "Fast Web View".
+   - Note: If `lopdf` lacks native linearization support, return `PdfError::UnsupportedOperation("Linearization not yet supported by lopdf backend".to_string())`. Do not write thousands of lines trying to implement it manually.
+
+REQUIREMENTS:
+- Provide robust `#[cfg(test)]` modules in every file.
+- Add `pub mod compress; pub mod repair; pub mod linearize;` to `paperpilot-pdf/src/operations/mod.rs`.

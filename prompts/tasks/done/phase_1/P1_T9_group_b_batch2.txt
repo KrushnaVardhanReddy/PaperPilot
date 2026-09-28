@@ -1,0 +1,35 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T9: GROUP B OPS (BATCH 2)                         |
+================================================================================
+
+OBJECTIVE:
+Implement the second batch of Group B PDF operations: Metadata, Encrypt, and Decrypt.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/metadata.rs`
+2. `paperpilot-pdf/src/operations/encrypt.rs`
+3. `paperpilot-pdf/src/operations/decrypt.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: The struct is defined simply as `pub struct LopdfDocument { pub inner: lopdf::Document }`.
+   - It is NOT wrapped in a `RefCell` or `Rc`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. To mutate it, just use `let inner = &mut doc.inner;`.
+2. Test Initialization: In your `#[cfg(test)]` blocks, when wrapping a raw `lopdf::Document`, instantiate it exactly like this:
+   `LopdfDocument { inner: doc }` (DO NOT use `LopdfDocument::new(doc)` because `new()` takes 0 arguments).
+3. Downcasting: Always downcast the incoming `PdfDocument` trait object like this:
+   `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(PdfError::UnsupportedOperation(...))?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `MetadataOperation`: Implement `PdfOperation`. 
+   - Provide a way to read and write standard Info dictionary keys (Title, Author, Subject, Keywords).
+   - In `lopdf`, the Info dictionary is referenced by the `Info` key in the trailer dictionary.
+2. `EncryptOperation`: Implement `PdfOperation`.
+   - `lopdf` supports basic password protection. Look for `lopdf`'s encryption structures, or if not supported natively, return a stub `PdfError::UnsupportedOperation`.
+3. `DecryptOperation`: Implement `PdfOperation`.
+   - Usually decryption requires passing the password during `Document::load`. For this operation, you might just strip the encryption dictionary from an already loaded document so it saves as unencrypted.
+
+REQUIREMENTS:
+- Provide robust `#[cfg(test)]` modules in every file.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

@@ -1,0 +1,34 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T10: GROUP B OPS (BATCH 3)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the third batch of Group B PDF operations: Watermark, HeaderFooter, and Validate.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/watermark.rs`
+2. `paperpilot-pdf/src/operations/header_footer.rs`
+3. `paperpilot-pdf/src/operations/validate.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: The struct is defined simply as `pub struct LopdfDocument { pub inner: lopdf::Document }`.
+   - It is NOT wrapped in a `RefCell` or `Rc`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. To mutate it, just use `let inner = &mut doc.inner;`.
+2. Test Initialization: In your `#[cfg(test)]` blocks, when wrapping a raw `lopdf::Document`, instantiate it exactly like this:
+   `LopdfDocument { inner: doc }` (DO NOT use `LopdfDocument::new(doc)` because `new()` takes 0 arguments).
+3. Downcasting: Always downcast the incoming `PdfDocument` trait object like this:
+   `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(PdfError::UnsupportedOperation(...))?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `WatermarkOperation`: Implement `PdfOperation`. 
+   - Add a text overlay to pages. You will need to manipulate the `Contents` stream of a page to append a text drawing operation (`BT ... ET`) and ensure a font resource exists in the page's `Resources` dictionary.
+2. `HeaderFooterOperation`: Implement `PdfOperation`.
+   - Similar to watermark, but positioned explicitly at the top/bottom margins of the page.
+3. `ValidateOperation`: Implement `PdfOperation`.
+   - Perform pre-flight checks: Ensure no broken cross-references, validate page count > 0, check if document is encrypted. Return `PdfError::InvalidInput` if validation fails. 
+
+REQUIREMENTS:
+- Provide robust `#[cfg(test)]` modules in every file.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.
