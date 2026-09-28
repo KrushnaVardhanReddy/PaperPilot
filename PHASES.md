@@ -38,10 +38,10 @@ Design the internal interfaces before implementing anything. This prevents tight
 
 | # | Task | Notes |
 |---|---|---|
-| 1.2.1 | Define `PdfDocument` trait | Open, save, page count, metadata |
-| 1.2.2 | Define `PdfOperation` trait | Common interface all operations implement |
-| 1.2.3 | Define `OperationResult` and error types | Typed errors, not string panics |
-| 1.2.4 | Define `JobProgress` event type | Used later by UI and CLI progress output |
+| 1.2.1 | Define `PdfDocument` trait ⏳ | Delegated to Jules (Session 803802133789731818) |
+| 1.2.2 | Define `PdfOperation` trait ⏳ | Delegated to Jules (Session 803802133789731818) |
+| 1.2.3 | Define `OperationResult` and error types ⏳ | Delegated to Jules (Session 6267567952319900834) |
+| 1.2.4 | Define `JobProgress` event type ⏳ | Delegated to Jules (Session 6267567952319900834) |
 
 ---
 
