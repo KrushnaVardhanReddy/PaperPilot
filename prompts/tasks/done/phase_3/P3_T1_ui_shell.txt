@@ -1,0 +1,33 @@
+---
+Task: Phase 3.2 - Core UI Shell
+Context: The Tauri 2.0 + Svelte 5 + TS project has been initialized in `apps/desktop`. A basic `app.css` design system with CSS tokens is in place.
+---
+
+Hey Jules, we are moving into Phase 3 (Tauri 2.0 + Svelte 5). 
+I've already scaffolded the project and committed it. Now we need to implement the core UI shell and shared state mechanics as outlined in `PHASES.md` Section 3.2.
+
+## Requirements:
+
+1. **App Layout (3.2.1):** 
+   - Update `apps/desktop/src/routes/+layout.svelte` to implement a professional Sidebar + Main Content layout.
+   - The Sidebar should be a component (`apps/desktop/src/lib/components/layout/Sidebar.svelte`).
+   - The Main Content should render `{@render children()}` inside a clean, scrollable surface.
+
+2. **Global State Store (3.2.3):**
+   - We are using Svelte 5 runes (`$state`). 
+   - Create `apps/desktop/src/lib/state/app.svelte.ts` representing global UI state (e.g., active navigation tab, global loading boolean, current theme).
+
+3. **Notification/Toast System (3.2.4):**
+   - Create a global toast notification manager (`apps/desktop/src/lib/state/toast.svelte.ts`) using runes.
+   - Build a `ToastContainer.svelte` and place it in the root layout to display non-blocking success/error messages.
+
+4. **File Drop Zone Component (3.2.5):**
+   - Build a reusable `apps/desktop/src/lib/components/ui/DropZone.svelte`.
+   - It should intercept file drag-and-drop events (from Tauri or standard HTML5 depending on capabilities, stick to HTML5 web standard for now) and emit the file paths via standard Svelte component events or callbacks.
+
+## Styling Rules:
+- STRICTLY DO NOT USE TailwindCSS.
+- Use the CSS variables defined in `apps/desktop/src/app.css` (e.g., `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`).
+- Ensure the components feel rich, native, and premium. Use hover states and smooth `transition` properties.
+
+Please open a PR to `main` when finished!

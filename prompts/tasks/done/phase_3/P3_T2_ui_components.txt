@@ -1,0 +1,32 @@
+---
+Task: Phase 3.2 & 3.4 - Document List & Operations Panel
+Context: The Tauri 2.0 + Svelte 5 + TS project has been scaffolded and the core layout, toast system, and dropzone are in `apps/desktop`.
+---
+
+Hey Jules! We need to finish off the Phase 3.2 Core UI and start building the Phase 3.4 Operations UI panels.
+
+## Requirements:
+
+1. **Document List (3.2.3):**
+   - Create `apps/desktop/src/lib/components/ui/DocumentList.svelte`.
+   - This component should subscribe to a new `$state` array in `app.svelte.ts` representing loaded files.
+   - Display a list of dropped files, showing a generic PDF icon, the file name, and file size (mock the page count for now).
+   - Allow removing a file from the list.
+
+2. **Settings Panel (3.2.4):**
+   - Create a `SettingsPanel.svelte` that can be toggled via the Sidebar.
+   - Include mock inputs for: "AI Provider (OpenAI/Anthropic/Local)", "API Key", and "Default Output Directory".
+
+3. **Operations Panel (3.4.1 & 3.4.2):**
+   - Create a right-side panel `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`.
+   - It should have a dropdown or tab system to select the current operation (start with "Merge").
+   - When "Merge" is selected (3.4.2), show a UI to reorder the files currently in the Document List, and a big "Run Merge" button.
+   - (For now, the "Run Merge" button just triggers a Toast notification saying "Merge triggered", no need to wire the Rust IPC just yet).
+
+## Styling Rules:
+- STRICTLY DO NOT USE TailwindCSS.
+- Use the CSS variables defined in `apps/desktop/src/app.css`.
+- Aim for a sleek, premium dark mode aesthetic.
+- Use Svelte 5 runes (`$state`, `$derived`, `$props`) for all reactivity.
+
+Please open a PR to `main` when finished!
