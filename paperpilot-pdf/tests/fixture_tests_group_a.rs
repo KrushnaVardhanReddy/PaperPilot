@@ -111,7 +111,7 @@ fn test_rotate_fixture() {
     let out_path = dir.path().join("out.pdf");
 
     let mut doc = LopdfDocument::load(&simple).unwrap();
-    let op = RotatePagesOperation::new(90);
+    let op = RotatePagesOperation::new(90, None);
     op.execute(&mut doc).unwrap();
     doc.save(&out_path).unwrap();
 

@@ -1745,6 +1745,7 @@ name = "paperpilot-mcp"
 version = "0.1.0"
 dependencies = [
  "paperpilot-core",
+ "paperpilot-pdf",
  "rmcp",
  "schemars",
  "serde",

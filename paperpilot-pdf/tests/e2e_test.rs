@@ -115,7 +115,7 @@ fn test_e2e_operations_pipeline() {
         .expect("Failed to delete page 2");
 
     // 5. Operation 3: Rotate the remaining pages by 90 degrees
-    let rotate_op = RotatePagesOperation::new(90);
+    let rotate_op = RotatePagesOperation::new(90, None);
     rotate_op.execute(&mut doc).expect("Failed to rotate pages");
 
     // 6. Operation 4: Add Watermark

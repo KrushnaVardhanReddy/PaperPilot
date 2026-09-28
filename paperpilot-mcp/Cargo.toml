@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
+paperpilot-pdf = { version = "0.1.0", path = "../paperpilot-pdf" }
 rmcp = { version = "3.5.0", features = ["macros", "transport-io"] }
 schemars = "1.2.2"
 serde = { version = "1.0.229", features = ["derive"] }
