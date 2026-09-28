@@ -1,0 +1,543 @@
+# PaperPilot — Development Phases & Tasks
+
+> Tasks marked **[PARALLEL]** can be worked on simultaneously.
+> Tasks marked **[BLOCKED BY]** cannot start until the listed task is complete.
+> Each phase has a clear exit condition — don't move to the next phase until it's met.
+
+---
+
+## Phase 1 — Rust Core Engine
+
+**Goal:** A reliable, well-tested PDF manipulation engine with a working CLI.
+No AI. No GUI. Just a solid foundation everything else will build on.
+
+**Exit condition:** All PDF operations listed below work correctly on real-world PDFs, have passing tests, and are accessible via the CLI.
+
+---
+
+### 1.1 — Project Setup `[PARALLEL]`
+
+These can all be done on day one simultaneously.
+
+| # | Task | Notes |
+|---|---|---|
+| 1.1.1 | Initialize Cargo workspace | Root `Cargo.toml` with workspace members |
+| 1.1.2 | Create crate stubs | `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli` empty crates |
+| 1.1.3 | Set up CI pipeline | GitHub Actions: build + test on push |
+| 1.1.4 | Set up test fixture corpus | Collect 20–30 real-world PDFs: normal, scanned, malformed, large, encrypted |
+| 1.1.5 | Choose and document PDF library decision | Evaluate `lopdf` + `pdfium-render` combo, document in ADR |
+| 1.1.6 | Set up linting and formatting | `clippy`, `rustfmt`, enforce in CI |
+
+---
+
+### 1.2 — Core Traits and Abstractions
+
+**[BLOCKED BY 1.1.1, 1.1.2]**
+
+Design the internal interfaces before implementing anything. This prevents tight coupling to a specific PDF library.
+
+| # | Task | Notes |
+|---|---|---|
+| 1.2.1 | Define `PdfDocument` trait | Open, save, page count, metadata |
+| 1.2.2 | Define `PdfOperation` trait | Common interface all operations implement |
+| 1.2.3 | Define `OperationResult` and error types | Typed errors, not string panics |
+| 1.2.4 | Define `JobProgress` event type | Used later by UI and CLI progress output |
+
+---
+
+### 1.3 — PDF Operations `[PARALLEL within group]`
+
+**[BLOCKED BY 1.2]**
+
+All operations are independent of each other and can be built in parallel once the traits are in place.
+
+#### Group A — Page Manipulation
+| # | Task | Notes |
+|---|---|---|
+| 1.3.1 | Merge | Combine N PDFs into one |
+| 1.3.2 | Split | Split by page range or every N pages |
+| 1.3.3 | Extract pages | Pull specific pages into a new PDF |
+| 1.3.4 | Delete pages | Remove pages by number/range |
+| 1.3.5 | Reorder pages | Reorder by providing new page index array |
+| 1.3.6 | Rotate pages | 90/180/270 degrees, specific pages or all |
+
+#### Group B — Document Operations
+| # | Task | Notes |
+|---|---|---|
+| 1.3.7 | Compress | Reduce file size (image downsampling, stream compression) |
+| 1.3.8 | Repair | Attempt to recover malformed PDFs |
+| 1.3.9 | Metadata read/write | Title, author, dates, custom fields |
+| 1.3.10 | Encrypt | Password protect with user/owner passwords |
+| 1.3.11 | Decrypt | Remove password protection (requires password) |
+| 1.3.12 | Watermark | Text or image watermark on specified pages |
+
+#### Group C — Extraction
+| # | Task | Notes |
+|---|---|---|
+| 1.3.13 | Extract text | Plain text output per page or full document |
+| 1.3.14 | Extract images | Save embedded images to files |
+| 1.3.15 | Render pages | Render pages to PNG/JPEG at specified DPI |
+| 1.3.16 | Images → PDF | Convert image files into a PDF document |
+| 1.3.17 | Search | Find text occurrences with page/position info |
+| 1.3.18 | Compare | Diff two PDFs, report structural/content differences |
+
+---
+
+### 1.4 — Testing `[PARALLEL with 1.3]`
+
+Write tests alongside each operation, not after.
+
+| # | Task | Notes |
+|---|---|---|
+| 1.4.1 | Unit tests per operation | Each operation tested in isolation |
+| 1.4.2 | Round-trip tests | `split → merge` should reproduce original structure |
+| 1.4.3 | Fixture-based integration tests | Run all operations against the test corpus |
+| 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
+| 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
+
+---
+
+### 1.5 — CLI `[BLOCKED BY 1.3]`
+
+**[BLOCKED BY 1.3 — each command blocked only by its own operation]**
+
+| # | Task | Notes |
+|---|---|---|
+| 1.5.1 | CLI scaffold | `clap`-based argument parser, subcommand structure |
+| 1.5.2 | `merge` command | |
+| 1.5.3 | `split` command | |
+| 1.5.4 | `extract` command | |
+| 1.5.5 | `remove` command | |
+| 1.5.6 | `reorder` command | |
+| 1.5.7 | `rotate` command | |
+| 1.5.8 | `compress` command | |
+| 1.5.9 | `extract-text` command | |
+| 1.5.10 | `extract-images` command | |
+| 1.5.11 | `watermark` command | |
+| 1.5.12 | `encrypt` / `decrypt` commands | |
+| 1.5.13 | `search` command | |
+| 1.5.14 | Progress output | Print progress to stderr for long operations |
+| 1.5.15 | JSON output mode | `--json` flag for scripting/piping |
+| 1.5.16 | CLI integration tests | Spawn binary, check outputs |
+
+---
+
+## Phase 2 — MCP Server
+
+**Goal:** PaperPilot exposes all PDF operations as strongly typed MCP tools that AI agents can call.
+
+**Exit condition:** An external AI agent (Claude, GPT, etc.) can use PaperPilot via MCP to merge, split, compress, and extract text from PDFs without any custom integration code.
+
+**[BLOCKED BY Phase 1 exit condition]**
+
+---
+
+### 2.1 — MCP Foundation `[PARALLEL]`
+
+| # | Task | Notes |
+|---|---|---|
+| 2.1.1 | Add `rmcp` crate dependency | Review `rmcp` API, write hello-world MCP server |
+| 2.1.2 | Create `paperpilot-mcp` crate | Stub crate in workspace |
+| 2.1.3 | Design tool schema conventions | Naming, input/output types, error format |
+
+---
+
+### 2.2 — Tool Implementations `[PARALLEL within group, BLOCKED BY 2.1]`
+
+Each MCP tool wraps the corresponding Phase 1 Rust operation.
+
+| # | Task | Notes |
+|---|---|---|
+| 2.2.1 | `pdf_merge` tool | |
+| 2.2.2 | `pdf_split` tool | |
+| 2.2.3 | `pdf_extract_pages` tool | |
+| 2.2.4 | `pdf_delete_pages` tool | |
+| 2.2.5 | `pdf_reorder_pages` tool | |
+| 2.2.6 | `pdf_rotate` tool | |
+| 2.2.7 | `pdf_compress` tool | |
+| 2.2.8 | `pdf_extract_text` tool | |
+| 2.2.9 | `pdf_extract_images` tool | |
+| 2.2.10 | `pdf_search` tool | |
+| 2.2.11 | `pdf_watermark` tool | |
+| 2.2.12 | `pdf_encrypt` / `pdf_decrypt` tools | |
+| 2.2.13 | `pdf_metadata` tool | Read and write metadata |
+
+---
+
+### 2.3 — MCP Server Infrastructure `[PARALLEL with 2.2]`
+
+| # | Task | Notes |
+|---|---|---|
+| 2.3.1 | Input validation layer | Validate all tool inputs before passing to engine |
+| 2.3.2 | Error response format | Structured, consistent error responses |
+| 2.3.3 | File path / temp file handling | Safe handling of input/output file paths |
+| 2.3.4 | MCP server binary | Standalone runnable server |
+| 2.3.5 | MCP schema tests | Validate all tool schemas are well-formed |
+| 2.3.6 | End-to-end MCP tests | Use MCP client to call tools, verify outputs |
+
+---
+
+## Phase 3 — Desktop Application
+
+**Goal:** A polished, standalone Tauri + Svelte desktop app for PDF manipulation.
+
+**Exit condition:** A user with no technical knowledge can open the app, drop in PDFs, perform all basic operations, and get output files — without touching the CLI.
+
+**[BLOCKED BY Phase 1 exit condition]**
+**[Can start in parallel with Phase 2]**
+
+---
+
+### 3.1 — Project Setup `[PARALLEL]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.1.1 | Initialize Tauri 2 project | Under `apps/desktop/` |
+| 3.1.2 | Configure Svelte 5 + TypeScript + Vite | |
+| 3.1.3 | Set up Tauri ↔ Rust command bindings | Define initial `invoke` commands |
+| 3.1.4 | Set up component library / design system | Pick: shadcn-svelte, bits-ui, or custom |
+| 3.1.5 | Define Tauri IPC schema | Types for all commands and events |
+| 3.1.6 | Set up frontend tests | Vitest + Testing Library |
+
+---
+
+### 3.2 — Core UI Shell `[PARALLEL within group, BLOCKED BY 3.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.2.1 | App layout and navigation | Sidebar, main area, settings panel |
+| 3.2.2 | File drop zone | Drag-and-drop + file picker |
+| 3.2.3 | Document list | Show loaded files with name, size, page count |
+| 3.2.4 | Settings panel | AI provider config, output directory, preferences |
+| 3.2.5 | Notification / toast system | Success, error, progress messages |
+
+---
+
+### 3.3 — PDF Preview `[PARALLEL with 3.2, BLOCKED BY 3.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.3.1 | Page renderer | Use Tauri to call Rust render-to-PNG, display in Svelte |
+| 3.3.2 | Page thumbnail strip | Scrollable strip of all pages |
+| 3.3.3 | Page selection | Click/shift-click to select pages |
+| 3.3.4 | Page reorder via drag | Drag thumbnails to reorder |
+| 3.3.5 | Page rotation controls | Per-page rotate buttons |
+| 3.3.6 | Page deletion UI | Select + delete pages visually |
+
+---
+
+### 3.4 — Operations UI `[BLOCKED BY 3.2]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.4.1 | Operation panel | Right-side panel with operation options |
+| 3.4.2 | Merge UI | Select files, set order, run |
+| 3.4.3 | Split UI | Choose split points or ranges |
+| 3.4.4 | Compress UI | Quality/size tradeoff slider |
+| 3.4.5 | Rotate UI | Select pages, choose angle |
+| 3.4.6 | Watermark UI | Text/image, position, opacity |
+| 3.4.7 | Encrypt/Decrypt UI | Password input, options |
+| 3.4.8 | Extract UI | Pages, text, images — separate modes |
+| 3.4.9 | Output file picker | Choose output path before running |
+
+---
+
+### 3.5 — Job System `[BLOCKED BY 3.1, PARALLEL with 3.2]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.5.1 | Rust async job runner | Tokio-based, emits progress events |
+| 3.5.2 | Tauri event bridge | Forward Rust progress events to Svelte |
+| 3.5.3 | Progress bar component | Shows job name, %, current page |
+| 3.5.4 | Job cancel support | Cancel button sends cancellation to Rust |
+| 3.5.5 | Job history panel | List of completed/failed jobs with output paths |
+
+---
+
+## Phase 4 — AI Layer
+
+**Goal:** Users can describe what they want in natural language. The AI produces a structured plan. The user confirms. Rust executes.
+
+**Exit condition:** A user can type "merge these files, remove blank pages, and compress the result" and get the correct output without manually configuring any operation.
+
+**[BLOCKED BY Phase 3]**
+
+---
+
+### 4.1 — AI Infrastructure `[PARALLEL]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.1.1 | Create `paperpilot-ai` crate | |
+| 4.1.2 | Define `AiProvider` trait | Pluggable: local, OpenAI-compatible, others |
+| 4.1.3 | llamafile integration | Bundle or point to local llamafile binary |
+| 4.1.4 | OpenAI-compatible API client | Works with Ollama, LM Studio, OpenAI, etc. |
+| 4.1.5 | AI provider config in settings | User picks provider, model, endpoint |
+
+---
+
+### 4.2 — Operation Planning `[BLOCKED BY 4.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.2.1 | Define `OperationPlan` type | Ordered list of typed operations |
+| 4.2.2 | System prompt design | Instruct AI to output only structured operation plans |
+| 4.2.3 | Natural language → `OperationPlan` parser | AI call + parse/validate output |
+| 4.2.4 | Plan validation | Validate plan against available operations before showing to user |
+| 4.2.5 | Plan serialization | JSON schema for plans, used by UI and MCP |
+
+---
+
+### 4.3 — Natural Language UI `[BLOCKED BY 4.2, PARALLEL with 4.4]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.3.1 | Command box component | Text input in main UI |
+| 4.3.2 | "Thinking" state | Show spinner while AI processes |
+| 4.3.3 | Plan display component | Show numbered list of interpreted operations |
+| 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
+
+---
+
+### 4.4 — Confirmation and Execution `[BLOCKED BY 4.2, PARALLEL with 4.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.4.1 | Confirmation dialog | Show plan with Cancel / Run buttons |
+| 4.4.2 | Plan → job execution | Convert confirmed plan into sequential job run |
+| 4.4.3 | Error recovery UI | If one step fails, show which step and allow retry |
+| 4.4.4 | MCP-based execution path | AI plans via MCP tools, Rust executes |
+
+---
+
+### 4.5 — CLI AI Integration `[BLOCKED BY 4.2, PARALLEL with 4.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.5.1 | `paperpilot ask "..."` command | Sends natural language to AI, shows plan, confirms, runs |
+| 4.5.2 | Non-interactive mode | `--yes` flag to skip confirmation for scripting |
+
+---
+
+## Phase 5 — Advanced Intelligence
+
+**Goal:** PaperPilot understands document content, not just structure.
+
+**Exit condition:** Users can make scanned PDFs searchable, search semantically, extract tables, and ask questions about document content.
+
+**[BLOCKED BY Phase 4]**
+
+---
+
+### 5.1 — OCR `[PARALLEL with 5.2]`
+
+| # | Task | Notes |
+|---|---|---|
+| 5.1.1 | Evaluate OCR options | Tesseract (via `leptess`), `ocrs`, cloud fallback |
+| 5.1.2 | Create `paperpilot-ocr` crate | |
+| 5.1.3 | Page-level OCR pipeline | Render page → OCR → embed text layer |
+| 5.1.4 | OCR progress reporting | Per-page progress events |
+| 5.1.5 | `pdf_ocr` MCP tool | |
+| 5.1.6 | `paperpilot ocr` CLI command | |
+| 5.1.7 | OCR UI in desktop | Button to make scanned PDF searchable |
+| 5.1.8 | Language selection | Support multi-language OCR |
+
+---
+
+### 5.2 — Document Understanding `[PARALLEL with 5.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 5.2.1 | Semantic search | Embed document chunks, search by meaning |
+| 5.2.2 | Table extraction | Detect and extract tables to CSV/JSON |
+| 5.2.3 | Document comparison | Semantic diff, not just structural |
+| 5.2.4 | Document summarization | AI-powered summary of document content |
+| 5.2.5 | PDF Q&A | Ask questions, get answers grounded in document |
+| 5.2.6 | Batch workflows | Run operations across folders of documents |
+
+---
+
+## Phase 6 — Enterprise
+
+**Goal:** Organizations can deploy and govern PaperPilot at scale.
+
+**Exit condition:** An IT admin can deploy PaperPilot, set up SSO, configure AI policies, and review audit logs — without touching source code.
+
+**[BLOCKED BY Phase 4]**
+**[Can run in parallel with Phase 5]**
+
+---
+
+### 6.1 — Identity `[PARALLEL within group]`
+
+| # | Task | Notes |
+|---|---|---|
+| 6.1.1 | Organization model | Multi-org data model |
+| 6.1.2 | User and team management | CRUD for users, teams, roles |
+| 6.1.3 | RBAC | Role definitions, permission checks |
+| 6.1.4 | SSO — SAML 2.0 | |
+| 6.1.5 | SSO — OIDC | |
+| 6.1.6 | SCIM provisioning | Automated user lifecycle from IdP |
+
+---
+
+### 6.2 — Security and Policy `[PARALLEL with 6.1, BLOCKED BY 6.1.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 6.2.1 | AI provider policy engine | Allow/block specific providers per org |
+| 6.2.2 | Data processing policies | Local-only, region restrictions |
+| 6.2.3 | Document retention policies | Auto-delete rules |
+| 6.2.4 | Encryption configuration | At-rest and in-transit options |
+| 6.2.5 | Central configuration management | Push config to all instances |
+
+---
+
+### 6.3 — Audit `[PARALLEL with 6.1 and 6.2]`
+
+| # | Task | Notes |
+|---|---|---|
+| 6.3.1 | Audit event schema | Typed events: who, what, when, result |
+| 6.3.2 | Audit log storage | Append-only, tamper-evident |
+| 6.3.3 | Audit log UI | Filterable, exportable |
+| 6.3.4 | Configurable verbosity | What gets logged vs. what doesn't |
+
+---
+
+### 6.4 — Enterprise Deployment `[PARALLEL with 6.1, 6.2, 6.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 6.4.1 | Docker image | Production-ready Dockerfile |
+| 6.4.2 | Docker Compose setup | For easy self-hosted deployment |
+| 6.4.3 | Kubernetes manifests | Helm chart or plain manifests |
+| 6.4.4 | Air-gapped deployment guide | No external network dependencies |
+| 6.4.5 | Upgrade / migration tooling | Safe schema migrations, zero-downtime updates |
+
+---
+
+## Phase 7 — Managed Cloud
+
+**Goal:** Organizations that don't want to self-host can use PaperPilot as a service.
+
+**Exit condition:** A company can sign up, connect their team, and use PaperPilot Cloud without operating any infrastructure.
+
+**[BLOCKED BY Phase 6]**
+
+---
+
+### 7.1 — Cloud Infrastructure `[PARALLEL within group]`
+
+| # | Task | Notes |
+|---|---|---|
+| 7.1.1 | Multi-tenant architecture | Org isolation at data and compute layer |
+| 7.1.2 | Document processing pipeline | Async, scalable job processing |
+| 7.1.3 | Cloud MCP gateway | Hosted MCP endpoint per org |
+| 7.1.4 | Monitoring and alerting | Uptime, error rates, job queue depth |
+| 7.1.5 | Autoscaling | Scale workers based on job queue |
+
+---
+
+### 7.2 — Cloud-Specific Features `[BLOCKED BY 7.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 7.2.1 | Billing and usage tracking | Per-org metering |
+| 7.2.2 | Admin dashboard | Org management, usage, billing |
+| 7.2.3 | Onboarding flow | Signup, org setup, first document |
+| 7.2.4 | SLA monitoring | Track and report uptime against commitments |
+| 7.2.5 | Enterprise support tooling | Ticket system, escalation paths |
+
+---
+
+## Parallel Execution Summary
+
+This is the high-level view of what can run simultaneously across phases:
+
+```text
+Phase 1
+├── 1.1 (Setup)          ──────────── all parallel
+├── 1.2 (Traits)         ──────────── after 1.1
+├── 1.3 (Operations)     ──────────── all parallel with each other, after 1.2
+├── 1.4 (Tests)          ──────────── parallel with 1.3
+└── 1.5 (CLI)            ──────────── each command unblocked when its op is done
+
+Phase 2 ──── starts after Phase 1
+├── 2.1 (MCP setup)      ──────────── parallel
+├── 2.2 (Tools)          ──────────── all parallel, after 2.1
+└── 2.3 (Infrastructure) ──────────── parallel with 2.2
+
+Phase 3 ──── starts after Phase 1 (PARALLEL WITH Phase 2)
+├── 3.1 (Setup)          ──────────── parallel
+├── 3.2 (Shell UI)       ──────────── parallel within group, after 3.1
+├── 3.3 (Preview)        ──────────── parallel with 3.2, after 3.1
+├── 3.4 (Operations UI)  ──────────── after 3.2
+└── 3.5 (Job System)     ──────────── parallel with 3.2, after 3.1
+
+Phase 4 ──── starts after Phase 3
+├── 4.1 (AI infra)       ──────────── parallel
+├── 4.2 (Planning)       ──────────── after 4.1
+├── 4.3 (NL UI)          ──────────── parallel with 4.4, after 4.2
+├── 4.4 (Execution)      ──────────── parallel with 4.3, after 4.2
+└── 4.5 (CLI AI)         ──────────── parallel with 4.3, after 4.2
+
+Phase 5 ──── starts after Phase 4 (PARALLEL WITH Phase 6)
+├── 5.1 (OCR)            ──────────── parallel with 5.2
+└── 5.2 (Understanding)  ──────────── parallel with 5.1
+
+Phase 6 ──── starts after Phase 4 (PARALLEL WITH Phase 5)
+├── 6.1 (Identity)       ──────────── parallel within group
+├── 6.2 (Security)       ──────────── parallel with 6.1 (RBAC needed first)
+├── 6.3 (Audit)          ──────────── parallel with 6.1 and 6.2
+└── 6.4 (Deployment)     ──────────── parallel with all of 6.x
+
+Phase 7 ──── starts after Phase 6
+├── 7.1 (Infrastructure) ──────────── parallel within group
+└── 7.2 (Features)       ──────────── after 7.1
+```
+
+---
+
+## Critical Path
+
+The sequence that determines the earliest possible ship date for each milestone:
+
+```text
+1.1 Setup
+  → 1.2 Traits
+    → 1.3 Operations (all parallel)
+      → 1.5 CLI
+        → Phase 1 complete ✓
+
+        → 2.1 MCP setup
+          → 2.2 + 2.3 (parallel)
+            → Phase 2 complete ✓
+
+        → 3.1 Desktop setup (starts same time as 2.1)
+          → 3.2 + 3.3 + 3.5 (parallel)
+            → 3.4 Operations UI
+              → Phase 3 complete ✓
+
+              → 4.1 AI infra
+                → 4.2 Planning
+                  → 4.3 + 4.4 + 4.5 (parallel)
+                    → Phase 4 complete ✓
+
+                    → Phase 5 + Phase 6 (parallel)
+                      → Phase 7
+```
+
+---
+
+## Recommended Start
+
+If working solo or as a small team, this is the suggested order for the first 4 weeks:
+
+| Week | Focus |
+|---|---|
+| 1 | 1.1 Setup + 1.2 Traits + PDF library evaluation |
+| 2 | 1.3 Group A (Merge, Split, Extract, Delete, Reorder, Rotate) |
+| 3 | 1.3 Group B + C (Compress, Repair, Metadata, Encrypt, Extract text/images) |
+| 4 | 1.4 Tests + 1.5 CLI — ship a working `paperpilot` binary |
+
+After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (Desktop) in parallel from week 5.
