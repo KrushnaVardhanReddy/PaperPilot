@@ -83,14 +83,14 @@ All operations are independent of each other and can be built in parallel once t
 #### Group C — Extraction & Search
 | # | Task | Notes |
 |---|---|
-| 1.3.22 | Extract text | Plain text output per page or full document |
-| 1.3.23 | Extract images | Save embedded images to files |
-| 1.3.24 | Render pages | Render pages to PNG/JPEG at specified DPI |
-| 1.3.25 | Images → PDF | Convert image files into a PDF document |
-| 1.3.26 | Search | Find text occurrences with page/position info |
-| 1.3.27 | Compare | Diff two PDFs, report structural/content differences |
-| 1.3.28 | Bookmarks | Read/write PDF outline (table of contents) |
-| 1.3.29 | OCR | Convert scanned/image PDFs to searchable text (via Tesseract) |
+| 1.3.22 | Extract text ⏳ | Delegated to Jules (Session 2668342604059292265) |
+| 1.3.23 | Extract images ⏳ | Delegated to Jules (Session 10564378390682319461) |
+| 1.3.24 | Render pages ⏳ | Delegated to Jules (Session 12785657976803298608) |
+| 1.3.25 | Images → PDF ⏳ | Delegated to Jules (Session 10564378390682319461) |
+| 1.3.26 | Search ⏳ | Delegated to Jules (Session 2668342604059292265) |
+| 1.3.27 | Compare ⏳ | Delegated to Jules (Session 12785657976803298608) |
+| 1.3.28 | Bookmarks ⏳ | Delegated to Jules (Session 2668342604059292265) |
+| 1.3.29 | OCR ⏳ | Delegated to Jules (Session 12785657976803298608) |
 
 #### Group D — Conversion
 | # | Task | Notes |
