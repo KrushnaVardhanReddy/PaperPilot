@@ -128,6 +128,16 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.36 | AcroForm fill | Fill and flatten PDF form fields programmatically |
 | 1.3.37 | Form field creation | Add text/checkbox/dropdown form fields to any PDF |
 
+#### Group F — PDF Creation (from scratch)
+| # | Task | Notes |
+|---|---|---|
+| 1.3.40 | Markdown → PDF | Render a Markdown file into a pixel-perfect PDF (headings, tables, code blocks, images) |
+| 1.3.41 | HTML → PDF | Render an HTML page/template into a PDF (full CSS support via headless renderer) |
+| 1.3.42 | Template engine | Handlebars-style templates with variable substitution: `{{client_name}}`, `{{invoice_total}}` etc. |
+| 1.3.43 | Built-in template library | Starter templates: Invoice, Contract, Report, Certificate, Letter, Resume |
+| 1.3.44 | Template → PDF CLI | `paperpilot create --template invoice.hbs --data data.json -o invoice.pdf` |
+| 1.3.45 | Custom page layout | Margin, paper size (A4/Letter/Legal), orientation, header/footer per template |
+
 ---
 
 ### 1.4 — Testing `[PARALLEL with 1.3]`
@@ -388,6 +398,21 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.5.2 | Non-interactive mode | `--yes` flag to skip confirmation for scripting |
 
 ---
+
+### 4.6 — AI PDF Creation `[BLOCKED BY 4.2, 1.3.40–1.3.45]`
+
+**Goal:** A user or AI agent describes what they want and PaperPilot generates a professional PDF from scratch — no design skills, no templates to configure manually.
+
+| # | Task | Notes |
+|---|---|---|
+| 4.6.1 | Natural language → PDF content | AI generates structured Markdown content from a prompt (e.g. "create a consulting invoice for Acme Corp, $5,000, due in 30 days") |
+| 4.6.2 | AI template selection | AI picks the best built-in template (invoice, contract, report) based on the user's intent |
+| 4.6.3 | AI fills template variables | AI extracts structured data from the prompt and populates all template fields |
+| 4.6.4 | Review & edit before rendering | Show AI-filled template in editor before generating the PDF |
+| 4.6.5 | `pdf_create` MCP tool | AI agents call `pdf_create` with a prompt — returns a ready PDF; no human in the loop needed |
+| 4.6.6 | `paperpilot create "..."` CLI | `paperpilot create "monthly report for Q3 sales" --template report -o q3.pdf` |
+| 4.6.7 | Multi-turn creation (chat mode) | User refines the PDF via follow-up prompts: "change the due date to Oct 31" → PDF updates live |
+| 4.6.8 | E2E AI creation tests | Generate real PDFs from prompts and verify structure and content (No Mocking) |
 
 ## Phase 5 — Advanced Intelligence
 
