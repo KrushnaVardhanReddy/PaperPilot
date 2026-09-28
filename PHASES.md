@@ -6,6 +6,23 @@
 
 ---
 
+## Licensing Model (LOCKED)
+
+**Decision: Open Core** — like GitLab, HashiCorp Vault, and Outline.
+
+| Tier | License | What's included |
+|---|---|---|
+| **Community (Free)** | Apache 2.0 | Core engine, CLI, MCP server, Desktop app, all PDF operations |
+| **Enterprise (Paid)** | Commercial | SSO (SAML/OIDC), RBAC, Audit logs, Multi-org, License key management, Group Policy |
+| **Cloud (Paid)** | Commercial | Managed hosting, Cloud MCP gateway, Billing, SLA monitoring |
+
+**Rules:**
+- Everything in Phases 1–5 is **Apache 2.0** — always free, always open.
+- Everything in Phase 6 (Enterprise) and Phase 7 (Cloud) is **Commercial** — gated behind a license key.
+- The boundary must never move. Enterprise features must never sneak into the Apache-licensed core.
+
+---
+
 ## Phase 1 — Rust Core Engine
 
 **Goal:** A reliable, well-tested PDF manipulation engine with a working CLI.
