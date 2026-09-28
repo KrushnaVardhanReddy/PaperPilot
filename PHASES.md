@@ -705,12 +705,30 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 
 ### 8.4 — SDK Libraries `[BLOCKED BY Phase 2 MCP]`
 
+#### 8.4a — Core SDKs
+
 | # | Task | Notes |
 |---|---|---|
-| 8.4.1 | Python SDK (`paperpilot-py`) | PyPI package wrapping the MCP interface |
-| 8.4.2 | JavaScript / Node SDK (`paperpilot-js`) | npm package |
-| 8.4.3 | Go SDK (`paperpilot-go`) | Go module |
+| 8.4.1 | Python SDK (`paperpilot-py`) | PyPI package: pythonic wrappers for all 29 operations, async support (`asyncio`), type hints, Pydantic models for all inputs/outputs |
+| 8.4.2 | JavaScript / Node SDK (`paperpilot-js`) | npm package with TypeScript types |
+| 8.4.3 | Go SDK (`paperpilot-go`) | Go module, includes `VerifyWebhookSignature()` crypto utility |
 | 8.4.4 | SDK documentation site | Auto-generated API docs for all SDKs |
+
+---
+
+#### 8.4b — AI Framework Integrations `[BLOCKED BY 8.4a]`
+
+**Goal:** AI engineers should be able to drop PaperPilot into their existing agent pipelines in under 5 minutes. Target the most popular Python AI frameworks used in production today.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.4b.1 | LangChain Tools integration | Ship `paperpilot-langchain` — a set of `BaseTool` subclasses (e.g. `MergePdfTool`, `ExtractTextTool`) that plug directly into any LangChain agent or chain |
+| 8.4b.2 | LlamaIndex Reader + Tool integration | Ship `paperpilot-llamaindex` — `PaperPilotReader` (load/parse PDFs as LlamaIndex Documents) and `PaperPilotToolSpec` (expose operations as LlamaIndex tools) |
+| 8.4b.3 | CrewAI Tool integration | Ship `paperpilot-crewai` — PaperPilot operations as CrewAI `BaseTool` instances, ready for multi-agent task delegation |
+| 8.4b.4 | LangGraph node integration | Ship `paperpilot-langgraph` — PaperPilot operations as stateful LangGraph nodes with typed `State` schemas |
+| 8.4b.5 | AutoGen integration | Tool wrappers for Microsoft AutoGen multi-agent framework |
+| 8.4b.6 | Haystack integration | `PaperPilotConverter` component for the Haystack document AI pipeline |
+| 8.4b.7 | AI framework integration tests | End-to-end tests: spawn a real LangChain agent, have it call PaperPilot tools on real PDFs, verify outputs (No Mocking) |
 
 ---
 
