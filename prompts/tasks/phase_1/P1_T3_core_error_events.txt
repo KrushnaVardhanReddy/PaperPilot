@@ -1,0 +1,27 @@
+You are tasked with implementing the foundational error handling and event tracking for PaperPilot core. This is Phase 1, Task 3 (P1-T3).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+
+We are designing the core architectural traits that will shield the application from tight coupling to specific PDF libraries. This first PR establishes the `error.rs` and `events.rs` modules inside `paperpilot-core`.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+
+- Modify `paperpilot-core/Cargo.toml` to add `thiserror` and `serde` (with `derive` feature) as dependencies.
+- Initialize `paperpilot-core/src/lib.rs` to expose `pub mod error;` and `pub mod events;`.
+- Create `paperpilot-core/src/error.rs` with a `PdfError` enum (using `thiserror`) and an `OperationResult` type alias.
+  - Variants must include: `IoError`, `ParseError`, `CorruptFile`, `UnsupportedOperation`, `Other`.
+- Create `paperpilot-core/src/events.rs` with a `JobProgress` struct (derived Serialize, Deserialize, Debug, Clone).
+  - Fields: `job_id` (String), `percentage` (u8), `current_step` (u32), `total_steps` (u32), `status_message` (String).
+- Add `#[cfg(test)]` modules in both files testing error conversion and event struct creation.
+
+════════════════════════════════════════════════════════════════
+WIKI DOCUMENTATION
+════════════════════════════════════════════════════════════════
+
+- Create or update `wiki/02-Core-Architecture.md` to document the error strategy and event models you implemented.
+
+Commit message must be: "jules: implement core error and event models"

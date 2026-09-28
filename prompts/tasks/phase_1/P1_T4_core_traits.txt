@@ -1,0 +1,29 @@
+You are tasked with implementing the core PDF traits for PaperPilot. This is Phase 1, Task 4 (P1-T4).
+
+════════════════════════════════════════════════════════════════
+TASK CONTEXT
+════════════════════════════════════════════════════════════════
+
+Now that the error handling is established, we need the actual interfaces that PDF engines will implement. This isolates our application from `lopdf` or `pdfium-render` specifics.
+
+════════════════════════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════════════════════════
+
+- Add `pub mod traits;` to `paperpilot-core/src/lib.rs`.
+- Create `paperpilot-core/src/traits.rs`.
+- Import `OperationResult` from `crate::error::OperationResult`.
+- Define `pub trait PdfDocument` with methods:
+  - `fn page_count(&self) -> OperationResult<u32>;`
+  - `fn save(&self, path: &std::path::Path) -> OperationResult<()>;`
+- Define `pub trait PdfOperation` with method:
+  - `fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()>;`
+- Add a `#[cfg(test)]` module containing a mock document and a dummy operation to prove the traits are object-safe and usable.
+
+════════════════════════════════════════════════════════════════
+WIKI DOCUMENTATION
+════════════════════════════════════════════════════════════════
+
+- Update `wiki/02-Core-Architecture.md` to explain how `PdfDocument` and `PdfOperation` act as architectural boundaries.
+
+Commit message must be: "jules: implement PdfDocument and PdfOperation traits"
