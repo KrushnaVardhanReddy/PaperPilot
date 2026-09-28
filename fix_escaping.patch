@@ -1,0 +1,22 @@
+--- paperpilot-pdf/src/operations/watermark.rs
++++ paperpilot-pdf/src/operations/watermark.rs
+@@ -62,7 +62,7 @@
+
+             let content = format!(
+                 "q\nBT\n/F1 48 Tf\n1 0 0 1 100 100 Tm\n0.5 g\n({text}) Tj\nET\nQ\n",
+-                text = self.text
++                text = escaped_text
+             );
+
+             let content_stream =
+--- paperpilot-pdf/src/operations/header_footer.rs
++++ paperpilot-pdf/src/operations/header_footer.rs
+@@ -68,7 +68,7 @@
+             let content = format!(
+                 "q\nBT\n/F1 12 Tf\n1 0 0 1 50 {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
+                 y_pos,
+-                text = self.text
++                text = escaped_text
+             );
+
+             let content_stream =

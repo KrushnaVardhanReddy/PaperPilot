@@ -8,6 +8,8 @@ pub enum PdfError {
     ParseError(String),
     #[error("Corrupt file: {0}")]
     CorruptFile(String),
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
     #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
     #[error("Other error: {0}")]

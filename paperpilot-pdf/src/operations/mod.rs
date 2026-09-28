@@ -1,8 +1,11 @@
-pub mod merge;
-pub mod split;
 pub mod burst;
+pub mod crop;
 pub mod delete;
 pub mod extract;
+pub mod header_footer;
+pub mod merge;
 pub mod reorder;
-pub mod crop;
 pub mod rotate;
+pub mod split;
+pub mod validate;
+pub mod watermark;
