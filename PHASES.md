@@ -203,9 +203,9 @@ Write tests alongside each operation, not after.
 
 | # | Task | Notes |
 |---|---|---|
-| 2.1.1 | Add `rmcp` crate dependency ⏳ | Delegated to Jules (Session 8555100062784875086) |
-| 2.1.2 | Create `paperpilot-mcp` crate ⏳ | Delegated to Jules (Session 8555100062784875086) |
-| 2.1.3 | Design tool schema conventions ⏳ | Delegated to Jules (Session 8555100062784875086) |
+| 2.1.1 | Add `rmcp` crate dependency ✅ | Merged (Session 8555100062784875086) |
+| 2.1.2 | Create `paperpilot-mcp` crate ✅ | Merged (Session 8555100062784875086) |
+| 2.1.3 | Design tool schema conventions ✅ | Merged (Session 8555100062784875086) |
 
 ---
 
