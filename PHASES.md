@@ -82,7 +82,7 @@ All operations are independent of each other and can be built in parallel once t
 
 #### Group C — Extraction & Search
 | # | Task | Notes |
-|---|---|
+|---|---|---|
 | 1.3.22 | Extract text ✅ | Merged (Session 2668342604059292265) |
 | 1.3.23 | Extract images ✅ | Merged (Session 10564378390682319461) |
 | 1.3.24 | Render pages ✅ | Merged (Session 12785657976803298608) |
@@ -116,9 +116,9 @@ Write tests alongside each operation, not after.
 
 | # | Task | Notes |
 |---|---|---|
-| 1.4.1 | Unit tests per operation | Each operation tested in isolation |
-| 1.4.2 | Round-trip tests ⏳ | Delegated to Jules (Integration Suites) |
-| 1.4.3 | Fixture-based integration tests ⏳ | Delegated to Jules (Integration Suites) |
+| 1.4.1 | Unit tests per operation ✅ | Written inline in every operation (`#[cfg(test)]`) |
+| 1.4.2 | Round-trip tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
+| 1.4.3 | Fixture-based integration tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
 | 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
 | 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
 | 1.4.6 | PDF Validation layer | Pre-flight checks before every operation: magic bytes, encryption, page range bounds, file size, output path writability |
@@ -161,7 +161,7 @@ Write tests alongside each operation, not after.
 
 **Exit condition:** An external AI agent (Claude, GPT, etc.) can use PaperPilot via MCP to merge, split, compress, and extract text from PDFs without any custom integration code.
 
-**[BLOCKED BY Phase 1 exit condition]**
+**[Phase 1 exit condition: ✅ MET — all operations implemented, tested, and CLI working]**
 
 ---
 
@@ -192,9 +192,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 2.2.9 | `pdf_extract_images` tool | |
 | 2.2.10 | `pdf_search` tool | |
 | 2.2.11 | `pdf_sign` tool | DocuSign / Local Signatures |
-| 2.2.11 | `pdf_watermark` tool | |
-| 2.2.12 | `pdf_encrypt` / `pdf_decrypt` tools | |
-| 2.2.13 | `pdf_metadata` tool | Read and write metadata |
+| 2.2.12 | `pdf_watermark` tool | |
+| 2.2.13 | `pdf_encrypt` / `pdf_decrypt` tools | |
+| 2.2.14 | `pdf_metadata` tool | Read and write metadata |
 
 ---
 
