@@ -444,6 +444,22 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 6.5 — License & EULA Enforcement `[PARALLEL with 6.1]`
+
+**Goal:** Prevent unauthorized commercial use by individuals without requiring server calls for the free tier.
+
+| # | Task | Notes |
+|---|---|---|
+| 6.5.1 | EULA gate at first launch | Show Personal vs. Commercial choice on first run; log acceptance |
+| 6.5.2 | License key validation | Lightweight offline-first key check (cryptographic signature, no phone-home required) |
+| 6.5.3 | License key backend API | Simple serverless function (Cloudflare Worker) to issue and revoke keys |
+| 6.5.4 | Enterprise feature gating | MSI/MDM, SSO, Audit Logs, Group Policy features locked behind valid commercial key |
+| 6.5.5 | License dashboard | Admin UI to manage seats, assign/revoke users per organization |
+| 6.5.6 | Grace period & offline mode | License valid offline for 30 days before requiring re-validation |
+| 6.5.7 | License expiry notifications | Warn admins 30/14/7 days before renewal |
+
+---
+
 ## Phase 7 — Managed Cloud
 
 **Goal:** Organizations that don't want to self-host can use PaperPilot as a service.
