@@ -54,14 +54,14 @@ All operations are independent of each other and can be built in parallel once t
 #### Group A — Page Manipulation
 | # | Task | Notes |
 |---|---|---|
-| 1.3.1 | Merge | Combine N PDFs into one |
-| 1.3.2 | Split | Split by page range or every N pages |
-| 1.3.3 | Extract pages | Pull specific pages into a new PDF |
-| 1.3.4 | Delete pages | Remove pages by number/range |
-| 1.3.5 | Reorder pages | Reorder by providing new page index array |
-| 1.3.6 | Rotate pages | 90/180/270 degrees, specific pages or all |
-| 1.3.7 | Crop pages | Trim page margins/content box |
-| 1.3.8 | Burst | Split every page into its own individual PDF file |
+| 1.3.1 | Merge ⏳ | Delegated to Jules (Session 2375117738102953150) |
+| 1.3.2 | Split ⏳ | Delegated to Jules (Session 2375117738102953150) |
+| 1.3.3 | Extract pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.4 | Delete pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.5 | Reorder pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.6 | Rotate pages ⏳ | Delegated to Jules (Session 12203497870162599469) |
+| 1.3.7 | Crop pages ⏳ | Delegated to Jules (Session 12203497870162599469) |
+| 1.3.8 | Burst ⏳ | Delegated to Jules (Session 2375117738102953150) |
 
 #### Group B — Document Operations
 | # | Task | Notes |
