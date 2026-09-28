@@ -280,7 +280,6 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.4.7 | Encrypt/Decrypt UI | Password input, options |
 | 3.4.8 | Extract UI | Pages, text, images — separate modes |
 | 3.4.9 | Output file picker | Choose output path before running |
-| 3.4.10 | Audio Command Interface | Microphone input for NLP-driven PDF manipulation (integrates with Phase 2 MCP) |
 
 ---
 
@@ -341,6 +340,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.2 | "Thinking" state | Show spinner while AI processes |
 | 4.3.3 | Plan display component | Show numbered list of interpreted operations |
 | 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
+| 4.3.5 | Voice input | Microphone → speech-to-text → feeds the NLP command box (integrates with Phase 2 MCP) |
 
 ---
 
