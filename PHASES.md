@@ -169,9 +169,9 @@ Write tests alongside each operation, not after.
 
 | # | Task | Notes |
 |---|---|---|
-| 2.1.1 | Add `rmcp` crate dependency | Review `rmcp` API, write hello-world MCP server |
-| 2.1.2 | Create `paperpilot-mcp` crate | Stub crate in workspace |
-| 2.1.3 | Design tool schema conventions | Naming, input/output types, error format |
+| 2.1.1 | Add `rmcp` crate dependency ⏳ | Delegated to Jules (Session 8555100062784875086) |
+| 2.1.2 | Create `paperpilot-mcp` crate ⏳ | Delegated to Jules (Session 8555100062784875086) |
+| 2.1.3 | Design tool schema conventions ⏳ | Delegated to Jules (Session 8555100062784875086) |
 
 ---
 
