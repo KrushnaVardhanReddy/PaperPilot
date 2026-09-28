@@ -1,0 +1,10 @@
+
+> desktop@0.1.0 preview
+> vite preview
+
+error when starting preview server:
+Error: Server files not found at /app/apps/desktop/.svelte-kit/output/server, did you run `build` first?
+    at preview (file:///app/apps/desktop/node_modules/@sveltejs/kit/src/exports/vite/preview/index.js:35:9)
+    at BasicMinimalPluginContext.configurePreviewServer (file:///app/apps/desktop/node_modules/@sveltejs/kit/src/exports/vite/index.js:1212:11)
+    at preview (file:///app/apps/desktop/node_modules/vite/dist/node/chunks/node.js:35428:102)
+    at async CAC.<anonymous> (file:///app/apps/desktop/node_modules/vite/dist/node/cli.js:811:18)

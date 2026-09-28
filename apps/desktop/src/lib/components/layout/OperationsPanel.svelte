@@ -1,6 +1,8 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
   import { toastState } from '$lib/state/toast.svelte';
+  import { jobsState } from '$lib/state/jobs.svelte';
+  import { invoke } from '@tauri-apps/api/core';
 
   let selectedOperation = $state('merge');
 
@@ -10,19 +12,112 @@
   let rotateAngle = $state('90');
   let watermarkText = $state('');
 
-  function handleRunOperation() {
+  async function handleRunOperation() {
     if (appState.documents.length === 0) {
       toastState.error('No documents available.');
       return;
     }
-    if (selectedOperation === 'merge') {
-      if (appState.documents.length < 2) {
-        toastState.error('Need at least 2 documents to merge.');
+
+    if (selectedOperation === 'merge' && appState.documents.length < 2) {
+      toastState.error('Need at least 2 documents to merge.');
+      return;
+    }
+
+    const docName = appState.documents[0].name;
+    const toolName = `pdf_${selectedOperation}`;
+    let args: Record<string, any> = {};
+
+    switch (selectedOperation) {
+      case 'merge':
+        args = {
+          inputs: appState.documents.map(d => d.name),
+          output: `${docName}_merged.pdf`
+        };
+        break;
+      case 'split':
+        args = {
+          input: docName,
+          output_dir: `${docName}_split`
+        };
+        break;
+      case 'compress':
+        args = {
+          input: docName,
+          output: `${docName}_compressed.pdf`
+        };
+        break;
+      case 'rotate':
+        args = {
+          input: docName,
+          pages: 'all',
+          angle: parseInt(rotateAngle, 10),
+          output: `${docName}_rotated.pdf`
+        };
+        break;
+      case 'watermark':
+        args = {
+          input: docName,
+          text: watermarkText,
+          output: `${docName}_watermarked.pdf`
+        };
+        break;
+      case 'encrypt':
+        args = {
+          input: docName,
+          password: 'password',
+          output: `${docName}_encrypted.pdf`
+        };
+        break;
+      case 'decrypt':
+        args = {
+          input: docName,
+          password: 'password',
+          output: `${docName}_decrypted.pdf`
+        };
+        break;
+      case 'metadata':
+        args = {
+          input: docName,
+          title: 'Title',
+          output: `${docName}_metadata.pdf`
+        };
+        break;
+      case 'extract_pages':
+        args = {
+          input: docName,
+          pages: '1',
+          output: `${docName}_extracted.pdf`
+        };
+        break;
+      case 'extract_text':
+        args = {
+          input: docName,
+          output: `${docName}_text.txt`
+        };
+        break;
+      default:
+        toastState.error('Unknown operation');
         return;
+    }
+
+    appState.setLoading(true);
+    try {
+      const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+      // Depending on the Rust side, the result is the JSON parsed OperationResult
+      const resObj = result as any;
+      if (resObj && resObj.success) {
+        toastState.success(resObj.message || `${toolName} completed successfully`);
+        jobsState.addJob(toolName, 'success', resObj.message);
+      } else {
+        toastState.error(resObj?.message || `${toolName} failed`);
+        jobsState.addJob(toolName, 'error', resObj?.message);
       }
-      toastState.success('Merge triggered');
-    } else {
-      toastState.success(`${selectedOperation.charAt(0).toUpperCase() + selectedOperation.slice(1)} triggered`);
+    } catch (error) {
+      const errMsg = typeof error === 'string' ? error : (error as Error).message || 'Unknown error occurred';
+      toastState.error(errMsg);
+      jobsState.addJob(toolName, 'error', errMsg);
+    } finally {
+      appState.setLoading(false);
     }
   }
 

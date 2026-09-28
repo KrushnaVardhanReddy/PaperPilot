@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import { jobsState } from '$lib/state/jobs.svelte';
 
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠' },
@@ -25,6 +26,24 @@
       </button>
     {/each}
   </nav>
+
+  <div class="sidebar-jobs">
+    <h4>Recent Jobs</h4>
+    {#if jobsState.jobs.length === 0}
+      <p class="no-jobs">No recent jobs</p>
+    {:else}
+      <div class="jobs-list">
+        {#each jobsState.jobs.slice(-5).reverse() as job (job.id)}
+          <div class="job-item">
+            <span class="job-status" class:success={job.status === 'success'} class:error={job.status === 'error'}>
+              {job.status === 'success' ? '✅' : '❌'}
+            </span>
+            <span class="job-name">{job.toolName}</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </div>
 
   <div class="sidebar-footer">
     <div class="theme-toggle">
@@ -122,5 +141,51 @@
   .theme-btn:hover {
     background-color: var(--bg-surface-hover);
     color: var(--text-primary);
+  }
+
+  .sidebar-jobs {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .sidebar-jobs h4 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .no-jobs {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .job-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    background-color: var(--bg-surface);
+    padding: 6px 10px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+  }
+
+  .job-status {
+    margin-right: 8px;
+    font-size: 0.8rem;
+  }
+
+  .job-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

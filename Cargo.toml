@@ -2,6 +2,6 @@
 members = [
     "paperpilot-core",
     "paperpilot-pdf",
-    "paperpilot-cli", "paperpilot-mcp",
+    "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri"
 ]
 resolver = "2"
