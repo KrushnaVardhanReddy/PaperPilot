@@ -212,11 +212,15 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-## Phase 3 — Desktop Application
+## Phase 3 — Desktop + Mobile Application (Tauri 2.0)
 
-**Goal:** A polished, standalone Tauri + Svelte desktop app for PDF manipulation.
+**Goal:** A polished, cross-platform Tauri 2.0 app for PDF manipulation — running natively on Windows, macOS, Linux, iOS, and Android from a single codebase.
 
-**Exit condition:** A user with no technical knowledge can open the app, drop in PDFs, perform all basic operations, and get output files — without touching the CLI.
+**Technology Decision (LOCKED):** Tauri 2.0 + Svelte 5 + TypeScript.
+- **Why Tauri 2.0:** Official iOS and Android support landed in v2.0. The Rust backend (`paperpilot-core`) is shared across all targets with zero changes — only the UI shell differs. Apache 2.0 licensed.
+- **Why Svelte:** Minimal bundle size (critical for mobile), no runtime overhead, compiles to vanilla JS.
+
+**Exit condition:** A user with no technical knowledge can open the app on any platform (desktop or mobile), drop in PDFs, perform all basic operations, and get output files — without touching the CLI.
 
 **[BLOCKED BY Phase 1 exit condition]**
 **[Can start in parallel with Phase 2]**
@@ -227,12 +231,14 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.1.1 | Initialize Tauri 2 project | Under `apps/desktop/` |
+| 3.1.1 | Initialize Tauri 2.0 project | Under `apps/desktop/` using `cargo tauri init` |
 | 3.1.2 | Configure Svelte 5 + TypeScript + Vite | |
 | 3.1.3 | Set up Tauri ↔ Rust command bindings | Define initial `invoke` commands |
 | 3.1.4 | Set up component library / design system | Pick: shadcn-svelte, bits-ui, or custom |
 | 3.1.5 | Define Tauri IPC schema | Types for all commands and events |
 | 3.1.6 | Set up frontend tests | Vitest + Testing Library |
+| 3.1.7 | Configure iOS target | `cargo tauri ios init`, provision profile setup |
+| 3.1.8 | Configure Android target | `cargo tauri android init`, NDK setup |
 
 ---
 
@@ -286,7 +292,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.5.3 | Progress bar component | Shows job name, %, current page |
 | 3.5.4 | Job cancel support | Cancel button sends cancellation to Rust |
 | 3.5.5 | Job history panel | List of completed/failed jobs with output paths |
-| 3.5.6 | E2E Desktop tests | Tauri WebDriver / Playwright automation driving the actual Rust backend (No Mocking) |
+| 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
+| 3.5.7 | E2E Desktop tests | Tauri WebDriver / Playwright automation driving the actual Rust backend (No Mocking) |
+| 3.5.8 | E2E Mobile tests (Simulator) | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
 
 ---
 
@@ -704,16 +712,19 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 
 ---
 
-### 8.9 — Mobile Companion App `[BLOCKED BY Phase 8.4 SDKs]`
+### 8.9 — Mobile App `[BLOCKED BY Phase 3 iOS/Android targets]`
 
-**Goal:** Lightweight iOS and Android app for viewing processing results, approving signed documents, and monitoring job status.
+**Goal:** Full-featured iOS and Android PaperPilot app built from the same Tauri 2.0 + Svelte codebase as the desktop app — not a separate project. All PDF processing runs locally on-device via the same `paperpilot-core` Rust library.
 
 | # | Task | Notes |
 |---|---|---|
-| 8.9.1 | Job status viewer | See live status of running/queued jobs from your phone |
-| 8.9.2 | Push notifications | Get notified when a long job completes or fails |
-| 8.9.3 | Document approval flow | Review and approve or reject a signed PDF from mobile |
-| 8.9.4 | Quick scan → PDF | Capture a physical document with camera and send to PaperPilot for OCR |
-| 8.9.5 | E2E Ecosystem tests | Automated workflows validating plugins and recipes against real inputs (No Mocking) |
+| 8.9.1 | Ship iOS app to App Store | Archive + submit via Xcode with `cargo tauri ios build` |
+| 8.9.2 | Ship Android app to Play Store | Sign + submit APK/AAB via `cargo tauri android build` |
+| 8.9.3 | Push notifications | Get notified when a long job completes or fails |
+| 8.9.4 | Document approval flow | Review and approve or reject a signed PDF from mobile |
+| 8.9.5 | Quick scan → PDF | Capture a physical document with camera and send to PaperPilot for OCR |
+| 8.9.6 | Mobile-specific gestures | Pinch-to-zoom on preview, swipe to delete pages |
+| 8.9.7 | Share sheet integration | iOS Share Sheet / Android Intent support to open PDFs directly from other apps |
+| 8.9.8 | E2E Mobile tests | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
 
 
