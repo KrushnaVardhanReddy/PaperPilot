@@ -297,6 +297,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.4.7 | Encrypt/Decrypt UI | Password input, options |
 | 3.4.8 | Extract UI | Pages, text, images — separate modes |
 | 3.4.9 | Output file picker | Choose output path before running |
+| 3.4.10 | **Visual Pipeline Builder (Basic)** | Drag-and-drop canvas to chain operations into a pipeline; save as a `.ppflow` recipe file |
+| 3.4.11 | **Conditional branching UI** | Add IF/ELSE nodes (e.g. "if scanned → OCR, else extract text directly") to the pipeline canvas |
+| 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
 
 ---
 
@@ -646,15 +649,40 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 
 ---
 
-### 8.2 — Workflow / Recipe Builder `[BLOCKED BY Phase 3]`
+### 8.2 — Pipeline Orchestrator `[BLOCKED BY Phase 3, Phase 8.3]`
+
+**Goal:** Let users define multi-step PDF processing pipelines (recipes) that run automatically, triggered by file system events, webhooks, or schedules. This is the feature that replaces expensive Enterprise Content Management (ECM) platforms.
+
+#### 8.2a — Pipeline Engine (Core)
 
 | # | Task | Notes |
 |---|---|---|
-| 8.2.1 | Recipe schema | JSON/TOML format: ordered list of operations with parameters |
-| 8.2.2 | CLI recipe execution | `paperpilot run recipe.toml --input file.pdf` |
-| 8.2.3 | Visual recipe builder (GUI) | Drag-and-drop pipeline builder in the Tauri desktop app |
-| 8.2.4 | Recipe sharing | Export/import recipe files; community recipe library |
-| 8.2.5 | Enterprise private recipes | Org-scoped recipe libraries, access controlled |
+| 8.2.1 | `.ppflow` pipeline schema | TOML/JSON format: trigger, stages, conditions, error handlers, output routing |
+| 8.2.2 | CLI pipeline execution | `paperpilot run pipeline.ppflow --input file.pdf` |
+| 8.2.3 | Conditional branching engine | IF/ELSE logic in pipelines (e.g., "if scanned → OCR branch, else text branch") |
+| 8.2.4 | Stage retry & error handling | Per-stage retry count, quarantine folder on failure, Slack/webhook alert |
+| 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
+| 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
+| 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
+| 8.2.8 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
+
+---
+
+#### 8.2b — Orchestrator API `[BLOCKED BY 8.2a, ENTERPRISE FEATURE]`
+
+**Goal:** Enterprises can define, trigger, and monitor pipelines programmatically via a REST/WebSocket API — no desktop app required. This is how large-scale automated document processing works (e.g. processing 50,000 PDFs a night from S3).
+
+| # | Task | Notes |
+|---|---|---|
+| 8.2b.1 | REST API for pipeline management | CRUD endpoints: create, update, delete, list pipelines |
+| 8.2b.2 | Pipeline trigger API | `POST /pipelines/{id}/run` with file payload or S3/GCS URL |
+| 8.2b.3 | Real-time execution status (WebSocket) | Stream stage-by-stage progress to caller in real-time |
+| 8.2b.4 | Pipeline execution history API | Query past runs, filter by status/date/file |
+| 8.2b.5 | Webhook callbacks | Fire a webhook at each stage completion or final success/failure |
+| 8.2b.6 | S3 / GCS / Azure Blob input sources | Pull input files directly from cloud storage buckets |
+| 8.2b.7 | Output routing | Route processed files back to S3/GCS/local/SFTP |
+| 8.2b.8 | API key management | Issue, rotate, and revoke API keys per org/team |
+| 8.2b.9 | Rate limiting & quotas | Per-org throttling to prevent abuse on cloud tier |
 
 ---
 
