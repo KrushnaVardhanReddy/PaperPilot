@@ -96,6 +96,7 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.19 | PDF/A conversion ✅ | Merged (Session 12850003959773306225) |
 | 1.3.20 | Header/Footer ✅ | Merged (Session 8470929282963705394) |
 | 1.3.21 | Bates numbering ✅ | Merged (Session 12785657976803298608) |
+| 1.3.22 | Integrity hash | Compute SHA-256 / SHA-512 fingerprint of a PDF; output digest and file size for tamper detection |
 
 #### Group C — Extraction & Search
 | # | Task | Notes |
@@ -167,8 +168,10 @@ Write tests alongside each operation, not after.
 | 1.5.17 | Webhook support ✅ | Merged |
 | 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
 | 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
-| 1.5.20 | CLI integration tests | Spawn binary, check outputs |
-| 1.5.21 | E2E CLI pipeline tests | Full end-to-end testing against real PDFs using the compiled binary (No Mocking) |
+| 1.5.20 | `hash` command | `paperpilot hash <file>` — prints SHA-256 fingerprint of any PDF |
+| 1.5.21 | `verify` command | `paperpilot verify <file> <expected-hash>` — exits 0 if match, 1 if tampered |
+| 1.5.22 | CLI integration tests | Spawn binary, check outputs |
+| 1.5.23 | E2E CLI pipeline tests | Full end-to-end testing against real PDFs using the compiled binary (No Mocking) |
 
 ---
 
@@ -664,7 +667,8 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
 | 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
-| 8.2.8 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
+| 8.2.8 | Per-stage integrity hashing | SHA-256 the file before and after every pipeline stage; mismatch = automatic abort + alert |
+| 8.2.9 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
 
 ---
 
