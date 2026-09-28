@@ -2,24 +2,59 @@ use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::CallToolRequestParams;
 use rmcp::model::CallToolResponse;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use lopdf::{Document, Object, Stream, dictionary};
+
+fn create_test_pdf(path: &Path) {
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let font_id = doc.add_object(dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+    let resources_id = doc.add_object(dictionary! {
+        "Font" => dictionary! {
+            "F1" => font_id,
+        },
+    });
+
+    let content = Stream::new(
+        dictionary! {},
+        b"BT /F1 12 Tf 10 10 Td (Test PDF Content) Tj ET".to_vec(),
+    );
+    let content_id = doc.add_object(content);
+    let page_id = doc.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "Contents" => content_id,
+        "Resources" => resources_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+    });
+
+    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
+        "Type" => "Pages",
+        "Kids" => vec![page_id.into()],
+        "Count" => 1,
+    }));
+    let catalog_id = doc.add_object(dictionary! {
+        "Type" => "Catalog",
+        "Pages" => pages_id,
+    });
+    doc.trailer.set("Root", catalog_id);
+    doc.compress();
+    doc.save(path).unwrap();
+}
 
 #[tokio::test]
 async fn test_pdf_merge_e2e() {
     let _server = PaperPilotMcpServer::new();
-    let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .join("paperpilot-pdf").join("tests")
-        .join("fixtures");
-
-    // Fallback if not found in root (instructions are explicitly asking for paperpilot-pdf/tests/fixtures)
-    // Create symlink for tests/fixtures to paperpilot-pdf/tests/fixtures so both work.
-
-    let input1 = fixtures_dir.join("simple.pdf");
-    let input2 = fixtures_dir.join("multi_page.pdf");
-
     let temp_dir = tempfile::tempdir().unwrap();
+    let input1 = temp_dir.path().join("simple.pdf");
+    let input2 = temp_dir.path().join("multi_page.pdf");
+    create_test_pdf(&input1);
+    create_test_pdf(&input2);
+
     let output_path = temp_dir.path().join("merged.pdf");
 
     let mut args = serde_json::Map::new();
@@ -56,14 +91,9 @@ async fn test_pdf_merge_e2e() {
 #[tokio::test]
 async fn test_pdf_extract_text_e2e() {
     let _server = PaperPilotMcpServer::new();
-    let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .join("paperpilot-pdf").join("tests")
-        .join("fixtures");
-
-    let input = fixtures_dir.join("simple.pdf");
     let temp_dir = tempfile::tempdir().unwrap();
+    let input = temp_dir.path().join("simple.pdf");
+    create_test_pdf(&input);
     let output_path = temp_dir.path().join("out.txt");
 
     let mut args = serde_json::Map::new();
@@ -97,13 +127,9 @@ async fn test_pdf_extract_text_e2e() {
 #[tokio::test]
 async fn test_pdf_metadata_e2e() {
     let _server = PaperPilotMcpServer::new();
-    let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .join("paperpilot-pdf").join("tests")
-        .join("fixtures");
-
-    let input = fixtures_dir.join("simple.pdf");
+    let temp_dir = tempfile::tempdir().unwrap();
+    let input = temp_dir.path().join("simple.pdf");
+    create_test_pdf(&input);
 
     let mut args = serde_json::Map::new();
     args.insert(

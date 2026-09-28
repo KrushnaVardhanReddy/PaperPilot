@@ -1,0 +1,27 @@
+---
+Task: Phase 2.3 - MCP Server Infrastructure
+Context: We have implemented all the MCP tools (Groups A, B, C) in `paperpilot-mcp/src/server.rs`. The `error.rs` formatting and basic parameter extraction are also implemented.
+---
+
+Hey Jules! We need to tie up all the loose ends for the MCP Server Infrastructure (Phase 2.3). 
+
+While we have the basic handlers working, we need to ensure the architecture is rock solid and strictly tested.
+
+## Requirements:
+
+1. **Input Validation Layer (2.3.1) & Temp Files (2.3.3):**
+   - Review `execute_call_tool` in `paperpilot-mcp/src/server.rs`. Ensure all 15 tools are correctly handling missing parameters and returning proper `rmcp::ErrorData::invalid_params`.
+   - Ensure the output paths are handled safely.
+
+2. **MCP Schema Tests (2.3.5):**
+   - Add a test suite `paperpilot-mcp/src/schema_tests.rs` (or add to `server.rs` tests).
+   - Iterate over `execute_list_tools().unwrap().tools`.
+   - Assert that EVERY tool has a correctly formed JSON schema (has a `type: object`, `properties`, and `required` fields).
+
+3. **End-to-End MCP Tests (2.3.6 & 2.3.7):**
+   - Create a dedicated integration test file `paperpilot-mcp/tests/e2e_mcp_test.rs`.
+   - Instead of dealing with stdin/stdout process piping (which is flaky), test the `PaperPilotMcpServer` methods directly as if you were an MCP client.
+   - For example: Call `execute_list_tools` to get the list. Construct a `CallToolRequestParams` for `pdf_merge` with paths to real test fixtures from `paperpilot-pdf/tests/fixtures/`, call `execute_call_tool`, and assert that the `OperationResult` returns `success: true`.
+   - Do this for at least 3 distinct tools (e.g., `pdf_merge`, `pdf_extract_text`, `pdf_metadata`) to prove the integration layer end-to-end.
+
+Please open a PR to `main` when finished!
