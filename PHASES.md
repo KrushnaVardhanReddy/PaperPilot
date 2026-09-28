@@ -326,11 +326,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.5.1 | Rust async job runner ✅ | Merged (Session 8999512547197594932) |
-| 3.5.2 | Tauri event bridge ✅ | Merged (Session 8999512547197594932) |
+| 3.5.1 | Rust async job runner | Tokio-based, emits progress events |
+| 3.5.2 | Tauri event bridge | Forward Rust progress events to Svelte |
 | 3.5.3 | Progress bar component | Shows job name, %, current page |
 | 3.5.4 | Job cancel support | Cancel button sends cancellation to Rust |
-| 3.5.5 | Job history panel ✅ | Merged (Session 8999512547197594932) |
+| 3.5.5 | Job history panel | List of completed/failed jobs with output paths |
 | 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
 | 3.5.7 | E2E Desktop tests | Tauri WebDriver / Playwright automation driving the actual Rust backend (No Mocking) |
 | 3.5.8 | E2E Mobile tests (Simulator) | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
