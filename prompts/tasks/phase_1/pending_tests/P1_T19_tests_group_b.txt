@@ -1,0 +1,29 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T19: INTEGRATION TESTS GROUP B                    |
+================================================================================
+
+OBJECTIVE:
+Write rigorous fixture-based integration tests for all Group B operations (Document Operations).
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/tests/fixture_tests.rs` (Append to this file)
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. Use `tests/fixtures/simple.pdf` (1 page) and `tests/fixtures/multi_page.pdf` (3 pages).
+2. Assert the outcome where possible (e.g., metadata update should be visible when reloading the saved file; watermark should result in a larger file or visible new stream).
+3. If an operation is a stub (returns `UnsupportedOperation`), test that it returns the exact error variant gracefully rather than panicking.
+
+SPECIFIC OPERATIONS TO TEST:
+- `compress`
+- `repair`
+- `linearize`
+- `encrypt` & `decrypt`
+- `watermark`
+- `redact`
+- `metadata`
+- `signature` (Stub)
+- `flatten` (Stub)
+- `pdf_a` (Stub)
+- `header_footer`

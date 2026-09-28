@@ -131,23 +131,23 @@ Write tests alongside each operation, not after.
 
 | # | Task | Notes |
 |---|---|---|
-| 1.5.1 | CLI scaffold ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.2 | `merge` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.3 | `split` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.4 | `extract` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.5 | `remove` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.6 | `reorder` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.7 | `rotate` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
-| 1.5.8 | `compress` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.9 | `extract-text` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.10 | `extract-images` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.11 | `watermark` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.12 | `encrypt` / `decrypt` commands ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.13 | `search` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
-| 1.5.14 | `validate` command ⏳ | Delegated to Jules (Session 18441140336993201035) |
-| 1.5.15 | Progress output ⏳ | Delegated to Jules (Session 18441140336993201035) |
-| 1.5.16 | JSON output mode ⏳ | Delegated to Jules (Session 18441140336993201035) |
-| 1.5.17 | Webhook support ⏳ | Delegated to Jules (Session 18441140336993201035) |
+| 1.5.1 | CLI scaffold ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.2 | `merge` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.3 | `split` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.4 | `extract` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.5 | `remove` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.6 | `reorder` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.7 | `rotate` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.8 | `compress` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.9 | `extract-text` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.10 | `extract-images` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.11 | `watermark` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.12 | `encrypt` / `decrypt` commands ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.13 | `search` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.14 | `validate` command ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.15 | Progress output ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.16 | JSON output mode ⏳ | Delegated to Jules (Session 9097309915277159341) |
+| 1.5.17 | Webhook support ⏳ | Delegated to Jules (Session 9097309915277159341) |
 | 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
 | 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
 | 1.5.20 | CLI integration tests | Spawn binary, check outputs |
