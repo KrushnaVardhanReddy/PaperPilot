@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "paperpilot-core",
+    "paperpilot-pdf",
+    "paperpilot-cli",
+]
+resolver = "2"
