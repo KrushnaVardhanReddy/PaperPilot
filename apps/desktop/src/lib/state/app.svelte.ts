@@ -3,6 +3,7 @@ export class AppState {
   isLoading = $state(false);
   theme = $state('dark');
   documents = $state<File[]>([]);
+  selectedDocumentIndex = $state<number | null>(null);
 
   constructor() {}
 
@@ -24,6 +25,17 @@ export class AppState {
 
   removeDocument(index: number) {
     this.documents = this.documents.filter((_, i) => i !== index);
+    if (this.selectedDocumentIndex === index) {
+      this.selectedDocumentIndex = null;
+    } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
+      this.selectedDocumentIndex -= 1;
+    }
+  }
+
+  selectDocument(index: number | null) {
+    if (index === null || (index >= 0 && index < this.documents.length)) {
+      this.selectedDocumentIndex = index;
+    }
   }
 
   reorderDocuments(fromIndex: number, toIndex: number) {

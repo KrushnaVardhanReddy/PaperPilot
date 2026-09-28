@@ -2,6 +2,7 @@
   import { appState } from '$lib/state/app.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';
   import DocumentList from '$lib/components/ui/DocumentList.svelte';
+  import PdfPreview from '$lib/components/ui/PdfPreview.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
 
@@ -13,15 +14,19 @@
 <div class="page-container">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
     <div class="content-area">
-      <div class="documents-view">
-        <header class="view-header">
-          <h2>Documents</h2>
-          <p>Add PDF files to process</p>
-        </header>
+      {#if appState.selectedDocumentIndex !== null}
+        <PdfPreview />
+      {:else}
+        <div class="documents-view">
+          <header class="view-header">
+            <h2>Documents</h2>
+            <p>Add PDF files to process</p>
+          </header>
 
-        <DropZone ondrop={handleFilesDropped} />
-        <DocumentList />
-      </div>
+          <DropZone ondrop={handleFilesDropped} />
+          <DocumentList />
+        </div>
+      {/if}
     </div>
 
     <OperationsPanel />

@@ -4,13 +4,25 @@
 
   let selectedOperation = $state('merge');
 
+  // Operation parameters
+  let splitPoints = $state('');
+  let compressQuality = $state(80);
+  let rotateAngle = $state('90');
+  let watermarkText = $state('');
+
   function handleRunOperation() {
+    if (appState.documents.length === 0) {
+      toastState.error('No documents available.');
+      return;
+    }
     if (selectedOperation === 'merge') {
       if (appState.documents.length < 2) {
         toastState.error('Need at least 2 documents to merge.');
         return;
       }
       toastState.success('Merge triggered');
+    } else {
+      toastState.success(`${selectedOperation.charAt(0).toUpperCase() + selectedOperation.slice(1)} triggered`);
     }
   }
 
@@ -36,9 +48,16 @@
     <div class="operation-selector">
       <label for="opSelect">Select Action</label>
       <select id="opSelect" bind:value={selectedOperation} class="form-input">
-        <option value="merge">Merge PDFs</option>
-        <option value="split">Split PDF</option>
+        <option value="merge">Merge</option>
+        <option value="split">Split</option>
+        <option value="extract_pages">Extract Pages</option>
+        <option value="extract_text">Extract Text</option>
         <option value="compress">Compress</option>
+        <option value="rotate">Rotate</option>
+        <option value="watermark">Watermark</option>
+        <option value="encrypt">Encrypt</option>
+        <option value="decrypt">Decrypt</option>
+        <option value="metadata">Metadata</option>
       </select>
     </div>
 
@@ -75,6 +94,34 @@
             {/each}
           </div>
         {/if}
+      </div>
+    {:else if selectedOperation === 'split'}
+      <div class="operation-config">
+        <label for="splitPoints" class="section-desc">Split Points (comma separated):</label>
+        <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 3, 5, 10" />
+      </div>
+    {:else if selectedOperation === 'compress'}
+      <div class="operation-config">
+        <label for="compressQuality" class="section-desc">Image Quality: {compressQuality}%</label>
+        <input id="compressQuality" type="range" min="0" max="100" bind:value={compressQuality} class="range-input" />
+      </div>
+    {:else if selectedOperation === 'rotate'}
+      <div class="operation-config">
+        <label for="rotateAngle" class="section-desc">Rotation Angle:</label>
+        <select id="rotateAngle" bind:value={rotateAngle} class="form-input">
+          <option value="90">90 Degrees</option>
+          <option value="180">180 Degrees</option>
+          <option value="270">270 Degrees</option>
+        </select>
+      </div>
+    {:else if selectedOperation === 'watermark'}
+      <div class="operation-config">
+        <label for="watermarkText" class="section-desc">Watermark Text:</label>
+        <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="Enter watermark text" />
+      </div>
+    {:else}
+      <div class="operation-config">
+        <p class="section-desc">Selected tool parameters will be applied to the active document.</p>
       </div>
     {/if}
 
@@ -260,5 +307,35 @@
     background-color: var(--bg-surface-hover);
     color: var(--text-muted);
     cursor: not-allowed;
+  }
+
+  .range-input {
+    width: 100%;
+    margin: 8px 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+
+  .range-input::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-surface-hover);
+    border-radius: 3px;
+  }
+
+  .range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    margin-top: -5px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .range-input:focus {
+    outline: none;
   }
 </style>

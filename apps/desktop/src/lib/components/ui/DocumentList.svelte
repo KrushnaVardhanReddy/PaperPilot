@@ -18,7 +18,12 @@
   {:else}
     <div class="list-container">
       {#each appState.documents as doc, index}
-        <div class="document-item">
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="document-item {appState.selectedDocumentIndex === index ? 'selected' : ''}"
+          onclick={() => appState.selectDocument(index)}
+        >
           <div class="doc-icon">📄</div>
           <div class="doc-info">
             <span class="doc-name">{doc.name}</span>
@@ -27,7 +32,7 @@
               <span class="doc-pages">1 page</span> <!-- Mock page count -->
             </div>
           </div>
-          <button class="remove-btn" onclick={() => appState.removeDocument(index)} title="Remove Document">
+          <button class="remove-btn" onclick={(e) => { e.stopPropagation(); appState.removeDocument(index); }} title="Remove Document">
             ❌
           </button>
         </div>
@@ -68,11 +73,17 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     transition: all var(--transition-fast);
+    cursor: pointer;
   }
 
   .document-item:hover {
     background-color: var(--bg-surface-hover);
     border-color: var(--text-muted);
+  }
+
+  .document-item.selected {
+    background-color: rgba(94, 106, 210, 0.1);
+    border-color: var(--accent-primary);
   }
 
   .doc-icon {
