@@ -5,7 +5,7 @@
 ================================================================================
 
 OBJECTIVE:
-Implement the final batch of Group B PDF operations: E-Signature, Redact, Flatten, and PDF/A Conversion.
+Implement the final batch of Group B PDF operations: Signature, Redact, Flatten, and PdfA.
 
 FILES TO CREATE/MODIFY:
 1. `paperpilot-pdf/src/operations/signature.rs`
@@ -13,13 +13,25 @@ FILES TO CREATE/MODIFY:
 3. `paperpilot-pdf/src/operations/flatten.rs`
 4. `paperpilot-pdf/src/operations/pdf_a.rs`
 
-IMPLEMENTATION DETAILS:
-1. Create `SignatureOperation`. Stub this for now returning `PdfError::UnsupportedOperation`, as it will require complex cryptography or DocuSign API integration.
-2. Create `RedactOperation`. Given bounding boxes, strip out intersecting text and draw black rectangles.
-3. Create `FlattenOperation`. Convert interactive forms/annotations into standard static PDF content streams.
-4. Create `PdfAConversionOperation`. Convert the PDF to PDF/A-1b or PDF/A-2b. If `lopdf` cannot do this natively, leave a stub.
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: The struct is defined simply as `pub struct LopdfDocument { pub inner: lopdf::Document }`.
+   - It is NOT wrapped in a `RefCell` or `Rc`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. To mutate it, just use `let inner = &mut doc.inner;`.
+2. Test Initialization: In your `#[cfg(test)]` blocks, when wrapping a raw `lopdf::Document`, instantiate it exactly like this:
+   `LopdfDocument { inner: doc }` (DO NOT use `LopdfDocument::new(doc)` because `new()` takes 0 arguments).
+3. Downcasting: Always downcast the incoming `PdfDocument` trait object like this:
+   `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(PdfError::UnsupportedOperation(...))?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `SignatureOperation`: Implement `PdfOperation`. 
+   - Stub this out for now returning `PdfError::UnsupportedOperation("Digital signatures not yet supported natively".to_string())`. Digital signatures in PDFs are highly complex and will be integrated later.
+2. `RedactOperation`: Implement `PdfOperation`.
+   - Given a page and a bounding box, draw a black rectangle. (For a true redaction, you would also strip text, but for this first iteration, simply appending a filled rectangle drawing operation to the page's Content stream is acceptable).
+3. `FlattenOperation`: Implement `PdfOperation`.
+   - Flattening bakes interactive forms (`AcroForm`) into the visual page content. You may stub this out if it's too complex for `lopdf`'s base capabilities.
+4. `PdfAConversionOperation`: Implement `PdfOperation`.
+   - Stub this out as unsupported for now.
 
 REQUIREMENTS:
-- Implement `PdfOperation` for each struct.
-- Provide robust `#[cfg(test)]` modules.
+- Provide robust `#[cfg(test)]` modules in every file (even for stubs, test that the stub returns the error).
 - Add them to `paperpilot-pdf/src/operations/mod.rs`.
