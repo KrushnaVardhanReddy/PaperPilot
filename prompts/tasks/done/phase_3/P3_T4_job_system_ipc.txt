@@ -1,0 +1,34 @@
+---
+Task: Phase 3.5 - Job System & Tauri IPC Integration
+Context: The Svelte UI panels are complete. The Rust backend has a fully functional MCP server exposing all PDF tools.
+---
+
+Hey Jules! It's time to connect the frontend to the backend using Tauri's IPC, effectively implementing Phase 3.5.
+
+Instead of writing custom Tauri commands for every single PDF operation, we can beautifully leverage the `paperpilot-mcp` server we already built! 
+
+## Requirements:
+
+1. **Tauri IPC Command (3.5.1 & 3.5.2):**
+   - In `apps/desktop/src-tauri/src/lib.rs` (or `main.rs`), write a single Tauri command:
+     ```rust
+     #[tauri::command]
+     async fn invoke_mcp_tool(tool_name: String, arguments: serde_json::Value) -> Result<serde_json::Value, String>
+     ```
+   - This command should construct a `rmcp::model::CallToolRequestParams`, call `paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool`, and return the JSON result. (You may need to add `paperpilot-mcp` as a dependency in `apps/desktop/src-tauri/Cargo.toml`).
+
+2. **Frontend Wiring:**
+   - Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` so that when a user clicks "Run {Operation}", it uses Tauri's `@tauri-apps/api/core` `invoke` to call `invoke_mcp_tool`.
+   - Take the inputs from the UI `$state`, map them to the MCP JSON schema, and execute it.
+   - On success, trigger a positive Toast notification. On error, trigger a negative Toast.
+
+3. **Job History Store (3.5.5):**
+   - Create `apps/desktop/src/lib/state/jobs.svelte.ts` using Svelte 5 runes.
+   - Maintain a list of executed jobs (Tool Name, timestamp, Success/Error status).
+   - Display a very simple "Recent Jobs" list at the bottom of the Sidebar.
+
+## Styling Rules:
+- STRICTLY DO NOT USE TailwindCSS.
+- Use our vanilla CSS tokens from `app.css`.
+
+Please open a PR to `main` when finished!
