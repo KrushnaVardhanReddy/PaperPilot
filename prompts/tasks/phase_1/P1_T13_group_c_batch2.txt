@@ -1,0 +1,29 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T13: GROUP C OPS (BATCH 2)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the second batch of Group C operations: Extract Images and Images to PDF.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/extract_images.rs`
+2. `paperpilot-pdf/src/operations/images_to_pdf.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: `pub struct LopdfDocument { pub inner: lopdf::Document }`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. Mutate via `let inner = &mut doc.inner;`.
+2. Test Initialization: Use `LopdfDocument { inner: doc }`. DO NOT use `LopdfDocument::new(doc)`.
+3. Downcasting: `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(...)?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `ExtractImagesOperation`: Implement `PdfOperation`.
+   - Iterate over page resources, find XObjects of Subtype Image. Extract their stream data. (Return the raw byte streams; no need to decode them to PNG/JPEG yet unless trivial).
+2. `ImagesToPdfOperation`: Implement `PdfOperation`.
+   - Given a list of image file paths, create a new PDF where each image is embedded on its own page, scaled to fit. (You may use the `image` crate if you want to read dimensions, but a basic embedding of the byte stream into an XObject is enough).
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide `#[cfg(test)]` modules.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

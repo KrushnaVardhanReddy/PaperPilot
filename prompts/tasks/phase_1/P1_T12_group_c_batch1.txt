@@ -1,0 +1,32 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T12: GROUP C OPS (BATCH 1)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the first batch of Group C operations: Extract Text, Search, and Bookmarks.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/extract_text.rs`
+2. `paperpilot-pdf/src/operations/search.rs`
+3. `paperpilot-pdf/src/operations/bookmarks.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: `pub struct LopdfDocument { pub inner: lopdf::Document }`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. Mutate via `let inner = &mut doc.inner;`.
+2. Test Initialization: Use `LopdfDocument { inner: doc }`. DO NOT use `LopdfDocument::new(doc)`.
+3. Downcasting: `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(...)?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `ExtractTextOperation`: Implement `PdfOperation`.
+   - Iterate over pages and extract text. Note: text extraction in `lopdf` requires parsing the content stream (`lopdf::content::Content`). If complex, `lopdf` has a basic `Document::extract_text(page_id)` helper function. Check if it exists and use it!
+2. `SearchOperation`: Implement `PdfOperation`.
+   - Call the `ExtractTextOperation` (or use the same logic) and perform a substring search, returning the page numbers where the text is found.
+3. `BookmarksOperation`: Implement `PdfOperation`.
+   - Read/write the PDF Outlines dictionary (Table of Contents). If too complex for this iteration, it is acceptable to stub this returning `PdfError::UnsupportedOperation`.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide `#[cfg(test)]` modules.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

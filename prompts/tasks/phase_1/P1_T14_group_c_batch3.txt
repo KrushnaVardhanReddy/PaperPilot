@@ -1,0 +1,35 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T14: GROUP C OPS (BATCH 3)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the third batch of Group C operations: Render, Compare, OCR, and Bates Numbering.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/render.rs`
+2. `paperpilot-pdf/src/operations/compare.rs`
+3. `paperpilot-pdf/src/operations/ocr.rs`
+4. `paperpilot-pdf/src/operations/bates.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `LopdfDocument` Definition: `pub struct LopdfDocument { pub inner: lopdf::Document }`. 
+   - DO NOT call `.borrow()` or `.borrow_mut()`. Mutate via `let inner = &mut doc.inner;`.
+2. Test Initialization: Use `LopdfDocument { inner: doc }`. DO NOT use `LopdfDocument::new(doc)`.
+3. Downcasting: `let lopdf_doc = document.as_any_mut().downcast_mut::<LopdfDocument>().ok_or(...)?;`
+
+SPECIFIC OPERATION DETAILS:
+1. `RenderOperation`: Implement `PdfOperation`.
+   - MUST RETURN STUB: `PdfError::UnsupportedOperation("Rendering requires an external engine like pdfium".to_string())`. `lopdf` cannot render PDFs.
+2. `CompareOperation`: Implement `PdfOperation`.
+   - Perform a basic structural diff (e.g., page count, dictionary differences) or stub it out if too complex.
+3. `OcrOperation`: Implement `PdfOperation`.
+   - MUST RETURN STUB: `PdfError::UnsupportedOperation("OCR requires tesseract".to_string())`.
+4. `BatesNumberingOperation`: Implement `PdfOperation`. (We moved this from Group B).
+   - Inject sequential numbers on each page. Similar to header/footer injection, inject a text drawing operation (`BT ... ET`) to the bottom corner of each page's content stream.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct (even stubs).
+- Provide `#[cfg(test)]` modules (test that stubs return errors).
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.
