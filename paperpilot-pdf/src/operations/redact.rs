@@ -37,9 +37,7 @@ impl PdfOperation for RedactOperation {
             .inner
             .get_pages()
             .get(&self.page_number)
-            .ok_or_else(|| {
-                PdfError::Other(format!("Page {} not found", self.page_number))
-            })?;
+            .ok_or_else(|| PdfError::Other(format!("Page {} not found", self.page_number)))?;
 
         let content = Content {
             operations: vec![
@@ -69,9 +67,7 @@ impl PdfOperation for RedactOperation {
         lopdf_doc
             .inner
             .add_to_page_content(page_id, content)
-            .map_err(|e| {
-                PdfError::Other(format!("Failed to add redaction to page: {}", e))
-            })?;
+            .map_err(|e| PdfError::Other(format!("Failed to add redaction to page: {}", e)))?;
 
         Ok(())
     }
