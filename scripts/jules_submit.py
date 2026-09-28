@@ -2,12 +2,15 @@
 """
 Jules Batch Submitter — Local AI Assistant
 Sends task prompts to Jules API to create async coding sessions → GitHub PRs.
+Completed prompts are automatically archived to prompts/tasks/done/ so they are
+never accidentally re-submitted.
 
 Usage:
   python3 scripts/jules_submit.py --task P1-T1          # Submit a specific task
   python3 scripts/jules_submit.py --phase 1             # Submit all Phase 1 tasks
-  python3 scripts/jules_submit.py --file prompts/tasks/P2_T1_audio_listener.txt
-  python3 scripts/jules_submit.py --list                # List all available tasks
+  python3 scripts/jules_submit.py --phase 1 --dry-run   # Preview without submitting
+  python3 scripts/jules_submit.py --file prompts/tasks/P2_T1_foo.txt
+  python3 scripts/jules_submit.py --list                # List all pending tasks
   python3 scripts/jules_submit.py --branch feature/dev  # Target a specific branch
 """
 
@@ -87,6 +90,7 @@ Critical Rules:
 # ──────────────────────────────────────────────────────────────────────────────
 
 TASKS_DIR = os.path.join(REPO_ROOT, "prompts", "tasks")
+DONE_DIR  = os.path.join(TASKS_DIR, "done")  # Completed prompts land here
 
 def _find_task_file(task_id: str) -> str:
     """Find a prompt file matching e.g. 'P1-T1' → prompts/tasks/**/P1_T1_*.txt"""
@@ -119,11 +123,17 @@ def _find_task_file(task_id: str) -> str:
     return matches[0]
 
 def _find_phase_files(phase_num: int) -> list:
-    """Find all prompt files for a given phase, sorted by task number."""
-    pattern = os.path.join(TASKS_DIR, "**", f"P{phase_num}_T*.txt")
+    """Find all PENDING prompt files for a given phase (excludes done/)."""
+    pattern = os.path.join(TASKS_DIR, f"phase_{phase_num}", f"P{phase_num}_T*.txt")
     matches = sorted(glob.glob(pattern, recursive=True))
+    # Also check top-level tasks dir for any files not in a sub-folder
+    top_pattern = os.path.join(TASKS_DIR, f"P{phase_num}_T*.txt")
+    matches += sorted(glob.glob(top_pattern))
+    # Exclude anything already in done/
+    matches = [m for m in matches if os.sep + "done" + os.sep not in m]
     if not matches:
-        print(f"❌ No prompt files found for Phase {phase_num} in {TASKS_DIR}/ (including subfolders)")
+        print(f"❌ No pending prompt files found for Phase {phase_num}.")
+        print(f"   (Already done? Check {DONE_DIR}/phase_{phase_num}/)")
         sys.exit(1)
     return matches
 
@@ -164,7 +174,8 @@ def submit_prompt(full_prompt: str, task_name: str = "Task"):
         print(f"❌ HTTP {e.code}: {e.read().decode()}")
         sys.exit(1)
 
-def submit_file(filepath: str, label: str = None):
+def submit_file(filepath: str, label: str = None, dry_run: bool = False):
+    """Submit a prompt file to Jules and archive it on success."""
     if not os.path.exists(filepath):
         print(f"❌ File not found: {filepath}")
         sys.exit(1)
@@ -172,21 +183,44 @@ def submit_file(filepath: str, label: str = None):
         prompt_content = f.read()
     full_prompt = SAFETY_RULES + "\n\n---\n\n" + prompt_content
     name = label or os.path.basename(filepath)
-    submit_prompt(full_prompt, task_name=name)
+
+    if dry_run:
+        print(f"[⏸️  DRY RUN] Would submit: {name}")
+        return
+
+    session_id = submit_prompt(full_prompt, task_name=name)
+
+    if session_id:
+        # Archive the prompt so it won't be picked up again
+        _archive_prompt(filepath)
+
+
+def _archive_prompt(filepath: str):
+    """Move a submitted prompt into done/ to prevent re-submission."""
+    import shutil
+    # Preserve the phase subfolder structure inside done/
+    rel = os.path.relpath(filepath, TASKS_DIR)
+    dest = os.path.join(DONE_DIR, rel)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.move(filepath, dest)
+    print(f"   ✅ Archived → prompts/tasks/done/{rel}")
+
 
 def list_tasks():
-    """Print all available task prompt files."""
+    """Print all pending task prompt files (excludes done/)."""
     if not os.path.isdir(TASKS_DIR):
         print(f"❌ Tasks directory not found: {TASKS_DIR}")
         sys.exit(1)
-    files = sorted(glob.glob(os.path.join(TASKS_DIR, "*.txt")))
+    files = sorted(glob.glob(os.path.join(TASKS_DIR, "**", "*.txt"), recursive=True))
+    # Exclude done/ folder
+    files = [f for f in files if os.sep + "done" + os.sep not in f]
     if not files:
-        print("⚠️  No task prompt files found in prompts/tasks/")
+        print("⚠️  No pending task prompt files found.")
         return
-    print(f"\n📋 Available tasks ({len(files)} total):\n")
+    print(f"\n📋 Pending tasks ({len(files)} total):\n")
     for f in files:
-        basename = os.path.basename(f)
-        print(f"   {basename}")
+        rel = os.path.relpath(f, TASKS_DIR)
+        print(f"   {rel}")
     print()
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -228,10 +262,12 @@ def main():
             print("❌ Please specify a phase number after --phase.")
             sys.exit(1)
         phase_num = int(args[idx + 1])
+        dry_run = "--dry-run" in args
         files = _find_phase_files(phase_num)
-        print(f"📅 Submitting {len(files)} task(s) for Phase {phase_num}...")
+        action = "Previewing" if dry_run else "Submitting"
+        print(f"\ud83d\udcc5 {action} {len(files)} pending task(s) for Phase {phase_num}...")
         for filepath in files:
-            submit_file(filepath, label=os.path.basename(filepath))
+            submit_file(filepath, label=os.path.basename(filepath), dry_run=dry_run)
         sys.exit(0)
 
     print(__doc__)
