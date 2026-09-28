@@ -1,0 +1,29 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 2 - MCP FOUNDATION                             |
+|                     TASK P2_T1: MCP FOUNDATION SETUP                          |
+================================================================================
+
+OBJECTIVE:
+Initialize the Model Context Protocol (MCP) foundation for PaperPilot. This crate will expose the `paperpilot-core` PDF operations as tools that AI assistants (like Claude or GPT) can call via JSON-RPC over stdin/stdout or HTTP.
+
+TASKS (PHASES 2.1.1, 2.1.2, 2.1.3):
+1. Create the `paperpilot-mcp` crate in the workspace.
+2. Add the `rmcp` dependency to this crate.
+3. Stub out a "hello world" MCP server using `rmcp`.
+4. Establish clear design conventions and schemas for how PDF operations will be exposed as MCP tools.
+
+FILES TO CREATE/MODIFY:
+1. `Cargo.toml` (Root): Add `paperpilot-mcp` to workspace members.
+2. `paperpilot-mcp/Cargo.toml`: Create package, add `rmcp`, `tokio`, `serde`, `paperpilot-core`, etc.
+3. `paperpilot-mcp/src/main.rs`: The entry point for the MCP server.
+4. `paperpilot-mcp/src/lib.rs`: Expose core modules.
+5. `paperpilot-mcp/src/server.rs`: Implement the `rmcp::Server` trait or routing logic.
+6. `paperpilot-mcp/src/schema.rs`: Define standard input/output models (JSON schemas) for tools.
+7. `paperpilot-mcp/src/error.rs`: Map `paperpilot-core::PdfError` to standard JSON-RPC/MCP error codes.
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. The server MUST communicate via stdio (stdin/stdout) by default so that Cursor/Claude Desktop can spawn it directly.
+2. Schema Convention: Every tool MUST return a standard JSON object containing `{ "success": true, "message": "...", "output_path": "..." }` on success, or an explicit JSON-RPC error on failure.
+3. Do NOT implement all 29 tools yet! Just implement one "hello world" tool (e.g., a simple ping or a tool that just echoes its input) to prove the `rmcp` plumbing works perfectly. We will implement the actual PDF operations in Phase 2.2.
+4. Prefix any questions you ask the user with "[P2_T1: MCP Foundation Setup]".

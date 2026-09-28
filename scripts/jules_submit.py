@@ -68,6 +68,7 @@ MANDATORY RULES — VIOLATION = REJECTED PR:
 3. Use clean module design and idiomatic Rust architecture. No spaghetti code.
 4. NEVER hardcode secrets, API keys, or local paths — always read from environment variables.
 5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
+6. When asking any questions, YOU MUST prefix your question with the Task Number and Title (e.g., "[P2_T1: MCP Foundation]").
 
 Project: PaperPilot
 Tech stack:
