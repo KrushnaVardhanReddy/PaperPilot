@@ -6,3 +6,6 @@ pub mod extract;
 pub mod reorder;
 pub mod crop;
 pub mod rotate;
+pub mod compress;
+pub mod repair;
+pub mod linearize;
