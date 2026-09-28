@@ -1,9 +1,9 @@
+use lopdf::{Document, Object, Stream, dictionary};
 use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::CallToolRequestParams;
 use rmcp::model::CallToolResponse;
 use serde_json::Value;
-use std::path::{Path, PathBuf};
-use lopdf::{Document, Object, Stream, dictionary};
+use std::path::Path;
 
 fn create_test_pdf(path: &Path) {
     let mut doc = Document::with_version("1.5");
@@ -32,11 +32,14 @@ fn create_test_pdf(path: &Path) {
         "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
     });
 
-    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
-        "Type" => "Pages",
-        "Kids" => vec![page_id.into()],
-        "Count" => 1,
-    }));
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
     let catalog_id = doc.add_object(dictionary! {
         "Type" => "Catalog",
         "Pages" => pages_id,
@@ -77,7 +80,10 @@ async fn test_pdf_merge_e2e() {
     let res = PaperPilotMcpServer::execute_call_tool(req).unwrap();
 
     if let CallToolResponse::Complete(result) = res {
-        assert!(!result.is_error.unwrap_or(false), "Tool execution returned an error");
+        assert!(
+            !result.is_error.unwrap_or(false),
+            "Tool execution returned an error"
+        );
         let content_str = &result.content[0].as_text().unwrap().text;
         let json_res: serde_json::Value = serde_json::from_str(content_str).unwrap();
         assert_eq!(json_res.get("success").unwrap().as_bool(), Some(true));
@@ -113,7 +119,10 @@ async fn test_pdf_extract_text_e2e() {
     let res = PaperPilotMcpServer::execute_call_tool(req).unwrap();
 
     if let CallToolResponse::Complete(result) = res {
-        assert!(!result.is_error.unwrap_or(false), "Tool execution returned an error");
+        assert!(
+            !result.is_error.unwrap_or(false),
+            "Tool execution returned an error"
+        );
         let content_str = &result.content[0].as_text().unwrap().text;
         let json_res: serde_json::Value = serde_json::from_str(content_str).unwrap();
         assert_eq!(json_res.get("success").unwrap().as_bool(), Some(true));
@@ -144,7 +153,10 @@ async fn test_pdf_metadata_e2e() {
     let res = PaperPilotMcpServer::execute_call_tool(req).unwrap();
 
     if let CallToolResponse::Complete(result) = res {
-        assert!(!result.is_error.unwrap_or(false), "Tool execution returned an error");
+        assert!(
+            !result.is_error.unwrap_or(false),
+            "Tool execution returned an error"
+        );
         let content_str = &result.content[0].as_text().unwrap().text;
         let json_res: serde_json::Value = serde_json::from_str(content_str).unwrap();
         assert_eq!(json_res.get("success").unwrap().as_bool(), Some(true));

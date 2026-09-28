@@ -1744,6 +1744,7 @@ dependencies = [
 name = "paperpilot-mcp"
 version = "0.1.0"
 dependencies = [
+ "lopdf",
  "paperpilot-core",
  "paperpilot-pdf",
  "rmcp",
