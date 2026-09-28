@@ -1,0 +1,30 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T16: CLI GROUP B & C                              |
+================================================================================
+
+OBJECTIVE:
+Expand the `paperpilot` CLI to support Group B (Document Ops) and Group C (Extraction/Search) subcommands.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-cli/src/cli.rs` (Add new variants to `Commands` enum)
+2. `paperpilot-cli/src/commands/mod.rs`
+3. `paperpilot-cli/src/commands/group_b.rs`
+4. `paperpilot-cli/src/commands/group_c.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. You are adding new commands to the existing `clap` CLI.
+2. Load the document, run the operation, and save the result (or print results for search/extract_text).
+3. Operations that are "stubs" in the engine (like OCR or Render) should just be mapped normally in the CLI. The CLI doesn't need to know they are stubs.
+
+SPECIFIC COMMANDS TO IMPLEMENT:
+GROUP B:
+- `compress`, `repair`, `linearize`
+- `encrypt`, `decrypt`
+- `watermark`, `header-footer`, `bates`
+- `metadata`, `signature`, `redact`, `flatten`, `pdf-a`
+
+GROUP C:
+- `extract-text`, `extract-images`, `images-to-pdf`
+- `search`, `compare`, `render`, `ocr`, `bookmarks`

@@ -1,0 +1,31 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T15: CLI SCAFFOLD & GROUP A                       |
+================================================================================
+
+OBJECTIVE:
+Set up the `paperpilot-cli` executable crate, add `clap` for parsing, and implement the CLI subcommands for Group A (Page Manipulation).
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-cli/Cargo.toml` (Add `clap` with `derive` feature, `env_logger`, `log`)
+2. `paperpilot-cli/src/main.rs`
+3. `paperpilot-cli/src/cli.rs`
+4. `paperpilot-cli/src/commands/mod.rs`
+5. `paperpilot-cli/src/commands/group_a.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. `paperpilot-cli` depends on `paperpilot-core` and `paperpilot-pdf`.
+2. Use `LopdfDocument::load(&path)` to load the document in the CLI handler, then instantiate the specific operation (e.g., `MergeOperation`), then call `op.execute(&mut doc)`, and finally `doc.save(&output_path)`.
+3. Keep argument structs clean. Use standard long/short aliases (e.g., `-i, --input`).
+4. Output meaningful errors to the user (e.g. `eprintln!`) instead of `unwrap()` panics.
+
+SPECIFIC COMMANDS TO IMPLEMENT:
+- `merge` (inputs: Vec<PathBuf>, output: PathBuf)
+- `split` (input: PathBuf, output_dir: PathBuf)
+- `extract` (input: PathBuf, pages: Vec<u32>, output: PathBuf)
+- `delete` (input: PathBuf, pages: Vec<u32>, output: PathBuf)
+- `reorder` (input: PathBuf, order: Vec<u32>, output: PathBuf)
+- `rotate` (input: PathBuf, pages: Vec<u32>, degrees: u16, output: PathBuf)
+- `crop` (input: PathBuf, pages: Vec<u32>, rect: String, output: PathBuf)
+- `burst` (input: PathBuf, output_dir: PathBuf)
