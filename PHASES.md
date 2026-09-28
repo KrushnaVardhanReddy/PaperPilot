@@ -721,6 +721,7 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.5.1 | Zapier integration | Official PaperPilot app in Zapier marketplace |
 | 8.5.2 | Make.com (Integromat) integration | Official module |
 | 8.5.3 | n8n community node | Self-hostable automation integration |
+| 8.5.4 | Enterprise Workload Automation | Official guides & plugins for Control-M, JAMS, and AutoSys (using REST + Webhook callbacks) |
 
 ---
 
