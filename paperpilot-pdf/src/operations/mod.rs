@@ -6,3 +6,7 @@ pub mod extract;
 pub mod reorder;
 pub mod crop;
 pub mod rotate;
+pub mod signature;
+pub mod flatten;
+pub mod pdf_a;
+pub mod redact;
