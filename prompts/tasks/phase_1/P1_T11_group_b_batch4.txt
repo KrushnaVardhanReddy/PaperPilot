@@ -1,0 +1,25 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T11: GROUP B OPS (BATCH 4)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the final batch of Group B PDF operations: E-Signature, Redact, Flatten, and PDF/A Conversion.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/signature.rs`
+2. `paperpilot-pdf/src/operations/redact.rs`
+3. `paperpilot-pdf/src/operations/flatten.rs`
+4. `paperpilot-pdf/src/operations/pdf_a.rs`
+
+IMPLEMENTATION DETAILS:
+1. Create `SignatureOperation`. Stub this for now returning `PdfError::UnsupportedOperation`, as it will require complex cryptography or DocuSign API integration.
+2. Create `RedactOperation`. Given bounding boxes, strip out intersecting text and draw black rectangles.
+3. Create `FlattenOperation`. Convert interactive forms/annotations into standard static PDF content streams.
+4. Create `PdfAConversionOperation`. Convert the PDF to PDF/A-1b or PDF/A-2b. If `lopdf` cannot do this natively, leave a stub.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide robust `#[cfg(test)]` modules.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

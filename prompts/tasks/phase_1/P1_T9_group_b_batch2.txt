@@ -1,0 +1,23 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T9: GROUP B OPS (BATCH 2)                         |
+================================================================================
+
+OBJECTIVE:
+Implement the second batch of Group B PDF operations: Metadata, Encrypt, and Decrypt.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/metadata.rs`
+2. `paperpilot-pdf/src/operations/encrypt.rs`
+3. `paperpilot-pdf/src/operations/decrypt.rs`
+
+IMPLEMENTATION DETAILS:
+1. Create `MetadataOperation`. It should support reading and writing the Document Information Dictionary (Title, Author, Subject, Keywords).
+2. Create `EncryptOperation`. Use `lopdf`'s built-in encryption features if available, or leave a stub if it requires an external crate.
+3. Create `DecryptOperation`. Requires a password string as input to unlock the PDF.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide robust `#[cfg(test)]` modules.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

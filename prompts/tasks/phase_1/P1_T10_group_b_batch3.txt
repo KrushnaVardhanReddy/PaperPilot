@@ -1,0 +1,23 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T10: GROUP B OPS (BATCH 3)                        |
+================================================================================
+
+OBJECTIVE:
+Implement the third batch of Group B PDF operations: Watermark, HeaderFooter, and Validation.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/watermark.rs`
+2. `paperpilot-pdf/src/operations/header_footer.rs`
+3. `paperpilot-pdf/src/operations/validate.rs`
+
+IMPLEMENTATION DETAILS:
+1. Create `WatermarkOperation`. Add text overlays to pages. (Use `lopdf` content streams).
+2. Create `HeaderFooterOperation`. Add repeating text or page numbers.
+3. Create `ValidateOperation`. This is the pre-flight check layer. Validate the PDF magic bytes (`%PDF-`), ensure it is not corrupted, and ensure page ranges are valid.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide robust `#[cfg(test)]` modules.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.

@@ -1,0 +1,23 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T8: GROUP B OPS (BATCH 1)                         |
+================================================================================
+
+OBJECTIVE:
+Implement the first batch of Group B PDF operations: Compress, Repair, and Linearize.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-pdf/src/operations/compress.rs`
+2. `paperpilot-pdf/src/operations/repair.rs`
+3. `paperpilot-pdf/src/operations/linearize.rs`
+
+IMPLEMENTATION DETAILS:
+1. Create `CompressOperation` implementing `PdfOperation`. It should have options for image downsampling or just object stream compression. Use `lopdf` stream compression.
+2. Create `RepairOperation` implementing `PdfOperation`. `lopdf` handles basic repairs automatically when loading, so this might just be a load/save cycle or stripping broken objects.
+3. Create `LinearizeOperation` implementing `PdfOperation`. Reorder the PDF cross-reference table and objects to allow for "Fast Web View" (streaming). Note: If `lopdf` lacks native linearization, leave a stub returning `PdfError::UnsupportedOperation` for now.
+
+REQUIREMENTS:
+- Implement `PdfOperation` for each struct.
+- Provide robust `#[cfg(test)]` modules using `LopdfDocument::new()`.
+- Add them to `paperpilot-pdf/src/operations/mod.rs`.
