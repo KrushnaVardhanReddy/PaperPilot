@@ -1,0 +1,33 @@
+---
+Task: Phase 3.3 & 3.4 - PDF Preview & Remaining Operation Panels
+Context: The basic layout, document list, and the Merge operation panel are completed in `apps/desktop`.
+---
+
+Hey Jules! We're continuing with the Svelte 5 desktop app UI. Now it's time to build the PDF Preview components and finish the rest of the operation parameter panels.
+
+## Requirements:
+
+1. **Remaining Operation Panels (3.4.3 - 3.4.9):**
+   - Expand `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` to support the rest of our MCP tools.
+   - Add new selection tabs for: `Split`, `Extract Pages`, `Extract Text`, `Compress`, `Rotate`, `Watermark`, `Encrypt`, `Decrypt`, and `Metadata`.
+   - Build out the parameter inputs for each using Svelte 5 `$state`:
+     - **Split:** "Split Points (comma separated)"
+     - **Compress:** "Image Quality (slider 0-100)"
+     - **Rotate:** "Angle (90/180/270)"
+     - **Watermark:** "Text to watermark"
+   - None of these need to call the actual Rust commands yet, just ensure the Svelte 5 reactive bindings and the UI look fantastic.
+
+2. **PDF Preview (3.3.1 - 3.3.3):**
+   - Build a `apps/desktop/src/lib/components/ui/PdfPreview.svelte`.
+   - This component will be displayed in the Main Content area when a document from the `DocumentList` is selected.
+   - Since we don't have the Rust renderer connected yet, build a beautiful mocked visual state:
+     - Render a scrollable CSS grid of "page thumbnails".
+     - Create a simple page placeholder component that looks like a blank piece of paper with a page number on it.
+     - Implement clicking to select specific pages (storing selected pages in a `$state` Set or array).
+
+## Styling Rules:
+- STRICTLY DO NOT USE TailwindCSS.
+- Use our vanilla CSS tokens from `app.css`.
+- Ensure it looks like a premium, sleek macOS/Windows native application.
+
+Please open a PR to `main` when finished!

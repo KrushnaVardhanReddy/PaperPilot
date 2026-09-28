@@ -238,13 +238,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 2.3.1 | Input validation layer | Validate all tool inputs before passing to engine |
-| 2.3.2 | Error response format | Structured, consistent error responses |
-| 2.3.3 | File path / temp file handling | Safe handling of input/output file paths |
-| 2.3.4 | MCP server binary | Standalone runnable server |
-| 2.3.5 | MCP schema tests | Validate all tool schemas are well-formed |
-| 2.3.6 | End-to-end MCP tests | Use MCP client to call tools, verify outputs |
-| 2.3.7 | E2E MCP tests (Strict) | Spawn real MCP server and execute JSON-RPC calls against real PDFs (No Mocking) |
+| 2.3.1 | Input validation layer ✅ | Merged (Session 9931121574944478405) |
+| 2.3.2 | Error response format ✅ | Merged (Session 9931121574944478405) |
+| 2.3.3 | File path / temp file handling ✅ | Merged (Session 9931121574944478405) |
+| 2.3.4 | MCP server binary ✅ | Merged (Session 9931121574944478405) |
+| 2.3.5 | MCP schema tests ✅ | Merged (Session 9931121574944478405) |
+| 2.3.6 | End-to-end MCP tests ✅ | Merged (Session 9931121574944478405) |
+| 2.3.7 | E2E MCP tests (Strict) ✅ | Merged (Session 9931121574944478405) |
 
 ---
 
@@ -294,9 +294,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.3.1 | Page renderer | Use Tauri to call Rust render-to-PNG, display in Svelte |
-| 3.3.2 | Page thumbnail strip | Scrollable strip of all pages |
-| 3.3.3 | Page selection | Click/shift-click to select pages |
+| 3.3.1 | Page renderer ✅ | Merged (Session 10488084682857299204) |
+| 3.3.2 | Page thumbnail strip ✅ | Merged (Session 10488084682857299204) |
+| 3.3.3 | Page selection ✅ | Merged (Session 10488084682857299204) |
 | 3.3.4 | Page reorder via drag | Drag thumbnails to reorder |
 | 3.3.5 | Page rotation controls | Per-page rotate buttons |
 | 3.3.6 | Page deletion UI | Select + delete pages visually |
@@ -309,13 +309,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 3.4.1 | Operation panel ✅ | Merged (Session 11119733351266944393) |
 | 3.4.2 | Merge UI ✅ | Merged (Session 11119733351266944393) |
-| 3.4.3 | Split UI | Choose split points or ranges |
-| 3.4.4 | Compress UI | Quality/size tradeoff slider |
-| 3.4.5 | Rotate UI | Select pages, choose angle |
-| 3.4.6 | Watermark UI | Text/image, position, opacity |
-| 3.4.7 | Encrypt/Decrypt UI | Password input, options |
-| 3.4.8 | Extract UI | Pages, text, images — separate modes |
-| 3.4.9 | Output file picker | Choose output path before running |
+| 3.4.3 | Split UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.4 | Compress UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.5 | Rotate UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.6 | Watermark UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.7 | Encrypt/Decrypt UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.8 | Extract UI ✅ | Merged (Session 10488084682857299204) |
+| 3.4.9 | Output file picker ✅ | Merged (Session 10488084682857299204) |
 | 3.4.10 | **Visual Pipeline Builder (Basic)** | Drag-and-drop canvas to chain operations into a pipeline; save as a `.ppflow` recipe file |
 | 3.4.11 | **Conditional branching UI** | Add IF/ELSE nodes (e.g. "if scanned → OCR, else extract text directly") to the pipeline canvas |
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
