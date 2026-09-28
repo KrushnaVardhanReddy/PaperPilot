@@ -282,11 +282,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.2.1 | App layout and navigation | Sidebar, main area, settings panel |
-| 3.2.2 | File drop zone | Drag-and-drop + file picker |
+| 3.2.1 | App layout and navigation ✅ | Merged (Session 6096383570980483046) |
+| 3.2.2 | File drop zone ✅ | Merged (Session 6096383570980483046) |
 | 3.2.3 | Document list | Show loaded files with name, size, page count |
 | 3.2.4 | Settings panel | AI provider config, output directory, preferences |
-| 3.2.5 | Notification / toast system | Success, error, progress messages |
+| 3.2.5 | Notification / toast system ✅ | Merged (Session 6096383570980483046) |
 
 ---
 
