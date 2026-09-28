@@ -80,8 +80,7 @@ mod tests {
 
             // Basic content stream with text to extract
             let content = "BT /F1 12 Tf 0 0 Td (Test) Tj ET";
-            let content_stream =
-                lopdf::Stream::new(Dictionary::new(), content.as_bytes().to_vec());
+            let content_stream = lopdf::Stream::new(Dictionary::new(), content.as_bytes().to_vec());
             let content_id = doc.add_object(Object::Stream(content_stream));
             page_dict.set("Contents", Object::Reference(content_id));
 
