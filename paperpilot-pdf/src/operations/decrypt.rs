@@ -3,11 +3,13 @@ use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 
 #[derive(Default)]
-pub struct DecryptOperation;
+pub struct DecryptOperation {
+    pub password: Option<String>,
+}
 
 impl DecryptOperation {
-    pub fn new() -> Self {
-        Self
+    pub fn new(password: Option<String>) -> Self {
+        Self { password }
     }
 }
 
@@ -19,6 +21,10 @@ impl PdfOperation for DecryptOperation {
             .ok_or_else(|| {
                 PdfError::UnsupportedOperation("Document is not a LopdfDocument".to_string())
             })?;
+
+        if let Some(password) = &self.password {
+            let _ = lopdf_doc.inner.decrypt(password);
+        }
 
         // Remove the 'Encrypt' key from the trailer dictionary to strip encryption
         lopdf_doc.inner.trailer.remove(b"Encrypt");
@@ -46,7 +52,7 @@ mod tests {
 
         assert!(doc.inner.trailer.has(b"Encrypt"));
 
-        let op = DecryptOperation::new();
+        let op = DecryptOperation::new(Some("pass".to_string()));
         assert!(op.execute(&mut doc).is_ok());
 
         assert!(!doc.inner.trailer.has(b"Encrypt"));

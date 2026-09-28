@@ -101,7 +101,7 @@ fn test_decrypt() {
 
     assert!(doc.inner.trailer.has(b"Encrypt"));
 
-    let op = DecryptOperation::new();
+    let op = DecryptOperation::new(Some("test".to_string()));
     assert!(op.execute(&mut doc).is_ok());
     assert!(!doc.inner.trailer.has(b"Encrypt"));
 
