@@ -118,6 +118,8 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.32 | PDF → PowerPoint (PPTX) | Export PDF slides to PPTX |
 | 1.3.33 | PDF → HTML | Export to HTML for web viewing |
 | 1.3.34 | PDF → Markdown | Export to clean Markdown text |
+| 1.3.38 | PDF → LLM-Ready Export | Structured export optimised for RAG pipelines: clean heading hierarchy, page numbers as metadata, tables as JSON, image captions — output as `{content}.md` + `{metadata}.json` sidecar pair |
+| 1.3.39 | Document type classifier | Auto-detect document type (invoice, contract, research paper, form, report) using heuristics + AI; tag the output metadata accordingly |
 
 #### Group E — Forms
 | # | Task | Notes |
@@ -420,9 +422,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.2.2 | Table extraction | Detect and extract tables to CSV/JSON |
 | 5.2.3 | Document comparison | Semantic diff, not just structural |
 | 5.2.4 | Document summarization | AI-powered summary of document content |
-| 5.2.5 | PDF Q&A | Ask questions, get answers grounded in document |
-| 5.2.6 | Batch workflows | Run operations across folders of documents |
-| 5.2.7 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
+| 5.2.5 | PDF Q&A (single doc) | Ask questions, get answers grounded in one document |
+| 5.2.6 | Multi-document synthesis | Upload 2–50 PDFs; ask cross-document questions (e.g. "which contract has the lowest penalty clause?"); AI synthesises across all docs |
+| 5.2.7 | Layout-preserving translation | Translate PDF text to any language while keeping the original visual layout intact (columns, tables, fonts) — powered by a pluggable translation API (DeepL / Google Translate / local LLM) |
+| 5.2.8 | Batch workflows | Run operations across folders of documents |
+| 5.2.9 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
 
 ---
 
@@ -796,5 +800,20 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.9.6 | Mobile-specific gestures | Pinch-to-zoom on preview, swipe to delete pages |
 | 8.9.7 | Share sheet integration | iOS Share Sheet / Android Intent support to open PDFs directly from other apps |
 | 8.9.8 | E2E Mobile tests | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
+
+---
+
+### 8.10 — Audio & Multimedia Generation `[BLOCKED BY Phase 5]`
+
+**Goal:** Break PDFs out of their static format into dynamic multimedia — following the emerging trend of AI-generated audio summaries and presentation generation from documents.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.10.1 | PDF → Audio summary | Generate an AI-voiced conversational audio summary (MP3/WAV) from a PDF using a pluggable TTS engine (ElevenLabs / Kokoro / local TTS) |
+| 8.10.2 | PDF → Podcast format | Two-voice AI conversational podcast generated from a PDF document (NotebookLM-style) |
+| 8.10.3 | PDF → Presentation (AI-structured) | AI maps the structural outline of a PDF and generates a professionally structured PPTX slide deck — not a raw conversion, but an AI-authored presentation |
+| 8.10.4 | Audio summary MCP tool | `pdf_audio_summary` MCP tool so AI agents can generate audio from any PDF |
+| 8.10.5 | Audio summary CLI command | `paperpilot audio-summary <file> --voice kokoro --output summary.mp3` |
+| 8.10.6 | E2E Multimedia tests | Generate real audio and presentation outputs from test PDFs and verify output quality (No Mocking) |
 
 
