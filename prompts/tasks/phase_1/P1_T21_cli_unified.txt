@@ -1,0 +1,25 @@
+================================================================================
+|                              PAPER PILOT PROJECT                              |
+|                          PHASE 1 - CORE ARCHITECTURE                          |
+|                     TASK P1_T21: UNIFIED CLI ENGINE                           |
+================================================================================
+
+OBJECTIVE:
+Build the ENTIRE `paperpilot-cli` executable crate in a single sweep. This replaces the previous parallel CLI tasks that caused merge conflicts.
+
+FILES TO CREATE/MODIFY:
+1. `paperpilot-cli/Cargo.toml` (Add `clap` with `derive`, `reqwest` with `blocking`, `serde`, `serde_json`, `log`, `env_logger`)
+2. `paperpilot-cli/src/main.rs` (Global `json` and `webhook` handler)
+3. `paperpilot-cli/src/cli.rs` (All 29 commands + Validate)
+4. `paperpilot-cli/src/commands/mod.rs`
+5. `paperpilot-cli/src/commands/group_a.rs`
+6. `paperpilot-cli/src/commands/group_b.rs`
+7. `paperpilot-cli/src/commands/group_c.rs`
+8. `paperpilot-cli/src/commands/validate.rs`
+
+CRITICAL IMPLEMENTATION RULES & TIPS FOR JULES:
+1. DO NOT WRITE ANY `#[cfg(test)]` MODULES. We are handling testing externally in Phase 1.4. You will get missing import errors if you try to mock files in unit tests. Just write the handler logic.
+2. Standardize error handling: All handlers should map exactly to `OperationResult<()>` (which is `Result<(), paperpilot_core::error::PdfError>`) so `main.rs` doesn't suffer type inference failures.
+3. In `main.rs`, after execution, format a JSON payload `{"success": true, "operation": "...", "error": null}`.
+4. If `--json` is active, print ONLY that JSON payload to stdout.
+5. If `--webhook <url>` is present, `POST` that JSON payload to the URL via `reqwest::blocking::Client`.
