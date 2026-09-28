@@ -3,16 +3,24 @@ use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 use std::path::PathBuf;
 
-pub fn handle_extract_text(input: &std::path::Path, _output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_extract_text(
+    input: &std::path::Path,
+    _output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
     op.execute(&mut doc)?;
     Ok(())
 }
 
-pub fn handle_extract_images(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_extract_images(
+    input: &std::path::Path,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::extract_images::ExtractImagesOperation::new(output.to_path_buf());
+    let op = paperpilot_pdf::operations::extract_images::ExtractImagesOperation::new(
+        output.to_path_buf(),
+    );
     op.execute(&mut doc)
 }
 
@@ -48,7 +56,9 @@ pub fn handle_bookmarks(input: &std::path::Path) -> OperationResult<()> {
 
 pub fn handle_images_to_pdf(images: &[PathBuf], output: &std::path::Path) -> OperationResult<()> {
     let mut doc = LopdfDocument::new();
-    let op = paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(images.iter().map(|p| p.to_path_buf()).collect());
+    let op = paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(
+        images.iter().map(|p| p.to_path_buf()).collect(),
+    );
     op.execute(&mut doc)?;
     doc.save(output)
 }

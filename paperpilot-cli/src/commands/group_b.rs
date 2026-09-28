@@ -2,7 +2,11 @@ use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 
-pub fn handle_compress(input: &std::path::Path, _quality: &str, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_compress(
+    input: &std::path::Path,
+    _quality: &str,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::compress::CompressOperation::new();
     op.execute(&mut doc)?;
@@ -23,7 +27,12 @@ pub fn handle_linearize(input: &std::path::Path, output: &std::path::Path) -> Op
     doc.save(output)
 }
 
-pub fn handle_encrypt(input: &std::path::Path, user_password: &Option<String>, owner_password: &Option<String>, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_encrypt(
+    input: &std::path::Path,
+    user_password: &Option<String>,
+    owner_password: &Option<String>,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::encrypt::EncryptOperation {
         user_password: user_password.clone(),
@@ -33,21 +42,34 @@ pub fn handle_encrypt(input: &std::path::Path, user_password: &Option<String>, o
     doc.save(output)
 }
 
-pub fn handle_decrypt(input: &std::path::Path, _password: &Option<String>, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_decrypt(
+    input: &std::path::Path,
+    _password: &Option<String>,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new();
     op.execute(&mut doc)?;
     doc.save(output)
 }
 
-pub fn handle_watermark(input: &std::path::Path, text: &str, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_watermark(
+    input: &std::path::Path,
+    text: &str,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text.to_string());
     op.execute(&mut doc)?;
     doc.save(output)
 }
 
-pub fn handle_redact(input: &std::path::Path, pages: &str, rect: &str, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_redact(
+    input: &std::path::Path,
+    pages: &str,
+    rect: &str,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
 
     let parts: Vec<&str> = rect.split(',').collect();
@@ -56,9 +78,21 @@ pub fn handle_redact(input: &std::path::Path, pages: &str, rect: &str, output: &
     let width = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0.0);
     let height = parts.get(3).and_then(|s| s.parse().ok()).unwrap_or(0.0);
 
-    let page_number = pages.split(',').next().and_then(|s| s.parse().ok()).unwrap_or(1);
+    let page_number = pages
+        .split(',')
+        .next()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1);
 
-    let op = paperpilot_pdf::operations::redact::RedactOperation::new(page_number, paperpilot_pdf::operations::redact::BoundingBox { x, y, width, height });
+    let op = paperpilot_pdf::operations::redact::RedactOperation::new(
+        page_number,
+        paperpilot_pdf::operations::redact::BoundingBox {
+            x,
+            y,
+            width,
+            height,
+        },
+    );
     op.execute(&mut doc)?;
     doc.save(output)
 }
@@ -81,7 +115,11 @@ pub fn handle_metadata(
     doc.save(output)
 }
 
-pub fn handle_signature(input: &std::path::Path, _cert: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_signature(
+    input: &std::path::Path,
+    _cert: &std::path::Path,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::signature::SignatureOperation::new();
     op.execute(&mut doc)?;
@@ -102,16 +140,32 @@ pub fn handle_pdf_a(input: &std::path::Path, output: &std::path::Path) -> Operat
     doc.save(output)
 }
 
-pub fn handle_header_footer(input: &std::path::Path, text: &str, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_header_footer(
+    input: &std::path::Path,
+    text: &str,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(text.to_string(), "bottom".to_string());
+    let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
+        text.to_string(),
+        "bottom".to_string(),
+    );
     op.execute(&mut doc)?;
     doc.save(output)
 }
 
-pub fn handle_bates(input: &std::path::Path, prefix: &str, start: u32, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_bates(
+    input: &std::path::Path,
+    prefix: &str,
+    start: u32,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::bates::BatesNumberingOperation::new(start, prefix.to_string(), 6);
+    let op = paperpilot_pdf::operations::bates::BatesNumberingOperation::new(
+        start,
+        prefix.to_string(),
+        6,
+    );
     op.execute(&mut doc)?;
     doc.save(output)
 }

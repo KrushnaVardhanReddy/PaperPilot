@@ -2,7 +2,11 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "paperpilot", version, about = "A fast, privacy-first PDF manipulation tool")]
+#[command(
+    name = "paperpilot",
+    version,
+    about = "A fast, privacy-first PDF manipulation tool"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
