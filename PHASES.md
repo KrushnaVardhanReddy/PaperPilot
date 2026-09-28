@@ -151,6 +151,7 @@ Write tests alongside each operation, not after.
 | 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
 | 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
 | 1.5.20 | CLI integration tests | Spawn binary, check outputs |
+| 1.5.21 | E2E CLI pipeline tests | Full end-to-end testing against real PDFs using the compiled binary (No Mocking) |
 
 ---
 
@@ -207,6 +208,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 2.3.4 | MCP server binary | Standalone runnable server |
 | 2.3.5 | MCP schema tests | Validate all tool schemas are well-formed |
 | 2.3.6 | End-to-end MCP tests | Use MCP client to call tools, verify outputs |
+| 2.3.7 | E2E MCP tests (Strict) | Spawn real MCP server and execute JSON-RPC calls against real PDFs (No Mocking) |
 
 ---
 
@@ -284,6 +286,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.5.3 | Progress bar component | Shows job name, %, current page |
 | 3.5.4 | Job cancel support | Cancel button sends cancellation to Rust |
 | 3.5.5 | Job history panel | List of completed/failed jobs with output paths |
+| 3.5.6 | E2E Desktop tests | Tauri WebDriver / Playwright automation driving the actual Rust backend (No Mocking) |
 
 ---
 
@@ -387,6 +390,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.2.4 | Document summarization | AI-powered summary of document content |
 | 5.2.5 | PDF Q&A | Ask questions, get answers grounded in document |
 | 5.2.6 | Batch workflows | Run operations across folders of documents |
+| 5.2.7 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
 
 ---
 
@@ -462,6 +466,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 6.5.5 | License dashboard | Admin UI to manage seats, assign/revoke users per organization |
 | 6.5.6 | Grace period & offline mode | License valid offline for 30 days before requiring re-validation |
 | 6.5.7 | License expiry notifications | Warn admins 30/14/7 days before renewal |
+| 6.5.8 | E2E Enterprise integration tests | Automated deployment and SSO workflow testing (No Mocking) |
 
 ---
 
@@ -496,6 +501,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 7.2.3 | Onboarding flow | Signup, org setup, first document |
 | 7.2.4 | SLA monitoring | Track and report uptime against commitments |
 | 7.2.5 | Enterprise support tooling | Ticket system, escalation paths |
+| 7.2.6 | E2E Cloud tenant tests | End-to-end multi-tenant isolation and billing workflow tests (No Mocking) |
 
 ---
 
@@ -708,5 +714,6 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.9.2 | Push notifications | Get notified when a long job completes or fails |
 | 8.9.3 | Document approval flow | Review and approve or reject a signed PDF from mobile |
 | 8.9.4 | Quick scan → PDF | Capture a physical document with camera and send to PaperPilot for OCR |
+| 8.9.5 | E2E Ecosystem tests | Automated workflows validating plugins and recipes against real inputs (No Mocking) |
 
 
