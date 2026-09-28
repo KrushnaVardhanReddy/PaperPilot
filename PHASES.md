@@ -23,10 +23,10 @@ These can all be done on day one simultaneously.
 |---|---|---|
 | ~~1.1.1~~ ✓ | ~~Initialize Cargo workspace~~ | Root `Cargo.toml` with workspace members |
 | ~~1.1.2~~ ✓ | ~~Create crate stubs~~ | `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli` empty crates |
-| 1.1.3 | Set up CI pipeline | GitHub Actions: build + test on push |
+| 1.1.3 | Set up CI pipeline ⏳ | Delegated to Jules (Session 367767207543843406) |
 | 1.1.4 | Set up test fixture corpus | Collect 20–30 real-world PDFs: normal, scanned, malformed, large, encrypted |
-| 1.1.5 | Choose and document PDF library decision | Evaluate `lopdf` + `pdfium-render` combo, document in ADR |
-| 1.1.6 | Set up linting and formatting | `clippy`, `rustfmt`, enforce in CI |
+| 1.1.5 | Choose and document PDF library decision ⏳ | Delegated to Jules (Session 901308598875262977) |
+| 1.1.6 | Set up linting and formatting ⏳ | Delegated to Jules (Session 367767207543843406) |
 
 ---
 
