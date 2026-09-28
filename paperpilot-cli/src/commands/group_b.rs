@@ -48,7 +48,7 @@ pub fn handle_decrypt(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new();
+    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(None);
     op.execute(&mut doc)?;
     doc.save(output)
 }

@@ -37,7 +37,10 @@ impl PdfOperation for RotatePagesOperation {
                 if let Some(&object_id) = all_pages.get(&page_num) {
                     pages_to_update.push(object_id);
                 } else {
-                    return Err(PdfError::ParseError(format!("Invalid page index: {}", page_num)));
+                    return Err(PdfError::ParseError(format!(
+                        "Invalid page index: {}",
+                        page_num
+                    )));
                 }
             }
         } else {
@@ -129,7 +132,10 @@ mod tests {
         pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
         pages_dict.set(
             "Kids",
-            lopdf::Object::Array(vec![lopdf::Object::Reference(page1_id), lopdf::Object::Reference(page2_id)]),
+            lopdf::Object::Array(vec![
+                lopdf::Object::Reference(page1_id),
+                lopdf::Object::Reference(page2_id),
+            ]),
         );
         pages_dict.set("Count", lopdf::Object::Integer(2));
         inner.set_object(pages_id, pages_dict);
@@ -139,7 +145,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut doc = LopdfDocument { inner };
 

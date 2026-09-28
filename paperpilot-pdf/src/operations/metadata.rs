@@ -8,11 +8,21 @@ pub struct MetadataOperation {
     pub author: Option<String>,
     pub subject: Option<String>,
     pub keywords: Option<String>,
+    pub retrieved_metadata:
+        std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
 }
 
 impl MetadataOperation {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            title: None,
+            author: None,
+            subject: None,
+            keywords: None,
+            retrieved_metadata: std::sync::Arc::new(std::sync::Mutex::new(
+                std::collections::HashMap::new(),
+            )),
+        }
     }
 }
 
@@ -48,6 +58,21 @@ impl PdfOperation for MetadataOperation {
         };
 
         if let Ok(lopdf::Object::Dictionary(info_dict)) = lopdf_doc.inner.get_object_mut(info_id) {
+            // Read all existing strings first
+            let mut read_map = std::collections::HashMap::new();
+            for (k, v) in info_dict.iter() {
+                if let Ok(s) = v.as_str() {
+                    let k_res = String::from_utf8(k.to_vec());
+                    let v_res = String::from_utf8(s.to_vec());
+                    if let (Ok(k_str), Ok(v_str)) = (k_res, v_res) {
+                        read_map.insert(k_str, v_str);
+                    }
+                }
+            }
+            if let Ok(mut lock) = self.retrieved_metadata.lock() {
+                *lock = read_map;
+            }
+
             if let Some(title) = &self.title {
                 info_dict.set(
                     "Title",

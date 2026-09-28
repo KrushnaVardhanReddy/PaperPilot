@@ -546,6 +546,482 @@ impl PaperPilotMcpServer {
         tool_7.input_schema = Arc::new(schema_7);
         tools.push(tool_7);
 
+        // Tool: pdf_compress
+        let mut schema_compress = serde_json::Map::new();
+        schema_compress.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_compress = serde_json::Map::new();
+        let mut prop_input_c = serde_json::Map::new();
+        prop_input_c.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_c.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_compress.insert("input".to_string(), serde_json::Value::Object(prop_input_c));
+        let mut prop_output_c = serde_json::Map::new();
+        prop_output_c.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_c.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        prop_compress.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_c),
+        );
+        schema_compress.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_compress),
+        );
+        let req_compress = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ];
+        schema_compress.insert(
+            "required".to_string(),
+            serde_json::Value::Array(req_compress),
+        );
+        let mut tool_compress = Tool::default();
+        tool_compress.name = "pdf_compress".into();
+        tool_compress.description = Some("Compresses a PDF to reduce file size.".into());
+        tool_compress.input_schema = std::sync::Arc::new(schema_compress);
+        tools.push(tool_compress);
+
+        // Tool: pdf_extract_text
+        let mut schema_ext_txt = serde_json::Map::new();
+        schema_ext_txt.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_ext_txt = serde_json::Map::new();
+        let mut prop_input_ext = serde_json::Map::new();
+        prop_input_ext.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_ext.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_ext_txt.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_ext),
+        );
+
+        let mut prop_pages_ext = serde_json::Map::new();
+        prop_pages_ext.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_pages_ext.insert(
+            "description".to_string(),
+            serde_json::Value::String(
+                "Pages to extract text from, e.g., '1,3,5-7' or 'all'.".to_string(),
+            ),
+        );
+        prop_ext_txt.insert(
+            "pages".to_string(),
+            serde_json::Value::Object(prop_pages_ext),
+        );
+
+        let mut prop_output_ext = serde_json::Map::new();
+        prop_output_ext.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_ext.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output text file path.".to_string()),
+        );
+        prop_ext_txt.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_ext),
+        );
+
+        schema_ext_txt.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_ext_txt),
+        );
+        let req_ext_txt = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ];
+        schema_ext_txt.insert(
+            "required".to_string(),
+            serde_json::Value::Array(req_ext_txt),
+        );
+
+        let mut tool_ext_txt = Tool::default();
+        tool_ext_txt.name = "pdf_extract_text".into();
+        tool_ext_txt.description = Some("Extracts raw text from a PDF.".into());
+        tool_ext_txt.input_schema = std::sync::Arc::new(schema_ext_txt);
+        tools.push(tool_ext_txt);
+
+        // Tool: pdf_extract_images
+        let mut schema_ext_img = serde_json::Map::new();
+        schema_ext_img.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_ext_img = serde_json::Map::new();
+
+        let mut prop_input_img = serde_json::Map::new();
+        prop_input_img.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_img.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_ext_img.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_img),
+        );
+
+        let mut prop_output_dir_img = serde_json::Map::new();
+        prop_output_dir_img.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_dir_img.insert(
+            "description".to_string(),
+            serde_json::Value::String("The directory where images will be saved.".to_string()),
+        );
+        prop_ext_img.insert(
+            "output_dir".to_string(),
+            serde_json::Value::Object(prop_output_dir_img),
+        );
+
+        schema_ext_img.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_ext_img),
+        );
+        let req_ext_img = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output_dir".to_string()),
+        ];
+        schema_ext_img.insert(
+            "required".to_string(),
+            serde_json::Value::Array(req_ext_img),
+        );
+
+        let mut tool_ext_img = Tool::default();
+        tool_ext_img.name = "pdf_extract_images".into();
+        tool_ext_img.description = Some("Extracts all embedded images from a PDF.".into());
+        tool_ext_img.input_schema = std::sync::Arc::new(schema_ext_img);
+        tools.push(tool_ext_img);
+
+        // Tool: pdf_search
+        let mut schema_search = serde_json::Map::new();
+        schema_search.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_search = serde_json::Map::new();
+
+        let mut prop_input_s = serde_json::Map::new();
+        prop_input_s.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_s.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_search.insert("input".to_string(), serde_json::Value::Object(prop_input_s));
+
+        let mut prop_query_s = serde_json::Map::new();
+        prop_query_s.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_query_s.insert(
+            "description".to_string(),
+            serde_json::Value::String("The text to search for.".to_string()),
+        );
+        prop_search.insert("query".to_string(), serde_json::Value::Object(prop_query_s));
+
+        schema_search.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_search),
+        );
+        let req_search = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("query".to_string()),
+        ];
+        schema_search.insert("required".to_string(), serde_json::Value::Array(req_search));
+
+        let mut tool_search = Tool::default();
+        tool_search.name = "pdf_search".into();
+        tool_search.description = Some("Searches for a text query inside a PDF.".into());
+        tool_search.input_schema = std::sync::Arc::new(schema_search);
+        tools.push(tool_search);
+
+        // Tool: pdf_watermark
+        let mut schema_wm = serde_json::Map::new();
+        schema_wm.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_wm = serde_json::Map::new();
+
+        let mut prop_input_w = serde_json::Map::new();
+        prop_input_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_wm.insert("input".to_string(), serde_json::Value::Object(prop_input_w));
+
+        let mut prop_text_w = serde_json::Map::new();
+        prop_text_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_text_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("The text to use as watermark.".to_string()),
+        );
+        prop_wm.insert("text".to_string(), serde_json::Value::Object(prop_text_w));
+
+        let mut prop_output_w = serde_json::Map::new();
+        prop_output_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        prop_wm.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_w),
+        );
+
+        schema_wm.insert("properties".to_string(), serde_json::Value::Object(prop_wm));
+        let req_wm = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("text".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ];
+        schema_wm.insert("required".to_string(), serde_json::Value::Array(req_wm));
+
+        let mut tool_wm = Tool::default();
+        tool_wm.name = "pdf_watermark".into();
+        tool_wm.description = Some("Applies a text watermark to a PDF.".into());
+        tool_wm.input_schema = std::sync::Arc::new(schema_wm);
+        tools.push(tool_wm);
+
+        // Tool: pdf_encrypt
+        let mut schema_enc = serde_json::Map::new();
+        schema_enc.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_enc = serde_json::Map::new();
+
+        let mut prop_input_e = serde_json::Map::new();
+        prop_input_e.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_e.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_enc.insert("input".to_string(), serde_json::Value::Object(prop_input_e));
+
+        let mut prop_pass_e = serde_json::Map::new();
+        prop_pass_e.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_pass_e.insert(
+            "description".to_string(),
+            serde_json::Value::String("The user password.".to_string()),
+        );
+        prop_enc.insert(
+            "password".to_string(),
+            serde_json::Value::Object(prop_pass_e),
+        );
+
+        let mut prop_output_e = serde_json::Map::new();
+        prop_output_e.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_e.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        prop_enc.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_e),
+        );
+
+        schema_enc.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_enc),
+        );
+        let req_enc = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("password".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ];
+        schema_enc.insert("required".to_string(), serde_json::Value::Array(req_enc));
+
+        let mut tool_enc = Tool::default();
+        tool_enc.name = "pdf_encrypt".into();
+        tool_enc.description = Some("Encrypts a PDF with a user password.".into());
+        tool_enc.input_schema = std::sync::Arc::new(schema_enc);
+        tools.push(tool_enc);
+
+        // Tool: pdf_decrypt
+        let mut schema_dec = serde_json::Map::new();
+        schema_dec.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_dec = serde_json::Map::new();
+
+        let mut prop_input_d = serde_json::Map::new();
+        prop_input_d.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_d.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_dec.insert("input".to_string(), serde_json::Value::Object(prop_input_d));
+
+        let mut prop_pass_d = serde_json::Map::new();
+        prop_pass_d.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_pass_d.insert(
+            "description".to_string(),
+            serde_json::Value::String("The user password.".to_string()),
+        );
+        prop_dec.insert(
+            "password".to_string(),
+            serde_json::Value::Object(prop_pass_d),
+        );
+
+        let mut prop_output_d = serde_json::Map::new();
+        prop_output_d.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_d.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        prop_dec.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_d),
+        );
+
+        schema_dec.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_dec),
+        );
+        let req_dec = vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("password".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ];
+        schema_dec.insert("required".to_string(), serde_json::Value::Array(req_dec));
+
+        let mut tool_dec = Tool::default();
+        tool_dec.name = "pdf_decrypt".into();
+        tool_dec.description = Some("Decrypts a PDF using the provided password.".into());
+        tool_dec.input_schema = std::sync::Arc::new(schema_dec);
+        tools.push(tool_dec);
+
+        // Tool: pdf_metadata
+        let mut schema_meta = serde_json::Map::new();
+        schema_meta.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_meta = serde_json::Map::new();
+
+        let mut prop_input_m = serde_json::Map::new();
+        prop_input_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_meta.insert("input".to_string(), serde_json::Value::Object(prop_input_m));
+
+        let mut prop_title_m = serde_json::Map::new();
+        prop_title_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_title_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new title.".to_string()),
+        );
+        prop_meta.insert("title".to_string(), serde_json::Value::Object(prop_title_m));
+
+        let mut prop_author_m = serde_json::Map::new();
+        prop_author_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_author_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new author.".to_string()),
+        );
+        prop_meta.insert(
+            "author".to_string(),
+            serde_json::Value::Object(prop_author_m),
+        );
+
+        let mut prop_output_m = serde_json::Map::new();
+        prop_output_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        prop_meta.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_m),
+        );
+
+        schema_meta.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_meta),
+        );
+        let req_meta = vec![serde_json::Value::String("input".to_string())]; // Output, title, author are optional
+        schema_meta.insert("required".to_string(), serde_json::Value::Array(req_meta));
+
+        let mut tool_meta = Tool::default();
+        tool_meta.name = "pdf_metadata".into();
+        tool_meta.description = Some("Reads (or writes) metadata to a PDF.".into());
+        tool_meta.input_schema = std::sync::Arc::new(schema_meta);
+        tools.push(tool_meta);
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -817,6 +1293,210 @@ impl PaperPilotMcpServer {
                     output_path: Some(output_dir),
                 })
             }
+
+            "pdf_compress" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::compress::CompressOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF compressed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_extract_text" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let pages = get_string("pages").ok();
+
+                let page_indices = if let Some(p) = pages {
+                    let parsed = parse_pages(&p)?;
+                    if parsed.is_empty() {
+                        None
+                    } else {
+                        Some(parsed)
+                    }
+                } else {
+                    None
+                };
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(
+                    page_indices,
+                );
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let text = op
+                    .extracted_text
+                    .lock()
+                    .unwrap()
+                    .clone()
+                    .unwrap_or_default();
+                std::fs::write(&output, text)
+                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Text extracted successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_extract_images" => {
+                let input = get_string("input")?;
+                let output_dir = get_string("output_dir")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::extract_images::ExtractImagesOperation::new(
+                    std::path::PathBuf::from(&output_dir),
+                );
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Images extracted successfully.".to_string(),
+                    output_path: Some(output_dir),
+                })
+            }
+
+            "pdf_search" => {
+                let input = get_string("input")?;
+                let query = get_string("query")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let matches = op.match_pages.lock().unwrap().clone();
+                let message = if matches.is_empty() {
+                    "No matches found.".to_string()
+                } else {
+                    format!("Matches found on pages: {:?}", matches)
+                };
+
+                Ok(OperationResult {
+                    success: true,
+                    message,
+                    output_path: None,
+                })
+            }
+
+            "pdf_watermark" => {
+                let input = get_string("input")?;
+                let text = get_string("text")?;
+                let output = get_string("output")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Watermark applied successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_encrypt" => {
+                let input = get_string("input")?;
+                let password = get_string("password")?;
+                let output = get_string("output")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let mut op = paperpilot_pdf::operations::encrypt::EncryptOperation::new();
+                op.user_password = Some(password.clone());
+                op.owner_password = Some(password);
+
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF encrypted successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_decrypt" => {
+                let input = get_string("input")?;
+                let password = get_string("password")?;
+                let output = get_string("output")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(Some(password));
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF decrypted successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_metadata" => {
+                let input = get_string("input")?;
+                let title = get_string("title").ok();
+                let author = get_string("author").ok();
+                let output = get_string("output").ok();
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let mut op = paperpilot_pdf::operations::metadata::MetadataOperation::new();
+                op.title = title;
+                op.author = author;
+
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let mut is_update = false;
+                if let Some(out_path) = &output {
+                    doc.save(&std::path::PathBuf::from(out_path))
+                        .map_err(crate::error::to_mcp_error)?;
+                    is_update = true;
+                }
+
+                let message = if is_update {
+                    "Metadata updated successfully.".to_string()
+                } else {
+                    let map = op.retrieved_metadata.lock().unwrap().clone();
+                    if map.is_empty() {
+                        "No metadata found.".to_string()
+                    } else {
+                        format!("Metadata: {:?}", map)
+                    }
+                };
+
+                Ok(OperationResult {
+                    success: true,
+                    message,
+                    output_path: output,
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -829,6 +1509,7 @@ impl PaperPilotMcpServer {
     }
 }
 
+#[allow(clippy::manual_async_fn)]
 impl ServerHandler for PaperPilotMcpServer {
     fn list_tools(
         &self,
@@ -854,11 +1535,10 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 8);
+        assert_eq!(res.tools.len(), 16);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }
-
 
     #[test]
     fn test_execute_call_tool_unknown() {
@@ -876,7 +1556,7 @@ mod tests {
             "inputs".to_string(),
             serde_json::Value::Array(vec![
                 serde_json::Value::String("dummy1.pdf".to_string()),
-                serde_json::Value::String("dummy2.pdf".to_string())
+                serde_json::Value::String("dummy2.pdf".to_string()),
             ]),
         );
         args.insert(
@@ -909,6 +1589,44 @@ mod tests {
 
         let res = PaperPilotMcpServer::execute_call_tool(request);
         assert!(res.is_err()); // Due to file not found
+    }
+
+    #[test]
+    fn test_execute_call_tool_extract_text() {
+        let mut args = serde_json::Map::new();
+        args.insert(
+            "input".to_string(),
+            serde_json::Value::String("dummy.pdf".to_string()),
+        );
+        args.insert(
+            "output".to_string(),
+            serde_json::Value::String("out.txt".to_string()),
+        );
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_extract_text".into();
+        request.arguments = Some(args);
+
+        let res = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_metadata() {
+        let mut args = serde_json::Map::new();
+        args.insert(
+            "input".to_string(),
+            serde_json::Value::String("dummy.pdf".to_string()),
+        );
+        args.insert(
+            "title".to_string(),
+            serde_json::Value::String("My Title".to_string()),
+        );
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_metadata".into();
+        request.arguments = Some(args);
+
+        let res = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(res.is_err());
     }
 
     #[test]

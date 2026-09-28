@@ -80,6 +80,7 @@ pub fn handle_rotate(
 
     let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(
         degrees.try_into().unwrap_or(0),
+        None,
     );
     op.execute(&mut doc)?;
     doc.save(output)
