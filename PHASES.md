@@ -38,10 +38,10 @@ Design the internal interfaces before implementing anything. This prevents tight
 
 | # | Task | Notes |
 |---|---|---|
-| 1.2.1 | Define `PdfDocument` trait ⏳ | Delegated to Jules (Session 803802133789731818) |
-| 1.2.2 | Define `PdfOperation` trait ⏳ | Delegated to Jules (Session 803802133789731818) |
-| 1.2.3 | Define `OperationResult` and error types ⏳ | Delegated to Jules (Session 6267567952319900834) |
-| 1.2.4 | Define `JobProgress` event type ⏳ | Delegated to Jules (Session 6267567952319900834) |
+| ~~1.2.1~~ ✓ | ~~Define `PdfDocument` trait~~ | Completed by Jules (Session 803802133789731818) |
+| ~~1.2.2~~ ✓ | ~~Define `PdfOperation` trait~~ | Completed by Jules (Session 803802133789731818) |
+| ~~1.2.3~~ ✓ | ~~Define `OperationResult` and error types~~ | Completed by Jules (Session 6267567952319900834) |
+| ~~1.2.4~~ ✓ | ~~Define `JobProgress` event type~~ | Completed by Jules (Session 6267567952319900834) |
 
 ---
 
