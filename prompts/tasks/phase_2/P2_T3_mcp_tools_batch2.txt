@@ -1,0 +1,53 @@
+# [P2_T3: MCP Tool Implementations - Batch 2]
+
+## Overview
+You are tasked with implementing the second batch of MCP tools for PaperPilot. We are hooking up the Group B & C PDF operations (Compress, Extract Text, Extract Images, Search, Watermark, Encrypt, Decrypt, Metadata) to the MCP server.
+
+Continue using the manual `ServerHandler` trait implementation pattern in `paperpilot-mcp/src/server.rs`. 
+
+## Specifications
+
+### 1. Register Tools in `execute_list_tools`
+For each of the following tools, build a JSON schema and append a `rmcp::model::Tool` to the `ListToolsResult`.
+
+**Tools to register:**
+1. `pdf_compress`: Compresses a PDF to reduce file size.
+   - Input: `input` (String - file path), `output` (String)
+2. `pdf_extract_text`: Extracts raw text from a PDF.
+   - Input: `input` (String), `pages` (String - optional, e.g., "1-5"), `output` (String)
+3. `pdf_extract_images`: Extracts all embedded images from a PDF.
+   - Input: `input` (String), `output_dir` (String)
+4. `pdf_search`: Searches for a text query inside a PDF.
+   - Input: `input` (String), `query` (String)
+5. `pdf_watermark`: Applies a text watermark to a PDF.
+   - Input: `input` (String), `text` (String), `output` (String)
+6. `pdf_encrypt`: Encrypts a PDF with a user password.
+   - Input: `input` (String), `password` (String), `output` (String)
+7. `pdf_decrypt`: Decrypts a PDF using the provided password.
+   - Input: `input` (String), `password` (String), `output` (String)
+8. `pdf_metadata`: Reads (or writes) metadata to a PDF.
+   - Input: `input` (String), `title` (String - optional), `author` (String - optional), `output` (String - optional)
+
+*Note: Ensure the descriptions in the `Tool` definitions clearly articulate the expected formats so AI agents know exactly how to use them.*
+
+### 2. Implement Execution in `execute_call_tool`
+Add a match arm for each tool name in `execute_call_tool()`.
+
+**Execution flow:**
+1. Parse the `arguments` `serde_json::Map`. Return `ErrorData::invalid_params` if required arguments are missing.
+2. Convert file path strings to `std::path::PathBuf`.
+3. Call the corresponding operation in the `paperpilot_pdf::operations::*` module (e.g., `paperpilot_pdf::operations::compress::compress_pdf`).
+4. On success, serialize the returned `paperpilot_core::error::OperationResult` struct to JSON and wrap it in a `ContentBlock::text`.
+5. On failure, map the `PdfError` to `ErrorData` using `crate::error::to_mcp_error(err)`.
+
+## Implementation Hints & Tips
+
+- **Search results:** `pdf_search` might return a complex `OperationResult` or just a message with the occurrences. Ensure it serializes cleanly.
+- **Optional arguments:** Use `.and_then(|val| val.as_str())` carefully for tools like `pdf_metadata` and `pdf_extract_text` where some arguments are optional.
+- **Testing:** Add at least two unit tests in `server.rs` (e.g., `test_execute_call_tool_extract_text` and `test_execute_call_tool_metadata`). You can use mock file paths.
+- **Rule 6 Reminder:** Prefix your questions/updates with `[P2_T3: MCP Tool Implementations - Batch 2]`.
+
+## Exit Criteria
+- `execute_list_tools` exposes all 8 Batch 2 tools with valid JSON schemas.
+- `execute_call_tool` successfully routes and executes all 8 tools.
+- `cargo test -p paperpilot-mcp` passes cleanly.

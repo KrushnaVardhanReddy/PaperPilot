@@ -1,0 +1,53 @@
+# [P2_T2: MCP Tool Implementations - Batch 1]
+
+## Overview
+You are tasked with implementing the first batch of MCP tools for PaperPilot. We are hooking up the Group A PDF operations (Merge, Split, Extract Pages, Delete Pages, Reorder Pages, Rotate, Crop, Burst) to the newly established MCP server foundation. 
+
+You must continue using the manual `ServerHandler` trait implementation pattern in `paperpilot-mcp/src/server.rs`. Do NOT use the `rmcp` macros, as they proved fragile.
+
+## Specifications
+
+### 1. Register Tools in `execute_list_tools`
+For each of the following tools, build a JSON schema and add a `rmcp::model::Tool` to the `ListToolsResult`.
+
+**Tools to register:**
+1. `pdf_merge`: Merges multiple PDFs into one.
+   - Input: `inputs` (Array of Strings - file paths), `output` (String - file path)
+2. `pdf_split`: Splits a PDF into multiple single-page PDFs.
+   - Input: `input` (String), `output_dir` (String)
+3. `pdf_extract_pages`: Extracts specific pages into a new PDF.
+   - Input: `input` (String), `pages` (String - e.g., "1,3,5-7"), `output` (String)
+4. `pdf_delete_pages`: Deletes specific pages.
+   - Input: `input` (String), `pages` (String), `output` (String)
+5. `pdf_reorder_pages`: Reorders pages.
+   - Input: `input` (String), `order` (String - e.g., "3,2,1"), `output` (String)
+6. `pdf_rotate`: Rotates pages in a PDF.
+   - Input: `input` (String), `pages` (String - "all" or specific pages), `angle` (Number - 90, 180, 270), `output` (String)
+7. `pdf_crop`: Crops pages to specific dimensions.
+   - Input: `input` (String), `box` (String - e.g., "0,0,595,842"), `output` (String)
+8. `pdf_burst`: Bursts a PDF into individual files, returning the path of each.
+   - Input: `input` (String), `output_dir` (String)
+
+*Note: Ensure the descriptions in the `Tool` definitions are extremely clear, as AI agents will rely on them to understand how to use the tool.*
+
+### 2. Implement Execution in `execute_call_tool`
+Add a match arm for each tool name in `execute_call_tool()`.
+
+**Execution flow:**
+1. Parse the `arguments` `serde_json::Map`. Return `ErrorData::invalid_params` if required arguments are missing or malformed.
+2. Convert file path strings to `std::path::PathBuf`.
+3. Call the corresponding operation in the `paperpilot_pdf::operations::*` module. (e.g., `paperpilot_pdf::operations::merge::merge_pdfs`).
+4. On success, serialize the `paperpilot_core::error::OperationResult` struct to JSON and wrap it in a `ContentBlock::text`. 
+5. On failure, map the `PdfError` to `ErrorData` using `crate::error::to_mcp_error(err)`.
+
+## Implementation Hints & Tips
+
+- **Validation:** Sanitize and validate the `pages` string formats before passing them down to the engine, returning an early `ErrorData` if they are invalid.
+- **Dependency:** You will need to add `paperpilot-pdf = { path = "../paperpilot-pdf" }` and `paperpilot-core = { path = "../paperpilot-core" }` to `paperpilot-mcp/Cargo.toml` to access the operations and the `OperationResult` struct.
+- **Testing:** Write unit tests for at least two of the new tools in `server.rs` (e.g., `test_execute_call_tool_merge` and `test_execute_call_tool_split`). You can use mock file paths for testing parameter parsing since the operations will fail on non-existent paths (which is an acceptable assertion for the routing test).
+- **Rule 6 Reminder:** Prefix your questions/updates with `[P2_T2: MCP Tool Implementations - Batch 1]`.
+
+## Exit Criteria
+- `execute_list_tools` exposes all 8 Group A tools with perfectly formed JSON schemas.
+- `execute_call_tool` successfully routes and executes all 8 tools.
+- `cargo test -p paperpilot-mcp` passes cleanly.
