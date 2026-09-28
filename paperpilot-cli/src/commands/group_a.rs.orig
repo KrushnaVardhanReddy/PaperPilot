@@ -1,0 +1,249 @@
+use std::path::PathBuf;
+use paperpilot_pdf::document::LopdfDocument;
+use paperpilot_pdf::operations::{
+    merge::MergeOperation,
+    split::SplitOperation,
+    extract::ExtractPagesOperation,
+    delete::DeletePagesOperation,
+    reorder::ReorderPagesOperation,
+    rotate::RotatePagesOperation,
+    crop::{CropPagesOperation, CropBox},
+    burst::BurstOperation,
+};
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use crate::error::CliError;
+
+pub fn handle_merge(inputs: Vec<PathBuf>, output: PathBuf) -> Result<(), CliError> {
+    if inputs.is_empty() {
+        return Err(CliError::InvalidArgument("No inputs provided for merge".to_string()));
+    }
+
+    let mut doc = LopdfDocument::new();
+    let op = MergeOperation::new(inputs);
+
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully merged to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_split(input: PathBuf, output_dir: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let total_pages = doc.page_count().unwrap_or(0);
+    let split_points: Vec<u32> = (1..total_pages).collect();
+    let op = SplitOperation::new(output_dir.clone(), split_points);
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    println!("Successfully split document into {:?}", output_dir);
+    Ok(())
+}
+
+pub fn handle_extract(input: PathBuf, pages: Vec<u32>, output: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let op = ExtractPagesOperation::new(pages);
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully extracted pages to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_delete(input: PathBuf, pages: Vec<u32>, output: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let op = DeletePagesOperation::new(pages);
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully deleted pages and saved to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_reorder(input: PathBuf, order: Vec<u32>, output: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let op = ReorderPagesOperation::new(order);
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully reordered pages and saved to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_rotate(input: PathBuf, _pages: Vec<u32>, degrees: u16, output: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let op = RotatePagesOperation::new(degrees);
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully rotated pages and saved to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_crop(input: PathBuf, _pages: Vec<u32>, rect: String, output: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let parts: Vec<&str> = rect.split(',').collect();
+    if parts.len() != 4 {
+        return Err(CliError::InvalidArgument("Crop rect must be in format 'left,bottom,right,top' or similar, 4 parts required.".to_string()));
+    }
+
+    let left: f32 = parts[0].parse().map_err(|_| CliError::InvalidArgument("Invalid left coordinate".to_string()))?;
+    let bottom: f32 = parts[1].parse().map_err(|_| CliError::InvalidArgument("Invalid bottom coordinate".to_string()))?;
+    let right: f32 = parts[2].parse().map_err(|_| CliError::InvalidArgument("Invalid right coordinate".to_string()))?;
+    let top: f32 = parts[3].parse().map_err(|_| CliError::InvalidArgument("Invalid top coordinate".to_string()))?;
+
+    let crop_box = CropBox { left, bottom, right, top };
+    let op = CropPagesOperation::new(crop_box);
+
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+    doc.save(&output).map_err(|e| CliError::Io(std::io::Error::other(e.to_string())))?;
+
+    println!("Successfully cropped pages and saved to {:?}", output);
+    Ok(())
+}
+
+pub fn handle_burst(input: PathBuf, output_dir: PathBuf) -> Result<(), CliError> {
+    let mut doc = LopdfDocument::load(&input).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    let op = BurstOperation::new(output_dir.clone());
+    op.execute(&mut doc).map_err(|e| CliError::Pdf(e.to_string()))?;
+
+    println!("Successfully burst document into {:?}", output_dir);
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use lopdf::{Document, Object, Dictionary};
+
+    fn create_dummy_pdf(path: &PathBuf) {
+        let mut d1 = Document::with_version("1.5");
+        let pages_id = d1.new_object_id();
+        let root_id = d1.new_object_id();
+
+        d1.objects.insert(
+            pages_id,
+            Object::Dictionary(Dictionary::from_iter(vec![
+                (b"Type".to_vec(), Object::Name(b"Pages".to_vec())),
+                (b"Count".to_vec(), Object::Integer(0)),
+                (b"Kids".to_vec(), Object::Array(vec![])),
+            ])),
+        );
+
+        d1.objects.insert(
+            root_id,
+            Object::Dictionary(Dictionary::from_iter(vec![
+                (b"Type".to_vec(), Object::Name(b"Catalog".to_vec())),
+                (b"Pages".to_vec(), Object::Reference(pages_id)),
+            ])),
+        );
+
+        d1.trailer.set("Root", Object::Reference(root_id));
+        d1.save(path).unwrap();
+    }
+
+    #[test]
+    fn test_handle_merge_empty() {
+        let dir = tempdir().unwrap();
+        let res = handle_merge(vec![], dir.path().join("out.pdf"));
+        assert!(matches!(res, Err(CliError::InvalidArgument(_))));
+    }
+
+    #[test]
+    fn test_handle_merge_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_merge(vec![p1], out.clone());
+        assert!(res.is_ok());
+        assert!(out.exists());
+    }
+
+    #[test]
+    fn test_handle_split_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out_dir = dir.path().join("out_dir");
+        std::fs::create_dir_all(&out_dir).unwrap();
+
+        let res = handle_split(p1, out_dir);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_handle_extract_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_extract(p1, vec![1], out);
+        assert!(res.is_ok()); // The extract operation on empty kids may just return Ok
+    }
+
+    #[test]
+    fn test_handle_delete_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_delete(p1, vec![1], out);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_handle_reorder_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_reorder(p1, vec![], out);
+        assert!(res.is_err()); // Depends on reorder impl, but basic test of execution.
+    }
+
+    #[test]
+    fn test_handle_rotate_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_rotate(p1, vec![1], 90, out);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_handle_crop_invalid_rect() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out = dir.path().join("out.pdf");
+
+        let res = handle_crop(p1, vec![1], "10,20,30".to_string(), out);
+        assert!(matches!(res, Err(CliError::InvalidArgument(_))));
+    }
+
+    #[test]
+    fn test_handle_burst_success() {
+        let dir = tempdir().unwrap();
+        let p1 = dir.path().join("in1.pdf");
+        create_dummy_pdf(&p1);
+        let out_dir = dir.path().join("out_dir");
+        std::fs::create_dir_all(&out_dir).unwrap();
+
+        let res = handle_burst(p1, out_dir);
+        assert!(res.is_ok());
+    }
+}

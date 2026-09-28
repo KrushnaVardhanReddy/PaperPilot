@@ -21,7 +21,7 @@ impl PdfOperation for RotatePagesOperation {
                 PdfError::UnsupportedOperation("Document is not a LopdfDocument".to_string())
             })?;
 
-        if self.degrees % 90 != 0 {
+        if !self.degrees.is_multiple_of(90) {
             return Err(PdfError::UnsupportedOperation(
                 "Rotation must be a multiple of 90 degrees".to_string(),
             ));
