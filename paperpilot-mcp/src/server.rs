@@ -1065,6 +1065,26 @@ impl PaperPilotMcpServer {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
+        let ensure_parent_dir = |path_str: &str| -> Result<(), ErrorData> {
+            if let Some(parent) = std::path::PathBuf::from(path_str).parent() {
+                let os_str = parent.as_os_str();
+                if !os_str.is_empty() {
+                    std::fs::create_dir_all(parent).map_err(|e| {
+                        ErrorData::invalid_params(
+                            format!("Failed to create parent directory: {}", e),
+                            None,
+                        )
+                    })?;
+                }
+            }
+            Ok(())
+        };
+
+        let ensure_dir = |path_str: &str| -> Result<(), ErrorData> {
+            std::fs::create_dir_all(path_str).map_err(|e| {
+                ErrorData::invalid_params(format!("Failed to create directory: {}", e), None)
+            })
+        };
 
         let parse_pages = |pages_str: &str| -> Result<Vec<u32>, ErrorData> {
             if pages_str.to_lowercase() == "all" {
@@ -1104,6 +1124,7 @@ impl PaperPilotMcpServer {
             "pdf_merge" => {
                 let inputs = get_string_array("inputs")?;
                 let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
                 let paths: Vec<PathBuf> = inputs.into_iter().map(PathBuf::from).collect();
 
                 let mut doc = LopdfDocument::new();
@@ -1144,6 +1165,8 @@ impl PaperPilotMcpServer {
                 let pages = get_string("pages")?;
                 let output = get_string("output")?;
 
+                ensure_parent_dir(&output)?;
+
                 let page_indices = parse_pages(&pages)?;
 
                 let mut doc = LopdfDocument::load(&PathBuf::from(&input))
@@ -1164,6 +1187,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let pages = get_string("pages")?;
                 let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
 
                 let page_indices = parse_pages(&pages)?;
 
@@ -1186,6 +1211,8 @@ impl PaperPilotMcpServer {
                 let order = get_string("order")?;
                 let output = get_string("output")?;
 
+                ensure_parent_dir(&output)?;
+
                 let new_order = parse_pages(&order)?;
 
                 let mut doc = LopdfDocument::load(&PathBuf::from(&input))
@@ -1206,6 +1233,8 @@ impl PaperPilotMcpServer {
                 let pages = get_string("pages")?;
                 let angle = get_number("angle")?;
                 let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
 
                 let page_indices = parse_pages(&pages)?;
                 let opt_pages = if page_indices.is_empty() {
@@ -1234,6 +1263,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let box_str = get_string("box")?;
                 let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
 
                 let bounds: Vec<&str> = box_str.split(',').collect();
                 if bounds.len() != 4 {
@@ -1298,6 +1329,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
+                ensure_parent_dir(&output)?;
+
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
                 let op = paperpilot_pdf::operations::compress::CompressOperation::new();
@@ -1316,6 +1349,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 let pages = get_string("pages").ok();
+
+                ensure_parent_dir(&output)?;
 
                 let page_indices = if let Some(p) = pages {
                     let parsed = parse_pages(&p)?;
@@ -1355,6 +1390,8 @@ impl PaperPilotMcpServer {
             "pdf_extract_images" => {
                 let input = get_string("input")?;
                 let output_dir = get_string("output_dir")?;
+
+                ensure_dir(&output_dir)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
@@ -1400,6 +1437,8 @@ impl PaperPilotMcpServer {
                 let text = get_string("text")?;
                 let output = get_string("output")?;
 
+                ensure_parent_dir(&output)?;
+
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
 
@@ -1419,6 +1458,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let password = get_string("password")?;
                 let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
@@ -1442,6 +1483,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let password = get_string("password")?;
                 let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
@@ -1475,6 +1518,7 @@ impl PaperPilotMcpServer {
 
                 let mut is_update = false;
                 if let Some(out_path) = &output {
+                    ensure_parent_dir(out_path)?;
                     doc.save(&std::path::PathBuf::from(out_path))
                         .map_err(crate::error::to_mcp_error)?;
                     is_update = true;
