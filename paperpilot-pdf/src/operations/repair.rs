@@ -1,6 +1,6 @@
+use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use crate::document::LopdfDocument;
 
 pub struct RepairOperation;
 
