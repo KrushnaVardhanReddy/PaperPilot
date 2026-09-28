@@ -1,9 +1,24 @@
 use crate::error::OperationResult;
+use std::any::Any;
 use std::path::Path;
+
+pub trait AsAny {
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl<T: Any> AsAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
 
 /// Represents a PDF document and operations that can be performed on it.
 /// This acts as an architectural boundary separating the core logic from specific PDF engine implementations.
-pub trait PdfDocument {
+pub trait PdfDocument: AsAny {
     /// Returns the number of pages in the document.
     fn page_count(&self) -> OperationResult<u32>;
 

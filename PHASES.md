@@ -54,14 +54,14 @@ All operations are independent of each other and can be built in parallel once t
 #### Group A — Page Manipulation
 | # | Task | Notes |
 |---|---|---|
-| 1.3.1 | Merge | Combine N PDFs into one |
-| 1.3.2 | Split | Split by page range or every N pages |
-| 1.3.3 | Extract pages | Pull specific pages into a new PDF |
-| 1.3.4 | Delete pages | Remove pages by number/range |
-| 1.3.5 | Reorder pages | Reorder by providing new page index array |
-| 1.3.6 | Rotate pages | 90/180/270 degrees, specific pages or all |
-| 1.3.7 | Crop pages | Trim page margins/content box |
-| 1.3.8 | Burst | Split every page into its own individual PDF file |
+| 1.3.1 | Merge ⏳ | Delegated to Jules (Session 2375117738102953150) |
+| 1.3.2 | Split ⏳ | Delegated to Jules (Session 2375117738102953150) |
+| 1.3.3 | Extract pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.4 | Delete pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.5 | Reorder pages ⏳ | Delegated to Jules (Session 1757891711996002541) |
+| 1.3.6 | Rotate pages ⏳ | Delegated to Jules (Session 12203497870162599469) |
+| 1.3.7 | Crop pages ⏳ | Delegated to Jules (Session 12203497870162599469) |
+| 1.3.8 | Burst ⏳ | Delegated to Jules (Session 2375117738102953150) |
 
 #### Group B — Document Operations
 | # | Task | Notes |
@@ -121,6 +121,7 @@ Write tests alongside each operation, not after.
 | 1.4.3 | Fixture-based integration tests | Run all operations against the test corpus |
 | 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
 | 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
+| 1.4.6 | PDF Validation layer | Pre-flight checks before every operation: magic bytes, encryption, page range bounds, file size, output path writability |
 
 ---
 
@@ -143,9 +144,13 @@ Write tests alongside each operation, not after.
 | 1.5.11 | `watermark` command | |
 | 1.5.12 | `encrypt` / `decrypt` commands | |
 | 1.5.13 | `search` command | |
-| 1.5.14 | Progress output | Print progress to stderr for long operations |
-| 1.5.15 | JSON output mode | `--json` flag for scripting/piping |
-| 1.5.16 | CLI integration tests | Spawn binary, check outputs |
+| 1.5.14 | `validate` command | Pre-flight checks: magic bytes, encryption, corruption, page bounds |
+| 1.5.15 | Progress output | Print progress to stderr for long operations |
+| 1.5.16 | JSON output mode | `--json` flag for scripting/piping |
+| 1.5.17 | Webhook support | `--webhook <url>` fires HTTP POST on completion or failure |
+| 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
+| 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
+| 1.5.20 | CLI integration tests | Spawn binary, check outputs |
 
 ---
 
