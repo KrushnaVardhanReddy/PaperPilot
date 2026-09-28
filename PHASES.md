@@ -280,6 +280,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.4.7 | Encrypt/Decrypt UI | Password input, options |
 | 3.4.8 | Extract UI | Pages, text, images — separate modes |
 | 3.4.9 | Output file picker | Choose output path before running |
+| 3.4.10 | Audio Command Interface | Microphone input for NLP-driven PDF manipulation (integrates with Phase 2 MCP) |
 
 ---
 
