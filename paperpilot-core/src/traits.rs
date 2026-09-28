@@ -1,4 +1,5 @@
 use crate::error::OperationResult;
+use std::any::Any;
 use std::path::Path;
 
 /// Represents a PDF document and operations that can be performed on it.
@@ -9,6 +10,9 @@ pub trait PdfDocument {
 
     /// Saves the document to the specified path.
     fn save(&self, path: &Path) -> OperationResult<()>;
+
+    /// Returns this trait as `Any` so we can downcast.
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 /// Represents an operation that can be executed against a PDF document.
@@ -33,6 +37,10 @@ mod tests {
 
         fn save(&self, _path: &Path) -> OperationResult<()> {
             Ok(())
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
         }
     }
 
