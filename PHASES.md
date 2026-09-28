@@ -131,19 +131,19 @@ Write tests alongside each operation, not after.
 
 | # | Task | Notes |
 |---|---|---|
-| 1.5.1 | CLI scaffold | `clap`-based argument parser, subcommand structure |
-| 1.5.2 | `merge` command | |
-| 1.5.3 | `split` command | |
-| 1.5.4 | `extract` command | |
-| 1.5.5 | `remove` command | |
-| 1.5.6 | `reorder` command | |
-| 1.5.7 | `rotate` command | |
-| 1.5.8 | `compress` command | |
-| 1.5.9 | `extract-text` command | |
-| 1.5.10 | `extract-images` command | |
-| 1.5.11 | `watermark` command | |
-| 1.5.12 | `encrypt` / `decrypt` commands | |
-| 1.5.13 | `search` command | |
+| 1.5.1 | CLI scaffold ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.2 | `merge` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.3 | `split` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.4 | `extract` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.5 | `remove` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.6 | `reorder` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.7 | `rotate` command ⏳ | Delegated to Jules (Session 17656500841359014291) |
+| 1.5.8 | `compress` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
+| 1.5.9 | `extract-text` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
+| 1.5.10 | `extract-images` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
+| 1.5.11 | `watermark` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
+| 1.5.12 | `encrypt` / `decrypt` commands ⏳ | Delegated to Jules (Session 3094407989243688221) |
+| 1.5.13 | `search` command ⏳ | Delegated to Jules (Session 3094407989243688221) |
 | 1.5.14 | `validate` command | Pre-flight checks: magic bytes, encryption, corruption, page bounds |
 | 1.5.15 | Progress output | Print progress to stderr for long operations |
 | 1.5.16 | JSON output mode | `--json` flag for scripting/piping |
