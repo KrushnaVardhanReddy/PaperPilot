@@ -265,7 +265,7 @@ def main():
         dry_run = "--dry-run" in args
         files = _find_phase_files(phase_num)
         action = "Previewing" if dry_run else "Submitting"
-        print(f"\ud83d\udcc5 {action} {len(files)} pending task(s) for Phase {phase_num}...")
+        print(f"📅 {action} {len(files)} pending task(s) for Phase {phase_num}...")
         for filepath in files:
             submit_file(filepath, label=os.path.basename(filepath), dry_run=dry_run)
         sys.exit(0)
