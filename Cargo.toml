@@ -2,6 +2,6 @@
 members = [
     "paperpilot-core",
     "paperpilot-pdf",
-    "paperpilot-cli",
+    "paperpilot-cli", "paperpilot-mcp",
 ]
 resolver = "2"
