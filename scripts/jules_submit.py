@@ -62,9 +62,9 @@ SAFETY_RULES = """
 MANDATORY RULES — VIOLATION = REJECTED PR:
 1. NEVER stub, mock, or TODO existing implementation code. Write real, working code only.
 2. Commit message must start with "jules: " prefix.
-3. Use clean module design and idiomatic Go architecture. No spaghetti code.
+3. Use clean module design and idiomatic Rust architecture. No spaghetti code.
 4. NEVER hardcode secrets, API keys, or local paths — always read from environment variables.
-5. UNIT TESTS REQUIRED: For every Go file you create or modify, you MUST write an accompanying `_test.go` file with 100% coverage.
+5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
 
 Project: PaperPilot
 Tech stack:
