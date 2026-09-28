@@ -8,8 +8,6 @@ use paperpilot_pdf::operations::rotate::RotatePagesOperation;
 use paperpilot_pdf::operations::extract_text::ExtractTextOperation;
 use paperpilot_pdf::operations::watermark::WatermarkOperation;
 
-use std::sync::{Arc, Mutex};
-use std::path::PathBuf;
 
 fn create_test_pdf(path: &std::path::Path) {
     let mut doc = Document::with_version("1.5");

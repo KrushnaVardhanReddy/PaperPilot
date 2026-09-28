@@ -1,0 +1,250 @@
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+
+#[derive(Parser, Debug)]
+#[command(name = "paperpilot", version, about = "A fast, privacy-first PDF manipulation tool")]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
+
+    /// Output result as JSON
+    #[arg(global = true, long)]
+    pub json: bool,
+
+    /// Post result as JSON to webhook URL
+    #[arg(global = true, long)]
+    pub webhook: Option<String>,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    // --- Group A: Page Manipulation ---
+    Merge {
+        #[arg(long, required = true)]
+        input: Vec<PathBuf>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Split {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Extract {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Delete {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Reorder {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        order: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Rotate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        degrees: i32,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Crop {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        rect: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Burst {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+
+    // --- Group B: Document Operations ---
+    Compress {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        quality: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Repair {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Linearize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Encrypt {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        user_password: Option<String>,
+        #[arg(long)]
+        owner_password: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Decrypt {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        password: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Watermark {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        text: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Redact {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        pages: String,
+        #[arg(long)]
+        rect: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Metadata {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        author: Option<String>,
+        #[arg(long)]
+        subject: Option<String>,
+        #[arg(long)]
+        keywords: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Signature {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        cert: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Flatten {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    PdfA {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    HeaderFooter {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        text: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Bates {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        prefix: String,
+        #[arg(long)]
+        start: u32,
+        #[arg(long)]
+        output: PathBuf,
+    },
+
+    // --- Group C & D: Extraction, Search & Conversion ---
+    ExtractText {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    ExtractImages {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Search {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        query: String,
+    },
+    Render {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Compare {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        input_b: PathBuf,
+    },
+    Ocr {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    Bookmarks {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    ImagesToPdf {
+        #[arg(long, required = true)]
+        images: Vec<PathBuf>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+
+    // --- Validate ---
+    Validate {
+        #[arg(long)]
+        input: PathBuf,
+    },
+}
