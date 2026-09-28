@@ -78,7 +78,7 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.18 | Flatten ✅ | Merged (Session 12850003959773306225) |
 | 1.3.19 | PDF/A conversion ✅ | Merged (Session 12850003959773306225) |
 | 1.3.20 | Header/Footer ✅ | Merged (Session 8470929282963705394) |
-| 1.3.21 | Bates numbering | Sequential legal stamping on pages (e.g. SMITH0001) |
+| 1.3.21 | Bates numbering ⏳ | Delegated to Jules (Session 12785657976803298608) |
 
 #### Group C — Extraction & Search
 | # | Task | Notes |
