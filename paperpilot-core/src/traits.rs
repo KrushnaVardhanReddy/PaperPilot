@@ -1,14 +1,18 @@
 use crate::error::OperationResult;
+use std::any::Any;
 use std::path::Path;
 
 /// Represents a PDF document and operations that can be performed on it.
 /// This acts as an architectural boundary separating the core logic from specific PDF engine implementations.
-pub trait PdfDocument {
+pub trait PdfDocument: Any {
     /// Returns the number of pages in the document.
     fn page_count(&self) -> OperationResult<u32>;
 
     /// Saves the document to the specified path.
     fn save(&self, path: &Path) -> OperationResult<()>;
+
+    /// Returns a mutable reference to the underlying Any type.
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 /// Represents an operation that can be executed against a PDF document.
@@ -33,6 +37,10 @@ mod tests {
 
         fn save(&self, _path: &Path) -> OperationResult<()> {
             Ok(())
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
         }
     }
 
