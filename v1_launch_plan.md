@@ -16,7 +16,7 @@ The goal is to complete all of these base version tasks by tomorrow, followed by
 
 ### Phase 2 (MCP Server) — 1 tool left
 | Task | What | Status |
-| 2.2.13 | `pdf_sign` tool (DocuSign / local signatures) | 🚧 In Progress (Session 17653366013174748041) |
+| 2.2.13 | `pdf_sign` tool (DocuSign / local signatures) | ✅ Completed |
 
 > *Note: MCP tool wiring for Groups B & C (2.4.1–2.4.13) is ✅ Merged.*
 
