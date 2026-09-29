@@ -3016,6 +3016,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "make-fixtures"
+version = "0.1.0"
+dependencies = [
+ "lopdf",
+]
+
+[[package]]
 name = "markup5ever"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

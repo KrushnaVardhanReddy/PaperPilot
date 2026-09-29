@@ -2,6 +2,7 @@
 members = [
     "paperpilot-core",
     "paperpilot-pdf",
-    "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri"
+    "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri",
+    "tools/make-fixtures"
 ]
 resolver = "2"

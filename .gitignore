@@ -6,6 +6,7 @@ dist/
 build/
 *.pdf
 !tests/fixtures/*.pdf
+!paperpilot-pdf/tests/fixtures/*.pdf
 pricing_strategy.md
 COMPETITORS.md
 v1_launch_plan.md
