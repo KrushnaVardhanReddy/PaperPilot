@@ -31,6 +31,7 @@ pub trait StoragePort: Send + Sync {
 pub struct LocalFileStorage;
 
 impl StoragePort for LocalFileStorage {
+    #[allow(clippy::collapsible_if)]
     fn write(&self, name: &str, data: &[u8]) -> OperationResult<()> {
         use crate::error::PdfError;
         if let Some(parent) = Path::new(name).parent() {
