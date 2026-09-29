@@ -21,8 +21,7 @@ pub fn handle_extract_text(
         text_pages.join("\n")
     };
 
-    std::fs::write(output, result_str)
-        .map_err(paperpilot_core::error::PdfError::IoError)?;
+    std::fs::write(output, result_str).map_err(paperpilot_core::error::PdfError::IoError)?;
 
     Ok(())
 }

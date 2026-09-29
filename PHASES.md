@@ -179,13 +179,13 @@ Write tests alongside each operation, not after.
 | 1.5.15 | Progress output ✅ | Merged |
 | 1.5.16 | JSON output mode ✅ | Merged |
 | 1.5.17 | Webhook support ✅ | Merged |
-| 1.5.18 | Webhook HMAC signing 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.19 | Webhook filter flags 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.20 | `hash` command 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.21 | `verify` command 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.22 | CLI integration tests 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.23 | E2E CLI pipeline tests 🚧 | In Progress (Session 3236745347341611735) |
-| 1.5.24 | `extract-text --format json` flag 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.18 | Webhook HMAC signing ✅ | Merged (Session 3236745347341611735) |
+| 1.5.19 | Webhook filter flags ✅ | Merged (Session 3236745347341611735) |
+| 1.5.20 | `hash` command ✅ | Merged (Session 3236745347341611735) |
+| 1.5.21 | `verify` command ✅ | Merged (Session 3236745347341611735) |
+| 1.5.22 | CLI integration tests ✅ | Merged (Session 3236745347341611735) |
+| 1.5.23 | E2E CLI pipeline tests ✅ | Merged (Session 3236745347341611735) |
+| 1.5.24 | `extract-text --format json` flag ✅ | Merged (Session 3236745347341611735) |
 
 ---
 

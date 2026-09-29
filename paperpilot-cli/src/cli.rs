@@ -275,4 +275,13 @@ pub enum Commands {
         #[arg(long)]
         expected_hash: String,
     },
+    // --- Group D: Conversion ---
+    Convert {
+        #[arg(long, required = true)]
+        format: String,
+        #[arg(long, required = true)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
 }

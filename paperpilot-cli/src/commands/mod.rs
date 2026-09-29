@@ -1,6 +1,7 @@
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
+pub mod group_d;
 pub mod validate;
 
 use crate::cli::Commands;
@@ -102,7 +103,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => group_b::handle_bates(input, prefix, *start, output),
 
         // Group C
-        Commands::ExtractText { input, output, format } => group_c::handle_extract_text(input, output, format),
+        Commands::ExtractText {
+            input,
+            output,
+            format,
+        } => group_c::handle_extract_text(input, output, format),
         Commands::ExtractImages { input, output } => group_c::handle_extract_images(input, output),
         Commands::Search { input, query } => group_c::handle_search(input, query),
         Commands::Render { input, output } => group_c::handle_render(input, output),
@@ -118,5 +123,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             input,
             expected_hash,
         } => validate::handle_verify(input, expected_hash),
+        // Group D
+        Commands::Convert {
+            format,
+            input,
+            output,
+        } => group_d::handle_convert(format, input, output.as_deref()),
     }
 }

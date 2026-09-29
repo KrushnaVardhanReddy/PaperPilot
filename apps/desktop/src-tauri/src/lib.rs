@@ -20,8 +20,11 @@ async fn invoke_mcp_tool(
     match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
         Ok(response) => {
             if let rmcp::model::CallToolResponse::Complete(result) = response {
-                if let Some(rmcp::model::ContentBlock::Text(text_content)) = result.content.first() {
-                    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text_content.text) {
+                if let Some(rmcp::model::ContentBlock::Text(text_content)) = result.content.first()
+                {
+                    if let Ok(parsed) =
+                        serde_json::from_str::<serde_json::Value>(&text_content.text)
+                    {
                         return Ok(parsed);
                     }
                 }
