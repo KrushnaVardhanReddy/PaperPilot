@@ -4,9 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+headless_chrome = "1.0.22"
 image = { version = "0.25.10", features = ["jpeg", "png"] }
 lopdf = "0.45.0"
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
+pulldown-cmark = "0.13.4"
+regex = "1.13.1"
+scraper = "0.27.0"
 
 [dev-dependencies]
 tempfile = "3.27.0"
