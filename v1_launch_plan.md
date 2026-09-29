@@ -14,7 +14,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.3 | Intent vocabulary definition (~45 operations) | ✅ Completed |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine | ✅ Completed |
 | 4.0.5 | Layer 2 — ONNX intent classifier (MobileBERT) | 🚧 In Progress (Session 12133795038104614276) |
-| 4.0.6 | Entity extractor (regex + NER) | Pending |
+| 4.0.6 | Entity extractor (regex + NER) | 🚧 In Progress (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver | Pending |
 | 4.0.8 | Offline NLP → `OperationPlan` output | Pending |
 | 4.0.9 | Offline NLP unit tests | Pending |

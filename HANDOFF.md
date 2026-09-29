@@ -88,6 +88,7 @@ PaperPilot/
 | Task | Session ID | What they are doing |
 |---|---|---|
 | Phase 4.0.5a ONNX Training | `12133795038104614276` | Building the Python script in `tools/train-nlp/` to fine-tune a model and export to ONNX |
+| Phase 4.0.6 Entity Extractor | `4945848464737601940` | Building regex & NER patterns in `paperpilot-nlp/src/entities.rs` to extract files and arguments |
 
 ---
 
