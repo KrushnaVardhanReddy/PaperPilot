@@ -132,12 +132,12 @@ All operations are independent of each other and can be built in parallel once t
 #### Group F — PDF Creation (from scratch)
 | # | Task | Notes |
 |---|---|---|
-| 1.3.40 | Markdown → PDF | Render a Markdown file into a pixel-perfect PDF (headings, tables, code blocks, images) |
-| 1.3.41 | HTML → PDF | Render an HTML page/template into a PDF (full CSS support via headless renderer) |
-| 1.3.42 | Template engine | Handlebars-style templates with variable substitution: `{{client_name}}`, `{{invoice_total}}` etc. |
-| 1.3.43 | Built-in template library | Starter templates: Invoice, Contract, Report, Certificate, Letter, Resume |
-| 1.3.44 | Template → PDF CLI | `paperpilot create --template invoice.hbs --data data.json -o invoice.pdf` |
-| 1.3.45 | Custom page layout | Margin, paper size (A4/Letter/Legal), orientation, header/footer per template |
+| 1.3.40 | Markdown → PDF ✅ | Merged |
+| 1.3.41 | HTML → PDF ✅ | Merged |
+| 1.3.42 | Template engine ✅ | Merged |
+| 1.3.43 | Built-in template library ✅ | Merged |
+| 1.3.44 | Template → PDF CLI ✅ | Merged |
+| 1.3.45 | Custom page layout ✅ | Merged |
 
 ---
 
@@ -272,7 +272,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.1.3 | Set up Tauri ↔ Rust command bindings ✅ | `invoke_mcp_tool` in `src-tauri/src/lib.rs` (Phase 3.5) |
 | 3.1.4 | Set up component library / design system ✅ | Custom vanilla CSS design system in `app.css` |
 | 3.1.5 | Define Tauri IPC schema ✅ | `jobs.svelte.ts` + `serde_json::Value`-typed commands |
-| 3.1.6 | Set up frontend tests 🟡 | Playwright E2E done; **Vitest component unit tests pending** |
+| 3.1.6 | Set up frontend tests ✅ | Playwright E2E & Vitest component unit tests merged |
 | 3.1.7 | Configure iOS target | `cargo tauri ios init`, provision profile setup |
 | 3.1.8 | Configure Android target | `cargo tauri android init`, NDK setup |
 
