@@ -426,7 +426,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 4.0.1 | Create `paperpilot-nlp` crate | Separate crate for offline NLP; no LLM dependencies |
 | 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
-| 4.0.3 | Intent vocabulary definition 🚧 | In Progress (Session 7343236324684096962) |
+| 4.0.3 | Intent vocabulary definition ✅ | Merged (Session 7343236324684096962) |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine | Trie-based keyword matcher + regex patterns for page ranges, file paths, passwords; covers top-20 operations at <1ms latency |
 | 4.0.5 | Layer 2 — ONNX intent classifier | Fine-tune a distilbert-tiny or MobileBERT model on PDF command dataset; export to ONNX; run via `ort` crate; ~30 MB sidecar |
 | 4.0.6 | Entity extractor | Extract structured args from the sentence: file paths, page numbers, passwords, output names using regex + NER patterns |
