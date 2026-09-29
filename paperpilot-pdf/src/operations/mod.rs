@@ -28,3 +28,5 @@ pub mod signature;
 pub mod split;
 pub mod validate;
 pub mod watermark;
+pub mod conversion;
+pub mod hash;

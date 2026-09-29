@@ -251,4 +251,18 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
     },
+
+    // --- Group D: Conversion ---
+    Convert {
+        #[arg(long, required = true)]
+        format: String,
+        #[arg(long, required = true)]
+        input: std::path::PathBuf,
+        #[arg(long)]
+        output: Option<std::path::PathBuf>,
+    },
+    Hash {
+        #[arg(long, required = true)]
+        input: std::path::PathBuf,
+    },
 }

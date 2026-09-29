@@ -2,6 +2,8 @@ pub mod group_a;
 pub mod group_b;
 pub mod group_c;
 pub mod validate;
+pub mod group_d;
+
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -113,5 +115,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
 
         // Validate
         Commands::Validate { input } => validate::handle_validate(input),
+
+        // Group D
+        Commands::Convert { format, input, output } => group_d::handle_convert(format, input, output.as_deref()),
+        Commands::Hash { input } => group_d::handle_hash(input),
     }
 }
