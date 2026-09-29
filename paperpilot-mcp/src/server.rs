@@ -1179,6 +1179,391 @@ impl PaperPilotMcpServer {
         tool_create_form.input_schema = std::sync::Arc::new(schema_cf);
         tools.push(tool_create_form);
 
+        // Tool: pdf_repair
+        let mut schema_repair = serde_json::Map::new();
+        schema_repair.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_repair = serde_json::Map::new();
+
+        let mut prop_input_repair = serde_json::Map::new();
+        prop_input_repair.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_repair.insert("description".to_string(), serde_json::Value::String("Path to the PDF to repair.".to_string()));
+        props_repair.insert("input".to_string(), serde_json::Value::Object(prop_input_repair));
+
+        let mut prop_output_repair = serde_json::Map::new();
+        prop_output_repair.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_repair.insert("description".to_string(), serde_json::Value::String("Path to save the repaired PDF.".to_string()));
+        props_repair.insert("output".to_string(), serde_json::Value::Object(prop_output_repair));
+
+        schema_repair.insert("properties".to_string(), serde_json::Value::Object(props_repair));
+        schema_repair.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_repair = Tool::default();
+        tool_repair.name = "pdf_repair".into();
+        tool_repair.description = Some("Repairs a corrupted or malformed PDF by rewriting its cross-reference table.".into());
+        tool_repair.input_schema = Arc::new(schema_repair);
+        tools.push(tool_repair);
+
+        // Tool: pdf_linearize
+        let mut schema_linearize = serde_json::Map::new();
+        schema_linearize.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_linearize = serde_json::Map::new();
+
+        let mut prop_input_linearize = serde_json::Map::new();
+        prop_input_linearize.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_linearize.insert("description".to_string(), serde_json::Value::String("Path to the PDF to linearize.".to_string()));
+        props_linearize.insert("input".to_string(), serde_json::Value::Object(prop_input_linearize));
+
+        let mut prop_output_linearize = serde_json::Map::new();
+        prop_output_linearize.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_linearize.insert("description".to_string(), serde_json::Value::String("Path to save the linearized PDF.".to_string()));
+        props_linearize.insert("output".to_string(), serde_json::Value::Object(prop_output_linearize));
+
+        schema_linearize.insert("properties".to_string(), serde_json::Value::Object(props_linearize));
+        schema_linearize.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_linearize = Tool::default();
+        tool_linearize.name = "pdf_linearize".into();
+        tool_linearize.description = Some("Linearizes a PDF for fast web view.".into());
+        tool_linearize.input_schema = Arc::new(schema_linearize);
+        tools.push(tool_linearize);
+
+        // Tool: pdf_flatten
+        let mut schema_flatten = serde_json::Map::new();
+        schema_flatten.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_flatten = serde_json::Map::new();
+
+        let mut prop_input_flatten = serde_json::Map::new();
+        prop_input_flatten.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_flatten.insert("description".to_string(), serde_json::Value::String("Path to the PDF to flatten.".to_string()));
+        props_flatten.insert("input".to_string(), serde_json::Value::Object(prop_input_flatten));
+
+        let mut prop_output_flatten = serde_json::Map::new();
+        prop_output_flatten.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_flatten.insert("description".to_string(), serde_json::Value::String("Path to save the flattened PDF.".to_string()));
+        props_flatten.insert("output".to_string(), serde_json::Value::Object(prop_output_flatten));
+
+        schema_flatten.insert("properties".to_string(), serde_json::Value::Object(props_flatten));
+        schema_flatten.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_flatten = Tool::default();
+        tool_flatten.name = "pdf_flatten".into();
+        tool_flatten.description = Some("Flattens a PDF by merging interactive elements into the page content.".into());
+        tool_flatten.input_schema = Arc::new(schema_flatten);
+        tools.push(tool_flatten);
+
+        // Tool: pdf_to_pdf_a
+        let mut schema_to_pdf_a = serde_json::Map::new();
+        schema_to_pdf_a.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_to_pdf_a = serde_json::Map::new();
+
+        let mut prop_input_to_pdf_a = serde_json::Map::new();
+        prop_input_to_pdf_a.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_to_pdf_a.insert("description".to_string(), serde_json::Value::String("Path to the PDF to convert to PDF/A.".to_string()));
+        props_to_pdf_a.insert("input".to_string(), serde_json::Value::Object(prop_input_to_pdf_a));
+
+        let mut prop_output_to_pdf_a = serde_json::Map::new();
+        prop_output_to_pdf_a.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_to_pdf_a.insert("description".to_string(), serde_json::Value::String("Path to save the PDF/A file.".to_string()));
+        props_to_pdf_a.insert("output".to_string(), serde_json::Value::Object(prop_output_to_pdf_a));
+
+        schema_to_pdf_a.insert("properties".to_string(), serde_json::Value::Object(props_to_pdf_a));
+        schema_to_pdf_a.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_to_pdf_a = Tool::default();
+        tool_to_pdf_a.name = "pdf_to_pdf_a".into();
+        tool_to_pdf_a.description = Some("Converts a PDF to PDF/A format.".into());
+        tool_to_pdf_a.input_schema = Arc::new(schema_to_pdf_a);
+        tools.push(tool_to_pdf_a);
+
+        // Tool: pdf_redact
+        let mut schema_redact = serde_json::Map::new();
+        schema_redact.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_redact = serde_json::Map::new();
+
+        let mut prop_input_redact = serde_json::Map::new();
+        prop_input_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_redact.insert("description".to_string(), serde_json::Value::String("Path to the PDF to redact.".to_string()));
+        props_redact.insert("input".to_string(), serde_json::Value::Object(prop_input_redact));
+
+        let mut prop_output_redact = serde_json::Map::new();
+        prop_output_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_redact.insert("description".to_string(), serde_json::Value::String("Path to save the redacted PDF.".to_string()));
+        props_redact.insert("output".to_string(), serde_json::Value::Object(prop_output_redact));
+
+        let mut prop_page_redact = serde_json::Map::new();
+        prop_page_redact.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        prop_page_redact.insert("description".to_string(), serde_json::Value::String("Page number to redact (1-based).".to_string()));
+        props_redact.insert("page".to_string(), serde_json::Value::Object(prop_page_redact));
+
+        let mut prop_x_redact = serde_json::Map::new();
+        prop_x_redact.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_redact.insert("x".to_string(), serde_json::Value::Object(prop_x_redact));
+
+        let mut prop_y_redact = serde_json::Map::new();
+        prop_y_redact.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_redact.insert("y".to_string(), serde_json::Value::Object(prop_y_redact));
+
+        let mut prop_width_redact = serde_json::Map::new();
+        prop_width_redact.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_redact.insert("width".to_string(), serde_json::Value::Object(prop_width_redact));
+
+        let mut prop_height_redact = serde_json::Map::new();
+        prop_height_redact.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_redact.insert("height".to_string(), serde_json::Value::Object(prop_height_redact));
+
+        schema_redact.insert("properties".to_string(), serde_json::Value::Object(props_redact));
+        schema_redact.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+            serde_json::Value::String("page".to_string()),
+            serde_json::Value::String("x".to_string()),
+            serde_json::Value::String("y".to_string()),
+            serde_json::Value::String("width".to_string()),
+            serde_json::Value::String("height".to_string()),
+        ]));
+
+        let mut tool_redact = Tool::default();
+        tool_redact.name = "pdf_redact".into();
+        tool_redact.description = Some("Redacts a specified area of a PDF page.".into());
+        tool_redact.input_schema = Arc::new(schema_redact);
+        tools.push(tool_redact);
+
+        // Tool: pdf_header_footer
+        let mut schema_hf = serde_json::Map::new();
+        schema_hf.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_hf = serde_json::Map::new();
+
+        let mut prop_input_hf = serde_json::Map::new();
+        prop_input_hf.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_hf.insert("input".to_string(), serde_json::Value::Object(prop_input_hf));
+
+        let mut prop_output_hf = serde_json::Map::new();
+        prop_output_hf.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_hf.insert("output".to_string(), serde_json::Value::Object(prop_output_hf));
+
+        let mut prop_text_hf = serde_json::Map::new();
+        prop_text_hf.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_hf.insert("text".to_string(), serde_json::Value::Object(prop_text_hf));
+
+        let mut prop_pos_hf = serde_json::Map::new();
+        prop_pos_hf.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_pos_hf.insert("description".to_string(), serde_json::Value::String("e.g. 'top' or 'bottom'".to_string()));
+        props_hf.insert("position".to_string(), serde_json::Value::Object(prop_pos_hf));
+
+        schema_hf.insert("properties".to_string(), serde_json::Value::Object(props_hf));
+        schema_hf.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+            serde_json::Value::String("text".to_string()),
+            serde_json::Value::String("position".to_string()),
+        ]));
+
+        let mut tool_hf = Tool::default();
+        tool_hf.name = "pdf_header_footer".into();
+        tool_hf.description = Some("Adds a header or footer to a PDF.".into());
+        tool_hf.input_schema = Arc::new(schema_hf);
+        tools.push(tool_hf);
+
+        // Tool: pdf_bates
+        let mut schema_bates = serde_json::Map::new();
+        schema_bates.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_bates = serde_json::Map::new();
+
+        let mut prop_input_bates = serde_json::Map::new();
+        prop_input_bates.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_bates.insert("input".to_string(), serde_json::Value::Object(prop_input_bates));
+
+        let mut prop_output_bates = serde_json::Map::new();
+        prop_output_bates.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_bates.insert("output".to_string(), serde_json::Value::Object(prop_output_bates));
+
+        let mut prop_start_num = serde_json::Map::new();
+        prop_start_num.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        props_bates.insert("start_number".to_string(), serde_json::Value::Object(prop_start_num));
+
+        let mut prop_prefix = serde_json::Map::new();
+        prop_prefix.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_bates.insert("prefix".to_string(), serde_json::Value::Object(prop_prefix));
+
+        let mut prop_padding = serde_json::Map::new();
+        prop_padding.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        props_bates.insert("padding".to_string(), serde_json::Value::Object(prop_padding));
+
+        schema_bates.insert("properties".to_string(), serde_json::Value::Object(props_bates));
+        schema_bates.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+            serde_json::Value::String("start_number".to_string()),
+            serde_json::Value::String("prefix".to_string()),
+            serde_json::Value::String("padding".to_string()),
+        ]));
+
+        let mut tool_bates = Tool::default();
+        tool_bates.name = "pdf_bates".into();
+        tool_bates.description = Some("Adds Bates numbering to a PDF.".into());
+        tool_bates.input_schema = Arc::new(schema_bates);
+        tools.push(tool_bates);
+
+        // Tool: pdf_render
+        let mut schema_render = serde_json::Map::new();
+        schema_render.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_render = serde_json::Map::new();
+
+        let mut prop_input_render = serde_json::Map::new();
+        prop_input_render.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_render.insert("input".to_string(), serde_json::Value::Object(prop_input_render));
+
+        let mut prop_output_render = serde_json::Map::new();
+        prop_output_render.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_render.insert("output".to_string(), serde_json::Value::Object(prop_output_render));
+
+        schema_render.insert("properties".to_string(), serde_json::Value::Object(props_render));
+        schema_render.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_render = Tool::default();
+        tool_render.name = "pdf_render".into();
+        tool_render.description = Some("Renders a PDF.".into());
+        tool_render.input_schema = Arc::new(schema_render);
+        tools.push(tool_render);
+
+        // Tool: pdf_images_to_pdf
+        let mut schema_itp = serde_json::Map::new();
+        schema_itp.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_itp = serde_json::Map::new();
+
+        let mut prop_inputs_itp = serde_json::Map::new();
+        prop_inputs_itp.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+
+        let mut prop_items_itp = serde_json::Map::new();
+        prop_items_itp.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_inputs_itp.insert("items".to_string(), serde_json::Value::Object(prop_items_itp));
+        props_itp.insert("inputs".to_string(), serde_json::Value::Object(prop_inputs_itp));
+
+        let mut prop_output_itp = serde_json::Map::new();
+        prop_output_itp.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_itp.insert("output".to_string(), serde_json::Value::Object(prop_output_itp));
+
+        schema_itp.insert("properties".to_string(), serde_json::Value::Object(props_itp));
+        schema_itp.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("inputs".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_itp = Tool::default();
+        tool_itp.name = "pdf_images_to_pdf".into();
+        tool_itp.description = Some("Converts a list of images to a PDF.".into());
+        tool_itp.input_schema = Arc::new(schema_itp);
+        tools.push(tool_itp);
+
+        // Tool: pdf_compare
+        let mut schema_compare = serde_json::Map::new();
+        schema_compare.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_compare = serde_json::Map::new();
+
+        let mut prop_input_a_compare = serde_json::Map::new();
+        prop_input_a_compare.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_compare.insert("input_a".to_string(), serde_json::Value::Object(prop_input_a_compare));
+
+        let mut prop_input_b_compare = serde_json::Map::new();
+        prop_input_b_compare.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_compare.insert("input_b".to_string(), serde_json::Value::Object(prop_input_b_compare));
+
+        let mut prop_output_compare = serde_json::Map::new();
+        prop_output_compare.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_compare.insert("output".to_string(), serde_json::Value::Object(prop_output_compare));
+
+        schema_compare.insert("properties".to_string(), serde_json::Value::Object(props_compare));
+        schema_compare.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input_a".to_string()),
+            serde_json::Value::String("input_b".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_compare = Tool::default();
+        tool_compare.name = "pdf_compare".into();
+        tool_compare.description = Some("Compares two PDFs.".into());
+        tool_compare.input_schema = Arc::new(schema_compare);
+        tools.push(tool_compare);
+
+        // Tool: pdf_bookmarks
+        let mut schema_bookmarks = serde_json::Map::new();
+        schema_bookmarks.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_bookmarks = serde_json::Map::new();
+
+        let mut prop_input_bookmarks = serde_json::Map::new();
+        prop_input_bookmarks.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_bookmarks.insert("input".to_string(), serde_json::Value::Object(prop_input_bookmarks));
+
+        let mut prop_output_bookmarks = serde_json::Map::new();
+        prop_output_bookmarks.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_bookmarks.insert("output".to_string(), serde_json::Value::Object(prop_output_bookmarks));
+
+        schema_bookmarks.insert("properties".to_string(), serde_json::Value::Object(props_bookmarks));
+        schema_bookmarks.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_bookmarks = Tool::default();
+        tool_bookmarks.name = "pdf_bookmarks".into();
+        tool_bookmarks.description = Some("Handles bookmarks in a PDF.".into());
+        tool_bookmarks.input_schema = Arc::new(schema_bookmarks);
+        tools.push(tool_bookmarks);
+
+        // Tool: pdf_ocr
+        let mut schema_ocr = serde_json::Map::new();
+        schema_ocr.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+        let mut props_ocr = serde_json::Map::new();
+
+        let mut prop_input_ocr = serde_json::Map::new();
+        prop_input_ocr.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_ocr.insert("input".to_string(), serde_json::Value::Object(prop_input_ocr));
+
+        let mut prop_output_ocr = serde_json::Map::new();
+        prop_output_ocr.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_ocr.insert("output".to_string(), serde_json::Value::Object(prop_output_ocr));
+
+        schema_ocr.insert("properties".to_string(), serde_json::Value::Object(props_ocr));
+        schema_ocr.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_ocr = Tool::default();
+        tool_ocr.name = "pdf_ocr".into();
+        tool_ocr.description = Some("Performs OCR on a PDF.".into());
+        tool_ocr.input_schema = Arc::new(schema_ocr);
+        tools.push(tool_ocr);
+
+
+
 
         Ok(ListToolsResult {
 
@@ -1219,8 +1604,11 @@ impl PaperPilotMcpServer {
                 })
         };
 
-        let get_number = |key: &str| -> Result<f64, ErrorData> {
-            args.get(key).and_then(|v| v.as_f64()).ok_or_else(|| {
+        let get_f64 = |key: &str| -> Result<f64, ErrorData> {
+            args.get(key).and_then(|v| v.as_f64()).ok_or_else(|| ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None))
+        };
+        let get_u64 = |key: &str| -> Result<u64, ErrorData> {
+            args.get(key).and_then(|v| v.as_u64()).ok_or_else(|| {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
@@ -1390,7 +1778,7 @@ impl PaperPilotMcpServer {
             "pdf_rotate" => {
                 let input = get_string("input")?;
                 let pages = get_string("pages")?;
-                let angle = get_number("angle")?;
+                let angle = get_f64("angle")?;
                 let output = get_string("output")?;
 
                 ensure_parent_dir(&output)?;
@@ -1858,6 +2246,243 @@ impl PaperPilotMcpServer {
                     output_path: None,
                 })
             }
+
+            "pdf_repair" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::repair::RepairOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF repaired successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_linearize" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::linearize::LinearizeOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF linearized successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_flatten" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::flatten::FlattenOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF flattened successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_to_pdf_a" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::pdf_a::PdfAConversionOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF converted to PDF/A successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_redact" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let page = get_u64("page")? as u32;
+                let x = get_f64("x")? as f32;
+                let y = get_f64("y")? as f32;
+                let width = get_f64("width")? as f32;
+                let height = get_f64("height")? as f32;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let bbox = paperpilot_pdf::operations::redact::BoundingBox { x, y, width, height };
+                let op = paperpilot_pdf::operations::redact::RedactOperation::new(page, bbox);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF redacted successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_header_footer" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let text = get_string("text")?;
+                let position = get_string("position")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(text, position);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Header/footer added successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_bates" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let start_number = get_u64("start_number")? as u32;
+                let prefix = get_string("prefix")?;
+                let padding = get_u64("padding")? as usize;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::bates::BatesNumberingOperation::new(start_number, prefix, padding);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Bates numbering applied successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_render" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::render::RenderOperation;
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF rendered successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_images_to_pdf" => {
+                let inputs = get_string_array("inputs")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let image_paths: Vec<std::path::PathBuf> = inputs.into_iter().map(std::path::PathBuf::from).collect();
+                let mut doc = LopdfDocument::new();
+                let op = paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(image_paths);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output)).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Images converted to PDF successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_compare" => {
+                let input_a = get_string("input_a")?;
+                let _input_b = get_string("input_b")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc_a = LopdfDocument::load(&std::path::PathBuf::from(&input_a)).map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::compare::CompareOperation;
+                op.execute(&mut doc_a).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF comparison completed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_bookmarks" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Bookmarks operation completed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_ocr" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::ocr::OcrOperation;
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "OCR operation completed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -1896,7 +2521,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 23);
+        assert_eq!(res.tools.len(), 35);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }
@@ -2016,5 +2641,44 @@ mod tests {
         } else {
             panic!("Expected Err");
         }
+    }
+
+    #[test]
+    fn test_execute_call_tool_repair() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_repair".into();
+        request.arguments = Some(serde_json::json!({
+            "input": "nonexistent.pdf",
+            "output": "/tmp/repaired.pdf"
+        }).as_object().unwrap().clone());
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_linearize() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_linearize".into();
+        request.arguments = Some(serde_json::json!({
+            "input": "nonexistent.pdf",
+            "output": "/tmp/linearized.pdf"
+        }).as_object().unwrap().clone());
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_bates() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_bates".into();
+        request.arguments = Some(serde_json::json!({
+            "input": "nonexistent.pdf",
+            "output": "/tmp/bates.pdf",
+            "start_number": 1,
+            "prefix": "BATES-",
+            "padding": 6
+        }).as_object().unwrap().clone());
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
     }
 }
