@@ -8,6 +8,7 @@ pub mod crop;
 pub mod decrypt;
 pub mod delete;
 pub mod encrypt;
+pub mod form;
 pub mod extract;
 pub mod extract_images;
 pub mod extract_text;

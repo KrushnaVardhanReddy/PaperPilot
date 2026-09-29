@@ -1022,7 +1022,90 @@ impl PaperPilotMcpServer {
         tool_meta.input_schema = std::sync::Arc::new(schema_meta);
         tools.push(tool_meta);
 
+
+
+        // Tool: pdf_read_form
+        let mut tool_read_form = rmcp::model::Tool::default();
+        tool_read_form.name = "pdf_read_form".into();
+        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF.".into());
+        let mut schema_rf = serde_json::Map::new();
+        schema_rf.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_rf = serde_json::Map::new();
+        let mut input_rf = serde_json::Map::new();
+        input_rf.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_rf.insert("input".to_string(), serde_json::Value::Object(input_rf));
+        schema_rf.insert("properties".to_string(), serde_json::Value::Object(props_rf));
+        schema_rf.insert("required".to_string(), serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]));
+        tool_read_form.input_schema = std::sync::Arc::new(schema_rf);
+        tools.push(tool_read_form);
+
+        // Tool: pdf_fill_form
+        let mut tool_fill_form = rmcp::model::Tool::default();
+        tool_fill_form.name = "pdf_fill_form".into();
+        tool_fill_form.description = Some("Fill AcroForm fields in a PDF.".into());
+        let mut schema_ff = serde_json::Map::new();
+        schema_ff.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_ff = serde_json::Map::new();
+
+        let mut input_ff = serde_json::Map::new();
+        input_ff.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_ff.insert("input".to_string(), serde_json::Value::Object(input_ff));
+
+        let mut values_ff = serde_json::Map::new();
+        values_ff.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        props_ff.insert("values".to_string(), serde_json::Value::Object(values_ff));
+
+        let mut output_ff = serde_json::Map::new();
+        output_ff.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_ff.insert("output".to_string(), serde_json::Value::Object(output_ff));
+
+        schema_ff.insert("properties".to_string(), serde_json::Value::Object(props_ff));
+        schema_ff.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("values".to_string()),
+            serde_json::Value::String("output".to_string())
+        ]));
+        tool_fill_form.input_schema = std::sync::Arc::new(schema_ff);
+        tools.push(tool_fill_form);
+
+        // Tool: pdf_create_form_field
+        let mut tool_create_form = rmcp::model::Tool::default();
+        tool_create_form.name = "pdf_create_form_field".into();
+        tool_create_form.description = Some("Add a new form field (text or checkbox) to a PDF page.".into());
+        let mut schema_cf = serde_json::Map::new();
+        schema_cf.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_cf = serde_json::Map::new();
+
+
+        let mut p1 = serde_json::Map::new(); p1.insert("type".to_string(), serde_json::Value::String("string".to_string())); props_cf.insert("input".to_string(), serde_json::Value::Object(p1));
+        let mut p2 = serde_json::Map::new(); p2.insert("type".to_string(), serde_json::Value::String("string".to_string())); props_cf.insert("field_name".to_string(), serde_json::Value::Object(p2));
+        let mut p3 = serde_json::Map::new(); p3.insert("type".to_string(), serde_json::Value::String("string".to_string())); props_cf.insert("field_type".to_string(), serde_json::Value::Object(p3));
+        let mut p4 = serde_json::Map::new(); p4.insert("type".to_string(), serde_json::Value::String("integer".to_string())); props_cf.insert("page".to_string(), serde_json::Value::Object(p4));
+        let mut p5 = serde_json::Map::new(); p5.insert("type".to_string(), serde_json::Value::String("number".to_string())); props_cf.insert("x".to_string(), serde_json::Value::Object(p5));
+        let mut p6 = serde_json::Map::new(); p6.insert("type".to_string(), serde_json::Value::String("number".to_string())); props_cf.insert("y".to_string(), serde_json::Value::Object(p6));
+        let mut p7 = serde_json::Map::new(); p7.insert("type".to_string(), serde_json::Value::String("number".to_string())); props_cf.insert("width".to_string(), serde_json::Value::Object(p7));
+        let mut p8 = serde_json::Map::new(); p8.insert("type".to_string(), serde_json::Value::String("number".to_string())); props_cf.insert("height".to_string(), serde_json::Value::Object(p8));
+        let mut p9 = serde_json::Map::new(); p9.insert("type".to_string(), serde_json::Value::String("string".to_string())); props_cf.insert("output".to_string(), serde_json::Value::Object(p9));
+
+
+        schema_cf.insert("properties".to_string(), serde_json::Value::Object(props_cf));
+        schema_cf.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("field_name".to_string()),
+            serde_json::Value::String("field_type".to_string()),
+            serde_json::Value::String("page".to_string()),
+            serde_json::Value::String("x".to_string()),
+            serde_json::Value::String("y".to_string()),
+            serde_json::Value::String("width".to_string()),
+            serde_json::Value::String("height".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+        tool_create_form.input_schema = std::sync::Arc::new(schema_cf);
+        tools.push(tool_create_form);
+
+
         Ok(ListToolsResult {
+
             tools,
             ..Default::default()
         })
@@ -1502,6 +1585,87 @@ impl PaperPilotMcpServer {
                 })
             }
 
+
+            "pdf_read_form" => {
+                let input = get_string("input")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::form::ReadFormOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let map = op.extracted_fields.lock().unwrap();
+                let message = if let Some(ref fields) = *map {
+                    serde_json::to_string(fields).unwrap_or_else(|_| "{}".to_string())
+                } else {
+                    "{}".to_string()
+                };
+
+                Ok(OperationResult {
+                    success: true,
+                    message,
+                    output_path: None,
+                })
+            }
+
+            "pdf_fill_form" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                let values_value = args.get("values").ok_or_else(|| ErrorData::invalid_params("Missing 'values'", None))?;
+                let values: std::collections::HashMap<String, String> = serde_json::from_value(values_value.clone())
+                    .map_err(|e| ErrorData::invalid_params("Invalid 'values' object", Some(serde_json::Value::String(e.to_string()))))?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::form::FillFormOperation::new(values);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Form filled successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+            "pdf_create_form_field" => {
+                let input = get_string("input")?;
+                let field_name = get_string("field_name")?;
+                let field_type = get_string("field_type")?;
+                let output = get_string("output")?;
+
+                let page = args.get("page").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
+                let x = args.get("x").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                let y = args.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                let width = args.get("width").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                let height = args.get("height").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+
+                let rect = [x, y, x + width, y + height];
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::form::CreateFormFieldOperation::new(
+                    field_name, field_type, page, rect
+                );
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Form field added successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
             "pdf_metadata" => {
                 let input = get_string("input")?;
                 let title = get_string("title").ok();
@@ -1580,7 +1744,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 16);
+        assert_eq!(res.tools.len(), 19);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }

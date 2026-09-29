@@ -2,6 +2,7 @@ pub mod group_a;
 pub mod group_b;
 pub mod group_c;
 pub mod group_d;
+pub mod group_e;
 pub mod validate;
 
 use crate::cli::Commands;
@@ -124,6 +125,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             expected_hash,
         } => validate::handle_verify(input, expected_hash),
         // Group D
+
+        // Group E
+        Commands::Form { command: form_cmd } => match form_cmd {
+            crate::cli::FormCommands::Read { input } => group_e::handle_form_read(input),
+            crate::cli::FormCommands::Fill { input, data, output } => group_e::handle_form_fill(input, data, output),
+            crate::cli::FormCommands::AddField { input, name, r#type, page, rect, output } => {
+                group_e::handle_form_add_field(input, name, r#type, *page, rect, output)
+            }
+        },
         Commands::Convert {
             format,
             input,

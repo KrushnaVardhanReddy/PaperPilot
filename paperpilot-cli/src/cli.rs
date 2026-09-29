@@ -275,6 +275,12 @@ pub enum Commands {
         #[arg(long)]
         expected_hash: String,
     },
+
+    // --- Group E: Forms ---
+    Form {
+        #[command(subcommand)]
+        command: FormCommands,
+    },
     // --- Group D: Conversion ---
     Convert {
         #[arg(long, required = true)]
@@ -283,5 +289,33 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: Option<PathBuf>,
+    },
+}
+
+
+#[derive(Subcommand, Debug)]
+pub enum FormCommands {
+    Read {
+        input: PathBuf,
+    },
+    Fill {
+        input: PathBuf,
+        #[arg(long)]
+        data: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+    AddField {
+        input: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long, default_value = "text")]
+        r#type: String,
+        #[arg(long, default_value = "1")]
+        page: i32,
+        #[arg(long)]
+        rect: String,
+        #[arg(short, long)]
+        output: PathBuf,
     },
 }
