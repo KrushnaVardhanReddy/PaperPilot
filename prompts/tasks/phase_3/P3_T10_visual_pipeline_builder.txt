@@ -1,0 +1,1048 @@
+---
+Task: Phase 3.4.10 — Visual Pipeline Builder
+Context: PaperPilot desktop app built with SvelteKit + Tauri. The existing UI is in `apps/desktop/src/`.
+---
+
+Hey Jules! This is our biggest UI feature: a **Visual Pipeline Builder** for chaining multiple PDF operations together in sequence. The user drops files, then builds a pipeline of steps (e.g., Compress → Watermark → Encrypt) which run one after another automatically. It should feel like a mini no-code workflow builder.
+
+---
+
+## Overview
+
+A **pipeline** is an ordered sequence of operation steps. Each step:
+- Has a tool name (e.g. `pdf_compress`, `pdf_watermark`)
+- Has its own configuration parameters (quality, text, angle, etc.)
+- Connects to the next step via an output → input relationship
+
+When the user clicks **Run Pipeline**, each step is executed in order via `invoke('invoke_mcp_tool', ...)`, and the output path of step N is fed as the input path of step N+1.
+
+---
+
+## New Files to Create
+
+### 1. `apps/desktop/src/lib/state/pipeline.svelte.ts`
+
+This is the state machine for the pipeline builder.
+
+```typescript
+// Type definitions
+export type OperationId =
+  | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_merge'
+  | 'pdf_split' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
+  | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
+  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign';
+
+export interface PipelineStep {
+  id: string;           // crypto.randomUUID()
+  operationId: OperationId;
+  label: string;        // Human-readable name, e.g. "Compress PDF"
+  icon: string;         // emoji or svg name, e.g. "🗜️"
+  params: Record<string, unknown>; // operation-specific params
+}
+
+export class PipelineState {
+  steps = $state<PipelineStep[]>([]);
+  isRunning = $state(false);
+  currentStepIndex = $state<number | null>(null); // which step is currently running
+  lastError = $state<string | null>(null);
+  lastSuccessOutput = $state<string | null>(null);
+
+  addStep(operationId: OperationId) {
+    // Lookup the default params and label from OPERATION_REGISTRY
+    const def = OPERATION_REGISTRY[operationId];
+    this.steps = [...this.steps, {
+      id: crypto.randomUUID(),
+      operationId,
+      label: def.label,
+      icon: def.icon,
+      params: { ...def.defaultParams }
+    }];
+  }
+
+  removeStep(id: string) {
+    this.steps = this.steps.filter(s => s.id !== id);
+  }
+
+  moveStep(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= this.steps.length) return;
+    const steps = [...this.steps];
+    const [moved] = steps.splice(fromIndex, 1);
+    steps.splice(toIndex, 0, moved);
+    this.steps = steps;
+  }
+
+  updateStepParam(id: string, paramKey: string, value: unknown) {
+    this.steps = this.steps.map(s =>
+      s.id === id ? { ...s, params: { ...s.params, [paramKey]: value } } : s
+    );
+  }
+
+  clearPipeline() {
+    this.steps = [];
+    this.currentStepIndex = null;
+    this.lastError = null;
+    this.lastSuccessOutput = null;
+  }
+
+  setRunning(running: boolean) {
+    this.isRunning = running;
+  }
+
+  setCurrentStepIndex(index: number | null) {
+    this.currentStepIndex = index;
+  }
+
+  setLastError(err: string | null) {
+    this.lastError = err;
+  }
+
+  setLastSuccessOutput(path: string | null) {
+    this.lastSuccessOutput = path;
+  }
+}
+
+export const pipelineState = new PipelineState();
+
+// ─── Operation Registry ───────────────────────────────────────────────────────
+// One entry per supported pipeline operation. defaultParams must match what
+// the Rust MCP tool expects. We use `__input__` and `__output__` as placeholder
+// tokens; the pipeline runner will substitute them at execution time.
+
+export const OPERATION_REGISTRY: Record<OperationId, {
+  label: string;
+  icon: string;
+  description: string;
+  defaultParams: Record<string, unknown>;
+  paramSchema: ParamSchema[];
+}> = {
+  pdf_compress: {
+    label: 'Compress',
+    icon: '🗜️',
+    description: 'Reduce PDF file size',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_rotate: {
+    label: 'Rotate Pages',
+    icon: '🔄',
+    description: 'Rotate all pages by a given angle',
+    defaultParams: { input: '__input__', output: '__output__', pages: 'all', angle: 90 },
+    paramSchema: [
+      { key: 'pages', label: 'Pages', type: 'text', placeholder: 'e.g. all, 1-3, 1,3,5' },
+      { key: 'angle', label: 'Angle', type: 'select', options: [90, 180, 270] }
+    ]
+  },
+  pdf_watermark: {
+    label: 'Watermark',
+    icon: '💧',
+    description: 'Apply a text watermark to all pages',
+    defaultParams: { input: '__input__', output: '__output__', text: 'CONFIDENTIAL', opacity: 0.3 },
+    paramSchema: [
+      { key: 'text', label: 'Watermark Text', type: 'text', placeholder: 'e.g. CONFIDENTIAL' },
+      { key: 'opacity', label: 'Opacity (0.0–1.0)', type: 'number', min: 0, max: 1, step: 0.1 }
+    ]
+  },
+  pdf_encrypt: {
+    label: 'Encrypt',
+    icon: '🔒',
+    description: 'Password-protect the PDF',
+    defaultParams: { input: '__input__', output: '__output__', password: '' },
+    paramSchema: [
+      { key: 'password', label: 'Password', type: 'password', placeholder: 'Enter password' }
+    ]
+  },
+  pdf_decrypt: {
+    label: 'Decrypt',
+    icon: '🔓',
+    description: 'Remove password from a protected PDF',
+    defaultParams: { input: '__input__', output: '__output__', password: '' },
+    paramSchema: [
+      { key: 'password', label: 'Password', type: 'password', placeholder: 'Enter password' }
+    ]
+  },
+  pdf_metadata: {
+    label: 'Set Metadata',
+    icon: '🏷️',
+    description: 'Update PDF title, author, etc.',
+    defaultParams: { input: '__input__', output: '__output__', title: '', author: '', subject: '' },
+    paramSchema: [
+      { key: 'title', label: 'Title', type: 'text', placeholder: 'Document title' },
+      { key: 'author', label: 'Author', type: 'text', placeholder: 'Author name' },
+      { key: 'subject', label: 'Subject', type: 'text', placeholder: 'Subject' }
+    ]
+  },
+  pdf_repair: {
+    label: 'Repair',
+    icon: '🔧',
+    description: 'Fix a corrupt or malformed PDF',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_linearize: {
+    label: 'Linearize',
+    icon: '⚡',
+    description: 'Optimize PDF for web viewing',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_flatten: {
+    label: 'Flatten',
+    icon: '📄',
+    description: 'Flatten form fields and annotations',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_redact: {
+    label: 'Redact',
+    icon: '⬛',
+    description: 'Permanently redact text from the PDF',
+    defaultParams: { input: '__input__', output: '__output__', terms: '' },
+    paramSchema: [
+      { key: 'terms', label: 'Terms to Redact (comma-separated)', type: 'text', placeholder: 'e.g. SSN, confidential' }
+    ]
+  },
+  pdf_header_footer: {
+    label: 'Header/Footer',
+    icon: '📃',
+    description: 'Add a header and/or footer to each page',
+    defaultParams: { input: '__input__', output: '__output__', header: '', footer: '' },
+    paramSchema: [
+      { key: 'header', label: 'Header Text', type: 'text', placeholder: 'Header' },
+      { key: 'footer', label: 'Footer Text', type: 'text', placeholder: 'Footer' }
+    ]
+  },
+  pdf_bates: {
+    label: 'Bates Numbering',
+    icon: '#️⃣',
+    description: 'Add sequential Bates numbers to each page',
+    defaultParams: { input: '__input__', output: '__output__', start: 1, prefix: 'DOC-' },
+    paramSchema: [
+      { key: 'prefix', label: 'Prefix', type: 'text', placeholder: 'e.g. DOC-' },
+      { key: 'start', label: 'Start Number', type: 'number', min: 1, step: 1 }
+    ]
+  },
+  pdf_ocr: {
+    label: 'OCR',
+    icon: '🔍',
+    description: 'Make a scanned PDF text-searchable',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_sign: {
+    label: 'Sign',
+    icon: '✍️',
+    description: 'Apply a digital signature to the PDF',
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_merge: {
+    label: 'Merge',
+    icon: '📎',
+    description: 'Merge multiple PDFs (uses all loaded documents)',
+    defaultParams: { inputs: '__all_inputs__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_split: {
+    label: 'Split',
+    icon: '✂️',
+    description: 'Split PDF by page ranges',
+    defaultParams: { input: '__input__', output_dir: '__output_dir__', split_at: '' },
+    paramSchema: [
+      { key: 'split_at', label: 'Split at pages (comma-separated)', type: 'text', placeholder: 'e.g. 3,7,12' }
+    ]
+  }
+};
+
+// Param schema types for rendering the config form dynamically
+export interface ParamSchema {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'password' | 'select' | 'range';
+  placeholder?: string;
+  options?: (string | number)[];
+  min?: number;
+  max?: number;
+  step?: number;
+}
+```
+
+---
+
+### 2. `apps/desktop/src/lib/components/pipeline/PipelineCanvas.svelte`
+
+This is the main drag-and-drop canvas for the pipeline builder.
+
+**What it shows:**
+- A horizontal scrollable canvas showing cards connected by arrows: `[Step 1] → [Step 2] → [Step 3] → [+ Add]`
+- Each card shows: icon, label, a brief param summary, and × button to remove
+- Cards can be dragged left/right to reorder (use HTML5 drag-and-drop: `draggable="true"`, `ondragstart`, `ondragover`, `ondrop`)
+- At the end of the chain, there's an `[+ Add Step]` placeholder that opens a step picker
+- The arrow connectors between steps are SVG chevron arrows or `→` separators
+
+**Detailed component code:**
+
+```svelte
+<script lang="ts">
+  import { pipelineState, OPERATION_REGISTRY } from '$lib/state/pipeline.svelte';
+  import StepCard from './StepCard.svelte';
+  import StepPicker from './StepPicker.svelte';
+
+  let showPicker = $state(false);
+  let dragFromIndex = $state<number | null>(null);
+
+  function handleDragStart(event: DragEvent, index: number) {
+    dragFromIndex = index;
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  function handleDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = 'move';
+  }
+
+  function handleDrop(event: DragEvent, toIndex: number) {
+    event.preventDefault();
+    if (dragFromIndex !== null && dragFromIndex !== toIndex) {
+      pipelineState.moveStep(dragFromIndex, toIndex);
+    }
+    dragFromIndex = null;
+  }
+
+  function handleDragEnd() {
+    dragFromIndex = null;
+  }
+</script>
+
+<div class="pipeline-canvas" id="pipeline-canvas">
+  <div class="canvas-scroll-wrapper">
+    {#each pipelineState.steps as step, i (step.id)}
+      <div
+        class="step-wrapper"
+        draggable="true"
+        ondragstart={(e) => handleDragStart(e, i)}
+        ondragover={(e) => handleDragOver(e, i)}
+        ondrop={(e) => handleDrop(e, i)}
+        ondragend={handleDragEnd}
+        class:drag-over={dragFromIndex !== null && dragFromIndex !== i}
+      >
+        <StepCard {step} index={i} isRunning={pipelineState.currentStepIndex === i} />
+      </div>
+
+      {#if i < pipelineState.steps.length - 1}
+        <div class="connector" aria-hidden="true">→</div>
+      {/if}
+    {/each}
+
+    <button
+      class="add-step-btn"
+      id="add-pipeline-step-btn"
+      onclick={() => showPicker = true}
+    >
+      + Add Step
+    </button>
+  </div>
+</div>
+
+{#if showPicker}
+  <StepPicker onclose={() => showPicker = false} />
+{/if}
+```
+
+**CSS for canvas:**
+```css
+.pipeline-canvas {
+  width: 100%;
+  padding: 24px 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  min-height: 140px;
+}
+
+.canvas-scroll-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.connector {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.add-step-btn {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.add-step-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.step-wrapper.drag-over {
+  opacity: 0.5;
+}
+```
+
+---
+
+### 3. `apps/desktop/src/lib/components/pipeline/StepCard.svelte`
+
+A single card in the pipeline canvas.
+
+```svelte
+<script lang="ts">
+  import type { PipelineStep } from '$lib/state/pipeline.svelte';
+  import { pipelineState } from '$lib/state/pipeline.svelte';
+
+  let { step, index, isRunning } = $props<{
+    step: PipelineStep;
+    index: number;
+    isRunning: boolean;
+  }>();
+</script>
+
+<div
+  class="step-card"
+  id={`pipeline-step-${step.id}`}
+  class:running={isRunning}
+  class:completed={pipelineState.currentStepIndex !== null &&
+                    pipelineState.currentStepIndex > index}
+>
+  <div class="step-header">
+    <span class="step-icon">{step.icon}</span>
+    <span class="step-label">{step.label}</span>
+    <button
+      class="remove-btn"
+      id={`remove-step-${step.id}`}
+      onclick={() => pipelineState.removeStep(step.id)}
+      title="Remove step"
+      disabled={pipelineState.isRunning}
+    >×</button>
+  </div>
+  <div class="step-index">Step {index + 1}</div>
+  {#if isRunning}
+    <div class="step-running-indicator" aria-label="Running">⏳</div>
+  {/if}
+</div>
+
+<style>
+  .step-card {
+    width: 120px;
+    flex-shrink: 0;
+    padding: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: grab;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    user-select: none;
+    position: relative;
+  }
+
+  .step-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+  }
+
+  .step-card.running {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+    animation: pulse 1.2s infinite;
+  }
+
+  .step-card.completed {
+    border-color: var(--success-color, #22c55e);
+    opacity: 0.7;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .step-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  .remove-btn:hover:not(:disabled) {
+    color: var(--error-color, #ef4444);
+  }
+
+  .step-index {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .step-running-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.75rem;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--accent-primary-alpha); }
+    50% { box-shadow: 0 0 0 5px var(--accent-primary-alpha); }
+  }
+</style>
+```
+
+---
+
+### 4. `apps/desktop/src/lib/components/pipeline/StepPicker.svelte`
+
+A modal/dropdown that shows all available operations in a grid for the user to pick and add to the pipeline.
+
+```svelte
+<script lang="ts">
+  import { pipelineState, OPERATION_REGISTRY, type OperationId } from '$lib/state/pipeline.svelte';
+
+  let { onclose } = $props<{ onclose: () => void }>();
+
+  function pick(opId: OperationId) {
+    pipelineState.addStep(opId);
+    onclose();
+  }
+
+  // Close when clicking outside
+  function handleBackdropClick(e: MouseEvent) {
+    if ((e.target as HTMLElement).classList.contains('picker-backdrop')) {
+      onclose();
+    }
+  }
+</script>
+
+<div class="picker-backdrop" onclick={handleBackdropClick} id="step-picker-modal">
+  <div class="picker-dialog" role="dialog" aria-label="Pick an operation">
+    <div class="picker-header">
+      <h3>Add Pipeline Step</h3>
+      <button class="close-btn" id="close-step-picker" onclick={onclose}>×</button>
+    </div>
+    <div class="picker-grid">
+      {#each Object.entries(OPERATION_REGISTRY) as [opId, def]}
+        <button
+          class="op-tile"
+          id={`op-tile-${opId}`}
+          onclick={() => pick(opId as OperationId)}
+        >
+          <span class="op-icon">{def.icon}</span>
+          <span class="op-label">{def.label}</span>
+          <span class="op-desc">{def.description}</span>
+        </button>
+      {/each}
+    </div>
+  </div>
+</div>
+
+<style>
+  .picker-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .picker-dialog {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 24px;
+    width: 540px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .picker-header h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .op-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: center;
+  }
+
+  .op-tile:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-surface-hover);
+  }
+
+  .op-icon {
+    font-size: 1.8rem;
+  }
+
+  .op-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .op-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+</style>
+```
+
+---
+
+### 5. `apps/desktop/src/lib/components/pipeline/StepConfigPanel.svelte`
+
+When a step card is clicked (not dragged), it becomes "selected" and a config panel shows below (or in the right sidebar) with the step's parameter fields, dynamically rendered from `paramSchema`.
+
+```svelte
+<script lang="ts">
+  import { pipelineState, OPERATION_REGISTRY } from '$lib/state/pipeline.svelte';
+
+  let selectedStepId = $state<string | null>(null);
+
+  // Derived: the selected step object
+  let selectedStep = $derived(
+    selectedStepId ? pipelineState.steps.find(s => s.id === selectedStepId) ?? null : null
+  );
+
+  let schema = $derived(
+    selectedStep ? OPERATION_REGISTRY[selectedStep.operationId].paramSchema : []
+  );
+
+  export function selectStep(id: string) {
+    selectedStepId = selectedStepId === id ? null : id;
+  }
+</script>
+
+{#if selectedStep && schema.length > 0}
+  <div class="config-panel" id="step-config-panel">
+    <div class="config-header">
+      <span>{selectedStep.icon} Configure: {selectedStep.label}</span>
+      <button onclick={() => selectedStepId = null}>×</button>
+    </div>
+    <div class="config-fields">
+      {#each schema as field}
+        <div class="field-group">
+          <label for={`field-${selectedStep.id}-${field.key}`}>{field.label}</label>
+          {#if field.type === 'select'}
+            <select
+              id={`field-${selectedStep.id}-${field.key}`}
+              value={String(selectedStep.params[field.key] ?? '')}
+              onchange={(e) => pipelineState.updateStepParam(
+                selectedStep!.id, field.key, Number((e.target as HTMLSelectElement).value)
+              )}
+            >
+              {#each (field.options ?? []) as opt}
+                <option value={String(opt)}>{opt}</option>
+              {/each}
+            </select>
+          {:else if field.type === 'number' || field.type === 'range'}
+            <input
+              id={`field-${selectedStep.id}-${field.key}`}
+              type={field.type === 'range' ? 'range' : 'number'}
+              min={field.min}
+              max={field.max}
+              step={field.step}
+              value={Number(selectedStep.params[field.key] ?? field.min ?? 0)}
+              oninput={(e) => pipelineState.updateStepParam(
+                selectedStep!.id, field.key, Number((e.target as HTMLInputElement).value)
+              )}
+            />
+          {:else}
+            <input
+              id={`field-${selectedStep.id}-${field.key}`}
+              type={field.type}
+              placeholder={field.placeholder}
+              value={String(selectedStep.params[field.key] ?? '')}
+              oninput={(e) => pipelineState.updateStepParam(
+                selectedStep!.id, field.key, (e.target as HTMLInputElement).value
+              )}
+            />
+          {/if}
+        </div>
+      {/each}
+    </div>
+  </div>
+{/if}
+```
+
+---
+
+### 6. `apps/desktop/src/lib/components/pipeline/PipelineRunner.svelte`
+
+The **Run Pipeline** button and live status display. Handles execution logic.
+
+**Execution logic:**
+1. Get `inputPath` from `appState.documents[0].name`
+2. For each step in `pipelineState.steps`:
+   a. Build `args` from step params, replacing `__input__` with the current `workingPath` and `__output__` with a temp path like `${originalName}_step_${i+1}_${step.operationId}.pdf`
+   b. Call `await invoke('invoke_mcp_tool', { toolName: step.operationId, arguments: args })`
+   c. If result.success is false, stop and show error
+   d. Update `workingPath` to the output path for the next step
+3. Show final success toast with the last output path
+
+```svelte
+<script lang="ts">
+  import { pipelineState } from '$lib/state/pipeline.svelte';
+  import { appState } from '$lib/state/app.svelte';
+  import { toastState } from '$lib/state/toast.svelte';
+  import { jobsState } from '$lib/state/jobs.svelte';
+  import { invoke } from '@tauri-apps/api/core';
+
+  async function runPipeline() {
+    if (pipelineState.steps.length === 0) {
+      toastState.error('Pipeline is empty. Add at least one step.');
+      return;
+    }
+    if (appState.documents.length === 0) {
+      toastState.error('No input document. Drop a PDF first.');
+      return;
+    }
+
+    pipelineState.setRunning(true);
+    pipelineState.setLastError(null);
+
+    const originalName = appState.documents[0].name.replace(/\.pdf$/i, '');
+    let workingPath = appState.documents[0].name;
+
+    try {
+      for (let i = 0; i < pipelineState.steps.length; i++) {
+        const step = pipelineState.steps[i];
+        pipelineState.setCurrentStepIndex(i);
+
+        const outputPath = `${originalName}_step${i + 1}_${step.operationId}.pdf`;
+
+        // Build args: replace __input__ and __output__ tokens
+        const args: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(step.params)) {
+          if (v === '__input__') args[k] = workingPath;
+          else if (v === '__output__') args[k] = outputPath;
+          else if (v === '__all_inputs__') args[k] = appState.documents.map(d => d.name);
+          else args[k] = v;
+        }
+
+        const jobId = jobsState.addJob(step.operationId, 'running', `Pipeline step ${i + 1}`);
+
+        const result = await invoke('invoke_mcp_tool', {
+          toolName: step.operationId,
+          arguments: args
+        }) as { success: boolean; message: string; output_path?: string };
+
+        if (!result.success) {
+          jobsState.updateJobStatus(jobId, 'error', result.message);
+          pipelineState.setLastError(`Step ${i + 1} (${step.label}) failed: ${result.message}`);
+          toastState.error(`Pipeline failed at step ${i + 1}: ${step.label}`);
+          return;
+        }
+
+        jobsState.updateJobStatus(jobId, 'success', result.message);
+        workingPath = result.output_path ?? outputPath;
+      }
+
+      pipelineState.setLastSuccessOutput(workingPath);
+      toastState.success(`Pipeline complete! Output: ${workingPath}`);
+    } catch (err) {
+      const msg = typeof err === 'string' ? err : (err as Error).message;
+      pipelineState.setLastError(msg);
+      toastState.error(`Pipeline error: ${msg}`);
+    } finally {
+      pipelineState.setRunning(false);
+      pipelineState.setCurrentStepIndex(null);
+    }
+  }
+</script>
+
+<div class="pipeline-runner" id="pipeline-runner">
+  {#if pipelineState.steps.length > 0}
+    <div class="runner-status">
+      {#if pipelineState.isRunning}
+        <span class="status-running">
+          ⏳ Running step {(pipelineState.currentStepIndex ?? 0) + 1} of {pipelineState.steps.length}...
+        </span>
+      {:else if pipelineState.lastError}
+        <span class="status-error">⚠️ {pipelineState.lastError}</span>
+      {:else if pipelineState.lastSuccessOutput}
+        <span class="status-success">✅ Done → {pipelineState.lastSuccessOutput}</span>
+      {/if}
+    </div>
+  {/if}
+
+  <div class="runner-controls">
+    <button
+      class="clear-btn"
+      id="clear-pipeline-btn"
+      onclick={pipelineState.clearPipeline.bind(pipelineState)}
+      disabled={pipelineState.isRunning || pipelineState.steps.length === 0}
+    >
+      Clear
+    </button>
+    <button
+      class="run-btn"
+      id="run-pipeline-btn"
+      onclick={runPipeline}
+      disabled={pipelineState.isRunning || pipelineState.steps.length === 0}
+    >
+      {pipelineState.isRunning ? 'Running…' : `▶ Run Pipeline (${pipelineState.steps.length} steps)`}
+    </button>
+  </div>
+</div>
+```
+
+---
+
+### 7. `apps/desktop/src/lib/components/pipeline/PipelineView.svelte`
+
+The top-level wrapper that assembles all pipeline components together.
+
+```svelte
+<script lang="ts">
+  import PipelineCanvas from './PipelineCanvas.svelte';
+  import PipelineRunner from './PipelineRunner.svelte';
+  import { appState } from '$lib/state/app.svelte';
+  import DropZone from '$lib/components/ui/DropZone.svelte';
+
+  function handleFilesDropped(files: File[]) {
+    appState.addDocuments(files);
+  }
+</script>
+
+<div class="pipeline-view" id="pipeline-view">
+  <header class="pipeline-header">
+    <h2>Visual Pipeline Builder</h2>
+    <p>Chain multiple PDF operations together. They execute in order, one output feeding the next.</p>
+  </header>
+
+  {#if appState.documents.length === 0}
+    <div class="pipeline-dropzone">
+      <DropZone ondrop={handleFilesDropped} />
+    </div>
+  {:else}
+    <div class="pipeline-input">
+      <span class="input-label">Input:</span>
+      <span class="input-filename">📄 {appState.documents[0].name}</span>
+    </div>
+  {/if}
+
+  <PipelineCanvas />
+
+  <PipelineRunner />
+</div>
+
+<style>
+  .pipeline-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 32px;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  .pipeline-header h2 {
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .pipeline-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .pipeline-dropzone {
+    max-width: 600px;
+  }
+
+  .pipeline-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .input-filename {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+</style>
+```
+
+---
+
+### 8. Update `apps/desktop/src/routes/+page.svelte`
+
+Add a new `pipeline` tab. In the `<script>` block import `PipelineView`, and in the template add:
+
+```svelte
+{:else if appState.activeTab === 'pipeline'}
+  <div class="content-area full-width">
+    <PipelineView />
+  </div>
+```
+
+---
+
+### 9. Update `apps/desktop/src/lib/components/layout/Sidebar.svelte` (or navigation)
+
+Add the pipeline tab to navigation. Find where tabs like `'home'` and `'settings'` are listed and add:
+
+```svelte
+<button
+  class="nav-item"
+  class:active={appState.activeTab === 'pipeline'}
+  id="nav-pipeline"
+  onclick={() => appState.setActiveTab('pipeline')}
+>
+  🔗 Pipeline
+</button>
+```
+
+---
+
+### 10. Tests: `apps/desktop/src/lib/components/__tests__/PipelineCanvas.test.ts`
+
+```typescript
+import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { pipelineState } from '$lib/state/pipeline.svelte';
+import PipelineCanvas from '../pipeline/PipelineCanvas.svelte';
+
+describe('PipelineCanvas', () => {
+  beforeEach(() => {
+    pipelineState.clearPipeline();
+  });
+
+  it('renders the Add Step button when empty', () => {
+    render(PipelineCanvas);
+    expect(screen.getByText('+ Add Step')).toBeTruthy();
+  });
+
+  it('renders step cards for each step in state', () => {
+    pipelineState.addStep('pdf_compress');
+    pipelineState.addStep('pdf_watermark');
+    render(PipelineCanvas);
+    expect(screen.getAllByText(/Step/)).toHaveLength(2);
+  });
+});
+```
+
+---
+
+### 11. Tests: `apps/desktop/src/lib/components/__tests__/PipelineRunner.test.ts`
+
+```typescript
+import { render, screen, fireEvent } from '@testing-library/svelte';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { pipelineState } from '$lib/state/pipeline.svelte';
+import { appState } from '$lib/state/app.svelte';
+import PipelineRunner from '../pipeline/PipelineRunner.svelte';
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn().mockResolvedValue({ success: true, message: 'ok', output_path: 'out.pdf' })
+}));
+
+describe('PipelineRunner', () => {
+  beforeEach(() => {
+    pipelineState.clearPipeline();
+  });
+
+  it('Run Pipeline button is disabled when pipeline is empty', () => {
+    render(PipelineRunner);
+    const btn = screen.getByText(/Run Pipeline/);
+    expect(btn).toBeDefined();
+  });
+
+  it('shows step count in Run button', () => {
+    pipelineState.addStep('pdf_compress');
+    pipelineState.addStep('pdf_watermark');
+    render(PipelineRunner);
+    expect(screen.getByText(/2 steps/)).toBeTruthy();
+  });
+});
+```
+
+---
+
+## Rules & Constraints
+
+1. **ONLY create/edit files inside `apps/desktop/src/`**. Do NOT touch Rust files.
+2. Use **Svelte 5 runes** (`$state`, `$derived`, `$props`). NOT Svelte 4 stores.
+3. Use **vanilla CSS inside `<style>`** tags. NO TailwindCSS. NO external CSS frameworks.
+4. Use existing CSS variables from `app.css`: `--bg-primary`, `--bg-secondary`, `--bg-surface`, `--bg-surface-hover`, `--text-primary`, `--text-secondary`, `--text-muted`, `--border-color`, `--accent-primary`, `--border-radius-md`, `--transition-fast`.
+5. All interactive elements MUST have unique `id` attributes (for Playwright tests).
+6. `svelte-check --tsconfig ./tsconfig.json` must pass with **0 errors, 0 warnings**.
+7. `npx vitest run` must pass.
+8. Open a PR to `main` when done.
+
+Please open a PR to `main` when finished!
