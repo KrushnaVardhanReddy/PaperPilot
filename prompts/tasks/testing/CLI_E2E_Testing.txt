@@ -14,13 +14,10 @@ Make sure you have at least:
 
 ### 2. E2E Script Execution
 Write a bash script `scripts/test_cli_e2e.sh` that actively runs the compiled `paperpilot-cli` binary against these PDFs. 
-You must test all implemented CLI commands:
-- `split`
-- `merge` / arrange
-- `rotate`
-- `extract`
-- `delete`
-- etc.
+You must systematically test ALL implemented CLI commands across all groups:
+- **Group A (Core):** `merge`, `split`, `rotate`, `extract-pages`, `delete`, `reorder`, `burst`, `crop`
+- **Group B (Security & Polish):** `encrypt`, `decrypt`, `redact`, `watermark`, `header-footer`, `metadata`, `compress`, `linearize`, `flatten`, `repair`, `pdf-a`, `signature`
+- **Group C (Extraction & Adv):** `extract-text`, `extract-images`, `images-to-pdf`, `bates`, `render`, `ocr`, `compare`, `search`, `bookmarks`, `form`, `hash`, `validate`, `conversion` (`to-markdown`, `to-json`, etc.), `classify`
 
 The script should check exit codes and verify that the output PDF files are actually created.
 

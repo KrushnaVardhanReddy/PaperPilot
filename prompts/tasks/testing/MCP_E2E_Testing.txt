@@ -11,11 +11,10 @@ Write a simple Python script `scripts/test_mcp_e2e.py` that connects to the runn
 
 ### 2. Execute MCP Tools
 Using the Python script, programmatically invoke the available MCP tools on real test fixtures (located in `tests/fixtures/`). 
-Test at least the following core operations:
-- `pdf_merge`
-- `pdf_split`
-- `pdf_rotate`
-- `pdf_extract`
+You must systematically test ALL implemented MCP tools:
+- **Group A (Core):** `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_extract_pages`, `pdf_delete_pages`, `pdf_reorder`, `pdf_burst`, `pdf_crop`
+- **Group B (Security & Polish):** `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_watermark`, `pdf_header_footer`, `pdf_metadata`, `pdf_compress`, `pdf_linearize`, `pdf_flatten`, `pdf_repair`, `pdf_pdf_a`, `pdf_sign`
+- **Group C (Extraction & Adv):** `pdf_extract_text`, `pdf_extract_images`, `pdf_images_to_pdf`, `pdf_bates`, `pdf_render`, `pdf_ocr`, `pdf_compare`, `pdf_search`, `pdf_bookmarks`, `pdf_form`, `pdf_hash`, `pdf_validate`, `pdf_convert`, `pdf_classify`
 
 Verify that the MCP tool responds with a success status and that the underlying files are actually generated on the filesystem.
 
