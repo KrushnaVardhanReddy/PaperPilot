@@ -79,6 +79,7 @@ PaperPilot/
 | Phase 4.0.1 (NLP Crate) | ✅ Complete | Created `paperpilot-nlp` |
 | Phase 4.0.2 (NLP Trait) | ✅ Complete | Defined `NlpResolver` trait |
 | Phase 4.0.3 (Intent Vocab) | ✅ Complete | ~45 intents & aliases defined in `intent.rs` |
+| Phase 4.0.4 (Rule Engine) | ✅ Complete | Layer 1 Aho-Corasick keyword matcher |
 
 ---
 
@@ -86,7 +87,6 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.0.4 Layer 1 Rule Engine | `283097227045968085` | Building the Aho-Corasick fast regex/keyword engine in `paperpilot-nlp` |
 | Phase 4.0.5a ONNX Training | `12133795038104614276` | Building the Python script in `tools/train-nlp/` to fine-tune a model and export to ONNX |
 
 ---
