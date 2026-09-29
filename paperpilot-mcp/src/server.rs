@@ -1021,6 +1021,82 @@ impl PaperPilotMcpServer {
         tool_meta.description = Some("Reads (or writes) metadata to a PDF.".into());
         tool_meta.input_schema = std::sync::Arc::new(schema_meta);
         tools.push(tool_meta);
+        let mut tool_docx = Tool::default();
+        tool_docx.name = "pdf_to_docx".into();
+        tool_docx.description =
+            Some("Converts a PDF document to DOCX format by extracting its text.".into());
+        let mut d_props = serde_json::Map::new();
+        d_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        d_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        tool_docx.input_schema = std::sync::Arc::new(serde_json::json!({
+            "type": "object",
+            "properties": d_props,
+            "required": ["input", "output"]
+        }).as_object().unwrap().clone());
+        tools.push(tool_docx);
+
+        let mut tool_xlsx = Tool::default();
+        tool_xlsx.name = "pdf_to_xlsx".into();
+        tool_xlsx.description =
+            Some("Converts a PDF document to XLSX format by using best effort table extraction.".into());
+        let mut x_props = serde_json::Map::new();
+        x_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        x_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        tool_xlsx.input_schema = std::sync::Arc::new(serde_json::json!({
+            "type": "object",
+            "properties": x_props,
+            "required": ["input", "output"]
+        }).as_object().unwrap().clone());
+        tools.push(tool_xlsx);
+
+        let mut tool_pptx = Tool::default();
+        tool_pptx.name = "pdf_to_pptx".into();
+        tool_pptx.description =
+            Some("Converts a PDF document to PPTX format via best effort slide generation.".into());
+        let mut p_props = serde_json::Map::new();
+        p_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        p_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        tool_pptx.input_schema = std::sync::Arc::new(serde_json::json!({
+            "type": "object",
+            "properties": p_props,
+            "required": ["input", "output"]
+        }).as_object().unwrap().clone());
+        tools.push(tool_pptx);
+
+        let mut tool_class = Tool::default();
+        tool_class.name = "pdf_classify_type".into();
+        tool_class.description =
+            Some("Classifies the PDF document type based on heuristics.".into());
+        let mut c_props = serde_json::Map::new();
+        c_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string" }),
+        );
+        tool_class.input_schema = std::sync::Arc::new(serde_json::json!({
+            "type": "object",
+            "properties": c_props,
+            "required": ["input"]
+        }).as_object().unwrap().clone());
+        tools.push(tool_class);
+
 
         Ok(ListToolsResult {
             tools,
@@ -1542,6 +1618,82 @@ impl PaperPilotMcpServer {
                     output_path: output,
                 })
             }
+                        "pdf_to_docx" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::conversion::PdfToDocxOperation::new(std::path::PathBuf::from(&output));
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Converted to DOCX successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_to_xlsx" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::conversion::PdfToXlsxOperation::new(std::path::PathBuf::from(&output));
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Converted to XLSX successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_to_pptx" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::conversion::PdfToPptxOperation::new(std::path::PathBuf::from(&output));
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Converted to PPTX successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_classify_type" => {
+                let input = get_string("input")?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::classify::PdfClassifyOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let classification = op.classification.lock().unwrap().clone();
+                let message = if let Some(c) = classification {
+                    serde_json::to_string(&c).unwrap_or_else(|_| "Failed to serialize classification".to_string())
+                } else {
+                    "Classification failed".to_string()
+                };
+
+                Ok(OperationResult {
+                    success: true,
+                    message,
+                    output_path: None,
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -1580,7 +1732,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 16);
+        assert_eq!(res.tools.len(), 20);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }

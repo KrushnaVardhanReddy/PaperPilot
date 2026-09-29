@@ -76,6 +76,21 @@ pub fn handle_convert(format: &str, input: &Path, output: Option<&Path>) -> Oper
             std::fs::write(out_path, json)
                 .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
         }
+        "docx" => {
+            let out_path = output.unwrap_or(Path::new("output.docx"));
+            let op = paperpilot_pdf::operations::conversion::PdfToDocxOperation::new(out_path.to_path_buf());
+            op.execute(&mut doc)?;
+        }
+        "xlsx" => {
+            let out_path = output.unwrap_or(Path::new("output.xlsx"));
+            let op = paperpilot_pdf::operations::conversion::PdfToXlsxOperation::new(out_path.to_path_buf());
+            op.execute(&mut doc)?;
+        }
+        "pptx" => {
+            let out_path = output.unwrap_or(Path::new("output.pptx"));
+            let op = paperpilot_pdf::operations::conversion::PdfToPptxOperation::new(out_path.to_path_buf());
+            op.execute(&mut doc)?;
+        }
         _ => {
             return Err(paperpilot_core::error::PdfError::Other(
                 "Invalid format specified".to_string(),
@@ -86,12 +101,18 @@ pub fn handle_convert(format: &str, input: &Path, output: Option<&Path>) -> Oper
     Ok(())
 }
 
-pub fn handle_hash(input: &Path) -> OperationResult<()> {
-    let op = paperpilot_pdf::operations::hash::IntegrityHashOperation::new(input.to_path_buf());
-    let mut doc = LopdfDocument::new(); // Dummy doc
+
+
+pub fn handle_classify(input: &Path) -> OperationResult<()> {
+    let mut doc = LopdfDocument::load(input)?;
+    let op = paperpilot_pdf::operations::classify::PdfClassifyOperation::new();
     op.execute(&mut doc)?;
-    let (hash, size) = op.hash_result.lock().unwrap().clone().unwrap_or_default();
-    println!("Hash: {}", hash);
-    println!("Size: {} bytes", size);
+
+    let res = op.classification.lock().unwrap().clone();
+    if let Some(c) = res {
+        let json = serde_json::to_string_pretty(&c).unwrap_or_default();
+        println!("{}", json);
+    }
+
     Ok(())
 }

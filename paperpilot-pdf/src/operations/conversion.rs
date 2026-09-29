@@ -3,6 +3,11 @@ use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use docx_rs::{Docx, Paragraph, Run};
+use rust_xlsxwriter::Workbook;
+use std::io::Write;
+use zip::write::SimpleFileOptions;
+use zip::ZipWriter;
 
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
@@ -296,6 +301,196 @@ impl PdfOperation for PdfToJsonOperation {
     }
 }
 
+
+pub struct PdfToDocxOperation {
+    pub output_path: std::path::PathBuf,
+}
+
+impl PdfToDocxOperation {
+    pub fn new(output_path: std::path::PathBuf) -> Self {
+        Self { output_path }
+    }
+}
+
+impl PdfOperation for PdfToDocxOperation {
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| {
+                PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
+            })?;
+
+        let inner = &mut lopdf_doc.inner;
+        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        all_pages.sort_unstable();
+
+        let mut docx = Docx::new();
+
+        for page_id in all_pages {
+            match inner.extract_text(&[page_id]) {
+                Ok(text) => {
+                    for line in text.lines() {
+                        let para = Paragraph::new().add_run(Run::new().add_text(line));
+                        docx = docx.add_paragraph(para);
+                    }
+                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_text("--- PAGE BREAK ---")));
+                }
+                Err(e) => {
+                    return Err(PdfError::Other(format!(
+                        "Failed to extract text from page {}: {}",
+                        page_id, e
+                    )));
+                }
+            }
+        }
+
+        let file = std::fs::File::create(&self.output_path)
+            .map_err(|e| PdfError::Other(format!("Failed to create DOCX file: {}", e)))?;
+        docx.build()
+            .pack(file)
+            .map_err(|e| PdfError::Other(format!("Failed to pack DOCX file: {}", e)))?;
+
+        Ok(())
+    }
+}
+
+pub struct PdfToXlsxOperation {
+    pub output_path: std::path::PathBuf,
+}
+
+impl PdfToXlsxOperation {
+    pub fn new(output_path: std::path::PathBuf) -> Self {
+        Self { output_path }
+    }
+}
+
+impl PdfOperation for PdfToXlsxOperation {
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| {
+                PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
+            })?;
+
+        let inner = &mut lopdf_doc.inner;
+        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        all_pages.sort_unstable();
+
+        let mut workbook = Workbook::new();
+        let worksheet = workbook.add_worksheet();
+        let mut current_row: u32 = 0;
+        let ws_regex = regex::Regex::new(r"\s{3,}").unwrap();
+
+        for page_id in all_pages {
+            match inner.extract_text(&[page_id]) {
+                Ok(text) => {
+                    for line in text.lines() {
+                        let line_trimmed = line.trim();
+                        if line_trimmed.is_empty() {
+                            continue;
+                        }
+
+                        let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
+
+                        for (col_idx, val) in cols.iter().enumerate() {
+                            worksheet.write_string(current_row, col_idx as u16, *val)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {}", e)))?;
+                        }
+                        current_row += 1;
+                    }
+                }
+                Err(e) => {
+                    return Err(PdfError::Other(format!(
+                        "Failed to extract text from page {}: {}",
+                        page_id, e
+                    )));
+                }
+            }
+        }
+
+        workbook.save(&self.output_path)
+            .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {}", e)))?;
+
+        Ok(())
+    }
+}
+
+pub struct PdfToPptxOperation {
+    pub output_path: std::path::PathBuf,
+}
+
+impl PdfToPptxOperation {
+    pub fn new(output_path: std::path::PathBuf) -> Self {
+        Self { output_path }
+    }
+}
+
+impl PdfOperation for PdfToPptxOperation {
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| {
+                PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
+            })?;
+
+        let inner = &mut lopdf_doc.inner;
+        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        all_pages.sort_unstable();
+
+        let file = std::fs::File::create(&self.output_path)
+            .map_err(|e| PdfError::Other(format!("Failed to create PPTX file: {}", e)))?;
+        let mut zip = ZipWriter::new(file);
+
+        let options = SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated)
+            .unix_permissions(0o755);
+
+        for (i, page_id) in all_pages.iter().enumerate() {
+            let slide_name = format!("ppt/slides/slide{}.xml", i + 1);
+            zip.start_file(&slide_name, options)
+                .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
+
+            let text = inner.extract_text(&[*page_id]).unwrap_or_default();
+            let slide_xml = format!(r#"<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld>
+        <p:spTree>
+            <p:sp>
+                <p:txBody>
+                    <a:p>
+                        <a:r>
+                            <a:t>{}</a:t>
+                        </a:r>
+                    </a:p>
+                </p:txBody>
+            </p:sp>
+        </p:spTree>
+    </p:cSld>
+</p:sld>"#, text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
+
+            zip.write_all(slide_xml.as_bytes())
+                .map_err(|e| PdfError::Other(format!("Failed to write slide XML: {}", e)))?;
+        }
+
+        zip.start_file("[Content_Types].xml", options)
+            .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
+        let content_types = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
+</Types>"#;
+        zip.write_all(content_types.as_bytes())
+            .map_err(|e| PdfError::Other(format!("Failed to write content types: {}", e)))?;
+
+        zip.finish()
+            .map_err(|e| PdfError::Other(format!("Failed to finish ZIP file: {}", e)))?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -404,4 +599,44 @@ mod tests {
         let extracted = text.as_ref().unwrap();
         assert!(extracted.contains("\"document_name\": \"test_doc.pdf\""));
     }
+
+    #[test]
+    fn test_pdf_to_docx() {
+        let mut doc = create_dummy_doc(1);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out_test.docx");
+
+        let op = PdfToDocxOperation::new(path.clone());
+        assert!(op.execute(&mut doc).is_ok());
+
+        assert!(path.exists());
+        assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_pdf_to_xlsx() {
+        let mut doc = create_dummy_doc(1);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out_test.xlsx");
+
+        let op = PdfToXlsxOperation::new(path.clone());
+        assert!(op.execute(&mut doc).is_ok());
+
+        assert!(path.exists());
+        assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_pdf_to_pptx() {
+        let mut doc = create_dummy_doc(1);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out_test.pptx");
+
+        let op = PdfToPptxOperation::new(path.clone());
+        assert!(op.execute(&mut doc).is_ok());
+
+        assert!(path.exists());
+        assert!(path.metadata().unwrap().len() > 0);
+    }
+
 }
