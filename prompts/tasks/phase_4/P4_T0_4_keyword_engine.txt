@@ -1,0 +1,86 @@
+---
+Task: Phase 4.0.4 — Layer 1 Keyword & Regex Rule Engine
+---
+
+Hey Jules! We are continuing with Phase 4.0 (Offline NLP Mode). You previously built the `Intent` enum and its synonym registry in `intent.rs` (Task 4.0.3). Now we are going to build the first layer of our classification engine: the Rule Engine.
+
+---
+
+## Context
+Our offline NLP pipeline uses a 2-layer approach:
+1. **Layer 1 (Rule Engine):** A blazing fast (<1ms) keyword and regex matcher. If a user's query perfectly matches a known alias (e.g., "combine pdfs"), Layer 1 immediately returns `Intent::Merge`, completely bypassing the heavy ML models. This handles ~80% of real-world queries.
+2. **Layer 2 (ONNX):** A fallback embedding model (built later in 4.0.5) used only if Layer 1 fails to find a confident match.
+
+---
+
+## What to Build
+
+We need to build a fast string matcher that searches the user's natural language string for the aliases defined in `Intent::all()`. 
+
+### 1. Dependencies
+Add the `aho-corasick` crate to `paperpilot-nlp/Cargo.toml`. This is the gold standard for fast, multi-pattern string search in Rust.
+
+### 2. The `RuleEngine` Struct
+Create `paperpilot-nlp/src/layer1.rs` (and export it in `lib.rs`). 
+
+Define a `RuleEngine` struct that wraps an `AhoCorasick` automaton.
+
+```rust
+use aho_corasick::{AhoCorasick, MatchKind};
+use crate::intent::Intent;
+
+pub struct RuleEngine {
+    ac: AhoCorasick,
+    // Maps the AhoCorasick pattern index back to the specific Intent
+    pattern_to_intent: Vec<Intent>, 
+}
+```
+
+### 3. Initialization
+Implement `RuleEngine::new()`.
+It should iterate over `Intent::all()`, extract all `aliases`, and build the Aho-Corasick automaton.
+- Ensure the search is case-insensitive.
+- Use `MatchKind::LeftmostLongest` so that longer, more specific phrases (e.g. "extract images") match before shorter substrings ("extract").
+
+```rust
+impl RuleEngine {
+    pub fn new() -> Self {
+        // ... iterate over Intent::all(), collect aliases, map indices to intents ...
+        // ... build AhoCorasick ...
+    }
+}
+```
+
+### 4. Prediction Logic
+Implement a `predict` function.
+
+```rust
+impl RuleEngine {
+    /// Attempts to find a matching intent in the text.
+    /// Returns Some(Intent) if a strong keyword match is found, otherwise None.
+    pub fn predict(&self, text: &str) -> Option<Intent> {
+        // Use self.ac.find(text)
+        // If a match is found, return the corresponding Intent from pattern_to_intent
+    }
+}
+```
+
+### 5. Fallback heuristics (Optional but recommended)
+If you want to be more robust, instead of returning the first match, you can use `find_iter` to find all matches, count frequencies, and return the Intent with the highest hit count. 
+For now, a simple `find` (Leftmost-longest) is acceptable for Phase 1.
+
+### 6. Tests
+Write comprehensive unit tests in `layer1.rs`.
+Test cases:
+- "Please merge these files for me" -> Should return `Some(Intent::Merge)`
+- "rotate the document 90 degrees" -> Should return `Some(Intent::Rotate)`
+- "this string has absolutely no valid pdf commands" -> Should return `None`
+
+---
+
+## Rules & Constraints
+1. Create `paperpilot-nlp/src/layer1.rs` and update `lib.rs`.
+2. Do NOT implement Layer 2 (ONNX) or Entity Extraction yet. This is strictly the Layer 1 keyword matcher.
+3. Ensure the code compiles cleanly (`cargo check -p paperpilot-nlp`).
+4. `cargo clippy --workspace` must pass with no warnings.
+5. `cargo test -p paperpilot-nlp` must pass.
