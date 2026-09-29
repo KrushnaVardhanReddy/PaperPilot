@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use crate::document::LopdfDocument;
 use lopdf::{Dictionary, Object, StringFormat};
 use paperpilot_core::error::{OperationResult, PdfError};
