@@ -17,6 +17,7 @@ pub struct PdfClassifyOperation {
 }
 
 impl PdfClassifyOperation {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             classification: Arc::new(Mutex::new(None)),
@@ -44,7 +45,7 @@ impl PdfOperation for PdfClassifyOperation {
         for page_id in pages_to_extract {
             if let Ok(extracted) = inner.extract_text(&[page_id]) {
                 text.push_str(&extracted);
-                text.push_str(" ");
+                text.push(' ');
             }
         }
 

@@ -24,6 +24,7 @@ impl Default for ReadFormOperation {
     }
 }
 
+#[allow(clippy::collapsible_if)]
 impl PdfOperation for ReadFormOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let doc = document
@@ -101,6 +102,7 @@ impl FillFormOperation {
     }
 }
 
+#[allow(clippy::collapsible_if)]
 impl PdfOperation for FillFormOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let doc = document
@@ -181,6 +183,7 @@ impl CreateFormFieldOperation {
     }
 }
 
+#[allow(clippy::collapsible_if)]
 impl PdfOperation for CreateFormFieldOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let doc = document
