@@ -41,7 +41,7 @@ These can all be done on day one simultaneously.
 | ~~1.1.1~~ ✓ | ~~Initialize Cargo workspace~~ | Root `Cargo.toml` with workspace members |
 | ~~1.1.2~~ ✓ | ~~Create crate stubs~~ | `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli` empty crates |
 | ~~1.1.3~~ ✓ | ~~Set up CI pipeline~~ | Completed by Jules (Session 367767207543843406) |
-| 1.1.4 | Set up test fixture corpus | Collect 20–30 real-world PDFs: normal, scanned, malformed, large, encrypted |
+| 1.1.4 | Set up test fixture corpus ✅ | Merged (Session 4769317803713179485) |
 | ~~1.1.5~~ ✓ | ~~Choose and document PDF library decision~~ | Completed by Jules (Session 901308598875262977) |
 | ~~1.1.6~~ ✓ | ~~Set up linting and formatting~~ | Completed by Jules (Session 367767207543843406) |
 
