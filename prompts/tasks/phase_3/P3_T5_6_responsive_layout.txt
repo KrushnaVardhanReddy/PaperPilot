@@ -1,0 +1,389 @@
+---
+Task: Phase 3.5.6 — Responsive Mobile Layout
+---
+
+Hey Jules! The PaperPilot Tauri desktop app currently has a fixed 260px sidebar that breaks at small window sizes (narrow Tauri windows, small-screen tablets). This task adds a responsive mobile layout using CSS media queries. **No new dependencies. No Tailwind. Pure vanilla CSS.**
+
+---
+
+## Context
+
+The app shell is structured as:
+
+```
+apps/desktop/src/
+├── app.css                          ← Global CSS variables and layout
+├── app.html
+└── routes/
+    ├── +layout.svelte               ← Mounts <Sidebar> and <main>
+    └── +page.svelte                 ← Page content (Documents, Settings tabs)
+
+lib/components/layout/
+├── Sidebar.svelte                   ← Fixed 260px left sidebar, has nav + jobs + footer
+├── OperationsPanel.svelte           ← Fixed 320px right panel
+└── ...
+```
+
+The root layout file is `apps/desktop/src/routes/+layout.svelte`. Read its contents and the CSS in `app.css` before making changes.
+
+The key CSS variables already defined in `app.css`:
+- `--bg-primary: #0F1115`
+- `--bg-secondary: #191B22`
+- `--bg-surface: #22252E`
+- `--bg-surface-hover: #2D313C`
+- `--text-primary: #FFFFFF`
+- `--text-secondary: #A1A7B3`
+- `--text-muted: #6B7280`
+- `--accent-primary: #5E6AD2`
+- `--border-color: #2D313C`
+- `--border-radius-sm: 4px`, `--border-radius-md: 8px`, `--border-radius-lg: 12px`
+- `--transition-fast: 150ms ease`
+
+---
+
+## Breakpoints to Support
+
+| Name | Width | Behaviour |
+|---|---|---|
+| Desktop | ≥ 900px | Current layout — sidebar always visible on left, ops panel on right |
+| Tablet | 600px – 899px | Sidebar collapses to icon-only strip (48px wide), ops panel below content |
+| Mobile | < 600px | Sidebar is hidden, replaced by a bottom nav bar; ops panel is a slide-up drawer |
+
+---
+
+## What to Change
+
+### 1. `apps/desktop/src/app.css`
+
+Add new CSS variables for responsive layout:
+```css
+--sidebar-width: 260px;
+--sidebar-collapsed-width: 48px;
+--ops-panel-width: 320px;
+--breakpoint-tablet: 900px;
+--breakpoint-mobile: 600px;
+```
+
+Add the core responsive layout rules at the bottom of `app.css`:
+
+```css
+/* ─── Tablet (600–899px): sidebar collapses to icons only ───────────────── */
+@media (max-width: 899px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width) !important;
+    overflow: hidden;
+  }
+  /* Hide text labels and jobs section at tablet */
+  .nav-label,
+  .brand-title,
+  .sidebar-jobs,
+  .sidebar-footer {
+    display: none;
+  }
+  .nav-item {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .nav-icon {
+    margin-right: 0;
+    font-size: 1.3rem;
+  }
+  /* Stack ops panel below content */
+  .page-container {
+    flex-direction: column;
+  }
+  .operations-panel {
+    width: 100% !important;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    max-height: 220px;
+    overflow-y: auto;
+  }
+}
+
+/* ─── Mobile (< 600px): hide sidebar, show bottom nav ───────────────────── */
+@media (max-width: 599px) {
+  .sidebar {
+    display: none;
+  }
+  .app-container {
+    flex-direction: column;
+  }
+  .main-content {
+    padding-bottom: 64px; /* space for bottom nav */
+  }
+  .operations-panel {
+    width: 100% !important;
+    max-height: 260px;
+  }
+}
+```
+
+---
+
+### 2. `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+
+The sidebar needs to track whether it's in collapsed mode for accessibility (aria attributes). Add a reactive `isCollapsed` boolean using `$state` that reads window width via `window.innerWidth`. Use Svelte's `onMount` to set it and add a `resize` event listener.
+
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  // ... existing imports
+
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let isCollapsed = $derived(windowWidth < 900);
+
+  onMount(() => {
+    function handleResize() {
+      windowWidth = window.innerWidth;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
+</script>
+
+<aside class="sidebar" aria-label="Main navigation" aria-expanded={!isCollapsed}>
+  <div class="sidebar-header">
+    <h1 class="brand-title">PaperPilot</h1>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Navigation">
+    {#each navItems as item (item.id)}
+      <button
+        class="nav-item"
+        class:active={appState.activeTab === item.id}
+        onclick={() => appState.setActiveTab(item.id)}
+        title={isCollapsed ? item.label : undefined}
+        id={`nav-${item.id}`}
+        aria-label={item.label}
+        aria-current={appState.activeTab === item.id ? 'page' : undefined}
+      >
+        <span class="nav-icon" aria-hidden="true">{item.icon}</span>
+        <span class="nav-label">{item.label}</span>
+      </button>
+    {/each}
+  </nav>
+
+  <!-- Keep jobs and footer but they're hidden via CSS at tablet/mobile -->
+  ...existing jobs and footer sections...
+</aside>
+```
+
+---
+
+### 3. New component: `apps/desktop/src/lib/components/layout/BottomNav.svelte`
+
+This component renders a bottom navigation bar for mobile (< 600px), replacing the hidden sidebar. It shows all nav items as centered icon+label buttons.
+
+```svelte
+<script lang="ts">
+  import { appState } from '$lib/state/app.svelte';
+  import { onMount } from 'svelte';
+
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let isMobile = $derived(windowWidth < 600);
+
+  onMount(() => {
+    function handleResize() { windowWidth = window.innerWidth; }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
+
+  const navItems = [
+    { id: 'home', label: 'Home', icon: '🏠' },
+    { id: 'documents', label: 'Documents', icon: '📄' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' }
+  ];
+</script>
+
+{#if isMobile}
+  <nav class="bottom-nav" id="mobile-bottom-nav" aria-label="Mobile navigation">
+    {#each navItems as item (item.id)}
+      <button
+        class="bottom-nav-item"
+        class:active={appState.activeTab === item.id}
+        id={`mobile-nav-${item.id}`}
+        onclick={() => appState.setActiveTab(item.id)}
+        aria-label={item.label}
+        aria-current={appState.activeTab === item.id ? 'page' : undefined}
+      >
+        <span class="bottom-nav-icon" aria-hidden="true">{item.icon}</span>
+        <span class="bottom-nav-label">{item.label}</span>
+      </button>
+    {/each}
+  </nav>
+{/if}
+
+<style>
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+    padding: 0 8px;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    padding: 8px 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+  }
+
+  .bottom-nav-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-surface);
+  }
+
+  .bottom-nav-item.active {
+    color: var(--accent-primary);
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.3rem;
+  }
+
+  .bottom-nav-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+</style>
+```
+
+---
+
+### 4. Update `apps/desktop/src/routes/+layout.svelte`
+
+Import and render `<BottomNav />` after the main content. Read the file first to understand the current structure.
+
+The layout should look like this after the edit:
+
+```svelte
+<script lang="ts">
+  import Sidebar from '$lib/components/layout/Sidebar.svelte';
+  import BottomNav from '$lib/components/layout/BottomNav.svelte';
+  import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
+  let { children } = $props();
+</script>
+
+<div class="app-container">
+  <Sidebar />
+  <main class="main-content">
+    {@render children()}
+  </main>
+</div>
+
+<BottomNav />
+<ToastContainer />
+```
+
+---
+
+### 5. Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+
+The operations panel needs responsive padding and font adjustments at smaller sizes. Add these CSS rules inside its `<style>` block:
+
+```css
+/* Tablet/mobile: reduce padding, stack action area */
+@media (max-width: 899px) {
+  .operations-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .panel-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .operation-selector,
+  .operation-config {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .action-area {
+    margin-top: 0;
+    padding-top: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 599px) {
+  .panel-content {
+    flex-direction: column;
+  }
+}
+```
+
+---
+
+### 6. Update `apps/desktop/src/lib/components/ui/DropZone.svelte`
+
+The DropZone should be responsive. Read its current content, then add:
+
+```css
+@media (max-width: 599px) {
+  /* Make drop zone padding smaller on mobile */
+  .dropzone {
+    padding: 32px 16px !important;
+  }
+}
+```
+
+---
+
+### 7. Tests: `apps/desktop/src/lib/components/__tests__/BottomNav.test.ts`
+
+```typescript
+import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect } from 'vitest';
+import BottomNav from '../layout/BottomNav.svelte';
+
+describe('BottomNav', () => {
+  it('renders home, documents and settings nav items', () => {
+    // Simulate mobile width
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    render(BottomNav);
+    expect(screen.getByLabelText('Home')).toBeTruthy();
+    expect(screen.getByLabelText('Documents')).toBeTruthy();
+    expect(screen.getByLabelText('Settings')).toBeTruthy();
+  });
+});
+```
+
+---
+
+## Rules & Constraints
+
+1. **Only create/edit files inside `apps/desktop/src/`**. Do NOT touch Rust files.
+2. Use **Svelte 5 runes** (`$state`, `$derived`, `$props`, `onMount`). NOT Svelte 4 stores or `writable`.
+3. Use **vanilla CSS inside `<style>`** tags and `@media` rules. NO TailwindCSS.
+4. Use the existing CSS variables from `app.css` (`--bg-primary`, `--sidebar-width`, etc.). Do NOT hardcode colours.
+5. All interactive elements MUST have unique `id` attributes.
+6. The desktop layout (≥ 900px) must be **completely unchanged** — the responsive changes must only affect narrower widths via `@media`.
+7. `svelte-check --tsconfig ./tsconfig.json` must pass with **0 errors, 0 warnings**.
+8. `npx vitest run` must pass.
+9. Open a PR to `main` when done.

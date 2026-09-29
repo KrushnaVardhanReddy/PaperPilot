@@ -1,0 +1,263 @@
+---
+Task: Phase 1.1.4 — Test Fixture PDF Collection (Rust)
+---
+
+Hey Jules! We need real PDF test fixtures for our test suite. Right now every test that references fixture files is silently skipped because the fixture directories don't exist. This task creates those directories, generates the PDFs programmatically using `lopdf`, and optionally adds a `make-fixtures` binary that can regenerate them.
+
+---
+
+## Context
+
+The fixture tests are in:
+- `paperpilot-pdf/tests/fixture_tests_group_a.rs`
+- `paperpilot-pdf/tests/fixture_tests_group_b.rs`
+- `paperpilot-pdf/tests/fixture_tests_group_c.rs`
+- `paperpilot-pdf/tests/property_tests.rs`
+- `paperpilot-pdf/src/validation.rs` (uses `tests/fixtures/sample.pdf`)
+- `paperpilot-cli/tests/e2e.rs` (uses `../tests/fixtures/`)
+
+The fixture helper function pattern used is:
+
+```rust
+fn get_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("tests")
+        .join("fixtures")
+        .join(name)
+}
+```
+
+So the fixture root directory needed is:
+```
+/PaperPilot/tests/fixtures/   ← workspace root level (shared)
+```
+
+The `paperpilot-pdf/src/validation.rs` uses:
+```rust
+PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample.pdf")
+```
+Which resolves to `paperpilot-pdf/tests/fixtures/sample.pdf`.
+
+---
+
+## What to Build
+
+### Step 1: Create the workspace-level fixture directory
+
+```
+tests/fixtures/       ← workspace root (used by paperpilot-pdf and paperpilot-cli)
+paperpilot-pdf/tests/fixtures/   ← used by validation.rs
+```
+
+### Step 2: Create a binary `tools/make-fixtures/src/main.rs`
+
+This binary uses `lopdf` to programmatically generate every required PDF fixture. It must be run once to generate all fixture files on disk.
+
+Add to workspace `Cargo.toml`:
+```toml
+[workspace]
+members = [
+    ...existing members...,
+    "tools/make-fixtures"
+]
+```
+
+Create `tools/make-fixtures/Cargo.toml`:
+```toml
+[package]
+name = "make-fixtures"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lopdf = "0.34"
+```
+
+Create `tools/make-fixtures/src/main.rs` that generates the following fixtures. **All PDFs must be real, valid, loadable lopdf documents.**
+
+---
+
+### Required Fixtures
+
+Below is the complete list. All paths are relative to the workspace root.
+
+#### A. `tests/fixtures/simple.pdf`
+- **Description:** A minimal single-page PDF with some lorem-ipsum text.
+- **Page count:** 1
+- **Required for:** `fixture_tests_group_a.rs::test_merge_fixture` (one of the two inputs)
+
+#### B. `tests/fixtures/multi_page.pdf`
+- **Description:** A 3-page PDF. Each page has different content (e.g. "Page 1", "Page 2", "Page 3") so tests can distinguish pages.
+- **Page count:** 3
+- **Required for:**
+  - `fixture_tests_group_a.rs::test_merge_fixture` (second input; merge result should have 4 pages)
+  - `fixture_tests_group_a.rs::test_split_fixture`
+  - `fixture_tests_group_a.rs::test_burst_fixture`
+  - `fixture_tests_group_a.rs::test_reorder_pages_fixture`
+  - `fixture_tests_group_a.rs::test_rotate_pages_fixture`
+  - `property_tests.rs` (all proptest fixtures use this)
+
+#### C. `tests/fixtures/encrypted.pdf`
+- **Description:** A password-protected PDF. Password must be `"test123"`.
+- **Page count:** 1
+- **Required for:** future decrypt tests and error-handling tests
+
+#### D. `tests/fixtures/malformed.pdf`
+- **Description:** A file that contains a PDF header (`%PDF-1.4`) but then has corrupt/truncated body bytes. It should NOT be loadable by lopdf.
+- **Page count:** N/A (must fail to parse)
+- **Required for:** `error_handling_tests.rs`
+- **Implementation:** Write this as raw bytes, not via lopdf. Use `std::fs::write` to write a byte slice that starts with `%PDF-1.4\n` but contains garbage after that.
+
+#### E. `tests/fixtures/scanned.pdf`
+- **Description:** A PDF that simulates a scanned document — contains only an image (a JPEG or PNG embedded into a PDF page), no text layer. Used for OCR tests.
+- **Page count:** 1
+
+#### F. `tests/fixtures/form_fields.pdf`
+- **Description:** A PDF with AcroForm fields (text fields, checkboxes). Used for flatten tests.
+- **Page count:** 1
+
+#### G. `tests/fixtures/large_text.pdf`
+- **Description:** A 10-page PDF where each page contains a paragraph of repeated Lorem Ipsum text. Used for extract-text tests to verify multi-page output.
+- **Page count:** 10
+
+#### H. `paperpilot-pdf/tests/fixtures/sample.pdf`
+- **Description:** A simple 1-page PDF (same as `simple.pdf`, just in a different location).
+- **Required for:** `paperpilot-pdf/src/validation.rs::tests::test_validate_valid_pdf`
+
+---
+
+### Step 3: Generate fixtures as part of the build / use `include_bytes!` alternative
+
+Since lopdf-generated PDFs need to be written to disk, the cleanest approach is:
+
+1. The `make-fixtures` binary, when run, writes all fixtures to `tests/fixtures/` and `paperpilot-pdf/tests/fixtures/`.
+2. Add a Cargo build script `build.rs` in `paperpilot-pdf/` that detects if fixtures are missing and calls `make-fixtures` automatically:
+
+```rust
+// paperpilot-pdf/build.rs
+use std::path::Path;
+use std::process::Command;
+
+fn main() {
+    let fixture_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("tests/fixtures/simple.pdf");
+
+    if !fixture_path.exists() {
+        // Attempt to run make-fixtures
+        let status = Command::new("cargo")
+            .args(["run", "--bin", "make-fixtures", "--manifest-path",
+                   &format!("{}/tools/make-fixtures/Cargo.toml",
+                             env!("CARGO_MANIFEST_DIR").replace("/paperpilot-pdf", ""))])
+            .status();
+        if let Err(e) = status {
+            println!("cargo:warning=Could not auto-generate fixtures: {e}");
+        }
+    }
+
+    println!("cargo:rerun-if-changed=tests/fixtures/");
+}
+```
+
+**Alternative (preferred for simplicity):** Instead of a build script, just add a `[dev-dependencies]` workspace-level script and document in `README-TEST.md` that you must run `cargo run --bin make-fixtures` before running tests for the first time.
+
+---
+
+### Step 4: Generate the fixture PDFs correctly using lopdf
+
+Here is a reference for creating a valid minimal PDF with lopdf:
+
+```rust
+use lopdf::{Document, Object, Stream, Dictionary, content::{Content, Operation}};
+
+fn create_simple_pdf(text: &str) -> Document {
+    let mut doc = Document::with_version("1.5");
+
+    let pages_id = doc.new_object_id();
+    let font_id = doc.add_object(dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+
+    let content = Content {
+        operations: vec![
+            Operation::new("BT", vec![]),
+            Operation::new("Tf", vec!["F1".into(), 14.into()]),
+            Operation::new("Td", vec![50.into(), 700.into()]),
+            Operation::new("Tj", vec![Object::string_literal(text)]),
+            Operation::new("ET", vec![]),
+        ],
+    };
+    let content_bytes = content.encode().unwrap();
+    let content_id = doc.add_object(Stream::new(dictionary!{}, content_bytes));
+
+    let page_id = doc.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+        "Contents" => content_id,
+        "Resources" => dictionary! {
+            "Font" => dictionary! {
+                "F1" => font_id,
+            }
+        }
+    });
+
+    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
+        "Type" => "Pages",
+        "Kids" => vec![page_id.into()],
+        "Count" => 1,
+    }));
+
+    let catalog_id = doc.add_object(dictionary! {
+        "Type" => "Catalog",
+        "Pages" => pages_id,
+    });
+    doc.trailer.set("Root", catalog_id);
+    doc
+}
+```
+
+Use this pattern to create all fixtures. For `multi_page.pdf` (3 pages), extend `Pages.Kids` to have 3 page object IDs and set `Count` to 3.
+
+For `malformed.pdf` do **NOT** use lopdf. Instead:
+```rust
+std::fs::write(output_path, b"%PDF-1.4\n1 0 obj\n<<CORRUPT GARBAGE HERE>>\nxref\n%%EOF")?;
+```
+
+---
+
+### Step 5: Update `.gitignore`
+
+The fixture PDFs should be **committed to git** (they are small deterministic files needed for CI). Make sure `.gitignore` does NOT exclude `*.pdf` files inside `tests/fixtures/`.
+
+Check the root `.gitignore` and `paperpilot-pdf/.gitignore` for any `*.pdf` exclusion rules, and remove them if present.
+
+---
+
+### Step 6: Verify all tests now run (not skipped)
+
+After generating fixtures, run:
+
+```bash
+cargo test -p paperpilot-pdf
+cargo test -p paperpilot-cli
+```
+
+All fixture tests should now run and pass (not be silently skipped due to missing files). If any fixture test fails because the test assertion is wrong (e.g. wrong page count), fix the assertion to match the actual generated fixture.
+
+---
+
+## Rules & Constraints
+
+1. **Only create/edit Rust files and TOML files.** Do NOT touch Svelte, JS, or TypeScript.
+2. All generated PDFs must be loadable by `lopdf::Document::load()` without errors (except `malformed.pdf` which must fail).
+3. `cargo test -p paperpilot-pdf` must pass with 0 failures.
+4. `cargo clippy --workspace -- -D warnings` must pass.
+5. The `make-fixtures` binary must run to completion without panicking.
+6. Commit the generated fixture PDF files to git (do not `.gitignore` them).
+7. Open a PR to `main` when done.
