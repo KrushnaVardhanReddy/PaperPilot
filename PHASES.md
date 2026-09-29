@@ -150,9 +150,9 @@ Write tests alongside each operation, not after.
 | 1.4.1 | Unit tests per operation ✅ | Written inline in every operation (`#[cfg(test)]`) |
 | 1.4.2 | Round-trip tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
 | 1.4.3 | Fixture-based integration tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
-| 1.4.4 | Property-based tests 🚧 | In Progress (Session 9564443689999737291) |
-| 1.4.5 | Error handling tests 🚧 | In Progress (Session 9564443689999737291) |
-| 1.4.6 | PDF Validation layer 🚧 | In Progress (Session 9564443689999737291) |
+| 1.4.4 | Property-based tests ✅ | Merged |
+| 1.4.5 | Error handling tests ✅ | Merged |
+| 1.4.6 | PDF Validation layer ✅ | Merged |
 
 ---
 
@@ -382,8 +382,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 3.5.1 | Rust async job runner ✅ | Merged (Session 8999512547197594932) |
 | 3.5.2 | Tauri event bridge ✅ | Merged (Session 8999512547197594932) |
-| 3.5.3 | Progress bar component 🚧 | In Progress (Session 547096698313425810) |
-| 3.5.4 | Job cancel support 🚧 | In Progress (Session 547096698313425810) |
+| 3.5.3 | Progress bar component ✅ | Merged |
+| 3.5.4 | Job cancel support ✅ | Merged |
 | 3.5.5 | Job history panel ✅ | Merged (Session 8999512547197594932) |
 | 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
 | 3.5.7 | E2E Desktop tests ✅ | Merged (Session 617520399890233763) |
@@ -395,9 +395,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.6.1 | Portable Windows Build (`.exe`) 🚧 | In Progress (Session 9012977792349214563) |
-| 3.6.2 | Portable Linux Build (`AppImage`) 🚧 | In Progress (Session 9012977792349214563) |
-| 3.6.3 | Portable macOS Build (`.app` / `.dmg`) 🚧 | In Progress (Session 9012977792349214563) |
+| 3.6.1 | Portable Windows Build (`.exe`) ✅ | Merged |
+| 3.6.2 | Portable Linux Build (`AppImage`) ✅ | Merged |
+| 3.6.3 | Portable macOS Build (`.app` / `.dmg`) ✅ | Merged |
 | 3.6.4 | MSI / MDM Installers (Enterprise) | Create traditional MSI installers for IT deployment (Intune, SCCM). |
 
 ---
