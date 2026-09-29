@@ -1,0 +1,43 @@
+---
+Task: Phase 1.3 Group F — PDF Creation (from scratch)
+Context: The paperpilot-core/paperpilot-pdf Rust workspace is fully set up. The lopdf crate is already a dependency. The trait pattern in paperpilot-core/src/traits.rs uses the PdfOperation trait.
+---
+
+Hey Jules! It's time to build Phase 1.3 Group F — the PDF Creation engine. This enables generating professional PDFs from Markdown, HTML templates, and Handlebars-style variable substitution.
+
+## Requirements:
+
+### 1.3.40 — Markdown → PDF
+- Add a `pdf_markdown_to_pdf` MCP tool in `paperpilot-mcp/src/server.rs`.
+- In `paperpilot-pdf/src/operations/`, implement `MarkdownToPdf` using the `pulldown-cmark` crate to parse Markdown.
+- Render headings (H1/H2/H3), paragraphs, **bold**, *italic*, `code blocks`, and tables into a `lopdf::Document`.
+- Add `pulldown-cmark` to `paperpilot-pdf/Cargo.toml`.
+- Args: `{ input: String (path to .md file), output: String (path for output .pdf) }`
+
+### 1.3.41 — HTML → PDF
+- Add a `pdf_html_to_pdf` MCP tool.
+- Implement `HtmlToPdf` using the `weasyprint` CLI as a subprocess fallback OR use `headless_chrome` crate if available.
+- If neither is cleanly available, use a pure Rust HTML parser (`scraper` crate) to strip HTML tags and render the plain text into a PDF (a best-effort fallback is acceptable here).
+- Args: `{ input: String (path to .html file), output: String (path for output .pdf) }`
+
+### 1.3.42 & 1.3.43 — Template Engine + Built-in Templates
+- Add a `pdf_create_from_template` MCP tool.
+- Implement a simple Handlebars-style variable substitution engine in Rust. You don't need the full `handlebars` crate — a simple regex/string replace of `{{variable_name}}` patterns is acceptable.
+- Create a `paperpilot-pdf/src/templates/` directory with at least two built-in Markdown templates:
+  - `invoice.md.hbs` — with `{{client_name}}`, `{{invoice_number}}`, `{{due_date}}`, `{{line_items}}`, `{{total}}`
+  - `report.md.hbs` — with `{{title}}`, `{{author}}`, `{{date}}`, `{{body}}`
+- Args: `{ template: String (template name OR path to .hbs file), data: Object (JSON key-value pairs), output: String }`
+
+### 1.3.44 — CLI Command
+- Add `paperpilot create --template <name> --data <data.json> -o <output.pdf>` to `paperpilot-cli/src/cli.rs`.
+
+### 1.3.45 — Custom Page Layout
+- Add optional args to the `pdf_markdown_to_pdf` and `pdf_create_from_template` tools: `page_size` (A4/Letter/Legal), `margin_mm` (number), `orientation` (portrait/landscape).
+
+## Rules:
+- Follow the existing `PdfOperation` trait pattern in `paperpilot-core/src/traits.rs`.
+- Add `#[cfg(test)]` unit tests for each operation.
+- Ensure the `pdf_markdown_to_pdf` and `pdf_create_from_template` tools are listed in `execute_list_tools()` in `server.rs`.
+- No Mocking in integration tests — generate real PDFs.
+
+Please open a PR to `main` when finished!

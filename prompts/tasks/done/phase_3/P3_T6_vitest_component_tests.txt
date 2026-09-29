@@ -1,0 +1,25 @@
+---
+Task: Phase 3.1.6 - Vitest Component Unit Tests
+Context: The Svelte desktop app has Playwright E2E tests already. We now need Vitest unit tests for individual Svelte 5 components.
+---
+
+Hey Jules! We have Playwright E2E tests running great, but we're missing Vitest component-level unit tests (Phase 3.1.6). Let's close that gap!
+
+## Requirements:
+
+1. **Setup Vitest:**
+   - Install `@vitest/ui`, `vitest`, and `@testing-library/svelte` as devDependencies.
+   - Add a `vitest.config.ts` (or extend `vite.config.js`) configured for Svelte 5 component testing.
+   - Add a `"test": "vitest run"` script to `package.json`.
+
+2. **Write Component Unit Tests (`apps/desktop/src/lib/components/__tests__/`):**
+   - **`Toast.test.ts`**: Mount a Toast notification, verify the message text renders, verify the correct CSS class is applied for `success` vs `error` type.
+   - **`DocumentList.test.ts`**: Mount the DocumentList with a mocked list of documents (`$state`), verify each document name appears in the DOM.
+   - **`OperationsPanel.test.ts`**: Mount the OperationsPanel, verify the operation selector renders, select a different operation from the dropdown, verify the correct parameter inputs appear.
+
+3. **Rules:**
+   - Use Svelte 5 rune-compatible testing patterns. `@testing-library/svelte` v5+ supports Svelte 5 runes.
+   - Do NOT use Playwright in these tests — pure Vitest only.
+   - STRICTLY DO NOT USE TailwindCSS.
+
+Please open a PR to `main` when finished!
