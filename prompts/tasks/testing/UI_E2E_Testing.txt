@@ -9,11 +9,12 @@ Hey Jules! We've implemented the Visual Pipeline Builder and the responsive mobi
 ### 1. E2E UI Testing
 You can either write a Playwright script in `apps/desktop/` or write a detailed manual testing script. 
 The test workflow MUST cover:
-1. Dragging and dropping multiple PDF fixtures into the DropZone.
-2. Rearranging the documents in the list.
-3. Using the Visual Pipeline Builder to add a Merge block, a Rotate block, and a Split block.
-4. Clicking the "Run Pipeline" button.
-5. Verifying that the progress bar updates and a Toast notification appears on success.
+1. Programmatically generating a new test PDF (e.g., using a quick Python script or `tools/make-fixtures`) so we have a fresh file to work with.
+2. Dragging and dropping this newly generated PDF (along with other fixtures) into the DropZone.
+3. Rearranging the documents in the list.
+4. Using the Visual Pipeline Builder to add a Merge block, a Rotate block, and a Split block.
+5. Clicking the "Run Pipeline" button.
+6. Verifying that the progress bar updates and a Toast notification appears on success.
 
 ### 2. Generate the Test Report
 Create a markdown report at `reports/UI_TEST_REPORT.md` documenting the results of the UI testing.
