@@ -385,7 +385,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.5.3 | Progress bar component ✅ | Merged |
 | 3.5.4 | Job cancel support ✅ | Merged |
 | 3.5.5 | Job history panel ✅ | Merged (Session 8999512547197594932) |
-| 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
+| 3.5.6 | Responsive mobile layout ✅ | Merged (Session 13229007488227647984) |
 | 3.5.7 | E2E Desktop tests ✅ | Merged (Session 617520399890233763) |
 | 3.5.8 | E2E Mobile tests (Simulator) | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
 
