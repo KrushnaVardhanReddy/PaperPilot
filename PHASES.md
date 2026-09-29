@@ -1017,3 +1017,47 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 10.3.2 | Playwright WASM E2E | Spin up the web app and run the same Playwright tests as the desktop |
 | 10.3.3 | Bundle size tracking | Fail CI if WASM bundle exceeds 5 MB (keep it fast to load) |
 
+---
+
+## Architecture Improvements — Hexagonal / Ports & Adapters
+
+**Goal:** Harden the Hexagonal Architecture foundations already present in PaperPilot so the codebase stays infrastructure-agnostic as we scale to cloud and WASM.
+
+**Strategy:** These are incremental, non-breaking additions to `paperpilot-core`. No operation code needs to change. Adapters are added alongside the existing direct-write pattern.
+
+---
+
+### A.1 — StoragePort (Output Adapter)
+
+| # | Task | Notes |
+|---|---|---|
+| A.1.1 | `StoragePort` trait ✅ | Defined in `paperpilot-core/src/ports.rs` — `write`, `read`, `exists` |
+| A.1.2 | `LocalFileStorage` adapter ✅ | Default impl — wraps `std::fs`; used in CLI and desktop |
+| A.1.3 | `MemoryStorage` adapter ✅ | In-memory map — use in unit tests, eliminates all temp file setup |
+| A.1.4 | Wire `StoragePort` into CLI commands | Replace `std::fs::write` calls in `paperpilot-cli` with `LocalFileStorage` |
+| A.1.5 | Wire `StoragePort` into MCP execute arms | Replace direct file writes in `paperpilot-mcp/src/server.rs` with injected port |
+| A.1.6 | `S3Storage` adapter | Implements `StoragePort` via `aws-sdk-s3`; used in Cloud phase (Phase 9) |
+| A.1.7 | Refactor all operation tests to use `MemoryStorage` | Eliminates all `tempfile` usage from tests |
+
+---
+
+### A.2 — PdfBackend Port (Input Adapter)
+
+| # | Task | Notes |
+|---|---|---|
+| A.2.1 | `PdfBackend` trait ✅ | Defined in `paperpilot-core/src/ports.rs` — `load_from_bytes`, `load_from_path` |
+| A.2.2 | `LopdfBackend` adapter | Implement `PdfBackend` for `lopdf` in `paperpilot-pdf` — wraps `LopdfDocument::load` |
+| A.2.3 | Wire `PdfBackend` into MCP server | Replace `LopdfDocument::load(...)` hardcoded calls with injected `PdfBackend` trait object |
+| A.2.4 | `PdfiumBackend` adapter (Future) | Swap in `pdfium-render` for higher-fidelity rendering, no operation changes needed |
+| A.2.5 | `MuPdfBackend` adapter (Future) | Use MuPDF for OCR-heavy workflows via FFI |
+
+---
+
+### A.3 — Dependency Inversion in CLI & MCP
+
+| # | Task | Notes |
+|---|---|---|
+| A.3.1 | `AppContext` struct | Single struct holding `Box<dyn StoragePort>` + `Box<dyn PdfBackend>` — injected at startup |
+| A.3.2 | CLI uses `AppContext` | `paperpilot-cli/src/main.rs` builds `AppContext` and passes to all command handlers |
+| A.3.3 | MCP uses `AppContext` | `PaperPilotMcpServer` holds `Arc<AppContext>` — all tools use it instead of hardcoded paths |
+| A.3.4 | Integration test harness | Boot the full app with `MemoryStorage` + `LopdfBackend` — true end-to-end, no file I/O |
