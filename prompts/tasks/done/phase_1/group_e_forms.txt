@@ -1,0 +1,22 @@
+---
+Task: Phase 1.3 Group E — Forms (AcroForm)
+Context: The core `PdfOperation` trait is established in `paperpilot-core/src/traits.rs`. This task involves handling interactive PDF forms (AcroForms).
+---
+
+Hey Jules! Please implement the Group E Form operations.
+
+## Requirements:
+1. Implement AcroForm read (Task 1.3.35) to read form field values from interactive PDF forms.
+2. Implement AcroForm fill (Task 1.3.36) to fill and flatten PDF form fields programmatically.
+3. Implement Form field creation (Task 1.3.37) to add text/checkbox/dropdown form fields to any PDF.
+4. Register these operations in the MCP server (`paperpilot-mcp/src/server.rs`) using the manual `ServerHandler` trait.
+5. Add CLI commands for these operations in `paperpilot-cli/src/commands/`.
+
+## Rules:
+- Follow the existing PdfOperation trait pattern in paperpilot-core/src/traits.rs
+- STRICTLY DO NOT USE TailwindCSS
+- Add #[cfg(test)] unit tests for each operation
+- No Mocking in integration tests — use real PDF files
+- MCP Server in `paperpilot-mcp/src/server.rs` uses manual `ServerHandler` trait — do NOT use `rmcp` macros.
+
+Please open a PR to `main` when finished!

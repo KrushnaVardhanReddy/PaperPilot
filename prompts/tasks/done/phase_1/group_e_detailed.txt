@@ -1,0 +1,45 @@
+---
+Task: Phase 1.3 Group E — Forms (AcroForm) (Detailed)
+Context: The core `PdfOperation` trait is established in `paperpilot-core/src/traits.rs`. This task involves handling interactive PDF forms (AcroForms) using the `lopdf` crate.
+---
+
+Hey Jules! Please implement the Group E Form operations. Here is exactly how to interact with the PDF dictionary structure:
+
+## Requirements:
+
+### 1.3.35 — AcroForm Read
+- Add a `pdf_read_form` MCP tool.
+- **How to implement:** Open the PDF with `lopdf::Document::load`. Get the `Catalog` (Root dictionary). Look up the `/AcroForm` key. 
+- Iterate through the `/Fields` array. For each field reference, look up the dictionary. Extract the `/T` (Text/Name of the field) and `/V` (Value) or `/AS` (Appearance State for checkboxes).
+- Return a JSON object mapping Field Names to their string/boolean values.
+- Args: `{ input: String }`
+
+### 1.3.36 — AcroForm Fill
+- Add a `pdf_fill_form` MCP tool.
+- **How to implement:** Load the document via `lopdf`. Find the `/AcroForm` -> `/Fields` array. 
+- Iterate through the fields. If the `/T` (Field Name) matches a key provided in the input JSON, update its `/V` (Value) entry in the dictionary with the new value.
+- To handle simple text fields, insert a `lopdf::Object::String`. For checkboxes, update `/V` to `/Yes` or `/Off`.
+- Save the modified PDF.
+- Args: `{ input: String, values: Object (JSON dict of field names to values), output: String }`
+
+### 1.3.37 — Form Field Creation
+- Add a `pdf_create_form_field` MCP tool.
+- **How to implement:** Add a new dictionary to the document objects representing a Widget annotation (`/Type /Annot`, `/Subtype /Widget`, `/FT /Tx` for text fields, `/T (FieldName)`, and a `/Rect [llx lly urx ury]` array).
+- Add this object reference to the target page's `/Annots` array.
+- Ensure the document Catalog has an `/AcroForm` dictionary, and add the new field reference to its `/Fields` array.
+- Args: `{ input: String, field_name: String, field_type: String (text/checkbox), page: i32, x: f32, y: f32, width: f32, height: f32, output: String }`
+
+### CLI Wiring
+- Add the following commands to `paperpilot-cli/src/cli.rs`:
+  - `paperpilot form read <input>`
+  - `paperpilot form fill <input> --data <values.json> -o <output.pdf>`
+  - `paperpilot form add-field <input> --name <name> --type text --page 1 --rect "100,100,300,150" -o <output.pdf>`
+
+## Rules:
+- Follow the existing PdfOperation trait pattern in paperpilot-core/src/traits.rs
+- STRICTLY DO NOT USE TailwindCSS
+- Add #[cfg(test)] unit tests for each operation
+- No Mocking in integration tests — use real PDF files
+- MCP Server in `paperpilot-mcp/src/server.rs` uses manual `ServerHandler` trait — do NOT use `rmcp` macros.
+
+Please open a PR to `main` when finished!

@@ -87,7 +87,9 @@ PaperPilot/
 
 | Session ID | Task | Files Touched |
 |---|---|---|
-| (None active) | | |
+| `8203167166999327475` | Group D Remaining: PDF→DOCX, XLSX, PPTX, Doc Classifier (1.3.30-32, 1.3.39) | `paperpilot-pdf/`, `paperpilot-mcp/`, `paperpilot-cli/` |
+| `996394326205831326` | Group E Forms: AcroForm read, fill, create (1.3.35-1.3.37) | `paperpilot-pdf/`, `paperpilot-mcp/`, `paperpilot-cli/` |
+| `6565731315931125703` | Phase 3.3 UI: Page preview controls (reorder, rotate, delete) (3.3.4-3.3.6) | `apps/desktop/src/` |
 
 > ⚠️ **Merge Conflict Warning:** None.
 
@@ -96,10 +98,8 @@ PaperPilot/
 ## 🔲 What's Next (Backlog Priority Order)
 
 1. **Phase 3.4.10 — Visual Pipeline Builder:** Node-based drag-and-drop canvas inside Svelte UI for chaining operations. (No Jules competitor is building this for PDFs.)
-3. **Phase 1.3 Group E — Forms:** AcroForm read/fill/create (1.3.35–1.3.37).
-4. **Phase 1.3 Group D Remaining:** PDF→DOCX, XLSX, PPTX (these need more complex crates — defer until after pipeline builder).
-5. **Phase 3.1.7 — iOS Target:** Needs a Mac with Xcode to run `cargo tauri ios init`.
-6. **Phase 4 — AI Layer:** Natural language → MCP tool execution. (Blocked by Phase 3.4.10.)
+3. **Phase 3.1.7 — iOS Target:** Needs a Mac with Xcode to run `cargo tauri ios init`.
+4. **Phase 4 — AI Layer:** Natural language → MCP tool execution. (Blocked by Phase 3.4.10.)
 
 ---
 

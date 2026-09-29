@@ -113,21 +113,21 @@ All operations are independent of each other and can be built in parallel once t
 #### Group D — Conversion
 | # | Task | Notes |
 |---|---|---|
-| 1.3.30 | PDF → Word (DOCX) | Export PDF content to editable Word document |
-| 1.3.31 | PDF → Excel (XLSX) | Export table content to spreadsheet |
-| 1.3.32 | PDF → PowerPoint (PPTX) | Export PDF slides to PPTX |
+| 1.3.30 | PDF → Word (DOCX) 🚧 | In Progress (Session 8203167166999327475) |
+| 1.3.31 | PDF → Excel (XLSX) 🚧 | In Progress (Session 8203167166999327475) |
+| 1.3.32 | PDF → PowerPoint (PPTX) 🚧 | In Progress (Session 8203167166999327475) |
 | 1.3.33 | PDF → HTML ✅ | Merged (Session 10906031722199501492) |
 | 1.3.34 | PDF → Markdown ✅ | Merged (Session 10906031722199501492) |
 | 1.3.38 | PDF → LLM-Ready Export ✅ | Merged (Session 10906031722199501492) |
-| 1.3.39 | Document type classifier | Auto-detect document type (invoice, contract, research paper, form, report) using heuristics + AI; tag the output metadata accordingly |
+| 1.3.39 | Document type classifier 🚧 | In Progress (Session 8203167166999327475) |
 | 1.3.46 | PDF → Structured JSON ✅ | Merged (Session 10906031722199501492) |
 
 #### Group E — Forms
 | # | Task | Notes |
 |---|---|---|
-| 1.3.35 | AcroForm read | Read form field values from interactive PDF forms |
-| 1.3.36 | AcroForm fill | Fill and flatten PDF form fields programmatically |
-| 1.3.37 | Form field creation | Add text/checkbox/dropdown form fields to any PDF |
+| 1.3.35 | AcroForm read 🚧 | In Progress (Session 996394326205831326) |
+| 1.3.36 | AcroForm fill 🚧 | In Progress (Session 996394326205831326) |
+| 1.3.37 | Form field creation 🚧 | In Progress (Session 996394326205831326) |
 
 #### Group F — PDF Creation (from scratch)
 | # | Task | Notes |
@@ -234,6 +234,60 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 2.4 — MCP Tool Backfill `[PARALLEL with 2.2, BLOCKED BY respective Phase 1 ops]`
+
+> These tools were added during Phase 1 sessions **after** 2.2 was originally written.
+> They are split into groups matching who will implement the MCP wiring.
+
+#### 2.4a — Group B Missing Tools (needs new Jules session)
+| # | Task | Notes |
+|---|---|---|
+| 2.4.1 | `pdf_repair` tool | Wraps `Repair` operation from 1.3.10 |
+| 2.4.2 | `pdf_linearize` tool | Wraps `Linearize` operation from 1.3.17 |
+| 2.4.3 | `pdf_redact` tool | Wraps `Redact` operation from 1.3.16 |
+| 2.4.4 | `pdf_flatten` tool | Wraps `Flatten` operation from 1.3.18 |
+| 2.4.5 | `pdf_to_pdf_a` tool | Wraps `PdfA` conversion from 1.3.19 |
+| 2.4.6 | `pdf_header_footer` tool | Wraps `HeaderFooter` from 1.3.20 |
+| 2.4.7 | `pdf_bates` tool | Wraps `Bates` numbering from 1.3.21 |
+| 2.4.8 | `pdf_integrity_hash` tool | Wraps `IntegrityHash` from 1.3.22 — already registered in PR #37, needs tracking |
+
+#### 2.4b — Group C Missing Tools (needs new Jules session)
+| # | Task | Notes |
+|---|---|---|
+| 2.4.9 | `pdf_render` tool | Wraps `Render` from 1.3.24 |
+| 2.4.10 | `pdf_images_to_pdf` tool | Wraps `ImagesToPdf` from 1.3.25 |
+| 2.4.11 | `pdf_compare` tool | Wraps `Compare` from 1.3.27 |
+| 2.4.12 | `pdf_bookmarks` tool | Wraps `Bookmarks` from 1.3.28 |
+| 2.4.13 | `pdf_ocr` tool | Wraps `Ocr` from 1.3.29 |
+
+#### 2.4c — Group F (PDF Creation) Missing Tools (needs new Jules session)
+| # | Task | Notes |
+|---|---|---|
+| 2.4.14 | `pdf_markdown_to_pdf` tool | Wraps `MarkdownToPdf` from 1.3.40 |
+| 2.4.15 | `pdf_html_to_pdf` tool | Wraps `HtmlToPdf` from 1.3.41 |
+| 2.4.16 | `pdf_create_from_template` tool | Wraps template engine from 1.3.42/1.3.43 |
+
+#### 2.4d — Group D Conversion Tools (wired by active Jules session 8203167166999327475)
+| # | Task | Notes |
+|---|---|---|
+| 2.4.17 | `pdf_to_html` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
+| 2.4.18 | `pdf_to_markdown` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
+| 2.4.19 | `pdf_to_json` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
+| 2.4.20 | `pdf_to_llm_export` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
+| 2.4.21 | `pdf_to_docx` tool 🚧 | In Progress (Session 8203167166999327475) |
+| 2.4.22 | `pdf_to_xlsx` tool 🚧 | In Progress (Session 8203167166999327475) |
+| 2.4.23 | `pdf_to_pptx` tool 🚧 | In Progress (Session 8203167166999327475) |
+| 2.4.24 | `pdf_classify_type` tool 🚧 | In Progress (Session 8203167166999327475) |
+
+#### 2.4e — Group E Forms Tools (wired by active Jules session 996394326205831326)
+| # | Task | Notes |
+|---|---|---|
+| 2.4.25 | `pdf_read_form` tool 🚧 | In Progress (Session 996394326205831326) |
+| 2.4.26 | `pdf_fill_form` tool 🚧 | In Progress (Session 996394326205831326) |
+| 2.4.27 | `pdf_create_form_field` tool 🚧 | In Progress (Session 996394326205831326) |
+
+---
+
 ### 2.3 — MCP Server Infrastructure `[PARALLEL with 2.2]`
 
 | # | Task | Notes |
@@ -297,9 +351,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.3.1 | Page renderer ✅ | Merged (Session 10488084682857299204) |
 | 3.3.2 | Page thumbnail strip ✅ | Merged (Session 10488084682857299204) |
 | 3.3.3 | Page selection ✅ | Merged (Session 10488084682857299204) |
-| 3.3.4 | Page reorder via drag | Drag thumbnails to reorder |
-| 3.3.5 | Page rotation controls | Per-page rotate buttons |
-| 3.3.6 | Page deletion UI | Select + delete pages visually |
+| 3.3.4 | Page reorder via drag 🚧 | In Progress (Session 6565731315931125703) |
+| 3.3.5 | Page rotation controls 🚧 | In Progress (Session 6565731315931125703) |
+| 3.3.6 | Page deletion UI 🚧 | In Progress (Session 6565731315931125703) |
 
 ---
 
@@ -334,6 +388,17 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
 | 3.5.7 | E2E Desktop tests ✅ | Merged (Session 617520399890233763) |
 | 3.5.8 | E2E Mobile tests (Simulator) | iOS Simulator + Android Emulator automated tests via Appium or Detox (No Mocking) |
+
+---
+
+### 3.6 — Release / Distribution `[BLOCKED BY 3.2, 3.4]`
+
+| # | Task | Notes |
+|---|---|---|
+| 3.6.1 | Portable Windows Build (`.exe`) | Configure Tauri to generate a standalone, installer-free `.exe` for enterprise USB distribution. |
+| 3.6.2 | Portable Linux Build (`AppImage`) | Enable AppImage output in `tauri.conf.json` for a zero-install Linux experience. |
+| 3.6.3 | Portable macOS Build (`.app` / `.dmg`) | Generate standalone drag-and-drop `.dmg` without requiring installer privileges. |
+| 3.6.4 | MSI / MDM Installers (Enterprise) | Create traditional MSI installers for IT deployment (Intune, SCCM). |
 
 ---
 

@@ -1,0 +1,23 @@
+---
+Task: Phase 1.3 Group D — Advanced Conversions
+Context: The core `PdfOperation` trait is established in `paperpilot-core/src/traits.rs`. Group D JSON, HTML, and Markdown conversions are already complete. We now need the DOCX, XLSX, PPTX exports, and Document Type Classifier.
+---
+
+Hey Jules! Please implement the remaining Group D advanced conversion operations.
+
+## Requirements:
+1. Implement PDF → DOCX (Task 1.3.30)
+2. Implement PDF → XLSX (Task 1.3.31)
+3. Implement PDF → PPTX (Task 1.3.32)
+4. Implement Document Type Classifier (Task 1.3.39) using heuristics/AI to auto-detect document type (invoice, contract, research paper, form, report).
+5. Register these operations in the MCP server (`paperpilot-mcp/src/server.rs`) using the manual `ServerHandler` trait.
+6. Add CLI commands for these operations in `paperpilot-cli/src/commands/`.
+
+## Rules:
+- Follow the existing PdfOperation trait pattern in paperpilot-core/src/traits.rs
+- STRICTLY DO NOT USE TailwindCSS
+- Add #[cfg(test)] unit tests for each operation
+- No Mocking in integration tests — use real PDF files
+- MCP Server in `paperpilot-mcp/src/server.rs` uses manual `ServerHandler` trait — do NOT use `rmcp` macros.
+
+Please open a PR to `main` when finished!

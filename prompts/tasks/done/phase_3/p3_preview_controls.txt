@@ -1,0 +1,30 @@
+---
+Task: Phase 3.3 — Basic UI Preview Controls (Reorder, Rotate, Delete)
+Context: The core UI shell and basic PDF preview are already implemented in Svelte 5 (`apps/desktop/src`). We now need to add interactive controls to the PDF page thumbnail strip.
+---
+
+Hey Jules! We need to implement the final basic features for the PDF preview UI in the Svelte app. 
+
+## Requirements for `apps/desktop/src/lib/components/ui/PdfPreview.svelte`:
+Currently, `PdfPreview.svelte` uses a static `const mockPages = Array.from(...)`. 
+First, **convert this into a reactive state array**: `let pages = $state(Array.from({ length: 12 }, (_, i) => ({ id: i + 1, num: i + 1, rotation: 0 })));`. Update the `{#each}` block to iterate over `pages`.
+
+1. **Page Reorder via Drag (Task 3.3.4):** 
+   - Add `draggable="true"` to the `.thumbnail-wrapper` div.
+   - Implement vanilla HTML5 `ondragstart`, `ondragover` (with `preventDefault()`), and `ondrop` handlers to swap/move items in the `pages` array. 
+2. **Page Rotation Controls (Task 3.3.5):** 
+   - Add a small rotate button (SVG icon) overlay inside the `.thumbnail` div.
+   - Clicking it should update the `rotation` property of that page in the array by adding 90 degrees.
+   - Apply `style="transform: rotate({page.rotation}deg)"` to the `.thumbnail` div itself (or a wrapper inside it).
+3. **Page Deletion UI (Task 3.3.6):** 
+   - Add a small delete button (SVG trash icon) overlay inside the `.thumbnail-wrapper`.
+   - Clicking it should `filter()` the `pages` array to remove that page, and also remove it from the `selectedPages` Set if it is selected.
+
+## Rules & Styling:
+- Use **Svelte 5 runes** (`$state`, `$derived`).
+- **STRICTLY DO NOT USE TailwindCSS.** Style the new buttons with standard CSS in the `<style>` block.
+- Use `position: absolute` for the rotate and delete icons, placing them in the corners of the thumbnail. Give them a nice background with hover effects using `var(--bg-secondary)` or `var(--primary-color)`.
+- Use standard `<svg>` tags for icons (e.g., standard Lucide/Feather paths).
+- Make sure `npm run check` passes in `apps/desktop/` before submitting.
+
+Please open a PR to `main` when finished!

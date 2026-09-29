@@ -1,0 +1,51 @@
+---
+Task: Phase 1.3 Group D — Advanced Conversions (Detailed)
+Context: The core `PdfOperation` trait is established in `paperpilot-core/src/traits.rs`. Group D JSON, HTML, and Markdown conversions are already complete. We now need the DOCX, XLSX, PPTX exports, and Document Type Classifier.
+---
+
+Hey Jules! Please implement the remaining Group D advanced conversion operations. Here are specific instructions on how to approach these complex conversions:
+
+## Requirements:
+
+### 1.3.30 — PDF → DOCX
+- Add a `pdf_to_docx` MCP tool.
+- Use the `docx-rs` crate (add to `paperpilot-pdf/Cargo.toml`).
+- Extract text from the PDF (you can reuse the existing `extract_text` logic) and write it out as a `.docx` file using `docx-rs::Docx::new().add_paragraph(...)`.
+- Args: `{ input: String (path to .pdf), output: String (path to .docx) }`
+
+### 1.3.31 — PDF → Excel (XLSX)
+- Add a `pdf_to_xlsx` MCP tool.
+- Use the `rust_xlsxwriter` crate (add to `paperpilot-pdf/Cargo.toml`).
+- **How to implement:** Implement a best-effort table extraction. Read text line by line. If a line has multiple distinct blocks of text separated by large whitespace gaps, treat it as columns in a row. Write these rows to the XLSX file.
+- Args: `{ input: String, output: String }`
+
+### 1.3.32 — PDF → PowerPoint (PPTX)
+- Add a `pdf_to_pptx` MCP tool.
+- Since native PPTX generation in Rust is limited, implement this as a fallback generator. 
+- Use the `lopdf` crate to extract each page as an image (or extract the text per page). 
+- If using `lopdf`, create a JSON representation of the slides, or use the `zip` crate to manually construct a basic uncompressed Office Open XML (PPTX) archive containing one image/text block per slide. (Keep it simple: best effort XML generation).
+- Args: `{ input: String, output: String }`
+
+### 1.3.39 — Document Type Classifier
+- Add a `pdf_classify_type` MCP tool.
+- **How to implement:** Extract the first 2-3 pages of text from the PDF.
+- Use a **heuristic keyword engine** (e.g. `Regex` or `aho-corasick` crate) to score the text against categories:
+  - **Invoice:** contains "Invoice", "Total", "Tax", "Due Date", "Balance"
+  - **Contract:** contains "Agreement", "Hereby", "Party of the first part", "Signatures"
+  - **Research Paper:** contains "Abstract", "References", "Methodology"
+  - **Form:** contains "Application", "Date of Birth", "Signature"
+- Return the highest scoring category as a JSON object: `{ "type": "Invoice", "confidence": 0.85 }`.
+- Args: `{ input: String }`
+
+### CLI Wiring
+- Add `Convert` subcommand logic in `paperpilot-cli/src/commands/group_d.rs` to route `--format docx`, `--format xlsx`, and `--format pptx`.
+- Add `paperpilot classify <input>` command.
+
+## Rules:
+- Follow the existing PdfOperation trait pattern in paperpilot-core/src/traits.rs
+- STRICTLY DO NOT USE TailwindCSS
+- Add #[cfg(test)] unit tests for each operation
+- No Mocking in integration tests — use real PDF files
+- MCP Server in `paperpilot-mcp/src/server.rs` uses manual `ServerHandler` trait — do NOT use `rmcp` macros.
+
+Please open a PR to `main` when finished!

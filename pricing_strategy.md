@@ -11,9 +11,9 @@
 | Tier | Price | Best For |
 |---|---|---|
 | Personal | **Free** | Everyone |
-| Pro | **$7/month** ($69/yr billed annually) | Power users, freelancers |
-| Teams | **$15/user/month** ($144/user/yr, billed annually) | SMBs, 2–50 seats |
-| Enterprise | **$25/user/month** ($240/user/yr, billed annually) | 50+ seats, IT-managed deployments |
+| Pro | **$7/month** (or $69/yr billed annually) | Power users, freelancers |
+| Teams | **$15/user/month** (or $144/user/yr billed annually) | SMBs, 2–50 seats |
+| Enterprise | **$25/user/month** (or $240/user/yr billed annually) | 50+ seats, IT-managed deployments |
 
 ---
 
@@ -22,6 +22,7 @@
 * **Target:** Individual users, students, open-source community.
 * **Features:**
   - All core PDF manipulation features (Merge, Split, Rotate, Text Extraction, Encryption)
+  - Offline AI Mode (Rule-based NLP intent routing, no API key required)
   - MCP Server (local, single-user)
   - CLI access
   - Community support only
@@ -34,7 +35,7 @@
 * **Target:** Freelancers, power users, consultants, solo developers.
 * **Features (everything in Personal, plus):**
   - Visual Pipeline Builder (Phase 3.4.10)
-  - AI Natural Language Mode (Phase 4)
+  - Pro AI Mode (Full LLM multi-step reasoning, Bring Your Own Key)
   - LLM-Ready Export (PDF → RAG-optimized Markdown + JSON sidecar)
   - Watch Folder daemon mode
   - Webhooks & HMAC signing
@@ -44,7 +45,7 @@
 ---
 
 ## Tier 3: Teams
-* **Price:** $15/user/month, billed annually ($144/user/year)
+* **Price:** $15/user/month (or $144/user/year billed annually)
 * **Target:** Agencies, small law firms, accounting teams, startups — 2 to 50 seats.
 * **Features (everything in Pro, plus):**
   - Centralized license portal (admin manages seats)
@@ -56,7 +57,7 @@
 ---
 
 ## Tier 4: Enterprise
-* **Price:** $25/user/month, billed annually ($300/user/year)
+* **Price:** $25/user/month (or $240/user/year billed annually)
 * **Minimum:** 50 seats
 * **Target:** Hospitals, law firms, financial institutions, government contractors, any org with an IT policy.
 * **Features (everything in Teams, plus):**
