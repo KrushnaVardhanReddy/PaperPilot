@@ -849,21 +849,71 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 
 ## Phase 9 — Advanced Editing & Enterprise Features
 
-**Goal:** Bridge the final gap with industry giants (e.g., Adobe Acrobat) by introducing true WYSIWYG interactive PDF editing and enterprise-grade security/forms.
+**Goal:** Close the most common gaps vs. Adobe Acrobat with achievable, well-defined capabilities. WYSIWYG text reflow is deliberately deferred to Phase 9.3 (Moonshot) due to extreme complexity.
 
-### 9.1 — Direct Canvas Editing (WYSIWYG)
+### 9.1 — Annotation & Markup (Achievable)
 | # | Task | Notes |
 |---|---|---|
-| 9.1.1 | Canvas Text Selection | Click and highlight existing text bounding boxes |
-| 9.1.2 | Text Replacement Engine | Edit text in-place while preserving font/styling/reflow |
-| 9.1.3 | Image Manipulation | Drag, resize, delete, and replace embedded images |
-| 9.1.4 | Redaction Tool | Select text/areas and permanently destroy underlying data |
+| 9.1.1 | Highlight Tool | Select text regions and apply colour highlight overlays |
+| 9.1.2 | Sticky Notes / Comments | Attach pop-up comment annotations to any page location |
+| 9.1.3 | Free-Draw Markup | Freehand pen/pencil drawing over pages (stored as SVG overlay) |
+| 9.1.4 | Redaction Tool | Select text/areas, burn a black box over them, and permanently strip underlying content stream data |
 
-### 9.2 — Forms & E-Signatures
+### 9.2 — Forms & E-Signatures (Achievable)
 | # | Task | Notes |
 |---|---|---|
 | 9.2.1 | Form Field Builder | Drag-and-drop text boxes, checkboxes, and radio buttons to create fillable PDFs |
 | 9.2.2 | Data Extraction | Extract filled form data to JSON/CSV |
 | 9.2.3 | Cryptographic Signing UI | Select a certificate, draw a signature, and apply a cryptographic seal |
 | 9.2.4 | Signature Verification | Automatically verify document integrity and show a green/red seal indicator |
+
+### 9.3 — WYSIWYG Canvas Editing (Moonshot)
+> [!WARNING]
+> This is the hardest unsolved problem in PDF engineering. PDFs have no reflow model — text is stored as absolute `x,y` positioned glyphs. True in-place editing requires parsing content streams, having access to embedded font subsets, and re-encoding glyph data. Even Adobe Acrobat struggles with this on some PDFs. Estimated scope: 12–24 engineering months.
+
+| # | Task | Notes |
+|---|---|---|
+| 9.3.1 | Content Stream Parser | Parse PDF page content streams to extract text bounding boxes and glyph sequences |
+| 9.3.2 | Font Subsetting Engine | Expand embedded font subsets to include any new characters the user wants to type |
+| 9.3.3 | In-Place Text Edit | Click a text run, edit it, re-encode back into the content stream |
+| 9.3.4 | Image Drag & Replace | Click an embedded image, drag to reposition, or replace with a new file |
+
+---
+
+## Phase 10 — WebAssembly (WASM) Target
+
+**Goal:** Compile `paperpilot-core` and `paperpilot-pdf` to WASM so PDF processing can run entirely in-browser — enabling a zero-install web app, powerful browser extensions, and embeddable SDKs for third-party websites.
+
+**Why WASM matters for PaperPilot:**
+- Our Rust core is already platform-agnostic — WASM is a natural compilation target.
+- Enables a `paperpilot.app` web version that processes files 100% locally in the browser (zero upload = perfect privacy).
+- The Browser Extension (Phase 8.8) can run the full PDF engine in-page without needing the native app installed.
+- Third-party developers can embed `paperpilot-wasm` in their own web apps as a drop-in library.
+
+**[BLOCKED BY Phase 3 / Phase 2 MCP]**
+
+### 10.1 — WASM Core Build
+| # | Task | Notes |
+|---|---|---|
+| 10.1.1 | Audit `paperpilot-core` for WASM compatibility | Replace any `std::fs` / `std::path` calls with WASM-safe equivalents (e.g., in-memory byte slices) |
+| 10.1.2 | Add `wasm32-unknown-unknown` target | Add to workspace `Cargo.toml` and CI matrix |
+| 10.1.3 | Create `paperpilot-wasm` crate | Thin `wasm-bindgen` wrapper that exposes core operations as JS-callable functions |
+| 10.1.4 | Build WASM bundle | `wasm-pack build --target web` — outputs `paperpilot_wasm.js` + `paperpilot_wasm_bg.wasm` |
+| 10.1.5 | Publish to npm as `@paperpilot/wasm` | Versioned npm package for easy consumption by web projects |
+
+### 10.2 — Web App (paperpilot.app)
+| # | Task | Notes |
+|---|---|---|
+| 10.2.1 | New SvelteKit web app | `apps/web` — same component library as the desktop, but without Tauri IPC |
+| 10.2.2 | File drag-and-drop via browser File API | Accept PDF uploads into in-memory `Uint8Array` |
+| 10.2.3 | WASM-based operations | All PDF processing via `@paperpilot/wasm` — zero server upload |
+| 10.2.4 | Progressive Web App (PWA) | Add service worker + manifest so users can "install" paperpilot.app to their desktop |
+| 10.2.5 | File System Access API integration | Directly read/write to local disk on Chrome/Edge without downloading |
+
+### 10.3 — WASM CI & Testing
+| # | Task | Notes |
+|---|---|---|
+| 10.3.1 | WASM unit tests | `wasm-pack test --headless --chrome` for all core operations |
+| 10.3.2 | Playwright WASM E2E | Spin up the web app and run the same Playwright tests as the desktop |
+| 10.3.3 | Bundle size tracking | Fail CI if WASM bundle exceeds 5 MB (keep it fast to load) |
 
