@@ -261,6 +261,10 @@ pub enum Commands {
     },
 
     // --- Validate ---
+    Classify {
+        #[arg(long)]
+        input: PathBuf,
+    },
     Validate {
         #[arg(long)]
         input: PathBuf,

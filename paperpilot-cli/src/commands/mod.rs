@@ -139,5 +139,6 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             input,
             output,
         } => group_d::handle_convert(format, input, output.as_deref()),
+        Commands::Classify { input } => group_d::handle_classify(input),
     }
 }
