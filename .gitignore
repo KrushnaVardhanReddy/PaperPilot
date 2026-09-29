@@ -7,3 +7,4 @@ build/
 *.pdf
 !tests/fixtures/*.pdf
 pricing_strategy.md
+COMPETITORS.md
