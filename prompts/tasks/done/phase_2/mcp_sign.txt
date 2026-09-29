@@ -1,0 +1,80 @@
+---
+Task: Phase 2.2.13 — Add `pdf_sign` tool to MCP server
+Context: The `SignatureOperation` exists as a stub in `paperpilot-pdf/src/operations/signature.rs`. We need to wire it up to the MCP server in `paperpilot-mcp/src/server.rs`.
+---
+
+Hey Jules! We need to add the `pdf_sign` tool to our MCP server. 
+The Rust operation already exists as `paperpilot_pdf::operations::signature::SignatureOperation` (currently it just returns an `UnsupportedOperation` error, which is expected for now until we implement the backend).
+
+**DO NOT touch any other file except `paperpilot-mcp/src/server.rs`.**
+
+## Step 1 — Add to `execute_list_tools()`
+
+In `paperpilot-mcp/src/server.rs`, inside `execute_list_tools()`, register the tool. Append it to the `tools` vector using this pattern:
+
+```rust
+// Tool: pdf_sign
+let mut schema_sign = serde_json::Map::new();
+schema_sign.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+let mut props_sign = serde_json::Map::new();
+
+let mut prop_input_sign = serde_json::Map::new();
+prop_input_sign.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+prop_input_sign.insert("description".to_string(), serde_json::Value::String("Path to the PDF to sign.".to_string()));
+props_sign.insert("input".to_string(), serde_json::Value::Object(prop_input_sign));
+
+let mut prop_output_sign = serde_json::Map::new();
+prop_output_sign.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+prop_output_sign.insert("description".to_string(), serde_json::Value::String("Path to save the signed PDF.".to_string()));
+props_sign.insert("output".to_string(), serde_json::Value::Object(prop_output_sign));
+
+// We'll leave out certificate paths for now since it's a stub, 
+// just input and output are enough.
+
+schema_sign.insert("properties".to_string(), serde_json::Value::Object(props_sign));
+schema_sign.insert("required".to_string(), serde_json::Value::Array(vec![
+    serde_json::Value::String("input".to_string()),
+    serde_json::Value::String("output".to_string()),
+]));
+
+let mut tool_sign = Tool::default();
+tool_sign.name = "pdf_sign".into();
+tool_sign.description = Some("Digitally signs a PDF document (Currently a stub).".into());
+tool_sign.input_schema = Arc::new(schema_sign);
+tools.push(tool_sign);
+```
+
+## Step 2 — Add to `execute_call_tool()`
+
+In the big `match request.name.as_str()` block, add a new match arm for `"pdf_sign"`:
+
+```rust
+"pdf_sign" => {
+    let input = get_string("input")?;
+    let output = get_string("output")?;
+
+    ensure_parent_dir(&output)?;
+
+    let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+        .map_err(crate::error::to_mcp_error)?;
+        
+    let op = paperpilot_pdf::operations::signature::SignatureOperation::new();
+    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+    
+    doc.save(&std::path::PathBuf::from(&output))
+        .map_err(crate::error::to_mcp_error)?;
+
+    Ok(OperationResult {
+        success: true,
+        message: "PDF signed successfully.".to_string(),
+        output_path: Some(output),
+    })
+}
+```
+
+## Rules
+- Only edit `paperpilot-mcp/src/server.rs`.
+- `cargo clippy -- -D warnings` must pass.
+- `cargo test` must pass.
+- Open a PR to `main` when done.
