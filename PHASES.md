@@ -239,26 +239,26 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 > These tools were added during Phase 1 sessions **after** 2.2 was originally written.
 > They are split into groups matching who will implement the MCP wiring.
 
-#### 2.4a — Group B Missing Tools (needs new Jules session)
+#### 2.4a — Group B Missing Tools ✅
 | # | Task | Notes |
 |---|---|---|
-| 2.4.1 | `pdf_repair` tool | Wraps `Repair` operation from 1.3.10 |
-| 2.4.2 | `pdf_linearize` tool | Wraps `Linearize` operation from 1.3.17 |
-| 2.4.3 | `pdf_redact` tool | Wraps `Redact` operation from 1.3.16 |
-| 2.4.4 | `pdf_flatten` tool | Wraps `Flatten` operation from 1.3.18 |
-| 2.4.5 | `pdf_to_pdf_a` tool | Wraps `PdfA` conversion from 1.3.19 |
-| 2.4.6 | `pdf_header_footer` tool | Wraps `HeaderFooter` from 1.3.20 |
-| 2.4.7 | `pdf_bates` tool | Wraps `Bates` numbering from 1.3.21 |
-| 2.4.8 | `pdf_integrity_hash` tool | Wraps `IntegrityHash` from 1.3.22 — already registered in PR #37, needs tracking |
+| 2.4.1 | `pdf_repair` tool ✅ | Merged |
+| 2.4.2 | `pdf_linearize` tool ✅ | Merged |
+| 2.4.3 | `pdf_redact` tool ✅ | Merged |
+| 2.4.4 | `pdf_flatten` tool ✅ | Merged |
+| 2.4.5 | `pdf_to_pdf_a` tool ✅ | Merged |
+| 2.4.6 | `pdf_header_footer` tool ✅ | Merged |
+| 2.4.7 | `pdf_bates` tool ✅ | Merged |
+| 2.4.8 | `pdf_integrity_hash` tool ✅ | Merged |
 
-#### 2.4b — Group C Missing Tools (needs new Jules session)
+#### 2.4b — Group C Missing Tools ✅
 | # | Task | Notes |
 |---|---|---|
-| 2.4.9 | `pdf_render` tool | Wraps `Render` from 1.3.24 |
-| 2.4.10 | `pdf_images_to_pdf` tool | Wraps `ImagesToPdf` from 1.3.25 |
-| 2.4.11 | `pdf_compare` tool | Wraps `Compare` from 1.3.27 |
-| 2.4.12 | `pdf_bookmarks` tool | Wraps `Bookmarks` from 1.3.28 |
-| 2.4.13 | `pdf_ocr` tool | Wraps `Ocr` from 1.3.29 |
+| 2.4.9 | `pdf_render` tool ✅ | Merged |
+| 2.4.10 | `pdf_images_to_pdf` tool ✅ | Merged |
+| 2.4.11 | `pdf_compare` tool ✅ | Merged |
+| 2.4.12 | `pdf_bookmarks` tool ✅ | Merged |
+| 2.4.13 | `pdf_ocr` tool ✅ | Merged |
 
 #### 2.4c — Group F (PDF Creation) Missing Tools (needs new Jules session)
 | # | Task | Notes |
