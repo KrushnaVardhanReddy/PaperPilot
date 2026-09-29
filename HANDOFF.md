@@ -33,14 +33,15 @@
 
 | File | Purpose |
 |---|---|
+| [`v1_launch_plan.md`](./v1_launch_plan.md) | High-level summary of tasks needed for the immediate v1 launch (Free Tier, NLP). |
 | [`PHASES.md`](./PHASES.md) | The master roadmap tracker. Every task, its status (✅/🚧/🔲), and which Jules session merged it. **Always check this first.** |
 | [`COMPETITORS.md`](./COMPETITORS.md) | Feature comparison matrix vs. Adobe, iLovePDF, PDF24, Stirling-PDF, PDFgear. Identifies our moat and gaps. |
 | [`pricing_strategy.md`](./pricing_strategy.md) | Tiered pricing model: Free → Pro ($7/mo) → Teams ($15/user/mo) → Enterprise ($25/user/mo). Includes the Contributor Revenue Sharing algorithm. |
 | [`Makefile`](./Makefile) | All dev commands. `make dev` starts the app, `make test-all` runs every test tier. |
-| [`COMPETITORS.md`](./COMPETITORS.md) | Feature comparison matrix vs. Adobe, iLovePDF, PDF24, Stirling-PDF, PDFgear. |
 | `scripts/jules_submit.py` | The submission script for Jules. Archives the prompt after submission. |
 | `prompts/tasks/` | Pending task prompts for Jules (not yet submitted). |
 | `prompts/tasks/done/` | Archived prompts for tasks already submitted to Jules. |
+| `prompts/tasks/testing/` | Prompts dedicated to End-to-End Validation testing sweeps. |
 
 ---
 
@@ -50,8 +51,10 @@
 PaperPilot/
 ├── paperpilot-core/        # Rust: Core traits (PdfOperation), error types, shared types
 ├── paperpilot-pdf/         # Rust: All 45+ PDF operations (merge, split, encrypt, OCR, etc.)
+├── paperpilot-nlp/         # Rust: Offline Intent Classification & NLP Rule Engine
 ├── paperpilot-mcp/         # Rust: MCP JSON-RPC server exposing all operations as tools
 ├── paperpilot-cli/         # Rust: Terminal CLI (paperpilot merge, split, create, etc.)
+├── tools/train-nlp/        # Python: Dataset generation and ONNX model training pipeline
 ├── apps/desktop/           # Svelte 5 + Tauri 2.0 desktop app
 │   ├── src/                # Svelte frontend (runes, components, state stores)
 │   ├── src-tauri/          # Rust Tauri backend (invoke_mcp_tool IPC command)
@@ -61,42 +64,39 @@ PaperPilot/
 
 **Key Patterns:**
 - All PDF operations implement the `PdfOperation` trait in `paperpilot-core/src/traits.rs`.
-- MCP Server in `paperpilot-mcp/src/server.rs` uses **manual `ServerHandler` trait** — do NOT use `rmcp` macros.
+- MCP Server uses **manual `ServerHandler` trait** — do NOT use `rmcp` macros.
 - Frontend uses **Svelte 5 runes** (`$state`, `$derived`) — not Svelte 4 stores.
-- Frontend calls Tauri backend via `invoke('invoke_mcp_tool', { tool, args })` in `apps/desktop/src-tauri/src/lib.rs`.
+- Frontend calls Tauri backend via `invoke('invoke_mcp_tool', { tool, args })`.
 
 ---
 
-## ✅ What's Done (Phase Status)
+## ✅ What's Done (Recent Achievements)
 
 | Phase | Status | Notes |
 |---|---|---|
-| Phase 1.3 Groups A, B, C | ✅ Complete | All 29+ core PDF operations merged |
-| Phase 1.3 Group F (PDF Creation) | ✅ Complete | Markdown→PDF, HTML→PDF, Template Engine, CLI |
-| Phase 1.4 (Testing) | ✅ Complete | Unit, fixture, and E2E tests all passing |
-| Phase 1.5 (CLI) — 1.5.1–1.5.17 | ✅ Complete | Full CLI with JSON mode, webhooks |
-| Phase 2 (MCP Server) | ✅ Complete | 15+ MCP tools, validation, E2E tests |
-| Phase 3.1 (Project Setup) | ✅ Complete | Tauri + Svelte 5 + Android target initialized |
-| Phase 3.2–3.5 (UI + IPC) | ✅ Complete | Full UI shell, job system, Tauri IPC |
-| Phase 3.5.7 (Playwright E2E) | ✅ Complete | 3 Playwright tests passing |
-| Phase 3.6 (Vitest) | ✅ Complete | Toast, DocumentList, OperationsPanel unit tests |
+| Phase 1.1.4 (Test Fixtures) | ✅ Complete | Test corpus built and tests validated |
+| Phase 3.5.6 (Responsive UI) | ✅ Complete | Mobile bottom-nav and operations panel |
+| Phase 4.0.1 (NLP Crate) | ✅ Complete | Created `paperpilot-nlp` |
+| Phase 4.0.2 (NLP Trait) | ✅ Complete | Defined `NlpResolver` trait |
+| Phase 4.0.3 (Intent Vocab) | ✅ Complete | ~45 intents & aliases defined in `intent.rs` |
 
 ---
 
 ## 🚧 Active Jules Sessions (In-Progress)
 
-| Session ID | Task | Files Touched |
+| Task | Session ID | What they are doing |
 |---|---|---|
-| `10984700971675576802` | Phase 2.4 MCP Backfill: Wire Groups B, C, F ops into MCP server | `paperpilot-mcp/src/server.rs` |
+| Phase 4.0.4 Layer 1 Rule Engine | `283097227045968085` | Building the Aho-Corasick fast regex/keyword engine in `paperpilot-nlp` |
+| Phase 4.0.5a ONNX Training | `12133795038104614276` | Building the Python script in `tools/train-nlp/` to fine-tune a model and export to ONNX |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **[WAITING]** Validate and merge MCP Backfill PR above.
-2. **Phase 3.4.10 — Visual Pipeline Builder:** Node-based drag-and-drop canvas inside Svelte UI for chaining operations.
-3. **Phase 3.1.7 — iOS Target:** Needs a Mac with Xcode to run `cargo tauri ios init`.
-4. **Phase 4 — AI Layer:** Natural language → MCP tool execution. (Blocked by Phase 3.4.10.)
+1. **[WAITING]** Monitor Jules for completion of Layer 1 Rule Engine (4.0.4) and ONNX Training Pipeline (4.0.5a).
+2. **Phase 4.E2E — System Validation:** Dispatch the newly created testing prompts (`CLI_E2E_Testing.txt`, `MCP_E2E_Testing.txt`, `UI_E2E_Testing.txt`) to test the entire surface area.
+3. **Phase 4.0.6 — Entity Extractor:** Build regex/NER patterns to extract file paths and page numbers.
+4. **Phase 3.1.7 — iOS Target:** Blocked on a Mac environment with Xcode.
 
 ---
 
@@ -109,62 +109,9 @@ make dev
 # Run ALL tests (Rust + Svelte typecheck + Playwright)
 make test-all
 
-# Run only Rust tests
-make test-backend
-
-# Run only Playwright E2E
-make test-e2e
-
-# Check for compile errors without building
-make check
-
 # Submit a new task to Jules
 python3 scripts/jules_submit.py --file prompts/tasks/<phase>/<task>.txt
-
-# Check active Jules sessions
-# Visit: https://jules.google.com/
-
-# Fetch Jules's latest PRs
-git fetch origin && git branch -r | grep jules
 ```
-
----
-
-## 📐 How to Write a Jules Prompt
-
-Prompts live in `prompts/tasks/<phase>/`. The format is:
-```
----
-Task: <Phase X.Y — Task Name>
-Context: <Brief description of the codebase state Jules needs to know>
----
-
-Hey Jules! <Friendly greeting, then bullet-pointed requirements>
-
-## Requirements:
-1. ...
-
-## Rules:
-- Follow the existing PdfOperation trait pattern in paperpilot-core/src/traits.rs
-- STRICTLY DO NOT USE TailwindCSS
-- Add #[cfg(test)] unit tests for each operation
-- No Mocking in integration tests — use real PDF files
-
-Please open a PR to `main` when finished!
-```
-
----
-
-## 💰 Pricing Summary (Updated)
-
-| Tier | Price | Key Hook |
-|---|---|---|
-| Personal | Free | All core PDF ops |
-| Pro | $7/mo | AI mode, Visual Pipeline Builder |
-| Teams | $15/user/mo | Shared recipe library, audit log |
-| Enterprise | $25/user/mo | SSO, MDM, SLAs, legal indemnification |
-
-15% of paid revenue → Contributor pool, distributed quarterly based on feature criticality multipliers.
 
 ---
 
