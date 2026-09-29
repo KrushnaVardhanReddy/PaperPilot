@@ -16,6 +16,12 @@ pub struct PdfClassifyOperation {
     pub classification: Arc<Mutex<Option<ClassificationResult>>>,
 }
 
+impl Default for PdfClassifyOperation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PdfClassifyOperation {
     pub fn new() -> Self {
         Self {
@@ -44,7 +50,7 @@ impl PdfOperation for PdfClassifyOperation {
         for page_id in pages_to_extract {
             if let Ok(extracted) = inner.extract_text(&[page_id]) {
                 text.push_str(&extracted);
-                text.push_str(" ");
+                text.push(' ');
             }
         }
 

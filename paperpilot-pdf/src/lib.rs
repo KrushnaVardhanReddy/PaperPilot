@@ -1,3 +1,4 @@
+pub mod validation;
 pub mod document;
 pub mod operations;
 
