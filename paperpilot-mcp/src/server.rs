@@ -1562,7 +1562,36 @@ impl PaperPilotMcpServer {
         tool_ocr.input_schema = Arc::new(schema_ocr);
         tools.push(tool_ocr);
 
+        // Tool: pdf_sign
+        let mut schema_sign = serde_json::Map::new();
+        schema_sign.insert("type".to_string(), serde_json::Value::String("object".to_string()));
 
+        let mut props_sign = serde_json::Map::new();
+
+        let mut prop_input_sign = serde_json::Map::new();
+        prop_input_sign.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_input_sign.insert("description".to_string(), serde_json::Value::String("Path to the PDF to sign.".to_string()));
+        props_sign.insert("input".to_string(), serde_json::Value::Object(prop_input_sign));
+
+        let mut prop_output_sign = serde_json::Map::new();
+        prop_output_sign.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_output_sign.insert("description".to_string(), serde_json::Value::String("Path to save the signed PDF.".to_string()));
+        props_sign.insert("output".to_string(), serde_json::Value::Object(prop_output_sign));
+
+        // We'll leave out certificate paths for now since it's a stub,
+        // just input and output are enough.
+
+        schema_sign.insert("properties".to_string(), serde_json::Value::Object(props_sign));
+        schema_sign.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+
+        let mut tool_sign = Tool::default();
+        tool_sign.name = "pdf_sign".into();
+        tool_sign.description = Some("Digitally signs a PDF document (Currently a stub).".into());
+        tool_sign.input_schema = Arc::new(schema_sign);
+        tools.push(tool_sign);
 
 
         Ok(ListToolsResult {
@@ -2483,6 +2512,27 @@ impl PaperPilotMcpServer {
                     output_path: Some(output),
                 })
             }
+            "pdf_sign" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::signature::SignatureOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "PDF signed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -2521,7 +2571,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 35);
+        assert_eq!(res.tools.len(), 36);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }
@@ -2677,6 +2727,18 @@ mod tests {
             "start_number": 1,
             "prefix": "BATES-",
             "padding": 6
+        }).as_object().unwrap().clone());
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_sign() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_sign".into();
+        request.arguments = Some(serde_json::json!({
+            "input": "nonexistent.pdf",
+            "output": "/tmp/signed.pdf"
         }).as_object().unwrap().clone());
         let result = PaperPilotMcpServer::execute_call_tool(request);
         assert!(result.is_err());
