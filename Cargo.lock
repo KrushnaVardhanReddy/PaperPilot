@@ -3662,6 +3662,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "paperpilot-nlp"
+version = "0.1.0"
+dependencies = [
+ "paperpilot-core",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "paperpilot-pdf"
 version = "0.1.0"
 dependencies = [

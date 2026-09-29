@@ -9,8 +9,8 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 
 | Task | What | Status |
 |---|---|---|
-| 4.0.1 | Create `paperpilot-nlp` crate | Pending |
-| 4.0.2 | Define `NlpResolver` trait | Pending |
+| 4.0.1 | Create `paperpilot-nlp` crate | ✅ Completed |
+| 4.0.2 | Define `NlpResolver` trait | ✅ Completed |
 | 4.0.3 | Intent vocabulary definition (~45 operations) | Pending |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine | Pending |
 | 4.0.5 | Layer 2 — ONNX intent classifier (MobileBERT) | Pending |

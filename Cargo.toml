@@ -4,5 +4,5 @@ members = [
     "paperpilot-pdf",
     "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri",
     "tools/make-fixtures"
-]
+, "paperpilot-nlp"]
 resolver = "2"

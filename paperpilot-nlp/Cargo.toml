@@ -1,0 +1,8 @@
+[package]
+name = "paperpilot-nlp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
+thiserror = "2.0.21"
