@@ -1,32 +1,50 @@
-.PHONY: all build check test lint format clean test-e2e
+.PHONY: all build check test test-backend test-frontend test-e2e test-all lint format clean dev
 
 # Default target
-all: format lint test build
+all: format lint test-all build
 
-# Build the entire workspace
+# Build the Rust workspace
 build:
 	cargo build --workspace
 
-# Check for compilation errors without building binaries
+# Check for Rust compilation errors and Svelte errors
 check:
 	cargo check --workspace
+	cd apps/desktop && npm run check
 
-# Run all unit and integration tests
-test:
+# Run all backend unit and integration tests
+test-backend:
 	cargo test --workspace
 
-# Run the end-to-end and fixture-based integration tests specifically
-test-e2e:
-	cargo test --test '*'
+# Run frontend unit/component tests (if any, otherwise just check)
+test-frontend:
+	cd apps/desktop && npm run check
 
-# Format the codebase
+# Run the end-to-end Playwright tests for the frontend/Tauri app
+test-e2e:
+	cd apps/desktop && npx playwright test
+
+# Run all tests across the stack
+test-all: test-backend test-frontend test-e2e
+
+# Backwards compatibility alias for backend tests
+test: test-backend
+
+# Format the Rust and frontend codebase
 format:
 	cargo fmt --all
+	cd apps/desktop && npm run format || true
 
-# Lint the codebase using Clippy
+# Lint the codebase using Clippy and ESLint
 lint:
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
+	cd apps/desktop && npm run lint || true
 
 # Clean build artifacts
 clean:
 	cargo clean
+	rm -rf apps/desktop/node_modules apps/desktop/.svelte-kit apps/desktop/playwright-report apps/desktop/test-results
+
+# Start the Tauri dev environment
+dev:
+	cd apps/desktop && npm run tauri dev
