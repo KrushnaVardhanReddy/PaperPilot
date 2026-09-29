@@ -1,0 +1,27 @@
+---
+Task: Svelte Desktop UI End-to-End Testing & Validation Report
+---
+
+Hey Jules! We've implemented the Visual Pipeline Builder and the responsive mobile layout for the Tauri/Svelte desktop app (`apps/desktop`). Now we need a manual and/or automated testing report on the actual UI workflows.
+
+## What to Build
+
+### 1. E2E UI Testing
+You can either write a Playwright script in `apps/desktop/` or write a detailed manual testing script. 
+The test workflow MUST cover:
+1. Dragging and dropping multiple PDF fixtures into the DropZone.
+2. Rearranging the documents in the list.
+3. Using the Visual Pipeline Builder to add a Merge block, a Rotate block, and a Split block.
+4. Clicking the "Run Pipeline" button.
+5. Verifying that the progress bar updates and a Toast notification appears on success.
+
+### 2. Generate the Test Report
+Create a markdown report at `reports/UI_TEST_REPORT.md` documenting the results of the UI testing.
+The report MUST include:
+1. **Working Flows:** Which parts of the UI are perfectly responsive, functional, and invoke the backend correctly?
+2. **Broken Flows:** Are there any buttons that don't do anything? Do any Tauri IPC calls fail? Does the UI freeze or panic during pipeline execution?
+3. **A11y/Responsiveness Issues:** Are there any elements that break on small mobile viewports? Are there any missing keyboard handlers or ARIA roles?
+
+## Constraints
+- Do NOT fix the bugs in the Svelte app. Your job is ONLY to test and report.
+- The `UI_TEST_REPORT.md` should contain specific file paths and line numbers if you identify where a bug originates.

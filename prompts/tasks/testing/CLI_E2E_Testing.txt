@@ -1,0 +1,36 @@
+---
+Task: CLI End-to-End Testing & Validation Report
+---
+
+Hey Jules! The core `paperpilot-pdf` and `paperpilot-cli` crates have been implemented, and we need a comprehensive end-to-end testing sweep for the CLI binary to ensure it actually works on real files before we proceed further.
+
+## What to Build
+
+### 1. Generate Test Data
+First, programmatically generate some test PDFs (single-page and multi-page) using a simple script, or use the fixtures already available in `tests/fixtures/`. 
+Make sure you have at least:
+- A single-page PDF
+- A multi-page PDF (e.g., 5-10 pages)
+
+### 2. E2E Script Execution
+Write a bash script `scripts/test_cli_e2e.sh` that actively runs the compiled `paperpilot-cli` binary against these PDFs. 
+You must test all implemented CLI commands:
+- `split`
+- `merge` / arrange
+- `rotate`
+- `extract`
+- `delete`
+- etc.
+
+The script should check exit codes and verify that the output PDF files are actually created.
+
+### 3. Generate the Test Report
+Based on the execution of your script, generate a comprehensive markdown report at `reports/CLI_TEST_REPORT.md`.
+The report MUST include:
+1. **Working Commands:** Which CLI subcommands executed successfully and produced valid output.
+2. **Broken Commands:** Which commands failed, crashed, panicked, or produced malformed outputs, including the exact error message or stack trace.
+3. **Missing Arguments/UX Issues:** Any CLI arguments that are confusing, poorly documented, or missing.
+
+## Constraints
+- Do NOT fix the bugs in the CLI crate. Your job is ONLY to test and report.
+- The `CLI_TEST_REPORT.md` must be extremely detailed so human engineers can tackle the fixes.

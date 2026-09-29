@@ -1,0 +1,31 @@
+---
+Task: MCP Server End-to-End Testing & Validation Report
+---
+
+Hey Jules! We have heavily extended the `paperpilot-mcp` server with new tools for PDF manipulation. We need to thoroughly validate that the MCP server runs and that AI agents can successfully call its tools.
+
+## What to Build
+
+### 1. Test Harness Setup
+Write a simple Python script `scripts/test_mcp_e2e.py` that connects to the running `paperpilot-mcp` binary via stdio. You can use the standard MCP Python SDK or just write a basic JSON-RPC wrapper over stdin/stdout.
+
+### 2. Execute MCP Tools
+Using the Python script, programmatically invoke the available MCP tools on real test fixtures (located in `tests/fixtures/`). 
+Test at least the following core operations:
+- `pdf_merge`
+- `pdf_split`
+- `pdf_rotate`
+- `pdf_extract`
+
+Verify that the MCP tool responds with a success status and that the underlying files are actually generated on the filesystem.
+
+### 3. Generate the Test Report
+Create a markdown report at `reports/MCP_TEST_REPORT.md` that answers:
+1. **Tool Discovery:** Did the MCP server correctly list all its tools?
+2. **Execution Success:** Which tools executed successfully and modified the files correctly?
+3. **Failures & Bugs:** Which tools failed? Provide the exact JSON-RPC error response from the MCP server.
+4. **Schema Issues:** Were there any schema mismatches or missing required arguments in the tool definitions?
+
+## Constraints
+- Do NOT fix the bugs in the MCP crate. Your job is ONLY to test and report.
+- Make sure to kill the MCP server process cleanly after the test script finishes.
