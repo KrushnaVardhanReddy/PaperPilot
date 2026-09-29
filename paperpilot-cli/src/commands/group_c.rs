@@ -5,11 +5,25 @@ use std::path::PathBuf;
 
 pub fn handle_extract_text(
     input: &std::path::Path,
-    _output: &std::path::Path,
+    output: &std::path::Path,
+    format: &str,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
     op.execute(&mut doc)?;
+
+    let text_lock = op.extracted_text.lock().unwrap();
+    let text_pages = text_lock.as_ref().unwrap();
+
+    let result_str = if format.eq_ignore_ascii_case("json") {
+        serde_json::to_string_pretty(text_pages).unwrap()
+    } else {
+        text_pages.join("\n")
+    };
+
+    std::fs::write(output, result_str)
+        .map_err(paperpilot_core::error::PdfError::IoError)?;
+
     Ok(())
 }
 

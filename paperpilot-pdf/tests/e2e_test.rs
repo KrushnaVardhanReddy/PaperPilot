@@ -101,10 +101,11 @@ fn test_e2e_operations_pipeline() {
 
     let text_lock = extract_op.extracted_text.lock().unwrap();
     let text = text_lock.as_ref().unwrap();
+    let joined_text = text.join("\n");
     assert!(
-        text.contains("Page 1 Text"),
+        joined_text.contains("Page 1 Text"),
         "Extracted text missing content: {}",
-        text
+        joined_text
     );
     drop(text_lock);
 
@@ -137,12 +138,13 @@ fn test_e2e_operations_pipeline() {
 
     let text_lock_final = extract_op_final.extracted_text.lock().unwrap();
     let text_final = text_lock_final.as_ref().unwrap();
+    let joined_text_final = text_final.join("\n");
 
     // Page 1 should still be there, Page 3 became Page 2, original Page 2 was deleted
-    assert!(text_final.contains("Page 1 Text"));
-    assert!(text_final.contains("Page 3 Text"));
+    assert!(joined_text_final.contains("Page 1 Text"));
+    assert!(joined_text_final.contains("Page 3 Text"));
     assert!(
-        !text_final.contains("Page 2 Text"),
+        !joined_text_final.contains("Page 2 Text"),
         "Page 2 should have been deleted"
     );
 }

@@ -341,33 +341,65 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 **Goal:** Users can describe what they want in natural language. The AI produces a structured plan. The user confirms. Rust executes.
 
-**Exit condition:** A user can type "merge these files, remove blank pages, and compress the result" and get the correct output without manually configuring any operation.
+**Two-Mode Strategy:**
+- **Offline NLP (Free Tier):** A fast, embedded intent classifier that runs 100% locally with zero API key. Handles single-intent commands (~80% of real user needs). Ships by default.
+- **LLM Mode (Pro/Teams):** Full natural language reasoning for complex multi-step commands. Requires an API key. Powered by a pluggable `NlpResolver` trait — OpenAI, Ollama, Gemini, or local llamafile.
+
+**Exit condition:** A free-tier user with no API key can type "compress this PDF" and get the correct output. A Pro user can type "merge these files, remove blank pages, and compress the result" and get the full chain executed.
 
 **[BLOCKED BY Phase 3]**
 
 ---
 
-### 4.1 — AI Infrastructure `[PARALLEL]`
+### 4.0 — Offline NLP Mode (Free Tier) `[PARALLEL]`
+
+> Ships with the Personal (Free) tier. No API key, no network, no download required.
+> Handles single-intent commands covering ~80% of real-world usage.
+> **Licensing: Apache 2.0 (Community)**
 
 | # | Task | Notes |
 |---|---|---|
-| 4.1.1 | Create `paperpilot-ai` crate | |
-| 4.1.2 | Define `AiProvider` trait | Pluggable: local, OpenAI-compatible, others |
-| 4.1.3 | llamafile integration | Bundle or point to local llamafile binary |
-| 4.1.4 | OpenAI-compatible API client | Works with Ollama, LM Studio, OpenAI, etc. |
-| 4.1.5 | AI provider config in settings | User picks provider, model, endpoint |
+| 4.0.1 | Create `paperpilot-nlp` crate | Separate crate for offline NLP; no LLM dependencies |
+| 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
+| 4.0.3 | Intent vocabulary definition | Enumerate all ~45 supported operations as a canonical intent list with aliases (e.g. `merge`, `combine`, `join` → `pdf_merge`) |
+| 4.0.4 | Layer 1 — Keyword & regex rule engine | Trie-based keyword matcher + regex patterns for page ranges, file paths, passwords; covers top-20 operations at <1ms latency |
+| 4.0.5 | Layer 2 — ONNX intent classifier | Fine-tune a distilbert-tiny or MobileBERT model on PDF command dataset; export to ONNX; run via `ort` crate; ~30 MB sidecar |
+| 4.0.6 | Entity extractor | Extract structured args from the sentence: file paths, page numbers, passwords, output names using regex + NER patterns |
+| 4.0.7 | Ambiguity resolver | When confidence is below threshold, ask a clarifying question instead of guessing |
+| 4.0.8 | Offline NLP → `OperationPlan` output | Produce the same `OperationPlan` type used by LLM mode so the downstream executor is identical |
+| 4.0.9 | Offline NLP unit tests | Test intent classification accuracy against a held-out command dataset; assert >90% top-1 accuracy |
+| 4.0.10 | Offline NLP E2E tests | Run real commands through the full offline stack → MCP tool dispatch → file output (No Mocking) |
 
 ---
 
-### 4.2 — Operation Planning `[BLOCKED BY 4.1]`
+### 4.1 — LLM Infrastructure `[PARALLEL]`
+
+> Powers the Pro/Teams tier. Requires an API key or local Ollama.
+> Implements the same `NlpResolver` trait from 4.0.2 — drop-in swap.
+> **Licensing: Apache 2.0 (Community) — key/provider config is user-supplied**
 
 | # | Task | Notes |
 |---|---|---|
-| 4.2.1 | Define `OperationPlan` type | Ordered list of typed operations |
-| 4.2.2 | System prompt design | Instruct AI to output only structured operation plans |
-| 4.2.3 | Natural language → `OperationPlan` parser | AI call + parse/validate output |
+| 4.1.1 | Create `paperpilot-ai` crate | LLM-specific implementations; depends on `paperpilot-nlp` for the shared trait |
+| 4.1.2 | `LlmNlpResolver` struct | Implements `NlpResolver` via LLM API call |
+| 4.1.3 | `OllamaNlpResolver` struct | Implements `NlpResolver` via local Ollama endpoint (offline but heavier, ~2–8 GB) |
+| 4.1.4 | llamafile integration | Bundle or point to local llamafile binary for air-gapped LLM mode |
+| 4.1.5 | OpenAI-compatible API client | Works with OpenAI, Gemini, Groq, LM Studio, etc. |
+| 4.1.6 | AI provider config in settings | User picks resolver: Offline / Ollama / OpenAI-compatible; enters endpoint + key |
+| 4.1.7 | Auto-fallback logic | If LLM resolver fails or has no key, fall back to offline NLP and inform the user |
+
+---
+
+### 4.2 — Operation Planning `[BLOCKED BY 4.0, 4.1]`
+
+| # | Task | Notes |
+|---|---|---|
+| 4.2.1 | Define `OperationPlan` type | Ordered list of typed operations — shared between offline and LLM resolvers |
+| 4.2.2 | System prompt design (LLM mode) | Instruct LLM to output only structured `OperationPlan` JSON |
+| 4.2.3 | Natural language → `OperationPlan` parser | Route to offline or LLM resolver based on user config |
 | 4.2.4 | Plan validation | Validate plan against available operations before showing to user |
 | 4.2.5 | Plan serialization | JSON schema for plans, used by UI and MCP |
+| 4.2.6 | Mode indicator in UI | Show a small badge: "Offline NLP" or "AI (GPT-4o)" so users know which mode ran |
 
 ---
 
@@ -376,10 +408,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | # | Task | Notes |
 |---|---|---|
 | 4.3.1 | Command box component | Text input in main UI |
-| 4.3.2 | "Thinking" state | Show spinner while AI processes |
+| 4.3.2 | "Thinking" state | Show spinner while AI/NLP processes |
 | 4.3.3 | Plan display component | Show numbered list of interpreted operations |
 | 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
 | 4.3.5 | Voice input | Microphone → speech-to-text → feeds the NLP command box (integrates with Phase 2 MCP) |
+| 4.3.6 | NLP mode toggle in settings | Simple switch: "Use Offline NLP" / "Use AI (requires key)" |
 
 ---
 
@@ -390,7 +423,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.4.1 | Confirmation dialog | Show plan with Cancel / Run buttons |
 | 4.4.2 | Plan → job execution | Convert confirmed plan into sequential job run |
 | 4.4.3 | Error recovery UI | If one step fails, show which step and allow retry |
-| 4.4.4 | MCP-based execution path | AI plans via MCP tools, Rust executes |
+| 4.4.4 | MCP-based execution path | Both NLP modes produce plans executed via MCP tools |
 
 ---
 
@@ -398,8 +431,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.5.1 | `paperpilot ask "..."` command | Sends natural language to AI, shows plan, confirms, runs |
+| 4.5.1 | `paperpilot ask "..."` command | Sends natural language to configured resolver (offline or LLM), shows plan, confirms, runs |
 | 4.5.2 | Non-interactive mode | `--yes` flag to skip confirmation for scripting |
+| 4.5.3 | `--offline` flag | Force offline NLP even if LLM key is configured |
 
 ---
 
@@ -595,8 +629,9 @@ Phase 3 ──── starts after Phase 1 (PARALLEL WITH Phase 2)
 └── 3.5 (Job System)     ──────────── parallel with 3.2, after 3.1
 
 Phase 4 ──── starts after Phase 3
-├── 4.1 (AI infra)       ──────────── parallel
-├── 4.2 (Planning)       ──────────── after 4.1
+├── 4.0 (Offline NLP)    ──────────── parallel [FREE TIER, no key needed]
+├── 4.1 (LLM infra)      ──────────── parallel [PRO TIER, API key required]
+├── 4.2 (Planning)       ──────────── after 4.0 + 4.1
 ├── 4.3 (NL UI)          ──────────── parallel with 4.4, after 4.2
 ├── 4.4 (Execution)      ──────────── parallel with 4.3, after 4.2
 └── 4.5 (CLI AI)         ──────────── parallel with 4.3, after 4.2
@@ -638,8 +673,8 @@ The sequence that determines the earliest possible ship date for each milestone:
             → 3.4 Operations UI
               → Phase 3 complete ✓
 
-              → 4.1 AI infra
-                → 4.2 Planning
+              → 4.0 Offline NLP + 4.1 LLM infra (parallel)
+                → 4.2 Planning (unified, resolver-agnostic)
                   → 4.3 + 4.4 + 4.5 (parallel)
                     → Phase 4 complete ✓
 

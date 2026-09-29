@@ -18,6 +18,18 @@ pub struct Cli {
     /// Post result as JSON to webhook URL
     #[arg(global = true, long)]
     pub webhook: Option<String>,
+
+    /// Secret key to compute HMAC-SHA256 signature of webhook payload
+    #[arg(global = true, long)]
+    pub webhook_secret: Option<String>,
+
+    /// Fire webhook only on operation success
+    #[arg(global = true, long)]
+    pub webhook_on_success: bool,
+
+    /// Fire webhook only on operation failure
+    #[arg(global = true, long)]
+    pub webhook_on_failure: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -204,6 +216,8 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value = "text")]
+        format: String,
     },
     ExtractImages {
         #[arg(long)]
@@ -250,5 +264,15 @@ pub enum Commands {
     Validate {
         #[arg(long)]
         input: PathBuf,
+    },
+    Hash {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    Verify {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        expected_hash: String,
     },
 }
