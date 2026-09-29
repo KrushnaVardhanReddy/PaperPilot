@@ -433,4 +433,38 @@
   .range-input:focus {
     outline: none;
   }
+
+  /* Tablet/mobile: reduce padding, stack action area */
+  @media (max-width: 899px) {
+    .operations-panel {
+      width: 100%;
+      border-left: none;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .panel-content {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .operation-selector,
+    .operation-config {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .action-area {
+      margin-top: 0;
+      padding-top: 0;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 599px) {
+    .panel-content {
+      flex-direction: column;
+    }
+  }
 </style>
