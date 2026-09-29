@@ -1,0 +1,27 @@
+---
+Task: Phase 3.5.7 - Playwright E2E Tests for Tauri Desktop
+Context: The Svelte frontend is wired to the Rust MCP backend via Tauri IPC.
+---
+
+Hey Jules, before we build any more UI features, we need to lock down our current functionality with robust Playwright E2E tests (Phase 3.5.7).
+
+## Requirements:
+
+1. **Playwright Setup:**
+   - Initialize `@playwright/test` in `apps/desktop`.
+   - Create a `playwright.config.ts` configured for testing a Tauri application. It should spawn `npm run tauri dev` (or the equivalent to hook into the desktop window). Since setting up Tauri + Playwright WebDriver can be tricky, the standard approach is to use Playwright's experimental electron/browser launch capabilities or simply test the Svelte web build directly using standard Playwright web testing by running `npm run dev`. Let's stick to testing the Web build directly via standard Playwright for now to ensure our Svelte components and IPC mocks behave correctly, as true native Tauri WebDriver testing is notoriously flaky. (Actually, just standard `@playwright/test` running against `localhost:5173` is perfect).
+
+2. **E2E Test Cases (`apps/desktop/tests/app.spec.ts`):**
+   - **Test 1: App Layout:** Verify the Sidebar and Main Content area render correctly.
+   - **Test 2: Settings Panel:** Verify clicking the Settings icon opens the Settings Panel, and you can modify the AI Provider.
+   - **Test 3: Operations Execution:**
+     - Select the "Merge" operation from the Sidebar/Dropdown.
+     - Verify the specific UI inputs for Merge appear.
+     - Click the "Run Merge" button.
+     - Verify a Toast notification appears.
+     - Verify the Job History list in the Sidebar updates with a new job entry.
+
+3. **IPC Mocking (Optional but Recommended):**
+   - Since testing against the true Rust backend in Playwright web mode might fail if `window.__TAURI_INTERNALS__` isn't fully mocked, ensure you add basic fallback mocks in `invoke_mcp_tool` wrapper on the frontend, or write the test to expect an IPC error toast (which is still a valid E2E verification of the UI flow).
+
+Please open a PR to `main` when finished!
