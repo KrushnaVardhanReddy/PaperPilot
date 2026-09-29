@@ -20,28 +20,9 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.9 | Offline NLP unit tests | Pending |
 | 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | Pending |
 
-### Phase 4.6 — AI PDF Creation (Pro Tier)
-*Generate professional PDFs from natural language prompts.*
-
+### Phase 3.1.7 — iOS Target
 | Task | What | Status |
 |---|---|---|
-| 4.6.1 | Natural language → PDF content (Markdown structure) | Pending |
-| 4.6.2 | AI template selection | Pending |
-| 4.6.3 | AI fills template variables | Pending |
-| 4.6.4 | Review & edit before rendering | Pending |
-| 4.6.5 | `pdf_create` MCP tool | Pending |
-| 4.6.6 | `paperpilot create` CLI | Pending |
-
-### Phase 5 & 6 — Advanced Intelligence (Pro) & Enterprise 
-*The final production tasks needed for commercial monetization across the Pro, Teams, and Enterprise pricing tiers.*
-
-| Task | What | Status |
-|---|---|---|
-| 5.1 | Offline OCR (`leptess` / `ocrs`) | Pending |
-| 5.2 | Semantic Search & Document Understanding (Local embeddings) | Pending |
-| 6.1 | Identity & SSO (SAML 2.0, OIDC) | Pending |
-| 6.2 | Security & Policy Configs | Pending |
-| 6.3 | Audit Logging | Pending |
 | 3.1.7 | iOS target (Requires Mac with Xcode) | Pending |
 
 ## 📅 Timeline
