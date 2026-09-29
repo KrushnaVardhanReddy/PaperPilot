@@ -32,8 +32,8 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.6.5 | `pdf_create` MCP tool | Pending |
 | 4.6.6 | `paperpilot create` CLI | Pending |
 
-### Phase 5 & 6 — Advanced Intelligence & Enterprise (Product Build)
-*The final offline and production tasks needed for the commercial product build.*
+### Phase 5 & 6 — Advanced Intelligence (Pro) & Enterprise 
+*The final production tasks needed for commercial monetization across the Pro, Teams, and Enterprise pricing tiers.*
 
 | Task | What | Status |
 |---|---|---|
