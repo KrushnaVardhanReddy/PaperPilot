@@ -96,7 +96,7 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.19 | PDF/A conversion ✅ | Merged (Session 12850003959773306225) |
 | 1.3.20 | Header/Footer ✅ | Merged (Session 8470929282963705394) |
 | 1.3.21 | Bates numbering ✅ | Merged (Session 12785657976803298608) |
-| 1.3.22 | Integrity hash 🚧 | In Progress (Session 10906031722199501492) |
+| 1.3.22 | Integrity hash ✅ | Merged (Session 10906031722199501492) |
 
 #### Group C — Extraction & Search
 | # | Task | Notes |
@@ -116,11 +116,11 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.30 | PDF → Word (DOCX) | Export PDF content to editable Word document |
 | 1.3.31 | PDF → Excel (XLSX) | Export table content to spreadsheet |
 | 1.3.32 | PDF → PowerPoint (PPTX) | Export PDF slides to PPTX |
-| 1.3.33 | PDF → HTML 🚧 | In Progress (Session 10906031722199501492) |
-| 1.3.34 | PDF → Markdown 🚧 | In Progress (Session 10906031722199501492) |
-| 1.3.38 | PDF → LLM-Ready Export 🚧 | In Progress (Session 10906031722199501492) |
+| 1.3.33 | PDF → HTML ✅ | Merged (Session 10906031722199501492) |
+| 1.3.34 | PDF → Markdown ✅ | Merged (Session 10906031722199501492) |
+| 1.3.38 | PDF → LLM-Ready Export ✅ | Merged (Session 10906031722199501492) |
 | 1.3.39 | Document type classifier | Auto-detect document type (invoice, contract, research paper, form, report) using heuristics + AI; tag the output metadata accordingly |
-| 1.3.46 | PDF → Structured JSON 🚧 | In Progress (Session 10906031722199501492) |
+| 1.3.46 | PDF → Structured JSON ✅ | Merged (Session 10906031722199501492) |
 
 #### Group E — Forms
 | # | Task | Notes |
