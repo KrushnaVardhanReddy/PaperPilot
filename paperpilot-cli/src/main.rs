@@ -52,20 +52,48 @@ fn main() {
     }
 
     if let Some(webhook_url) = cli.webhook {
-        let client = Client::new();
-        match client.post(&webhook_url).json(&payload).send() {
-            Ok(res) if res.status().is_success() => {
-                info!("Successfully posted to webhook: {}", webhook_url);
+        let should_fire = if cli.webhook_on_success && cli.webhook_on_failure {
+            true // If both are set, logic usually dictates firing on both, or it's contradictory. Let's fire always if no filters, or if both are on.
+        } else if cli.webhook_on_success {
+            payload.success
+        } else if cli.webhook_on_failure {
+            !payload.success
+        } else {
+            true // No filters specified, fire always
+        };
+
+        if should_fire {
+            let client = Client::new();
+            let mut request = client.post(&webhook_url).json(&payload);
+
+            if let Some(secret) = cli.webhook_secret {
+                use hmac::{Hmac, Mac};
+                use sha2::Sha256;
+                type HmacSha256 = Hmac<Sha256>;
+
+                let payload_bytes = serde_json::to_vec(&payload).unwrap();
+                let mut mac = <HmacSha256 as hmac::KeyInit>::new_from_slice(secret.as_bytes())
+                    .expect("HMAC can take key of any size");
+                mac.update(&payload_bytes);
+                let result = mac.finalize();
+                let signature = hex::encode(result.into_bytes());
+                request = request.header("x-paperpilot-signature", signature);
             }
-            Ok(res) => {
-                error!(
-                    "Webhook returned error status: {} - {}",
-                    res.status(),
-                    webhook_url
-                );
-            }
-            Err(e) => {
-                error!("Failed to post to webhook: {} - {}", e, webhook_url);
+
+            match request.send() {
+                Ok(res) if res.status().is_success() => {
+                    info!("Successfully posted to webhook: {}", webhook_url);
+                }
+                Ok(res) => {
+                    error!(
+                        "Webhook returned error status: {} - {}",
+                        res.status(),
+                        webhook_url
+                    );
+                }
+                Err(e) => {
+                    error!("Failed to post to webhook: {} - {}", e, webhook_url);
+                }
             }
         }
     }

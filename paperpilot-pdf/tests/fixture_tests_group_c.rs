@@ -35,6 +35,7 @@ fn test_extract_text_fixture() {
     let text = text_lock.as_ref().unwrap();
     // Verify we actually extract text
     assert!(!text.is_empty());
+    assert!(!text[0].is_empty());
 }
 
 #[test]

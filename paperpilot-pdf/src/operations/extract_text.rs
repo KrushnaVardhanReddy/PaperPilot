@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 pub struct ExtractTextOperation {
     pub pages: Option<Vec<u32>>,
-    pub extracted_text: Arc<Mutex<Option<String>>>,
+    pub extracted_text: Arc<Mutex<Option<Vec<String>>>>,
 }
 
 impl ExtractTextOperation {
@@ -36,13 +36,12 @@ impl PdfOperation for ExtractTextOperation {
             }
         };
 
-        let mut full_text = String::new();
+        let mut pages_text = Vec::new();
 
         for page_id in target_pages {
             match inner.extract_text(&[page_id]) {
                 Ok(text) => {
-                    full_text.push_str(&text);
-                    full_text.push('\n');
+                    pages_text.push(text);
                 }
                 Err(e) => {
                     return Err(PdfError::Other(format!(
@@ -54,7 +53,7 @@ impl PdfOperation for ExtractTextOperation {
         }
 
         if let Ok(mut lock) = self.extracted_text.lock() {
-            *lock = Some(full_text);
+            *lock = Some(pages_text);
         } else {
             return Err(PdfError::Other("Failed to acquire mutex lock".to_string()));
         }
@@ -128,7 +127,7 @@ mod tests {
         assert!(text.is_some());
         let extracted = text.as_ref().unwrap();
         // The extraction might not be perfect with this dummy font, but it shouldn't fail
-        assert!(!extracted.is_empty());
+        assert_eq!(extracted.len(), 2);
     }
 
     #[test]
@@ -140,6 +139,6 @@ mod tests {
         let text = op.extracted_text.lock().unwrap();
         assert!(text.is_some());
         let extracted = text.as_ref().unwrap();
-        assert!(!extracted.is_empty());
+        assert_eq!(extracted.len(), 2);
     }
 }

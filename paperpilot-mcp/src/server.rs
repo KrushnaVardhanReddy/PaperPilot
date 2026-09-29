@@ -1371,13 +1371,14 @@ impl PaperPilotMcpServer {
                 );
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
-                let text = op
+                let text_pages = op
                     .extracted_text
                     .lock()
                     .unwrap()
                     .clone()
                     .unwrap_or_default();
-                std::fs::write(&output, text)
+                let joined_text = text_pages.join("\n");
+                std::fs::write(&output, joined_text)
                     .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
 
                 Ok(OperationResult {
