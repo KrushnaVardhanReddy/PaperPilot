@@ -845,4 +845,25 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 | 8.10.5 | Audio summary CLI command | `paperpilot audio-summary <file> --voice kokoro --output summary.mp3` |
 | 8.10.6 | E2E Multimedia tests | Generate real audio and presentation outputs from test PDFs and verify output quality (No Mocking) |
 
+---
+
+## Phase 9 — Advanced Editing & Enterprise Features
+
+**Goal:** Bridge the final gap with industry giants (e.g., Adobe Acrobat) by introducing true WYSIWYG interactive PDF editing and enterprise-grade security/forms.
+
+### 9.1 — Direct Canvas Editing (WYSIWYG)
+| # | Task | Notes |
+|---|---|---|
+| 9.1.1 | Canvas Text Selection | Click and highlight existing text bounding boxes |
+| 9.1.2 | Text Replacement Engine | Edit text in-place while preserving font/styling/reflow |
+| 9.1.3 | Image Manipulation | Drag, resize, delete, and replace embedded images |
+| 9.1.4 | Redaction Tool | Select text/areas and permanently destroy underlying data |
+
+### 9.2 — Forms & E-Signatures
+| # | Task | Notes |
+|---|---|---|
+| 9.2.1 | Form Field Builder | Drag-and-drop text boxes, checkboxes, and radio buttons to create fillable PDFs |
+| 9.2.2 | Data Extraction | Extract filled form data to JSON/CSV |
+| 9.2.3 | Cryptographic Signing UI | Select a certificate, draw a signature, and apply a cryptographic seal |
+| 9.2.4 | Signature Verification | Automatically verify document integrity and show a green/red seal indicator |
 
