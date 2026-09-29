@@ -1,7 +1,7 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
 
-  const mockPages = Array.from({ length: 12 }, (_, i) => i + 1);
+  let pages = $state(Array.from({ length: 12 }, (_, i) => ({ id: i + 1, num: i + 1, rotation: 0 })));
   let selectedPages = $state(new Set<number>());
 
   function togglePageSelection(pageNum: number) {
@@ -19,11 +19,56 @@
   }
 
   function selectAll() {
-    selectedPages = new Set(mockPages);
+    selectedPages = new Set(pages.map(p => p.id));
   }
 
   function handleBack() {
     appState.selectDocument(null);
+  }
+
+  let draggedIndex = $state<number | null>(null);
+
+  function handleDragStart(e: DragEvent, index: number) {
+    draggedIndex = index;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  function handleDrop(e: DragEvent, targetIndex: number) {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const newPages = [...pages];
+    const [draggedItem] = newPages.splice(draggedIndex, 1);
+    newPages.splice(targetIndex, 0, draggedItem);
+    pages = newPages;
+    draggedIndex = null;
+  }
+
+  function handleRotate(e: MouseEvent, id: number) {
+    e.stopPropagation();
+    const index = pages.findIndex(p => p.id === id);
+    if (index !== -1) {
+      pages[index].rotation += 90;
+    }
+  }
+
+  function handleDelete(e: MouseEvent, id: number) {
+    e.stopPropagation();
+    pages = pages.filter(p => p.id !== id);
+    if (selectedPages.has(id)) {
+      const newSelection = new Set(selectedPages);
+      newSelection.delete(id);
+      selectedPages = newSelection;
+    }
   }
 </script>
 
@@ -38,7 +83,7 @@
       </button>
       <div class="doc-info">
         <h3>{appState.documents[appState.selectedDocumentIndex!]?.name}</h3>
-        <span class="page-count">{mockPages.length} pages</span>
+        <span class="page-count">{pages.length} pages</span>
       </div>
     </div>
 
@@ -50,18 +95,33 @@
 
   <div class="preview-content">
     <div class="thumbnails-grid">
-      {#each mockPages as page}
+      {#each pages as page, i}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-          class="thumbnail-wrapper {selectedPages.has(page) ? 'selected' : ''}"
-          onclick={() => togglePageSelection(page)}
+          class="thumbnail-wrapper {selectedPages.has(page.id) ? 'selected' : ''}"
+          onclick={() => togglePageSelection(page.id)}
+          draggable="true"
+          ondragstart={(e) => handleDragStart(e, i)}
+          ondragover={handleDragOver}
+          ondrop={(e) => handleDrop(e, i)}
         >
-          <div class="thumbnail">
+          <div class="thumbnail" style="transform: rotate({page.rotation}deg)">
+            <button class="rotate-btn" onclick={(e) => handleRotate(e, page.id)} title="Rotate Page">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38l-5.67-5.67"/>
+              </svg>
+            </button>
             <span class="mock-content">PDF Content</span>
           </div>
-          <span class="page-number">Page {page}</span>
-          {#if selectedPages.has(page)}
+          <button class="delete-btn" onclick={(e) => handleDelete(e, page.id)} title="Delete Page">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+          <span class="page-number">Page {page.num}</span>
+          {#if selectedPages.has(page.id)}
             <div class="selection-indicator">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
@@ -225,6 +285,64 @@
 
   .thumbnail-wrapper.selected .page-number {
     color: var(--accent-primary);
+  }
+
+  .rotate-btn {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition-fast);
+    z-index: 10;
+  }
+
+  .thumbnail-wrapper:hover .rotate-btn {
+    opacity: 1;
+  }
+
+  .rotate-btn:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+
+  .delete-btn {
+    position: absolute;
+    bottom: 24px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition-fast);
+    z-index: 10;
+  }
+
+  .thumbnail-wrapper:hover .delete-btn {
+    opacity: 1;
+  }
+
+  .delete-btn:hover {
+    background-color: #ffebee;
+    color: #e53935;
+    border-color: #ef9a9a;
   }
 
   .selection-indicator {
