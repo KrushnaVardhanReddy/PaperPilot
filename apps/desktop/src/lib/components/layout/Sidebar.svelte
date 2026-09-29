@@ -1,10 +1,21 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { appState } from '$lib/state/app.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
 
   import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
   import CancelButton from '$lib/components/ui/CancelButton.svelte';
 
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let isCollapsed = $derived(windowWidth < 900);
+
+  onMount(() => {
+    function handleResize() {
+      windowWidth = window.innerWidth;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
 
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠' },
@@ -14,19 +25,23 @@
   ];
 </script>
 
-<aside class="sidebar">
+<aside class="sidebar" aria-label="Main navigation">
   <div class="sidebar-header">
     <h1 class="brand-title">PaperPilot</h1>
   </div>
 
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" aria-label="Navigation">
     {#each navItems as item (item.id)}
       <button
         class="nav-item"
         class:active={appState.activeTab === item.id}
         onclick={() => appState.setActiveTab(item.id)}
+        title={isCollapsed ? item.label : undefined}
+        id={`nav-${item.id}`}
+        aria-label={item.label}
+        aria-current={appState.activeTab === item.id ? 'page' : undefined}
       >
-        <span class="nav-icon">{item.icon}</span>
+        <span class="nav-icon" aria-hidden="true">{item.icon}</span>
         <span class="nav-label">{item.label}</span>
       </button>
     {/each}

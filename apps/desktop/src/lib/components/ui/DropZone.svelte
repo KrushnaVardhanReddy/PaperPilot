@@ -143,4 +143,11 @@
   input[type="file"] {
     display: none;
   }
+
+  @media (max-width: 599px) {
+    /* Make drop zone padding smaller on mobile */
+    .drop-content {
+      padding: 32px 16px !important;
+    }
+  }
 </style>
