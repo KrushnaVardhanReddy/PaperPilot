@@ -1,0 +1,241 @@
+---
+Task: Phase 2.4 — MCP Tool Backfill (Groups B & C)
+Context: paperpilot-mcp/src/server.rs already has ~19 tools wired up (pdf_merge, pdf_split, pdf_compress, pdf_watermark, pdf_encrypt, pdf_decrypt, pdf_metadata, pdf_extract_text, pdf_extract_images, pdf_search, pdf_rotate, pdf_crop, pdf_burst, pdf_extract_pages, pdf_delete_pages, pdf_reorder_pages, pdf_read_form, pdf_fill_form, pdf_create_form_field). The Rust operations for Groups B and C are fully implemented in paperpilot-pdf/src/operations/ — they just need to be wired into the server.
+---
+
+Hey Jules! This task has very specific implementation requirements. Please read every step carefully before touching code.
+
+## What needs to be done
+
+Add 12 new tools to `paperpilot-mcp/src/server.rs` — 7 from Group B and 5 from Group C. The Rust operations already exist and compile. You are ONLY adding MCP wiring.
+
+**DO NOT touch any other file except `paperpilot-mcp/src/server.rs`.**
+
+---
+
+## Step 1 — Add to `execute_list_tools()` (the big `Vec::new()` block)
+
+For each tool, append a new `Tool` registration following this EXACT pattern used for `pdf_compress`:
+
+```rust
+// Tool: pdf_repair
+let mut schema_repair = serde_json::Map::new();
+schema_repair.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+let mut props_repair = serde_json::Map::new();
+
+let mut prop_input_repair = serde_json::Map::new();
+prop_input_repair.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+prop_input_repair.insert("description".to_string(), serde_json::Value::String("Path to the PDF to repair.".to_string()));
+props_repair.insert("input".to_string(), serde_json::Value::Object(prop_input_repair));
+
+let mut prop_output_repair = serde_json::Map::new();
+prop_output_repair.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+prop_output_repair.insert("description".to_string(), serde_json::Value::String("Path to save the repaired PDF.".to_string()));
+props_repair.insert("output".to_string(), serde_json::Value::Object(prop_output_repair));
+
+schema_repair.insert("properties".to_string(), serde_json::Value::Object(props_repair));
+schema_repair.insert("required".to_string(), serde_json::Value::Array(vec![
+    serde_json::Value::String("input".to_string()),
+    serde_json::Value::String("output".to_string()),
+]));
+
+let mut tool_repair = Tool::default();
+tool_repair.name = "pdf_repair".into();
+tool_repair.description = Some("Repairs a corrupted or malformed PDF by rewriting its cross-reference table.".into());
+tool_repair.input_schema = Arc::new(schema_repair);
+tools.push(tool_repair);
+```
+
+Repeat this pattern for all 12 tools. Each schema only needs `input` (string) and `output` (string) as required fields, EXCEPT for the ones listed in the special cases below.
+
+---
+
+## Step 2 — The 12 tools and their schemas
+
+### GROUP B — Simple tools (input + output only)
+
+#### 1. `pdf_repair`
+- Input params: `input` (string), `output` (string)
+- Operation: `paperpilot_pdf::operations::repair::RepairOperation::new()`
+
+#### 2. `pdf_linearize`
+- Input params: `input` (string), `output` (string)
+- Operation: `paperpilot_pdf::operations::linearize::LinearizeOperation::new()`
+
+#### 3. `pdf_flatten`
+- Input params: `input` (string), `output` (string)
+- Operation: `paperpilot_pdf::operations::flatten::FlattenOperation::new()`
+
+#### 4. `pdf_to_pdf_a`
+- Input params: `input` (string), `output` (string)
+- Operation: `paperpilot_pdf::operations::pdf_a::PdfAOperation::new()`
+
+---
+
+### GROUP B — Parameterized tools
+
+#### 5. `pdf_redact`
+- Input params: `input` (string), `output` (string), `page` (integer — 1-based page number), `x` (number), `y` (number), `width` (number), `height` (number)
+- All 7 params are required.
+- Operation:
+```rust
+let page = get_u64("page")? as u32;
+let x = get_f64("x")? as f32;
+let y = get_f64("y")? as f32;
+let width = get_f64("width")? as f32;
+let height = get_f64("height")? as f32;
+let bbox = paperpilot_pdf::operations::redact::BoundingBox { x, y, width, height };
+let op = paperpilot_pdf::operations::redact::RedactOperation::new(page, bbox);
+```
+
+#### 6. `pdf_header_footer`
+- Input params: `input` (string), `output` (string), `text` (string), `position` (string — e.g. "top" or "bottom")
+- All 4 required.
+- Operation:
+```rust
+let text = get_string("text")?;
+let position = get_string("position")?;
+let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(text, position);
+```
+
+#### 7. `pdf_bates`
+- Input params: `input` (string), `output` (string), `start_number` (integer), `prefix` (string), `padding` (integer)
+- All 5 required.
+- Operation:
+```rust
+let start_number = get_u64("start_number")? as u32;
+let prefix = get_string("prefix")?;
+let padding = get_u64("padding")? as usize;
+let op = paperpilot_pdf::operations::bates::BatesNumberingOperation::new(start_number, prefix, padding);
+```
+
+---
+
+### GROUP C — Tools
+
+#### 8. `pdf_render`
+- Input params: `input` (string), `output` (string)
+- Operation: `paperpilot_pdf::operations::render::RenderOperation`
+- Note: `RenderOperation` has no `new()`. Use `let op = paperpilot_pdf::operations::render::RenderOperation;`
+
+#### 9. `pdf_images_to_pdf`
+- Input params: `inputs` (array of strings — image file paths), `output` (string)
+- Operation:
+```rust
+let inputs_arr = args.get("inputs")
+    .and_then(|v| v.as_array())
+    .ok_or_else(|| error_missing("inputs"))?;
+let image_paths: Vec<std::path::PathBuf> = inputs_arr.iter()
+    .filter_map(|v| v.as_str().map(std::path::PathBuf::from))
+    .collect();
+// For this operation, we do NOT load a pre-existing document.
+// Create an empty LopdfDocument, then run the operation:
+let mut doc = LopdfDocument::new_empty(); // or load a blank PDF — see note below
+let op = paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(image_paths);
+op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+doc.save(&std::path::PathBuf::from(&output)).map_err(crate::error::to_mcp_error)?;
+```
+**Note:** If `LopdfDocument::new_empty()` does not exist, check if `LopdfDocument` has a `Default` impl or a `new()` method. If neither exists, create a minimal blank lopdf document with: `let inner = lopdf::Document::with_version("1.5"); let mut doc = LopdfDocument { inner };`
+
+#### 10. `pdf_compare`
+- Input params: `input_a` (string), `input_b` (string), `output` (string)
+- Operation:
+```rust
+let input_a = get_string("input_a")?;
+let input_b = get_string("input_b")?;
+let mut doc_a = LopdfDocument::load(&std::path::PathBuf::from(&input_a)).map_err(crate::error::to_mcp_error)?;
+// CompareOperation has no constructor args — use: let op = paperpilot_pdf::operations::compare::CompareOperation;
+let op = paperpilot_pdf::operations::compare::CompareOperation;
+op.execute(&mut doc_a).map_err(crate::error::to_mcp_error)?;
+// Note: compare is a stub — result message can reference both files
+```
+
+#### 11. `pdf_bookmarks`
+- Input params: `input` (string), `output` (string)
+- Operation:
+```rust
+let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
+```
+
+#### 12. `pdf_ocr`
+- Input params: `input` (string), `output` (string)
+- Operation: `let op = paperpilot_pdf::operations::ocr::OcrOperation;`
+- Note: `OcrOperation` is a stub (no `new()`), use the struct directly.
+
+---
+
+## Step 3 — Add to `execute_call_tool()` (the big `match request.name.as_str()` block)
+
+For each tool, add a new match arm. Here is the EXACT boilerplate pattern to copy for simple `input + output` tools:
+
+```rust
+"pdf_repair" => {
+    let input = get_string("input")?;
+    let output = get_string("output")?;
+
+    ensure_parent_dir(&output)?;
+
+    let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+        .map_err(crate::error::to_mcp_error)?;
+    let op = paperpilot_pdf::operations::repair::RepairOperation::new();
+    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+    doc.save(&std::path::PathBuf::from(&output))
+        .map_err(crate::error::to_mcp_error)?;
+
+    Ok(OperationResult {
+        success: true,
+        message: "PDF repaired successfully.".to_string(),
+        output_path: Some(output),
+    })
+}
+```
+
+Insert the match arm BEFORE the final `_ => { ... }` fallthrough arm.
+
+---
+
+## Step 4 — Helper functions to look for
+
+The server.rs already has these helpers — USE THEM:
+- `get_string(key)` — extracts a string arg from the JSON args map
+- `get_u64(key)` — extracts an integer arg (check if this exists; if not, use `args.get(key).and_then(|v| v.as_u64()).ok_or_else(|| error_missing(key))`)
+- `get_f64(key)` — extracts a float arg (check if this exists; same pattern as above)
+- `ensure_parent_dir(path)` — creates parent directories for the output path
+- `crate::error::to_mcp_error` — converts `PdfError` to MCP `ErrorData`
+
+---
+
+## Step 5 — Tests
+
+Add a `#[cfg(test)]` test block at the bottom of server.rs (or in the existing test module) for at least these 3 tools:
+
+```rust
+#[test]
+fn test_execute_call_tool_repair() {
+    use crate::server::PaperPilotMcpServer;
+    use rmcp::model::CallToolRequestParams;
+
+    let params = CallToolRequestParams {
+        name: "pdf_repair".into(),
+        arguments: Some(serde_json::json!({
+            "input": "nonexistent.pdf",
+            "output": "/tmp/repaired.pdf"
+        }).as_object().unwrap().clone()),
+    };
+    // Should return an Err (file not found) not a panic
+    let result = PaperPilotMcpServer::execute_call_tool_impl(params);
+    assert!(result.is_err());
+}
+```
+
+Follow the same pattern for `pdf_linearize` and `pdf_bates`.
+
+---
+
+## Rules
+- Only edit `paperpilot-mcp/src/server.rs`. No other files.
+- Use the MANUAL `ServerHandler` trait. Do NOT use any `rmcp` macros.
+- `cargo clippy -- -D warnings` must pass with zero warnings.
+- `cargo test` must pass.
+- Open a PR to `main` when done.

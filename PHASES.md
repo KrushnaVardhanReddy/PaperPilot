@@ -113,21 +113,21 @@ All operations are independent of each other and can be built in parallel once t
 #### Group D — Conversion
 | # | Task | Notes |
 |---|---|---|
-| 1.3.30 | PDF → Word (DOCX) 🚧 | In Progress (Session 8203167166999327475) |
-| 1.3.31 | PDF → Excel (XLSX) 🚧 | In Progress (Session 8203167166999327475) |
-| 1.3.32 | PDF → PowerPoint (PPTX) 🚧 | In Progress (Session 8203167166999327475) |
+| 1.3.30 | PDF → Word (DOCX) ✅ | Merged (Session 8203167166999327475) |
+| 1.3.31 | PDF → Excel (XLSX) ✅ | Merged (Session 8203167166999327475) |
+| 1.3.32 | PDF → PowerPoint (PPTX) ✅ | Merged (Session 8203167166999327475) |
 | 1.3.33 | PDF → HTML ✅ | Merged (Session 10906031722199501492) |
 | 1.3.34 | PDF → Markdown ✅ | Merged (Session 10906031722199501492) |
 | 1.3.38 | PDF → LLM-Ready Export ✅ | Merged (Session 10906031722199501492) |
-| 1.3.39 | Document type classifier 🚧 | In Progress (Session 8203167166999327475) |
+| 1.3.39 | Document type classifier ✅ | Merged (Session 8203167166999327475) |
 | 1.3.46 | PDF → Structured JSON ✅ | Merged (Session 10906031722199501492) |
 
 #### Group E — Forms
 | # | Task | Notes |
 |---|---|---|
-| 1.3.35 | AcroForm read 🚧 | In Progress (Session 996394326205831326) |
-| 1.3.36 | AcroForm fill 🚧 | In Progress (Session 996394326205831326) |
-| 1.3.37 | Form field creation 🚧 | In Progress (Session 996394326205831326) |
+| 1.3.35 | AcroForm read ✅ | Merged (Session 996394326205831326) |
+| 1.3.36 | AcroForm fill ✅ | Merged (Session 996394326205831326) |
+| 1.3.37 | Form field creation ✅ | Merged (Session 996394326205831326) |
 
 #### Group F — PDF Creation (from scratch)
 | # | Task | Notes |
@@ -150,9 +150,9 @@ Write tests alongside each operation, not after.
 | 1.4.1 | Unit tests per operation ✅ | Written inline in every operation (`#[cfg(test)]`) |
 | 1.4.2 | Round-trip tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
 | 1.4.3 | Fixture-based integration tests ✅ | Merged (`fixture_tests_group_a/b/c.rs`) |
-| 1.4.4 | Property-based tests | Use `proptest` for page range invariants |
-| 1.4.5 | Error handling tests | Malformed PDFs, wrong passwords, empty inputs |
-| 1.4.6 | PDF Validation layer | Pre-flight checks before every operation: magic bytes, encryption, page range bounds, file size, output path writability |
+| 1.4.4 | Property-based tests 🚧 | In Progress (Session 9564443689999737291) |
+| 1.4.5 | Error handling tests 🚧 | In Progress (Session 9564443689999737291) |
+| 1.4.6 | PDF Validation layer 🚧 | In Progress (Session 9564443689999737291) |
 
 ---
 
@@ -267,24 +267,24 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 2.4.15 | `pdf_html_to_pdf` tool | Wraps `HtmlToPdf` from 1.3.41 |
 | 2.4.16 | `pdf_create_from_template` tool | Wraps template engine from 1.3.42/1.3.43 |
 
-#### 2.4d — Group D Conversion Tools (wired by active Jules session 8203167166999327475)
+#### 2.4d — Group D Conversion Tools
 | # | Task | Notes |
 |---|---|---|
 | 2.4.17 | `pdf_to_html` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
 | 2.4.18 | `pdf_to_markdown` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
 | 2.4.19 | `pdf_to_json` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
 | 2.4.20 | `pdf_to_llm_export` tool 🚧 | Already registered in PR #37 (Session 10906031722199501492) |
-| 2.4.21 | `pdf_to_docx` tool 🚧 | In Progress (Session 8203167166999327475) |
-| 2.4.22 | `pdf_to_xlsx` tool 🚧 | In Progress (Session 8203167166999327475) |
-| 2.4.23 | `pdf_to_pptx` tool 🚧 | In Progress (Session 8203167166999327475) |
-| 2.4.24 | `pdf_classify_type` tool 🚧 | In Progress (Session 8203167166999327475) |
+| 2.4.21 | `pdf_to_docx` tool ✅ | Merged (Session 8203167166999327475) |
+| 2.4.22 | `pdf_to_xlsx` tool ✅ | Merged (Session 8203167166999327475) |
+| 2.4.23 | `pdf_to_pptx` tool ✅ | Merged (Session 8203167166999327475) |
+| 2.4.24 | `pdf_classify_type` tool ✅ | Merged (Session 8203167166999327475) |
 
 #### 2.4e — Group E Forms Tools (wired by active Jules session 996394326205831326)
 | # | Task | Notes |
 |---|---|---|
-| 2.4.25 | `pdf_read_form` tool 🚧 | In Progress (Session 996394326205831326) |
-| 2.4.26 | `pdf_fill_form` tool 🚧 | In Progress (Session 996394326205831326) |
-| 2.4.27 | `pdf_create_form_field` tool 🚧 | In Progress (Session 996394326205831326) |
+| 2.4.25 | `pdf_read_form` tool ✅ | Merged (Session 996394326205831326) |
+| 2.4.26 | `pdf_fill_form` tool ✅ | Merged (Session 996394326205831326) |
+| 2.4.27 | `pdf_create_form_field` tool ✅ | Merged (Session 996394326205831326) |
 
 ---
 
@@ -351,9 +351,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.3.1 | Page renderer ✅ | Merged (Session 10488084682857299204) |
 | 3.3.2 | Page thumbnail strip ✅ | Merged (Session 10488084682857299204) |
 | 3.3.3 | Page selection ✅ | Merged (Session 10488084682857299204) |
-| 3.3.4 | Page reorder via drag 🚧 | In Progress (Session 6565731315931125703) |
-| 3.3.5 | Page rotation controls 🚧 | In Progress (Session 6565731315931125703) |
-| 3.3.6 | Page deletion UI 🚧 | In Progress (Session 6565731315931125703) |
+| 3.3.4 | Page reorder via drag ✅ | Merged (Session 6565731315931125703) |
+| 3.3.5 | Page rotation controls ✅ | Merged (Session 6565731315931125703) |
+| 3.3.6 | Page deletion UI ✅ | Merged (Session 6565731315931125703) |
 
 ---
 
@@ -382,8 +382,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 3.5.1 | Rust async job runner ✅ | Merged (Session 8999512547197594932) |
 | 3.5.2 | Tauri event bridge ✅ | Merged (Session 8999512547197594932) |
-| 3.5.3 | Progress bar component | Shows job name, %, current page |
-| 3.5.4 | Job cancel support | Cancel button sends cancellation to Rust |
+| 3.5.3 | Progress bar component 🚧 | In Progress (Session 547096698313425810) |
+| 3.5.4 | Job cancel support 🚧 | In Progress (Session 547096698313425810) |
 | 3.5.5 | Job history panel ✅ | Merged (Session 8999512547197594932) |
 | 3.5.6 | Responsive mobile layout | Adapt UI shell for small screens (bottom nav, touch targets) |
 | 3.5.7 | E2E Desktop tests ✅ | Merged (Session 617520399890233763) |
@@ -395,9 +395,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.6.1 | Portable Windows Build (`.exe`) | Configure Tauri to generate a standalone, installer-free `.exe` for enterprise USB distribution. |
-| 3.6.2 | Portable Linux Build (`AppImage`) | Enable AppImage output in `tauri.conf.json` for a zero-install Linux experience. |
-| 3.6.3 | Portable macOS Build (`.app` / `.dmg`) | Generate standalone drag-and-drop `.dmg` without requiring installer privileges. |
+| 3.6.1 | Portable Windows Build (`.exe`) 🚧 | In Progress (Session 9012977792349214563) |
+| 3.6.2 | Portable Linux Build (`AppImage`) 🚧 | In Progress (Session 9012977792349214563) |
+| 3.6.3 | Portable macOS Build (`.app` / `.dmg`) 🚧 | In Progress (Session 9012977792349214563) |
 | 3.6.4 | MSI / MDM Installers (Enterprise) | Create traditional MSI installers for IT deployment (Intune, SCCM). |
 
 ---

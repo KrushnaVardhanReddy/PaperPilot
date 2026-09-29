@@ -1,0 +1,256 @@
+---
+Task: Phase 3.5 — Progress Bar + Job Cancel UI (Tasks 3.5.3, 3.5.4)
+Context: The Tauri 2.0 + Svelte 5 desktop app is fully set up. The job system is in `apps/desktop/src/lib/stores/jobs.svelte.ts`. The Tauri IPC command `invoke_mcp_tool` is in `apps/desktop/src-tauri/src/lib.rs`. We need a visual progress bar component and job cancellation support.
+---
+
+Hey Jules! This task adds a progress bar UI component and job cancellation. All changes are in `apps/desktop/src/` except for the Tauri cancel command in `src-tauri/src/lib.rs`.
+
+---
+
+## Task 1: ProgressBar Component (3.5.3)
+
+Create `apps/desktop/src/lib/components/ui/ProgressBar.svelte`:
+
+```svelte
+<script lang="ts">
+  interface Props {
+    jobName: string;
+    percent: number; // 0-100
+    currentPage?: number;
+    totalPages?: number;
+    visible?: boolean;
+  }
+
+  let { jobName, percent, currentPage, totalPages, visible = true }: Props = $props();
+
+  const clampedPercent = $derived(Math.min(100, Math.max(0, percent)));
+</script>
+
+{#if visible}
+  <div class="progress-wrapper" role="progressbar" aria-valuenow={clampedPercent} aria-valuemin={0} aria-valuemax={100}>
+    <div class="progress-header">
+      <span class="progress-job-name">{jobName}</span>
+      <span class="progress-percent">{clampedPercent}%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: {clampedPercent}%"></div>
+    </div>
+    {#if currentPage !== undefined && totalPages !== undefined}
+      <div class="progress-detail">Page {currentPage} of {totalPages}</div>
+    {/if}
+  </div>
+{/if}
+
+<style>
+  .progress-wrapper {
+    width: 100%;
+    padding: 0.75rem 0;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #aaa);
+  }
+  .progress-job-name {
+    font-weight: 500;
+    color: var(--text-primary, #eee);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+  }
+  .progress-percent {
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--surface-2, #2a2a3a);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent, #6c63ff), var(--accent-light, #a78bfa));
+    border-radius: 3px;
+    transition: width 0.25s ease;
+  }
+  .progress-detail {
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+  }
+</style>
+```
+
+---
+
+## Task 2: Expose the ProgressBar in the main UI
+
+In `apps/desktop/src/App.svelte` (or wherever the job list is rendered), import and use the ProgressBar:
+
+Find where jobs are displayed and add the ProgressBar beneath each active job. Look for the existing job rendering logic (it uses the `jobs` store from `jobs.svelte.ts`). Add something like:
+
+```svelte
+<script lang="ts">
+  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+  // ... existing imports
+</script>
+
+<!-- Inside the job rendering loop, add: -->
+{#each $activeJobs as job}
+  <ProgressBar
+    jobName={job.name}
+    percent={job.progress ?? 0}
+    currentPage={job.currentPage}
+    totalPages={job.totalPages}
+    visible={job.status === 'running'}
+  />
+{/each}
+```
+
+Adapt this to the actual store shape in `jobs.svelte.ts`. Read the store first to understand the `Job` type fields.
+
+---
+
+## Task 3: Cancel Button + Tauri IPC (3.5.4)
+
+### 3a. Add a `cancel_job` Tauri command in `apps/desktop/src-tauri/src/lib.rs`
+
+After the `invoke_mcp_tool` command, add:
+
+```rust
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
+
+// Global cancellation registry — maps job_id → cancelled flag
+lazy_static::lazy_static! {
+    static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+}
+
+#[tauri::command]
+fn cancel_job(job_id: String) -> Result<(), String> {
+    let mut flags = CANCEL_FLAGS.lock().map_err(|e| e.to_string())?;
+    flags.insert(job_id, true);
+    Ok(())
+}
+```
+
+If `lazy_static` is not yet in `Cargo.toml`, add it:
+```toml
+lazy_static = "1"
+```
+in `apps/desktop/src-tauri/Cargo.toml`.
+
+Then register it in `run()`:
+```rust
+.invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job])
+```
+
+### 3b. Add a Cancel button in the Svelte UI
+
+Create `apps/desktop/src/lib/components/ui/CancelButton.svelte`:
+
+```svelte
+<script lang="ts">
+  import { invoke } from '@tauri-apps/api/core';
+
+  interface Props {
+    jobId: string;
+    onCancelled?: () => void;
+  }
+
+  let { jobId, onCancelled }: Props = $props();
+  let cancelling = $state(false);
+
+  async function handleCancel() {
+    cancelling = true;
+    try {
+      await invoke('cancel_job', { jobId });
+      onCancelled?.();
+    } catch (e) {
+      console.error('Failed to cancel job:', e);
+    } finally {
+      cancelling = false;
+    }
+  }
+</script>
+
+<button
+  class="cancel-btn"
+  onclick={handleCancel}
+  disabled={cancelling}
+  aria-label="Cancel job"
+>
+  {cancelling ? 'Cancelling…' : '✕ Cancel'}
+</button>
+
+<style>
+  .cancel-btn {
+    background: transparent;
+    border: 1px solid var(--error, #ef4444);
+    color: var(--error, #ef4444);
+    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .cancel-btn:hover:not(:disabled) {
+    background: var(--error, #ef4444);
+    color: white;
+  }
+  .cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+```
+
+---
+
+## Task 4: Write Vitest tests for both components
+
+Add `apps/desktop/src/lib/components/__tests__/ProgressBar.test.ts`:
+
+```typescript
+import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect } from 'vitest';
+import ProgressBar from '../ui/ProgressBar.svelte';
+
+describe('ProgressBar', () => {
+  it('renders with job name', () => {
+    render(ProgressBar, { props: { jobName: 'Merging PDFs', percent: 42 } });
+    expect(screen.getByText('Merging PDFs')).toBeTruthy();
+    expect(screen.getByText('42%')).toBeTruthy();
+  });
+
+  it('clamps percent to 0-100', () => {
+    render(ProgressBar, { props: { jobName: 'Test', percent: 150 } });
+    expect(screen.getByText('100%')).toBeTruthy();
+  });
+
+  it('is hidden when visible=false', () => {
+    const { container } = render(ProgressBar, {
+      props: { jobName: 'Hidden', percent: 50, visible: false }
+    });
+    expect(container.querySelector('.progress-wrapper')).toBeNull();
+  });
+
+  it('shows page info when provided', () => {
+    render(ProgressBar, { props: { jobName: 'Test', percent: 50, currentPage: 3, totalPages: 10 } });
+    expect(screen.getByText('Page 3 of 10')).toBeTruthy();
+  });
+});
+```
+
+---
+
+## Rules
+- Only modify files inside `apps/desktop/`. Do NOT touch any Rust crates except `apps/desktop/src-tauri/src/lib.rs` and `apps/desktop/src-tauri/Cargo.toml`.
+- Use Svelte 5 `$state` and `$derived` runes — NOT Svelte 4 stores or `writable()`.
+- `npm run check` (svelte-check) must pass with zero errors.
+- `npx vitest run` must pass.
+- Open a PR to `main` when done.

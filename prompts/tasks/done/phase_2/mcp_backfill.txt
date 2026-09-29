@@ -1,0 +1,39 @@
+---
+Task: Phase 2.4 — MCP Tool Backfill (Groups B, C, F)
+Context: During Phase 1, we implemented many Rust operations for Group B, C, and F, but we never registered them as MCP tools in `paperpilot-mcp/src/server.rs`. The Rust operations already exist, we just need the MCP wiring.
+---
+
+Hey Jules! We need you to backfill the MCP tools for operations that are already implemented in `paperpilot-core` / `paperpilot-pdf`.
+
+## Requirements:
+Please register the following tools in `paperpilot-mcp/src/server.rs` (in `ServerHandler::list_tools` and `execute_call_tool`) by wrapping the existing operations:
+
+### Group B (Document Ops)
+1. `pdf_repair` (wraps `Repair` operation)
+2. `pdf_linearize` (wraps `Linearize` operation)
+3. `pdf_redact` (wraps `Redact` operation)
+4. `pdf_flatten` (wraps `Flatten` operation)
+5. `pdf_to_pdf_a` (wraps `PdfA` conversion)
+6. `pdf_header_footer` (wraps `HeaderFooter` operation)
+7. `pdf_bates` (wraps `Bates` numbering)
+*(Note: `pdf_integrity_hash` is already handled in another PR)*
+
+### Group C (Extraction & Search)
+8. `pdf_render` (wraps `Render` operation)
+9. `pdf_images_to_pdf` (wraps `ImagesToPdf` operation)
+10. `pdf_compare` (wraps `Compare` operation)
+11. `pdf_bookmarks` (wraps `Bookmarks` operation)
+12. `pdf_ocr` (wraps `Ocr` operation)
+
+### Group F (PDF Creation)
+13. `pdf_markdown_to_pdf` (wraps `MarkdownToPdf` operation)
+14. `pdf_html_to_pdf` (wraps `HtmlToPdf` operation)
+15. `pdf_create_from_template` (wraps Template Engine operation)
+
+## Rules:
+- The underlying operations already exist in `paperpilot-pdf/src/operations/`. You just need to import them and call their `.execute()` methods inside `server.rs`.
+- STRICTLY DO NOT USE TailwindCSS (Not applicable here, but standard rule).
+- Add `#[cfg(test)]` unit tests in `server.rs` testing that `execute_call_tool` returns the expected results for these new tools.
+- MCP Server in `paperpilot-mcp/src/server.rs` uses manual `ServerHandler` trait — do NOT use `rmcp` macros.
+
+Please open a PR to `main` when finished!

@@ -1,0 +1,253 @@
+---
+Task: Phase 1.4 — Testing & PDF Validation Layer (Tasks 1.4.4, 1.4.5, 1.4.6)
+Context: The paperpilot-pdf crate has 45+ PDF operations fully implemented in `paperpilot-pdf/src/operations/`. All existing tests use real fixture PDFs in `tests/fixtures/`. We need property-based tests, robust error-handling tests, and a pre-flight PDF validation layer.
+---
+
+Hey Jules! This task covers three related testing and validation improvements. All changes go in `paperpilot-pdf/` only — no other crates.
+
+---
+
+## Task 1: Property-Based Tests (1.4.4)
+
+Add a new file: `paperpilot-pdf/tests/property_tests.rs`
+
+Use the `proptest` crate (add it to `paperpilot-pdf/Cargo.toml` under `[dev-dependencies]`):
+```toml
+proptest = "1"
+```
+
+Write property-based tests for page range invariants. Example structure:
+
+```rust
+use proptest::prelude::*;
+use paperpilot_pdf::operations::split::SplitOperation;
+use paperpilot_pdf::operations::extract::ExtractOperation;
+
+proptest! {
+    /// Splitting a 5-page PDF at page N should always produce two valid outputs
+    #[test]
+    fn test_split_never_panics(page_num in 1u32..5u32) {
+        // Load the real fixture PDF
+        use paperpilot_pdf::document::LopdfDocument;
+        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        let path = std::path::PathBuf::from("tests/fixtures/sample.pdf");
+        if !path.exists() { return Ok(()); }
+        let mut doc = LopdfDocument::load(&path).unwrap();
+        let op = SplitOperation::new(page_num);
+        // Should never panic; may return Ok or Err
+        let _ = op.execute(&mut doc);
+    }
+
+    #[test]
+    fn test_extract_page_range_invariant(start in 1u32..4u32, end in 1u32..5u32) {
+        use paperpilot_pdf::document::LopdfDocument;
+        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        let path = std::path::PathBuf::from("tests/fixtures/sample.pdf");
+        if !path.exists() { return Ok(()); }
+        let mut doc = LopdfDocument::load(&path).unwrap();
+        // Extract with any range — should not panic
+        let op = ExtractOperation::new(vec![start]);
+        let _ = op.execute(&mut doc);
+    }
+}
+```
+
+Add at least 5 `proptest!` cases covering: split, extract, rotate, delete, and reorder.
+
+---
+
+## Task 2: Error Handling Tests (1.4.5)
+
+Add a new file: `paperpilot-pdf/tests/error_handling_tests.rs`
+
+Test these specific failure cases:
+
+```rust
+use paperpilot_pdf::document::LopdfDocument;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+
+// 1. Nonexistent file returns Err, not panic
+#[test]
+fn test_load_nonexistent_file_returns_err() {
+    let result = LopdfDocument::load(&std::path::PathBuf::from("does_not_exist.pdf"));
+    assert!(result.is_err(), "Expected Err for missing file");
+}
+
+// 2. Empty byte slice should fail gracefully
+#[test]
+fn test_load_empty_bytes_returns_err() {
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    let result = LopdfDocument::load(tmp.path());
+    assert!(result.is_err(), "Expected Err for empty file");
+}
+
+// 3. Truncated/malformed PDF
+#[test]
+fn test_load_malformed_pdf_returns_err() {
+    use std::io::Write;
+    let mut tmp = tempfile::NamedTempFile::new().unwrap();
+    tmp.write_all(b"%PDF-1.4\ngarbage data that is not a real pdf").unwrap();
+    let result = LopdfDocument::load(tmp.path());
+    // May succeed (lopdf is lenient) or fail — either is acceptable, but must not panic
+    let _ = result;
+}
+
+// 4. Page out of range
+#[test]
+fn test_delete_out_of_range_page_returns_err() {
+    let path = std::path::PathBuf::from("tests/fixtures/sample.pdf");
+    if !path.exists() { return; }
+    let mut doc = LopdfDocument::load(&path).unwrap();
+    let op = paperpilot_pdf::operations::delete::DeletePagesOperation::new(vec![9999]);
+    let result = op.execute(&mut doc);
+    assert!(result.is_err(), "Expected Err for out-of-range page");
+}
+
+// 5. Wrong password on encrypted PDF
+#[test]
+fn test_decrypt_wrong_password_returns_err() {
+    let path = std::path::PathBuf::from("tests/fixtures/sample.pdf");
+    if !path.exists() { return; }
+    let mut doc = LopdfDocument::load(&path).unwrap();
+    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new("wrongpassword".to_string());
+    // May succeed or fail depending on whether sample.pdf is encrypted — just must not panic
+    let _ = op.execute(&mut doc);
+}
+
+// 6. Empty input for merge
+#[test]
+fn test_merge_empty_list_returns_err() {
+    use paperpilot_pdf::operations::merge::MergeOperation;
+    let op = MergeOperation::new(vec![]);
+    // MergeOperation requires documents to merge — an empty list should return Err
+    // We can't easily test this through execute() without docs, so just verify the struct creates
+    let _ = op;
+}
+```
+
+Add the `tempfile` dev-dependency if not already present:
+```toml
+tempfile = "3"
+```
+
+---
+
+## Task 3: PDF Validation Layer (1.4.6)
+
+Create a new file: `paperpilot-pdf/src/validation.rs`
+
+This is a pre-flight check function that runs BEFORE any operation executes:
+
+```rust
+use paperpilot_core::error::{OperationResult, PdfError};
+use std::path::Path;
+
+/// Pre-flight validation checks before running any PDF operation.
+/// Returns Ok(()) if the file is safe to process, Err with a descriptive message otherwise.
+pub fn validate_pdf_input(path: &Path) -> OperationResult<()> {
+    // 1. File must exist
+    if !path.exists() {
+        return Err(PdfError::InvalidInput(format!(
+            "Input file does not exist: {}",
+            path.display()
+        )));
+    }
+
+    // 2. File must be readable and non-empty
+    let metadata = std::fs::metadata(path).map_err(|e| {
+        PdfError::InvalidInput(format!("Cannot read file metadata: {}", e))
+    })?;
+    if metadata.len() == 0 {
+        return Err(PdfError::InvalidInput("Input file is empty (0 bytes).".to_string()));
+    }
+
+    // 3. File size sanity check (reject files > 500 MB)
+    const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
+    if metadata.len() > MAX_FILE_SIZE {
+        return Err(PdfError::InvalidInput(format!(
+            "File too large: {} bytes (max 500 MB)",
+            metadata.len()
+        )));
+    }
+
+    // 4. Magic bytes check — PDF must start with %PDF-
+    let mut f = std::fs::File::open(path).map_err(|e| {
+        PdfError::InvalidInput(format!("Cannot open file: {}", e))
+    })?;
+    let mut magic = [0u8; 5];
+    use std::io::Read;
+    f.read_exact(&mut magic).map_err(|_| {
+        PdfError::InvalidInput("File is too small to be a valid PDF.".to_string())
+    })?;
+    if &magic != b"%PDF-" {
+        return Err(PdfError::InvalidInput(
+            "File does not appear to be a PDF (missing %PDF- header).".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate the output path — parent directory must be writable.
+pub fn validate_pdf_output(path: &Path) -> OperationResult<()> {
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            return Err(PdfError::InvalidInput(format!(
+                "Output directory does not exist: {}",
+                parent.display()
+            )));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_nonexistent_file() {
+        let result = validate_pdf_input(Path::new("nonexistent.pdf"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validate_empty_file() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let result = validate_pdf_input(tmp.path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validate_non_pdf_magic_bytes() {
+        use std::io::Write;
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        tmp.write_all(b"PK\x03\x04 this is a zip file not a pdf").unwrap();
+        let result = validate_pdf_input(tmp.path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validate_valid_pdf_fixture() {
+        let path = std::path::Path::new("tests/fixtures/sample.pdf");
+        if path.exists() {
+            let result = validate_pdf_input(path);
+            assert!(result.is_ok());
+        }
+    }
+}
+```
+
+Then expose it from `paperpilot-pdf/src/lib.rs`:
+```rust
+pub mod validation;
+```
+
+---
+
+## Rules
+- Only modify files inside `paperpilot-pdf/`. Do NOT touch `paperpilot-mcp/`, `paperpilot-cli/`, or `apps/`.
+- Add `proptest` and `tempfile` to `[dev-dependencies]` in `paperpilot-pdf/Cargo.toml` only if not already present.
+- `cargo test -p paperpilot-pdf` must pass.
+- `cargo clippy -p paperpilot-pdf -- -D warnings` must pass.
+- Open a PR to `main` when done.
