@@ -12,7 +12,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.1 | Create `paperpilot-nlp` crate | ✅ Completed |
 | 4.0.2 | Define `NlpResolver` trait | ✅ Completed |
 | 4.0.3 | Intent vocabulary definition (~45 operations) | ✅ Completed |
-| 4.0.4 | Layer 1 — Keyword & regex rule engine | Pending |
+| 4.0.4 | Layer 1 — Keyword & regex rule engine | 🚧 In Progress (Session 283097227045968085) |
 | 4.0.5 | Layer 2 — ONNX intent classifier (MobileBERT) | Pending |
 | 4.0.6 | Entity extractor (regex + NER) | Pending |
 | 4.0.7 | Ambiguity resolver | Pending |
