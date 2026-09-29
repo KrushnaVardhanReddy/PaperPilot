@@ -2,6 +2,10 @@
   import { appState } from '$lib/state/app.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
 
+  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+  import CancelButton from '$lib/components/ui/CancelButton.svelte';
+
+
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'documents', label: 'Documents', icon: '📄' },
@@ -34,11 +38,30 @@
     {:else}
       <div class="jobs-list">
         {#each jobsState.jobs.slice(-5).reverse() as job (job.id)}
-          <div class="job-item">
-            <span class="job-status" class:success={job.status === 'success'} class:error={job.status === 'error'}>
-              {job.status === 'success' ? '✅' : '❌'}
-            </span>
-            <span class="job-name">{job.toolName}</span>
+          <div class="job-item-container">
+            <div class="job-item">
+              <span class="job-status" class:success={job.status === 'success'} class:error={job.status === 'error'} class:running={job.status === 'running'} class:cancelled={job.status === 'cancelled'}>
+                {#if job.status === 'success'}✅{/if}
+                {#if job.status === 'error'}❌{/if}
+                {#if job.status === 'running'}⏳{/if}
+                {#if job.status === 'cancelled'}🚫{/if}
+              </span>
+              <span class="job-name">{job.toolName}</span>
+              {#if job.status === 'running'}
+                <div class="cancel-container">
+                  <CancelButton jobId={job.id} onCancelled={() => jobsState.updateJobStatus(job.id, 'cancelled', 'Cancelled by user')} />
+                </div>
+              {/if}
+            </div>
+            {#if job.status === 'running'}
+              <ProgressBar
+                jobName={job.toolName}
+                percent={job.progress ?? 0}
+                currentPage={job.currentPage}
+                totalPages={job.totalPages}
+                visible={true}
+              />
+            {/if}
           </div>
         {/each}
       </div>
@@ -167,16 +190,6 @@
     gap: 6px;
   }
 
-  .job-item {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    background-color: var(--bg-surface);
-    padding: 6px 10px;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-  }
 
   .job-status {
     margin-right: 8px;
@@ -188,4 +201,33 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  .job-item-container {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+  }
+
+  .job-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+  }
+
+  .cancel-container {
+    margin-left: auto;
+  }
+
+  .job-status.running {
+    color: var(--accent-primary);
+  }
+
+  .job-status.cancelled {
+    color: var(--text-muted);
+  }
+
 </style>

@@ -1,5 +1,24 @@
 use rmcp::model::CallToolRequestParams;
 
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
+
+pub mod error;
+use crate::error::DesktopError;
+
+lazy_static::lazy_static! {
+    static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+}
+
+#[tauri::command]
+fn cancel_job(job_id: String) -> Result<(), DesktopError> {
+    let mut flags = CANCEL_FLAGS.lock().map_err(|e| DesktopError::LockError(e.to_string()))?;
+    flags.insert(job_id, true);
+    Ok(())
+}
+
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -39,14 +58,14 @@ async fn invoke_mcp_tool(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::invoke_mcp_tool;
+    use crate::{invoke_mcp_tool, cancel_job, CANCEL_FLAGS};
     use serde_json::json;
 
     #[tokio::test]
@@ -76,5 +95,15 @@ mod tests {
         assert!(result.is_err());
         let err_msg = result.unwrap_err();
         assert!(err_msg.contains("Unknown tool"));
+    }
+
+    #[test]
+    fn test_cancel_job() {
+        let job_id = "test-job-123".to_string();
+        let res = cancel_job(job_id.clone());
+        assert!(res.is_ok());
+
+        let flags = CANCEL_FLAGS.lock().unwrap();
+        assert_eq!(flags.get(&job_id), Some(&true));
     }
 }
