@@ -34,6 +34,7 @@
     {#each pipelineState.steps as step, i (step.id)}
       <div
         class="step-wrapper"
+        role="listitem"
         draggable="true"
         ondragstart={(e) => handleDragStart(e, i)}
         ondragover={(e) => handleDragOver(e, i)}

@@ -27,7 +27,7 @@ The goal is to complete all of these base version tasks by tomorrow, followed by
 | 3.5.3 | Progress bar component (job name, %, current page) | ✅ Completed |
 | 3.5.4 | Job cancel support (cancel button → Rust cancellation) | ✅ Completed |
 | 3.5.6 | Responsive mobile layout | Pending |
-| 3.4.10 | **Visual Pipeline Builder** (the big feature) | 🚧 In Progress (Session 11392384016459446142) |
+| 3.4.10 | **Visual Pipeline Builder** (the big feature) | ✅ Completed |
 | 3.6.1–3.6.4 | Portable builds (`.exe`, `AppImage`, `.dmg`, MSI) | ✅ Completed (3.6.1-3.6.3) |
 
 ## 📅 Timeline

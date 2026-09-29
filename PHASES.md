@@ -370,7 +370,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.4.7 | Encrypt/Decrypt UI ✅ | Merged (Session 10488084682857299204) |
 | 3.4.8 | Extract UI ✅ | Merged (Session 10488084682857299204) |
 | 3.4.9 | Output file picker ✅ | Merged (Session 10488084682857299204) |
-| 3.4.10 | **Visual Pipeline Builder (Basic)** 🚧 | In Progress (Session 11392384016459446142) |
+| 3.4.10 | **Visual Pipeline Builder (Basic)** ✅ | Merged |
 | 3.4.11 | **Conditional branching UI** | Add IF/ELSE nodes (e.g. "if scanned → OCR, else extract text directly") to the pipeline canvas |
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
 

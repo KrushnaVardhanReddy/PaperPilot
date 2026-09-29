@@ -16,7 +16,12 @@
   }
 </script>
 
-<div class="picker-backdrop" onclick={handleBackdropClick} id="step-picker-modal">
+<div 
+  class="picker-backdrop" 
+  onclick={handleBackdropClick} 
+  onkeydown={(e) => e.key === 'Escape' && onclose()}
+  role="presentation"
+  id="step-picker-modal">
   <div class="picker-dialog" role="dialog" aria-label="Pick an operation">
     <div class="picker-header">
       <h3>Add Pipeline Step</h3>
