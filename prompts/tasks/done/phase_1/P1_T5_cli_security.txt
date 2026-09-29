@@ -1,0 +1,31 @@
+---
+Task: Phase 1.5 CLI Security & E2E enhancements (1.5.18 - 1.5.24)
+Context: The paperpilot-cli crate exposes our PDF operations to the terminal. We are adding security features (webhook HMAC signing, file hashing) and structured output.
+---
+
+Hey Jules! With your recent PRs merged, we are now ready to close out the remaining CLI features defined in Phase 1.5 (tasks 1.5.18 through 1.5.24). 
+
+## Requirements:
+
+1. **Webhook HMAC Signing (1.5.18) & Filters (1.5.19)**
+   - Add `--webhook-secret <key>`, `--webhook-on-success`, and `--webhook-on-failure` flags to the global CLI arguments.
+   - If `--webhook-secret` is provided, compute an HMAC-SHA256 signature of the JSON payload and include it in an `x-paperpilot-signature` HTTP header.
+   - Respect the filter flags when deciding whether to fire the webhook.
+
+2. **Hash & Verify Commands (1.5.20 & 1.5.21)**
+   - Implement `paperpilot hash <file>` which computes and prints the SHA-256 hash of a PDF.
+   - Implement `paperpilot verify <file> <expected-hash>` which exits `0` if the hash matches, and `1` (with an error message) if it does not. (Use the `sha2` crate).
+
+3. **Structured JSON Output for text extraction (1.5.24)**
+   - Add a `--format json` flag specifically for the `extract-text` command.
+   - When provided, it should output a structured JSON array representing the pages, rather than flat text.
+
+4. **Testing (1.5.22 & 1.5.23)**
+   - Add integration tests in `paperpilot-cli/tests/` that actually spawn the compiled `paperpilot` binary (using `assert_cmd`) and verify its output on test PDFs.
+
+## Rules:
+- Ensure all new CLI flags are properly documented using `clap` macro docstrings so `paperpilot --help` looks clean.
+- Update `Cargo.toml` with any necessary crypto crates (`sha2`, `hmac`).
+- Make sure `cargo clippy` and `cargo test` pass cleanly.
+
+Please open a PR to `main` when finished!

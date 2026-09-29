@@ -96,7 +96,7 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.19 | PDF/A conversion ✅ | Merged (Session 12850003959773306225) |
 | 1.3.20 | Header/Footer ✅ | Merged (Session 8470929282963705394) |
 | 1.3.21 | Bates numbering ✅ | Merged (Session 12785657976803298608) |
-| 1.3.22 | Integrity hash | Compute SHA-256 / SHA-512 fingerprint of a PDF; output digest and file size for tamper detection |
+| 1.3.22 | Integrity hash 🚧 | In Progress (Session 10906031722199501492) |
 
 #### Group C — Extraction & Search
 | # | Task | Notes |
@@ -116,11 +116,11 @@ All operations are independent of each other and can be built in parallel once t
 | 1.3.30 | PDF → Word (DOCX) | Export PDF content to editable Word document |
 | 1.3.31 | PDF → Excel (XLSX) | Export table content to spreadsheet |
 | 1.3.32 | PDF → PowerPoint (PPTX) | Export PDF slides to PPTX |
-| 1.3.33 | PDF → HTML | Export to HTML for web viewing |
-| 1.3.34 | PDF → Markdown | Export to clean Markdown text |
-| 1.3.38 | PDF → LLM-Ready Export | Structured export optimised for RAG pipelines: clean heading hierarchy, page numbers as metadata, tables as JSON, image captions — output as `{content}.md` + `{metadata}.json` sidecar pair |
+| 1.3.33 | PDF → HTML 🚧 | In Progress (Session 10906031722199501492) |
+| 1.3.34 | PDF → Markdown 🚧 | In Progress (Session 10906031722199501492) |
+| 1.3.38 | PDF → LLM-Ready Export 🚧 | In Progress (Session 10906031722199501492) |
 | 1.3.39 | Document type classifier | Auto-detect document type (invoice, contract, research paper, form, report) using heuristics + AI; tag the output metadata accordingly |
-| 1.3.46 | PDF → Structured JSON | Per-page structured text extraction: `{ document, pages: [{ page_number, text, word_count, has_images, tables[] }] }` — machine-readable format for AI agents, RAG pipelines, and enterprise integrations |
+| 1.3.46 | PDF → Structured JSON 🚧 | In Progress (Session 10906031722199501492) |
 
 #### Group E — Forms
 | # | Task | Notes |
@@ -179,13 +179,13 @@ Write tests alongside each operation, not after.
 | 1.5.15 | Progress output ✅ | Merged |
 | 1.5.16 | JSON output mode ✅ | Merged |
 | 1.5.17 | Webhook support ✅ | Merged |
-| 1.5.18 | Webhook HMAC signing | `--webhook-secret <key>` signs payload so receivers can verify authenticity |
-| 1.5.19 | Webhook filter flags | `--webhook-on-success` and `--webhook-on-failure` for selective firing |
-| 1.5.20 | `hash` command | `paperpilot hash <file>` — prints SHA-256 fingerprint of any PDF |
-| 1.5.21 | `verify` command | `paperpilot verify <file> <expected-hash>` — exits 0 if match, 1 if tampered |
-| 1.5.22 | CLI integration tests | Spawn binary, check outputs |
-| 1.5.23 | E2E CLI pipeline tests | Full end-to-end testing against real PDFs using the compiled binary (No Mocking) |
-| 1.5.24 | `extract-text --format json` flag | Outputs structured per-page JSON instead of flat `.txt`; distinct from `--json` mode which only wraps the operation result |
+| 1.5.18 | Webhook HMAC signing 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.19 | Webhook filter flags 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.20 | `hash` command 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.21 | `verify` command 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.22 | CLI integration tests 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.23 | E2E CLI pipeline tests 🚧 | In Progress (Session 3236745347341611735) |
+| 1.5.24 | `extract-text --format json` flag 🚧 | In Progress (Session 3236745347341611735) |
 
 ---
 
