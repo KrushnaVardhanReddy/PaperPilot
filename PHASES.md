@@ -267,12 +267,12 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 3.1.1 | Initialize Tauri 2.0 project | Under `apps/desktop/` using `cargo tauri init` |
-| 3.1.2 | Configure Svelte 5 + TypeScript + Vite | |
-| 3.1.3 | Set up Tauri ↔ Rust command bindings | Define initial `invoke` commands |
-| 3.1.4 | Set up component library / design system | Pick: shadcn-svelte, bits-ui, or custom |
-| 3.1.5 | Define Tauri IPC schema | Types for all commands and events |
-| 3.1.6 | Set up frontend tests | Vitest + Testing Library |
+| 3.1.1 | Initialize Tauri 2.0 project ✅ | `apps/desktop/src-tauri/` fully scaffolded |
+| 3.1.2 | Configure Svelte 5 + TypeScript + Vite ✅ | Svelte 5.56, TypeScript 6.0, Vite 8 |
+| 3.1.3 | Set up Tauri ↔ Rust command bindings ✅ | `invoke_mcp_tool` in `src-tauri/src/lib.rs` (Phase 3.5) |
+| 3.1.4 | Set up component library / design system ✅ | Custom vanilla CSS design system in `app.css` |
+| 3.1.5 | Define Tauri IPC schema ✅ | `jobs.svelte.ts` + `serde_json::Value`-typed commands |
+| 3.1.6 | Set up frontend tests 🟡 | Playwright E2E done; **Vitest component unit tests pending** |
 | 3.1.7 | Configure iOS target | `cargo tauri ios init`, provision profile setup |
 | 3.1.8 | Configure Android target | `cargo tauri android init`, NDK setup |
 
