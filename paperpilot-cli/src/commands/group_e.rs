@@ -25,7 +25,7 @@ pub fn handle_form_read(input: &Path) -> OperationResult<()> {
 
 pub fn handle_form_fill(input: &Path, data: &Path, output: &Path) -> OperationResult<()> {
     let data_str = fs::read_to_string(data)
-        .map_err(|e| PdfError::IoError(e))?;
+        .map_err(PdfError::IoError)?;
 
     let values: HashMap<String, String> = serde_json::from_str(&data_str)
         .map_err(|e| PdfError::InvalidInput(e.to_string()))?;
