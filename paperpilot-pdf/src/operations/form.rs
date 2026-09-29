@@ -55,9 +55,9 @@ impl PdfOperation for ReadFormOperation {
 
         if let Ok(Object::Array(fields)) = acroform.get(b"Fields") {
             for field_obj in fields {
-                if let Object::Reference(field_id) = field_obj {
-                    if let Ok(field_dict) = doc.inner.get_dictionary(*field_id) {
-                        if let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
+                if let Object::Reference(field_id) = field_obj
+                    && let Ok(field_dict) = doc.inner.get_dictionary(*field_id)
+                        && let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
                             let name = String::from_utf8_lossy(name_bytes).to_string();
 
                             let value = if let Ok(v) = field_dict.get(b"V") {
@@ -78,8 +78,6 @@ impl PdfOperation for ReadFormOperation {
 
                             fields_map.insert(name, value);
                         }
-                    }
-                }
             }
         }
 
@@ -118,27 +116,25 @@ impl PdfOperation for FillFormOperation {
         };
 
         let mut field_ids = Vec::new();
-        if let Ok(acroform) = doc.inner.get_dictionary(acroform_ref) {
-            if let Ok(Object::Array(fields)) = acroform.get(b"Fields") {
+        if let Ok(acroform) = doc.inner.get_dictionary(acroform_ref)
+            && let Ok(Object::Array(fields)) = acroform.get(b"Fields") {
                 for field_obj in fields {
                     if let Object::Reference(field_id) = field_obj {
                         field_ids.push(*field_id);
                     }
                 }
             }
-        }
 
         let mut fields_to_update = Vec::new();
 
         for field_id in field_ids {
-            if let Ok(field_dict) = doc.inner.get_dictionary(field_id) {
-                if let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
+            if let Ok(field_dict) = doc.inner.get_dictionary(field_id)
+                && let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
                     let name = String::from_utf8_lossy(name_bytes).to_string();
                     if let Some(new_value) = self.values.get(&name) {
                         fields_to_update.push((field_id, new_value.clone()));
                     }
                 }
-            }
         }
 
         for (field_id, new_value) in fields_to_update {
@@ -239,11 +235,10 @@ impl PdfOperation for CreateFormFieldOperation {
 
         let mut acroform_ref = None;
 
-        if let Ok(catalog) = doc.inner.get_object(catalog_id).and_then(Object::as_dict) {
-            if let Ok(Object::Reference(id)) = catalog.get(b"AcroForm") {
+        if let Ok(catalog) = doc.inner.get_object(catalog_id).and_then(Object::as_dict)
+            && let Ok(Object::Reference(id)) = catalog.get(b"AcroForm") {
                 acroform_ref = Some(*id);
             }
-        }
 
         let af_id = if let Some(id) = acroform_ref {
             id
