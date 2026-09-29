@@ -1,0 +1,35 @@
+---
+Task: Phase 1.3 Group D — PDF Conversion & LLM Export
+Context: The paperpilot-core/paperpilot-pdf Rust workspace is fully set up. We are now implementing the export pipelines to convert PDFs into other formats.
+---
+
+Hey Jules! Let's tackle Phase 1.3 Group D (Conversion and Exports). This is a crucial feature set that differentiates PaperPilot, especially the LLM-Ready export.
+
+## Requirements:
+
+### 1. 1.3.33 & 1.3.34: PDF → HTML & PDF → Markdown
+- Add `pdf_to_html` and `pdf_to_markdown` MCP tools.
+- Implement these operations in `paperpilot-pdf/src/operations/conversion.rs`.
+- You can leverage existing PDF text extraction logic, but format the output with basic Markdown (`# Page X`, paragraphs) or HTML tags.
+
+### 2. 1.3.38: PDF → LLM-Ready Export (The "Killer Feature")
+- Add a `pdf_to_llm_export` MCP tool.
+- This should extract the text and attempt to output a clean `{content}.md` file alongside a `{metadata}.json` sidecar containing page numbers, word counts, and structural metadata.
+- Don't worry about perfect layout parsing for now — a best-effort structural Markdown extraction is enough for V1.
+
+### 3. 1.3.46: PDF → Structured JSON
+- Add a `pdf_to_json` MCP tool.
+- Extract text page-by-page and serialize it to a JSON structure: `{ document_name, pages: [{ page_number, text, char_count }] }`
+
+### 4. Integrity Hash Core Operation (Requested by User)
+- We need an underlying core operation for the `hash`/`verify` CLI commands.
+- Implement an `IntegrityHash` operation in `paperpilot-pdf` that reads a PDF file, computes a SHA-256 hash using the `sha2` crate, and returns the digest string and file size in bytes.
+- Add an associated `pdf_integrity_hash` MCP tool.
+
+## Rules:
+- Note: We are deliberately skipping PDF->Word (DOCX), Excel, and PPTX for this PR, as they require complex format specifications. Focus entirely on HTML, Markdown, LLM-Export, JSON, and the Integrity Hash.
+- Add `#[cfg(test)]` unit tests for each operation.
+- Register all new MCP tools in `execute_list_tools()`.
+- Add corresponding CLI commands in `paperpilot-cli` (e.g., `paperpilot convert --format md <file>`, `paperpilot convert --format llm <file>`).
+
+Please open a PR to `main` when finished!

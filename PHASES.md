@@ -273,8 +273,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 3.1.4 | Set up component library / design system ✅ | Custom vanilla CSS design system in `app.css` |
 | 3.1.5 | Define Tauri IPC schema ✅ | `jobs.svelte.ts` + `serde_json::Value`-typed commands |
 | 3.1.6 | Set up frontend tests ✅ | Playwright E2E & Vitest component unit tests merged |
-| 3.1.7 | Configure iOS target | `cargo tauri ios init`, provision profile setup |
-| 3.1.8 | Configure Android target | `cargo tauri android init`, NDK setup |
+| 3.1.7 | Configure iOS target | Requires macOS (Xcode) to run `cargo tauri ios init` |
+| 3.1.8 | Configure Android target ✅ | `apps/desktop/src-tauri/gen/android` scaffolded |
 
 ---
 
