@@ -9,6 +9,7 @@
   const navItems = [
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'documents', label: 'Documents', icon: '📄' },
+    { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 </script>

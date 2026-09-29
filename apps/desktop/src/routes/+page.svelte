@@ -5,6 +5,7 @@
   import PdfPreview from '$lib/components/ui/PdfPreview.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
+  import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
 
   function handleFilesDropped(files: File[]) {
     appState.addDocuments(files);
@@ -33,6 +34,10 @@
   {:else if appState.activeTab === 'settings'}
     <div class="content-area full-width">
       <SettingsPanel />
+    </div>
+  {:else if appState.activeTab === 'pipeline'}
+    <div class="content-area full-width">
+      <PipelineView />
     </div>
   {/if}
 </div>
