@@ -84,6 +84,7 @@ PaperPilot/
 | Phase 4.0.6 (Entity Extractor) | ✅ Complete | Regex & NER for files, pages, angles |
 | Phase 4.0.7+4.0.8 (Resolver) | ✅ Complete | Wired `OfflineNlpResolver` and ambiguity checks |
 | Phase 4.0.9 (Offline NLP Tests) | ✅ Complete | Accuracy test suite in `resolver_accuracy_test.rs` |
+| Phase 4.0.10 (Offline E2E) | ✅ Complete | NLP output to actual MCP file modifications |
 
 ---
 
@@ -91,7 +92,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.0.10 (Offline E2E) | `15569134686656851401` | Wiring the full NLP output to actual MCP file modifications |
+| None | N/A | No active sessions at the moment |
 
 ---
 

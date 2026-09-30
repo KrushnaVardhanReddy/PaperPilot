@@ -18,7 +18,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.7 | Ambiguity resolver | ✅ Completed |
 | 4.0.8 | Offline NLP → `OperationPlan` output | ✅ Completed |
 | 4.0.9 | Offline NLP unit tests | ✅ Completed |
-| 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | 🚧 In Progress (Session 15569134686656851401) |
+| 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | ✅ Completed |
 
 ### Phase 4.E2E — System Validation Testing
 | Task | What | Status |
