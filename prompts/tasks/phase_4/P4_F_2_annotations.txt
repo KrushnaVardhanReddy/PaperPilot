@@ -1,0 +1,123 @@
+# Task: Phase 4.F.2 — PDF Annotations
+
+## Objective
+The PDF Viewer is fully functional. Now we need to build the annotation overlay layer. This involves adding standard markup tools (Highlight, Underline, Strikethrough), sticky notes, and a free-draw pen, plus a side panel to list all annotations.
+
+## Requirements
+- Use Svelte 5 Runes (`$state`, `$effect`, `$derived`).
+- Build beautiful, modern UI components with standard CSS (no Tailwind).
+- You must complete all of the following sub-tasks for Phase 4.F.2:
+  - **F.2.1 Highlight tool**: Select text on a page and apply a colored highlight.
+  - **F.2.2 Underline & Strikethrough**: Text markup tools matching standard annotation conventions.
+  - **F.2.3 Sticky note / Comment**: Click anywhere on a page to attach a floating comment bubble.
+  - **F.2.4 Free-draw tool**: Draw freehand lines or shapes (pen tool) on top of a page.
+  - **F.2.5 Annotation panel**: Side panel listing all annotations in the document with page references.
+  - **F.2.6 Save annotations to PDF**: Flatten or embed annotations into the PDF via `paperpilot-pdf` Tauri commands.
+  - **F.2.7 Annotation unit tests**: Verify annotation add/remove/serialize round-trips correctly.
+- Overlay annotations on top of the `<canvas>` rendered by `pdfjs-dist`. Ensure they scale and position correctly when zooming.
+
+### 1. Component Structure
+You will need to create or update the following files in `apps/desktop/src/`:
+1. **`lib/components/PdfAnnotationLayer.svelte`** -> An overlay placed exactly over the PDF `<canvas>`.
+2. **`lib/components/PdfAnnotationToolbar.svelte`** -> A toolbar with buttons for Highlight, Underline, Strikethrough, Sticky Note, and Free-Draw.
+3. **`lib/components/PdfAnnotationPanel.svelte`** -> A side panel listing all active annotations in the document.
+4. **`lib/api/pdf.ts`** -> Tauri invoke wrappers to call `paperpilot-pdf` commands for saving/flattening (F.2.6).
+
+### 2. Implementation Details
+
+#### Annotation Layer (`PdfAnnotationLayer.svelte`)
+This layer sits directly on top of the PDF canvas and captures mouse/pointer events for drawing or text selection.
+```svelte
+<script lang="ts">
+  let { scale, pageNum, annotations = $bindable([]) } = $props();
+  let currentTool = $state('none'); // 'highlight', 'pen', 'note'
+  let isDrawing = $state(false);
+
+  // Logic for capturing drawing paths or text selection rectangles goes here.
+  // Make sure to scale coordinates based on `scale`.
+</script>
+
+<div class="annotation-layer" style="transform: scale({scale}); transform-origin: top left;">
+  <!-- Render existing annotations here using SVG or absolute positioned DOM elements -->
+  {#each annotations as annotation}
+    {#if annotation.type === 'highlight'}
+      <div class="highlight" style="left: {annotation.x}px; top: {annotation.y}px; width: {annotation.w}px; height: {annotation.h}px; background-color: {annotation.color};"></div>
+    {/if}
+  {/each}
+</div>
+
+<style>
+  .annotation-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Change based on active tool */
+  }
+  .highlight {
+    position: absolute;
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+  }
+</style>
+```
+
+#### Annotation Toolbar (`PdfAnnotationToolbar.svelte`)
+A floating or pinned toolbar to select the active tool.
+```svelte
+<script lang="ts">
+  let { activeTool = $bindable('none') } = $props();
+</script>
+
+<div class="toolbar">
+  <button class:active={activeTool === 'highlight'} onclick={() => activeTool = 'highlight'}>Highlight</button>
+  <button class:active={activeTool === 'pen'} onclick={() => activeTool = 'pen'}>Pen</button>
+  <button class:active={activeTool === 'note'} onclick={() => activeTool = 'note'}>Note</button>
+</div>
+
+<style>
+  .toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+  button.active {
+    background: #eef2ff;
+    color: #4f46e5;
+  }
+</style>
+```
+
+#### Viewer Integration (`routes/+page.svelte`)
+Update the main viewer to include the annotation overlay and toolbars.
+```svelte
+<div class="app-container">
+  <PdfThumbnails {pdfDoc} bind:pageNum />
+  
+  <div class="main-content">
+    <div class="top-bar">
+      <PdfToolbar bind:pageNum {numPages} bind:scale />
+      <PdfAnnotationToolbar bind:activeTool />
+    </div>
+    
+    <div class="pdf-wrapper">
+      <PdfViewer {fileUrl} bind:pdfDoc bind:pageNum bind:scale />
+      <!-- The layer must exactly overlap the canvas -->
+      <PdfAnnotationLayer {scale} {pageNum} bind:annotations activeTool={activeTool} />
+    </div>
+  </div>
+  
+  <PdfAnnotationPanel {annotations} />
+</div>
+```
+
+## Verification Steps
+1. Run `npm run dev` in `apps/desktop`.
+2. Open a PDF.
+3. Select the "Highlight" tool and drag over the document. Verify a highlight rectangle is created and persists when you zoom in/out.
+4. Select the "Pen" tool and draw a shape. Verify the path is rendered correctly.
+5. Verify all annotations appear in the right-side Annotation Panel.
