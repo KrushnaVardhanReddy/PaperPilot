@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    static ref RE_FILE: Regex = Regex::new(r#"(?i)(?:"([^"]+\.pdf)")|(?:'([^']+\.pdf)')|([a-zA-Z0-9_\-\./\\]+\.pdf)"#).unwrap();
+    static ref RE_FILE: Regex = Regex::new(r#"(?i)(?:"([^"]+\.(?:pdf|png|jpe?g))")|(?:'([^']+\.(?:pdf|png|jpe?g))')|([a-zA-Z0-9_\-\./\\]+\.(?:pdf|png|jpe?g))"#).unwrap();
     static ref RE_PAGES: Regex = Regex::new(r#"(?i)pages?\s+([\d,\-\s]+)|\b(\d+\s*-\s*\d+)\b"#).unwrap();
     static ref RE_ANGLE: Regex = Regex::new(r#"(?i)(?:rotate\s+)?(-?(?:90|180|270))\b(?:\s*degrees?)?"#).unwrap();
     static ref RE_PASSWORD: Regex = Regex::new(r#"(?i)(?:password is|pw)\s+(?:["']([^"']+)["']|([^\s]+))"#).unwrap();
