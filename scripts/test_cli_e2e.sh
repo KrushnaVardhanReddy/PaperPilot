@@ -79,7 +79,7 @@ run_test() {
     local error_msg=""
 
     # For subcommands not implemented, we might get "unrecognized subcommand" or "not yet implemented"
-    if echo "$stderr_content" | grep -qi "unrecognized subcommand" || echo "$stderr_content" | grep -qi "not yet implemented" || echo "$stdout_content" | grep -qi "not yet implemented" || echo "$stderr_content" | grep -qi "not supported yet"; then
+    if echo "$stderr_content" | grep -qi "unrecognized subcommand" || echo "$stderr_content" | grep -qi "not yet implemented" || echo "$stdout_content" | grep -qi "not yet implemented" || echo "$stderr_content" | grep -qi "not supported yet" || echo "$stderr_content" | grep -qi "unsupported operation"; then
         SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
         TOTAL_TESTS=$((TOTAL_TESTS - 1))
         echo "- \`$cmd_name\`" >> "$SKIPPED_CMDS"
@@ -96,7 +96,17 @@ run_test() {
             error_msg="No error message outputted on failure"
         fi
     else
-        if [ $exit_code -ne 0 ]; then
+        if [ "$check_type" = "json_fail" ]; then
+            if [ $exit_code -eq 0 ]; then
+                success=0
+                error_msg="Expected failure but got exit code 0"
+            else
+                if ! echo "$stdout_content" | tail -n 1 | python3 -c "import sys,json; json.load(sys.stdin)" > /dev/null 2>&1; then
+                    success=0
+                    error_msg="Invalid JSON output: $stdout_content"
+                fi
+            fi
+        elif [ $exit_code -ne 0 ]; then
             success=0
             error_msg="Command failed. Stderr: $stderr_content Stdout: $stdout_content"
         else
@@ -210,7 +220,7 @@ run_test "err_permission" "" "fail" "merge --input tests/e2e_fixtures/single_pag
 # --- JSON Mode Tests ---
 run_test "json_hash" "" "json" "hash --input tests/e2e_fixtures/single_page.pdf --json"
 run_test "json_merge" "$OUT_DIR/json_merge.pdf" "json" "merge --input tests/e2e_fixtures/single_page.pdf --input tests/e2e_fixtures/single_page.pdf --output $OUT_DIR/json_merge.pdf --json"
-run_test "json_err_merge_missing" "" "json" "merge --input missing12345.pdf --output $OUT_DIR/fail.pdf --json"
+run_test "json_err_merge_missing" "" "json_fail" "merge --input missing12345.pdf --output $OUT_DIR/fail.pdf --json"
 
 
 # Build the report

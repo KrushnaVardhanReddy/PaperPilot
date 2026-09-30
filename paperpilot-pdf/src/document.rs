@@ -16,9 +16,24 @@ impl Default for LopdfDocument {
 
 impl LopdfDocument {
     pub fn new() -> Self {
-        Self {
-            inner: Document::with_version("1.5"),
-        }
+        let mut doc = Document::with_version("1.5");
+        let pages_id = doc.new_object_id();
+
+        let mut pages_dict = lopdf::Dictionary::new();
+        pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
+        pages_dict.set("Count", lopdf::Object::Integer(0));
+        pages_dict.set("Kids", lopdf::Object::Array(vec![]));
+
+        doc.objects.insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+        
+        let mut catalog = lopdf::Dictionary::new();
+        catalog.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
+        catalog.set("Pages", lopdf::Object::Reference(pages_id));
+        let catalog_id = doc.add_object(catalog);
+        
+        doc.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+
+        Self { inner: doc }
     }
 
     pub fn load(path: &Path) -> OperationResult<Self> {

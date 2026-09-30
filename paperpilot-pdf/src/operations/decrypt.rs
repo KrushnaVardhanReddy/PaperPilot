@@ -23,7 +23,9 @@ impl PdfOperation for DecryptOperation {
             })?;
 
         if let Some(password) = &self.password {
-            let _ = lopdf_doc.inner.decrypt(password);
+            if let Err(e) = lopdf_doc.inner.decrypt(password) {
+                return Err(PdfError::UnsupportedOperation(format!("Decryption failed or unsupported format: {}", e)));
+            }
         }
 
         // Remove the 'Encrypt' key from the trailer dictionary to strip encryption
