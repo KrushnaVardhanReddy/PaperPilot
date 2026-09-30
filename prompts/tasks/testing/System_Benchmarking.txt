@@ -1,0 +1,35 @@
+---
+Task: Phase E.4 — Overall System Performance & Latency Benchmarking
+---
+
+Hey Jules! We need to prove that PaperPilot is blazing fast even under heavy loads. You are going to build an automated benchmarking suite that tests the performance of our core backend and NLP layers.
+
+## Requirements
+
+### 1. Large Document Generation
+Your script must programmatically generate large PDF fixtures (or use `make-fixtures` if it supports it) specifically for these benchmarks:
+- A single massive **100-page PDF document**.
+- A collection of **multiple PDFs** (e.g., 20 PDFs of 5 pages each).
+
+### 2. Core Operations Benchmarking
+Run the following operations on the generated fixtures and measure execution time (latency), CPU usage, and peak memory footprint:
+- **Merge:** Merge the 20 PDFs into a single 100-page document.
+- **Split:** Split the 100-page document into 100 individual 1-page documents.
+- **Extract Text:** Extract all text from the 100-page document.
+- **Watermark:** Apply a watermark to every page of the 100-page document.
+
+### 3. NLP Layer Benchmarking
+Run 1000 simulated queries through the `OfflineNlpResolver` (Rust regex/keyword engine).
+- Measure average latency per query (it should be sub-millisecond).
+
+### 4. Output Report
+The benchmarking script should automatically generate a `SYSTEM_BENCHMARK_REPORT.md` file in the repository root. The report should contain:
+- A clear markdown table of the operations.
+- File sizes used.
+- Execution Time (ms/s).
+- Peak Memory Usage (MB).
+
+## Rules
+- You can write this benchmarking script in Rust (using `criterion` or a simple custom binary in `paperpilot-core/benches/`) OR as a standalone Python script in `scripts/benchmark.py`.
+- No UI interactions required for this backend benchmark.
+- DO NOT mock the PDFs. Actually perform the operations using the real implementations.
