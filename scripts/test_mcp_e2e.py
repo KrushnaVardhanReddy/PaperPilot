@@ -1,7 +1,7 @@
 import asyncio
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.session import ClientSession
-from mcp.shared.exceptions import MCPError
+from mcp.shared.exceptions import McpError
 import os
 import sys
 import time
@@ -60,7 +60,7 @@ async def test_all_tools(session):
             })
             if not passed:
                 report_data["failed"] = True
-        except MCPError as e:
+        except McpError as e:
             latency_ms = int((time.time() - start) * 1000)
             msg = str(e)
             if "Not implemented" in msg or "Unsupported" in msg:
@@ -76,7 +76,7 @@ async def test_all_tools(session):
                     "tool": tool_name,
                     "passed": False,
                     "latency_ms": latency_ms,
-                    "error": f"MCPError: {msg}",
+                    "error": f"McpError: {msg}",
                     "args": args
                 })
                 report_data["failed"] = True
@@ -270,22 +270,22 @@ async def test_error_handling(session):
         await session.call_tool("pdf_rotate", arguments={"input": resolve_fixture("single_page.pdf")}) # Missing required args
         report_data["error_handling"].append("pdf_rotate missing arguments DID NOT FAIL")
         report_data["failed"] = True
-    except MCPError as e:
-        report_data["error_handling"].append("pdf_rotate missing arguments correctly threw MCPError")
+    except McpError as e:
+        report_data["error_handling"].append("pdf_rotate missing arguments correctly threw McpError")
 
     try:
         await session.call_tool("pdf_decrypt", arguments={"input": resolve_fixture("encrypted.pdf"), "output": resolve_fixture("dec.pdf"), "password": "wrong"})
         report_data["error_handling"].append("pdf_decrypt wrong password DID NOT FAIL")
         report_data["failed"] = True
-    except MCPError as e:
-        report_data["error_handling"].append("pdf_decrypt wrong password correctly threw MCPError")
+    except McpError as e:
+        report_data["error_handling"].append("pdf_decrypt wrong password correctly threw McpError")
 
     try:
         await session.call_tool("unknown_tool_name", arguments={})
         report_data["error_handling"].append("unknown_tool DID NOT FAIL")
         report_data["failed"] = True
-    except MCPError as e:
-        report_data["error_handling"].append("unknown_tool correctly threw MCPError")
+    except McpError as e:
+        report_data["error_handling"].append("unknown_tool correctly threw McpError")
 
 async def test_tool_discovery_and_schema(session):
     tools_res = await session.list_tools()
@@ -334,12 +334,12 @@ async def main():
                 report_data["failed"] = True
 
             for name, tool in tools.items():
-                if not tool.input_schema:
+                if not tool.inputSchema:
                     report_data["schema_issues"].append(f"{name}: empty inputSchema")
                     continue
 
-                properties = tool.input_schema.get("properties", {})
-                required = tool.input_schema.get("required", [])
+                properties = tool.inputSchema.get("properties", {})
+                required = tool.inputSchema.get("required", [])
 
                 for prop, details in properties.items():
                     if "description" not in details and prop in required:

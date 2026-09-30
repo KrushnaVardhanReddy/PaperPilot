@@ -1,0 +1,53 @@
+# Task: Implement Missing MCP Handlers & Fix Schema Descriptions (V2)
+
+## Context
+We are getting the `paperpilot-mcp` E2E tests to 100% pass rate. 
+
+**CRITICAL NOTE ON TESTING:** 
+Before you run `scripts/test_mcp_e2e.py`, you MUST run `python3 scripts/generate_fixtures.py`. The python test script assumes the PDF fixtures already exist in `tests/e2e_fixtures`. If you do not run the generator first, all tests will fail with "IO Error" or "Parse Error". **Do NOT modify how `LopdfDocument::load` handles errors.** The error types are correct; the files just need to exist.
+
+## Objective
+1. **Implement `pdf_hash` and `pdf_validate` Handlers**: In `paperpilot-mcp/src/server.rs`, these two tools are missing from the `execute_list_tools` schema registration and the `call_tool` execution match block.
+   - You need to add `pdf_hash` and `pdf_validate` schemas to `execute_list_tools()`. They should take a single `input` parameter (string).
+   
+   - **For `pdf_hash`**, add this match arm to `call_tool`:
+     ```rust
+     "pdf_hash" => {
+         let input = get_string("input")?;
+         let op = paperpilot_pdf::operations::hash::IntegrityHashOperation::new(std::path::PathBuf::from(&input));
+         let mut doc = paperpilot_pdf::document::LopdfDocument::new(); // Dummy doc
+         op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+         let result = op.hash_result.lock().unwrap();
+         let (hash, _size) = result.as_ref().unwrap();
+         Ok(OperationResult {
+             success: true,
+             message: "Hash calculated".to_string(),
+             output_path: Some(hash.clone()), 
+         })
+     }
+     ```
+
+   - **For `pdf_validate`**, add this match arm to `call_tool`:
+     ```rust
+     "pdf_validate" => {
+         let input = get_string("input")?;
+         let mut doc = paperpilot_pdf::document::LopdfDocument::load(&std::path::PathBuf::from(&input))
+             .map_err(crate::error::to_mcp_error)?;
+         let op = paperpilot_pdf::operations::validate::ValidateOperation::new();
+         op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+         Ok(OperationResult {
+             success: true,
+             message: "Document is valid".to_string(),
+             output_path: Some("true".to_string()),
+         })
+     }
+     ```
+
+2. **Fix Schema Missing Descriptions**: The test script expects every required parameter in `execute_list_tools()` to have a `"description"`. 
+   - Open `paperpilot-mcp/src/server.rs`.
+   - For every required property in every tool, ensure `prop_name.insert("description".to_string(), serde_json::Value::String("...".to_string()));` is present.
+
+## Validation
+1. Run `python3 scripts/generate_fixtures.py`
+2. Run `python3 scripts/test_mcp_e2e.py`
+3. Everything should be 100% green. Open a PR to `main`!
