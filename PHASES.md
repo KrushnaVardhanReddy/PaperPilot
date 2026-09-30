@@ -456,8 +456,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.1.1 | Integrate `pdfjs-dist` into Svelte app | Add `pdfjs-dist` npm package; configure the worker in `apps/desktop/` |
-| F.1.2 | PDF Viewer component (`PdfViewer.svelte`) | Render pages on `<canvas>` elements with scroll, zoom in/out, fit-to-width |
+| F.1.1 | Integrate `pdfjs-dist` into Svelte app | 🚧 Configure the worker (Session 14901891694995485696) |
+| F.1.2 | PDF Viewer component (`PdfViewer.svelte`) | 🚧 Render pages on `<canvas>`, zoom controls (Session 14901891694995485696) |
 | F.1.3 | Page thumbnail strip | Vertical scrollable strip showing page thumbnails for navigation |
 | F.1.4 | Document info panel | Show page count, file size, title, author, PDF version |
 | F.1.5 | Viewer ↔ DropZone integration | Selecting a file in the DocumentList opens it in the viewer pane |
