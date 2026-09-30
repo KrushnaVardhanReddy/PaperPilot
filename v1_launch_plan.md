@@ -17,7 +17,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.6 | Entity extractor (regex + NER) | ✅ Completed |
 | 4.0.7 | Ambiguity resolver | ✅ Completed |
 | 4.0.8 | Offline NLP → `OperationPlan` output | ✅ Completed |
-| 4.0.9 | Offline NLP unit tests | 🚧 In Progress (Session 8279024761787825031) |
+| 4.0.9 | Offline NLP unit tests | ✅ Completed |
 | 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | Pending |
 
 ### Phase 4.E2E — System Validation Testing

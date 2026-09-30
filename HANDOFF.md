@@ -83,6 +83,7 @@ PaperPilot/
 | Phase 4.0.5a (ONNX Training) | ✅ Complete | Python pipeline to train and export MobileBERT |
 | Phase 4.0.6 (Entity Extractor) | ✅ Complete | Regex & NER for files, pages, angles |
 | Phase 4.0.7+4.0.8 (Resolver) | ✅ Complete | Wired `OfflineNlpResolver` and ambiguity checks |
+| Phase 4.0.9 (Offline NLP Tests) | ✅ Complete | Accuracy test suite in `resolver_accuracy_test.rs` |
 
 ---
 
@@ -90,7 +91,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.0.9 (Offline NLP Tests) | `8279024761787825031` | Building accuracy test suite in `paperpilot-nlp/tests/resolver_accuracy_test.rs` |
+| None | N/A | No active sessions at the moment |
 
 ---
 
