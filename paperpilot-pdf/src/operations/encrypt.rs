@@ -1,8 +1,8 @@
-use paperpilot_core::error::{OperationResult, PdfError};
-use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use crate::document::LopdfDocument;
 use lopdf;
 use lopdf::{EncryptionState, EncryptionVersion, Permissions};
+use paperpilot_core::error::{OperationResult, PdfError};
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::convert::TryFrom;
 
 #[derive(Default)]
@@ -26,8 +26,14 @@ impl PdfOperation for EncryptOperation {
 
         // Dynamically inject a placeholder ID array if missing
         if lopdf_doc.inner.trailer.get(b"ID").is_err() {
-            let id_str = lopdf::Object::String(b"default_id_placeholder".to_vec(), lopdf::StringFormat::Literal);
-            lopdf_doc.inner.trailer.set("ID", lopdf::Object::Array(vec![id_str.clone(), id_str]));
+            let id_str = lopdf::Object::String(
+                b"default_id_placeholder".to_vec(),
+                lopdf::StringFormat::Literal,
+            );
+            lopdf_doc
+                .inner
+                .trailer
+                .set("ID", lopdf::Object::Array(vec![id_str.clone(), id_str]));
         }
 
         let user_pwd = self.user_password.as_deref().unwrap_or("");
@@ -44,7 +50,9 @@ impl PdfOperation for EncryptOperation {
         let state = EncryptionState::try_from(version)
             .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
 
-        lopdf_doc.inner.encrypt(&state)
+        lopdf_doc
+            .inner
+            .encrypt(&state)
             .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
 
         Ok(())
@@ -73,7 +81,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut doc = LopdfDocument { inner };
 

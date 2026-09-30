@@ -30,9 +30,9 @@ mod tests {
     use super::*;
     use crate::document::LopdfDocument;
     use lopdf::Document as LopdfInnerDocument;
+    use lopdf::dictionary;
     use std::path::PathBuf;
     use tempfile::tempdir;
-    use lopdf::dictionary;
 
     fn create_test_pdf(path: &PathBuf, text_content: &str) {
         let mut inner = LopdfInnerDocument::with_version("1.5");
@@ -54,11 +54,17 @@ mod tests {
                 lopdf::content::Operation::new("BT", vec![]),
                 lopdf::content::Operation::new("Tf", vec!["F1".into(), 12.into()]),
                 lopdf::content::Operation::new("Td", vec![10.into(), 10.into()]),
-                lopdf::content::Operation::new("Tj", vec![lopdf::Object::string_literal(text_content)]),
+                lopdf::content::Operation::new(
+                    "Tj",
+                    vec![lopdf::Object::string_literal(text_content)],
+                ),
                 lopdf::content::Operation::new("ET", vec![]),
             ],
         };
-        let content_id = inner.add_object(lopdf::Stream::new(lopdf::Dictionary::new(), content.encode().unwrap()));
+        let content_id = inner.add_object(lopdf::Stream::new(
+            lopdf::Dictionary::new(),
+            content.encode().unwrap(),
+        ));
 
         let page_id = inner.add_object(dictionary! {
             "Type" => "Page",
@@ -67,11 +73,14 @@ mod tests {
             "Resources" => resources_id,
         });
 
-        inner.set_object(pages_id, dictionary! {
-            "Type" => "Pages",
-            "Kids" => vec![page_id.into()],
-            "Count" => 1,
-        });
+        inner.set_object(
+            pages_id,
+            dictionary! {
+                "Type" => "Pages",
+                "Kids" => vec![page_id.into()],
+                "Count" => 1,
+            },
+        );
 
         let catalog_id = inner.add_object(dictionary! {
             "Type" => "Catalog",

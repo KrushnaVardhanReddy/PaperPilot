@@ -1,7 +1,7 @@
 use rmcp::model::CallToolRequestParams;
 
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 pub mod error;
 pub mod menu;
@@ -15,11 +15,12 @@ lazy_static::lazy_static! {
 
 #[tauri::command]
 fn cancel_job(job_id: String) -> Result<(), DesktopError> {
-    let mut flags = CANCEL_FLAGS.lock().map_err(|e| DesktopError::LockError(e.to_string()))?;
+    let mut flags = CANCEL_FLAGS
+        .lock()
+        .map_err(|e| DesktopError::LockError(e.to_string()))?;
     flags.insert(job_id, true);
     Ok(())
 }
-
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -64,31 +65,29 @@ pub fn run() {
             let menu = menu::build_menu(app)?;
             app.set_menu(menu)?;
 
-            app.on_menu_event(move |app_handle, event| {
-                match event.id().as_ref() {
-                    "open_file" => {
-                        let _ = app_handle.emit("menu-open-file", ());
-                    }
-                    "save_annotations" => {
-                        let _ = app_handle.emit("menu-save-annotations", ());
-                    }
-                    "undo" => {
-                        let _ = app_handle.emit("menu-undo", ());
-                    }
-                    "redo" => {
-                        let _ = app_handle.emit("menu-redo", ());
-                    }
-                    "zoom_in" => {
-                        let _ = app_handle.emit("menu-zoom-in", ());
-                    }
-                    "zoom_out" => {
-                        let _ = app_handle.emit("menu-zoom-out", ());
-                    }
-                    "fit_width" => {
-                        let _ = app_handle.emit("menu-fit-width", ());
-                    }
-                    _ => {}
+            app.on_menu_event(move |app_handle, event| match event.id().as_ref() {
+                "open_file" => {
+                    let _ = app_handle.emit("menu-open-file", ());
                 }
+                "save_annotations" => {
+                    let _ = app_handle.emit("menu-save-annotations", ());
+                }
+                "undo" => {
+                    let _ = app_handle.emit("menu-undo", ());
+                }
+                "redo" => {
+                    let _ = app_handle.emit("menu-redo", ());
+                }
+                "zoom_in" => {
+                    let _ = app_handle.emit("menu-zoom-in", ());
+                }
+                "zoom_out" => {
+                    let _ = app_handle.emit("menu-zoom-out", ());
+                }
+                "fit_width" => {
+                    let _ = app_handle.emit("menu-fit-width", ());
+                }
+                _ => {}
             });
             Ok(())
         })
@@ -99,7 +98,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{invoke_mcp_tool, cancel_job, CANCEL_FLAGS};
+    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS};
     use serde_json::json;
 
     #[tokio::test]

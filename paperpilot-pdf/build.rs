@@ -10,9 +10,16 @@ fn main() {
     if !fixture_path.exists() {
         // Attempt to run make-fixtures
         let status = Command::new("cargo")
-            .args(["run", "--bin", "make-fixtures", "--manifest-path",
-                   &format!("{}/tools/make-fixtures/Cargo.toml",
-                             env!("CARGO_MANIFEST_DIR").replace("/paperpilot-pdf", ""))])
+            .args([
+                "run",
+                "--bin",
+                "make-fixtures",
+                "--manifest-path",
+                &format!(
+                    "{}/tools/make-fixtures/Cargo.toml",
+                    env!("CARGO_MANIFEST_DIR").replace("/paperpilot-pdf", "")
+                ),
+            ])
             .status();
         if let Err(e) = status {
             println!("cargo:warning=Could not auto-generate fixtures: {e}");

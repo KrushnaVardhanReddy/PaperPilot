@@ -68,10 +68,9 @@ pub fn build_menu(app: &App) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
         .build()?;
 
     // 5. Help Menu
-    let docs_item = MenuItemBuilder::with_id("docs", "Documentation")
-        .build(handle)?;
-    let shortcuts_item = MenuItemBuilder::with_id("shortcuts", "Keyboard Shortcuts")
-        .build(handle)?;
+    let docs_item = MenuItemBuilder::with_id("docs", "Documentation").build(handle)?;
+    let shortcuts_item =
+        MenuItemBuilder::with_id("shortcuts", "Keyboard Shortcuts").build(handle)?;
 
     let help_menu = SubmenuBuilder::new(handle, "Help")
         .item(&docs_item)

@@ -57,9 +57,23 @@ impl PdfOperation for PdfClassifyOperation {
         let text_lower = text.to_lowercase();
 
         let categories = vec![
-            ("Invoice", vec!["invoice", "total", "tax", "due date", "balance"]),
-            ("Contract", vec!["agreement", "hereby", "party of the first part", "signatures"]),
-            ("Research Paper", vec!["abstract", "references", "methodology"]),
+            (
+                "Invoice",
+                vec!["invoice", "total", "tax", "due date", "balance"],
+            ),
+            (
+                "Contract",
+                vec![
+                    "agreement",
+                    "hereby",
+                    "party of the first part",
+                    "signatures",
+                ],
+            ),
+            (
+                "Research Paper",
+                vec!["abstract", "references", "methodology"],
+            ),
             ("Form", vec!["application", "date of birth", "signature"]),
         ];
 
@@ -139,7 +153,8 @@ mod tests {
         pages_dict.set("Kids", Object::Array(vec![Object::Reference(page_id)]));
 
         doc.objects.insert(pages_id, Object::Dictionary(pages_dict));
-        doc.trailer.set("Root", Object::Dictionary(Dictionary::new()));
+        doc.trailer
+            .set("Root", Object::Dictionary(Dictionary::new()));
 
         let mut catalog = Dictionary::new();
         catalog.set("Type", Object::Name(b"Catalog".to_vec()));

@@ -1,13 +1,13 @@
 use crate::document::LopdfDocument;
+use docx_rs::{Docx, Paragraph, Run};
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
-use docx_rs::{Docx, Paragraph, Run};
 use rust_xlsxwriter::Workbook;
+use serde::{Deserialize, Serialize};
 use std::io::Write;
-use zip::write::SimpleFileOptions;
+use std::sync::{Arc, Mutex};
 use zip::ZipWriter;
+use zip::write::SimpleFileOptions;
 
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
@@ -301,7 +301,6 @@ impl PdfOperation for PdfToJsonOperation {
     }
 }
 
-
 pub struct PdfToDocxOperation {
     pub output_path: std::path::PathBuf,
 }
@@ -334,7 +333,9 @@ impl PdfOperation for PdfToDocxOperation {
                         let para = Paragraph::new().add_run(Run::new().add_text(line));
                         docx = docx.add_paragraph(para);
                     }
-                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_text("--- PAGE BREAK ---")));
+                    docx = docx.add_paragraph(
+                        Paragraph::new().add_run(Run::new().add_text("--- PAGE BREAK ---")),
+                    );
                 }
                 Err(e) => {
                     return Err(PdfError::Other(format!(
@@ -395,8 +396,11 @@ impl PdfOperation for PdfToXlsxOperation {
                         let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
 
                         for (col_idx, val) in cols.iter().enumerate() {
-                            worksheet.write_string(current_row, col_idx as u16, *val)
-                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {}", e)))?;
+                            worksheet
+                                .write_string(current_row, col_idx as u16, *val)
+                                .map_err(|e| {
+                                    PdfError::Other(format!("Failed to write XLSX cell: {}", e))
+                                })?;
                         }
                         current_row += 1;
                     }
@@ -410,7 +414,8 @@ impl PdfOperation for PdfToXlsxOperation {
             }
         }
 
-        workbook.save(&self.output_path)
+        workbook
+            .save(&self.output_path)
             .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {}", e)))?;
 
         Ok(())
@@ -454,7 +459,8 @@ impl PdfOperation for PdfToPptxOperation {
                 .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
 
             let text = inner.extract_text(&[*page_id]).unwrap_or_default();
-            let slide_xml = format!(r#"<?xml version="1.0" encoding="UTF-8"?>
+            let slide_xml = format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
     <p:cSld>
         <p:spTree>
@@ -469,7 +475,11 @@ impl PdfOperation for PdfToPptxOperation {
             </p:sp>
         </p:spTree>
     </p:cSld>
-</p:sld>"#, text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
+</p:sld>"#,
+                text.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+            );
 
             zip.write_all(slide_xml.as_bytes())
                 .map_err(|e| PdfError::Other(format!("Failed to write slide XML: {}", e)))?;
@@ -638,5 +648,4 @@ mod tests {
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
     }
-
 }

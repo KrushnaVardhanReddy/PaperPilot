@@ -1,12 +1,12 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
+use lopdf::Document;
 use paperpilot_core::traits::PdfOperation;
 use paperpilot_pdf::document::LopdfDocument;
-use paperpilot_pdf::operations::merge::MergeOperation;
-use paperpilot_pdf::operations::extract_text::ExtractTextOperation;
 use paperpilot_pdf::operations::compress::CompressOperation;
+use paperpilot_pdf::operations::extract_text::ExtractTextOperation;
+use paperpilot_pdf::operations::merge::MergeOperation;
 use paperpilot_pdf::operations::watermark::WatermarkOperation;
 use std::path::PathBuf;
-use lopdf::Document;
 use std::time::Instant;
 
 fn get_workspace_root() -> PathBuf {
@@ -17,9 +17,18 @@ fn get_workspace_root() -> PathBuf {
 fn bench_concurrent(_c: &mut Criterion) {
     let workspace = get_workspace_root();
 
-    let large_pdf_path = workspace.join("tests").join("bench_fixtures").join("large_100page.pdf");
-    let medium_pdf_path = workspace.join("tests").join("bench_fixtures").join("medium_50page.pdf");
-    let small_pdf_path = workspace.join("tests").join("bench_fixtures").join("small_10page.pdf");
+    let large_pdf_path = workspace
+        .join("tests")
+        .join("bench_fixtures")
+        .join("large_100page.pdf");
+    let medium_pdf_path = workspace
+        .join("tests")
+        .join("bench_fixtures")
+        .join("medium_50page.pdf");
+    let small_pdf_path = workspace
+        .join("tests")
+        .join("bench_fixtures")
+        .join("small_10page.pdf");
     let batch_dir = workspace.join("tests").join("bench_fixtures").join("batch");
 
     let mut batch_paths = Vec::new();
@@ -39,21 +48,27 @@ fn bench_concurrent(_c: &mut Criterion) {
 
     // B: Extract Text
     {
-        let mut doc = LopdfDocument { inner: Document::load(&large_pdf_path).unwrap() };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&large_pdf_path).unwrap(),
+        };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();
     }
 
     // C: Compress
     {
-        let mut doc = LopdfDocument { inner: Document::load(&medium_pdf_path).unwrap() };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&medium_pdf_path).unwrap(),
+        };
         let compress_op = CompressOperation::new();
         compress_op.execute(&mut doc).unwrap();
     }
 
     // D: Watermark
     {
-        let mut doc = LopdfDocument { inner: Document::load(&small_pdf_path).unwrap() };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&small_pdf_path).unwrap(),
+        };
         let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
         watermark_op.execute(&mut doc).unwrap();
     }
@@ -74,7 +89,9 @@ fn bench_concurrent(_c: &mut Criterion) {
     let t2 = std::thread::spawn({
         let large_pdf_path = large_pdf_path.clone();
         move || {
-            let mut doc = LopdfDocument { inner: Document::load(&large_pdf_path).unwrap() };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&large_pdf_path).unwrap(),
+            };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
         }
@@ -83,7 +100,9 @@ fn bench_concurrent(_c: &mut Criterion) {
     let t3 = std::thread::spawn({
         let medium_pdf_path = medium_pdf_path.clone();
         move || {
-            let mut doc = LopdfDocument { inner: Document::load(&medium_pdf_path).unwrap() };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&medium_pdf_path).unwrap(),
+            };
             let compress_op = CompressOperation::new();
             compress_op.execute(&mut doc).unwrap();
         }
@@ -92,7 +111,9 @@ fn bench_concurrent(_c: &mut Criterion) {
     let t4 = std::thread::spawn({
         let small_pdf_path = small_pdf_path.clone();
         move || {
-            let mut doc = LopdfDocument { inner: Document::load(&small_pdf_path).unwrap() };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&small_pdf_path).unwrap(),
+            };
             let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
             watermark_op.execute(&mut doc).unwrap();
         }

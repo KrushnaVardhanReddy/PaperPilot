@@ -1,6 +1,6 @@
+use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use crate::document::LopdfDocument;
 
 pub struct FlattenOperation;
 
@@ -23,7 +23,10 @@ impl PdfOperation for FlattenOperation {
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
 
-        let catalog_ref = lopdf_doc.inner.trailer.get(b"Root")
+        let catalog_ref = lopdf_doc
+            .inner
+            .trailer
+            .get(b"Root")
             .and_then(|r| r.as_reference())
             .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
 
@@ -78,7 +81,13 @@ mod tests {
         let op = FlattenOperation::new();
 
         // Check AcroForm exists before
-        let catalog_id = doc.inner.trailer.get(b"Root").unwrap().as_reference().unwrap();
+        let catalog_id = doc
+            .inner
+            .trailer
+            .get(b"Root")
+            .unwrap()
+            .as_reference()
+            .unwrap();
         let catalog = doc.inner.get_object(catalog_id).unwrap().as_dict().unwrap();
         assert!(catalog.has(b"AcroForm"));
 

@@ -32,14 +32,17 @@ impl PdfOperation for ReadFormOperation {
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
 
-        let catalog = doc.inner.catalog().map_err(|_| {
-            PdfError::ParseError("Missing Document Catalog".into())
-        })?;
+        let catalog = doc
+            .inner
+            .catalog()
+            .map_err(|_| PdfError::ParseError("Missing Document Catalog".into()))?;
 
         let acroform_ref = match catalog.get(b"AcroForm") {
             Ok(Object::Reference(id)) => *id,
             Ok(Object::Dictionary(_)) => {
-                return Err(PdfError::ParseError("Inline AcroForm dict not fully supported".into()));
+                return Err(PdfError::ParseError(
+                    "Inline AcroForm dict not fully supported".into(),
+                ));
             }
             _ => {
                 let mut map = self.extracted_fields.lock().unwrap();
@@ -48,9 +51,10 @@ impl PdfOperation for ReadFormOperation {
             }
         };
 
-        let acroform = doc.inner.get_dictionary(acroform_ref).map_err(|_| {
-            PdfError::ParseError("Failed to get AcroForm dictionary".into())
-        })?;
+        let acroform = doc
+            .inner
+            .get_dictionary(acroform_ref)
+            .map_err(|_| PdfError::ParseError("Failed to get AcroForm dictionary".into()))?;
 
         let mut fields_map = HashMap::new();
 
@@ -109,13 +113,18 @@ impl PdfOperation for FillFormOperation {
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
 
-        let catalog = doc.inner.catalog().map_err(|_| {
-            PdfError::ParseError("Missing Document Catalog".into())
-        })?;
+        let catalog = doc
+            .inner
+            .catalog()
+            .map_err(|_| PdfError::ParseError("Missing Document Catalog".into()))?;
 
         let acroform_ref = match catalog.get(b"AcroForm") {
             Ok(Object::Reference(id)) => *id,
-            _ => return Err(PdfError::ParseError("AcroForm not found or unsupported format".into())),
+            _ => {
+                return Err(PdfError::ParseError(
+                    "AcroForm not found or unsupported format".into(),
+                ));
+            }
         };
 
         let mut field_ids = Vec::new();
@@ -143,7 +152,11 @@ impl PdfOperation for FillFormOperation {
         }
 
         for (field_id, new_value) in fields_to_update {
-            if let Ok(field_dict) = doc.inner.get_object_mut(field_id).and_then(Object::as_dict_mut) {
+            if let Ok(field_dict) = doc
+                .inner
+                .get_object_mut(field_id)
+                .and_then(Object::as_dict_mut)
+            {
                 let is_checkbox = if let Ok(Object::Name(ft)) = field_dict.get(b"FT") {
                     ft == b"Btn"
                 } else {
@@ -154,7 +167,10 @@ impl PdfOperation for FillFormOperation {
                     field_dict.set("V", Object::Name(new_value.clone().into_bytes()));
                     field_dict.set("AS", Object::Name(new_value.clone().into_bytes()));
                 } else {
-                    field_dict.set("V", Object::String(new_value.clone().into_bytes(), StringFormat::Literal));
+                    field_dict.set(
+                        "V",
+                        Object::String(new_value.clone().into_bytes(), StringFormat::Literal),
+                    );
                 }
             }
         }
@@ -190,9 +206,9 @@ impl PdfOperation for CreateFormFieldOperation {
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
 
         let pages = doc.inner.get_pages();
-        let page_id = pages.get(&(self.page as u32)).ok_or_else(|| {
-            PdfError::InvalidInput(format!("Page {} not found", self.page))
-        })?;
+        let page_id = pages
+            .get(&(self.page as u32))
+            .ok_or_else(|| PdfError::InvalidInput(format!("Page {} not found", self.page)))?;
         let page_id = *page_id;
 
         let mut widget_dict = Dictionary::new();
@@ -206,13 +222,19 @@ impl PdfOperation for CreateFormFieldOperation {
         };
         widget_dict.set("FT", Object::Name(ft));
 
-        widget_dict.set("T", Object::String(self.field_name.clone().into_bytes(), StringFormat::Literal));
-        widget_dict.set("Rect", vec![
-            self.rect[0].into(),
-            self.rect[1].into(),
-            self.rect[2].into(),
-            self.rect[3].into(),
-        ]);
+        widget_dict.set(
+            "T",
+            Object::String(self.field_name.clone().into_bytes(), StringFormat::Literal),
+        );
+        widget_dict.set(
+            "Rect",
+            vec![
+                self.rect[0].into(),
+                self.rect[1].into(),
+                self.rect[2].into(),
+                self.rect[3].into(),
+            ],
+        );
 
         if self.field_type == "checkbox" {
             widget_dict.set("V", Object::Name(b"Off".to_vec()));
@@ -220,7 +242,11 @@ impl PdfOperation for CreateFormFieldOperation {
 
         let widget_id = doc.inner.add_object(widget_dict);
 
-        if let Ok(page_dict) = doc.inner.get_object_mut(page_id).and_then(Object::as_dict_mut) {
+        if let Ok(page_dict) = doc
+            .inner
+            .get_object_mut(page_id)
+            .and_then(Object::as_dict_mut)
+        {
             match page_dict.get_mut(b"Annots") {
                 Ok(Object::Array(annots)) => {
                     annots.push(Object::Reference(widget_id));
@@ -235,7 +261,11 @@ impl PdfOperation for CreateFormFieldOperation {
         let trailer = &doc.inner.trailer;
         let catalog_id = match trailer.get(b"Root") {
             Ok(Object::Reference(id)) => *id,
-            _ => return Err(PdfError::ParseError("Missing Document Catalog reference in trailer".into())),
+            _ => {
+                return Err(PdfError::ParseError(
+                    "Missing Document Catalog reference in trailer".into(),
+                ));
+            }
         };
 
         let mut acroform_ref = None;
@@ -253,13 +283,21 @@ impl PdfOperation for CreateFormFieldOperation {
             af_dict.set("Fields", vec![]);
             let new_id = doc.inner.add_object(af_dict);
 
-            if let Ok(catalog) = doc.inner.get_object_mut(catalog_id).and_then(Object::as_dict_mut) {
+            if let Ok(catalog) = doc
+                .inner
+                .get_object_mut(catalog_id)
+                .and_then(Object::as_dict_mut)
+            {
                 catalog.set("AcroForm", Object::Reference(new_id));
             }
             new_id
         };
 
-        if let Ok(af_dict) = doc.inner.get_object_mut(af_id).and_then(Object::as_dict_mut) {
+        if let Ok(af_dict) = doc
+            .inner
+            .get_object_mut(af_id)
+            .and_then(Object::as_dict_mut)
+        {
             match af_dict.get_mut(b"Fields") {
                 Ok(Object::Array(fields)) => {
                     fields.push(Object::Reference(widget_id));
@@ -283,9 +321,10 @@ mod tests {
     fn create_test_doc_with_form() -> LopdfDocument {
         let mut doc = Document::with_version("1.5");
 
-        let page_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Type", Object::Name(b"Page".to_vec())),
-        ]));
+        let page_id = doc.add_object(Dictionary::from_iter(vec![(
+            "Type",
+            Object::Name(b"Page".to_vec()),
+        )]));
 
         let pages_id = doc.add_object(Dictionary::from_iter(vec![
             ("Type", Object::Name(b"Pages".to_vec())),
@@ -303,13 +342,17 @@ mod tests {
         let field_id = doc.add_object(Dictionary::from_iter(vec![
             ("Type", Object::Name(b"Annot".to_vec())),
             ("Subtype", Object::Name(b"Widget".to_vec())),
-            ("T", Object::String(b"FirstName".to_vec(), StringFormat::Literal)),
+            (
+                "T",
+                Object::String(b"FirstName".to_vec(), StringFormat::Literal),
+            ),
             ("V", Object::String(b"John".to_vec(), StringFormat::Literal)),
         ]));
 
-        let acroform_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Fields", Object::Array(vec![Object::Reference(field_id)])),
-        ]));
+        let acroform_id = doc.add_object(Dictionary::from_iter(vec![(
+            "Fields",
+            Object::Array(vec![Object::Reference(field_id)]),
+        )]));
 
         if let Ok(catalog) = doc.get_object_mut(catalog_id).and_then(Object::as_dict_mut) {
             catalog.set("AcroForm", Object::Reference(acroform_id));

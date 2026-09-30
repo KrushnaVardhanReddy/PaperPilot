@@ -14,11 +14,12 @@ pub fn validate_pdf_input(path: &Path) -> OperationResult<()> {
     }
 
     // 2. File must be readable and non-empty
-    let metadata = std::fs::metadata(path).map_err(|e| {
-        PdfError::InvalidInput(format!("Cannot read file metadata: {}", e))
-    })?;
+    let metadata = std::fs::metadata(path)
+        .map_err(|e| PdfError::InvalidInput(format!("Cannot read file metadata: {}", e)))?;
     if metadata.len() == 0 {
-        return Err(PdfError::InvalidInput("Input file is empty (0 bytes).".to_string()));
+        return Err(PdfError::InvalidInput(
+            "Input file is empty (0 bytes).".to_string(),
+        ));
     }
 
     // 3. File size sanity check (reject files > 500 MB)
@@ -31,14 +32,12 @@ pub fn validate_pdf_input(path: &Path) -> OperationResult<()> {
     }
 
     // 4. Magic bytes check - PDF must start with %PDF-
-    let mut f = std::fs::File::open(path).map_err(|e| {
-        PdfError::InvalidInput(format!("Cannot open file: {}", e))
-    })?;
+    let mut f = std::fs::File::open(path)
+        .map_err(|e| PdfError::InvalidInput(format!("Cannot open file: {}", e)))?;
     let mut magic = [0u8; 5];
     use std::io::Read;
-    f.read_exact(&mut magic).map_err(|_| {
-        PdfError::InvalidInput("File is too small to be a valid PDF.".to_string())
-    })?;
+    f.read_exact(&mut magic)
+        .map_err(|_| PdfError::InvalidInput("File is too small to be a valid PDF.".to_string()))?;
     if &magic != b"%PDF-" {
         return Err(PdfError::InvalidInput(
             "File does not appear to be a PDF (missing %PDF- header).".to_string(),
@@ -51,12 +50,13 @@ pub fn validate_pdf_input(path: &Path) -> OperationResult<()> {
 /// Validate the output path - parent directory must be writable.
 pub fn validate_pdf_output(path: &Path) -> OperationResult<()> {
     if let Some(parent) = path.parent()
-        && !parent.exists() {
-            return Err(PdfError::InvalidInput(format!(
-                "Output directory does not exist: {}",
-                parent.display()
-            )));
-        }
+        && !parent.exists()
+    {
+        return Err(PdfError::InvalidInput(format!(
+            "Output directory does not exist: {}",
+            parent.display()
+        )));
+    }
     Ok(())
 }
 
@@ -82,7 +82,8 @@ mod tests {
     fn test_validate_non_pdf_magic_bytes() {
         use std::io::Write;
         let mut tmp = tempfile::NamedTempFile::new().unwrap();
-        tmp.write_all(b"PK\x03\x04 this is a zip file not a pdf").unwrap();
+        tmp.write_all(b"PK\x03\x04 this is a zip file not a pdf")
+            .unwrap();
         let result = validate_pdf_input(tmp.path());
         assert!(result.is_err());
     }
