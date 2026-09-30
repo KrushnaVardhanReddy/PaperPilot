@@ -96,14 +96,15 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.F.1 (Part 2) | `4907328417855474410` | Building thumbnail strip, info panel, and DropZone integration |
+| Phase 4.F.2 Annotations | `10367502172143029328` | Building the PDF annotation overlays (highlight, pen, sticky notes) |
+| Phase 4.F.3 Form Filling | `6603654323246619177` | Detecting and rendering HTML form inputs over the PDF canvas |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for Viewer Completion:** Wait for Jules session `4907328417855474410` to complete and verify the advanced viewer features work perfectly.
-2. **Proceed with Annotations (4.F.2):** The viewer is working perfectly. Start building the annotation layer on top of it (Task F.2).
+1. **Wait for F.2 & F.3 Completion:** Wait for both Jules sessions to complete and verify them.
+2. **Phase 5 (NLP):** Once the PDF editor is entirely functional, start integrating the local Llama backend.
 
 ---
 

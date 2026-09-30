@@ -51,21 +51,21 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.2 — Annotations
 | Task | What | Status |
 |---|---|---|
-| F.2.1 | Highlight tool (multi-colour) | Pending |
-| F.2.2 | Underline & Strikethrough | Pending |
-| F.2.3 | Sticky note / Comment | Pending |
-| F.2.4 | Free-draw (pen) tool | Pending |
-| F.2.5 | Annotation panel (sidebar) | Pending |
-| F.2.6 | Save annotations to PDF | Pending |
-| F.2.7 | Annotation unit tests | Pending |
+| F.2.1 | Highlight tool (multi-colour) | 🚧 In Progress |
+| F.2.2 | Underline & Strikethrough | 🚧 In Progress |
+| F.2.3 | Sticky note / Comment | 🚧 In Progress |
+| F.2.4 | Free-draw (pen) tool | 🚧 In Progress |
+| F.2.5 | Annotation panel (sidebar) | 🚧 In Progress |
+| F.2.6 | Save annotations to PDF | 🚧 In Progress |
+| F.2.7 | Annotation unit tests | 🚧 In Progress |
 
 #### 4.F.3 — Form Filling
 | Task | What | Status |
 |---|---|---|
-| F.3.1 | Detect AcroForm fields via pdfjs | Pending |
-| F.3.2 | Render editable overlays on fields | Pending |
-| F.3.3 | Save filled form to PDF | Pending |
-| F.3.4 | Form fill E2E test | Pending |
+| F.3.1 | Detect AcroForm fields via pdfjs | 🚧 In Progress |
+| F.3.2 | Render editable overlays on fields | 🚧 In Progress |
+| F.3.3 | Save filled form to PDF | 🚧 In Progress |
+| F.3.4 | Form fill E2E test | 🚧 In Progress |
 
 #### 4.F.4 — Native OS Menu Bar
 | Task | What | Status |
