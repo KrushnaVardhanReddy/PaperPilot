@@ -94,17 +94,16 @@ PaperPilot/
 
 ## 🚧 Active Jules Sessions (In-Progress)
 
-| (None) | | All core tests passing and green! |
+| Task | Session ID | What they are doing |
+|---|---|---|
+| Phase 4.F.4 Native Menu | `6071845476508957630` | Building Tauri v2 native desktop menu bar (File/Edit/View/Help) |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Trigger Phase 4.F.4 (Native Menu):** The core is fully stable and E2E bugs are fixed. Trigger the Native Menu prompt to start Phase 4.F:
-   ```bash
-   python3 scripts/jules_submit.py --file prompts/tasks/phase_4/P4_F_4_native_menu.txt
-   ```
-2. **Proceed with Viewer & Annotations (4.F):** After the menu is done, move on to building the `pdfjs` viewer and annotation tools.
+1. **Wait for Native Menu:** Wait for Jules session `6071845476508957630` to complete and verify the desktop menu works.
+2. **Proceed with Viewer & Annotations (4.F):** After the menu is done, move on to building the `pdfjs` viewer and annotation tools in Svelte.
 
 ---
 

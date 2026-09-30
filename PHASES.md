@@ -487,8 +487,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.4.1 | Tauri `Menu` setup | Configure native menu bar in `tauri.conf.json` and `src-tauri/src/main.rs` |
-| F.4.2 | File menu | `Open` (import PDFs), `Save Annotations`, `Settings`, `Quit` |
+| F.4.1 | Tauri `Menu` setup | 🚧 Configure native menu bar (Session 6071845476508957630) |
+| F.4.2 | File menu | 🚧 `Open` (import PDFs), `Save Annotations`, `Settings`, `Quit` |
 | F.4.3 | Edit menu | `Undo`, `Redo` (pipeline and annotation changes) |
 | F.4.4 | View menu | `Zoom In`, `Zoom Out`, `Fit to Width`, `Toggle Sidebar` |
 | F.4.5 | Window menu | `Minimize`, `Maximise`, `Full Screen` |

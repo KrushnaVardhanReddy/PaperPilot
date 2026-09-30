@@ -70,8 +70,8 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.4 — Native OS Menu Bar
 | Task | What | Status |
 |---|---|---|
-| F.4.1 | Tauri `Menu` setup (File, Edit, View, Window, Help) | Pending |
-| F.4.2–F.4.7 | All menus + keyboard shortcuts wired | Pending |
+| F.4.1 | Tauri `Menu` setup (File, Edit, View, Window, Help) | 🚧 In Progress |
+| F.4.2–F.4.7 | All menus + keyboard shortcuts wired | 🚧 In Progress |
 
 ---
 
