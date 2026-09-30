@@ -82,6 +82,7 @@ PaperPilot/
 | Phase 4.0.4 (Rule Engine) | ✅ Complete | Layer 1 Aho-Corasick keyword matcher |
 | Phase 4.0.5a (ONNX Training) | ✅ Complete | Python pipeline to train and export MobileBERT |
 | Phase 4.0.6 (Entity Extractor) | ✅ Complete | Regex & NER for files, pages, angles |
+| Phase 4.0.7+4.0.8 (Resolver) | ✅ Complete | Wired `OfflineNlpResolver` and ambiguity checks |
 
 ---
 
@@ -89,7 +90,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.0.7 + 4.0.8 (Resolver) | `14288794462066623856` | Building ambiguity check and wiring the full `OfflineNlpResolver` |
+| None | N/A | No active sessions at the moment |
 
 ---
 
