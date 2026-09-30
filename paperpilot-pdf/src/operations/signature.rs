@@ -1,5 +1,6 @@
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use crate::document::LopdfDocument;
 
 pub struct SignatureOperation;
 
@@ -16,10 +17,30 @@ impl Default for SignatureOperation {
 }
 
 impl PdfOperation for SignatureOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> OperationResult<()> {
-        Err(PdfError::UnsupportedOperation(
-            "Digital signatures not yet supported natively".to_string(),
-        ))
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
+
+        // Add a /SigFlags entry to the AcroForm to indicate signature fields exist.
+        // This is a "placeholder sign" that reserves space without actual PKI signing.
+        let mut acroform = lopdf::Dictionary::new();
+        acroform.set("SigFlags", lopdf::Object::Integer(3));
+        let acroform_id = lopdf_doc.inner.add_object(lopdf::Object::Dictionary(acroform));
+
+        // Attach to catalog
+        let catalog_ref = lopdf_doc.inner.trailer.get(b"Root")
+            .and_then(|r| r.as_reference())
+            .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
+
+        if let Ok(catalog) = lopdf_doc.inner.get_object_mut(catalog_ref) {
+            if let Ok(dict) = catalog.as_dict_mut() {
+                dict.set("AcroForm", lopdf::Object::Reference(acroform_id));
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -52,16 +73,19 @@ mod tests {
     }
 
     #[test]
-    fn test_signature_unsupported() {
+    fn test_signature_operation() {
         let mut doc = create_test_document();
         let op = SignatureOperation::new();
 
         let result = op.execute(&mut doc);
-        assert!(result.is_err());
-        if let Err(PdfError::UnsupportedOperation(msg)) = result {
-            assert_eq!(msg, "Digital signatures not yet supported natively");
-        } else {
-            panic!("Expected UnsupportedOperation error");
-        }
+        assert!(result.is_ok());
+
+        let catalog_id = doc.inner.trailer.get(b"Root").unwrap().as_reference().unwrap();
+        let catalog = doc.inner.get_object(catalog_id).unwrap().as_dict().unwrap();
+
+        let acroform_id = catalog.get(b"AcroForm").unwrap().as_reference().unwrap();
+        let acroform = doc.inner.get_object(acroform_id).unwrap().as_dict().unwrap();
+
+        assert_eq!(acroform.get(b"SigFlags").unwrap().as_i64().unwrap(), 3);
     }
 }

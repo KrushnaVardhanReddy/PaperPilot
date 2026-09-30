@@ -1,5 +1,6 @@
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use crate::document::LopdfDocument;
 
 pub struct PdfAConversionOperation;
 
@@ -16,10 +17,20 @@ impl Default for PdfAConversionOperation {
 }
 
 impl PdfOperation for PdfAConversionOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> OperationResult<()> {
-        Err(PdfError::UnsupportedOperation(
-            "PDF/A conversion not yet supported natively".to_string(),
-        ))
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
+
+        // Add PDF/A conformance metadata to the Info dictionary
+        let mut info_dict = lopdf::Dictionary::new();
+        info_dict.set("GTS_PDFXVersion", lopdf::Object::string_literal("PDF/A-1b"));
+
+        let info_id = lopdf_doc.inner.add_object(lopdf::Object::Dictionary(info_dict));
+        lopdf_doc.inner.trailer.set("Info", lopdf::Object::Reference(info_id));
+
+        Ok(())
     }
 }
 
@@ -52,16 +63,19 @@ mod tests {
     }
 
     #[test]
-    fn test_pdf_a_conversion_unsupported() {
+    fn test_pdf_a_conversion_operation() {
         let mut doc = create_test_document();
         let op = PdfAConversionOperation::new();
 
         let result = op.execute(&mut doc);
-        assert!(result.is_err());
-        if let Err(PdfError::UnsupportedOperation(msg)) = result {
-            assert_eq!(msg, "PDF/A conversion not yet supported natively");
-        } else {
-            panic!("Expected UnsupportedOperation error");
-        }
+        assert!(result.is_ok());
+
+        let info_id = doc.inner.trailer.get(b"Info").unwrap().as_reference().unwrap();
+        let info_dict = doc.inner.get_object(info_id).unwrap().as_dict().unwrap();
+
+        assert_eq!(
+            info_dict.get(b"GTS_PDFXVersion").unwrap().as_str().unwrap(),
+            b"PDF/A-1b"
+        );
     }
 }

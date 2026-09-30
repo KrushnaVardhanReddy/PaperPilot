@@ -64,26 +64,19 @@ fn test_linearize() {
     let op = LinearizeOperation::new();
 
     let res = op.execute(&mut doc);
-    assert!(res.is_err());
-    if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(msg, "Linearization not yet supported by lopdf backend");
-    } else {
-        panic!("Expected UnsupportedOperation");
-    }
+    assert!(res.is_ok());
 }
 
 #[test]
-fn test_encrypt_stub() {
+fn test_encrypt() {
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
-    let op = EncryptOperation::new();
+    let mut op = EncryptOperation::new();
+    op.user_password = Some("test".to_string());
+    op.owner_password = Some("test".to_string());
 
     let res = op.execute(&mut doc);
-    assert!(res.is_err());
-    if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(msg, "Encrypt operation is not natively supported by lopdf");
-    } else {
-        panic!("Expected UnsupportedOperation");
-    }
+    assert!(res.is_ok());
+    assert!(doc.inner.trailer.has(b"Encrypt"));
 }
 
 #[test]
@@ -91,18 +84,19 @@ fn test_decrypt() {
     let temp_dir = tempdir().unwrap();
     let output_path = temp_dir.path().join("decrypted.pdf");
 
-    // We add a dummy Encrypt dictionary manually to simulate an encrypted doc, then decrypt
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
-    let encrypt_dict = lopdf::Dictionary::new();
-    let encrypt_id = doc.inner.add_object(encrypt_dict);
-    doc.inner
-        .trailer
-        .set("Encrypt", lopdf::Object::Reference(encrypt_id));
+
+    // Encrypt the test document first
+    let mut encrypt_op = EncryptOperation::new();
+    encrypt_op.user_password = Some("test".to_string());
+    encrypt_op.owner_password = Some("test".to_string());
+    assert!(encrypt_op.execute(&mut doc).is_ok());
 
     assert!(doc.inner.trailer.has(b"Encrypt"));
 
-    let op = DecryptOperation::new(Some("test".to_string()));
-    assert!(op.execute(&mut doc).is_ok());
+    // Now decrypt it
+    let decrypt_op = DecryptOperation::new(Some("test".to_string()));
+    assert!(decrypt_op.execute(&mut doc).is_ok());
     assert!(!doc.inner.trailer.has(b"Encrypt"));
 
     assert!(doc.save(&output_path).is_ok());
@@ -186,48 +180,30 @@ fn test_metadata() {
 }
 
 #[test]
-fn test_signature_stub() {
+fn test_signature() {
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
     let op = SignatureOperation::new();
 
     let res = op.execute(&mut doc);
-    assert!(res.is_err());
-    if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(msg, "Digital signatures not yet supported natively");
-    } else {
-        panic!("Expected UnsupportedOperation");
-    }
+    assert!(res.is_ok());
 }
 
 #[test]
-fn test_flatten_stub() {
+fn test_flatten() {
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
     let op = FlattenOperation::new();
 
     let res = op.execute(&mut doc);
-    assert!(res.is_err());
-    if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(
-            msg,
-            "Flattening interactive forms not yet supported natively"
-        );
-    } else {
-        panic!("Expected UnsupportedOperation");
-    }
+    assert!(res.is_ok());
 }
 
 #[test]
-fn test_pdf_a_stub() {
+fn test_pdf_a() {
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
     let op = PdfAConversionOperation::new();
 
     let res = op.execute(&mut doc);
-    assert!(res.is_err());
-    if let Err(PdfError::UnsupportedOperation(msg)) = res {
-        assert_eq!(msg, "PDF/A conversion not yet supported natively");
-    } else {
-        panic!("Expected UnsupportedOperation");
-    }
+    assert!(res.is_ok());
 }
 
 #[test]

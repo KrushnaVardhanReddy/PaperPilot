@@ -125,11 +125,11 @@ fn test_bates_numbering_fixture() {
 }
 
 #[test]
-fn test_compare_stub() {
+fn test_compare_missing_b() {
     let mut doc = LopdfDocument::new();
-    let op = CompareOperation;
+    let op = CompareOperation::new();
     let result = op.execute(&mut doc);
-    assert!(matches!(result, Err(PdfError::UnsupportedOperation(_))));
+    assert!(matches!(result, Err(PdfError::InvalidInput(_))));
 }
 
 #[test]
@@ -137,21 +137,21 @@ fn test_bookmarks_stub() {
     let mut doc = LopdfDocument::new();
     let op = BookmarksOperation::new();
     let result = op.execute(&mut doc);
-    assert!(matches!(result, Err(PdfError::UnsupportedOperation(_))));
+    assert!(result.is_ok());
 }
 
 #[test]
 fn test_render_stub() {
     let mut doc = LopdfDocument::new();
-    let op = RenderOperation;
+    let op = RenderOperation::new();
     let result = op.execute(&mut doc);
-    assert!(matches!(result, Err(PdfError::UnsupportedOperation(_))));
+    assert!(result.is_ok());
 }
 
 #[test]
 fn test_ocr_stub() {
     let mut doc = LopdfDocument::new();
-    let op = OcrOperation;
+    let op = OcrOperation::new();
     let result = op.execute(&mut doc);
-    assert!(matches!(result, Err(PdfError::UnsupportedOperation(_))));
+    assert!(result.is_ok());
 }
