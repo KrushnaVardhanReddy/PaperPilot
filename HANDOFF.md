@@ -101,10 +101,13 @@ PaperPilot/
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **[WAITING]** Monitor Jules for completion of Layer 1 Rule Engine (4.0.4) and ONNX Training Pipeline (4.0.5a).
-2. **Phase 4.E2E — System Validation:** Dispatch the newly created testing prompts (`CLI_E2E_Testing.txt`, `MCP_E2E_Testing.txt`, `UI_E2E_Testing.txt`) to test the entire surface area.
-3. **Phase 4.0.6 — Entity Extractor:** Build regex/NER patterns to extract file paths and page numbers.
-4. **Phase 3.1.7 — iOS Target:** Blocked on a Mac environment with Xcode.
+1. **Wait for E2E Tests:** In ~2-3 hours, check for `CLI_TEST_REPORT.md`, `MCP_TEST_REPORT.md`, `UI_TEST_REPORT.md`, and `SYSTEM_BENCHMARK_REPORT.md`.
+2. **Fix E2E Bugs FIRST:** Review the reports and fix **any and all issues** surfaced by the test sweeps. Do not proceed to new features until the core system is 100% green.
+3. **Trigger Phase 4.F.4 (Native Menu):** Once the core is fully stable and E2E bugs are fixed, trigger the Native Menu prompt to start Phase 4.F:
+   ```bash
+   python3 scripts/jules_submit.py --file prompts/tasks/phase_4/P4_F_4_native_menu.txt
+   ```
+4. **Proceed with Viewer & Annotations (4.F):** After the menu is done, move on to building the `pdfjs` viewer and annotation tools.
 
 ---
 
