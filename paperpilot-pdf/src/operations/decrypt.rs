@@ -43,18 +43,32 @@ mod tests {
     #[test]
     fn test_decrypt_operation() {
         let mut inner = LopdfInnerDocument::with_version("1.5");
-        // Add a dummy Encrypt dictionary
-        let encrypt_dict = lopdf::Dictionary::new();
-        let encrypt_id = inner.add_object(encrypt_dict);
-        inner
-            .trailer
-            .set("Encrypt", lopdf::Object::Reference(encrypt_id));
+
+        let pages_id = inner.new_object_id();
+        let mut pages_dict = lopdf::Dictionary::new();
+        pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
+        pages_dict.set("Kids", lopdf::Object::Array(vec![]));
+        pages_dict.set("Count", lopdf::Object::Integer(0));
+        inner.set_object(pages_id, pages_dict);
+
+        let mut catalog_dict = lopdf::Dictionary::new();
+        catalog_dict.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
+        let catalog_id = inner.add_object(catalog_dict);
+
+        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut doc = LopdfDocument { inner };
 
+        // Encrypt the test document first
+        let mut encrypt_op = crate::operations::encrypt::EncryptOperation::new();
+        encrypt_op.user_password = Some("test".to_string());
+        encrypt_op.owner_password = Some("test".to_string());
+        assert!(encrypt_op.execute(&mut doc).is_ok());
+
         assert!(doc.inner.trailer.has(b"Encrypt"));
 
-        let op = DecryptOperation::new(Some("pass".to_string()));
+        let op = DecryptOperation::new(Some("test".to_string()));
         assert!(op.execute(&mut doc).is_ok());
 
         assert!(!doc.inner.trailer.has(b"Encrypt"));

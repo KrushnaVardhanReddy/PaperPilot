@@ -49,15 +49,16 @@ pub fn handle_render(input: &std::path::Path, _output: &std::path::Path) -> Oper
     op.execute(&mut doc)
 }
 
-pub fn handle_compare(input: &std::path::Path, _input_b: &std::path::Path) -> OperationResult<()> {
+pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::compare::CompareOperation;
+    let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
+    op.input_b = Some(input_b.to_string_lossy().to_string());
     op.execute(&mut doc)
 }
 
 pub fn handle_ocr(input: &std::path::Path, _output: &std::path::Path) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::ocr::OcrOperation;
+    let op = paperpilot_pdf::operations::ocr::OcrOperation::new();
     op.execute(&mut doc)
 }
 

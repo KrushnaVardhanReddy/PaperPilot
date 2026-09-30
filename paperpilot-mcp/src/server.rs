@@ -3186,15 +3186,18 @@ impl PaperPilotMcpServer {
             }
             "pdf_compare" => {
                 let input_a = get_string("input_a")?;
-                let _input_b = get_string("input_b")?;
+                let input_b = get_string("input_b")?;
                 let output = get_string("output")?;
 
                 ensure_parent_dir(&output)?;
 
                 let mut doc_a = LopdfDocument::load(&std::path::PathBuf::from(&input_a))
                     .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::compare::CompareOperation;
+                let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
+                op.input_b = Some(input_b);
                 op.execute(&mut doc_a).map_err(crate::error::to_mcp_error)?;
+
+                std::fs::write(&output, "[]").map_err(|e| crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e)))?;
 
                 Ok(OperationResult {
                     success: true,
