@@ -284,7 +284,7 @@ def generate_report(metrics, platform_info):
 
 def main():
     platform_info = get_platform_info()
-    with open("bench.out", "r") as f:
+    with open("benchmark.log", "r") as f:
         output = f.read()
     metrics = parse_metrics(output)
     report_md = generate_report(metrics, platform_info)
