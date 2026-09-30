@@ -160,3 +160,21 @@ Results of the bad-input tests.
 - Do NOT fix bugs. Your job is ONLY to test and report.
 - Kill the MCP server subprocess cleanly when done.
 - `MCP_TEST_REPORT.md` must be committed.
+
+---
+
+## 🚨 Updates for Session 2 (Crucial MCP Unblocker)
+
+Hey Jules!
+
+A few critical things to unblock you on the MCP E2E test harness:
+
+**1. The Initialization Handshake is Mandatory:** The reason the connection is dropping/panicking is because MCP servers require a strict initialization handshake before they will accept any tool calls or list requests. If you just pipe raw JSON-RPC tools/list commands immediately into stdin, the server will reject it. You must first send an `initialize` request, wait for the response, and then send a `notifications/initialized` notification. Only then can you call tools.
+
+**2. Just use the official Python SDK:** Instead of writing a custom JSON-RPC wrapper and manually managing the `_meta` fields, pagination, and handshake sequence, please use the official Python SDK: `pip install mcp`. 
+
+You can use `mcp.client.stdio.stdio_client` and `mcp.client.session.ClientSession`. It handles the entire startup sequence and message formatting for you.
+
+**3. Reminder on our Rust Architecture:** Also, remember that our Rust server does *not* use the `rmcp` macros — we implemented a manual `ServerHandler` trait to avoid macro-related issues. The panic you are seeing is almost certainly just the manual handler throwing an error and terminating because it received a tool call while still in the uninitialized state.
+
+Switch over to the official `mcp` Python package, use its `ClientSession`, and the tests should flow perfectly!
