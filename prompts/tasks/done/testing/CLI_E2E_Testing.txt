@@ -1,0 +1,141 @@
+---
+Task: CLI End-to-End Testing & Validation Report
+---
+
+Hey Jules! The core `paperpilot-pdf` and `paperpilot-cli` crates are implemented. We need a thorough, automated end-to-end sweep across every single CLI command before we ship, producing a detailed bug report that human engineers can act on.
+
+---
+
+## Step 1: Fixture Setup
+
+Programmatically generate the following real PDF fixtures in `tests/e2e_fixtures/` (add to `.gitignore`). Use `paperpilot-cli create`, `lopdf`, or `printpdf` directly:
+
+| Fixture | Description |
+|---|---|
+| `single_page.pdf` | 1 page, plain text content |
+| `multi_page.pdf` | 5 pages, mixed text and paragraph breaks |
+| `large_doc.pdf` | 20 pages, longer content simulating a report |
+| `image_doc.pdf` | 3 pages, each containing an embedded image |
+| `encrypted.pdf` | A copy of `single_page.pdf` encrypted with password `"testpass123"` |
+
+---
+
+## Step 2: Build the Test Script
+
+Write a bash script at `scripts/test_cli_e2e.sh`. It must:
+1. Build the `paperpilot-cli` binary first: `cargo build --release -p paperpilot-cli`
+2. Define a helper function `run_test` that:
+   - Executes the command
+   - Captures stdout, stderr and the exit code
+   - If exit code is non-zero OR the expected output file does not exist → marks the test **FAILED**
+   - Otherwise → marks it **PASSED**
+3. After all tests finish, print a summary: total tests, passed, failed.
+4. Exit with code `1` if ANY test failed, so CI can detect failures.
+
+---
+
+## Step 3: Test ALL Operations
+
+Using `run_test`, systematically test every implemented command. For each command, assert:
+- Exit code is `0`
+- Expected output file exists and has size > 0 bytes
+
+### Group A — Core Operations
+| Command | Input | Assert |
+|---|---|---|
+| `merge` | `multi_page.pdf` + `single_page.pdf` | `merged.pdf` exists |
+| `split` | `multi_page.pdf` | `split_001.pdf` ... `split_005.pdf` exist |
+| `rotate` | `single_page.pdf --angle 90` | `rotated.pdf` exists |
+| `extract-pages` | `multi_page.pdf --pages 1-3` | `extracted.pdf` with 3 pages |
+| `delete` | `multi_page.pdf --pages 2,4` | `deleted.pdf` with 3 pages |
+| `reorder` | `multi_page.pdf --order 5,4,3,2,1` | `reordered.pdf` exists |
+| `burst` | `multi_page.pdf` | 5 individual PDFs in output dir |
+| `crop` | `single_page.pdf` | `cropped.pdf` exists |
+
+### Group B — Security & Polish
+| Command | Input | Assert |
+|---|---|---|
+| `encrypt` | `single_page.pdf --password testpass123` | `encrypted.pdf` exists |
+| `decrypt` | `encrypted.pdf --password testpass123` | `decrypted.pdf` exists |
+| `redact` | `single_page.pdf --pattern "CONFIDENTIAL"` | `redacted.pdf` exists |
+| `watermark` | `single_page.pdf --text "DRAFT"` | `watermarked.pdf` exists |
+| `header-footer` | `multi_page.pdf --header "Page {n}"` | `headerfooter.pdf` exists |
+| `metadata` | `single_page.pdf --title "Test Doc"` | `metadata.pdf` exists |
+| `compress` | `large_doc.pdf` | `compressed.pdf` exists and size < original |
+| `linearize` | `large_doc.pdf` | `linearized.pdf` exists |
+| `flatten` | `single_page.pdf` | `flattened.pdf` exists |
+| `repair` | `single_page.pdf` | `repaired.pdf` exists |
+| `pdf-a` | `single_page.pdf` | `pdf_a.pdf` exists |
+| `signature` | `single_page.pdf` | `signed.pdf` exists |
+
+### Group C — Extraction & Advanced
+| Command | Input | Assert |
+|---|---|---|
+| `extract-text` | `multi_page.pdf` | stdout or text file is non-empty |
+| `extract-images` | `image_doc.pdf` | at least 1 image file extracted |
+| `images-to-pdf` | dir of PNGs | `images.pdf` exists |
+| `bates` | `multi_page.pdf --prefix "DOC-"` | `bates.pdf` exists |
+| `render` | `single_page.pdf` | PNG(s) exist in output dir |
+| `ocr` | `image_doc.pdf` | `ocr.pdf` or text file is non-empty |
+| `compare` | `single_page.pdf` + `single_page.pdf` | output report shows 0 differences |
+| `search` | `multi_page.pdf --query "text"` | output lists matching pages |
+| `bookmarks` | `multi_page.pdf` | `bookmarks.pdf` or JSON output exists |
+| `form` | `single_page.pdf` | `form.pdf` or JSON output exists |
+| `hash` | `single_page.pdf` | SHA hash printed to stdout |
+| `validate` | `single_page.pdf` | exit code 0, "valid" in output |
+| `conversion` | `single_page.pdf --to markdown` | `.md` file is non-empty |
+| `classify` | `single_page.pdf` | classification label printed to stdout |
+
+---
+
+## Step 4: Error Condition Tests
+
+Test how the CLI handles bad inputs (all should exit with non-zero code and a human-readable error message):
+- `merge` with a non-existent file path → must not panic, must print useful error
+- `decrypt` with wrong password → must exit with clear error message
+- `rotate` with invalid angle `--angle 45` → must print validation error
+- Any command with `--output /nonexistent/dir/output.pdf` → must print permission error
+
+---
+
+## Step 5: JSON Mode Tests
+For every command that supports `--json` output mode, verify the JSON response is valid and parseable:
+```bash
+paperpilot-cli hash single_page.pdf --json | python3 -c "import sys,json; json.load(sys.stdin)"
+```
+
+---
+
+## Step 6: Generate `CLI_TEST_REPORT.md`
+
+After running all tests, output `reports/CLI_TEST_REPORT.md` with the following structure:
+
+```markdown
+# PaperPilot CLI — E2E Test Report
+Generated: <timestamp>
+
+## Summary
+- Total Tests: X
+- Passed: X ✅
+- Failed: X ❌
+- Skipped (not implemented): X ⚠️
+
+## Detailed Results
+
+### ✅ Working Commands
+| Command | Execution Time | Notes |
+
+### ❌ Failed Commands
+| Command | Exit Code | Error Output | Root Cause (best guess) |
+
+### ⚠️ Not Implemented
+List any commands that returned `command not found` or `not yet implemented`.
+
+### UX Issues
+Any confusing flags, misleading error messages, or missing `--help` documentation.
+```
+
+## Constraints
+- Do NOT fix bugs. Your job is ONLY to test and report.
+- Report must include the **exact** error output for every failure.
+- `CLI_TEST_REPORT.md` must be committed.

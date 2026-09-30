@@ -448,6 +448,68 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 4.F — PDF Viewer, Annotations & Native Menu *(Pre-Release Blocker)*
+
+> **Why this is required before release:** PaperPilot without a PDF viewer and basic annotation support is incomplete as a product. Users cannot preview what they are operating on, cannot annotate documents, and cannot fill forms — all baseline expectations for any PDF tool. Without these, users still need Acrobat alongside PaperPilot.
+
+#### 4.F.1 — Embedded PDF Viewer
+
+| # | Task | Notes |
+|---|---|---|
+| F.1.1 | Integrate `pdfjs-dist` into Svelte app | Add `pdfjs-dist` npm package; configure the worker in `apps/desktop/` |
+| F.1.2 | PDF Viewer component (`PdfViewer.svelte`) | Render pages on `<canvas>` elements with scroll, zoom in/out, fit-to-width |
+| F.1.3 | Page thumbnail strip | Vertical scrollable strip showing page thumbnails for navigation |
+| F.1.4 | Document info panel | Show page count, file size, title, author, PDF version |
+| F.1.5 | Viewer ↔ DropZone integration | Selecting a file in the DocumentList opens it in the viewer pane |
+
+#### 4.F.2 — Annotations
+
+| # | Task | Notes |
+|---|---|---|
+| F.2.1 | Highlight tool | Select text on a page and apply a coloured highlight (yellow, green, pink) |
+| F.2.2 | Underline & Strikethrough | Text markup tools matching standard annotation conventions |
+| F.2.3 | Sticky note / Comment | Click anywhere on a page to attach a floating comment bubble |
+| F.2.4 | Free-draw tool | Draw freehand lines or shapes (pen tool) on top of a page |
+| F.2.5 | Annotation panel | Side panel listing all annotations in the document with page references |
+| F.2.6 | Save annotations to PDF | Flatten or embed annotations into the PDF via `paperpilot-pdf` |
+| F.2.7 | Annotation unit tests | Verify annotation add/remove/serialize round-trips correctly |
+
+#### 4.F.3 — Form Filling
+
+| # | Task | Notes |
+|---|---|---|
+| F.3.1 | Detect interactive form fields | Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown) |
+| F.3.2 | Render editable form overlays | Show native HTML `<input>` / `<select>` overlays on top of field positions |
+| F.3.3 | Save filled form to PDF | Write field values back into the PDF file via `paperpilot-pdf` |
+| F.3.4 | Form fill E2E test | Load a form PDF, fill all fields, save, reload and verify field values persist |
+
+#### 4.F.4 — Native OS Menu Bar
+
+| # | Task | Notes |
+|---|---|---|
+| F.4.1 | Tauri `Menu` setup | Configure native menu bar in `tauri.conf.json` and `src-tauri/src/main.rs` |
+| F.4.2 | File menu | `Open` (import PDFs), `Save Annotations`, `Settings`, `Quit` |
+| F.4.3 | Edit menu | `Undo`, `Redo` (pipeline and annotation changes) |
+| F.4.4 | View menu | `Zoom In`, `Zoom Out`, `Fit to Width`, `Toggle Sidebar` |
+| F.4.5 | Window menu | `Minimize`, `Maximise`, `Full Screen` |
+| F.4.6 | Help menu | `Documentation`, `Keyboard Shortcuts`, `About PaperPilot` |
+| F.4.7 | Keyboard shortcuts | `Cmd/Ctrl+O` open, `Cmd/Ctrl+Z` undo, `Cmd/Ctrl++/-` zoom, `Cmd/Ctrl+Q` quit |
+
+---
+
+### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)
+
+> **Trigger condition:** All of Phase 4.F must be merged before Round 2 begins. These tests must re-run the full surface area including the new Viewer, Annotation, Form Fill, and Menu features.
+
+| # | Task | Notes |
+|---|---|---|
+| R2.E1 | CLI End-to-End Re-Validation | Re-run full CLI sweep; verify no regressions; add annotation/form save commands |
+| R2.E2 | MCP End-to-End Re-Validation | Re-run all MCP tools; add `pdf_annotate`, `pdf_form_fill` tools |
+| R2.E3 | UI Full Re-Validation (Viewer + Annotations) | Playwright: viewer render, highlight flow, sticky note, form fill, menu bar actions |
+| R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
+
+---
+
 ### 4.1 — LLM Infrastructure `[PARALLEL]`
 
 > Powers the Pro/Teams tier. Requires an API key or local Ollama.

@@ -1,0 +1,162 @@
+---
+Task: MCP Server End-to-End Testing & Validation Report
+---
+
+Hey Jules! The `paperpilot-mcp` server exposes 34+ PDF operations as MCP JSON-RPC tools. We need a thorough automated sweep to prove it works end-to-end before shipping, producing a detailed report that human engineers can action.
+
+---
+
+## Step 1: Fixture Setup
+
+Programmatically generate the following real PDF fixtures in `tests/e2e_fixtures/` (add to `.gitignore`). Use `paperpilot-cli create`, `lopdf`, or a Python PDF library:
+
+| Fixture | Description |
+|---|---|
+| `single_page.pdf` | 1 page, plain text |
+| `multi_page.pdf` | 5 pages, mixed text |
+| `large_doc.pdf` | 20 pages, report-style content |
+| `image_doc.pdf` | 3 pages with embedded images |
+| `encrypted.pdf` | `single_page.pdf` encrypted with password `"testpass123"` |
+
+---
+
+## Step 2: Build the Test Harness
+
+Write `scripts/test_mcp_e2e.py` in Python. The script must:
+1. Launch the `paperpilot-mcp` binary as a subprocess with stdin/stdout communication.
+2. Implement a thin JSON-RPC 2.0 helper:
+   ```python
+   def call_tool(proc, tool_name: str, args: dict) -> dict:
+       # Write {"jsonrpc":"2.0","method":"tools/call","params":{"name":tool_name,"arguments":args},"id":1}
+       # Read response line, parse and return
+   ```
+3. Implement a `run_test(name, fn)` decorator/helper that catches exceptions, records PASS/FAIL + latency (ms).
+4. After all tests: print summary and write `reports/MCP_TEST_REPORT.md`.
+5. Exit with code `1` if ANY test failed.
+
+---
+
+## Step 3: Tool Discovery Test
+
+Before running operations, call `tools/list` on the MCP server and:
+- Assert the response is valid JSON
+- Assert the list contains **all 34+ expected tools**
+- Record any missing tools as a FAIL in the report
+
+---
+
+## Step 4: Test ALL MCP Tools
+
+For each tool, assert:
+- The JSON-RPC response has `"result"` (not `"error"`)
+- The expected output file exists and has size > 0 bytes
+- Record the round-trip latency (ms)
+
+### Group A — Core Operations
+| Tool | Args | Assert |
+|---|---|---|
+| `pdf_merge` | `[multi_page.pdf, single_page.pdf]` → `merged.pdf` | merged.pdf > 0 bytes |
+| `pdf_split` | `multi_page.pdf` | 5 split files exist |
+| `pdf_rotate` | `single_page.pdf, angle=90` | rotated.pdf exists |
+| `pdf_extract_pages` | `multi_page.pdf, pages=[1,2,3]` | extracted.pdf, 3 pages |
+| `pdf_delete_pages` | `multi_page.pdf, pages=[2,4]` | deleted.pdf, 3 pages |
+| `pdf_reorder` | `multi_page.pdf, order=[5,4,3,2,1]` | reordered.pdf exists |
+| `pdf_burst` | `multi_page.pdf` | 5 individual PDFs |
+| `pdf_crop` | `single_page.pdf` | cropped.pdf exists |
+
+### Group B — Security & Polish
+| Tool | Args | Assert |
+|---|---|---|
+| `pdf_encrypt` | `single_page.pdf, password="testpass123"` | encrypted.pdf exists |
+| `pdf_decrypt` | `encrypted.pdf, password="testpass123"` | decrypted.pdf exists |
+| `pdf_redact` | `single_page.pdf, pattern="CONFIDENTIAL"` | redacted.pdf exists |
+| `pdf_watermark` | `single_page.pdf, text="DRAFT"` | watermarked.pdf exists |
+| `pdf_header_footer` | `multi_page.pdf, header="Page {n}"` | headerfooter.pdf exists |
+| `pdf_metadata` | `single_page.pdf, title="Test"` | metadata.pdf exists |
+| `pdf_compress` | `large_doc.pdf` | compressed.pdf < original size |
+| `pdf_linearize` | `large_doc.pdf` | linearized.pdf exists |
+| `pdf_flatten` | `single_page.pdf` | flattened.pdf exists |
+| `pdf_repair` | `single_page.pdf` | repaired.pdf exists |
+| `pdf_pdf_a` | `single_page.pdf` | pdf_a.pdf exists |
+| `pdf_sign` | `single_page.pdf` | signed.pdf exists |
+
+### Group C — Extraction & Advanced
+| Tool | Args | Assert |
+|---|---|---|
+| `pdf_extract_text` | `multi_page.pdf` | result.text is non-empty |
+| `pdf_extract_images` | `image_doc.pdf` | ≥1 image file extracted |
+| `pdf_images_to_pdf` | `[img1.png, img2.png]` | images.pdf exists |
+| `pdf_bates` | `multi_page.pdf, prefix="DOC-"` | bates.pdf exists |
+| `pdf_render` | `single_page.pdf` | PNG(s) exist in output |
+| `pdf_ocr` | `image_doc.pdf` | text content non-empty |
+| `pdf_compare` | `single_page.pdf, single_page.pdf` | result shows 0 diffs |
+| `pdf_search` | `multi_page.pdf, query="text"` | matching page list returned |
+| `pdf_bookmarks` | `multi_page.pdf` | bookmark JSON returned |
+| `pdf_form` | `single_page.pdf` | form fields JSON returned |
+| `pdf_hash` | `single_page.pdf` | SHA hash string returned |
+| `pdf_validate` | `single_page.pdf` | result.valid == true |
+| `pdf_convert` | `single_page.pdf, format="markdown"` | .md content non-empty |
+| `pdf_classify` | `single_page.pdf` | label string returned |
+
+---
+
+## Step 5: Error Handling Tests
+
+Test that the MCP server returns well-formed JSON-RPC error responses (not panics) for:
+- Calling a tool with a missing required argument → `{"error": {"code": -32602, ...}}`
+- Passing a non-existent file path → error response, not a server crash
+- Calling `pdf_decrypt` with wrong password → error response with clear message
+- Calling an unknown tool name → `{"error": {"code": -32601, ...}}`
+
+---
+
+## Step 6: Schema Validation
+
+For each tool in `tools/list`, validate that:
+- Every required argument has a `description`
+- Every argument has a correct `type` field (`string`, `array`, `integer`, etc.)
+- No tools are listed with empty `inputSchema`
+
+---
+
+## Step 7: Generate `MCP_TEST_REPORT.md`
+
+After all tests, write `reports/MCP_TEST_REPORT.md`:
+
+```markdown
+# PaperPilot MCP Server — E2E Test Report
+Generated: <timestamp>
+
+## Summary
+- Total Tools Tested: X
+- Passed: X ✅
+- Failed: X ❌
+- Not Implemented: X ⚠️
+
+## Tool Discovery
+- Expected tools: 34
+- Found tools: X
+- Missing: [list]
+
+## Detailed Results
+
+### ✅ Working Tools
+| Tool | Latency (ms) | Notes |
+
+### ❌ Failed Tools
+| Tool | Error Code | Error Message | Root Cause Guess |
+
+### ⚠️ Not Implemented
+List tools returning "not implemented" or similar.
+
+### Schema Issues
+Any tools with missing descriptions, wrong types, or empty inputSchema.
+
+### Error Handling
+Results of the bad-input tests.
+```
+
+## Constraints
+- Do NOT fix bugs. Your job is ONLY to test and report.
+- Kill the MCP server subprocess cleanly when done.
+- `MCP_TEST_REPORT.md` must be committed.
