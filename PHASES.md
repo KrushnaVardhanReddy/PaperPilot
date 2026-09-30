@@ -495,6 +495,15 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.4.6 | Help menu | ✅ `Documentation`, `Keyboard Shortcuts`, `About PaperPilot` |
 | F.4.7 | Keyboard shortcuts | ✅ `Cmd/Ctrl+O` open, `Cmd/Ctrl+Z` undo, `Cmd/Ctrl++/-` zoom, `Cmd/Ctrl+Q` quit |
 
+#### 4.F.5 — End-to-End Testing (Phase 4.F)
+
+| # | Task | Notes |
+|---|---|---|
+| F.5.1 | Viewer E2E Test | Verify PDF load, canvas rendering, and info panel. |
+| F.5.2 | Annotations E2E Test | Verify adding highlights and pens to the annotation layer. |
+| F.5.3 | Form Filling E2E Test | Verify rendering and filling HTML `<input>` overlays. |
+| F.5.4 | Menu / Tauri IPC Test | Verify File/Edit menu events trigger frontend actions. |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)

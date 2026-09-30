@@ -1,0 +1,95 @@
+# Task: Phase 4.F.5 — E2E Testing for PDF Viewer & Annotations
+
+## Objective
+Now that the PDF Viewer, Annotations (Highlight/Pen/Notes), Form Filling, and Native OS Menu Bar are fully implemented, we need comprehensive End-to-End (E2E) tests. Use Playwright to verify that the UI components render correctly and interact as expected.
+
+## Requirements
+- Use Playwright (already configured in `apps/desktop/playwright.config.ts` or similar).
+- You must complete all of the following sub-tasks for Phase 4.F.5:
+  - **F.5.1 Viewer E2E Test**: Verify that a PDF loads into the `<canvas>`, the thumbnail strip populates, and the info panel shows metadata.
+  - **F.5.2 Annotations E2E Test**: Verify that clicking the Highlight and Pen tools activates them and allows creating elements on the annotation layer.
+  - **F.5.3 Form Filling E2E Test**: Verify that form fields render as HTML `<input>` overlays and can be typed into.
+  - **F.5.4 Menu / Tauri IPC Test**: Mock or trigger Tauri IPC events to verify that File/Edit/View menu actions map to the correct frontend state changes.
+
+### 1. Component Structure
+You will need to create the following test file:
+1. **`apps/desktop/tests/viewer.spec.ts`** -> The main Playwright suite for Phase 4.F.
+
+### 2. Implementation Details
+
+#### Playwright Test Suite (`apps/desktop/tests/viewer.spec.ts`)
+Create a new file to house these tests. Ensure it tests the DOM elements rendered by Svelte.
+
+```typescript
+import { test, expect } from '@playwright/test';
+import path from 'path';
+
+test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    // Navigate to the app (adjust URL to your dev server or tauri build)
+    await page.goto('/');
+    
+    // Simulate uploading/selecting a test PDF
+    // E.g., setting a file input or mocking the DropZone
+    const testPdfPath = path.join(__dirname, 'fixtures', 'test_doc.pdf');
+    const fileInput = page.locator('input[type="file"]');
+    if (await fileInput.isVisible()) {
+      await fileInput.setInputFiles(testPdfPath);
+    }
+  });
+
+  test('F.5.1: PDF loads in canvas and thumbnails appear', async ({ page }) => {
+    // Wait for the canvas to render
+    const canvas = page.locator('.viewer-container canvas');
+    await expect(canvas).toBeVisible({ timeout: 10000 });
+
+    // Check thumbnails
+    const thumbnails = page.locator('.thumbnail-strip canvas');
+    expect(await thumbnails.count()).toBeGreaterThan(0);
+
+    // Check Info Panel
+    const infoPanel = page.locator('.info-panel');
+    await expect(infoPanel).toContainText('Document Info');
+  });
+
+  test('F.5.2: Annotation toolbar allows highlighting', async ({ page }) => {
+    // Wait for the canvas
+    await page.waitForSelector('.viewer-container canvas');
+
+    // Click the highlight tool
+    await page.getByRole('button', { name: 'Highlight' }).click();
+
+    // Verify the tool is active
+    await expect(page.getByRole('button', { name: 'Highlight' })).toHaveClass(/active/);
+
+    // Simulate mouse drag on the annotation layer
+    const annotationLayer = page.locator('.annotation-layer');
+    await annotationLayer.dragTo(annotationLayer, {
+      sourcePosition: { x: 100, y: 100 },
+      targetPosition: { x: 200, y: 150 }
+    });
+
+    // Check that a highlight div was created
+    const highlight = page.locator('.annotation-layer .highlight').first();
+    await expect(highlight).toBeVisible();
+  });
+  
+  test('F.5.3: Form fields overlay correctly', async ({ page }) => {
+    // Note: This requires a fixture PDF that has AcroForm fields.
+    // Ensure you use a specific fixture for this test.
+    
+    const input = page.locator('.form-layer input.pdf-input').first();
+    // Only assert if the specific test PDF has inputs
+    if (await input.count() > 0) {
+      await input.fill('Test User');
+      await expect(input).toHaveValue('Test User');
+    }
+  });
+});
+```
+
+## Verification Steps
+1. Place a sample PDF (`test_doc.pdf`) in `apps/desktop/tests/fixtures/`.
+2. Run `npm run test:e2e` (or `npx playwright test`) inside `apps/desktop`.
+3. Verify that all Phase 4.F tests pass.
