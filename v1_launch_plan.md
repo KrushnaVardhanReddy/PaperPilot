@@ -26,6 +26,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | E.1 | CLI End-to-End Testing & Validation Report | Pending |
 | E.2 | MCP End-to-End Testing & Validation Report | Pending |
 | E.3 | Svelte UI End-to-End Testing & Validation Report | Pending |
+| E.4 | NLP Performance & Latency Benchmarking | Pending |
 
 ### Phase 3.1.7 — iOS Target
 | Task | What | Status |

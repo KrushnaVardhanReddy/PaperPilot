@@ -444,6 +444,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | E.1 | CLI End-to-End Testing & Validation Report | Full automated script hitting all 34 operations on real fixtures, producing `CLI_TEST_REPORT.md` |
 | E.2 | MCP End-to-End Testing & Validation Report | Python stdio wrapper testing all 34 MCP tools on real fixtures, producing `MCP_TEST_REPORT.md` |
 | E.3 | Svelte UI End-to-End Testing & Validation Report | E2E Playwright or manual testing on drag-and-drop, pipeline builder, and execution, producing `UI_TEST_REPORT.md` |
+| E.4 | NLP Performance & Latency Benchmarking | Measure Rust regex vs ONNX model latency (ms) across different document sizes and query lengths, producing `NLP_BENCHMARK_REPORT.md` |
 
 ---
 
