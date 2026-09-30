@@ -80,6 +80,8 @@ PaperPilot/
 | Phase 4.0.2 (NLP Trait) | ✅ Complete | Defined `NlpResolver` trait |
 | Phase 4.0.3 (Intent Vocab) | ✅ Complete | ~45 intents & aliases defined in `intent.rs` |
 | Phase 4.0.4 (Rule Engine) | ✅ Complete | Layer 1 Aho-Corasick keyword matcher |
+| Phase 4.0.5a (ONNX Training) | ✅ Complete | Python pipeline to train and export MobileBERT |
+| Phase 4.0.6 (Entity Extractor) | ✅ Complete | Regex & NER for files, pages, angles |
 
 ---
 
@@ -87,8 +89,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.0.5a ONNX Training | `12133795038104614276` | Building the Python script in `tools/train-nlp/` to fine-tune a model and export to ONNX |
-| Phase 4.0.6 Entity Extractor | `4945848464737601940` | Building regex & NER patterns in `paperpilot-nlp/src/entities.rs` to extract files and arguments |
+| None | N/A | No active sessions at the moment |
 
 ---
 
