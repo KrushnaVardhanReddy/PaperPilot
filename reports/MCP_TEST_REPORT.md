@@ -1,5 +1,5 @@
 # PaperPilot MCP Server — E2E Test Report
-Generated: 2026-09-30T14:25:19.768267
+Generated: 2026-09-30T10:39:05.581411
 
 ## Summary
 - Total Tools Tested: 34
@@ -17,29 +17,29 @@ Generated: 2026-09-30T14:25:19.768267
 ### ✅ Working Tools
 | Tool | Latency (ms) | Notes |
 |---|---|---|
-| pdf_merge | 9 | OK |
-| pdf_split | 6 | OK |
-| pdf_rotate | 3 | OK |
-| pdf_extract_pages | 3 | OK |
-| pdf_delete_pages | 4 | OK |
-| pdf_reorder_pages | 5 | OK |
-| pdf_burst | 6 | OK |
-| pdf_crop | 3 | OK |
-| pdf_decrypt | 3 | OK |
-| pdf_redact | 3 | OK |
-| pdf_watermark | 3 | OK |
-| pdf_header_footer | 4 | OK |
-| pdf_metadata | 3 | OK |
-| pdf_compress | 7 | OK |
-| pdf_repair | 3 | OK |
-| pdf_extract_text | 4 | OK |
-| pdf_extract_images | 3 | OK |
-| pdf_images_to_pdf | 4 | OK |
-| pdf_bates | 4 | OK |
-| pdf_search | 5 | OK |
-| pdf_read_form | 3 | OK |
-| pdf_to_docx | 6 | OK |
-| pdf_classify_type | 7 | OK |
+| pdf_merge | 5 | OK |
+| pdf_split | 2 | OK |
+| pdf_rotate | 1 | OK |
+| pdf_extract_pages | 2 | OK |
+| pdf_delete_pages | 3 | OK |
+| pdf_reorder_pages | 2 | OK |
+| pdf_burst | 4 | OK |
+| pdf_crop | 1 | OK |
+| pdf_decrypt | 1 | OK |
+| pdf_redact | 2 | OK |
+| pdf_watermark | 1 | OK |
+| pdf_header_footer | 2 | OK |
+| pdf_metadata | 1 | OK |
+| pdf_compress | 2 | OK |
+| pdf_repair | 1 | OK |
+| pdf_extract_text | 2 | OK |
+| pdf_extract_images | 2 | OK |
+| pdf_images_to_pdf | 2 | OK |
+| pdf_bates | 2 | OK |
+| pdf_search | 3 | OK |
+| pdf_read_form | 1 | OK |
+| pdf_to_docx | 4 | OK |
+| pdf_classify_type | 3 | OK |
 
 ### ❌ Failed Tools
 | Tool | Latency (ms) | Error | Root Cause Guess |
@@ -61,6 +61,7 @@ Generated: 2026-09-30T14:25:19.768267
 ### Schema Issues
 
 ### Error Handling
-- pdf_rotate missing arguments correctly threw MCPError
-- pdf_decrypt wrong password correctly threw MCPError
-- unknown_tool correctly threw MCPError
+- pdf_rotate missing arguments correctly threw McpError
+- pdf_decrypt wrong password correctly threw McpError
+- unknown_tool correctly threw McpError
+
