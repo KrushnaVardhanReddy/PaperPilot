@@ -4,7 +4,9 @@ use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
 pub mod error;
+pub mod menu;
 use crate::error::DesktopError;
+use tauri::Emitter;
 
 lazy_static::lazy_static! {
     static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
@@ -58,6 +60,38 @@ async fn invoke_mcp_tool(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let menu = menu::build_menu(app)?;
+            app.set_menu(menu)?;
+
+            app.on_menu_event(move |app_handle, event| {
+                match event.id().as_ref() {
+                    "open_file" => {
+                        let _ = app_handle.emit("menu-open-file", ());
+                    }
+                    "save_annotations" => {
+                        let _ = app_handle.emit("menu-save-annotations", ());
+                    }
+                    "undo" => {
+                        let _ = app_handle.emit("menu-undo", ());
+                    }
+                    "redo" => {
+                        let _ = app_handle.emit("menu-redo", ());
+                    }
+                    "zoom_in" => {
+                        let _ = app_handle.emit("menu-zoom-in", ());
+                    }
+                    "zoom_out" => {
+                        let _ = app_handle.emit("menu-zoom-out", ());
+                    }
+                    "fit_width" => {
+                        let _ = app_handle.emit("menu-fit-width", ());
+                    }
+                    _ => {}
+                }
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
