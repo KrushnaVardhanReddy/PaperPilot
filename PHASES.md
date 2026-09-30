@@ -430,8 +430,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.4 | Layer 1 — Keyword & regex rule engine ✅ | Merged (Session 283097227045968085) |
 | 4.0.5 | Layer 2 — ONNX intent classifier ✅ | Merged (Session 12133795038104614276) |
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
-| 4.0.7 | Ambiguity resolver | When confidence is below threshold, ask a clarifying question instead of guessing |
-| 4.0.8 | Offline NLP → `OperationPlan` output | Produce the same `OperationPlan` type used by LLM mode so the downstream executor is identical |
+| 4.0.7 | Ambiguity resolver 🚧 | In Progress (Session 14288794462066623856) |
+| 4.0.8 | Offline NLP → `OperationPlan` output 🚧 | In Progress (Session 14288794462066623856) |
 | 4.0.9 | Offline NLP unit tests | Test intent classification accuracy against a held-out command dataset; assert >90% top-1 accuracy |
 | 4.0.10 | Offline NLP E2E tests | Run real commands through the full offline stack → MCP tool dispatch → file output (No Mocking) |
 

@@ -15,8 +15,8 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | 4.0.4 | Layer 1 — Keyword & regex rule engine | ✅ Completed |
 | 4.0.5 | Layer 2 — ONNX intent classifier (MobileBERT) | ✅ Completed |
 | 4.0.6 | Entity extractor (regex + NER) | ✅ Completed |
-| 4.0.7 | Ambiguity resolver | Pending |
-| 4.0.8 | Offline NLP → `OperationPlan` output | Pending |
+| 4.0.7 | Ambiguity resolver | 🚧 In Progress (Session 14288794462066623856) |
+| 4.0.8 | Offline NLP → `OperationPlan` output | 🚧 In Progress (Session 14288794462066623856) |
 | 4.0.9 | Offline NLP unit tests | Pending |
 | 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | Pending |
 

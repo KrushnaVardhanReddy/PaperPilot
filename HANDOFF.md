@@ -89,7 +89,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| None | N/A | No active sessions at the moment |
+| Phase 4.0.7 + 4.0.8 (Resolver) | `14288794462066623856` | Building ambiguity check and wiring the full `OfflineNlpResolver` |
 
 ---
 
