@@ -94,13 +94,16 @@ PaperPilot/
 
 ## 🚧 Active Jules Sessions (In-Progress)
 
-| (None) | | Viewer and Menu are fully merged! |
+| Task | Session ID | What they are doing |
+|---|---|---|
+| Phase 4.F.1 (Part 2) | `4907328417855474410` | Building thumbnail strip, info panel, and DropZone integration |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Proceed with Annotations (4.F.2):** The viewer is working perfectly. Start building the annotation layer on top of it (Task F.2).
+1. **Wait for Viewer Completion:** Wait for Jules session `4907328417855474410` to complete and verify the advanced viewer features work perfectly.
+2. **Proceed with Annotations (4.F.2):** The viewer is working perfectly. Start building the annotation layer on top of it (Task F.2).
 
 ---
 

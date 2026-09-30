@@ -1,0 +1,109 @@
+# Task: Phase 4.F.1 (Part 2) — Advanced PDF Viewer Features
+
+## Objective
+The base `<PdfViewer>` canvas rendering works. Now we need to finish the remaining features for Phase 4.F.1: the Thumbnail Strip, the Document Info Panel, and full integration with the existing `DocumentList` DropZone.
+
+## Requirements
+- Use Svelte 5 Runes (`$state`, `$effect`, `$derived`).
+- Build beautiful, modern UI components with standard CSS (no Tailwind). Keep it consistent with our premium, dynamic aesthetic.
+
+### 1. Component Structure
+You will need to create or update the following files in `apps/desktop/src/`:
+1. **`lib/components/PdfThumbnails.svelte`** -> The vertical strip on the left showing page previews.
+2. **`lib/components/PdfInfoPanel.svelte`** -> The right-side panel showing document metadata.
+3. **`routes/+page.svelte`** -> Update the main layout to include these components and bind the `fileUrl` from the `DocumentList`.
+
+### 2. Implementation Details
+
+#### Thumbnail Strip (`PdfThumbnails.svelte`)
+Use pdfjs-dist to render small `<canvas>` previews for each page in a vertical scrollable flex column. 
+```svelte
+<script lang="ts">
+  import * as pdfjsLib from 'pdfjs-dist';
+  
+  let { pdfDoc, pageNum = $bindable(1) } = $props();
+  let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
+
+  // You will need to loop through 1..numPages and render a tiny canvas for each page
+  // Hint: Use page.render() with a scale of ~0.2
+</script>
+
+<div class="thumbnail-strip">
+  <!-- Render a list of canvas elements here -->
+</div>
+
+<style>
+  .thumbnail-strip {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    width: 200px;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    padding: 1rem;
+    gap: 1rem;
+  }
+</style>
+```
+
+#### Document Info Panel (`PdfInfoPanel.svelte`)
+Use `pdfDoc.getMetadata()` to fetch and display the metadata.
+```svelte
+<script lang="ts">
+  import * as pdfjsLib from 'pdfjs-dist';
+
+  let { pdfDoc } = $props();
+  let metadata: any = $state(null);
+
+  $effect(() => {
+    if (pdfDoc) {
+      pdfDoc.getMetadata().then((data) => {
+        metadata = data.info;
+      });
+    }
+  });
+</script>
+
+<div class="info-panel">
+  <h3>Document Info</h3>
+  {#if metadata}
+    <p><strong>Title:</strong> {metadata.Title || 'Unknown'}</p>
+    <p><strong>Author:</strong> {metadata.Author || 'Unknown'}</p>
+    <p><strong>Producer:</strong> {metadata.Producer || 'Unknown'}</p>
+  {/if}
+  {#if pdfDoc}
+    <p><strong>Pages:</strong> {pdfDoc.numPages}</p>
+  {/if}
+</div>
+
+<style>
+  .info-panel {
+    width: 250px;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    padding: 1rem;
+  }
+</style>
+```
+
+#### Viewer ↔ DropZone Integration (`routes/+page.svelte`)
+Update the main layout to look like this:
+```svelte
+<div class="app-container">
+  <PdfThumbnails {pdfDoc} bind:pageNum />
+  
+  <div class="main-content">
+    <PdfToolbar bind:pageNum {numPages} bind:scale />
+    <PdfViewer {fileUrl} bind:pdfDoc bind:pageNum bind:scale />
+  </div>
+  
+  <PdfInfoPanel {pdfDoc} />
+</div>
+```
+
+## Verification Steps
+1. Run `npm run dev` in `apps/desktop`.
+2. Drop a local PDF into the DropZone or DocumentList.
+3. Verify the `PdfViewer` renders the document in the center pane.
+4. Verify the left sidebar shows mini thumbnails of all pages.
+5. Verify the info panel shows the correct Title/Author.

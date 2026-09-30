@@ -44,9 +44,9 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 |---|---|---|
 | F.1.1 | Integrate `pdfjs-dist` into Svelte app | ✅ Completed |
 | F.1.2 | `PdfViewer.svelte` component (canvas render, scroll, zoom) | ✅ Completed |
-| F.1.3 | Page thumbnail strip for navigation | Pending |
-| F.1.4 | Document info panel | Pending |
-| F.1.5 | Viewer ↔ DropZone integration | Pending |
+| F.1.3 | Page thumbnail strip for navigation | 🚧 In Progress |
+| F.1.4 | Document info panel | 🚧 In Progress |
+| F.1.5 | Viewer ↔ DropZone integration | 🚧 In Progress |
 
 #### 4.F.2 — Annotations
 | Task | What | Status |
