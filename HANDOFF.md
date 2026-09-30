@@ -90,7 +90,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| None | N/A | No active sessions at the moment |
+| Phase 4.0.9 (Offline NLP Tests) | `8279024761787825031` | Building accuracy test suite in `paperpilot-nlp/tests/resolver_accuracy_test.rs` |
 
 ---
 

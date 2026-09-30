@@ -432,7 +432,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver ✅ | Merged (Session 14288794462066623856) |
 | 4.0.8 | Offline NLP → `OperationPlan` output ✅ | Merged (Session 14288794462066623856) |
-| 4.0.9 | Offline NLP unit tests | Test intent classification accuracy against a held-out command dataset; assert >90% top-1 accuracy |
+| 4.0.9 | Offline NLP unit tests 🚧 | In Progress (Session 8279024761787825031) |
 | 4.0.10 | Offline NLP E2E tests | Run real commands through the full offline stack → MCP tool dispatch → file output (No Mocking) |
 
 ---
