@@ -96,19 +96,18 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| (None) | | All E2E sweeps completed! |
+| MCP Schema Fixes (pdf_hash/validate) | `6870604848242545014` | Adding missing handlers and descriptions to `server.rs` |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for E2E Tests:** In ~2-3 hours, check for `CLI_TEST_REPORT.md`, `MCP_TEST_REPORT.md`, `UI_TEST_REPORT.md`, and `SYSTEM_BENCHMARK_REPORT.md`.
-2. **Fix E2E Bugs FIRST:** Review the reports and fix **any and all issues** surfaced by the test sweeps. Do not proceed to new features until the core system is 100% green.
-3. **Trigger Phase 4.F.4 (Native Menu):** Once the core is fully stable and E2E bugs are fixed, trigger the Native Menu prompt to start Phase 4.F:
+1. **Wait for MCP Fixes:** Wait for Jules session `6870604848242545014` to complete and merge. Once merged, verify that MCP E2E tests are 100% green.
+2. **Trigger Phase 4.F.4 (Native Menu):** Once the core is fully stable and E2E bugs are fixed, trigger the Native Menu prompt to start Phase 4.F:
    ```bash
    python3 scripts/jules_submit.py --file prompts/tasks/phase_4/P4_F_4_native_menu.txt
    ```
-4. **Proceed with Viewer & Annotations (4.F):** After the menu is done, move on to building the `pdfjs` viewer and annotation tools.
+3. **Proceed with Viewer & Annotations (4.F):** After the menu is done, move on to building the `pdfjs` viewer and annotation tools.
 
 ---
 
