@@ -3,6 +3,9 @@
   import DropZone from '$lib/components/ui/DropZone.svelte';
   import DocumentList from '$lib/components/ui/DocumentList.svelte';
   import PdfViewer from '$lib/components/PdfViewer.svelte';
+  import PdfToolbar from '$lib/components/PdfToolbar.svelte';
+  import PdfThumbnails from '$lib/components/PdfThumbnails.svelte';
+  import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
@@ -12,6 +15,11 @@
   }
 
   let currentFileUrl = $state('');
+
+  let pdfDoc: any = $state(null);
+  let pageNum = $state(1);
+  let scale = $state(1.2);
+  let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
 
   $effect(() => {
     if (appState.selectedDocumentIndex !== null) {
@@ -49,7 +57,14 @@
             <h3 class="doc-title">{appState.documents[appState.selectedDocumentIndex]?.name}</h3>
           </div>
           <div class="viewer-content">
-            <PdfViewer fileUrl={currentFileUrl} />
+            <PdfThumbnails {pdfDoc} bind:pageNum />
+
+            <div class="viewer-main">
+              <PdfToolbar bind:pageNum {numPages} bind:scale />
+              <PdfViewer fileUrl={currentFileUrl} bind:pdfDoc bind:pageNum bind:scale />
+            </div>
+
+            <PdfInfoPanel {pdfDoc} />
           </div>
         </div>
       {:else}
@@ -166,5 +181,14 @@
     flex: 1;
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: row;
+  }
+
+  .viewer-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 </style>
