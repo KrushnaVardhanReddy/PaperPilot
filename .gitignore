@@ -17,3 +17,4 @@ tools/train-nlp/output/
 tools/train-nlp/logs/
 __pycache__/
 venv/
+tests/bench_fixtures/
