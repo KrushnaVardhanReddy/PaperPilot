@@ -94,13 +94,16 @@ PaperPilot/
 
 ## 🚧 Active Jules Sessions (In-Progress)
 
-| (None) | | All core tests passing and green! |
+| Task | Session ID | What they are doing |
+|---|---|---|
+| Implement 9 Missing PDF Ops | `9822981817873040403` | Implementing fallback/stub operations in `paperpilot-pdf` |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Trigger Phase 4.F.4 (Native Menu):** The core is fully stable and E2E bugs are fixed. Trigger the Native Menu prompt to start Phase 4.F:
+1. **Wait for PDF Operations:** Wait for Jules session `9822981817873040403` to complete and verify the final 9 unsupported MCP tools pass the tests.
+2. **Trigger Phase 4.F.4 (Native Menu):** Once the core is fully stable and E2E bugs are fixed, trigger the Native Menu prompt to start Phase 4.F:
    ```bash
    python3 scripts/jules_submit.py --file prompts/tasks/phase_4/P4_F_4_native_menu.txt
    ```
