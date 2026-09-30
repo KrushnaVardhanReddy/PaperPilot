@@ -1,0 +1,137 @@
+# Task: Phase 4.F.1 — Embedded PDF Viewer (pdfjs-dist)
+
+## Objective
+Integrate Mozilla's `pdfjs-dist` into the Svelte 5 desktop app to render PDF files directly in a `<canvas>`. Build a robust `PdfViewer.svelte` component that supports pagination and basic zooming.
+
+## Requirements
+- Use Svelte 5 Runes (`$state`, `$effect`, `$derived`) for state management.
+- Use `pdfjs-dist` to parse and render the PDF pages onto an HTML5 canvas.
+- The viewer must handle loading the PDF.js worker correctly in a Vite environment.
+- Create a basic toolbar with "Previous Page", "Next Page", and "Zoom In/Out" controls.
+
+### 1. Component Structure
+You will need to create or update the following files in `apps/desktop/src/`:
+1. **`lib/components/PdfViewer.svelte`** -> The main canvas renderer and PDF.js wrapper.
+2. **`lib/components/PdfToolbar.svelte`** -> Pagination and zoom controls.
+3. **`routes/+page.svelte`** -> Update the main page to mount the `PdfViewer` component when a file is loaded (replacing or augmenting the DropZone).
+
+### 2. Implementation Details
+
+First, install the library in the `apps/desktop` directory:
+```bash
+cd apps/desktop
+npm install pdfjs-dist
+```
+
+Because Vite handles static assets differently, you must configure the PDF.js worker inside your component like this:
+
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import * as pdfjsLib from 'pdfjs-dist';
+  
+  // Vite worker import trick
+  import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+  let { fileUrl = '' } = $props();
+  
+  let canvas: HTMLCanvasElement;
+  let pdfDoc: pdfjsLib.PDFDocumentProxy | null = $state(null);
+  let pageNum = $state(1);
+  let scale = $state(1.2);
+  let numPages = $state(0);
+  let isRendering = $state(false);
+
+  async function loadDocument() {
+    if (!fileUrl) return;
+    try {
+      const loadingTask = pdfjsLib.getDocument(fileUrl);
+      pdfDoc = await loadingTask.promise;
+      numPages = pdfDoc.numPages;
+      pageNum = 1;
+      renderPage();
+    } catch (err) {
+      console.error("Error loading PDF:", err);
+    }
+  }
+
+  async function renderPage() {
+    if (!pdfDoc || !canvas || isRendering) return;
+    isRendering = true;
+    
+    try {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale });
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Handle high-DPI displays (retina screens)
+      const outputScale = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = Math.floor(viewport.width) + "px";
+      canvas.style.height = Math.floor(viewport.height) + "px";
+
+      const transform = outputScale !== 1 
+        ? [outputScale, 0, 0, outputScale, 0, 0] 
+        : null;
+
+      const renderContext = {
+        canvasContext: ctx,
+        transform,
+        viewport,
+      };
+
+      await page.render(renderContext).promise;
+    } catch (err) {
+      console.error("Render error:", err);
+    } finally {
+      isRendering = false;
+    }
+  }
+
+  // Reactively re-render when fileUrl, pageNum, or scale changes
+  $effect(() => {
+    if (fileUrl) loadDocument();
+  });
+
+  $effect(() => {
+    if (pdfDoc) renderPage();
+  });
+</script>
+
+<div class="viewer-container">
+  <canvas bind:this={canvas}></canvas>
+</div>
+
+<style>
+  .viewer-container {
+    display: flex;
+    justify-content: center;
+    overflow: auto;
+    background-color: #f3f4f6; /* light gray backdrop */
+    padding: 2rem;
+    height: 100%;
+  }
+  canvas {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    background-color: white;
+  }
+</style>
+```
+
+### 3. Toolbar Controls
+Create a small `PdfToolbar.svelte` that binds to `pageNum`, `numPages`, and `scale`.
+- "Prev" button (disabled if `pageNum <= 1`)
+- "Next" button (disabled if `pageNum >= numPages`)
+- Zoom buttons (`scale += 0.2` / `scale -= 0.2`)
+
+## Verification Steps
+1. Run `npm run dev` in `apps/desktop`.
+2. Provide a valid test `fileUrl` (e.g., place a `test.pdf` in `apps/desktop/static/` and pass `fileUrl="/test.pdf"`).
+3. Verify that the PDF renders onto the canvas cleanly.
+4. Verify that clicking "Next Page" successfully renders page 2.
+5. Verify that zooming in increases the canvas rendering scale without making it blurry (thanks to the devicePixelRatio handling).
