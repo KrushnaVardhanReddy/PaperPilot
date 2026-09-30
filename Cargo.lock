@@ -3666,7 +3666,9 @@ name = "paperpilot-nlp"
 version = "0.1.0"
 dependencies = [
  "aho-corasick",
+ "lazy_static",
  "paperpilot-core",
+ "regex",
  "thiserror 2.0.21",
 ]
 
