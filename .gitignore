@@ -18,3 +18,4 @@ tools/train-nlp/logs/
 __pycache__/
 venv/
 tests/e2e_fixtures/
+tests/bench_fixtures/

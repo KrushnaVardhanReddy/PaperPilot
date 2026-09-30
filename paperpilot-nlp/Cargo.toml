@@ -15,3 +15,8 @@ paperpilot-mcp = { path = "../paperpilot-mcp" }
 lopdf = "0.45.0"
 serde_json = "1.0.151"
 rmcp = "3.5.0"
+criterion = "0.8.2"
+
+[[bench]]
+name = "nlp_resolver"
+harness = false
