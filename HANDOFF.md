@@ -96,14 +96,13 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.F.4 Native Menu | `6071845476508957630` | Building Tauri v2 native desktop menu bar (File/Edit/View/Help) |
 | Phase 4.F.1 PDF Viewer | `14901891694995485696` | Integrating pdfjs-dist into Svelte and building PdfViewer component |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for Native Menu & Viewer:** Wait for both Jules sessions to complete. Verify the menu works and the PDF viewer loads `test.pdf` onto the canvas.
+1. **Wait for PDF Viewer:** Wait for Jules session `14901891694995485696` to complete and verify it loads `test.pdf` onto the canvas.
 2. **Proceed with Annotations (4.F.2):** Once the viewer works, start building the annotation layer on top of it.
 
 ---
