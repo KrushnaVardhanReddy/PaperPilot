@@ -1,0 +1,7 @@
+transformers
+torch
+optimum[onnxruntime]
+onnxruntime
+scikit-learn
+datasets
+pandas

@@ -10,3 +10,10 @@ build/
 pricing_strategy.md
 COMPETITORS.md
 v1_launch_plan.md
+tools/train-nlp/dataset.csv
+tools/train-nlp/results/
+tools/train-nlp/temp_model/
+tools/train-nlp/output/
+tools/train-nlp/logs/
+__pycache__/
+venv/
