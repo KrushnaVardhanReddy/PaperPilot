@@ -86,6 +86,7 @@ PaperPilot/
 | Phase 4.0.9 (Offline NLP Tests) | ✅ Complete | Accuracy test suite in `resolver_accuracy_test.rs` |
 | Phase 4.0.10 (Offline E2E) | ✅ Complete | NLP output to actual MCP file modifications |
 | Phase E.1 (CLI E2E) | ✅ Complete | Automated E2E testing sweep of `paperpilot-cli` |
+| Phase E.2 (MCP E2E) | ✅ Complete | Automated JSON-RPC stdio testing of `paperpilot-mcp` |
 | Phase E.3 (UI E2E) | ✅ Complete | Playwright UI tests for the Svelte/Tauri app |
 | Phase E.4 (Benchmark) | ✅ Complete | System performance & latency testing |
 
@@ -95,7 +96,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase E.2 (MCP E2E) | `8173916483370105862` | Automated JSON-RPC stdio testing of `paperpilot-mcp` |
+| (None) | | All E2E sweeps completed! |
 
 ---
 
