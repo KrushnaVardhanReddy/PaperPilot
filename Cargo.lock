@@ -1945,6 +1945,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gen-e2e-fixtures"
+version = "0.1.0"
+dependencies = [
+ "lopdf",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
