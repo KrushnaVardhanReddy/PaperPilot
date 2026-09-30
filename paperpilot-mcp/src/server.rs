@@ -1026,8 +1026,14 @@ impl PaperPilotMcpServer {
         tool_docx.description =
             Some("Converts a PDF document to DOCX format by extracting its text.".into());
         let mut d_props = serde_json::Map::new();
-        d_props.insert("input".into(), serde_json::json!({ "type": "string" }));
-        d_props.insert("output".into(), serde_json::json!({ "type": "string" }));
+        d_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        d_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output file path." }),
+        );
         tool_docx.input_schema = std::sync::Arc::new(
             serde_json::json!({
                 "type": "object",
@@ -1046,8 +1052,14 @@ impl PaperPilotMcpServer {
             "Converts a PDF document to XLSX format by using best effort table extraction.".into(),
         );
         let mut x_props = serde_json::Map::new();
-        x_props.insert("input".into(), serde_json::json!({ "type": "string" }));
-        x_props.insert("output".into(), serde_json::json!({ "type": "string" }));
+        x_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        x_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output file path." }),
+        );
         tool_xlsx.input_schema = std::sync::Arc::new(
             serde_json::json!({
                 "type": "object",
@@ -1065,8 +1077,14 @@ impl PaperPilotMcpServer {
         tool_pptx.description =
             Some("Converts a PDF document to PPTX format via best effort slide generation.".into());
         let mut p_props = serde_json::Map::new();
-        p_props.insert("input".into(), serde_json::json!({ "type": "string" }));
-        p_props.insert("output".into(), serde_json::json!({ "type": "string" }));
+        p_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        p_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output file path." }),
+        );
         tool_pptx.input_schema = std::sync::Arc::new(
             serde_json::json!({
                 "type": "object",
@@ -1084,7 +1102,10 @@ impl PaperPilotMcpServer {
         tool_class.description =
             Some("Classifies the PDF document type based on heuristics.".into());
         let mut c_props = serde_json::Map::new();
-        c_props.insert("input".into(), serde_json::json!({ "type": "string" }));
+        c_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
         tool_class.input_schema = std::sync::Arc::new(
             serde_json::json!({
                 "type": "object",
@@ -1111,6 +1132,10 @@ impl PaperPilotMcpServer {
         input_rf.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        input_rf.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
         );
         props_rf.insert("input".to_string(), serde_json::Value::Object(input_rf));
         schema_rf.insert(
@@ -1140,6 +1165,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        input_ff.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_ff.insert("input".to_string(), serde_json::Value::Object(input_ff));
 
         let mut values_ff = serde_json::Map::new();
@@ -1147,12 +1176,20 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("object".to_string()),
         );
+        values_ff.insert(
+            "description".to_string(),
+            serde_json::Value::String("Values to fill.".to_string()),
+        );
         props_ff.insert("values".to_string(), serde_json::Value::Object(values_ff));
 
         let mut output_ff = serde_json::Map::new();
         output_ff.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        output_ff.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_ff.insert("output".to_string(), serde_json::Value::Object(output_ff));
 
@@ -1188,11 +1225,19 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        p1.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_cf.insert("input".to_string(), serde_json::Value::Object(p1));
         let mut p2 = serde_json::Map::new();
         p2.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        p2.insert(
+            "description".to_string(),
+            serde_json::Value::String("Field name.".to_string()),
         );
         props_cf.insert("field_name".to_string(), serde_json::Value::Object(p2));
         let mut p3 = serde_json::Map::new();
@@ -1200,11 +1245,19 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        p3.insert(
+            "description".to_string(),
+            serde_json::Value::String("Field type.".to_string()),
+        );
         props_cf.insert("field_type".to_string(), serde_json::Value::Object(p3));
         let mut p4 = serde_json::Map::new();
         p4.insert(
             "type".to_string(),
             serde_json::Value::String("integer".to_string()),
+        );
+        p4.insert(
+            "description".to_string(),
+            serde_json::Value::String("Page number.".to_string()),
         );
         props_cf.insert("page".to_string(), serde_json::Value::Object(p4));
         let mut p5 = serde_json::Map::new();
@@ -1212,11 +1265,19 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
         );
+        p5.insert(
+            "description".to_string(),
+            serde_json::Value::String("X coordinate.".to_string()),
+        );
         props_cf.insert("x".to_string(), serde_json::Value::Object(p5));
         let mut p6 = serde_json::Map::new();
         p6.insert(
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
+        );
+        p6.insert(
+            "description".to_string(),
+            serde_json::Value::String("Y coordinate.".to_string()),
         );
         props_cf.insert("y".to_string(), serde_json::Value::Object(p6));
         let mut p7 = serde_json::Map::new();
@@ -1224,17 +1285,29 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
         );
+        p7.insert(
+            "description".to_string(),
+            serde_json::Value::String("Width.".to_string()),
+        );
         props_cf.insert("width".to_string(), serde_json::Value::Object(p7));
         let mut p8 = serde_json::Map::new();
         p8.insert(
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
         );
+        p8.insert(
+            "description".to_string(),
+            serde_json::Value::String("Height.".to_string()),
+        );
         props_cf.insert("height".to_string(), serde_json::Value::Object(p8));
         let mut p9 = serde_json::Map::new();
         p9.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        p9.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_cf.insert("output".to_string(), serde_json::Value::Object(p9));
 
@@ -1538,6 +1611,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
         );
+        prop_x_redact.insert(
+            "description".to_string(),
+            serde_json::Value::String("X coordinate.".to_string()),
+        );
         props_redact.insert("x".to_string(), serde_json::Value::Object(prop_x_redact));
 
         let mut prop_y_redact = serde_json::Map::new();
@@ -1545,12 +1622,20 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
         );
+        prop_y_redact.insert(
+            "description".to_string(),
+            serde_json::Value::String("Y coordinate.".to_string()),
+        );
         props_redact.insert("y".to_string(), serde_json::Value::Object(prop_y_redact));
 
         let mut prop_width_redact = serde_json::Map::new();
         prop_width_redact.insert(
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
+        );
+        prop_width_redact.insert(
+            "description".to_string(),
+            serde_json::Value::String("Width.".to_string()),
         );
         props_redact.insert(
             "width".to_string(),
@@ -1561,6 +1646,10 @@ impl PaperPilotMcpServer {
         prop_height_redact.insert(
             "type".to_string(),
             serde_json::Value::String("number".to_string()),
+        );
+        prop_height_redact.insert(
+            "description".to_string(),
+            serde_json::Value::String("Height.".to_string()),
         );
         props_redact.insert(
             "height".to_string(),
@@ -1604,6 +1693,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_hf.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_hf.insert(
             "input".to_string(),
             serde_json::Value::Object(prop_input_hf),
@@ -1614,6 +1707,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_output_hf.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
         props_hf.insert(
             "output".to_string(),
             serde_json::Value::Object(prop_output_hf),
@@ -1623,6 +1720,10 @@ impl PaperPilotMcpServer {
         prop_text_hf.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_text_hf.insert(
+            "description".to_string(),
+            serde_json::Value::String("Text to add.".to_string()),
         );
         props_hf.insert("text".to_string(), serde_json::Value::Object(prop_text_hf));
 
@@ -1674,6 +1775,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_bates.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_bates.insert(
             "input".to_string(),
             serde_json::Value::Object(prop_input_bates),
@@ -1683,6 +1788,10 @@ impl PaperPilotMcpServer {
         prop_output_bates.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_bates.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_bates.insert(
             "output".to_string(),
@@ -1694,6 +1803,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("integer".to_string()),
         );
+        prop_start_num.insert(
+            "description".to_string(),
+            serde_json::Value::String("Start number.".to_string()),
+        );
         props_bates.insert(
             "start_number".to_string(),
             serde_json::Value::Object(prop_start_num),
@@ -1704,12 +1817,20 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_prefix.insert(
+            "description".to_string(),
+            serde_json::Value::String("Prefix.".to_string()),
+        );
         props_bates.insert("prefix".to_string(), serde_json::Value::Object(prop_prefix));
 
         let mut prop_padding = serde_json::Map::new();
         prop_padding.insert(
             "type".to_string(),
             serde_json::Value::String("integer".to_string()),
+        );
+        prop_padding.insert(
+            "description".to_string(),
+            serde_json::Value::String("Padding length.".to_string()),
         );
         props_bates.insert(
             "padding".to_string(),
@@ -1751,6 +1872,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_render.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_render.insert(
             "input".to_string(),
             serde_json::Value::Object(prop_input_render),
@@ -1760,6 +1885,10 @@ impl PaperPilotMcpServer {
         prop_output_render.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_render.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_render.insert(
             "output".to_string(),
@@ -1798,6 +1927,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("array".to_string()),
         );
+        prop_inputs_itp.insert(
+            "description".to_string(),
+            serde_json::Value::String("List of image paths.".to_string()),
+        );
 
         let mut prop_items_itp = serde_json::Map::new();
         prop_items_itp.insert(
@@ -1817,6 +1950,10 @@ impl PaperPilotMcpServer {
         prop_output_itp.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_itp.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_itp.insert(
             "output".to_string(),
@@ -1855,6 +1992,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_a_compare.insert(
+            "description".to_string(),
+            serde_json::Value::String("First input PDF file path.".to_string()),
+        );
         props_compare.insert(
             "input_a".to_string(),
             serde_json::Value::Object(prop_input_a_compare),
@@ -1865,6 +2006,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_b_compare.insert(
+            "description".to_string(),
+            serde_json::Value::String("Second input PDF file path.".to_string()),
+        );
         props_compare.insert(
             "input_b".to_string(),
             serde_json::Value::Object(prop_input_b_compare),
@@ -1874,6 +2019,10 @@ impl PaperPilotMcpServer {
         prop_output_compare.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_compare.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output diff file path.".to_string()),
         );
         props_compare.insert(
             "output".to_string(),
@@ -1913,6 +2062,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_bookmarks.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_bookmarks.insert(
             "input".to_string(),
             serde_json::Value::Object(prop_input_bookmarks),
@@ -1922,6 +2075,10 @@ impl PaperPilotMcpServer {
         prop_output_bookmarks.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_bookmarks.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_bookmarks.insert(
             "output".to_string(),
@@ -1960,6 +2117,10 @@ impl PaperPilotMcpServer {
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
         );
+        prop_input_ocr.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
         props_ocr.insert(
             "input".to_string(),
             serde_json::Value::Object(prop_input_ocr),
@@ -1969,6 +2130,10 @@ impl PaperPilotMcpServer {
         prop_output_ocr.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_ocr.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         props_ocr.insert(
             "output".to_string(),
@@ -2009,6 +2174,10 @@ impl PaperPilotMcpServer {
         );
         prop_input_sign.insert(
             "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        prop_input_sign.insert(
+            "description".to_string(),
             serde_json::Value::String("Path to the PDF to sign.".to_string()),
         );
         props_sign.insert(
@@ -2020,6 +2189,10 @@ impl PaperPilotMcpServer {
         prop_output_sign.insert(
             "type".to_string(),
             serde_json::Value::String("string".to_string()),
+        );
+        prop_output_sign.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
         );
         prop_output_sign.insert(
             "description".to_string(),
@@ -2050,6 +2223,74 @@ impl PaperPilotMcpServer {
         tool_sign.description = Some("Digitally signs a PDF document (Currently a stub).".into());
         tool_sign.input_schema = Arc::new(schema_sign);
         tools.push(tool_sign);
+
+        // Tool: pdf_hash
+        let mut schema_hash = serde_json::Map::new();
+        schema_hash.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_hash = serde_json::Map::new();
+        let mut prop_input_hash = serde_json::Map::new();
+        prop_input_hash.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_hash.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        props_hash.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_hash),
+        );
+        schema_hash.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_hash),
+        );
+        schema_hash.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
+        );
+        let mut tool_hash = Tool::default();
+        tool_hash.name = "pdf_hash".into();
+        tool_hash.description = Some("Calculates integrity hash for a PDF.".into());
+        tool_hash.input_schema = std::sync::Arc::new(schema_hash);
+        tools.push(tool_hash);
+
+        // Tool: pdf_validate
+        let mut schema_val = serde_json::Map::new();
+        schema_val.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_val = serde_json::Map::new();
+        let mut prop_input_val = serde_json::Map::new();
+        prop_input_val.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_val.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        props_val.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_val),
+        );
+        schema_val.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_val),
+        );
+        schema_val.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
+        );
+        let mut tool_val = Tool::default();
+        tool_val.name = "pdf_validate".into();
+        tool_val.description = Some("Validates a PDF document.".into());
+        tool_val.input_schema = std::sync::Arc::new(schema_val);
+        tools.push(tool_val);
 
         Ok(ListToolsResult {
             tools,
@@ -3020,6 +3261,36 @@ impl PaperPilotMcpServer {
                     output_path: Some(output),
                 })
             }
+
+            "pdf_hash" => {
+                let input = get_string("input")?;
+                let op = paperpilot_pdf::operations::hash::IntegrityHashOperation::new(
+                    std::path::PathBuf::from(&input),
+                );
+                let mut doc = paperpilot_pdf::document::LopdfDocument::new(); // Dummy doc
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                let result = op.hash_result.lock().unwrap();
+                let (hash, _size) = result.as_ref().unwrap();
+                Ok(OperationResult {
+                    success: true,
+                    message: "Hash calculated".to_string(),
+                    output_path: Some(hash.clone()),
+                })
+            }
+            "pdf_validate" => {
+                let input = get_string("input")?;
+                let mut doc = paperpilot_pdf::document::LopdfDocument::load(
+                    &std::path::PathBuf::from(&input),
+                )
+                .map_err(crate::error::to_mcp_error)?;
+                let op = paperpilot_pdf::operations::validate::ValidateOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                Ok(OperationResult {
+                    success: true,
+                    message: "Document is valid".to_string(),
+                    output_path: Some("true".to_string()),
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -3058,7 +3329,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 36);
+        assert_eq!(res.tools.len(), 38);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }
@@ -3242,6 +3513,38 @@ mod tests {
             serde_json::json!({
                 "input": "nonexistent.pdf",
                 "output": "/tmp/signed.pdf"
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_hash() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_hash".into();
+        request.arguments = Some(
+            serde_json::json!({
+                "input": "nonexistent.pdf",
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_validate() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_validate".into();
+        request.arguments = Some(
+            serde_json::json!({
+                "input": "nonexistent.pdf",
             })
             .as_object()
             .unwrap()
