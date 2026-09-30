@@ -1,0 +1,178 @@
+---
+Task: Phase 4.0.7 + 4.0.8 — Ambiguity Resolver & OperationPlan Output
+---
+
+Hey Jules! We are completing the core offline NLP pipeline in `paperpilot-nlp`. We have:
+- `intent.rs` — Intent enum with ~45 variants and their aliases
+- `layer1.rs` — Aho-Corasick keyword matcher (`RuleEngine`) that returns `Option<Intent>`
+- `entities.rs` — Regex extractor returning `ExtractedEntities { files, page_ranges, angles, passwords }`
+- `traits.rs` — The `NlpResolver` trait and `OperationPlan` / `NlpError` types
+
+In this task you will implement **two small modules** and **wire everything together** into a working `OfflineNlpResolver` that fully implements the `NlpResolver` trait.
+
+---
+
+## Part A — Phase 4.0.7: Ambiguity Resolver
+
+Create `paperpilot-nlp/src/ambiguity.rs` and export it in `lib.rs`.
+
+### What it does
+When `RuleEngine::predict()` returns `None` (no confident keyword match), we don't want to silently fail. We need to detect this and surface a helpful error. Additionally, if `ExtractedEntities` is missing critical arguments for the matched intent, we should flag that too.
+
+### Implementation
+
+```rust
+use crate::intent::Intent;
+use crate::entities::ExtractedEntities;
+use crate::traits::NlpError;
+
+/// Check if we have enough extracted entities to proceed with the intent.
+/// Returns Ok(()) if sufficient, or Err(NlpError::MissingParameters) if not.
+pub fn check_completeness(intent: &Intent, entities: &ExtractedEntities) -> Result<(), NlpError> {
+    // Operations that require at least one input file:
+    let needs_file = matches!(intent,
+        Intent::Merge | Intent::Split | Intent::Rotate | Intent::Extract |
+        Intent::Delete | Intent::Reorder | Intent::Encrypt | Intent::Decrypt |
+        Intent::Compress | Intent::Watermark | Intent::Redact | Intent::ExtractText |
+        Intent::ExtractImages | Intent::Validate | Intent::Repair
+        // etc. — add all operations that require a file argument
+    );
+
+    if needs_file && entities.files.is_empty() {
+        return Err(NlpError::MissingParameters(
+            format!("Operation '{:?}' requires at least one PDF file path. Example: 'rotate my_file.pdf 90 degrees'", intent)
+        ));
+    }
+
+    // Rotation requires an angle
+    if matches!(intent, Intent::Rotate) && entities.angles.is_empty() {
+        return Err(NlpError::MissingParameters(
+            "Rotate operation requires an angle (90, 180, or 270).".to_string()
+        ));
+    }
+
+    Ok(())
+}
+```
+
+### Tests
+Write at least 3 unit tests:
+- Merge with files → `Ok(())`
+- Merge with no files → `Err(MissingParameters)`
+- Rotate with no angle → `Err(MissingParameters)`
+
+---
+
+## Part B — Phase 4.0.8: OperationPlan Output & OfflineNlpResolver
+
+### 1. Flesh out OperationPlan in `traits.rs`
+
+Replace the placeholder `OperationPlan` struct (which currently has a `// TODO`) with a real implementation:
+
+```rust
+use crate::intent::Intent;
+use crate::entities::ExtractedEntities;
+
+#[derive(Debug, Clone)]
+pub struct OperationPlan {
+    pub intent: Intent,
+    pub input_files: Vec<String>,
+    pub output_file: Option<String>,
+    pub page_ranges: Vec<String>,
+    pub angles: Vec<i32>,
+    pub passwords: Vec<String>,
+    pub raw_query: String,
+}
+
+impl OperationPlan {
+    pub fn new(intent: Intent, entities: ExtractedEntities, raw_query: String) -> Self {
+        // Separate the last file as output if multiple files and intent is Merge
+        let (inputs, output) = Self::split_io(intent.clone(), entities.files);
+        OperationPlan {
+            intent,
+            input_files: inputs,
+            output_file: output,
+            page_ranges: entities.page_ranges,
+            angles: entities.angles,
+            passwords: entities.passwords,
+            raw_query,
+        }
+    }
+
+    fn split_io(intent: Intent, files: Vec<String>) -> (Vec<String>, Option<String>) {
+        // Heuristic: if 2+ files and intent is Merge, last file is output
+        if matches!(intent, Intent::Merge) && files.len() >= 2 {
+            let mut inputs = files;
+            let output = inputs.pop();
+            (inputs, output)
+        } else {
+            (files, None)
+        }
+    }
+}
+```
+
+### 2. Create OfflineNlpResolver
+
+Create `paperpilot-nlp/src/resolver.rs` and export it in `lib.rs`.
+
+Implement the `NlpResolver` trait:
+
+```rust
+use crate::traits::{NlpResolver, OperationPlan, NlpError};
+use crate::layer1::RuleEngine;
+use crate::entities::extract_entities;
+use crate::ambiguity::check_completeness;
+
+pub struct OfflineNlpResolver {
+    engine: RuleEngine,
+}
+
+impl OfflineNlpResolver {
+    pub fn new() -> Self {
+        OfflineNlpResolver { engine: RuleEngine::new() }
+    }
+}
+
+impl NlpResolver for OfflineNlpResolver {
+    fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError> {
+        // 1. Classify the intent
+        let intent = self.engine.predict(query)
+            .ok_or_else(|| NlpError::AmbiguousIntent(
+                format!("Could not identify a PDF operation in: '{}'", query)
+            ))?;
+
+        // 2. Extract entities
+        let entities = extract_entities(query);
+
+        // 3. Check completeness
+        check_completeness(&intent, &entities)?;
+
+        // 4. Build and return the plan
+        Ok(OperationPlan::new(intent, entities, query.to_string()))
+    }
+}
+```
+
+### Tests for OfflineNlpResolver
+Write at least 4 tests in `resolver.rs`:
+- `"merge a.pdf and b.pdf into output.pdf"` → `Ok` with `Merge` intent, 2 inputs, 1 output
+- `"rotate doc.pdf 90 degrees"` → `Ok` with `Rotate` intent, angle = 90
+- `"do something unrelated"` → `Err(AmbiguousIntent)`
+- `"merge"` (no files) → `Err(MissingParameters)`
+
+---
+
+## Summary of Files to Create/Modify
+
+| File | Action |
+|---|---|
+| `paperpilot-nlp/src/ambiguity.rs` | **Create** |
+| `paperpilot-nlp/src/resolver.rs` | **Create** |
+| `paperpilot-nlp/src/traits.rs` | **Modify** (flesh out `OperationPlan`) |
+| `paperpilot-nlp/src/lib.rs` | **Modify** (add `pub mod ambiguity; pub mod resolver;`) |
+
+## Rules & Constraints
+1. Only touch `paperpilot-nlp/`. Zero changes to other crates.
+2. `cargo clippy --workspace` must pass with 0 warnings.
+3. `cargo test -p paperpilot-nlp` must pass.
