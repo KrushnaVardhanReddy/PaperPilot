@@ -5,17 +5,16 @@
   // Vite worker import trick
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-  import PdfToolbar from './PdfToolbar.svelte';
-
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-  let { fileUrl = '' } = $props();
+  let {
+    fileUrl = '',
+    pdfDoc = $bindable(null),
+    pageNum = $bindable(1),
+    scale = $bindable(1.2)
+  } = $props();
 
   let canvas: HTMLCanvasElement;
-  let pdfDoc: pdfjsLib.PDFDocumentProxy | null = $state(null);
-  let pageNum = $state(1);
-  let scale = $state(1.2);
-  let numPages = $state(0);
   let isRendering = false; // Not a $state to prevent infinite loops in effects
 
   async function loadDocument(url: string) {
@@ -23,7 +22,6 @@
     try {
       const loadingTask = pdfjsLib.getDocument({ url });
       pdfDoc = await loadingTask.promise;
-      numPages = pdfDoc.numPages;
       pageNum = 1;
     } catch (err) {
       console.error("Error loading PDF:", err);
@@ -82,8 +80,6 @@
 </script>
 
 <div class="pdf-viewer-wrapper">
-  <PdfToolbar bind:pageNum bind:scale {numPages} />
-
   <div class="viewer-container">
     <canvas bind:this={canvas}></canvas>
   </div>
