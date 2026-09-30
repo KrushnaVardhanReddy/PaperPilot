@@ -1,0 +1,131 @@
+# Task: Phase 4.F.3 — Form Filling (V2: Review Fixes)
+
+## Objective
+Implement interactive form filling capabilities for AcroForm PDFs. When a PDF contains form fields (text boxes, checkboxes, radio buttons, dropdowns), we need to detect them using `pdfjs-dist` and render native HTML input overlays on top of the `<canvas>`.
+*(Note: You have a great foundation from the previous session; now you must apply the critical code review fixes to ensure robust functionality and E2E verification).*
+
+## Requirements
+- Use Svelte 5 Runes (`$state`, `$effect`, `$derived`).
+- Build beautiful, modern UI components with standard CSS (no Tailwind).
+- You must complete all of the following sub-tasks for Phase 4.F.3:
+  - **F.3.1 Detect interactive form fields**: Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown).
+  - **F.3.2 Render editable form overlays**: Show native HTML `<input>` / `<select>` overlays on top of field positions.
+  - **F.3.3 Save filled form to PDF**: Write field values back into the PDF file via `paperpilot-pdf`.
+  - **F.3.4 Form fill E2E test**: Load a form PDF, fill all fields, save, reload and verify field values persist.
+- Overlay HTML form inputs precisely on top of the PDF canvas using coordinates provided by PDF.js field annotations.
+- Bind the input values so they can be saved back to the PDF later.
+
+## CRITICAL FIXES FOR THIS SESSION
+You MUST implement the following fixes based on code review feedback:
+1. **Initial Value Hydration**: Existing form values in the PDF must be read correctly so that already-filled PDFs don't display blank HTML inputs on top.
+2. **Type Casting**: The `formValues` for checkboxes binds to a boolean, but the Rust backend expects strings. Ensure you cast booleans to string values before passing them to the Tauri backend.
+3. **Robust E2E Validation**: The Playwright E2E test must actually reload the PDF after saving to verify that the field values persisted into the physical file, rather than just stopping at the success toast.
+4. **Button Visibility**: The "Save Form" button should be visible based on whether the document contains form fields initially, rather than only appearing after a user starts typing.
+
+### 1. Component Structure
+You will need to create or update the following files in `apps/desktop/src/`:
+1. **`lib/components/PdfFormLayer.svelte`** -> An overlay placed exactly over the PDF `<canvas>` that parses and renders form fields.
+2. **`lib/api/pdf.ts`** -> Tauri invoke wrappers to call `paperpilot-pdf` to save form fields.
+
+### 2. Implementation Details
+
+#### Form Layer (`PdfFormLayer.svelte`)
+Use `page.getAnnotations()` from PDF.js to find widget annotations corresponding to form fields.
+```svelte
+<script lang="ts">
+  import * as pdfjsLib from 'pdfjs-dist';
+
+  let { pdfDoc, pageNum, scale, formValues = $bindable({}) } = $props();
+  let fields: any[] = $state([]);
+
+  $effect(() => {
+    async function fetchFields() {
+      if (!pdfDoc) return;
+      const page = await pdfDoc.getPage(pageNum);
+      const annotations = await page.getAnnotations();
+      
+      // Filter for AcroForm Widgets (Widget type is 20)
+      fields = annotations.filter(a => a.subtype === 'Widget' && a.fieldType);
+    }
+    fetchFields();
+  });
+
+  // Convert PDF coordinates (which are from the bottom-left corner) 
+  // to CSS coordinates (top-left) based on the current scale.
+  function getFieldStyle(field: any) {
+    // field.rect = [x_ll, y_ll, x_ur, y_ur]
+    const [x, y, width, height] = field.rect;
+    // Note: PDF.js provides utility functions to transform these arrays easily using the viewport.
+    return `left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
+  }
+</script>
+
+<div class="form-layer" style="transform: scale({scale}); transform-origin: top left;">
+  {#each fields as field}
+    {#if field.fieldType === 'Tx'}
+      <!-- Text Field -->
+      <input 
+        type="text" 
+        class="pdf-input" 
+        style={getFieldStyle(field)} 
+        bind:value={formValues[field.fieldName]} 
+        placeholder={field.alternativeText || ''}
+      />
+    {:else if field.fieldType === 'Btn'}
+      <!-- Checkbox or Radio -->
+      <input 
+        type={field.checkBox ? 'checkbox' : 'radio'} 
+        class="pdf-checkbox" 
+        style={getFieldStyle(field)} 
+        bind:checked={formValues[field.fieldName]} 
+      />
+    {:else if field.fieldType === 'Ch'}
+      <!-- Dropdown -->
+      <select class="pdf-select" style={getFieldStyle(field)} bind:value={formValues[field.fieldName]}>
+        {#each field.options || [] as option}
+          <option value={option.exportValue}>{option.displayValue}</option>
+        {/each}
+      </select>
+    {/if}
+  {/each}
+</div>
+
+<style>
+  .form-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .pdf-input, .pdf-select {
+    position: absolute;
+    background: rgba(238, 242, 255, 0.4); /* subtle blue tint */
+    border: 1px solid #c7d2fe;
+    font-family: inherit;
+    padding: 2px;
+  }
+  .pdf-input:focus, .pdf-select:focus {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #4f46e5;
+    outline: none;
+  }
+</style>
+```
+
+#### Viewer Integration (`routes/+page.svelte`)
+Include the form layer in the PDF wrapper alongside the annotation layer.
+```svelte
+    <div class="pdf-wrapper">
+      <PdfViewer {fileUrl} bind:pdfDoc bind:pageNum bind:scale />
+      <PdfAnnotationLayer {scale} {pageNum} bind:annotations activeTool={activeTool} />
+      <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues />
+    </div>
+```
+
+## Verification Steps
+1. Run `npm run dev` in `apps/desktop`.
+2. Open a PDF that contains AcroForm fields.
+3. Verify that the fields render correctly positioned on top of the document, AND that existing values are populated correctly.
+4. Verify you can type into text fields and toggle checkboxes.
+5. Verify zooming the document correctly scales and repositions the input fields.

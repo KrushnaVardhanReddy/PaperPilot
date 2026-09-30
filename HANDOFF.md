@@ -96,8 +96,8 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.F.2 Annotations | `10367502172143029328` | Building the PDF annotation overlays (highlight, pen, sticky notes) |
-| Phase 4.F.3 Form Filling | `6603654323246619177` | Detecting and rendering HTML form inputs over the PDF canvas |
+| Phase 4.F.2 Annotations (V2) | `14771112096253112493` | Perfecting coordinate mapping for PDF annotation overlays |
+| Phase 4.F.3 Form Filling (V2) | `18047202170093336005` | Applying code review fixes for form parsing and persistence |
 
 ---
 

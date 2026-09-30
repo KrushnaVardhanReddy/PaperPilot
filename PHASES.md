@@ -466,22 +466,22 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.2.1 | Highlight tool | 🚧 Select text on a page and apply a coloured highlight (yellow, green, pink) (Session 10367502172143029328) |
-| F.2.2 | Underline & Strikethrough | 🚧 Text markup tools matching standard annotation conventions (Session 10367502172143029328) |
-| F.2.3 | Sticky note / Comment | 🚧 Click anywhere on a page to attach a floating comment bubble (Session 10367502172143029328) |
-| F.2.4 | Free-draw tool | 🚧 Draw freehand lines or shapes (pen tool) on top of a page (Session 10367502172143029328) |
-| F.2.5 | Annotation panel | 🚧 Side panel listing all annotations in the document with page references (Session 10367502172143029328) |
-| F.2.6 | Save annotations to PDF | 🚧 Flatten or embed annotations into the PDF via `paperpilot-pdf` (Session 10367502172143029328) |
-| F.2.7 | Annotation unit tests | 🚧 Verify annotation add/remove/serialize round-trips correctly (Session 10367502172143029328) |
+| F.2.1 | Highlight tool | 🚧 Select text on a page and apply a coloured highlight (yellow, green, pink) (Session 14771112096253112493) |
+| F.2.2 | Underline & Strikethrough | 🚧 Text markup tools matching standard annotation conventions (Session 14771112096253112493) |
+| F.2.3 | Sticky note / Comment | 🚧 Click anywhere on a page to attach a floating comment bubble (Session 14771112096253112493) |
+| F.2.4 | Free-draw tool | 🚧 Draw freehand lines or shapes (pen tool) on top of a page (Session 14771112096253112493) |
+| F.2.5 | Annotation panel | 🚧 Side panel listing all annotations in the document with page references (Session 14771112096253112493) |
+| F.2.6 | Save annotations to PDF | 🚧 Flatten or embed annotations into the PDF via `paperpilot-pdf` (Session 14771112096253112493) |
+| F.2.7 | Annotation unit tests | 🚧 Verify annotation add/remove/serialize round-trips correctly (Session 14771112096253112493) |
 
 #### 4.F.3 — Form Filling
 
 | # | Task | Notes |
 |---|---|---|
-| F.3.1 | Detect interactive form fields | 🚧 Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown) (Session 6603654323246619177) |
-| F.3.2 | Render editable form overlays | 🚧 Show native HTML `<input>` / `<select>` overlays on top of field positions (Session 6603654323246619177) |
-| F.3.3 | Save filled form to PDF | 🚧 Write field values back into the PDF file via `paperpilot-pdf` (Session 6603654323246619177) |
-| F.3.4 | Form fill E2E test | 🚧 Load a form PDF, fill all fields, save, reload and verify field values persist (Session 6603654323246619177) |
+| F.3.1 | Detect interactive form fields | 🚧 Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown) (Session 18047202170093336005) |
+| F.3.2 | Render editable form overlays | 🚧 Show native HTML `<input>` / `<select>` overlays on top of field positions (Session 18047202170093336005) |
+| F.3.3 | Save filled form to PDF | 🚧 Write field values back into the PDF file via `paperpilot-pdf` (Session 18047202170093336005) |
+| F.3.4 | Form fill E2E test | 🚧 Load a form PDF, fill all fields, save, reload and verify field values persist (Session 18047202170093336005) |
 
 #### 4.F.4 — Native OS Menu Bar
 
