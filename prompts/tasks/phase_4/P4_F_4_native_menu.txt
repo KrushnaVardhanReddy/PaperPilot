@@ -1,0 +1,132 @@
+---
+Task: Phase 4.F.4 — Native OS Menu Bar (Tauri v2)
+---
+
+Hey Jules! We need to implement a native OS menu bar for the desktop app so it feels like a real native application (especially on macOS where the menu bar is critical for basic shortcuts like Cmd+Q and Cmd+Z). 
+
+## What to Build
+
+We are using **Tauri v2**. You will create a custom menu structure and attach it to the Tauri app during the setup phase in `apps/desktop/src-tauri/src/lib.rs`.
+
+### 1. Menu Structure
+The menu should have the following top-level items:
+1. **PaperPilot** (App menu, macOS only usually) -> About, Quit
+2. **File** -> Open, Save Annotations, Settings
+3. **Edit** -> Undo, Redo
+4. **View** -> Zoom In, Zoom Out, Fit to Width, Toggle Sidebar
+5. **Window** -> Minimize, Maximize, Full Screen
+6. **Help** -> Documentation, Keyboard Shortcuts
+
+### 2. Implementation
+
+Because we are on Tauri v2, you will use the `tauri::menu` module.
+
+```rust
+// apps/desktop/src-tauri/src/lib.rs (or a new menu.rs file)
+
+use tauri::menu::{MenuBuilder, SubmenuBuilder, MenuItemBuilder, PredefinedMenuItem};
+use tauri::{App, Manager};
+
+pub fn build_menu(app: &App) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
+    let handle = app.handle();
+
+    // 1. File Menu
+    let open_item = MenuItemBuilder::with_id("open_file", "Open").accelerator("CmdOrCtrl+O").build(handle)?;
+    let save_ann_item = MenuItemBuilder::with_id("save_annotations", "Save Annotations").accelerator("CmdOrCtrl+S").build(handle)?;
+    let settings_item = MenuItemBuilder::with_id("settings", "Settings").accelerator("CmdOrCtrl+,").build(handle)?;
+    
+    let file_menu = SubmenuBuilder::new(handle, "File")
+        .item(&open_item)
+        .item(&save_ann_item)
+        .separator()
+        .item(&settings_item)
+        .separator()
+        .item(&PredefinedMenuItem::quit(handle, None)?)
+        .build()?;
+
+    // 2. Edit Menu (mostly predefined for native text inputs, plus our custom pipeline undo)
+    let undo_item = MenuItemBuilder::with_id("undo", "Undo").accelerator("CmdOrCtrl+Z").build(handle)?;
+    let redo_item = MenuItemBuilder::with_id("redo", "Redo").accelerator("CmdOrCtrl+Shift+Z").build(handle)?;
+    
+    let edit_menu = SubmenuBuilder::new(handle, "Edit")
+        .item(&undo_item)
+        .item(&redo_item)
+        .separator()
+        .item(&PredefinedMenuItem::cut(handle, None)?)
+        .item(&PredefinedMenuItem::copy(handle, None)?)
+        .item(&PredefinedMenuItem::paste(handle, None)?)
+        .build()?;
+
+    // 3. View Menu
+    let zoom_in = MenuItemBuilder::with_id("zoom_in", "Zoom In").accelerator("CmdOrCtrl+=").build(handle)?;
+    let zoom_out = MenuItemBuilder::with_id("zoom_out", "Zoom Out").accelerator("CmdOrCtrl+-").build(handle)?;
+    let fit_width = MenuItemBuilder::with_id("fit_width", "Fit to Width").accelerator("CmdOrCtrl+0").build(handle)?;
+    
+    let view_menu = SubmenuBuilder::new(handle, "View")
+        .item(&zoom_in)
+        .item(&zoom_out)
+        .item(&fit_width)
+        .separator()
+        .item(&PredefinedMenuItem::fullscreen(handle, None)?)
+        .build()?;
+
+    // 4. Window Menu
+    let window_menu = SubmenuBuilder::new(handle, "Window")
+        .item(&PredefinedMenuItem::minimize(handle, None)?)
+        .item(&PredefinedMenuItem::maximize(handle, None)?)
+        .item(&PredefinedMenuItem::close_window(handle, None)?)
+        .build()?;
+
+    // Assemble the main menu
+    MenuBuilder::new(handle)
+        .items(&[&file_menu, &edit_menu, &view_menu, &window_menu])
+        .build()
+}
+```
+
+### 3. Event Handling
+
+In `src-tauri/src/lib.rs`, wire up the menu in the `setup` hook, and listen for the events:
+
+```rust
+// inside tauri::Builder::default().setup(|app| { ... })
+let menu = build_menu(app)?;
+app.set_menu(menu)?;
+
+app.on_menu_event(move |app_handle, event| {
+    match event.id().as_ref() {
+        "open_file" => {
+            // Emit event to frontend to trigger file picker
+            let _ = app_handle.emit("menu-open-file", ());
+        }
+        "save_annotations" => {
+            // Note: Will be implemented fully in F.2.6
+            let _ = app_handle.emit("menu-save-annotations", ());
+        }
+        "undo" => {
+            let _ = app_handle.emit("menu-undo", ());
+        }
+        "redo" => {
+            let _ = app_handle.emit("menu-redo", ());
+        }
+        "zoom_in" => {
+            let _ = app_handle.emit("menu-zoom-in", ());
+        }
+        "zoom_out" => {
+            let _ = app_handle.emit("menu-zoom-out", ());
+        }
+        "fit_width" => {
+            let _ = app_handle.emit("menu-fit-width", ());
+        }
+        _ => {}
+    }
+});
+```
+
+### 4. Svelte Frontend Listener (Stub)
+In `apps/desktop/src/App.svelte` or your main layout file, import `@tauri-apps/api/event` and `listen` for `"menu-open-file"`. Just print a `console.log("Menu action: Open File")` for now. We will wire these up to real frontend actions when the Viewer is built.
+
+## Constraints
+- Do not build the frontend viewer functionality yet. Just set up the native menu and emit the events.
+- Ensure `cargo check` and `npm run build` pass in `apps/desktop`.
+- Ensure it compiles cleanly on Tauri v2.
