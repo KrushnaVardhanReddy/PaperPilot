@@ -3667,8 +3667,12 @@ version = "0.1.0"
 dependencies = [
  "aho-corasick",
  "lazy_static",
+ "lopdf",
  "paperpilot-core",
+ "paperpilot-mcp",
  "regex",
+ "rmcp",
+ "serde_json",
  "thiserror 2.0.21",
 ]
 
