@@ -94,16 +94,13 @@ PaperPilot/
 
 ## 🚧 Active Jules Sessions (In-Progress)
 
-| Task | Session ID | What they are doing |
-|---|---|---|
-| Phase 4.F.1 PDF Viewer | `14901891694995485696` | Integrating pdfjs-dist into Svelte and building PdfViewer component |
+| (None) | | Viewer and Menu are fully merged! |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for PDF Viewer:** Wait for Jules session `14901891694995485696` to complete and verify it loads `test.pdf` onto the canvas.
-2. **Proceed with Annotations (4.F.2):** Once the viewer works, start building the annotation layer on top of it.
+1. **Proceed with Annotations (4.F.2):** The viewer is working perfectly. Start building the annotation layer on top of it (Task F.2).
 
 ---
 
