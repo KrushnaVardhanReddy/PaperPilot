@@ -44,11 +44,11 @@ pub fn handle_encrypt(
 
 pub fn handle_decrypt(
     input: &std::path::Path,
-    _password: &Option<String>,
+    password: &Option<String>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(None);
+    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(password.clone());
     op.execute(&mut doc)?;
     doc.save(output)
 }

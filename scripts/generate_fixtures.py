@@ -23,7 +23,7 @@ def encrypt_pdf(input_path, output_path, password):
     writer = PdfWriter()
     for page in reader.pages:
         writer.add_page(page)
-    writer.encrypt(password)
+    writer.encrypt(password, use_128bit=False)
     with open(output_path, "wb") as f:
         writer.write(f)
 
