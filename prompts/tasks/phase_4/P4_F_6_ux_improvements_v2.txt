@@ -1,0 +1,640 @@
+# Task: Phase 4.F.6 — UI Fixes, Menu Wiring & UX Improvements
+# Revision 2 — Expanded with full implementation details
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER replace a working function body with `// TODO` or empty returns.
+3. Every file you modify MUST still compile (`cargo check` + `npm run check`).
+4. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+5. Commit message must start with `jules: ` prefix.
+6. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER use Svelte 4 stores.
+7. Use Vanilla CSS — NEVER use Tailwind or any utility-class framework.
+8. Follow the existing CSS variable naming convention for all new styles.
+9. All new buttons and interactive elements must have a unique `id` attribute for testability.
+
+---
+
+## CONTEXT: What You Need to Know Before Starting
+
+### Project Layout
+```
+apps/desktop/
+  src/
+    app.css                          # Global CSS variables / tokens
+    routes/
+      +layout.svelte                 # Root layout — Tauri event listeners live here
+      +page.svelte                   # Main page — all panels assembled here
+    lib/
+      state/
+        app.svelte.ts                # AppState class (Svelte 5 runes)
+      components/
+        PdfAnnotationPanel.svelte    # Right panel: Annotations list
+        PdfInfoPanel.svelte          # Right panel: Document info
+        PdfThumbnails.svelte         # Left: page thumbnail strip
+        PdfToolbar.svelte            # Top: page nav, zoom controls
+        PdfAnnotationToolbar.svelte  # Annotation tool selection
+        PdfViewer.svelte             # Core PDF canvas renderer
+        layout/
+          Titlebar.svelte            # Custom window titlebar + menus
+          Sidebar.svelte             # Left navigation sidebar
+        ui/
+          DocumentList.svelte        # List of uploaded PDFs
+  src-tauri/
+    capabilities/
+      default.json                   # Tauri 2.0 permission grants (CRITICAL)
+    tauri.conf.json                  # Window config
+```
+
+### Key Patterns
+- State: AppState class in app.svelte.ts uses Svelte 5 $state fields.
+  Import: `import { appState } from '$lib/state/app.svelte';`
+- Tauri events: emit() and listen() from @tauri-apps/api/event
+- Window APIs: getCurrentWindow() from @tauri-apps/api/window (requires capabilities)
+- Dialog: open() from @tauri-apps/plugin-dialog (requires dialog:allow-open capability)
+
+---
+
+## BUG FIX 1: Window Controls Do Nothing (CRITICAL — Fix First)
+
+### Root Cause
+apps/desktop/src-tauri/capabilities/default.json is missing all window control permissions.
+Tauri 2.0 silently ignores API calls that are not granted.
+
+### File to Modify
+apps/desktop/src-tauri/capabilities/default.json
+
+### Required New Content (replace the entire file)
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "window:allow-close",
+    "window:allow-minimize",
+    "window:allow-maximize",
+    "window:allow-toggle-maximize",
+    "window:allow-set-theme",
+    "window:allow-is-maximized",
+    "dialog:allow-open",
+    "dialog:allow-save"
+  ]
+}
+```
+
+### Verification
+After this change:
+- The X close button in Titlebar.svelte must actually close the window
+- The minimize button must minimize the window
+- The maximize button must maximize/restore the window
+- The Window menu items (Minimize, Maximize, Close) must all work
+
+---
+
+## BUG FIX 2: File -> Open Does Nothing
+
+### Root Cause
+In apps/desktop/src/routes/+layout.svelte, the menu-open-file listener is a stub:
+```typescript
+unlisten = await listen('menu-open-file', (event) => {
+  console.log("Menu action: Open File"); // Does nothing!
+});
+```
+
+### File to Modify
+apps/desktop/src/routes/+layout.svelte
+
+### Required Changes
+
+1. Add appState import at the top of the script block if not already present:
+```typescript
+import { appState } from '$lib/state/app.svelte';
+```
+
+2. Replace ONLY the callback body of the menu-open-file listener.
+   The surrounding async IIFE, try/catch, and unlisten variable pattern must remain unchanged.
+
+New callback:
+```typescript
+unlisten = await listen('menu-open-file', async () => {
+  try {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+    });
+    if (selected && typeof selected === 'string') {
+      const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'document.pdf';
+      const response = await fetch(window.__TAURI_INTERNALS__.convertFileSrc(selected));
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      Object.defineProperty(file, 'path', { value: selected, writable: false });
+      appState.addDocuments([file]);
+      appState.selectDocument(appState.documents.length - 1);
+    }
+  } catch (err) {
+    console.error('Failed to open file dialog:', err);
+  }
+});
+```
+
+### Verification
+1. Click File -> Open in the Titlebar menu
+2. Native OS file picker opens, filtered to .pdf files only
+3. Selecting a PDF adds it to appState.documents
+4. The viewer automatically switches to display that document
+
+---
+
+## BUG FIX 3: Wire All Remaining Menu Events
+
+The following events are emitted by Titlebar.svelte but have NO listeners anywhere.
+Add listeners inside the existing async IIFE in +layout.svelte, after the menu-open-file listener.
+
+Add these additional listeners (still inside the same try block):
+```typescript
+const unlistenSave = await listen('menu-save-annotations', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:save-annotations'));
+});
+
+const unlistenSettings = await listen('menu-settings', () => {
+  appState.setActiveTab('settings');
+});
+
+const unlistenUndo = await listen('menu-undo', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:undo'));
+});
+
+const unlistenRedo = await listen('menu-redo', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:redo'));
+});
+
+const unlistenZoomIn = await listen('menu-zoom-in', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'));
+});
+
+const unlistenZoomOut = await listen('menu-zoom-out', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'));
+});
+
+const unlistenFitWidth = await listen('menu-fit-width', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:fit-width'));
+});
+```
+
+Update the cleanup return function to call all unlisten functions:
+```typescript
+return () => {
+  if (unlisten) unlisten();
+  if (unlistenSave) unlistenSave();
+  if (unlistenSettings) unlistenSettings();
+  if (unlistenUndo) unlistenUndo();
+  if (unlistenRedo) unlistenRedo();
+  if (unlistenZoomIn) unlistenZoomIn();
+  if (unlistenZoomOut) unlistenZoomOut();
+  if (unlistenFitWidth) unlistenFitWidth();
+};
+```
+
+Then in PdfToolbar.svelte, add onMount listeners for the custom window events
+paperpilot:zoom-in, paperpilot:zoom-out, and paperpilot:fit-width
+that call the existing zoom/scale functions.
+
+---
+
+## FEATURE 1: View Button on Document List Rows
+
+### File to Modify
+apps/desktop/src/lib/components/ui/DocumentList.svelte
+
+### What to Add
+Add a View (eye) button to each document row, between the doc info and the remove button.
+
+The row order: [PDF icon] [doc name + meta] [VIEW button] [REMOVE button]
+
+View button requirements:
+- id="view-doc-{index}" for testability
+- title="View document" for tooltip
+- onclick: calls appState.selectDocument(index)
+- onclick must call e.stopPropagation() to avoid triggering the row click
+- Eye SVG icon:
+  ```html
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+  ```
+- Styled like the remove-btn (transparent bg, opacity 0.6, opacity 1 on hover)
+- CSS class: view-btn
+
+Also fix the hardcoded page count. Change:
+```svelte
+<span class="doc-pages">1 page</span>
+```
+To:
+```svelte
+<span class="doc-pages">{(doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF'}</span>
+```
+
+---
+
+## FEATURE 2: Collapsible Right Panel (Annotations + Doc Info as Tabbed Unit)
+
+### Create New Component
+apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte
+
+This component must:
+1. Accept props: annotations (bindable Annotation[]), pdfDoc (any), onJumpToPage (function)
+2. Contain a tab bar with two tabs: "Annotations" and "Info"
+3. Have a collapse toggle button (chevron) on the left edge
+4. When collapsed: 40px wide showing only the collapse toggle
+5. When expanded: 280px wide showing the active tab content
+6. Use CSS transition: width 0.25s ease for smooth animation
+7. Persist collapsed state to localStorage under key 'viewer-right-panel-collapsed'
+8. Restore persisted state on mount via onMount
+
+Full component structure:
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
+  import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
+  import type { Annotation } from '$lib/api/pdf';
+
+  let {
+    annotations = $bindable([]),
+    pdfDoc = null,
+    onJumpToPage
+  }: {
+    annotations: Annotation[];
+    pdfDoc: any;
+    onJumpToPage: (page: number) => void;
+  } = $props();
+
+  let isCollapsed = $state(false);
+  let activeTab = $state<'annotations' | 'info'>('annotations');
+
+  onMount(() => {
+    const stored = localStorage.getItem('viewer-right-panel-collapsed');
+    if (stored === 'true') isCollapsed = true;
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-collapsed', String(isCollapsed));
+  });
+</script>
+
+<div class="right-panel" class:collapsed={isCollapsed}>
+  <button
+    class="collapse-toggle"
+    id="right-panel-toggle"
+    onclick={() => isCollapsed = !isCollapsed}
+    title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+    aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+  >
+    {isCollapsed ? '›' : '‹'}
+  </button>
+
+  {#if !isCollapsed}
+    <div class="panel-tabs">
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'annotations'}
+        id="right-panel-tab-annotations"
+        onclick={() => activeTab = 'annotations'}
+      >
+        Annotations ({annotations.length})
+      </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'info'}
+        id="right-panel-tab-info"
+        onclick={() => activeTab = 'info'}
+      >
+        Info
+      </button>
+    </div>
+
+    <div class="panel-content">
+      {#if activeTab === 'annotations'}
+        <PdfAnnotationPanel bind:annotations {onJumpToPage} />
+      {:else}
+        <PdfInfoPanel {pdfDoc} />
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .right-panel {
+    position: relative;
+    width: 280px;
+    min-width: 280px;
+    transition: width 0.25s ease, min-width 0.25s ease;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .right-panel.collapsed {
+    width: 40px;
+    min-width: 40px;
+  }
+  .collapse-toggle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0 4px 4px 0;
+    color: var(--text-muted);
+    width: 16px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 10;
+    transition: all var(--transition-fast);
+  }
+  .collapse-toggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+  }
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+  }
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+  }
+  .tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-primary);
+  }
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+</style>
+```
+
+### Update +page.svelte
+1. Add import: `import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';`
+2. Remove: `<PdfAnnotationPanel bind:annotations onJumpToPage={(p) => pageNum = p} />`
+3. Remove: `<PdfInfoPanel {pdfDoc} />`
+4. Add in their place: `<ViewerRightPanel bind:annotations {pdfDoc} onJumpToPage={(p) => pageNum = p} />`
+
+---
+
+## FEATURE 3: Left Sidebar — Icon Rail Collapse Mode
+
+### File to Modify
+apps/desktop/src/lib/components/layout/Sidebar.svelte
+
+### Changes Required
+
+1. Replace the existing isCollapsed derived with manual toggle + localStorage persistence:
+
+Remove this:
+```typescript
+let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+let isCollapsed = $derived(windowWidth < 900);
+
+onMount(() => {
+  function handleResize() {
+    windowWidth = window.innerWidth;
+  }
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+});
+```
+
+Replace with:
+```typescript
+let manualCollapsed = $state(false);
+
+let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+let isCollapsed = $derived(manualCollapsed || windowWidth < 900);
+
+onMount(() => {
+  const stored = localStorage.getItem('sidebar-collapsed');
+  if (stored === 'true') manualCollapsed = true;
+
+  function handleResize() {
+    windowWidth = window.innerWidth;
+  }
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+});
+
+$effect(() => {
+  localStorage.setItem('sidebar-collapsed', String(manualCollapsed));
+});
+```
+
+2. Add class:collapsed={isCollapsed} to the <aside> element.
+
+3. Add collapse toggle button inside .sidebar-footer, ABOVE the theme-toggle div:
+```svelte
+<button
+  class="collapse-btn"
+  id="sidebar-collapse-toggle"
+  onclick={() => manualCollapsed = !manualCollapsed}
+  title={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+  aria-label={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+>
+  {manualCollapsed ? '›' : '‹'}
+</button>
+```
+
+4. Add to the CSS:
+```css
+.sidebar {
+  /* Add transition to existing .sidebar rule */
+  transition: width 0.25s ease;
+}
+.sidebar.collapsed {
+  width: 48px;
+}
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .brand-title,
+.sidebar.collapsed .sidebar-jobs {
+  display: none;
+}
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+.sidebar.collapsed .nav-icon {
+  margin-right: 0;
+}
+.sidebar.collapsed .theme-btn {
+  display: none;
+}
+.collapse-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+.collapse-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+```
+
+---
+
+## FEATURE 4: Status Bar
+
+### Create New File
+apps/desktop/src/lib/components/layout/StatusBar.svelte
+
+```svelte
+<script lang="ts">
+  let {
+    pageNum = 1,
+    numPages = 0,
+    scale = 1.2,
+    fileName = '',
+    fileSize = 0
+  }: {
+    pageNum: number;
+    numPages: number;
+    scale: number;
+    fileName: string;
+    fileSize: number;
+  } = $props();
+
+  function formatSize(bytes: number): string {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  let zoomPercent = $derived(Math.round(scale * 100));
+</script>
+
+{#if numPages > 0}
+<div class="status-bar" role="status" aria-label="Document status">
+  {#if fileName}
+    <span class="status-item status-filename" title={fileName}>{fileName}</span>
+    <span class="status-sep">·</span>
+  {/if}
+  <span class="status-item" id="status-page">Page {pageNum} of {numPages}</span>
+  <span class="status-sep">·</span>
+  <span class="status-item" id="status-zoom">{zoomPercent}%</span>
+  {#if fileSize}
+    <span class="status-sep">·</span>
+    <span class="status-item" id="status-size">{formatSize(fileSize)}</span>
+  {/if}
+</div>
+{/if}
+
+<style>
+  .status-bar {
+    height: 24px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .status-item { white-space: nowrap; }
+  .status-filename {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+  }
+  .status-sep { opacity: 0.4; }
+</style>
+```
+
+### Wire StatusBar into +page.svelte
+1. Add import: `import StatusBar from '$lib/components/layout/StatusBar.svelte';`
+2. Inside the viewer-wrapper div, add StatusBar AFTER viewer-content, BEFORE closing </div>:
+```svelte
+<StatusBar
+  {pageNum}
+  {numPages}
+  {scale}
+  fileName={appState.documents[appState.selectedDocumentIndex ?? 0]?.name ?? ''}
+  fileSize={appState.documents[appState.selectedDocumentIndex ?? 0]?.size ?? 0}
+/>
+```
+
+---
+
+## Verification Checklist
+
+### Bug Fixes
+[ ] Click the X close button in Titlebar -> window closes
+[ ] Click the minimize button -> window minimizes
+[ ] Click the maximize button -> window maximizes/restores
+[ ] Window -> Minimize in the dropdown -> window minimizes
+[ ] File -> Open -> native OS file picker opens (PDF filter only)
+[ ] Select a PDF via File -> Open -> it loads in the viewer
+[ ] File -> Settings -> Settings tab activates
+[ ] View -> Zoom In -> zoom increases in the viewer
+
+### New Features
+[ ] Upload a PDF. Row shows an eye icon View button. Click it -> viewer opens that PDF
+[ ] In the viewer, find the right panel toggle (chevron). Click -> panel collapses smoothly
+[ ] Click again -> expands smoothly
+[ ] Right panel collapsed state persists after refresh
+[ ] Inside expanded right panel: Annotations tab shows annotation list
+[ ] Inside expanded right panel: Info tab shows document info
+[ ] Status bar shows "Page 1 of N · 120% · 2.3 MB" when a PDF is open
+[ ] Left sidebar collapse button collapses sidebar to 48px icon rail
+[ ] Icon rail re-expands the sidebar
+[ ] Sidebar collapsed state persists across refresh
+
+### Compile and Test
+# From apps/desktop - must pass with 0 errors:
+npm run check
+
+# From repo root - must pass:
+make test-all
+
+---
+
+Last updated: 2026-10-01 | Revision 2 | Authored by Antigravity Orchestrator

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   let {
     pageNum = $bindable(1),
     numPages = 0,
@@ -26,6 +28,22 @@
       scale -= 0.2;
     }
   }
+
+  onMount(() => {
+    function onZoomIn() { scale = Math.min(scale + 0.2, 5.0); }
+    function onZoomOut() { scale = Math.max(scale - 0.2, 0.2); }
+    function onFitWidth() { scale = 1.0; }
+
+    window.addEventListener('paperpilot:zoom-in', onZoomIn);
+    window.addEventListener('paperpilot:zoom-out', onZoomOut);
+    window.addEventListener('paperpilot:fit-width', onFitWidth);
+
+    return () => {
+      window.removeEventListener('paperpilot:zoom-in', onZoomIn);
+      window.removeEventListener('paperpilot:zoom-out', onZoomOut);
+      window.removeEventListener('paperpilot:fit-width', onFitWidth);
+    };
+  });
 </script>
 
 <div class="toolbar">

@@ -5,6 +5,14 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "window:allow-close",
+    "window:allow-minimize",
+    "window:allow-maximize",
+    "window:allow-toggle-maximize",
+    "window:allow-set-theme",
+    "window:allow-is-maximized",
+    "dialog:allow-open",
+    "dialog:allow-save"
   ]
 }

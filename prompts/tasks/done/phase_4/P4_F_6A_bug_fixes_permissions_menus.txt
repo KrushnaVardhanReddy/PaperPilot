@@ -1,0 +1,247 @@
+# Task: Phase 4.F.6-A — Critical Bug Fixes: Tauri Permissions + Menu Wiring
+# Priority: HIGHEST — run this first, all other UI tasks depend on these fixes
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST still compile (`cargo check` + `npm run check`).
+3. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message must start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores.
+
+---
+
+## CONTEXT
+
+This task fixes the two root causes that make the entire custom UI non-functional:
+1. The Tauri 2.0 permissions file is missing window control permissions — so
+   minimize/maximize/close buttons silently do nothing.
+2. The menu event listeners in +layout.svelte are stubs — they never do anything.
+
+---
+
+## FIX 1: Tauri Capabilities (Window Controls + Dialog)
+
+### File to Modify
+apps/desktop/src-tauri/capabilities/default.json
+
+### Current Content
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}
+```
+
+### Replace the entire file with:
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "window:allow-close",
+    "window:allow-minimize",
+    "window:allow-maximize",
+    "window:allow-toggle-maximize",
+    "window:allow-set-theme",
+    "window:allow-is-maximized",
+    "dialog:allow-open",
+    "dialog:allow-save"
+  ]
+}
+```
+
+### Why This Works
+Tauri 2.0 denies all API calls not explicitly listed in capabilities/default.json.
+getCurrentWindow().close() / minimize() / toggleMaximize() all silently fail without
+the corresponding "window:allow-*" permissions. The dialog plugin similarly requires
+"dialog:allow-open" to show a native file picker.
+
+---
+
+## FIX 2: File -> Open (layout.svelte)
+
+### File to Modify
+apps/desktop/src/routes/+layout.svelte
+
+### Current broken listener (lines ~20-22):
+```typescript
+unlisten = await listen('menu-open-file', (event) => {
+  console.log("Menu action: Open File");
+});
+```
+
+### Step 1: Add missing import at the top of the <script> block
+If `import { appState } from '$lib/state/app.svelte';` is not already present, add it.
+The file already has these imports — add appState alongside them:
+```typescript
+import { appState } from '$lib/state/app.svelte';
+```
+
+### Step 2: Replace ONLY the menu-open-file listener callback
+Keep the async IIFE structure, try/catch, and `let unlisten` variable exactly as-is.
+Only replace the callback body:
+
+```typescript
+unlisten = await listen('menu-open-file', async () => {
+  try {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+    });
+    if (selected && typeof selected === 'string') {
+      const fileName =
+        selected.split('/').pop() ||
+        selected.split('\\').pop() ||
+        'document.pdf';
+      const response = await fetch(
+        window.__TAURI_INTERNALS__.convertFileSrc(selected)
+      );
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      Object.defineProperty(file, 'path', { value: selected, writable: false });
+      appState.addDocuments([file]);
+      appState.selectDocument(appState.documents.length - 1);
+    }
+  } catch (err) {
+    console.error('Failed to open file dialog:', err);
+  }
+});
+```
+
+---
+
+## FIX 3: Wire All Remaining Menu Events (layout.svelte)
+
+All events below are emitted by Titlebar.svelte but have zero listeners in the app.
+Add them inside the same async IIFE in +layout.svelte, after the menu-open-file block,
+still inside the same try{} block. Declare variables with `let` before the IIFE
+(alongside the existing `let unlisten: () => void;`):
+
+```typescript
+let unlisten: () => void;
+let unlistenSave: () => void;
+let unlistenSettings: () => void;
+let unlistenUndo: () => void;
+let unlistenRedo: () => void;
+let unlistenZoomIn: () => void;
+let unlistenZoomOut: () => void;
+let unlistenFitWidth: () => void;
+```
+
+Add these listener assignments inside the try block, after the menu-open-file listener:
+```typescript
+unlistenSave = await listen('menu-save-annotations', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:save-annotations'));
+});
+
+unlistenSettings = await listen('menu-settings', () => {
+  appState.setActiveTab('settings');
+});
+
+unlistenUndo = await listen('menu-undo', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:undo'));
+});
+
+unlistenRedo = await listen('menu-redo', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:redo'));
+});
+
+unlistenZoomIn = await listen('menu-zoom-in', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'));
+});
+
+unlistenZoomOut = await listen('menu-zoom-out', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'));
+});
+
+unlistenFitWidth = await listen('menu-fit-width', () => {
+  window.dispatchEvent(new CustomEvent('paperpilot:fit-width'));
+});
+```
+
+Update the cleanup return() inside onMount to call all unlisten functions:
+```typescript
+return () => {
+  if (unlisten) unlisten();
+  if (unlistenSave) unlistenSave();
+  if (unlistenSettings) unlistenSettings();
+  if (unlistenUndo) unlistenUndo();
+  if (unlistenRedo) unlistenRedo();
+  if (unlistenZoomIn) unlistenZoomIn();
+  if (unlistenZoomOut) unlistenZoomOut();
+  if (unlistenFitWidth) unlistenFitWidth();
+};
+```
+
+### Wire zoom events in PdfToolbar.svelte
+In apps/desktop/src/lib/components/PdfToolbar.svelte, add onMount listeners
+for the custom window events that dispatch zoom changes.
+
+The toolbar already has zoom functions (they mutate the `scale` binding).
+Inside onMount, add:
+```typescript
+function onZoomIn() { scale = Math.min(scale + 0.2, 5.0); }
+function onZoomOut() { scale = Math.max(scale - 0.2, 0.2); }
+function onFitWidth() { scale = 1.0; }
+
+window.addEventListener('paperpilot:zoom-in', onZoomIn);
+window.addEventListener('paperpilot:zoom-out', onZoomOut);
+window.addEventListener('paperpilot:fit-width', onFitWidth);
+
+return () => {
+  window.removeEventListener('paperpilot:zoom-in', onZoomIn);
+  window.removeEventListener('paperpilot:zoom-out', onZoomOut);
+  window.removeEventListener('paperpilot:fit-width', onFitWidth);
+};
+```
+
+---
+
+## Files Modified by This Task
+- apps/desktop/src-tauri/capabilities/default.json
+- apps/desktop/src/routes/+layout.svelte
+- apps/desktop/src/lib/components/PdfToolbar.svelte
+
+## Files NOT Touched by This Task
+- +page.svelte
+- Sidebar.svelte
+- DocumentList.svelte
+- Any new component files
+
+---
+
+## Verification Checklist
+[ ] Click the X (close) button in Titlebar -> window closes
+[ ] Click the minimize button -> window minimizes
+[ ] Click the maximize button -> window maximizes/restores
+[ ] Window -> Minimize menu item -> window minimizes
+[ ] File -> Open -> native OS file picker opens, filtered to PDF only
+[ ] Select a PDF -> it loads in the viewer automatically
+[ ] File -> Settings menu item -> Settings tab activates
+[ ] View -> Zoom In -> zoom increases in the viewer (not just console.log)
+[ ] View -> Zoom Out -> zoom decreases
+
+## Compile & Test
+```bash
+# From apps/desktop
+npm run check
+
+# From repo root
+make test-all
+```
+
+Last updated: 2026-10-01 | Task 4.F.6-A | Antigravity Orchestrator
