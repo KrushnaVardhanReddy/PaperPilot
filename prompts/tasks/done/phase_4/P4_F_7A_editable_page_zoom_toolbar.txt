@@ -1,3 +1,47 @@
+# Task: Phase 4.F.7-A — Editable Page Jump Input + Zoom Presets in PdfToolbar
+# Parallel-safe: ONLY touches apps/desktop/src/lib/components/PdfToolbar.svelte
+# Zero conflicts with tabs or layout changes
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css`.
+
+---
+
+## CONTEXT & GOAL
+
+In `apps/desktop/src/lib/components/PdfToolbar.svelte`:
+- Currently, page display is static text: `Page {pageNum} of {numPages || 1}`. A user with a 50-page document cannot jump to page 25 without clicking "Next" 24 times.
+- Currently, zoom is static text: `{Math.round(scale * 100)}%`. A user cannot type a zoom or pick standard zoom presets (50%, 100%, 150%, 200%, Fit Width).
+
+### The Fix
+Replace the static text in `PdfToolbar.svelte` with:
+1. **Interactive Page Input**:
+   - `<input id="toolbar-page-input" class="page-input" bind:value={inputPage} />`
+   - Typing a page number and pressing **Enter** (or blur) validates and sets `pageNum = parsed`.
+   - Clamps between `1` and `numPages`.
+   - Pressing **Escape** resets input back to current `pageNum`.
+2. **Interactive Zoom Preset Dropdown + Fit Button**:
+   - `<select id="toolbar-zoom-select">` with options `50%`, `75%`, `100%`, `125%`, `150%`, `175%`, `200%`, `300%`.
+   - Added a dedicated "Fit" button (`id="toolbar-fit-width"`) to reset zoom to 1.0 (100%).
+   - Retains the existing `+` and `−` step buttons and Tauri keyboard shortcuts (`paperpilot:zoom-in`, `paperpilot:zoom-out`, `paperpilot:fit-width`).
+
+---
+
+## IMPLEMENTATION: Full `PdfToolbar.svelte`
+
+Replace `apps/desktop/src/lib/components/PdfToolbar.svelte` completely with:
+
+```svelte
 <script lang="ts">
   import { onMount } from 'svelte';
 
@@ -296,3 +340,16 @@
     border-color: var(--accent-primary, #5e6ad2);
   }
 </style>
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] `npm run check` passes with 0 errors.
+- [ ] `make test-all` passes.
+- [ ] In UI:
+  - Page input displays current page.
+  - Typing a number and hitting Enter jumps to that page immediately.
+  - Selecting an option in zoom dropdown adjusts viewer scale immediately.
+  - "Fit" button resets scale to 100%.

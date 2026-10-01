@@ -1,0 +1,293 @@
+# Task: Phase 4.F.9-A — Canvas Text Search Bar (Ctrl+F) with Match Navigation
+# Parallel-safe: Creates apps/desktop/src/lib/components/PdfSearchBar.svelte, wires into PdfViewer.svelte
+# Zero conflicts with Thumbnails, Home, or Left Sidebar
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css`.
+
+---
+
+## CONTEXT & OBJECTIVE
+
+Users reading long documents (contracts, manuals, research papers) need in-document text search (`Ctrl+F` / `Cmd+F`).
+Currently, PaperPilot has no in-viewer search bar.
+
+### Goals:
+1. Create `apps/desktop/src/lib/components/PdfSearchBar.svelte`:
+   - A floating search widget in the top-right corner of the PDF canvas (like Chrome/Acrobat/Preview).
+   - Opened via `Ctrl+F` / `Cmd+F` or a search icon.
+   - Closed via `Esc` or `×` button.
+   - Shows:
+     - Search `<input>`
+     - Match counter: `Match 3 of 15` (or `0/0` if none)
+     - `‹` (Prev Match) and `›` (Next Match) buttons
+2. Search logic:
+   - When user types text, extract text across pages via `pdfDoc.getPage(i).then(page => page.getTextContent())`.
+   - Find matching page numbers and match indices.
+   - Clicking `Next` or `Prev` (or pressing Enter / Shift+Enter in input) immediately updates `pageNum` to jump to the matching page.
+
+---
+
+## STEP 1: Create `PdfSearchBar.svelte`
+
+Create new file: `apps/desktop/src/lib/components/PdfSearchBar.svelte`
+
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  let {
+    pdfDoc = null,
+    pageNum = $bindable(1)
+  }: {
+    pdfDoc: any;
+    pageNum: number;
+  } = $props();
+
+  let isOpen = $state(false);
+  let searchQuery = $state('');
+  let currentMatchIndex = $state(0);
+  let matches = $state<{ page: number; text: string }[]>([]);
+  let isSearching = $state(false);
+  let inputEl: HTMLInputElement | null = null;
+
+  async function performSearch(query: string) {
+    if (!pdfDoc || !query.trim()) {
+      matches = [];
+      currentMatchIndex = 0;
+      return;
+    }
+
+    isSearching = true;
+    const found: { page: number; text: string }[] = [];
+    const q = query.toLowerCase();
+
+    try {
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+
+        if (pageText.toLowerCase().includes(q)) {
+          found.push({ page: i, text: pageText });
+        }
+      }
+      matches = found;
+      currentMatchIndex = found.length > 0 ? 0 : 0;
+      if (found.length > 0) {
+        pageNum = found[0].page;
+      }
+    } catch (err) {
+      console.warn('Search error:', err);
+    } finally {
+      isSearching = false;
+    }
+  }
+
+  function nextMatch() {
+    if (matches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex + 1) % matches.length;
+    pageNum = matches[currentMatchIndex].page;
+  }
+
+  function prevMatch() {
+    if (matches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex - 1 + matches.length) % matches.length;
+    pageNum = matches[currentMatchIndex].page;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      isOpen = true;
+      setTimeout(() => inputEl?.focus(), 50);
+      return;
+    }
+
+    if (!isOpen) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      isOpen = false;
+    }
+  }
+
+  function handleInputKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) prevMatch();
+      else nextMatch();
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  });
+</script>
+
+{#if isOpen}
+  <div class="search-bar" id="pdf-search-bar" role="search">
+    <input
+      bind:this={inputEl}
+      id="pdf-search-input"
+      class="search-input"
+      placeholder="Find in document..."
+      bind:value={searchQuery}
+      oninput={() => performSearch(searchQuery)}
+      onkeydown={handleInputKeydown}
+    />
+
+    <span class="match-count" id="pdf-search-count">
+      {#if isSearching}
+        ...
+      {:else if matches.length > 0}
+        {currentMatchIndex + 1} of {matches.length}
+      {:else if searchQuery.trim()}
+        0 of 0
+      {:else}
+        
+      {/if}
+    </span>
+
+    <button
+      class="search-btn"
+      id="pdf-search-prev"
+      onclick={prevMatch}
+      disabled={matches.length <= 1}
+      title="Previous match (Shift+Enter)"
+      aria-label="Previous match"
+    >
+      ‹
+    </button>
+
+    <button
+      class="search-btn"
+      id="pdf-search-next"
+      onclick={nextMatch}
+      disabled={matches.length <= 1}
+      title="Next match (Enter)"
+      aria-label="Next match"
+    >
+      ›
+    </button>
+
+    <button
+      class="close-btn"
+      id="pdf-search-close"
+      onclick={() => isOpen = false}
+      title="Close (Esc)"
+      aria-label="Close search"
+    >
+      ×
+    </button>
+  </div>
+{/if}
+
+<style>
+  .search-bar {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--border-radius-md, 6px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    padding: 6px 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  .search-input {
+    width: 170px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary, #ffffff);
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .match-count {
+    font-size: 0.75rem;
+    color: var(--text-muted, #9ca3af);
+    min-width: 50px;
+    text-align: right;
+  }
+
+  .search-btn, .close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius-sm, 4px);
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .search-btn:hover:not(:disabled), .close-btn:hover {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #ffffff);
+  }
+
+  .search-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .close-btn {
+    font-size: 1rem;
+    margin-left: 2px;
+  }
+</style>
+```
+
+---
+
+## STEP 2: Mount `PdfSearchBar.svelte` in `apps/desktop/src/lib/components/PdfViewer.svelte`
+
+In `PdfViewer.svelte`:
+1. Import `PdfSearchBar`:
+```typescript
+import PdfSearchBar from './PdfSearchBar.svelte';
+```
+2. Render inside the main viewer container:
+```svelte
+<div class="pdf-viewer-container">
+  <PdfSearchBar {pdfDoc} bind:pageNum />
+  <canvas bind:this={canvas} class="pdf-canvas"></canvas>
+  ...
+</div>
+```
+Ensure `.pdf-viewer-container` has `position: relative;`.
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] `npm run check` passes with 0 errors.
+- [ ] `make test-all` passes.
+- [ ] In UI with a document open:
+  - Pressing `Ctrl+F` (or `Cmd+F`) reveals the floating search bar in top right.
+  - Typing a word finds occurrences and shows match count (`1 of 4`).
+  - Pressing Enter or clicking `›` advances to next matching page.
+  - Pressing Esc closes the search bar.

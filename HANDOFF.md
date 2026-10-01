@@ -79,6 +79,7 @@ PaperPilot/
 | Phase E.4 (Benchmark) | ✅ Complete | System performance & latency testing |
 | Phase 4.F.4 (Custom HTML Titlebar) | ✅ Complete | Replaced native OS decorations with Svelte titlebar |
 | Phase 4.F.6 (UX Improvements & Permissions) | ✅ Complete | View button, collapsible sidebars & right panel, status bar, Tauri permissions & native file open (PRs #73, #74, #75, #76) |
+| Phase 4.F.7-A (Editable Page Jump & Zoom Presets) | ✅ Complete | Interactive page number input + zoom preset dropdown & Fit button (PR #77) |
 
 ---
 
@@ -86,20 +87,29 @@ PaperPilot/
 
 | Task | Prompt File | What it does |
 |---|---|---|
-| Phase 4.F.7-A | `prompts/tasks/phase_4/P4_F_7A_editable_page_zoom_toolbar.txt` | Editable page jump input + zoom presets dropdown in `PdfToolbar.svelte` |
 | Phase 4.F.7-B | `prompts/tasks/phase_4/P4_F_7B_multidoc_tabs_operations_dock.txt` | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.F.8 (Power User UX & Design Tokens):**
-   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay
+1. **Phase 4.F.8 (Desktop Instant Open & Power UX):**
+   - Instant document open flow: dropping or selecting a PDF immediately opens it in the viewer
+   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay with fuzzy search across operations, files, and tabs
    - Floating pill annotation toolbar over PDF canvas with backdrop blur
-   - Linear-inspired design tokens (`--surface-0` through `--surface-4`) in `app.css`
-2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-4. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+   - Resizable right panel with drag handle (240px–600px) and persistence
+2. **Phase 4.F.9 (Canvas Search & Direct Thumbnail Page Management):**
+   - In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation and counter (`P4_F_9A_canvas_search_ctrl_f.txt`)
+   - Direct drag-and-drop page reordering in thumbnail sidebar (`P4_F_9B_thumbnail_page_management.txt`)
+   - Hover quick action buttons on thumbnails (Rotate 🔄, Delete 🗑️)
+3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
+4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+5. **Phase 5 (Advanced Intelligence & Local AI Engine):**
+   - High-speed OCR (`paperpilot-ocr`)
+   - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search
+   - MinerU / Marker-style layout-aware clean Markdown and LaTeX table parsing
+   - Automatic local PII detection & structural redaction (SSNs, credit cards, names)
+   - Multi-core memory-mapped streaming (`memmap2`) for 1,000+ page documents
 
 ---
 
