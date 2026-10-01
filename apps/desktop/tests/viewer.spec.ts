@@ -35,7 +35,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     await expect(canvas).toBeVisible({ timeout: 10000 });
 
     // Check thumbnails
-    const thumbnails = page.locator('.thumbnail-strip canvas');
+    const thumbnails = page.locator('.thumbnails-container canvas');
     await expect(thumbnails.first()).toBeVisible({ timeout: 10000 });
     expect(await thumbnails.count()).toBeGreaterThan(0);
 
