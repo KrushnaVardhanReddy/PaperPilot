@@ -35,6 +35,13 @@ Currently, PaperPilot has no in-viewer search bar.
    - When user types text, extract text across pages via `pdfDoc.getPage(i).then(page => page.getTextContent())`.
    - Find matching page numbers and match indices.
    - Clicking `Next` or `Prev` (or pressing Enter / Shift+Enter in input) immediately updates `pageNum` to jump to the matching page.
+3. FIX Desktop Titlebar Window Controls & Tab Overflow (CRITICAL VISUAL FIX):
+   - In `apps/desktop/src/lib/components/layout/Titlebar.svelte`:
+     - Ensure `.window-controls` has `position: fixed; right: 0; top: 0; z-index: 9999; display: flex; height: 38px; background: var(--bg-secondary);` OR in `.titlebar` ensure `.window-controls` has `margin-left: auto; flex-shrink: 0; z-index: 1000;`.
+     - In `DocumentTabBar.svelte`, ensure the tab bar or tab buttons NEVER overlap or cover the window controls (`-`, `□`, `×`).
+     - Window control buttons must ALWAYS be clearly visible and clickable at the top right of the application window.
+4. Verify Instant Document Open:
+   - Ensure that whenever a document is added via file picker (`+` tab or menu) or dropped, `appState.selectDocument(appState.documents.length - 1)` is called and immediately displays the viewer canvas rather than keeping the user on the dropzone.
 
 ---
 
