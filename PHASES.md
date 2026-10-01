@@ -694,6 +694,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
 | 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
 | 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
+| 5.3.9 | Visual Pixel PDF Comparison Slider | Side-by-side & overlay dual-canvas pixel-diff tool in Rust (`image` crate) with grayscale identical background and red/green visual shift highlights |
 
 ---
 
@@ -705,6 +706,19 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.4.2 | Fake Scanner Effect | Apply subtle skew, grain, and contrast filter to emulate physical scanner output |
 | 5.4.3 | Embedded JavaScript Inspector | Inspect and extract embedded script payloads for security review |
 | 5.4.4 | Color Inversion / Dark Mode Filter | Invert document colors or strip colored backgrounds for paper/ink conservation |
+
+---
+
+### 5.5 — Headless Automation & Streamable MCP Transport `[PARALLEL with 5.4]`
+
+> Bridges the UI pipeline to headless scripts and remote AI agents.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.5.1 | CLI Headless Pipeline Runner (`paperpilot pipeline run`) | Execute visual pipeline JSON workflows directly from CLI without opening GUI |
+| 5.5.2 | Pipeline Recipe Export in Desktop UI | One-click button in `PipelineCanvas.svelte` to copy bash CLI command or export JSON recipe |
+| 5.5.3 | Streamable HTTP MCP Server (`paperpilot-mcp --port 8080 --http`) | Expose Model Context Protocol over streamable HTTP for remote agents (LangChain, n8n, AutoGen) alongside stdio |
+| 5.5.4 | Chained Pipeline MCP Tool (`pdf_run_pipeline`) | Allow AI agents over MCP to trigger an entire multi-step recipe in a single atomic RPC call |
 
 ## Phase 6 — Enterprise
 

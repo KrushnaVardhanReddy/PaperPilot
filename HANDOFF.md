@@ -104,10 +104,12 @@ PaperPilot/
 3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
 4. **Phase 5 (Advanced Intelligence & Local AI Engine):**
    - High-speed OCR (`paperpilot-ocr`)
+   - Visual Pixel PDF Comparison Slider (Rust `image` pixel-diff engine)
    - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search
    - MinerU / Marker-style layout-aware clean Markdown and LaTeX table parsing
    - Automatic local PII detection & structural redaction (SSNs, credit cards, names)
    - Multi-core memory-mapped streaming (`memmap2`) for 1,000+ page documents
+   - Headless CLI Pipeline Runner (`paperpilot pipeline run --spec recipe.json`) & Streamable HTTP MCP server (`paperpilot-mcp --port 8080 --http`)
 
 ---
 
