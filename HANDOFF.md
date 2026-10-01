@@ -96,14 +96,15 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.F.5 E2E Tests | `16037090941130414687` | Writing Playwright E2E tests for the PDF Viewer, Annotations, and Menu IPC |
+| Phase 4.E2E Round 2 Backend | `11037071907297271510` | Registering `pdf_annotate` and `pdf_form_fill` via CLI/MCP and adding backend E2E tests |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for F.2 & F.3 Completion:** Wait for both Jules sessions to complete and verify them.
-2. **Phase 5 (NLP):** Once the PDF editor is entirely functional, start integrating the local Llama backend.
+1. **Wait for Backend E2E Validation:** Wait for Jules session `11037071907297271510` to complete the backend registration and MCP testing for R2.E1 & R2.E2.
+2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking once the backend is validated.
+3. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 
 ---
 
@@ -122,4 +123,4 @@ python3 scripts/jules_submit.py --file prompts/tasks/<phase>/<task>.txt
 
 ---
 
-*Last updated: 2026-09-29*
+*Last updated: 2026-09-30*

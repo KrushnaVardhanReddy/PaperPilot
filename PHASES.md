@@ -499,10 +499,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.5.1 | Viewer E2E Test | 🚧 Pending (Session 16037090941130414687) |
-| F.5.2 | Annotations E2E Test | 🚧 Pending (Session 16037090941130414687) |
+| F.5.1 | Viewer E2E Test | ✅ Completed |
+| F.5.2 | Annotations E2E Test | ✅ Completed |
 | F.5.3 | Form Filling E2E Test | ✅ Form tests are fully implemented and verified in F.3 |
-| F.5.4 | Menu / Tauri IPC Test | 🚧 Pending (Session 16037090941130414687) |
+| F.5.4 | Menu / Tauri IPC Test | ✅ Completed |
 
 ---
 
@@ -514,7 +514,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | R2.E1 | CLI End-to-End Re-Validation | Re-run full CLI sweep; verify no regressions; add annotation/form save commands |
 | R2.E2 | MCP End-to-End Re-Validation | Re-run all MCP tools; add `pdf_annotate`, `pdf_form_fill` tools |
-| R2.E3 | UI Full Re-Validation (Viewer + Annotations) | Playwright: viewer render, highlight flow, sticky note, form fill, menu bar actions |
+| R2.E3 | UI Full Re-Validation (Viewer + Annotations) | ✅ Completed |
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
 
 ---
