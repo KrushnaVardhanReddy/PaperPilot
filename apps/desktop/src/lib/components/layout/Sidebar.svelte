@@ -7,14 +7,23 @@
   import CancelButton from '$lib/components/ui/CancelButton.svelte';
 
   let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  let isCollapsed = $derived(windowWidth < 900);
+  let manualCollapsed = $state(false);
+  let isCollapsed = $derived(manualCollapsed || windowWidth < 900);
 
   onMount(() => {
+    // Restore persisted collapse state
+    const stored = localStorage.getItem('sidebar-collapsed');
+    if (stored === 'true') manualCollapsed = true;
+
     function handleResize() {
       windowWidth = window.innerWidth;
     }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  });
+
+  $effect(() => {
+    localStorage.setItem('sidebar-collapsed', String(manualCollapsed));
   });
 
   const navItems = [
@@ -25,7 +34,7 @@
   ];
 </script>
 
-<aside class="sidebar" aria-label="Main navigation">
+<aside class="sidebar" class:collapsed={isCollapsed} aria-label="Main navigation">
   <div class="sidebar-header">
     <h1 class="brand-title">PaperPilot</h1>
   </div>
@@ -85,6 +94,15 @@
   </div>
 
   <div class="sidebar-footer">
+    <button
+      class="collapse-btn"
+      id="sidebar-collapse-toggle"
+      onclick={() => manualCollapsed = !manualCollapsed}
+      title={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-label={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+    >
+      {manualCollapsed ? '›' : '‹'}
+    </button>
     <div class="theme-toggle">
       <button
         class="theme-btn"
@@ -104,6 +122,52 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    transition: width 0.25s ease;
+  }
+
+  /* Collapsed state: 48px icon rail */
+  .sidebar.collapsed {
+    width: 48px;
+  }
+
+  /* Hide text elements when collapsed */
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .brand-title,
+  .sidebar.collapsed .sidebar-jobs {
+    display: none;
+  }
+
+  /* Hide theme toggle entirely when collapsed */
+  .sidebar.collapsed .theme-btn {
+    display: none;
+  }
+
+  /* Center icons when collapsed */
+  .sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .sidebar.collapsed .nav-icon {
+    margin-right: 0;
+  }
+
+  /* Collapse toggle button */
+  .collapse-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .collapse-btn:hover {
+    background: var(--bg-surface);
+    color: var(--text-primary);
   }
 
   .sidebar-header {
