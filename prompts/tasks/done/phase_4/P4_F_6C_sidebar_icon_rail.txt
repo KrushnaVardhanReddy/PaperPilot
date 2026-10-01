@@ -1,0 +1,212 @@
+# Task: Phase 4.F.6-C — Left Sidebar Collapsible Icon Rail
+# Parallel-safe: Only touches Sidebar.svelte
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST still compile (`npm run check`).
+3. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message must start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect) — NEVER Svelte 4 stores.
+6. Use Vanilla CSS — NEVER Tailwind.
+7. All new interactive elements must have a unique `id` attribute.
+
+---
+
+## CONTEXT
+
+### File to Modify
+apps/desktop/src/lib/components/layout/Sidebar.svelte
+
+### Current Behavior
+The sidebar is currently 260px wide (fixed). It only "collapses" automatically
+based on window width when windowWidth < 900 via:
+  `let isCollapsed = $derived(windowWidth < 900);`
+There is NO manual toggle for the user.
+
+### Goal
+Add a manual collapse toggle button that:
+1. Collapses the sidebar to a 48px icon-only "rail" (showing just nav icons)
+2. Has a smooth CSS width transition
+3. Persists the user's choice in localStorage
+4. Still auto-collapses at small window widths (preserve existing behavior)
+
+---
+
+## CHANGE 1: Update Script Logic
+
+### Current script block (lines 1-26):
+```typescript
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { appState } from '$lib/state/app.svelte';
+  import { jobsState } from '$lib/state/jobs.svelte';
+  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+  import CancelButton from '$lib/components/ui/CancelButton.svelte';
+
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let isCollapsed = $derived(windowWidth < 900);
+
+  onMount(() => {
+    function handleResize() {
+      windowWidth = window.innerWidth;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
+  ...
+```
+
+### Replace ONLY the state variables and onMount (keep all imports and navItems):
+```typescript
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let manualCollapsed = $state(false);
+  let isCollapsed = $derived(manualCollapsed || windowWidth < 900);
+
+  onMount(() => {
+    // Restore persisted collapse state
+    const stored = localStorage.getItem('sidebar-collapsed');
+    if (stored === 'true') manualCollapsed = true;
+
+    function handleResize() {
+      windowWidth = window.innerWidth;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
+
+  $effect(() => {
+    localStorage.setItem('sidebar-collapsed', String(manualCollapsed));
+  });
+```
+
+---
+
+## CHANGE 2: Add class:collapsed to the <aside> Element
+
+### Current:
+```svelte
+<aside class="sidebar" aria-label="Main navigation">
+```
+
+### Replace with:
+```svelte
+<aside class="sidebar" class:collapsed={isCollapsed} aria-label="Main navigation">
+```
+
+---
+
+## CHANGE 3: Add Collapse Toggle Button
+
+Add this button INSIDE the `.sidebar-footer` div, BEFORE the existing `.theme-toggle` div:
+
+```svelte
+<button
+  class="collapse-btn"
+  id="sidebar-collapse-toggle"
+  onclick={() => manualCollapsed = !manualCollapsed}
+  title={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+  aria-label={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+>
+  {manualCollapsed ? '›' : '‹'}
+</button>
+```
+
+---
+
+## CHANGE 4: Add CSS Rules
+
+Add these rules to the existing <style> block:
+
+```css
+/* Smooth width transition */
+.sidebar {
+  transition: width 0.25s ease;
+}
+
+/* Collapsed state: 48px icon rail */
+.sidebar.collapsed {
+  width: 48px;
+}
+
+/* Hide text elements when collapsed */
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .brand-title,
+.sidebar.collapsed .sidebar-jobs {
+  display: none;
+}
+
+/* Hide theme toggle entirely when collapsed */
+.sidebar.collapsed .theme-btn {
+  display: none;
+}
+
+/* Center icons when collapsed */
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+.sidebar.collapsed .nav-icon {
+  margin-right: 0;
+}
+
+/* Collapse toggle button */
+.collapse-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.collapse-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+```
+
+Note: The `.sidebar` rule already exists in the CSS. ADD `transition: width 0.25s ease;`
+to the existing rule — do NOT create a duplicate `.sidebar` rule.
+
+---
+
+## Files Modified by This Task
+- apps/desktop/src/lib/components/layout/Sidebar.svelte
+
+## Files NOT Touched by This Task
+- +page.svelte
+- +layout.svelte
+- capabilities/default.json
+- DocumentList.svelte
+- Any new component files
+
+---
+
+## Verification Checklist
+[ ] A collapse button (‹) appears at the bottom of the sidebar, above the theme toggle
+[ ] Clicking ‹ collapses sidebar to 48px width smoothly (width CSS transition visible)
+[ ] When collapsed, only nav icons are visible — no labels, no brand title, no jobs list
+[ ] Collapsed sidebar shows › toggle
+[ ] Clicking › expands the sidebar back to full width smoothly
+[ ] Collapsed state persists after app restart (localStorage key: 'sidebar-collapsed')
+[ ] Sidebar still auto-collapses to icon rail when window width < 900px
+[ ] Navigation still works when collapsed (clicking icons changes the active tab)
+[ ] Nav icons have tooltip (title attribute) when collapsed for discoverability
+
+## Compile & Test
+```bash
+# From apps/desktop
+npm run check
+
+# From repo root
+make test-all
+```
+
+Last updated: 2026-10-01 | Task 4.F.6-C | Antigravity Orchestrator

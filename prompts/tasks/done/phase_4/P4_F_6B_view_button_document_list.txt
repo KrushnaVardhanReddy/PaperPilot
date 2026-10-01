@@ -1,0 +1,164 @@
+# Task: Phase 4.F.6-B — View Button + Improved Document List Row
+# Parallel-safe: Only touches DocumentList.svelte
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST still compile (`npm run check`).
+3. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message must start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores.
+6. Use Vanilla CSS — NEVER Tailwind.
+7. All new interactive elements must have a unique `id` attribute.
+
+---
+
+## CONTEXT
+
+### File to Modify
+apps/desktop/src/lib/components/ui/DocumentList.svelte
+
+### How it fits in the app
+DocumentList.svelte is rendered inside the Documents view in +page.svelte.
+It renders one row per uploaded PDF using: `{#each appState.documents as doc, index}`.
+
+Each row currently shows:
+- A PDF emoji icon (📄)
+- The filename + size
+- A single ❌ remove button
+
+The app state is imported from: `import { appState } from '$lib/state/app.svelte';`
+
+### How document selection works
+Calling `appState.selectDocument(index)` sets `appState.selectedDocumentIndex = index`.
+In +page.svelte, when selectedDocumentIndex is not null, the PDF viewer is shown.
+So the "View" button just needs to call selectDocument(index) and the viewer opens automatically.
+
+---
+
+## CHANGE 1: Add "View" Button to Each Document Row
+
+### Position in the row
+Current: [📄 icon] [doc info] [❌ remove]
+New:     [📄 icon] [doc info] [👁 view] [❌ remove]
+
+### Button implementation
+Add a view button BEFORE the existing remove button, inside the #each block:
+
+```svelte
+<button
+  class="view-btn"
+  id="view-doc-{index}"
+  title="View document"
+  aria-label="View {doc.name}"
+  onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
+>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+</button>
+```
+
+Note: e.stopPropagation() is required so clicking the button doesn't also
+trigger the row's onclick which also selects the document (would be a double-call,
+which is harmless, but stopPropagation is cleaner).
+
+### CSS for view-btn
+Add this to the <style> block:
+```css
+.view-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 8px;
+  margin-left: 4px;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  opacity: 0.6;
+}
+.view-btn:hover {
+  opacity: 1;
+  color: var(--accent-primary);
+  background-color: rgba(94, 106, 210, 0.1);
+}
+```
+
+---
+
+## CHANGE 2: Fix Hardcoded Page Count
+
+### Current (line ~32):
+```svelte
+<span class="doc-pages">1 page</span> <!-- Mock page count -->
+```
+
+### Replace with:
+```svelte
+<span class="doc-pages">{(doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF'}</span>
+```
+
+This gracefully handles the case where pageCount is not yet known (shows "PDF")
+vs when it is known (shows "N pages"). The pageCount property is set by the
+PDF viewer after loading.
+
+---
+
+## CHANGE 3: Improve Row Hover State
+
+The current row has `cursor: pointer` and a hover background, but clicking the row
+itself selects the document. This is fine. However, when hovering, make the view
+and remove buttons more visible by updating the parent hover rule.
+
+Add to the existing `.document-item:hover` rule:
+```css
+.document-item:hover .view-btn,
+.document-item:hover .remove-btn {
+  opacity: 1;
+}
+```
+
+And set the default opacity of remove-btn to match view-btn (0.6) by adding
+`opacity: 0.6;` to the existing `.remove-btn` rule if it does not already have it.
+
+---
+
+## Files Modified by This Task
+- apps/desktop/src/lib/components/ui/DocumentList.svelte
+
+## Files NOT Touched by This Task
+- +page.svelte
+- +layout.svelte
+- capabilities/default.json
+- Sidebar.svelte
+- Any new component files
+
+---
+
+## Verification Checklist
+[ ] Upload a PDF via the dropzone. The document row appears.
+[ ] The row shows both a view (eye) button and a remove (X) button.
+[ ] Clicking the eye button opens the PDF in the viewer.
+[ ] Clicking the X button removes the document.
+[ ] Hovering the row makes both buttons more visible (opacity increases).
+[ ] The page count shows "PDF" when unknown, or "N pages" when known.
+[ ] The eye button has id="view-doc-0" (for first doc), id="view-doc-1" (second), etc.
+
+## Compile & Test
+```bash
+# From apps/desktop
+npm run check
+
+# From repo root
+make test-all
+```
+
+Last updated: 2026-10-01 | Task 4.F.6-B | Antigravity Orchestrator
