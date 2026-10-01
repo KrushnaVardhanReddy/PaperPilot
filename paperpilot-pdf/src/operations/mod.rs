@@ -1,3 +1,4 @@
+pub mod annotate;
 pub mod bates;
 pub mod bookmarks;
 pub mod burst;

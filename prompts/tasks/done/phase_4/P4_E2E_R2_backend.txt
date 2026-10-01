@@ -1,0 +1,27 @@
+# Task: Phase 4.E2E Round 2 — CLI & MCP Re-Validation
+
+## Objective
+Now that the PDF Viewer, Annotations, and Form Filling features are fully merged into `paperpilot-pdf`, we need to expose these new capabilities through the CLI and MCP Server, and re-validate that all operations function correctly end-to-end.
+
+## Requirements
+
+### 1. CLI Updates (`paperpilot-cli`)
+- Add an `annotate` command to the CLI to apply annotations via `paperpilot-pdf::operations::annotate::AnnotateOperation`.
+- The form commands (`form read`, `form fill`, `form add-field`) are already implemented in `paperpilot-cli`, but verify they are fully covered by CLI tests.
+- Re-run the full CLI E2E test suite (`cargo test --test e2e` in `paperpilot-cli`).
+
+### 2. MCP Server Updates (`paperpilot-mcp`)
+- The `pdf_annotate` and `pdf_form_fill` tools were mentioned in previous phases but are missing from `paperpilot-mcp/src/server.rs`.
+- Implement `pdf_annotate` in the MCP server.
+- Implement `pdf_form_fill` (and related form tools if missing) in the MCP server.
+- Add MCP tests for these tools.
+- Re-run the full MCP E2E test suite (`cargo test` in `paperpilot-mcp`) and ensure 100% pass rate.
+
+### 3. Tauri Wiring (`apps/desktop/src-tauri`)
+- Verify that `invoke_mcp_tool` in `apps/desktop/src-tauri/src/lib.rs` properly handles the new `pdf_annotate` and `pdf_fill_form` (or `pdf_form_fill`) operations to bridge the frontend and `paperpilot-pdf`. The Svelte frontend is already calling `invoke_mcp_tool(toolName: 'pdf_fill_form', ...)` and `invoke('save_annotations')`.
+
+## Verification Steps
+1. `cargo test -p paperpilot-cli`
+2. `cargo test -p paperpilot-mcp`
+3. Check `apps/desktop/src-tauri/src/lib.rs` for tool handling.
+4. Ensure no warnings or errors exist.
