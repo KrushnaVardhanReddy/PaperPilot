@@ -1,0 +1,36 @@
+# Task: Phase 4.F.6 — PDF Viewer UX Improvements
+
+## Objective
+The current PDF Viewer experience feels cramped, and the native "Open" menu isn't functional. We need to implement collapsible side panels for the PDF viewer to maximize screen real estate, add a "View" button to uploaded documents, and wire up the Tauri native file picker.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER replace a working function body with `// TODO` or empty returns.
+3. Every file you modify MUST still compile.
+4. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+5. Commit message must start with "jules: " prefix.
+
+## Requirements
+
+### 1. View Button on Uploaded Documents
+In the Home/Documents view where the list of uploaded PDFs is shown under the Dropzone:
+- Add a "View" button (e.g., an eye icon or just the word "View") next to the red 'X' delete button.
+- Clicking this button should switch the app's active tab to the PDF viewer and load that specific document.
+
+### 2. Collapsible Viewer Sidebars
+In the PDF Viewer screen (`apps/desktop/src/routes/viewer/+page.svelte` or wherever the main viewer layout is):
+- The right-side panels ("Annotations (0)" and "Document Info") currently take up too much horizontal space.
+- Make these panels completely collapsible. Add toggle buttons (e.g., an "i" button for info, and a "Pen" icon for annotations) that float on the right side of the screen when collapsed.
+- When collapsed, the PDF `<canvas>` should automatically expand to use the newly available full-screen width.
+- Use Svelte 5 `$state` to track whether these panels are expanded or collapsed.
+
+### 3. Native "File -> Open" Implementation
+The native menu (and our incoming custom Titlebar menu) emits a Tauri event `menu-open-file` when the user clicks "File -> Open", but the frontend currently does nothing with it.
+- In `apps/desktop/src/routes/+layout.svelte`, update the `listen('menu-open-file', ...)` callback.
+- When triggered, use Tauri's `@tauri-apps/plugin-dialog` to open a file selection dialog (filtering for `.pdf` files).
+- If the user selects a file, read its path, convert it to a format the app can process (or just add its path/metadata to `appState.documents`), and navigate the user to the viewer.
+
+## Verification Steps
+1. Upload a PDF. Click the new "View" button next to it. Verify it immediately opens in the viewer.
+2. Inside the viewer, click the toggle buttons to collapse the right-side panels. Verify the PDF canvas expands to use the full width.
+3. Trigger the `menu-open-file` event (or use the native menu). Verify the OS file picker opens, allows selecting a PDF, and loads it into the app.
