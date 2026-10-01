@@ -1,0 +1,803 @@
+# Task: Phase 4.F.7 — Multi-Document Tabs + Right-Docked Operations Panel + Editable Page & Zoom
+# Priority: HIGH — Solves tabbed workspace ([Tab1][Tab2][+]), docks Operations panel to right, and makes Page Jump & Zoom directly editable
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow the design system tokens in `app.css` (e.g. `var(--bg-secondary)`, `var(--bg-surface)`, `var(--accent-primary)`, `var(--border-color)`).
+
+---
+
+## CONTEXT & CURRENT PROBLEMS
+
+### Problem 1: Operations Panel Drops to the Bottom
+In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+A responsive media query `@media (max-width: 899px)` sets `.operations-panel { width: 100%; border-top: 1px solid var(--border-color); }`.
+Furthermore, in `apps/desktop/src/routes/+page.svelte`, the layout lacks a flex row wrapper, causing the Operations panel to appear underneath the DocumentList instead of docked as a sleek right inspector panel (like Linear/Finder).
+
+### Problem 2: No Multi-Document Tabs
+Currently, `AppState` only tracks `selectedDocumentIndex: number | null`.
+When a user views a document, they only see a single document with a "< Back" button.
+There is no tab bar like Chrome, Arc, or Zed (`[Krushna-passport.pdf ×] [Q3-Report.pdf ×] [+]`), meaning users cannot switch back and forth between multiple opened PDFs or open a new PDF directly into a tab.
+
+### Problem 3: Page Number and Zoom are Static / Not Directly Editable
+In `apps/desktop/src/lib/components/PdfToolbar.svelte`:
+- Page number is static text: `Page {pageNum} of {numPages || 1}`. A user with a 100-page document cannot jump to page 45 without clicking "Next" 44 times!
+- Zoom level is static text: `{Math.round(scale * 100)}%`. Users cannot type `150%` or choose standard presets (`Fit Width`, `50%`, `100%`, `150%`, `200%`).
+- Both must be directly editable with instant keyboard confirmation (Enter key) and validation bounds.
+
+---
+
+## STEP 1: Extend `AppState` for Tab Management
+
+File: `apps/desktop/src/lib/state/app.svelte.ts`
+
+Update `AppState` to manage open tabs:
+```typescript
+export class AppState {
+  activeTab = $state('home');
+  isLoading = $state(false);
+  theme = $state('dark');
+  documents = $state<File[]>([]);
+  selectedDocumentIndex = $state<number | null>(null);
+
+  // Tab management for multi-document viewer
+  openDocIndices = $state<number[]>([]);
+
+  constructor() {}
+
+  setActiveTab(tab: string) {
+    this.activeTab = tab;
+  }
+
+  setLoading(loading: boolean) {
+    this.isLoading = loading;
+  }
+
+  async setTheme(theme: string) {
+    this.theme = theme;
+    try {
+      await getCurrentWindow().setTheme(theme === 'dark' ? 'dark' : 'light');
+    } catch (err) {
+      console.warn("Could not set native window theme", err);
+    }
+  }
+
+  addDocuments(files: File[]) {
+    this.documents = [...this.documents, ...files];
+  }
+
+  removeDocument(index: number) {
+    // Close tab if open
+    this.closeTab(index);
+
+    // Shift remaining tab indices if after deleted index
+    this.openDocIndices = this.openDocIndices.map(i => i > index ? i - 1 : i);
+
+    this.documents = this.documents.filter((_, i) => i !== index);
+    if (this.selectedDocumentIndex === index) {
+      this.selectedDocumentIndex = this.openDocIndices.length > 0 ? this.openDocIndices[this.openDocIndices.length - 1] : null;
+    } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
+      this.selectedDocumentIndex -= 1;
+    }
+  }
+
+  selectDocument(index: number | null) {
+    if (index === null) {
+      this.selectedDocumentIndex = null;
+      return;
+    }
+    if (index >= 0 && index < this.documents.length) {
+      this.selectedDocumentIndex = index;
+      if (!this.openDocIndices.includes(index)) {
+        this.openDocIndices = [...this.openDocIndices, index];
+      }
+    }
+  }
+
+  closeTab(index: number) {
+    const tabIdx = this.openDocIndices.indexOf(index);
+    if (tabIdx !== -1) {
+      this.openDocIndices = this.openDocIndices.filter(i => i !== index);
+      if (this.selectedDocumentIndex === index) {
+        if (this.openDocIndices.length > 0) {
+          const nextIdx = Math.min(tabIdx, this.openDocIndices.length - 1);
+          this.selectedDocumentIndex = this.openDocIndices[nextIdx];
+        } else {
+          this.selectedDocumentIndex = null;
+        }
+      }
+    }
+  }
+
+  reorderDocuments(fromIndex: number, toIndex: number) {
+    const docs = [...this.documents];
+    const [movedItem] = docs.splice(fromIndex, 1);
+    docs.splice(toIndex, 0, movedItem);
+    this.documents = docs;
+  }
+}
+```
+
+---
+
+## STEP 2: Create `DocumentTabBar.svelte`
+
+Create a new file:
+`apps/desktop/src/lib/components/layout/DocumentTabBar.svelte`
+
+```svelte
+<script lang="ts">
+  import { appState } from '$lib/state/app.svelte';
+
+  async function handleNewTab() {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+      });
+      if (selected && typeof selected === 'string') {
+        const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'document.pdf';
+        const response = await fetch(
+          // @ts-expect-error __TAURI_INTERNALS__ is injected by Tauri
+          window.__TAURI_INTERNALS__.convertFileSrc(selected)
+        );
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+        Object.defineProperty(file, 'path', { value: selected, writable: false });
+        appState.addDocuments([file]);
+        appState.selectDocument(appState.documents.length - 1);
+      }
+    } catch (err) {
+      console.warn('Native open dialog unavailable, using fallback', err);
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.onchange = (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          appState.addDocuments([files[0]]);
+          appState.selectDocument(appState.documents.length - 1);
+        }
+      };
+      input.click();
+    }
+  }
+</script>
+
+<div class="tab-bar" role="tablist" aria-label="Open documents">
+  <button
+    class="home-tab-btn"
+    class:active={appState.selectedDocumentIndex === null}
+    onclick={() => appState.selectDocument(null)}
+    title="Documents Library"
+    id="tab-btn-home"
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <span>Documents</span>
+  </button>
+
+  <div class="tabs-scroll-container">
+    {#each appState.openDocIndices as docIndex (docIndex)}
+      {@const doc = appState.documents[docIndex]}
+      {#if doc}
+        <div
+          class="doc-tab"
+          class:active={appState.selectedDocumentIndex === docIndex}
+          role="tab"
+          aria-selected={appState.selectedDocumentIndex === docIndex}
+          id="tab-doc-{docIndex}"
+          onclick={() => appState.selectDocument(docIndex)}
+        >
+          <span class="tab-icon">📄</span>
+          <span class="tab-title" title={doc.name}>{doc.name}</span>
+          <button
+            class="tab-close-btn"
+            id="tab-close-{docIndex}"
+            title="Close tab"
+            aria-label="Close {doc.name}"
+            onclick={(e) => {
+              e.stopPropagation();
+              appState.closeTab(docIndex);
+            }}
+          >
+            ×
+          </button>
+        </div>
+      {/if}
+    {/each}
+  </div>
+
+  <button
+    class="new-tab-btn"
+    id="new-doc-tab-btn"
+    title="Open new document"
+    aria-label="Open new document"
+    onclick={handleNewTab}
+  >
+    +
+  </button>
+</div>
+
+<style>
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-surface, #1e1e24);
+    border-bottom: 1px solid var(--border-color, #2a2a35);
+    height: 38px;
+    padding: 0 8px;
+    gap: 4px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .home-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    height: 28px;
+    border-radius: var(--border-radius-sm, 4px);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    flex-shrink: 0;
+  }
+
+  .home-tab-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .home-tab-btn.active {
+    color: var(--accent-primary, #5e6ad2);
+    background-color: rgba(94, 106, 210, 0.15);
+    font-weight: 500;
+  }
+
+  .tabs-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+
+  .tabs-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doc-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    height: 28px;
+    border-radius: var(--border-radius-sm, 4px);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    max-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .doc-tab:hover {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .doc-tab.active {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-secondary, #13131a);
+    border-color: var(--border-color, #2a2a35);
+    font-weight: 500;
+  }
+
+  .tab-icon {
+    font-size: 12px;
+  }
+
+  .tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .tab-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: all var(--transition-fast, 0.15s ease);
+  }
+
+  .tab-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .new-tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--border-radius-sm, 4px);
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    flex-shrink: 0;
+  }
+
+  .new-tab-btn:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
+  }
+</style>
+```
+
+---
+
+## STEP 3: Make Page Number & Zoom Directly Editable in `PdfToolbar.svelte`
+
+File: `apps/desktop/src/lib/components/PdfToolbar.svelte`
+
+Replace the static text with editable inputs:
+
+### Component Script:
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  let {
+    pageNum = $bindable(1),
+    numPages = 0,
+    scale = $bindable(1.2),
+  } = $props();
+
+  let inputPage = $state(String(pageNum));
+  let isEditingPage = $state(false);
+
+  // Keep local page input in sync with external page changes
+  $effect(() => {
+    if (!isEditingPage) {
+      inputPage = String(pageNum);
+    }
+  });
+
+  function applyPageJump() {
+    isEditingPage = false;
+    const parsed = parseInt(inputPage, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= (numPages || 1)) {
+      pageNum = parsed;
+    } else {
+      inputPage = String(pageNum);
+    }
+  }
+
+  function handlePageKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      applyPageJump();
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === 'Escape') {
+      inputPage = String(pageNum);
+      isEditingPage = false;
+      (e.target as HTMLInputElement).blur();
+    }
+  }
+
+  function prevPage() {
+    if (pageNum > 1) {
+      pageNum -= 1;
+    }
+  }
+
+  function nextPage() {
+    if (pageNum < numPages) {
+      pageNum += 1;
+    }
+  }
+
+  function zoomIn() {
+    scale = Math.min(Math.round((scale + 0.2) * 10) / 10, 5.0);
+  }
+
+  function zoomOut() {
+    scale = Math.max(Math.round((scale - 0.2) * 10) / 10, 0.2);
+  }
+
+  function setZoomPreset(val: number) {
+    scale = val;
+  }
+
+  onMount(() => {
+    function onZoomIn() { scale = Math.min(scale + 0.2, 5.0); }
+    function onZoomOut() { scale = Math.max(scale - 0.2, 0.2); }
+    function onFitWidth() { scale = 1.0; }
+
+    window.addEventListener('paperpilot:zoom-in', onZoomIn);
+    window.addEventListener('paperpilot:zoom-out', onZoomOut);
+    window.addEventListener('paperpilot:fit-width', onFitWidth);
+
+    return () => {
+      window.removeEventListener('paperpilot:zoom-in', onZoomIn);
+      window.removeEventListener('paperpilot:zoom-out', onZoomOut);
+      window.removeEventListener('paperpilot:fit-width', onFitWidth);
+    };
+  });
+</script>
+```
+
+### Component Template:
+```svelte
+<div class="toolbar">
+  <!-- Page Navigation Group with Editable Page Input -->
+  <div class="toolbar-group">
+    <button
+      class="toolbar-btn"
+      id="toolbar-prev-page"
+      onclick={prevPage}
+      disabled={pageNum <= 1}
+      title="Previous Page (Left Arrow)"
+    >
+      ‹
+    </button>
+
+    <div class="page-jump-container">
+      <input
+        type="text"
+        id="toolbar-page-input"
+        class="page-input"
+        bind:value={inputPage}
+        onfocus={() => isEditingPage = true}
+        onblur={applyPageJump}
+        onkeydown={handlePageKeydown}
+        title="Type page number and press Enter"
+        aria-label="Current page number"
+      />
+      <span class="page-total">/ {numPages || 1}</span>
+    </div>
+
+    <button
+      class="toolbar-btn"
+      id="toolbar-next-page"
+      onclick={nextPage}
+      disabled={pageNum >= numPages}
+      title="Next Page (Right Arrow)"
+    >
+      ›
+    </button>
+  </div>
+
+  <!-- Zoom Controls with Presets Dropdown & Buttons -->
+  <div class="toolbar-group">
+    <button
+      class="toolbar-btn"
+      id="toolbar-zoom-out"
+      onclick={zoomOut}
+      title="Zoom Out (Ctrl -)"
+      disabled={scale <= 0.2}
+    >
+      −
+    </button>
+
+    <div class="zoom-dropdown-wrapper">
+      <select
+        id="toolbar-zoom-select"
+        class="zoom-select"
+        value={Math.round(scale * 100)}
+        onchange={(e) => setZoomPreset(parseInt((e.target as HTMLSelectElement).value, 10) / 100)}
+        title="Zoom Preset"
+        aria-label="Zoom level"
+      >
+        <option value="50">50%</option>
+        <option value="75">75%</option>
+        <option value="100">100%</option>
+        <option value="125">125%</option>
+        <option value="150">150%</option>
+        <option value="175">175%</option>
+        <option value="200">200%</option>
+        <option value="300">300%</option>
+        {#if ![50, 75, 100, 125, 150, 175, 200, 300].includes(Math.round(scale * 100))}
+          <option value={Math.round(scale * 100)}>{Math.round(scale * 100)}%</option>
+        {/if}
+      </select>
+    </div>
+
+    <button
+      class="toolbar-btn"
+      id="toolbar-zoom-in"
+      onclick={zoomIn}
+      title="Zoom In (Ctrl +)"
+      disabled={scale >= 5.0}
+    >
+      +
+    </button>
+
+    <button
+      class="toolbar-btn-text"
+      id="toolbar-fit-width"
+      onclick={() => scale = 1.0}
+      title="Reset to 100% (Fit Width)"
+    >
+      Fit
+    </button>
+  </div>
+</div>
+```
+
+### Component CSS:
+```css
+<style>
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-surface, #ffffff);
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05));
+    z-index: 10;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary, #374151);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    padding: 0;
+  }
+
+  .toolbar-btn:hover:not(:disabled) {
+    background-color: var(--bg-surface-hover, #f3f4f6);
+    border-color: var(--accent-primary, #5e6ad2);
+    color: var(--accent-primary, #5e6ad2);
+  }
+
+  .toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .toolbar-btn-text {
+    height: 28px;
+    padding: 0 8px;
+    background-color: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+  }
+
+  .toolbar-btn-text:hover {
+    color: var(--accent-primary, #5e6ad2);
+    border-color: var(--accent-primary, #5e6ad2);
+    background-color: var(--bg-surface-hover, #f3f4f6);
+  }
+
+  .page-jump-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-primary, #f9fafb);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: var(--border-radius-sm, 4px);
+    padding: 0 6px;
+    height: 28px;
+  }
+
+  .page-input {
+    width: 32px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary, #111827);
+    outline: none;
+    padding: 0;
+  }
+
+  .page-input:focus {
+    background: var(--bg-surface, #ffffff);
+    border-radius: 2px;
+  }
+
+  .page-total {
+    font-size: 0.85rem;
+    color: var(--text-muted, #9ca3af);
+    white-space: nowrap;
+  }
+
+  .zoom-dropdown-wrapper {
+    position: relative;
+  }
+
+  .zoom-select {
+    height: 28px;
+    padding: 0 6px;
+    background-color: var(--bg-primary, #f9fafb);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 0.85rem;
+    color: var(--text-primary, #374151);
+    cursor: pointer;
+    outline: none;
+    font-weight: 500;
+  }
+
+  .zoom-select:hover {
+    border-color: var(--accent-primary, #5e6ad2);
+  }
+</style>
+```
+
+---
+
+## STEP 4: Fix OperationsPanel Styling & Docking
+
+File: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+
+1. Update `.operations-panel` CSS so it is firmly docked as a 320px right sidebar:
+```css
+  .operations-panel {
+    width: 320px;
+    min-width: 320px;
+    background-color: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
+  }
+```
+
+2. Remove the `@media (max-width: 899px)` rule that sets `.operations-panel { width: 100%; border-left: none; border-top: 1px solid var(--border-color); }`.
+Keep the panel docked as a right inspector column so it NEVER wraps beneath the documents list.
+
+---
+
+## STEP 5: Update `apps/desktop/src/routes/+page.svelte`
+
+Integrate `DocumentTabBar.svelte` and wire the tabbed layout:
+
+1. Import `DocumentTabBar`:
+```typescript
+import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
+```
+
+2. Include `DocumentTabBar` above the workspace when `appState.activeTab === 'home'`:
+```svelte
+{#if appState.activeTab === 'home'}
+  <div class="workspace-wrapper">
+    <DocumentTabBar />
+
+    <div class="workspace-body">
+      {#if appState.selectedDocumentIndex !== null}
+        <div class="viewer-wrapper">
+          <!-- Existing PDF viewer content -->
+          ...
+        </div>
+      {:else}
+        <div class="documents-layout">
+          <div class="documents-view">
+            <header class="view-header">
+              <h2>Documents</h2>
+              <p>Add PDF files to process</p>
+            </header>
+            <DropZone ondrop={handleFilesDropped} />
+            <DocumentList />
+          </div>
+          <OperationsPanel />
+        </div>
+      {/if}
+    </div>
+  </div>
+```
+
+3. Update page styles in `+page.svelte`:
+```css
+  .workspace-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .workspace-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .documents-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .documents-view {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+```
+
+---
+
+## STEP 6: Verification Checklist
+
+Execute locally before opening PR:
+- [ ] Run `npm run check` inside `apps/desktop/` — must pass with 0 errors.
+- [ ] Run `cargo check --workspace` — must pass with 0 errors.
+- [ ] Run `make test-all` — all backend and Playwright tests must pass.
+- [ ] In UI:
+  - OperationsPanel is cleanly docked on the right side of the Documents view (NOT dropped to the bottom).
+  - Clicking "View" or the document row opens the PDF and creates a tab in `DocumentTabBar`.
+  - Clicking the `[+]` button opens the file dialog to add another document into a new tab.
+  - Clicking `×` on a tab closes it.
+  - Clicking the "Documents" home tab returns to the upload/documents list view without losing open tabs.
+  - In PDF Toolbar:
+    - Page number input can be typed into directly (e.g., typing `15` and hitting Enter jumps straight to page 15).
+    - Zoom dropdown allows selecting 50%, 75%, 100%, 150%, 200%, or Fit Width directly without clicking 20 times.

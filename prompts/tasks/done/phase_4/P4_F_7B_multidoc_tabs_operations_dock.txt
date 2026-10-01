@@ -1,0 +1,480 @@
+# Task: Phase 4.F.7-B — Multi-Document Tab Bar + Right-Docked Operations Panel
+# Parallel-safe: Touches app.svelte.ts, OperationsPanel.svelte, creates DocumentTabBar.svelte, updates +page.svelte
+# Zero conflicts with PdfToolbar.svelte (Task 7A)
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css`.
+
+---
+
+## CONTEXT & GOAL
+
+1. **Fix Operations Panel Dropping to Bottom**:
+   - In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+     Remove the `@media (max-width: 899px)` rule that sets `.operations-panel { width: 100%; border-top: 1px solid var(--border-color); }`.
+     Set `.operations-panel { width: 320px; min-width: 320px; height: 100%; flex-shrink: 0; }`.
+   - In `apps/desktop/src/routes/+page.svelte`:
+     Wrap the documents view and Operations panel in a flex-row container (`.documents-layout`), so Operations is permanently docked on the right side (like Linear/Finder inspector) and NEVER wraps beneath the document list.
+
+2. **Add Multi-Document Tab System `[Documents] [Tab 1] [Tab 2] [+]`**:
+   - Extend `AppState` in `apps/desktop/src/lib/state/app.svelte.ts` with `openDocIndices` state, `selectDocument(index)`, and `closeTab(index)`.
+   - Create `DocumentTabBar.svelte` with:
+     - Home "Documents" button to return to document list/upload view
+     - Active tabs for open documents (`[📄 Doc.pdf ×]`)
+     - Close `×` button on each tab
+     - `+` button that calls `@tauri-apps/plugin-dialog` `open()` to open another PDF directly into a new tab
+   - Mount `DocumentTabBar` at the top of the workspace in `+page.svelte`.
+
+---
+
+## STEP 1: Extend `AppState` for Tabs
+
+File: `apps/desktop/src/lib/state/app.svelte.ts`
+
+```typescript
+import { getCurrentWindow } from '@tauri-apps/api/window';
+
+export class AppState {
+  activeTab = $state('home');
+  isLoading = $state(false);
+  theme = $state('dark');
+  documents = $state<File[]>([]);
+  selectedDocumentIndex = $state<number | null>(null);
+
+  // Tab management for multi-document viewer
+  openDocIndices = $state<number[]>([]);
+
+  constructor() {}
+
+  setActiveTab(tab: string) {
+    this.activeTab = tab;
+  }
+
+  setLoading(loading: boolean) {
+    this.isLoading = loading;
+  }
+
+  async setTheme(theme: string) {
+    this.theme = theme;
+    try {
+      await getCurrentWindow().setTheme(theme === 'dark' ? 'dark' : 'light');
+    } catch (err) {
+      console.warn("Could not set native window theme", err);
+    }
+  }
+
+  addDocuments(files: File[]) {
+    this.documents = [...this.documents, ...files];
+  }
+
+  removeDocument(index: number) {
+    this.closeTab(index);
+    this.openDocIndices = this.openDocIndices.map(i => i > index ? i - 1 : i);
+    this.documents = this.documents.filter((_, i) => i !== index);
+    if (this.selectedDocumentIndex === index) {
+      this.selectedDocumentIndex = this.openDocIndices.length > 0 ? this.openDocIndices[this.openDocIndices.length - 1] : null;
+    } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
+      this.selectedDocumentIndex -= 1;
+    }
+  }
+
+  selectDocument(index: number | null) {
+    if (index === null) {
+      this.selectedDocumentIndex = null;
+      return;
+    }
+    if (index >= 0 && index < this.documents.length) {
+      this.selectedDocumentIndex = index;
+      if (!this.openDocIndices.includes(index)) {
+        this.openDocIndices = [...this.openDocIndices, index];
+      }
+    }
+  }
+
+  closeTab(index: number) {
+    const tabIdx = this.openDocIndices.indexOf(index);
+    if (tabIdx !== -1) {
+      this.openDocIndices = this.openDocIndices.filter(i => i !== index);
+      if (this.selectedDocumentIndex === index) {
+        if (this.openDocIndices.length > 0) {
+          const nextIdx = Math.min(tabIdx, this.openDocIndices.length - 1);
+          this.selectedDocumentIndex = this.openDocIndices[nextIdx];
+        } else {
+          this.selectedDocumentIndex = null;
+        }
+      }
+    }
+  }
+
+  reorderDocuments(fromIndex: number, toIndex: number) {
+    const docs = [...this.documents];
+    const [movedItem] = docs.splice(fromIndex, 1);
+    docs.splice(toIndex, 0, movedItem);
+    this.documents = docs;
+  }
+}
+
+export const appState = new AppState();
+```
+
+---
+
+## STEP 2: Create `DocumentTabBar.svelte`
+
+Create new file: `apps/desktop/src/lib/components/layout/DocumentTabBar.svelte`
+
+```svelte
+<script lang="ts">
+  import { appState } from '$lib/state/app.svelte';
+
+  async function handleNewTab() {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+      });
+      if (selected && typeof selected === 'string') {
+        const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'document.pdf';
+        const response = await fetch(
+          // @ts-expect-error __TAURI_INTERNALS__ is injected by Tauri
+          window.__TAURI_INTERNALS__.convertFileSrc(selected)
+        );
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+        Object.defineProperty(file, 'path', { value: selected, writable: false });
+        appState.addDocuments([file]);
+        appState.selectDocument(appState.documents.length - 1);
+      }
+    } catch (err) {
+      console.warn('Native open dialog unavailable, using fallback', err);
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.onchange = (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          appState.addDocuments([files[0]]);
+          appState.selectDocument(appState.documents.length - 1);
+        }
+      };
+      input.click();
+    }
+  }
+</script>
+
+<div class="tab-bar" role="tablist" aria-label="Open documents">
+  <button
+    class="home-tab-btn"
+    class:active={appState.selectedDocumentIndex === null}
+    onclick={() => appState.selectDocument(null)}
+    title="Documents Library"
+    id="tab-btn-home"
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <span>Documents</span>
+  </button>
+
+  <div class="tabs-scroll-container">
+    {#each appState.openDocIndices as docIndex (docIndex)}
+      {@const doc = appState.documents[docIndex]}
+      {#if doc}
+        <div
+          class="doc-tab"
+          class:active={appState.selectedDocumentIndex === docIndex}
+          role="tab"
+          aria-selected={appState.selectedDocumentIndex === docIndex}
+          id="tab-doc-{docIndex}"
+          onclick={() => appState.selectDocument(docIndex)}
+        >
+          <span class="tab-icon">📄</span>
+          <span class="tab-title" title={doc.name}>{doc.name}</span>
+          <button
+            class="tab-close-btn"
+            id="tab-close-{docIndex}"
+            title="Close tab"
+            aria-label="Close {doc.name}"
+            onclick={(e) => {
+              e.stopPropagation();
+              appState.closeTab(docIndex);
+            }}
+          >
+            ×
+          </button>
+        </div>
+      {/if}
+    {/each}
+  </div>
+
+  <button
+    class="new-tab-btn"
+    id="new-doc-tab-btn"
+    title="Open new document"
+    aria-label="Open new document"
+    onclick={handleNewTab}
+  >
+    +
+  </button>
+</div>
+
+<style>
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-surface, #1e1e24);
+    border-bottom: 1px solid var(--border-color, #2a2a35);
+    height: 38px;
+    padding: 0 8px;
+    gap: 4px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .home-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    height: 28px;
+    border-radius: var(--border-radius-sm, 4px);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    flex-shrink: 0;
+  }
+
+  .home-tab-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .home-tab-btn.active {
+    color: var(--accent-primary, #5e6ad2);
+    background-color: rgba(94, 106, 210, 0.15);
+    font-weight: 500;
+  }
+
+  .tabs-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+
+  .tabs-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doc-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    height: 28px;
+    border-radius: var(--border-radius-sm, 4px);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    max-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .doc-tab:hover {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .doc-tab.active {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-secondary, #13131a);
+    border-color: var(--border-color, #2a2a35);
+    font-weight: 500;
+  }
+
+  .tab-icon {
+    font-size: 12px;
+  }
+
+  .tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .tab-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: all var(--transition-fast, 0.15s ease);
+  }
+
+  .tab-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .new-tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--border-radius-sm, 4px);
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    flex-shrink: 0;
+  }
+
+  .new-tab-btn:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
+  }
+</style>
+```
+
+---
+
+## STEP 3: Fix OperationsPanel Styling in `OperationsPanel.svelte`
+
+File: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+
+1. In `<style>`:
+```css
+  .operations-panel {
+    width: 320px;
+    min-width: 320px;
+    background-color: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
+  }
+```
+
+2. Remove the `@media (max-width: 899px)` rule setting `.operations-panel { width: 100%; border-top: 1px solid var(--border-color); }`.
+
+---
+
+## STEP 4: Update `apps/desktop/src/routes/+page.svelte`
+
+Integrate `DocumentTabBar` and wire `.documents-layout`:
+
+```svelte
+<script lang="ts">
+  ...
+  import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
+  ...
+</script>
+
+{#if appState.activeTab === 'home'}
+  <div class="workspace-wrapper">
+    <DocumentTabBar />
+
+    <div class="workspace-body">
+      {#if appState.selectedDocumentIndex !== null}
+        <div class="viewer-wrapper">
+          <!-- Existing PDF viewer content -->
+          ...
+        </div>
+      {:else}
+        <div class="documents-layout">
+          <div class="documents-view">
+            <header class="view-header">
+              <h2>Documents</h2>
+              <p>Add PDF files to process</p>
+            </header>
+            <DropZone ondrop={handleFilesDropped} />
+            <DocumentList />
+          </div>
+          <OperationsPanel />
+        </div>
+      {/if}
+    </div>
+  </div>
+{:else if appState.activeTab === 'settings'}
+...
+```
+
+Add CSS in `+page.svelte`:
+```css
+  .workspace-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .workspace-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .documents-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .documents-view {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] `npm run check` passes with 0 errors.
+- [ ] `cargo check --workspace` passes.
+- [ ] `make test-all` passes.
+- [ ] OperationsPanel stays docked on the right side of the Documents view (NOT dropped to the bottom).
+- [ ] Tab bar displays at top with Documents home button, document tabs, and `+` button.
+- [ ] Clicking `+` or "View" opens the document into a tab.
