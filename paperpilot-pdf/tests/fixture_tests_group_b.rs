@@ -1,4 +1,4 @@
-use paperpilot_core::error::PdfError;
+
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 

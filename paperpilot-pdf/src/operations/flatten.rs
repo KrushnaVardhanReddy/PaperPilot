@@ -27,11 +27,10 @@ impl PdfOperation for FlattenOperation {
             .and_then(|r| r.as_reference())
             .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
 
-        if let Ok(catalog) = lopdf_doc.inner.get_object_mut(catalog_ref) {
-            if let Ok(dict) = catalog.as_dict_mut() {
+        if let Ok(catalog) = lopdf_doc.inner.get_object_mut(catalog_ref)
+            && let Ok(dict) = catalog.as_dict_mut() {
                 dict.remove(b"AcroForm");
             }
-        }
 
         Ok(())
     }

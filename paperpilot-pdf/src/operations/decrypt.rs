@@ -22,11 +22,10 @@ impl PdfOperation for DecryptOperation {
                 PdfError::UnsupportedOperation("Document is not a LopdfDocument".to_string())
             })?;
 
-        if let Some(password) = &self.password {
-            if let Err(e) = lopdf_doc.inner.decrypt(password) {
+        if let Some(password) = &self.password
+            && let Err(e) = lopdf_doc.inner.decrypt(password) {
                 return Err(PdfError::UnsupportedOperation(format!("Decryption failed or unsupported format: {}", e)));
             }
-        }
 
         // Remove the 'Encrypt' key from the trailer dictionary to strip encryption
         lopdf_doc.inner.trailer.remove(b"Encrypt");
