@@ -14,12 +14,34 @@
   import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
   import StatusBar from '$lib/components/layout/StatusBar.svelte';
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
+  import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
+  import { listen } from '@tauri-apps/api/event';
 
   import { onMount } from 'svelte';
   onMount(() => {
     window.addEventListener('test-select-doc', (e: any) => {
        appState.selectDocument(e.detail);
     });
+
+    // Tauri events from titlebar
+    const unlistenMenuToggleDiff = listen('menu-toggle-diff', () => {
+      appState.toggleDiffView();
+    });
+
+    // Key bindings
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        appState.toggleDiffView();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      unlistenMenuToggleDiff.then(fn => fn());
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   });
 
   import { savePdfForm } from '$lib/api/pdf';
@@ -88,7 +110,9 @@
       <DocumentTabBar />
 
       <div class="workspace-body">
-        {#if appState.selectedDocumentIndex !== null}
+        {#if appState.showDiffView}
+          <PdfVisualDiff onClose={() => appState.showDiffView = false} />
+        {:else if appState.selectedDocumentIndex !== null}
           <div class="viewer-wrapper">
             <div class="viewer-content">
             <PdfThumbnails {pdfDoc} bind:pageNum />
