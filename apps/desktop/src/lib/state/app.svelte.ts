@@ -1,3 +1,5 @@
+import { getCurrentWindow } from '@tauri-apps/api/window';
+
 export class AppState {
   activeTab = $state('home');
   isLoading = $state(false);
@@ -15,8 +17,13 @@ export class AppState {
     this.isLoading = loading;
   }
 
-  setTheme(theme: string) {
+  async setTheme(theme: string) {
     this.theme = theme;
+    try {
+      await getCurrentWindow().setTheme(theme === 'dark' ? 'dark' : 'light');
+    } catch (err) {
+      console.warn("Could not set native window theme", err);
+    }
   }
 
   addDocuments(files: File[]) {

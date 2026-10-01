@@ -6,6 +6,8 @@
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
 
+  import { appState } from '$lib/state/app.svelte';
+
   let { children } = $props();
 
   onMount(() => {
@@ -28,6 +30,19 @@
         unlisten();
       }
     };
+  });
+
+  // Sync theme with document class
+  $effect(() => {
+    if (typeof document !== 'undefined') {
+      if (appState.theme === 'light') {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    }
   });
 </script>
 

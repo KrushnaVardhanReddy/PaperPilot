@@ -34,6 +34,28 @@
   --breakpoint-mobile: 600px;
 }
 
+:root.light {
+  /* Colors - Light mode */
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #FFFFFF;
+  --bg-surface: #F0F2F5;
+  --bg-surface-hover: #E4E7EB;
+
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+
+  --accent-primary: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-active: #3730A3;
+
+  --border-color: #E5E7EB;
+  
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
