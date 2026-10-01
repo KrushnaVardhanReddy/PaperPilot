@@ -24,6 +24,10 @@ test-frontend:
 test-e2e:
 	cd apps/desktop && npx playwright test
 
+# Run Playwright in UI mode to manually step through and test every feature/button
+test-e2e-ui:
+	cd apps/desktop && npx playwright test --ui
+
 # Run all tests across the stack
 test-all: test-backend test-frontend test-e2e
 
