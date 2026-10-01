@@ -82,19 +82,24 @@ PaperPilot/
 
 ---
 
-## 🚧 Active Jules Sessions (In-Progress)
+## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What they are doing |
+| Task | Prompt File | What it does |
 |---|---|---|
-| None | | |
+| Phase 4.F.7-A | `prompts/tasks/phase_4/P4_F_7A_editable_page_zoom_toolbar.txt` | Editable page jump input + zoom presets dropdown in `PdfToolbar.svelte` |
+| Phase 4.F.7-B | `prompts/tasks/phase_4/P4_F_7B_multidoc_tabs_operations_dock.txt` | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-3. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+1. **Phase 4.F.8 (Power User UX & Design Tokens):**
+   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay
+   - Floating pill annotation toolbar over PDF canvas with backdrop blur
+   - Linear-inspired design tokens (`--surface-0` through `--surface-4`) in `app.css`
+2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
+3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+4. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 
 ---
 

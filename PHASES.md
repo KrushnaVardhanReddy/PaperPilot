@@ -510,6 +510,22 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.6.2 | Collapsible Sidebars & Viewer Panels | ✅ Completed (PR #75, PR #76) |
 | F.6.3 | Native "File -> Open" & Window Permissions | ✅ Completed (PR #74) |
 
+#### 4.F.7 — Multi-Document Workspace & Toolbar Precision `[ACTIVE]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.7.1 | Editable Page Jump Input + Zoom Presets | 🚧 In-Progress (`P4_F_7A_editable_page_zoom_toolbar.txt`) — Type page number + Enter; quick zoom presets |
+| F.7.2 | Multi-Document Tab Bar `[Tab1][Tab2][+]` | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Tab bar, tab switching, and `+` native picker |
+| F.7.3 | Right-Docked Operations Panel | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Docked inspector side-rail, remove bottom wrapping |
+
+#### 4.F.8 — Power User Experience & Design Tokens `[NEXT]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.8.1 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued — Floating fuzzy search overlay over all 45+ PDF operations, recent files, and tabs |
+| F.8.2 | Floating Canvas-First Annotation Toolbar | 🔲 Queued — Compact floating pill toolbar over PDF canvas with backdrop blur |
+| F.8.3 | Linear-inspired Design Elevation Tokens | 🔲 Queued — Formalize `--surface-0` through `--surface-4` in `app.css` |
+
 
 ---
 
