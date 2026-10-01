@@ -478,10 +478,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.3.1 | Detect interactive form fields | 🚧 Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown) (Session 18047202170093336005) |
-| F.3.2 | Render editable form overlays | 🚧 Show native HTML `<input>` / `<select>` overlays on top of field positions (Session 18047202170093336005) |
-| F.3.3 | Save filled form to PDF | 🚧 Write field values back into the PDF file via `paperpilot-pdf` (Session 18047202170093336005) |
-| F.3.4 | Form fill E2E test | 🚧 Load a form PDF, fill all fields, save, reload and verify field values persist (Session 18047202170093336005) |
+| F.3.1 | Detect interactive form fields | ✅ Use `pdfjs` to find `AcroForm` fields (text, checkbox, radio, dropdown) |
+| F.3.2 | Render editable form overlays | ✅ Show native HTML `<input>` / `<select>` overlays on top of field positions |
+| F.3.3 | Save filled form to PDF | ✅ Write field values back into the PDF file via `paperpilot-pdf` |
+| F.3.4 | Form fill E2E test | ✅ Load a form PDF, fill all fields, save, reload and verify field values persist |
 
 #### 4.F.4 — Native OS Menu Bar
 

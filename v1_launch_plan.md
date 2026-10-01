@@ -62,10 +62,10 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.3 — Form Filling
 | Task | What | Status |
 |---|---|---|
-| F.3.1 | Detect AcroForm fields via pdfjs | 🚧 In Progress |
-| F.3.2 | Render editable overlays on fields | 🚧 In Progress |
-| F.3.3 | Save filled form to PDF | 🚧 In Progress |
-| F.3.4 | Form fill E2E test | 🚧 In Progress |
+| F.3.1 | Detect AcroForm fields via pdfjs | ✅ Completed |
+| F.3.2 | Render editable overlays on fields | ✅ Completed |
+| F.3.3 | Save filled form to PDF | ✅ Completed |
+| F.3.4 | Form fill E2E test | ✅ Completed |
 
 #### 4.F.4 — Native OS Menu Bar
 | Task | What | Status |
