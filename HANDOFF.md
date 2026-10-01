@@ -87,24 +87,29 @@ PaperPilot/
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-*(None currently active — ready for Phase 4.F.9)*
+| Task | Session ID | What it does |
+|---|---|---|
+| Phase 4.F.9-A | `17938215746492684563` | In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation, window controls anchor, and instant open check |
+| Phase 4.F.9-B | `11112673620045863445` | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.F.9 (Canvas Search & Direct Thumbnail Page Management):**
-   - In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation and counter (`prompts/tasks/phase_4/P4_F_9A_canvas_search_ctrl_f.txt`)
-   - Direct drag-and-drop page reordering in thumbnail sidebar (`prompts/tasks/phase_4/P4_F_9B_thumbnail_page_management.txt`)
-   - Hover quick action buttons on thumbnails (Rotate 🔄, Delete 🗑️)
-3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-5. **Phase 5 (Advanced Intelligence & Local AI Engine):**
+1. **Phase 4.F.10 (Stirling-Style Categorized Tools Dock):**
+   - Searchable tool directory (`🔍 Search tools...`) with live tag & name filtering (`prompts/tasks/phase_4/P4_F_10_stirling_categorized_tools_dock.txt`)
+   - Categorized tool groups with icons (Quick Actions, Page Management, Edit & Markup, Optimize, Security, Convert, AI)
+   - Interactive slide-in parameter inspector with `‹ Back to tools` navigation
+2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
+3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+4. **Phase 5 (Advanced Intelligence & Local AI Engine):**
    - High-speed OCR (`paperpilot-ocr`)
+   - Visual Pixel PDF Comparison Slider (Rust `image` pixel-diff engine)
    - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search
    - MinerU / Marker-style layout-aware clean Markdown and LaTeX table parsing
    - Automatic local PII detection & structural redaction (SSNs, credit cards, names)
    - Multi-core memory-mapped streaming (`memmap2`) for 1,000+ page documents
+   - Headless CLI Pipeline Runner (`paperpilot pipeline run --spec recipe.json`) & Streamable HTTP MCP server (`paperpilot-mcp --port 8080 --http`)
 
 ---
 

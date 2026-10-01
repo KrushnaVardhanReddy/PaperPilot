@@ -104,6 +104,8 @@
     border-bottom: 1px solid var(--border-color, #2a2a35);
     height: 38px;
     padding: 0 8px;
+    /* Add padding-right so tabs don't overlap with the fixed window controls (46px * 3 = 138px) */
+    padding-right: 146px;
     gap: 4px;
     user-select: none;
     flex-shrink: 0;

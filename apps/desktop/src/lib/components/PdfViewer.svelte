@@ -5,6 +5,7 @@
   // Vite worker import trick
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import PdfAnnotationLayer from './PdfAnnotationLayer.svelte';
+  import PdfSearchBar from './PdfSearchBar.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -86,6 +87,7 @@
 </script>
 
 <div class="pdf-viewer-wrapper">
+  <PdfSearchBar {pdfDoc} bind:pageNum />
   <div class="viewer-container">
     <div class="page-container">
       <canvas bind:this={canvas} style="display: block;"></canvas>
@@ -100,6 +102,7 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
+    position: relative;
   }
 
   .viewer-container {

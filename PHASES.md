@@ -526,13 +526,21 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | ✅ Completed (PR #79) — Floating fuzzy search overlay over operations, documents, and actions |
 | F.8.3 | Floating Canvas-First Annotation Toolbar | ✅ Completed (PR #79) — Floating pill toolbar over PDF canvas with backdrop blur |
 | F.8.4 | Resizable Right Panel & Titlebar Anchor Fix | ✅ Completed (PR #79) — Draggable split-handle (240px-600px) and anchored window controls |
-#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[QUEUED]`
+#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[ACTIVE]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | 🔲 Queued (`P4_F_9A_canvas_search_ctrl_f.txt`) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`) |
-| F.9.2 | Direct Thumbnail Page Reordering | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Drag-and-drop page reordering directly in thumbnail sidebar |
-| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
+| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | 🚧 In-Progress (Session 17938215746492684563) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`) |
+| F.9.2 | Direct Thumbnail Page Reordering | 🚧 In-Progress (Session 11112673620045863445) — Drag-and-drop page reordering directly in thumbnail sidebar |
+| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🚧 In-Progress (Session 11112673620045863445) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
+
+#### 4.F.10 — Stirling-Style Categorized Tools Dock `[QUEUED]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.10.1 | Searchable Tool Directory & Filtering | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — `🔍 Search tools...` input with instant tag & name filtering |
+| F.10.2 | Categorized Tool Accordions | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
+| F.10.3 | Slide-in Inspector & Param Config | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Inline parameter inspector with `‹ Back` navigation |
 
 
 ---
@@ -686,6 +694,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
 | 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
 | 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
+| 5.3.9 | Visual Pixel PDF Comparison Slider | Side-by-side & overlay dual-canvas pixel-diff tool in Rust (`image` crate) with grayscale identical background and red/green visual shift highlights |
 
 ---
 
@@ -697,6 +706,19 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.4.2 | Fake Scanner Effect | Apply subtle skew, grain, and contrast filter to emulate physical scanner output |
 | 5.4.3 | Embedded JavaScript Inspector | Inspect and extract embedded script payloads for security review |
 | 5.4.4 | Color Inversion / Dark Mode Filter | Invert document colors or strip colored backgrounds for paper/ink conservation |
+
+---
+
+### 5.5 — Headless Automation & Streamable MCP Transport `[PARALLEL with 5.4]`
+
+> Bridges the UI pipeline to headless scripts and remote AI agents.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.5.1 | CLI Headless Pipeline Runner (`paperpilot pipeline run`) | Execute visual pipeline JSON workflows directly from CLI without opening GUI |
+| 5.5.2 | Pipeline Recipe Export in Desktop UI | One-click button in `PipelineCanvas.svelte` to copy bash CLI command or export JSON recipe |
+| 5.5.3 | Streamable HTTP MCP Server (`paperpilot-mcp --port 8080 --http`) | Expose Model Context Protocol over streamable HTTP for remote agents (LangChain, n8n, AutoGen) alongside stdio |
+| 5.5.4 | Chained Pipeline MCP Tool (`pdf_run_pipeline`) | Allow AI agents over MCP to trigger an entire multi-step recipe in a single atomic RPC call |
 
 ## Phase 6 — Enterprise
 
