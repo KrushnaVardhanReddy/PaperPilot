@@ -670,6 +670,32 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 5.3 — Advanced Layout, Imposition & Security Tools `[PARALLEL with 5.1 and 5.2]`
+
+> Closes the competitive gaps identified against Stirling-PDF and Adobe Acrobat Pro.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.3.1 | Booklet Imposition | Reorder and layout pages for 2-sided booklet printing |
+| 5.3.2 | Multi-Page Layout (N-Up) | Layout 2, 4, 9 pages per physical sheet |
+| 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) |
+| 5.3.4 | Image / Logo Watermark Stamp | Place transparent PNG/JPEG stamps at exact coordinates on pages |
+| 5.3.5 | Validate Digital Signatures | Verify cryptographic signature validity, certificate chain, and tamper hashes |
+| 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
+| 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
+| 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
+
+---
+
+### 5.4 — Document Intelligence & Auto-Organization `[PARALLEL with 5.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 5.4.1 | Content-Based Auto-Rename | Automatically rename files based on extracted invoice numbers, dates, or vendor titles |
+| 5.4.2 | Fake Scanner Effect | Apply subtle skew, grain, and contrast filter to emulate physical scanner output |
+| 5.4.3 | Embedded JavaScript Inspector | Inspect and extract embedded script payloads for security review |
+| 5.4.4 | Color Inversion / Dark Mode Filter | Invert document colors or strip colored backgrounds for paper/ink conservation |
+
 ## Phase 6 — Enterprise
 
 **Goal:** Organizations can deploy and govern PaperPilot at scale.
