@@ -9,36 +9,42 @@ describe('OperationsPanel', () => {
     appState.selectedDocumentIndex = -1;
   });
 
-  it('renders the operations selector', () => {
+  it('renders the operations search and directory initially', () => {
     render(OperationsPanel);
 
-    // Check if the select element is present
-    expect(screen.getByLabelText('Select Action')).toBeInTheDocument();
+    // Check if the search input is present
+    expect(screen.getByPlaceholderText('Search tools...')).toBeInTheDocument();
 
-    // Check if default operation 'merge' params are visible
-    expect(screen.getByText('Reorder files to set the merge order:')).toBeInTheDocument();
+    // Check if category headers are visible
+    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+    expect(screen.getByText('Page Management')).toBeInTheDocument();
   });
 
-  it('shows correct parameters when switching operations', async () => {
+  it('shows correct parameters when switching to an operation', async () => {
     render(OperationsPanel);
 
-    const select = screen.getByLabelText('Select Action') as HTMLSelectElement;
+    // Click on the split tool card
+    const splitButton = screen.getAllByText('Split PDF')[0].closest('button');
+    expect(splitButton).not.toBeNull();
+    if (splitButton) {
+      await fireEvent.click(splitButton);
+    }
 
-    // Default is merge
-    expect(select.value).toBe('merge');
-    expect(screen.getByText('Reorder files to set the merge order:')).toBeInTheDocument();
-
-    // Switch to split
-    await fireEvent.change(select, { target: { value: 'split' } });
-    expect(select.value).toBe('split');
-
-    // Check if split params are visible
+    // Check if split params are visible in Inspector Mode
     await waitFor(() => {
-      expect(screen.getByLabelText('Split Points (comma separated):')).toBeInTheDocument();
+      expect(screen.getByLabelText('Split Page Ranges (comma separated):')).toBeInTheDocument();
     });
 
-    // Switch to rotate
-    await fireEvent.change(select, { target: { value: 'rotate' } });
+    // Go back to directory
+    const backButton = screen.getByTitle('Back to tool list');
+    await fireEvent.click(backButton);
+
+    // Click on the rotate tool card
+    const rotateButton = screen.getAllByText('Rotate Pages')[0].closest('button');
+    expect(rotateButton).not.toBeNull();
+    if (rotateButton) {
+      await fireEvent.click(rotateButton);
+    }
 
     // Check if rotate params are visible
     await waitFor(() => {

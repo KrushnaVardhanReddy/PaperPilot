@@ -4,46 +4,129 @@
   import { jobsState } from '$lib/state/jobs.svelte';
   import { invoke } from '@tauri-apps/api/core';
 
-  let selectedOperation = $state('merge');
+  interface ToolDefinition {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
+    tags: string[];
+  }
 
-  // Operation parameters
+  const allTools: ToolDefinition[] = [
+    // Quick / Popular
+    { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', tags: ['shrink', 'size', 'optimize'] },
+    { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', tags: ['combine', 'join', 'append'] },
+    { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', tags: ['orientation', 'turn'] },
+    { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', tags: ['diff', 'compare', 'difference'] },
+    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', tags: ['scan', 'text', 'extract'] },
+    { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', tags: ['word', 'docx', 'convert', 'export'] },
+
+    // Page Operations
+    { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', tags: ['combine', 'join', 'concat'] },
+    { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', tags: ['divide', 'cut', 'separate'] },
+    { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', tags: ['diff', 'compare'] },
+    { id: 'extract_pages', title: 'Extract Pages', description: 'Save specific pages into a new PDF document', icon: '📤', category: 'pages', tags: ['select', 'isolate'] },
+    { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', tags: ['orientation', 'turn', 'flip'] },
+
+    // Edit & Markup
+    { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', tags: ['stamp', 'text', 'brand', 'copyright'] },
+    { id: 'flatten', title: 'Flatten Annotations', description: 'Bake annotations & forms permanently into page graphics', icon: '📄', category: 'edit', tags: ['bake', 'lock', 'rasterize'] },
+
+    // Optimize & Repair
+    { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', tags: ['shrink', 'size', 'dpi'] },
+    { id: 'repair', title: 'Repair PDF', description: 'Recover and rebuild corrupted or unreadable documents', icon: '🔧', category: 'optimize', tags: ['corrupt', 'fix', 'recover'] },
+
+    // Security & Privacy
+    { id: 'encrypt', title: 'Encrypt with Password', description: 'Protect document with AES-256 password encryption', icon: '🔒', category: 'security', tags: ['protect', 'password', 'lock'] },
+    { id: 'decrypt', title: 'Remove Password', description: 'Remove password restrictions from unlocked PDF', icon: '🔓', category: 'security', tags: ['unlock', 'open'] },
+    { id: 'metadata', title: 'Edit / Sanitize Metadata', description: 'Inspect and clean author, title, and creation timestamps', icon: '📋', category: 'security', tags: ['sanitize', 'privacy', 'info'] },
+
+    // Convert & Export
+    { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', tags: ['word', 'docx'] },
+    { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', tags: ['excel', 'sheet', 'table'] },
+    { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', tags: ['llm', 'markdown', 'md'] },
+    { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', tags: ['text', 'dump', 'raw'] },
+
+    // AI & Intelligence
+    { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', tags: ['ocr', 'scan', 'tesseract'] },
+    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', tags: ['images', 'photos', 'export'] }
+  ];
+
+  const categories = [
+    { id: 'quick', title: 'Quick Actions', icon: '⚡' },
+    { id: 'pages', title: 'Page Management', icon: '📑' },
+    { id: 'edit', title: 'Edit & Markup', icon: '✍️' },
+    { id: 'optimize', title: 'Optimize & Repair', icon: '🗜️' },
+    { id: 'security', title: 'Security & Privacy', icon: '🔒' },
+    { id: 'convert', title: 'Convert & Export', icon: '🔄' },
+    { id: 'ai', title: 'AI & Intelligence', icon: '🧠' }
+  ];
+
+  let searchQuery = $state('');
+  let activeTool = $state<ToolDefinition | null>(null);
+
+  // Tool parameter states
   let splitPoints = $state('');
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
   let watermarkText = $state('');
+  let password = $state('');
+  let metadataTitle = $state('');
+
+  // Filter tools based on search query
+  let filteredTools = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return allTools;
+    return allTools.filter(t =>
+      t.title.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.tags.some(tag => tag.toLowerCase().includes(q))
+    );
+  });
+
+  function selectTool(tool: ToolDefinition) {
+    activeTool = tool;
+  }
+
+  function backToDirectory() {
+    activeTool = null;
+  }
 
   async function handleRunOperation() {
+    if (!activeTool) return;
     if (appState.documents.length === 0) {
-      toastState.error('No documents available.');
+      toastState.error('No documents available. Add or drop a PDF first.');
       return;
     }
 
-    if (selectedOperation === 'merge' && appState.documents.length < 2) {
-      toastState.error('Need at least 2 documents to merge.');
+    if (activeTool.id === 'merge' && appState.documents.length < 2) {
+      toastState.error('Need at least 2 documents in tabs to merge.');
       return;
     }
 
-    const docName = appState.documents[0].name;
-    const toolName = `pdf_${selectedOperation}`;
+    const docIndex = appState.selectedDocumentIndex ?? 0;
+    const docName = appState.documents[docIndex]?.name || appState.documents[0].name;
+    const toolName = `pdf_${activeTool.id}`;
     let args: Record<string, any> = {};
 
-    switch (selectedOperation) {
+    switch (activeTool.id) {
       case 'merge':
         args = {
           inputs: appState.documents.map(d => d.name),
-          output: `${docName}_merged.pdf`
+          output: `${docName.replace(/.pdf$/i, '')}_merged.pdf`
         };
         break;
       case 'split':
         args = {
           input: docName,
-          output_dir: `${docName}_split`
+          output_dir: `${docName.replace(/.pdf$/i, '')}_split`
         };
         break;
       case 'compress':
         args = {
           input: docName,
-          output: `${docName}_compressed.pdf`
+          output: `${docName.replace(/.pdf$/i, '')}_compressed.pdf`
         };
         break;
       case 'rotate':
@@ -51,65 +134,68 @@
           input: docName,
           pages: 'all',
           angle: parseInt(rotateAngle, 10),
-          output: `${docName}_rotated.pdf`
+          output: `${docName.replace(/.pdf$/i, '')}_rotated.pdf`
         };
         break;
       case 'watermark':
         args = {
           input: docName,
-          text: watermarkText,
-          output: `${docName}_watermarked.pdf`
+          text: watermarkText || 'CONFIDENTIAL',
+          output: `${docName.replace(/.pdf$/i, '')}_watermarked.pdf`
         };
         break;
       case 'encrypt':
         args = {
           input: docName,
-          password: 'password',
-          output: `${docName}_encrypted.pdf`
+          password: password || 'paperpilot',
+          output: `${docName.replace(/.pdf$/i, '')}_encrypted.pdf`
         };
         break;
       case 'decrypt':
         args = {
           input: docName,
-          password: 'password',
-          output: `${docName}_decrypted.pdf`
+          password: password || '',
+          output: `${docName.replace(/.pdf$/i, '')}_decrypted.pdf`
         };
         break;
       case 'metadata':
         args = {
           input: docName,
-          title: 'Title',
-          output: `${docName}_metadata.pdf`
+          title: metadataTitle || docName,
+          output: `${docName.replace(/.pdf$/i, '')}_metadata.pdf`
         };
         break;
       case 'extract_pages':
         args = {
           input: docName,
           pages: '1',
-          output: `${docName}_extracted.pdf`
+          output: `${docName.replace(/.pdf$/i, '')}_extracted.pdf`
         };
         break;
       case 'extract_text':
+      case 'ocr':
         args = {
           input: docName,
-          output: `${docName}_text.txt`
+          output: `${docName.replace(/.pdf$/i, '')}_text.txt`
         };
         break;
       default:
-        toastState.error('Unknown operation');
-        return;
+        args = {
+          input: docName,
+          output: `${docName.replace(/.pdf$/i, '')}_output.pdf`
+        };
+        break;
     }
 
     appState.setLoading(true);
     try {
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
-      // Depending on the Rust side, the result is the JSON parsed OperationResult
       const resObj = result as any;
       if (resObj && resObj.success) {
-        toastState.success(resObj.message || `${toolName} completed successfully`);
+        toastState.success(resObj.message || `${activeTool.title} completed successfully`);
         jobsState.addJob(toolName, 'success', resObj.message);
       } else {
-        toastState.error(resObj?.message || `${toolName} failed`);
+        toastState.error(resObj?.message || `${activeTool.title} failed`);
         jobsState.addJob(toolName, 'error', resObj?.message);
       }
     } catch (error) {
@@ -134,221 +220,408 @@
   }
 </script>
 
-<div class="operations-panel">
-  <div class="panel-header">
-    <h3>Operations</h3>
-  </div>
-
-  <div class="panel-content">
-    <div class="operation-selector">
-      <label for="opSelect">Select Action</label>
-      <select id="opSelect" bind:value={selectedOperation} class="form-input">
-        <option value="merge">Merge</option>
-        <option value="split">Split</option>
-        <option value="extract_pages">Extract Pages</option>
-        <option value="extract_text">Extract Text</option>
-        <option value="compress">Compress</option>
-        <option value="rotate">Rotate</option>
-        <option value="watermark">Watermark</option>
-        <option value="encrypt">Encrypt</option>
-        <option value="decrypt">Decrypt</option>
-        <option value="metadata">Metadata</option>
-      </select>
+<div class="operations-panel" id="operations-panel">
+  {#if activeTool}
+    <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
+    <div class="inspector-header">
+      <button class="back-btn" onclick={backToDirectory} id="btn-back-tools" title="Back to tool list">
+        ‹ Back
+      </button>
+      <div class="inspector-title-wrap">
+        <span class="tool-icon">{activeTool.icon}</span>
+        <h3 class="inspector-title">{activeTool.title}</h3>
+      </div>
     </div>
 
-    {#if selectedOperation === 'merge'}
-      <div class="operation-config">
-        <p class="section-desc">Reorder files to set the merge order:</p>
+    <div class="inspector-content">
+      <p class="tool-desc">{activeTool.description}</p>
 
-        {#if appState.documents.length === 0}
-          <div class="empty-list">No documents added.</div>
-        {:else}
-          <div class="reorder-list">
-            {#each appState.documents as doc, i}
-              <div class="reorder-item">
-                <span class="item-name" title={doc.name}>{doc.name}</span>
-                <div class="reorder-controls">
-                  <button
-                    class="icon-btn"
-                    disabled={i === 0}
-                    onclick={() => moveUp(i)}
-                    title="Move Up"
-                  >
-                    ⬆️
-                  </button>
-                  <button
-                    class="icon-btn"
-                    disabled={i === appState.documents.length - 1}
-                    onclick={() => moveDown(i)}
-                    title="Move Down"
-                  >
-                    ⬇️
-                  </button>
+      {#if activeTool.id === 'merge'}
+        <div class="operation-config">
+          <p class="section-desc">Reorder open documents for merging:</p>
+          {#if appState.documents.length === 0}
+            <div class="empty-list">No documents added.</div>
+          {:else}
+            <div class="reorder-list">
+              {#each appState.documents as doc, i}
+                <div class="reorder-item">
+                  <span class="item-name" title={doc.name}>{doc.name}</span>
+                  <div class="reorder-controls">
+                    <button class="icon-btn" disabled={i === 0} onclick={() => moveUp(i)} title="Move Up">⬆️</button>
+                    <button class="icon-btn" disabled={i === appState.documents.length - 1} onclick={() => moveDown(i)} title="Move Down">⬇️</button>
+                  </div>
                 </div>
-              </div>
-            {/each}
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {:else if activeTool.id === 'split'}
+        <div class="operation-config">
+          <label for="splitPoints" class="section-desc">Split Page Ranges (comma separated):</label>
+          <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 1-3, 4-8" />
+        </div>
+      {:else if activeTool.id === 'compress'}
+        <div class="operation-config">
+          <label for="compressQuality" class="section-desc">Image Quality: {compressQuality}%</label>
+          <input id="compressQuality" type="range" min="10" max="100" bind:value={compressQuality} class="range-input" />
+          <div class="range-labels">
+            <span>Smaller file</span>
+            <span>Higher quality</span>
           </div>
+        </div>
+      {:else if activeTool.id === 'rotate'}
+        <div class="operation-config">
+          <label for="rotateAngle" class="section-desc">Rotation Angle:</label>
+          <select id="rotateAngle" bind:value={rotateAngle} class="form-input">
+            <option value="90">90° Clockwise</option>
+            <option value="180">180° Flip</option>
+            <option value="270">270° Counter-Clockwise</option>
+          </select>
+        </div>
+      {:else if activeTool.id === 'watermark'}
+        <div class="operation-config">
+          <label for="watermarkText" class="section-desc">Watermark Text:</label>
+          <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="e.g. CONFIDENTIAL" />
+        </div>
+      {:else if activeTool.id === 'encrypt' || activeTool.id === 'decrypt'}
+        <div class="operation-config">
+          <label for="passwordField" class="section-desc">Password:</label>
+          <input id="passwordField" type="password" class="form-input" bind:value={password} placeholder="Enter document password" />
+        </div>
+      {:else}
+        <div class="operation-config">
+          <p class="section-desc">Applies directly to the active document.</p>
+        </div>
+      {/if}
+
+      <div class="action-area">
+        <button
+          class="run-btn"
+          id="btn-run-operation"
+          disabled={appState.documents.length === 0}
+          onclick={handleRunOperation}
+        >
+          Run {activeTool.title}
+        </button>
+      </div>
+    </div>
+  {:else}
+    <!-- DIRECTORY MODE (STIRLING PDF STYLE) -->
+    <div class="panel-header">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          id="tool-search-input"
+          class="tool-search-input"
+          type="text"
+          placeholder="Search tools..."
+          bind:value={searchQuery}
+        />
+        {#if searchQuery}
+          <button class="clear-search-btn" onclick={() => searchQuery = ''}>×</button>
         {/if}
       </div>
-    {:else if selectedOperation === 'split'}
-      <div class="operation-config">
-        <label for="splitPoints" class="section-desc">Split Points (comma separated):</label>
-        <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 3, 5, 10" />
-      </div>
-    {:else if selectedOperation === 'compress'}
-      <div class="operation-config">
-        <label for="compressQuality" class="section-desc">Image Quality: {compressQuality}%</label>
-        <input id="compressQuality" type="range" min="0" max="100" bind:value={compressQuality} class="range-input" />
-      </div>
-    {:else if selectedOperation === 'rotate'}
-      <div class="operation-config">
-        <label for="rotateAngle" class="section-desc">Rotation Angle:</label>
-        <select id="rotateAngle" bind:value={rotateAngle} class="form-input">
-          <option value="90">90 Degrees</option>
-          <option value="180">180 Degrees</option>
-          <option value="270">270 Degrees</option>
-        </select>
-      </div>
-    {:else if selectedOperation === 'watermark'}
-      <div class="operation-config">
-        <label for="watermarkText" class="section-desc">Watermark Text:</label>
-        <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="Enter watermark text" />
-      </div>
-    {:else}
-      <div class="operation-config">
-        <p class="section-desc">Selected tool parameters will be applied to the active document.</p>
-      </div>
-    {/if}
-
-    <div class="action-area">
-      <button
-        class="run-btn"
-        disabled={appState.documents.length === 0}
-        onclick={handleRunOperation}
-      >
-        Run {selectedOperation.charAt(0).toUpperCase() + selectedOperation.slice(1)}
-      </button>
     </div>
-  </div>
+
+    <div class="panel-content">
+      {#if searchQuery.trim()}
+        <!-- Search Results View -->
+        <div class="search-results-list">
+          <span class="category-header">Search Results ({filteredTools.length})</span>
+          {#if filteredTools.length === 0}
+            <div class="empty-state">No matching tools found</div>
+          {:else}
+            {#each filteredTools as tool (tool.id + tool.category)}
+              <button class="tool-card" onclick={() => selectTool(tool)} id="tool-{tool.id}">
+                <span class="tool-card-icon">{tool.icon}</span>
+                <div class="tool-card-info">
+                  <span class="tool-card-title">{tool.title}</span>
+                  <span class="tool-card-desc">{tool.description}</span>
+                </div>
+              </button>
+            {/each}
+          {/if}
+        </div>
+      {:else}
+        <!-- Categorized Sections View -->
+        {#each categories as cat}
+          {@const toolsInCat = allTools.filter(t => t.category === cat.id)}
+          {#if toolsInCat.length > 0}
+            <div class="category-section">
+              <span class="category-header">
+                <span class="cat-icon">{cat.icon}</span>
+                {cat.title}
+              </span>
+              <div class="category-grid">
+                {#each toolsInCat as tool (tool.id + tool.category)}
+                  <button class="tool-card" onclick={() => selectTool(tool)} id="tool-{tool.id}">
+                    <span class="tool-card-icon">{tool.icon}</span>
+                    <div class="tool-card-info">
+                      <span class="tool-card-title">{tool.title}</span>
+                      <span class="tool-card-desc">{tool.description}</span>
+                    </div>
+                  </button>
+                {/each}
+              </div>
+            </div>
+          {/if}
+        {/each}
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style>
   .operations-panel {
     width: 320px;
     min-width: 320px;
-    background-color: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary, #141416);
+    border-left: 1px solid var(--border-color, #2a2a35);
     display: flex;
     flex-direction: column;
     height: 100%;
     flex-shrink: 0;
+    overflow: hidden;
   }
 
   .panel-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #2a2a35);
+    flex-shrink: 0;
   }
 
-  .panel-header h3 {
-    font-size: 1.1rem;
-    color: var(--text-primary);
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--border-radius-sm, 4px);
+    padding: 0 10px;
+  }
+
+  .search-icon {
+    font-size: 13px;
+    opacity: 0.6;
+    margin-right: 6px;
+  }
+
+  .tool-search-input {
+    width: 100%;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary, #ffffff);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .clear-search-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #9ca3af);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
   }
 
   .panel-content {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
     flex: 1;
     overflow-y: auto;
-  }
-
-  .operation-selector {
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
   }
 
-  .operation-selector label {
-    font-size: 0.9rem;
+  .category-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .category-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #9ca3af);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+
+  .cat-icon {
+    font-size: 12px;
+  }
+
+  .category-grid, .search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .tool-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm, 4px);
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-fast, 0.15s ease);
+    width: 100%;
+  }
+
+  .tool-card:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    border-color: var(--border-color, #2a2a35);
+  }
+
+  .tool-card-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .tool-card-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tool-card-title {
+    font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-primary, #ffffff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tool-card-desc {
+    font-size: 11px;
+    color: var(--text-muted, #9ca3af);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* INSPECTOR VIEW */
+  .inspector-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #2a2a35);
+    background-color: var(--bg-secondary, #141416);
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--border-radius-sm, 4px);
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .back-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .inspector-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .inspector-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .inspector-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tool-desc {
+    font-size: 12px;
+    color: var(--text-secondary, #9ca3af);
+    line-height: 1.4;
+  }
+
+  .section-desc {
+    font-size: 12px;
+    color: var(--text-secondary, #9ca3af);
+    margin-bottom: 6px;
+    display: block;
   }
 
   .form-input {
     width: 100%;
-    padding: 10px 12px;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 0.95rem;
-    transition: border-color var(--transition-fast);
-  }
-
-  .form-input:focus {
+    padding: 8px 12px;
+    background-color: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--border-radius-sm, 4px);
+    color: var(--text-primary, #ffffff);
+    font-size: 13px;
     outline: none;
-    border-color: var(--accent-primary);
   }
 
-  select.form-input {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A1A7B3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 40px;
+  .range-input {
+    width: 100%;
+    accent-color: var(--accent-primary, #5e6ad2);
   }
 
-  .operation-config {
+  .range-labels {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .section-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-
-  .empty-list {
-    padding: 16px;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    background-color: var(--bg-primary);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius-md);
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted, #9ca3af);
+    margin-top: 2px;
   }
 
   .reorder-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    background-color: var(--bg-primary);
-    padding: 12px;
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--border-color);
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
   }
 
   .reorder-item {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 8px;
-    background-color: var(--bg-surface);
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
+    align-items: center;
+    padding: 6px 10px;
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 4px;
+    font-size: 12px;
   }
 
   .item-name {
-    font-size: 0.85rem;
-    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 1;
-    margin-right: 12px;
+    max-width: 180px;
   }
 
   .reorder-controls {
@@ -357,20 +630,11 @@
   }
 
   .icon-btn {
-    background: none;
+    background: transparent;
     border: none;
-    padding: 4px;
+    font-size: 10px;
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color var(--transition-fast);
-  }
-
-  .icon-btn:hover:not(:disabled) {
-    background-color: var(--bg-surface-hover);
+    padding: 2px 4px;
   }
 
   .icon-btn:disabled {
@@ -380,87 +644,35 @@
 
   .action-area {
     margin-top: auto;
-    padding-top: 24px;
+    padding-top: 16px;
   }
 
   .run-btn {
     width: 100%;
-    padding: 12px;
-    background-color: var(--accent-primary);
-    color: white;
+    padding: 10px 16px;
+    background-color: var(--accent-primary, #5e6ad2);
+    color: #ffffff;
     border: none;
-    border-radius: var(--border-radius-md);
-    font-size: 1rem;
-    font-weight: 600;
+    border-radius: var(--border-radius-sm, 4px);
+    font-weight: 500;
+    font-size: 13px;
     cursor: pointer;
-    transition: background-color var(--transition-fast);
+    transition: background-color var(--transition-fast, 0.15s ease);
   }
 
   .run-btn:hover:not(:disabled) {
-    background-color: var(--accent-hover);
+    background-color: var(--accent-hover, #6e79d6);
   }
 
   .run-btn:disabled {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-muted);
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .range-input {
-    width: 100%;
-    margin: 8px 0;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-  }
-
-  .range-input::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 6px;
-    background: var(--bg-surface-hover);
-    border-radius: 3px;
-  }
-
-  .range-input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 16px;
-    width: 16px;
-    border-radius: 50%;
-    background: var(--accent-primary);
-    cursor: pointer;
-    margin-top: -5px;
-    box-shadow: var(--shadow-sm);
-  }
-
-  .range-input:focus {
-    outline: none;
-  }
-
-  /* Tablet/mobile: reduce padding, stack action area */
-  @media (max-width: 899px) {
-    .panel-content {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding: 12px;
-    }
-
-    .operation-selector,
-    .operation-config {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .action-area {
-      margin-top: 0;
-      padding-top: 0;
-      width: 100%;
-    }
-  }
-
-  @media (max-width: 599px) {
-    .panel-content {
-      flex-direction: column;
-    }
+  .empty-state {
+    padding: 20px 0;
+    text-align: center;
+    color: var(--text-muted, #9ca3af);
+    font-size: 12px;
   }
 </style>

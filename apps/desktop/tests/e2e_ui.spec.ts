@@ -88,7 +88,8 @@ test.describe('Multi-File Upload & Operations', () => {
     await page.click('#tab-btn-home');
 
     // To test reordering, we select "merge" operation to reveal the reorder list
-    await page.selectOption('#opSelect', 'merge');
+    await page.fill('#tool-search-input', 'merge');
+    await page.locator('#tool-merge').first().click();
 
     const reorderItems = page.locator('.reorder-list .reorder-item');
     await expect(reorderItems).toHaveCount(2);
@@ -115,7 +116,8 @@ test.describe('Multi-File Upload & Operations', () => {
 
     await page.click('#tab-btn-home');
 
-    await page.selectOption('#opSelect', 'compress');
+    await page.fill('#tool-search-input', 'compress');
+    await page.locator('#tool-compress').first().click();
 
     const runBtn = page.locator('.run-btn');
     await runBtn.click();
@@ -214,7 +216,8 @@ test.describe('Pipeline Execution and Error State', () => {
 
     await page.click('#tab-btn-home');
 
-    await page.selectOption('#opSelect', 'compress');
+    await page.fill('#tool-search-input', 'compress');
+    await page.locator('#tool-compress').first().click();
 
     const runBtn = page.locator('.run-btn');
     await runBtn.click();

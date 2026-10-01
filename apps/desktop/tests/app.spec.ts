@@ -72,8 +72,10 @@ test.describe('PaperPilot E2E Tests', () => {
     await page.click('#tab-btn-home');
 
     // Select "Merge" operation
-    const opSelect = page.locator('#opSelect');
-    await opSelect.selectOption('merge');
+    const opSelect = page.locator('#tool-search-input');
+    await opSelect.fill('merge');
+    await page.locator('#tool-merge').first().click();
+
 
     // Verify UI inputs for Merge appear (reorder list should have the file)
     const reorderList = page.locator('.reorder-list');
