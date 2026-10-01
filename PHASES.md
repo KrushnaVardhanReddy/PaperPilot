@@ -542,6 +542,17 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.10.2 | Categorized Tool Accordions | 🚧 In-Progress (Session 2657978941396479742) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
 | F.10.3 | Slide-in Inspector & Param Config | 🚧 In-Progress (Session 2657978941396479742) — Inline parameter inspector with `‹ Back` navigation |
 
+#### 4.F.11 — Visual Split-Screen Pixel PDF Diff Slider `[QUEUED]`
+
+> **Core Basic / Free Feature**: Bypasses Adobe Acrobat Pro's $239/yr paywall and Stirling PDF's text-only limitation.
+
+| # | Task | Notes |
+|---|---|---|
+| F.11.1 | Visual Pixel Diff Engine | 🔲 Queued (`P4_F_11_visual_pixel_diff_slider.txt`) — HTML5 2D pixel comparison (`getImageData()`), red/green discrepancy map |
+| F.11.2 | Interactive Split Slider | 🔲 Queued (`P4_F_11_visual_pixel_diff_slider.txt`) — Draggable divider handle across dual canvas layers (before/after) |
+| F.11.3 | Synchronized Paging & Navigation | 🔲 Queued (`P4_F_11_visual_pixel_diff_slider.txt`) — Multi-document selection, side-by-side mode, keyboard shortcut (`Ctrl+D`) |
+
+
 
 ---
 
