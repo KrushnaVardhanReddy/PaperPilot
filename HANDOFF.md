@@ -97,10 +97,14 @@ PaperPilot/
    - Instant document open flow: dropping or selecting a PDF immediately opens it in the viewer
    - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay with fuzzy search across operations, files, and tabs
    - Floating pill annotation toolbar over PDF canvas with backdrop blur
-   - Linear-inspired design tokens (`--surface-0` through `--surface-4`) in `app.css`
-2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-4. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+   - Resizable right panel with drag handle (240px–600px) and persistence
+2. **Phase 4.F.9 (Canvas Search & Direct Thumbnail Page Management):**
+   - In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation and counter (`P4_F_9A_canvas_search_ctrl_f.txt`)
+   - Direct drag-and-drop page reordering in thumbnail sidebar (`P4_F_9B_thumbnail_page_management.txt`)
+   - Hover quick action buttons on thumbnails (Rotate 🔄, Delete 🗑️)
+3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
+4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+5. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 
 ---
 

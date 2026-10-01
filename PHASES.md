@@ -525,7 +525,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.8.1 | Instant Document Open on Drop/Select | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Dropping or selecting a PDF immediately opens it in viewer |
 | F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating fuzzy search overlay over operations, documents, and actions |
 | F.8.3 | Floating Canvas-First Annotation Toolbar | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating pill toolbar over PDF canvas with backdrop blur |
-| F.8.4 | Linear-inspired Design Elevation Tokens | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Standardize `--surface-0` through `--surface-4` in `app.css` |
+#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[QUEUED]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | 🔲 Queued (`P4_F_9A_canvas_search_ctrl_f.txt`) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`) |
+| F.9.2 | Direct Thumbnail Page Reordering | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Drag-and-drop page reordering directly in thumbnail sidebar |
+| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
 
 
 ---
