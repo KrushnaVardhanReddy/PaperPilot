@@ -78,6 +78,7 @@ PaperPilot/
 | Phase E.3 (UI E2E) | ✅ Complete | Playwright UI tests for the Svelte/Tauri app |
 | Phase E.4 (Benchmark) | ✅ Complete | System performance & latency testing |
 | Phase 4.F.4 (Custom HTML Titlebar) | ✅ Complete | Replaced native OS decorations with Svelte titlebar |
+| Phase 4.F.6 (UX Improvements & Permissions) | ✅ Complete | View button, collapsible sidebars & right panel, status bar, Tauri permissions & native file open (PRs #73, #74, #75, #76) |
 
 ---
 
@@ -91,7 +92,7 @@ PaperPilot/
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.F.6 (UX Improvements):** Trigger the Jules task to add Collapsible Sidebars, View Button on Uploads, and wire `menu-open-file`.
+1. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
 2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
 3. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 

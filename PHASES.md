@@ -506,9 +506,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.6.1 | View Button on Uploads | Add a "View" button next to delete in the Dropzone file list |
-| F.6.2 | Collapsible Sidebars | Hide/show Annotations and Document Info panels to maximize canvas space |
-| F.6.3 | Native "File -> Open" | Wire Tauri `menu-open-file` event to `@tauri-apps/plugin-dialog` to select PDFs |
+| F.6.1 | View Button on Uploads | ✅ Completed (PR #73) |
+| F.6.2 | Collapsible Sidebars & Viewer Panels | ✅ Completed (PR #75, PR #76) |
+| F.6.3 | Native "File -> Open" & Window Permissions | ✅ Completed (PR #74) |
 
 
 ---
