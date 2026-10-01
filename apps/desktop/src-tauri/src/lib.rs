@@ -57,6 +57,24 @@ async fn invoke_mcp_tool(
     }
 }
 
+#[tauri::command]
+async fn save_annotations(
+    file_path: String,
+    output_path: String,
+    annotations: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let mut args = serde_json::Map::new();
+    args.insert("input".to_string(), serde_json::Value::String(file_path));
+    args.insert("output".to_string(), serde_json::Value::String(output_path));
+    args.insert("annotations".to_string(), annotations);
+
+    invoke_mcp_tool(
+        "pdf_annotate".to_string(),
+        serde_json::Value::Object(args),
+    )
+    .await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -91,7 +109,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
