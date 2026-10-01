@@ -112,8 +112,6 @@
         {currentMatchIndex + 1} of {matches.length}
       {:else if searchQuery.trim()}
         0 of 0
-      {:else}
-
       {/if}
     </span>
 
