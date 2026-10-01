@@ -518,13 +518,20 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.7.2 | Multi-Document Tab Bar `[Tab1][Tab2][+]` | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Tab bar, tab switching, and `+` native picker |
 | F.7.3 | Right-Docked Operations Panel | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Docked inspector side-rail, remove bottom wrapping |
 
-#### 4.F.8 — Power User Experience & Design Tokens `[NEXT]`
+#### 4.F.8 — Desktop Instant Open & Power UX `[NEXT]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.8.1 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued — Floating fuzzy search overlay over all 45+ PDF operations, recent files, and tabs |
-| F.8.2 | Floating Canvas-First Annotation Toolbar | 🔲 Queued — Compact floating pill toolbar over PDF canvas with backdrop blur |
-| F.8.3 | Linear-inspired Design Elevation Tokens | 🔲 Queued — Formalize `--surface-0` through `--surface-4` in `app.css` |
+| F.8.1 | Instant Document Open on Drop/Select | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Dropping or selecting a PDF immediately opens it in viewer |
+| F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating fuzzy search overlay over operations, documents, and actions |
+| F.8.3 | Floating Canvas-First Annotation Toolbar | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating pill toolbar over PDF canvas with backdrop blur |
+#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[QUEUED]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | 🔲 Queued (`P4_F_9A_canvas_search_ctrl_f.txt`) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`) |
+| F.9.2 | Direct Thumbnail Page Reordering | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Drag-and-drop page reordering directly in thumbnail sidebar |
+| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🔲 Queued (`P4_F_9B_thumbnail_page_management.txt`) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
 
 
 ---
@@ -647,21 +654,48 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 5.2 — Document Understanding `[PARALLEL with 5.1]`
+### 5.2 — Document Understanding & Local Vector Engine `[PARALLEL with 5.1]`
 
 | # | Task | Notes |
 |---|---|---|
-| 5.2.1 | Semantic search | Embed document chunks, search by meaning |
-| 5.2.2 | Table extraction | Detect and extract tables to CSV/JSON |
-| 5.2.3 | Document comparison | Semantic diff, not just structural |
-| 5.2.4 | Document summarization | AI-powered summary of document content |
-| 5.2.5 | PDF Q&A (single doc) | Ask questions, get answers grounded in one document |
-| 5.2.6 | Multi-document synthesis | Upload 2–50 PDFs; ask cross-document questions (e.g. "which contract has the lowest penalty clause?"); AI synthesises across all docs |
-| 5.2.7 | Layout-preserving translation | Translate PDF text to any language while keeping the original visual layout intact (columns, tables, fonts) — powered by a pluggable translation API (DeepL / Google Translate / local LLM) |
-| 5.2.8 | Batch workflows | Run operations across folders of documents |
-| 5.2.9 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
+| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort` (ONNX Runtime) using quantized BGE-micro (<30MB) — 100% offline RAG |
+| 5.2.2 | Layout-Aware Markdown & Table Parser | MinerU/Marker-style structured text extraction preserving multi-columns, LaTeX math, and Markdown tables |
+| 5.2.3 | Semantic Search & Highlighting | Search document by intent/meaning rather than exact keywords, jumping directly to target sentences |
+| 5.2.4 | Table Extraction to CSV/JSON/Parquet | Detect table boundaries and export structured data |
+| 5.2.5 | Automatic PII Redaction (SSN, Cards, Names) | Local regex + NER entity classifier to automatically detect and structurally redact sensitive PII |
+| 5.2.6 | Single-Document Contextual Q&A | Grounded Q&A against document content with page source citations |
+| 5.2.7 | Multi-Document Synthesis | Query 2–50 documents simultaneously (e.g. "compare indemnity caps across all 3 vendor agreements") |
+| 5.2.8 | Layout-Preserving Translation | Translate text blocks in-place while keeping columns, tables, and typography intact |
+| 5.2.9 | High-Scale Memory-Mapped Streaming (`memmap2`) | Lazy page streaming and multi-core Rayon processing for fast opening of 1,000+ page documents |
+| 5.2.10 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
 
 ---
+
+### 5.3 — Advanced Layout, Imposition & Security Tools `[PARALLEL with 5.1 and 5.2]`
+
+> Closes the competitive gaps identified against Stirling-PDF and Adobe Acrobat Pro.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.3.1 | Booklet Imposition | Reorder and layout pages for 2-sided booklet printing |
+| 5.3.2 | Multi-Page Layout (N-Up) | Layout 2, 4, 9 pages per physical sheet |
+| 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) |
+| 5.3.4 | Image / Logo Watermark Stamp | Place transparent PNG/JPEG stamps at exact coordinates on pages |
+| 5.3.5 | Validate Digital Signatures | Verify cryptographic signature validity, certificate chain, and tamper hashes |
+| 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
+| 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
+| 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
+
+---
+
+### 5.4 — Document Intelligence & Auto-Organization `[PARALLEL with 5.3]`
+
+| # | Task | Notes |
+|---|---|---|
+| 5.4.1 | Content-Based Auto-Rename | Automatically rename files based on extracted invoice numbers, dates, or vendor titles |
+| 5.4.2 | Fake Scanner Effect | Apply subtle skew, grain, and contrast filter to emulate physical scanner output |
+| 5.4.3 | Embedded JavaScript Inspector | Inspect and extract embedded script payloads for security review |
+| 5.4.4 | Color Inversion / Dark Mode Filter | Invert document colors or strip colored backgrounds for paper/ink conservation |
 
 ## Phase 6 — Enterprise
 
