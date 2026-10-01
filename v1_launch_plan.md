@@ -4,30 +4,6 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 
 ## 🔲 Pending Post-Launch Tasks
 
-### Phase 4.0 — Offline NLP Mode (Free Tier)
-*A fast, embedded intent classifier that runs 100% locally with zero API key. Handles single-intent commands (~80% of real user needs). Ships by default.*
-
-| Task | What | Status |
-|---|---|---|
-| 4.0.1 | Create `paperpilot-nlp` crate | ✅ Completed |
-| 4.0.2 | Define `NlpResolver` trait | ✅ Completed |
-| 4.0.3 | Intent vocabulary definition (~45 operations) | ✅ Completed |
-| 4.0.4 | Layer 1 — Keyword & regex rule engine | ✅ Completed |
-| 4.0.5 | Layer 2 — ONNX intent classifier (MobileBERT) | ✅ Completed |
-| 4.0.6 | Entity extractor (regex + NER) | ✅ Completed |
-| 4.0.7 | Ambiguity resolver | ✅ Completed |
-| 4.0.8 | Offline NLP → `OperationPlan` output | ✅ Completed |
-| 4.0.9 | Offline NLP unit tests | ✅ Completed |
-| 4.0.10 | Offline NLP E2E tests (MCP tool dispatch) | ✅ Completed |
-
-### Phase 4.E2E — System Validation Testing
-| Task | What | Status |
-|---|---|---|
-| E.1 | CLI End-to-End Testing & Validation Report | ✅ Completed |
-| E.2 | MCP End-to-End Testing & Validation Report | ✅ Completed |
-| E.3 | Svelte UI End-to-End Testing & Validation Report | ✅ Completed |
-| E.4 | Overall System Performance & Latency Benchmarking | ✅ Completed |
-
 ### Phase 3.1.7 — iOS Target
 | Task | What | Status |
 |---|---|---|
@@ -37,51 +13,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 
 ### Phase 4.F — PDF Viewer, Annotations & Native Menu *(Pre-Release Blocker)*
 
-> All tasks here are required before release. Without a viewer and annotations, PaperPilot is not a complete PDF product.
-
-#### 4.F.1 — Embedded PDF Viewer
-| Task | What | Status |
-|---|---|---|
-| F.1.1 | Integrate `pdfjs-dist` into Svelte app | ✅ Completed |
-| F.1.2 | `PdfViewer.svelte` component (canvas render, scroll, zoom) | ✅ Completed |
-| F.1.3 | Page thumbnail strip for navigation | ✅ Completed |
-| F.1.4 | Document info panel | ✅ Completed |
-| F.1.5 | Viewer ↔ DropZone integration | ✅ Completed |
-
-#### 4.F.2 — Annotations
-| Task | What | Status |
-|---|---|---|
-| F.2.1 | Highlight tool (multi-colour) | ✅ Completed |
-| F.2.2 | Underline & Strikethrough | ✅ Completed |
-| F.2.3 | Sticky note / Comment | ✅ Completed |
-| F.2.4 | Free-draw (pen) tool | ✅ Completed |
-| F.2.5 | Annotation panel (sidebar) | ✅ Completed |
-| F.2.6 | Save annotations to PDF | ✅ Completed |
-| F.2.7 | Annotation unit tests | ✅ Completed |
-
-#### 4.F.3 — Form Filling
-| Task | What | Status |
-|---|---|---|
-| F.3.1 | Detect AcroForm fields via pdfjs | ✅ Completed |
-| F.3.2 | Render editable overlays on fields | ✅ Completed |
-| F.3.3 | Save filled form to PDF | ✅ Completed |
-| F.3.4 | Form fill E2E test | ✅ Completed |
-
-#### 4.F.4 — Custom HTML Titlebar
-| Task | What | Status |
-|---|---|---|
-| F.4.1 | Disable Native Decorations in `tauri.conf.json` | ✅ Completed |
-| F.4.2–F.4.5 | Create `Titlebar.svelte` & wire HTML menus | ✅ Completed |
-
----
-
-#### 4.F.5 — End-to-End Testing (Phase 4.F)
-| Task | What | Status |
-|---|---|---|
-| F.5.1 | Viewer E2E Test (Canvas & Metadata) | ✅ Completed |
-| F.5.2 | Annotations E2E Test | ✅ Completed |
-| F.5.3 | Form Filling E2E Test | ✅ Completed |
-| F.5.4 | Menu / Tauri IPC Test | ✅ Completed |
+> Tasks 4.F.1 through 4.F.5 (Viewer, Annotations, Forms, and Native Menu implementation & testing) are ✅ Completed.
 
 #### 4.F.6 — PDF Viewer UX Improvements
 | Task | What | Status |
@@ -95,9 +27,6 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 ### Phase 4.E2E Round 2 — Full System Re-Validation (Post Phase 4.F)
 | Task | What | Status |
 |---|---|---|
-| R2.E1 | CLI E2E Re-Validation (with new annotation/form commands) | ✅ Completed |
-| R2.E2 | MCP E2E Re-Validation (with `pdf_annotate`, `pdf_form_fill`) | ✅ Completed |
-| R2.E3 | UI Playwright Re-Validation (viewer + annotations + menu) | ✅ Completed |
 | R2.E4 | System Performance Re-Benchmark (includes viewer render latency) | Pending |
 
 ## 📅 Timeline

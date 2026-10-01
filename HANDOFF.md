@@ -74,18 +74,6 @@ PaperPilot/
 
 | Phase | Status | Notes |
 |---|---|---|
-| Phase 1.1.4 (Test Fixtures) | ✅ Complete | Test corpus built and tests validated |
-| Phase 3.5.6 (Responsive UI) | ✅ Complete | Mobile bottom-nav and operations panel |
-| Phase 4.0.1 (NLP Crate) | ✅ Complete | Created `paperpilot-nlp` |
-| Phase 4.0.2 (NLP Trait) | ✅ Complete | Defined `NlpResolver` trait |
-| Phase 4.0.3 (Intent Vocab) | ✅ Complete | ~45 intents & aliases defined in `intent.rs` |
-| Phase 4.0.4 (Rule Engine) | ✅ Complete | Layer 1 Aho-Corasick keyword matcher |
-| Phase 4.0.5a (ONNX Training) | ✅ Complete | Python pipeline to train and export MobileBERT |
-| Phase 4.0.6 (Entity Extractor) | ✅ Complete | Regex & NER for files, pages, angles |
-| Phase 4.0.7+4.0.8 (Resolver) | ✅ Complete | Wired `OfflineNlpResolver` and ambiguity checks |
-| Phase 4.0.9 (Offline NLP Tests) | ✅ Complete | Accuracy test suite in `resolver_accuracy_test.rs` |
-| Phase 4.0.10 (Offline E2E) | ✅ Complete | NLP output to actual MCP file modifications |
-| Phase E.1 (CLI E2E) | ✅ Complete | Automated E2E testing sweep of `paperpilot-cli` |
 | Phase E.2 (MCP E2E) | ✅ Complete | Automated JSON-RPC stdio testing of `paperpilot-mcp` |
 | Phase E.3 (UI E2E) | ✅ Complete | Playwright UI tests for the Svelte/Tauri app |
 | Phase E.4 (Benchmark) | ✅ Complete | System performance & latency testing |
