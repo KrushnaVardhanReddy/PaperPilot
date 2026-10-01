@@ -96,7 +96,7 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-
+| Phase 4.F.5 E2E Tests | `16037090941130414687` | Writing Playwright E2E tests for the PDF Viewer, Annotations, and Menu IPC |
 
 ---
 

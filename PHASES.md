@@ -499,10 +499,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.5.1 | Viewer E2E Test | Verify PDF load, canvas rendering, and info panel. |
-| F.5.2 | Annotations E2E Test | Verify adding highlights and pens to the annotation layer. |
-| F.5.3 | Form Filling E2E Test | Verify rendering and filling HTML `<input>` overlays. |
-| F.5.4 | Menu / Tauri IPC Test | Verify File/Edit menu events trigger frontend actions. |
+| F.5.1 | Viewer E2E Test | 🚧 Pending (Session 16037090941130414687) |
+| F.5.2 | Annotations E2E Test | 🚧 Pending (Session 16037090941130414687) |
+| F.5.3 | Form Filling E2E Test | ✅ Form tests are fully implemented and verified in F.3 |
+| F.5.4 | Menu / Tauri IPC Test | 🚧 Pending (Session 16037090941130414687) |
 
 ---
 

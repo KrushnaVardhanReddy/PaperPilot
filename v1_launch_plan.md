@@ -78,10 +78,10 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.5 — End-to-End Testing (Phase 4.F)
 | Task | What | Status |
 |---|---|---|
-| F.5.1 | Viewer E2E Test (Canvas & Metadata) | Pending |
-| F.5.2 | Annotations E2E Test | Pending |
-| F.5.3 | Form Filling E2E Test | Pending |
-| F.5.4 | Menu / Tauri IPC Test | Pending |
+| F.5.1 | Viewer E2E Test (Canvas & Metadata) | 🚧 In Progress (Session 16037090941130414687) |
+| F.5.2 | Annotations E2E Test | 🚧 In Progress (Session 16037090941130414687) |
+| F.5.3 | Form Filling E2E Test | ✅ Completed |
+| F.5.4 | Menu / Tauri IPC Test | 🚧 In Progress (Session 16037090941130414687) |
 
 ---
 
