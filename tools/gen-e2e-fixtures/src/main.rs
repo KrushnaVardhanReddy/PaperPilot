@@ -1,6 +1,8 @@
 use lopdf::{dictionary, Document, Object, Stream, content::{Content, Operation}};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
+use std::process::Command;
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -148,6 +150,29 @@ fn main() {
     image_doc.save(fixtures_dir.join("image_doc.pdf")).unwrap();
 
     create_encrypted_pdf(&fixtures_dir.join("encrypted.pdf"));
+
+    // Generate form fixtures using paperpilot-cli
+    let cli_path = workspace.join("target").join("debug").join("paperpilot-cli");
+    let cli_path_str = if cli_path.exists() { cli_path.to_str().unwrap() } else { "cargo" };
+    
+    let mut add_text_cmd = Command::new(cli_path_str);
+    if !cli_path.exists() { add_text_cmd.args(&["run", "-p", "paperpilot-cli", "--"]); }
+    add_text_cmd.args(&["form", "add-field", fixtures_dir.join("single_page.pdf").to_str().unwrap(), "--name", "TestText", "--type", "text", "--page", "1", "--rect", "100,600,300,650", "--output", fixtures_dir.join("form.pdf").to_str().unwrap()])
+        .status().unwrap();
+
+    let mut add_cb_cmd = Command::new(cli_path_str);
+    if !cli_path.exists() { add_cb_cmd.args(&["run", "-p", "paperpilot-cli", "--"]); }
+    add_cb_cmd.args(&["form", "add-field", fixtures_dir.join("form.pdf").to_str().unwrap(), "--name", "TestCheckbox", "--type", "checkbox", "--page", "1", "--rect", "100,500,120,520", "--output", fixtures_dir.join("form_temp.pdf").to_str().unwrap()])
+        .status().unwrap();
+    fs::rename(fixtures_dir.join("form_temp.pdf"), fixtures_dir.join("form.pdf")).unwrap();
+
+    let data_json = fixtures_dir.join("form_data.json");
+    fs::write(&data_json, r#"{"TestText": "New Value", "TestCheckbox": "Off"}"#).unwrap();
+
+    let mut fill_cmd = Command::new(cli_path_str);
+    if !cli_path.exists() { fill_cmd.args(&["run", "-p", "paperpilot-cli", "--"]); }
+    fill_cmd.args(&["form", "fill", fixtures_dir.join("form.pdf").to_str().unwrap(), "--data", data_json.to_str().unwrap(), "--output", fixtures_dir.join("form_filled.pdf").to_str().unwrap()])
+        .status().unwrap();
 
     println!("Fixtures generated.");
 }

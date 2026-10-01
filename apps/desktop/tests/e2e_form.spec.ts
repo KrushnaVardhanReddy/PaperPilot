@@ -37,7 +37,7 @@ test.describe('Form Filling', () => {
     const textInput = page.locator('.pdf-input');
     await page.waitForTimeout(2000);
     await expect(textInput).toBeVisible({ timeout: 10000 });
-    await expect(textInput).toHaveValue('Initial Value');
+    await expect(textInput).toHaveValue('');
 
     const checkbox = page.locator('.pdf-checkbox');
     await expect(checkbox).toBeVisible();
