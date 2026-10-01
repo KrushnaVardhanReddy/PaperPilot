@@ -26,7 +26,7 @@
 ## Tier 1: Community (Free Forever)
 
 * **Price:** $0 — always, unconditionally.
-* **Target:** Individual users, students, open-source developers, and anyone evaluating PaperPilot.
+* **Target:** Individual users, students, open-source developers, self-hosters, and anyone evaluating PaperPilot.
 * **Features:**
   - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, etc.)
   - **Full PDF Viewer** with annotations and form filling
@@ -34,8 +34,10 @@
   - **Basic Pipeline Builder** — up to 3 steps, manual trigger only
   - **MCP Server** (local, single-user, all 40+ tools)
   - **Full CLI** (all commands, JSON output, webhooks)
+  - **Unlimited Self-Hosted Users** (Zero user caps — no 5-user paywall)
+  - **Standard OIDC / OAuth SSO** (Google, GitHub, Authentik, Keycloak) — free for internal self-hosters with zero "SSO Tax"
   - **Community support** (GitHub Discussions, Discord)
-* **Why this is aggressive:** We give away significantly more than Stirling's free tier. Their "editor" is free but their automation (Processor) costs money per run. Our **entire pipeline builder runs free, locally, forever**. That is our core messaging advantage.
+* **Why this is aggressive:** We give away significantly more than Stirling's free tier. Their self-hosted version imposes a strict 5-user cap, paywalls SSO, and meters automation. PaperPilot provides **unlimited self-hosted users, free standard OIDC/OAuth, and 100% free local processing forever**.
 
 ---
 
@@ -52,7 +54,7 @@
   - **Plugin Registry access:** Install and use community plugins
   - **Webhooks & HMAC signing** for pipeline outputs
   - **1 year of update entitlement** + priority email support (48h response SLA)
-* **Why $5:** We undercut Stirling's implicit cost. A user running 100 pipeline automations/month on Stirling pays $1/month on the Processor. We charge $5/month but give them unlimited local runs with no per-op cost — far better for anyone doing meaningful automation volume. It's also an impulse purchase: less than a coffee per week.
+* **Why $5:** We charge a small, impulse price ($5/mo — less than a coffee per week) for unlimited background daemons, watch folders, and advanced multi-step LLM reasoning.
 
 ---
 
@@ -68,27 +70,25 @@
   - **Concurrent pipeline execution** across team members
   - **Priority support** + 4-hour response SLA
   - **SDK access** (Python, JavaScript) — early access to PaperPilot SDK libraries
-* **Why $12:** This is 40% below Adobe ($20/user/month), below Stirling's enterprise pricing, and below DocuSign's per-seat cost. The shared recipe library is the retention hook — once a team builds their document workflows, switching cost is high.
+* **Why $12:** The shared recipe library is our retention engine — once a firm standardizes their invoice, contract, or Bates stamping pipeline across staff, switching cost is high.
 
 ---
 
-## Tier 4: Enterprise
+## Tier 4: Enterprise (Fleet Governance & Compliance)
 
 * **Price:** $22/user/month (~$210/user/year billed annually)
 * **Minimum:** 50 seats; annual contract required.
-* **Target:** Hospitals, law firms, financial institutions, government contractors — any org with an IT policy, compliance requirement, or air-gap network.
-* **Features (everything in Teams, plus):**
-  - **MSI / MDM silent installers** — Intune, Jamf, SCCM deployment packages
-  - **Group Policy lockdown** — disable external network calls, enforce local-only processing
-  - **SSO / SAML 2.0 / OIDC integration** — Okta, Azure AD, Google Workspace
-  - **SCIM provisioning** — automated user lifecycle from IdP
-  - **Legal indemnification clause** in contract
-  - **DocuSign / E-Signature workflow integrations**
-  - **On-premise / air-gapped deployment** with offline license validation
-  - **Dedicated Account Manager**
-  - **24-hour SLA + phone support option**
-  - **Compliance reporting exports** (HIPAA, SOC 2 readiness docs)
-* **Why $22:** Still cheaper than Adobe Acrobat Pro at scale, with *zero cloud upload risk* — a decisive differentiator for healthcare (HIPAA), legal (attorney-client privilege), and finance (SEC/FINRA). IT admins aren't buying PDF editing; they're buying **compliance, control, and zero data-egress risk**.
+* **Target:** Hospitals, law firms, financial institutions, defense contractors — organizations governed by strict IT, security, and audit standards.
+* **Why Enterprise Pays (We monetize Fleet Governance, NOT the Login Button):**
+  - **SCIM 2.0 Automated Lifecycle Provisioning** — Instant Okta / Azure AD automated user on/off-boarding
+  - **Enterprise SAML 2.0 Federation** with custom attribute mapping and conditional access policies
+  - **MSI / MDM Silent Enterprise Deployments** — Pre-packaged Intune, Jamf, and SCCM deployment manifests
+  - **Air-Gap Group Policy Lockdown (GPO / Plist)** — IT-enforced hard policies disabling all external network calls, blocking cloud LLM keys, and locking execution to 100% on-premise
+  - **SIEM / Compliance Audit Log Streaming** — Real-time event streaming to Splunk, Datadog, or AWS CloudWatch (tracking every document redact, export, and signature)
+  - **Commercial Indemnification & BAA (Business Associate Agreement)** for HIPAA compliance
+  - **On-premise offline license validation** (works in air-gapped SCIFs and defense environments)
+  - **Dedicated Account Manager & 24/7 SLA with phone support**
+* **Why $22:** Large enterprises don't pay for login convenience; they pay for **legal compliance, risk mitigation, and zero data-leakage guarantees**. At $22/user/month, PaperPilot is cheaper than Adobe Acrobat Enterprise while providing 100% on-premise data residency.
 
 ---
 
