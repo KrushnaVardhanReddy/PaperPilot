@@ -1,4 +1,4 @@
-# Task: Phase 4.F.8 — Instant File Open Flow + Raycast Command Palette (Ctrl+K) + Floating Toolbar
+# Task: Phase 4.F.8 — Instant File Open Flow + Raycast Command Palette (Ctrl+K) + Floating Toolbar + Resizable Right Panel
 # Priority: HIGH — Transforms PaperPilot from a "web upload utility" into a real native desktop PDF application
 
 ---
@@ -45,7 +45,15 @@ Currently, `PdfToolbar` and `PdfAnnotationToolbar` are stacked as two full-width
 - Use subtle backdrop blur (`backdrop-filter: blur(12px); background: rgba(30, 30, 36, 0.85);`).
 - Maximizes the vertical viewing area for reading the document.
 
-### 4. Linear-Style Semantic Elevation Tokens in `app.css`
+### 4. Draggable Resizable & Expandable Right Panel (`ViewerRightPanel.svelte`)
+Currently, `ViewerRightPanel` is locked to a fixed 280px width, which makes reading annotations and inspecting PDF metadata cramped.
+**Requirement:**
+- Allow the user to drag the left border of `ViewerRightPanel` to resize it smoothly between `240px` and `550px`.
+- Add a drag handle (`.resize-handle`) on the left edge with `cursor: col-resize`.
+- Persist the custom panel width to `localStorage.getItem('viewer-right-panel-width')`.
+- Double-clicking the resize handle or toggle snaps between standard (`280px`) and wide expanded (`450px`).
+
+### 5. Linear-Style Semantic Elevation Tokens in `app.css`
 Define standardized elevation surfaces in `apps/desktop/src/app.css`:
 ```css
 --surface-0: #0d0d0f; /* Base window background */
@@ -80,7 +88,263 @@ appState.selectDocument(appState.documents.length - 1);
 
 ---
 
-### STEP 2: Create `CommandPalette.svelte`
+### STEP 2: Update `ViewerRightPanel.svelte` for Resizing & Expansion
+
+File: `apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte`
+
+Replace with resizable width logic:
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
+  import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
+  import type { Annotation } from '$lib/api/pdf';
+
+  let {
+    annotations = $bindable<Annotation[]>([]),
+    pdfDoc = null,
+    onJumpToPage
+  }: {
+    annotations: Annotation[];
+    pdfDoc: any;
+    onJumpToPage: (page: number) => void;
+  } = $props();
+
+  let isCollapsed = $state(false);
+  let activeTab = $state<'annotations' | 'info'>('annotations');
+  let panelWidth = $state(300);
+  let isDragging = $state(false);
+
+  onMount(() => {
+    const storedCollapsed = localStorage.getItem('viewer-right-panel-collapsed');
+    if (storedCollapsed === 'true') isCollapsed = true;
+
+    const storedTab = localStorage.getItem('viewer-right-panel-tab');
+    if (storedTab === 'info' || storedTab === 'annotations') {
+      activeTab = storedTab;
+    }
+
+    const storedWidth = localStorage.getItem('viewer-right-panel-width');
+    if (storedWidth) {
+      const parsed = parseInt(storedWidth, 10);
+      if (!isNaN(parsed) && parsed >= 220 && parsed <= 700) {
+        panelWidth = parsed;
+      }
+    }
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-collapsed', String(isCollapsed));
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-tab', activeTab);
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-width', String(panelWidth));
+  });
+
+  function startResize(e: MouseEvent) {
+    if (isCollapsed) return;
+    isDragging = true;
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const delta = startX - moveEvent.clientX;
+      const newWidth = Math.min(Math.max(startWidth + delta, 240), 600);
+      panelWidth = newWidth;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  function handleResizeDblClick() {
+    panelWidth = panelWidth > 350 ? 300 : 480;
+  }
+</script>
+
+<div
+  class="right-panel"
+  class:collapsed={isCollapsed}
+  class:dragging={isDragging}
+  style={!isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+>
+  <!-- Draggable left resize handle -->
+  {#if !isCollapsed}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="resize-handle"
+      id="right-panel-resize-handle"
+      title="Drag to resize panel, double-click to toggle width"
+      onmousedown={startResize}
+      ondblclick={handleResizeDblClick}
+    ></div>
+  {/if}
+
+  <button
+    class="collapse-toggle"
+    id="right-panel-toggle"
+    onclick={() => isCollapsed = !isCollapsed}
+    title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+    aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+  >
+    {isCollapsed ? '›' : '‹'}
+  </button>
+
+  {#if !isCollapsed}
+    <div class="panel-tabs" role="tablist" aria-label="Panel sections">
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'annotations'}
+        id="right-panel-tab-annotations"
+        role="tab"
+        aria-selected={activeTab === 'annotations'}
+        onclick={() => activeTab = 'annotations'}
+      >
+        Annotations ({annotations.length})
+      </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'info'}
+        id="right-panel-tab-info"
+        role="tab"
+        aria-selected={activeTab === 'info'}
+        onclick={() => activeTab = 'info'}
+      >
+        Info
+      </button>
+    </div>
+
+    <div class="panel-content" role="tabpanel">
+      {#if activeTab === 'annotations'}
+        <PdfAnnotationPanel
+          bind:annotations
+          {onJumpToPage}
+        />
+      {:else}
+        <PdfInfoPanel {pdfDoc} />
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+
+  .right-panel.dragging {
+    transition: none; /* smooth real-time drag without transition lag */
+    user-select: none;
+  }
+
+  .right-panel.collapsed {
+    width: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 20;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .resize-handle:hover,
+  .right-panel.dragging .resize-handle {
+    background: var(--accent-primary);
+  }
+
+  .collapse-toggle {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0 4px 4px 0;
+    color: var(--text-muted);
+    width: 16px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 10;
+    transition: all var(--transition-fast);
+    padding: 0;
+  }
+
+  .collapse-toggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+  }
+
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    padding-left: 26px; /* leave room for resize handle and toggle */
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+  }
+
+  .tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-primary);
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+```
+
+---
+
+### STEP 3: Create `CommandPalette.svelte`
 
 Create new file: `apps/desktop/src/lib/components/layout/CommandPalette.svelte`
 
@@ -184,7 +448,6 @@ Create new file: `apps/desktop/src/lib/components/layout/CommandPalette.svelte`
   ];
 
   let filteredCommands = $derived.by(() => {
-    // Dynamic document commands
     const docCommands: CommandItem[] = appState.documents.map((doc, idx) => ({
       id: `cmd-doc-${idx}`,
       title: doc.name,
@@ -425,14 +688,14 @@ Create new file: `apps/desktop/src/lib/components/layout/CommandPalette.svelte`
 
 ---
 
-### STEP 3: Mount `CommandPalette.svelte` in `+layout.svelte`
+### STEP 4: Mount `CommandPalette.svelte` in `+layout.svelte`
 
 In `apps/desktop/src/routes/+layout.svelte`:
 Import and render `<CommandPalette />` at the root layout so it is accessible from any tab or page.
 
 ---
 
-### STEP 4: Add Floating Pill Style to `PdfAnnotationToolbar.svelte`
+### STEP 5: Add Floating Pill Style to `PdfAnnotationToolbar.svelte`
 
 In `apps/desktop/src/lib/components/PdfAnnotationToolbar.svelte`:
 Adjust wrapper style to float above the canvas:
@@ -468,3 +731,6 @@ Adjust wrapper style to float above the canvas:
 - [ ] Typing in Command Palette filters operations and open documents.
 - [ ] Arrow keys and Enter select and run actions.
 - [ ] Annotation toolbar floats above the document canvas as a sleek pill.
+- [ ] Dragging the left edge of `ViewerRightPanel` resizes the panel smoothly between 240px and 600px.
+- [ ] Double-clicking the resize handle snaps between 300px and 480px.
+- [ ] Refreshing the app persists the custom right panel width.
