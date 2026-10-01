@@ -1,8 +1,11 @@
-# PaperPilot Pricing Strategy
+# PaperPilot Pricing Strategy (v2 — Competitive Update)
 
-**Target Market:** B2B (Business-to-Business) PDF Utility Market
-**Overhead:** $0.00 compute cost (local-first rendering)
-**Goal:** Undercut Adobe Acrobat Pro ($240/yr) while building a sustainable revenue model and a self-reinforcing contributor flywheel.
+**Target Market:** Individual developers, power users, SMBs, and Enterprise PDF teams.
+**Overhead:** $0.00 compute cost on local processing (our core advantage over every cloud-based tool).
+**Goal:** Beat Stirling PDF's usage-based model with a simpler "pay once, run forever locally" message, while building a sustainable B2B revenue stream from teams and enterprise.
+
+> **Key Counter-Positioning vs. Stirling PDF:**
+> Stirling charges $0.01 per automation run (their Processor product). PaperPilot runs **100% locally** — you never pay per operation. Every automation, every pipeline run, every batch job is **free on your machine**. For developers and power users running hundreds of automations a month, we are dramatically cheaper.
 
 ---
 
@@ -10,116 +13,172 @@
 
 | Tier | Price | Best For |
 |---|---|---|
-| Personal | **Free** | Everyone |
-| Pro | **$7/month** (or $69/yr billed annually) | Power users, freelancers |
-| Teams | **$15/user/month** (or $144/user/yr billed annually) | SMBs, 2–50 seats |
-| Enterprise | **$25/user/month** (or $240/user/yr billed annually) | 50+ seats, IT-managed deployments |
+| **Community** | **Free** | Everyone — individuals, students, open source |
+| **Pro** | **$5/month** (or $48/yr — save 20%) | Power users, freelancers, consultants |
+| **Teams** | **$12/user/month** (or $115/user/yr — save 20%) | Small teams, agencies, law firms, 2–50 seats |
+| **Enterprise** | **$22/user/month** (or $210/user/yr) | 50+ seats, IT-managed, compliance-driven orgs |
+| **Cloud (Usage-Based)** | **$0.01/run** (first 1000 runs free) | Serverless/CI users who can't run locally |
+
+> Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
 
 ---
 
-## Tier 1: Personal (Free Forever)
-* **Price:** $0
-* **Target:** Individual users, students, open-source community.
+## Tier 1: Community (Free Forever)
+
+* **Price:** $0 — always, unconditionally.
+* **Target:** Individual users, students, open-source developers, and anyone evaluating PaperPilot.
 * **Features:**
-  - All core PDF manipulation features (Merge, Split, Rotate, Text Extraction, Encryption)
-  - Offline AI Mode (Rule-based NLP intent routing, no API key required)
-  - MCP Server (local, single-user)
-  - CLI access
-  - Community support only
-* **Why:** Drives massive user acquisition, word-of-mouth marketing, and acts as a trojan horse into corporate environments. The free tier is how PaperPilot spreads.
+  - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, etc.)
+  - **Full PDF Viewer** with annotations and form filling
+  - **Offline AI Mode** (rule-based NLP intent routing — zero API key, zero network)
+  - **Basic Pipeline Builder** — up to 3 steps, manual trigger only
+  - **MCP Server** (local, single-user, all 40+ tools)
+  - **Full CLI** (all commands, JSON output, webhooks)
+  - **Community support** (GitHub Discussions, Discord)
+* **Why this is aggressive:** We give away significantly more than Stirling's free tier. Their "editor" is free but their automation (Processor) costs money per run. Our **entire pipeline builder runs free, locally, forever**. That is our core messaging advantage.
 
 ---
 
 ## Tier 2: Pro
-* **Price:** $7/month (~$69/year billed annually)
-* **Target:** Freelancers, power users, consultants, solo developers.
-* **Features (everything in Personal, plus):**
-  - Visual Pipeline Builder (Phase 3.4.10)
-  - Pro AI Mode (Full LLM multi-step reasoning, Bring Your Own Key)
-  - LLM-Ready Export (PDF → RAG-optimized Markdown + JSON sidecar)
-  - Watch Folder daemon mode
-  - Webhooks & HMAC signing
-  - 1 year of update entitlement + priority email support
-* **Positioning:** $7/month is an impulse purchase. It's less than a Netflix subscription and has a clear, compelling feature hook (the Visual Pipeline Builder and AI mode).
+
+* **Price:** $5/month (~$48/year billed annually)
+* **Target:** Freelancers, power users, consultants, solo developers who want advanced automation and AI.
+* **Features (everything in Community, plus):**
+  - **Unlimited pipeline steps** (Community is capped at 3)
+  - **Advanced Pipeline triggers:** Watch Folder daemon mode, Webhook trigger, Cron scheduling
+  - **Pro AI Mode:** Full LLM multi-step reasoning — bring your own key (OpenAI, Ollama, Gemini, local llamafile)
+  - **LLM-Ready Export:** PDF → RAG-optimized Markdown + structured JSON sidecar
+  - **Voice input** for NLP command box
+  - **Plugin Registry access:** Install and use community plugins
+  - **Webhooks & HMAC signing** for pipeline outputs
+  - **1 year of update entitlement** + priority email support (48h response SLA)
+* **Why $5:** We undercut Stirling's implicit cost. A user running 100 pipeline automations/month on Stirling pays $1/month on the Processor. We charge $5/month but give them unlimited local runs with no per-op cost — far better for anyone doing meaningful automation volume. It's also an impulse purchase: less than a coffee per week.
 
 ---
 
 ## Tier 3: Teams
-* **Price:** $15/user/month (or $144/user/year billed annually)
+
+* **Price:** $12/user/month (~$115/user/year billed annually)
+* **Minimum:** 2 seats
 * **Target:** Agencies, small law firms, accounting teams, startups — 2 to 50 seats.
 * **Features (everything in Pro, plus):**
-  - Centralized license portal (admin manages seats)
-  - Shared recipe/pipeline library (team recipes stored in a private registry)
-  - Audit log (searchable job history per user)
-  - Priority support + 4-hour response SLA
-* **Why $15:** Teams share the tool actively, so per-seat value is higher. Still 6x cheaper than Adobe per year. The shared recipe library is the key hook — once a team builds workflows, they don't leave.
+  - **Centralized license portal** — admin manages seats, assigns roles
+  - **Shared pipeline/recipe library** — team recipes stored in a private registry
+  - **Team audit log** — searchable job history per user (what ran, when, result)
+  - **Concurrent pipeline execution** across team members
+  - **Priority support** + 4-hour response SLA
+  - **SDK access** (Python, JavaScript) — early access to PaperPilot SDK libraries
+* **Why $12:** This is 40% below Adobe ($20/user/month), below Stirling's enterprise pricing, and below DocuSign's per-seat cost. The shared recipe library is the retention hook — once a team builds their document workflows, switching cost is high.
 
 ---
 
 ## Tier 4: Enterprise
-* **Price:** $25/user/month (or $240/user/year billed annually)
-* **Minimum:** 50 seats
-* **Target:** Hospitals, law firms, financial institutions, government contractors, any org with an IT policy.
+
+* **Price:** $22/user/month (~$210/user/year billed annually)
+* **Minimum:** 50 seats; annual contract required.
+* **Target:** Hospitals, law firms, financial institutions, government contractors — any org with an IT policy, compliance requirement, or air-gap network.
 * **Features (everything in Teams, plus):**
-  - MSI / MDM silent installers (Intune, Jamf, SCCM)
-  - Group Policy lockdown (disable external network calls, enforce encryption)
-  - SSO / SAML integration (Okta, Azure AD, Google Workspace)
-  - Legal indemnification clause
-  - DocuSign / E-Signature integrations
-  - Dedicated Account Manager
-  - 24-hour SLA + phone support option
-  - On-premise deployment option (airgapped networks)
-* **Why $25:** This is still **less than Adobe Acrobat** per user per year at scale, but with *zero cloud upload risk* — a massive differentiator for healthcare (HIPAA), legal (client privilege), and finance (SEC/FINRA) use cases. IT admins aren't buying PDF editing; they're buying compliance, control, and peace of mind.
+  - **MSI / MDM silent installers** — Intune, Jamf, SCCM deployment packages
+  - **Group Policy lockdown** — disable external network calls, enforce local-only processing
+  - **SSO / SAML 2.0 / OIDC integration** — Okta, Azure AD, Google Workspace
+  - **SCIM provisioning** — automated user lifecycle from IdP
+  - **Legal indemnification clause** in contract
+  - **DocuSign / E-Signature workflow integrations**
+  - **On-premise / air-gapped deployment** with offline license validation
+  - **Dedicated Account Manager**
+  - **24-hour SLA + phone support option**
+  - **Compliance reporting exports** (HIPAA, SOC 2 readiness docs)
+* **Why $22:** Still cheaper than Adobe Acrobat Pro at scale, with *zero cloud upload risk* — a decisive differentiator for healthcare (HIPAA), legal (attorney-client privilege), and finance (SEC/FINRA). IT admins aren't buying PDF editing; they're buying **compliance, control, and zero data-egress risk**.
+
+---
+
+## Tier 5: Cloud (Usage-Based) — Developer / CI Tier
+
+* **Price:** **$0.01 per pipeline run** (first **1,000 runs free**, no credit card required)
+* **Target:** Developers integrating PaperPilot into CI/CD pipelines, serverless functions, or automation scripts — who cannot or prefer not to run a local binary.
+* **Features:**
+  - Hosted PaperPilot MCP endpoint (Cloud MCP Gateway)
+  - All 40+ MCP tools available via HTTP
+  - Pay only for what you use; no monthly seat commitment
+  - Scales to millions of runs with volume discounts (see below)
+  - Usage dashboard with per-operation cost breakdown
+* **Volume pricing:**
+  | Monthly Runs | Price/Run |
+  |---|---|
+  | 0–1,000 | **Free** |
+  | 1,001–10,000 | $0.01/run |
+  | 10,001–100,000 | $0.007/run |
+  | 100,001–1,000,000 | $0.005/run |
+  | 1,000,000+ | Custom / negotiate |
+
+* **Why this tier:** This **directly matches and undercuts Stirling**. Stirling gives 500 free runs, we give 1,000. Stirling charges $0.01/run with no published volume discount. We start discounting at 10k runs. For DevOps teams and API integrators, this is the clear winner on price and flexibility.
 
 ---
 
 ## 💡 Plugin Ecosystem Revenue Sharing Model
 
-**Philosophy:** While the core PaperPilot engine and Enterprise B2B features are built and maintained by the founding team, we want to incentivize a thriving ecosystem of community-built extensions.
+**Philosophy:** The core PaperPilot engine is built and maintained by the core team, but a thriving ecosystem of community-built plugins is what makes PaperPilot a platform, not just a tool.
 
 ### The Pool
 - **10% of all paid subscription revenue** is reserved as the Plugin Developer Revenue Pool, distributed quarterly.
-- This is fully transparent: pool size and top-earning plugins are published publicly on the website every quarter.
+- Fully transparent: pool size and top-earning plugins are published publicly on the website every quarter.
 
-### How It Works (Value Allocation)
-Instead of a flat scoring system, revenue is dynamically routed based on **plugin usage by paying customers**:
-
-1. **Plugin Analytics:** When a Pro, Teams, or Enterprise user installs and executes a community plugin (e.g., "HIPAA Redactor" or "Invoice Normalizer"), that usage is anonymously tallied.
-2. **Distribution:** The 10% quarterly pool is divided proportionally among plugin authors based on the aggregate usage of their plugins by paid tiers.
-3. **Quality Control:** To qualify for the revenue pool, plugins must be open-source, undergo a security review, and be officially published to the PaperPilot Plugin Registry.
+### How It Works
+Revenue is dynamically routed based on **plugin usage by paying customers**:
+1. When a Pro, Teams, or Enterprise user runs a community plugin (e.g., "HIPAA Redactor" or "Invoice Normalizer"), that usage is anonymously tallied.
+2. The 10% quarterly pool is divided proportionally among plugin authors by paid-tier usage share.
+3. To qualify: plugins must be open-source, undergo a security review, and be published to the PaperPilot Plugin Registry.
 
 ### Payout Process
-1. Plugin Author registers their GitHub handle and payment info (Stripe / Wise).
-2. At end of each quarter, the algorithm calculates usage metrics and splits the pool.
-3. Payouts are sent automatically.
-4. Contributors must submit a tax form (W-9 / W-8BEN equivalent) before first payout.
+1. Plugin author registers GitHub handle + payment info (Stripe / Wise).
+2. End of each quarter: algorithm calculates usage metrics and splits the pool automatically.
+3. Contributors submit tax form (W-9 / W-8BEN) before first payout.
 
 ### Why This Works
-> Free users become plugin developers. Plugin developers build niche tools that attract more Enterprise customers.
-> Revenue growth increases the pool. A bigger pool attracts more developers.
-> This is a self-reinforcing flywheel that allows the core team to focus exclusively on B2B infrastructure.
+> Free users become plugin developers. Plugins attract more Enterprise customers. Revenue growth increases the pool. A bigger pool attracts more developers. This is a self-reinforcing flywheel.
+
+---
+
+## 🚀 Key Messaging vs. Competitors
+
+### vs. Stirling PDF
+> *"Stirling charges $0.01 per automation run. PaperPilot runs locally — every automation is free, forever, no run counter, no billing surprise. For teams running hundreds of document workflows a month, that's the difference between a $50 bill and $0."*
+
+### vs. Adobe Acrobat Pro
+> *"Adobe charges $20/user/month and uploads your documents to Adobe's cloud. PaperPilot Enterprise is $22/user/year — 11x cheaper — and your documents never leave your network."*
+
+### vs. iLovePDF / Smallpdf
+> *"Those tools require uploading your sensitive documents to a third-party server. PaperPilot processes everything on your device. Your legal briefs, medical records, and financial statements stay yours."*
+
+### vs. PDFgear
+> *"PDFgear is free and closed-source — you're trusting their privacy policy. PaperPilot is free and open-source — you can read the code yourself and verify exactly what happens with your documents."*
 
 ---
 
 ## 🚀 Growth Feature Roadmap
 
-These features transform PaperPilot from a standalone tool into a platform:
+These features transform PaperPilot from a tool into a platform:
 
 ### 1. Plugin / Extension System
-Community-built `PdfOperation` plugins. Legal firms can publish a "HIPAA Redactor" plugin. Accounting firms can publish an "Invoice Normalizer" plugin. Plugin authors earn from the contributor pool.
+Community-built `PdfOperation` plugins. Legal firms publish a "HIPAA Redactor". Accounting firms publish an "Invoice Normalizer". Plugin authors earn from the contributor pool. This is the network effect moat.
 
-### 2. Workflow / Recipe Builder (GUI) — Phase 3.4.10
-Visual drag-and-drop pipeline builder: `Validate → Redact → Bates Number → Sign → Webhook`. Recipes can be saved, shared, and imported. Enterprise customers get private recipe libraries.
+### 2. Workflow / Pipeline Builder (GUI) — Phase 3.4.10+
+Visual drag-and-drop pipeline: `Validate → Redact → Bates Number → Sign → Webhook`. Basic pipelines are **free in Community**. Advanced triggers (scheduling, webhooks, watch folders) require Pro.
 
 ### 3. Watch Folder Mode (CLI Daemon)
-`paperpilot watch ./incoming --recipe compress --output ./done --webhook $SLACK_WEBHOOK`
-Automatically processes every new file dropped in a watched directory. Set-and-forget for IT departments.
+```
+paperpilot watch ./incoming --recipe compress --output ./done --webhook $SLACK_WEBHOOK
+```
+Auto-processes every new file dropped in a watched folder. Pro tier feature. The "set-and-forget" for IT departments.
 
 ### 4. SDK Libraries (Python, JavaScript, Go)
-First-class SDKs that wrap the CLI/MCP interface. Makes PaperPilot a standard dependency in company automation scripts. Dramatically expands the developer audience.
+First-class SDKs wrapping the CLI/MCP interface. PaperPilot becomes a standard dependency in company automation scripts. Teams tier gets early access.
 
 ### 5. Zapier / Make.com / n8n Integration Nodes
-One-click PaperPilot nodes in no-code automation platforms. Unlocks a completely non-technical user segment — office managers and legal assistants building workflows without code.
+One-click PaperPilot nodes in no-code automation platforms. Unlocks non-technical users — office managers and legal assistants building workflows without code.
 
 ### 6. Document Intelligence Dashboard
-Analytics panel showing what operations run most often, error rates, average processing time, and a searchable job history. Enterprise admins love this for compliance reporting.
+Analytics panel: what operations run most often, error rates, average processing time, searchable job history. Enterprise admins love this for compliance reporting.
+
+### 7. Cloud MCP Gateway (Phase 7)
+Hosted MCP endpoint for teams that can't run a local binary. Billed on usage-based Cloud tier. Enables PaperPilot as a drop-in PDF backend for any AI agent via the internet.
