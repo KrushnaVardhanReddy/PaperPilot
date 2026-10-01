@@ -163,7 +163,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     await expect(annotationLayer).toBeVisible();
 
     // Click the pen tool
-    const penBtn = page.getByRole('button', { name: 'Pen' });
+    const penBtn = page.locator('.tool-btn[title="Pen"]');
     await penBtn.click();
 
     // Verify the tool is active

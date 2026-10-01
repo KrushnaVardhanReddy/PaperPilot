@@ -59,7 +59,7 @@ test.describe('Form Filling', () => {
     await expect(toast).toBeVisible();
 
     // To simulate a fresh load, we can close the viewer and upload the simulated "saved" file
-    await page.locator('.back-btn').click();
+    await page.locator('.home-tab-btn').click();
 
     // Ensure we are back on document list
     await expect(page.locator('.documents-view')).toBeVisible();
