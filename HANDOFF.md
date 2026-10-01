@@ -80,14 +80,13 @@ PaperPilot/
 | Phase 4.F.4 (Custom HTML Titlebar) | ✅ Complete | Replaced native OS decorations with Svelte titlebar |
 | Phase 4.F.6 (UX Improvements & Permissions) | ✅ Complete | View button, collapsible sidebars & right panel, status bar, Tauri permissions & native file open (PRs #73, #74, #75, #76) |
 | Phase 4.F.7-A (Editable Page Jump & Zoom Presets) | ✅ Complete | Interactive page number input + zoom preset dropdown & Fit button (PR #77) |
+| Phase 4.F.7-B (Multi-Document Tabs & Operations Dock) | ✅ Complete | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel (PR #78) |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Prompt File | What it does |
-|---|---|---|
-| Phase 4.F.7-B | `prompts/tasks/phase_4/P4_F_7B_multidoc_tabs_operations_dock.txt` | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel |
+*(None currently active — ready for Phase 4.F.8)*
 
 ---
 
