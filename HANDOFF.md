@@ -89,6 +89,7 @@ PaperPilot/
 | Phase E.2 (MCP E2E) | ✅ Complete | Automated JSON-RPC stdio testing of `paperpilot-mcp` |
 | Phase E.3 (UI E2E) | ✅ Complete | Playwright UI tests for the Svelte/Tauri app |
 | Phase E.4 (Benchmark) | ✅ Complete | System performance & latency testing |
+| Phase 4.F.4 (Custom HTML Titlebar) | ✅ Complete | Replaced native OS decorations with Svelte titlebar |
 
 ---
 
@@ -102,8 +103,9 @@ PaperPilot/
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-2. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+1. **Phase 4.F.6 (UX Improvements):** Trigger the Jules task to add Collapsible Sidebars, View Button on Uploads, and wire `menu-open-file`.
+2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+3. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 
 ---
 

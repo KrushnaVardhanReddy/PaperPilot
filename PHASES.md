@@ -483,17 +483,15 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.3.3 | Save filled form to PDF | ✅ Write field values back into the PDF file via `paperpilot-pdf` |
 | F.3.4 | Form fill E2E test | ✅ Load a form PDF, fill all fields, save, reload and verify field values persist |
 
-#### 4.F.4 — Native OS Menu Bar
+#### 4.F.4 — Custom HTML Titlebar
 
 | # | Task | Notes |
 |---|---|---|
-| F.4.1 | Tauri `Menu` setup | ✅ Configure native menu bar in `tauri.conf.json` and `src-tauri/src/main.rs` |
-| F.4.2 | File menu | ✅ `Open` (import PDFs), `Save Annotations`, `Settings`, `Quit` |
-| F.4.3 | Edit menu | ✅ `Undo`, `Redo` (pipeline and annotation changes) |
-| F.4.4 | View menu | ✅ `Zoom In`, `Zoom Out`, `Fit to Width`, `Toggle Sidebar` |
-| F.4.5 | Window menu | ✅ `Minimize`, `Maximise`, `Full Screen` |
-| F.4.6 | Help menu | ✅ `Documentation`, `Keyboard Shortcuts`, `About PaperPilot` |
-| F.4.7 | Keyboard shortcuts | ✅ `Cmd/Ctrl+O` open, `Cmd/Ctrl+Z` undo, `Cmd/Ctrl++/-` zoom, `Cmd/Ctrl+Q` quit |
+| F.4.1 | Disable Native Decorations | ✅ Set `decorations: false` in `tauri.conf.json` |
+| F.4.2 | Remove Native Menu | ✅ Remove Rust `menu::build_menu` from `lib.rs` |
+| F.4.3 | `Titlebar.svelte` Component | ✅ Custom HTML/CSS component with drag regions and controls |
+| F.4.4 | File/Edit/View/Window Menus | ✅ HTML dropdowns replicating old native menu |
+| F.4.5 | Layout Integration | ✅ Mount `<Titlebar />` globally in `+layout.svelte` |
 
 #### 4.F.5 — End-to-End Testing (Phase 4.F)
 
@@ -503,6 +501,15 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.5.2 | Annotations E2E Test | ✅ Completed |
 | F.5.3 | Form Filling E2E Test | ✅ Form tests are fully implemented and verified in F.3 |
 | F.5.4 | Menu / Tauri IPC Test | ✅ Completed |
+
+#### 4.F.6 — PDF Viewer UX Improvements
+
+| # | Task | Notes |
+|---|---|---|
+| F.6.1 | View Button on Uploads | Add a "View" button next to delete in the Dropzone file list |
+| F.6.2 | Collapsible Sidebars | Hide/show Annotations and Document Info panels to maximize canvas space |
+| F.6.3 | Native "File -> Open" | Wire Tauri `menu-open-file` event to `@tauri-apps/plugin-dialog` to select PDFs |
+
 
 ---
 

@@ -67,11 +67,11 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | F.3.3 | Save filled form to PDF | ✅ Completed |
 | F.3.4 | Form fill E2E test | ✅ Completed |
 
-#### 4.F.4 — Native OS Menu Bar
+#### 4.F.4 — Custom HTML Titlebar
 | Task | What | Status |
 |---|---|---|
-| F.4.1 | Tauri `Menu` setup (File, Edit, View, Window, Help) | ✅ Completed |
-| F.4.2–F.4.7 | All menus + keyboard shortcuts wired | ✅ Completed |
+| F.4.1 | Disable Native Decorations in `tauri.conf.json` | ✅ Completed |
+| F.4.2–F.4.5 | Create `Titlebar.svelte` & wire HTML menus | ✅ Completed |
 
 ---
 
@@ -82,6 +82,13 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 | F.5.2 | Annotations E2E Test | ✅ Completed |
 | F.5.3 | Form Filling E2E Test | ✅ Completed |
 | F.5.4 | Menu / Tauri IPC Test | ✅ Completed |
+
+#### 4.F.6 — PDF Viewer UX Improvements
+| Task | What | Status |
+|---|---|---|
+| F.6.1 | View Button on Uploads | Pending |
+| F.6.2 | Collapsible Sidebars | Pending |
+| F.6.3 | Native "File -> Open" Wired to Tauri plugin | Pending |
 
 ---
 
