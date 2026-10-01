@@ -76,9 +76,15 @@
   </div>
 
   <div class="window-controls">
-    <button class="control-btn" onclick={() => getCurrentWindow().minimize()}>_</button>
-    <button class="control-btn" onclick={() => getCurrentWindow().toggleMaximize()}>□</button>
-    <button class="control-btn close" onclick={() => getCurrentWindow().close()}>×</button>
+    <button class="control-btn" onclick={() => getCurrentWindow().minimize()}>
+      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="4" width="8" height="1" fill="currentColor"/></svg>
+    </button>
+    <button class="control-btn" onclick={() => getCurrentWindow().toggleMaximize()}>
+      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+    </button>
+    <button class="control-btn close" onclick={() => getCurrentWindow().close()}>
+      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2,2 L8,8 M8,2 L2,8" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+    </button>
   </div>
 </div>
 
