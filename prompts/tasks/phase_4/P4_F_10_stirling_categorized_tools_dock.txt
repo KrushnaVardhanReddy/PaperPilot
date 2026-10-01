@@ -73,12 +73,14 @@ Replace `OperationsPanel.svelte` with the following comprehensive, Svelte 5 impl
     { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', tags: ['shrink', 'size', 'optimize'] },
     { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', tags: ['combine', 'join', 'append'] },
     { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', tags: ['orientation', 'turn'] },
-    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '🔍', category: 'quick', tags: ['scan', 'text', 'extract'] },
+    { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', tags: ['diff', 'compare', 'difference'] },
+    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', tags: ['scan', 'text', 'extract'] },
     { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', tags: ['word', 'docx', 'convert', 'export'] },
 
     // Page Operations
     { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', tags: ['combine', 'join', 'concat'] },
     { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', tags: ['divide', 'cut', 'separate'] },
+    { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', tags: ['diff', 'compare'] },
     { id: 'extract_pages', title: 'Extract Pages', description: 'Save specific pages into a new PDF document', icon: '📤', category: 'pages', tags: ['select', 'isolate'] },
     { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', tags: ['orientation', 'turn', 'flip'] },
 
