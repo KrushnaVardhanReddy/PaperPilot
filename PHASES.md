@@ -512,8 +512,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| R2.E1 | CLI End-to-End Re-Validation | Re-run full CLI sweep; verify no regressions; add annotation/form save commands |
-| R2.E2 | MCP End-to-End Re-Validation | Re-run all MCP tools; add `pdf_annotate`, `pdf_form_fill` tools |
+| R2.E1 | CLI End-to-End Re-Validation | ✅ Completed |
+| R2.E2 | MCP End-to-End Re-Validation | ✅ Completed |
 | R2.E3 | UI Full Re-Validation (Viewer + Annotations) | ✅ Completed |
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
 

@@ -96,15 +96,14 @@ PaperPilot/
 
 | Task | Session ID | What they are doing |
 |---|---|---|
-| Phase 4.E2E Round 2 Backend | `1813508056764839460` | Registering `pdf_annotate` and `pdf_form_fill` via CLI/MCP and adding backend E2E tests |
+| None | | |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Wait for Backend E2E Validation:** Wait for Jules session `1813508056764839460` to complete the backend registration and MCP testing for R2.E1 & R2.E2.
-2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking once the backend is validated.
-3. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+1. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+2. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
 
 ---
 

@@ -2032,7 +2032,6 @@ name = "gen-e2e-fixtures"
 version = "0.1.0"
 dependencies = [
  "lopdf",
- "paperpilot-pdf",
 ]
 
 [[package]]

@@ -88,8 +88,8 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 ### Phase 4.E2E Round 2 — Full System Re-Validation (Post Phase 4.F)
 | Task | What | Status |
 |---|---|---|
-| R2.E1 | CLI E2E Re-Validation (with new annotation/form commands) | Pending |
-| R2.E2 | MCP E2E Re-Validation (with `pdf_annotate`, `pdf_form_fill`) | Pending |
+| R2.E1 | CLI E2E Re-Validation (with new annotation/form commands) | ✅ Completed |
+| R2.E2 | MCP E2E Re-Validation (with `pdf_annotate`, `pdf_form_fill`) | ✅ Completed |
 | R2.E3 | UI Playwright Re-Validation (viewer + annotations + menu) | ✅ Completed |
 | R2.E4 | System Performance Re-Benchmark (includes viewer render latency) | Pending |
 
