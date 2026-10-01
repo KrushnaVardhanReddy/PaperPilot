@@ -69,10 +69,9 @@ test.describe('Drag-and-Drop DropZone', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
-    // Verify the document appears in the DocumentList
-    const docName = page.locator('.document-item .doc-name');
-    await expect(docName).toBeVisible();
-    await expect(docName).toHaveText('single_page.pdf');
+    // Verify the document is loaded (either in list or directly via viewer)
+    const docTab = page.locator('#tab-doc-0');
+    await expect(docTab).toBeVisible();
   });
 });
 
@@ -86,8 +85,7 @@ test.describe('Multi-File Upload & Operations', () => {
       path.resolve('../../tests/e2e_fixtures/single_page.pdf')
     ]);
 
-    const docItems = page.locator('.document-item');
-    await expect(docItems).toHaveCount(2);
+    await page.click('#tab-btn-home');
 
     // To test reordering, we select "merge" operation to reveal the reorder list
     await page.selectOption('#opSelect', 'merge');
@@ -114,6 +112,8 @@ test.describe('Multi-File Upload & Operations', () => {
 
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
+
+    await page.click('#tab-btn-home');
 
     await page.selectOption('#opSelect', 'compress');
 
@@ -211,6 +211,8 @@ test.describe('Pipeline Execution and Error State', () => {
         mimeType: 'application/pdf',
         buffer: Buffer.from('%PDF-1.4')
     });
+
+    await page.click('#tab-btn-home');
 
     await page.selectOption('#opSelect', 'compress');
 

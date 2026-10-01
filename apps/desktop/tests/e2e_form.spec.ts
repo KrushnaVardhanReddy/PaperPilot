@@ -25,7 +25,7 @@ test.describe('Form Filling', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/form.pdf'));
 
-    const docName = page.locator('.document-item').locator('.doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
     await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 0 })) });
@@ -68,7 +68,7 @@ test.describe('Form Filling', () => {
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/form_filled.pdf'));
 
     // Click the newly uploaded item (it will be the second one or the newly added one)
-    const newDoc = page.locator('.document-item').locator('.doc-name').last();
+    const newDoc = page.locator('#tab-doc-1');
     await expect(newDoc).toBeVisible();
     await newDoc.click({ force: true });
     await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 1 })) });

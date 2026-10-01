@@ -76,13 +76,13 @@
   </div>
 
   <div class="window-controls">
-    <button class="control-btn" onclick={() => getCurrentWindow().minimize()}>
+    <button class="control-btn" aria-label="Minimize window" onclick={() => getCurrentWindow().minimize()}>
       <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="4" width="8" height="1" fill="currentColor"/></svg>
     </button>
-    <button class="control-btn" onclick={() => getCurrentWindow().toggleMaximize()}>
+    <button class="control-btn" aria-label="Maximize window" onclick={() => getCurrentWindow().toggleMaximize()}>
       <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1"/></svg>
     </button>
-    <button class="control-btn close" onclick={() => getCurrentWindow().close()}>
+    <button class="control-btn close" aria-label="Close window" onclick={() => getCurrentWindow().close()}>
       <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2,2 L8,8 M8,2 L2,8" stroke="currentColor" stroke-width="1" fill="none"/></svg>
     </button>
   </div>
@@ -95,6 +95,8 @@
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    width: 100%;
     user-select: none;
     flex-shrink: 0;
     font-size: 13px;
@@ -185,6 +187,9 @@
   .window-controls {
     display: flex;
     height: 100%;
+    margin-left: auto;
+    flex-shrink: 0;
+    z-index: 100;
   }
 
   .control-btn {

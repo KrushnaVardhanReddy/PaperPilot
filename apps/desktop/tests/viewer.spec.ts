@@ -23,7 +23,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
-    const docName = page.locator('.document-item .doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
 
@@ -54,7 +54,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
-    const docName = page.locator('.document-item .doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
 
@@ -89,7 +89,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/form.pdf'));
 
-    const docName = page.locator('.document-item .doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
 
@@ -127,7 +127,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/form.pdf'));
 
-    const docName = page.locator('.document-item .doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
 
@@ -151,7 +151,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
-    const docName = page.locator('.document-item .doc-name').first();
+    const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
 

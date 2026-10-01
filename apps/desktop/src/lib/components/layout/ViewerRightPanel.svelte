@@ -16,6 +16,8 @@
 
   let isCollapsed = $state(false);
   let activeTab = $state<'annotations' | 'info'>('annotations');
+  let panelWidth = $state(300);
+  let isDragging = $state(false);
 
   onMount(() => {
     const storedCollapsed = localStorage.getItem('viewer-right-panel-collapsed');
@@ -24,6 +26,14 @@
     const storedTab = localStorage.getItem('viewer-right-panel-tab');
     if (storedTab === 'info' || storedTab === 'annotations') {
       activeTab = storedTab;
+    }
+
+    const storedWidth = localStorage.getItem('viewer-right-panel-width');
+    if (storedWidth) {
+      const parsed = parseInt(storedWidth, 10);
+      if (!isNaN(parsed) && parsed >= 220 && parsed <= 700) {
+        panelWidth = parsed;
+      }
     }
   });
 
@@ -34,9 +44,56 @@
   $effect(() => {
     localStorage.setItem('viewer-right-panel-tab', activeTab);
   });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-width', String(panelWidth));
+  });
+
+  function startResize(e: MouseEvent) {
+    if (isCollapsed) return;
+    isDragging = true;
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const delta = startX - moveEvent.clientX;
+      const newWidth = Math.min(Math.max(startWidth + delta, 240), 600);
+      panelWidth = newWidth;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  function handleResizeDblClick() {
+    panelWidth = panelWidth > 350 ? 300 : 480;
+  }
 </script>
 
-<div class="right-panel" class:collapsed={isCollapsed}>
+<div
+  class="right-panel"
+  class:collapsed={isCollapsed}
+  class:dragging={isDragging}
+  style={!isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+>
+  <!-- Draggable left resize handle -->
+  {#if !isCollapsed}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="resize-handle"
+      id="right-panel-resize-handle"
+      title="Drag to resize panel, double-click to toggle width"
+      onmousedown={startResize}
+      ondblclick={handleResizeDblClick}
+    ></div>
+  {/if}
+
   <button
     class="collapse-toggle"
     id="right-panel-toggle"
@@ -87,25 +144,45 @@
 <style>
   .right-panel {
     position: relative;
-    width: 280px;
-    min-width: 280px;
-    transition: width 0.25s ease, min-width 0.25s ease;
     overflow: hidden;
     border-left: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+
+  .right-panel.dragging {
+    transition: none; /* smooth real-time drag without transition lag */
+    user-select: none;
   }
 
   .right-panel.collapsed {
-    width: 40px;
-    min-width: 40px;
+    width: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 20;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .resize-handle:hover,
+  .right-panel.dragging .resize-handle {
+    background: var(--accent-primary);
   }
 
   .collapse-toggle {
     position: absolute;
-    left: 0;
+    left: 6px;
     top: 50%;
     transform: translateY(-50%);
     background: var(--bg-surface);
@@ -133,7 +210,7 @@
     display: flex;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
-    padding-left: 20px; /* leave room for the collapse toggle */
+    padding-left: 26px; /* leave room for resize handle and toggle */
   }
 
   .tab-btn {
