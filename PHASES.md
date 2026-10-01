@@ -534,13 +534,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.9.2 | Direct Thumbnail Page Reordering | ✅ Completed (PR #80) — Drag-and-drop page reordering directly in thumbnail sidebar |
 | F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | ✅ Completed (PR #80) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
 
-#### 4.F.10 — Stirling-Style Categorized Tools Dock `[QUEUED]`
+#### 4.F.10 — Stirling-Style Categorized Tools Dock `[ACTIVE]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.10.1 | Searchable Tool Directory & Filtering | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — `🔍 Search tools...` input with instant tag & name filtering |
-| F.10.2 | Categorized Tool Accordions | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
-| F.10.3 | Slide-in Inspector & Param Config | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Inline parameter inspector with `‹ Back` navigation |
+| F.10.1 | Searchable Tool Directory & Filtering | 🚧 In-Progress (Session 2657978941396479742) — `🔍 Search tools...` input with instant tag & name filtering |
+| F.10.2 | Categorized Tool Accordions | 🚧 In-Progress (Session 2657978941396479742) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
+| F.10.3 | Slide-in Inspector & Param Config | 🚧 In-Progress (Session 2657978941396479742) — Inline parameter inspector with `‹ Back` navigation |
 
 
 ---

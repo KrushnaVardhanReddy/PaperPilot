@@ -89,7 +89,9 @@ PaperPilot/
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-*None currently running. Ready to dispatch Phase 4.F.10.*
+| Task | Session ID | What it does |
+|---|---|---|
+| Phase 4.F.10 | `2657978941396479742` | Stirling-Style Categorized Tools Dock (Searchable Tool Directory + Slide-in Param Inspectors) |
 
 ---
 
