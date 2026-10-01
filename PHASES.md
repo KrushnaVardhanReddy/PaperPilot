@@ -1003,6 +1003,15 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 - Desktop "Export Recipe" button produces `.ppflow.json` (importable by other tools).
 - CLI and Desktop accept **both formats transparently** at runtime.
 
+**Automation Interface Strategy: CLI vs. API vs. MCP (Both CLI and API are supported):**
+| Interface | Target Audience | Tier / Deployment | Primary Use Cases |
+|---|---|---|---|
+| **CLI (`paperpilot run ...`)** | Developers, Sysadmins, DevOps, Power Desktop Users | **Free / Community** (Local binary) | Shell scripts, cron jobs, local folder watchers, zero-network CI/CD pipelines, offline workstation automation |
+| **REST API (`POST /pipelines/...`)** | Enterprise Teams, SaaS Integrations, Cloud Microservices | **Pro / Enterprise** (Headless Docker/Server) | Low-code orchestrators (n8n, Zapier, Make), batch cloud S3/GCS processing, webhook callbacks, multi-tenant scheduling |
+| **MCP Tool (`pdf_run_pipeline`)** | AI Agents & AI Engineers | **Pro / Enterprise** (Desktop & Headless Server) | Autonomous LLM agents (Claude Desktop, Cursor, LangChain) executing entire multi-step recipes in a single atomic invocation |
+
+*Architecture Note:* CLI, REST API, Desktop UI, and MCP all act as thin presentation layers dispatching to the same unified `paperpilot-core` pipeline runner and `PdfOperation` trait implementations.
+
 **Trigger support matrix (vs Stirling):**
 | Trigger | Stirling | PaperPilot |
 |---|---|---|
