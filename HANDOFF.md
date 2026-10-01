@@ -84,14 +84,13 @@ PaperPilot/
 | Phase 4.F.8 (Desktop Instant Open & Power UX) | ✅ Complete | Instant open, Command Palette (`Ctrl+K`), Floating Toolbar, Resizable Right Panel (PR #79) |
 | Phase 4.F.9-A (Canvas Text Search) | ✅ Complete | In-canvas text search bar (`Ctrl+F` / `⌘F`), match navigation (`1 of 12`, `‹ / ›`), Titlebar window controls anchor fix (PR #81) |
 | Phase 4.F.9-B (Thumbnail Page Management) | ✅ Complete | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) (PR #80) |
+| Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What it does |
-|---|---|---|
-| Phase 4.F.10 | `2657978941396479742` | Stirling-Style Categorized Tools Dock (Searchable Tool Directory + Slide-in Param Inspectors) |
+*None currently running. Ready to submit Phase 4.F.11.*
 
 ---
 
