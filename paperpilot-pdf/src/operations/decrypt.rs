@@ -24,7 +24,10 @@ impl PdfOperation for DecryptOperation {
 
         if let Some(password) = &self.password {
             if let Err(e) = lopdf_doc.inner.decrypt(password) {
-                return Err(PdfError::UnsupportedOperation(format!("Decryption failed or unsupported format: {}", e)));
+                return Err(PdfError::UnsupportedOperation(format!(
+                    "Decryption failed or unsupported format: {}",
+                    e
+                )));
             }
         }
 
@@ -56,7 +59,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut doc = LopdfDocument { inner };
 

@@ -1,6 +1,6 @@
+use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use crate::document::LopdfDocument;
 
 pub struct SignatureOperation;
 
@@ -27,10 +27,15 @@ impl PdfOperation for SignatureOperation {
         // This is a "placeholder sign" that reserves space without actual PKI signing.
         let mut acroform = lopdf::Dictionary::new();
         acroform.set("SigFlags", lopdf::Object::Integer(3));
-        let acroform_id = lopdf_doc.inner.add_object(lopdf::Object::Dictionary(acroform));
+        let acroform_id = lopdf_doc
+            .inner
+            .add_object(lopdf::Object::Dictionary(acroform));
 
         // Attach to catalog
-        let catalog_ref = lopdf_doc.inner.trailer.get(b"Root")
+        let catalog_ref = lopdf_doc
+            .inner
+            .trailer
+            .get(b"Root")
             .and_then(|r| r.as_reference())
             .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
 
@@ -80,11 +85,22 @@ mod tests {
         let result = op.execute(&mut doc);
         assert!(result.is_ok());
 
-        let catalog_id = doc.inner.trailer.get(b"Root").unwrap().as_reference().unwrap();
+        let catalog_id = doc
+            .inner
+            .trailer
+            .get(b"Root")
+            .unwrap()
+            .as_reference()
+            .unwrap();
         let catalog = doc.inner.get_object(catalog_id).unwrap().as_dict().unwrap();
 
         let acroform_id = catalog.get(b"AcroForm").unwrap().as_reference().unwrap();
-        let acroform = doc.inner.get_object(acroform_id).unwrap().as_dict().unwrap();
+        let acroform = doc
+            .inner
+            .get_object(acroform_id)
+            .unwrap()
+            .as_dict()
+            .unwrap();
 
         assert_eq!(acroform.get(b"SigFlags").unwrap().as_i64().unwrap(), 3);
     }

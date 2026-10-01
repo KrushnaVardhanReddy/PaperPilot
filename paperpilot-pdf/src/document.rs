@@ -24,14 +24,16 @@ impl LopdfDocument {
         pages_dict.set("Count", lopdf::Object::Integer(0));
         pages_dict.set("Kids", lopdf::Object::Array(vec![]));
 
-        doc.objects.insert(pages_id, lopdf::Object::Dictionary(pages_dict));
-        
+        doc.objects
+            .insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+
         let mut catalog = lopdf::Dictionary::new();
         catalog.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
         catalog.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = doc.add_object(catalog);
-        
-        doc.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+
+        doc.trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         Self { inner: doc }
     }

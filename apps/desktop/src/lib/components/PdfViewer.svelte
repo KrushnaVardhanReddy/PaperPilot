@@ -4,6 +4,8 @@
 
   // Vite worker import trick
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+  import PdfAnnotationLayer from './PdfAnnotationLayer.svelte';
+  import type { Annotation } from '$lib/api/pdf';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -11,7 +13,9 @@
     fileUrl = '',
     pdfDoc = $bindable(null),
     pageNum = $bindable(1),
-    scale = $bindable(1.2)
+    scale = $bindable(1.2),
+    activeTool = 'none',
+    annotations = $bindable([] as Annotation[])
   } = $props();
 
   let canvas: HTMLCanvasElement;
@@ -43,6 +47,8 @@
       const outputScale = window.devicePixelRatio || 1;
       canvas.width = Math.floor(viewport.width * outputScale);
       canvas.height = Math.floor(viewport.height * outputScale);
+
+      // The CSS width/height should match the unscaled viewport to map correctly with 1x zoom layer
       canvas.style.width = Math.floor(viewport.width) + "px";
       canvas.style.height = Math.floor(viewport.height) + "px";
 
@@ -81,7 +87,10 @@
 
 <div class="pdf-viewer-wrapper">
   <div class="viewer-container">
-    <canvas bind:this={canvas}></canvas>
+    <div class="page-container">
+      <canvas bind:this={canvas} style="display: block;"></canvas>
+      <PdfAnnotationLayer {scale} {pageNum} bind:annotations {activeTool} />
+    </div>
   </div>
 </div>
 
@@ -102,9 +111,16 @@
     flex: 1;
   }
 
-  canvas {
+  .page-container {
+    position: relative;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     background-color: white;
+    /* Ensure the container sizes tightly around the canvas */
+    display: inline-block;
+    height: fit-content;
+  }
+
+  canvas {
     max-width: 100%; /* Ensure canvas doesn't break layout unexpectedly */
     object-fit: contain;
   }

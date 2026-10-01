@@ -1,6 +1,6 @@
+use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use crate::document::LopdfDocument;
 
 pub struct PdfAConversionOperation;
 
@@ -27,8 +27,13 @@ impl PdfOperation for PdfAConversionOperation {
         let mut info_dict = lopdf::Dictionary::new();
         info_dict.set("GTS_PDFXVersion", lopdf::Object::string_literal("PDF/A-1b"));
 
-        let info_id = lopdf_doc.inner.add_object(lopdf::Object::Dictionary(info_dict));
-        lopdf_doc.inner.trailer.set("Info", lopdf::Object::Reference(info_id));
+        let info_id = lopdf_doc
+            .inner
+            .add_object(lopdf::Object::Dictionary(info_dict));
+        lopdf_doc
+            .inner
+            .trailer
+            .set("Info", lopdf::Object::Reference(info_id));
 
         Ok(())
     }
@@ -70,7 +75,13 @@ mod tests {
         let result = op.execute(&mut doc);
         assert!(result.is_ok());
 
-        let info_id = doc.inner.trailer.get(b"Info").unwrap().as_reference().unwrap();
+        let info_id = doc
+            .inner
+            .trailer
+            .get(b"Info")
+            .unwrap()
+            .as_reference()
+            .unwrap();
         let info_dict = doc.inner.get_object(info_id).unwrap().as_dict().unwrap();
 
         assert_eq!(

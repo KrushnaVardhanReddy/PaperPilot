@@ -9,6 +9,9 @@
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
+  import PdfAnnotationToolbar from '$lib/components/PdfAnnotationToolbar.svelte';
+  import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
+  import type { Annotation } from '$lib/api/pdf';
 
   function handleFilesDropped(files: File[]) {
     appState.addDocuments(files);
@@ -20,6 +23,9 @@
   let pageNum = $state(1);
   let scale = $state(1.2);
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
+
+  let activeTool = $state('none');
+  let annotations = $state<Annotation[]>([]);
 
   $effect(() => {
     if (appState.selectedDocumentIndex !== null) {
@@ -60,10 +66,24 @@
             <PdfThumbnails {pdfDoc} bind:pageNum />
 
             <div class="viewer-main">
-              <PdfToolbar bind:pageNum {numPages} bind:scale />
-              <PdfViewer fileUrl={currentFileUrl} bind:pdfDoc bind:pageNum bind:scale />
+              <div class="toolbars-container">
+                <PdfToolbar bind:pageNum {numPages} bind:scale />
+                <PdfAnnotationToolbar bind:activeTool />
+              </div>
+              <PdfViewer
+                fileUrl={currentFileUrl}
+                bind:pdfDoc
+                bind:pageNum
+                bind:scale
+                activeTool={activeTool}
+                bind:annotations
+              />
             </div>
 
+            <PdfAnnotationPanel
+              bind:annotations
+              onJumpToPage={(p: number) => pageNum = p}
+            />
             <PdfInfoPanel {pdfDoc} />
           </div>
         </div>
@@ -80,7 +100,9 @@
       {/if}
     </div>
 
-    <OperationsPanel />
+    {#if appState.selectedDocumentIndex === null}
+      <OperationsPanel />
+    {/if}
   {:else if appState.activeTab === 'settings'}
     <div class="content-area full-width">
       <SettingsPanel />
@@ -190,5 +212,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  .toolbars-container {
+    display: flex;
+    flex-direction: column;
   }
 </style>

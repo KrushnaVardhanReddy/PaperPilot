@@ -1,6 +1,6 @@
+use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use crate::document::LopdfDocument;
 
 #[derive(Default)]
 pub struct BookmarksOperation {}
@@ -19,7 +19,9 @@ impl PdfOperation for BookmarksOperation {
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
 
         // Access the Outline (bookmarks) from the Catalog dictionary
-        let catalog = lopdf_doc.inner.catalog()
+        let catalog = lopdf_doc
+            .inner
+            .catalog()
             .map_err(|e| PdfError::Other(format!("Cannot read catalog: {}", e)))?;
 
         // Check if Outlines entry exists
@@ -53,7 +55,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut doc = LopdfDocument { inner };
 

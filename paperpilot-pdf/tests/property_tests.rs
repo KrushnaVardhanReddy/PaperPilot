@@ -1,9 +1,9 @@
-use proptest::prelude::*;
-use paperpilot_pdf::operations::split::SplitOperation;
-use paperpilot_pdf::operations::extract::ExtractPagesOperation;
-use paperpilot_pdf::operations::rotate::RotatePagesOperation;
 use paperpilot_pdf::operations::delete::DeletePagesOperation;
+use paperpilot_pdf::operations::extract::ExtractPagesOperation;
 use paperpilot_pdf::operations::reorder::ReorderPagesOperation;
+use paperpilot_pdf::operations::rotate::RotatePagesOperation;
+use paperpilot_pdf::operations::split::SplitOperation;
+use proptest::prelude::*;
 
 proptest! {
     /// Splitting a 3-page PDF at page N should always produce two valid outputs or an error, never panic.

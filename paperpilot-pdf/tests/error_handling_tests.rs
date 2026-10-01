@@ -1,5 +1,5 @@
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_core::traits::PdfOperation;
+use paperpilot_pdf::document::LopdfDocument;
 
 // 1. Nonexistent file returns Err, not panic
 #[test]
@@ -21,7 +21,8 @@ fn test_load_empty_bytes_returns_err() {
 fn test_load_malformed_pdf_returns_err() {
     use std::io::Write;
     let mut tmp = tempfile::NamedTempFile::new().unwrap();
-    tmp.write_all(b"%PDF-1.4\ngarbage data that is not a real pdf").unwrap();
+    tmp.write_all(b"%PDF-1.4\ngarbage data that is not a real pdf")
+        .unwrap();
     let result = LopdfDocument::load(tmp.path());
     // May succeed (lopdf is lenient) or fail - either is acceptable, but must not panic
     let _ = result;
@@ -36,7 +37,9 @@ fn test_delete_out_of_range_page_returns_err() {
     }
     path.push("tests/fixtures/sample.pdf");
 
-    if !path.exists() { return; }
+    if !path.exists() {
+        return;
+    }
     let mut doc = LopdfDocument::load(&path).unwrap();
     let op = paperpilot_pdf::operations::delete::DeletePagesOperation::new(vec![9999]);
     let result = op.execute(&mut doc);
@@ -52,9 +55,13 @@ fn test_decrypt_wrong_password_returns_err() {
     }
     path.push("tests/fixtures/sample.pdf");
 
-    if !path.exists() { return; }
+    if !path.exists() {
+        return;
+    }
     let mut doc = LopdfDocument::load(&path).unwrap();
-    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(Some("wrongpassword".to_string()));
+    let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(Some(
+        "wrongpassword".to_string(),
+    ));
     // May succeed or fail depending on whether sample.pdf is encrypted - just must not panic
     let _ = op.execute(&mut doc);
 }
