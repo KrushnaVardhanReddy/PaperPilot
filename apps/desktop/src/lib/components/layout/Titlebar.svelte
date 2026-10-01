@@ -59,6 +59,8 @@
           <button onclick={() => triggerEvent('menu-zoom-in')}>Zoom In <span class="shortcut">Ctrl+=</span></button>
           <button onclick={() => triggerEvent('menu-zoom-out')}>Zoom Out <span class="shortcut">Ctrl+-</span></button>
           <button onclick={() => triggerEvent('menu-fit-width')}>Fit Width <span class="shortcut">Ctrl+0</span></button>
+          <hr />
+          <button onclick={() => triggerEvent('menu-toggle-diff')}>Compare Documents (Visual Diff) <span class="shortcut">Ctrl+D</span></button>
         </div>
       {/if}
     </div>

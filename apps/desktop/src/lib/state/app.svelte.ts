@@ -9,11 +9,16 @@ export class AppState {
 
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
+  showDiffView = $state(false);
 
   constructor() {}
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  toggleDiffView(show?: boolean) {
+    this.showDiffView = typeof show === 'boolean' ? show : !this.showDiffView;
   }
 
   setLoading(loading: boolean) {
