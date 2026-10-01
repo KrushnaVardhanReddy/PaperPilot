@@ -973,14 +973,118 @@ After week 4, you have something real to show. Start Phase 2 (MCP) and Phase 3 (
 
 **Goal:** Let users define multi-step PDF processing pipelines (recipes) that run automatically, triggered by file system events, webhooks, or schedules. This is the feature that replaces expensive Enterprise Content Management (ECM) platforms.
 
+---
+
+#### 🏗️ Pipeline Format Decision (2026-10-01) — `.ppflow` TOML-first
+
+> **Reference:** Stirling PDF pipeline docs were reviewed at https://docs.stirlingpdf.com/Configuration/Automation/Pipeline/
+
+**Decision: Primary format is `.ppflow` (TOML). Secondary format is `.ppflow.json` (JSON) for machine exchange.**
+
+**Why NOT pure JSON like Stirling:**
+- Stirling's JSON pipeline format is a serialized batch of HTTP calls — operations are literal REST endpoint paths (`/api/v1/misc/compress-pdf`). Tightly coupled to their Java/Spring web server.
+- JSON has no comment support — you can't annotate why a stage exists, reference a ticket number, or leave a warning.
+- Stirling has **silent failure modes** — invalid ops return `200 OK` with an empty body; errors disappear into logs.
+- Stirling has **no real branching** — filters silently drop files; there's no IF/ELSE. No retry. No per-stage error handling.
+- Stirling has **two incompatible JSON formats** (UI format vs folder-scan format) — causes user confusion.
+
+**Why TOML for authoring:**
+| | Stirling (JSON) | PaperPilot (TOML) |
+|---|---|---|
+| Comments | ❌ | ✅ `# Process invoices nightly` |
+| Multi-line strings | ❌ | ✅ Triple-quote `"""` blocks |
+| Readability | Verbose | Clean key=value sections |
+| Git diffs | Noisy | One value per line |
+| Env var injection | ❌ | ✅ `"${env:MY_SECRET}"` |
+| Machine generation | Easy | Easy |
+
+**Why JSON as the export/API format:**
+- REST API request body, MCP tool args, CLI `--json` flag all emit/accept JSON.
+- Desktop "Export Recipe" button produces `.ppflow.json` (importable by other tools).
+- CLI and Desktop accept **both formats transparently** at runtime.
+
+**Trigger support matrix (vs Stirling):**
+| Trigger | Stirling | PaperPilot |
+|---|---|---|
+| Manual (UI) | ✅ | ✅ Desktop GUI canvas |
+| CLI file arg | Via REST only | ✅ `paperpilot run invoice.ppflow input.pdf` |
+| Watch folder | ✅ | ✅ `type = "watch_folder"` |
+| Cron schedule | ❌ | ✅ `type = "schedule", cron = "0 2 * * 1"` |
+| Webhook | ❌ | ✅ `type = "webhook"` (Phase 8.2b) |
+| MCP agent call | ❌ | ✅ `pdf_run_pipeline` MCP tool (Phase 5.5.4) |
+
+**Reference `.ppflow` schema example:**
+```toml
+# invoice-processing.ppflow
+name        = "Invoice Processing"
+description = "Monthly AR invoice batch: OCR → watermark → encrypt → archive"
+version     = "1"
+
+[trigger]
+type        = "watch_folder"
+path        = "/mnt/invoices/incoming"
+extensions  = ["pdf"]
+
+[output]
+dir         = "/mnt/invoices/processed/{date}"
+filename    = "{stem}-processed-{date}"
+on_conflict = "rename"   # "overwrite" | "rename" | "skip"
+
+[[stage]]
+id          = "ocr"
+op          = "ocr"
+[stage.params]
+languages   = ["eng"]
+skip_text   = true
+
+[[stage]]
+id          = "filter_large"
+op          = "filter_page_count"
+condition   = { comparator = "Greater", value = 3 }
+on_no_match = "archive_original"   # "skip" | "archive_original" | "error"
+
+[[stage]]
+id          = "watermark"
+op          = "watermark"
+depends_on  = ["ocr"]            # DAG dependency — not just linear serial
+[stage.params]
+text        = "PROCESSED {date}"
+opacity     = 0.4
+
+[[stage]]
+id          = "compress"
+op          = "compress"
+retry       = 2                   # per-stage retry on failure
+[stage.params]
+level       = "medium"
+
+[[stage]]
+id          = "encrypt"
+op          = "encrypt"
+[stage.params]
+password    = "${env:INVOICE_PDF_PASSWORD}"  # env var injection — no hardcoded secrets
+permissions = { print = true, edit = false }
+```
+
+**Key advantages over Stirling's JSON:**
+1. `depends_on` — proper DAG dependency model; stages can depend on specific prior stages (not just serial)
+2. `on_no_match` — explicit, named behavior when filters don't match (not silent empty response)
+3. `retry = N` — per-stage retry count
+4. `${env:VAR}` — environment variable injection for secrets
+5. `[trigger]` section — first-class typed trigger config (folder, schedule, webhook, MCP)
+6. `[output]` section — named output routing and file naming with template variables
+7. Comments — every stage can explain *why* it exists, not just *what* it does
+
+---
+
 #### 8.2a — Pipeline Engine (Core)
 
 | # | Task | Notes |
 |---|---|---|
-| 8.2.1 | `.ppflow` pipeline schema | TOML/JSON format: trigger, stages, conditions, error handlers, output routing |
-| 8.2.2 | CLI pipeline execution | `paperpilot run pipeline.ppflow --input file.pdf` |
-| 8.2.3 | Conditional branching engine | IF/ELSE logic in pipelines (e.g., "if scanned → OCR branch, else text branch") |
-| 8.2.4 | Stage retry & error handling | Per-stage retry count, quarantine folder on failure, Slack/webhook alert |
+| 8.2.1 | `.ppflow` pipeline schema | **TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
+| 8.2.2 | CLI pipeline execution | `paperpilot run invoice.ppflow input.pdf` — accepts `.ppflow` (TOML) or `.ppflow.json` (JSON) transparently |
+| 8.2.3 | Conditional branching engine | IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
+| 8.2.4 | Stage retry & error handling | Per-stage `retry = N`, quarantine folder on final failure, optional Slack/webhook failure alert |
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
 | 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
