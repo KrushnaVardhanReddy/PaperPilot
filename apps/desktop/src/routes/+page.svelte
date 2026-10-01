@@ -5,14 +5,14 @@
   import PdfViewer from '$lib/components/PdfViewer.svelte';
   import PdfToolbar from '$lib/components/PdfToolbar.svelte';
   import PdfThumbnails from '$lib/components/PdfThumbnails.svelte';
-  import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
   import PdfAnnotationToolbar from '$lib/components/PdfAnnotationToolbar.svelte';
-  import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
   import type { Annotation } from '$lib/api/pdf';
   import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
+  import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
+  import StatusBar from '$lib/components/layout/StatusBar.svelte';
 
   import { onMount } from 'svelte';
   onMount(() => {
@@ -117,12 +117,23 @@
               </div>
             </div>
 
-            <PdfAnnotationPanel
+            <ViewerRightPanel
               bind:annotations
+              {pdfDoc}
               onJumpToPage={(p: number) => pageNum = p}
             />
-            <PdfInfoPanel {pdfDoc} />
           </div>
+          <StatusBar
+            {pageNum}
+            {numPages}
+            {scale}
+            fileName={appState.selectedDocumentIndex !== null
+              ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+              : ''}
+            fileSize={appState.selectedDocumentIndex !== null
+              ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+              : 0}
+          />
         </div>
       {:else}
         <div class="documents-view">

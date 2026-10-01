@@ -40,6 +40,10 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     expect(await thumbnails.count()).toBeGreaterThan(0);
 
     // Check Info Panel
+    // The panel is now hidden by a tab in ViewerRightPanel
+    const rightPanel = page.locator('.right-panel');
+    await expect(rightPanel).toBeVisible();
+    await page.click('#right-panel-tab-info');
     const infoPanel = page.locator('.info-panel');
     await expect(infoPanel).toBeVisible();
   });
