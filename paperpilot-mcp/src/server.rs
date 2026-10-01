@@ -2292,6 +2292,74 @@ impl PaperPilotMcpServer {
         tool_val.input_schema = std::sync::Arc::new(schema_val);
         tools.push(tool_val);
 
+        // Tool: pdf_annotate
+        let mut schema_ann = serde_json::Map::new();
+        schema_ann.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_ann = serde_json::Map::new();
+        let mut prop_input_ann = serde_json::Map::new();
+        prop_input_ann.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_input_ann.insert(
+            "description".to_string(),
+            serde_json::Value::String("The input PDF file path.".to_string()),
+        );
+        props_ann.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_ann),
+        );
+
+        let mut prop_output_ann = serde_json::Map::new();
+        prop_output_ann.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_output_ann.insert(
+            "description".to_string(),
+            serde_json::Value::String("The output PDF file path.".to_string()),
+        );
+        props_ann.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_ann),
+        );
+
+        let mut prop_annotations_ann = serde_json::Map::new();
+        prop_annotations_ann.insert(
+            "type".to_string(),
+            serde_json::Value::String("array".to_string()),
+        );
+        prop_annotations_ann.insert(
+            "description".to_string(),
+            serde_json::Value::String("A list of annotation objects to apply.".to_string()),
+        );
+        props_ann.insert(
+            "annotations".to_string(),
+            serde_json::Value::Object(prop_annotations_ann),
+        );
+
+        schema_ann.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_ann),
+        );
+        schema_ann.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+                serde_json::Value::String("annotations".to_string()),
+            ]),
+        );
+
+        let mut tool_ann = Tool::default();
+        tool_ann.name = "pdf_annotate".into();
+        tool_ann.description = Some("Applies annotations to a PDF document.".into());
+        tool_ann.input_schema = std::sync::Arc::new(schema_ann);
+        tools.push(tool_ann);
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -2705,6 +2773,42 @@ impl PaperPilotMcpServer {
                     success: true,
                     message,
                     output_path: None,
+                })
+            }
+            "pdf_annotate" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                let annotations_value = args.get("annotations").ok_or_else(|| {
+                    ErrorData::invalid_params("Missing 'annotations'", None)
+                })?;
+
+                let annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> =
+                    serde_json::from_value(annotations_value.clone()).map_err(|e| {
+                        ErrorData::invalid_params(
+                            "Invalid 'annotations' array",
+                            Some(serde_json::Value::String(e.to_string())),
+                        )
+                    })?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::annotate::AnnotateOperation::new()
+                    .with_annotations(annotations);
+
+                op.execute(&mut doc.inner)
+                    .map_err(crate::error::to_mcp_error)?;
+
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Annotations applied successfully.".to_string(),
+                    output_path: Some(output),
                 })
             }
 
@@ -3332,7 +3436,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 38);
+        assert_eq!(res.tools.len(), 39);
         assert_eq!(res.tools[0].name, "pdf_merge");
         assert_eq!(res.tools[1].name, "pdf_split");
     }
@@ -3555,5 +3659,142 @@ mod tests {
         );
         let result = PaperPilotMcpServer::execute_call_tool(request);
         assert!(result.is_err());
+    }
+}
+
+#[cfg(test)]
+mod tests_added {
+    use super::*;
+    use serde_json::json;
+    use std::path::PathBuf;
+
+    fn get_fixture_path(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("tests")
+            .join("fixtures")
+            .join(name)
+    }
+
+    #[test]
+    fn test_execute_call_tool_annotate() {
+        let input_path = get_fixture_path("simple.pdf");
+        let output_path = get_fixture_path("test_annotated.pdf");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_annotate".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+                "annotations": [
+                    {
+                        "id": "1",
+                        "type": "highlight",
+                        "page": 1,
+                        "x": 100.0,
+                        "y": 100.0,
+                        "w": 50.0,
+                        "h": 20.0,
+                        "color": "#ffff00",
+                        "content": "Test annotation"
+                    }
+                ]
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_ok());
+
+        if output_path.exists() {
+            std::fs::remove_file(&output_path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_execute_call_tool_read_form() {
+        let input_path = get_fixture_path("simple.pdf");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_read_form".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_execute_call_tool_fill_form() {
+        let input_path = get_fixture_path("simple.pdf");
+        let output_path = get_fixture_path("test_filled.pdf");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_fill_form".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+                "values": {
+                    "TestField": "TestValue"
+                }
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let _ = result;
+
+        if output_path.exists() {
+            std::fs::remove_file(&output_path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_execute_call_tool_create_form_field() {
+        let input_path = get_fixture_path("simple.pdf");
+        let output_path = get_fixture_path("test_create_field.pdf");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_create_form_field".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+                "field_name": "TestField",
+                "field_type": "text",
+                "page": 1,
+                "x": 100.0,
+                "y": 100.0,
+                "width": 100.0,
+                "height": 20.0
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(result.is_ok());
+
+        if output_path.exists() {
+            std::fs::remove_file(&output_path).unwrap();
+        }
     }
 }

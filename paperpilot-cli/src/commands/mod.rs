@@ -3,6 +3,7 @@ pub mod group_b;
 pub mod group_c;
 pub mod group_d;
 pub mod group_e;
+pub mod annotate;
 pub mod validate;
 
 use crate::cli::Commands;
@@ -118,6 +119,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::ImagesToPdf { images, output } => group_c::handle_images_to_pdf(images, output),
 
         // Validate
+        Commands::Annotate {
+            input,
+            data,
+            output,
+        } => annotate::handle_annotate(input, data, output),
         Commands::Validate { input } => validate::handle_validate(input),
         Commands::Hash { input } => validate::handle_hash(input),
         Commands::Verify {
