@@ -15,6 +15,7 @@
         "title": "PaperPilot",
         "width": 1200,
         "height": 800,
+        "decorations": false,
         "minWidth": 900,
         "minHeight": 600,
         "resizable": true,

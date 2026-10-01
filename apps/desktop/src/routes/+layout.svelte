@@ -3,6 +3,7 @@
   import Sidebar from '$lib/components/layout/Sidebar.svelte';
   import BottomNav from '$lib/components/layout/BottomNav.svelte';
   import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
+  import Titlebar from '$lib/components/layout/Titlebar.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
 
@@ -47,10 +48,13 @@
 </script>
 
 <div class="app-container">
-  <Sidebar />
-  <main class="main-content">
-    {@render children()}
-  </main>
+  <Titlebar />
+  <div class="main-wrapper">
+    <Sidebar />
+    <main class="main-content">
+      {@render children()}
+    </main>
+  </div>
 </div>
 
 <BottomNav />
