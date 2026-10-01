@@ -186,10 +186,14 @@
 
   .window-controls {
     display: flex;
-    height: 100%;
+    height: 38px;
     margin-left: auto;
     flex-shrink: 0;
-    z-index: 100;
+    z-index: 9999;
+    position: fixed;
+    right: 0;
+    top: 0;
+    background: var(--bg-secondary);
   }
 
   .control-btn {
