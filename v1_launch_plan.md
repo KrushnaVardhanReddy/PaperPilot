@@ -51,13 +51,13 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.2 — Annotations
 | Task | What | Status |
 |---|---|---|
-| F.2.1 | Highlight tool (multi-colour) | 🚧 In Progress |
-| F.2.2 | Underline & Strikethrough | 🚧 In Progress |
-| F.2.3 | Sticky note / Comment | 🚧 In Progress |
-| F.2.4 | Free-draw (pen) tool | 🚧 In Progress |
-| F.2.5 | Annotation panel (sidebar) | 🚧 In Progress |
-| F.2.6 | Save annotations to PDF | 🚧 In Progress |
-| F.2.7 | Annotation unit tests | 🚧 In Progress |
+| F.2.1 | Highlight tool (multi-colour) | ✅ Completed |
+| F.2.2 | Underline & Strikethrough | ✅ Completed |
+| F.2.3 | Sticky note / Comment | ✅ Completed |
+| F.2.4 | Free-draw (pen) tool | ✅ Completed |
+| F.2.5 | Annotation panel (sidebar) | ✅ Completed |
+| F.2.6 | Save annotations to PDF | ✅ Completed |
+| F.2.7 | Annotation unit tests | ✅ Completed |
 
 #### 4.F.3 — Form Filling
 | Task | What | Status |
