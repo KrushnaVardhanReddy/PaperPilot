@@ -86,20 +86,17 @@ PaperPilot/
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-*(None currently active — ready for Phase 4.F.8)*
+| Task | Session ID | What it does |
+|---|---|---|
+| Phase 4.F.8 | `12765949361691601462` | Instant open, Command Palette (`Ctrl+K`), Floating Toolbar, Resizable Right Panel, Window Controls Fix |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.F.8 (Desktop Instant Open & Power UX):**
-   - Instant document open flow: dropping or selecting a PDF immediately opens it in the viewer
-   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay with fuzzy search across operations, files, and tabs
-   - Floating pill annotation toolbar over PDF canvas with backdrop blur
-   - Resizable right panel with drag handle (240px–600px) and persistence
-2. **Phase 4.F.9 (Canvas Search & Direct Thumbnail Page Management):**
-   - In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation and counter (`P4_F_9A_canvas_search_ctrl_f.txt`)
-   - Direct drag-and-drop page reordering in thumbnail sidebar (`P4_F_9B_thumbnail_page_management.txt`)
+1. **Phase 4.F.9 (Canvas Search & Direct Thumbnail Page Management):**
+   - In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation and counter (`prompts/tasks/phase_4/P4_F_9A_canvas_search_ctrl_f.txt`)
+   - Direct drag-and-drop page reordering in thumbnail sidebar (`prompts/tasks/phase_4/P4_F_9B_thumbnail_page_management.txt`)
    - Hover quick action buttons on thumbnails (Rotate 🔄, Delete 🗑️)
 3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
 4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
