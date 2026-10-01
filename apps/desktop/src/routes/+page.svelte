@@ -44,7 +44,10 @@
   }
 
   function handleFilesDropped(files: File[]) {
+    if (files.length === 0) return;
+    const startIndex = appState.documents.length;
     appState.addDocuments(files);
+    appState.selectDocument(startIndex);
   }
 
   let currentFileUrl = $state('');

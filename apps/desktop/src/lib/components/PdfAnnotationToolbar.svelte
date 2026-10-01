@@ -29,14 +29,21 @@
 
 <style>
   .annotation-toolbar {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    background: rgba(30, 30, 36, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 24px;
+    padding: 4px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: var(--bg-surface, #ffffff);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-    z-index: 10;
+    gap: 8px;
   }
 
   .tool-btn {

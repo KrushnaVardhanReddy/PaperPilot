@@ -5,6 +5,12 @@
   --bg-surface: #22252E;
   --bg-surface-hover: #2D313C;
 
+  --surface-0: #0d0d0f; /* Base window background */
+  --surface-1: #141416; /* Sidebar, panels, tab bar */
+  --surface-2: #1c1c1f; /* Cards, rows, dropzones */
+  --surface-3: #242428; /* Hover states, pill buttons */
+  --surface-4: #2c2c31; /* Active/selected items */
+
   --text-primary: #FFFFFF;
   --text-secondary: #A1A7B3;
   --text-muted: #6B7280;
@@ -40,6 +46,12 @@
   --bg-secondary: #FFFFFF;
   --bg-surface: #F0F2F5;
   --bg-surface-hover: #E4E7EB;
+
+  --surface-0: #fcfcfc; /* Base window background */
+  --surface-1: #f3f3f3; /* Sidebar, panels, tab bar */
+  --surface-2: #eaeaec; /* Cards, rows, dropzones */
+  --surface-3: #e1e1e4; /* Hover states, pill buttons */
+  --surface-4: #d8d8db; /* Active/selected items */
 
   --text-primary: #111827;
   --text-secondary: #4B5563;

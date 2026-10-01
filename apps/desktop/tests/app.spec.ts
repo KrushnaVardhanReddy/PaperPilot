@@ -69,6 +69,8 @@ test.describe('PaperPilot E2E Tests', () => {
       }
     ]);
 
+    await page.click('#tab-btn-home');
+
     // Select "Merge" operation
     const opSelect = page.locator('#opSelect');
     await opSelect.selectOption('merge');
