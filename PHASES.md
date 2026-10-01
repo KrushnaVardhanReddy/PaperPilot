@@ -514,7 +514,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.7.1 | Editable Page Jump Input + Zoom Presets | 🚧 In-Progress (`P4_F_7A_editable_page_zoom_toolbar.txt`) — Type page number + Enter; quick zoom presets |
+| F.7.1 | Editable Page Jump Input + Zoom Presets | ✅ Completed (PR #77) — Type page number + Enter; quick zoom presets |
 | F.7.2 | Multi-Document Tab Bar `[Tab1][Tab2][+]` | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Tab bar, tab switching, and `+` native picker |
 | F.7.3 | Right-Docked Operations Panel | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Docked inspector side-rail, remove bottom wrapping |
 
