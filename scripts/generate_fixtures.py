@@ -36,12 +36,23 @@ def main():
     encrypt_pdf("tests/e2e_fixtures/single_page.pdf", "tests/e2e_fixtures/encrypted.pdf", "testpass123")
 
     # Let's also create dummy images for `pdf_images_to_pdf`
-    # We will use PIL to create dummy images
     from PIL import Image
     img1 = Image.new('RGB', (100, 100), color = 'red')
     img1.save('tests/e2e_fixtures/img1.png')
     img2 = Image.new('RGB', (100, 100), color = 'blue')
     img2.save('tests/e2e_fixtures/img2.png')
+
+    # Generate benchmark fixtures
+    os.makedirs("tests/bench_fixtures/batch", exist_ok=True)
+    create_pdf("tests/bench_fixtures/tiny_1page.pdf", 1, "Bench 1 Page")
+    create_pdf("tests/bench_fixtures/single_1page.pdf", 1, "Bench 1 Page")
+    create_pdf("tests/bench_fixtures/small_10page.pdf", 10, "Bench 10 Page")
+    create_pdf("tests/bench_fixtures/medium_50page.pdf", 50, "Bench 50 Page")
+    create_pdf("tests/bench_fixtures/large_100page.pdf", 100, "Bench 100 Page")
+    create_pdf("tests/bench_fixtures/xlarge_500page.pdf", 500, "Bench 500 Page")
+    
+    for i in range(1, 21):
+        create_pdf(f"tests/bench_fixtures/batch/doc_{i:03d}.pdf", 1, f"Batch Doc {i}")
 
 if __name__ == "__main__":
     main()
