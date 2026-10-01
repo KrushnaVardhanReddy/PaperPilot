@@ -542,15 +542,15 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.10.2 | Categorized Tool Accordions | ✅ Completed (PR #82) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
 | F.10.3 | Slide-in Inspector & Param Config | ✅ Completed (PR #82) — Inline parameter inspector with `‹ Back` navigation |
 
-#### 4.F.11 — Visual Split-Screen Pixel PDF Diff Slider `[ACTIVE]`
+#### 4.F.11 — Visual Split-Screen Pixel PDF Diff Slider `[COMPLETED]`
 
 > **Core Basic / Free Feature**: Bypasses Adobe Acrobat Pro's $239/yr paywall and Stirling PDF's text-only limitation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.11.1 | Visual Pixel Diff Engine | 🚧 In-Progress (Session 13073783580366619147) — HTML5 2D pixel comparison (`getImageData()`), red/green discrepancy map |
-| F.11.2 | Interactive Split Slider | 🚧 In-Progress (Session 13073783580366619147) — Draggable divider handle across dual canvas layers (before/after) |
-| F.11.3 | Synchronized Paging & Navigation | 🚧 In-Progress (Session 13073783580366619147) — Multi-document selection, side-by-side mode, keyboard shortcut (`Ctrl+D`) |
+| F.11.1 | Visual Pixel Diff Engine | ✅ Completed (PR #83) — HTML5 2D pixel comparison (`getImageData()`), red/green discrepancy map |
+| F.11.2 | Interactive Split Slider | ✅ Completed (PR #83) — Draggable divider handle across dual canvas layers (before/after) |
+| F.11.3 | Synchronized Paging & Navigation | ✅ Completed (PR #83) — Multi-document selection, side-by-side mode, keyboard shortcut (`Ctrl+D`) |
 
 #### 4.F.12 — Custom CSS Injection for HTML/Markdown/Excel → PDF `[ACTIVE]`
 

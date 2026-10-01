@@ -85,6 +85,7 @@ PaperPilot/
 | Phase 4.F.9-A (Canvas Text Search) | ✅ Complete | In-canvas text search bar (`Ctrl+F` / `⌘F`), match navigation (`1 of 12`, `‹ / ›`), Titlebar window controls anchor fix (PR #81) |
 | Phase 4.F.9-B (Thumbnail Page Management) | ✅ Complete | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) (PR #80) |
 | Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
+| Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
 
 ---
 
@@ -92,7 +93,6 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.F.11 | `13073783580366619147` | Visual Split-Screen Pixel PDF Diff Slider (Interactive split slider, pixel diff overlay, side-by-side mode) |
 | Phase 4.F.12 | `1183351717147081897` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (5 presets, custom CSS upload/inline, Excel table parsing) |
 
 ---
