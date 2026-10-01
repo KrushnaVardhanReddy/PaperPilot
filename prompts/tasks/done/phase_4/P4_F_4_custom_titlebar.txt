@@ -1,0 +1,132 @@
+# Task: Phase 4.F.4 — Custom HTML Titlebar & Native Decoration Removal
+
+## Objective
+The native OS titlebar on Linux GTK does not automatically change color when the user toggles the PaperPilot Dark/Light mode theme. To achieve a perfectly seamless UI across all platforms, we need to completely disable the native OS window decorations (title bar, borders) and replace them with a Custom HTML Titlebar built in Svelte.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER replace a working function body with `// TODO` or empty returns.
+3. Every file you modify MUST still compile.
+4. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+5. Commit message must start with "jules: " prefix.
+
+## Requirements
+- Disable Tauri native decorations.
+- Remove the Rust-side `menu::build_menu` logic.
+- Create a `Titlebar.svelte` component providing drag regions, window controls, and HTML dropdown menus (File, Edit, View, Window).
+- Wire the HTML dropdown menus to emit the exact same Tauri events the native menu emitted (e.g., `menu-open-file`).
+- Ensure `Titlebar.svelte` is mounted globally via `+layout.svelte`.
+
+### 1. Component Structure
+You will modify and create the following files:
+1. **`apps/desktop/src-tauri/tauri.conf.json`** -> Update window config.
+2. **`apps/desktop/src-tauri/src/lib.rs`** -> Remove native menu logic.
+3. **`apps/desktop/src/lib/components/layout/Titlebar.svelte`** -> New custom titlebar component.
+4. **`apps/desktop/src/routes/+layout.svelte`** -> Inject Titlebar.
+
+### 2. Implementation Details
+
+#### Disable Decorations (`apps/desktop/src-tauri/tauri.conf.json`)
+Find the `app.windows` array and set `"decorations": false`:
+```json
+"windows": [
+  {
+    "title": "PaperPilot",
+    "width": 1200,
+    "height": 800,
+    "decorations": false,
+    "resizable": true,
+    "fullscreen": false,
+    "center": true
+  }
+]
+```
+
+#### Remove Native Menu (`apps/desktop/src-tauri/src/lib.rs`)
+Remove the lines that build and set the menu in the `setup` closure:
+```rust
+        .setup(|app| {
+            // Remove: let menu = menu::build_menu(app)?;
+            // Remove: app.set_menu(menu)?;
+            // Remove: app.on_menu_event(...) block completely.
+            Ok(())
+        })
+```
+
+#### Custom Titlebar Component (`apps/desktop/src/lib/components/layout/Titlebar.svelte`)
+Create this new component. It must use Svelte 5 `$state` for the active dropdown menu, and `@tauri-apps/api/window` for controls.
+
+```html
+<script lang="ts">
+  import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { emit } from '@tauri-apps/api/event';
+  import { onMount } from 'svelte';
+
+  let activeMenu: string | null = $state(null);
+
+  onMount(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('.menu-item')) activeMenu = null;
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  });
+
+  function toggleMenu(menu: string, e: MouseEvent) {
+    e.stopPropagation();
+    activeMenu = activeMenu === menu ? null : menu;
+  }
+
+  async function triggerEvent(eventName: string) {
+    activeMenu = null;
+    await emit(eventName);
+  }
+</script>
+
+<div class="titlebar" data-tauri-drag-region>
+  <div class="titlebar-menus" data-tauri-drag-region>
+    <div class="brand">PaperPilot</div>
+    
+    <div class="menu-item" class:active={activeMenu === 'file'}>
+      <button class="menu-btn" onclick={(e) => toggleMenu('file', e)}>File</button>
+      {#if activeMenu === 'file'}
+        <div class="dropdown">
+          <button onclick={() => triggerEvent('menu-open-file')}>Open</button>
+          <button onclick={() => triggerEvent('menu-save-annotations')}>Save Annotations</button>
+          <button onclick={() => getCurrentWindow().close()}>Exit</button>
+        </div>
+      {/if}
+    </div>
+    <!-- Add Edit, View, Window dropdowns similarly to match the old native menu -->
+  </div>
+
+  <div class="window-controls">
+    <button onclick={() => getCurrentWindow().minimize()}>_</button>
+    <button onclick={() => getCurrentWindow().toggleMaximize()}>□</button>
+    <button class="close" onclick={() => getCurrentWindow().close()}>×</button>
+  </div>
+</div>
+
+<style>
+  .titlebar {
+    height: 38px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  /* Add necessary styles for menus, dropdowns, and controls */
+</style>
+```
+
+#### Layout Integration (`apps/desktop/src/routes/+layout.svelte`)
+Import and place the `<Titlebar />` at the very top of the app. Make sure `.app-container` in `app.css` correctly stacks it above the existing layout (e.g. change `.app-container` to `flex-direction: column`, and wrap Sidebar + Main into a `.main-wrapper` flex-row).
+
+## Verification Steps
+1. Run `make dev`.
+2. Confirm the native OS titlebar is completely gone.
+3. Confirm you can drag the window by clicking the new HTML titlebar background.
+4. Confirm minimize, maximize, and close buttons work.
+5. Confirm clicking "File -> Open" emits the event and triggers existing listeners.
