@@ -63,6 +63,10 @@ Define standardized elevation surfaces in `apps/desktop/src/app.css`:
 --surface-4: #2c2c31; /* Active/selected items */
 ```
 
+### 6. Ensure Window Controls (Minimize, Maximize, Close) are Always Visible & Styled
+In `apps/desktop/src/lib/components/layout/Titlebar.svelte`:
+On custom-framed desktop windows, the top-right controls (Minimize `−`, Maximize `□`, Close `×`) must always be pinned to the right edge with `flex-shrink: 0`, standard 46px click targets, clear hover states (red for close), and explicit SVG icons so they never get obscured or pushed off-screen when menus expand or window resizes.
+
 ---
 
 ## IMPLEMENTATION DETAILS
@@ -719,6 +723,11 @@ Adjust wrapper style to float above the canvas:
 }
 ```
 
+### STEP 6: Ensure Window Controls in `Titlebar.svelte` are Rock-Solid
+In `apps/desktop/src/lib/components/layout/Titlebar.svelte`:
+Ensure `.titlebar` has `display: flex; justify-content: space-between; align-items: center; width: 100%;` and `.window-controls` has `display: flex; height: 100%; margin-left: auto; flex-shrink: 0; z-index: 100;`.
+Make sure the SVG icon paths for Minimize, Maximize, and Close use clean stroke/fill colors (`currentColor`) so they are clearly visible on dark and light backgrounds.
+
 ---
 
 ## VERIFICATION CHECKLIST
@@ -727,6 +736,7 @@ Adjust wrapper style to float above the canvas:
 - [ ] `cargo check --workspace` passes with 0 errors.
 - [ ] `make test-all` passes.
 - [ ] Dropping a single PDF immediately renders the PDF in the viewer (no extra click needed).
+- [ ] Top-right window controls (Minimize `−`, Maximize `□`, Close `×`) are clearly visible, never cut off, and properly minimize, maximize, and close the window.
 - [ ] Pressing `Ctrl+K` opens the Command Palette.
 - [ ] Typing in Command Palette filters operations and open documents.
 - [ ] Arrow keys and Enter select and run actions.
