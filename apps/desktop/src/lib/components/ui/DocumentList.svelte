@@ -29,9 +29,23 @@
             <span class="doc-name">{doc.name}</span>
             <div class="doc-meta">
               <span class="doc-size">{formatFileSize(doc.size)}</span>
-              <span class="doc-pages">1 page</span> <!-- Mock page count -->
+              <span class="doc-pages">{(doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF'}</span>
             </div>
           </div>
+          <button
+            class="view-btn"
+            id="view-doc-{index}"
+            title="View document"
+            aria-label="View {doc.name}"
+            onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
           <button class="remove-btn" onclick={(e) => { e.stopPropagation(); appState.removeDocument(index); }} title="Remove Document">
             ❌
           </button>
@@ -81,6 +95,11 @@
     border-color: var(--text-muted);
   }
 
+  .document-item:hover .view-btn,
+  .document-item:hover .remove-btn {
+    opacity: 1;
+  }
+
   .document-item.selected {
     background-color: rgba(94, 106, 210, 0.1);
     border-color: var(--accent-primary);
@@ -116,6 +135,27 @@
     color: var(--text-secondary);
   }
 
+  .view-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 8px;
+    margin-left: 4px;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    opacity: 0.6;
+  }
+
+  .view-btn:hover {
+    opacity: 1;
+    color: var(--accent-primary);
+    background-color: rgba(94, 106, 210, 0.1);
+  }
+
   .remove-btn {
     background: none;
     border: none;
@@ -129,7 +169,7 @@
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    opacity: 0.7;
+    opacity: 0.6;
   }
 
   .remove-btn:hover {

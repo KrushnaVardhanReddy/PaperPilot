@@ -13,12 +13,70 @@
 
   onMount(() => {
     let unlisten: () => void;
+    let unlistenSave: () => void;
+    let unlistenSettings: () => void;
+    let unlistenUndo: () => void;
+    let unlistenRedo: () => void;
+    let unlistenZoomIn: () => void;
+    let unlistenZoomOut: () => void;
+    let unlistenFitWidth: () => void;
 
     // We use an async IIFE because `listen` returns a promise containing the unlisten function
     (async () => {
       try {
-        unlisten = await listen('menu-open-file', (event) => {
-          console.log("Menu action: Open File");
+        unlisten = await listen('menu-open-file', async () => {
+          try {
+            const { open } = await import('@tauri-apps/plugin-dialog');
+            const selected = await open({
+              multiple: false,
+              filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+            });
+            if (selected && typeof selected === 'string') {
+              const fileName =
+                selected.split('/').pop() ||
+                selected.split('\\').pop() ||
+                'document.pdf';
+              const response = await fetch(
+                // @ts-expect-error __TAURI_INTERNALS__ is injected by Tauri
+                window.__TAURI_INTERNALS__.convertFileSrc(selected)
+              );
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: 'application/pdf' });
+              Object.defineProperty(file, 'path', { value: selected, writable: false });
+              appState.addDocuments([file]);
+              appState.selectDocument(appState.documents.length - 1);
+            }
+          } catch (err) {
+            console.error('Failed to open file dialog:', err);
+          }
+        });
+
+        unlistenSave = await listen('menu-save-annotations', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:save-annotations'));
+        });
+
+        unlistenSettings = await listen('menu-settings', () => {
+          appState.setActiveTab('settings');
+        });
+
+        unlistenUndo = await listen('menu-undo', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:undo'));
+        });
+
+        unlistenRedo = await listen('menu-redo', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:redo'));
+        });
+
+        unlistenZoomIn = await listen('menu-zoom-in', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'));
+        });
+
+        unlistenZoomOut = await listen('menu-zoom-out', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'));
+        });
+
+        unlistenFitWidth = await listen('menu-fit-width', () => {
+          window.dispatchEvent(new CustomEvent('paperpilot:fit-width'));
         });
       } catch (err) {
         // If not running in Tauri (e.g. standard browser web mode testing)
@@ -27,9 +85,14 @@
     })();
 
     return () => {
-      if (unlisten) {
-        unlisten();
-      }
+      if (unlisten) unlisten();
+      if (unlistenSave) unlistenSave();
+      if (unlistenSettings) unlistenSettings();
+      if (unlistenUndo) unlistenUndo();
+      if (unlistenRedo) unlistenRedo();
+      if (unlistenZoomIn) unlistenZoomIn();
+      if (unlistenZoomOut) unlistenZoomOut();
+      if (unlistenFitWidth) unlistenFitWidth();
     };
   });
 

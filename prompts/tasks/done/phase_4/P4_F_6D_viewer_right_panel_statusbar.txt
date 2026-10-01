@@ -1,0 +1,445 @@
+# Task: Phase 4.F.6-D — ViewerRightPanel + StatusBar
+# Parallel-safe: Creates 2 new components, modifies +page.svelte only
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST still compile (`npm run check`).
+3. If a test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message must start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores.
+6. Use Vanilla CSS — NEVER Tailwind.
+7. All new interactive elements must have a unique `id` attribute.
+
+---
+
+## CONTEXT
+
+### How the Viewer Currently Works (+page.svelte)
+
+The PDF viewer layout in +page.svelte has this structure when a document is open:
+```
+<div class="viewer-wrapper">
+  <div class="viewer-header">   <- back button + doc title
+  <div class="viewer-content">  <- horizontal flex row containing:
+      <PdfThumbnails />         <- left thumbnail strip
+      <div class="viewer-main"> <- center: toolbars + canvas
+      <PdfAnnotationPanel />    <- right: annotation list (NO collapse)
+      <PdfInfoPanel />          <- right: doc info (NO collapse, stacked below)
+  </div>
+</div>
+```
+
+The two right panels (PdfAnnotationPanel and PdfInfoPanel) are permanently visible,
+taking up significant horizontal space with no way to hide them.
+
+### Goal
+1. Create ViewerRightPanel.svelte — a new wrapper component that:
+   - Merges PdfAnnotationPanel and PdfInfoPanel into one tabbed panel
+   - Is collapsible (280px expanded, 40px collapsed)
+   - Persists collapsed/tab state to localStorage
+
+2. Create StatusBar.svelte — a thin bar at the bottom of the viewer showing:
+   - Current page / total pages
+   - Zoom percentage
+   - File size
+
+3. Update +page.svelte to use both new components.
+
+---
+
+## STEP 1: Create ViewerRightPanel.svelte
+
+### Create the file at:
+apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte
+
+### Full component content:
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
+  import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
+  import type { Annotation } from '$lib/api/pdf';
+
+  let {
+    annotations = $bindable<Annotation[]>([]),
+    pdfDoc = null,
+    onJumpToPage
+  }: {
+    annotations: Annotation[];
+    pdfDoc: any;
+    onJumpToPage: (page: number) => void;
+  } = $props();
+
+  let isCollapsed = $state(false);
+  let activeTab = $state<'annotations' | 'info'>('annotations');
+
+  onMount(() => {
+    const storedCollapsed = localStorage.getItem('viewer-right-panel-collapsed');
+    if (storedCollapsed === 'true') isCollapsed = true;
+
+    const storedTab = localStorage.getItem('viewer-right-panel-tab');
+    if (storedTab === 'info' || storedTab === 'annotations') {
+      activeTab = storedTab;
+    }
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-collapsed', String(isCollapsed));
+  });
+
+  $effect(() => {
+    localStorage.setItem('viewer-right-panel-tab', activeTab);
+  });
+</script>
+
+<div class="right-panel" class:collapsed={isCollapsed}>
+  <button
+    class="collapse-toggle"
+    id="right-panel-toggle"
+    onclick={() => isCollapsed = !isCollapsed}
+    title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+    aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+  >
+    {isCollapsed ? '›' : '‹'}
+  </button>
+
+  {#if !isCollapsed}
+    <div class="panel-tabs" role="tablist" aria-label="Panel sections">
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'annotations'}
+        id="right-panel-tab-annotations"
+        role="tab"
+        aria-selected={activeTab === 'annotations'}
+        onclick={() => activeTab = 'annotations'}
+      >
+        Annotations ({annotations.length})
+      </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'info'}
+        id="right-panel-tab-info"
+        role="tab"
+        aria-selected={activeTab === 'info'}
+        onclick={() => activeTab = 'info'}
+      >
+        Info
+      </button>
+    </div>
+
+    <div class="panel-content" role="tabpanel">
+      {#if activeTab === 'annotations'}
+        <PdfAnnotationPanel
+          bind:annotations
+          {onJumpToPage}
+        />
+      {:else}
+        <PdfInfoPanel {pdfDoc} />
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .right-panel {
+    position: relative;
+    width: 280px;
+    min-width: 280px;
+    transition: width 0.25s ease, min-width 0.25s ease;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .right-panel.collapsed {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .collapse-toggle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0 4px 4px 0;
+    color: var(--text-muted);
+    width: 16px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 10;
+    transition: all var(--transition-fast);
+    padding: 0;
+  }
+
+  .collapse-toggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+  }
+
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    padding-left: 20px; /* leave room for the collapse toggle */
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+  }
+
+  .tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-primary);
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+```
+
+---
+
+## STEP 2: Create StatusBar.svelte
+
+### Create the file at:
+apps/desktop/src/lib/components/layout/StatusBar.svelte
+
+### Full component content:
+```svelte
+<script lang="ts">
+  let {
+    pageNum = 1,
+    numPages = 0,
+    scale = 1.2,
+    fileName = '',
+    fileSize = 0
+  }: {
+    pageNum: number;
+    numPages: number;
+    scale: number;
+    fileName: string;
+    fileSize: number;
+  } = $props();
+
+  function formatSize(bytes: number): string {
+    if (!bytes || bytes === 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  let zoomPercent = $derived(Math.round(scale * 100));
+  let sizeStr = $derived(formatSize(fileSize));
+</script>
+
+{#if numPages > 0}
+<div class="status-bar" role="status" aria-label="Document status">
+  {#if fileName}
+    <span class="status-item status-filename" title={fileName}>{fileName}</span>
+    <span class="status-sep" aria-hidden="true">·</span>
+  {/if}
+
+  <span class="status-item" id="status-page">
+    Page {pageNum} of {numPages}
+  </span>
+
+  <span class="status-sep" aria-hidden="true">·</span>
+
+  <span class="status-item" id="status-zoom">{zoomPercent}%</span>
+
+  {#if sizeStr}
+    <span class="status-sep" aria-hidden="true">·</span>
+    <span class="status-item" id="status-size">{sizeStr}</span>
+  {/if}
+</div>
+{/if}
+
+<style>
+  .status-bar {
+    height: 24px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .status-item {
+    white-space: nowrap;
+  }
+
+  .status-filename {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+  }
+
+  .status-sep {
+    opacity: 0.35;
+    font-size: 10px;
+  }
+</style>
+```
+
+---
+
+## STEP 3: Update +page.svelte
+
+### File to Modify
+apps/desktop/src/routes/+page.svelte
+
+### 3a. Add two new imports at the top of the script block
+Add these two lines alongside the existing component imports:
+```typescript
+import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
+import StatusBar from '$lib/components/layout/StatusBar.svelte';
+```
+
+### 3b. Inside the viewer-content div, replace the two standalone panel components
+
+#### REMOVE these two lines:
+```svelte
+<PdfAnnotationPanel
+  bind:annotations
+  onJumpToPage={(p: number) => pageNum = p}
+/>
+<PdfInfoPanel {pdfDoc} />
+```
+
+#### ADD in their place (same position in the layout):
+```svelte
+<ViewerRightPanel
+  bind:annotations
+  {pdfDoc}
+  onJumpToPage={(p: number) => pageNum = p}
+/>
+```
+
+### 3c. Add the StatusBar AFTER the viewer-content div, BEFORE the closing </div> of viewer-wrapper
+
+Find this section:
+```svelte
+<div class="viewer-wrapper">
+  <div class="viewer-header">
+    ...
+  </div>
+  <div class="viewer-content">
+    ...
+  </div>
+</div>   <-- Add StatusBar BEFORE this closing tag
+```
+
+Insert BETWEEN the closing </div> of viewer-content and the closing </div> of viewer-wrapper:
+```svelte
+  <StatusBar
+    {pageNum}
+    {numPages}
+    {scale}
+    fileName={appState.selectedDocumentIndex !== null
+      ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+      : ''}
+    fileSize={appState.selectedDocumentIndex !== null
+      ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+      : 0}
+  />
+```
+
+### 3d. Remove now-unused imports
+If PdfAnnotationPanel and PdfInfoPanel are ONLY used in the viewer-content section
+(and not elsewhere on the page), remove their import lines:
+```typescript
+// REMOVE these if they are no longer used:
+import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
+import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
+```
+
+IMPORTANT: Only remove them if they are not referenced anywhere else in the file.
+Run `npm run check` to confirm there are no "unused import" or "not found" errors.
+
+---
+
+## Files Created by This Task
+- apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte (NEW)
+- apps/desktop/src/lib/components/layout/StatusBar.svelte (NEW)
+
+## Files Modified by This Task
+- apps/desktop/src/routes/+page.svelte
+
+## Files NOT Touched by This Task
+- +layout.svelte
+- capabilities/default.json
+- Sidebar.svelte
+- DocumentList.svelte
+- PdfAnnotationPanel.svelte (used as child, not modified)
+- PdfInfoPanel.svelte (used as child, not modified)
+
+---
+
+## Verification Checklist
+
+### ViewerRightPanel
+[ ] Open a PDF in the viewer. Right side shows a tabbed panel.
+[ ] "Annotations (0)" tab is shown by default.
+[ ] Clicking "Info" tab switches to the document info view.
+[ ] Clicking the ‹ chevron button on the left edge of the panel collapses it to 40px.
+[ ] Collapse animation is smooth (CSS transition visible — not a snap).
+[ ] When collapsed, no content is visible — only the › toggle button.
+[ ] Clicking › expands the panel back to 280px smoothly.
+[ ] The PDF canvas area fills the newly available horizontal space when panel is collapsed.
+[ ] Panel collapsed state is restored after refresh (localStorage key: 'viewer-right-panel-collapsed').
+[ ] Active tab is restored after refresh (localStorage key: 'viewer-right-panel-tab').
+
+### StatusBar
+[ ] When a PDF is open, a thin status bar appears at the bottom of the viewer.
+[ ] Status bar shows: filename · "Page 1 of N" · "120%" · "2.3 MB"
+[ ] Page number updates as you navigate pages.
+[ ] Zoom percentage updates as you zoom in/out.
+[ ] Status bar is NOT shown when no document is open (numPages === 0).
+
+## Compile & Test
+```bash
+# From apps/desktop — must pass with 0 errors
+npm run check
+
+# From repo root
+make test-all
+```
+
+Last updated: 2026-10-01 | Task 4.F.6-D | Antigravity Orchestrator
