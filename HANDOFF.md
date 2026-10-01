@@ -93,8 +93,9 @@ PaperPilot/
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.F.8 (Power User UX & Design Tokens):**
-   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay
+1. **Phase 4.F.8 (Desktop Instant Open & Power UX):**
+   - Instant document open flow: dropping or selecting a PDF immediately opens it in the viewer
+   - Raycast-style Command Palette (`Ctrl+K` / `⌘K`) overlay with fuzzy search across operations, files, and tabs
    - Floating pill annotation toolbar over PDF canvas with backdrop blur
    - Linear-inspired design tokens (`--surface-0` through `--surface-4`) in `app.css`
 2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.

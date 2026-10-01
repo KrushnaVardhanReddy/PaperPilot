@@ -518,13 +518,14 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.7.2 | Multi-Document Tab Bar `[Tab1][Tab2][+]` | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Tab bar, tab switching, and `+` native picker |
 | F.7.3 | Right-Docked Operations Panel | 🚧 In-Progress (`P4_F_7B_multidoc_tabs_operations_dock.txt`) — Docked inspector side-rail, remove bottom wrapping |
 
-#### 4.F.8 — Power User Experience & Design Tokens `[NEXT]`
+#### 4.F.8 — Desktop Instant Open & Power UX `[NEXT]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.8.1 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued — Floating fuzzy search overlay over all 45+ PDF operations, recent files, and tabs |
-| F.8.2 | Floating Canvas-First Annotation Toolbar | 🔲 Queued — Compact floating pill toolbar over PDF canvas with backdrop blur |
-| F.8.3 | Linear-inspired Design Elevation Tokens | 🔲 Queued — Formalize `--surface-0` through `--surface-4` in `app.css` |
+| F.8.1 | Instant Document Open on Drop/Select | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Dropping or selecting a PDF immediately opens it in viewer |
+| F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating fuzzy search overlay over operations, documents, and actions |
+| F.8.3 | Floating Canvas-First Annotation Toolbar | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Floating pill toolbar over PDF canvas with backdrop blur |
+| F.8.4 | Linear-inspired Design Elevation Tokens | 🔲 Queued (`P4_F_8_instant_open_palette_floating_toolbar.txt`) — Standardize `--surface-0` through `--surface-4` in `app.css` |
 
 
 ---
