@@ -518,14 +518,14 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.7.2 | Multi-Document Tab Bar `[Tab1][Tab2][+]` | ✅ Completed (PR #78) — Tab bar, tab switching, close tabs, and `+` native picker |
 | F.7.3 | Right-Docked Operations Panel | ✅ Completed (PR #78) — Docked inspector side-rail, remove bottom wrapping |
 
-#### 4.F.8 — Desktop Instant Open & Power UX `[ACTIVE]`
+#### 4.F.8 — Desktop Instant Open & Power UX `[COMPLETED]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.8.1 | Instant Document Open on Drop/Select | 🚧 In-Progress (Session 12765949361691601462) — Dropping or selecting a PDF immediately opens it in viewer |
-| F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | 🚧 In-Progress (Session 12765949361691601462) — Floating fuzzy search overlay over operations, documents, and actions |
-| F.8.3 | Floating Canvas-First Annotation Toolbar | 🚧 In-Progress (Session 12765949361691601462) — Floating pill toolbar over PDF canvas with backdrop blur |
-| F.8.4 | Resizable Right Panel & Titlebar Anchor Fix | 🚧 In-Progress (Session 12765949361691601462) — Draggable split-handle and anchored window controls |
+| F.8.1 | Instant Document Open on Drop/Select | ✅ Completed (PR #79) — Dropping or selecting a PDF immediately opens it in viewer |
+| F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | ✅ Completed (PR #79) — Floating fuzzy search overlay over operations, documents, and actions |
+| F.8.3 | Floating Canvas-First Annotation Toolbar | ✅ Completed (PR #79) — Floating pill toolbar over PDF canvas with backdrop blur |
+| F.8.4 | Resizable Right Panel & Titlebar Anchor Fix | ✅ Completed (PR #79) — Draggable split-handle (240px-600px) and anchored window controls |
 #### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[QUEUED]`
 
 | # | Task | Notes |

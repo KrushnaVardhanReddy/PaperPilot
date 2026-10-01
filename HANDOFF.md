@@ -81,14 +81,13 @@ PaperPilot/
 | Phase 4.F.6 (UX Improvements & Permissions) | ✅ Complete | View button, collapsible sidebars & right panel, status bar, Tauri permissions & native file open (PRs #73, #74, #75, #76) |
 | Phase 4.F.7-A (Editable Page Jump & Zoom Presets) | ✅ Complete | Interactive page number input + zoom preset dropdown & Fit button (PR #77) |
 | Phase 4.F.7-B (Multi-Document Tabs & Operations Dock) | ✅ Complete | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel (PR #78) |
+| Phase 4.F.8 (Desktop Instant Open & Power UX) | ✅ Complete | Instant open, Command Palette (`Ctrl+K`), Floating Toolbar, Resizable Right Panel (PR #79) |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What it does |
-|---|---|---|
-| Phase 4.F.8 | `12765949361691601462` | Instant open, Command Palette (`Ctrl+K`), Floating Toolbar, Resizable Right Panel, Window Controls Fix |
+*(None currently active — ready for Phase 4.F.9)*
 
 ---
 
