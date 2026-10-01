@@ -93,7 +93,8 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.F.12 | `1183351717147081897` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (5 presets, custom CSS upload/inline, Excel table parsing) |
+| Phase 4.F.12 (Session A) | `1183351717147081897` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (5 presets, custom CSS upload/inline, Excel table parsing) |
+| Phase 4.F.12 (Session B) | `15935475204670535170` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (Fresh session started directly off latest `main`) |
 
 ---
 
