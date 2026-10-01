@@ -526,13 +526,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.8.2 | Raycast Command Palette (`Ctrl+K` / `⌘K`) | ✅ Completed (PR #79) — Floating fuzzy search overlay over operations, documents, and actions |
 | F.8.3 | Floating Canvas-First Annotation Toolbar | ✅ Completed (PR #79) — Floating pill toolbar over PDF canvas with backdrop blur |
 | F.8.4 | Resizable Right Panel & Titlebar Anchor Fix | ✅ Completed (PR #79) — Draggable split-handle (240px-600px) and anchored window controls |
-#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[ACTIVE]`
+#### 4.F.9 — Canvas Search & Direct Thumbnail Page Management `[COMPLETED]`
 
 | # | Task | Notes |
 |---|---|---|
-| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | 🚧 In-Progress (Session 17938215746492684563) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`) |
-| F.9.2 | Direct Thumbnail Page Reordering | 🚧 In-Progress (Session 11112673620045863445) — Drag-and-drop page reordering directly in thumbnail sidebar |
-| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🚧 In-Progress (Session 11112673620045863445) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
+| F.9.1 | Canvas Text Search Bar (`Ctrl+F` / `⌘F`) | ✅ Completed (PR #81) — Floating search bar over canvas with match navigation (`1 of 12`, `‹ / ›`), Titlebar window controls anchor fix |
+| F.9.2 | Direct Thumbnail Page Reordering | ✅ Completed (PR #80) — Drag-and-drop page reordering directly in thumbnail sidebar |
+| F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | ✅ Completed (PR #80) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
 
 #### 4.F.10 — Stirling-Style Categorized Tools Dock `[QUEUED]`
 

@@ -82,15 +82,14 @@ PaperPilot/
 | Phase 4.F.7-A (Editable Page Jump & Zoom Presets) | ✅ Complete | Interactive page number input + zoom preset dropdown & Fit button (PR #77) |
 | Phase 4.F.7-B (Multi-Document Tabs & Operations Dock) | ✅ Complete | Multi-Document tabs `[Tab1][Tab2][+]` + right-docked Operations panel (PR #78) |
 | Phase 4.F.8 (Desktop Instant Open & Power UX) | ✅ Complete | Instant open, Command Palette (`Ctrl+K`), Floating Toolbar, Resizable Right Panel (PR #79) |
+| Phase 4.F.9-A (Canvas Text Search) | ✅ Complete | In-canvas text search bar (`Ctrl+F` / `⌘F`), match navigation (`1 of 12`, `‹ / ›`), Titlebar window controls anchor fix (PR #81) |
+| Phase 4.F.9-B (Thumbnail Page Management) | ✅ Complete | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) (PR #80) |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What it does |
-|---|---|---|
-| Phase 4.F.9-A | `17938215746492684563` | In-canvas text search bar (`Ctrl+F` / `⌘F`) with match navigation, window controls anchor, and instant open check |
-| Phase 4.F.9-B | `11112673620045863445` | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) |
+*None currently running. Ready to dispatch Phase 4.F.10.*
 
 ---
 
