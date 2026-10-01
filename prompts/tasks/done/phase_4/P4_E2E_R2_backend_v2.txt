@@ -1,0 +1,28 @@
+# Task: Phase 4.E2E Round 2 — CLI & MCP Re-Validation (V2)
+
+## Objective
+The PDF Viewer, Annotations, and Form Filling UI are fully merged and tested in the frontend. However, the backend (`paperpilot-cli` and `paperpilot-mcp`) needs to explicitly expose the new capabilities (`annotate` and `form_fill`) and we need to re-validate that all operations function correctly end-to-end.
+
+## Context & Key Files
+- The annotation backend logic is already written in `paperpilot-pdf/src/operations/annotate.rs`. It provides the `AnnotateOperation` struct which takes `AnnotationParams`.
+- The form fill backend logic is already written in `paperpilot-pdf/src/operations/form.rs`. It provides the `FillFormOperation` struct which takes a `HashMap<String, String>`.
+- The frontend (Tauri) calls these via `invoke_mcp_tool` with the names `pdf_annotate` and `pdf_fill_form`.
+
+## Requirements
+
+### 1. CLI Updates (`paperpilot-cli`)
+- Add an `annotate` command to the CLI to apply annotations via `paperpilot-pdf::operations::annotate::AnnotateOperation`. 
+- Ensure `form read`, `form fill`, and `form add-field` commands are fully working.
+- Ensure the CLI E2E tests (`cargo test --test e2e` in `paperpilot-cli`) cover the new form and annotate commands.
+
+### 2. MCP Server Updates (`paperpilot-mcp`)
+- The `pdf_annotate` and `pdf_form_fill` (or `pdf_fill_form`) tools are currently missing from `paperpilot-mcp/src/server.rs`. You must implement and register them in the MCP server.
+- Add robust unit/integration tests for these new MCP tools.
+- Re-run the full MCP test suite (`cargo test` in `paperpilot-mcp`) and ensure a 100% pass rate.
+
+### 3. Validation
+- Run `cargo test -p paperpilot-cli`
+- Run `cargo test -p paperpilot-mcp`
+- Run `cargo clippy` and `cargo fmt` to ensure code quality.
+
+Please verify the entire backend integration thoroughly so that the UI can successfully communicate with the Rust backend via the MCP tool definitions.
