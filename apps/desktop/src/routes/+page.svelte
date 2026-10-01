@@ -13,6 +13,7 @@
   import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
   import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
   import StatusBar from '$lib/components/layout/StatusBar.svelte';
+  import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
 
   import { onMount } from 'svelte';
   onMount(() => {
@@ -80,20 +81,13 @@
 
 <div class="page-container">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
-    <div class="content-area">
-      {#if appState.selectedDocumentIndex !== null}
-        <div class="viewer-wrapper">
-          <div class="viewer-header">
-            <button class="back-btn" onclick={() => appState.selectDocument(null)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-              Back to Documents
-            </button>
-            <h3 class="doc-title">{appState.documents[appState.selectedDocumentIndex]?.name}</h3>
-          </div>
-          <div class="viewer-content">
+    <div class="workspace-wrapper">
+      <DocumentTabBar />
+
+      <div class="workspace-body">
+        {#if appState.selectedDocumentIndex !== null}
+          <div class="viewer-wrapper">
+            <div class="viewer-content">
             <PdfThumbnails {pdfDoc} bind:pageNum />
 
             <div class="viewer-main">
@@ -123,34 +117,34 @@
               onJumpToPage={(p: number) => pageNum = p}
             />
           </div>
-          <StatusBar
-            {pageNum}
-            {numPages}
-            {scale}
-            fileName={appState.selectedDocumentIndex !== null
-              ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
-              : ''}
-            fileSize={appState.selectedDocumentIndex !== null
-              ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
-              : 0}
-          />
-        </div>
-      {:else}
-        <div class="documents-view">
-          <header class="view-header">
-            <h2>Documents</h2>
-            <p>Add PDF files to process</p>
-          </header>
+            <StatusBar
+              {pageNum}
+              {numPages}
+              {scale}
+              fileName={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+                : ''}
+              fileSize={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+                : 0}
+            />
+          </div>
+        {:else}
+          <div class="documents-layout">
+            <div class="documents-view">
+              <header class="view-header">
+                <h2>Documents</h2>
+                <p>Add PDF files to process</p>
+              </header>
 
-          <DropZone ondrop={handleFilesDropped} />
-          <DocumentList />
-        </div>
-      {/if}
+              <DropZone ondrop={handleFilesDropped} />
+              <DocumentList />
+            </div>
+            <OperationsPanel />
+          </div>
+        {/if}
+      </div>
     </div>
-
-    {#if appState.selectedDocumentIndex === null}
-      <OperationsPanel />
-    {/if}
   {:else if appState.activeTab === 'settings'}
     <div class="content-area full-width">
       <SettingsPanel />
@@ -181,13 +175,37 @@
     width: 100%;
   }
 
-  .documents-view {
-    padding: 32px;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
+  .workspace-wrapper {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .workspace-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .documents-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .documents-view {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .view-header {
@@ -210,41 +228,6 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
-  }
-
-  .viewer-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 24px;
-    background-color: var(--bg-surface, #ffffff);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-  }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    color: var(--text-secondary, #4b5563);
-    cursor: pointer;
-    font-size: 0.95rem;
-    padding: 6px 12px;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-
-  .back-btn:hover {
-    color: var(--text-primary, #111827);
-    background-color: var(--bg-surface-hover, #f3f4f6);
-  }
-
-  .doc-title {
-    margin: 0;
-    font-size: 1.1rem;
-    color: var(--text-primary, #111827);
-    font-weight: 500;
   }
 
   .viewer-content {

@@ -235,11 +235,13 @@
 <style>
   .operations-panel {
     width: 320px;
+    min-width: 320px;
     background-color: var(--bg-secondary);
     border-left: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     height: 100%;
+    flex-shrink: 0;
   }
 
   .panel-header {
@@ -436,12 +438,6 @@
 
   /* Tablet/mobile: reduce padding, stack action area */
   @media (max-width: 899px) {
-    .operations-panel {
-      width: 100%;
-      border-left: none;
-      border-top: 1px solid var(--border-color);
-    }
-
     .panel-content {
       flex-direction: row;
       flex-wrap: wrap;

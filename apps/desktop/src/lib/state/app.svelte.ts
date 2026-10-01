@@ -7,6 +7,9 @@ export class AppState {
   documents = $state<File[]>([]);
   selectedDocumentIndex = $state<number | null>(null);
 
+  // Tab management for multi-document viewer
+  openDocIndices = $state<number[]>([]);
+
   constructor() {}
 
   setActiveTab(tab: string) {
@@ -31,17 +34,41 @@ export class AppState {
   }
 
   removeDocument(index: number) {
+    this.closeTab(index);
+    this.openDocIndices = this.openDocIndices.map(i => i > index ? i - 1 : i);
     this.documents = this.documents.filter((_, i) => i !== index);
     if (this.selectedDocumentIndex === index) {
-      this.selectedDocumentIndex = null;
+      this.selectedDocumentIndex = this.openDocIndices.length > 0 ? this.openDocIndices[this.openDocIndices.length - 1] : null;
     } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
       this.selectedDocumentIndex -= 1;
     }
   }
 
   selectDocument(index: number | null) {
-    if (index === null || (index >= 0 && index < this.documents.length)) {
+    if (index === null) {
+      this.selectedDocumentIndex = null;
+      return;
+    }
+    if (index >= 0 && index < this.documents.length) {
       this.selectedDocumentIndex = index;
+      if (!this.openDocIndices.includes(index)) {
+        this.openDocIndices = [...this.openDocIndices, index];
+      }
+    }
+  }
+
+  closeTab(index: number) {
+    const tabIdx = this.openDocIndices.indexOf(index);
+    if (tabIdx !== -1) {
+      this.openDocIndices = this.openDocIndices.filter(i => i !== index);
+      if (this.selectedDocumentIndex === index) {
+        if (this.openDocIndices.length > 0) {
+          const nextIdx = Math.min(tabIdx, this.openDocIndices.length - 1);
+          this.selectedDocumentIndex = this.openDocIndices[nextIdx];
+        } else {
+          this.selectedDocumentIndex = null;
+        }
+      }
     }
   }
 
