@@ -1,0 +1,591 @@
+# Task: Phase 4.F.12 — Custom CSS Styling & Presets for HTML/Markdown/Excel → PDF Conversion (Core Basic Feature)
+# Priority: HIGH — Free core differentiator vs Adobe Acrobat Pro ($239/yr) and Stirling PDF (rigid unstyled conversions)
+# Parallel-Safe: 
+#   1. Modifies paperpilot-pdf/src/operations/conversion.rs (adds HtmlToPdfOperation with custom CSS & presets)
+#   2. Modifies paperpilot-core/src/traits.rs or paperpilot-pdf/src/operations/mod.rs (exposes HtmlToPdfOperation)
+#   3. Modifies paperpilot-mcp/src/lib.rs (registers html_to_pdf, markdown_to_pdf, excel_to_pdf with CSS args)
+#   4. Modifies paperpilot-cli/src/main.rs (adds --css, --css-preset flags to `paperpilot convert`)
+#   5. Creates apps/desktop/src/lib/components/CssInjectionPanel.svelte (standalone Svelte 5 component)
+# Zero conflicts with OperationsPanel.svelte (Phase 4.F.10) or PdfVisualDiff.svelte (Phase 4.F.11).
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css`.
+
+---
+
+## CONTEXT & OBJECTIVES
+
+Converting Markdown, HTML, and Excel files into PDFs is notoriously ugly in most PDF tools:
+- **Stirling PDF** and command-line tools produce raw, unstyled browser defaults with giant serif fonts, awkward page breaks, overflowing tables, and zero visual hierarchy.
+- **Adobe Acrobat Pro** restricts layout templating behind costly enterprise licenses or requires manual post-editing in InDesign.
+
+PaperPilot makes **Styled Document-to-PDF Conversion a free, core built-in desktop & CLI feature**:
+1. **5 Built-In Aesthetic Presets**:
+   - `github`: Modern developer documentation style with clean sans-serif typography, subtle borders, syntax-highlighted code blocks, and zebra-striped tables.
+   - `elegant`: Executive serif typography (Merriweather / Georgia), refined margins, drop-caps or subtle headers, warm tone.
+   - `minimal`: Clean, Swiss-inspired monochrome design with generous whitespace and bold headers.
+   - `branded`: Bold corporate aesthetic with accent color bars, crisp divider rules, and modern table styling.
+   - `compact`: Dense typography with optimized margins designed for multi-column reports, invoices, and large datasets.
+2. **Custom CSS File & Inline Injection**:
+   - Users can upload or select any `.css` file or paste custom CSS rules directly in the desktop inspector or CLI (`--css brand.css`).
+   - Custom CSS is injected into the `<style>` block of the rendering pipeline.
+3. **Excel → Styled HTML Table → PDF Pipeline**:
+   - Spreadsheets (`.xlsx`, `.csv`) are converted to clean semantic `<table>` elements with column headers, formatted numbers, and auto-paginated table headers (`thead { display: table-header-group }`).
+   - The selected CSS preset or custom stylesheet transforms raw spreadsheet grids into publication-quality executive reports.
+4. **Rust Conversion Engine**:
+   - Uses headless Chromium / print-to-pdf pipeline or wkhtmltopdf/resvg rendering logic to produce crisp vector PDFs with `@page` margin rules and headers/footers.
+
+---
+
+## STEP 1: Rust Backend Engine in `paperpilot-pdf`
+
+In `paperpilot-pdf/src/operations/conversion.rs`:
+
+1. Define CSS Preset Library:
+```rust
+pub const CSS_PRESET_GITHUB: &str = r#"
+@page { margin: 20mm; size: A4; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #24292e;
+    background-color: #ffffff;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1f2328;
+}
+h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+code {
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 4px;
+    padding: 0.2em 0.4em;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 85%;
+}
+pre {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    overflow: auto;
+    line-height: 1.45;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+}
+table th, table td {
+    padding: 8px 12px;
+    border: 1px solid #d0d7de;
+}
+table th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+}
+table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+"#;
+
+pub const CSS_PRESET_ELEGANT: &str = r#"
+@page { margin: 25mm; size: A4; }
+body {
+    font-family: "Georgia", "Merriweather", serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #2c3e50;
+    background-color: #ffffff;
+}
+h1, h2, h3 {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color: #1a252f;
+    letter-spacing: 0.02em;
+}
+h1 { font-size: 2.2em; text-align: center; margin-bottom: 1.5em; }
+h2 { font-size: 1.6em; border-bottom: 2px solid #8e44ad; padding-bottom: 6px; margin-top: 1.8em; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+table th {
+    border-bottom: 2px solid #2c3e50;
+    padding: 10px 14px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+table td {
+    border-bottom: 1px solid #ecf0f1;
+    padding: 10px 14px;
+}
+"#;
+
+pub const CSS_PRESET_MINIMAL: &str = r#"
+@page { margin: 18mm; size: A4; }
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #111111;
+}
+h1, h2, h3 { font-weight: 700; color: #000000; }
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.4em; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+table th, table td { padding: 6px 10px; border-bottom: 1px solid #000; text-align: left; }
+table th { font-weight: 700; border-top: 1px solid #000; }
+"#;
+
+pub const CSS_PRESET_BRANDED: &str = r#"
+@page { margin: 20mm; size: A4; }
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #1e293b;
+}
+h1 { font-size: 2em; color: #4361ee; border-left: 4px solid #4361ee; padding-left: 12px; }
+h2 { font-size: 1.4em; color: #3a0ca3; margin-top: 1.5em; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; margin: 16px 0; }
+table th { background: #4361ee; color: #ffffff; padding: 10px 14px; font-weight: 600; text-align: left; }
+table td { padding: 8px 14px; border-bottom: 1px solid #f1f5f9; }
+table tr:nth-child(even) td { background-color: #f8fafc; }
+"#;
+
+pub const CSS_PRESET_COMPACT: &str = r#"
+@page { margin: 12mm; size: A4; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #1f2937;
+}
+h1 { font-size: 1.4em; margin-bottom: 8px; }
+h2 { font-size: 1.2em; margin-top: 12px; margin-bottom: 6px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 10.5px; }
+table th, table td { padding: 4px 6px; border: 1px solid #d1d5db; }
+table th { background: #f3f4f6; font-weight: 600; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+"#;
+```
+
+2. Implement `HtmlToPdfOptions` and `build_styled_html`:
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HtmlToPdfOptions {
+    pub preset: Option<String>,      // "github", "elegant", "minimal", "branded", "compact"
+    pub custom_css: Option<String>,  // inline CSS string
+    pub page_size: Option<String>,   // "A4", "Letter", etc.
+    pub margin_mm: Option<f32>,      // default 20mm
+}
+
+impl Default for HtmlToPdfOptions {
+    fn default() -> Self {
+        Self {
+            preset: Some("github".to_string()),
+            custom_css: None,
+            page_size: Some("A4".to_string()),
+            margin_mm: Some(20.0),
+        }
+    }
+}
+
+pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
+    let preset_css = match preset.unwrap_or("github") {
+        "elegant" => CSS_PRESET_ELEGANT,
+        "minimal" => CSS_PRESET_MINIMAL,
+        "branded" => CSS_PRESET_BRANDED,
+        "compact" => CSS_PRESET_COMPACT,
+        _ => CSS_PRESET_GITHUB,
+    };
+
+    if let Some(custom) = custom_css {
+        if !custom.trim().is_empty() {
+            return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
+        }
+    }
+    preset_css.to_string()
+}
+
+pub fn inject_css_into_html(html: &str, css: &str) -> String {
+    let style_tag = format!("<style id=\"paperpilot-injected-css\">\n{}\n</style>", css);
+    if let Some(pos) = html.find("</head>") {
+        let mut out = html[..pos].to_string();
+        out.push_str(&style_tag);
+        out.push_str(&html[pos..]);
+        out
+    } else {
+        format!("<!DOCTYPE html><html><head>{}</head><body>{}</body></html>", style_tag, html)
+    }
+}
+```
+
+3. Implement `MarkdownToPdfOperation`:
+   - Parse markdown to HTML using pulldown-cmark (or existing markdown parser).
+   - Inject the resolved CSS.
+   - Render via print-to-pdf pipeline.
+
+4. Implement `ExcelToStyledHtmlOperation`:
+   - Parse sheet cells from `.xlsx` / `.csv` using `calamine` or `rust_xlsxwriter`.
+   - Build semantic HTML `<table>` with headers, formatted cells, and proper classes.
+   - Inject resolved CSS preset.
+
+---
+
+## STEP 2: Create `apps/desktop/src/lib/components/CssInjectionPanel.svelte`
+
+Create a reusable, standalone Svelte 5 component `apps/desktop/src/lib/components/CssInjectionPanel.svelte`:
+
+```svelte
+<script lang="ts">
+  let {
+    preset = $bindable('github'),
+    customCss = $bindable(''),
+    pageSize = $bindable('A4'),
+    onPreview = () => {},
+    onReset = () => {}
+  }: {
+    preset?: string;
+    customCss?: string;
+    pageSize?: string;
+    onPreview?: () => void;
+    onReset?: () => void;
+  } = $props();
+
+  let showAdvancedCss = $state(false);
+
+  const presets = [
+    { id: 'github', label: 'GitHub Docs', desc: 'Clean sans-serif, syntax highlighting, zebra tables' },
+    { id: 'elegant', label: 'Executive Serif', desc: 'Georgia typography, purple accents, refined headers' },
+    { id: 'minimal', label: 'Swiss Minimal', desc: 'High-contrast monochrome, bold headers, generous space' },
+    { id: 'branded', label: 'Corporate Modern', desc: 'Indigo brand bar, styled badges, modern card tables' },
+    { id: 'compact', label: 'Dense Report', desc: 'Optimized 11px font, tight margins, spreadsheet-ready' }
+  ];
+
+  function handleFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          customCss = e.target.result as string;
+          showAdvancedCss = true;
+        }
+      };
+      reader.readAsText(input.files[0]);
+    }
+  }
+</script>
+
+<div class="css-injection-panel" id="css-injection-panel">
+  <div class="panel-header">
+    <div class="header-title">
+      <span class="header-icon">🎨</span>
+      <h4>PDF Styling & Presets</h4>
+    </div>
+    <span class="badge-free">CORE FREE</span>
+  </div>
+
+  <!-- Preset Selector -->
+  <div class="control-group">
+    <label for="css-preset-select">Style Theme</label>
+    <select id="css-preset-select" bind:value={preset}>
+      {#each presets as p}
+        <option value={p.id}>{p.label}</option>
+      {/each}
+    </select>
+    <p class="preset-description">
+      {presets.find(p => p.id === preset)?.desc}
+    </p>
+  </div>
+
+  <!-- Page Geometry -->
+  <div class="control-row">
+    <div class="control-group half">
+      <label for="css-pagesize-select">Page Format</label>
+      <select id="css-pagesize-select" bind:value={pageSize}>
+        <option value="A4">A4 (210 × 297 mm)</option>
+        <option value="Letter">US Letter (8.5 × 11 in)</option>
+        <option value="Legal">US Legal (8.5 × 14 in)</option>
+      </select>
+    </div>
+    <div class="control-group half">
+      <label for="css-margin-preset">Margins</label>
+      <select id="css-margin-preset">
+        <option value="normal">Normal (20mm)</option>
+        <option value="narrow">Narrow (12mm)</option>
+        <option value="wide">Wide (25mm)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Custom CSS Accordion -->
+  <div class="custom-css-section">
+    <button
+      type="button"
+      id="btn-toggle-custom-css"
+      class="toggle-btn"
+      onclick={() => (showAdvancedCss = !showAdvancedCss)}
+    >
+      <span>{showAdvancedCss ? '▼' : '►'} Custom CSS Injection</span>
+      <span class="subtext">{customCss.trim().length > 0 ? '(Active)' : '(Optional)'}</span>
+    </button>
+
+    {#if showAdvancedCss}
+      <div class="css-editor-container" id="custom-css-container">
+        <div class="editor-actions">
+          <label class="btn-secondary btn-file-upload" for="css-file-input">
+            📁 Import .css file
+            <input
+              type="file"
+              id="css-file-input"
+              accept=".css"
+              style="display: none;"
+              onchange={handleFileUpload}
+            />
+          </label>
+          {#if customCss.trim().length > 0}
+            <button
+              type="button"
+              id="btn-clear-custom-css"
+              class="btn-text-danger"
+              onclick={() => (customCss = '')}
+            >
+              Clear CSS
+            </button>
+          {/if}
+        </div>
+
+        <textarea
+          id="custom-css-textarea"
+          bind:value={customCss}
+          placeholder="/* Enter custom CSS rules here */&#10;body { font-size: 16px; }&#10;h1 { color: #0070f3; }"
+          rows="6"
+          spellcheck="false"
+        ></textarea>
+        <div class="css-tip">
+          💡 Custom rules are appended after the preset theme to override fonts, colors, and margins.
+        </div>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .css-injection-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--surface-secondary, #1e1e24);
+    border: 1px solid var(--border-color, #2d2d38);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-title h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+  }
+
+  .badge-free {
+    font-size: 10px;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .control-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .half {
+    flex: 1;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary, #a1a1aa);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  select, textarea {
+    background: var(--surface-primary, #141418);
+    border: 1px solid var(--border-color, #3f3f4e);
+    border-radius: 6px;
+    color: var(--text-primary, #ffffff);
+    padding: 8px 10px;
+    font-size: 12px;
+    font-family: inherit;
+  }
+
+  select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brand-accent, #6366f1);
+  }
+
+  .preset-description {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-muted, #71717a);
+    font-style: italic;
+  }
+
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 6px 0;
+    color: var(--text-secondary, #d4d4d8);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .toggle-btn:hover {
+    color: var(--brand-accent, #818cf8);
+  }
+
+  .subtext {
+    font-size: 11px;
+    color: var(--text-muted, #71717a);
+  }
+
+  .css-editor-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-file-upload {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: var(--surface-tertiary, #272730);
+    border: 1px solid var(--border-color, #3f3f4e);
+    border-radius: 4px;
+    color: var(--text-primary, #ffffff);
+    cursor: pointer;
+  }
+
+  .btn-file-upload:hover {
+    background: var(--surface-hover, #32323e);
+  }
+
+  .btn-text-danger {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+
+  textarea {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    resize: vertical;
+    white-space: pre;
+  }
+
+  .css-tip {
+    font-size: 10.5px;
+    color: var(--text-muted, #71717a);
+    line-height: 1.4;
+  }
+</style>
+```
+
+---
+
+## STEP 3: CLI Integration in `paperpilot-cli`
+
+Update `paperpilot-cli/src/main.rs`:
+Add flags to `convert` command:
+- `--css <PATH>`: Path to a custom CSS file to inject.
+- `--css-preset <PRESET>`: One of `github`, `elegant`, `minimal`, `branded`, `compact` (defaults to `github`).
+- `--inline-css <CSS_STRING>`: Inline CSS string.
+
+Example terminal usage:
+```bash
+paperpilot convert README.md README.pdf --css-preset elegant
+paperpilot convert metrics.xlsx metrics.pdf --css-preset compact --css corporate.css
+```
+
+---
+
+## STEP 4: Write Tests in `paperpilot-pdf`
+
+In `paperpilot-pdf/src/operations/conversion.rs`:
+1. `test_css_preset_resolution`: Verify `resolve_css("elegant", None)` contains `"Georgia"` and correct margin rules.
+2. `test_custom_css_concatenation`: Verify custom CSS is correctly appended to the preset stylesheet.
+3. `test_inject_css_into_html`: Verify `<style>` block is inserted into `<head>` before `</head>`.
+4. `test_excel_to_html_table`: Verify `.xlsx` data renders valid semantic HTML table with headers and classes.
+
+---
+
+## VERIFICATION CHECKLIST
+
+1. `cargo check --workspace` passes with 0 errors.
+2. `cargo test -p paperpilot-pdf` passes all conversion and CSS injection tests.
+3. `npm run check` in `apps/desktop` passes with 0 errors.
+4. All Svelte components use Svelte 5 runes ($state, $props, $bindable).
+5. All interactive elements have descriptive, unique `id` attributes.
+6. Commit message starts with `jules: ` prefix.

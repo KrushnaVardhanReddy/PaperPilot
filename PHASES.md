@@ -552,6 +552,17 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.11.2 | Interactive Split Slider | 🔲 Queued (`P4_F_11_visual_pixel_diff_slider.txt`) — Draggable divider handle across dual canvas layers (before/after) |
 | F.11.3 | Synchronized Paging & Navigation | 🔲 Queued (`P4_F_11_visual_pixel_diff_slider.txt`) — Multi-document selection, side-by-side mode, keyboard shortcut (`Ctrl+D`) |
 
+#### 4.F.12 — Custom CSS Injection for HTML/Markdown/Excel → PDF `[QUEUED]`
+
+> **Core Basic / Free Feature**: Overcomes Stirling PDF's unstyled conversions and Adobe Acrobat Pro's costly enterprise layout paywalls.
+
+| # | Task | Notes |
+|---|---|---|
+| F.12.1 | CSS Preset Library (5 Themes) | 🔲 Queued (`P4_F_12_custom_css_html_md_excel_to_pdf.txt`) — `github`, `elegant`, `minimal`, `branded`, `compact` print-optimized stylesheets |
+| F.12.2 | Custom CSS File & Inline Injection | 🔲 Queued (`P4_F_12_custom_css_html_md_excel_to_pdf.txt`) — Desktop `.css` file upload + inline textarea + CLI `--css` flags |
+| F.12.3 | Excel → Styled Semantic Table Pipeline | 🔲 Queued (`P4_F_12_custom_css_html_md_excel_to_pdf.txt`) — Spreadsheet `.xlsx`/`.csv` parsed into semantic HTML `<table>` with CSS styling |
+| F.12.4 | Standalone Svelte 5 `CssInjectionPanel` | 🔲 Queued (`P4_F_12_custom_css_html_md_excel_to_pdf.txt`) — Modern Svelte 5 runes component for tool inspector integration |
+
 
 
 ---

@@ -101,9 +101,14 @@ PaperPilot/
    - High-contrast visual pixel discrepancy comparison engine (bypasses Adobe Acrobat Pro's $239/yr paywall and Stirling PDF's text-only limitation)
    - Interactive split-slider before/after mode (`splitPercent`), difference map overlay, and synchronized side-by-side mode (`prompts/tasks/phase_4/P4_F_11_visual_pixel_diff_slider.txt`)
    - Shortcut `Ctrl+D` and menu integration (`View -> Compare Documents`)
-2. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-3. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-4. **Phase 5 (Advanced Intelligence & Local AI Engine):**
+2. **Phase 4.F.12 (Custom CSS Injection for HTML/Markdown/Excel → PDF — Core Free Feature):**
+   - 5 built-in print presets: `github`, `elegant`, `minimal`, `branded`, `compact`
+   - Custom CSS file upload & inline CSS injection for Desktop inspector and CLI (`--css brand.css`)
+   - Excel (`.xlsx`, `.csv`) → semantic styled HTML table → PDF pipeline (`prompts/tasks/phase_4/P4_F_12_custom_css_html_md_excel_to_pdf.txt`)
+   - Standalone `CssInjectionPanel.svelte` Svelte 5 runes component
+3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
+4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+5. **Phase 5 (Advanced Intelligence & Local AI Engine):**
    - High-speed OCR (`paperpilot-ocr`)
    - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search
    - MinerU / Marker-style layout-aware clean Markdown and LaTeX table parsing
