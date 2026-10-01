@@ -534,6 +534,14 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.9.2 | Direct Thumbnail Page Reordering | 🚧 In-Progress (Session 11112673620045863445) — Drag-and-drop page reordering directly in thumbnail sidebar |
 | F.9.3 | Thumbnail Quick Actions (Rotate & Delete Page) | 🚧 In-Progress (Session 11112673620045863445) — Hover quick buttons on thumbnail cards to rotate or delete individual pages |
 
+#### 4.F.10 — Stirling-Style Categorized Tools Dock `[QUEUED]`
+
+| # | Task | Notes |
+|---|---|---|
+| F.10.1 | Searchable Tool Directory & Filtering | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — `🔍 Search tools...` input with instant tag & name filtering |
+| F.10.2 | Categorized Tool Accordions | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Quick Actions, Page Mgmt, Edit, Optimize, Security, Convert, AI |
+| F.10.3 | Slide-in Inspector & Param Config | 🔲 Queued (`P4_F_10_stirling_categorized_tools_dock.txt`) — Inline parameter inspector with `‹ Back` navigation |
+
 
 ---
 
