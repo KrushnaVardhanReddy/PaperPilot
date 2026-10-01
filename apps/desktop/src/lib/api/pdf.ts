@@ -16,3 +16,14 @@ export interface Annotation {
 export async function saveAnnotations(filePath: string, outputPath: string, annotations: Annotation[]) {
   return invoke('save_annotations', { filePath, outputPath, annotations });
 }
+
+export async function savePdfForm(inputPath: string, outputPath: string, values: Record<string, string>): Promise<any> {
+    return await invoke('invoke_mcp_tool', {
+        toolName: 'pdf_fill_form',
+        arguments: {
+            input: inputPath,
+            output: outputPath,
+            values
+        }
+    });
+}

@@ -49,7 +49,7 @@ impl PdfOperation for CompareOperation {
 
         // Use a clean operation instance for document B to avoid mingling states
         let extract_op_b = ExtractTextOperation::new(None);
-        let mut dyn_doc_b: &mut dyn PdfDocument = &mut doc_b;
+        let dyn_doc_b: &mut dyn PdfDocument = &mut doc_b;
         extract_op_b.execute(dyn_doc_b)?;
         let text_b_mutex = extract_op_b.extracted_text.clone();
         let text_b_opt = text_b_mutex.lock().unwrap().clone();

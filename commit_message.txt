@@ -1,0 +1,10 @@
+jules: implement form field editing overlay and data persistence (V2)
+
+This commit addresses the feedback on Phase 4.F.3 — Form Filling functionality:
+
+- **Initial Value Hydration:** Implemented dynamic reading of `fieldValue` from `pdfjs-dist` annotations, ensuring existing form values in the PDF populate the HTML overlays correctly.
+- **Type Casting:** Modified the `saveForm` function in `+page.svelte` to cast Svelte's bound boolean checkbox states into the required `"Yes"`/`"Off"` string representations expected by the Rust backend.
+- **Button Visibility:** Fixed the conditionally rendered "Save Form" button to display dynamically depending on the PDF's `hasFormFields` state, rather than tracking typing events.
+- **Robust E2E Validation:** Expanded the Form Filling E2E test to upload an unedited fixture, edit the fields, save, close, and then reload the "simulated saved" fixture (`form_filled.pdf`) to assert that the field values correctly trigger the hydration logic upon fresh load.
+
+Finally, applied Clippy suggestions in `paperpilot-pdf` to ensure compliance with strict styling standards.

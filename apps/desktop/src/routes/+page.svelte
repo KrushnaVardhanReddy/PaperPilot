@@ -12,6 +12,35 @@
   import PdfAnnotationToolbar from '$lib/components/PdfAnnotationToolbar.svelte';
   import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
   import type { Annotation } from '$lib/api/pdf';
+  import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
+
+  import { onMount } from 'svelte';
+  onMount(() => {
+    window.addEventListener('test-select-doc', (e: any) => {
+       appState.selectDocument(e.detail);
+    });
+  });
+
+  import { savePdfForm } from '$lib/api/pdf';
+  import { toastState } from '$lib/state/toast.svelte';
+
+  async function saveForm() {
+    if (appState.selectedDocumentIndex === null) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+    // Convert booleans to strings
+    const stringValues: Record<string, string> = {};
+    for (const [k, v] of Object.entries(formValues)) {
+       stringValues[k] = typeof v === 'boolean' ? (v ? 'Yes' : 'Off') : String(v);
+    }
+    try {
+      const path = (file as any).path || file.name;
+      await savePdfForm(path, path, stringValues);
+      toastState.success('Form saved successfully');
+    } catch (e) {
+      toastState.error(`Failed to save form: ${e}`);
+    }
+  }
 
   function handleFilesDropped(files: File[]) {
     appState.addDocuments(files);
@@ -23,6 +52,8 @@
   let pageNum = $state(1);
   let scale = $state(1.2);
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
+  let formValues = $state<Record<string, any>>({});
+  let hasFormFields = $state(false);
 
   let activeTool = $state('none');
   let annotations = $state<Annotation[]>([]);
@@ -70,14 +101,20 @@
                 <PdfToolbar bind:pageNum {numPages} bind:scale />
                 <PdfAnnotationToolbar bind:activeTool />
               </div>
-              <PdfViewer
-                fileUrl={currentFileUrl}
-                bind:pdfDoc
-                bind:pageNum
-                bind:scale
-                activeTool={activeTool}
-                bind:annotations
-              />
+              {#if hasFormFields}
+                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={saveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
+              {/if}
+              <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
+                <PdfViewer
+                  fileUrl={currentFileUrl}
+                  bind:pdfDoc
+                  bind:pageNum
+                  bind:scale
+                  activeTool={activeTool}
+                  bind:annotations
+                />
+                <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
+              </div>
             </div>
 
             <PdfAnnotationPanel
