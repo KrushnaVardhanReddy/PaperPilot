@@ -654,19 +654,20 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 5.2 — Document Understanding `[PARALLEL with 5.1]`
+### 5.2 — Document Understanding & Local Vector Engine `[PARALLEL with 5.1]`
 
 | # | Task | Notes |
 |---|---|---|
-| 5.2.1 | Semantic search | Embed document chunks, search by meaning |
-| 5.2.2 | Table extraction | Detect and extract tables to CSV/JSON |
-| 5.2.3 | Document comparison | Semantic diff, not just structural |
-| 5.2.4 | Document summarization | AI-powered summary of document content |
-| 5.2.5 | PDF Q&A (single doc) | Ask questions, get answers grounded in one document |
-| 5.2.6 | Multi-document synthesis | Upload 2–50 PDFs; ask cross-document questions (e.g. "which contract has the lowest penalty clause?"); AI synthesises across all docs |
-| 5.2.7 | Layout-preserving translation | Translate PDF text to any language while keeping the original visual layout intact (columns, tables, fonts) — powered by a pluggable translation API (DeepL / Google Translate / local LLM) |
-| 5.2.8 | Batch workflows | Run operations across folders of documents |
-| 5.2.9 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
+| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort` (ONNX Runtime) using quantized BGE-micro (<30MB) — 100% offline RAG |
+| 5.2.2 | Layout-Aware Markdown & Table Parser | MinerU/Marker-style structured text extraction preserving multi-columns, LaTeX math, and Markdown tables |
+| 5.2.3 | Semantic Search & Highlighting | Search document by intent/meaning rather than exact keywords, jumping directly to target sentences |
+| 5.2.4 | Table Extraction to CSV/JSON/Parquet | Detect table boundaries and export structured data |
+| 5.2.5 | Automatic PII Redaction (SSN, Cards, Names) | Local regex + NER entity classifier to automatically detect and structurally redact sensitive PII |
+| 5.2.6 | Single-Document Contextual Q&A | Grounded Q&A against document content with page source citations |
+| 5.2.7 | Multi-Document Synthesis | Query 2–50 documents simultaneously (e.g. "compare indemnity caps across all 3 vendor agreements") |
+| 5.2.8 | Layout-Preserving Translation | Translate text blocks in-place while keeping columns, tables, and typography intact |
+| 5.2.9 | High-Scale Memory-Mapped Streaming (`memmap2`) | Lazy page streaming and multi-core Rayon processing for fast opening of 1,000+ page documents |
+| 5.2.10 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
 
 ---
 

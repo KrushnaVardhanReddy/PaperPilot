@@ -104,7 +104,12 @@ PaperPilot/
    - Hover quick action buttons on thumbnails (Rotate 🔄, Delete 🗑️)
 3. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
 4. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
-5. **Phase 5 (NLP & OCR):** Begin integration of the offline NLP classifier and OCR components.
+5. **Phase 5 (Advanced Intelligence & Local AI Engine):**
+   - High-speed OCR (`paperpilot-ocr`)
+   - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search
+   - MinerU / Marker-style layout-aware clean Markdown and LaTeX table parsing
+   - Automatic local PII detection & structural redaction (SSNs, credit cards, names)
+   - Multi-core memory-mapped streaming (`memmap2`) for 1,000+ page documents
 
 ---
 
