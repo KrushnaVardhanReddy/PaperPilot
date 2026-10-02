@@ -46,30 +46,34 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
    ```
 
 3. **Verify Annotation Tools in Top Toolbar**:
-   - Check presence of tools:
-     - `#tool-pointer`
-     - `#tool-highlight`
-     - `#tool-underline`
-     - `#tool-strike`
-     - `#tool-pen`
-     - `#tool-note`
+   - Check presence of exact button elements:
+     - `#tool-btn-none` (Pointer)
+     - `#tool-btn-highlight` (Highlight)
+     - `#tool-btn-underline` (Underline)
+     - `#tool-btn-strikethrough` (Strike)
+     - `#tool-btn-pen` (Pen)
+     - `#tool-btn-note` (Note)
 
-4. **Activate Highlight Tool**:
-   - Click `#tool-highlight`:
+4. **Test Pointer Tool (Default Active)**:
+   - Verify `#tool-btn-none` has the `.active` class on initial load.
+
+5. **Test Note Tool**:
+   - Click `#tool-btn-note`:
      ```bash
-     npx --prefix apps/desktop agent-browser click "#tool-highlight"
+     npx --prefix apps/desktop agent-browser click "#tool-btn-note"
      ```
-   - Verify `#tool-highlight` has the active state class.
+   - Verify `#tool-btn-note` gets the `.active` class and `#tool-btn-none` loses `.active`.
 
-5. **Activate Pen Tool**:
-   - Click `#tool-pen`:
-     ```bash
-     npx --prefix apps/desktop agent-browser click "#tool-pen"
-     ```
-   - Verify `#tool-pen` is active.
+6. **Test Highlight, Underline, and Pen Tools**:
+   - Click `#tool-btn-highlight` -> verify active.
+   - Click `#tool-btn-underline` -> verify active.
+   - Click `#tool-btn-strikethrough` -> verify active.
+   - Click `#tool-btn-pen` -> verify active.
+   - Click back on `#tool-btn-none` (Pointer) -> verify it returns to active pointer mode.
 
-6. **Verify Annotation Badge**:
-   - Inspect `.annotation-count-badge` or the annotation indicator in the status bar/header.
+7. **Verify Annotation Canvas & Right Drawer**:
+   - Ensure the right sidebar tab `Annotations (0)` is present and clickable.
+   - Verify no toolbar buttons overlap on the PDF viewer canvas.
 
 ---
 
