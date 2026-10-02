@@ -156,5 +156,14 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(input),
+        Commands::Serve { port, bind } => {
+            let rt = tokio::runtime::Runtime::new().map_err(|e| {
+                paperpilot_core::error::PdfError::IoError(e)
+            })?;
+            rt.block_on(async {
+                paperpilot_gateway::server::start(*port, bind).await
+            }).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+            Ok(())
+        }
     }
 }

@@ -308,6 +308,13 @@ pub enum Commands {
         #[arg(long)]
         inline_css: Option<String>,
     },
+    // --- Headless Server / Automation Gateway ---
+    Serve {
+        #[arg(long, default_value = "7823")]
+        port: u16,
+        #[arg(long, default_value = "127.0.0.1")]
+        bind: String,
+    },
 }
 
 
