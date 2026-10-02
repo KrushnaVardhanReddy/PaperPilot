@@ -18,7 +18,7 @@ test.describe('QA-5: Annotation & Markup Tools', () => {
     await page.goto('/');
 
     const fileInput = page.locator('input[multiple][type="file"]');
-    await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/contract_555.pdf'));
+    await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
     const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
