@@ -100,7 +100,7 @@ PaperPilot/
 |---|---|---|---|
 | **QA-1**: Document Lifecycle & Tabs | `544885962421601530` | Multi-doc tabs, `pdf_info`, `pdf_validate`, `pdf_hash`, `pdf_metadata` | [Session 544885962421601530](https://jules.google.com/session/544885962421601530) |
 | **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | [Session 17034994067282609951](https://jules.google.com/session/17034994067282609951) |
-| **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | [Session 10793971291527024299](https://jules.google.com/session/10793971291527024299) |
+| **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | ✅ Merged (PR #91) |
 | **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | [Session 13669625293175016599](https://jules.google.com/session/13669625293175016599) |
 | **QA-5**: Annotations & Markup | `3824896424156358922` | Toolbar, `pdf_watermark`, `pdf_annotate`, `pdf_header_footer`, `pdf_bates`, `pdf_create_form_field`, `pdf_read_form`, `pdf_fill_form`, `pdf_sign` | [Session 3824896424156358922](https://jules.google.com/session/3824896424156358922) |
 | **QA-6**: Operations Dock & Page Tools | `3241010897792427201` | Category pills, `pdf_merge`, `pdf_split`, `pdf_page_numbers`, `pdf_remove_blank`, `pdf_compress`, `pdf_linearize`, `pdf_repair`, `pdf_flatten` | [Session 3241010897792427201](https://jules.google.com/session/3241010897792427201) |
