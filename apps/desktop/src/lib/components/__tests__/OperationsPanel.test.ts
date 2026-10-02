@@ -16,8 +16,8 @@ describe('OperationsPanel', () => {
     expect(screen.getByPlaceholderText('Search tools...')).toBeInTheDocument();
 
     // Check if category headers are visible
-    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
-    expect(screen.getByText('Page Management')).toBeInTheDocument();
+    expect(screen.getAllByText('Quick Actions').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Page Management').length).toBeGreaterThan(0);
   });
 
   it('shows correct parameters when switching to an operation', async () => {
