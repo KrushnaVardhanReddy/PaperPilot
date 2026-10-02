@@ -7,4 +7,5 @@ pub struct OperationResult {
     pub output_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diff_detected: Option<bool>,
+    pub data: Option<serde_json::Value>,
 }

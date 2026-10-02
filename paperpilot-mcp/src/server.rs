@@ -2616,6 +2616,7 @@ impl PaperPilotMcpServer {
                 op.render().map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "HTML converted to PDF successfully.".to_string(),
                     output_path: Some(output),
@@ -2651,6 +2652,7 @@ impl PaperPilotMcpServer {
                 op.render().map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Markdown converted to PDF successfully.".to_string(),
                     output_path: Some(output),
@@ -2682,6 +2684,7 @@ impl PaperPilotMcpServer {
                 op.render().map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Excel converted to PDF successfully.".to_string(),
                     output_path: Some(output),
@@ -2705,6 +2708,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Blank pages removed successfully.".to_string(),
                     output_path: Some(output),
@@ -2730,6 +2734,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Page numbers added successfully.".to_string(),
                     output_path: Some(output),
@@ -2750,6 +2755,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDFs merged successfully.".to_string(),
                     output_path: Some(output),
@@ -2772,6 +2778,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF split successfully.".to_string(),
                     output_path: Some(output_dir),
@@ -2796,6 +2803,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Pages extracted successfully.".to_string(),
                     output_path: Some(output),
@@ -2820,6 +2828,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Pages deleted successfully.".to_string(),
                     output_path: Some(output),
@@ -2843,6 +2852,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Pages reordered successfully.".to_string(),
                     output_path: Some(output),
@@ -2875,6 +2885,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Pages rotated successfully.".to_string(),
                     output_path: Some(output),
@@ -2924,6 +2935,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Pages cropped successfully.".to_string(),
                     output_path: Some(output),
@@ -2942,6 +2954,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF burst successfully.".to_string(),
                     output_path: Some(output_dir),
@@ -2963,6 +2976,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF compressed successfully.".to_string(),
                     output_path: Some(output),
@@ -3007,6 +3021,7 @@ impl PaperPilotMcpServer {
                     .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Text extracted successfully.".to_string(),
                     output_path: Some(output),
@@ -3029,6 +3044,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Images extracted successfully.".to_string(),
                     output_path: Some(output_dir),
@@ -3054,6 +3070,7 @@ impl PaperPilotMcpServer {
                 };
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message,
                     output_path: None,
@@ -3091,6 +3108,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Annotations applied successfully.".to_string(),
                     output_path: Some(output),
@@ -3114,6 +3132,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Watermark applied successfully.".to_string(),
                     output_path: Some(output),
@@ -3140,6 +3159,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF encrypted successfully.".to_string(),
                     output_path: Some(output),
@@ -3163,6 +3183,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF decrypted successfully.".to_string(),
                     output_path: Some(output),
@@ -3187,6 +3208,7 @@ impl PaperPilotMcpServer {
                 };
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message,
                     output_path: None,
@@ -3220,6 +3242,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Form filled successfully.".to_string(),
                     output_path: Some(output),
@@ -3254,6 +3277,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Form field added successfully.".to_string(),
                     output_path: Some(output),
@@ -3283,10 +3307,11 @@ impl PaperPilotMcpServer {
                     is_update = true;
                 }
 
+                let map = op.retrieved_metadata.lock().unwrap().clone();
+
                 let message = if is_update {
                     "Metadata updated successfully.".to_string()
                 } else {
-                    let map = op.retrieved_metadata.lock().unwrap().clone();
                     if map.is_empty() {
                         "No metadata found.".to_string()
                     } else {
@@ -3295,6 +3320,7 @@ impl PaperPilotMcpServer {
                 };
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message,
                     output_path: output,
@@ -3316,6 +3342,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Converted to DOCX successfully.".to_string(),
                     output_path: Some(output),
@@ -3337,6 +3364,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Converted to XLSX successfully.".to_string(),
                     output_path: Some(output),
@@ -3358,6 +3386,7 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Converted to PPTX successfully.".to_string(),
                     output_path: Some(output),
@@ -3382,6 +3411,7 @@ impl PaperPilotMcpServer {
                 };
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message,
                     output_path: None,
@@ -3403,6 +3433,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF repaired successfully.".to_string(),
                     output_path: Some(output),
@@ -3423,6 +3454,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF linearized successfully.".to_string(),
                     output_path: Some(output),
@@ -3443,6 +3475,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF flattened successfully.".to_string(),
                     output_path: Some(output),
@@ -3463,6 +3496,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF converted to PDF/A successfully.".to_string(),
                     output_path: Some(output),
@@ -3494,6 +3528,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF redacted successfully.".to_string(),
                     output_path: Some(output),
@@ -3518,6 +3553,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Header/footer added successfully.".to_string(),
                     output_path: Some(output),
@@ -3545,6 +3581,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Bates numbering applied successfully.".to_string(),
                     output_path: Some(output),
@@ -3565,6 +3602,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF rendered successfully.".to_string(),
                     output_path: Some(output),
@@ -3588,6 +3626,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Images converted to PDF successfully.".to_string(),
                     output_path: Some(output),
@@ -3620,6 +3659,7 @@ impl PaperPilotMcpServer {
                 std::fs::write(&output, diff_report).map_err(|e| crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e)))?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: if diff_detected { "Differences detected.".to_string() } else { "PDF comparison completed successfully. No differences detected.".to_string() },
                     output_path: Some(output),
@@ -3640,6 +3680,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "Bookmarks operation completed successfully.".to_string(),
                     output_path: Some(output),
@@ -3660,6 +3701,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "OCR operation completed successfully.".to_string(),
                     output_path: Some(output),
@@ -3682,6 +3724,7 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
+                    data: None,
                     success: true,
                     message: "PDF signed successfully.".to_string(),
                     output_path: Some(output),
@@ -3699,6 +3742,7 @@ impl PaperPilotMcpServer {
                 let result = op.hash_result.lock().unwrap();
                 let (hash, _size) = result.as_ref().unwrap();
                 Ok(OperationResult {
+                    data: Some(serde_json::json!({"hash": hash.clone()})),
                     success: true,
                     message: "Hash calculated".to_string(),
                     output_path: Some(hash.clone()),
@@ -3714,6 +3758,7 @@ impl PaperPilotMcpServer {
                 let op = paperpilot_pdf::operations::validate::ValidateOperation::new();
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 Ok(OperationResult {
+                    data: Some(serde_json::json!({"is_valid": true})),
                     success: true,
                     message: "Document is valid".to_string(),
                     output_path: Some("true".to_string()),
