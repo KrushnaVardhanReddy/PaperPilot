@@ -2104,6 +2104,44 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_input_b_compare),
         );
 
+        let mut prop_file1_compare = serde_json::Map::new();
+        prop_file1_compare.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_compare.insert(
+            "file1".to_string(),
+            serde_json::Value::Object(prop_file1_compare),
+        );
+        let mut prop_file_a_compare = serde_json::Map::new();
+        prop_file_a_compare.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_compare.insert(
+            "file_a".to_string(),
+            serde_json::Value::Object(prop_file_a_compare),
+        );
+
+        let mut prop_file2_compare = serde_json::Map::new();
+        prop_file2_compare.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_compare.insert(
+            "file2".to_string(),
+            serde_json::Value::Object(prop_file2_compare),
+        );
+        let mut prop_file_b_compare = serde_json::Map::new();
+        prop_file_b_compare.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_compare.insert(
+            "file_b".to_string(),
+            serde_json::Value::Object(prop_file_b_compare),
+        );
+
         let mut prop_output_compare = serde_json::Map::new();
         prop_output_compare.insert(
             "type".to_string(),
@@ -2124,11 +2162,7 @@ impl PaperPilotMcpServer {
         );
         schema_compare.insert(
             "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input_a".to_string()),
-                serde_json::Value::String("input_b".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
+            serde_json::Value::Array(vec![]),
         );
 
         let mut tool_compare = Tool::default();
@@ -2585,6 +2619,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "HTML converted to PDF successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_convert_markdown" => {
@@ -2619,6 +2654,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Markdown converted to PDF successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_convert_excel" => {
@@ -2649,6 +2685,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Excel converted to PDF successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -2671,6 +2708,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Blank pages removed successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -2695,6 +2733,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Page numbers added successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -2714,6 +2753,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDFs merged successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_split" => {
@@ -2735,6 +2775,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF split successfully.".to_string(),
                     output_path: Some(output_dir),
+                    diff_detected: None,
                 })
             }
             "pdf_extract_pages" => {
@@ -2758,6 +2799,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Pages extracted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_delete_pages" => {
@@ -2781,6 +2823,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Pages deleted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_reorder_pages" => {
@@ -2803,6 +2846,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Pages reordered successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_rotate" => {
@@ -2834,6 +2878,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Pages rotated successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_crop" => {
@@ -2882,6 +2927,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Pages cropped successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_burst" => {
@@ -2899,6 +2945,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF burst successfully.".to_string(),
                     output_path: Some(output_dir),
+                    diff_detected: None,
                 })
             }
 
@@ -2919,6 +2966,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF compressed successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -2962,6 +3010,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Text extracted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -2983,6 +3032,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Images extracted successfully.".to_string(),
                     output_path: Some(output_dir),
+                    diff_detected: None,
                 })
             }
 
@@ -3007,6 +3057,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message,
                     output_path: None,
+                    diff_detected: None,
                 })
             }
             "pdf_annotate" => {
@@ -3043,6 +3094,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Annotations applied successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3065,6 +3117,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Watermark applied successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3090,6 +3143,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF encrypted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3112,6 +3166,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF decrypted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3135,6 +3190,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message,
                     output_path: None,
+                    diff_detected: None,
                 })
             }
 
@@ -3167,6 +3223,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Form filled successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3200,6 +3257,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Form field added successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_metadata" => {
@@ -3240,6 +3298,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message,
                     output_path: output,
+                    diff_detected: None,
                 })
             }
             "pdf_to_docx" => {
@@ -3260,6 +3319,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Converted to DOCX successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_to_xlsx" => {
@@ -3280,6 +3340,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Converted to XLSX successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_to_pptx" => {
@@ -3300,6 +3361,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Converted to PPTX successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_classify_type" => {
@@ -3323,6 +3385,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message,
                     output_path: None,
+                    diff_detected: None,
                 })
             }
 
@@ -3343,6 +3406,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF repaired successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_linearize" => {
@@ -3362,6 +3426,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF linearized successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_flatten" => {
@@ -3381,6 +3446,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF flattened successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_to_pdf_a" => {
@@ -3400,6 +3466,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF converted to PDF/A successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_redact" => {
@@ -3430,6 +3497,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF redacted successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_header_footer" => {
@@ -3453,6 +3521,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Header/footer added successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_bates" => {
@@ -3479,6 +3548,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Bates numbering applied successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_render" => {
@@ -3498,6 +3568,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF rendered successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_images_to_pdf" => {
@@ -3520,12 +3591,13 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Images converted to PDF successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_compare" => {
-                let input_a = get_string("input_a")?;
-                let input_b = get_string("input_b")?;
-                let output = get_string("output")?;
+                let input_a = get_string("input_a").or_else(|_| get_string("file_a")).or_else(|_| get_string("file1"))?;
+                let input_b = get_string("input_b").or_else(|_| get_string("file_b")).or_else(|_| get_string("file2"))?;
+                let output = get_string("output").unwrap_or_else(|_| "diff_report.json".to_string());
 
                 ensure_parent_dir(&output)?;
 
@@ -3533,14 +3605,25 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
                 let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
                 op.input_b = Some(input_b);
+
                 op.execute(&mut doc_a).map_err(crate::error::to_mcp_error)?;
 
-                std::fs::write(&output, "[]").map_err(|e| crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e)))?;
+                let result_opt = op.result.lock().unwrap().take();
+                let diff_detected = result_opt.as_ref().map(|r| r.diff_detected).unwrap_or(false);
+
+                let diff_report = if let Some(res) = result_opt {
+                    serde_json::to_string_pretty(&res).unwrap_or_else(|_| "[]".to_string())
+                } else {
+                    "[]".to_string()
+                };
+
+                std::fs::write(&output, diff_report).map_err(|e| crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e)))?;
 
                 Ok(OperationResult {
                     success: true,
-                    message: "PDF comparison completed successfully.".to_string(),
+                    message: if diff_detected { "Differences detected.".to_string() } else { "PDF comparison completed successfully. No differences detected.".to_string() },
                     output_path: Some(output),
+                    diff_detected: Some(diff_detected),
                 })
             }
             "pdf_bookmarks" => {
@@ -3560,6 +3643,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Bookmarks operation completed successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_ocr" => {
@@ -3579,6 +3663,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "OCR operation completed successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
             "pdf_sign" => {
@@ -3600,6 +3685,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF signed successfully.".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
                 })
             }
 
@@ -3616,6 +3702,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Hash calculated".to_string(),
                     output_path: Some(hash.clone()),
+                    diff_detected: None,
                 })
             }
             "pdf_validate" => {
@@ -3630,6 +3717,7 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "Document is valid".to_string(),
                     output_path: Some("true".to_string()),
+                    diff_detected: None,
                 })
             }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
