@@ -98,7 +98,7 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.F.13 | `6513801077432005833` | Stirling Parity: Category Filter Pills, To-PDF conversions in Dock, Page Numbers, Blank Page Removal |
+| Phase 4.F.13 | `12318669239840057258` | Stirling Parity: Category Filter Pills, To-PDF conversions in Dock, Page Numbers, Blank Page Removal (re-triggered cleanly from main) |
 | Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
 
 ---
