@@ -92,14 +92,15 @@ PaperPilot/
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-*None currently running. Ready to submit Phase 4.E2E Round 2.*
+| Task | Session ID | What it does |
+|---|---|---|
+| Phase 4.E2E R2.E3 | `11778243636880036911` | Comprehensive UI Playwright E2E Suite (Tabs, Search, Tools Dock, Diff Slider, CSS Injection) |
 
 ---
 
 ## 🔲 What's Next (Backlog Priority Order)
 
-1. **Phase 4.E2E Round 2 (Real E2E Testing without Mocking):** Implement native driver tests and system re-validation post-Viewer UX improvements.
-2. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking.
+1. **Phase 4.E2E R2.E4:** Execute `scripts/benchmark.py` for system performance re-benchmarking post-Phase 4.F.
 3. **Phase 5 (Advanced Intelligence & Local AI Engine):**
    - High-speed OCR (`paperpilot-ocr`)
    - Local embedded vector engine via `ort` ONNX Runtime (<30MB model) for 100% offline RAG & semantic search

@@ -575,7 +575,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | R2.E1 | CLI End-to-End Re-Validation | ✅ Completed |
 | R2.E2 | MCP End-to-End Re-Validation | ✅ Completed |
-| R2.E3 | UI Full Re-Validation (Viewer + Annotations + Phase 4.F Features) | 🔲 Queued (`P4_E2E_R2_comprehensive_ui_suite.txt`) — Playwright E2E suite covering Tabs, Canvas Search, Tools Dock, Diff Slider, CSS Injection |
+| R2.E3 | UI Full Re-Validation (Viewer + Annotations + Phase 4.F Features) | 🚧 In-Progress (Session 11778243636880036911) — Playwright E2E suite covering Tabs, Canvas Search, Tools Dock, Diff Slider, CSS Injection |
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
 
 ---
