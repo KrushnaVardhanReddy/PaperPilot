@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-7 — Security & Conversion Operations
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -14,7 +14,8 @@ Your mission is to:
    - **Encrypt with Password**: Enter password `vault999` and click Run.
    - **Remove Password (Decrypt)**: Enter password `vault999` and click Run.
    - **Convert to Markdown**: Run operation and verify export.
-4. If ANY IPC error or operation failure occurs, fix the code and submit a green PR.
+4. Test the same operations via REST API endpoints to ensure Ports & Adapters parity.
+5. If ANY IPC error, REST error, or operation failure occurs, fix the code and submit a green PR.
 
 ---
 
@@ -61,6 +62,14 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md -
    - Fill title input with `Sanitized Document 999`.
    - Click `#btn-run-operation`.
    - Verify success toast appears.
+
+5. **Dual-Channel Verification: REST API Execution**:
+   - Ensure metadata and inspection tools work identically via REST API:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
+       -F "file=@tests/e2e_fixtures/secret_999.pdf"
+     ```
+   - Verify JSON response includes accurate metadata.
 
 ---
 

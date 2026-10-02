@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-4 — Thumbnail Sidebar Drag & Page Manipulation
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -11,7 +11,8 @@ Your mission is to:
 1. Generate a 3-page test PDF **using PaperPilot's conversion engine** with giant numbers: `PAGE 111`, `PAGE 222`, `PAGE 333`.
 2. Launch the desktop app and open the document.
 3. Test thumbnail rendering, drag-and-drop page reordering (moving Page 3 to Page 1), and hover quick actions (Rotate, Delete).
-4. If ANY thumbnail rendering or reordering defect is found, fix the code and submit a green PR.
+4. Verify page rotation and reorder parity via the REST API endpoints (`/api/v1/pdf/rotate` & `/api/v1/pdf/reorder`).
+5. If ANY thumbnail rendering or reordering defect is found, fix the code and submit a green PR.
 
 ---
 
@@ -63,6 +64,17 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/thumbnail_test.
 5. **Test Page Reorder**:
    - Simulate dragging page 3 before page 1 (or clicking move-up action).
    - Verify page sequence reflects the new order.
+
+6. **Dual-Channel Verification: REST API Page Reorder & Rotate**:
+   - Verify identical page manipulation via REST API:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rotate \
+       -F "file=@tests/e2e_fixtures/thumbnail_test.pdf" \
+       -F "pages=2" \
+       -F "angle=90" \
+       -o /tmp/rotated_via_api.pdf
+     ```
+   - Assert `/tmp/rotated_via_api.pdf` exists and is a valid 3-page PDF.
 
 ---
 

@@ -70,6 +70,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_20.md --ou
    - Click `#btn-run-operation`.
    - Verify execution completes.
 
+6. **Dual-Channel Verification: REST API Execution**:
+   - Ensure the server endpoint processes the exact same fixtures via HTTP:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge \
+       -F "files=@tests/e2e_fixtures/part_10.pdf" \
+       -F "files=@tests/e2e_fixtures/part_20.pdf" \
+       -o /tmp/api_merged_6.pdf
+     ```
+   - Verify `/tmp/api_merged_6.pdf` exists and page count is 2.
+
 ---
 
 ## STEP 3: BUG FIX MANDATE

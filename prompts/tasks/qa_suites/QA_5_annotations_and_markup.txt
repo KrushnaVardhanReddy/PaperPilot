@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-5 — Annotation & Markup Tools
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -12,7 +12,8 @@ Your mission is to:
 2. Launch the desktop app and activate annotation tools from the unified top toolbar.
 3. Test Highlight, Underline, Pen, Sticky Note, and annotation deletion.
 4. Verify that annotation count updates in the status badge (`Annotations (N)`).
-5. If ANY tool button fails to activate or annotation canvas breaks, fix the code and submit a green PR.
+5. Verify watermark and annotation parity via the REST API endpoints (`/api/v1/pdf/watermark` & `/api/v1/pdf/info`).
+6. If ANY tool button fails to activate or annotation canvas breaks, fix the code and submit a green PR.
 
 ---
 
@@ -74,6 +75,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
 7. **Verify Annotation Canvas & Right Drawer**:
    - Ensure the right sidebar tab `Annotations (0)` is present and clickable.
    - Verify no toolbar buttons overlap on the PDF viewer canvas.
+
+8. **Dual-Channel Verification: REST API Watermark & Stamp**:
+   - Ensure overlay and visual markup tools work headlessly via REST API:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark \
+       -F "file=@tests/e2e_fixtures/contract_555.pdf" \
+       -F "text=CONFIDENTIAL #555" \
+       -o /tmp/watermarked_via_api.pdf
+     ```
+   - Assert `/tmp/watermarked_via_api.pdf` exists and is a valid PDF.
 
 ---
 

@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-8 — Visual Pixel Diff Slider & To-PDF Conversions
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -17,7 +17,8 @@ Your mission is to:
    - Split slider handle dragging works.
    - Discrepancy highlights the changed price area.
    - Mode toggling between Split, Overlay, and Side-by-Side functions smoothly.
-5. If ANY canvas rendering error or slider drag defect occurs, fix the code and submit a green PR.
+5. Verify PDF comparison parity via the REST API endpoint (`/api/v1/pdf/compare`).
+6. If ANY canvas rendering error or slider drag defect occurs, fix the code and submit a green PR.
 
 ---
 
@@ -70,6 +71,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md 
    - Click `#diff-mode-overlay` -> verify `#diff-overlay-canvas` appears.
    - Click `#diff-mode-side-by-side` -> verify dual side-by-side view.
    - Click `#diff-close-btn` -> verify diff modal closes.
+
+5. **Dual-Channel Verification: REST API Document Comparison**:
+   - Ensure the server endpoint can compare the revisions headlessly:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare \
+       -F "file1=@tests/e2e_fixtures/contract_v1.pdf" \
+       -F "file2=@tests/e2e_fixtures/contract_v2.pdf" \
+       -o /tmp/diff_report.json
+     ```
+   - Assert `/tmp/diff_report.json` indicates diff detected and marks page 1 changes.
 
 ---
 

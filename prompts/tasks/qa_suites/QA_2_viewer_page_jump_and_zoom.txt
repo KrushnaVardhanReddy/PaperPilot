@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-2 — PDF Canvas Viewer, Page Jump & Zoom Presets
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -12,7 +12,8 @@ Your mission is to:
 2. Launch the desktop app and load the document via `agent-browser`.
 3. Test precision page jumping (e.g. jumping from Page 1 to Page 4), zoom dropdown presets (50%, 100%, 120%, 200%), and the `Fit` button.
 4. Verify that the Zoom % text is clearly visible and high-contrast in dark mode.
-5. If ANY bug, unreadable text, or jump failure occurs, fix the code and submit a green PR.
+5. Verify headless page rendering parity via the REST API endpoint (`/api/v1/pdf/render-page`).
+6. If ANY bug, unreadable text, or jump failure occurs, fix the code and submit a green PR.
 
 ---
 
@@ -82,6 +83,17 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numb
      ```
    - Click `#toolbar-zoom-fit` (Fit button).
    - Verify zoom recalculates and canvas scales to viewport.
+
+6. **Dual-Channel Verification: Headless Page Render via REST API**:
+   - Ensure the server endpoint can render and rasterize pages headlessly:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page \
+       -F "file=@tests/e2e_fixtures/multi_page_numbered.pdf" \
+       -F "page=4" \
+       -F "dpi=150" \
+       -o /tmp/page_4_rendered.png
+     ```
+   - Verify `/tmp/page_4_rendered.png` exists and is a valid non-empty PNG image.
 
 ---
 

@@ -1,5 +1,5 @@
 # Autonomous QA Test Suite: QA-3 — In-Canvas Text Search & Match Highlighting
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
@@ -11,7 +11,8 @@ Your mission is to:
 1. Generate a multi-page test PDF **using PaperPilot's conversion engine** containing repeating numbered serial codes (e.g. `SERIAL-777` appearing on Page 1, Page 3, and Page 5).
 2. Launch the desktop app and open the document.
 3. Test canvas text search (`Ctrl+F`), searching for `SERIAL-777`, navigating matches (`1 of 3`, `2 of 3`, `3 of 3`), and closing search (`Esc`).
-4. If ANY search highlight, shortcut, or navigation defect is found, fix the code and submit a green PR.
+4. Verify search and text extraction parity headlessly via the REST API endpoint (`/api/v1/pdf/extract-text` & `/api/v1/pdf/search`).
+5. If ANY search highlight, shortcut, or navigation defect is found, fix the code and submit a green PR.
 
 ---
 
@@ -83,6 +84,15 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_num
 6. **Close Search**:
    - Click `#pdf-search-close` (or press Escape).
    - Verify `#pdf-search-bar` is hidden.
+
+7. **Dual-Channel Verification: REST API Text Search & Extraction**:
+   - Ensure the server endpoint finds the exact same occurrences headlessly:
+     ```bash
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text \
+       -F "file=@tests/e2e_fixtures/search_test.pdf" \
+       -F "query=SERIAL-777"
+     ```
+   - Assert JSON output reflects 3 occurrences and lists pages [1, 3, 5].
 
 ---
 

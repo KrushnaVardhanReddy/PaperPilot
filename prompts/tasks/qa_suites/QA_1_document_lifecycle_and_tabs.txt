@@ -96,6 +96,20 @@ Verify both `tests/e2e_fixtures/doc_100.pdf` and `tests/e2e_fixtures/doc_200.pdf
      ```
    - Verify `#tab-doc-1` is removed from the DOM and `#tab-doc-0` automatically becomes active.
 
+5. **Dual-Channel Verification: REST API Document Inspection & Health**:
+   - Ensure the server endpoint processes the exact same fixtures via HTTP:
+     ```bash
+     # Verify health
+     curl -s http://127.0.0.1:7823/health
+     # Inspect doc_100.pdf metadata headlessly
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
+       -F "file=@tests/e2e_fixtures/doc_100.pdf"
+     # Inspect doc_200.pdf metadata headlessly
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
+       -F "file=@tests/e2e_fixtures/doc_200.pdf"
+     ```
+   - Verify both HTTP responses return valid JSON with correct page counts.
+
 ---
 
 ## STEP 4: BUG TRIAGE & FIX MANDATE

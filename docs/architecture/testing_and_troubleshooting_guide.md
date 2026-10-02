@@ -17,12 +17,19 @@ PaperPilot is deliberately structured into three decoupled layers:
 └──────────────────────────▲─────────────────────────────┘
                            │ IPC invoke() / Events
 ┌──────────────────────────▼─────────────────────────────┐
-│  Tier 2: Tauri 2.0 API & IPC Bridge                    │
+│  Tier 2A: Tauri 2.0 API & IPC Bridge                   │
 │  - Command dispatch (generate_handler![]), permissions │
 │  - Security capabilities (capabilities/default.json)   │
 │  - Serialization / deserialization boundary (serde)    │
 └──────────────────────────▲─────────────────────────────┘
-                           │ JSON-RPC 2.0 Stdio / In-Process
+                           │
+┌──────────────────────────▼─────────────────────────────┐
+│  Tier 2B: REST API & Remote MCP Gateway (Axum :7823)   │
+│  - Driving Adapter for Automation (n8n, curl, scripts) │
+│  - Remote MCP over HTTP/SSE (/mcp/sse)                 │
+│  - OpenAPI / Swagger spec documentation (/docs)        │
+└──────────────────────────▲─────────────────────────────┘
+                           │ Hexagonal Ports (PdfOperation & MCP Registry)
 ┌──────────────────────────▼─────────────────────────────┐
 │  Tier 1: MCP Server & Rust Core Engine                 │
 │  - 45+ PDF operations (lopdf, pdf-writer, pdfium)      │
@@ -93,10 +100,36 @@ When an operation, user action, or test fails, **NEVER guess or apply random tri
    - TypeScript: `await invoke('invoke_mcp_tool', { tool: 'pdf_split', args: { path, ranges } })`
    - Rust: `pub fn invoke_mcp_tool(tool: String, args: serde_json::Value)`
 
-#### Common Tier 2 Root Causes:
+#### Common Tier 2A Root Causes:
 - **`command ... not found`:** Command is defined in Rust but missing from `generate_handler![]`.
 - **`permission denied` / `plugin dialog not allowed`:** Capability missing from `capabilities/default.json`.
 - **Webview sandbox block:** File path cannot be read directly by webview without `convertFileSrc` or native Tauri FS commands.
+
+---
+
+### TIER 2B: REST API & Remote MCP Gateway (Axum / HTTP)
+
+**Question:** *"Are automation endpoints and remote MCP clients receiving properly serialized responses?"*
+
+#### How to Test:
+1. **Server Health & Docs Check:**
+   ```bash
+   curl -s http://127.0.0.1:7823/health
+   curl -s http://127.0.0.1:7823/docs
+   ```
+2. **Direct REST Multipart Execution:**
+   ```bash
+   curl -X POST http://127.0.0.1:7823/api/v1/pdf/info -F "file=@tests/e2e_fixtures/sample.pdf"
+   ```
+3. **Remote MCP SSE Handshake Check:**
+   ```bash
+   curl -N http://127.0.0.1:7823/mcp/sse
+   ```
+
+#### Common Tier 2B Root Causes:
+- **`415 Unsupported Media Type` or `422 Unprocessable Entity`:** Multipart boundary header missing in request, or JSON body schema mismatch with the Axum extractor.
+- **Port Conflict (`EADDRINUSE`):** Port 7823 occupied by previous process. Kill existing listener (`fuser -k 7823/tcp`) or run with `--port <NEW_PORT>`.
+- **SSE Connection Drop:** Client disconnected before receiving session ID endpoint URI.
 
 ---
 
@@ -155,7 +188,13 @@ Does `npm run check` pass with 0 errors?
           │
           ▼
 Does the browser console show an IPC rejection / permission error?
-   ├── ❌ YES ──► TIER 2 IPC BUG: Check `generate_handler![]` or `capabilities/default.json`.
+   ├── ❌ YES ──► TIER 2A IPC BUG: Check `generate_handler![]` or `capabilities/default.json`.
+   │
+   └── ❌ NO
+          │
+          ▼
+Did a REST API or Remote MCP test fail (e.g. curl /api/v1/...)?
+   ├── ❌ YES ──► TIER 2B GATEWAY BUG: Check Axum route, multipart parser, or SSE event formatting.
    │
    └── ❌ NO  (Silent failure or visual glitch)
           │
@@ -171,10 +210,11 @@ Does the browser console show an IPC rejection / permission error?
 ## 📋 Rules for Autonomous QA Submissions
 
 1. **Root-Cause Isolation Required:** When submitting a PR fixing a bug, state which Tier caused the failure:
-   - Example: *"Fixes Tier 2 IPC argument mismatch in `pdf_split` handler"*
+   - Example: *"Fixes Tier 2A IPC argument mismatch in `pdf_split` handler"*
+   - Example: *"Fixes Tier 2B Axum multipart boundary extraction in `pdf_merge` endpoint"*
    - Example: *"Fixes Tier 3 dark mode contrast in `.zoom-select`"*
 2. **Zero-Mocking Policy:** Never mock Rust MCP output with fake static fixtures in production UI code. Always test against actual engine outputs or valid test fixtures.
 3. **All Tiers Verified:** Every submitted PR must pass:
    - Tier 1: `cargo test --workspace`
-   - Tier 2: `cargo check --workspace`
+   - Tier 2A/2B: `cargo check --workspace` & REST/MCP integration tests
    - Tier 3: `npm --prefix apps/desktop run check` and `npm --prefix apps/desktop test`
