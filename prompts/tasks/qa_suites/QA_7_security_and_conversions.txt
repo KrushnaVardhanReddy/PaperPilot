@@ -63,16 +63,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md -
    - Click `#btn-run-operation`.
    - Verify success toast appears.
 
-5. **Triple-Channel Verification Contract (UI vs. REST vs. MCP)**:
+5. **Triple-Channel Semantic Verification Contract (UI vs. REST vs. MCP)**:
 
-| Channel | Input Payload / Action | Expected Output | Assertion Command |
+| Channel | Input Payload / Action | Expected Semantic Result | Strict Verification Command |
 |---|---|---|---|
 | **Channel 1 (UI)** | Enter password `vault999` in `#passwordField` + click Run | Success toast appears, encrypted file written | `.toast-success` visible in DOM |
 | **Channel 2 (REST)** | `POST /api/v1/pdf/info` (`file=@secret_999.pdf`) | `HTTP 200` + JSON metadata containing title | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -F "file=@tests/e2e_fixtures/secret_999.pdf" \| grep '"status":"ok"'` |
-| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/encrypt` (`password: vault999`) | `HTTP 200` + Encrypted PDF output | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/encrypt -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/secret_999.pdf","password":"vault999","output":"/tmp/secret_999_enc.pdf"}' \| grep -i 'success'` |
-| **Channel 3 (MCP stdio)** | `tools/call` (`pdf_encrypt`, `password: vault999`) | JSON-RPC result confirming encryption | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_encrypt","arguments":{"input":"tests/e2e_fixtures/secret_999.pdf","password":"vault999","output":"/tmp/secret_999_mcp_enc.pdf"}}}' \| cargo run -p paperpilot-mcp \| grep -i 'success'` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/encrypt` (`password: vault999`) | PDF is truly AES-encrypted: opening WITHOUT password FAILS; opening WITH password SUCCEEDS | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/encrypt -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/secret_999.pdf","password":"vault999","output":"/tmp/secret_999_enc.pdf"}' && ! cargo run -p paperpilot-cli -- info --input /tmp/secret_999_enc.pdf 2>/dev/null && cargo run -p paperpilot-cli -- decrypt --input /tmp/secret_999_enc.pdf --password vault999 --output /tmp/decrypted.pdf` |
+| **Channel 3 (MCP stdio)** | `tools/call` (`pdf_encrypt`, `password: vault999`) | File is cryptographically locked | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_encrypt","arguments":{"input":"tests/e2e_fixtures/secret_999.pdf","password":"vault999","output":"/tmp/secret_999_mcp_enc.pdf"}}}' \| cargo run -p paperpilot-mcp \| grep -q '"success":true' && ! cargo run -p paperpilot-cli -- info --input /tmp/secret_999_mcp_enc.pdf 2>/dev/null` |
 
-- **Strict Parity Rule**: Encryption locks and metadata sanitization applied via the UI must match the cryptographically secured PDF streams produced by REST and MCP tools.
+- **Strict Cryptographic Rule**: An endpoint returning HTTP 200 is NOT enough. You MUST verify that the output PDF actually blocks unauthorized reads when password is missing, and unlocks cleanly when password is supplied.
 
 ---
 
