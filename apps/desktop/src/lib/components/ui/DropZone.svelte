@@ -54,6 +54,7 @@
     <label class="browse-btn">
       Browse Files
       <input
+        id="drop-zone-file-input"
         type="file"
         multiple
         accept=".pdf"
@@ -141,7 +142,18 @@
   }
 
   input[type="file"] {
-    display: none;
+    display: block;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .browse-btn {
+    position: relative;
   }
 
   @media (max-width: 599px) {

@@ -35,3 +35,4 @@ pub mod validate;
 pub mod watermark;
 pub mod cleanup;
 pub mod page_numbers;
+pub mod info;
