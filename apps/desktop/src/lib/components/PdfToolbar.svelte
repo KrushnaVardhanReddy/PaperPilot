@@ -181,9 +181,9 @@
     align-items: center;
     gap: 1.5rem;
     padding: 0.5rem 1rem;
-    background-color: var(--bg-surface, #ffffff);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05));
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
     z-index: 10;
   }
 
@@ -199,21 +199,21 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    background-color: var(--bg-surface, #ffffff);
-    border: 1px solid var(--border-color, #d1d5db);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm, 4px);
     font-size: 1rem;
     font-weight: 500;
-    color: var(--text-primary, #374151);
+    color: var(--text-primary);
     cursor: pointer;
     transition: all var(--transition-fast, 0.15s ease);
     padding: 0;
   }
 
   .toolbar-btn:hover:not(:disabled) {
-    background-color: var(--bg-surface-hover, #f3f4f6);
-    border-color: var(--accent-primary, #5e6ad2);
-    color: var(--accent-primary, #5e6ad2);
+    background-color: var(--bg-surface-hover);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
   }
 
   .toolbar-btn:disabled {
@@ -224,28 +224,28 @@
   .toolbar-btn-text {
     height: 28px;
     padding: 0 8px;
-    background-color: var(--bg-surface, #ffffff);
-    border: 1px solid var(--border-color, #d1d5db);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm, 4px);
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-secondary, #6b7280);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast, 0.15s ease);
   }
 
   .toolbar-btn-text:hover {
-    color: var(--accent-primary, #5e6ad2);
-    border-color: var(--accent-primary, #5e6ad2);
-    background-color: var(--bg-surface-hover, #f3f4f6);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background-color: var(--bg-surface-hover);
   }
 
   .page-jump-container {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: var(--bg-primary, #f9fafb);
-    border: 1px solid var(--border-color, #d1d5db);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm, 4px);
     padding: 0 6px;
     height: 28px;
@@ -259,19 +259,19 @@
     text-align: center;
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--text-primary, #111827);
+    color: var(--text-primary);
     outline: none;
     padding: 0;
   }
 
   .page-input:focus {
-    background: var(--bg-surface, #ffffff);
+    background: var(--bg-surface-hover);
     border-radius: 2px;
   }
 
   .page-total {
     font-size: 0.85rem;
-    color: var(--text-muted, #9ca3af);
+    color: var(--text-muted);
     white-space: nowrap;
   }
 
@@ -282,17 +282,17 @@
   .zoom-select {
     height: 28px;
     padding: 0 6px;
-    background-color: var(--bg-primary, #f9fafb);
-    border: 1px solid var(--border-color, #d1d5db);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm, 4px);
     font-size: 0.85rem;
-    color: var(--text-primary, #374151);
+    color: var(--text-primary);
     cursor: pointer;
     outline: none;
     font-weight: 500;
   }
 
   .zoom-select:hover {
-    border-color: var(--accent-primary, #5e6ad2);
+    border-color: var(--accent-primary);
   }
 </style>

@@ -1,6 +1,17 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
 
+  let fileInputRef: HTMLInputElement | undefined = $state();
+
+  function handleFileInputChange(e: Event) {
+    const files = (e.target as HTMLInputElement).files;
+    if (files && files.length > 0) {
+      appState.addDocuments([files[0]]);
+      appState.selectDocument(appState.documents.length - 1);
+      (e.target as HTMLInputElement).value = '';
+    }
+  }
+
   async function handleNewTab() {
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
@@ -19,21 +30,13 @@
         Object.defineProperty(file, 'path', { value: selected, writable: false });
         appState.addDocuments([file]);
         appState.selectDocument(appState.documents.length - 1);
+        return;
       }
     } catch (err) {
-      console.warn('Native open dialog unavailable, using fallback', err);
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/pdf';
-      input.onchange = (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
-          appState.addDocuments([files[0]]);
-          appState.selectDocument(appState.documents.length - 1);
-        }
-      };
-      input.click();
+      console.warn('Native open dialog unavailable, using HTML file picker fallback', err);
     }
+    // Fallback: trigger HTML file input directly
+    fileInputRef?.click();
   }
 </script>
 
@@ -94,6 +97,13 @@
   >
     +
   </button>
+  <input
+    bind:this={fileInputRef}
+    type="file"
+    accept=".pdf"
+    style="display: none;"
+    onchange={handleFileInputChange}
+  />
 </div>
 
 <style>

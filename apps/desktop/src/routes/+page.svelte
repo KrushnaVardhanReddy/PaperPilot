@@ -120,12 +120,12 @@
             <div class="viewer-main">
               <div class="toolbars-container">
                 <PdfToolbar bind:pageNum {numPages} bind:scale />
-                <PdfAnnotationToolbar bind:activeTool />
               </div>
               {#if hasFormFields}
                 <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={saveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
               {/if}
               <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
+                <PdfAnnotationToolbar bind:activeTool />
                 <PdfViewer
                   fileUrl={currentFileUrl}
                   bind:pdfDoc
