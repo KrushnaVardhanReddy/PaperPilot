@@ -70,26 +70,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_20.md --ou
    - Click `#btn-run-operation`.
    - Verify execution completes.
 
-6. **Triple-Channel Verification: REST API & MCP Execution**:
-   - Ensure the server endpoint processes the exact same fixtures via HTTP and MCP:
-     ```bash
-     # ── CHANNEL 2: REST API (Port 7823) ──
-     # 1. Test Convenience Merge Endpoint:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge \
-       -F "files=@tests/e2e_fixtures/part_10.pdf" \
-       -F "files=@tests/e2e_fixtures/part_20.pdf" \
-       -o /tmp/api_merged_6.pdf
+6. **Triple-Channel Verification Contract (UI vs. REST vs. MCP)**:
 
-     # 2. Test Dynamic 44-Tool Router (Blank Page Removal):
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/remove_blank \
-       -H "Content-Type: application/json" \
-       -d '{"input": "/tmp/api_merged_6.pdf", "output": "/tmp/api_cleaned_6.pdf", "sensitivity": 95}'
+| Channel | Input Payload / Action | Expected Output | Assertion Command |
+|---|---|---|---|
+| **Channel 1 (UI)** | Click category pill `[ 📑 Pages ]` + Run Merge | Merged document tab created with 2 pages | `#tab-doc-0` contains 2 pages |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/merge` (`files=[part_10, part_20]`) | `HTTP 200` + Merged PDF binary stream | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -F "files=@tests/e2e_fixtures/part_10.pdf" -F "files=@tests/e2e_fixtures/part_20.pdf" -o /tmp/api_merged_6.pdf && test -s /tmp/api_merged_6.pdf` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/remove_blank` | `HTTP 200` + JSON with output path | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/remove_blank -H "Content-Type: application/json" -d '{"input":"/tmp/api_merged_6.pdf","output":"/tmp/api_cleaned_6.pdf","sensitivity":95}' \| grep -i 'success'` |
+| **Channel 3 (MCP stdio)** | `tools/call` (`pdf_remove_blank`) | JSON-RPC result confirming execution | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_remove_blank","arguments":{"input":"/tmp/api_merged_6.pdf","output":"/tmp/mcp_cleaned_6.pdf","sensitivity":95}}}' \| cargo run -p paperpilot-mcp \| grep -i 'success'` |
 
-     # ── CHANNEL 3: MCP PROTOCOL ──
-     # 3. Test MCP Tool execution via stdio JSON-RPC:
-     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_remove_blank","arguments":{"input":"/tmp/api_merged_6.pdf","output":"/tmp/mcp_cleaned_6.pdf","sensitivity":95}}}' | cargo run -p paperpilot-mcp
-     ```
-   - Verify all output files exist and page count matches expectation.
+- **Strict Parity Rule**: Tool operations performed via UI Dock must result in the identical page structure and stream content as operations executed via REST and MCP endpoints.
 
 ---
 

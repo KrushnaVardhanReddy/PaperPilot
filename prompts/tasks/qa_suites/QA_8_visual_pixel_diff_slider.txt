@@ -72,26 +72,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md 
    - Click `#diff-mode-side-by-side` -> verify dual side-by-side view.
    - Click `#diff-close-btn` -> verify diff modal closes.
 
-5. **Triple-Channel Verification: REST API & MCP Document Comparison**:
-   - Ensure document comparison works headlessly across REST and MCP:
-     ```bash
-     # ── CHANNEL 2: REST API (Port 7823) ──
-     # 1. Convenience Endpoint:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare \
-       -F "file1=@tests/e2e_fixtures/contract_v1.pdf" \
-       -F "file2=@tests/e2e_fixtures/contract_v2.pdf" \
-       -o /tmp/diff_report.json
+5. **Triple-Channel Verification Contract (UI vs. REST vs. MCP)**:
 
-     # 2. Dynamic 44-Tool Router:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/compare \
-       -H "Content-Type: application/json" \
-       -d '{"file_a": "tests/e2e_fixtures/contract_v1.pdf", "file_b": "tests/e2e_fixtures/contract_v2.pdf"}'
+| Channel | Input Payload / Action | Expected Output | Assertion Command |
+|---|---|---|---|
+| **Channel 1 (UI)** | Open Diff (`Ctrl+D`) comparing `contract_v1` & `contract_v2` | `#visual-diff-container` visible, highlight map displays diff on line fee | `#visual-diff-container` visible |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/compare` (`files=[v1, v2]`) | `HTTP 200` + JSON report marking page 1 diffs | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -F "file1=@tests/e2e_fixtures/contract_v1.pdf" -F "file2=@tests/e2e_fixtures/contract_v2.pdf" \| grep '"diff_detected":true'` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/compare` | `HTTP 200` + Diff JSON result | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/compare -H "Content-Type: application/json" -d '{"file_a":"tests/e2e_fixtures/contract_v1.pdf","file_b":"tests/e2e_fixtures/contract_v2.pdf"}' \| grep -i 'diff'` |
+| **Channel 3 (MCP stdio)** | `tools/call` (`pdf_compare`) | JSON-RPC result confirming changes detected | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_compare","arguments":{"file_a":"tests/e2e_fixtures/contract_v1.pdf","file_b":"tests/e2e_fixtures/contract_v2.pdf"}}}' \| cargo run -p paperpilot-mcp \| grep -i 'diff'` |
 
-     # ── CHANNEL 3: MCP PROTOCOL ──
-     # 3. Compare via MCP stdio:
-     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_compare","arguments":{"file_a":"tests/e2e_fixtures/contract_v1.pdf","file_b":"tests/e2e_fixtures/contract_v2.pdf"}}}' | cargo run -p paperpilot-mcp
-     ```
-   - Assert diff output indicates changes detected between revisions across all channels.
+- **Strict Parity Rule**: Visual pixel discrepancies highlighted on canvas must match the exact diff regions and page numbers detected by REST and MCP comparison tools.
 
 ---
 

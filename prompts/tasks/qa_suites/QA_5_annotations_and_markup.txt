@@ -76,28 +76,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
    - Ensure the right sidebar tab `Annotations (0)` is present and clickable.
    - Verify no toolbar buttons overlap on the PDF viewer canvas.
 
-8. **Triple-Channel Verification: REST API & MCP Watermark & Stamp**:
-   - Ensure overlay and visual markup tools work headlessly across REST and MCP:
-     ```bash
-     # ── CHANNEL 2: REST API (Port 7823) ──
-     # 1. Convenience Endpoint:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark \
-       -F "file=@tests/e2e_fixtures/contract_555.pdf" \
-       -F "text=CONFIDENTIAL #555" \
-       -o /tmp/watermarked_via_api.pdf
+8. **Triple-Channel Verification Contract (UI vs. REST vs. MCP)**:
 
-     # 2. Dynamic 44-Tool Router:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/watermark \
-       -H "Content-Type: application/json" \
-       -d '{"input": "tests/e2e_fixtures/contract_555.pdf", "text": "CONFIDENTIAL #555", "output": "/tmp/watermarked_via_tools_api.pdf"}'
+| Channel | Input Payload / Action | Expected Output | Assertion Command |
+|---|---|---|---|
+| **Channel 1 (UI)** | Click `#tool-btn-highlight` + drag over heading | Highlight markup SVG element created on canvas | `.annotation-layer rect` or `.annotation-layer mark` exists |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/watermark` (`text="CONFIDENTIAL #555"`) | `HTTP 200` + `application/pdf` binary stream | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -F "file=@tests/e2e_fixtures/contract_555.pdf" -F "text=CONFIDENTIAL #555" -o /tmp/watermarked_api.pdf && test -s /tmp/watermarked_api.pdf` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/watermark` | `HTTP 200` + JSON with output path | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/watermark -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/contract_555.pdf","text":"CONFIDENTIAL #555","output":"/tmp/watermarked_tools.pdf"}' \| grep -i 'success'` |
+| **Channel 3 (MCP SSE)** | `POST /mcp/messages` (`pdf_watermark`) | `HTTP 200` + JSON-RPC result | `curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa5-test" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_watermark","arguments":{"input":"tests/e2e_fixtures/contract_555.pdf","text":"CONFIDENTIAL #555","output":"/tmp/watermarked_mcp.pdf"}}}' \| grep -i 'result'` |
 
-     # ── CHANNEL 3: MCP PROTOCOL ──
-     # 3. Watermark via Remote MCP SSE/HTTP:
-     curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa5-test" \
-       -H "Content-Type: application/json" \
-       -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_watermark","arguments":{"input":"tests/e2e_fixtures/contract_555.pdf","text":"CONFIDENTIAL #555","output":"/tmp/watermarked_via_mcp.pdf"}}}'
-     ```
-   - Assert all output files exist and are valid watermarked PDFs.
+- **Strict Parity Rule**: Visual stamps and watermarks placed via UI must match the exact stamp layer and file size growth produced by REST and MCP watermarking endpoints.
 
 ---
 

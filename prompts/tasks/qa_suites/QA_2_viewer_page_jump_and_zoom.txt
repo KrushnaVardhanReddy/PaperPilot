@@ -84,29 +84,16 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numb
    - Click `#toolbar-zoom-fit` (Fit button).
    - Verify zoom recalculates and canvas scales to viewport.
 
-6. **Triple-Channel Verification: Headless Page Render via REST & MCP**:
-   - Ensure the server endpoint can render and rasterize pages headlessly across channels:
-     ```bash
-     # ── CHANNEL 2: REST API (Port 7823) ──
-     # 1. Convenience Render Endpoint:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page \
-       -F "file=@tests/e2e_fixtures/multi_page_numbered.pdf" \
-       -F "page=4" \
-       -F "dpi=150" \
-       -o /tmp/page_4_rendered.png
+6. **Triple-Channel Verification Contract (UI vs. REST vs. MCP)**:
 
-     # 2. Dynamic 44-Tool Router:
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/render \
-       -H "Content-Type: application/json" \
-       -d '{"input": "tests/e2e_fixtures/multi_page_numbered.pdf", "page": 4, "dpi": 150, "output": "/tmp/page_4_rendered_dynamic.png"}'
+| Channel | Input Payload / Action | Expected Output | Assertion Command |
+|---|---|---|---|
+| **Channel 1 (UI)** | Type page `4` in `#page-jump-input` + Press Enter | Canvas scrolls to Page 4, renders "Header 4" | `#page-jump-input` value is `4`, canvas renders |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/render-page` (`page=4, dpi=150`) | `HTTP 200` + `image/png` binary stream | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -F "file=@tests/e2e_fixtures/multi_page_numbered.pdf" -F "page=4" -F "dpi=150" -o /tmp/page_4_rendered.png && test -s /tmp/page_4_rendered.png` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/render` (`page: 4`) | `HTTP 200` + JSON with output path | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/render -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/multi_page_numbered.pdf","page":4,"dpi":150,"output":"/tmp/page_4_dynamic.png"}' \| grep -i 'success'` |
+| **Channel 3 (MCP SSE)** | `POST /mcp/messages` (`pdf_render`) | `HTTP 200` + JSON-RPC matching output image | `curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa2-test" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_render","arguments":{"input":"tests/e2e_fixtures/multi_page_numbered.pdf","page":4,"dpi":150,"output":"/tmp/page_4_mcp.png"}}}' \| grep -i 'result'` |
 
-     # ── CHANNEL 3: MCP PROTOCOL ──
-     # 3. Render via Remote MCP SSE/HTTP:
-     curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa2-test" \
-       -H "Content-Type: application/json" \
-       -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_render","arguments":{"input":"tests/e2e_fixtures/multi_page_numbered.pdf","page":4,"dpi":150,"output":"/tmp/page_4_rendered_mcp.png"}}}'
-     ```
-   - Verify `/tmp/page_4_rendered.png` and `/tmp/page_4_rendered_mcp.png` exist and are valid PNG images.
+- **Strict Parity Rule**: Visual page rendering in UI must match the rasterized pixel dimensions and text content returned by REST and MCP tools.
 
 ---
 
