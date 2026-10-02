@@ -35,7 +35,10 @@ export class AppState {
   }
 
   addDocuments(files: File[]) {
+    const startIdx = this.documents.length;
     this.documents = [...this.documents, ...files];
+    const newIndices = files.map((_, i) => startIdx + i);
+    this.openDocIndices = [...this.openDocIndices, ...newIndices];
   }
 
   removeDocument(index: number) {

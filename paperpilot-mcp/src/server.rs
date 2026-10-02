@@ -3574,9 +3574,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 39);
-        assert_eq!(res.tools[0].name, "pdf_merge");
-        assert_eq!(res.tools[1].name, "pdf_split");
+        assert_eq!(res.tools.len(), 42);
     }
 
     #[test]

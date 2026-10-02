@@ -200,7 +200,7 @@
   }
 </script>
 
-<div class="diff-viewer" id="pdf-visual-diff-viewer">
+<div class="diff-viewer" id="visual-diff-container">
   <!-- Top Control Header -->
   <header class="diff-header">
     <div class="diff-title-section">
@@ -309,7 +309,7 @@
         <!-- Draggable Divider Handle -->
         <div
           class="split-slider-handle"
-          id="diff-split-slider"
+          id="diff-split-handle"
           style={`left: ${splitPercent}%;`}
           onmousedown={startSplitterDrag}
         >
@@ -323,7 +323,7 @@
 
     {:else if viewMode === 'overlay'}
       <div class="overlay-container">
-        <canvas bind:this={canvasDiff} class="canvas-diff-view"></canvas>
+        <canvas bind:this={canvasDiff} class="canvas-diff-view" id="diff-overlay-canvas"></canvas>
         <!-- Retain A and B in DOM for rendering computations -->
         <canvas bind:this={canvasA} style="display: none;"></canvas>
         <canvas bind:this={canvasB} style="display: none;"></canvas>

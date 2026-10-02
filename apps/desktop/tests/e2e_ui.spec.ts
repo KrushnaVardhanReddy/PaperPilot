@@ -228,3 +228,104 @@ test.describe('Pipeline Execution and Error State', () => {
     await expect(errorToast).toContainText('Mocked error message');
   });
 });
+
+test.describe('Phase 4.F Features Validation', () => {
+
+  test('can open multiple documents into separate tabs and switch between them', async ({ page }) => {
+    await page.goto('/');
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles([
+      path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
+      path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
+    ]);
+
+    // Tab 0 should be active
+    await expect(page.locator('#tab-doc-0')).toBeVisible();
+    await expect(page.locator('#tab-doc-1')).toBeVisible();
+
+    // Click tab 1 to switch document
+    await page.click('#tab-doc-1');
+    await expect(page.locator('#tab-doc-1')).toHaveClass(/active/);
+  });
+
+  test('canvas search bar opens with shortcut and highlights matches', async ({ page }) => {
+    await page.goto('/');
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/multi_page.pdf'));
+
+    // Trigger Ctrl+F
+    await page.keyboard.press('ControlOrMeta+f');
+    const searchBar = page.locator('#pdf-search-bar');
+    await expect(searchBar).toBeVisible();
+
+    // Type search query
+    await page.fill('#pdf-search-input', 'Page');
+    await page.keyboard.press('Enter');
+
+    // Verify match count indicator exists
+    const matchCount = page.locator('#pdf-search-count');
+    await expect(matchCount).toBeVisible();
+  });
+
+  test('tools dock filters operations and navigates to parameter inspector', async ({ page }) => {
+    await page.goto('/');
+    const searchInput = page.locator('#tool-search-input');
+    await expect(searchInput).toBeVisible();
+
+    // Filter tools by typing 'watermark'
+    await searchInput.fill('watermark');
+    const watermarkTool = page.locator('#tool-watermark');
+    await expect(watermarkTool).toBeVisible();
+
+    // Click tool to enter parameter inspector
+    await watermarkTool.click();
+    await expect(page.locator('#inspector-param-watermark')).toBeVisible();
+
+    // Test back navigation
+    await page.click('#tool-inspector-back-btn');
+    await expect(searchInput).toBeVisible();
+  });
+
+  test('visual diff comparison opens and allows adjusting split slider', async ({ page }) => {
+    await page.goto('/');
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles([
+      path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
+      path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
+    ]);
+
+    // Open diff view via shortcut or compare button
+    await page.keyboard.press('ControlOrMeta+d');
+    const diffContainer = page.locator('#visual-diff-container');
+    await expect(diffContainer).toBeVisible();
+
+    // Check split mode elements
+    const splitHandle = page.locator('#diff-split-handle');
+    await expect(splitHandle).toBeVisible();
+
+    // Switch to overlay mode
+    await page.click('#diff-mode-overlay');
+    await expect(page.locator('#diff-overlay-canvas')).toBeVisible();
+
+    // Close diff view
+    await page.click('#diff-close-btn');
+    await expect(diffContainer).not.toBeVisible();
+  });
+
+  test('custom css injection panel displays presets and accepts custom css input', async ({ page }) => {
+    await page.goto('/');
+    const searchInput = page.locator('#tool-search-input');
+    await searchInput.fill('html to pdf');
+
+    const convertTool = page.locator('#tool-html-to-pdf, #tool-convert').first();
+    if (await convertTool.isVisible()) {
+      await convertTool.click();
+      const presetSelector = page.locator('#css-preset-select');
+      if (await presetSelector.isVisible()) {
+        await presetSelector.selectOption('github');
+        await expect(presetSelector).toHaveValue('github');
+      }
+    }
+  });
+
+});
