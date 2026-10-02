@@ -149,7 +149,7 @@
       <select
         id="toolbar-zoom-select"
         class="zoom-select"
-        value={Math.round(scale * 100)}
+        value={String(Math.round(scale * 100))}
         onchange={(e) => setZoomPreset(parseInt((e.target as HTMLSelectElement).value, 10) / 100)}
         title="Zoom Preset"
         aria-label="Zoom level"
@@ -180,8 +180,8 @@
 
     <button
       class="toolbar-btn-text"
-      id="toolbar-fit-width"
-      onclick={() => scale = 1.0}
+      id="toolbar-zoom-fit"
+      onclick={() => window.dispatchEvent(new CustomEvent("paperpilot:fit-viewport"))}
       title="Reset to 100% (Fit Width)"
     >
       Fit

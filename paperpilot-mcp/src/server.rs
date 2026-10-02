@@ -1,5 +1,19 @@
 use crate::schema::OperationResult;
 use rmcp::handler::server::ServerHandler;
+use lazy_static::lazy_static;
+use pdfium_render::prelude::*;
+
+lazy_static! {
+    static ref PDFIUM: Result<Pdfium, PdfiumError> = {
+        let bindings = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(&std::env::var("PDFIUM_PATH").unwrap_or_else(|_| "".to_string())))
+            .or_else(|_| Pdfium::bind_to_system_library());
+        match bindings {
+            Ok(b) => Ok(Pdfium::new(b)),
+            Err(e) => Err(e),
+        }
+    };
+}
+
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, ListToolsResult, Tool,
 };
@@ -3677,15 +3691,48 @@ impl PaperPilotMcpServer {
             "pdf_render" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
+                let page = args.get("page").and_then(|v| {
+                    if let Some(s) = v.as_str() {
+                        s.parse::<u32>().ok()
+                    } else if let Some(n) = v.as_u64() {
+                        Some(n as u32)
+                    } else {
+                        None
+                    }
+                }).unwrap_or(1);
+                let dpi = args.get("dpi").and_then(|v| {
+                    if let Some(s) = v.as_str() {
+                        s.parse::<f32>().ok()
+                    } else if let Some(n) = v.as_f64() {
+                        Some(n as f32)
+                    } else {
+                        None
+                    }
+                }).unwrap_or(150.0);
 
                 ensure_parent_dir(&output)?;
 
-                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::render::RenderOperation;
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-                doc.save(&std::path::PathBuf::from(&output))
-                    .map_err(crate::error::to_mcp_error)?;
+                use pdfium_render::prelude::*;
+
+                let pdfium = match &*PDFIUM {
+                    Ok(p) => p,
+                    Err(e) => return Err(rmcp::ErrorData::invalid_params(format!("Failed to bind to pdfium: {:?}", e), None)),
+                };
+
+                let doc = pdfium.load_pdf_from_file(&input, None).map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to load pdf: {:?}", e), None))?;
+                let page_index = if page > 0 { (page - 1) as i32 } else { 0 };
+                let pages = doc.pages();
+                if page_index >= pages.len() as i32 {
+                    return Err(rmcp::ErrorData::invalid_params(format!("Page out of bounds"), None));
+                }
+
+                let pdf_page = pages.get((page_index as u16).into()).map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to get page: {:?}", e), None))?;
+
+                let target_w = (pdf_page.width().value * dpi / 72.0) as u16;
+                let bitmap = pdf_page.render_with_config(&PdfRenderConfig::new().set_target_width(target_w.into()).set_clear_color(PdfColor::WHITE)).map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to render page: {:?}", e), None))?;
+
+                let img = bitmap.as_image().map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to get image: {:?}", e), None))?;
+                img.into_rgba8().save_with_format(&output, image::ImageFormat::Png).map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to save png: {:?}", e), None))?;
 
                 Ok(OperationResult {
                     data: None,
@@ -3756,23 +3803,16 @@ impl PaperPilotMcpServer {
             }
             "pdf_bookmarks" => {
                 let input = get_string("input")?;
-                let output = get_string("output")?;
-
-                ensure_parent_dir(&output)?;
-
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
                 let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-                doc.save(&std::path::PathBuf::from(&output))
-                    .map_err(crate::error::to_mcp_error)?;
+                let op_res = op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
-                    data: None,
+                    data: Some(serde_json::to_value(op_res).unwrap_or(serde_json::json!({"bookmarks": "outline"}))),
                     success: true,
-                    
                     message: "Bookmarks operation completed successfully.".to_string(),
-                    output_path: Some(output),
+                    output_path: None,
                     diff_detected: None,
                 })
             }
@@ -3891,6 +3931,24 @@ impl ServerHandler for PaperPilotMcpServer {
 }
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn test_pdf_render_tool_invalid_page() {
+        let mut req = CallToolRequestParams::default();
+        req.name = "pdf_render".into();
+        let mut args = serde_json::Map::new();
+        args.insert("input".to_string(), serde_json::json!("tests/e2e_fixtures/multi_page_numbered.pdf"));
+        args.insert("output".to_string(), serde_json::json!("/tmp/render_test_mcp_bounds.png"));
+        args.insert("page".to_string(), serde_json::json!(999));
+        req.arguments = Some(args);
+
+        let res = PaperPilotMcpServer::execute_call_tool(req);
+        assert!(res.is_err() || (res.is_ok() && match res.unwrap() {
+            CallToolResponse::Complete(r) => r.is_error.unwrap_or(false),
+            _ => false
+        }));
+    }
+
     use super::*;
 
     #[test]

@@ -171,3 +171,103 @@ pub async fn info(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compare".to_string()), req).await
 }
+
+
+pub async fn render_page(req: axum::extract::Request) -> axum::response::Response {
+    let mut args = serde_json::Map::new();
+    let mut temp_files = vec![];
+    let output_path = std::env::temp_dir().join(format!("{}.png", uuid::Uuid::new_v4()));
+
+    use axum::extract::FromRequest;
+    use axum::response::IntoResponse;
+    let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
+        Ok(m) => m,
+        Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid multipart").into_response(),
+    };
+
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+        if name.is_empty() { continue; }
+
+        let file_name = field.file_name().map(|s| s.to_string());
+        let data = match field.bytes().await {
+            Ok(d) => d,
+            Err(_) => continue,
+        };
+
+        if file_name.is_some() || name == "file" || name == "input" {
+            let mut temp_file = match tempfile::NamedTempFile::new() {
+                Ok(tf) => tf,
+                Err(_) => return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to create temp file").into_response(),
+            };
+            let path = temp_file.path().to_owned();
+            use std::io::Write;
+            if let Err(_) = temp_file.write_all(&data) {
+                return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to write data").into_response();
+            };
+            args.insert("input".to_string(), serde_json::Value::String(path.to_string_lossy().to_string()));
+            temp_files.push(temp_file);
+        } else {
+            let s = String::from_utf8_lossy(&data).to_string();
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&s) {
+                 args.insert(name, val);
+            } else {
+                 args.insert(name, serde_json::Value::String(s));
+            }
+        }
+    }
+
+    args.insert("output".to_string(), serde_json::Value::String(output_path.to_string_lossy().to_string()));
+
+    let mut request = rmcp::model::CallToolRequestParams::default();
+    request.name = "pdf_render".into();
+    request.arguments = Some(args);
+
+    match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
+        Ok(_) => {
+            if let Ok(bytes) = std::fs::read(&output_path) {
+                let _ = std::fs::remove_file(&output_path);
+                let mut res = axum::response::Response::new(axum::body::Body::from(bytes));
+                res.headers_mut().insert(axum::http::header::CONTENT_TYPE, axum::http::HeaderValue::from_static("image/png"));
+                res.into_response()
+            } else {
+                (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "File generated but could not be read").into_response()
+            }
+        },
+        Err(e) => {
+            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.message.clone()).into_response()
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::Request;
+    use axum::body::Body;
+    use serde_json::json;
+    use axum::response::IntoResponse;
+
+    #[tokio::test]
+    async fn test_mcp_exec_handles_invalid_arguments() {
+        let req = McpExecRequest {
+            tool: "pdf_render".to_string(),
+            arguments: Some(json!("not an object")),
+        };
+        let res = mcp_exec(axum::Json(req)).await;
+        assert_eq!(res.into_response().status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_render_page_handles_invalid_multipart() {
+        let req = Request::builder()
+            .method("POST")
+            .uri("/api/v1/pdf/render-page")
+            .body(Body::empty())
+            .unwrap();
+
+        let res = render_page(req).await;
+        assert_eq!(res.into_response().status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+}
