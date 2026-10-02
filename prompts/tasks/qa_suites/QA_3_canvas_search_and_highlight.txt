@@ -91,10 +91,13 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_num
 |---|---|---|---|
 | **Channel 1 (UI)** | Search `SERIAL-777` via `#pdf-search-input` | Matches count reads `1 of 3`, highlights yellow | `#pdf-search-count` contains `1 of 3` |
 | **Channel 2 (REST)** | `POST /api/v1/pdf/extract-text` (`query=SERIAL-777`) | `HTTP 200` + JSON with 3 occurrences on pages [1, 3, 5] | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -F "file=@tests/e2e_fixtures/search_test.pdf" -F "query=SERIAL-777" \| grep '"total_matches":3'` |
-| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/extract_text` | `HTTP 200` + Dump of raw text containing query | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/extract_text -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/search_test.pdf","output":"/tmp/search_out.txt"}' && grep 'SERIAL-777' /tmp/search_out.txt` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/pdf_extract_text` | `HTTP 200` + Dump of raw text containing query | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_text -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/search_test.pdf","output":"/tmp/search_out.txt"}' && grep 'SERIAL-777' /tmp/search_out.txt` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/pdf_extract_images` | Extracts raster embedded images into folder | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/search_test.pdf","output_dir":"/tmp/extracted_imgs"}' \| grep -q 'success'` |
+| **Channel 2 (REST)** | `POST /api/v1/pdf/tools/pdf_ocr` | OCR extraction on document | `curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H "Content-Type: application/json" -d '{"input":"tests/e2e_fixtures/search_test.pdf","output":"/tmp/ocr_out.pdf"}' \| grep -q 'success'` |
 | **Channel 3 (MCP stdio)** | `tools/call` (`pdf_search`, `query: "SERIAL-777"`) | JSON-RPC result listing matching pages [1, 3, 5] | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_search","arguments":{"input":"tests/e2e_fixtures/search_test.pdf","query":"SERIAL-777"}}}' \| cargo run -p paperpilot-mcp \| grep 'SERIAL-777'` |
+| **Channel 3 (MCP stdio)** | `tools/call` (`pdf_extract_images`) | Tool extracts embedded image assets | `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_extract_images","arguments":{"input":"tests/e2e_fixtures/search_test.pdf","output_dir":"/tmp/mcp_imgs"}}}' \| cargo run -p paperpilot-mcp \| grep -q 'success'` |
 
-- **Strict Parity Rule**: The number of search matches and target pages highlighted in UI must match the occurrences reported by REST and MCP search tools.
+- **Strict Parity Rule**: The number of search matches, extracted text passages, and image assets reported across UI, REST, and MCP must match exactly.
 
 ---
 
