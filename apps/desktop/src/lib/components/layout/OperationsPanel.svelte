@@ -77,6 +77,7 @@
   let searchQuery = $state('');
   let selectedCategory = $state('all');
   let activeTool = $state<ToolDefinition | null>(null);
+  let isCollapsed = $state(false);
 
   // Tool parameter states
   let splitPoints = $state('');
@@ -247,7 +248,12 @@
   }
 </script>
 
-<div class="operations-panel" id="operations-panel">
+<div class="operations-panel" class:collapsed={isCollapsed} id="operations-panel">
+  <button class="collapse-toggle" onclick={() => isCollapsed = !isCollapsed} title={isCollapsed ? "Expand Tools" : "Collapse Tools"}>
+    {isCollapsed ? '‹' : '›'}
+  </button>
+  
+  <div class="panel-inner-content">
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -433,19 +439,61 @@
       {/if}
     </div>
   {/if}
+  </div>
 </div>
 
 <style>
   .operations-panel {
+    position: relative;
     width: 320px;
     min-width: 320px;
-    background-color: var(--bg-secondary, #141416);
-    border-left: 1px solid var(--border-color, #2a2a35);
-    display: flex;
-    flex-direction: column;
     height: 100%;
     flex-shrink: 0;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .operations-panel.collapsed {
+    width: 0px;
+    min-width: 0px;
+  }
+
+  .collapse-toggle {
+    position: absolute;
+    left: -24px;
+    top: 16px;
+    width: 24px;
+    height: 48px;
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: var(--text-secondary, #9ca3af);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 50;
+    transition: all 0.2s ease;
+  }
+
+  .collapse-toggle:hover {
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .panel-inner-content {
+    width: 320px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-secondary, #141416);
+    border-left: 1px solid var(--border-color, #2a2a35);
     overflow: hidden;
+  }
+
+  .operations-panel.collapsed .panel-inner-content {
+    border-left-color: transparent;
   }
 
   .panel-header {

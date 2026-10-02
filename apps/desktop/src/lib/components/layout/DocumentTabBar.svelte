@@ -68,10 +68,11 @@
   <label
     class="new-tab-btn"
     id="new-doc-tab-btn"
-    title="Open new document"
-    aria-label="Open new document"
+    title="Open new PDF"
+    aria-label="Open new PDF"
   >
-    +
+    <span style="font-size: 16px; line-height: 1;">+</span>
+    <span style="font-size: 12px; font-weight: 500;">Add PDF</span>
     <input
       type="file"
       accept=".pdf"
@@ -129,7 +130,7 @@
     gap: 4px;
     overflow-x: auto;
     scrollbar-width: none;
-    flex: 1;
+    flex: 0 1 auto;
   }
 
   .tabs-scroll-container::-webkit-scrollbar {
@@ -202,20 +203,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    gap: 6px;
+    padding: 0 10px;
+    height: 28px;
     border-radius: var(--border-radius-sm, 4px);
-    border: none;
-    background: transparent;
-    color: var(--text-muted, #6b7280);
-    font-size: 16px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary, #9ca3af);
     cursor: pointer;
     transition: all var(--transition-fast, 0.15s ease);
     flex-shrink: 0;
+    margin-left: 2px;
   }
 
   .new-tab-btn:hover {
-    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.08));
     color: var(--text-primary, #ffffff);
+    border-color: var(--border-color, #2a2a35);
   }
 </style>
