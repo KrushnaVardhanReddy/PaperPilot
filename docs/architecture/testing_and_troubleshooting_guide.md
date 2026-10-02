@@ -115,18 +115,32 @@ When an operation, user action, or test fails, **NEVER guess or apply random tri
 1. **Server Health & Docs Check:**
    ```bash
    curl -s http://127.0.0.1:7823/health
+   # Must return {"status": "ok", "version": "...", "tools_count": 44}
    curl -s http://127.0.0.1:7823/docs
    ```
 2. **Direct REST Multipart Execution:**
    ```bash
    curl -X POST http://127.0.0.1:7823/api/v1/pdf/info -F "file=@tests/e2e_fixtures/sample.pdf"
    ```
-3. **Remote MCP SSE Handshake Check:**
+3. **Dynamic 44-Tool Router Execution (`/api/v1/pdf/tools/:tool_name`):**
+   ```bash
+   # Any of PaperPilot's 44 tools can be invoked directly by name:
+   curl -X POST http://127.0.0.1:7823/api/v1/pdf/tools/rotate \
+     -H "Content-Type: application/json" \
+     -d '{"input": "sample.pdf", "angle": 90, "output": "rotated.pdf"}'
+
+   curl -X POST http://127.0.0.1:7823/api/v1/pdf/tools/remove_blank \
+     -H "Content-Type: application/json" \
+     -d '{"input": "sample.pdf", "output": "clean.pdf", "sensitivity": 95}'
+   ```
+4. **Remote MCP SSE Handshake Check:**
    ```bash
    curl -N http://127.0.0.1:7823/mcp/sse
    ```
 
 #### Common Tier 2B Root Causes:
+- **`400 Bad Request` on `/api/v1/pdf/tools/:tool_name`:** Missing required schema parameter (e.g., omitting `angle` for `rotate` or `password` for `encrypt`). Check `paperpilot-mcp/src/server.rs` tool input schema.
+- **`404 Not Found` on tool dispatch:** Tool name does not exist in the 44-tool registry. Tool names can be called with or without `pdf_` prefix (`rotate` or `pdf_rotate`).
 - **`415 Unsupported Media Type` or `422 Unprocessable Entity`:** Multipart boundary header missing in request, or JSON body schema mismatch with the Axum extractor.
 - **Port Conflict (`EADDRINUSE`):** Port 7823 occupied by previous process. Kill existing listener (`fuser -k 7823/tcp`) or run with `--port <NEW_PORT>`.
 - **SSE Connection Drop:** Client disconnected before receiving session ID endpoint URI.
