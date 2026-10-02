@@ -15,6 +15,7 @@ paperpilot-pdf = { version = "0.1.0", path = "../paperpilot-pdf" }
 rmcp = "3.5.0"
 serde = "1.0.229"
 serde_json = "1.0.151"
+tempfile = "3.27.0"
 tokio = "1.53.1"
 tokio-stream = "0.1.19"
 tower = "0.5.3"
