@@ -36,7 +36,22 @@ pub fn handle_convert(
         })
     };
 
-    match format {
+    let actual_format = if format == "pdf" {
+        if let Some(ext) = input.extension().and_then(|s| s.to_str()) {
+            match ext {
+                "md" => "md_to_pdf",
+                "html" | "htm" => "html_to_pdf",
+                "xlsx" | "csv" => "excel_to_pdf",
+                _ => return Err(paperpilot_core::error::PdfError::Other("Unsupported file extension for format 'pdf'".to_string())),
+            }
+        } else {
+            return Err(paperpilot_core::error::PdfError::Other("Input file has no extension".to_string()));
+        }
+    } else {
+        format
+    };
+
+    match actual_format {
         "html_to_pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input)
@@ -76,7 +91,7 @@ pub fn handle_convert(
 
     let mut doc = LopdfDocument::load(input)?;
 
-    match format {
+    match actual_format {
         "html" => {
             let out_path = output.unwrap_or(Path::new("output.html"));
             let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::new();
