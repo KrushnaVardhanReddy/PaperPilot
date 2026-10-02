@@ -1,10 +1,8 @@
 use axum::{
-    extract::{Path, Multipart},
-    http::{StatusCode, header::CONTENT_TYPE},
+    extract::Path,
+    http::StatusCode,
     response::{IntoResponse, Json},
-    extract::Request,
 };
-use axum::body::Body;
 use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse};
 use serde::{Deserialize, Serialize};
@@ -63,80 +61,59 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
 
 pub async fn handle_tool(
     Path(tool_name): Path<String>,
-    request: Request<Body>,
+    req: axum::extract::Request,
 ) -> impl IntoResponse {
+    let content_type = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
     let mut args = serde_json::Map::new();
     let mut temp_files = vec![];
 
-    let content_type = request
-        .headers()
-        .get(CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or("");
-
     if content_type.starts_with("application/json") {
-        let bytes = match axum::body::to_bytes(request.into_body(), usize::MAX).await {
-            Ok(b) => b,
-            Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "Failed to read body"}))).into_response(),
-        };
-
-        let json_body: serde_json::Value = match serde_json::from_slice(&bytes) {
-            Ok(j) => j,
-            Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "Invalid JSON"}))).into_response(),
-        };
-
-        if let serde_json::Value::Object(map) = json_body {
+        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX).await.unwrap_or_default();
+        if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
             args = map;
-        } else {
-            return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "JSON body must be an object"}))).into_response();
-        }
-    } else if content_type.starts_with("multipart/form-data") {
-        use axum::extract::FromRequest;
-        let mut multipart = match axum::extract::Multipart::from_request(request, &()).await {
-            Ok(m) => m,
-            Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "Failed to parse multipart/form-data"}))).into_response(),
-        };
-
-        while let Ok(Some(field)) = multipart.next_field().await {
-        let name = field.name().unwrap_or("").to_string();
-        if name.is_empty() { continue; }
-
-        let file_name = field.file_name().map(|s| s.to_string());
-
-        let data = match field.bytes().await {
-            Ok(d) => d.to_vec(),
-            Err(_) => continue,
-        };
-
-        if file_name.is_some() || name == "file" || name == "input" {
-            let temp_file = NamedTempFile::new().unwrap();
-            let path = temp_file.path().to_owned();
-            let mut file = File::create(&path).unwrap();
-            file.write_all(&data).unwrap();
-
-            if name == "input" || name == "file" {
-                args.insert("input".to_string(), Value::String(path.to_string_lossy().to_string()));
-            } else if args.contains_key(&name) {
-                // If it's an array like merge
-                 if let Value::Array(arr) = args.get_mut(&name).unwrap() {
-                     arr.push(Value::String(path.to_string_lossy().to_string()));
-                 }
-            } else {
-                args.insert(name.clone(), Value::String(path.to_string_lossy().to_string()));
-            }
-            temp_files.push(temp_file);
-        } else {
-            let s = String::from_utf8_lossy(&data).to_string();
-            // Try parsing as json if possible, else string
-            if let Ok(val) = serde_json::from_str::<Value>(&s) {
-                 args.insert(name, val);
-            } else {
-                 args.insert(name, Value::String(s));
-            }
-        }
         }
     } else {
-        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "Unsupported Content-Type"}))).into_response();
+        use axum::extract::FromRequest;
+        let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
+            Ok(m) => m,
+            Err(_) => return (axum::http::StatusCode::BAD_REQUEST, Json(serde_json::json!({"success": false, "error": "Invalid multipart request"}))).into_response(),
+        };
+        while let Ok(Some(field)) = multipart.next_field().await {
+            let name = field.name().unwrap_or("").to_string();
+            if name.is_empty() { continue; }
+
+            let file_name = field.file_name().map(|s| s.to_string());
+
+            let data = match field.bytes().await {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+
+            if file_name.is_some() || name == "file" || name == "input" || name == "file1" || name == "file2" || name == "file_a" || name == "file_b" || name == "input_a" || name == "input_b" {
+                let temp_file = NamedTempFile::new().unwrap();
+                let path = temp_file.path().to_owned();
+                let mut file = File::create(&path).unwrap();
+                file.write_all(&data).unwrap();
+
+                if name == "input" || name == "file" {
+                    args.insert("input".to_string(), Value::String(path.to_string_lossy().to_string()));
+                } else if args.contains_key(&name) {
+                     if let Value::Array(arr) = args.get_mut(&name).unwrap() {
+                         arr.push(Value::String(path.to_string_lossy().to_string()));
+                     }
+                } else {
+                    args.insert(name.clone(), Value::String(path.to_string_lossy().to_string()));
+                }
+                temp_files.push(temp_file);
+            } else {
+                let s = String::from_utf8_lossy(&data).to_string();
+                if let Ok(val) = serde_json::from_str::<Value>(&s) {
+                     args.insert(name, val);
+                } else {
+                     args.insert(name, Value::String(s));
+                }
+            }
+        }
     }
 
     let mut request = CallToolRequestParams::default();
@@ -163,30 +140,34 @@ pub async fn handle_tool(
     }
 }
 
-pub async fn merge(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("merge".to_string()), request).await
+pub async fn merge(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("merge".to_string()), req).await
 }
 
-pub async fn split(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("split".to_string()), request).await
+pub async fn split(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("split".to_string()), req).await
 }
 
-pub async fn compress(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("compress".to_string()), request).await
+pub async fn compress(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("compress".to_string()), req).await
 }
 
-pub async fn extract_text(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("extract_text".to_string()), request).await
+pub async fn extract_text(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("extract_text".to_string()), req).await
 }
 
-pub async fn convert(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("convert".to_string()), request).await
+pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("convert".to_string()), req).await
 }
 
-pub async fn watermark(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("watermark".to_string()), request).await
+pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("watermark".to_string()), req).await
 }
 
-pub async fn info(request: Request<Body>) -> impl IntoResponse {
-    handle_tool(Path("metadata".to_string()), request).await
+pub async fn info(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("metadata".to_string()), req).await
+}
+
+pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_compare".to_string()), req).await
 }

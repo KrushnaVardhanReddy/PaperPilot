@@ -4,9 +4,16 @@ use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::path::PathBuf;
 
+#[derive(Default, serde::Serialize)]
+pub struct CompareResult {
+    pub diff_detected: bool,
+    pub pages: Vec<u32>,
+}
+
 #[derive(Default)]
 pub struct CompareOperation {
     pub input_b: Option<String>,
+    pub result: std::sync::Mutex<Option<CompareResult>>,
 }
 
 impl CompareOperation {
@@ -33,11 +40,11 @@ impl PdfOperation for CompareOperation {
         let pages_a = lopdf_doc_a.inner.get_pages();
         let pages_b = doc_b.inner.get_pages();
         if pages_a.len() != pages_b.len() {
-            return Err(PdfError::InvalidInput(format!(
-                "Documents differ in page count: A has {}, B has {}",
-                pages_a.len(),
-                pages_b.len()
-            )));
+             *self.result.lock().unwrap() = Some(CompareResult {
+                 diff_detected: true,
+                 pages: vec![1],
+             });
+             return Ok(());
         }
 
         // Extract and compare text
@@ -54,11 +61,17 @@ impl PdfOperation for CompareOperation {
         let text_b_mutex = extract_op_b.extracted_text.clone();
         let text_b_opt = text_b_mutex.lock().unwrap().clone();
 
-        if text_a_opt != text_b_opt {
-            return Err(PdfError::InvalidInput(
-                "Documents differ in extracted text content".into(),
-            ));
+        let diff_detected = text_a_opt != text_b_opt;
+        let mut pages = vec![];
+        if diff_detected {
+             // For now we just return page 1 if there's a diff, but ideally we'd compare page by page.
+             pages.push(1);
         }
+
+        *self.result.lock().unwrap() = Some(CompareResult {
+            diff_detected,
+            pages,
+        });
 
         Ok(())
     }
@@ -152,6 +165,8 @@ mod tests {
         // Compare different documents
         let mut op2 = CompareOperation::new();
         op2.input_b = Some(path_c.to_string_lossy().to_string());
-        assert!(op2.execute(&mut doc_a).is_err());
+        assert!(op2.execute(&mut doc_a).is_ok());
+        let res = op2.result.lock().unwrap().take().unwrap();
+        assert!(res.diff_detected);
     }
 }

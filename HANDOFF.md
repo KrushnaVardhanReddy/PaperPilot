@@ -88,17 +88,23 @@ PaperPilot/
 | Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
 | Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
 | Phase 4.F.12 (Custom CSS Document Conversions) | ✅ Complete | 5 CSS presets (`github`, `elegant`, `minimal`, etc.), custom CSS upload/inline, Excel semantic table styling (PR #84) |
-| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | ✅ Complete | Category filter pills, blank page removal, page numbers, to-PDF conversions in Dock (PR #87, Session 12318669239840057258) |
-| Phase 4.E2E R2.E5 (Autonomous Agent QA Suite) | 🔲 Queued | Vercel Agent Browser / Stagehand exploration loop where Jules tests all tools and fixes bugs directly |
+| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | ✅ Complete | Category filter pills, blank page removal, page numbers, to-PDF conversions in Dock (PR #87) |
+| Phase 5 (V1 API Gateway & Headless Automation Server) | ✅ Complete | Axum REST API, Dynamic 44-tool routing, MCP-over-SSE, CLI `paperpilot serve --port 7823` (PR #88) |
+| Phase 4.E2E R2.E5 (Triple-Channel Autonomous QA Suites) | 🚧 In-Progress | 8 active Jules sessions verifying all 44 tools across Desktop UI, REST API, and MCP channels |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What it does |
-|---|---|---|
-| API Gateway & Headless Server (Phase 5) | `16879956204484826744` | Axum HTTP/REST API (`/api/v1/pdf/*`), Dynamic 44-tool routing (`/tools/:tool_name`), MCP-over-SSE (`/mcp/sse`), CLI `paperpilot serve --port 7823`, OpenAPI `/docs` |
-| Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
+| Task | Session ID | What it does | Session Link |
+|---|---|---|---|
+| **QA-1**: Document Lifecycle & Tabs | `544885962421601530` | Multi-doc tabs, `pdf_info`, `pdf_validate`, `pdf_hash`, `pdf_metadata` | [Session 544885962421601530](https://jules.google.com/session/544885962421601530) |
+| **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | [Session 17034994067282609951](https://jules.google.com/session/17034994067282609951) |
+| **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | ✅ Merged (PR #91) |
+| **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | ✅ Merged (PR #90) |
+| **QA-5**: Annotations & Markup | `3824896424156358922` | Toolbar, `pdf_watermark`, `pdf_annotate`, `pdf_header_footer`, `pdf_bates`, `pdf_create_form_field`, `pdf_read_form`, `pdf_fill_form`, `pdf_sign` | ✅ Merged (PR #89) |
+| **QA-6**: Operations Dock & Page Tools | `3241010897792427201` | Category pills, `pdf_merge`, `pdf_split`, `pdf_page_numbers`, `pdf_remove_blank`, `pdf_compress`, `pdf_linearize`, `pdf_repair`, `pdf_flatten` | [Session 3241010897792427201](https://jules.google.com/session/3241010897792427201) |
+| **QA-7**: Security & Conversions | `7264050569938354833` | Password encryption, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`, `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx` | [Session 7264050569938354833](https://jules.google.com/session/7264050569938354833) |
 
 ---
 

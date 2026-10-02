@@ -23,6 +23,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/convert", post(handlers::convert))
         .route("/api/v1/pdf/watermark", post(handlers::watermark))
         .route("/api/v1/pdf/info", post(handlers::info))
+        .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
         .layer(cors)
 }
