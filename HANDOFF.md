@@ -98,7 +98,8 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.F.13 | `12318669239840057258` | Stirling Parity: Category Filter Pills, To-PDF conversions in Dock, Page Numbers, Blank Page Removal (re-triggered cleanly from main) |
+| Phase 4.F.13A (Rust Backend) | `18397296069691197411` | Backend blank page removal, positional Bates stamping, MCP tool registration (assertion 43) |
+| Phase 4.F.13B (Desktop UI) | `2670447761643250835` | Category filter pills, new Stirling tools in Dock, inspector parameter forms |
 | Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
 
 ---
