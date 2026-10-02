@@ -64,12 +64,18 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md -
    - Verify success toast appears.
 
 5. **Dual-Channel Verification: REST API Execution**:
-   - Ensure metadata and inspection tools work identically via REST API:
+   - Ensure metadata, inspection, and security tools work identically via REST API:
      ```bash
+     # 1. Metadata Inspection:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
        -F "file=@tests/e2e_fixtures/secret_999.pdf"
+
+     # 2. Dynamic 44-Tool Router Encryption:
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/encrypt \
+       -H "Content-Type: application/json" \
+       -d '{"input": "tests/e2e_fixtures/secret_999.pdf", "password": "vault999", "output": "/tmp/secret_999_enc.pdf"}'
      ```
-   - Verify JSON response includes accurate metadata.
+   - Verify JSON response includes accurate metadata and encrypted output exists.
 
 ---
 
