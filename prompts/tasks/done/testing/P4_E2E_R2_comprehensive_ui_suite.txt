@@ -1,4 +1,4 @@
-# Task: Phase 4.E2E Round 2 — Comprehensive UI & System E2E Validation (Post Viewer & Annotations)
+# Task: Phase 4.E2E Round 2 (v2) — Comprehensive Playwright E2E UI Suite & Bug Triage
 # Priority: HIGH — Pre-release validation blocker before Phase 5
 # Target: Desktop UI (Playwright), Rust MCP & CLI Integration, Zero-Mocking
 
@@ -6,64 +6,84 @@
 
 ## MANDATORY RULES — VIOLATION = REJECTED PR
 
-1. NEVER comment out, stub, or mock existing implementation code.
-2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+1. NEVER comment out, stub, or mock existing implementation code in production files.
+2. Every file you modify MUST compile cleanly (`npm --prefix apps/desktop run check` and `cargo check --workspace`).
 3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
 4. Commit message MUST start with `jules: ` prefix.
 5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
 6. Use Vanilla CSS — NEVER TailwindCSS.
-7. All new interactive elements must have a unique `id` attribute.
-8. Follow design system tokens in `app.css`.
+7. Follow the 3-Tier troubleshooting protocol:
+   - Tier 1: Check `paperpilot-pdf` or `paperpilot-mcp` if Rust logic fails.
+   - Tier 2: Check Tauri IPC `generate_handler![]` and `capabilities/default.json` if command fails.
+   - Tier 3: Check Svelte 5 runes and DOM IDs if frontend fails.
 
 ---
 
-## CONTEXT & OBJECTIVE
+## CONTEXT & EXACT DOM SELECTORS
 
-Phase 4.F delivered major enhancements to the PaperPilot Desktop experience:
-1. Custom HTML Titlebar with drag window controls (Phase 4.F.4)
-2. View button, collapsible sidebars, native file open permissions (Phase 4.F.6)
-3. Page Jump input & Zoom preset toolbar (Phase 4.F.7-A)
-4. Multi-document tabs `[Tab1][Tab2][+]` and Right-Docked Operations Panel (Phase 4.F.7-B)
-5. Instant Document Open, Command Palette (`Ctrl+K`), and Floating Canvas Toolbar (Phase 4.F.8)
-6. Canvas Text Search Bar (`Ctrl+F`), match navigation (`1 of 12`, `‹ / ›`), and direct thumbnail drag-and-drop reordering + hover quick actions (Phase 4.F.9)
-7. Stirling-Style Categorized Tools Dock with search filtering and parameter inspector (Phase 4.F.10)
-8. Visual Split-Screen Pixel PDF Diff Slider (`Ctrl+D`, split slider, diff overlay, side-by-side mode) (Phase 4.F.11)
-9. Custom CSS Injection and styled presets for HTML/Markdown/Excel to PDF (Phase 4.F.12)
+PaperPilot Desktop has the following confirmed interactive elements:
 
-Now we need **Phase 4.E2E Round 2 (R2.E3)**: Expand `apps/desktop/tests/e2e_ui.spec.ts` to thoroughly validate all these newly added Phase 4.F capabilities in Playwright.
+1. **Document Tabs (`DocumentTabBar.svelte`)**:
+   - Documents library home button: `#tab-btn-home`
+   - Individual document tabs: `#tab-doc-0`, `#tab-doc-1`, etc.
+   - Document tab close button: `#tab-close-0`, `#tab-close-1`, etc.
+   - Add new document tab file input: `#new-doc-tab-btn input[type="file"]` or `.drop-zone input[type="file"]`
+
+2. **Canvas Search Bar (`PdfSearchBar.svelte`)**:
+   - Opened via `ControlOrMeta+f`
+   - Search container: `#pdf-search-bar`
+   - Search input field: `#pdf-search-input`
+   - Match count indicator: `#pdf-search-count`
+   - Close search: `#pdf-search-close`
+
+3. **Categorized Tools Dock (`OperationsPanel.svelte`)**:
+   - Container: `#operations-panel`
+   - Search input: `#tool-search-input`
+   - Individual tool cards: `#tool-compress`, `#tool-merge`, `#tool-split`, `#tool-rotate`, `#tool-watermark`, `#tool-ocr`
+   - Back button in parameter inspector: `#btn-back-tools`
+   - Run operation button: `#btn-run-operation`
+
+4. **Visual Split-Screen Pixel Diff Slider (`PdfVisualDiff.svelte`)**:
+   - Opened via `ControlOrMeta+d` (or via compare tool)
+   - Diff container: `#visual-diff-container`
+   - Split slider handle: `#diff-split-handle`
+   - Overlay mode button: `#diff-mode-overlay`
+   - Close diff button: `#diff-close-btn`
+
+5. **Custom CSS Presets (`CssInjectionPanel.svelte`)**:
+   - Preset selector: `#css-preset-select` (options: `github`, `elegant`, `minimal`, `branded`, `compact`)
 
 ---
 
-## STEP 1: Generate Fresh Test PDF Fixtures
+## STEP 1: Ensure PDF Test Fixtures Exist
 
-Ensure fixtures exist in `tests/e2e_fixtures/`:
+Check `tests/e2e_fixtures/`:
 - `tests/e2e_fixtures/single_page.pdf`
 - `tests/e2e_fixtures/multi_page.pdf`
 - `tests/e2e_fixtures/sample.pdf`
 
-If they don't exist, run `python3 scripts/generate_fixtures.py` or use `paperpilot-cli create`.
+If any are missing, generate them or use `python3 scripts/generate_fixtures.py`.
 
 ---
 
 ## STEP 2: Update `apps/desktop/tests/e2e_ui.spec.ts`
 
-Add test suites covering the new Phase 4.F features:
+Add test suites covering each Phase 4.F feature with proper async waiting and realistic inputs:
 
-### 2.1 — Multi-Document Tabs & Instant Open
+### 2.1 — Multi-Document Tabs
 ```typescript
 test('can open multiple documents into separate tabs and switch between them', async ({ page }) => {
   await page.goto('/');
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles([
     path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
     path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
   ]);
 
-  // Tab 0 should be active
-  await expect(page.locator('#tab-doc-0')).toBeVisible();
-  await expect(page.locator('#tab-doc-1')).toBeVisible();
+  await expect(page.locator('#tab-doc-0')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#tab-doc-1')).toBeVisible({ timeout: 5000 });
 
-  // Click tab 1 to switch document
+  // Switch to tab 1
   await page.click('#tab-doc-1');
   await expect(page.locator('#tab-doc-1')).toHaveClass(/active/);
 });
@@ -71,104 +91,75 @@ test('can open multiple documents into separate tabs and switch between them', a
 
 ### 2.2 — Canvas Search Bar (`Ctrl+F`)
 ```typescript
-test('canvas search bar opens with shortcut and highlights matches', async ({ page }) => {
+test('canvas search bar opens with shortcut and responds to search', async ({ page }) => {
   await page.goto('/');
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/multi_page.pdf'));
 
-  // Trigger Ctrl+F
+  // Trigger search shortcut
   await page.keyboard.press('ControlOrMeta+f');
   const searchBar = page.locator('#pdf-search-bar');
-  await expect(searchBar).toBeVisible();
+  await expect(searchBar).toBeVisible({ timeout: 5000 });
 
-  // Type search query
-  await page.fill('#pdf-search-input', 'Page');
+  // Search for text
+  await page.fill('#pdf-search-input', 'Paper');
   await page.keyboard.press('Enter');
-
-  // Verify match count indicator exists
-  const matchCount = page.locator('#pdf-search-count');
-  await expect(matchCount).toBeVisible();
+  await expect(page.locator('#pdf-search-count')).toBeVisible();
 });
 ```
 
-### 2.3 — Categorized Tools Dock & Search Filter
+### 2.3 — Categorized Tools Dock & Navigation
 ```typescript
 test('tools dock filters operations and navigates to parameter inspector', async ({ page }) => {
   await page.goto('/');
   const searchInput = page.locator('#tool-search-input');
   await expect(searchInput).toBeVisible();
 
-  // Filter tools by typing 'watermark'
+  // Search for watermark
   await searchInput.fill('watermark');
   const watermarkTool = page.locator('#tool-watermark');
   await expect(watermarkTool).toBeVisible();
 
-  // Click tool to enter parameter inspector
+  // Navigate to inspector and back
   await watermarkTool.click();
-  await expect(page.locator('#inspector-param-watermark')).toBeVisible();
-
-  // Test back navigation
-  await page.click('#tool-inspector-back-btn');
+  await expect(page.locator('#btn-back-tools')).toBeVisible();
+  await page.click('#btn-back-tools');
   await expect(searchInput).toBeVisible();
 });
 ```
 
-### 2.4 — Visual Split-Screen Diff Slider
+### 2.4 — Visual Split-Screen Diff Comparison
 ```typescript
-test('visual diff comparison opens and allows adjusting split slider', async ({ page }) => {
+test('visual diff comparison opens and switches modes', async ({ page }) => {
   await page.goto('/');
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles([
     path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
     path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
   ]);
 
-  // Open diff view via shortcut or compare button
   await page.keyboard.press('ControlOrMeta+d');
   const diffContainer = page.locator('#visual-diff-container');
-  await expect(diffContainer).toBeVisible();
-
-  // Check split mode elements
-  const splitHandle = page.locator('#diff-split-handle');
-  await expect(splitHandle).toBeVisible();
-
-  // Switch to overlay mode
-  await page.click('#diff-mode-overlay');
-  await expect(page.locator('#diff-overlay-canvas')).toBeVisible();
-
-  // Close diff view
-  await page.click('#diff-close-btn');
-  await expect(diffContainer).not.toBeVisible();
-});
-```
-
-### 2.5 — Custom CSS Injection Inspector
-```typescript
-test('custom css injection panel displays presets and accepts custom css input', async ({ page }) => {
-  await page.goto('/');
-  const searchInput = page.locator('#tool-search-input');
-  await searchInput.fill('html to pdf');
-  
-  const convertTool = page.locator('#tool-html-to-pdf, #tool-convert').first();
-  if (await convertTool.isVisible()) {
-    await convertTool.click();
-    const presetSelector = page.locator('#css-preset-select');
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption('github');
-      await expect(presetSelector).toHaveValue('github');
-    }
+  if (await diffContainer.isVisible()) {
+    await expect(page.locator('#diff-split-handle')).toBeVisible();
+    await page.click('#diff-close-btn');
+    await expect(diffContainer).not.toBeVisible();
   }
 });
 ```
 
 ---
 
-## STEP 3: Verification & Test Execution
+## STEP 3: Verification & Execution
 
-Run the complete test suite locally:
-1. `npm --prefix apps/desktop run check`
+Run the tests and checks locally:
+1. `npm --prefix apps/desktop run check` (Must pass with 0 errors)
 2. `npm --prefix apps/desktop test`
-3. `npx --prefix apps/desktop playwright test tests/e2e_ui.spec.ts`
-4. `cargo check --workspace`
+3. `cargo check --workspace`
+4. Run Playwright: `npx --prefix apps/desktop playwright test tests/e2e_ui.spec.ts`
 
-Ensure all tests pass with zero failures. Open a pull request against `main`!
+If any test fails or UI glitch is found:
+- Trace whether it is Tier 1 (Rust), Tier 2 (Tauri IPC), or Tier 3 (Svelte 5).
+- Fix the issue in the source code.
+- Commit all changes with `jules: add Phase 4.E2E Round 2 comprehensive UI test suite and bug fixes`.
+- Open a PR against `main`.

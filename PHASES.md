@@ -565,16 +565,16 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 
 
-#### 4.F.13 — Stirling Parity: Category Filter Pills & Extended Tools `[READY TO DISPATCH]`
+#### 4.F.13 — Stirling Parity: Category Filter Pills & Extended Tools `[IN-PROGRESS]`
 
 > **Core Basic / Free Feature**: Enhances Operations Dock ergonomics with category filter pills, instant 1-click filtering, and Stirling tools parity.
 
 | # | Task | Notes |
 |---|---|---|
-| F.13.1 | Horizontal Category Filter Pills Bar | Prompt ready (`P4_F_13`) — `[All]`, `[⚡ Quick]`, `[📑 Pages]`, `[✍️ Edit]`, `[🔒 Security]` with 1-click category switching |
-| F.13.2 | To-PDF Conversions in Dock | Prompt ready (`P4_F_13`) — Markdown → PDF, HTML → PDF, Images → PDF with CSS presets |
-| F.13.3 | Page Numbers & Bates Stamping | Prompt ready (`P4_F_13`) — Template `{n} of {total}`, position selector, margin controls |
-| F.13.4 | Auto Remove Blank Pages & Text Redaction | Prompt ready (`P4_F_13`) — Blank page stream detection + sensitive PII blackout sanitization |
+| F.13.1 | Horizontal Category Filter Pills Bar | 🚧 In-Progress (Session 6513801077432005833) — `[All]`, `[⚡ Quick]`, `[📑 Pages]`, `[✍️ Edit]`, `[🔒 Security]` with 1-click category switching |
+| F.13.2 | To-PDF Conversions in Dock | 🚧 In-Progress (Session 6513801077432005833) — Markdown → PDF, HTML → PDF, Images → PDF with CSS presets |
+| F.13.3 | Page Numbers & Bates Stamping | 🚧 In-Progress (Session 6513801077432005833) — Template `{n} of {total}`, position selector, margin controls |
+| F.13.4 | Auto Remove Blank Pages & Text Redaction | 🚧 In-Progress (Session 6513801077432005833) — Blank page stream detection + sensitive PII blackout sanitization |
 
 ---
 

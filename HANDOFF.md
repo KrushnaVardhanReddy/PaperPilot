@@ -89,7 +89,7 @@ PaperPilot/
 | Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
 | Phase 4.F.12 (Custom CSS Document Conversions) | ✅ Complete | 5 CSS presets (`github`, `elegant`, `minimal`, etc.), custom CSS upload/inline, Excel semantic table styling (PR #84) |
 | Phase 4.E2E R2.E3 (UI Full Re-Validation) | ✅ Complete | Multi-document tabs, search, tools dock, diff slider Playwright tests (PR #85, Session 11778243636880036911) |
-| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | 📋 Ready to Dispatch | Category filter pills, To-PDF conversions in Dock, Page Numbers, Blank Removal (`P4_F_13`) |
+| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | 🚧 In-Progress | Session `6513801077432005833` |
 | Phase 4.E2E R2.E5 (Autonomous Agent QA Suite) | 🔲 Queued | Vercel Agent Browser / Stagehand exploration loop where Jules tests all tools and fixes bugs directly |
 
 ---
@@ -98,6 +98,7 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
+| Phase 4.F.13 | `6513801077432005833` | Stirling Parity: Category Filter Pills, To-PDF conversions in Dock, Page Numbers, Blank Page Removal |
 | Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
 
 ---
