@@ -377,17 +377,13 @@
         {/if}
       </div>
 
-      <!-- Category Pills -->
-      <div class="category-pills">
-        {#each allCategories as cat}
-          <button
-            class="category-pill pill-btn {selectedCategory === cat.id ? 'active' : ''}"
-            onclick={() => selectedCategory = cat.id}
-          >
-            <span class="pill-icon">{cat.icon}</span>
-            <span class="pill-text">{cat.title}</span>
-          </button>
-        {/each}
+      <!-- Category Selector -->
+      <div class="category-selector">
+        <select bind:value={selectedCategory} class="category-dropdown">
+          {#each allCategories as cat}
+            <option value={cat.id}>{cat.icon} {cat.title}</option>
+          {/each}
+        </select>
       </div>
     </div>
 
@@ -468,43 +464,36 @@
     padding: 0 10px;
   }
 
-  .category-pills {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
+  .category-selector {
     padding: 12px 0 0 0;
-    scrollbar-width: none; /* Firefox */
   }
 
-  .category-pills::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
-  }
-
-  .category-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+  .category-dropdown {
+    width: 100%;
+    height: 34px;
     background-color: var(--bg-surface, #1e1e24);
     border: 1px solid var(--border-color, #2a2a35);
-    border-radius: 100px;
-    color: var(--text-secondary, #9ca3af);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-  }
-
-  .category-pill:hover {
-    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
     color: var(--text-primary, #ffffff);
+    border-radius: var(--border-radius-sm, 4px);
+    padding: 0 30px 0 10px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
   }
 
-  .category-pill.active {
-    background-color: var(--accent-primary, #5e6ad2);
+  .category-dropdown:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .category-dropdown:focus {
     border-color: var(--accent-primary, #5e6ad2);
-    color: #ffffff;
   }
 
   .search-icon {
@@ -690,6 +679,16 @@
     color: var(--text-primary, #ffffff);
     font-size: 13px;
     outline: none;
+  }
+
+  select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+    padding-right: 30px;
   }
 
   .range-input {
