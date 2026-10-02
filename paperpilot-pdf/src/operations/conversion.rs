@@ -8,6 +8,317 @@ use std::io::Write;
 use std::sync::{Arc, Mutex};
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
+use std::path::PathBuf;
+
+pub const CSS_PRESET_GITHUB: &str = r#"
+@page { margin: 20mm; size: A4; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #24292e;
+    background-color: #ffffff;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1f2328;
+}
+h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+code {
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 4px;
+    padding: 0.2em 0.4em;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 85%;
+}
+pre {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    overflow: auto;
+    line-height: 1.45;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+}
+table th, table td {
+    padding: 8px 12px;
+    border: 1px solid #d0d7de;
+}
+table th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+}
+table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+"#;
+
+pub const CSS_PRESET_ELEGANT: &str = r#"
+@page { margin: 25mm; size: A4; }
+body {
+    font-family: "Georgia", "Merriweather", serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #2c3e50;
+    background-color: #ffffff;
+}
+h1, h2, h3 {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color: #1a252f;
+    letter-spacing: 0.02em;
+}
+h1 { font-size: 2.2em; text-align: center; margin-bottom: 1.5em; }
+h2 { font-size: 1.6em; border-bottom: 2px solid #8e44ad; padding-bottom: 6px; margin-top: 1.8em; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+table th {
+    border-bottom: 2px solid #2c3e50;
+    padding: 10px 14px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+table td {
+    border-bottom: 1px solid #ecf0f1;
+    padding: 10px 14px;
+}
+"#;
+
+pub const CSS_PRESET_MINIMAL: &str = r#"
+@page { margin: 18mm; size: A4; }
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #111111;
+}
+h1, h2, h3 { font-weight: 700; color: #000000; }
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.4em; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+table th, table td { padding: 6px 10px; border-bottom: 1px solid #000; text-align: left; }
+table th { font-weight: 700; border-top: 1px solid #000; }
+"#;
+
+pub const CSS_PRESET_BRANDED: &str = r#"
+@page { margin: 20mm; size: A4; }
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #1e293b;
+}
+h1 { font-size: 2em; color: #4361ee; border-left: 4px solid #4361ee; padding-left: 12px; }
+h2 { font-size: 1.4em; color: #3a0ca3; margin-top: 1.5em; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; margin: 16px 0; }
+table th { background: #4361ee; color: #ffffff; padding: 10px 14px; font-weight: 600; text-align: left; }
+table td { padding: 8px 14px; border-bottom: 1px solid #f1f5f9; }
+table tr:nth-child(even) td { background-color: #f8fafc; }
+"#;
+
+pub const CSS_PRESET_COMPACT: &str = r#"
+@page { margin: 12mm; size: A4; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #1f2937;
+}
+h1 { font-size: 1.4em; margin-bottom: 8px; }
+h2 { font-size: 1.2em; margin-top: 12px; margin-bottom: 6px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 10.5px; }
+table th, table td { padding: 4px 6px; border: 1px solid #d1d5db; }
+table th { background: #f3f4f6; font-weight: 600; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+"#;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HtmlToPdfOptions {
+    pub preset: Option<String>,      // "github", "elegant", "minimal", "branded", "compact"
+    pub custom_css: Option<String>,  // inline CSS string
+    pub page_size: Option<String>,   // "A4", "Letter", etc.
+    pub margin_mm: Option<f32>,      // default 20mm
+}
+
+impl Default for HtmlToPdfOptions {
+    fn default() -> Self {
+        Self {
+            preset: Some("github".to_string()),
+            custom_css: None,
+            page_size: Some("A4".to_string()),
+            margin_mm: Some(20.0),
+        }
+    }
+}
+
+pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
+    let preset_css = match preset.unwrap_or("github") {
+        "elegant" => CSS_PRESET_ELEGANT,
+        "minimal" => CSS_PRESET_MINIMAL,
+        "branded" => CSS_PRESET_BRANDED,
+        "compact" => CSS_PRESET_COMPACT,
+        _ => CSS_PRESET_GITHUB,
+    };
+
+    if let Some(custom) = custom_css {
+        if !custom.trim().is_empty() {
+            return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
+        }
+    }
+    preset_css.to_string()
+}
+
+pub fn inject_css_into_html(html: &str, css: &str) -> String {
+    let style_tag = format!("<style id=\"paperpilot-injected-css\">\n{}\n</style>", css);
+    if let Some(pos) = html.find("</head>") {
+        let mut out = html[..pos].to_string();
+        out.push_str(&style_tag);
+        out.push_str(&html[pos..]);
+        out
+    } else {
+        format!("<!DOCTYPE html><html><head>{}</head><body>{}</body></html>", style_tag, html)
+    }
+}
+
+pub struct HtmlToPdfOperation {
+    pub input_html: String,
+    pub output_path: PathBuf,
+    pub options: HtmlToPdfOptions,
+}
+
+impl HtmlToPdfOperation {
+    pub fn new(input_html: String, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
+        Self { input_html, output_path, options }
+    }
+
+    pub fn render(&self) -> OperationResult<()> {
+        let css = resolve_css(
+            self.options.preset.as_deref(),
+            self.options.custom_css.as_deref(),
+        );
+        let styled_html = inject_css_into_html(&self.input_html, &css);
+
+        use headless_chrome::{Browser, LaunchOptions};
+
+        let browser = Browser::new(LaunchOptions {
+            headless: true,
+            sandbox: false,
+            ..Default::default()
+        }).map_err(|e| PdfError::Other(format!("Failed to launch browser: {}", e)))?;
+
+        let tab = browser.new_tab().map_err(|e| PdfError::Other(format!("Failed to create tab: {}", e)))?;
+
+        let mut temp_file = tempfile::NamedTempFile::new()
+            .map_err(|e| PdfError::Other(format!("Failed to create temp file: {}", e)))?;
+        temp_file.write_all(styled_html.as_bytes())
+            .map_err(|e| PdfError::Other(format!("Failed to write to temp file: {}", e)))?;
+        let temp_url = format!("file://{}", temp_file.path().to_string_lossy());
+
+        tab.navigate_to(&temp_url).map_err(|e| PdfError::Other(format!("Failed to navigate: {}", e)))?;
+        tab.wait_until_navigated().map_err(|e| PdfError::Other(format!("Failed to wait for navigation: {}", e)))?;
+
+        let pdf_data = tab.print_to_pdf(None)
+            .map_err(|e| PdfError::Other(format!("Failed to print to pdf: {}", e)))?;
+
+        std::fs::write(&self.output_path, pdf_data)
+            .map_err(|e| PdfError::Other(format!("Failed to write pdf file: {}", e)))?;
+
+        Ok(())
+    }
+}
+
+pub struct MarkdownToPdfOperation {
+    pub input_md: String,
+    pub output_path: PathBuf,
+    pub options: HtmlToPdfOptions,
+}
+
+impl MarkdownToPdfOperation {
+    pub fn new(input_md: String, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
+        Self { input_md, output_path, options }
+    }
+
+    pub fn render(&self) -> OperationResult<()> {
+        use pulldown_cmark::{Parser, html};
+        let parser = Parser::new(&self.input_md);
+        let mut html_output = String::new();
+        html::push_html(&mut html_output, parser);
+
+        let full_html = format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>{}</body></html>", html_output);
+
+        let html_op = HtmlToPdfOperation::new(full_html, self.output_path.clone(), self.options.clone());
+        html_op.render()
+    }
+}
+
+pub struct ExcelToStyledHtmlOperation {
+    pub input_path: PathBuf,
+    pub output_path: PathBuf,
+    pub options: HtmlToPdfOptions,
+}
+
+impl ExcelToStyledHtmlOperation {
+    pub fn new(input_path: PathBuf, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
+        Self { input_path, output_path, options }
+    }
+
+    pub fn render(&self) -> OperationResult<()> {
+        use calamine::{Reader, open_workbook_auto, Data};
+
+        let mut workbook = open_workbook_auto(&self.input_path)
+            .map_err(|e| PdfError::Other(format!("Failed to open workbook: {}", e)))?;
+
+        let mut html = String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
+
+        let sheets = workbook.sheet_names().to_owned();
+        for sheet_name in sheets {
+            html.push_str(&format!("<h2>{}</h2>", sheet_name));
+            if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                html.push_str("<table>");
+                let mut is_first_row = true;
+                for row in range.rows() {
+                    html.push_str("<tr>");
+                    for cell in row {
+                        let cell_tag = if is_first_row { "th" } else { "td" };
+                        let cell_val = match cell {
+                            Data::String(s) => s.to_string(),
+                            Data::Float(f) => f.to_string(),
+                            Data::Int(i) => i.to_string(),
+                            Data::Bool(b) => b.to_string(),
+                            Data::Error(e) => format!("Error: {:?}", e),
+                            Data::Empty => String::new(),
+                            Data::DateTime(d) => d.as_f64().to_string(),
+                            Data::DateTimeIso(d) => d.to_string(),
+                            Data::DurationIso(d) => d.to_string(),
+                        };
+                        html.push_str(&format!("<{}>{}</{}>", cell_tag, cell_val, cell_tag));
+                    }
+                    html.push_str("</tr>");
+                    is_first_row = false;
+                }
+                html.push_str("</table>");
+            }
+        }
+        html.push_str("</body></html>");
+
+        let html_op = HtmlToPdfOperation::new(html, self.output_path.clone(), self.options.clone());
+        html_op.render()
+    }
+}
+
 
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
@@ -553,6 +864,43 @@ mod tests {
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
         LopdfDocument { inner: doc }
+    }
+
+    #[test]
+    fn test_css_preset_resolution() {
+        let css = resolve_css(Some("elegant"), None);
+        assert!(css.contains("Georgia"));
+        assert!(css.contains("margin: 25mm"));
+
+        let css2 = resolve_css(Some("github"), None);
+        assert!(css2.contains("-apple-system"));
+        assert!(css2.contains("margin: 20mm"));
+
+        let css3 = resolve_css(None, None);
+        assert!(css3.contains("-apple-system"));
+    }
+
+    #[test]
+    fn test_custom_css_concatenation() {
+        let css = resolve_css(Some("minimal"), Some("body { font-size: 20px; }"));
+        assert!(css.contains("margin: 18mm"));
+        assert!(css.contains("/* Custom CSS */"));
+        assert!(css.contains("body { font-size: 20px; }"));
+    }
+
+    #[test]
+    fn test_inject_css_into_html() {
+        let html = "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>";
+        let css = "body { color: red; }";
+        let injected = inject_css_into_html(html, css);
+
+        assert!(injected.contains("<style id=\"paperpilot-injected-css\">\nbody { color: red; }\n</style>"));
+        assert!(injected.contains("</head>"));
+
+        let html_no_head = "<body><h1>Hello</h1></body>";
+        let injected_no_head = inject_css_into_html(html_no_head, css);
+        assert!(injected_no_head.starts_with("<!DOCTYPE html><html><head><style id=\"paperpilot-injected-css\">"));
+        assert!(injected_no_head.contains("<body><body><h1>Hello</h1></body></body></html>"));
     }
 
     #[test]

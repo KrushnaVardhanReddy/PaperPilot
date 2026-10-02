@@ -301,6 +301,12 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: Option<PathBuf>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        css_preset: Option<String>,
+        #[arg(long)]
+        inline_css: Option<String>,
     },
 }
 

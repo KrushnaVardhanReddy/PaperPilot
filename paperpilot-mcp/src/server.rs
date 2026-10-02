@@ -22,6 +22,46 @@ impl PaperPilotMcpServer {
     pub fn execute_list_tools() -> Result<ListToolsResult, ErrorData> {
         let mut tools = Vec::new();
 
+        let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
+            let schema = serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": {
+                        "type": "string",
+                        "description": "Path to input file"
+                    },
+                    "output": {
+                        "type": "string",
+                        "description": "Path to output PDF file"
+                    },
+                    "preset": {
+                        "type": "string",
+                        "description": "CSS preset (github, elegant, minimal, branded, compact)"
+                    },
+                    "custom_css": {
+                        "type": "string",
+                        "description": "Custom CSS rules to apply"
+                    },
+                    "page_size": {
+                        "type": "string",
+                        "description": "Page size format (e.g. A4, Letter)"
+                    }
+                },
+                "required": ["input", "output"]
+            });
+
+            let tool = Tool::new(
+                name.to_string(),
+                desc.to_string(),
+                schema.as_object().unwrap().clone(),
+            );
+            tools.push(tool);
+        };
+
+        add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
+        add_styled_tool(&mut tools, "pdf_convert_markdown", "Convert Markdown to styled PDF");
+        add_styled_tool(&mut tools, "pdf_convert_excel", "Convert Excel/CSV to styled PDF via semantic HTML");
+
         // Tool: pdf_merge
         let mut schema_0 = serde_json::Map::new();
         schema_0.insert(
@@ -2464,6 +2504,104 @@ impl PaperPilotMcpServer {
         };
 
         let result = match request.name.as_ref() {
+            "pdf_convert_html" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+                let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
+                    preset,
+                    custom_css,
+                    page_size,
+                    margin_mm: Some(20.0),
+                };
+
+                let input_str = std::fs::read_to_string(&input).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to read input file: {}", e), None)
+                })?;
+
+                let op = paperpilot_pdf::operations::conversion::HtmlToPdfOperation::new(
+                    input_str,
+                    PathBuf::from(&output),
+                    options,
+                );
+
+                op.render().map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "HTML converted to PDF successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_convert_markdown" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+                let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
+                    preset,
+                    custom_css,
+                    page_size,
+                    margin_mm: Some(20.0),
+                };
+
+                let input_str = std::fs::read_to_string(&input).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to read input file: {}", e), None)
+                })?;
+
+                let op = paperpilot_pdf::operations::conversion::MarkdownToPdfOperation::new(
+                    input_str,
+                    PathBuf::from(&output),
+                    options,
+                );
+
+                op.render().map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Markdown converted to PDF successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+            "pdf_convert_excel" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+                let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
+                    preset,
+                    custom_css,
+                    page_size,
+                    margin_mm: Some(20.0),
+                };
+
+                let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(
+                    PathBuf::from(&input),
+                    PathBuf::from(&output),
+                    options,
+                );
+
+                op.render().map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Excel converted to PDF successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
             "pdf_merge" => {
                 let inputs = get_string_array("inputs")?;
                 let output = get_string("output")?;
