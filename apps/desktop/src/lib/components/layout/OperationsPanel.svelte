@@ -251,7 +251,7 @@
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
-      <button class="back-btn" onclick={backToDirectory} id="tool-inspector-back-btn" title="Back to tool list">
+      <button class="back-btn" onclick={backToDirectory} id="btn-back-tools" title="Back to tool list">
         ‹ Back
       </button>
       <div class="inspector-title-wrap" id="inspector-param-{activeTool.id.replace('pdf_', '')}">
@@ -381,7 +381,7 @@
       <div class="category-pills">
         {#each allCategories as cat}
           <button
-            class="category-pill {selectedCategory === cat.id ? 'active' : ''}"
+            class="category-pill pill-btn {selectedCategory === cat.id ? 'active' : ''}"
             onclick={() => selectedCategory = cat.id}
           >
             <span class="pill-icon">{cat.icon}</span>
@@ -400,7 +400,7 @@
             <div class="empty-state">No matching tools found</div>
           {:else}
             {#each filteredTools as tool (tool.id + tool.category)}
-              <button class="tool-card" onclick={() => selectTool(tool)} id="tool-{tool.id}">
+              <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                 <span class="tool-card-icon">{tool.icon}</span>
                 <div class="tool-card-info">
                   <span class="tool-card-title">{tool.title}</span>
@@ -422,7 +422,7 @@
               </span>
               <div class="category-grid">
                 {#each toolsInCat as tool (tool.id + tool.category)}
-                  <button class="tool-card" onclick={() => selectTool(tool)} id="tool-{tool.id}">
+                  <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                     <span class="tool-card-icon">{tool.icon}</span>
                     <div class="tool-card-info">
                       <span class="tool-card-title">{tool.title}</span>

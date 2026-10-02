@@ -89,7 +89,7 @@ test.describe('Multi-File Upload & Operations', () => {
 
     // To test reordering, we select "merge" operation to reveal the reorder list
     await page.fill('#tool-search-input', 'merge');
-    await page.locator('#tool-merge').first().click();
+    await page.locator('#tool-btn-merge').first().click();
 
     const reorderItems = page.locator('.reorder-list .reorder-item');
     await expect(reorderItems).toHaveCount(2);
@@ -117,7 +117,7 @@ test.describe('Multi-File Upload & Operations', () => {
     await page.click('#tab-btn-home');
 
     await page.fill('#tool-search-input', 'compress');
-    await page.locator('#tool-compress').first().click();
+    await page.locator('#tool-btn-compress').first().click();
 
     const runBtn = page.locator('.run-btn');
     await runBtn.click();
@@ -217,7 +217,7 @@ test.describe('Pipeline Execution and Error State', () => {
     await page.click('#tab-btn-home');
 
     await page.fill('#tool-search-input', 'compress');
-    await page.locator('#tool-compress').first().click();
+    await page.locator('#tool-btn-compress').first().click();
 
     const runBtn = page.locator('.run-btn');
     await runBtn.click();
@@ -274,7 +274,7 @@ test.describe('Phase 4.F Features Validation', () => {
 
     // Filter tools by typing 'watermark'
     await searchInput.fill('watermark');
-    const watermarkTool = page.locator('#tool-watermark');
+    const watermarkTool = page.locator('#tool-btn-watermark');
     await expect(watermarkTool).toBeVisible();
 
     // Click tool to enter parameter inspector
@@ -282,7 +282,7 @@ test.describe('Phase 4.F Features Validation', () => {
     await expect(page.locator('#inspector-param-watermark')).toBeVisible();
 
     // Test back navigation
-    await page.click('#tool-inspector-back-btn');
+    await page.click('#btn-back-tools');
     await expect(searchInput).toBeVisible();
   });
 
@@ -317,7 +317,7 @@ test.describe('Phase 4.F Features Validation', () => {
     const searchInput = page.locator('#tool-search-input');
     await searchInput.fill('html to pdf');
 
-    const convertTool = page.locator('#tool-html-to-pdf, #tool-convert').first();
+    const convertTool = page.locator('#tool-btn-html-to-pdf, #tool-btn-convert').first();
     if (await convertTool.isVisible()) {
       await convertTool.click();
       const presetSelector = page.locator('#css-preset-select');
