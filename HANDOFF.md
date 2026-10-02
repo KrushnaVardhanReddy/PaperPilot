@@ -104,7 +104,7 @@ PaperPilot/
 | **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | ✅ Merged (PR #90) |
 | **QA-5**: Annotations & Markup | `3824896424156358922` | Toolbar, `pdf_watermark`, `pdf_annotate`, `pdf_header_footer`, `pdf_bates`, `pdf_create_form_field`, `pdf_read_form`, `pdf_fill_form`, `pdf_sign` | ✅ Merged (PR #89) |
 | **QA-6**: Operations Dock & Page Tools | `3241010897792427201` | Category pills, `pdf_merge`, `pdf_split`, `pdf_page_numbers`, `pdf_remove_blank`, `pdf_compress`, `pdf_linearize`, `pdf_repair`, `pdf_flatten` | [Session 3241010897792427201](https://jules.google.com/session/3241010897792427201) |
-| **QA-7**: Security & Conversions | `7264050569938354833` | Password encryption, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`, `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx` | [Session 7264050569938354833](https://jules.google.com/session/7264050569938354833) |
+| **QA-7**: Security & Conversions | `7264050569938354833` | Password encryption, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`, `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx` | ✅ Merged (PR #95) |
 
 ---
 
