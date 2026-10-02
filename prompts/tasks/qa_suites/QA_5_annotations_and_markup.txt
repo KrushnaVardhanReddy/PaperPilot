@@ -79,12 +79,18 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
 8. **Dual-Channel Verification: REST API Watermark & Stamp**:
    - Ensure overlay and visual markup tools work headlessly via REST API:
      ```bash
+     # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark \
        -F "file=@tests/e2e_fixtures/contract_555.pdf" \
        -F "text=CONFIDENTIAL #555" \
        -o /tmp/watermarked_via_api.pdf
+
+     # 2. Dynamic 44-Tool Router:
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/watermark \
+       -H "Content-Type: application/json" \
+       -d '{"input": "tests/e2e_fixtures/contract_555.pdf", "text": "CONFIDENTIAL #555", "output": "/tmp/watermarked_via_tools_api.pdf"}'
      ```
-   - Assert `/tmp/watermarked_via_api.pdf` exists and is a valid PDF.
+   - Assert both output files exist and are valid PDFs.
 
 ---
 

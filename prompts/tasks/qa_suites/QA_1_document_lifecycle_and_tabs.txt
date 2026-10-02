@@ -99,16 +99,19 @@ Verify both `tests/e2e_fixtures/doc_100.pdf` and `tests/e2e_fixtures/doc_200.pdf
 5. **Dual-Channel Verification: REST API Document Inspection & Health**:
    - Ensure the server endpoint processes the exact same fixtures via HTTP:
      ```bash
-     # Verify health
+     # 1. Verify health check (must return tools_count: 44)
      curl -s http://127.0.0.1:7823/health
-     # Inspect doc_100.pdf metadata headlessly
+
+     # 2. Inspect doc_100.pdf via convenience endpoint
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
        -F "file=@tests/e2e_fixtures/doc_100.pdf"
-     # Inspect doc_200.pdf metadata headlessly
-     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
-       -F "file=@tests/e2e_fixtures/doc_200.pdf"
+
+     # 3. Inspect doc_200.pdf via dynamic 44-tool router
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/info \
+       -H "Content-Type: application/json" \
+       -d '{"input": "tests/e2e_fixtures/doc_200.pdf"}'
      ```
-   - Verify both HTTP responses return valid JSON with correct page counts.
+   - Verify HTTP responses return valid JSON with correct page counts.
 
 ---
 

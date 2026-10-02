@@ -88,11 +88,17 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_num
 7. **Dual-Channel Verification: REST API Text Search & Extraction**:
    - Ensure the server endpoint finds the exact same occurrences headlessly:
      ```bash
+     # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text \
        -F "file=@tests/e2e_fixtures/search_test.pdf" \
        -F "query=SERIAL-777"
+
+     # 2. Dynamic 44-Tool Router:
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/extract_text \
+       -H "Content-Type: application/json" \
+       -d '{"input": "tests/e2e_fixtures/search_test.pdf", "output": "/tmp/extracted_search_text.txt"}'
      ```
-   - Assert JSON output reflects 3 occurrences and lists pages [1, 3, 5].
+   - Assert text extraction succeeds and occurrences are verified.
 
 ---
 

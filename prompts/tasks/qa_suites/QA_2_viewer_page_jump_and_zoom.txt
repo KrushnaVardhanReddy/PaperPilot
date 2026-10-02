@@ -87,11 +87,17 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numb
 6. **Dual-Channel Verification: Headless Page Render via REST API**:
    - Ensure the server endpoint can render and rasterize pages headlessly:
      ```bash
+     # 1. Convenience Render Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page \
        -F "file=@tests/e2e_fixtures/multi_page_numbered.pdf" \
        -F "page=4" \
        -F "dpi=150" \
        -o /tmp/page_4_rendered.png
+
+     # 2. Dynamic 44-Tool Router:
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/render \
+       -H "Content-Type: application/json" \
+       -d '{"input": "tests/e2e_fixtures/multi_page_numbered.pdf", "page": 4, "dpi": 150, "output": "/tmp/page_4_rendered_dynamic.png"}'
      ```
    - Verify `/tmp/page_4_rendered.png` exists and is a valid non-empty PNG image.
 

@@ -75,12 +75,18 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md 
 5. **Dual-Channel Verification: REST API Document Comparison**:
    - Ensure the server endpoint can compare the revisions headlessly:
      ```bash
+     # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare \
        -F "file1=@tests/e2e_fixtures/contract_v1.pdf" \
        -F "file2=@tests/e2e_fixtures/contract_v2.pdf" \
        -o /tmp/diff_report.json
+
+     # 2. Dynamic 44-Tool Router:
+     curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/compare \
+       -H "Content-Type: application/json" \
+       -d '{"file_a": "tests/e2e_fixtures/contract_v1.pdf", "file_b": "tests/e2e_fixtures/contract_v2.pdf"}'
      ```
-   - Assert `/tmp/diff_report.json` indicates diff detected and marks page 1 changes.
+   - Assert diff output indicates changes detected between revisions.
 
 ---
 
