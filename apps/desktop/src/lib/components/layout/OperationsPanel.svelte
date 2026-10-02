@@ -224,10 +224,10 @@
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
-      <button class="back-btn" onclick={backToDirectory} id="btn-back-tools" title="Back to tool list">
+      <button class="back-btn" onclick={backToDirectory} id="tool-inspector-back-btn" title="Back to tool list">
         ‹ Back
       </button>
-      <div class="inspector-title-wrap">
+      <div class="inspector-title-wrap" id="inspector-param-{activeTool.id.replace('pdf_', '')}">
         <span class="tool-icon">{activeTool.icon}</span>
         <h3 class="inspector-title">{activeTool.title}</h3>
       </div>
