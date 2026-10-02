@@ -552,16 +552,16 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.11.2 | Interactive Split Slider | ✅ Completed (PR #83) — Draggable divider handle across dual canvas layers (before/after) |
 | F.11.3 | Synchronized Paging & Navigation | ✅ Completed (PR #83) — Multi-document selection, side-by-side mode, keyboard shortcut (`Ctrl+D`) |
 
-#### 4.F.12 — Custom CSS Injection for HTML/Markdown/Excel → PDF `[ACTIVE]`
+#### 4.F.12 — Custom CSS Injection for HTML/Markdown/Excel → PDF `[COMPLETED]`
 
 > **Core Basic / Free Feature**: Overcomes Stirling PDF's unstyled conversions and Adobe Acrobat Pro's costly enterprise layout paywalls.
 
 | # | Task | Notes |
 |---|---|---|
-| F.12.1 | CSS Preset Library (5 Themes) | 🚧 In-Progress (Session 1183351717147081897) — `github`, `elegant`, `minimal`, `branded`, `compact` print-optimized stylesheets |
-| F.12.2 | Custom CSS File & Inline Injection | 🚧 In-Progress (Session 1183351717147081897) — Desktop `.css` file upload + inline textarea + CLI `--css` flags |
-| F.12.3 | Excel → Styled Semantic Table Pipeline | 🚧 In-Progress (Session 1183351717147081897) — Spreadsheet `.xlsx`/`.csv` parsed into semantic HTML `<table>` with CSS styling |
-| F.12.4 | Standalone Svelte 5 `CssInjectionPanel` | 🚧 In-Progress (Session 1183351717147081897) — Modern Svelte 5 runes component for tool inspector integration |
+| F.12.1 | CSS Preset Library (5 Themes) | ✅ Completed (PR #84) — `github`, `elegant`, `minimal`, `branded`, `compact` print-optimized stylesheets |
+| F.12.2 | Custom CSS File & Inline Injection | ✅ Completed (PR #84) — Desktop `.css` file upload + inline textarea + CLI `--css` flags |
+| F.12.3 | Excel → Styled Semantic Table Pipeline | ✅ Completed (PR #84) — Spreadsheet `.xlsx`/`.csv` parsed into semantic HTML `<table>` with CSS styling |
+| F.12.4 | Standalone Svelte 5 `CssInjectionPanel` | ✅ Completed (PR #84) — Modern Svelte 5 runes component for tool inspector integration |
 
 
 

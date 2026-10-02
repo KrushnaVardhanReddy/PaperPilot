@@ -86,15 +86,13 @@ PaperPilot/
 | Phase 4.F.9-B (Thumbnail Page Management) | ✅ Complete | Direct thumbnail drag-and-drop page reordering + hover quick actions (Rotate 🔄, Delete 🗑️) (PR #80) |
 | Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
 | Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
+| Phase 4.F.12 (Custom CSS Document Conversions) | ✅ Complete | 5 CSS presets (`github`, `elegant`, `minimal`, etc.), custom CSS upload/inline, Excel semantic table styling (PR #84) |
 
 ---
 
 ## 🚧 Active Jules Tasks (In-Progress)
 
-| Task | Session ID | What it does |
-|---|---|---|
-| Phase 4.F.12 (Session A) | `1183351717147081897` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (5 presets, custom CSS upload/inline, Excel table parsing) |
-| Phase 4.F.12 (Session B) | `15935475204670535170` | Custom CSS Injection & Presets for HTML/Markdown/Excel → PDF (Fresh session started directly off latest `main`) |
+*None currently running. Ready to submit Phase 4.E2E Round 2.*
 
 ---
 
