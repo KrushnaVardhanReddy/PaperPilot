@@ -3,11 +3,16 @@
 ## Objective
 Enable third-party automation tools, workflow orchestrators (n8n, Make, Zapier), AI agents (Claude Desktop, Cursor, Custom LLM bots), CI/CD pipelines, and local scripts (Python, curl) to directly execute PaperPilot operations.
 
-PaperPilot is built with a high-performance native Rust core and ~42 MCP tools in `paperpilot-mcp`. Currently, these run via stdio JSON-RPC internally or within the Tauri desktop app.
-In this task, we will add an optional headless HTTP daemon/gateway crate (`paperpilot-gateway` or inside `paperpilot-cli`/`paperpilot-mcp`) that exposes:
+PaperPilot is built with a high-performance native Rust core and 44 MCP tools in `paperpilot-mcp`. Currently, these run via stdio JSON-RPC internally or within the Tauri desktop app.
+In this task, we will add an optional headless HTTP daemon/gateway crate (`paperpilot-gateway`) that exposes:
 1. **MCP over HTTP/SSE Transport**: Standardized Model Context Protocol over Server-Sent Events / HTTP POST, letting any MCP-compliant client connect remotely.
-2. **REST API (`/api/v1/pdf/*`)**: Clean JSON & multipart endpoints wrapping the core operations (`merge`, `split`, `compress`, `convert`, `ocr`, `watermark`, `extract_text`, `info`, etc.) with Swagger/OpenAPI documentation.
-3. **Optional Background Daemon Mode in Desktop**: Allow users to toggle "Enable Local API Server (port 7823)" in desktop settings, or run standalone via CLI (`paperpilot serve --port 7823`).
+2. **Comprehensive Automation REST API (`/api/v1/pdf/*`)**:
+   - Ergonomic endpoints for high-frequency operations (`/merge`, `/split`, `/compress`, `/convert`, `/extract-text`, `/watermark`, `/info`).
+   - **Dynamic Tool Dispatch Endpoint**: `POST /api/v1/pdf/tools/:tool_name` allowing ANY of PaperPilot's 44 tools (e.g. `rotate`, `encrypt`, `decrypt`, `remove_blank`, `page_numbers`, `compare`, `crop`, `flatten`, `ocr`, etc.) to be invoked directly via its own dedicated URL path!
+   - Generic JSON execution endpoint: `POST /api/v1/pdf/mcp-exec`.
+   - Interactive OpenAPI/Swagger documentation at `/docs`.
+3. **CLI Headless Daemon Mode**: Standalone command `paperpilot serve --port 7823` in `paperpilot-cli`.
+4. **Desktop App Settings Toggle**: Allow desktop users to enable the background local API server on port 7823.
 
 ---
 
@@ -15,7 +20,7 @@ In this task, we will add an optional headless HTTP daemon/gateway crate (`paper
 1. NEVER comment out, stub, or mock existing implementation code.
 2. NEVER replace working function bodies with `// TODO` or empty returns.
 3. Do NOT break existing stdio MCP server functionality (`paperpilot-mcp`). Stdio MCP must continue to work flawlessly.
-4. Keep all core dependencies open source under Apache 2.0 (consistent with Phases 1-5).
+4. Keep all core dependencies open source under Apache 2.0.
 5. All new Rust endpoints must be covered by integration tests using real PDFs (`tests/api_gateway_tests.rs`).
 6. Commit message must start with "jules: " prefix.
 
@@ -25,28 +30,27 @@ In this task, we will add an optional headless HTTP daemon/gateway crate (`paper
 To ensure maximum testability, zero code duplication, and clean decoupling:
 - **Core Domain / Port**: The PDF operations traits (`PdfOperation`) in `paperpilot-core` and the tool execution registry in `paperpilot-mcp` serve as the **primary ports**. No PDF logic or file manipulation code may be duplicated in the gateway!
 - **Primary / Driving Adapters**:
-  1. **Tauri IPC Adapter**: (Already existing) forwards frontend IPC calls to core/MCP.
-  2. **CLI Adapter**: (Already existing) drives core operations via terminal args.
-  3. **MCP Stdio Adapter**: (Already existing) drives tool execution via stdin/stdout JSON-RPC.
+  1. **Tauri IPC Adapter**: (Existing) forwards frontend IPC calls to core/MCP.
+  2. **CLI Adapter**: (Existing) drives core operations via terminal args.
+  3. **MCP Stdio Adapter**: (Existing) drives tool execution via stdin/stdout JSON-RPC.
   4. **NEW: MCP SSE/HTTP Adapter**: Exposes the MCP port over HTTP Server-Sent Events.
   5. **NEW: REST / Axum Adapter**: Accepts multipart/JSON HTTP requests, converts them into core operation calls or MCP tool invocations, and returns HTTP responses.
-- Because all adapters plug into the same core ports, unit and integration testing can easily mock or directly verify operations without spinning up full network servers, while integration tests verify the network adapters directly.
 
-### 2. New Crate or Module: `paperpilot-gateway` (or `paperpilot-server`)
+### 2. New Crate: `paperpilot-gateway`
 Add a lightweight, blazing-fast async HTTP service using `axum` and `tokio`.
 Features required in the server:
-- **CORS Support**: Permissive or configurable CORS so browser-based webhooks or local web tools can invoke it.
+- **CORS Support**: Permissive CORS so browser-based webhooks or local web tools can invoke it.
 - **Port Configuration**: Default to port `7823` (or environment variable `PAPERPILOT_PORT`), configurable via CLI flags `--port <PORT>` and `--bind <IP>`.
 - **Health Check**: `GET /health` returning `{"status": "ok", "version": "...", "tools_count": 44}` (dynamically derived from the MCP server tool registry).
 - **OpenAPI / Swagger UI**: Expose interactive docs at `GET /docs` or `GET /swagger-ui` (e.g. using `utoipa` or lightweight static OpenAPI spec) so users can test endpoints right from their browser.
 
-### 2. Layer 1: MCP-over-HTTP/SSE Transport
+### 3. Layer 1: MCP-over-HTTP/SSE Transport
 - Implement an SSE endpoint: `GET /mcp/sse` (initiates the event stream with session ID).
 - Implement an RPC endpoint: `POST /mcp/messages?sessionId=<ID>` (receives JSON-RPC MCP requests and routes them directly to `paperpilot_mcp::server::PaperPilotServer`).
-- AI agents like Claude Desktop, Cursor, LangChain, and n8n MCP nodes can point to `http://localhost:7823/mcp/sse` and immediately discover & invoke all 42+ PaperPilot tools without needing local CLI binary paths!
+- AI agents like Claude Desktop, Cursor, LangChain, and n8n MCP nodes can point to `http://localhost:7823/mcp/sse` and immediately discover & invoke all 44 PaperPilot tools without needing local CLI binary paths!
 
-### 3. Layer 2: Automation REST API (`/api/v1/pdf/*`)
-Provide streamlined REST endpoints handling multipart form uploads and raw file paths for automation:
+### 4. Layer 2: Automation REST API (`/api/v1/pdf/*`)
+Provide REST endpoints handling multipart form uploads and raw file paths for automation:
 - `POST /api/v1/pdf/merge` (Accepts multipart array of PDF files, returns merged PDF file).
 - `POST /api/v1/pdf/split` (Accepts PDF file + split ranges, returns ZIP or single page).
 - `POST /api/v1/pdf/compress` (Accepts PDF + compression quality, returns compressed PDF).
@@ -54,14 +58,16 @@ Provide streamlined REST endpoints handling multipart form uploads and raw file 
 - `POST /api/v1/pdf/convert` (Supports conversions like `markdown-to-pdf`, `html-to-pdf`, `pdf-to-images`).
 - `POST /api/v1/pdf/watermark` (Accepts PDF + watermark text/image options).
 - `POST /api/v1/pdf/info` (Returns page count, PDF version, metadata, file size in JSON).
-- `POST /api/v1/pdf/mcp-exec` (Direct JSON endpoint: `{ "tool": "pdf_merge", "arguments": { ... } }` for generic automation calling any tool dynamically).
+- **Dynamic 44-Tool Router**: `POST /api/v1/pdf/tools/:tool_name`
+  - Accepts JSON payload of parameters or multipart fields and executes ANY registered tool by name (e.g., `POST /api/v1/pdf/tools/rotate`, `POST /api/v1/pdf/tools/encrypt`, `POST /api/v1/pdf/tools/remove_blank`, `POST /api/v1/pdf/tools/page_numbers`). If tool name starts with or without `pdf_`, resolve cleanly.
+- `POST /api/v1/pdf/mcp-exec` (Direct JSON endpoint: `{ "tool": "pdf_merge", "arguments": { ... } }` for generic JSON-RPC automation).
 
-### 4. CLI Headless Mode (`paperpilot serve`)
+### 5. CLI Headless Mode (`paperpilot serve`)
 Extend `paperpilot-cli`:
 - Add subcommand: `paperpilot serve [--port 7823] [--bind 127.0.0.1] [--cors]`
 - Starts the HTTP/SSE server in headless mode suitable for Docker containers, local automation scripts, or systemd services.
 
-### 5. Desktop App Settings Toggle (Optional Local Server)
+### 6. Desktop App Settings Toggle (Optional Local Server)
 In the desktop UI (`apps/desktop`):
 - Add a toggle in Settings / App Bar: "Enable Local Automation Server (port 7823)".
 - When enabled, the Tauri backend starts the Axum server on a background thread so n8n, Python scripts, or external tools can interact with the running desktop instance.
@@ -71,11 +77,12 @@ In the desktop UI (`apps/desktop`):
 ## Verification & Testing Steps
 
 1. **Rust Tests**:
-   - Create integration tests in `crates/paperpilot-gateway/tests/server_test.rs` or `paperpilot-mcp/tests/http_api_test.rs`.
+   - Create integration tests in `crates/paperpilot-gateway/tests/server_test.rs` or `paperpilot-gateway/tests/server_test.rs`.
    - Test starting the Axum app with `axum::serve` or `tower::ServiceExt::oneshot`.
-   - Send `GET /health` -> assert 200 OK.
+   - Send `GET /health` -> assert 200 OK and `tools_count == 44`.
    - Send `POST /api/v1/pdf/info` with sample PDF bytes -> assert JSON contains valid page count.
    - Send `POST /api/v1/pdf/merge` with 2 test PDFs -> assert response has `application/pdf` and merged page count matches.
+   - Send `POST /api/v1/pdf/tools/pdf_remove_blank` or `POST /api/v1/pdf/tools/remove_blank` -> assert proper routing and execution.
 2. **CLI Test**:
    - Run `cargo run -p paperpilot-cli -- serve --port 7823 &`
    - Curl the health endpoint: `curl -s http://127.0.0.1:7823/health`
