@@ -1,8 +1,6 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
 
-  let fileInputRef: HTMLInputElement | undefined = $state();
-
   function openFileObjects(files: File[]) {
     if (files.length === 0) return;
     const targetIndex = appState.documents.length;
@@ -16,37 +14,6 @@
       openFileObjects(Array.from(target.files));
       target.value = '';
     }
-  }
-
-  async function handleNewTab() {
-    try {
-      const { open } = await import('@tauri-apps/plugin-dialog');
-      const selected = await open({
-        multiple: false,
-        filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
-      });
-      if (selected && typeof selected === 'string') {
-        const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'document.pdf';
-        try {
-          // Tauri convertFileSrc
-          const src = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__?.convertFileSrc
-            ? (window as any).__TAURI_INTERNALS__.convertFileSrc(selected)
-            : selected;
-          const response = await fetch(src);
-          const blob = await response.blob();
-          const file = new File([blob], fileName, { type: 'application/pdf' });
-          Object.defineProperty(file, 'path', { value: selected, writable: false });
-          openFileObjects([file]);
-          return;
-        } catch (fetchErr) {
-          console.warn('convertFileSrc fetch failed, using direct file picker fallback', fetchErr);
-        }
-      }
-    } catch (dialogErr) {
-      console.warn('Native open dialog unavailable, using HTML file picker fallback', dialogErr);
-    }
-    // Fallback: trigger HTML file input directly
-    fileInputRef?.click();
   }
 </script>
 
@@ -98,22 +65,20 @@
     {/each}
   </div>
 
-  <button
+  <label
     class="new-tab-btn"
     id="new-doc-tab-btn"
     title="Open new document"
     aria-label="Open new document"
-    onclick={handleNewTab}
   >
     +
-  </button>
-  <input
-    bind:this={fileInputRef}
-    type="file"
-    accept=".pdf"
-    style="display: none;"
-    onchange={handleFileInputChange}
-  />
+    <input
+      type="file"
+      accept=".pdf"
+      style="display: none;"
+      onchange={handleFileInputChange}
+    />
+  </label>
 </div>
 
 <style>
