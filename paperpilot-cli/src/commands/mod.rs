@@ -144,7 +144,17 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             format,
             input,
             output,
-        } => group_d::handle_convert(format, input, output.as_deref()),
+            css,
+            css_preset,
+            inline_css,
+        } => group_d::handle_convert(
+            format,
+            input,
+            output.as_deref(),
+            css.as_deref(),
+            css_preset.as_deref(),
+            inline_css.as_deref(),
+        ),
         Commands::Classify { input } => group_d::handle_classify(input),
     }
 }

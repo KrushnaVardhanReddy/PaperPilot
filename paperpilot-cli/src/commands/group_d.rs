@@ -3,7 +3,77 @@ use paperpilot_core::traits::PdfOperation;
 use paperpilot_pdf::document::LopdfDocument;
 use std::path::Path;
 
-pub fn handle_convert(format: &str, input: &Path, output: Option<&Path>) -> OperationResult<()> {
+pub fn handle_convert(
+    format: &str,
+    input: &Path,
+    output: Option<&Path>,
+    css: Option<&Path>,
+    css_preset: Option<&str>,
+    inline_css: Option<&str>,
+) -> OperationResult<()> {
+
+    let build_options = || -> OperationResult<paperpilot_pdf::operations::conversion::HtmlToPdfOptions> {
+        let mut custom_css_str = String::new();
+        if let Some(css_path) = css {
+            let file_content = std::fs::read_to_string(css_path)
+                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read css file: {}", e)))?;
+            custom_css_str.push_str(&file_content);
+        }
+        if let Some(inline) = inline_css {
+            if !custom_css_str.is_empty() {
+                custom_css_str.push('\n');
+            }
+            custom_css_str.push_str(inline);
+        }
+
+        let final_css = if custom_css_str.is_empty() { None } else { Some(custom_css_str) };
+
+        Ok(paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
+            preset: css_preset.map(|s| s.to_string()),
+            custom_css: final_css,
+            page_size: Some("A4".to_string()),
+            margin_mm: Some(20.0),
+        })
+    };
+
+    match format {
+        "html_to_pdf" => {
+            let out_path = output.unwrap_or(Path::new("output.pdf"));
+            let input_str = std::fs::read_to_string(input)
+                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e)))?;
+            let op = paperpilot_pdf::operations::conversion::HtmlToPdfOperation::new(
+                input_str,
+                out_path.to_path_buf(),
+                build_options()?
+            );
+            op.render()?;
+            return Ok(());
+        }
+        "md_to_pdf" => {
+            let out_path = output.unwrap_or(Path::new("output.pdf"));
+            let input_str = std::fs::read_to_string(input)
+                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e)))?;
+            let op = paperpilot_pdf::operations::conversion::MarkdownToPdfOperation::new(
+                input_str,
+                out_path.to_path_buf(),
+                build_options()?
+            );
+            op.render()?;
+            return Ok(());
+        }
+        "excel_to_pdf" => {
+            let out_path = output.unwrap_or(Path::new("output.pdf"));
+            let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(
+                input.to_path_buf(),
+                out_path.to_path_buf(),
+                build_options()?
+            );
+            op.render()?;
+            return Ok(());
+        }
+        _ => {}
+    }
+
     let mut doc = LopdfDocument::load(input)?;
 
     match format {
