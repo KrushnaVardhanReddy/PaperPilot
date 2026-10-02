@@ -62,6 +62,55 @@ impl PaperPilotMcpServer {
         add_styled_tool(&mut tools, "pdf_convert_markdown", "Convert Markdown to styled PDF");
         add_styled_tool(&mut tools, "pdf_convert_excel", "Convert Excel/CSV to styled PDF via semantic HTML");
 
+
+        // Tool: pdf_remove_blank
+        let mut schema_rb = serde_json::Map::new();
+        schema_rb.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_rb = serde_json::Map::new();
+        let mut prop_in_rb = serde_json::Map::new();
+        prop_in_rb.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_rb.insert("input".to_string(), serde_json::Value::Object(prop_in_rb));
+        let mut prop_out_rb = serde_json::Map::new();
+        prop_out_rb.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_rb.insert("output".to_string(), serde_json::Value::Object(prop_out_rb));
+        let mut prop_sens = serde_json::Map::new();
+        prop_sens.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_rb.insert("sensitivity".to_string(), serde_json::Value::Object(prop_sens));
+        schema_rb.insert("properties".to_string(), serde_json::Value::Object(props_rb));
+        schema_rb.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+        let mut tool_rb = Tool::default();
+        tool_rb.name = "pdf_remove_blank".into();
+        tool_rb.description = Some("Removes blank pages from a PDF.".into());
+        tool_rb.input_schema = std::sync::Arc::new(schema_rb);
+        tools.push(tool_rb);
+
+
+        // Tool: pdf_page_numbers
+        let mut schema_pn = serde_json::Map::new();
+        schema_pn.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_pn = serde_json::Map::new();
+        let mut p1 = serde_json::Map::new(); p1.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pn.insert("input".to_string(), serde_json::Value::Object(p1));
+        let mut p2 = serde_json::Map::new(); p2.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pn.insert("output".to_string(), serde_json::Value::Object(p2));
+        let mut p3 = serde_json::Map::new(); p3.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pn.insert("position".to_string(), serde_json::Value::Object(p3));
+        let mut p4 = serde_json::Map::new(); p4.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pn.insert("format".to_string(), serde_json::Value::Object(p4));
+        schema_pn.insert("properties".to_string(), serde_json::Value::Object(props_pn));
+        schema_pn.insert("required".to_string(), serde_json::Value::Array(vec![
+            serde_json::Value::String("input".to_string()),
+            serde_json::Value::String("output".to_string()),
+        ]));
+        let mut tool_pn = Tool::default();
+        tool_pn.name = "pdf_page_numbers".into();
+        tool_pn.description = Some("Adds page numbers to a PDF.".into());
+        tool_pn.input_schema = std::sync::Arc::new(schema_pn);
+        tools.push(tool_pn);
+
         // Tool: pdf_merge
         let mut schema_0 = serde_json::Map::new();
         schema_0.insert(
@@ -2602,6 +2651,53 @@ impl PaperPilotMcpServer {
                     output_path: Some(output),
                 })
             }
+
+            "pdf_remove_blank" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+                let sensitivity = args.get("sensitivity").and_then(|v| v.as_u64()).unwrap_or(95) as u8;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(sensitivity);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Blank pages removed successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
+
+            "pdf_page_numbers" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+                let position = args.get("position").and_then(|v| v.as_str()).unwrap_or("bottom-right").to_string();
+                let format = args.get("format").and_then(|v| v.as_str()).unwrap_or("Page {n} of {total}").to_string();
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::page_numbers::PageNumbersOperation::new(position, format);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                doc.save(&std::path::PathBuf::from(&output))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: "Page numbers added successfully.".to_string(),
+                    output_path: Some(output),
+                })
+            }
+
             "pdf_merge" => {
                 let inputs = get_string_array("inputs")?;
                 let output = get_string("output")?;
@@ -3574,7 +3670,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 42);
+        assert_eq!(res.tools.len(), 44);
     }
 
     #[test]
