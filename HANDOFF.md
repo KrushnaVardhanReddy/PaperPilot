@@ -41,6 +41,7 @@
 | `scripts/jules_submit.py` | The submission script for Jules. Archives the prompt after submission. |
 | `prompts/tasks/` | Pending task prompts for Jules (not yet submitted). |
 | `prompts/tasks/done/` | Archived prompts for tasks already submitted to Jules. |
+| [`docs/architecture/testing_and_troubleshooting_guide.md`](./docs/architecture/testing_and_troubleshooting_guide.md) | Authoritative 3-tier (MCP, API/Tauri, Svelte UI) diagnostic and testing guide for Jules & contributors. |
 | `prompts/tasks/testing/` | Prompts dedicated to End-to-End Validation testing sweeps. |
 
 ---
