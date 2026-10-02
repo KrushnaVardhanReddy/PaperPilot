@@ -1,0 +1,95 @@
+# Autonomous QA Test Suite: QA-2 — PDF Canvas Viewer, Page Jump & Zoom Presets
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate a multi-page test PDF **using PaperPilot's conversion engine** with clear, prominent page numbers (e.g. Page 1, Page 2, Page 3, Page 4, Page 5) on every page.
+2. Launch the desktop app and load the document via `agent-browser`.
+3. Test precision page jumping (e.g. jumping from Page 1 to Page 4), zoom dropdown presets (50%, 100%, 120%, 200%), and the `Fit` button.
+4. Verify that the Zoom % text is clearly visible and high-contrast in dark mode.
+5. If ANY bug, unreadable text, or jump failure occurs, fix the code and submit a green PR.
+
+---
+
+## STEP 1: GENERATE MULTI-PAGE NUMBERED TEST PDF VIA CLI
+
+Create a 5-page Markdown document with bold section numbers:
+
+```bash
+cat << 'EOF' > /tmp/multi_page_numbered.md
+# Page 1: Introduction & Chapter 100
+This is page number 1 with verification code: [NUM-100].
+
+<div style="page-break-after: always;"></div>
+
+# Page 2: Analytics & Data 200
+This is page number 2 with verification code: [NUM-200].
+
+<div style="page-break-after: always;"></div>
+
+# Page 3: Operations & Metrics 300
+This is page number 3 with verification code: [NUM-300].
+
+<div style="page-break-after: always;"></div>
+
+# Page 4: Financial Summary 400
+This is page number 4 with verification code: [NUM-400].
+
+<div style="page-break-after: always;"></div>
+
+# Page 5: Conclusion & Signoff 500
+This is page number 5 with verification code: [NUM-500].
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numbered.md --output tests/e2e_fixtures/multi_page_numbered.pdf --css-preset elegant
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/multi_page_numbered.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Verify Page Total**:
+   - Total pages indicator `#toolbar-page-total` must show `/ 5`.
+   - Current page input `#toolbar-page-input` must show `1`.
+
+4. **Test Page Jump**:
+   - Fill `#toolbar-page-input` with `4` and press Enter.
+   - Verify the viewer updates and `#toolbar-page-input` reflects `4`.
+
+5. **Test Zoom Preset Dropdown**:
+   - Check `#toolbar-zoom-select`:
+     - Must show legible white/light text against dark background (no white-on-white text).
+   - Change zoom value to `150`:
+     ```bash
+     npx --prefix apps/desktop agent-browser fill "#toolbar-zoom-select" "150"
+     ```
+   - Click `#toolbar-zoom-fit` (Fit button).
+   - Verify zoom recalculates and canvas scales to viewport.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If page input fails to scroll, zoom text is unreadable, or buttons overlap:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the bug in `apps/desktop/src/lib/components/PdfToolbar.svelte` or `PdfViewer.svelte`.
+- Ensure `npm --prefix apps/desktop run check` reports 0 errors.
+- Commit with `jules: QA-2 Canvas viewer and page zoom controls verified`.
+- Open a PR against `main`.

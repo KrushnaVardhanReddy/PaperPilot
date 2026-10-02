@@ -1,0 +1,108 @@
+# Autonomous QA Test Suite: QA-1 — Document Lifecycle & Tab Operations
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate test PDF fixtures **using PaperPilot's own built-in conversion engine** so that document creation is verified.
+2. Launch the desktop app using `npm run dev`.
+3. Drive the UI using `npx agent-browser` to thoroughly test opening, switching, and closing multiple documents.
+4. If ANY visual defect, broken click handler, contrast bug, or tab indexing issue is found:
+   - Triage it using `docs/architecture/testing_and_troubleshooting_guide.md` (Tier 1/2/3).
+   - **Fix the bug directly in the source code.**
+   - Re-verify and open a green PR.
+
+---
+
+## STEP 1: CREATE TEST DOCUMENTS USING PAPERPILOT'S CONVERSION ENGINE
+
+Instead of using generic third-party files, create test PDFs **using our own Markdown → PDF converter** with distinct numbers so text and pages are identifiable:
+
+Run these commands in terminal:
+```bash
+# Create Markdown document 1 with recognizable numbered sections
+cat << 'EOF' > /tmp/doc_100_report.md
+# Financial Report 100
+- Invoice ID: #100-98765
+- Account Balance: $100,500.00
+- Total Transactions: 100
+- Target Milestone: 100% Complete
+EOF
+
+# Create Markdown document 2 with recognizable numbered sections
+cat << 'EOF' > /tmp/doc_200_analytics.md
+# Analytics Summary 200
+- Unique Visitors: 200,450
+- Page Views: 200,990
+- Conversion Ratio: 2.00%
+- Servers Active: 200 Nodes
+EOF
+
+# Convert them to PDF using paperpilot-cli
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/doc_100_report.md --output tests/e2e_fixtures/doc_100.pdf --css-preset corporate
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/doc_200_analytics.md --output tests/e2e_fixtures/doc_200.pdf --css-preset academic
+```
+
+Verify both `tests/e2e_fixtures/doc_100.pdf` and `tests/e2e_fixtures/doc_200.pdf` exist.
+
+---
+
+## STEP 2: LAUNCH THE DEV SERVER & BROWSER EXPLORATION
+
+1. Start the Vite dev server in the background:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open the page via `agent-browser`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+---
+
+## STEP 3: EXECUTE QA FLOWS VIA AGENT BROWSER
+
+1. **Test Initial State**:
+   - Inspect snapshot output. Ensure `.drop-zone` and `#tab-btn-home` are visible.
+   - Verify dark mode contrast: background surface is dark, text is readable.
+
+2. **Test Opening Multi-Documents**:
+   - Load both `doc_100.pdf` and `doc_200.pdf` into the file input.
+   - Run snapshot:
+     ```bash
+     npx --prefix apps/desktop agent-browser snapshot -i
+     ```
+   - **Assertion:** Verify that both tabs exist: `#tab-doc-0` (`doc_100.pdf`) and `#tab-doc-1` (`doc_200.pdf`).
+
+3. **Test Switching Document Tabs**:
+   - Click `#tab-doc-1`:
+     ```bash
+     npx --prefix apps/desktop agent-browser click "#tab-doc-1"
+     ```
+   - Verify that `#tab-doc-1` has the active tab styling.
+   - Verify that the canvas renders the "Analytics Summary 200" content.
+
+4. **Test Closing Tabs**:
+   - Click `#tab-close-1` to close the second document:
+     ```bash
+     npx --prefix apps/desktop agent-browser click "#tab-close-1"
+     ```
+   - Verify `#tab-doc-1` is removed from the DOM and `#tab-doc-0` automatically becomes active.
+
+---
+
+## STEP 4: BUG TRIAGE & FIX MANDATE
+
+If any step fails, hangs, or shows incorrect layout:
+- Check `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the code in `apps/desktop/src/` or `paperpilot-pdf/`.
+- Run `npm --prefix apps/desktop run check` and `npm --prefix apps/desktop test` to ensure 0 errors.
+- Commit all changes with `jules: QA-1 Document lifecycle verified and bug fixes applied`.
+- Open a Pull Request against `main`.
