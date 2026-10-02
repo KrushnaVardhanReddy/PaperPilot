@@ -50,7 +50,13 @@
 
     // AI & Intelligence
     { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', tags: ['ocr', 'scan', 'tesseract'] },
-    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', tags: ['images', 'photos', 'export'] }
+    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', tags: ['images', 'photos', 'export'] },
+    // Stirling Parity Tools
+    { id: 'remove_blank', title: 'Remove Blank Pages', description: 'Remove empty or nearly empty pages', icon: '🧹', category: 'pages', tags: ['blank', 'empty', 'clean', 'delete'] },
+    { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
+    { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', tags: ['markdown', 'convert', 'pdf', 'generate'] },
+    { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', tags: ['html', 'web', 'convert', 'pdf'] },
+    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] }
   ];
 
   const categories = [
@@ -63,7 +69,13 @@
     { id: 'ai', title: 'AI & Intelligence', icon: '🧠' }
   ];
 
+  const allCategories = [
+    { id: 'all', title: 'All', icon: '✨' },
+    ...categories
+  ];
+
   let searchQuery = $state('');
+  let selectedCategory = $state('all');
   let activeTool = $state<ToolDefinition | null>(null);
 
   // Tool parameter states
@@ -74,15 +86,27 @@
   let password = $state('');
   let metadataTitle = $state('');
 
+  // New tool parameters
+  let blankSensitivity = $state(99);
+  let pageNumberPos = $state('bottom-right');
+  let pageNumberFormat = $state('Page 1 of N');
+  let convertPreset = $state('academic');
+
   // Filter tools based on search query
   let filteredTools = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return allTools;
-    return allTools.filter(t =>
-      t.title.toLowerCase().includes(q) ||
-      t.description.toLowerCase().includes(q) ||
-      t.tags.some(tag => tag.toLowerCase().includes(q))
-    );
+    let tools = allTools;
+
+    if (q) {
+      tools = tools.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.tags.some(tag => tag.toLowerCase().includes(q))
+      );
+    } else if (selectedCategory !== 'all') {
+      tools = tools.filter(t => t.category === selectedCategory);
+    }
+    return tools;
   });
 
   function selectTool(tool: ToolDefinition) {
@@ -107,7 +131,10 @@
 
     const docIndex = appState.selectedDocumentIndex ?? 0;
     const docName = appState.documents[docIndex]?.name || appState.documents[0].name;
-    const toolName = `pdf_${activeTool.id}`;
+    let toolName = `pdf_${activeTool.id}`;
+    if (activeTool.id === 'md_to_pdf') toolName = 'pdf_convert_markdown';
+    if (activeTool.id === 'html_to_pdf') toolName = 'pdf_convert_html';
+    if (activeTool.id === 'img_to_pdf') toolName = 'pdf_images_to_pdf';
     let args: Record<string, any> = {};
 
     switch (activeTool.id) {
@@ -283,6 +310,34 @@
           <label for="watermarkText" class="section-desc">Watermark Text:</label>
           <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="e.g. CONFIDENTIAL" />
         </div>
+      {:else if activeTool.id === 'remove_blank'}
+        <div class="operation-config">
+          <label for="blankSensitivity" class="section-desc">Sensitivity (0-100): {blankSensitivity}%</label>
+          <input id="blankSensitivity" type="range" min="0" max="100" bind:value={blankSensitivity} class="range-input" />
+        </div>
+      {:else if activeTool.id === 'page_numbers'}
+        <div class="operation-config">
+          <label for="pageNumberPos" class="section-desc">Position:</label>
+          <select id="pageNumberPos" bind:value={pageNumberPos} class="form-input">
+            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-center">Top Center</option>
+          </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="pageNumberFormat" class="section-desc">Format:</label>
+          <input id="pageNumberFormat" type="text" class="form-input" bind:value={pageNumberFormat} placeholder={'Page {n} of {total}'} />
+        </div>
+      {:else if activeTool.id === 'md_to_pdf' || activeTool.id === 'html_to_pdf'}
+        <div class="operation-config">
+          <label for="convertPreset" class="section-desc">Style Preset:</label>
+          <select id="convertPreset" bind:value={convertPreset} class="form-input">
+            <option value="academic">Academic</option>
+            <option value="corporate">Corporate</option>
+            <option value="minimalist">Minimalist</option>
+          </select>
+        </div>
       {:else if activeTool.id === 'encrypt' || activeTool.id === 'decrypt'}
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
@@ -321,13 +376,26 @@
           <button class="clear-search-btn" onclick={() => searchQuery = ''}>×</button>
         {/if}
       </div>
+
+      <!-- Category Pills -->
+      <div class="category-pills">
+        {#each allCategories as cat}
+          <button
+            class="category-pill {selectedCategory === cat.id ? 'active' : ''}"
+            onclick={() => selectedCategory = cat.id}
+          >
+            <span class="pill-icon">{cat.icon}</span>
+            <span class="pill-text">{cat.title}</span>
+          </button>
+        {/each}
+      </div>
     </div>
 
     <div class="panel-content">
-      {#if searchQuery.trim()}
+      {#if searchQuery.trim() || selectedCategory !== 'all'}
         <!-- Search Results View -->
         <div class="search-results-list">
-          <span class="category-header">Search Results ({filteredTools.length})</span>
+          <span class="category-header">{searchQuery.trim() ? 'Search Results' : allCategories.find(c => c.id === selectedCategory)?.title} ({filteredTools.length})</span>
           {#if filteredTools.length === 0}
             <div class="empty-state">No matching tools found</div>
           {:else}
@@ -345,7 +413,7 @@
       {:else}
         <!-- Categorized Sections View -->
         {#each categories as cat}
-          {@const toolsInCat = allTools.filter(t => t.category === cat.id)}
+          {@const toolsInCat = filteredTools.filter(t => t.category === cat.id)}
           {#if toolsInCat.length > 0}
             <div class="category-section">
               <span class="category-header">
@@ -398,6 +466,45 @@
     border: 1px solid var(--border-color, #2a2a35);
     border-radius: var(--border-radius-sm, 4px);
     padding: 0 10px;
+  }
+
+  .category-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 0 0 0;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .category-pills::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+
+  .category-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 100px;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .category-pill:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
+  }
+
+  .category-pill.active {
+    background-color: var(--accent-primary, #5e6ad2);
+    border-color: var(--accent-primary, #5e6ad2);
+    color: #ffffff;
   }
 
   .search-icon {
