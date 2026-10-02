@@ -66,7 +66,7 @@ test.describe('Drag-and-Drop DropZone', () => {
 
     // Playwright supports setInputFiles on any input[type="file"], which is
     // exactly what the DropZone Browse button uses.
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
     // Verify the document is loaded (either in list or directly via viewer)
@@ -79,7 +79,7 @@ test.describe('Multi-File Upload & Operations', () => {
   test('can upload multiple PDFs and reorder them', async ({ page }) => {
     await page.goto('/');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles([
       path.resolve('../../tests/e2e_fixtures/multi_page.pdf'),
       path.resolve('../../tests/e2e_fixtures/single_page.pdf')
@@ -111,7 +111,7 @@ test.describe('Multi-File Upload & Operations', () => {
   test('can run a single operation directly from the OperationsPanel', async ({ page }) => {
     await page.goto('/');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/single_page.pdf'));
 
     await page.click('#tab-btn-home');
@@ -137,7 +137,7 @@ test.describe('Visual Pipeline Builder', () => {
     await page.click('#nav-pipeline');
 
     // Upload files to pipeline dropzone
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles([
       path.resolve('../../tests/e2e_fixtures/multi_page.pdf'),
       path.resolve('../../tests/e2e_fixtures/single_page.pdf')
@@ -179,7 +179,7 @@ test.describe('Pipeline Execution and Error State', () => {
     await page.click('#nav-pipeline');
 
     // Upload file
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/multi_page.pdf'));
 
     // Add Merge block
@@ -203,7 +203,7 @@ test.describe('Pipeline Execution and Error State', () => {
   test('shows error toast if operation fails', async ({ page }) => {
     await page.goto('/');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     // We use a specific file name "error" to trigger the mock we set up
     // However, the input is an actual file, so we need to trigger it somehow.
     // Let's create a dummy file named 'error.pdf' to trigger the mocked error.
@@ -233,7 +233,7 @@ test.describe('Phase 4.F Features Validation', () => {
 
   test('can open multiple documents into separate tabs and switch between them', async ({ page }) => {
     await page.goto('/');
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles([
       path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
       path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
@@ -250,7 +250,7 @@ test.describe('Phase 4.F Features Validation', () => {
 
   test('canvas search bar opens with shortcut and highlights matches', async ({ page }) => {
     await page.goto('/');
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/multi_page.pdf'));
 
     // Trigger Ctrl+F
@@ -288,7 +288,7 @@ test.describe('Phase 4.F Features Validation', () => {
 
   test('visual diff comparison opens and allows adjusting split slider', async ({ page }) => {
     await page.goto('/');
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple]');
     await fileInput.setInputFiles([
       path.resolve('../../tests/e2e_fixtures/single_page.pdf'),
       path.resolve('../../tests/e2e_fixtures/multi_page.pdf')
