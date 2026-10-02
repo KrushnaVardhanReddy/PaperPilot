@@ -97,6 +97,7 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
+| API Gateway & Headless Server (Phase 5) | `1539917231135602156` | Axum HTTP/REST API (`/api/v1/pdf/*`), MCP-over-SSE (`/mcp/sse`), CLI `paperpilot serve --port 7823`, OpenAPI `/docs` |
 | Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
 
 ---
