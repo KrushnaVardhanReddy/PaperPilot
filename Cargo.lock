@@ -4158,7 +4158,6 @@ dependencies = [
  "axum",
  "bytes",
  "futures",
- "http-body-util",
  "multipart",
  "paperpilot-core",
  "paperpilot-mcp",

@@ -37,14 +37,134 @@
 
     window.addEventListener('keydown', handleKeyDown);
 
+    window.addEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
+    window.addEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
+    window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
+
     return () => {
       unlistenMenuToggleDiff.then(fn => fn());
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
+      window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
+      window.removeEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
     };
   });
 
   import { savePdfForm } from '$lib/api/pdf';
   import { toastState } from '$lib/state/toast.svelte';
+  import { invoke, convertFileSrc } from '@tauri-apps/api/core';
+
+  async function handleRotatePage(e: CustomEvent<{ page: number }>) {
+    if (appState.selectedDocumentIndex === null) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+
+    appState.setLoading(true);
+    try {
+      const path = (file as any).path || file.name;
+      await invoke('invoke_mcp_tool', {
+        toolName: 'pdf_rotate',
+        arguments: {
+          input: path,
+          pages: String(e.detail.page),
+          angle: 90,
+          output: path
+        }
+      });
+      await refreshCurrentDocument();
+      toastState.success(`Page ${e.detail.page} rotated.`);
+    } catch (err) {
+      toastState.error(`Failed to rotate page: ${err}`);
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  async function handleDeletePage(e: CustomEvent<{ page: number }>) {
+    if (appState.selectedDocumentIndex === null) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+
+    appState.setLoading(true);
+    try {
+      const path = (file as any).path || file.name;
+      await invoke('invoke_mcp_tool', {
+        toolName: 'pdf_delete_pages',
+        arguments: {
+          input: path,
+          pages: String(e.detail.page),
+          output: path
+        }
+      });
+      await refreshCurrentDocument();
+      toastState.success(`Page ${e.detail.page} deleted.`);
+    } catch (err) {
+      toastState.error(`Failed to delete page: ${err}`);
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  async function handleReorderPage(e: CustomEvent<{ fromPage: number, toPage: number }>) {
+    if (appState.selectedDocumentIndex === null || !pdfDoc) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+
+    appState.setLoading(true);
+    try {
+      const path = (file as any).path || file.name;
+      const { fromPage, toPage } = e.detail;
+
+      const pages = Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
+      const [movedPage] = pages.splice(fromPage - 1, 1);
+
+      // Calculate new index
+      let targetIndex = toPage - 1;
+      if (fromPage < toPage) {
+          targetIndex -= 1;
+      }
+      pages.splice(targetIndex, 0, movedPage);
+
+      await invoke('invoke_mcp_tool', {
+        toolName: 'pdf_reorder_pages',
+        arguments: {
+          input: path,
+          order: pages.join(','),
+          output: path
+        }
+      });
+      await refreshCurrentDocument();
+      toastState.success(`Page moved to position ${toPage}.`);
+    } catch (err) {
+      toastState.error(`Failed to reorder pages: ${err}`);
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  async function refreshCurrentDocument() {
+    if (appState.selectedDocumentIndex === null) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+    const path = (file as any).path;
+    if (!path) return; // not a local tauri file, or some edge case
+
+    try {
+      // Fetch the updated file using Tauri's custom protocol
+      const response = await fetch(
+        convertFileSrc(path) + "?t=" + Date.now(),
+        { cache: 'no-store' }
+      );
+      const blob = await response.blob();
+      const newFile = new File([blob], file.name, { type: file.type || 'application/pdf' });
+      Object.defineProperty(newFile, 'path', { value: path, writable: false });
+      appState.documents[appState.selectedDocumentIndex] = newFile;
+      // Trigger reactivity on documents array
+      appState.documents = [...appState.documents];
+    } catch (err) {
+      console.error("Failed to refresh document:", err);
+    }
+  }
 
   async function saveForm() {
     if (appState.selectedDocumentIndex === null) return;
