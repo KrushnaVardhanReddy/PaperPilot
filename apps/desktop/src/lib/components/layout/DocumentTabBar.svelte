@@ -3,12 +3,18 @@
 
   let fileInputRef: HTMLInputElement | undefined = $state();
 
+  function openFileObjects(files: File[]) {
+    if (files.length === 0) return;
+    const targetIndex = appState.documents.length;
+    appState.addDocuments(files);
+    appState.selectDocument(targetIndex);
+  }
+
   function handleFileInputChange(e: Event) {
-    const files = (e.target as HTMLInputElement).files;
-    if (files && files.length > 0) {
-      appState.addDocuments([files[0]]);
-      appState.selectDocument(appState.documents.length - 1);
-      (e.target as HTMLInputElement).value = '';
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      openFileObjects(Array.from(target.files));
+      target.value = '';
     }
   }
 
@@ -21,19 +27,23 @@
       });
       if (selected && typeof selected === 'string') {
         const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'document.pdf';
-        const response = await fetch(
-          // @ts-expect-error __TAURI_INTERNALS__ is injected by Tauri
-          window.__TAURI_INTERNALS__.convertFileSrc(selected)
-        );
-        const blob = await response.blob();
-        const file = new File([blob], fileName, { type: 'application/pdf' });
-        Object.defineProperty(file, 'path', { value: selected, writable: false });
-        appState.addDocuments([file]);
-        appState.selectDocument(appState.documents.length - 1);
-        return;
+        try {
+          // Tauri convertFileSrc
+          const src = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__?.convertFileSrc
+            ? (window as any).__TAURI_INTERNALS__.convertFileSrc(selected)
+            : selected;
+          const response = await fetch(src);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: 'application/pdf' });
+          Object.defineProperty(file, 'path', { value: selected, writable: false });
+          openFileObjects([file]);
+          return;
+        } catch (fetchErr) {
+          console.warn('convertFileSrc fetch failed, using direct file picker fallback', fetchErr);
+        }
       }
-    } catch (err) {
-      console.warn('Native open dialog unavailable, using HTML file picker fallback', err);
+    } catch (dialogErr) {
+      console.warn('Native open dialog unavailable, using HTML file picker fallback', dialogErr);
     }
     // Fallback: trigger HTML file input directly
     fileInputRef?.click();
