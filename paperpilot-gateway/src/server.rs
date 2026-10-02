@@ -16,6 +16,7 @@ pub async fn build_app() -> Router {
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))
         .route("/api/v1/pdf/tools/{tool_name}", post(handlers::handle_tool))
+        .route("/api/v1/pdf/render-page", post(handlers::render_page))
         .route("/api/v1/pdf/merge", post(handlers::merge))
         .route("/api/v1/pdf/split", post(handlers::split))
         .route("/api/v1/pdf/compress", post(handlers::compress))

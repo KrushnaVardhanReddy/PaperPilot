@@ -85,6 +85,27 @@
     renderPage(pdfDoc, pageNum, scale);
   });
 
+
+  $effect(() => {
+    const handleFit = () => {
+      if (pdfDoc && canvas) {
+         pdfDoc.getPage(pageNum).then((page: pdfjsLib.PDFPageProxy) => {
+           const viewport = page.getViewport({ scale: 1.0 });
+           const container = canvas.closest('.viewer-container');
+           if (container) {
+             const containerWidth = container.clientWidth - 64; // account for 2rem padding
+             const newScale = containerWidth / viewport.width;
+             scale = Math.min(Math.max(newScale, 0.2), 5.0);
+           }
+         });
+      }
+    };
+    window.addEventListener('paperpilot:fit-viewport', handleFit);
+    return () => {
+      window.removeEventListener('paperpilot:fit-viewport', handleFit);
+    };
+  });
+
   import type { SearchMatchItem } from './PdfSearchBar.svelte';
   let searchHighlights: SearchMatchItem[] = $state([]);
   let viewportState: any = $state(null);
