@@ -84,9 +84,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numb
    - Click `#toolbar-zoom-fit` (Fit button).
    - Verify zoom recalculates and canvas scales to viewport.
 
-6. **Dual-Channel Verification: Headless Page Render via REST API**:
-   - Ensure the server endpoint can render and rasterize pages headlessly:
+6. **Triple-Channel Verification: Headless Page Render via REST & MCP**:
+   - Ensure the server endpoint can render and rasterize pages headlessly across channels:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Convenience Render Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page \
        -F "file=@tests/e2e_fixtures/multi_page_numbered.pdf" \
@@ -98,8 +99,14 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/multi_page_numb
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/render \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/multi_page_numbered.pdf", "page": 4, "dpi": 150, "output": "/tmp/page_4_rendered_dynamic.png"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Render via Remote MCP SSE/HTTP:
+     curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa2-test" \
+       -H "Content-Type: application/json" \
+       -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_render","arguments":{"input":"tests/e2e_fixtures/multi_page_numbered.pdf","page":4,"dpi":150,"output":"/tmp/page_4_rendered_mcp.png"}}}'
      ```
-   - Verify `/tmp/page_4_rendered.png` exists and is a valid non-empty PNG image.
+   - Verify `/tmp/page_4_rendered.png` and `/tmp/page_4_rendered_mcp.png` exist and are valid PNG images.
 
 ---
 

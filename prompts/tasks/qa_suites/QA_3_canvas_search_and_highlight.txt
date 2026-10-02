@@ -85,9 +85,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_num
    - Click `#pdf-search-close` (or press Escape).
    - Verify `#pdf-search-bar` is hidden.
 
-7. **Dual-Channel Verification: REST API Text Search & Extraction**:
-   - Ensure the server endpoint finds the exact same occurrences headlessly:
+7. **Triple-Channel Verification: REST API & MCP Text Extraction**:
+   - Ensure text search and extraction work consistently across all channels:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text \
        -F "file=@tests/e2e_fixtures/search_test.pdf" \
@@ -97,8 +98,12 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_num
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/extract_text \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/search_test.pdf", "output": "/tmp/extracted_search_text.txt"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Search text via MCP stdio:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_search","arguments":{"input":"tests/e2e_fixtures/search_test.pdf","query":"SERIAL-777"}}}' | cargo run -p paperpilot-mcp
      ```
-   - Assert text extraction succeeds and occurrences are verified.
+   - Assert all channels confirm the presence of matches across the pages.
 
 ---
 

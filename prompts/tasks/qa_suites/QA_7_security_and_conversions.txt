@@ -63,9 +63,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md -
    - Click `#btn-run-operation`.
    - Verify success toast appears.
 
-5. **Dual-Channel Verification: REST API Execution**:
-   - Ensure metadata, inspection, and security tools work identically via REST API:
+5. **Triple-Channel Verification: REST API & MCP Security Tools**:
+   - Ensure metadata, inspection, and security tools work identically across all channels:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Metadata Inspection:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info \
        -F "file=@tests/e2e_fixtures/secret_999.pdf"
@@ -74,8 +75,12 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md -
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/encrypt \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/secret_999.pdf", "password": "vault999", "output": "/tmp/secret_999_enc.pdf"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Encrypt via MCP stdio:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_encrypt","arguments":{"input":"tests/e2e_fixtures/secret_999.pdf","password":"vault999","output":"/tmp/secret_999_mcp_enc.pdf"}}}' | cargo run -p paperpilot-mcp
      ```
-   - Verify JSON response includes accurate metadata and encrypted output exists.
+   - Verify encrypted output exists across both REST and MCP channels.
 
 ---
 

@@ -76,9 +76,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
    - Ensure the right sidebar tab `Annotations (0)` is present and clickable.
    - Verify no toolbar buttons overlap on the PDF viewer canvas.
 
-8. **Dual-Channel Verification: REST API Watermark & Stamp**:
-   - Ensure overlay and visual markup tools work headlessly via REST API:
+8. **Triple-Channel Verification: REST API & MCP Watermark & Stamp**:
+   - Ensure overlay and visual markup tools work headlessly across REST and MCP:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark \
        -F "file=@tests/e2e_fixtures/contract_555.pdf" \
@@ -89,8 +90,14 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_number
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/watermark \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/contract_555.pdf", "text": "CONFIDENTIAL #555", "output": "/tmp/watermarked_via_tools_api.pdf"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Watermark via Remote MCP SSE/HTTP:
+     curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa5-test" \
+       -H "Content-Type: application/json" \
+       -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_watermark","arguments":{"input":"tests/e2e_fixtures/contract_555.pdf","text":"CONFIDENTIAL #555","output":"/tmp/watermarked_via_mcp.pdf"}}}'
      ```
-   - Assert both output files exist and are valid PDFs.
+   - Assert all output files exist and are valid watermarked PDFs.
 
 ---
 

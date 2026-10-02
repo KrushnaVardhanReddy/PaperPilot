@@ -65,9 +65,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/thumbnail_test.
    - Simulate dragging page 3 before page 1 (or clicking move-up action).
    - Verify page sequence reflects the new order.
 
-6. **Dual-Channel Verification: REST API Page Reorder & Rotate**:
-   - Verify identical page manipulation via REST API using both endpoint formats:
+6. **Triple-Channel Verification: REST API & MCP Page Reorder & Rotate**:
+   - Verify identical page manipulation across REST and MCP channels:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rotate \
        -F "file=@tests/e2e_fixtures/thumbnail_test.pdf" \
@@ -79,8 +80,12 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/thumbnail_test.
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/rotate \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/thumbnail_test.pdf", "pages": "2", "angle": 90, "output": "/tmp/rotated_via_tools_api.pdf"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Rotate via MCP stdio:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_rotate","arguments":{"input":"tests/e2e_fixtures/thumbnail_test.pdf","pages":"2","angle":90,"output":"/tmp/rotated_via_mcp.pdf"}}}' | cargo run -p paperpilot-mcp
      ```
-   - Assert both output files exist and are valid 3-page PDFs.
+   - Assert all output files exist and are valid rotated 3-page PDFs.
 
 ---
 

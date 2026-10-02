@@ -96,9 +96,10 @@ Verify both `tests/e2e_fixtures/doc_100.pdf` and `tests/e2e_fixtures/doc_200.pdf
      ```
    - Verify `#tab-doc-1` is removed from the DOM and `#tab-doc-0` automatically becomes active.
 
-5. **Dual-Channel Verification: REST API Document Inspection & Health**:
-   - Ensure the server endpoint processes the exact same fixtures via HTTP:
+5. **Triple-Channel Verification: REST API & MCP Inspection**:
+   - Ensure the server endpoint processes the exact same fixtures via HTTP and MCP:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Verify health check (must return tools_count: 44)
      curl -s http://127.0.0.1:7823/health
 
@@ -110,8 +111,17 @@ Verify both `tests/e2e_fixtures/doc_100.pdf` and `tests/e2e_fixtures/doc_200.pdf
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/info \
        -H "Content-Type: application/json" \
        -d '{"input": "tests/e2e_fixtures/doc_200.pdf"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL (stdio & Remote SSE) ──
+     # 4. Inspect via MCP stdio JSON-RPC:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_info","arguments":{"input":"tests/e2e_fixtures/doc_100.pdf"}}}' | cargo run -p paperpilot-mcp
+
+     # 5. Inspect via Remote MCP SSE/HTTP:
+     curl -s -X POST "http://127.0.0.1:7823/mcp/messages?sessionId=qa1-test" \
+       -H "Content-Type: application/json" \
+       -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_info","arguments":{"input":"tests/e2e_fixtures/doc_100.pdf"}}}'
      ```
-   - Verify HTTP responses return valid JSON with correct page counts.
+   - Verify UI, REST, and MCP all return matching, accurate metadata and page counts.
 
 ---
 

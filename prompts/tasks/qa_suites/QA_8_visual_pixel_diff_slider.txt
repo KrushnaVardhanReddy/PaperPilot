@@ -72,9 +72,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md 
    - Click `#diff-mode-side-by-side` -> verify dual side-by-side view.
    - Click `#diff-close-btn` -> verify diff modal closes.
 
-5. **Dual-Channel Verification: REST API Document Comparison**:
-   - Ensure the server endpoint can compare the revisions headlessly:
+5. **Triple-Channel Verification: REST API & MCP Document Comparison**:
+   - Ensure document comparison works headlessly across REST and MCP:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Convenience Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare \
        -F "file1=@tests/e2e_fixtures/contract_v1.pdf" \
@@ -85,8 +86,12 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md 
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/compare \
        -H "Content-Type: application/json" \
        -d '{"file_a": "tests/e2e_fixtures/contract_v1.pdf", "file_b": "tests/e2e_fixtures/contract_v2.pdf"}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Compare via MCP stdio:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_compare","arguments":{"file_a":"tests/e2e_fixtures/contract_v1.pdf","file_b":"tests/e2e_fixtures/contract_v2.pdf"}}}' | cargo run -p paperpilot-mcp
      ```
-   - Assert diff output indicates changes detected between revisions.
+   - Assert diff output indicates changes detected between revisions across all channels.
 
 ---
 

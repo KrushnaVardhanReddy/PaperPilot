@@ -70,9 +70,10 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_20.md --ou
    - Click `#btn-run-operation`.
    - Verify execution completes.
 
-6. **Dual-Channel Verification: REST API Execution**:
-   - Ensure the server endpoint processes the exact same fixtures via HTTP:
+6. **Triple-Channel Verification: REST API & MCP Execution**:
+   - Ensure the server endpoint processes the exact same fixtures via HTTP and MCP:
      ```bash
+     # ── CHANNEL 2: REST API (Port 7823) ──
      # 1. Test Convenience Merge Endpoint:
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge \
        -F "files=@tests/e2e_fixtures/part_10.pdf" \
@@ -83,8 +84,12 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_20.md --ou
      curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/remove_blank \
        -H "Content-Type: application/json" \
        -d '{"input": "/tmp/api_merged_6.pdf", "output": "/tmp/api_cleaned_6.pdf", "sensitivity": 95}'
+
+     # ── CHANNEL 3: MCP PROTOCOL ──
+     # 3. Test MCP Tool execution via stdio JSON-RPC:
+     echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_remove_blank","arguments":{"input":"/tmp/api_merged_6.pdf","output":"/tmp/mcp_cleaned_6.pdf","sensitivity":95}}}' | cargo run -p paperpilot-mcp
      ```
-   - Verify `/tmp/api_merged_6.pdf` exists and page count is 2.
+   - Verify all output files exist and page count matches expectation.
 
 ---
 
