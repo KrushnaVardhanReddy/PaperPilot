@@ -8,7 +8,6 @@
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
-  import PdfAnnotationToolbar from '$lib/components/PdfAnnotationToolbar.svelte';
   import type { Annotation } from '$lib/api/pdf';
   import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
   import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
@@ -119,13 +118,12 @@
 
             <div class="viewer-main">
               <div class="toolbars-container">
-                <PdfToolbar bind:pageNum {numPages} bind:scale />
+                <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
               </div>
               {#if hasFormFields}
                 <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={saveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
               {/if}
               <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
-                <PdfAnnotationToolbar bind:activeTool />
                 <PdfViewer
                   fileUrl={currentFileUrl}
                   bind:pdfDoc

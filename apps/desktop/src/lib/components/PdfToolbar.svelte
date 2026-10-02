@@ -5,7 +5,22 @@
     pageNum = $bindable(1),
     numPages = 0,
     scale = $bindable(1.2),
+    activeTool = $bindable('none'),
+  }: {
+    pageNum?: number;
+    numPages?: number;
+    scale?: number;
+    activeTool?: string;
   } = $props();
+
+  const annotationTools = [
+    { id: 'none', label: 'Pointer', icon: 'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z' },
+    { id: 'highlight', label: 'Highlight', icon: 'M12 19l7-7 3 3-7 7-3-3z M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z' },
+    { id: 'underline', label: 'Underline', icon: 'M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3 M4 21h16' },
+    { id: 'strikethrough', label: 'Strike', icon: 'M5 12h14 M12 6a4 4 0 0 0-4 4 M16 16a4 4 0 0 1-4 4' },
+    { id: 'pen', label: 'Pen', icon: 'M12 19l7-7 3 3-7 7-3-3z M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z' },
+    { id: 'note', label: 'Note', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }
+  ];
 
   let inputPage = $state(String(pageNum));
   let isEditingPage = $state(false);
@@ -172,6 +187,27 @@
       Fit
     </button>
   </div>
+
+  <!-- Divider -->
+  <div class="toolbar-divider"></div>
+
+  <!-- Markup & Annotation Tools Group -->
+  <div class="toolbar-group annotation-group">
+    {#each annotationTools as tool}
+      <button
+        class="toolbar-btn tool-btn"
+        class:active={activeTool === tool.id}
+        id="tool-btn-{tool.id}"
+        onclick={() => activeTool = tool.id}
+        title="{tool.label} Tool"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d={tool.icon}></path>
+        </svg>
+        <span class="tool-label">{tool.label}</span>
+      </button>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -294,5 +330,58 @@
 
   .zoom-select:hover {
     border-color: var(--accent-primary);
+  }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 18px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .annotation-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 8px;
+    width: auto;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm, 4px);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+  }
+
+  .tool-btn:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
+
+  .tool-btn.active {
+    background-color: rgba(94, 106, 210, 0.18);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .tool-label {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 900px) {
+    .tool-label {
+      display: none;
+    }
   }
 </style>
