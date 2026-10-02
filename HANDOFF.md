@@ -97,7 +97,8 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.E2E R2.E3 | `11778243636880036911` | Comprehensive UI Playwright E2E Suite (Tabs, Search, Tools Dock, Diff Slider, CSS Injection) |
+| Phase 4.E2E R2.E3 (v1) | `11778243636880036911` | Initial Playwright suite run |
+| Phase 4.E2E R2.E3 (v2 Updated) | `10652984541833495616` | Updated Comprehensive UI Playwright E2E Suite with exact DOM IDs & 3-tier troubleshooting |
 
 ---
 
