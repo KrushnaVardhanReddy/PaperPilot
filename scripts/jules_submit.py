@@ -244,7 +244,8 @@ def main():
         if idx + 1 >= len(args):
             print("❌ Please specify a file path after --file.")
             sys.exit(1)
-        submit_file(args[idx + 1])
+        dry_run = "--dry-run" in args
+        submit_file(args[idx + 1], dry_run=dry_run)
         sys.exit(0)
 
     if "--task" in args:
@@ -268,6 +269,16 @@ def main():
         action = "Previewing" if dry_run else "Submitting"
         print(f"📅 {action} {len(files)} pending task(s) for Phase {phase_num}...")
         for filepath in files:
+            submit_file(filepath, label=os.path.basename(filepath), dry_run=dry_run)
+        sys.exit(0)
+
+    if "--qa" in args:
+        dry_run = "--dry-run" in args
+        qa_files = sorted(glob.glob(os.path.join(TASKS_DIR, "qa_suites", "QA_*.txt")))
+        qa_files = [f for f in qa_files if os.sep + "done" + os.sep not in f]
+        action = "Previewing" if dry_run else "Submitting"
+        print(f"🎯 {action} {len(qa_files)} QA test suite(s)...")
+        for filepath in qa_files:
             submit_file(filepath, label=os.path.basename(filepath), dry_run=dry_run)
         sys.exit(0)
 
