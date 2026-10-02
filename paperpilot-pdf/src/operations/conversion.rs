@@ -278,38 +278,63 @@ impl ExcelToStyledHtmlOperation {
     pub fn render(&self) -> OperationResult<()> {
         use calamine::{Reader, open_workbook_auto, Data};
 
-        let mut workbook = open_workbook_auto(&self.input_path)
-            .map_err(|e| PdfError::Other(format!("Failed to open workbook: {}", e)))?;
-
         let mut html = String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
 
-        let sheets = workbook.sheet_names().to_owned();
-        for sheet_name in sheets {
-            html.push_str(&format!("<h2>{}</h2>", sheet_name));
-            if let Ok(range) = workbook.worksheet_range(&sheet_name) {
-                html.push_str("<table>");
-                let mut is_first_row = true;
-                for row in range.rows() {
+        if self.input_path.extension().and_then(|s| s.to_str()) == Some("csv") {
+            let mut rdr = csv::Reader::from_path(&self.input_path)
+                .map_err(|e| PdfError::Other(format!("Failed to parse CSV: {}", e)))?;
+
+            html.push_str("<table>");
+            if let Ok(headers) = rdr.headers() {
+                html.push_str("<tr>");
+                for h in headers {
+                    html.push_str(&format!("<th>{}</th>", html_escape::encode_text(h)));
+                }
+                html.push_str("</tr>");
+            }
+
+            for result in rdr.records() {
+                if let Ok(record) = result {
                     html.push_str("<tr>");
-                    for cell in row {
-                        let cell_tag = if is_first_row { "th" } else { "td" };
-                        let cell_val = match cell {
-                            Data::String(s) => s.to_string(),
-                            Data::Float(f) => f.to_string(),
-                            Data::Int(i) => i.to_string(),
-                            Data::Bool(b) => b.to_string(),
-                            Data::Error(e) => format!("Error: {:?}", e),
-                            Data::Empty => String::new(),
-                            Data::DateTime(d) => d.as_f64().to_string(),
-                            Data::DateTimeIso(d) => d.to_string(),
-                            Data::DurationIso(d) => d.to_string(),
-                        };
-                        html.push_str(&format!("<{}>{}</{}>", cell_tag, cell_val, cell_tag));
+                    for field in record.iter() {
+                        html.push_str(&format!("<td>{}</td>", html_escape::encode_text(field)));
                     }
                     html.push_str("</tr>");
-                    is_first_row = false;
                 }
-                html.push_str("</table>");
+            }
+            html.push_str("</table>");
+        } else {
+            let mut workbook = open_workbook_auto(&self.input_path)
+                .map_err(|e| PdfError::Other(format!("Failed to open workbook: {}", e)))?;
+
+            let sheets = workbook.sheet_names().to_owned();
+            for sheet_name in sheets {
+                html.push_str(&format!("<h2>{}</h2>", html_escape::encode_text(&sheet_name)));
+                if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                    html.push_str("<table>");
+                    let mut is_first_row = true;
+                    for row in range.rows() {
+                        html.push_str("<tr>");
+                        for cell in row {
+                            let cell_tag = if is_first_row { "th" } else { "td" };
+                            let cell_val = match cell {
+                                Data::String(s) => s.to_string(),
+                                Data::Float(f) => f.to_string(),
+                                Data::Int(i) => i.to_string(),
+                                Data::Bool(b) => b.to_string(),
+                                Data::Error(e) => format!("Error: {:?}", e),
+                                Data::Empty => String::new(),
+                                Data::DateTime(d) => d.as_f64().to_string(),
+                                Data::DateTimeIso(d) => d.to_string(),
+                                Data::DurationIso(d) => d.to_string(),
+                            };
+                            html.push_str(&format!("<{}>{}</{}>", cell_tag, html_escape::encode_text(&cell_val), cell_tag));
+                        }
+                        html.push_str("</tr>");
+                        is_first_row = false;
+                    }
+                    html.push_str("</table>");
+                }
             }
         }
         html.push_str("</body></html>");
@@ -995,5 +1020,26 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_excel_to_html_csv() {
+        let dir = tempfile::tempdir().unwrap();
+        let csv_path = dir.path().join("test.csv");
+        let out_path = dir.path().join("out.pdf");
+        std::fs::write(&csv_path, "Name,Age\nJohn,30\nJane,25").unwrap();
+
+        let options = HtmlToPdfOptions {
+            preset: None,
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+
+        let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
+        assert!(op.render().is_ok());
+
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
     }
 }
