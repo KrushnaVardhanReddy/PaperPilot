@@ -1,0 +1,64 @@
+# Task: Phase 4.F.13A — Backend PDF Utilities: Blank Page Removal, Positional Bates Stamping & MCP Registration
+# Target: paperpilot-pdf + paperpilot-mcp
+# Execution: Jules Cloud Agent
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER leave empty 0-byte files. All operations must have real, working implementations.
+3. Do NOT modify any files in apps/desktop/ or prompts/tasks/qa_suites/.
+4. All code must compile and pass tests:
+   - `cargo test -p paperpilot-pdf`
+   - `cargo test -p paperpilot-mcp`
+   - `cargo check --workspace`
+5. In `paperpilot-mcp/src/server.rs`, remember to update `test_execute_list_tools()` assertion:
+   - Current count is 42 tools. Adding `pdf_remove_blank` increases count to 43 tools (`assert_eq!(res.tools.len(), 43);`).
+6. Commit message must start with "jules: " prefix.
+
+---
+
+## 1. OBJECTIVES
+
+Implement the backend PDF operations and register them as MCP tools.
+
+### Step 1: Implement `RemoveBlankPagesOperation`
+In `paperpilot-pdf/src/operations/cleanup.rs`:
+- Create `RemoveBlankPagesOperation` implementing the `PdfOperation` trait.
+- Input parameters:
+  - `input`: Path to input PDF file.
+  - `threshold`: Sensitivity threshold (e.g. byte length threshold for stream or empty text/graphic objects, default: 50 bytes).
+  - `output`: Path to write the cleaned PDF file.
+- Logic using `lopdf::Document`:
+  - Load the document.
+  - Iterate through all pages.
+  - If a page has an empty content stream or stream length < threshold with no visible text/image operators, omit it from the page tree.
+  - If no pages are blank, copy input to output or save document.
+  - Ensure the output PDF has valid page dictionaries and catalog.
+- Add unit test in `cleanup.rs` testing a PDF with a blank page.
+- Export in `paperpilot-pdf/src/operations/mod.rs`.
+
+### Step 2: Dynamic Positional Coordinates in `BatesNumberingOperation`
+In `paperpilot-pdf/src/operations/bates_numbering.rs`:
+- Support a `position` parameter with values:
+  - `"bottom-right"` (default: margin right 40, margin bottom 30)
+  - `"bottom-center"` (centered horizontally, margin bottom 30)
+  - `"bottom-left"` (margin left 40, margin bottom 30)
+  - `"top-right"` (margin right 40, margin top page_height - 30)
+  - `"top-center"` (centered horizontally, margin top page_height - 30)
+- Calculate (x, y) coordinates dynamically based on page mediabox width and height.
+
+### Step 3: MCP Tool Registration in `paperpilot-mcp`
+In `paperpilot-mcp/src/server.rs`:
+1. Register tool `pdf_remove_blank`:
+   - Description: "Detects and removes blank pages from a PDF based on content stream threshold."
+   - Parameters: `input` (string, required), `output` (string, required), `threshold` (integer, optional, default 50).
+2. Wire `pdf_remove_blank` execution to `RemoveBlankPagesOperation`.
+3. In `test_execute_list_tools()` around line 3577:
+   - Update `assert_eq!(res.tools.len(), 43);` (42 previous tools + 1 new tool = 43).
+
+---
+
+## 2. VERIFICATION
+
+1. `cargo test -p paperpilot-pdf` -> all tests pass.
+2. `cargo test -p paperpilot-mcp` -> `test_execute_list_tools` and all server tests pass.
+3. `cargo check --workspace` -> 0 errors.

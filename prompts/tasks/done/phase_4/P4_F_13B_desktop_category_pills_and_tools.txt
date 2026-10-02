@@ -1,0 +1,75 @@
+# Task: Phase 4.F.13B — Desktop UI: Category Filter Pills, Tool Directory & Inspector Forms
+# Target: apps/desktop (Svelte 5 Runes)
+# Execution: Jules Cloud Agent
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER delete or skip tests in apps/desktop/tests/*.
+3. Only touch files inside apps/desktop/ (especially OperationsPanel.svelte). Do NOT edit Rust crates.
+4. All code must compile and pass typecheck:
+   - `npm --prefix apps/desktop run check`
+   - `npm --prefix apps/desktop run test:unit`
+5. Commit message must start with "jules: " prefix.
+
+---
+
+## 1. OBJECTIVES
+
+Modernize `OperationsPanel.svelte` with top-tier UI ergonomics (VS Code & Figma inspired) and Stirling-style category filtering:
+
+### Step 1: Category Filter Pills Bar in `OperationsPanel.svelte`
+In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+- Below `#tool-search-input`, add a horizontal scrolling pill selector:
+  ```svelte
+  <div class="category-pills-bar">
+    <button 
+      class="pill-btn" 
+      class:active={selectedCategory === 'all'}
+      onclick={() => selectedCategory = 'all'}
+    >
+      All
+    </button>
+    {#each categories as cat}
+      <button 
+        class="pill-btn" 
+        class:active={selectedCategory === cat.id}
+        onclick={() => selectedCategory = cat.id}
+      >
+        <span class="pill-icon">{cat.icon}</span>
+        {cat.title}
+      </button>
+    {/each}
+  </div>
+  ```
+- State: `let selectedCategory = $state<string>('all');`
+- Clicking a category pill filters visible tool sections to only that category.
+- When `searchQuery` has text, automatically show matching tools across all categories.
+- When `searchQuery` is empty, filter by `selectedCategory` (or display all if `'all'`).
+
+### Step 2: Register Missing Stirling Tools in `allTools`
+In `allTools` array in `OperationsPanel.svelte`:
+- `remove_blank`: Category `pages`, title `'Remove Blank Pages'`, icon `'🧹'`, tags `['blank', 'empty', 'clean', 'delete']`
+- `page_numbers`: Category `pages`, title `'Add Page Numbers'`, icon `'🔢'`, tags `['numbering', 'bates', 'header', 'footer', 'page']`
+- `md_to_pdf`: Category `convert`, title `'Markdown to PDF'`, icon `'📝'`, tags `['markdown', 'convert', 'pdf', 'generate']`
+- `html_to_pdf`: Category `convert`, title `'HTML to PDF'`, icon `'🌐'`, tags `['html', 'web', 'convert', 'pdf']`
+- `img_to_pdf`: Category `convert`, title `'Images to PDF'`, icon `'🖼️'`, tags `['image', 'jpg', 'png', 'combine', 'photo']`
+
+### Step 3: Inspector Parameter Forms for New Tools
+In the active tool inspector view:
+- For `remove_blank`: Single-click "Remove Blank Pages" button + threshold sensitivity slider.
+- For `page_numbers`: Position dropdown (`bottom-right`, `bottom-center`, `top-right`, `top-center`) + Format input template (e.g. `Page {n} of {total}`).
+- For `md_to_pdf` / `html_to_pdf` / `img_to_pdf`: Input file picker + CSS Preset dropdown (`Academic Paper`, `Corporate Report`, `Modern Minimalist`).
+
+### Step 4: Styling
+- Add CSS styling for `.category-pills-bar` and `.pill-btn`:
+  - Horizontal display, flex-wrap or horizontal scroll with hidden scrollbar.
+  - Modern subtle border, rounded pill radius (`border-radius: 9999px`).
+  - Active pill gets subtle accent background and contrasting text color.
+  - Smooth hover transitions.
+
+---
+
+## 2. VERIFICATION
+
+1. `npm --prefix apps/desktop run check` -> 0 errors, 0 warnings.
+2. `npm --prefix apps/desktop run test:unit` -> all tests pass.

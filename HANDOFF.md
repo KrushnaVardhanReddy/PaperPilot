@@ -88,8 +88,7 @@ PaperPilot/
 | Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
 | Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
 | Phase 4.F.12 (Custom CSS Document Conversions) | ✅ Complete | 5 CSS presets (`github`, `elegant`, `minimal`, etc.), custom CSS upload/inline, Excel semantic table styling (PR #84) |
-| Phase 4.E2E R2.E3 (UI Full Re-Validation) | ✅ Complete | Multi-document tabs, search, tools dock, diff slider Playwright tests (PR #85, Session 11778243636880036911) |
-| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | 🚧 In-Progress | Session `6513801077432005833` |
+| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | ✅ Complete | Category filter pills, blank page removal, page numbers, to-PDF conversions in Dock (PR #87, Session 12318669239840057258) |
 | Phase 4.E2E R2.E5 (Autonomous Agent QA Suite) | 🔲 Queued | Vercel Agent Browser / Stagehand exploration loop where Jules tests all tools and fixes bugs directly |
 
 ---
@@ -98,8 +97,6 @@ PaperPilot/
 
 | Task | Session ID | What it does |
 |---|---|---|
-| Phase 4.F.13A (Rust Backend) | `18397296069691197411` | Backend blank page removal, positional Bates stamping, MCP tool registration (assertion 43) |
-| Phase 4.F.13B (Desktop UI) | `2670447761643250835` | Category filter pills, new Stirling tools in Dock, inspector parameter forms |
 | Phase 4.E2E R2.E3 (v2 Secondary) | `10652984541833495616` | Secondary run with exact DOM IDs |
 
 ---

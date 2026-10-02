@@ -1,114 +1,63 @@
 # Task: Phase 4.F.13 — Stirling Parity: Category Filter Pills, Stirling Tools (To-PDF, Page Numbers, Blank Removal) & Clean Ergonomics
+# Target: apps/desktop (Svelte 5) + paperpilot-pdf (Rust) + paperpilot-mcp
+# Execution: Jules Cloud Agent
 
-## Priority: HIGH — Parity with Stirling PDF v1/v2 Directory & Clean Modern Ergonomics
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER comment out, stub, or mock existing implementation code.
+2. NEVER leave empty 0-byte files (like cleanup.rs). Implement actual working logic!
+3. NEVER delete or skip existing tests in apps/desktop/tests/*.
+4. Do NOT delete or modify any prompts in prompts/tasks/qa_suites/ or prompts/tasks/api_gateway/.
+5. All code must compile and pass tests:
+   - `cargo check --workspace`
+   - `npm --prefix apps/desktop run check`
+6. Commit message must start with "jules: " prefix.
 
 ---
 
 ## 1. OBJECTIVES
 
-This task modernizes the **Operations Dock** (`OperationsPanel.svelte`) and backend execution pipeline with top-tier UI ergonomics inspired by VS Code and Figma, while adding Stirling PDF's highest-value missing tools:
+Complete the Stirling-PDF parity tools and ergonomic category filter pills in the Operations Dock:
 
-1. **Modern Category Filter Pills Bar (No Hidden Tools, Zero Friction)**:
-   - Below the search bar, provide a horizontal scrolling pill selector:
-     - `[ All ] [ ⚡ Quick ] [ 📑 Pages ] [ ✍️ Edit ] [ 🗜️ Optimize ] [ 🔒 Security ] [ 🔄 Convert ] [ 🧠 AI ]`
-   - **Single-Click Filtering**: Clicking a category pill filters the view to that category instantly.
-   - **All Open by Default**: The "All" view shows all tools without hiding anything.
-   - **Chevron Minimizing Option**: Optional subtle chevron on section headers allowing users to minimize sections if desired, but defaults to fully visible.
-   - **Instant Search Integration**: Typing into the search bar auto-activates search mode across all categories. Clearing search restores the active pill selection.
+### 1. Modern Category Filter Pills Bar in `OperationsPanel.svelte`
+In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+- Below `#tool-search-input`, implement a horizontal pill selector:
+  - `[ All ] [ ⚡ Quick ] [ 📑 Pages ] [ ✍️ Edit ] [ 🗜️ Optimize ] [ 🔒 Security ] [ 🔄 Convert ] [ 🧠 AI ]`
+- State: `let selectedCategory = $state<string>('all');`
+- Clicking a pill filters visible tools to that category immediately.
+- When `searchQuery` is empty:
+  - If `selectedCategory === 'all'`, display all categories/tools.
+  - If `selectedCategory !== 'all'`, display only the tools matching `selectedCategory`.
+- When `searchQuery` has text, search across all tools regardless of selected category.
 
-2. **Integration of "To-PDF" Conversions (Phase 4.F.12 Engine)**:
-   - Wire existing backend conversion engines directly into the Tools Dock:
-     - **Markdown → PDF** (`md_to_pdf`) with custom CSS preset options.
-     - **HTML → PDF** (`html_to_pdf`) with styling presets.
-     - **Images → PDF** (`img_to_pdf` / PNG, JPG, WebP combining).
-     - **DOCX → PDF** (`docx_to_pdf`).
-   - Add dedicated inspector parameter views allowing users to select an input file or paste text, select a CSS preset (Academic / Corporate / Minimalist), and produce an output PDF tab.
+### 2. Register New Stirling-Style Tools in `allTools`
+In `OperationsPanel.svelte`:
+- `remove_blank`: Category `pages`, title `'Remove Blank Pages'`, icon `'🧹'`, tags `['blank', 'empty', 'clean', 'delete']`
+- `page_numbers`: Category `pages`, title `'Add Page Numbers'`, icon `'🔢'`, tags `['numbering', 'bates', 'header', 'footer', 'page']`
+- `md_to_pdf`: Category `convert`, title `'Markdown to PDF'`, icon `'📝'`, tags `['markdown', 'convert', 'pdf', 'generate']`
+- `html_to_pdf`: Category `convert`, title `'HTML to PDF'`, icon `'🌐'`, tags `['html', 'web', 'convert', 'pdf']`
+- `img_to_pdf`: Category `convert`, title `'Images to PDF'`, icon `'🖼️'`, tags `['image', 'jpg', 'png', 'combine', 'photo']`
 
-3. **New Stirling-Style Core Utilities**:
-   - **Add Page Numbers / Bates Stamping**:
-     - Parameters: Format template (e.g., `Page {n} of {total}` or `{n}`), Position (`bottom-right`, `bottom-center`, `bottom-left`, `top-right`, `top-center`), Margin, and Starting number.
-   - **Remove Blank Pages**:
-     - Parameters: Sensitivity threshold (e.g. 98% white / empty text & vector streams). Auto-strips blank scan pages.
-   - **Auto-Redact / Blackout**:
-     - Tool to redact sensitive patterns (Emails, Phone Numbers, SSN / Credit Card patterns) or user-specified keywords, permanently sanitizing the PDF stream.
+### 3. Inspector Views for the New Tools
+In `OperationsPanel.svelte`'s inspector section:
+- For `remove_blank`: Sensitivity slider (e.g. 95% - 99%) or single-click run.
+- For `page_numbers`: Dropdown for position (`bottom-right`, `bottom-center`, `top-right`, `top-center`) and format input (`Page {n} of {total}`).
+- For `md_to_pdf` / `html_to_pdf`: File or text input with CSS preset selection (`academic`, `corporate`, `minimalist`).
 
----
-
-## 2. STEP-BY-STEP IMPLEMENTATION PLAN
-
-### Step 2.1: Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
-
-1. **Category Pills State & Template**:
-   ```ts
-   let selectedCategory = $state<string>('all');
-   ```
-
-2. **Category Pill Bar HTML**:
-   ```svelte
-   <div class="category-pills-bar">
-     <button 
-       class="pill-btn" 
-       class:active={selectedCategory === 'all'}
-       onclick={() => selectedCategory = 'all'}
-     >
-       All
-     </button>
-     {#each categories as cat}
-       <button 
-         class="pill-btn" 
-         class:active={selectedCategory === cat.id}
-         onclick={() => selectedCategory = cat.id}
-       >
-         <span class="pill-icon">{cat.icon}</span>
-         {cat.title}
-       </button>
-     {/each}
-   </div>
-   ```
-
-3. **Filtered View Logic**:
-   - When `searchQuery` has text, show matching tools.
-   - When `searchQuery` is empty:
-     - If `selectedCategory === 'all'`, display all sections.
-     - If `selectedCategory !== 'all'`, display only the chosen category's grid.
-
-4. **Register New Tools in `allTools`**:
-   - `md_to_pdf`: Category `convert`, title `'Markdown to PDF'`, tags `['markdown', 'convert', 'pdf', 'generate']`
-   - `html_to_pdf`: Category `convert`, title `'HTML to PDF'`, tags `['html', 'web', 'convert', 'pdf']`
-   - `img_to_pdf`: Category `convert`, title `'Images to PDF'`, tags `['image', 'jpg', 'png', 'combine', 'photo']`
-   - `page_numbers`: Category `pages`, title `'Add Page Numbers'`, tags `['numbering', 'bates', 'header', 'footer', 'page']`
-   - `remove_blank`: Category `pages`, title `'Remove Blank Pages'`, tags `['blank', 'empty', 'clean', 'delete']`
-   - `redact_text`: Category `security`, title `'Redact Sensitive Text'`, tags `['redact', 'blackout', 'privacy', 'sanitize']`
-
-5. **Inspector Views for New Tools**:
-   - For `page_numbers`: Provide dropdown for position (`Bottom Right`, `Bottom Center`, `Top Right`) and format input (`Page {n} of {total}`).
-   - For `remove_blank`: Provide a one-click "Detect & Remove Blank Pages" with a sensitivity slider (Default: 99%).
-   - For `img_to_pdf` / `md_to_pdf`: File picker input + CSS theme preset selector (`Academic Paper`, `Corporate Report`, `Modern Minimalist`).
+### 4. Backend Implementation in Rust
+1. **Remove Blank Pages** in `paperpilot-pdf/src/operations/cleanup.rs` (implement real logic using `lopdf`, do NOT leave empty!):
+   - Check pages whose content stream length is under a threshold (e.g. < 50 bytes) or without text operators, and remove those page objects.
+2. **Page Numbers / Bates** in `paperpilot-pdf/src/operations/bates_numbering.rs` (or `page_numbers.rs`):
+   - Ensure dynamic position calculation works for standard positions (`bottom-right`, `bottom-center`, etc.).
+3. **Register MCP Tools** in `paperpilot-mcp/src/server.rs`:
+   - Register `pdf_remove_blank` and wire execution to the operation.
+4. **Tauri IPC Command** in `apps/desktop/src-tauri/src/lib.rs` (if calling directly or via MCP invoke):
+   - Ensure `invoke_mcp_tool` or dedicated Tauri commands can run `remove_blank`, `page_numbers`, and `convert`.
 
 ---
 
-### Step 2.2: Backend Handlers in `paperpilot-pdf` and Tauri Commands
+## 2. VERIFICATION & TESTS
 
-1. **Page Number Stamping**:
-   - In `paperpilot-pdf/src/page_numbers.rs`, implement a function that loads pages with `lopdf` or `pdf-writer`, renders formatted text in the designated margin box, and saves the output.
-2. **Remove Blank Pages**:
-   - In `paperpilot-pdf/src/cleanup.rs`, check for pages having 0 text elements and empty content streams or rasterize thumbnail check to remove indices.
-3. **Expose Tauri Commands** in `apps/desktop/src-tauri/src/lib.rs`:
-   - `pdf_add_page_numbers(path: String, format: String, position: String)`
-   - `pdf_remove_blank_pages(path: String, threshold: f32)`
-   - Connect existing `pdf_convert_html_to_pdf` / `pdf_convert_markdown_to_pdf`.
-
----
-
-## 3. VERIFICATION & TESTS
-
-1. **Unit & Component Tests**:
-   - Update `apps/desktop/src/lib/components/__tests__/OperationsPanel.test.ts` to test:
-     - Pill clicks filter the category cards instantly.
-     - Search input filters cards across all categories.
-     - New tools render and trigger their respective inspector panels.
-2. **Typecheck & Lint**:
-   - Run `npm --prefix apps/desktop run check` (0 errors, 0 warnings).
-3. **Execution Verification**:
-   - Confirm pill transitions feel instant and silky smooth.
-   - Test search query filtering across newly added tools.
+1. `cargo check --workspace` must pass with 0 errors.
+2. `npm --prefix apps/desktop run check` must pass with 0 errors.
+3. `npm --prefix apps/desktop run test:unit` must pass.
+4. Existing E2E tests in `apps/desktop/tests/` must remain passing.
