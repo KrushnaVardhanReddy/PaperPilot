@@ -1,0 +1,83 @@
+# Autonomous QA Test Suite: QA-8 — Visual Pixel Diff Slider & To-PDF Conversions
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate two numbered revisions of a contract **using PaperPilot's conversion engine**:
+   - `contract_v1.pdf` (contains `$10,000` price tag)
+   - `contract_v2.pdf` (contains modified `$15,000` price tag)
+2. Launch the desktop app and open both documents in tabs.
+3. Open the **Visual Split-Screen Pixel Diff Slider** (`Ctrl+D` or compare tool).
+4. Verify:
+   - Split slider handle dragging works.
+   - Discrepancy highlights the changed price area.
+   - Mode toggling between Split, Overlay, and Side-by-Side functions smoothly.
+5. If ANY canvas rendering error or slider drag defect occurs, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TWO NUMBERED REVISIONS VIA CLI
+
+```bash
+cat << 'EOF' > /tmp/contract_v1.md
+# Master Services Agreement Revision 1
+- Client: Acme Corp
+- Total Contract Fee: $10,000.00
+- Payment Schedule: Net 30
+EOF
+
+cat << 'EOF' > /tmp/contract_v2.md
+# Master Services Agreement Revision 2
+- Client: Acme Corp
+- Total Contract Fee: $15,000.00
+- Payment Schedule: Net 15
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v1.md --output tests/e2e_fixtures/contract_v1.pdf --css-preset corporate
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_v2.md --output tests/e2e_fixtures/contract_v2.pdf --css-preset corporate
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/contract_v1.pdf` and `tests/e2e_fixtures/contract_v2.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Open Visual Pixel Diff**:
+   - Press shortcut `ControlOrMeta+d`:
+     ```bash
+     npx --prefix apps/desktop agent-browser keyboard press "ControlOrMeta+d"
+     ```
+   - Verify `#visual-diff-container` is visible.
+
+4. **Verify Slider & Modes**:
+   - Check `#diff-split-handle` is visible.
+   - Click `#diff-mode-overlay` -> verify `#diff-overlay-canvas` appears.
+   - Click `#diff-mode-side-by-side` -> verify dual side-by-side view.
+   - Click `#diff-close-btn` -> verify diff modal closes.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If shortcut doesn't trigger diff view, split canvas fails, or overlay crashes:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `apps/desktop/src/lib/components/PdfVisualDiff.svelte`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-8 Visual split diff comparison and to-pdf conversions verified`.
+- Open a PR against `main`.

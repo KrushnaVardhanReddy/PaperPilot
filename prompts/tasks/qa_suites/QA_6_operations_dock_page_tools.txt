@@ -1,0 +1,82 @@
+# Autonomous QA Test Suite: QA-6 — Operations Dock: Page Tools, Merge, Split & Category Pills
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate numbered documents **using PaperPilot's conversion engine**: `part_10.pdf` and `part_20.pdf`.
+2. Launch the desktop app and open the Right-Docked Operations Panel (`#operations-panel`).
+3. Test the Category Filter Pills (`All`, `Quick`, `Pages`, `Edit`, etc.) and search filtering.
+4. Test parameter inspectors:
+   - **Merge Inspector**: Reorder open files and click Run.
+   - **Split Inspector**: Enter range `1-2` and click Run.
+5. If ANY operation fails or toast shows error, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TEST DOCUMENTS VIA CLI
+
+```bash
+cat << 'EOF' > /tmp/part_10.md
+# Document 10 - Section A
+First chunk of data with identifier #10.
+EOF
+
+cat << 'EOF' > /tmp/part_20.md
+# Document 20 - Section B
+Second chunk of data with identifier #20.
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_10.md --output tests/e2e_fixtures/part_10.pdf
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/part_20.md --output tests/e2e_fixtures/part_20.pdf
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/part_10.pdf` and `tests/e2e_fixtures/part_20.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Test Category Filter Pills**:
+   - Locate category pills (`.pill-btn`).
+   - Click `Pages` pill -> verify only page management tools are visible.
+   - Click `All` pill -> verify all tool sections return.
+
+4. **Test Search Filter**:
+   - Type `merge` into `#tool-search-input`.
+   - Click `#tool-merge`.
+   - Verify inspector mode opens with `#btn-back-tools` and reorder list.
+   - Click `#btn-run-operation`.
+   - Verify success toast `.toast-success` appears.
+   - Click `#btn-back-tools` to return to directory.
+
+5. **Test Split Tool**:
+   - Click `#tool-split`.
+   - Fill `#splitPoints` with `1`.
+   - Click `#btn-run-operation`.
+   - Verify execution completes.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If tools don't filter or operation execution errors:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` or `src-tauri/src/lib.rs`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-6 Operations dock page tools and category pills verified`.
+- Open a PR against `main`.

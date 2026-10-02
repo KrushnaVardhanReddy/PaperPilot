@@ -1,0 +1,74 @@
+# Autonomous QA Test Suite: QA-7 — Security & Conversion Operations
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate a test document **using PaperPilot's conversion engine**: `secret_999.pdf`.
+2. Launch the desktop app and open the Right-Docked Operations Panel.
+3. Test Security & Conversion operations:
+   - **Encrypt with Password**: Enter password `vault999` and click Run.
+   - **Remove Password (Decrypt)**: Enter password `vault999` and click Run.
+   - **Convert to Markdown**: Run operation and verify export.
+4. If ANY IPC error or operation failure occurs, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TEST DOCUMENT VIA CLI
+
+```bash
+cat << 'EOF' > /tmp/secret_999.md
+# TOP SECRET VAULT #999
+Access Code: 999-OMEGA
+Clearance Level: 5
+Confidentiality Notice: Protected under Federal Trade Secrets.
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/secret_999.md --output tests/e2e_fixtures/secret_999.pdf
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/secret_999.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Test Encrypt Tool**:
+   - Filter search by typing `encrypt`.
+   - Click `#tool-encrypt`.
+   - Fill password field `#password` with `vault999`.
+   - Click `#btn-run-operation`.
+   - Verify success toast appears.
+   - Click `#btn-back-tools`.
+
+4. **Test Metadata Sanitization**:
+   - Filter search by typing `metadata`.
+   - Click `#tool-metadata`.
+   - Fill title input with `Sanitized Document 999`.
+   - Click `#btn-run-operation`.
+   - Verify success toast appears.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If password input fails or encryption tool returns error:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `paperpilot-pdf` or `apps/desktop/src-tauri/src/lib.rs`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-7 Security and conversion tools verified`.
+- Open a PR against `main`.

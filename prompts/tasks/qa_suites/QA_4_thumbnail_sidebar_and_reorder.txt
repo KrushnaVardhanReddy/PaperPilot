@@ -1,0 +1,76 @@
+# Autonomous QA Test Suite: QA-4 — Thumbnail Sidebar Drag & Page Manipulation
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate a 3-page test PDF **using PaperPilot's conversion engine** with giant numbers: `PAGE 111`, `PAGE 222`, `PAGE 333`.
+2. Launch the desktop app and open the document.
+3. Test thumbnail rendering, drag-and-drop page reordering (moving Page 3 to Page 1), and hover quick actions (Rotate, Delete).
+4. If ANY thumbnail rendering or reordering defect is found, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TEST PDF WITH GIANT NUMBERED PAGES
+
+```bash
+cat << 'EOF' > /tmp/thumbnail_test.md
+# PAGE 111 - ALPHA
+Unique fingerprint: 111-AAA
+
+<div style="page-break-after: always;"></div>
+
+# PAGE 222 - BETA
+Unique fingerprint: 222-BBB
+
+<div style="page-break-after: always;"></div>
+
+# PAGE 333 - GAMMA
+Unique fingerprint: 333-CCC
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/thumbnail_test.md --output tests/e2e_fixtures/thumbnail_test.pdf --css-preset modern
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/thumbnail_test.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Verify Thumbnail Sidebar**:
+   - Ensure the left thumbnail sidebar is open and shows 3 thumbnail cards (`.thumbnail-card` or `#thumb-page-1`, `#thumb-page-2`, `#thumb-page-3`).
+
+4. **Test Quick Actions on Hover**:
+   - Locate hover action buttons for page 2:
+     - Rotate 90° button (`#thumb-rotate-2` or `.thumb-btn-rotate`).
+     - Click rotate and verify page rotation angle updates in state.
+
+5. **Test Page Reorder**:
+   - Simulate dragging page 3 before page 1 (or clicking move-up action).
+   - Verify page sequence reflects the new order.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If thumbnails don't render or reordering fails:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `apps/desktop/src/lib/components/ThumbnailSidebar.svelte` or `PdfViewer.svelte`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-4 Thumbnail sidebar and page manipulation verified`.
+- Open a PR against `main`.

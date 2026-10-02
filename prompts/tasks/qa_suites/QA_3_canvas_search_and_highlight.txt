@@ -1,0 +1,96 @@
+# Autonomous QA Test Suite: QA-3 — In-Canvas Text Search & Match Highlighting
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate a multi-page test PDF **using PaperPilot's conversion engine** containing repeating numbered serial codes (e.g. `SERIAL-777` appearing on Page 1, Page 3, and Page 5).
+2. Launch the desktop app and open the document.
+3. Test canvas text search (`Ctrl+F`), searching for `SERIAL-777`, navigating matches (`1 of 3`, `2 of 3`, `3 of 3`), and closing search (`Esc`).
+4. If ANY search highlight, shortcut, or navigation defect is found, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TEST PDF WITH SPECIFIC SEARCHABLE NUMBERS
+
+```bash
+cat << 'EOF' > /tmp/search_test_numbered.md
+# Page 1 - Production Unit
+Unit Registered: SERIAL-777
+Timestamp: 10:00:00
+
+<div style="page-break-after: always;"></div>
+
+# Page 2 - Warehouse
+Standard inventory without matching target.
+
+<div style="page-break-after: always;"></div>
+
+# Page 3 - Maintenance Log
+Inspecting unit with badge: SERIAL-777
+Status: Passed check.
+
+<div style="page-break-after: always;"></div>
+
+# Page 4 - Dispatch
+Different unit: SERIAL-999
+
+<div style="page-break-after: always;"></div>
+
+# Page 5 - Final Archive
+Archived copy for: SERIAL-777
+Verification code: 777-VERIFIED
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/search_test_numbered.md --output tests/e2e_fixtures/search_test.pdf --css-preset minimal
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/search_test.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Open Search Bar**:
+   - Press shortcut `ControlOrMeta+f`:
+     ```bash
+     npx --prefix apps/desktop agent-browser keyboard press "ControlOrMeta+f"
+     ```
+   - Verify `#pdf-search-bar` is visible.
+
+4. **Search for Numbered Target**:
+   - Fill `#pdf-search-input` with `SERIAL-777` and press Enter.
+   - Verify match indicator `#pdf-search-count` shows `1 of 3` (or `3 matches`).
+
+5. **Navigate Matches**:
+   - Click `#pdf-search-next` (Next button) -> verify counter advances to `2 of 3`.
+   - Click `#pdf-search-prev` (Prev button) -> verify counter returns to `1 of 3`.
+
+6. **Close Search**:
+   - Click `#pdf-search-close` (or press Escape).
+   - Verify `#pdf-search-bar` is hidden.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If search shortcut doesn't trigger, count is inaccurate, or highlight fails:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `apps/desktop/src/lib/components/PdfSearchBar.svelte` or `PdfViewer.svelte`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-3 Canvas search and match navigation verified`.
+- Open a PR against `main`.

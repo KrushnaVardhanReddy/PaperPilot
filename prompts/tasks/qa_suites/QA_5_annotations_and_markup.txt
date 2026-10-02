@@ -1,0 +1,83 @@
+# Autonomous QA Test Suite: QA-5 — Annotation & Markup Tools
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
+# Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
+
+---
+
+## 🎯 MISSION OBJECTIVE
+
+Jules, you are our Senior Autonomous QA Engineer.
+Your mission is to:
+1. Generate a test document **using PaperPilot's conversion engine** containing numbered contracts and bullet points.
+2. Launch the desktop app and activate annotation tools from the unified top toolbar.
+3. Test Highlight, Underline, Pen, Sticky Note, and annotation deletion.
+4. Verify that annotation count updates in the status badge (`Annotations (N)`).
+5. If ANY tool button fails to activate or annotation canvas breaks, fix the code and submit a green PR.
+
+---
+
+## STEP 1: CREATE TEST DOCUMENT VIA CLI
+
+```bash
+cat << 'EOF' > /tmp/contract_numbered.md
+# Non-Disclosure Agreement #555
+1. Term: The duration is 5 years from signing.
+2. Penalty: Liquidated damages of $555,000 for breach.
+3. Jurisdiction: State of Delaware.
+EOF
+
+cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/contract_numbered.md --output tests/e2e_fixtures/contract_555.pdf --css-preset corporate
+```
+
+---
+
+## STEP 2: LAUNCH & TEST VIA AGENT BROWSER
+
+1. Start dev server:
+   ```bash
+   npm --prefix apps/desktop run dev &
+   sleep 3
+   ```
+
+2. Open app and load `tests/e2e_fixtures/contract_555.pdf`:
+   ```bash
+   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser snapshot -i
+   ```
+
+3. **Verify Annotation Tools in Top Toolbar**:
+   - Check presence of tools:
+     - `#tool-pointer`
+     - `#tool-highlight`
+     - `#tool-underline`
+     - `#tool-strike`
+     - `#tool-pen`
+     - `#tool-note`
+
+4. **Activate Highlight Tool**:
+   - Click `#tool-highlight`:
+     ```bash
+     npx --prefix apps/desktop agent-browser click "#tool-highlight"
+     ```
+   - Verify `#tool-highlight` has the active state class.
+
+5. **Activate Pen Tool**:
+   - Click `#tool-pen`:
+     ```bash
+     npx --prefix apps/desktop agent-browser click "#tool-pen"
+     ```
+   - Verify `#tool-pen` is active.
+
+6. **Verify Annotation Badge**:
+   - Inspect `.annotation-count-badge` or the annotation indicator in the status bar/header.
+
+---
+
+## STEP 3: BUG FIX MANDATE
+
+If tools overlap on PDF or click handlers do not toggle tool state:
+- Triage Tier 1/2/3 using `docs/architecture/testing_and_troubleshooting_guide.md`.
+- Fix the issue in `apps/desktop/src/lib/components/PdfToolbar.svelte` or `PdfViewer.svelte`.
+- Ensure `npm --prefix apps/desktop run check` passes with 0 errors.
+- Commit with `jules: QA-5 Annotation tools and unified toolbar verified`.
+- Open a PR against `main`.
