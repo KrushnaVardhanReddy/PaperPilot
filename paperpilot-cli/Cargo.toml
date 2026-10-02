@@ -16,6 +16,7 @@ paperpilot-pdf = { path = "../paperpilot-pdf" }
 hmac = "0.13.0"
 sha2 = "0.11.0"
 hex = "0.4.3"
+paperpilot-gateway = { version = "0.1.0", path = "../paperpilot-gateway" }
 
 [dev-dependencies]
 assert_cmd = "2.2.2"

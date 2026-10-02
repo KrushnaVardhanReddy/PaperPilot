@@ -55,7 +55,7 @@ test.describe('PaperPilot E2E Tests', () => {
     await page.getByRole('button', { name: /Home/i }).click();
 
     // Upload mock documents (merge requires at least 2)
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple][type="file"]');
     await fileInput.setInputFiles([
       {
         name: 'test_document1.pdf',

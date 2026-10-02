@@ -22,7 +22,7 @@ test.describe('Form Filling', () => {
   test('renders form layer correctly and allows editing', async ({ page }) => {
     await page.goto('/');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[multiple][type="file"]');
     await fileInput.setInputFiles(path.resolve('../../tests/e2e_fixtures/form.pdf'));
 
     const docName = page.locator('#tab-doc-0');
