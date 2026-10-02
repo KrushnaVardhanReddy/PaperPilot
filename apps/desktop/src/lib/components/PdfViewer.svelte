@@ -84,13 +84,40 @@
     // Read states synchronously so Svelte tracks them
     renderPage(pdfDoc, pageNum, scale);
   });
+
+  import type { SearchMatchItem } from './PdfSearchBar.svelte';
+  let searchHighlights: SearchMatchItem[] = $state([]);
+  let viewportState: any = $state(null);
+
+  $effect(() => {
+      if (pdfDoc && pageNum && scale) {
+          pdfDoc.getPage(pageNum).then((page: pdfjsLib.PDFPageProxy) => {
+              viewportState = page.getViewport({ scale: scale });
+          });
+      }
+  });
 </script>
 
 <div class="pdf-viewer-wrapper">
-  <PdfSearchBar {pdfDoc} bind:pageNum />
+  <PdfSearchBar {pdfDoc} bind:pageNum bind:searchHighlights />
   <div class="viewer-container">
     <div class="page-container">
       <canvas bind:this={canvas} style="display: block;"></canvas>
+      {#if viewportState}
+        <div class="search-highlights-layer" style="width: {viewportState.width}px; height: {viewportState.height}px;">
+           {#each searchHighlights as item}
+               {@const pt = pdfjsLib.Util.normalizeRect([
+                   item.x,
+                   item.y,
+                   item.x + item.width,
+                   item.y + item.height
+               ])}
+               {@const vpPt1 = viewportState.convertToViewportPoint(pt[0], pt[1])}
+               {@const vpPt2 = viewportState.convertToViewportPoint(pt[2], pt[3])}
+               <div class="search-highlight" style="left: {vpPt1[0]}px; top: {vpPt2[1]}px; width: {vpPt2[0] - vpPt1[0]}px; height: {vpPt1[1] - vpPt2[1]}px;"></div>
+           {/each}
+        </div>
+      {/if}
       <PdfAnnotationLayer {scale} {pageNum} bind:annotations {activeTool} />
     </div>
   </div>
@@ -126,5 +153,19 @@
   canvas {
     max-width: 100%; /* Ensure canvas doesn't break layout unexpectedly */
     object-fit: contain;
+  }
+
+  .search-highlights-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .search-highlight {
+    position: absolute;
+    background-color: rgba(255, 255, 0, 0.4);
+    border-radius: 2px;
   }
 </style>

@@ -1,18 +1,27 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  export interface SearchMatchItem {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
   let {
     pdfDoc = null,
-    pageNum = $bindable(1)
+    pageNum = $bindable(1),
+    searchHighlights = $bindable([])
   }: {
     pdfDoc: any;
     pageNum: number;
+    searchHighlights: SearchMatchItem[];
   } = $props();
 
   let isOpen = $state(false);
   let searchQuery = $state('');
   let currentMatchIndex = $state(0);
-  let matches = $state<{ page: number; text: string }[]>([]);
+  let matches = $state<{ page: number; items: SearchMatchItem[] }[]>([]);
   let isSearching = $state(false);
   let inputEl: HTMLInputElement | null = $state(null);
 
@@ -24,19 +33,38 @@
     }
 
     isSearching = true;
-    const found: { page: number; text: string }[] = [];
+    const found: { page: number; items: SearchMatchItem[] }[] = [];
     const q = query.toLowerCase();
 
     try {
       for (let i = 1; i <= pdfDoc.numPages; i++) {
         const page = await pdfDoc.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
+
+        let matchItems: SearchMatchItem[] = [];
+
+        const pageTextStr = textContent.items
+          .map((item: any) => item.str)
+          .join('');
+
+        const pageTextSpace = textContent.items
           .map((item: any) => item.str)
           .join(' ');
 
-        if (pageText.toLowerCase().includes(q)) {
-          found.push({ page: i, text: pageText });
+        if (pageTextStr.toLowerCase().includes(q) || pageTextSpace.toLowerCase().includes(q)) {
+            // Find specific items matching
+            for (let item of textContent.items) {
+               if (item.str.toLowerCase().includes(q)) {
+                  matchItems.push({
+                      x: item.transform[4],
+                      y: item.transform[5],
+                      width: item.width,
+                      height: item.height
+                  });
+               }
+            }
+            // Add page even if precise match box is not found due to join
+            found.push({ page: i, items: matchItems });
         }
       }
       matches = found;
@@ -50,6 +78,24 @@
       isSearching = false;
     }
   }
+
+  $effect(() => {
+     if (matches.length > 0 && currentMatchIndex < matches.length) {
+         if (pageNum === matches[currentMatchIndex].page) {
+             searchHighlights = matches[currentMatchIndex].items;
+         } else {
+             // For multi-match on same page handling, or just show all matches on current page
+             let pageMatches = matches.filter(m => m.page === pageNum);
+             let allItems = [];
+             for (let pm of pageMatches) {
+                 allItems.push(...pm.items);
+             }
+             searchHighlights = allItems;
+         }
+     } else {
+         searchHighlights = [];
+     }
+  });
 
   function nextMatch() {
     if (matches.length === 0) return;
@@ -87,11 +133,9 @@
     }
   }
 
-  onMount(() => {
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  });
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen}
   <div class="search-bar" id="pdf-search-bar" role="search">
