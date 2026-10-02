@@ -23,9 +23,10 @@
     });
 
     // Tauri events from titlebar
-    const unlistenMenuToggleDiff = listen('menu-toggle-diff', () => {
+    let unlistenMenuToggleDiff: (() => void) | undefined;
+    listen('menu-toggle-diff', () => {
       appState.toggleDiffView();
-    });
+    }).then(fn => unlistenMenuToggleDiff = fn).catch(() => {});
 
     // Key bindings
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,7 +43,7 @@
     window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
 
     return () => {
-      unlistenMenuToggleDiff.then(fn => fn());
+      if (unlistenMenuToggleDiff) unlistenMenuToggleDiff();
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
       window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
