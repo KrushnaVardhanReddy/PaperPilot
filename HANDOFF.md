@@ -87,6 +87,8 @@ PaperPilot/
 | Phase 4.F.10 (Stirling-Style Tools Dock) | ✅ Complete | Categorized tools directory + search filter + slide-in parameter inspectors (PR #82) |
 | Phase 4.F.11 (Visual Pixel Diff Slider) | ✅ Complete | Visual split-screen pixel diff comparison slider, pixel discrepancy map, side-by-side mode (PR #83) |
 | Phase 4.F.12 (Custom CSS Document Conversions) | ✅ Complete | 5 CSS presets (`github`, `elegant`, `minimal`, etc.), custom CSS upload/inline, Excel semantic table styling (PR #84) |
+| Phase 4.F.13 (Stirling Parity: Category Pills & Extended Tools) | 📋 Ready to Dispatch | Category filter pills, To-PDF conversions in Dock, Page Numbers, Blank Removal (`P4_F_13`) |
+| Phase 4.E2E R2.E5 (Autonomous Agent QA Suite) | 🔲 Queued | Vercel Agent Browser / Stagehand exploration loop where Jules tests all tools and fixes bugs directly |
 
 ---
 

@@ -565,6 +565,17 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 
 
+#### 4.F.13 — Stirling Parity: Category Filter Pills & Extended Tools `[READY TO DISPATCH]`
+
+> **Core Basic / Free Feature**: Enhances Operations Dock ergonomics with category filter pills, instant 1-click filtering, and Stirling tools parity.
+
+| # | Task | Notes |
+|---|---|---|
+| F.13.1 | Horizontal Category Filter Pills Bar | Prompt ready (`P4_F_13`) — `[All]`, `[⚡ Quick]`, `[📑 Pages]`, `[✍️ Edit]`, `[🔒 Security]` with 1-click category switching |
+| F.13.2 | To-PDF Conversions in Dock | Prompt ready (`P4_F_13`) — Markdown → PDF, HTML → PDF, Images → PDF with CSS presets |
+| F.13.3 | Page Numbers & Bates Stamping | Prompt ready (`P4_F_13`) — Template `{n} of {total}`, position selector, margin controls |
+| F.13.4 | Auto Remove Blank Pages & Text Redaction | Prompt ready (`P4_F_13`) — Blank page stream detection + sensitive PII blackout sanitization |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)
@@ -577,6 +588,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R2.E2 | MCP End-to-End Re-Validation | ✅ Completed |
 | R2.E3 | UI Full Re-Validation (Viewer + Annotations + Phase 4.F Features) | 🚧 In-Progress (Session 11778243636880036911) — Playwright E2E suite covering Tabs, Canvas Search, Tools Dock, Diff Slider, CSS Injection |
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
+| R2.E5 | Autonomous Agent QA Testing Suite (Vercel Agent Browser / Stagehand) | 🔲 Queued — Headless autonomous agent test loop where Jules launches dev server, explores & clicks through all tools, identifies visual/functional bugs, and commits code fixes directly |
 
 ---
 
