@@ -99,7 +99,7 @@ PaperPilot/
 | Task | Session ID | What it does | Session Link |
 |---|---|---|---|
 | **QA-1**: Document Lifecycle & Tabs | `544885962421601530` | Multi-doc tabs, `pdf_info`, `pdf_validate`, `pdf_hash`, `pdf_metadata` | ✅ Merged (PR #93) |
-| **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | [Session 17034994067282609951](https://jules.google.com/session/17034994067282609951) |
+| **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | ✅ Merged (PR #97) |
 | **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | ✅ Merged (PR #91) |
 | **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | ✅ Merged (PR #90) |
 | **QA-5**: Annotations & Markup | `3824896424156358922` | Toolbar, `pdf_watermark`, `pdf_annotate`, `pdf_header_footer`, `pdf_bates`, `pdf_create_form_field`, `pdf_read_form`, `pdf_fill_form`, `pdf_sign` | ✅ Merged (PR #89) |

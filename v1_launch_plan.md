@@ -18,9 +18,7 @@ With the v1.0 Base Version (Phases 1-3) successfully completed, we are now shift
 #### 4.F.6 — PDF Viewer UX Improvements
 | Task | What | Status |
 |---|---|---|
-| F.6.1 | View Button on Uploads | ✅ Completed (PR #73) |
-| F.6.2 | Collapsible Sidebars & Viewer Panels | ✅ Completed (PR #75, PR #76) |
-| F.6.3 | Native "File -> Open" Wired to Tauri plugin | ✅ Completed (PR #74) |
+| F.6 | PDF Viewer UX Improvements | ✅ Completed |
 
 ---
 
