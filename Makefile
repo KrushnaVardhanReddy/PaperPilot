@@ -1,11 +1,25 @@
-.PHONY: all build check test test-backend test-frontend test-e2e test-all lint format clean dev
+.PHONY: all build build-release dist check test test-backend test-frontend test-e2e test-all lint format clean dev
 
 # Default target
 all: format lint test-all build
 
-# Build the Rust workspace
+# Build the Rust workspace (debug)
 build:
 	cargo build --workspace
+
+# Build the production standalone desktop app (release) and inspect binary size
+build-release:
+	cd apps/desktop && npm run build
+	cargo build --release -p desktop
+	@echo "\n=== Release Binary Size ==="
+	@ls -lh target/release/desktop
+
+# Package standalone desktop installers (AppImage, deb)
+dist:
+	cd apps/desktop && npm run tauri build
+	@echo "\n=== Built Package Bundles ==="
+	@find target/release/bundle -type f -exec ls -lh {} + 2>/dev/null || true
+
 
 # Check for Rust compilation errors and Svelte errors
 check:
