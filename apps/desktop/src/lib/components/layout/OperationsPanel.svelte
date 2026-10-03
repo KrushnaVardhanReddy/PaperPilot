@@ -192,33 +192,49 @@
 
     switch (activeTool.id) {
       case 'merge': {
-        const { save } = await import('@tauri-apps/plugin-dialog');
+        let outputPath: string | null = customOutputPath;
         const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
-        const outputPath = await save({
-          title: 'Save Merged PDF As...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return; // user cancelled
+        if (!outputPath) {
+          try {
+            const { save } = await import('@tauri-apps/plugin-dialog');
+            outputPath = await save({
+              title: 'Save Merged PDF As...',
+              defaultPath: suggested,
+              filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+            });
+          } catch(err) {
+             console.warn('Tauri dialog unavailable, falling back:', err);
+          }
+        }
+        const finalPath = outputPath || suggested;
         args = {
           inputs: appState.documents.map((d, i) => appState.documentPaths[i] || d.name),
-          output: outputPath
+          output: finalPath
         };
         break;
       }
       case 'split': {
-        const { save } = await import('@tauri-apps/plugin-dialog');
+        let outputPath: string | null = customOutputPath;
         const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
-        const outputPath = await save({
-          title: 'Save Split PDFs to Folder (choose base filename)...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return; // user cancelled
-        const outputDir = outputPath.replace(/\.pdf$/i, '');
+        if (!outputPath) {
+          try {
+            const { save } = await import('@tauri-apps/plugin-dialog');
+            outputPath = await save({
+              title: 'Save Split PDFs to Folder (choose base filename)...',
+              defaultPath: suggested,
+              filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+            });
+          } catch(err) {
+            console.warn('Tauri dialog unavailable, falling back:', err);
+          }
+        }
+
+        const finalPath = outputPath || suggested;
+        const outputDir = finalPath.replace(/\.pdf$/i, '');
         args = {
           input: docPath,
-          output_dir: outputDir
+          output_pattern: outputDir + "_p%d.pdf",
+          ranges: splitPoints
         };
         break;
       }
@@ -547,7 +563,7 @@
         <button
           class="run-btn"
           id="btn-run-operation"
-          disabled={!['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id) && appState.documents.length === 0}
+          disabled={!activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
           onclick={handleRunOperation}
         >
           Run {activeTool.title}
@@ -571,13 +587,16 @@
         {/if}
       </div>
 
-      <!-- Category Selector -->
-      <div class="category-selector">
-        <select bind:value={selectedCategory} class="category-dropdown">
-          {#each allCategories as cat}
-            <option value={cat.id}>{cat.icon} {cat.title}</option>
-          {/each}
-        </select>
+      <!-- Category Filter Pills -->
+      <div class="category-pills">
+        {#each allCategories as cat}
+          <button
+            class="pill-btn {selectedCategory === cat.id ? 'active' : ''}"
+            onclick={() => selectedCategory = cat.id}
+          >
+            {cat.icon} {cat.title}
+          </button>
+        {/each}
       </div>
     </div>
 
@@ -658,37 +677,46 @@
     padding: 0 10px;
   }
 
-  .category-selector {
+
+  .category-pills {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
     padding: 12px 0 0 0;
+    scrollbar-width: none; /* Firefox */
+  }
+  .category-pills::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
   }
 
-  .category-dropdown {
-    width: 100%;
-    height: 34px;
+  .pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
     background-color: var(--bg-surface, #1e1e24);
     border: 1px solid var(--border-color, #2a2a35);
-    color: var(--text-primary, #ffffff);
-    border-radius: var(--border-radius-sm, 4px);
-    padding: 0 30px 0 10px;
-    font-size: 13px;
-    outline: none;
+    border-radius: 16px;
+    color: var(--text-muted, #9ca3af);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
     cursor: pointer;
-    font-family: inherit;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 14px;
+    transition: all var(--transition-fast, 0.15s ease);
   }
 
-  .category-dropdown:hover {
+  .pill-btn:hover {
     background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
   }
 
-  .category-dropdown:focus {
+  .pill-btn.active {
+    background-color: var(--accent-primary, #5e6ad2);
     border-color: var(--accent-primary, #5e6ad2);
+    color: #ffffff;
   }
+
+
 
   .search-icon {
     font-size: 13px;
