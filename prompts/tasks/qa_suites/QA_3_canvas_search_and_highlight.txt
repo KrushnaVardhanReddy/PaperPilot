@@ -18,9 +18,13 @@
 3. **SELF-HEALING FIX OBLIGATION**:
    - If you encounter ANY issue (e.g. broken click handler, operation error toast, missing output file, invisible result, tab synchronization defect, contrast issue, or UI freeze), **YOU MUST FIX THE CODE DIRECTLY IN THE REPOSITORY**.
    - Do NOT mark the test as failed or report it as an external bug; identify the root cause, edit the source code, and re-test with `agent-browser` until the UI flow succeeds cleanly with visible success feedback.
-4. **COMPILATION & TYPES**:
+4. **GOLD-STANDARD REFERENCE IMPLEMENTATION**:
+   - The **Merge PDF tool** (`case 'merge':` in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`) is verified working end-to-end.
+   - It properly resolves absolute paths using `appState.documentPaths[i]`, handles destination picking with Tauri's `save()` dialog, and renders full output paths in the success toast.
+   - If ANY other operation encounters path resolution errors, missing output files, or argument mismatches, **refer to and follow the implementation pattern established in `merge`**.
+5. **COMPILATION & TYPES**:
    - Every file you modify must compile cleanly (`npm run check` and `cargo check --workspace`).
-5. **COMMIT & CODE STANDARDS**:
+6. **COMMIT & CODE STANDARDS**:
    - Commit prefix: `jules: QA-`.
    - Svelte 5 runes ($state, $derived, $effect, $props) only — NEVER Svelte 4 stores or writable().
    - Vanilla CSS only — NEVER TailwindCSS.
