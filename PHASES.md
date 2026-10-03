@@ -622,6 +622,18 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.16.2 | Direct Compare / Diff Wiring | Wire "Compare PDFs" card directly to `appState.toggleDiffView(true)` with multi-document validation |
 | F.16.3 | PDF Creation Tool Unblocking | Allow `md_to_pdf`, `html_to_pdf`, and `img_to_pdf` without requiring an already opened PDF; integrate input file pickers |
 
+#### 4.F.18 — Developer Mode (Local REST API Sidecar)
+
+> **Strategic Growth Feature**: Allows developers to instantly run local automations via `localhost:7823` from Python, n8n, etc., without requiring them to install Docker or the standalone CLI. Keeps the free tier insanely competitive vs Stirling PDF.
+
+| # | Task | Notes |
+|---|---|---|
+| F.18.1 | Bundle `paperpilot-gateway` Sidecar | Configure `tauri.conf.json` to bundle `paperpilot-gateway` binary for Mac/Windows/Linux as a sidecar |
+| F.18.2 | "Developer Mode" Settings Toggle | Add a `Developer Mode: Enable Local REST API (Port 7823)` toggle to `SettingsPanel.svelte` |
+| F.18.3 | Sidecar Tauri IPC Spawning | Use `@tauri-apps/plugin-shell` to start/stop the `paperpilot-gateway` sidecar process when the toggle is enabled |
+| F.18.4 | API Docs UI Integration | When Developer Mode is on, show the "API Docs" tab (which embeds `http://localhost:7823/swagger-ui`) |
+| F.18.5 | Sidecar Lifecycle Management | Ensure the sidecar is cleanly terminated if the Desktop app closes or the user turns off the toggle |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)

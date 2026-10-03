@@ -1,0 +1,23 @@
+# Phase 4.F.18 — Developer Mode (Local REST API Sidecar)
+
+## Context
+Based on our strategic analysis of `pricing_strategy.md` and `COMPETITORS.md`, PaperPilot offers unlimited, free local processing to undercut competitors like Stirling PDF. 
+To make this incredible for developers, we want to allow them to enable a "Developer Mode" in the Desktop app which spins up the `paperpilot-gateway` REST server locally on port 7823.
+
+## Requirements
+
+1. **Sidecar Configuration:** 
+   - Update `apps/desktop/src-tauri/tauri.conf.json` to include the `paperpilot-gateway` binary as a Tauri sidecar (`externalBin`). You may need to compile the gateway first and copy it into `src-tauri/binaries/` with the correct target triplet.
+2. **Settings Toggle:** 
+   - Add a switch in `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`: "Developer Mode: Enable Local REST API (Port 7823)".
+   - Persist this preference using the existing Tauri store or localStorage.
+3. **Spawning the Daemon:**
+   - In `apps/desktop/src/lib/stores/appState.svelte.ts` (or equivalent), use `@tauri-apps/plugin-shell` to spawn the sidecar when the toggle is turned ON.
+   - Kill the child process when the toggle is turned OFF.
+4. **Lifecycle Management:**
+   - Ensure the Tauri app correctly kills the `paperpilot-gateway` process when the desktop application closes.
+5. **API Docs UI:**
+   - Ensure the `ApiDocsView.svelte` tab is only visible when Developer Mode is enabled.
+
+## Completion Criteria
+When the toggle is flipped on, a user can instantly navigate to `http://localhost:7823/swagger-ui` in their browser and it works. When flipped off, the port shuts down. When the app exits, the port shuts down.
