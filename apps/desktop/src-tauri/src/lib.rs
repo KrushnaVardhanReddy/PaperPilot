@@ -77,6 +77,28 @@ async fn save_annotations(
     .await
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct FileMetadata {
+    pub path: String,
+    pub name: String,
+    pub size_bytes: u64,
+}
+
+#[tauri::command]
+async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
+    let p = std::path::Path::new(&path);
+    let meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+    let name = p
+        .file_name()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "document.pdf".to_string());
+    Ok(FileMetadata {
+        path,
+        name,
+        size_bytes: meta.len(),
+    })
+}
+
 #[tauri::command]
 async fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| e.to_string())
@@ -90,15 +112,16 @@ pub fn run() {
         .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS};
+    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata};
     use serde_json::json;
+    use std::io::Write;
 
     #[tokio::test]
     async fn test_invoke_mcp_tool_validation_error() {
@@ -137,5 +160,30 @@ mod tests {
 
         let flags = CANCEL_FLAGS.lock().unwrap();
         assert_eq!(flags.get(&job_id), Some(&true));
+    }
+
+    #[tokio::test]
+    async fn test_get_file_metadata_valid() {
+        let temp_dir = std::env::temp_dir();
+        let file_path = temp_dir.join("test_metadata.pdf");
+        let content = b"dummy pdf content";
+        {
+            let mut f = std::fs::File::create(&file_path).unwrap();
+            f.write_all(content).unwrap();
+        }
+
+        let res = get_file_metadata(file_path.to_string_lossy().to_string()).await;
+        assert!(res.is_ok());
+        let metadata = res.unwrap();
+        assert_eq!(metadata.name, "test_metadata.pdf");
+        assert_eq!(metadata.size_bytes, content.len() as u64);
+
+        std::fs::remove_file(file_path).unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_file_metadata_invalid() {
+        let res = get_file_metadata("non_existent_file_path.pdf".to_string()).await;
+        assert!(res.is_err());
     }
 }

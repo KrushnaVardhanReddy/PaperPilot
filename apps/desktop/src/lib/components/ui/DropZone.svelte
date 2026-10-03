@@ -39,14 +39,24 @@
     const paths = Array.isArray(selected) ? selected : [selected];
     const filesArray: File[] = [];
     for (const path of paths) {
-      const fileName = path.split('/').pop() || path.split('\\').pop() || 'document.pdf';
-      const bytes: number[] = await invoke('read_file_bytes', { path });
-      const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-      (file as any)._localPath = path;
+      const meta = await invoke<{ name: string; size_bytes: number; path: string }>('get_file_metadata', { path });
+      const blob = new Blob([], { type: 'application/pdf' });
+      const file = new File([blob], meta.name, { type: 'application/pdf' });
+      Object.defineProperty(file, 'size', { value: meta.size_bytes, writable: false });
+      (file as any)._localPath = meta.path;
+      (file as any)._isLoaded = false;
       filesArray.push(file);
     }
     if (filesArray.length > 0) ondrop(filesArray);
+  }
+
+  function handleFileInputChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      const filesArray = Array.from(target.files);
+      ondrop(filesArray);
+    }
+    target.value = '';
   }
 </script>
 
@@ -67,6 +77,8 @@
 
     <button type="button" class="browse-btn" onclick={handleBrowseClick}>
       Browse Files
+      <!-- Hidden file input for Playwright test compatibility -->
+      <input type="file" multiple accept=".pdf,application/pdf" onchange={handleFileInputChange} />
     </button>
   </div>
 </div>

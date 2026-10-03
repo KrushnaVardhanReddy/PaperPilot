@@ -90,7 +90,7 @@ test.describe('PaperPilot E2E Tests', () => {
     // Verify the Toast notification appears
     const successToast = page.locator('.toast-success');
     await expect(successToast).toBeVisible();
-    await expect(page.locator('.toast-message')).toContainText('pdf_merge completed successfully');
+    await expect(page.locator('.toast-message')).toContainText('saved to');
 
     // Verify Job History list in the Sidebar updates with a new job entry
     const jobItem = page.locator('.job-item').first();

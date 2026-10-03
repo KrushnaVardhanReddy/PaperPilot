@@ -1,5 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
+const MAX_OPEN_TABS = 8;
+
 export class AppState {
   activeTab = $state('home');
   isLoading = $state(false);
@@ -42,8 +44,28 @@ export class AppState {
     const newPaths = files.map(f => (f as any)._localPath || '');
     console.log('[AppState] addDocuments paths:', newPaths);
     this.documentPaths = [...this.documentPaths, ...newPaths];
-    const newIndices = files.map((_, i) => startIdx + i);
-    this.openDocIndices = [...this.openDocIndices, ...newIndices];
+
+    if (files.length === 1) {
+      if (this.openDocIndices.length >= MAX_OPEN_TABS) {
+        // remove the oldest unselected tab
+        const oldestIndex = this.openDocIndices.findIndex(idx => idx !== this.selectedDocumentIndex);
+        if (oldestIndex !== -1) {
+            this.openDocIndices = this.openDocIndices.filter((_, i) => i !== oldestIndex);
+        }
+      }
+      this.openDocIndices = [...this.openDocIndices, startIdx];
+    } else if (files.length > 1) {
+       // batch ingestion: Do NOT add all indices.
+       // open at most 1 tab for the first file.
+       if (this.openDocIndices.length >= MAX_OPEN_TABS) {
+          const oldestIndex = this.openDocIndices.findIndex(idx => idx !== this.selectedDocumentIndex);
+          if (oldestIndex !== -1) {
+              this.openDocIndices = this.openDocIndices.filter((_, i) => i !== oldestIndex);
+          }
+       }
+       // Note: we're only making the first item available as a tab, so users stay mainly in the list.
+       this.openDocIndices = [...this.openDocIndices, startIdx];
+    }
   }
 
   removeDocument(index: number) {
@@ -66,6 +88,13 @@ export class AppState {
     if (index >= 0 && index < this.documents.length) {
       this.selectedDocumentIndex = index;
       if (!this.openDocIndices.includes(index)) {
+        if (this.openDocIndices.length >= MAX_OPEN_TABS) {
+            // remove the oldest unselected tab
+            const oldestIndex = this.openDocIndices.findIndex(idx => idx !== this.selectedDocumentIndex);
+            if (oldestIndex !== -1) {
+                this.openDocIndices = this.openDocIndices.filter((_, i) => i !== oldestIndex);
+            }
+        }
         this.openDocIndices = [...this.openDocIndices, index];
       }
     }

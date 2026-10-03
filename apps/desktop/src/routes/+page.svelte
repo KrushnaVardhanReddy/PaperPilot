@@ -202,20 +202,57 @@
   let annotations = $state<Annotation[]>([]);
 
   $effect(() => {
-    if (appState.selectedDocumentIndex !== null) {
-      const file = appState.documents[appState.selectedDocumentIndex];
-      if (file) {
-        currentFileUrl = URL.createObjectURL(file);
+    let objectUrl = '';
+    let isAborted = false;
+
+    async function loadFile() {
+      const activeIndex = appState.selectedDocumentIndex;
+      if (activeIndex !== null) {
+        const file = appState.documents[activeIndex];
+        if (file) {
+          const isLoaded = (file as any)._isLoaded !== false;
+          if (!isLoaded) {
+            const path = (file as any)._localPath;
+            if (path) {
+              try {
+                const bytes: number[] = await invoke('read_file_bytes', { path });
+                if (isAborted) return; // Prevent overwriting state if user switched tabs
+
+                const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+                const newFile = new File([blob], file.name, { type: 'application/pdf' });
+                Object.defineProperty(newFile, 'size', { value: file.size, writable: false });
+                (newFile as any)._localPath = path;
+                (newFile as any)._isLoaded = true;
+
+                appState.documents[activeIndex] = newFile;
+                objectUrl = URL.createObjectURL(newFile);
+                currentFileUrl = objectUrl;
+              } catch (e) {
+                if (isAborted) return;
+                console.error("Failed to lazy load file", e);
+                currentFileUrl = '';
+              }
+            } else {
+               currentFileUrl = '';
+            }
+          } else {
+            objectUrl = URL.createObjectURL(file);
+            currentFileUrl = objectUrl;
+          }
+        } else {
+          currentFileUrl = '';
+        }
       } else {
         currentFileUrl = '';
       }
-    } else {
-      currentFileUrl = '';
     }
 
+    loadFile();
+
     return () => {
-      if (currentFileUrl) {
-        URL.revokeObjectURL(currentFileUrl);
+      isAborted = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
       }
     };
   });
