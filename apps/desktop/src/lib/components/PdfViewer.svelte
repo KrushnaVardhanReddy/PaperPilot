@@ -117,7 +117,16 @@
           });
       }
   });
+
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('paperpilot:search-open'));
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="pdf-viewer-wrapper">
   <PdfSearchBar {pdfDoc} bind:pageNum bind:searchHighlights />

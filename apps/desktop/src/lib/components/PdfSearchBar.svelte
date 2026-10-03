@@ -110,7 +110,7 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey) {
       e.preventDefault();
       isOpen = true;
       setTimeout(() => inputEl?.focus(), 50);

@@ -28,20 +28,23 @@ impl PdfOperation for SearchOperation {
 
         let inner = &mut lopdf_doc.inner;
 
-        let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        let pages_dict = inner.get_pages();
+        let mut all_pages: Vec<(&u32, &lopdf::ObjectId)> = pages_dict.iter().collect();
+        all_pages.sort_by_key(|k| k.0); // Ensure they are sorted by page index
+
         let mut found_pages = Vec::new();
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
+        for (page_idx, _page_id) in all_pages {
+            match inner.extract_text(&[*page_idx]) {
                 Ok(text) => {
-                    if text.contains(&self.search_query) {
-                        found_pages.push(page_id);
+                    if text.replace(" ", "").to_lowercase().contains(&self.search_query.replace(" ", "").to_lowercase()) {
+                        found_pages.push(*page_idx);
                     }
                 }
                 Err(e) => {
                     return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
+                        "Failed to extract text from page {:?}: {}",
+                        page_idx, e
                     )));
                 }
             }
