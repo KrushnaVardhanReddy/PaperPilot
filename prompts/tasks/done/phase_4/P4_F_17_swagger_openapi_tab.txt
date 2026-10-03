@@ -1,0 +1,122 @@
+# Task: Phase 4.F.17 — Swagger / OpenAPI Interactive Documentation Tab
+# Parallel-safe: Creates ApiDocsView.svelte, updates Sidebar.svelte, app.svelte.ts, and +page.svelte
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST still compile (`npm run check` in `apps/desktop`).
+3. If a test fails, FIX the code or the test — do NOT delete or skip tests (`npm test` in `apps/desktop`).
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores.
+6. Use Vanilla CSS — NEVER Tailwind.
+7. All new interactive elements must have a unique `id` attribute.
+
+---
+
+## CONTEXT & GOAL
+
+PaperPilot exposes a comprehensive REST API and MCP endpoints via `paperpilot-gateway` (running locally on port 7823 by default, or remotely).
+The complete OpenAPI specification is located at:
+`docs/api/openapi.json`
+
+Currently, desktop users have no visual way within the desktop application to:
+1. Explore the available API endpoints and operations schemas.
+2. Inspect request parameters, payloads, responses, and curl commands.
+3. Check the status of the local gateway server (`http://127.0.0.1:7823/health`).
+4. Interactively execute requests against the gateway or copy ready-to-run curl snippets.
+
+### Objective:
+1. Create a dedicated **API / Gateway Documentation** view in the desktop app:
+   `apps/desktop/src/lib/components/layout/ApiDocsView.svelte`
+2. Bundle or load the OpenAPI specification cleanly in the desktop client.
+3. Build a clean, responsive, dark-mode native OpenAPI / Swagger documentation browser matching PaperPilot's styling (custom cards by category, endpoints list with method tags [GET/POST], parameter tables, JSON body schemas, "Try It Out / Test" execution with curl code generation, and Gateway health check ping).
+4. Integrate the new view into:
+   - `apps/desktop/src/lib/state/app.svelte.ts` (allow `'api'` as an active tab)
+   - `apps/desktop/src/lib/components/layout/Sidebar.svelte` (add the API navigation button with icon `⚡`)
+   - `apps/desktop/src/routes/+page.svelte` (render `ApiDocsView` when `appState.activeTab === 'api'`)
+5. Add unit tests for the new component and state in `apps/desktop/src/lib/components/layout/ApiDocsView.test.ts`.
+
+---
+
+## STEP-BY-STEP IMPLEMENTATION
+
+### STEP 1: Update App State
+File: `apps/desktop/src/lib/state/app.svelte.ts`
+
+Ensure `activeTab` supports `'api'` and add any needed navigation helper if required.
+
+---
+
+### STEP 2: Update Sidebar Navigation
+File: `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+
+In `navItems`, add the API tab item:
+```ts
+const navItems = [
+  { id: 'home', label: 'Home', icon: '🏠' },
+  { id: 'documents', label: 'Documents', icon: '📄' },
+  { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
+  { id: 'api', label: 'API & Gateway', icon: '⚡' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' }
+];
+```
+
+Ensure the button has `id="nav-api"` and accessible attributes matching other nav items.
+
+---
+
+### STEP 3: Create ApiDocsView.svelte
+File: `apps/desktop/src/lib/components/layout/ApiDocsView.svelte`
+
+Create a comprehensive, stylish API and Swagger viewer component:
+- **Header Section:**
+  - Title: "PaperPilot API & Gateway"
+  - Gateway status badge (pings `http://127.0.0.1:7823/health` with a "Check Status" button, showing Online / Offline status and latency).
+  - Target Base URL input (`id="api-gateway-url"`, defaulting to `http://127.0.0.1:7823`).
+  - Search input (`id="api-search-input"`) to filter endpoints by tag, path, or description.
+- **Category Filter Pills:**
+  - All, Document, Operations, Security, MCP, Health
+- **Endpoint Cards:**
+  - Method badge (`GET` in blue, `POST` in emerald, `DELETE` in rose).
+  - Endpoint path and summary/description.
+  - Expandable detail view containing:
+    - Request Body Schema / Parameters.
+    - Example payload with "Copy Payload" button.
+    - Generated `curl` command with "Copy cURL" button (`id="copy-curl-[endpoint-id]"`).
+    - "Send Request" button (`id="send-request-[endpoint-id]"`) that makes a fetch request to the configured Base URL and displays the formatted JSON response and status code.
+- **Embed / Spec Access:**
+  - Button to view/download raw `openapi.json` (`id="btn-view-openapi-json"`).
+
+Styles must use Vanilla CSS (dark theme, CSS variables such as `var(--bg-primary, #0f172a)`, `var(--text-primary, #f8fafc)`, `var(--accent-color, #38bdf8)`, rounded cards, smooth transitions).
+
+---
+
+### STEP 4: Integrate into +page.svelte
+File: `apps/desktop/src/routes/+page.svelte`
+
+Import `ApiDocsView`:
+```svelte
+import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
+```
+
+In the main view conditional block:
+```svelte
+{:else if appState.activeTab === 'api'}
+  <div class="content-area full-width">
+    <ApiDocsView />
+  </div>
+```
+
+---
+
+### STEP 5: Verification & Tests
+1. Run `npm run check` inside `apps/desktop` and ensure 0 TypeScript / Svelte errors.
+2. Create unit test `apps/desktop/src/lib/components/layout/ApiDocsView.test.ts` testing:
+   - Rendering of the API title and gateway URL input.
+   - Filtering of endpoints by search query.
+   - Endpoint cards expand and show curl command snippet.
+3. Run `npm test` inside `apps/desktop` to ensure all tests pass.
+4. Commit all files with commit message:
+   `jules: implement interactive Swagger and OpenAPI documentation tab`
