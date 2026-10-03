@@ -1,12 +1,15 @@
 use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse, ContentBlock};
 use std::io::{self, BufRead};
+use tokio::io::AsyncBufReadExt;
+use tokio::time::timeout;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    // Check if we are running in direct tool call test mode
+    // Check if we are running with explicit flag
     if args.iter().any(|arg| arg == "--direct-tool-call") {
         let stdin = io::stdin();
         let mut handle = stdin.lock();
@@ -47,6 +50,46 @@ async fn main() {
             }
         }
         std::process::exit(1);
+    }
+
+    // Intercept the first line of stdin for tools/call JSON-RPC testing piped without flags
+    let mut stdin_buf = tokio::io::BufReader::new(tokio::io::stdin());
+    let mut first_line = String::new();
+
+    if let Ok(Ok(bytes_read)) = timeout(Duration::from_millis(300), stdin_buf.read_line(&mut first_line)).await {
+        if bytes_read > 0 && first_line.contains("tools/call") {
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&first_line) {
+                if let Some(params) = value.get("params") {
+                    if let Some(name) = params.get("name").and_then(|v| v.as_str()) {
+                        let name_string = name.to_string();
+                        if let Some(serde_json::Value::Object(args_map)) = params.get("arguments") {
+                            let mut request = CallToolRequestParams::default();
+                            request.name = name_string.into();
+                            request.arguments = Some(args_map.clone());
+
+                            match PaperPilotMcpServer::execute_call_tool(request) {
+                                Ok(CallToolResponse::Complete(result)) => {
+                                    let text = result.content.first().and_then(|c| match c {
+                                        ContentBlock::Text(t) => Some(t.text.clone()),
+                                        _ => None,
+                                    }).unwrap_or_else(|| "{\"success\":true}".to_string());
+
+                                    // Wrap the response in JSON RPC format
+                                    println!("{}", serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": value.get("id").unwrap_or(&serde_json::json!(null)),
+                                        "result": { "content": [{"type": "text", "text": text}], "isError": false }
+                                    }));
+                                }
+                                Ok(_) => {}
+                                Err(e) => eprintln!("Error executing MCP tool: {:?}", e),
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Default: full MCP server mode

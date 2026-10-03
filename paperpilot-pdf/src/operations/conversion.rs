@@ -230,7 +230,13 @@ impl HtmlToPdfOperation {
         tab.navigate_to(&temp_url).map_err(|e| PdfError::Other(format!("Failed to navigate: {}", e)))?;
         tab.wait_until_navigated().map_err(|e| PdfError::Other(format!("Failed to wait for navigation: {}", e)))?;
 
-        let pdf_data = tab.print_to_pdf(None)
+        let pdf_data = tab.print_to_pdf(Some(headless_chrome::types::PrintToPdfOptions {
+            prefer_css_page_size: Some(true),
+            print_background: Some(true),
+            paper_width: Some(8.27),
+            paper_height: Some(11.69),
+            ..Default::default()
+        }))
             .map_err(|e| PdfError::Other(format!("Failed to print to pdf: {}", e)))?;
 
         std::fs::write(&self.output_path, pdf_data)
