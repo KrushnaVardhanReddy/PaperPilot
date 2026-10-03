@@ -229,11 +229,23 @@
                 currentFileUrl = objectUrl;
               } catch (e) {
                 if (isAborted) return;
-                console.error("Failed to lazy load file", e);
-                currentFileUrl = '';
+                console.error("Failed to lazy load file from Tauri, attempting fallback to original file", e);
+
+                if (file.size > 0) {
+                  objectUrl = URL.createObjectURL(file);
+                  currentFileUrl = objectUrl;
+                } else {
+                  currentFileUrl = '';
+                }
               }
             } else {
-               currentFileUrl = '';
+               // Fallback when no path is available (e.g. Playwright testing via standard file input)
+               if (file.size > 0) {
+                 objectUrl = URL.createObjectURL(file);
+                 currentFileUrl = objectUrl;
+               } else {
+                 currentFileUrl = '';
+               }
             }
           } else {
             objectUrl = URL.createObjectURL(file);
