@@ -146,13 +146,29 @@
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'extract_text':
       case 'ocr':           customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
+      case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
+      case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
+      case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
+      case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
 
   async function handleRunOperation() {
     if (!activeTool) return;
-    if (appState.documents.length === 0) {
+
+    if (activeTool.id === 'compare') {
+      if (appState.documents.length < 2) {
+        toastState.error('Need at least 2 documents loaded to compare.');
+        return;
+      }
+      appState.toggleDiffView(true);
+      return;
+    }
+
+    const isCreationTool = ['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id);
+    if (!isCreationTool && appState.documents.length === 0) {
       toastState.error('No documents available. Add or drop a PDF first.');
       return;
     }
@@ -203,6 +219,80 @@
         args = {
           input: docPath,
           output_dir: outputDir
+        };
+        break;
+      }
+      case 'md_to_pdf': {
+        const { open, save } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          title: 'Select Markdown File',
+          multiple: false,
+          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
+        });
+        if (!selected) return;
+        const inputPath = Array.isArray(selected) ? selected[0] : selected;
+
+        const suggested = getOutputPath('output.pdf');
+        const outputPath = await save({
+          title: 'Save PDF As...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return;
+
+        args = {
+          input: inputPath,
+          output: outputPath,
+          preset: convertPreset
+        };
+        break;
+      }
+      case 'html_to_pdf': {
+        const { open, save } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          title: 'Select HTML File',
+          multiple: false,
+          filters: [{ name: 'HTML', extensions: ['html', 'htm'] }]
+        });
+        if (!selected) return;
+        const inputPath = Array.isArray(selected) ? selected[0] : selected;
+
+        const suggested = getOutputPath('output.pdf');
+        const outputPath = await save({
+          title: 'Save PDF As...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return;
+
+        args = {
+          input: inputPath,
+          output: outputPath,
+          preset: convertPreset
+        };
+        break;
+      }
+      case 'img_to_pdf': {
+        const { open, save } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          title: 'Select Images',
+          multiple: true,
+          filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }]
+        });
+        if (!selected || selected.length === 0) return;
+        const inputPaths = Array.isArray(selected) ? selected : [selected];
+
+        const suggested = getOutputPath('output.pdf');
+        const outputPath = await save({
+          title: 'Save PDF As...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return;
+
+        args = {
+          inputs: inputPaths,
+          output: outputPath
         };
         break;
       }
@@ -260,6 +350,36 @@
         args = {
           input: docPath,
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
+        };
+        break;
+      case 'pdf_to_docx':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.docx`)
+        };
+        break;
+      case 'pdf_to_xlsx':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.xlsx`)
+        };
+        break;
+      case 'pdf_to_markdown':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.md`)
+        };
+        break;
+      case 'pdf_to_pptx':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.pptx`)
+        };
+        break;
+      case 'extract_images':
+        args = {
+          input: docPath,
+          output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_images`)
         };
         break;
       default:
@@ -407,7 +527,7 @@
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split'}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf'}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">Output file:</label>
           <div class="output-path-row">
@@ -427,7 +547,7 @@
         <button
           class="run-btn"
           id="btn-run-operation"
-          disabled={appState.documents.length === 0}
+          disabled={!['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id) && appState.documents.length === 0}
           onclick={handleRunOperation}
         >
           Run {activeTool.title}
