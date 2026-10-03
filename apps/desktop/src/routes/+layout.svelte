@@ -7,6 +7,7 @@
   import CommandPalette from '$lib/components/layout/CommandPalette.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
+  import { invoke } from '@tauri-apps/api/core';
 
   import { appState } from '$lib/state/app.svelte';
 
@@ -37,13 +38,10 @@
                 selected.split('/').pop() ||
                 selected.split('\\').pop() ||
                 'document.pdf';
-              const response = await fetch(
-                // @ts-expect-error __TAURI_INTERNALS__ is injected by Tauri
-                window.__TAURI_INTERNALS__.convertFileSrc(selected)
-              );
-              const blob = await response.blob();
+              const bytes: number[] = await invoke('read_file_bytes', { path: selected });
+              const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
               const file = new File([blob], fileName, { type: 'application/pdf' });
-              Object.defineProperty(file, 'path', { value: selected, writable: false });
+              (file as any)._localPath = selected;
               appState.addDocuments([file]);
               appState.selectDocument(appState.documents.length - 1);
             }

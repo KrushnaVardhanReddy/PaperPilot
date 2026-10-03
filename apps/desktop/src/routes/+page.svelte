@@ -62,7 +62,7 @@
 
     appState.setLoading(true);
     try {
-      const path = (file as any).path || file.name;
+      const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
       await invoke('invoke_mcp_tool', {
         toolName: 'pdf_rotate',
         arguments: {
@@ -88,7 +88,7 @@
 
     appState.setLoading(true);
     try {
-      const path = (file as any).path || file.name;
+      const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
       await invoke('invoke_mcp_tool', {
         toolName: 'pdf_delete_pages',
         arguments: {
@@ -113,7 +113,7 @@
 
     appState.setLoading(true);
     try {
-      const path = (file as any).path || file.name;
+      const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
       const { fromPage, toPage } = e.detail;
 
       const pages = Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
@@ -145,22 +145,19 @@
 
   async function refreshCurrentDocument() {
     if (appState.selectedDocumentIndex === null) return;
-    const file = appState.documents[appState.selectedDocumentIndex];
+    const idx = appState.selectedDocumentIndex;
+    const file = appState.documents[idx];
     if (!file) return;
-    const path = (file as any).path;
-    if (!path) return; // not a local tauri file, or some edge case
+    const path = appState.documentPaths[idx];
+    if (!path) return;
 
     try {
-      // Fetch the updated file using Tauri's custom protocol
-      const response = await fetch(
-        convertFileSrc(path) + "?t=" + Date.now(),
-        { cache: 'no-store' }
-      );
-      const blob = await response.blob();
+      const bytes: number[] = await invoke('read_file_bytes', { path });
+      const blob = new Blob([new Uint8Array(bytes)], { type: file.type || 'application/pdf' });
       const newFile = new File([blob], file.name, { type: file.type || 'application/pdf' });
-      Object.defineProperty(newFile, 'path', { value: path, writable: false });
-      appState.documents[appState.selectedDocumentIndex] = newFile;
-      // Trigger reactivity on documents array
+      (newFile as any)._localPath = path;
+      appState.documents[idx] = newFile;
+      appState.documentPaths[idx] = path;
       appState.documents = [...appState.documents];
     } catch (err) {
       console.error("Failed to refresh document:", err);
@@ -177,7 +174,7 @@
        stringValues[k] = typeof v === 'boolean' ? (v ? 'Yes' : 'Off') : String(v);
     }
     try {
-      const path = (file as any).path || file.name;
+      const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
       await savePdfForm(path, path, stringValues);
       toastState.success('Form saved successfully');
     } catch (e) {

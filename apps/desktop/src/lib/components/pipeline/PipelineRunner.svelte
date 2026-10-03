@@ -19,7 +19,9 @@
     pipelineState.setLastError(null);
 
     const originalName = appState.documents[0].name.replace(/\.pdf$/i, '');
-    let workingPath = appState.documents[0].name;
+    let workingPath = appState.documentPaths[0] || appState.documents[0].name;
+    console.log('[PipelineRunner] documentPaths:', appState.documentPaths);
+    console.log('[PipelineRunner] workingPath:', workingPath);
 
     try {
       for (let i = 0; i < pipelineState.steps.length; i++) {
@@ -33,7 +35,8 @@
         for (const [k, v] of Object.entries(step.params)) {
           if (v === '__input__') args[k] = workingPath;
           else if (v === '__output__') args[k] = outputPath;
-          else if (v === '__all_inputs__') args[k] = appState.documents.map(d => d.name);
+          else if (v === '__output_dir__') args[k] = `${originalName}_step${i + 1}_${step.operationId}_dir`;
+          else if (v === '__all_inputs__') args[k] = appState.documents.map((d, i) => appState.documentPaths[i] || d.name);
           else args[k] = v;
         }
 

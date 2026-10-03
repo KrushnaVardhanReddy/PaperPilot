@@ -5,6 +5,7 @@ export class AppState {
   isLoading = $state(false);
   theme = $state('dark');
   documents = $state<File[]>([]);
+  documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
 
   // Tab management for multi-document viewer
@@ -37,6 +38,10 @@ export class AppState {
   addDocuments(files: File[]) {
     const startIdx = this.documents.length;
     this.documents = [...this.documents, ...files];
+    // Extract path from the file object (set before addDocuments is called)
+    const newPaths = files.map(f => (f as any)._localPath || '');
+    console.log('[AppState] addDocuments paths:', newPaths);
+    this.documentPaths = [...this.documentPaths, ...newPaths];
     const newIndices = files.map((_, i) => startIdx + i);
     this.openDocIndices = [...this.openDocIndices, ...newIndices];
   }
@@ -45,6 +50,7 @@ export class AppState {
     this.closeTab(index);
     this.openDocIndices = this.openDocIndices.map(i => i > index ? i - 1 : i);
     this.documents = this.documents.filter((_, i) => i !== index);
+    this.documentPaths = this.documentPaths.filter((_, i) => i !== index);
     if (this.selectedDocumentIndex === index) {
       this.selectedDocumentIndex = this.openDocIndices.length > 0 ? this.openDocIndices[this.openDocIndices.length - 1] : null;
     } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
@@ -85,6 +91,11 @@ export class AppState {
     const [movedItem] = docs.splice(fromIndex, 1);
     docs.splice(toIndex, 0, movedItem);
     this.documents = docs;
+
+    const paths = [...this.documentPaths];
+    const [movedPath] = paths.splice(fromIndex, 1);
+    paths.splice(toIndex, 0, movedPath);
+    this.documentPaths = paths;
   }
 }
 

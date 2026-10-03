@@ -77,7 +77,6 @@
   let searchQuery = $state('');
   let selectedCategory = $state('all');
   let activeTool = $state<ToolDefinition | null>(null);
-  let isCollapsed = $state(false);
 
   // Tool parameter states
   let splitPoints = $state('');
@@ -132,6 +131,10 @@
 
     const docIndex = appState.selectedDocumentIndex ?? 0;
     const docName = appState.documents[docIndex]?.name || appState.documents[0].name;
+    const docPath = appState.documentPaths[docIndex] || docName;
+    const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+    const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
     let toolName = `pdf_${activeTool.id}`;
     if (activeTool.id === 'md_to_pdf') toolName = 'pdf_convert_markdown';
     if (activeTool.id === 'html_to_pdf') toolName = 'pdf_convert_html';
@@ -141,76 +144,76 @@
     switch (activeTool.id) {
       case 'merge':
         args = {
-          inputs: appState.documents.map(d => d.name),
-          output: `${docName.replace(/.pdf$/i, '')}_merged.pdf`
+          inputs: appState.documents.map((d, i) => appState.documentPaths[i] || d.name),
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`)
         };
         break;
       case 'split':
         args = {
-          input: docName,
-          output_dir: `${docName.replace(/.pdf$/i, '')}_split`
+          input: docPath,
+          output_dir: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`)
         };
         break;
       case 'compress':
         args = {
-          input: docName,
-          output: `${docName.replace(/.pdf$/i, '')}_compressed.pdf`
+          input: docPath,
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_compressed.pdf`)
         };
         break;
       case 'rotate':
         args = {
-          input: docName,
+          input: docPath,
           pages: 'all',
           angle: parseInt(rotateAngle, 10),
-          output: `${docName.replace(/.pdf$/i, '')}_rotated.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
         };
         break;
       case 'watermark':
         args = {
-          input: docName,
+          input: docPath,
           text: watermarkText || 'CONFIDENTIAL',
-          output: `${docName.replace(/.pdf$/i, '')}_watermarked.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
         };
         break;
       case 'encrypt':
         args = {
-          input: docName,
+          input: docPath,
           password: password || 'paperpilot',
-          output: `${docName.replace(/.pdf$/i, '')}_encrypted.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_encrypted.pdf`)
         };
         break;
       case 'decrypt':
         args = {
-          input: docName,
+          input: docPath,
           password: password || '',
-          output: `${docName.replace(/.pdf$/i, '')}_decrypted.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_decrypted.pdf`)
         };
         break;
       case 'metadata':
         args = {
-          input: docName,
+          input: docPath,
           title: metadataTitle || docName,
-          output: `${docName.replace(/.pdf$/i, '')}_metadata.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
         };
         break;
       case 'extract_pages':
         args = {
-          input: docName,
+          input: docPath,
           pages: '1',
-          output: `${docName.replace(/.pdf$/i, '')}_extracted.pdf`
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
         };
         break;
       case 'extract_text':
       case 'ocr':
         args = {
-          input: docName,
-          output: `${docName.replace(/.pdf$/i, '')}_text.txt`
+          input: docPath,
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
         };
         break;
       default:
         args = {
-          input: docName,
-          output: `${docName.replace(/.pdf$/i, '')}_output.pdf`
+          input: docPath,
+          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_output.pdf`)
         };
         break;
     }
@@ -220,8 +223,10 @@
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
       const resObj = result as any;
       if (resObj && resObj.success) {
-        toastState.success(resObj.message || `${activeTool.title} completed successfully`);
-        jobsState.addJob(toolName, 'success', resObj.message);
+        const outDest = resObj.output_path || args.output || args.output_dir;
+        const msg = outDest ? `${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+        toastState.success(msg);
+        jobsState.addJob(toolName, 'success', msg);
       } else {
         toastState.error(resObj?.message || `${activeTool.title} failed`);
         jobsState.addJob(toolName, 'error', resObj?.message);
@@ -248,12 +253,7 @@
   }
 </script>
 
-<div class="operations-panel" class:collapsed={isCollapsed} id="operations-panel">
-  <button class="collapse-toggle" onclick={() => isCollapsed = !isCollapsed} title={isCollapsed ? "Expand Tools" : "Collapse Tools"}>
-    {isCollapsed ? '‹' : '›'}
-  </button>
-  
-  <div class="panel-inner-content">
+<div class="operations-panel" id="operations-panel">
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -439,61 +439,19 @@
       {/if}
     </div>
   {/if}
-  </div>
 </div>
 
 <style>
   .operations-panel {
-    position: relative;
     width: 320px;
     min-width: 320px;
-    height: 100%;
-    flex-shrink: 0;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .operations-panel.collapsed {
-    width: 0px;
-    min-width: 0px;
-  }
-
-  .collapse-toggle {
-    position: absolute;
-    left: -24px;
-    top: 16px;
-    width: 24px;
-    height: 48px;
-    background: var(--bg-surface, #1e1e24);
-    border: 1px solid var(--border-color, #2a2a35);
-    border-right: none;
-    border-radius: 6px 0 0 6px;
-    color: var(--text-secondary, #9ca3af);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    z-index: 50;
-    transition: all 0.2s ease;
-  }
-
-  .collapse-toggle:hover {
-    color: var(--text-primary, #ffffff);
-    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
-  }
-
-  .panel-inner-content {
-    width: 320px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
     background-color: var(--bg-secondary, #141416);
     border-left: 1px solid var(--border-color, #2a2a35);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
     overflow: hidden;
-  }
-
-  .operations-panel.collapsed .panel-inner-content {
-    border-left-color: transparent;
   }
 
   .panel-header {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invoke } from '@tauri-apps/api/core';
   let isDragging = $state(false);
   let { ondrop }: { ondrop: (files: File[]) => void } = $props();
 
@@ -26,13 +27,26 @@
     }
   }
 
-  function handleFileInput(e: Event) {
-    const target = e.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-      const filesArray = Array.from(target.files);
-      ondrop(filesArray);
-      target.value = ''; // Reset input
+  async function handleBrowseClick(e: MouseEvent) {
+    // Intercept click; use Tauri native dialog so we get full absolute paths
+    e.preventDefault();
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const selected = await open({
+      multiple: true,
+      filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+    });
+    if (!selected) return;
+    const paths = Array.isArray(selected) ? selected : [selected];
+    const filesArray: File[] = [];
+    for (const path of paths) {
+      const fileName = path.split('/').pop() || path.split('\\').pop() || 'document.pdf';
+      const bytes: number[] = await invoke('read_file_bytes', { path });
+      const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      (file as any)._localPath = path;
+      filesArray.push(file);
     }
+    if (filesArray.length > 0) ondrop(filesArray);
   }
 </script>
 
@@ -51,16 +65,9 @@
     <h3 class="title">Drop PDF files here</h3>
     <p class="subtitle">or click to browse</p>
 
-    <label class="browse-btn">
+    <button type="button" class="browse-btn" onclick={handleBrowseClick}>
       Browse Files
-      <input
-        id="drop-zone-file-input"
-        type="file"
-        multiple
-        accept=".pdf"
-        onchange={handleFileInput}
-      />
-    </label>
+    </button>
   </div>
 </div>
 

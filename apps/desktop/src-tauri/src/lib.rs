@@ -32,6 +32,10 @@ async fn invoke_mcp_tool(
     arguments: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     let mut request = CallToolRequestParams::default();
+    let cwd = std::env::current_dir().unwrap_or_default();
+    println!(">>> Invoking MCP tool: {}", tool_name);
+    println!(">>> CWD: {}", cwd.display());
+    println!(">>> Arguments: {}", arguments);
     request.name = tool_name.into();
     if let serde_json::Value::Object(map) = arguments {
         request.arguments = Some(map);
@@ -73,6 +77,11 @@ async fn save_annotations(
     .await
 }
 
+#[tauri::command]
+async fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(&path).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -81,7 +90,7 @@ pub fn run() {
         .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
