@@ -1,0 +1,640 @@
+{
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {},
+          "success": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ],
+        "type": "object"
+      },
+      "CompareJsonRequest": {
+        "properties": {
+          "file1": {
+            "example": "doc_v1.pdf",
+            "type": "string"
+          },
+          "file2": {
+            "example": "doc_v2.pdf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file1",
+          "file2"
+        ],
+        "type": "object"
+      },
+      "CompressJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          },
+          "output": {
+            "example": "output.pdf",
+            "type": "string"
+          },
+          "quality": {
+            "example": "medium",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "ConvertJsonRequest": {
+        "properties": {
+          "format": {
+            "example": "docx",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          },
+          "output": {
+            "example": "output.docx",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "ExtractTextJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          },
+          "page": {
+            "example": "1",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "example": "ok",
+            "type": "string"
+          },
+          "tools_count": {
+            "example": 44,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "version": {
+            "example": "0.1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "tools_count"
+        ],
+        "type": "object"
+      },
+      "InfoJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "McpExecRequest": {
+        "properties": {
+          "arguments": {},
+          "tool": {
+            "example": "pdf_metadata",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool"
+        ],
+        "type": "object"
+      },
+      "MergeJsonRequest": {
+        "properties": {
+          "inputs": {
+            "example": [
+              "doc1.pdf",
+              "doc2.pdf"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "output": {
+            "example": "merged.pdf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inputs",
+          "output"
+        ],
+        "type": "object"
+      },
+      "SplitJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          },
+          "output": {
+            "example": "output_dir/",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pages": {
+            "example": "1-3,5",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "WatermarkJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "input.pdf",
+            "type": "string"
+          },
+          "opacity": {
+            "example": 0.3,
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "output": {
+            "example": "watermarked.pdf",
+            "type": "string"
+          },
+          "text": {
+            "example": "CONFIDENTIAL",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 44 intelligent PDF tools.",
+    "license": {
+      "name": ""
+    },
+    "title": "PaperPilot Gateway API & MCP Server",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/pdf/compare": {
+      "post": {
+        "operationId": "compare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Comparison completed"
+          }
+        },
+        "summary": "Compare two PDF documents for visual and textual differences",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/compress": {
+      "post": {
+        "operationId": "compress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompressJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Compressed successfully"
+          }
+        },
+        "summary": "Compress a PDF document to reduce file size",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/convert": {
+      "post": {
+        "operationId": "convert",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Converted successfully"
+          }
+        },
+        "summary": "Convert a PDF to/from another format (docx, images, html, xlsx, etc.)",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/extract-text": {
+      "post": {
+        "operationId": "extract_text",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractTextJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Text extracted successfully"
+          }
+        },
+        "summary": "Extract clean text from a PDF document",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/info": {
+      "post": {
+        "operationId": "info",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfoJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Info extracted successfully"
+          }
+        },
+        "summary": "Retrieve metadata and page information for a PDF document",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/mcp-exec": {
+      "post": {
+        "operationId": "mcp_exec",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpExecRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Tool executed successfully"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Execute MCP tool directly by tool name with arbitrary JSON arguments",
+        "tags": [
+          "MCP"
+        ]
+      }
+    },
+    "/api/v1/pdf/merge": {
+      "post": {
+        "operationId": "merge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Merged successfully"
+          }
+        },
+        "summary": "Merge multiple PDF documents into a single PDF",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/render-page": {
+      "post": {
+        "operationId": "render_page",
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {}
+            },
+            "description": "Rendered PNG image binary"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "500": {
+            "description": "Render failure"
+          }
+        },
+        "summary": "Render a single PDF page directly to a PNG image stream",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/split": {
+      "post": {
+        "operationId": "split",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SplitJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Split successfully"
+          }
+        },
+        "summary": "Split a PDF document into separate pages or ranges",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/tools/{tool_name}": {
+      "post": {
+        "operationId": "handle_tool",
+        "parameters": [
+          {
+            "description": "Name of the tool (with or without 'pdf_' prefix)",
+            "in": "path",
+            "name": "tool_name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Tool executed successfully"
+          },
+          "400": {
+            "description": "Invalid multipart or payload"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON",
+        "tags": [
+          "MCP"
+        ]
+      }
+    },
+    "/api/v1/pdf/watermark": {
+      "post": {
+        "operationId": "watermark",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatermarkJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Watermarked successfully"
+          }
+        },
+        "summary": "Apply text or image watermarks to a PDF document",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Service is healthy and ready"
+          }
+        },
+        "summary": "Gateway health check",
+        "tags": [
+          "Health"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Gateway health check and tool status",
+      "name": "Health"
+    },
+    {
+      "description": "Direct Model Context Protocol execution endpoint for 44+ tools",
+      "name": "MCP"
+    },
+    {
+      "description": "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data",
+      "name": "PDF Operations"
+    }
+  ]
+}

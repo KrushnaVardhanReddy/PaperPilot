@@ -104,4 +104,10 @@ async fn test_swagger_ui_endpoint() {
     assert_eq!(json["info"]["title"], "PaperPilot Gateway API & MCP Server");
     assert!(json["paths"]["/health"].is_object());
     assert!(json["paths"]["/api/v1/pdf/mcp-exec"].is_object());
+
+    // Export static docs/api/openapi.json
+    let _ = std::fs::create_dir_all("../docs/api");
+    let _ = std::fs::write("../docs/api/openapi.json", serde_json::to_string_pretty(&json).unwrap());
+    let _ = std::fs::create_dir_all("docs/api");
+    let _ = std::fs::write("docs/api/openapi.json", serde_json::to_string_pretty(&json).unwrap());
 }
