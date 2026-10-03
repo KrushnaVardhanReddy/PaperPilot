@@ -35,7 +35,8 @@
   function applyPageJump() {
     isEditingPage = false;
     const parsed = parseInt(inputPage, 10);
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= (numPages || 1)) {
+    const maxPage = numPages && numPages > 0 ? numPages : Infinity;
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= maxPage) {
       pageNum = parsed;
     } else {
       inputPage = String(pageNum);
@@ -119,7 +120,7 @@
         title="Type page number and press Enter"
         aria-label="Current page number"
       />
-      <span class="page-total">/ {numPages || 1}</span>
+      <span id="toolbar-page-total" class="page-total">/ {numPages || 1}</span>
     </div>
 
     <button
