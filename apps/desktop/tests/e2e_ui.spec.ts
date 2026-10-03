@@ -245,15 +245,10 @@ test.describe('Phase 4.F Features Validation', () => {
 
     // Wait for the active document viewer to appear, it should open tab-doc-0
 
-    // We want to click on #tab-doc-1. But #tab-doc-1 is NOT opened automatically since files.length > 1.
-    // Let's close tab 0 to force it back to document list.
-    await page.locator('.tab-close-btn').first().click();
-
-    const viewDoc1 = page.locator('#view-doc-1');
-    // Using evaluate to force click because visibility checks on this custom button may fail due to hover styling
-    await viewDoc1.evaluate(el => (el as HTMLElement).click());
-
+    // My previous fix to appState adds all indices when multiple files are uploaded.
+    // So both #tab-doc-0 and #tab-doc-1 should already be visible. We can just click tab 1.
     await expect(page.locator('#tab-doc-1')).toBeVisible();
+    await page.locator('#tab-doc-1').click();
     await expect(page.locator('#tab-doc-1')).toHaveClass(/active/);
   });
 

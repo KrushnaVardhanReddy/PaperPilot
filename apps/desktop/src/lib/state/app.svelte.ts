@@ -64,7 +64,7 @@ export class AppState {
           }
        }
        // Note: we're only making the first item available as a tab, so users stay mainly in the list.
-       this.openDocIndices = [...this.openDocIndices, startIdx];
+       this.openDocIndices = [...this.openDocIndices, ...Array.from({length: files.length}, (_, i) => startIdx + i)];
     }
   }
 
