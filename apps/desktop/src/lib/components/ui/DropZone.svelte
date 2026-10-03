@@ -53,7 +53,10 @@
   function handleFileInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      const filesArray = Array.from(target.files);
+      const filesArray = Array.from(target.files).map(f => {
+        (f as any)._isLoaded = true;
+        return f;
+      });
       ondrop(filesArray);
     }
     target.value = '';

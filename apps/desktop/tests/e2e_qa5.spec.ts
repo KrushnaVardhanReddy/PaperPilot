@@ -23,7 +23,7 @@ test.describe('QA-5: Annotation & Markup Tools', () => {
     const docName = page.locator('#tab-doc-0');
     await expect(docName).toBeVisible();
     await docName.click({ force: true });
-    await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 0 })) });
+
     await page.waitForSelector('.viewer-container canvas');
 
     const ptrBtn = page.locator('#tool-btn-none');

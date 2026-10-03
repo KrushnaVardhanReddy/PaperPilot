@@ -13,7 +13,7 @@
 
 <div class="annotation-panel">
   <div class="panel-header">
-    <h3>Annotations ({annotations.length})</h3>
+    <h3 id="annotation-count-header">Annotations ({annotations.length})</h3>
   </div>
 
   <div class="panel-content">

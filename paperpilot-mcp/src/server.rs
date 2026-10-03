@@ -3636,8 +3636,8 @@ impl PaperPilotMcpServer {
             "pdf_header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let text = get_string("text")?;
-                let position = get_string("position")?;
+                let text = args.get("text").and_then(|v| v.as_str()).unwrap_or_else(|| args.get("header_left").and_then(|v| v.as_str()).unwrap_or_else(|| args.get("footer_center").and_then(|v| v.as_str()).unwrap_or("Header"))).to_string();
+                let position = args.get("position").and_then(|v| v.as_str()).unwrap_or_else(|| if args.get("footer_center").is_some() { "bottom-center" } else { "top-left" }).to_string();
 
                 ensure_parent_dir(&output)?;
 
@@ -3664,7 +3664,7 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 let start_number = get_u64("start_number")? as u32;
                 let prefix = get_string("prefix")?;
-                let padding = get_u64("padding")? as usize;
+                let padding = args.get("padding").and_then(|v| v.as_u64()).unwrap_or(6) as usize;
 
                 ensure_parent_dir(&output)?;
 
