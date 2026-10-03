@@ -1,8 +1,29 @@
-# Autonomous QA Test Suite: QA-4 — Thumbnail Sidebar Drag & Page Manipulation
-# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC + REST API
+# Autonomous QA Test Suite: QA-4 — Thumbnail Sidebar Navigation & Page Reordering
+# Target: apps/desktop (Vite / Svelte 5) + Tauri IPC
 # Mode: Autonomous Agent Browser Exploration & Self-Healing Bug Fixes
 
 ---
+
+---
+
+## 🚨 MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. **REAL AGENT-BROWSER EXECUTION: ALL UI TASKS MUST BE PERFORMED THROUGH `agent-browser`**:
+   - You MUST launch the frontend dev server (`npm --prefix apps/desktop run dev &`) on `http://localhost:1420`.
+   - You MUST actively drive all UI interactions using `npx --prefix apps/desktop agent-browser` (`open`, `snapshot -i`, `click`, `fill`).
+   - Mocking UI steps or relying ONLY on compiler checks / backend curl calls is strictly prohibited and will result in an immediate PR rejection.
+2. **VERIFY VISIBLE UI FEEDBACK**:
+   - Every click, form fill, and operation must be confirmed via `agent-browser snapshot -i`.
+   - You MUST verify that tabs actually open, canvas updates with page text, toasts appear, and output file paths are displayed.
+3. **SELF-HEALING FIX OBLIGATION**:
+   - If you encounter ANY issue (e.g. broken click handler, operation error toast, missing output file, invisible result, tab synchronization defect, contrast issue, or UI freeze), **YOU MUST FIX THE CODE DIRECTLY IN THE REPOSITORY**.
+   - Do NOT mark the test as failed or report it as an external bug; identify the root cause, edit the source code, and re-test with `agent-browser` until the UI flow succeeds cleanly with visible success feedback.
+4. **COMPILATION & TYPES**:
+   - Every file you modify must compile cleanly (`npm run check` and `cargo check --workspace`).
+5. **COMMIT & CODE STANDARDS**:
+   - Commit prefix: `jules: QA-`.
+   - Svelte 5 runes ($state, $derived, $effect, $props) only — NEVER Svelte 4 stores or writable().
+   - Vanilla CSS only — NEVER TailwindCSS.
 
 ## 🎯 MISSION OBJECTIVE
 
@@ -49,7 +70,7 @@ cargo run -p paperpilot-cli -- convert --format pdf --input /tmp/thumbnail_test.
 
 2. Open app and load `tests/e2e_fixtures/thumbnail_test.pdf`:
    ```bash
-   npx --prefix apps/desktop agent-browser open "http://localhost:5173"
+   npx --prefix apps/desktop agent-browser open "http://localhost:1420"
    npx --prefix apps/desktop agent-browser snapshot -i
    ```
 

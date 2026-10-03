@@ -1,7 +1,6 @@
 use lopdf::{dictionary, Document, Object, Stream, content::{Content, Operation}};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
 use std::process::Command;
 
 fn get_workspace_root() -> PathBuf {
