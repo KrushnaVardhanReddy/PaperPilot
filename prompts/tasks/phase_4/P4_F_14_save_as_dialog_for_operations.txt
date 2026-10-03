@@ -1,0 +1,250 @@
+# Task: Phase 4.F.14 — Native Save-As Dialog & Editable Output Path for Operations
+# Priority: HIGH — Eliminates invisible output files; users must know where their output is saved
+# Parallel-safe: Only modifies OperationsPanel.svelte and interacts with Tauri dialog plugin (already a dependency)
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable()`.
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css` (e.g. `var(--bg-secondary)`, `var(--bg-surface)`, `var(--accent-primary)`, `var(--border-color)`).
+
+---
+
+## CONTEXT & OBJECTIVE
+
+Currently, when a user runs a PDF operation (e.g. Merge, Compress, Encrypt), the output file is written
+to a path automatically constructed from the source file's directory with a generated filename
+(e.g. `Krushna_Passport_merged.pdf` in the same folder as the input).
+
+This is invisible and confusing:
+- The user doesn't know where the file was saved.
+- The user cannot choose the filename.
+- For **Merge** and **Split**, the output destination is especially critical since the result is a new document.
+
+### Goals
+
+1. **For Merge & Split** — show a native **"Save As" dialog** before running the operation, letting the user pick both
+   the output filename and directory. Use Tauri's `save()` from `@tauri-apps/plugin-dialog`.
+
+2. **For all other single-file operations** — show an **editable output path field** in the tool inspector
+   (pre-filled with the auto-suggested path based on source file), so the user can accept or change it
+   before hitting "Run".
+
+3. The success toast must always show the **full absolute path** of the saved file.
+
+---
+
+## STEP 1: Add Save-As for Merge & Split in `OperationsPanel.svelte`
+
+File: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+
+### 1A — Import Tauri save dialog (lazy import, already available as a plugin dependency)
+
+In `handleRunOperation`, for the `merge` and `split` cases, **before invoking the MCP tool**, call:
+
+```typescript
+const { save } = await import('@tauri-apps/plugin-dialog');
+```
+
+### 1B — Merge case: show Save-As dialog
+
+Replace the current merge args block:
+```typescript
+case 'merge': {
+  const suggested = `${docName.replace(/\.pdf$/i, '')}_merged.pdf`;
+  const outputPath = await save({
+    title: 'Save Merged PDF As...',
+    defaultPath: suggested,
+    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+  });
+  if (!outputPath) return; // user cancelled
+  args = {
+    inputs: appState.documents.map((d, i) => appState.documentPaths[i] || d.name),
+    output: outputPath
+  };
+  break;
+}
+```
+
+### 1C — Split case: show folder picker
+
+Replace the current split args block:
+```typescript
+case 'split': {
+  // Note: Tauri plugin-dialog does not have a native folder-only picker in all versions.
+  // Use save() with a sentinel filename to let the user pick the destination folder+prefix.
+  const suggested = `${docName.replace(/\.pdf$/i, '')}_split`;
+  const outputPath = await save({
+    title: 'Save Split PDFs to Folder (choose base filename)...',
+    defaultPath: suggested,
+    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+  });
+  if (!outputPath) return; // user cancelled
+  // Strip extension if user typed one; the split operation appends _pageN.pdf automatically.
+  const outputDir = outputPath.replace(/\.pdf$/i, '');
+  args = {
+    input: docPath,
+    output_dir: outputDir
+  };
+  break;
+}
+```
+
+---
+
+## STEP 2: Add editable output path for all other tools
+
+### 2A — Add reactive state for the output path field
+
+In the `<script>` section of `OperationsPanel.svelte`, add:
+
+```typescript
+let customOutputPath = $state('');
+
+// Auto-fill the output path whenever the active tool or selected document changes
+$effect(() => {
+  if (!activeTool || appState.documents.length === 0) {
+    customOutputPath = '';
+    return;
+  }
+  const docIndex = appState.selectedDocumentIndex ?? 0;
+  const docName = appState.documents[docIndex]?.name || '';
+  const docPath = appState.documentPaths[docIndex] || docName;
+  const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+  const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+  const base = docName.replace(/\.pdf$/i, '');
+
+  switch (activeTool.id) {
+    case 'merge':
+    case 'split':
+      customOutputPath = ''; // handled by native dialog
+      break;
+    case 'compress':   customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
+    case 'rotate':     customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
+    case 'watermark':  customOutputPath = getOutputPath(`${base}_watermarked.pdf`); break;
+    case 'encrypt':    customOutputPath = getOutputPath(`${base}_encrypted.pdf`);   break;
+    case 'decrypt':    customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
+    case 'metadata':   customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
+    case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`); break;
+    case 'extract_text':
+    case 'ocr':        customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+    default:           customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
+  }
+});
+```
+
+### 2B — Use `customOutputPath` in the args switch
+
+For all non-merge, non-split cases, replace `output: getOutputPath(...)` with `output: customOutputPath`.
+
+Example for compress:
+```typescript
+case 'compress':
+  args = {
+    input: docPath,
+    output: customOutputPath
+  };
+  break;
+```
+Apply the same pattern to all remaining cases: `rotate`, `watermark`, `encrypt`, `decrypt`, `metadata`, `extract_pages`, `extract_text`/`ocr`, and `default`.
+
+### 2C — Render the editable output path field in the inspector
+
+In the inspector template, just before the **Run** button (look for `id="btn-run-operation"` or similar),
+add an output path row **only for tools that are NOT merge or split**:
+
+```svelte
+{#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split'}
+  <div class="operation-config" id="output-path-config">
+    <label for="output-path-input" class="section-desc">Output file:</label>
+    <div class="output-path-row">
+      <input
+        id="output-path-input"
+        type="text"
+        class="form-input output-path-input"
+        bind:value={customOutputPath}
+        placeholder="Output file path..."
+        title="Edit the output file path"
+      />
+    </div>
+  </div>
+{/if}
+```
+
+### 2D — Add CSS for the output path input
+
+In the `<style>` block, add:
+
+```css
+.output-path-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.output-path-input {
+  flex: 1;
+  font-size: 11px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  color: var(--text-muted, #9ca3af);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.output-path-input:focus {
+  color: var(--text-primary, #ffffff);
+}
+```
+
+---
+
+## STEP 3: Show full output path in success toast
+
+In the `handleRunOperation` try block, update the success handler:
+
+```typescript
+if (resObj && resObj.success) {
+  const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+  const msg = outDest
+    ? `✅ ${activeTool.title} saved to: ${outDest}`
+    : (resObj.message || `${activeTool.title} completed successfully`);
+  toastState.success(msg);
+  jobsState.addJob(toolName, 'success', msg);
+}
+```
+
+---
+
+## STEP 4: Add `core:dialog:allow-save` capability (if missing)
+
+File: `apps/desktop/src-tauri/capabilities/default.json`
+
+Check if `"core:dialog:allow-save"` is already in the `permissions` array. If not, add it:
+
+```json
+"tauri-plugin-dialog:allow-save",
+```
+
+> Note: The exact capability identifier depends on the installed version of `tauri-plugin-dialog`.
+> Check the existing permissions block in `default.json` for the pattern — if `tauri-plugin-dialog:allow-open` is present, add `tauri-plugin-dialog:allow-save` in the same style.
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] `npm run check` passes with 0 errors.
+- [ ] `cargo check --workspace` passes.
+- [ ] In the desktop app with two PDFs open:
+  - Select **Merge PDFs** → click **Run** → a native Save-As dialog appears → choose a path → file is saved there.
+  - Select **Compress PDF** → the inspector shows an editable "Output file:" path field pre-filled with `<source_dir>/<name>_compressed.pdf` → user can edit it → click Run → file is saved to the (possibly edited) path.
+  - The success toast shows the full absolute path of the output file.
+  - Cancelling the Save-As dialog (for Merge/Split) does NOT run the operation.
+- [ ] `make test-all` passes.

@@ -576,6 +576,16 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.13.3 | Page Numbers & Bates Stamping | ✅ Completed (PR #87, Session 12318669239840057258) — Dynamic page numbering, position selector, margin controls |
 | F.13.4 | Auto Remove Blank Pages & Text Redaction | ✅ Completed (PR #87, Session 12318669239840057258) — Blank page stream sensitivity detection and removal |
 
+#### 4.F.14 — Native Save-As Dialog & Editable Output Path for Operations
+
+> **Core UX Fix**: Users currently have no visibility into where output files are written. This closes that gap with a native save dialog for Merge/Split and an editable output path field for all other tools.
+
+| # | Task | Notes |
+|---|---|---|
+| F.14.1 | Native "Save As" dialog for Merge & Split | Show `@tauri-apps/plugin-dialog` `save()` before running Merge or Split; user picks filename & destination; cancelling aborts the operation |
+| F.14.2 | Editable output path field for all other tools | Inspector shows a pre-filled, editable "Output file:" path input (auto-suggested from source dir) that the user can override before running |
+| F.14.3 | Full absolute path in success toast | Success notification always displays the exact absolute path where the output was written |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)

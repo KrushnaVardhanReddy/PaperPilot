@@ -117,6 +117,39 @@
     activeTool = null;
   }
 
+  let customOutputPath = $state('');
+
+  // Auto-fill the output path whenever the active tool or selected document changes
+  $effect(() => {
+    if (!activeTool || appState.documents.length === 0) {
+      customOutputPath = '';
+      return;
+    }
+    const docIndex = appState.selectedDocumentIndex ?? 0;
+    const docName = appState.documents[docIndex]?.name || '';
+    const docPath = appState.documentPaths[docIndex] || docName;
+    const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+    const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+    const base = docName.replace(/\.pdf$/i, '');
+
+    switch (activeTool.id) {
+      case 'merge':
+      case 'split':
+        customOutputPath = ''; // handled by native dialog
+        break;
+      case 'compress':      customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
+      case 'rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
+      case 'watermark':     customOutputPath = getOutputPath(`${base}_watermarked.pdf`); break;
+      case 'encrypt':       customOutputPath = getOutputPath(`${base}_encrypted.pdf`);   break;
+      case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
+      case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
+      case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
+      case 'extract_text':
+      case 'ocr':           customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
+    }
+  });
+
   async function handleRunOperation() {
     if (!activeTool) return;
     if (appState.documents.length === 0) {
@@ -142,22 +175,41 @@
     let args: Record<string, any> = {};
 
     switch (activeTool.id) {
-      case 'merge':
+      case 'merge': {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
+        const outputPath = await save({
+          title: 'Save Merged PDF As...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return; // user cancelled
         args = {
           inputs: appState.documents.map((d, i) => appState.documentPaths[i] || d.name),
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`)
+          output: outputPath
         };
         break;
-      case 'split':
+      }
+      case 'split': {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
+        const outputPath = await save({
+          title: 'Save Split PDFs to Folder (choose base filename)...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return; // user cancelled
+        const outputDir = outputPath.replace(/\.pdf$/i, '');
         args = {
           input: docPath,
-          output_dir: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`)
+          output_dir: outputDir
         };
         break;
+      }
       case 'compress':
         args = {
           input: docPath,
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_compressed.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_compressed.pdf`)
         };
         break;
       case 'rotate':
@@ -165,55 +217,55 @@
           input: docPath,
           pages: 'all',
           angle: parseInt(rotateAngle, 10),
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
         };
         break;
       case 'watermark':
         args = {
           input: docPath,
           text: watermarkText || 'CONFIDENTIAL',
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
         };
         break;
       case 'encrypt':
         args = {
           input: docPath,
           password: password || 'paperpilot',
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_encrypted.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_encrypted.pdf`)
         };
         break;
       case 'decrypt':
         args = {
           input: docPath,
           password: password || '',
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_decrypted.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_decrypted.pdf`)
         };
         break;
       case 'metadata':
         args = {
           input: docPath,
           title: metadataTitle || docName,
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
         };
         break;
       case 'extract_pages':
         args = {
           input: docPath,
           pages: '1',
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
         };
         break;
       case 'extract_text':
       case 'ocr':
         args = {
           input: docPath,
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
         };
         break;
       default:
         args = {
           input: docPath,
-          output: getOutputPath(`${docName.replace(/\.pdf$/i, '')}_output.pdf`)
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_output.pdf`)
         };
         break;
     }
@@ -223,8 +275,8 @@
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
       const resObj = result as any;
       if (resObj && resObj.success) {
-        const outDest = resObj.output_path || args.output || args.output_dir;
-        const msg = outDest ? `${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+        const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+        const msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
         toastState.success(msg);
         jobsState.addJob(toolName, 'success', msg);
       } else {
@@ -352,6 +404,22 @@
       {:else}
         <div class="operation-config">
           <p class="section-desc">Applies directly to the active document.</p>
+        </div>
+      {/if}
+
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split'}
+        <div class="operation-config" id="output-path-config">
+          <label for="output-path-input" class="section-desc">Output file:</label>
+          <div class="output-path-row">
+            <input
+              id="output-path-input"
+              type="text"
+              class="form-input output-path-input"
+              bind:value={customOutputPath}
+              placeholder="Output file path..."
+              title="Edit the output file path"
+            />
+          </div>
         </div>
       {/if}
 
@@ -786,5 +854,25 @@
     text-align: center;
     color: var(--text-muted, #9ca3af);
     font-size: 12px;
+  }
+
+  .output-path-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .output-path-input {
+    flex: 1;
+    font-size: 11px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    color: var(--text-muted, #9ca3af);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .output-path-input:focus {
+    color: var(--text-primary, #ffffff);
   }
 </style>
