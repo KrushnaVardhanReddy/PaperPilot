@@ -96,6 +96,7 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 0 })) });
 
     // Wait for the form layer to render
+    await page.waitForSelector('.form-layer input.pdf-input', { state: 'visible', timeout: 5000 });
     const input = page.locator('.form-layer input.pdf-input').first();
     await expect(input).toBeVisible({ timeout: 10000 });
 
@@ -132,6 +133,9 @@ test.describe('Phase 4.F - PDF Viewer & Annotations E2E', () => {
     await docName.click({ force: true });
 
     await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 0 })) });
+
+    // Wait for the form layer to render before interacting with save form
+    await page.waitForSelector('.pdf-input', { state: 'visible', timeout: 5000 });
 
     // Verify Save Form button that triggers an IPC call
     const saveBtn = page.locator('.save-form-btn');
