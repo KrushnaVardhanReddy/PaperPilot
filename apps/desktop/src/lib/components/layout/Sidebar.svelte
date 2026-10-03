@@ -30,6 +30,7 @@
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'documents', label: 'Documents', icon: '📄' },
     { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
+    { id: 'api', label: 'API & Gateway', icon: '⚡' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 </script>
