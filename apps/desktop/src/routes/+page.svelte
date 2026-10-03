@@ -27,6 +27,7 @@
   import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
   import StatusBar from '$lib/components/layout/StatusBar.svelte';
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
+  import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import { listen } from '@tauri-apps/api/event';
 
@@ -355,6 +356,10 @@
   {:else if appState.activeTab === 'pipeline'}
     <div class="content-area full-width">
       <PipelineView />
+    </div>
+  {:else if appState.activeTab === 'api'}
+    <div class="content-area full-width">
+      <ApiDocsView />
     </div>
   {/if}
 </div>
