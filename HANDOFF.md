@@ -98,14 +98,14 @@ PaperPilot/
 
 | Task | Session ID | What it does | Session Link |
 |---|---|---|---|
-| **QA-1**: Document Lifecycle & Tabs | `544885962421601530` | Multi-doc tabs, `pdf_info`, `pdf_validate`, `pdf_hash`, `pdf_metadata` | ✅ Merged (PR #93) |
-| **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | ✅ Merged (PR #97) |
-| **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | ✅ Merged (PR #91) |
-| **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | ✅ Merged (PR #90) |
+| **QA-1**: Document Lifecycle & Tabs | `544885962421601530` | Multi-doc tabs, `pdf_info`, `pdf_validate`, `pdf_hash`, `pdf_metadata` | ✅ Merged (PR #101) |
+| **QA-2**: Viewer Navigation & Zoom | `17034994067282609951` | Canvas page jump, zoom fit, `pdf_render`, `pdf_classify_type`, `pdf_bookmarks` | ✅ Merged (PR #100) |
+| **QA-3**: Search & Extraction | `10793971291527024299` | Canvas search bar, `pdf_search`, `pdf_extract_text`, `pdf_extract_images`, `pdf_ocr` | ✅ Merged (PR #104) |
+| **QA-4**: Thumbnail Sidebar & Reorder | `13669625293175016599` | Drag reorder, `pdf_rotate`, `pdf_crop`, `pdf_delete_pages`, `pdf_extract_pages`, `pdf_reorder_pages`, `pdf_burst` | ✅ Merged (PR #103) |
 | **QA-5**: Annotations & Markup | `3824896424156358922` | Toolbar, `pdf_watermark`, `pdf_annotate`, `pdf_header_footer`, `pdf_bates`, `pdf_create_form_field`, `pdf_read_form`, `pdf_fill_form`, `pdf_sign` | ✅ Merged (PR #89) |
 | **QA-6**: Operations Dock & Page Tools | `3241010897792427201` | Category pills, `pdf_merge`, `pdf_split`, `pdf_page_numbers`, `pdf_remove_blank`, `pdf_compress`, `pdf_linearize`, `pdf_repair`, `pdf_flatten` | ✅ Merged (PR #92) |
-| **QA-7**: Security & Conversions | `7264050569938354833` | Password encryption, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`, `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx` | ✅ Merged (PR #95) |
-| **QA-8**: Visual Pixel Diff Slider | `4164997819618967941` | Split slider (`Ctrl+D`), discrepancy map, `pdf_compare` | [Session 4164997819618967941](https://jules.google.com/session/4164997819618967941) |
+| **QA-7**: Security & Conversions | `7264050569938354833` | Password encryption, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`, `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx` | ✅ Merged (PR #105) |
+| **QA-8**: Visual Pixel Diff Slider | `4164997819618967941` | Split slider (`Ctrl+D`), discrepancy map, `pdf_compare` | ✅ Merged (PR #102) |
 
 ---
 
