@@ -1,9 +1,55 @@
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 use axum::{
     routing::{get, post},
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
 use crate::{handlers, sse};
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        handlers::health,
+        handlers::mcp_exec,
+        handlers::merge,
+        handlers::split,
+        handlers::compress,
+        handlers::extract_text,
+        handlers::convert,
+        handlers::watermark,
+        handlers::info,
+        handlers::compare,
+        handlers::render_page,
+        handlers::handle_tool
+    ),
+    components(
+        schemas(
+            handlers::HealthResponse,
+            handlers::McpExecRequest,
+            handlers::ApiResponse,
+            handlers::MergeJsonRequest,
+            handlers::SplitJsonRequest,
+            handlers::CompressJsonRequest,
+            handlers::ExtractTextJsonRequest,
+            handlers::ConvertJsonRequest,
+            handlers::WatermarkJsonRequest,
+            handlers::InfoJsonRequest,
+            handlers::CompareJsonRequest
+        )
+    ),
+    tags(
+        (name = "Health", description = "Gateway health check and tool status"),
+        (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 44+ tools"),
+        (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data")
+    ),
+    info(
+        title = "PaperPilot Gateway API & MCP Server",
+        version = "0.1.0",
+        description = "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 44 intelligent PDF tools."
+    )
+)]
+pub struct ApiDoc;
 
 pub async fn build_app() -> Router {
     let cors = CorsLayer::new()
@@ -12,6 +58,7 @@ pub async fn build_app() -> Router {
         .allow_headers(Any);
 
     Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))
@@ -34,5 +81,6 @@ pub async fn start(port: u16, bind: &str) -> std::io::Result<()> {
     let addr = format!("{}:{}", bind, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("Starting gateway server on {}", addr);
+    tracing::info!("Swagger UI accessible at http://{}/swagger-ui", addr);
     axum::serve(listener, app).await
 }

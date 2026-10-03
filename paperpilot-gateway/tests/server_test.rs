@@ -83,3 +83,25 @@ async fn test_multipart_and_json_endpoints() {
     // Just check the parsing didn't fail with BAD_REQUEST
     assert_ne!(response.status(), StatusCode::BAD_REQUEST);
 }
+
+#[tokio::test]
+async fn test_swagger_ui_endpoint() {
+    let app = build_app().await;
+
+    let request = Request::builder()
+        .uri("/api-docs/openapi.json")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["info"]["title"], "PaperPilot Gateway API & MCP Server");
+    assert!(json["paths"]["/health"].is_object());
+    assert!(json["paths"]["/api/v1/pdf/mcp-exec"].is_object());
+}

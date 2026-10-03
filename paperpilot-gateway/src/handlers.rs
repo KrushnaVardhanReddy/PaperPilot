@@ -10,14 +10,115 @@ use serde_json::Value;
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
+use utoipa::ToSchema;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct HealthResponse {
+    #[schema(example = "ok")]
     pub status: String,
+    #[schema(example = "0.1.0")]
     pub version: String,
+    #[schema(example = 44)]
     pub tools_count: usize,
 }
 
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ApiResponse {
+    #[schema(example = true)]
+    pub success: bool,
+    pub result: Option<Value>,
+    pub error: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct McpExecRequest {
+    #[schema(example = "pdf_metadata")]
+    pub tool: String,
+    #[schema(example = json!({"input": "/path/to/document.pdf"}))]
+    pub arguments: Option<Value>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct MergeJsonRequest {
+    #[schema(example = json!(["doc1.pdf", "doc2.pdf"]))]
+    pub inputs: Vec<String>,
+    #[schema(example = "merged.pdf")]
+    pub output: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct SplitJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+    #[schema(example = "1-3,5")]
+    pub pages: Option<String>,
+    #[schema(example = "output_dir/")]
+    pub output: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct CompressJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+    #[schema(example = "output.pdf")]
+    pub output: String,
+    #[schema(example = "medium")]
+    pub quality: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct ExtractTextJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+    #[schema(example = "1")]
+    pub page: Option<u32>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct ConvertJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+    #[schema(example = "output.docx")]
+    pub output: String,
+    #[schema(example = "docx")]
+    pub format: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct WatermarkJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+    #[schema(example = "watermarked.pdf")]
+    pub output: String,
+    #[schema(example = "CONFIDENTIAL")]
+    pub text: Option<String>,
+    #[schema(example = 0.3)]
+    pub opacity: Option<f32>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct InfoJsonRequest {
+    #[schema(example = "input.pdf")]
+    pub input: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct CompareJsonRequest {
+    #[schema(example = "doc_v1.pdf")]
+    pub file1: String,
+    #[schema(example = "doc_v2.pdf")]
+    pub file2: String,
+}
+
+/// Gateway health check
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is healthy and ready", body = HealthResponse)
+    )
+)]
 pub async fn health() -> impl IntoResponse {
     let tools_count = match PaperPilotMcpServer::execute_list_tools() {
         Ok(res) => res.tools.len(),
@@ -31,12 +132,18 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
-#[derive(Deserialize)]
-pub struct McpExecRequest {
-    pub tool: String,
-    pub arguments: Option<Value>,
-}
-
+/// Execute MCP tool directly by tool name with arbitrary JSON arguments
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/mcp-exec",
+    tag = "MCP",
+    request_body = McpExecRequest,
+    responses(
+        (status = 200, description = "Tool executed successfully", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
 pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse {
     let mut request = CallToolRequestParams::default();
     request.name = payload.tool.into();
@@ -59,6 +166,20 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
     }
 }
 
+/// Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/tools/{tool_name}",
+    tag = "MCP",
+    params(
+        ("tool_name" = String, Path, description = "Name of the tool (with or without 'pdf_' prefix)")
+    ),
+    responses(
+        (status = 200, description = "Tool executed successfully", body = ApiResponse),
+        (status = 400, description = "Invalid multipart or payload"),
+        (status = 500, description = "Execution error")
+    )
+)]
 pub async fn handle_tool(
     Path(tool_name): Path<String>,
     req: axum::extract::Request,
@@ -98,9 +219,9 @@ pub async fn handle_tool(
                 if name == "input" || name == "file" {
                     args.insert("input".to_string(), Value::String(path.to_string_lossy().to_string()));
                 } else if args.contains_key(&name) {
-                     if let Value::Array(arr) = args.get_mut(&name).unwrap() {
-                         arr.push(Value::String(path.to_string_lossy().to_string()));
-                     }
+                    if let Value::Array(arr) = args.get_mut(&name).unwrap() {
+                        arr.push(Value::String(path.to_string_lossy().to_string()));
+                    }
                 } else {
                     args.insert(name.clone(), Value::String(path.to_string_lossy().to_string()));
                 }
@@ -140,39 +261,129 @@ pub async fn handle_tool(
     }
 }
 
+/// Merge multiple PDF documents into a single PDF
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/merge",
+    tag = "PDF Operations",
+    request_body(content = MergeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Merged successfully", body = ApiResponse)
+    )
+)]
 pub async fn merge(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("merge".to_string()), req).await
 }
 
+/// Split a PDF document into separate pages or ranges
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/split",
+    tag = "PDF Operations",
+    request_body(content = SplitJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Split successfully", body = ApiResponse)
+    )
+)]
 pub async fn split(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("split".to_string()), req).await
 }
 
+/// Compress a PDF document to reduce file size
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/compress",
+    tag = "PDF Operations",
+    request_body(content = CompressJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Compressed successfully", body = ApiResponse)
+    )
+)]
 pub async fn compress(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("compress".to_string()), req).await
 }
 
+/// Extract clean text from a PDF document
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/extract-text",
+    tag = "PDF Operations",
+    request_body(content = ExtractTextJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Text extracted successfully", body = ApiResponse)
+    )
+)]
 pub async fn extract_text(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("extract_text".to_string()), req).await
 }
 
+/// Convert a PDF to/from another format (docx, images, html, xlsx, etc.)
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/convert",
+    tag = "PDF Operations",
+    request_body(content = ConvertJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Converted successfully", body = ApiResponse)
+    )
+)]
 pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("convert".to_string()), req).await
 }
 
+/// Apply text or image watermarks to a PDF document
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/watermark",
+    tag = "PDF Operations",
+    request_body(content = WatermarkJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Watermarked successfully", body = ApiResponse)
+    )
+)]
 pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("watermark".to_string()), req).await
 }
 
+/// Retrieve metadata and page information for a PDF document
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/info",
+    tag = "PDF Operations",
+    request_body(content = InfoJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Info extracted successfully", body = ApiResponse)
+    )
+)]
 pub async fn info(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("metadata".to_string()), req).await
 }
 
+/// Compare two PDF documents for visual and textual differences
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/compare",
+    tag = "PDF Operations",
+    request_body(content = CompareJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Comparison completed", body = ApiResponse)
+    )
+)]
 pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compare".to_string()), req).await
 }
 
-
+/// Render a single PDF page directly to a PNG image stream
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/render-page",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Rendered PNG image binary", content_type = "image/png"),
+        (status = 400, description = "Invalid request"),
+        (status = 500, description = "Render failure")
+    )
+)]
 pub async fn render_page(req: axum::extract::Request) -> axum::response::Response {
     let mut args = serde_json::Map::new();
     let mut temp_files = vec![];
@@ -239,7 +450,6 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
