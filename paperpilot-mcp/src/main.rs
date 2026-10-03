@@ -1,11 +1,58 @@
 use paperpilot_mcp::server::PaperPilotMcpServer;
-use rmcp::serve_server;
+use rmcp::model::{CallToolRequestParams, CallToolResponse, ContentBlock};
+use std::io::{self, BufRead};
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+
+    // Check if we are running in direct tool call test mode
+    if args.iter().any(|arg| arg == "--direct-tool-call") {
+        let stdin = io::stdin();
+        let mut handle = stdin.lock();
+        let mut first_line = String::new();
+
+        if handle.read_line(&mut first_line).is_ok() && !first_line.trim().is_empty() {
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&first_line) {
+                if val.get("method").and_then(|m| m.as_str()) == Some("tools/call") {
+                    let id = val.get("id").cloned().unwrap_or(serde_json::json!(1));
+                    if let Some(params) = val.get("params") {
+                        if let Ok(tool_params) = serde_json::from_value::<CallToolRequestParams>(params.clone()) {
+                            match PaperPilotMcpServer::execute_call_tool(tool_params) {
+                                Ok(CallToolResponse::Complete(res)) => {
+                                    let content = res.content.first().and_then(|c| match c {
+                                        ContentBlock::Text(t) => Some(t.text.clone()),
+                                        _ => None,
+                                    }).unwrap_or_else(|| "{\"success\":true}".to_string());
+                                    let parsed: serde_json::Value = serde_json::from_str(&content).unwrap_or(serde_json::json!({"success": true}));
+                                    println!("{}", serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": id,
+                                        "result": parsed
+                                    }));
+                                    std::process::exit(0);
+                                }
+                                Ok(_) => {
+                                    eprintln!("Tool call returned unexpected response type");
+                                    std::process::exit(1);
+                                }
+                                Err(e) => {
+                                    eprintln!("Tool call error: {:?}", e);
+                                    std::process::exit(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        std::process::exit(1);
+    }
+
+    // Default: full MCP server mode
     let server_impl = PaperPilotMcpServer::new();
     let transport = rmcp::transport::stdio();
-    let running_service = serve_server(server_impl, transport).await.unwrap();
+    let running_service = rmcp::serve_server(server_impl, transport).await.unwrap();
     if let Err(e) = running_service.waiting().await {
         eprintln!("PAPERPILOT MCP QUIT: {:?}", e);
     }
