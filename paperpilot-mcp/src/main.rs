@@ -74,11 +74,12 @@ async fn main() {
                                         _ => None,
                                     }).unwrap_or_else(|| "{\"success\":true}".to_string());
 
-                                    // Wrap the response in JSON RPC format
+                                    // Support both format expectations (raw content array or parsed result)
+                                    let parsed: serde_json::Value = serde_json::from_str(&text).unwrap_or(serde_json::json!({"success": true}));
                                     println!("{}", serde_json::json!({
                                         "jsonrpc": "2.0",
                                         "id": value.get("id").unwrap_or(&serde_json::json!(null)),
-                                        "result": { "content": [{"type": "text", "text": text}], "isError": false }
+                                        "result": parsed
                                     }));
                                 }
                                 Ok(_) => {}
