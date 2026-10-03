@@ -1,0 +1,116 @@
+# Task: Phase 2.5 — OpenAPI 3.1 & Interactive Swagger UI for PaperPilot Gateway
+# Priority: MEDIUM — Provides Stirling-PDF parity with interactive API docs and OpenAPI spec export
+# Parallel-safe: Only modifies paperpilot-gateway crate and docs/api/
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`cargo check --workspace` and `cargo test -p paperpilot-gateway`).
+3. Commit message MUST start with `jules: ` prefix.
+4. Follow Axum and Rust best practices.
+5. All interactive endpoints in Swagger UI must match the live routes mounted in `paperpilot-gateway/src/server.rs`.
+
+---
+
+## CONTEXT & OBJECTIVE
+
+PaperPilot features a high-performance REST and SSE Gateway (`paperpilot-gateway`) hosting 14+ endpoints and routing to 44 MCP tools. Currently, there is no interactive Swagger / OpenAPI interface, making API discovery difficult for developers, homelabs, and third-party integrations (a core strength of Stirling-PDF).
+
+### Goals:
+1. Integrate `utoipa` (OpenAPI 3.1 generator for Axum) and `utoipa-swagger-ui` in `paperpilot-gateway`.
+2. Annotate all existing route handlers in `paperpilot-gateway/src/handlers.rs`:
+   - `/health` (GET)
+   - `/api/v1/pdf/render-page` (POST)
+   - `/api/v1/pdf/merge` (POST)
+   - `/api/v1/pdf/split` (POST)
+   - `/api/v1/pdf/compress` (POST)
+   - `/api/v1/pdf/extract-text` (POST)
+   - `/api/v1/pdf/convert` (POST)
+   - `/api/v1/pdf/watermark` (POST)
+   - `/api/v1/pdf/info` (POST)
+   - `/api/v1/pdf/compare` (POST)
+   - `/api/v1/pdf/mcp-exec` (POST)
+   - `/api/v1/pdf/tools/{tool_name}` (POST)
+   - `/mcp/sse` (GET) and `/mcp/messages` (POST)
+3. Expose interactive Swagger UI at `http://localhost:7823/swagger-ui`.
+4. Expose the raw JSON specification at `http://localhost:7823/api-docs/openapi.json`.
+5. Export static `docs/api/openapi.json` for client SDK generation (Python/TypeScript).
+
+---
+
+## STEP 1: Add Dependencies in `paperpilot-gateway/Cargo.toml`
+
+Add:
+```toml
+utoipa = { version = "5", features = ["axum", "uuid"] }
+utoipa-swagger-ui = { version = "8", features = ["axum"] }
+```
+
+---
+
+## STEP 2: Annotate Models and Endpoints in `paperpilot-gateway`
+
+1. In `handlers.rs`:
+   - Add `#[derive(utoipa::ToSchema)]` to all request and response payload structs (`MergeRequest`, `SplitRequest`, `CompressRequest`, `OperationResult`, `HealthResponse`, etc.).
+   - Decorate each handler function with `#[utoipa::path(...)]` specifying HTTP method, path, request body, tag, and expected responses.
+
+2. In `server.rs`:
+   - Define the `ApiDoc` struct with `#[derive(utoipa::OpenApi)]`:
+   ```rust
+   use utoipa::OpenApi;
+   use utoipa_swagger_ui::SwaggerUi;
+
+   #[derive(OpenApi)]
+   #[openapi(
+       paths(
+           handlers::health,
+           handlers::merge,
+           handlers::split,
+           handlers::compress,
+           handlers::extract_text,
+           handlers::convert,
+           handlers::watermark,
+           handlers::info,
+           handlers::compare,
+           handlers::render_page,
+           handlers::mcp_exec,
+           handlers::handle_tool,
+       ),
+       components(
+           schemas(
+               handlers::HealthResponse,
+               handlers::MergeRequest,
+               handlers::SplitRequest,
+               // ... other schemas
+           )
+       ),
+       tags(
+           (name = "pdf", description = "PDF operations and transformations"),
+           (name = "system", description = "Health checks and gateway info")
+       ),
+       info(
+           title = "PaperPilot Gateway API",
+           version = "0.1.0",
+           description = "Local-first PDF manipulation REST API with MCP server parity"
+       )
+   )]
+   pub struct ApiDoc;
+   ```
+   - Mount the Swagger UI router into `build_app()`:
+   ```rust
+   Router::new()
+       .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+       // ... existing routes
+   ```
+
+---
+
+## STEP 3: Automated Tests & Verification
+
+1. Add an integration test in `paperpilot-gateway`:
+   - Query `GET /api-docs/openapi.json` and verify `HTTP 200` with valid JSON containing `"openapi": "3."` and registered paths.
+   - Query `GET /swagger-ui` and verify `HTTP 200` returning the Swagger HTML bundle.
+2. Run `cargo check --workspace` and `cargo test -p paperpilot-gateway`.
+3. Commit with prefix: `jules: Phase 2.5 OpenAPI spec and Swagger UI integration`.

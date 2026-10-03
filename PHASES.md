@@ -302,6 +302,20 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 2.5 — OpenAPI 3.1 & Embedded Swagger UI for Gateway
+
+> **Stirling-PDF Parity & Developer Integration**: Exposes interactive Swagger UI at `/swagger-ui` and the OpenAPI 3.1 JSON specification at `/api-docs/openapi.json` for all REST endpoints and MCP dispatchers.
+
+| # | Task | Notes |
+|---|---|---|
+| 2.5.1 | `utoipa` & `utoipa-swagger-ui` Integration | Add dependencies to `paperpilot-gateway` and define root `ApiDoc` |
+| 2.5.2 | REST & MCP Endpoint Annotations | Annotate all 14+ endpoints (`/health`, `/merge`, `/split`, `/compress`, `/tools/{tool_name}`) with `#[utoipa::path]` |
+| 2.5.3 | Schema Models Definition | Add `#[derive(ToSchema)]` to all request/response payload structs |
+| 2.5.4 | Embedded Swagger UI Route | Mount `/swagger-ui` and `/api-docs/openapi.json` in Axum router |
+| 2.5.5 | OpenAPI JSON Spec Export | Export static `docs/api/openapi.json` for external client SDK generation |
+
+---
+
 ## Phase 3 — Desktop + Mobile Application (Tauri 2.0)
 
 **Goal:** A polished, cross-platform Tauri 2.0 app for PDF manipulation — running natively on Windows, macOS, Linux, iOS, and Android from a single codebase.
