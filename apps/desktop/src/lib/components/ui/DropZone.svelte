@@ -54,6 +54,11 @@
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       const filesArray = Array.from(target.files);
+      // Playwright injects absolute path via file.path or we use its name
+      for (const f of filesArray) {
+        (f as any)._localPath = (f as any).path || f.name;
+        (f as any)._isLoaded = false;
+      }
       ondrop(filesArray);
     }
     target.value = '';
