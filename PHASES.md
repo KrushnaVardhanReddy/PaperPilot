@@ -299,6 +299,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 2.3.5 | MCP schema tests ✅ | Merged (Session 9931121574944478405) |
 | 2.3.6 | End-to-end MCP tests ✅ | Merged (Session 9931121574944478405) |
 | 2.3.7 | E2E MCP tests (Strict) ✅ | Merged (Session 9931121574944478405) |
+| 2.3.8 | SDK Architecture Lock (`rmcp` vs `pmcp`) ✅ | **Architectural Decision (Locked):** Retain official Anthropic `rmcp` 3.5.0 SDK for guaranteed host compatibility (Claude Desktop, Cursor, Goose). Evaluated `pmcp` (zero-cost alternative); deferred to Phase 7.1 Cloud gateway where high-concurrency microsecond serialization matters. |
 
 ---
 
@@ -892,7 +893,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 7.1.1 | Multi-tenant architecture | Org isolation at data and compute layer |
 | 7.1.2 | Document processing pipeline | Async, scalable job processing |
-| 7.1.3 | Cloud MCP gateway | Hosted MCP endpoint per org |
+| 7.1.3 | Cloud MCP gateway | Hosted MCP endpoint per org; evaluate `pmcp` zero-cost SDK for high-throughput multi-tenant streaming |
 | 7.1.4 | Monitoring and alerting | Uptime, error rates, job queue depth |
 | 7.1.5 | Autoscaling | Scale workers based on job queue |
 
