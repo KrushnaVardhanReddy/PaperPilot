@@ -45,26 +45,15 @@ export class AppState {
     console.log('[AppState] addDocuments paths:', newPaths);
     this.documentPaths = [...this.documentPaths, ...newPaths];
 
-    if (files.length === 1) {
+    for (let i = 0; i < files.length; i++) {
       if (this.openDocIndices.length >= MAX_OPEN_TABS) {
         // remove the oldest unselected tab
         const oldestIndex = this.openDocIndices.findIndex(idx => idx !== this.selectedDocumentIndex);
         if (oldestIndex !== -1) {
-            this.openDocIndices = this.openDocIndices.filter((_, i) => i !== oldestIndex);
+            this.openDocIndices = this.openDocIndices.filter((_, idx) => idx !== oldestIndex);
         }
       }
-      this.openDocIndices = [...this.openDocIndices, startIdx];
-    } else if (files.length > 1) {
-       // batch ingestion: Do NOT add all indices.
-       // open at most 1 tab for the first file.
-       if (this.openDocIndices.length >= MAX_OPEN_TABS) {
-          const oldestIndex = this.openDocIndices.findIndex(idx => idx !== this.selectedDocumentIndex);
-          if (oldestIndex !== -1) {
-              this.openDocIndices = this.openDocIndices.filter((_, i) => i !== oldestIndex);
-          }
-       }
-       // Note: we're only making the first item available as a tab, so users stay mainly in the list.
-       this.openDocIndices = [...this.openDocIndices, startIdx];
+      this.openDocIndices = [...this.openDocIndices, startIdx + i];
     }
   }
 

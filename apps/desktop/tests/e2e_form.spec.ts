@@ -34,8 +34,8 @@ test.describe('Form Filling', () => {
     const formLayer = page.locator('.form-layer');
 
     // Check if initial values are loaded
+    await page.waitForSelector('.pdf-input', { state: 'visible', timeout: 5000 });
     const textInput = page.locator('.pdf-input');
-    await page.waitForTimeout(2000);
     await expect(textInput).toBeVisible({ timeout: 10000 });
     await expect(textInput).toHaveValue('');
 
@@ -74,8 +74,8 @@ test.describe('Form Filling', () => {
     await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: 1 })) });
 
     // Assert new values persisted in the fresh load
+    await page.waitForSelector('.pdf-input', { state: 'visible', timeout: 5000 });
     const newTextInput = page.locator('.pdf-input');
-    await page.waitForTimeout(2000);
     await expect(newTextInput).toBeVisible({ timeout: 10000 });
     await expect(newTextInput).toHaveValue('New Value');
 
