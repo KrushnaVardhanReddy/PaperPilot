@@ -243,11 +243,11 @@ test.describe('Phase 4.F Features Validation', () => {
     // Tab 0 should be active
     await expect(page.locator('#tab-doc-0')).toBeVisible();
 
-    // Wait for the tabs to appear
-    await expect(page.locator('#tab-doc-0')).toBeVisible();
-    await expect(page.locator('#tab-doc-1')).toBeVisible();
+    // Wait for the active document viewer to appear, it should open tab-doc-0
 
-    // Switch to tab 1
+    // My previous fix to appState adds all indices when multiple files are uploaded.
+    // So both #tab-doc-0 and #tab-doc-1 should already be visible. We can just click tab 1.
+    await expect(page.locator('#tab-doc-1')).toBeVisible();
     await page.locator('#tab-doc-1').click();
     await expect(page.locator('#tab-doc-1')).toHaveClass(/active/);
   });

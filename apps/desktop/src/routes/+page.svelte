@@ -29,22 +29,12 @@
     }).then(fn => unlistenMenuToggleDiff = fn).catch(() => {});
 
     // Key bindings
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
-        e.preventDefault();
-        appState.toggleDiffView();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     window.addEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
     window.addEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
     window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
 
     return () => {
       if (unlistenMenuToggleDiff) unlistenMenuToggleDiff();
-      window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
       window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
       window.removeEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
@@ -269,6 +259,13 @@
     };
   });
 </script>
+
+<svelte:window onkeydown={(e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    appState.toggleDiffView();
+  }
+}} />
 
 <div class="page-container">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
