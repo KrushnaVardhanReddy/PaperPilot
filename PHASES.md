@@ -586,6 +586,27 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.14.2 | Editable output path field for all other tools | Inspector shows a pre-filled, editable "Output file:" path input (auto-suggested from source dir) that the user can override before running |
 | F.14.3 | Full absolute path in success toast | Success notification always displays the exact absolute path where the output was written |
 
+#### 4.F.15 — High-Volume File Ingestion: Lazy Byte Loading & Tab Limit Management
+
+> **Core Stability & Scalability Fix**: Loading 50–100 files simultaneously currently triggers out-of-memory crashes due to eager byte reads, and crashes tab ergonomics. Introduces lightweight metadata ingestion, lazy on-demand byte reading for the canvas viewer, and an 8-tab ceiling.
+
+| # | Task | Notes |
+|---|---|---|
+| F.15.1 | Lightweight File Metadata Command (`get_file_metadata`) | Rust Tauri command querying file path, name, and size via `std::fs::metadata` without allocating file payload |
+| F.15.2 | Lazy Ingestion in DropZone | Instant multi-file browsing via lightweight placeholders; zero upfront byte allocation |
+| F.15.3 | Tab Bar Limit & Library Separation | Decouple Documents Library list from open tabs; enforce max 8 active tabs with auto-rotation |
+| F.15.4 | On-Demand Viewer Byte Loading | Load raw file bytes and blob URLs only when a document is actively viewed in the canvas; revoke URLs on switch |
+
+#### 4.F.16 — Operation Panel Tool Audits: Correct File Extensions, Creation Workflows & Compare Integration
+
+> **Core Ergonomics & Accuracy Fix**: Audit and fix tool outputs (e.g. Word exports ending in `.pdf`), connect Compare directly to `PdfVisualDiff`, and allow PDF creation tools (`md_to_pdf`, `html_to_pdf`, `img_to_pdf`) without requiring a pre-opened PDF.
+
+| # | Task | Notes |
+|---|---|---|
+| F.16.1 | Output Extension Mapping | Auto-suggest correct extensions (`.docx`, `.xlsx`, `.md`, `.pptx`, directory for images) instead of fallback `.pdf` |
+| F.16.2 | Direct Compare / Diff Wiring | Wire "Compare PDFs" card directly to `appState.toggleDiffView(true)` with multi-document validation |
+| F.16.3 | PDF Creation Tool Unblocking | Allow `md_to_pdf`, `html_to_pdf`, and `img_to_pdf` without requiring an already opened PDF; integrate input file pickers |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)

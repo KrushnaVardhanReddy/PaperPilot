@@ -1,0 +1,144 @@
+# Task: Phase 4.F.15 — High-Volume File Ingestion: Lazy Byte Loading & Tab Limit Management
+# Priority: HIGH — Prevents OOM crashes and UI freeze when loading large files or 100+ PDFs simultaneously
+# Parallel-safe: Modifies apps/desktop/src/lib/components/ui/DropZone.svelte, apps/desktop/src/lib/state/app.svelte.ts, apps/desktop/src/routes/+page.svelte, apps/desktop/src-tauri/src/lib.rs
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests.
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute.
+8. Follow design system tokens in `app.css` (e.g. `var(--bg-secondary)`, `var(--bg-surface)`, `var(--accent-primary)`, `var(--border-color)`).
+
+---
+
+## CONTEXT & OBJECTIVE
+
+Currently, when browsing or dropping multiple files (e.g. 50–100 PDFs):
+1. **OOM / Freeze Crash**: `DropZone.svelte` loops over every selected file path and synchronously calls `invoke('read_file_bytes', { path })`, converting each file into a complete `Blob` and `File` object in memory. For 50–100 files, this reads gigabytes of raw binary data into JavaScript heap memory, causing the renderer thread to hang or crash with Out-Of-Memory (OOM).
+2. **Tab Bar Explosion**: `appState.addDocuments(files)` automatically adds ALL newly ingested files into `openDocIndices`. Adding 100 files causes 100 tabs to be rendered in `DocumentTabBar.svelte`, making the tab bar unusable and cluttering the viewer.
+3. **Missing File Metadata Command**: Rust has `read_file_bytes`, but lacked a lightweight metadata query (`get_file_info`) to get file size and page count without loading full bytes into JS memory.
+
+### Objectives:
+1. **Rust Backend (`lib.rs`)**: Add a fast Tauri command `get_file_metadata(path: String) -> Result<FileInfo, String>` returning `{ path, name, size_bytes }` (using `std::fs::metadata`) without reading file payloads into memory.
+2. **Frontend State (`app.svelte.ts`)**:
+   - Ensure `addDocuments` or `addDocumentPaths` does NOT eagerly read byte payloads into RAM.
+   - Separate **Library Documents** (`appState.documents`) from **Open Tabs** (`appState.openDocIndices`).
+   - Implement an **Open Tab Limit** (default: max 8 tabs). When adding batch files (e.g. 20–100 files), only open the first document in the canvas (or leave on Document Library list if multiple), and do NOT open 100 tabs.
+   - If an opened tab exceeds the limit, either replace the oldest unpinned tab or warn the user.
+3. **Lazy PDF Loading in Viewer (`+page.svelte`)**:
+   - Only fetch raw bytes via `read_file_bytes` or use Tauri asset streaming (`convertFileSrc(path)`) when a document is actually selected (`appState.selectedDocumentIndex !== null`) to display in the viewer canvas.
+4. **Fast Batch Browsing in `DropZone.svelte`**:
+   - When browsing via native open dialog, fetch lightweight file info for the list immediately (using lightweight File placeholders or metadata).
+   - Display batch loading progress or instant addition to the library without memory pressure.
+
+---
+
+## STEP 1: Add Lightweight File Metadata Command in Rust
+
+File: `apps/desktop/src-tauri/src/lib.rs`
+
+### 1A — Struct Definition
+```rust
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct FileMetadata {
+    pub path: String,
+    pub name: String,
+    pub size_bytes: u64,
+}
+```
+
+### 1B — Tauri Command
+```rust
+#[tauri::command]
+async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
+    let p = std::path::Path::new(&path);
+    let meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+    let name = p
+        .file_name()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "document.pdf".to_string());
+    Ok(FileMetadata {
+        path,
+        name,
+        size_bytes: meta.len(),
+    })
+}
+```
+
+### 1C — Register in `invoke_handler!`
+Add `get_file_metadata` to `tauri::generate_handler![..., get_file_metadata]`.
+
+---
+
+## STEP 2: Update `DropZone.svelte` to Lazy/Lightweight Ingestion
+
+File: `apps/desktop/src/lib/components/ui/DropZone.svelte`
+
+In `handleBrowseClick`:
+Instead of invoking `read_file_bytes` in a loop and loading all file contents into memory:
+1. Call native dialog `open({ multiple: true, filters: [{ name: 'PDF Documents', extensions: ['pdf'] }] })`.
+2. For each selected path:
+   Call `const meta = await invoke('get_file_metadata', { path });` (or query in parallel with `Promise.all`).
+3. Construct lightweight `File` placeholders with 0-byte blobs:
+```typescript
+const blob = new Blob([], { type: 'application/pdf' });
+const file = new File([blob], meta.name, { type: 'application/pdf' });
+Object.defineProperty(file, 'size', { value: meta.size_bytes, writable: false });
+(file as any)._localPath = meta.path;
+(file as any)._isLoaded = false;
+filesArray.push(file);
+```
+4. Hand off `filesArray` to `ondrop(filesArray)`.
+This makes browsing and adding 100+ files instantaneous without consuming RAM!
+
+---
+
+## STEP 3: Cap Open Tabs and Separate Library from Tabs in `app.svelte.ts`
+
+File: `apps/desktop/src/lib/state/app.svelte.ts`
+
+1. Define `MAX_OPEN_TABS = 8`.
+2. Update `addDocuments(files: File[], openFirst: boolean = false)`:
+   - Append to `this.documents` and `this.documentPaths`.
+   - If `files.length === 1`:
+     - Open this single file in a tab and select it (if tabs count < `MAX_OPEN_TABS`, append index; otherwise replace active or oldest).
+   - If `files.length > 1` (batch ingestion like 10–100 files):
+     - Add all files to the library list.
+     - Do NOT add all 100 indices to `openDocIndices`.
+     - Open at most 1 tab for the first file (or keep on the Documents library view so the user can see all 100 items listed and click the one they want to view).
+3. Ensure `selectDocument(index: number | null)`:
+   - When user clicks a document from the library, if `openDocIndices.length >= MAX_OPEN_TABS` and `index` is not already open:
+     - Close the first (oldest) tab in `openDocIndices` to make room for the newly requested document tab.
+   - Append `index` to `openDocIndices` and set `this.selectedDocumentIndex = index`.
+
+---
+
+## STEP 4: Lazy On-Demand Byte Loading in Viewer (`+page.svelte`)
+
+File: `apps/desktop/src/routes/+page.svelte`
+
+In the `$effect` that manages `currentFileUrl`:
+When a document is selected (`appState.selectedDocumentIndex !== null`):
+1. Check if the file's bytes have been loaded or if it's a 0-byte placeholder (`file.size > 0 && file.slice(0, 1).size === 0` or `!(file as any)._isLoaded`).
+2. If not loaded:
+   - Call `const bytes: number[] = await invoke('read_file_bytes', { path });`
+   - Create a `Blob` and `URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }))`.
+   - Set `currentFileUrl` to this object URL.
+3. When the tab or document changes, revoke the previous object URL to immediately free memory.
+
+---
+
+## STEP 5: Verification and Quality Checks
+
+1. Run `cargo check --workspace` to ensure the new `get_file_metadata` command compiles without errors.
+2. Run `npm run check` in `apps/desktop` to ensure Svelte 5 and TypeScript compilation passes with 0 errors.
+3. Test batch adding:
+   - Dropping or browsing 20+ files should populate the Documents library list smoothly.
+   - Tabs bar should never exceed the maximum tab limit (e.g. 8 tabs).
+   - Memory usage should remain minimal until a document is viewed.
