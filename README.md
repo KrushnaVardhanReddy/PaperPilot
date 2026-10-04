@@ -11,7 +11,7 @@ PaperPilot is a blazing-fast, local-first document automation platform. It allow
 ## ✨ Features
 
 - **🚀 Native Performance:** Powered entirely by Rust (`lopdf`) for sub-millisecond document manipulation. Capable of processing 10,000+ pages per second.
-- **🧠 Offline NLP Engine:** Built-in ultra-compact ONNX intent classifier (NeuML's `bert-hash-nano`, <1M parameters, ~1MB ONNX) and Aho-Corasick rule engine. Type *"Merge these PDFs and rotate page 1"* and the local engine instantly executes the task without needing an API key.
+- **🧠 Offline NLP Engine:** Built-in ultra-compact ONNX embedding model (NeuML's `bert-hash-nano-embeddings`, <1M parameters, ~1.1MB ONNX) and Aho-Corasick rule engine. Type *"Merge these PDFs and rotate page 1"* and the local engine instantly executes the task without needing an API key.
 - **💻 Svelte 5 + Tauri 2 Desktop App:** A sleek, modern GUI for managing your document workflows locally.
 - **🤖 MCP Server:** First-class support for the Model Context Protocol. Expose all 30+ PDF operations securely to external AI agents (like Claude Desktop).
 - **⚙️ Terminal CLI:** Fully featured command-line interface for scripting and headless environments.

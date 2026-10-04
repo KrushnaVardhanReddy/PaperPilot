@@ -30,7 +30,7 @@
 * **Features:**
   - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, etc.)
   - **Full PDF Viewer** with annotations and form filling
-  - **Offline AI Mode** (rule-based NLP intent routing — zero API key, zero network)
+  - **Offline AI Mode** (100% local, zero API key, zero network — powered by embedded NeuML's `bert-hash-nano-embeddings` <1.1MB ONNX model & Aho-Corasick rule engine for instant command resolution)
   - **Basic Pipeline Builder** — up to 3 steps, manual trigger only
   - **MCP Server** (local, single-user, all 40+ tools)
   - **Full CLI** (all commands, JSON output, webhooks)
