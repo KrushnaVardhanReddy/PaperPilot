@@ -2,6 +2,7 @@ use rmcp::model::CallToolRequestParams;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use tokio::sync::oneshot;
 
 pub mod error;
 use crate::error::DesktopError;
@@ -9,6 +10,9 @@ use crate::error::DesktopError;
 lazy_static::lazy_static! {
     static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
         Arc::new(Mutex::new(HashMap::new()));
+
+    static ref GATEWAY_RUNNING: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
+    static ref GATEWAY_SHUTDOWN_TX: Arc<Mutex<Option<oneshot::Sender<()>>>> = Arc::new(Mutex::new(None));
 }
 
 #[tauri::command]
@@ -104,6 +108,62 @@ async fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| e.to_string())
 }
 
+#[derive(serde::Serialize)]
+struct GatewayStatus {
+    is_running: bool,
+    port: u16,
+    swagger_url: String,
+}
+
+#[tauri::command]
+fn get_gateway_status() -> GatewayStatus {
+    let is_running = *GATEWAY_RUNNING.lock().unwrap();
+    GatewayStatus {
+        is_running,
+        port: 7823,
+        swagger_url: "http://127.0.0.1:7823/swagger-ui".to_string(),
+    }
+}
+
+#[tauri::command]
+async fn start_gateway() -> Result<(), String> {
+    let mut is_running = GATEWAY_RUNNING.lock().unwrap();
+    if *is_running {
+        return Ok(());
+    }
+
+    let (tx, rx) = oneshot::channel();
+
+    // Spawn the gateway
+    tokio::spawn(async move {
+        let shutdown_signal = async {
+            let _ = rx.await;
+        };
+        if let Err(e) = paperpilot_gateway::server::start(7823, "127.0.0.1", shutdown_signal).await {
+            eprintln!("Gateway server failed: {}", e);
+        }
+
+        *GATEWAY_RUNNING.lock().unwrap() = false;
+    });
+
+    *is_running = true;
+    *GATEWAY_SHUTDOWN_TX.lock().unwrap() = Some(tx);
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn stop_gateway() -> Result<(), String> {
+    let mut tx_lock = GATEWAY_SHUTDOWN_TX.lock().unwrap();
+    if let Some(tx) = tx_lock.take() {
+        let _ = tx.send(());
+    }
+
+    // The tokio task will clean up the GATEWAY_RUNNING flag
+    Ok(())
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -112,14 +172,14 @@ pub fn run() {
         .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata};
+    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX};
     use serde_json::json;
     use std::io::Write;
 
@@ -185,5 +245,44 @@ mod tests {
     async fn test_get_file_metadata_invalid() {
         let res = get_file_metadata("non_existent_file_path.pdf".to_string()).await;
         assert!(res.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_gateway_lifecycle() {
+        // Reset state
+        *GATEWAY_RUNNING.lock().unwrap() = false;
+        *GATEWAY_SHUTDOWN_TX.lock().unwrap() = None;
+
+        // Ensure status is initially false
+        let status1 = get_gateway_status();
+        assert!(!status1.is_running);
+        assert_eq!(status1.port, 7823);
+
+        // Start gateway
+        let start_res = start_gateway().await;
+        assert!(start_res.is_ok());
+
+        // Check state after start
+        let status2 = get_gateway_status();
+        assert!(status2.is_running);
+        assert!(GATEWAY_SHUTDOWN_TX.lock().unwrap().is_some());
+
+        // Calling start again should also return Ok (no-op)
+        let start_res2 = start_gateway().await;
+        assert!(start_res2.is_ok());
+
+        // Stop gateway
+        let stop_res = stop_gateway().await;
+        assert!(stop_res.is_ok());
+
+        // Verify TX is taken (the async task itself resets running state eventually,
+        // but TX should be gone immediately)
+        assert!(GATEWAY_SHUTDOWN_TX.lock().unwrap().is_none());
+
+        // Give the spawned task a tiny bit of time to shutdown and reset the flag
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+        let status3 = get_gateway_status();
+        assert!(!status3.is_running);
     }
 }
