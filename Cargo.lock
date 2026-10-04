@@ -1532,6 +1532,7 @@ name = "desktop"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
+ "paperpilot-gateway",
  "paperpilot-mcp",
  "rmcp",
  "serde",

@@ -1,4 +1,5 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { safeInvoke } from '$lib/utils/tauri';
 
 const MAX_OPEN_TABS = 8;
 
@@ -14,7 +15,42 @@ export class AppState {
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
 
-  constructor() {}
+  // Developer Mode
+  developerMode = $state(false);
+  gatewayRunning = $state(false);
+  gatewayPort = $state(7823);
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const storedDev = localStorage.getItem('paperpilot:developer-mode');
+      if (storedDev === 'true') {
+        this.developerMode = true;
+        // Don't auto-start here, let the UI or a separate init flow handle it,
+        // or actually, we can start it if we are in Tauri
+        this.toggleDeveloperMode(true);
+      }
+    }
+  }
+
+  async toggleDeveloperMode(enabled?: boolean) {
+    if (typeof enabled === 'boolean') {
+      this.developerMode = enabled;
+    } else {
+      this.developerMode = !this.developerMode;
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot:developer-mode', String(this.developerMode));
+    }
+
+    if (this.developerMode) {
+      await safeInvoke('start_gateway');
+      this.gatewayRunning = true;
+    } else {
+      await safeInvoke('stop_gateway');
+      this.gatewayRunning = false;
+    }
+  }
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
