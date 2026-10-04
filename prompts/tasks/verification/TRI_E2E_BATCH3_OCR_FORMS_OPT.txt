@@ -1,0 +1,116 @@
+# Task: Phase 4.E2E-R3 — Batch 3: OCR, Forms & Stamps Tri-Interface Test & Living Documentation
+# Priority: HIGH
+# Spec: specs/013-tri-interface-e2e-and-docs/spec.md
+
+## Objective
+Implement tri-interface automated testing and living documentation for **Group 3: OCR, Forms & Stamps Operations (Tools 21–30)** across **CLI**, **MCP**, and **REST API**. The test script inspects input PDF metrics, executes across all 3 interfaces, inspects output artifacts after execution, and documents verified copy-pasteable working examples into `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. DO NOT FIX OR MASK FAILING TOOLS. If any tool fails on CLI, MCP, or API, do NOT patch underlying tool implementations in this PR. Accurately report the failure, exit code, error message, and root cause in the generated report.
+2. Every file you modify or create MUST compile and run cleanly.
+3. Commit message must start with "jules: " prefix.
+4. Python code must use standard library or existing dependencies in the workspace.
+5. Living Documentation rule: The report must include copy-pasteable working examples for CLI, MCP, and REST API so users can use the report as documentation.
+6. MANDATORY TEST PDF CHECK-IN: All test PDF files used (both input test PDFs under `tests/e2e_fixtures/` and generated output PDFs/artifacts under `tests/e2e_fixtures/out/tri_e2e/`) MUST be committed and checked into git as part of the PR. Do NOT add output PDFs to `.gitignore`. They serve as verified, downloadable proof of each operation.
+
+## Requirements
+- Target tools (10 operations):
+  21. `pdf_render`
+  22. `pdf_ocr`
+  23. `pdf_search`
+  24. `pdf_bates`
+  25. `pdf_watermark`
+  26. `pdf_header_footer`
+  27. `pdf_read_form`
+  28. `pdf_fill_form`
+  29. `pdf_create_form_field`
+  30. `pdf_metadata`
+- Pre-execution snapshot: Input PDF file path, size in bytes, page count.
+- Execute tool on:
+  - CLI (`./target/debug/paperpilot-cli <subcommand> ... --json`)
+  - MCP (JSON-RPC `tools/call` over stdio via `./target/debug/paperpilot-mcp`)
+  - REST API (`curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/...`)
+- Post-execution snapshot: Output artifact path, size, format validation.
+- Append/update results in `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+### 1. Component Structure
+You will modify:
+1. **`scripts/test_tri_interface_e2e.py`** -> Add Batch 3 tool runners and form validators.
+2. **`reports/TRI_INTERFACE_E2E_AND_DOCS.md`** -> Update living documentation and verification report.
+
+### 2. Implementation Details
+
+#### Tool Specifications for Batch 3 (Tools 21–30)
+Map each tool with exact commands, inputs, and outputs in `scripts/test_tri_interface_e2e.py`:
+
+21. **Render (`pdf_render`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/rendered.png`
+   - CLI: `render --input {in} --page 1 --output {out}`
+   - MCP: `{"name":"pdf_render", "arguments":{"input":in, "page":1, "output":out}}`
+   - API: `POST /api/v1/pdf/render-page` with `{"input":in, "page":1}`
+22. **OCR (`pdf_ocr`)**:
+   - Input: `image_doc.pdf`
+   - Output: `out/tri_e2e/ocr_result.pdf` (or text output)
+   - CLI: `ocr --input {in} --output {out}`
+   - MCP: `{"name":"pdf_ocr", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_ocr` with `{"input":in, "output":out}`
+23. **Search (`pdf_search`)**:
+   - Input: `search_test.pdf`
+   - Output: JSON match list
+   - CLI: `search --input {in} --query "test"`
+   - MCP: `{"name":"pdf_search", "arguments":{"input":in, "query":"test"}}`
+   - API: `POST /api/v1/pdf/tools/pdf_search` with `{"input":in, "query":"test"}`
+24. **Bates Stamping (`pdf_bates`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/bates_stamped.pdf`
+   - CLI: `bates --input {in} --prefix "CONF-" --start-number 1 --padding 6 --output {out}`
+   - MCP: `{"name":"pdf_bates", "arguments":{"input":in, "prefix":"CONF-", "start_number":1, "padding":6, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_bates` with `{"input":in, "prefix":"CONF-", "start_number":1, "padding":6, "output":out}`
+25. **Watermark (`pdf_watermark`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/watermarked.pdf`
+   - CLI: `watermark --input {in} --text "SAMPLE" --output {out}`
+   - MCP: `{"name":"pdf_watermark", "arguments":{"input":in, "text":"SAMPLE", "output":out}}`
+   - API: `POST /api/v1/pdf/watermark` with `{"input":in, "text":"SAMPLE", "output":out}`
+26. **Header & Footer (`pdf_header_footer`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/header_footer.pdf`
+   - CLI: `header-footer --input {in} --header-left "Confidential" --footer-center "Page" --output {out}`
+   - MCP: `{"name":"pdf_header_footer", "arguments":{"input":in, "header_left":"Confidential", "footer_center":"Page", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_header_footer` with `{"input":in, "header_left":"Confidential", "footer_center":"Page", "output":out}`
+27. **Read Form (`pdf_read_form`)**:
+   - Input: `form.pdf`
+   - Output: JSON form fields map
+   - CLI: `read-form --input {in}`
+   - MCP: `{"name":"pdf_read_form", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/tools/pdf_read_form` with `{"input":in}`
+28. **Fill Form (`pdf_fill_form`)**:
+   - Input: `form.pdf`
+   - Output: `out/tri_e2e/filled_form.pdf`
+   - CLI: `fill-form --input {in} --data '{"first_name":"Alice"}' --output {out}`
+   - MCP: `{"name":"pdf_fill_form", "arguments":{"input":in, "fields":{"first_name":"Alice"}, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_fill_form` with `{"input":in, "fields":{"first_name":"Alice"}, "output":out}`
+29. **Create Form Field (`pdf_create_form_field`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/field_added.pdf`
+   - CLI: `create-form-field --input {in} --field-type text --field-name "signature" --x 50 --y 50 --width 150 --height 30 --output {out}`
+   - MCP: `{"name":"pdf_create_form_field", "arguments":{"input":in, "field_type":"text", "field_name":"signature", "x":50, "y":50, "width":150, "height":30, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_create_form_field` with `{"input":in, "field_type":"text", "field_name":"signature", "x":50, "y":50, "width":150, "height":30, "output":out}`
+30. **Metadata (`pdf_metadata`)**:
+   - Input: `single_page.pdf`
+   - Output: JSON document metadata
+   - CLI: `metadata --input {in}`
+   - MCP: `{"name":"pdf_metadata", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/info` with `{"input":in}`
+
+#### Living Documentation Report Generation
+For each tool, document:
+- Copy-pasteable CLI command
+- Copy-pasteable MCP stdio JSON-RPC frame
+- Copy-pasteable REST API curl request
+- Verification scorecard with latency, size delta, format integrity check, and PASS/FAIL verdict.
+
+## Verification Steps
+1. Run `python3 scripts/test_tri_interface_e2e.py`.
+2. Inspect `reports/TRI_INTERFACE_E2E_AND_DOCS.md` ensuring Tools 21–30 have complete documentation and execution metrics.

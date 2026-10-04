@@ -1,0 +1,196 @@
+# Task: Phase 4.E2E-R3 — Batch 1: Structural & Page Operations Tri-Interface Test & Living Documentation
+# Priority: HIGH
+# Spec: specs/013-tri-interface-e2e-and-docs/spec.md
+
+## Objective
+Implement tri-interface automated testing and living documentation for **Group 1: Structural & Page Operations (Tools 1–10)** across **CLI**, **MCP**, and **REST API**. The test script inspects the input PDF before execution, executes across all 3 interfaces, inspects the output PDF after execution, and writes verified copy-pasteable working examples into `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. DO NOT FIX OR MASK FAILING TOOLS. If any tool fails on CLI, MCP, or API, do NOT patch underlying tool implementations in this PR. Accurately report the failure, exit code, error message, and root cause in the generated report.
+2. Every file you modify or create MUST compile and run cleanly.
+3. Commit message must start with "jules: " prefix.
+4. Python code must use standard library or existing dependencies in the workspace.
+5. Living Documentation rule: The report must include copy-pasteable working examples for CLI, MCP, and REST API so users can use the report as documentation.
+6. MANDATORY TEST PDF CHECK-IN: All test PDF files used (both input test PDFs under `tests/e2e_fixtures/` and generated output PDFs/artifacts under `tests/e2e_fixtures/out/tri_e2e/`) MUST be committed and checked into git as part of the PR. Do NOT add output PDFs to `.gitignore`. They serve as verified, downloadable proof of each operation.
+
+## Requirements
+- Target tools (10 operations):
+  1. `pdf_merge`
+  2. `pdf_split`
+  3. `pdf_rotate`
+  4. `pdf_extract_pages`
+  5. `pdf_delete_pages`
+  6. `pdf_reorder_pages`
+  7. `pdf_burst`
+  8. `pdf_crop`
+  9. `pdf_remove_blank`
+  10. `pdf_page_numbers`
+- Pre-execution snapshot: Input PDF file path, size in bytes, page count.
+- Execute tool on:
+  - CLI (`./target/debug/paperpilot-cli <subcommand> ... --json`)
+  - MCP (JSON-RPC `tools/call` over stdio via `./target/debug/paperpilot-mcp`)
+  - REST API (`curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/...`)
+- Post-execution snapshot: Output PDF file path, size in bytes, size delta, page count, valid PDF format check (`%PDF`).
+- Append/update results in `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+### 1. Component Structure
+You will modify and create the following files:
+1. **`scripts/test_tri_interface_e2e.py`** -> Tri-interface test runner and documentation generator.
+2. **`reports/TRI_INTERFACE_E2E_AND_DOCS.md`** -> Generated living documentation and verification report.
+3. **`Makefile`** -> Add `test-tri-e2e` target.
+
+### 2. Implementation Details
+
+#### Test Framework Foundation (`scripts/test_tri_interface_e2e.py`)
+Implement the test harness in Python 3. It must manage background gateway startup, run commands synchronously, snapshot PDF metrics, and format markdown documentation:
+
+```python
+import os
+import sys
+import json
+import time
+import subprocess
+import urllib.request
+import urllib.error
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FIXTURES_DIR = os.path.join(REPO_ROOT, "tests", "e2e_fixtures")
+OUT_DIR = os.path.join(FIXTURES_DIR, "out", "tri_e2e")
+REPORT_PATH = os.path.join(REPO_ROOT, "reports", "TRI_INTERFACE_E2E_AND_DOCS.md")
+GATEWAY_URL = "http://127.0.0.1:7823"
+```
+
+#### Snapshot Helper Functions
+Implement helpers to count pages and read file byte sizes:
+```python
+def get_pdf_info(filepath):
+    if not os.path.exists(filepath):
+        return {"exists": False, "size": 0, "pages": 0}
+    size = os.path.getsize(filepath)
+    pages = 0
+    try:
+        with open(filepath, "rb") as f:
+            content = f.read()
+            # Fast count /Type /Page
+            pages = max(1, content.count(b"/Type /Page") - content.count(b"/Type /Pages"))
+    except Exception:
+        pages = 1
+    return {"exists": True, "size": size, "pages": pages}
+```
+
+#### Interface Execution Runners
+```python
+def run_cli(args):
+    start = time.time()
+    cli_bin = os.path.join(REPO_ROOT, "target", "debug", "paperpilot-cli")
+    cmd = [cli_bin] + args + ["--json"]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    latency = int((time.time() - start) * 1000)
+    return {"exit_code": proc.returncode, "stdout": proc.stdout, "stderr": proc.stderr, "latency_ms": latency}
+
+def run_mcp(tool_name, arguments):
+    start = time.time()
+    mcp_bin = os.path.join(REPO_ROOT, "target", "debug", "paperpilot-mcp")
+    payload = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {"name": tool_name, "arguments": arguments}
+    })
+    proc = subprocess.run([mcp_bin], input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    latency = int((time.time() - start) * 1000)
+    return {"exit_code": proc.returncode, "stdout": proc.stdout, "stderr": proc.stderr, "latency_ms": latency}
+
+def run_api(endpoint, payload):
+    start = time.time()
+    url = f"{GATEWAY_URL}{endpoint}"
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = resp.read().decode("utf-8")
+            latency = int((time.time() - start) * 1000)
+            return {"status": resp.status, "body": data, "latency_ms": latency, "ok": True}
+    except urllib.error.HTTPError as e:
+        latency = int((time.time() - start) * 1000)
+        return {"status": e.code, "body": e.read().decode("utf-8"), "latency_ms": latency, "ok": False}
+    except Exception as e:
+        latency = int((time.time() - start) * 1000)
+        return {"status": 500, "body": str(e), "latency_ms": latency, "ok": False}
+```
+
+#### Tool Specifications for Batch 1 (Tools 1–10)
+Map each tool with exact commands, inputs, and outputs:
+1. **Merge (`pdf_merge`)**:
+   - Input: `page_1.pdf`, `page_2.pdf`
+   - Output: `out/tri_e2e/merged.pdf`
+   - CLI: `merge --input {p1} {p2} --output {out}`
+   - MCP: `{"name":"pdf_merge", "arguments":{"inputs":[p1, p2], "output":out}}`
+   - API: `POST /api/v1/pdf/merge` with `{"inputs":[p1, p2], "output":out}`
+2. **Split (`pdf_split`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/split.pdf` (or split dir)
+   - CLI: `split --input {in} --pages 1-2 --output {out}`
+   - MCP: `{"name":"pdf_split", "arguments":{"input":in, "pages":"1-2", "output":out}}`
+   - API: `POST /api/v1/pdf/split` with `{"input":in, "pages":"1-2", "output":out}`
+3. **Rotate (`pdf_rotate`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/rotated.pdf`
+   - CLI: `rotate --input {in} --angle 90 --output {out}`
+   - MCP: `{"name":"pdf_rotate", "arguments":{"input":in, "angle":90, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_rotate` with `{"input":in, "angle":90, "output":out}`
+4. **Extract Pages (`pdf_extract_pages`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/extracted.pdf`
+   - CLI: `extract --input {in} --pages 1,3 --output {out}`
+   - MCP: `{"name":"pdf_extract_pages", "arguments":{"input":in, "pages":"1,3", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_extract_pages` with `{"input":in, "pages":"1,3", "output":out}`
+5. **Delete Pages (`pdf_delete_pages`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/deleted.pdf`
+   - CLI: `delete --input {in} --pages 2 --output {out}`
+   - MCP: `{"name":"pdf_delete_pages", "arguments":{"input":in, "pages":"2", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_delete_pages` with `{"input":in, "pages":"2", "output":out}`
+6. **Reorder Pages (`pdf_reorder_pages`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/reordered.pdf`
+   - CLI: `reorder --input {in} --order 3,2,1 --output {out}`
+   - MCP: `{"name":"pdf_reorder_pages", "arguments":{"input":in, "order":"3,2,1", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_reorder_pages` with `{"input":in, "order":"3,2,1", "output":out}`
+7. **Burst (`pdf_burst`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/burst/`
+   - CLI: `burst --input {in} --output-dir {out}`
+   - MCP: `{"name":"pdf_burst", "arguments":{"input":in, "output_dir":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_burst` with `{"input":in, "output_dir":out}`
+8. **Crop (`pdf_crop`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/cropped.pdf`
+   - CLI: `crop --input {in} --x 10 --y 10 --width 500 --height 700 --output {out}`
+   - MCP: `{"name":"pdf_crop", "arguments":{"input":in, "x":10, "y":10, "width":500, "height":700, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_crop` with `{"input":in, "x":10, "y":10, "width":500, "height":700, "output":out}`
+9. **Remove Blank (`pdf_remove_blank`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/nonblank.pdf`
+   - CLI: `remove-blank --input {in} --output {out}`
+   - MCP: `{"name":"pdf_remove_blank", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_remove_blank` with `{"input":in, "output":out}`
+10. **Page Numbers (`pdf_page_numbers`)**:
+   - Input: `multi_page.pdf`
+   - Output: `out/tri_e2e/numbered.pdf`
+   - CLI: `page-numbers --input {in} --position bottom-center --output {out}`
+   - MCP: `{"name":"pdf_page_numbers", "arguments":{"input":in, "position":"bottom-center", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_page_numbers` with `{"input":in, "position":"bottom-center", "output":out}`
+
+#### Living Documentation Report Generation (`reports/TRI_INTERFACE_E2E_AND_DOCS.md`)
+Render markdown containing the scorecard, master parity matrix, and for each tool:
+- Synopsis
+- Copy-pasteable CLI example
+- Copy-pasteable MCP stdio JSON-RPC example
+- Copy-pasteable REST API curl example
+- Metrics table: before size, after size, page change, execution latency, and PASS/FAIL verdict.
+
+## Verification Steps
+1. Build binaries: `cargo build --workspace`.
+2. Run script: `python3 scripts/test_tri_interface_e2e.py`.
+3. Check generated report: `cat reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+4. Verify that working examples are rendered for all 10 tools.

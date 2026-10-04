@@ -1,0 +1,116 @@
+# Task: Phase 4.E2E-R3 — Batch 2: Security & Content Operations Tri-Interface Test & Living Documentation
+# Priority: HIGH
+# Spec: specs/013-tri-interface-e2e-and-docs/spec.md
+
+## Objective
+Implement tri-interface automated testing and living documentation for **Group 2: Security & Content Operations (Tools 11–20)** across **CLI**, **MCP**, and **REST API**. The test script inspects input PDF metrics, executes across all 3 interfaces, inspects output artifacts after execution, and documents verified copy-pasteable working examples into `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. DO NOT FIX OR MASK FAILING TOOLS. If any tool fails on CLI, MCP, or API, do NOT patch underlying tool implementations in this PR. Accurately report the failure, exit code, error message, and root cause in the generated report.
+2. Every file you modify or create MUST compile and run cleanly.
+3. Commit message must start with "jules: " prefix.
+4. Python code must use standard library or existing dependencies in the workspace.
+5. Living Documentation rule: The report must include copy-pasteable working examples for CLI, MCP, and REST API so users can use the report as documentation.
+6. MANDATORY TEST PDF CHECK-IN: All test PDF files used (both input test PDFs under `tests/e2e_fixtures/` and generated output PDFs/artifacts under `tests/e2e_fixtures/out/tri_e2e/`) MUST be committed and checked into git as part of the PR. Do NOT add output PDFs to `.gitignore`. They serve as verified, downloadable proof of each operation.
+
+## Requirements
+- Target tools (10 operations):
+  11. `pdf_encrypt`
+  12. `pdf_decrypt`
+  13. `pdf_redact`
+  14. `pdf_sign`
+  15. `pdf_validate`
+  16. `pdf_hash`
+  17. `pdf_repair`
+  18. `pdf_extract_text`
+  19. `pdf_extract_images`
+  20. `pdf_images_to_pdf`
+- Pre-execution snapshot: Input PDF file path, size in bytes, page count.
+- Execute tool on:
+  - CLI (`./target/debug/paperpilot-cli <subcommand> ... --json`)
+  - MCP (JSON-RPC `tools/call` over stdio via `./target/debug/paperpilot-mcp`)
+  - REST API (`curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/...`)
+- Post-execution snapshot: Output artifact path, size, format validation (magic bytes).
+- Append/update results in `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+### 1. Component Structure
+You will modify:
+1. **`scripts/test_tri_interface_e2e.py`** -> Add Batch 2 tool runners and format checkers.
+2. **`reports/TRI_INTERFACE_E2E_AND_DOCS.md`** -> Update living documentation and verification report.
+
+### 2. Implementation Details
+
+#### Tool Specifications for Batch 2 (Tools 11–20)
+Map each tool with exact commands, inputs, and outputs in `scripts/test_tri_interface_e2e.py`:
+
+11. **Encrypt (`pdf_encrypt`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/encrypted_test.pdf`
+   - CLI: `encrypt --input {in} --password "secret123" --output {out}`
+   - MCP: `{"name":"pdf_encrypt", "arguments":{"input":in, "user_password":"secret123", "owner_password":"secret123", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_encrypt` with `{"input":in, "user_password":"secret123", "output":out}`
+12. **Decrypt (`pdf_decrypt`)**:
+   - Input: `encrypted.pdf` (password: "password123" or "secret123")
+   - Output: `out/tri_e2e/decrypted_test.pdf`
+   - CLI: `decrypt --input {in} --password "password123" --output {out}`
+   - MCP: `{"name":"pdf_decrypt", "arguments":{"input":in, "password":"password123", "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_decrypt` with `{"input":in, "password":"password123", "output":out}`
+13. **Redact (`pdf_redact`)**:
+   - Input: `search_test.pdf`
+   - Output: `out/tri_e2e/redacted_test.pdf`
+   - CLI: `redact --input {in} --text "Confidential" --output {out}`
+   - MCP: `{"name":"pdf_redact", "arguments":{"input":in, "page":1, "x":50, "y":50, "width":200, "height":50, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_redact` with `{"input":in, "page":1, "x":50, "y":50, "width":200, "height":50, "output":out}`
+14. **Sign (`pdf_sign`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/signed_test.pdf`
+   - CLI: `sign --input {in} --reason "Verified" --output {out}`
+   - MCP: `{"name":"pdf_sign", "arguments":{"input":in, "output":out, "reason":"Verified"}}`
+   - API: `POST /api/v1/pdf/tools/pdf_sign` with `{"input":in, "output":out, "reason":"Verified"}`
+15. **Validate (`pdf_validate`)**:
+   - Input: `single_page.pdf`
+   - Output: JSON boolean status
+   - CLI: `validate --input {in}`
+   - MCP: `{"name":"pdf_validate", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/tools/pdf_validate` with `{"input":in}`
+16. **Hash (`pdf_hash`)**:
+   - Input: `single_page.pdf`
+   - Output: SHA-256 hash string
+   - CLI: `hash --input {in}`
+   - MCP: `{"name":"pdf_hash", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/tools/pdf_hash` with `{"input":in}`
+17. **Repair (`pdf_repair`)**:
+   - Input: `repaired.pdf` (or `single_page.pdf`)
+   - Output: `out/tri_e2e/repaired_test.pdf`
+   - CLI: `repair --input {in} --output {out}`
+   - MCP: `{"name":"pdf_repair", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_repair` with `{"input":in, "output":out}`
+18. **Extract Text (`pdf_extract_text`)**:
+   - Input: `search_test.pdf`
+   - Output: `out/tri_e2e/extracted_text.txt` (or stdout text)
+   - CLI: `extract-text --input {in} --output {out}`
+   - MCP: `{"name":"pdf_extract_text", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/extract-text` with `{"input":in}`
+19. **Extract Images (`pdf_extract_images`)**:
+   - Input: `image_doc.pdf`
+   - Output: `out/tri_e2e/extracted_images/`
+   - CLI: `extract-images --input {in} --output-dir {out}`
+   - MCP: `{"name":"pdf_extract_images", "arguments":{"input":in, "output_dir":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_extract_images` with `{"input":in, "output_dir":out}`
+20. **Images to PDF (`pdf_images_to_pdf`)**:
+   - Input: `img1.png`, `img2.png`
+   - Output: `out/tri_e2e/images_converted.pdf`
+   - CLI: `images-to-pdf --input {img1} {img2} --output {out}`
+   - MCP: `{"name":"pdf_images_to_pdf", "arguments":{"inputs":[img1, img2], "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_images_to_pdf` with `{"inputs":[img1, img2], "output":out}`
+
+#### Living Documentation Report Generation
+For each tool, document:
+- Copy-pasteable CLI command
+- Copy-pasteable MCP stdio JSON-RPC frame
+- Copy-pasteable REST API curl request
+- Verification scorecard with latency, size delta, format integrity check, and PASS/FAIL verdict.
+
+## Verification Steps
+1. Run `python3 scripts/test_tri_interface_e2e.py`.
+2. Inspect `reports/TRI_INTERFACE_E2E_AND_DOCS.md` ensuring Tools 11–20 have complete documentation and execution metrics.

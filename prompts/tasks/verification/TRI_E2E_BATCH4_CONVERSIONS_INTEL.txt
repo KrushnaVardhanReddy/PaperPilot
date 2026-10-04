@@ -1,0 +1,145 @@
+# Task: Phase 4.E2E-R3 — Batch 4: Conversions, Bookmarks & Advanced Tools Tri-Interface Test & Living Documentation
+# Priority: HIGH
+# Spec: specs/013-tri-interface-e2e-and-docs/spec.md
+
+## Objective
+Implement tri-interface automated testing and living documentation for **Group 4: Conversions, Bookmarks & Advanced Operations (Tools 31–44)** across **CLI**, **MCP**, and **REST API**. The test script inspects input PDF metrics, executes across all 3 interfaces, inspects output artifacts after execution, and documents verified copy-pasteable working examples into `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. DO NOT FIX OR MASK FAILING TOOLS. If any tool fails on CLI, MCP, or API, do NOT patch underlying tool implementations in this PR. Accurately report the failure, exit code, error message, and root cause in the generated report.
+2. Every file you modify or create MUST compile and run cleanly.
+3. Commit message must start with "jules: " prefix.
+4. Python code must use standard library or existing dependencies in the workspace.
+5. Living Documentation rule: The report must include copy-pasteable working examples for CLI, MCP, and REST API so users can use the report as documentation.
+6. MANDATORY TEST PDF CHECK-IN: All test PDF files used (both input test PDFs under `tests/e2e_fixtures/` and generated output PDFs/artifacts under `tests/e2e_fixtures/out/tri_e2e/`) MUST be committed and checked into git as part of the PR. Do NOT add output PDFs to `.gitignore`. They serve as verified, downloadable proof of each operation.
+
+## Requirements
+- Target tools (14 operations):
+  31. `pdf_bookmarks`
+  32. `pdf_compress`
+  33. `pdf_linearize`
+  34. `pdf_flatten`
+  35. `pdf_to_docx`
+  36. `pdf_to_xlsx`
+  37. `pdf_to_pptx`
+  38. `pdf_to_pdf_a`
+  39. `pdf_classify_type`
+  40. `pdf_compare`
+  41. `pdf_annotate`
+  42. `pdf_convert_html`
+  43. `pdf_convert_markdown`
+  44. `pdf_convert_excel`
+- Pre-execution snapshot: Input PDF / source file path, size in bytes, page count.
+- Execute tool on:
+  - CLI (`./target/debug/paperpilot-cli <subcommand> ... --json`)
+  - MCP (JSON-RPC `tools/call` over stdio via `./target/debug/paperpilot-mcp`)
+  - REST API (`curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/...`)
+- Post-execution snapshot: Output artifact path, size, format validation (magic bytes).
+- Append/update results in `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+### 1. Component Structure
+You will modify:
+1. **`scripts/test_tri_interface_e2e.py`** -> Add Batch 4 tool runners, non-PDF input generators, and conversion validators.
+2. **`reports/TRI_INTERFACE_E2E_AND_DOCS.md`** -> Finalize master living documentation and verification report.
+
+### 2. Implementation Details
+
+#### Tool Specifications for Batch 4 (Tools 31–44)
+Map each tool with exact commands, inputs, and outputs in `scripts/test_tri_interface_e2e.py`:
+
+31. **Bookmarks (`pdf_bookmarks`)**:
+   - Input: `multi_page.pdf`
+   - Output: JSON bookmarks outline
+   - CLI: `bookmarks --input {in}`
+   - MCP: `{"name":"pdf_bookmarks", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/tools/pdf_bookmarks` with `{"input":in}`
+32. **Compress (`pdf_compress`)**:
+   - Input: `large_doc.pdf`
+   - Output: `out/tri_e2e/compressed.pdf`
+   - CLI: `compress --input {in} --quality medium --output {out}`
+   - MCP: `{"name":"pdf_compress", "arguments":{"input":in, "quality":"medium", "output":out}}`
+   - API: `POST /api/v1/pdf/compress` with `{"input":in, "quality":"medium", "output":out}`
+33. **Linearize (`pdf_linearize`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/linearized.pdf`
+   - CLI: `linearize --input {in} --output {out}`
+   - MCP: `{"name":"pdf_linearize", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_linearize` with `{"input":in, "output":out}`
+34. **Flatten (`pdf_flatten`)**:
+   - Input: `form_filled.pdf`
+   - Output: `out/tri_e2e/flattened.pdf`
+   - CLI: `flatten --input {in} --output {out}`
+   - MCP: `{"name":"pdf_flatten", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_flatten` with `{"input":in, "output":out}`
+35. **PDF to DOCX (`pdf_to_docx`)**:
+   - Input: `search_test.pdf`
+   - Output: `out/tri_e2e/document.docx`
+   - CLI: `to-docx --input {in} --output {out}`
+   - MCP: `{"name":"pdf_to_docx", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/convert` with `{"input":in, "output":out, "format":"docx"}`
+36. **PDF to XLSX (`pdf_to_xlsx`)**:
+   - Input: `search_test.pdf`
+   - Output: `out/tri_e2e/document.xlsx`
+   - CLI: `to-xlsx --input {in} --output {out}`
+   - MCP: `{"name":"pdf_to_xlsx", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_to_xlsx` with `{"input":in, "output":out}`
+37. **PDF to PPTX (`pdf_to_pptx`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/presentation.pptx`
+   - CLI: `to-pptx --input {in} --output {out}`
+   - MCP: `{"name":"pdf_to_pptx", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_to_pptx` with `{"input":in, "output":out}`
+38. **PDF to PDF/A (`pdf_to_pdf_a`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/archival.pdf`
+   - CLI: `to-pdf-a --input {in} --output {out}`
+   - MCP: `{"name":"pdf_to_pdf_a", "arguments":{"input":in, "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_to_pdf_a` with `{"input":in, "output":out}`
+39. **Classify Type (`pdf_classify_type`)**:
+   - Input: `form.pdf`
+   - Output: JSON type classification
+   - CLI: `classify --input {in}`
+   - MCP: `{"name":"pdf_classify_type", "arguments":{"input":in}}`
+   - API: `POST /api/v1/pdf/tools/pdf_classify_type` with `{"input":in}`
+40. **Compare (`pdf_compare`)**:
+   - Input: `page_1.pdf`, `page_2.pdf`
+   - Output: JSON comparison diff report
+   - CLI: `compare --file1 {f1} --file2 {f2}`
+   - MCP: `{"name":"pdf_compare", "arguments":{"file1":f1, "file2":f2}}`
+   - API: `POST /api/v1/pdf/compare` with `{"file1":f1, "file2":f2}`
+41. **Annotate (`pdf_annotate`)**:
+   - Input: `single_page.pdf`
+   - Output: `out/tri_e2e/annotated.pdf`
+   - CLI: `annotate --input {in} --annotations '[{"type":"note","page":1,"x":50,"y":50,"content":"Test"}]' --output {out}`
+   - MCP: `{"name":"pdf_annotate", "arguments":{"input":in, "annotations":[{"type":"note","page":1,"x":50,"y":50,"content":"Test"}], "output":out}}`
+   - API: `POST /api/v1/pdf/tools/pdf_annotate` with `{"input":in, "annotations":[{"type":"note","page":1,"x":50,"y":50,"content":"Test"}], "output":out}`
+42. **HTML to PDF (`pdf_convert_html`)**:
+   - Input: temporary HTML file with `<h1>Invoice</h1><p>Test</p>`
+   - Output: `out/tri_e2e/html_out.pdf`
+   - CLI: `from-html --input {in} --output {out} --preset elegant`
+   - MCP: `{"name":"pdf_convert_html", "arguments":{"input":in, "output":out, "preset":"elegant"}}`
+   - API: `POST /api/v1/pdf/tools/pdf_convert_html` with `{"input":in, "output":out, "preset":"elegant"}`
+43. **Markdown to PDF (`pdf_convert_markdown`)**:
+   - Input: temporary MD file with `# Header\n\nContent`
+   - Output: `out/tri_e2e/md_out.pdf`
+   - CLI: `from-markdown --input {in} --output {out} --preset github`
+   - MCP: `{"name":"pdf_convert_markdown", "arguments":{"input":in, "output":out, "preset":"github"}}`
+   - API: `POST /api/v1/pdf/tools/pdf_convert_markdown` with `{"input":in, "output":out, "preset":"github"}`
+44. **Excel to PDF (`pdf_convert_excel`)**:
+   - Input: temporary CSV file with `Item,Price\nBook,10`
+   - Output: `out/tri_e2e/excel_out.pdf`
+   - CLI: `from-excel --input {in} --output {out} --preset minimal`
+   - MCP: `{"name":"pdf_convert_excel", "arguments":{"input":in, "output":out, "preset":"minimal"}}`
+   - API: `POST /api/v1/pdf/tools/pdf_convert_excel` with `{"input":in, "output":out, "preset":"minimal"}`
+
+#### Living Documentation Report Generation
+For each tool, document:
+- Copy-pasteable CLI command
+- Copy-pasteable MCP stdio JSON-RPC frame
+- Copy-pasteable REST API curl request
+- Verification scorecard with latency, size delta, format integrity check, and PASS/FAIL verdict.
+
+## Verification Steps
+1. Run `python3 scripts/test_tri_interface_e2e.py`.
+2. Inspect `reports/TRI_INTERFACE_E2E_AND_DOCS.md` ensuring Tools 31–44 have complete documentation and execution metrics.
+3. Verify that the Executive Summary records 44/44 total operations.

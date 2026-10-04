@@ -18,8 +18,9 @@ Now that PaperPilot has complete implementations of CLI, MCP, and REST API acros
 3. **Deep State & File Inspection**:
    - Takes a **Pre-Execution Snapshot** of the input fixture (file path, file size in bytes, page count).
    - Executes the operation across all 3 interfaces.
-   - Takes a **Post-Execution Snapshot** of the resulting PDF/output file (file size, delta in bytes, page count change, and format validation like valid PDF header, zip header for docx, PNG signature, etc.).
-4. **Strict "Report, Don't Fix" Rule**:
+4. **Check in Test PDFs (Input & Output Artifacts)**:
+   - All input fixture PDFs and resulting output test PDFs/artifacts generated during verification must be committed and checked into git (under `tests/e2e_fixtures/` and `tests/e2e_fixtures/out/tri_e2e/`) so that the documentation has actual, real downloadable/inspectable test PDFs associated with each run.
+5. **Strict "Report, Don't Fix" Rule**:
    - If a tool fails on any interface, the test harness must **NOT** mask, ignore, or modify underlying tool logic. It must accurately record the failure status, error message, exit code, and root cause in the generated report.
 
 ---
