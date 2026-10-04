@@ -26,7 +26,10 @@
 
 <div class="titlebar" data-tauri-drag-region>
   <div class="titlebar-menus" data-tauri-drag-region>
-    <div class="brand" data-tauri-drag-region>PaperPilot</div>
+    <div class="brand" data-tauri-drag-region>
+      <img src="/favicon.png" alt="PaperPilot" class="brand-icon" />
+      <span>PaperPilot</span>
+    </div>
 
     <div class="menu-item" class:active={activeMenu === 'file'}>
       <button class="menu-btn" onclick={(e) => toggleMenu('file', e)}>File</button>
@@ -111,10 +114,20 @@
   }
 
   .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 600;
     margin-right: 16px;
     margin-left: 8px;
     color: var(--text-primary);
+  }
+
+  .brand-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    object-fit: contain;
   }
 
   .menu-item {
