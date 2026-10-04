@@ -994,6 +994,20 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 6.6 — Enterprise DRM, Anti-Brute-Force & Self-Destructing Documents (Dead Man's Switch) `[PARALLEL with 6.2]`
+
+> High-security enterprise defense against unauthorized data exfiltration, GPU brute-forcing, and unauthorized offline cracking.
+
+| # | Task | Notes |
+|---|---|---|
+| 6.6.1 | Remote Burn Switch via Key Escrow (KMS / Vault) | Master AES-256 key $K_{doc}$ stored in PaperPilot Gateway/HSM; after $N$ failed verification attempts, the server permanently purges $K_{doc}$, rendering all distributed copies mathematical noise |
+| 6.6.2 | Memory-Hard Key Derivation (Argon2id) | Support configurable Argon2id / scrypt key derivation (1GB RAM cost per attempt) to neutralize offline GPU rack brute-forcing (Hashcat/John the Ripper) |
+| 6.6.3 | Coercion / Duress Password & Honeypot Decoy | Secondary password triggers silent decoy mode: opens sanitized mock PDF while quietly triggering a secure cryptographic zero-wipe (`0x00`) on sensitive cached data |
+| 6.6.4 | Exponential Backoff & Local Lockout Enforcement | Enforce progressive delay penalties on repeated incorrect decryption attempts across Desktop, CLI, and REST Gateway |
+| 6.6.5 | Exfiltration & Brute-Force Alerting Webhooks | Fire real-time SIEM alerts (PagerDuty, Slack, Syslog) when repeated decryption failures indicate brute-force reconnaissance |
+
+---
+
 ## Phase 7 — Managed Cloud
 
 **Goal:** Organizations that don't want to self-host can use PaperPilot as a service.
