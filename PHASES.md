@@ -458,7 +458,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
 | 4.0.3 | Intent vocabulary definition ✅ | Merged (Session 7343236324684096962) |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine ✅ | Merged (Session 283097227045968085) |
-| 4.0.5 | Layer 2 — ONNX intent classifier ✅ | Merged (Session 12133795038104614276). Architecture: NeuML's `bert-hash-nano-embeddings` (<1M params, ~1.1MB INT8 ONNX, 128-dim vectors) for semantic intent routing & zero-shot classification |
+| 4.0.5 | Layer 2 — ONNX intent classifier | ⏳ Pending / Planned — Architecture: NeuML's `bert-hash-nano-embeddings` (<1M params, ~1.1MB INT8 ONNX, 128-dim vectors) via `ort` runtime |
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver ✅ | Merged (Session 14288794462066623856) |
 | 4.0.8 | Offline NLP → `OperationPlan` output ✅ | Merged (Session 14288794462066623856) |
