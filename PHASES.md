@@ -829,6 +829,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.4.2 | Fake Scanner Effect | Apply subtle skew, grain, and contrast filter to emulate physical scanner output |
 | 5.4.3 | Embedded JavaScript Inspector | Inspect and extract embedded script payloads for security review |
 | 5.4.4 | Color Inversion / Dark Mode Filter | Invert document colors or strip colored backgrounds for paper/ink conservation |
+| 5.4.5 | Change PDF Permissions (Security Flags) | Modify document user/owner permissions (allow/disallow printing, copying text, form filling, annotations) without changing master encryption |
+| 5.4.6 | Adjust Image Contrast / Clean Scan | Enhance contrast, brightness, and thresholding on scanned PDFs to whiten backgrounds and sharpen text before OCR |
+| 5.4.7 | Scanner Image Split (Dual-Page Book Split) | Automatically detect center spine and split scanned two-page book spreads into individual portrait pages |
+| 5.4.8 | Comic Book Archive Conversion (PDF ↔ CBR/CBZ) | Convert PDFs to/from comic archive formats (`.cbz` zip and `.cbr` rar) preserving page sequence and metadata |
+| 5.4.9 | Selective Color Replacement / Background Removal | Replace specific document CMYK/RGB colors (e.g. replace colored header bars or tinted paper backgrounds with pure white) |
 
 ---
 
