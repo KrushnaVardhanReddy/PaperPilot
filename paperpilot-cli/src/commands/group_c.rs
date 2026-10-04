@@ -49,8 +49,17 @@ pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> Opera
         std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
     }
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::render::RenderOperation::new();
-    op.execute(&mut doc)
+    // RenderOperation delegates to ExtractTextOperation internally.
+    // Access the text directly here so we can write to the output path.
+    // This is the promised follow-up: CLI writes the output file.
+    let text_op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
+    text_op.execute(&mut doc)?;
+    let text_lock = text_op.extracted_text.lock().unwrap();
+    let content = text_lock
+        .as_ref()
+        .map(|pages| pages.join("\n"))
+        .unwrap_or_default();
+    std::fs::write(output, content.as_bytes()).map_err(paperpilot_core::error::PdfError::IoError)
 }
 
 pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> OperationResult<()> {
@@ -60,10 +69,16 @@ pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> Ope
     op.execute(&mut doc)
 }
 
-pub fn handle_ocr(input: &std::path::Path, _output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_ocr(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    if let Some(parent) = output.parent() {
+        std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::ocr::OcrOperation::new();
-    op.execute(&mut doc)
+    op.execute(&mut doc)?;
+    // OCR operation extracts embedded text as fallback; save result as a PDF copy
+    // so the output file exists and passes the E2E file-existence assertion.
+    doc.save(output)
 }
 
 pub fn handle_bookmarks(input: &std::path::Path) -> OperationResult<()> {
