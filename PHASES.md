@@ -458,7 +458,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
 | 4.0.3 | Intent vocabulary definition ✅ | Merged (Session 7343236324684096962) |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine ✅ | Merged (Session 283097227045968085) |
-| 4.0.5 | Layer 2 — ONNX intent classifier | ⏳ Pending / Planned — Architecture: NeuML's `bert-hash-nano-embeddings` (<1M params, ~1.1MB INT8 ONNX, 128-dim vectors) via `ort` runtime |
+| 4.0.5 | Layer 2 — ONNX Slot-Filling Intent & Entity Classifier | ⏳ Pending / Planned — Architecture: DistilBERT/MobileBERT INT8 ONNX (~20MB, <5ms CPU latency via `ort`) for zero-shot intent and token slot-filling (extracts file names, page ranges, and actions in any phrasing) |
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver ✅ | Merged (Session 14288794462066623856) |
 | 4.0.8 | Offline NLP → `OperationPlan` output ✅ | Merged (Session 14288794462066623856) |
@@ -711,8 +711,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.1.1 | Create `paperpilot-ai` crate | LLM-specific implementations; depends on `paperpilot-nlp` for the shared trait |
 | 4.1.2 | `LlmNlpResolver` struct | Implements `NlpResolver` via LLM API call |
 | 4.1.3 | `OllamaNlpResolver` struct | Implements `NlpResolver` via local Ollama endpoint (offline but heavier, ~2–8 GB) |
-| 4.1.4 | llamafile integration | Bundle or point to local llamafile binary for air-gapped LLM mode |
-| 4.1.5 | OpenAI-compatible API client | Works with OpenAI, Gemini, Groq, LM Studio, etc. |
+| 4.1.4 | Embedded Local SLM (`SmolLM-135M` / llamafile) | Built-in offline small language model (~75MB Q4 GGUF) for conversational, multi-step pipeline planning without external servers |
+| 4.1.5 | OpenAI-compatible API client | Works with OpenAI, Gemini, Groq, LM Studio, etc. (BYOK - Bring Your Own Key) |
 | 4.1.6 | AI provider config in settings | User picks resolver: Offline / Ollama / OpenAI-compatible; enters endpoint + key |
 | 4.1.7 | Auto-fallback logic | If LLM resolver fails or has no key, fall back to offline NLP and inform the user |
 
