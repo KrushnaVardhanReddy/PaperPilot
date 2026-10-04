@@ -38,3 +38,43 @@ Provide a unified, modern desktop workstation for viewing, navigating, annotatin
   - Rich Markdown formatting with syntax highlighting, lists, and table rendering.
   - Per-document conversation history persistence across tab switching.
   - Interactive Action Confirmation cards embedded directly in the message flow (e.g. "Run Merge", "Apply Redaction").
+
+### 6. Developer Mode: Tri-Interface Action Inspector & CodeGen (`ActionInspector.svelte`)
+- **Trigger**: Toggleable via `Developer Mode` switch in settings, top toolbar badge (`🛠️ Dev Mode`), or hotkey `Ctrl+Shift+I`.
+- **Purpose**: Bridge visual GUI actions to repeatable automation code (CLI, cURL REST API, MCP tool call, and Python/Bash scripts) with one-click copying.
+- **UI Architecture**:
+  - Embedded collapsible drawer or tab inside `OperationsPanel.svelte`.
+  - **Live Reactive CodeGen**: As users adjust sliders (e.g., opacity, page ranges, passwords, crop boxes) or pick files in the GUI, the generated snippet updates instantly in real time.
+- **Multi-Tab CodeGen Formats**:
+  1. **CLI Tab**:
+     - Formats exact bash command with flags matching active inputs:
+       ```bash
+       paperpilot watermark --input contract.pdf --output out.pdf --text "CONFIDENTIAL" --pages 1-5
+       ```
+     - Includes a toggle: `Wrap in batch loop (all *.pdf in folder)` generating a 3-line bash `for file in *.pdf; do ... done` snippet.
+  2. **REST API (cURL) Tab**:
+     - Formats full `curl` command with method, endpoint, headers, and JSON body targeting PaperPilot's local/gateway HTTP API:
+       ```bash
+       curl -X POST http://localhost:8080/api/v1/pdf/tools/pdf_watermark \
+         -H "Content-Type: application/json" \
+         -d '{"input": "contract.pdf", "output": "out.pdf", "text": "CONFIDENTIAL", "pages": [1,2,3,4,5]}'
+       ```
+  3. **MCP Tool Call (JSON) Tab**:
+     - Produces native Model Context Protocol JSON payload ready to paste into Claude Desktop, Cursor, Antigravity, or any MCP client:
+       ```json
+       {
+         "name": "pdf_watermark",
+         "arguments": {
+           "input": "contract.pdf",
+           "output": "out.pdf",
+           "text": "CONFIDENTIAL",
+           "pages": [1, 2, 3, 4, 5]
+         }
+       }
+       ```
+  4. **Code / Scripting Tab**:
+     - Generates copyable scripts in **Python** (`requests` or `subprocess`), **Node.js/TypeScript**, and **Rust** (`paperpilot-core` crate call).
+- **Audit & Workflow History ("Action Log")**:
+  - Retains a chronological list of recent operations executed during the desktop session.
+  - "Export Workflow as Pipeline": Allows exporting multi-step user actions (e.g. *Decrypt -> Extract Pages -> Watermark*) as an executable Bash script or a multi-step MCP execution plan.
+
