@@ -186,6 +186,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(alias = "sign")]
     Signature {
         #[arg(long)]
         input: PathBuf,
@@ -200,6 +201,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(alias = "to-pdf-a")]
     PdfA {
         #[arg(long)]
         input: PathBuf,
@@ -485,6 +487,37 @@ mod tests {
                 assert_eq!(output, PathBuf::from("out.pdf"));
             }
             _ => panic!("Expected ImagesToPdf command"),
+        }
+    }
+
+    #[test]
+    fn test_signature_alias() {
+        let args = vec![
+            "paperpilot", "sign", "--input", "in.pdf", "--cert", "cert.pem", "--output", "out.pdf",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Signature { input, cert, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(cert, PathBuf::from("cert.pem"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected Signature command"),
+        }
+    }
+
+    #[test]
+    fn test_pdfa_alias() {
+        let args = vec![
+            "paperpilot", "to-pdf-a", "--input", "in.pdf", "--output", "out.pdf",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::PdfA { input, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected PdfA command"),
         }
     }
 }
