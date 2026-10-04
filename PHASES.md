@@ -141,6 +141,21 @@ All operations are independent of each other and can be built in parallel once t
 
 ---
 
+#### Group G — Smart Scan Compression (DjVu-inspired)
+> Inspired by DjVu's 3-layer decomposition (background + foreground text mask + OCR). Target: 80–90% size reduction on scanned PDFs vs. standard Flate/JPEG. See `INSPIRATION.md §1`.
+
+| # | Task | Notes |
+|---|---|---|
+| 1.3.50 | Scanned page detector | Heuristic: if >80% of page content stream is raster image data with no vector paths → classify as "scanned page" |
+| 1.3.51 | Background layer extraction | Downsample page raster to ~72 DPI; apply IW44-style wavelet compression (Rust `image` crate wavelets) for paper texture / colour wash |
+| 1.3.52 | Foreground text mask | Binarise the full-res page raster (adaptive threshold); detect connected components corresponding to text glyphs; encode as JBIG2 or CCITT Group 4 bitonal stream |
+| 1.3.53 | Hidden text layer injection | After OCR (Phase 5.1), inject the text layer as a `ActualText` / invisible-text overlay within the compressed page for copy-paste and search |
+| 1.3.54 | 3-layer page reassembly | Combine background (low-res colour) + foreground (bitonal hi-res mask) + hidden text into a single lopdf page object; result opens normally in any PDF viewer |
+| 1.3.55 | `SmartCompressOperation` | Wraps tasks 1.3.50–1.3.54; called by `pdf_compress` when `--mode smart-scan` is passed; falls back to standard Flate for non-scanned pages |
+| 1.3.56 | Compression ratio benchmarks | Automated test comparing output size vs. standard `pdf_compress --quality low/medium` on a fixture set of 10 scanned PDFs; must achieve ≥70% reduction |
+
+---
+
 ### 1.4 — Testing `[PARALLEL with 1.3]`
 
 Write tests alongside each operation, not after.
@@ -1563,6 +1578,7 @@ permissions = { print = true, edit = false }
 | 8.3.4 | `ppdoc → Markdown` exporter | Best-effort flat text; preserve tables (GFM), images (relative paths), headings |
 | 8.3.5 | `ppdoc → Plain Text` exporter | Reading-order extraction with clean whitespace |
 | 8.3.6 | Export CLI subcommand | `paperpilot ppdoc export --format pdf --input doc.ppdoc --output doc.pdf` |
+| 8.3.7 | Hybrid PDF Export (`--embed-source`) | Inspired by LibreOffice Hybrid PDF but **visible**: attach the `.ppdoc` ZIP bundle into the PDF `/EmbeddedFiles` dictionary; inject structured XMP metadata (`ppdoc_version`, `generator`); render a small tasteful "PaperPilot Document" badge in the PDF margin (opt-out flag `--no-badge`). When any resulting `.pdf` is dropped back into PaperPilot, the embedded `.ppdoc` is extracted and opened with full edit history, AI embeddings, and vector source intact. **Viral distribution mechanism** — every shared PDF is a soft funnel for PaperPilot adoption. See `INSPIRATION.md §4`. |
 
 ---
 
