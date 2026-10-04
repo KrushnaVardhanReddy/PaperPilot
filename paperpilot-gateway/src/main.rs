@@ -16,5 +16,5 @@ async fn main() -> std::io::Result<()> {
 
     let bind = env::var("BIND").unwrap_or_else(|_| "127.0.0.1".to_string());
 
-    paperpilot_gateway::server::start(port, &bind).await
+    paperpilot_gateway::server::start(port, &bind, std::future::pending()).await
 }

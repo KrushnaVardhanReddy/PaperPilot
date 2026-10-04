@@ -42,18 +42,20 @@
 
   <nav class="sidebar-nav" aria-label="Navigation">
     {#each navItems as item (item.id)}
-      <button
-        class="nav-item"
-        class:active={appState.activeTab === item.id}
-        onclick={() => appState.setActiveTab(item.id)}
-        title={isCollapsed ? item.label : undefined}
-        id={`nav-${item.id}`}
-        aria-label={item.label}
-        aria-current={appState.activeTab === item.id ? 'page' : undefined}
-      >
-        <span class="nav-icon" aria-hidden="true">{item.icon}</span>
-        <span class="nav-label">{item.label}</span>
-      </button>
+      {#if item.id !== 'api' || appState.developerMode}
+        <button
+          class="nav-item"
+          class:active={appState.activeTab === item.id}
+          onclick={() => appState.setActiveTab(item.id)}
+          title={isCollapsed ? item.label : undefined}
+          id={`nav-${item.id}`}
+          aria-label={item.label}
+          aria-current={appState.activeTab === item.id ? 'page' : undefined}
+        >
+          <span class="nav-icon" aria-hidden="true">{item.icon}</span>
+          <span class="nav-label">{item.label}</span>
+        </button>
+      {/if}
     {/each}
   </nav>
 

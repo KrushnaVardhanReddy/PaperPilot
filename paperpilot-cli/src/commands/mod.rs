@@ -161,7 +161,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 paperpilot_core::error::PdfError::IoError(e)
             })?;
             rt.block_on(async {
-                paperpilot_gateway::server::start(*port, bind).await
+                paperpilot_gateway::server::start(*port, bind, std::future::pending()).await
             }).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             Ok(())
         }

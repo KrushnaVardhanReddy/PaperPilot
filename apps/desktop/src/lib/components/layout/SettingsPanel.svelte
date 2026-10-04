@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { appState } from '$lib/state/app.svelte';
+
   let aiProvider = $state('openai');
   let apiKey = $state('');
   let outputDir = $state('');
@@ -58,6 +60,36 @@
           <button class="btn secondary" onclick={handleBrowse}>Browse</button>
         </div>
       </div>
+    </div>
+
+    <div class="setting-group" id="setting-group-developer-mode">
+      <h3>Developer Mode & Local REST API</h3>
+      <div class="setting-item toggle-item">
+        <div class="setting-info">
+          <label for="developer-mode-toggle">Enable Local REST API & Swagger (Port 7823)</label>
+          <p class="help-text">
+            Spins up a local REST API and Swagger UI server at <code>http://127.0.0.1:7823</code> for Python scripts, homelab automations, and external clients.
+          </p>
+        </div>
+        <label class="switch">
+          <input
+            type="checkbox"
+            id="developer-mode-toggle"
+            checked={appState.developerMode}
+            onchange={async (e) => await appState.toggleDeveloperMode(e.currentTarget.checked)}
+          />
+          <span class="slider round"></span>
+        </label>
+      </div>
+      {#if appState.developerMode}
+        <div class="dev-mode-status" id="dev-mode-status-info">
+          <span class="status-indicator active">● Running</span>
+          <span>API Endpoint: <code>http://127.0.0.1:{appState.gatewayPort}</code></span>
+          <a href="http://127.0.0.1:{appState.gatewayPort}/swagger-ui" target="_blank" rel="noreferrer" class="swagger-link" id="open-swagger-external-btn">
+            Open Swagger UI ↗
+          </a>
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -184,5 +216,118 @@
   .btn.secondary:hover {
     background-color: var(--bg-surface-hover);
     border-color: var(--text-muted);
+  }
+
+  /* Toggle Switch Styles */
+  .setting-item.toggle-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .setting-info {
+    flex: 1;
+    margin-right: 20px;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-secondary);
+    transition: .3s;
+    border: 1px solid var(--border-color);
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--text-secondary);
+    transition: .3s;
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+
+  input:focus + .slider {
+    box-shadow: 0 0 1px var(--accent-primary);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: #fff;
+  }
+
+  .slider.round {
+    border-radius: 24px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  .dev-mode-status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background-color: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+
+  .status-indicator {
+    font-weight: bold;
+    color: var(--text-muted);
+  }
+
+  .status-indicator.active {
+    color: #4caf50;
+  }
+
+  code {
+    background-color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+  }
+
+  .swagger-link {
+    margin-left: auto;
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .swagger-link:hover {
+    text-decoration: underline;
   }
 </style>
