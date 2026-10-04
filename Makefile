@@ -11,10 +11,13 @@ build:
 run: build-release
 	./target/release/desktop
 
-# Build the production standalone desktop app (release) and inspect binary size
+# Run desktop in live-reload dev mode (starts Vite + debug Tauri)
+dev:
+	cd apps/desktop && npm run tauri dev
+
+# Build the production standalone desktop app (release) with embedded frontend
 build-release:
-	cd apps/desktop && npm run build
-	cargo build --release -p desktop
+	cd apps/desktop && npx tauri build --no-bundle
 	@echo "\n=== Release Binary Size ==="
 	@ls -lh target/release/desktop
 
