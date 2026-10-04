@@ -4236,6 +4236,7 @@ dependencies = [
  "axum",
  "bytes",
  "futures",
+ "lopdf",
  "multipart",
  "paperpilot-core",
  "paperpilot-mcp",
