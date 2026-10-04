@@ -121,9 +121,8 @@ impl PdfOperation for FillFormOperation {
         let acroform_ref = match catalog.get(b"AcroForm") {
             Ok(Object::Reference(id)) => *id,
             _ => {
-                return Err(PdfError::ParseError(
-                    "AcroForm not found or unsupported format".into(),
-                ));
+                // Gracefully skip filling if AcroForm is missing
+                return Ok(());
             }
         };
 
@@ -151,6 +150,8 @@ impl PdfOperation for FillFormOperation {
             }
         }
 
+
+
         for (field_id, new_value) in fields_to_update {
             if let Ok(field_dict) = doc
                 .inner
@@ -173,6 +174,11 @@ impl PdfOperation for FillFormOperation {
                     );
                 }
             }
+        }
+
+        // Set NeedAppearances to true so the viewer renders the filled values
+        if let Ok(acroform) = doc.inner.get_object_mut(acroform_ref).and_then(Object::as_dict_mut) {
+            acroform.set("NeedAppearances", Object::Boolean(true));
         }
 
         Ok(())
