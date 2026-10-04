@@ -597,9 +597,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.14.1 | Native "Save As" dialog for Merge & Split | Show `@tauri-apps/plugin-dialog` `save()` before running Merge or Split; user picks filename & destination; cancelling aborts the operation |
-| F.14.2 | Editable output path field for all other tools | Inspector shows a pre-filled, editable "Output file:" path input (auto-suggested from source dir) that the user can override before running |
-| F.14.3 | Full absolute path in success toast | Success notification always displays the exact absolute path where the output was written |
+| F.14.1 | Native "Save As" dialog for Merge & Split | ✅ Completed — Show `@tauri-apps/plugin-dialog` `save()` before running Merge or Split; user picks filename & destination; cancelling aborts the operation |
+| F.14.2 | Editable output path field for all other tools | ✅ Completed — Inspector shows a pre-filled, editable "Output file:" path input (auto-suggested from source dir) that the user can override before running |
+| F.14.3 | Full absolute path in success toast | ✅ Completed — Success notification always displays the exact absolute path where the output was written |
 
 #### 4.F.15 — High-Volume File Ingestion: Lazy Byte Loading & Tab Limit Management
 
@@ -607,10 +607,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.15.1 | Lightweight File Metadata Command (`get_file_metadata`) | Rust Tauri command querying file path, name, and size via `std::fs::metadata` without allocating file payload |
-| F.15.2 | Lazy Ingestion in DropZone | Instant multi-file browsing via lightweight placeholders; zero upfront byte allocation |
-| F.15.3 | Tab Bar Limit & Library Separation | Decouple Documents Library list from open tabs; enforce max 8 active tabs with auto-rotation |
-| F.15.4 | On-Demand Viewer Byte Loading | Load raw file bytes and blob URLs only when a document is actively viewed in the canvas; revoke URLs on switch |
+| F.15.1 | Lightweight File Metadata Command (`get_file_metadata`) | ✅ Completed — Rust Tauri command querying file path, name, and size via `std::fs::metadata` without allocating file payload |
+| F.15.2 | Lazy Ingestion in DropZone | ✅ Completed — Instant multi-file browsing via lightweight placeholders; zero upfront byte allocation |
+| F.15.3 | Tab Bar Limit & Library Separation | ✅ Completed — Decouple Documents Library list from open tabs; enforce max 8 active tabs with auto-rotation |
+| F.15.4 | On-Demand Viewer Byte Loading | ✅ Completed — Load raw file bytes and blob URLs only when a document is actively viewed in the canvas; revoke URLs on switch |
 
 #### 4.F.16 — Operation Panel Tool Audits: Correct File Extensions, Creation Workflows & Compare Integration
 
@@ -618,9 +618,19 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.16.1 | Output Extension Mapping | Auto-suggest correct extensions (`.docx`, `.xlsx`, `.md`, `.pptx`, directory for images) instead of fallback `.pdf` |
-| F.16.2 | Direct Compare / Diff Wiring | Wire "Compare PDFs" card directly to `appState.toggleDiffView(true)` with multi-document validation |
-| F.16.3 | PDF Creation Tool Unblocking | Allow `md_to_pdf`, `html_to_pdf`, and `img_to_pdf` without requiring an already opened PDF; integrate input file pickers |
+| F.16.1 | Output Extension Mapping | ✅ Completed — Auto-suggest correct extensions (`.docx`, `.xlsx`, `.md`, `.pptx`, directory for images) instead of fallback `.pdf` |
+| F.16.2 | Direct Compare / Diff Wiring | ✅ Completed — Wire "Compare PDFs" card directly to `appState.toggleDiffView(true)` with multi-document validation |
+| F.16.3 | PDF Creation Tool Unblocking | ✅ Completed — Allow `md_to_pdf`, `html_to_pdf`, and `img_to_pdf` without requiring an already opened PDF; integrate input file pickers |
+
+#### 4.F.17 — Swagger / OpenAPI Interactive Documentation Tab
+
+> **Interactive Developer Experience**: Dedicated native OpenAPI/Swagger explorer tab inside the desktop app with live schema navigation, endpoint documentation, curl code generators, and local gateway health checking.
+
+| # | Task | Notes |
+|---|---|---|
+| F.17.1 | API Docs Component (`ApiDocsView.svelte`) | ✅ Completed (PR #107) — Interactive Swagger/OpenAPI documentation browser with endpoint search, method filtering, and try-it-out capabilities |
+| F.17.2 | Sidebar & Tab Navigation Integration | ✅ Completed (PR #107) — Added API Docs tab to desktop navigation rail (`⚡`) and application state |
+| F.17.3 | OpenAPI Spec Bundling & Schema Ingestion | ✅ Completed (PR #107) — Static spec JSON ingestion from `docs/api/openapi.json` with gateway ping check |
 
 #### 4.F.18 — Developer Mode (Local REST API Sidecar)
 
@@ -646,7 +656,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R2.E2 | MCP End-to-End Re-Validation | ✅ Completed |
 | R2.E3 | UI Full Re-Validation (Viewer + Annotations + Phase 4.F Features) | ✅ Completed (PR #85, Session 11778243636880036911) — Playwright E2E suite covering Tabs, Canvas Search, Tools Dock, Diff Slider, CSS Injection |
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
-| R2.E5 | Autonomous Agent QA Testing Suite (Vercel Agent Browser / Stagehand) | 🚧 In Progress — QA-2 verified & merged (PR #100, Session 857817697737443650); QA-1, 3, 4, 5, 6, 7, 8 running |
+| R2.E5 | Autonomous Agent QA Testing Suite (Vercel Agent Browser / Stagehand) | ✅ Completed — QA-1 through QA-8 fully verified and merged (PR #100 - PR #108) |
 
 
 ---
