@@ -762,6 +762,28 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.6.7 | Multi-turn creation (chat mode) | User refines the PDF via follow-up prompts: "change the due date to Oct 31" → PDF updates live |
 | 4.6.8 | E2E AI creation tests | Generate real PDFs from prompts and verify structure and content (No Mocking) |
 
+---
+
+### 4.7 — Automation Engine `[BLOCKED BY 4.4, PARALLEL with 4.5, 4.6]`
+
+**Goal:** Turn PaperPilot into a headless automation backend that runs document workflows without human interaction — triggered by file system events, scheduled runs, or CLI/MCP invocations.
+
+**Exit condition:** A folder watcher daemon can be configured to auto-OCR, watermark, and compress any PDF dropped into a watched directory. A CSV + template can generate a batch of 1,000 personalized PDFs unattended. All batch jobs emit a machine-readable execution receipt.
+
+---
+
+| # | Task | Notes |
+|---|---|---|
+| 4.7.1 | Hot Folder Watcher daemon | Background service watching a configured directory; triggers a named recipe when a `.pdf` file is created or moved in. Config via `paperpilot watch --dir ~/inbox --recipe ocr-and-compress`. Uses `notify-rs` (cross-platform filesystem events). |
+| 4.7.2 | Recipe / Pipeline definition format | Simple TOML config file defining ordered steps: `[[step]] tool = "pdf_ocr"`, `[[step]] tool = "pdf_compress"`. Referenced by the watcher and CLI. |
+| 4.7.3 | `paperpilot run-recipe` CLI command | `paperpilot run-recipe --recipe pipeline.toml --input file.pdf --output out/` — headless, exit-code-clean, scriptable. |
+| 4.7.4 | CSV/JSON Bulk Fill (Mail Merge) | `paperpilot fill-batch --template form.pdf --data records.csv --output-dir ./out/` — iterates rows, fills AcroForm fields, flattens, saves as `{row.name}_{date}.pdf`. |
+| 4.7.5 | Dynamic token naming | String interpolation for output paths: `{input_name}`, `{date:YYYY-MM-DD}`, `{index:04}`, `{hash:8}`, `{metadata:title}`. Used in batch fill and watcher recipes. |
+| 4.7.6 | Conditional logic in recipes | TOML-defined conditions: `if_scanned = true → run ocr first`, `if_page_count_gt = 50 → compression = aggressive`. Evaluated at runtime before each step. |
+| 4.7.7 | Execution Receipt / Audit Log | After every batch job or recipe run, emit `execution_receipt.json` alongside output: `job_id`, `timestamp`, `input_hash` (SHA-256), `output_hash`, `operations_applied[]`, `execution_time_ms`, `errors[]`. |
+| 4.7.8 | Desktop UI for Automation | "Automations" tab in desktop app: list configured watchers, enable/disable, view last execution receipt per watcher, manually trigger a recipe against open document. |
+| 4.7.9 | MCP tools for automation | `recipe_run(recipe_toml, input)`, `batch_fill(template, data_json)`, `watcher_start(dir, recipe)`, `watcher_stop(id)` — allows AI agents to orchestrate headless document automation. |
+
 ## Phase 5 — Advanced Intelligence
 
 **Goal:** PaperPilot understands document content, not just structure.
