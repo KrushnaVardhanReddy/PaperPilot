@@ -74,9 +74,21 @@
     ...categories
   ];
 
+  import { onMount } from 'svelte';
+
   let searchQuery = $state('');
   let selectedCategory = $state('all');
   let activeTool = $state<ToolDefinition | null>(null);
+  let isCollapsed = $state(false);
+
+  onMount(() => {
+    const stored = localStorage.getItem('operations-panel-collapsed');
+    if (stored === 'true') isCollapsed = true;
+  });
+
+  $effect(() => {
+    localStorage.setItem('operations-panel-collapsed', String(isCollapsed));
+  });
 
   // Tool parameter states
   let splitPoints = $state('');
@@ -441,7 +453,18 @@
   }
 </script>
 
-<div class="operations-panel" id="operations-panel">
+<div class="operations-panel" class:collapsed={isCollapsed} id="operations-panel">
+  <button
+    class="collapse-toggle"
+    id="operations-panel-toggle"
+    onclick={() => isCollapsed = !isCollapsed}
+    title={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
+    aria-label={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
+  >
+    {isCollapsed ? '‹' : '›'}
+  </button>
+
+  {#if !isCollapsed}
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -646,6 +669,7 @@
       {/if}
     </div>
   {/if}
+  {/if}
 </div>
 
 <style>
@@ -659,6 +683,40 @@
     height: 100%;
     flex-shrink: 0;
     overflow: hidden;
+    position: relative;
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+
+  .operations-panel.collapsed {
+    width: 32px !important;
+    min-width: 32px !important;
+  }
+
+  .collapse-toggle {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 4px;
+    color: var(--text-muted, #9ca3af);
+    width: 20px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    z-index: 10;
+    transition: all var(--transition-fast, 0.15s ease);
+    padding: 0;
+  }
+
+  .collapse-toggle:hover {
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    border-color: var(--accent-primary, #5e6ad2);
   }
 
   .panel-header {
