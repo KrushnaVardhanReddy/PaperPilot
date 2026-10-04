@@ -76,11 +76,11 @@ pub async fn build_app() -> Router {
         .layer(cors)
 }
 
-pub async fn start(port: u16, bind: &str) -> std::io::Result<()> {
+pub async fn start(port: u16, bind: &str, shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static) -> std::io::Result<()> {
     let app = build_app().await;
     let addr = format!("{}:{}", bind, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("Starting gateway server on {}", addr);
     tracing::info!("Swagger UI accessible at http://{}/swagger-ui", addr);
-    axum::serve(listener, app).await
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal).await
 }
