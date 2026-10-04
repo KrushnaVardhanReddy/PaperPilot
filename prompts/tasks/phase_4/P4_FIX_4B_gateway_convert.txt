@@ -1,0 +1,72 @@
+# Task: Phase 4.FIX.4B — Gateway REST API Convert JSON Route Mapping
+
+## Objective
+Fix the `/api/v1/pdf/convert` handler in `paperpilot-gateway` so that JSON requests with `format: "docx"` / `"xlsx"` / `"pptx"` successfully route to the appropriate conversion operations.
+
+**Branch**: `fix/gateway-convert-json`
+
+---
+
+## File Ownership (STRICT: ONLY touch files in paperpilot-gateway/)
+```
+paperpilot-gateway/src/handlers.rs
+```
+DO NOT modify any files in:
+- `paperpilot-pdf/`
+- `paperpilot-cli/`
+- `paperpilot-mcp/`
+- `reports/TRI_INTERFACE_E2E_AND_DOCS.md` (Will be consolidated after merge)
+
+---
+
+## Required Fixes
+
+### 1. `handlers.rs` — Forward JSON requests on `/api/v1/pdf/convert` to target tools
+**Issue:**
+When clients POST to `/api/v1/pdf/convert` with JSON:
+```json
+{
+  "input": "document.pdf",
+  "output": "document.docx",
+  "format": "docx"
+}
+```
+`handle_tool` receives `tool_name = "convert"`. It tries to resolve it as `pdf_convert`, which does not exist in `paperpilot-mcp` (the MCP tools are named `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, etc.), returning HTTP 500.
+
+**Fix:**
+In `paperpilot-gateway/src/handlers.rs`:
+In `handle_tool` (around line 242) or in `pub async fn convert`:
+- If `tool_name == "convert"` or `resolved_name == "pdf_convert"`:
+  - Check the `format` argument in `args`:
+    - `"docx"` => map `resolved_name = "pdf_to_docx".to_string();`
+    - `"xlsx"` => map `resolved_name = "pdf_to_xlsx".to_string();`
+    - `"pptx"` => map `resolved_name = "pdf_to_pptx".to_string();`
+    - `"html"` => map `resolved_name = "pdf_convert_html".to_string();`
+    - `"markdown"` => map `resolved_name = "pdf_convert_markdown".to_string();`
+    - `"excel"` | `"csv"` => map `resolved_name = "pdf_convert_excel".to_string();`
+- Ensure that the execution completes and returns HTTP 200 with the operation result.
+
+---
+
+## Output Report
+Generate a verification summary report at:
+`reports/TRI_INTERFACE_E2E_API_VERIFIED.md`
+Confirming that `POST /api/v1/pdf/convert` with `{"format": "docx", ...}` and `{"format": "xlsx", ...}` returns HTTP 200 and generates valid files.
+
+---
+
+## Verification Commands
+```bash
+cargo check -p paperpilot-gateway
+cargo test -p paperpilot-gateway
+
+# Start gateway in background or test via curl:
+# curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert \
+#   -H "Content-Type: application/json" \
+#   -d '{"input": "tests/e2e_fixtures/search_test.pdf", "output": "/tmp/api_test.docx", "format": "docx"}'
+```
+
+## Commit Message
+```
+fix(gateway): map convert format parameter to specific conversion tools
+```

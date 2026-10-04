@@ -1,0 +1,85 @@
+# Task: Phase 4.FIX.4A — CLI Command Polish, Aliases & Robust Annotate/Burst
+
+## Objective
+Fix the remaining CLI command execution issues so that all commands pass cleanly according to their `--help` specifications.
+
+**Branch**: `fix/cli-commands-polish`
+
+---
+
+## File Ownership (STRICT: ONLY touch files in paperpilot-cli/)
+```
+paperpilot-cli/src/cli.rs
+paperpilot-cli/src/commands/annotate.rs
+paperpilot-cli/src/commands/group_a.rs
+```
+DO NOT modify any files in:
+- `paperpilot-pdf/`
+- `paperpilot-mcp/`
+- `paperpilot-gateway/`
+- `reports/TRI_INTERFACE_E2E_AND_DOCS.md` (Will be consolidated after merge)
+
+---
+
+## Required Fixes (Verified via `paperpilot --help`)
+
+### 1. `annotate.rs` — Support both file path and inline JSON string for `--data`
+**File:** `paperpilot-cli/src/commands/annotate.rs`
+**Issue:** `handle_annotate` currently calls `fs::read_to_string(data)` assuming `--data` is always an existing file path. When a user or test passes inline JSON (`--data '[{"type":"note",...}]'`), it fails with `I/O error: No such file or directory`.
+**Fix:**
+- Check if `data` is an existing file path:
+  - If yes, read string from file with `fs::read_to_string(data)`.
+  - If no (or if the path string starts with `[` or `{`), treat `data.to_string_lossy()` directly as the JSON string!
+- Parse the resulting string into `Vec<AnnotationParams>`.
+
+### 2. `group_a.rs` — Ensure output directory exists in `burst`
+**File:** `paperpilot-cli/src/commands/group_a.rs`
+**Issue:** `handle_burst` passes `output` to `BurstOperation`. If the output directory does not exist, writing `page_1.pdf` inside it fails with `I/O error: No such file or directory`.
+**Fix:**
+- In `handle_burst`, call `std::fs::create_dir_all(output)?;` before executing `op.execute(&mut doc)`.
+
+### 3. `cli.rs` — Add intuitive subcommand aliases
+**File:** `paperpilot-cli/src/cli.rs`
+**Issue:** Subcommand naming discrepancies:
+- `signature`: Add `#[command(alias = "sign")]` so both `paperpilot signature` and `paperpilot sign` work.
+- Add aliases for common conversion subcommands or aliases matching user expectations:
+  - `#[command(alias = "to-pdf-a")]` on `PdfA`
+  - Under `Commands`, add convenience conversion subcommands if appropriate or alias them.
+
+---
+
+## Mandatory Principle: Always Inspect `--help` First!
+Jules, DO NOT guess CLI subcommands or flag names. Always run:
+```bash
+./target/release/paperpilot-cli --help
+./target/release/paperpilot-cli <command> --help
+```
+If any test or user expectation differs from what `--help` reports, inspect the Clap struct definitions in `paperpilot-cli/src/cli.rs` and make the flags/aliases match cleanly without breaking existing flags.
+
+---
+
+## Output Report
+Generate a verification summary report at:
+`reports/TRI_INTERFACE_E2E_CLI_VERIFIED.md`
+Confirming that `annotate`, `burst`, `reorder`, `split`, `merge`, `decrypt`, and conversion CLI commands run and write output files.
+
+---
+
+## Verification Commands
+```bash
+cargo check -p paperpilot-cli
+cargo test -p paperpilot-cli
+
+# Verify annotate with inline JSON:
+cargo run -p paperpilot-cli -- annotate --input tests/e2e_fixtures/single_page.pdf --data '[{"type":"note","page":1,"x":50,"y":50,"content":"Test"}]' --output /tmp/test_ann_cli.pdf --json
+test -s /tmp/test_ann_cli.pdf && echo "Annotate OK"
+
+# Verify burst creates dir and files:
+cargo run -p paperpilot-cli -- burst --input tests/e2e_fixtures/multi_page.pdf --output /tmp/test_burst_cli --json
+ls /tmp/test_burst_cli/page_1.pdf && echo "Burst OK"
+```
+
+## Commit Message
+```
+fix(cli): support inline json in annotate, ensure burst output dir exists, and add sign alias
+```
