@@ -121,3 +121,21 @@ Now that PaperPilot has complete implementations of CLI, MCP, and REST API acros
   - Page count verified against expected logic.
   - Format validation (magic bytes or format-specific verification).
 - **Rule of Engagement**: If any test fails, record failure reason in `reports/TRI_INTERFACE_E2E_AND_DOCS.md` — do NOT mask failures or skip tools.
+
+---
+
+## 5. Execution Status & Active Fix Streams
+
+### E2E Sweep Completion
+- **Batch 1 (Structural & Page Operations 1-10)**: Completed & verified (PR #110).
+- **Batch 2 (Security & Content Operations 11-20)**: Completed & verified (PR #112).
+- **Batch 3 (OCR, Forms & Stamps 21-30)**: Completed & verified (PR #113).
+- **Batch 4 (Conversion & Advanced 31-44)**: Completed & verified (PR #111).
+- **Consolidated Living Docs**: `reports/TRI_INTERFACE_E2E_AND_DOCS.md` generated with full real-world evidence and zero masked failures.
+
+### Crate-Isolated Active Fix Tracks
+To resolve all discovered interface mismatches and operation gaps without merge conflicts, three parallel tracks are active:
+1. **Track 1 (`paperpilot-cli` only)**: Fix CLI argument definitions (`--angle` alias, `num_args=1..`, `crop` flags, `remove-blank` / `page-numbers` subcommands, binary alias). (Session `15143213812508351944`)
+2. **Track 2 (`paperpilot-gateway` only)**: Normalize MCP/REST API parameters (`rotate`, `crop`, `split`, `burst`, `reorder`, `render` JSON payload, error responses). (Session `3687370227158297202`)
+3. **Track 3 (`paperpilot-pdf` & `paperpilot-mcp` core engine)**: Fix underlying file writers (`pdf_render` fallback & output saving, `pdf_split` output directory, `pdf_fill_form`, `pdf_ocr`). (Session `11257365868253034873`)
+
