@@ -1,0 +1,87 @@
+# Task: Phase 4.FIX.4C — Tri-Interface E2E Test Suite 100% Parity Validation
+
+## Objective
+Update and enhance the E2E verification test suite (`scripts/test_tri_interface_e2e.py`) to validate all 44 PDF operations across CLI, MCP, and REST API interfaces with 100% parity, using proper test fixtures and arguments.
+
+**Branch**: `feat/tri-interface-e2e-100-parity`
+
+---
+
+## File Ownership (STRICT: ONLY touch the test script and its dedicated output report)
+```
+scripts/test_tri_interface_e2e.py
+reports/TRI_INTERFACE_E2E_100_VERIFIED.md
+```
+DO NOT modify any production Rust code in:
+- `paperpilot-pdf/`
+- `paperpilot-cli/`
+- `paperpilot-mcp/`
+- `paperpilot-gateway/`
+- `reports/TRI_INTERFACE_E2E_AND_DOCS.md` (Will be consolidated after all PRs merge)
+
+---
+
+## Required Test Harness Updates in `scripts/test_tri_interface_e2e.py`
+
+### 1. `signature` / `sign` Test Case
+- **Certificate Fixture**: Use `tests/e2e_fixtures/out/tri_e2e/dummy.p12` (or generate a valid test pkcs12 if not present).
+- **CLI Command**:
+  ```bash
+  paperpilot signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output <out_dir>/signed_test_cli.pdf --json
+  ```
+- **MCP Payload**:
+  ```json
+  {"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "<out_dir>/signed_test_mcp.pdf"}
+  ```
+- **REST API Payload**:
+  `POST /api/v1/pdf/sign` or `POST /api/v1/pdf/tools/pdf_sign`:
+  ```json
+  {"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "<out_dir>/signed_test_api.pdf"}
+  ```
+
+### 2. `reorder` Test Case
+- **Multi-page Fixture**: Use `tests/e2e_fixtures/multi_page.pdf` (which contains 5 pages).
+- **Page Permutation**: The reorder operation requires a full permutation matching the document page count (5 pages).
+- **CLI Command**:
+  ```bash
+  paperpilot reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output <out_dir>/reordered_cli.pdf --json
+  ```
+- **MCP Payload**:
+  ```json
+  {"input": "tests/e2e_fixtures/multi_page.pdf", "pages": [2, 1, 3, 4, 5], "output": "<out_dir>/reordered_mcp.pdf"}
+  ```
+- **REST API Payload**:
+  `POST /api/v1/pdf/reorder` or `POST /api/v1/pdf/tools/pdf_reorder`:
+  ```json
+  {"input": "tests/e2e_fixtures/multi_page.pdf", "pages": [2, 1, 3, 4, 5], "output": "<out_dir>/reordered_api.pdf"}
+  ```
+
+### 3. All Conversions (`convert` / `to_docx` / `to_xlsx` / `to_pptx` / etc.)
+- Ensure CLI calls use the verified format subcommands or flags:
+  ```bash
+  paperpilot convert --input <in> --output <out> --format docx
+  ```
+  or corresponding subcommands if available according to `paperpilot --help`.
+
+### 4. Output Report
+Have the script write the completed scorecard and detailed interface outputs directly to:
+`reports/TRI_INTERFACE_E2E_100_VERIFIED.md`
+
+Include:
+- Total tools tested
+- CLI Pass Rate, MCP Pass Rate, REST API Pass Rate
+- Latency and exact curl/CLI/MCP command for each operation
+
+---
+
+## Verification
+Run the test script locally to ensure clean execution:
+```bash
+python3 scripts/test_tri_interface_e2e.py
+test -f reports/TRI_INTERFACE_E2E_100_VERIFIED.md && echo "Report generated successfully"
+```
+
+## Commit Message
+```
+test(e2e): configure dummy cert for signature, 5-page permutation for reorder, and generate 100% parity report
+```

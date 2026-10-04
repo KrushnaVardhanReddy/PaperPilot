@@ -687,9 +687,14 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R3.E4 | Group 4: Forms, Metadata & Optimization Tri-Interface Test (8 tools) | ✅ Completed (PR #111 & #113) — Verified CLI, MCP, and REST API across forms, metadata, and PDF optimization |
 | R3.E5 | Group 5: Advanced Conversion & Intelligence Tri-Interface Test (10 tools) | ✅ Completed (PR #111) — Verified CLI, MCP, and REST API across format conversions and AI helpers |
 | R3.E6 | Tri-Interface Automated Master Runner & Living Documentation Generator | ✅ Completed (PR #110–#113) — Living Documentation consolidated at `reports/TRI_INTERFACE_E2E_AND_DOCS.md` |
-| R3.FIX.1 | Crate Isolated Fix: CLI Argument & Flag Normalization | 🚧 In-Progress (Session `15143213812508351944`) — `paperpilot-cli` only |
-| R3.FIX.2 | Crate Isolated Fix: Gateway MCP/API Parameter Mapping | 🚧 In-Progress (Session `3687370227158297202`) — `paperpilot-gateway` only |
-| R3.FIX.3 | Crate Isolated Fix: Core Engine Operation & MCP Writers | 🚧 In-Progress (Session `11257365868253034873`) — `paperpilot-pdf` & `paperpilot-mcp` |
+| R3.FIX.1 | Crate Isolated Fix: CLI Argument & Flag Normalization | ✅ Completed (PR #114) — `paperpilot-cli` |
+| R3.FIX.2 | Crate Isolated Fix: Gateway MCP/API Parameter Mapping | ✅ Completed (PR #115) — `paperpilot-gateway` |
+| R3.FIX.3A | Core Engine Operation Fixes (Decrypt, Split, Burst) | ✅ Completed (PR #117) — `paperpilot-pdf` |
+| R3.FIX.3B | MCP & Gateway E2E Stability & Param Resolution | ✅ Completed (PR #116) — `paperpilot-mcp` & `paperpilot-gateway` |
+| R3.FIX.4A | CLI Polish: Inline JSON Annotate, Burst Dir Creation & Sign Alias | 🚧 In-Progress (Session `13738505855971818665`) — `paperpilot-cli` only |
+| R3.FIX.4B | Gateway REST API: Format-to-Tool JSON Mapping for `/convert` | 🚧 In-Progress (Session `12956779516479074956`) — `paperpilot-gateway` only |
+| R3.FIX.4C | Tri-Interface E2E Suite: 100% Parity with Cert Fixture & 5-Page Reorder | 🚧 In-Progress (Session `15755330535588048459`) — `scripts/test_tri_interface_e2e.py` only |
+
 
 
 
