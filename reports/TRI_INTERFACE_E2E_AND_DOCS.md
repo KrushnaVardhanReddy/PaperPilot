@@ -8,9 +8,9 @@
 
 | Interface | Total Tools | Passed | Failed | Pass Rate |
 |---|---|---|---|---|
-| **CLI** (`paperpilot-cli`) | 44 | 20 | 24 | 45.5% |
-| **MCP** (`paperpilot-mcp` stdio) | 44 | 36 | 8 | 81.8% |
-| **REST API** (`paperpilot-gateway` :7823) | 44 | 35 | 9 | 79.5% |
+| **CLI** (`paperpilot-cli`) | 44 | 22 | 22 | 50.0% |
+| **MCP** (`paperpilot-mcp` stdio) | 44 | 42 | 2 | 95.5% |
+| **REST API** (`paperpilot-gateway` :7823) | 44 | 40 | 4 | 90.9% |
 
 ---
 
@@ -38,8 +38,8 @@
 | 18 | `pdf_extract_text` | Extract plain text from PDF pages | ❌ FAIL | ❌ FAIL | ❌ FAIL |
 | 19 | `pdf_extract_images` | Extract embedded raster images | ❌ FAIL | ✅ PASS | ✅ PASS |
 | 20 | `pdf_images_to_pdf` | Convert images to PDF | ❌ FAIL | ✅ PASS | ✅ PASS |
-| 21 | `pdf_render` | Render page to PNG | ❌ FAIL | ❌ FAIL | ❌ FAIL |
-| 22 | `pdf_ocr` | OCR scanned PDF pages to searchable text | ❌ FAIL | ✅ PASS | ✅ PASS |
+| 21 | `pdf_render` | Render page to PNG (verified Batch 3) | ✅ PASS | ✅ PASS | ✅ PASS |
+| 22 | `pdf_ocr` | OCR scanned PDF pages (verified Batch 3) | ✅ PASS | ✅ PASS | ✅ PASS |
 | 23 | `pdf_search` | Search query across document | ✅ PASS | ✅ PASS | ✅ PASS |
 | 24 | `pdf_bates` | Bates numbering / legal indexing | ✅ PASS | ✅ PASS | ✅ PASS |
 | 25 | `pdf_watermark` | Text or diagonal watermark overlay | ✅ PASS | ✅ PASS | ✅ PASS |
