@@ -1,29 +1,39 @@
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use std::path::PathBuf;
 
-pub struct OcrOperation;
+pub struct OcrOperationImpl {
+    pub output_path: Option<PathBuf>,
+}
 
-impl OcrOperation {
+impl OcrOperationImpl {
     pub fn new() -> Self {
-        Self
+        Self { output_path: None }
     }
 }
 
-impl Default for OcrOperation {
+impl Default for OcrOperationImpl {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl PdfOperation for OcrOperation {
+impl PdfOperation for OcrOperationImpl {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        // Fallback: if the PDF has embedded text, return it without OCR
-        // Real OCR via Tesseract can be added later as an optional feature flag
         let text_op = crate::operations::extract_text::ExtractTextOperation::new(None);
-        text_op.execute(document)?;
-        Ok(())
+        let result = text_op.execute(document);
+
+        if let Some(path) = &self.output_path {
+            document.save(path)?;
+        }
+
+        result
     }
 }
+
+pub type OcrOperation = OcrOperationImpl;
+#[allow(non_upper_case_globals)]
+pub const OcrOperation: OcrOperationImpl = OcrOperationImpl { output_path: None };
 
 #[cfg(test)]
 mod tests {
@@ -31,7 +41,6 @@ mod tests {
     use crate::document::LopdfDocument;
     use lopdf::Document as LopdfInnerDocument;
     use lopdf::dictionary;
-    use std::path::PathBuf;
     use tempfile::tempdir;
 
     fn create_test_pdf(path: &PathBuf, text_content: &str) {
@@ -99,9 +108,13 @@ mod tests {
         create_test_pdf(&doc_path, "Hello World");
 
         let mut doc = LopdfDocument::load(&doc_path).unwrap();
-        let op = OcrOperation::new();
+        let mut op = OcrOperationImpl::new();
+
+        let output_path = temp_dir.path().join("out.pdf");
+        op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
         assert!(result.is_ok());
+        assert!(output_path.exists());
     }
 }

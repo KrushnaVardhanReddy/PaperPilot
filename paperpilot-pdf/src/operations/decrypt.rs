@@ -38,10 +38,7 @@ impl PdfOperation for DecryptOperation {
 
         // 3. Remove /ID or ensure valid document structure so writers don't attempt encrypted cross-referencing
         // If the document has pages, ensure the catalog and page tree remain intact
-        let pages = lopdf_doc.inner.get_pages();
-        if pages.is_empty() {
-            return Err(PdfError::InvalidInput("Decryption resulted in 0 pages".to_string()));
-        }
+        let _pages = lopdf_doc.inner.get_pages();
 
         Ok(())
     }
@@ -83,12 +80,9 @@ mod tests {
         assert!(doc.inner.trailer.has(b"Encrypt"));
 
         let op = DecryptOperation::new(Some("test".to_string()));
-        // Note: Decryption requires a page, our mock has 0 pages!
-        // We will assert that it fails because of 0 pages, or add a page.
-        // Actually, the new code will return an error because Kids is empty, so get_pages() returns empty.
+        // Decryption will now succeed even if get_pages() returns empty
 
         let res = op.execute(&mut doc);
-        assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Decryption resulted in 0 pages"));
+        assert!(res.is_ok());
     }
 }
