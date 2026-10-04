@@ -476,48 +476,74 @@ pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
     )
 )]
 pub async fn render_page(req: axum::extract::Request) -> axum::response::Response {
-    let mut args = serde_json::Map::new();
-    let mut temp_files = vec![];
-    let output_path = std::env::temp_dir().join(format!("{}.png", uuid::Uuid::new_v4()));
-
     use axum::extract::FromRequest;
     use axum::response::IntoResponse;
-    let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
-        Ok(m) => m,
-        Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid multipart").into_response(),
-    };
+    let mut args = serde_json::Map::new();
+    let mut temp_files = vec![];
 
-    while let Ok(Some(field)) = multipart.next_field().await {
-        let name = field.name().unwrap_or("").to_string();
-        if name.is_empty() { continue; }
+    let content_type = req.headers().get(axum::http::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("");
+    let is_json = content_type.starts_with("application/json");
 
-        let file_name = field.file_name().map(|s| s.to_string());
-        let data = match field.bytes().await {
-            Ok(d) => d,
-            Err(_) => continue,
+    if is_json {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+            Ok(b) => b,
+            Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid body").into_response(),
+        };
+        if let Ok(json_val) = serde_json::from_slice::<serde_json::Value>(&body_bytes) {
+            if let Some(obj) = json_val.as_object() {
+                args = obj.clone();
+            } else {
+                return (axum::http::StatusCode::BAD_REQUEST, "Invalid JSON object").into_response();
+            }
+        } else {
+            return (axum::http::StatusCode::BAD_REQUEST, "Invalid JSON").into_response();
+        }
+    } else {
+        let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
+            Ok(m) => m,
+            Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid multipart").into_response(),
         };
 
-        if file_name.is_some() || name == "file" || name == "input" {
-            let mut temp_file = match tempfile::NamedTempFile::new() {
-                Ok(tf) => tf,
-                Err(_) => return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to create temp file").into_response(),
+        while let Ok(Some(field)) = multipart.next_field().await {
+            let name = field.name().unwrap_or("").to_string();
+            if name.is_empty() { continue; }
+
+            let file_name = field.file_name().map(|s| s.to_string());
+            let data = match field.bytes().await {
+                Ok(d) => d,
+                Err(_) => continue,
             };
-            let path = temp_file.path().to_owned();
-            use std::io::Write;
-            if let Err(_) = temp_file.write_all(&data) {
-                return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to write data").into_response();
-            };
-            args.insert("input".to_string(), serde_json::Value::String(path.to_string_lossy().to_string()));
-            temp_files.push(temp_file);
-        } else {
-            let s = String::from_utf8_lossy(&data).to_string();
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&s) {
-                 args.insert(name, val);
+
+            if file_name.is_some() || name == "file" || name == "input" {
+                let mut temp_file = match tempfile::NamedTempFile::new() {
+                    Ok(tf) => tf,
+                    Err(_) => return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to create temp file").into_response(),
+                };
+                let path = temp_file.path().to_owned();
+                use std::io::Write;
+                if let Err(_) = temp_file.write_all(&data) {
+                    return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to write data").into_response();
+                };
+                args.insert("input".to_string(), serde_json::Value::String(path.to_string_lossy().to_string()));
+                temp_files.push(temp_file);
             } else {
-                 args.insert(name, serde_json::Value::String(s));
+                let s = String::from_utf8_lossy(&data).to_string();
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&s) {
+                     args.insert(name, val);
+                } else {
+                     args.insert(name, serde_json::Value::String(s));
+                }
             }
         }
     }
+
+    let caller_provided_output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+    let output_path = if let Some(out) = &caller_provided_output {
+        std::path::PathBuf::from(out)
+    } else {
+        std::env::temp_dir().join(format!("{}.png", uuid::Uuid::new_v4()))
+    };
 
     args.insert("output".to_string(), serde_json::Value::String(output_path.to_string_lossy().to_string()));
 
@@ -526,14 +552,32 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     request.arguments = Some(args);
 
     match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
-        Ok(_) => {
-            if let Ok(bytes) = std::fs::read(&output_path) {
-                let _ = std::fs::remove_file(&output_path);
-                let mut res = axum::response::Response::new(axum::body::Body::from(bytes));
-                res.headers_mut().insert(axum::http::header::CONTENT_TYPE, axum::http::HeaderValue::from_static("image/png"));
-                res.into_response()
+        Ok(res) => {
+            if caller_provided_output.is_some() {
+                // If output was provided, return standard JSON response
+                let content_blocks = match res {
+                    rmcp::model::CallToolResponse::Complete(r) => r.content,
+                    _ => vec![],
+                };
+                let res_json = content_blocks.first().and_then(|b| {
+                    if let rmcp::model::ContentBlock::Text(text_block) = b {
+                        serde_json::from_str::<serde_json::Value>(&text_block.text).ok()
+                    } else {
+                        None
+                    }
+                }).unwrap_or(serde_json::json!({"success": true, "output_path": output_path.to_string_lossy().to_string()}));
+
+                (axum::http::StatusCode::OK, axum::Json(res_json)).into_response()
             } else {
-                (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "File generated but could not be read").into_response()
+                // If output was not provided, stream the image bytes
+                if let Ok(bytes) = std::fs::read(&output_path) {
+                    let _ = std::fs::remove_file(&output_path);
+                    let mut res = axum::response::Response::new(axum::body::Body::from(bytes));
+                    res.headers_mut().insert(axum::http::header::CONTENT_TYPE, axum::http::HeaderValue::from_static("image/png"));
+                    res.into_response()
+                } else {
+                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "File generated but could not be read").into_response()
+                }
             }
         },
         Err(e) => {
@@ -595,5 +639,33 @@ mod tests {
 
         let res = render_page(req).await;
         assert_eq!(res.into_response().status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_render_page_handles_json_object() {
+        let req = Request::builder()
+            .method("POST")
+            .uri("/api/v1/pdf/render-page")
+            .header("content-type", "application/json")
+            .body(Body::from(r#"{"input": "invalid.pdf", "page": 1, "output": "/tmp/out.png"}"#))
+            .unwrap();
+
+        let res = render_page(req).await.into_response();
+        // Since execute_call_tool fails cleanly due to invalid.pdf missing, we expect INTERNAL_SERVER_ERROR,
+        // but we verify that parsing didn't fail with BAD_REQUEST
+        assert_eq!(res.status(), axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_render_page_handles_json_non_object() {
+        let req = Request::builder()
+            .method("POST")
+            .uri("/api/v1/pdf/render-page")
+            .header("content-type", "application/json")
+            .body(Body::from(r#"["not", "an", "object"]"#))
+            .unwrap();
+
+        let res = render_page(req).await.into_response();
+        assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
