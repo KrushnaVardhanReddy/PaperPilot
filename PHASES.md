@@ -789,7 +789,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort` (ONNX Runtime) using quantized BGE-micro (<30MB) — 100% offline RAG |
+| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort` (ONNX Runtime) using NeuML's `bert-hash-nano-embeddings` (<1M params, ~1.1MB INT8 ONNX, 128-dim vectors) — 100% offline RAG & semantic search |
 | 5.2.2 | Layout-Aware Markdown & Table Parser | MinerU/Marker-style structured text extraction preserving multi-columns, LaTeX math, and Markdown tables |
 | 5.2.3 | Semantic Search & Highlighting | Search document by intent/meaning rather than exact keywords, jumping directly to target sentences |
 | 5.2.4 | Table Extraction to CSV/JSON/Parquet | Detect table boundaries and export structured data |
