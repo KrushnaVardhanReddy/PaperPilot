@@ -9,8 +9,14 @@ FIXTURE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tes
 OUT_DIR = os.path.join(FIXTURE_DIR, "out", "tri_e2e")
 REPORT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", "TRI_INTERFACE_E2E_BATCH3_OCR_FORMS.md"))
 
-CLI_BIN = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-cli"))
-MCP_BIN = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-mcp"))
+CLI_BIN_REL = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "release", "paperpilot-cli"))
+CLI_BIN_DBG = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-cli"))
+MCP_BIN_REL = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "release", "paperpilot-mcp"))
+MCP_BIN_DBG = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-mcp"))
+
+CLI_BIN = CLI_BIN_REL if os.path.exists(CLI_BIN_REL) else CLI_BIN_DBG
+MCP_BIN = MCP_BIN_REL if os.path.exists(MCP_BIN_REL) else MCP_BIN_DBG
+
 GATEWAY_URL = "http://127.0.0.1:7823"
 
 class GatewayServer:
@@ -20,11 +26,11 @@ class GatewayServer:
     def start(self):
         print("Starting paperpilot-gateway...")
         self.process = subprocess.Popen(
-            ["cargo", "run", "-p", "paperpilot-cli", "--", "serve", "--port", "7823"],
+            [CLI_BIN, "serve", "--port", "7823"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
-        time.sleep(8)
+        time.sleep(2)
 
     def stop(self):
         if self.process:
