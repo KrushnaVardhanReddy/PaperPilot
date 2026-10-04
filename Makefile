@@ -1,4 +1,4 @@
-.PHONY: all build build-release dist check test test-backend test-frontend test-e2e test-all lint format clean dev
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all lint format clean dev
 
 # Default target
 all: format lint test-all build
@@ -7,12 +7,22 @@ all: format lint test-all build
 build:
 	cargo build --workspace
 
+# Build frontend and debug desktop app, then run
+run:
+	cd apps/desktop && npm run build
+	cargo build -p desktop
+	./target/debug/desktop
+
 # Build the production standalone desktop app (release) and inspect binary size
 build-release:
 	cd apps/desktop && npm run build
 	cargo build --release -p desktop
 	@echo "\n=== Release Binary Size ==="
 	@ls -lh target/release/desktop
+
+# Build release desktop app and run
+run-release: build-release
+	./target/release/desktop
 
 # Package standalone desktop installers (AppImage, deb)
 dist:
