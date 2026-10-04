@@ -66,3 +66,7 @@ clean:
 # Start the Tauri dev environment
 dev:
 	cd apps/desktop && npm run tauri dev
+
+# Run Tri-Interface E2E Test (Batch 1: Structural)
+test-tri-e2e:
+	python3 scripts/test_tri_interface_e2e.py
