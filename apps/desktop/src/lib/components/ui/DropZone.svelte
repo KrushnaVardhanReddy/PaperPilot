@@ -53,12 +53,12 @@
   function handleFileInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      const filesArray = Array.from(target.files);
-      // Playwright injects absolute path via file.path or we use its name
-      for (const f of filesArray) {
+      const filesArray = Array.from(target.files).map(f => {
         (f as any)._localPath = (f as any).path || f.name;
-        (f as any)._isLoaded = false;
-      }
+        // In browser / test contexts without native backend, File object already holds the bytes
+        (f as any)._isLoaded = f.size > 0;
+        return f;
+      });
       ondrop(filesArray);
     }
     target.value = '';
