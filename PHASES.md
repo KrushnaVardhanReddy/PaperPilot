@@ -1415,6 +1415,29 @@ permissions = { print = true, edit = false }
 
 ---
 
+### 8.11 — Physical Document Ingestion `[BLOCKED BY Phase 5.1 OCR, PARALLEL with 8.9]`
+
+**Goal:** Make PaperPilot the automatic destination for every scan that leaves a physical printer or phone camera — without requiring the user to change their existing scan workflow. Every scan that touches PaperPilot immediately becomes a first-class `.ppdoc` document: deskewed, compressed (DjVu 3-layer, Phase 1.3.50–1.3.56), OCR'd, and searchable.
+
+**Exit condition:** A user can walk to any network printer, select "Scan to Computer → PaperPilot" on the printer's touchscreen, and the scanned document arrives as a fully processed `.ppdoc` on their desktop with OCR and AI embeddings — without installing any printer driver.
+
+---
+
+| # | Task | Notes |
+|---|---|---|
+| 8.11.1 | Hot folder scan-ingest recipe | Extend Phase 4.7.1 watcher to detect `.pdf`/`.jpg`/`.png` drops and auto-run `scan-ingest` recipe: deskew → smart compress (1.3.55) → OCR (Phase 5.1) → save `.ppdoc`. No user action needed after initial setup. |
+| 8.11.2 | eSCL/AirScan local server | Implement an eSCL (Mopria/AirScan) HTTP server that advertises itself on mDNS/Bonjour as `PaperPilot on <hostname>`. Any modern network printer's "Scan to Computer" menu discovers and shows it as a destination. Scanner streams raw TIFF/JPEG directly to PaperPilot over HTTP — no driver install, zero user config beyond first enable. Works with every eSCL-compliant printer (HP, Epson, Canon, Brother, Ricoh all support eSCL). |
+| 8.11.3 | Virtual CUPS printer (Linux/macOS) | Register PaperPilot as a CUPS print queue with a custom PPD. When a scanner's "Print to PDF" or "Scan to Application" sends a PostScript/PWG Raster job to this queue, PaperPilot intercepts the stream and converts to `.ppdoc`. Replaces the role of PDF24 / PDFCreator but adds OCR and full PaperPilot processing. |
+| 8.11.4 | Windows WIA virtual scanner | On Windows, register a WIA (Windows Image Acquisition) minidriver so PaperPilot appears in "Windows Fax and Scan" and any WIA-aware scanner application as a scan destination. The WIA driver returns processed `.ppdoc` data rather than raw TIFF. |
+| 8.11.5 | Mobile camera scan (native) | In the PaperPilot mobile app (8.9), expose a native document camera scanner with: real-time perspective correction guide overlay, auto-capture on document detection, multi-page session (keep scanning until user taps "Done"), and immediate DjVu-style compression + OCR pipeline on-device. |
+| 8.11.6 | Mobile Share Extension (any scanner app) | Register a system Share Extension on iOS and an Intent filter on Android. User scans in **any** third-party scanner app (Apple Continuity Camera, Microsoft Lens, Adobe Scan) and taps Share → PaperPilot. The JPEG/PDF is ingested, processed, and saved as `.ppdoc`. No PaperPilot scanner UI required. |
+| 8.11.7 | Scan-to-email receiver | Run a local SMTP listener (bound to `localhost:2525`). User configures their printer's "Scan to Email" to send to `scan@paperpilot.local` (DNS resolved via mDNS). PaperPilot receives the email, extracts the PDF/JPEG attachment, and runs the scan-ingest pipeline. Works with every enterprise MFP that supports scan-to-email. |
+| 8.11.8 | Print-with-return-address (steganographic fingerprint) | When PaperPilot **prints** a `.ppdoc` document, embed two invisible markers in the printed output: (a) a 2×2 mm corner micro-QR code encoding `{doc_id, version_hash, ppdoc_server}` and (b) a DCT-domain steganographic watermark that survives the print→scan round-trip. When the physical document is later scanned back into PaperPilot, it detects the markers and: links the scan to the original `.ppdoc` source; overlays hand-written annotations as a new annotation layer on the original editable document; shows a diff "Original vs. annotated physical copy." Enables paper-based annotation workflows to flow back into the digital document. |
+| 8.11.9 | Round-trip annotation merge UI | Desktop UI for reviewing a scanned-back document: side-by-side view of original `.ppdoc` vs. inbound scan; detected handwritten annotations shown as a new `annotation` layer; one-click "Accept all" merges annotations into the canonical document. |
+| 8.11.10 | E2E Physical Ingestion tests | Automated tests: spin up a mock eSCL HTTP client, POST a test TIFF scan, verify PaperPilot produces a valid `.ppdoc` with OCR text and DjVu compression applied. Print-with-return-address: embed watermark, simulate scan (Gaussian blur + noise filter to simulate print/scan degradation), verify fingerprint is recovered and doc_id decoded correctly. (No Mocking of the compression or OCR pipeline.) |
+
+---
+
 ## Phase 9 — Advanced Editing & Enterprise Features
 
 **Goal:** Close the most common gaps vs. Adobe Acrobat with achievable, well-defined capabilities. WYSIWYG text reflow is deliberately deferred to Phase 9.3 (Moonshot) due to extreme complexity.
