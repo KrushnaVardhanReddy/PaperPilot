@@ -1,23 +1,146 @@
-# Phase 4.F.18 — Developer Mode (Local REST API Sidecar)
+# Task: Phase 4.F.18 — Developer Mode (Local REST API Sidecar)
+# Parallel-safe: Implements Developer Mode toggle in SettingsPanel, manages local gateway lifecycle via Tauri IPC and AppState
+# Spec: specs/012-developer-mode-gateway-sidecar/spec.md
 
-## Context
-Based on our strategic analysis of `pricing_strategy.md` and `COMPETITORS.md`, PaperPilot offers unlimited, free local processing to undercut competitors like Stirling PDF. 
-To make this incredible for developers, we want to allow them to enable a "Developer Mode" in the Desktop app which spins up the `paperpilot-gateway` REST server locally on port 7823.
+---
 
-## Requirements
+## MANDATORY RULES — VIOLATION = REJECTED PR
 
-1. **Sidecar Configuration:** 
-   - Update `apps/desktop/src-tauri/tauri.conf.json` to include the `paperpilot-gateway` binary as a Tauri sidecar (`externalBin`). You may need to compile the gateway first and copy it into `src-tauri/binaries/` with the correct target triplet.
-2. **Settings Toggle:** 
-   - Add a switch in `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`: "Developer Mode: Enable Local REST API (Port 7823)".
-   - Persist this preference using the existing Tauri store or localStorage.
-3. **Spawning the Daemon:**
-   - In `apps/desktop/src/lib/stores/appState.svelte.ts` (or equivalent), use `@tauri-apps/plugin-shell` to spawn the sidecar when the toggle is turned ON.
-   - Kill the child process when the toggle is turned OFF.
-4. **Lifecycle Management:**
-   - Ensure the Tauri app correctly kills the `paperpilot-gateway` process when the desktop application closes.
-5. **API Docs UI:**
-   - Ensure the `ApiDocsView.svelte` tab is only visible when Developer Mode is enabled.
+1. NEVER comment out, stub, or mock existing implementation code.
+2. Every file you modify MUST compile cleanly (`npm run check` in `apps/desktop` and `cargo check --workspace`).
+3. If an existing test fails, FIX the code or the test — do NOT delete or skip tests (`npm test` in `apps/desktop` and `cargo test --workspace`).
+4. Commit message MUST start with `jules: ` prefix.
+5. Use Svelte 5 runes ($state, $derived, $effect, $props) — NEVER Svelte 4 stores or writable().
+6. Use Vanilla CSS — NEVER TailwindCSS.
+7. All new interactive elements must have a unique `id` attribute (e.g. `id="developer-mode-toggle"`).
+8. Follow design system tokens in `app.css`.
 
-## Completion Criteria
-When the toggle is flipped on, a user can instantly navigate to `http://localhost:7823/swagger-ui` in their browser and it works. When flipped off, the port shuts down. When the app exits, the port shuts down.
+---
+
+## CONTEXT & OBJECTIVE
+
+PaperPilot offers free, unlimited offline processing that competes with Stirling PDF. To enable instant local automation (via Python, curl, n8n, homelabs) and developer adoption without requiring Docker or manual CLI commands, PaperPilot needs a built-in **Developer Mode**.
+
+When Developer Mode is enabled:
+1. The Desktop backend spawns/manages the `paperpilot-gateway` REST server locally on port 7823 (`http://127.0.0.1:7823`).
+2. Developers can browse `http://127.0.0.1:7823/swagger-ui` in their browser or explore the integrated "API & Gateway" tab (`ApiDocsView.svelte`).
+3. When toggled off or when the desktop application closes, the process/server terminates cleanly and frees port 7823.
+
+---
+
+## STEP 1: Add Gateway Lifecycle Commands to Tauri Backend
+
+File: `apps/desktop/src-tauri/Cargo.toml`
+Add `paperpilot-gateway` dependency to `[dependencies]`:
+```toml
+paperpilot-gateway = { path = "../../../paperpilot-gateway" }
+```
+
+File: `apps/desktop/src-tauri/src/lib.rs`
+1. Define a global thread-safe state for the gateway server handle / cancellation token:
+```rust
+lazy_static::lazy_static! {
+    static ref GATEWAY_RUNNING: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
+    static ref GATEWAY_SHUTDOWN_TX: Arc<Mutex<Option<tokio::sync::oneshot::Sender<()>>>> = Arc::new(Mutex::new(None));
+}
+```
+
+2. Implement Tauri commands:
+- `get_gateway_status`: returns `{ is_running: bool, port: u16, swagger_url: String }`.
+- `start_gateway`: if not running, binds to `127.0.0.1:7823`, starts the gateway server using `tokio::spawn`, sets state to running, and stores the shutdown sender.
+- `stop_gateway`: if running, sends the shutdown signal, sets state to false, and releases port.
+
+3. In `tauri::Builder::default()`:
+Register the commands in `invoke_handler`:
+`tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway]`
+
+4. On application exit/cleanup:
+Ensure when the app window/process exits, `stop_gateway` is executed to clean up port 7823.
+
+5. Add unit tests in `src-tauri/src/lib.rs` verifying status reporting and start/stop behavior.
+
+---
+
+## STEP 2: Update Application State (`apps/desktop/src/lib/state/app.svelte.ts`)
+
+File: `apps/desktop/src/lib/state/app.svelte.ts`
+1. Add state fields:
+```typescript
+developerMode = $state(false);
+gatewayRunning = $state(false);
+gatewayPort = $state(7823);
+```
+2. In the constructor or initialization, restore persisted Developer Mode state:
+```typescript
+if (typeof window !== 'undefined') {
+  const storedDev = localStorage.getItem('paperpilot:developer-mode');
+  if (storedDev === 'true') {
+    this.developerMode = true;
+  }
+}
+```
+3. Add method `async toggleDeveloperMode(enabled?: boolean)`:
+- Sets `developerMode` to given or inverted boolean.
+- Stores in `localStorage.setItem('paperpilot:developer-mode', String(this.developerMode))`.
+- If enabled: calls Tauri command `start_gateway` (via `safeInvoke` fallback).
+- If disabled: calls Tauri command `stop_gateway`.
+- Updates `this.gatewayRunning`.
+
+---
+
+## STEP 3: Add Developer Mode Settings UI
+
+File: `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`
+1. Add a **Developer Mode** section in `SettingsPanel.svelte`:
+```svelte
+<div class="setting-group" id="setting-group-developer-mode">
+  <h3>Developer Mode & Local REST API</h3>
+  <div class="setting-item toggle-item">
+    <div class="setting-info">
+      <label for="developer-mode-toggle">Enable Local REST API & Swagger (Port 7823)</label>
+      <p class="help-text">
+        Spins up a local REST API and Swagger UI server at <code>http://127.0.0.1:7823</code> for Python scripts, homelab automations, and external clients.
+      </p>
+    </div>
+    <label class="switch">
+      <input
+        type="checkbox"
+        id="developer-mode-toggle"
+        checked={appState.developerMode}
+        onchange={async (e) => await appState.toggleDeveloperMode(e.currentTarget.checked)}
+      />
+      <span class="slider round"></span>
+    </label>
+  </div>
+  {#if appState.developerMode}
+    <div class="dev-mode-status" id="dev-mode-status-info">
+      <span class="status-indicator active">● Running</span>
+      <span>API Endpoint: <code>http://127.0.0.1:{appState.gatewayPort}</code></span>
+      <a href="http://127.0.0.1:{appState.gatewayPort}/swagger-ui" target="_blank" rel="noreferrer" class="swagger-link" id="open-swagger-external-btn">
+        Open Swagger UI ↗
+      </a>
+    </div>
+  {/if}
+</div>
+```
+2. Style switch toggle with clean Vanilla CSS matching the dark mode design tokens.
+
+---
+
+## STEP 4: Sidebar Tab Visibility & Tests
+
+File: `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+- When Developer Mode is off, hide the API Docs tab or show a subtle disabled indicator.
+- When Developer Mode is on, the `#nav-api` button is active and accessible.
+
+File: `apps/desktop/src/lib/components/layout/SettingsPanel.test.ts` (or update existing unit tests):
+- Add test verifying that clicking `#developer-mode-toggle` toggles `appState.developerMode`.
+
+---
+
+## STEP 5: Verification & Quality Checks
+
+1. `cargo check --workspace` must pass with 0 errors.
+2. `cargo test --workspace` must pass with 0 failures.
+3. `cd apps/desktop && npm run check` must pass with 0 errors.
+4. `cd apps/desktop && npx playwright test` must pass all tests.
