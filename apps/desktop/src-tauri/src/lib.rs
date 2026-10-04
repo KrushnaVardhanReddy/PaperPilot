@@ -171,11 +171,16 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             use tauri::Manager;
-            if let Some(window) = app.get_webview_window("main") {
-                let icon_bytes = include_bytes!("../icons/icon.png");
-                if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
-                    let _ = window.set_icon(icon);
+            let icon_bytes = include_bytes!("../icons/icon.png");
+            if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_icon(icon.clone());
                 }
+
+                let _ = tauri::tray::TrayIconBuilder::new()
+                    .icon(icon)
+                    .tooltip("PaperPilot")
+                    .build(app);
             }
             Ok(())
         })

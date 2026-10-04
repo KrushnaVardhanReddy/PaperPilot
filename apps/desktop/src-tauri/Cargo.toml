@@ -22,7 +22,7 @@ paperpilot-mcp = { path = "../../../paperpilot-mcp" }
 paperpilot-gateway = { path = "../../../paperpilot-gateway" }
 tokio = { version = "1", features = ["full"] }
 rmcp = { version = "3.5.0" }
-tauri = { version = "2", features = ["protocol-asset", "image-png"] }
+tauri = { version = "2", features = ["protocol-asset", "image-png", "tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
