@@ -29,3 +29,12 @@ Provide a unified, modern desktop workstation for viewing, navigating, annotatin
   - Auto-suggests the output file path in the source document's directory with the correct extension (`.docx`, `.xlsx`, `.md`, `.txt`, `.pdf`).
   - Pre-filled in an editable text input before the Run button.
 - **Creation Tools Unblocked**: `md_to_pdf`, `html_to_pdf`, and `img_to_pdf` open native system file dialogs for input files without requiring an already opened PDF.
+
+### 5. AI Chat Panel & Assistant Drawer (`PdfChatPanel.svelte`)
+- **Widget**: Integrated via zero-dependency [`quikchat`](https://github.com/deftio/quikchat) to avoid wheel reinvention and keep Tauri bundle overhead negligible.
+- **Placement**: Collapsible right or bottom drawer toggleable via top toolbar / shortcut.
+- **Capabilities**:
+  - Multi-turn conversational Q&A against active document text (offline via `bert-hash-nano-embeddings` or Pro via local Ollama / cloud LLM).
+  - Rich Markdown formatting with syntax highlighting, lists, and table rendering.
+  - Per-document conversation history persistence across tab switching.
+  - Interactive Action Confirmation cards embedded directly in the message flow (e.g. "Run Merge", "Apply Redaction").

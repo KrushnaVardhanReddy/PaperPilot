@@ -721,6 +721,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
 | 4.3.5 | Voice input | Microphone → speech-to-text → feeds the NLP command box (integrates with Phase 2 MCP) |
 | 4.3.6 | NLP mode toggle in settings | Simple switch: "Use Offline NLP" / "Use AI (requires key)" |
+| 4.3.7 | Multi-turn Chat Panel (`PdfChatPanel.svelte`) | Embed zero-dependency [`quikchat`](https://github.com/deftio/quikchat) as a collapsible side-drawer next to `PdfViewer.svelte`. Supports multi-turn document Q&A, markdown formatting, per-tab history save/restore, and interactive action confirmation cards |
 
 ---
 
