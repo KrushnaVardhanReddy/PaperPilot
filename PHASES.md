@@ -691,9 +691,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R3.FIX.2 | Crate Isolated Fix: Gateway MCP/API Parameter Mapping | ✅ Completed (PR #115) — `paperpilot-gateway` |
 | R3.FIX.3A | Core Engine Operation Fixes (Decrypt, Split, Burst) | ✅ Completed (PR #117) — `paperpilot-pdf` |
 | R3.FIX.3B | MCP & Gateway E2E Stability & Param Resolution | ✅ Completed (PR #116) — `paperpilot-mcp` & `paperpilot-gateway` |
-| R3.FIX.4A | CLI Polish: Inline JSON Annotate, Burst Dir Creation & Sign Alias | 🚧 In-Progress (Session `13738505855971818665`) — `paperpilot-cli` only |
-| R3.FIX.4B | Gateway REST API: Format-to-Tool JSON Mapping for `/convert` | 🚧 In-Progress (Session `12956779516479074956`) — `paperpilot-gateway` only |
-| R3.FIX.4C | Tri-Interface E2E Suite: 100% Parity with Cert Fixture & 5-Page Reorder | 🚧 In-Progress (Session `15755330535588048459`) — `scripts/test_tri_interface_e2e.py` only |
+| R3.FIX.4A | CLI Polish: Inline JSON Annotate, Burst Dir Creation & Sign Alias | ✅ Completed (PR #119) — `paperpilot-cli` |
+| R3.FIX.4B | Gateway REST API: Format-to-Tool JSON Mapping for `/convert` | ✅ Completed (PR #118) — `paperpilot-gateway` |
+| R3.FIX.4C | Master Tri-Interface E2E Suite: All 44 Tools, 100% Parity | 🚧 In-Progress (Session `12417317949789003938`) — `scripts/test_tri_interface_e2e.py` only |
 
 
 

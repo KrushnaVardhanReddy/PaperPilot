@@ -1,0 +1,82 @@
+# Task: Phase 4.FIX.4C.v2 — Master Tri-Interface E2E Test Suite (All 44 Tools, 100% Parity)
+
+## Objective
+Update and enhance `scripts/test_tri_interface_e2e.py` into a data-driven master E2E test runner covering **all 44 PDF operations** across CLI, MCP, and REST API, and generate the final green verification report at `reports/TRI_INTERFACE_E2E_100_VERIFIED.md`.
+
+**Branch**: `feat/tri-interface-e2e-all-44-parity`
+**Base Branch**: `main` (Already includes PR #118 format mapping and PR #119 CLI annotate/burst/sign fixes).
+
+---
+
+## File Ownership (STRICT: ONLY touch the test script and its output report)
+```
+scripts/test_tri_interface_e2e.py
+reports/TRI_INTERFACE_E2E_100_VERIFIED.md
+```
+DO NOT modify any production Rust code in `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, or `paperpilot-gateway/`. All fixes are already merged into `main`.
+
+---
+
+## Architecture: Data-Driven Test Table
+
+Instead of writing 44 separate repetitive functions, structure `scripts/test_tri_interface_e2e.py` cleanly with a data-driven list of test definitions. Each definition contains:
+1. `tool_id`: (e.g. `pdf_merge`, `pdf_sign`, `pdf_reorder`, `pdf_to_docx`, etc.)
+2. `cli_args`: Command-line arguments for `paperpilot <command> ...` (or `paperpilot-cli`)
+3. `mcp_args`: JSON dictionary payload for MCP tool execution
+4. `api_endpoint` & `api_payload`: Endpoint (e.g. `/api/v1/pdf/convert` or `/api/v1/pdf/tools/<tool_id>`) and JSON request payload
+5. `expected_output`: File path where output is expected (in `tests/e2e_fixtures/out/tri_e2e/`)
+
+---
+
+## Critical Tool Configurations & Working Fixtures
+
+Reference working fixtures already in `tests/e2e_fixtures/` and previous batch implementations (`reports/TRI_INTERFACE_E2E_AND_DOCS.md`):
+
+1. **`pdf_sign` / `signature`**:
+   - Certificate fixture: `tests/e2e_fixtures/out/tri_e2e/dummy.p12`
+   - CLI: `paperpilot signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output <out_dir>/signed_test_cli.pdf --json`
+   - MCP: `{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "<out_dir>/signed_test_mcp.pdf"}`
+   - API: `POST /api/v1/pdf/sign` or `POST /api/v1/pdf/tools/pdf_sign` with same payload.
+
+2. **`pdf_reorder` / `reorder`**:
+   - Document fixture: `tests/e2e_fixtures/multi_page.pdf` (contains exactly 5 pages).
+   - Order permutation: Must be 5 elements: `2,1,3,4,5`
+   - CLI: `paperpilot reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output <out_dir>/reordered_cli.pdf --json`
+   - MCP: `{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": [2, 1, 3, 4, 5], "output": "<out_dir>/reordered_mcp.pdf"}`
+   - API: `POST /api/v1/pdf/reorder` or `POST /api/v1/pdf/tools/pdf_reorder` with same payload.
+
+3. **`pdf_annotate` / `annotate`**:
+   - CLI: Supports inline JSON directly:
+     `paperpilot annotate --input tests/e2e_fixtures/single_page.pdf --data '[{"type":"note","page":1,"x":50,"y":50,"content":"Test"}]' --output <out_dir>/annotated_cli.pdf --json`
+
+4. **`pdf_burst` / `burst`**:
+   - CLI: `paperpilot burst --input tests/e2e_fixtures/multi_page.pdf --output <out_dir>/burst_cli --json` (directory creation is handled).
+
+5. **Conversions (`to_docx`, `to_xlsx`, `to_pptx`, `to_html`, `to_markdown`)**:
+   - CLI: `paperpilot convert --input tests/e2e_fixtures/single_page.pdf --output <out_dir>/out.<ext> --format <format>`
+   - API: `POST /api/v1/pdf/convert` with `{"input": "...", "output": "...", "format": "docx"}` (handler format mapping is merged).
+
+6. **Inspection / Query tools (`search`, `metadata`, `bookmarks`, `validate`, `hash`, `classify`)**:
+   - Run without `expected_output` file check if they return JSON stdout/payloads.
+
+---
+
+## Output Report: `reports/TRI_INTERFACE_E2E_100_VERIFIED.md`
+Run all 44 tools and generate a structured markdown report:
+- Executive Scorecard: CLI Pass Rate, MCP Pass Rate, API Pass Rate (Target: 44/44 on all).
+- Summary Table with columns: `#`, `Tool ID`, `CLI`, `MCP`, `REST API`, `Status`.
+- Tool details with exact working copy-pasteable snippets.
+
+---
+
+## Verification
+```bash
+cargo build --release -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
+python3 scripts/test_tri_interface_e2e.py
+test -f reports/TRI_INTERFACE_E2E_100_VERIFIED.md && echo "Master Report OK"
+```
+
+## Commit Message
+```
+test(e2e): data-driven 44-tool tri-interface test harness and 100% parity report
+```
