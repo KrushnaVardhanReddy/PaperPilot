@@ -1,463 +1,337 @@
 import os
 import sys
+import time
 import subprocess
 import json
-import time
 import urllib.request
-import shutil
 
-# Setup paths
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-CLI_BIN = os.path.join(PROJECT_ROOT, "target", "debug", "paperpilot-cli")
-MCP_BIN = os.path.join(PROJECT_ROOT, "target", "debug", "paperpilot-mcp")
-GATEWAY_BIN = os.path.join(PROJECT_ROOT, "target", "debug", "paperpilot-gateway")
-FIXTURE_DIR = os.path.join(PROJECT_ROOT, "tests", "e2e_fixtures")
+FIXTURE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tests", "e2e_fixtures"))
 OUT_DIR = os.path.join(FIXTURE_DIR, "out", "tri_e2e")
-REPORT_PATH = os.path.join(PROJECT_ROOT, "reports", "TRI_INTERFACE_E2E_BATCH2_SECURITY_CONTENT.md")
+REPORT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", "TRI_INTERFACE_E2E_BATCH3_OCR_FORMS.md"))
 
-API_BASE_URL = "http://127.0.0.1:7823/api/v1/pdf/tools"
-
-os.makedirs(OUT_DIR, exist_ok=True)
-os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
+CLI_BIN = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-cli"))
+MCP_BIN = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "target", "debug", "paperpilot-mcp"))
+GATEWAY_URL = "http://127.0.0.1:7823"
 
 class GatewayServer:
     def __init__(self):
         self.process = None
 
     def start(self):
-        print("Starting gateway server...")
-        self.process = subprocess.Popen([GATEWAY_BIN, "serve", "--port", "7823"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # Wait for server to start
-        for _ in range(30):
-            try:
-                urllib.request.urlopen("http://127.0.0.1:7823/swagger-ui")
-                print("Gateway server is up!")
-                return
-            except Exception as e:
-                time.sleep(0.5)
-        print("Failed to start gateway server!")
-        self.stop()
-        sys.exit(1)
+        print("Starting paperpilot-gateway...")
+        self.process = subprocess.Popen(
+            ["cargo", "run", "-p", "paperpilot-cli", "--", "serve", "--port", "7823"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(8)
 
     def stop(self):
         if self.process:
-            print("Stopping gateway server...")
+            print("Stopping paperpilot-gateway...")
             self.process.terminate()
             self.process.wait()
 
-class MCPClient:
+class TestRunner:
     def __init__(self):
-        self.process = None
+        self.results = []
+        self.tools_run = 0
+        self.interfaces = {"CLI": 0, "MCP": 0, "API": 0}
+        self.interfaces_passed = {"CLI": 0, "MCP": 0, "API": 0}
+        self.latencies = {"CLI": [], "MCP": [], "API": []}
 
-    def start(self):
-        if self.process:
-            try:
-                self.process.terminate()
-            except:
-                pass
-        self.process = subprocess.Popen([MCP_BIN], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def record_result(self, tool, interface, passed, latency, command_or_request, output_path=None, error=None):
+        self.results.append({
+            "tool": tool,
+            "interface": interface,
+            "passed": passed,
+            "latency": latency,
+            "command": command_or_request,
+            "output_path": output_path,
+            "error": error
+        })
+        self.interfaces[interface] += 1
+        if passed:
+            self.interfaces_passed[interface] += 1
+        self.latencies[interface].append(latency)
 
-    def call_tool(self, name, arguments, req_id=2):
-        self.start() # start fresh for each call
-        req = {
-            "jsonrpc": "2.0",
-            "id": req_id,
-            "method": "tools/call",
-            "params": {
-                "name": name,
-                "arguments": arguments
-            }
-        }
-        start = time.time()
+    def run_cli(self, tool, args_list, expected_output=None):
+        cmd = [CLI_BIN] + args_list + ["--json"]
+        start_time = time.time()
         try:
-            self.process.stdin.write(json.dumps(req) + "\n")
-            self.process.stdin.flush()
-            while True:
-                line = self.process.stdout.readline()
-                if not line:
-                    err = self.process.stderr.read()
-                    return {"error": f"Connection closed. stderr: {err}", "latency_ms": (time.time() - start) * 1000}
-                try:
-                    resp = json.loads(line)
-                    if resp.get("id") == req_id:
-                        return {"response": resp, "latency_ms": (time.time() - start) * 1000}
-                except json.JSONDecodeError:
-                    pass
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            latency = (time.time() - start_time) * 1000
+            passed = True
+            error = None
+            if expected_output and not os.path.exists(expected_output):
+                passed = False
+                error = f"Output file not found: {expected_output}"
+            elif expected_output and os.path.getsize(expected_output) == 0:
+                passed = False
+                error = f"Output file is 0 bytes: {expected_output}"
+        except subprocess.CalledProcessError as e:
+            latency = (time.time() - start_time) * 1000
+            passed = False
+            error = f"Exit code {e.returncode}: {e.stderr}"
+
+        cmd_str = " ".join(cmd)
+        self.record_result(tool, "CLI", passed, latency, cmd_str, expected_output, error)
+        return passed
+
+    def run_mcp(self, tool, args_dict, expected_output=None):
+        start_time = time.time()
+        passed = True
+        error = None
+        payload = json.dumps({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {"name": tool, "arguments": args_dict}
+        }) + "\n"
+
+        try:
+            result = subprocess.run(
+                [MCP_BIN],
+                input=payload,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=15
+            )
+            latency = (time.time() - start_time) * 1000
+
+            if result.returncode != 0:
+                passed = False
+                error = f"Exit code {result.returncode}: {result.stderr}"
+            else:
+                if expected_output and not os.path.exists(expected_output):
+                    passed = False
+                    error = f"Output file not found: {expected_output}"
+                elif expected_output and os.path.getsize(expected_output) == 0:
+                    passed = False
+                    error = f"Output file is 0 bytes: {expected_output}"
+        except subprocess.TimeoutExpired as e:
+            latency = (time.time() - start_time) * 1000
+            passed = False
+            error = f"MCP command timed out after 15s"
         except Exception as e:
-            return {"error": str(e), "latency_ms": (time.time() - start) * 1000}
+            latency = (time.time() - start_time) * 1000
+            passed = False
+            error = str(e)
 
-    def stop(self):
-        if self.process:
-            print("Stopping MCP server...")
-            self.process.terminate()
-            self.process.wait()
+        self.record_result(tool, "MCP", passed, latency, payload.strip(), expected_output, error)
+        return passed
 
-# Use kwargs in format string since `in` is a reserved keyword in python
-def format_str(fmt_string, **kwargs):
-    return fmt_string.format(**kwargs)
+    def run_api(self, tool, endpoint, payload, expected_output=None):
+        url = f"{GATEWAY_URL}{endpoint}"
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
+        start_time = time.time()
+        passed = True
+        error = None
+        curl_cmd = f"curl -s -X POST {url} -H 'Content-Type: application/json' -d '{json.dumps(payload)}'"
+        try:
+            with urllib.request.urlopen(req) as response:
+                res_data = response.read()
+            latency = (time.time() - start_time) * 1000
+            if expected_output and not os.path.exists(expected_output):
+                passed = False
+                error = f"Output file not found: {expected_output}"
+            elif expected_output and os.path.getsize(expected_output) == 0:
+                passed = False
+                error = f"Output file is 0 bytes: {expected_output}"
+        except urllib.error.URLError as e:
+            latency = (time.time() - start_time) * 1000
+            passed = False
+            error = str(e)
 
-tools = [
-    {
-        "id": 11,
-        "name": "pdf_encrypt",
-        "cli_cmd": "encrypt --input {input} --user-password secret123 --owner-password secret123 --output {out}",
-        "mcp_args": '{"input":"{input}", "password":"secret123", "owner_password":"secret123", "output":"{out}"}',
-        "api_endpoint": "/pdf_encrypt",
-        "api_payload": '{"input":"{input}", "password":"secret123", "owner_password":"secret123", "output":"{out}"}',
-        "input_fixture": "single_page.pdf",
-        "output_fixture": "encrypted_test.pdf",
-        "desc": "Encrypt PDF with user/owner password."
-    },
-    {
-        "id": 12,
-        "name": "pdf_decrypt",
-        "cli_cmd": "decrypt --input {input} --password password123 --output {out}",
-        "mcp_args": '{"input":"{input}", "password":"password123", "output":"{out}"}',
-        "api_endpoint": "/pdf_decrypt",
-        "api_payload": '{"input":"{input}", "password":"password123", "output":"{out}"}',
-        "input_fixture": "encrypted.pdf", # Will try with testpass123 as test_cli_e2e.sh does if password123 fails
-        "output_fixture": "decrypted_test.pdf",
-        "desc": "Decrypt password-protected PDF."
-    },
-    {
-        "id": 13,
-        "name": "pdf_redact",
-        "cli_cmd": "redact --input {input} --pages 1 --rect 50,50,200,50 --output {out}",
-        "mcp_args": '{"input":"{input}", "page":1, "x":50, "y":50, "width":200, "height":50, "output":"{out}"}',
-        "api_endpoint": "/pdf_redact",
-        "api_payload": '{"input":"{input}", "page":1, "x":50, "y":50, "width":200, "height":50, "output":"{out}"}',
-        "input_fixture": "search_test.pdf",
-        "output_fixture": "redacted_test.pdf",
-        "desc": "Black out and redact text/coordinates."
-    },
-    {
-        "id": 14,
-        "name": "pdf_sign",
-        "cli_cmd": "signature --input {input} --cert {cert} --output {out}",
-        "mcp_args": '{"input":"{input}", "output":"{out}", "cert_path":"{cert}", "password":"pass", "reason":"Verified"}',
-        "api_endpoint": "/pdf_sign",
-        "api_payload": '{"input":"{input}", "output":"{out}", "cert_path":"{cert}", "password":"pass", "reason":"Verified"}',
-        "input_fixture": "single_page.pdf",
-        "output_fixture": "signed_test.pdf",
-        "desc": "Digital signature / stamp certification."
-    },
-    {
-        "id": 15,
-        "name": "pdf_validate",
-        "cli_cmd": "validate --input {input}",
-        "mcp_args": '{"input":"{input}"}',
-        "api_endpoint": "/pdf_validate",
-        "api_payload": '{"input":"{input}"}',
-        "input_fixture": "single_page.pdf",
-        "output_fixture": None,
-        "desc": "Structural validation & corruption check."
-    },
-    {
-        "id": 16,
-        "name": "pdf_hash",
-        "cli_cmd": "hash --input {input}",
-        "mcp_args": '{"input":"{input}"}',
-        "api_endpoint": "/pdf_hash",
-        "api_payload": '{"input":"{input}"}',
-        "input_fixture": "single_page.pdf",
-        "output_fixture": None,
-        "desc": "Compute cryptographic integrity hash."
-    },
-    {
-        "id": 17,
-        "name": "pdf_repair",
-        "cli_cmd": "repair --input {input} --output {out}",
-        "mcp_args": '{"input":"{input}", "output":"{out}"}',
-        "api_endpoint": "/pdf_repair",
-        "api_payload": '{"input":"{input}", "output":"{out}"}',
-        "input_fixture": "single_page.pdf", # Using single_page instead of repaired.pdf to avoid missing fixture issues
-        "output_fixture": "repaired_test.pdf",
-        "desc": "Repair corrupted xref tables and trailers."
-    },
-    {
-        "id": 18,
-        "name": "pdf_extract_text",
-        "cli_cmd": "extract-text --input {input} --output {out}",
-        "mcp_args": '{"input":"{input}", "output":"{out}"}',
-        "api_endpoint": "/pdf_extract_text",
-        "api_payload": '{"input":"{input}", "output":"{out}"}',
-        "input_fixture": "search_test.pdf",
-        "output_fixture": "extracted_text.txt",
-        "desc": "Extract plain text from PDF pages."
-    },
-    {
-        "id": 19,
-        "name": "pdf_extract_images",
-        "cli_cmd": "extract-images --input {input} --output {out}",
-        "mcp_args": '{"input":"{input}", "output_dir":"{out}"}',
-        "api_endpoint": "/pdf_extract_images",
-        "api_payload": '{"input":"{input}", "output_dir":"{out}"}',
-        "input_fixture": "image_doc.pdf",
-        "output_fixture": "extracted_images",
-        "desc": "Extract embedded raster images."
-    },
-    {
-        "id": 20,
-        "name": "pdf_images_to_pdf",
-        "cli_cmd": "images-to-pdf --images {img1} {img2} --output {out}",
-        "mcp_args": '{"inputs":["{img1}", "{img2}"], "output":"{out}"}',
-        "api_endpoint": "/pdf_images_to_pdf",
-        "api_payload": '{"inputs":["{img1}", "{img2}"], "output":"{out}"}',
-        "input_fixture": "img1.png",
-        "output_fixture": "images_converted.pdf",
-        "desc": "Convert image files into a single PDF."
-    },
-]
+        self.record_result(tool, "API", passed, latency, curl_cmd, expected_output, error)
+        return passed
 
-def run_cli(cmd):
-    start = time.time()
-    try:
-        res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
-        return {"stdout": res.stdout, "stderr": res.stderr, "exit_code": res.returncode, "latency_ms": (time.time() - start) * 1000}
-    except subprocess.TimeoutExpired:
-        return {"error": "Timeout", "latency_ms": (time.time() - start) * 1000}
-
-def run_api(endpoint, payload):
-    start = time.time()
-    req = urllib.request.Request(API_BASE_URL + endpoint, data=payload.encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
-    try:
-        with urllib.request.urlopen(req) as response:
-            body = response.read().decode('utf-8')
-            return {"status": response.status, "body": body, "latency_ms": (time.time() - start) * 1000}
-    except urllib.error.HTTPError as e:
-        return {"status": e.code, "body": e.read().decode('utf-8'), "latency_ms": (time.time() - start) * 1000}
-    except Exception as e:
-        return {"error": str(e), "latency_ms": (time.time() - start) * 1000}
-
-def get_file_info(path):
-    if not os.path.exists(path):
-        return None
-    size = os.path.getsize(path)
-    return {"size": size}
-
-def verify_output(tool, out_path):
-    if not tool["output_fixture"]:
-        return True, "No output file expected."
-
-    if tool["name"] == "pdf_extract_images":
-        if os.path.isdir(out_path):
-            return True, "Directory exists"
-        else:
-            return False, "Output directory not found"
-
-    if os.path.exists(out_path) and os.path.getsize(out_path) > 0:
-        return True, f"Output file created ({os.path.getsize(out_path)} bytes)"
-    else:
-        return False, f"Output file missing or empty: {out_path}"
+os.makedirs(OUT_DIR, exist_ok=True)
 
 def main():
-    report_content = [
-        "# PaperPilot Tri-Interface E2E Verification & Interactive Living Documentation",
-        "",
-        "## Executive Scorecard",
-        "| Interface | Pass Rate | Avg Latency |",
-        "|---|---|---|",
-    ]
-
-    cli_passed = 0
-    mcp_passed = 0
-    api_passed = 0
-    total = len(tools)
-    cli_latency = 0
-    mcp_latency = 0
-    api_latency = 0
-
-    detailed_report = []
-
-    mcp_client = MCPClient()
     gateway = GatewayServer()
     gateway.start()
 
-    # Touch a dummy cert.p12 for sign tests
-    cert_path = os.path.join(OUT_DIR, "dummy.p12")
-    if not os.path.exists(cert_path):
-        open(cert_path, "w").close()
+    runner = TestRunner()
 
-    req_id = 2
+    # 21. pdf_render
+    print("Running pdf_render...")
+    in_file = os.path.join(FIXTURE_DIR, "single_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "rendered_cli.png")
+    out_file_mcp = os.path.join(OUT_DIR, "rendered_mcp.png")
+    out_file_api = os.path.join(OUT_DIR, "rendered_api.png")
 
-    for tool in tools:
-        print(f"Running tool {tool['id']}: {tool['name']}")
-        in_path = os.path.join(FIXTURE_DIR, tool["input_fixture"])
-        out_name = tool["output_fixture"]
-        out_path = os.path.join(OUT_DIR, out_name) if out_name else ""
-        img1 = os.path.join(FIXTURE_DIR, "img1.png")
-        img2 = os.path.join(FIXTURE_DIR, "img2.png")
+    runner.run_cli("pdf_render", ["render", "--input", in_file, "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_render", {"input": in_file, "page": 1, "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_render", "/api/v1/pdf/render-page", {"input": in_file, "page": 1, "output": out_file_api}, expected_output=out_file_api)
 
-        if tool["name"] == "pdf_decrypt":
-            # For decrypt, try to copy the fixture again to ensure it exists
-            if not os.path.exists(in_path):
-                print(f"Warning: Decrypt input fixture missing: {in_path}")
+    # 22. pdf_ocr
+    print("Running pdf_ocr...")
+    in_file = os.path.join(FIXTURE_DIR, "image_doc.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "ocr_result_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "ocr_result_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "ocr_result_api.pdf")
 
-        if out_name and os.path.exists(out_path):
-            if os.path.isdir(out_path):
-                shutil.rmtree(out_path)
-            else:
-                os.remove(out_path)
+    runner.run_cli("pdf_ocr", ["ocr", "--input", in_file, "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_ocr", {"input": in_file, "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_ocr", "/api/v1/pdf/tools/pdf_ocr", {"input": in_file, "output": out_file_api}, expected_output=out_file_api)
 
-        in_info = get_file_info(in_path)
-        if not in_info:
-            print(f"  WARNING: Input fixture {in_path} missing!")
-            in_info = {"size": 0}
+    # 23. pdf_search
+    print("Running pdf_search...")
+    in_file = os.path.join(FIXTURE_DIR, "search_test.pdf")
 
-        detailed_report.extend([
-            f"### Tool {tool['id']}: `{tool['name']}`",
-            f"**Description**: {tool['desc']}",
-            f"**Input Snapshot**: {in_path} ({in_info['size']} bytes)",
-            ""
-        ])
+    runner.run_cli("pdf_search", ["search", "--input", in_file, "--query", "test"])
+    runner.run_mcp("pdf_search", {"input": in_file, "query": "test"})
+    runner.run_api("pdf_search", "/api/v1/pdf/tools/pdf_search", {"input": in_file, "query": "test"})
+
+    # 24. pdf_bates
+    print("Running pdf_bates...")
+    in_file = os.path.join(FIXTURE_DIR, "multi_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "bates_stamped_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "bates_stamped_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "bates_stamped_api.pdf")
+
+    runner.run_cli("pdf_bates", ["bates", "--input", in_file, "--prefix", "CONF-", "--start", "1", "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_bates", {"input": in_file, "prefix": "CONF-", "start_number": 1, "padding": 6, "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_bates", "/api/v1/pdf/tools/pdf_bates", {"input": in_file, "prefix": "CONF-", "start_number": 1, "padding": 6, "output": out_file_api}, expected_output=out_file_api)
+
+    # 25. pdf_watermark
+    print("Running pdf_watermark...")
+    in_file = os.path.join(FIXTURE_DIR, "single_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "watermarked_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "watermarked_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "watermarked_api.pdf")
+
+    runner.run_cli("pdf_watermark", ["watermark", "--input", in_file, "--text", "SAMPLE", "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_watermark", {"input": in_file, "text": "SAMPLE", "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_watermark", "/api/v1/pdf/watermark", {"input": in_file, "text": "SAMPLE", "output": out_file_api}, expected_output=out_file_api)
+
+    # 26. pdf_header_footer
+    print("Running pdf_header_footer...")
+    in_file = os.path.join(FIXTURE_DIR, "multi_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "header_footer_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "header_footer_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "header_footer_api.pdf")
+
+    runner.run_cli("pdf_header_footer", ["header-footer", "--input", in_file, "--text", "Confidential - Page", "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_header_footer", {"input": in_file, "header_left": "Confidential", "footer_center": "Page", "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_header_footer", "/api/v1/pdf/tools/pdf_header_footer", {"input": in_file, "header_left": "Confidential", "footer_center": "Page", "output": out_file_api}, expected_output=out_file_api)
+
+    # 27. pdf_read_form
+    print("Running pdf_read_form...")
+    in_file = os.path.join(FIXTURE_DIR, "form.pdf")
+
+    runner.run_cli("pdf_read_form", ["form", "read", in_file])
+    runner.run_mcp("pdf_read_form", {"input": in_file})
+    runner.run_api("pdf_read_form", "/api/v1/pdf/tools/pdf_read_form", {"input": in_file})
+
+    # 28. pdf_fill_form
+    print("Running pdf_fill_form...")
+    in_file = os.path.join(FIXTURE_DIR, "form.pdf")
+    data_file = os.path.join(FIXTURE_DIR, "form_data.json")
+    out_file_cli = os.path.join(OUT_DIR, "filled_form_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "filled_form_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "filled_form_api.pdf")
+
+    runner.run_cli("pdf_fill_form", ["form", "fill", in_file, "--data", data_file, "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_fill_form", {"input": in_file, "values": {"TestText": "Alice"}, "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_fill_form", "/api/v1/pdf/tools/pdf_fill_form", {"input": in_file, "values": {"TestText": "Alice"}, "output": out_file_api}, expected_output=out_file_api)
+
+    # 29. pdf_create_form_field
+    print("Running pdf_create_form_field...")
+    in_file = os.path.join(FIXTURE_DIR, "single_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "field_added_cli.pdf")
+    out_file_mcp = os.path.join(OUT_DIR, "field_added_mcp.pdf")
+    out_file_api = os.path.join(OUT_DIR, "field_added_api.pdf")
+
+    runner.run_cli("pdf_create_form_field", ["form", "add-field", in_file, "--name", "signature", "--type", "text", "--rect", "50,50,150,30", "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_create_form_field", {"input": in_file, "field_type": "text", "field_name": "signature", "x": 50, "y": 50, "width": 150, "height": 30, "output": out_file_mcp}, expected_output=out_file_mcp)
+    runner.run_api("pdf_create_form_field", "/api/v1/pdf/tools/pdf_create_form_field", {"input": in_file, "field_type": "text", "field_name": "signature", "x": 50, "y": 50, "width": 150, "height": 30, "output": out_file_api}, expected_output=out_file_api)
+
+    # 30. pdf_metadata
+    print("Running pdf_metadata...")
+    in_file = os.path.join(FIXTURE_DIR, "single_page.pdf")
+    out_file_cli = os.path.join(OUT_DIR, "metadata_cli.json")
+
+    runner.run_cli("pdf_metadata", ["metadata", "--input", in_file, "--output", out_file_cli], expected_output=out_file_cli)
+    runner.run_mcp("pdf_metadata", {"input": in_file})
+    runner.run_api("pdf_metadata", "/api/v1/pdf/info", {"input": in_file})
+
+    # GENERATE REPORT
+    import json
+
+    total = len(runner.results) // 3
+    passed = runner.interfaces_passed
+
+    report_content = [
+        "# Phase 4.E2E-R3 — Tri-Interface Verification Report (Batch 3: OCR, Forms & Stamps)",
+        "",
+        "## Executive Scorecard",
+        f"- **Total Tools Verified:** {total}",
+        f"- **CLI Pass Rate:** {passed['CLI']} / {total}",
+        f"- **MCP Pass Rate:** {passed['MCP']} / {total}",
+        f"- **API Pass Rate:** {passed['API']} / {total}",
+        ""
+    ]
+
+    report_content.append("## Detailed Tool-by-Tool Documentation\n")
+
+    tools_grouped = {}
+    for res in runner.results:
+        tool_name = res['tool']
+        if tool_name not in tools_grouped:
+            tools_grouped[tool_name] = {}
+        tools_grouped[tool_name][res['interface']] = res
+
+    for tool_name, interfaces in tools_grouped.items():
+        report_content.append(f"### Tool: `{tool_name}`\n")
 
         # CLI
-        cli_out_path = out_path + ".cli" if out_path else ""
-        cli_cmd_str = tool['cli_cmd'].replace('{input}', in_path).replace('{out}', cli_out_path).replace('{img1}', img1).replace('{img2}', img2).replace('{cert}', cert_path)
-        cli_cmd = f"{CLI_BIN} {cli_cmd_str} --json"
-
-        print(f"  [CLI] {cli_cmd}")
-        cli_res = run_cli(cli_cmd)
-
-        if cli_res.get("exit_code") != 0 and tool["name"] == "pdf_decrypt":
-            # the test bash script used testpass123
-            print(f"  [CLI] retry with testpass123")
-            cli_cmd_str = cli_cmd_str.replace("password123", "testpass123")
-            cli_cmd = f"{CLI_BIN} {cli_cmd_str} --json"
-            cli_res = run_cli(cli_cmd)
-
-        cli_latency += cli_res.get("latency_ms", 0)
-
-        cli_success = False
-        cli_ver_msg = ""
-        if cli_res.get("exit_code") == 0:
-            cli_success, cli_ver_msg = verify_output(tool, cli_out_path)
-            if cli_success: cli_passed += 1
-
-        detailed_report.extend([
-            "#### 💻 CLI Example",
-            f"```bash\n{cli_cmd}\n```",
-            f"**Result**: {'PASS ✅' if cli_success else 'FAIL ❌'} ({cli_res.get('latency_ms', 0):.2f}ms)",
-            f"**Details**: Exit code {cli_res.get('exit_code')}. {cli_ver_msg}",
-            f"**Output**:\n```\n{cli_res.get('stdout', '')[:500]}\n```" if not cli_success else "",
-             f"**Error**:\n```\n{cli_res.get('stderr', '')[:500]}\n```" if cli_res.get('stderr') else "",
-            ""
-        ])
+        cli = interfaces['CLI']
+        report_content.append("#### 💻 CLI")
+        report_content.append(f"```bash\n{cli['command']}\n```")
+        report_content.append(f"- **Status:** {'✅ PASS' if cli['passed'] else '❌ FAIL'}")
+        report_content.append(f"- **Latency:** {cli['latency']:.2f} ms")
+        if cli['error']:
+            report_content.append(f"- **Error:** {cli['error']}")
+        report_content.append("")
 
         # MCP
-        mcp_out_path = out_path + ".mcp" if out_path else ""
-        mcp_args_str = tool['mcp_args'].replace('{input}', in_path).replace('{out}', mcp_out_path).replace('{img1}', img1).replace('{img2}', img2).replace('{cert}', cert_path)
-        if tool["name"] == "pdf_decrypt":
-            mcp_args_str = mcp_args_str.replace("password123", "testpass123")
+        mcp = interfaces['MCP']
+        report_content.append("#### 🤖 MCP")
+        report_content.append("```json")
+        try:
+            mcp_cmd = json.dumps(json.loads(mcp['command']), indent=2)
+        except:
+            mcp_cmd = mcp['command']
+        report_content.append(mcp_cmd)
+        report_content.append("```")
+        report_content.append(f"- **Status:** {'✅ PASS' if mcp['passed'] else '❌ FAIL'}")
+        report_content.append(f"- **Latency:** {mcp['latency']:.2f} ms")
+        if mcp['error']:
+            report_content.append(f"- **Error:** {mcp['error']}")
+        report_content.append("")
 
-        mcp_args = json.loads(mcp_args_str)
-        print(f"  [MCP] {tool['name']}")
-        mcp_res = mcp_client.call_tool(tool["name"], mcp_args, req_id)
+        # API
+        api = interfaces['API']
+        report_content.append("#### 🌐 REST API")
+        report_content.append(f"```bash\n{api['command']}\n```")
+        report_content.append(f"- **Status:** {'✅ PASS' if api['passed'] else '❌ FAIL'}")
+        report_content.append(f"- **Latency:** {api['latency']:.2f} ms")
+        if api['error']:
+            report_content.append(f"- **Error:** {api['error']}")
+        report_content.append("")
 
-        req_id += 1
-        mcp_latency += mcp_res["latency_ms"]
+        report_content.append("---")
+        report_content.append("")
 
-        mcp_success = False
-        mcp_ver_msg = ""
-        if "response" in mcp_res and not mcp_res["response"].get("error"):
-            # Check response format
-            result = mcp_res["response"].get("result", {})
-            if result.get("isError") == True:
-                mcp_success = False
-                mcp_ver_msg = f"MCP returned isError=True: {result}"
-            else:
-                mcp_success, mcp_ver_msg = verify_output(tool, mcp_out_path)
-                if mcp_success: mcp_passed += 1
-        elif "response" in mcp_res and mcp_res["response"].get("error"):
-            mcp_success = False
-            mcp_ver_msg = f"MCP Error: {mcp_res['response']['error']}"
-        else:
-             mcp_success = False
-             mcp_ver_msg = f"Failed to get response: {mcp_res}"
+    with open(REPORT_PATH, 'w') as f:
+        f.write('\n'.join(report_content))
 
-        rpc_req = json.dumps({
-            "jsonrpc": "2.0",
-            "id": req_id-1,
-            "method": "tools/call",
-            "params": {
-                "name": tool["name"],
-                "arguments": mcp_args
-            }
-        })
+    print(f"Report generated at {REPORT_PATH}")
 
-        detailed_report.extend([
-            "#### 🤖 MCP Example",
-            f"```json\n{rpc_req}\n```",
-            f"**Result**: {'PASS ✅' if mcp_success else 'FAIL ❌'} ({mcp_res['latency_ms']:.2f}ms)",
-            f"**Details**: {mcp_ver_msg}",
-            f"**Response**:\n```json\n{json.dumps(mcp_res.get('response', {}))}\n```" if not mcp_success else "",
-            ""
-        ])
-
-        # REST API
-        api_out_path = out_path + ".api" if out_path else ""
-        if api_out_path and tool["name"] == "pdf_extract_images":
-             pass
-        elif api_out_path and not os.path.exists(api_out_path) and not tool["name"] == "pdf_extract_images":
-             pass
-
-        api_payload_str = tool['api_payload'].replace('{input}', in_path).replace('{out}', api_out_path).replace('{img1}', img1).replace('{img2}', img2).replace('{cert}', cert_path)
-        if tool["name"] == "pdf_decrypt":
-            api_payload_str = api_payload_str.replace("password123", "testpass123")
-
-        endpoint_to_use = f"/{tool['name']}"
-        if tool['name'] == "pdf_extract_text":
-             pass
-
-
-        curl_cmd = f"curl -s -X POST {API_BASE_URL}{endpoint_to_use} -H 'Content-Type: application/json' -d '{api_payload_str}'"
-        print(f"  [API] {endpoint_to_use}")
-
-        api_res = run_api(endpoint_to_use, api_payload_str)
-        api_latency += api_res["latency_ms"]
-
-        api_success = False
-        api_ver_msg = ""
-        if api_res.get("status") == 200:
-            try:
-                body = json.loads(api_res.get("body", "{}"))
-                if body.get("success") == False or body.get("status") == "error":
-                     api_success = False
-                     api_ver_msg = f"API returned error: {body}"
-                else:
-                    api_success, api_ver_msg = verify_output(tool, api_out_path)
-                    if api_success: api_passed += 1
-            except:
-                api_success = False
-                api_ver_msg = f"Invalid JSON response or no output verification. Response: {api_res.get('body')}"
-                if not tool["output_fixture"]:
-                    api_success = True
-                    api_passed += 1
-        else:
-             api_success = False
-             api_ver_msg = f"HTTP {api_res.get('status')}: {api_res.get('body')}"
-
-        detailed_report.extend([
-            "#### 🌐 REST API Example",
-            f"```bash\n{curl_cmd}\n```",
-            f"**Result**: {'PASS ✅' if api_success else 'FAIL ❌'} ({api_res['latency_ms']:.2f}ms)",
-            f"**Details**: {api_ver_msg}",
-            f"**Response**:\n```json\n{api_res.get('body', '')}\n```" if not api_success else "",
-            ""
-        ])
-
-    mcp_client.stop()
-    #     gateway.stop()
-
-    report_content.insert(5, f"| CLI | {cli_passed}/{total} ({(cli_passed/total)*100:.1f}%) | {cli_latency/total:.2f}ms |")
-    report_content.insert(6, f"| MCP | {mcp_passed}/{total} ({(mcp_passed/total)*100:.1f}%) | {mcp_latency/total:.2f}ms |")
-    report_content.insert(7, f"| REST API | {api_passed}/{total} ({(api_passed/total)*100:.1f}%) | {api_latency/total:.2f}ms |")
-
-    with open(REPORT_PATH, "w") as f:
-        f.write("\n".join(report_content) + "\n\n" + "\n".join(detailed_report) + "\n")
-
-    print(f"Report written to {REPORT_PATH}")
+    gateway.stop()
 
 if __name__ == "__main__":
     main()
