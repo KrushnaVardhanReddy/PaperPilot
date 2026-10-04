@@ -7,11 +7,9 @@ all: format lint test-all build
 build:
 	cargo build --workspace
 
-# Build frontend and debug desktop app, then run
-run:
-	cd apps/desktop && npm run build
-	cargo build -p desktop
-	./target/debug/desktop
+# Build and run the standalone desktop application
+run: build-release
+	./target/release/desktop
 
 # Build the production standalone desktop app (release) and inspect binary size
 build-release:
