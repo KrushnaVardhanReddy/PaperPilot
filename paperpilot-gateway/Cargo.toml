@@ -29,3 +29,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 utoipa = { version = "6.0.0", features = ["axum_extras", "uuid", "macros"] }
 utoipa-swagger-ui = { version = "10.0.1", features = ["axum"] }
 uuid = { version = "1.26.1", features = ["v4"] }
+lopdf = "0.45.0"
