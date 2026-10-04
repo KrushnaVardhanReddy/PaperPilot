@@ -60,7 +60,7 @@ All 3 tasks have been partitioned with **strict crate-level file ownership** so 
 
 | Task | Scope (Owned Crates) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **P4_FIX_1** | `paperpilot-cli/` only | [Session 15143213812508351944](https://jules.google.com/session/15143213812508351944) | `main` | Fix all CLI clap flags & subcommands + CLI non-regression tests |
+| **P4_FIX_1** | `paperpilot-cli/` only | [Session 15143213812508351944](https://jules.google.com/session/15143213812508351944) | `main` | **Merged (PR #114)**: Clap flags, aliases & subcommands fixed |
 | **P4_FIX_2** | `paperpilot-gateway/` only | [Session 3687370227158297202](https://jules.google.com/session/3687370227158297202) | `main` | Normalize MCP/REST API parameters + MCP regression tests |
 | **P4_FIX_3** | `paperpilot-pdf/`, `paperpilot-mcp/` | [Session 11257365868253034873](https://jules.google.com/session/11257365868253034873) | `main` | Fix render fallback output, split output dir, form fill, OCR + engine tests |
 
