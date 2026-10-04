@@ -46,7 +46,8 @@ This document analyzes the current landscape of PDF manipulation tools and compa
 | **Basic Ops (Merge, Split, etc)** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | **Annotations** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | **Form Filling** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **PDF Text Editor (WYSIWYG)** | ❌ Not planned | ✅ Yes | 🟡 Alpha | 🟡 Basic |
+| **PDF Text Editor (WYSIWYG)** | 🚧 Phase 5.6 | ✅ Yes | 🟡 Alpha | 🟡 Basic |
+| **In-Browser WebAssembly (WASM)** | 🚧 Phase 5.7 | 🟡 C++ Emscripten | ❌ Web Server Required | ❌ No |
 | **OCR** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | **Certificate / Digital Signing** | ✅ Yes (basic) | ✅ Yes | ✅ Yes | ✅ Yes |
 | **Redaction** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
@@ -70,6 +71,7 @@ This document analyzes the current landscape of PDF manipulation tools and compa
 | **Shared / Multi-party Signing** | 🚧 Phase 6.2 | ✅ Yes | ✅ Yes | ❌ No |
 | **Auto Rename (based on content)** | 🚧 Phase 5.4 | ❌ No | ✅ Yes | ❌ No |
 | **Mobile Scanner** | 🚧 Post 3.1.7 | ✅ Yes | 🟡 Config only | ❌ No |
+| **Print Preflight & PDF/X** | 🚧 Phase 5.6.5 | ✅ Yes | ❌ No | ❌ No |
 
 ---
 
@@ -219,3 +221,25 @@ Recent updates to Stirling PDF have created **deep community backlash and functi
 The two highest-value backend automations that teams actively migrate for:
 1. **Visual Pixel PDF Comparison (Visual Diff Slider & Report)**
 2. **Deterministic API Form Filling & Flattening** (Supported 100% in PaperPilot Phase 1.3 / Phase 4.F).
+
+---
+
+## 🏛️ Adobe Acrobat Pro Deep-Dive: The Strategy to Outcompete the Industry Leader
+
+Adobe Acrobat Pro is the $240/year enterprise standard. To displace Adobe rather than just matching Stirling-PDF, PaperPilot attacks Adobe’s four structural vulnerabilities:
+
+### 1. The Cloud AI Privacy Trap vs. 100% On-Device AI
+* **Adobe’s Model**: Adobe Acrobat AI Assistant uploads document text and embeddings to Adobe cloud servers, requiring recurring subscription add-ons ($4.99/mo extra) and raising immediate red flags for HIPAA, GDPR, defense, and legal teams.
+* **PaperPilot Advantage**: **100% Local Intelligence**. With embedded `NeuML/bert-hash-nano-embeddings` (<1.1MB ONNX) and local Ollama / vLLM integration via MCP, documents never leave localhost. Legal and healthcare teams can run document summarization, semantic search, and intent automation in air-gapped environments without data leaks.
+
+### 2. Pure Rust WebAssembly (`paperpilot-wasm`) vs. Legacy C++ Emscripten
+* **Adobe’s Model**: Adobe Acrobat Web compiles their 30-year-old C++ engine into WebAssembly via Emscripten. The resulting bundle is heavy, takes seconds to initialize, and pushes files to Adobe cloud document cloud storage.
+* **PaperPilot Advantage**: **Zero-Upload Browser Processing**. Rust compiles natively to `wasm32-unknown-unknown` with `wasm-bindgen`. Core PDF manipulation (merge, split, crop, compress, encrypt, redact) executes 100% client-side in the browser's memory sandbox without uploading bytes to any server.
+
+### 3. Open Agentic Infrastructure (MCP) vs. Adobe Closed Garden
+* **Adobe’s Model**: Adobe Acrobat has no open protocol for autonomous AI agents. Developers are restricted to proprietary Acrobat JavaScript or expensive Adobe PDF Services Cloud APIs ($0.05/transaction).
+* **PaperPilot Advantage**: **First-Class Model Context Protocol (MCP)**. With 40+ native tools, any AI agent (Claude Desktop, local LangChain, AutoGen, OpenCode) can programmatically control PaperPilot, orchestrating complex multi-document pipelines as easily as a human user.
+
+### 4. In-Place WYSIWYG Editing Without Bloat (Phase 5.6 Parity)
+* **Adobe’s Monopolistic Hold**: Adobe’s primary retention anchor is direct in-place typo and text editing with font reflow.
+* **PaperPilot Strategy (Phase 5.6)**: Implement paragraph boundary detection and content stream operator rewriting (`BT...ET`, `Tj`, `TJ`) in Rust (`lopdf`). Users get seamless typo editing and image replacement directly in the canvas viewer without Adobe's 1.5GB background daemon overhead.

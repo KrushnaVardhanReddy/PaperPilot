@@ -848,6 +848,33 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.5.3 | Streamable HTTP MCP Server (`paperpilot-mcp --port 8080 --http`) | Expose Model Context Protocol over streamable HTTP for remote agents (LangChain, n8n, AutoGen) alongside stdio |
 | 5.5.4 | Chained Pipeline MCP Tool (`pdf_run_pipeline`) | Allow AI agents over MCP to trigger an entire multi-step recipe in a single atomic RPC call |
 
+---
+
+### 5.6 — In-Place Content & Typography Editor (Adobe Acrobat Pro Parity) `[PARALLEL with 5.5]`
+
+> Directly addresses Adobe Acrobat Pro's core competitive advantage: true inline typographic text and object manipulation without re-exporting.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.6.1 | Text Block & Paragraph Boundary Detection | Segment raw content stream operators (`BT...ET`, `Tj`, `TJ`) into selectable paragraphs and text bounding blocks |
+| 5.6.2 | In-Place Text Editing & Content Stream Rewriting | Allow user to click any existing text, edit typos, and rewrite font encoding and content streams via `lopdf` |
+| 5.6.3 | Font Metric Matching & Fallback Synthesis | Analyze embedded font descriptors to match typeface metrics, font weight, and kerning on edits |
+| 5.6.4 | Object-Level Image & Shape Transformation | Move, resize, replace, or delete existing images and vector graphics directly on the canvas |
+| 5.6.5 | Print Preflight & PDF/X Verification | Verify color profiles (RGB/CMYK), embedded fonts, image DPI (>300 DPI for print), and PDF/X-1a / PDF/X-4 compliance |
+
+---
+
+### 5.7 — Pure Rust WebAssembly (WASM) Engine & Zero-Upload Web App `[PARALLEL with 5.6]`
+
+> Beats Adobe Acrobat Web: 100% client-side in-browser PDF manipulation without uploading files to Adobe/cloud servers.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.7.1 | `paperpilot-wasm` Crate | Compile core `paperpilot-pdf` algorithms to `wasm32-unknown-unknown` via `wasm-bindgen` |
+| 5.7.2 | Client-Side In-Browser Operations | Run Merge, Split, Rotate, Compress, Encrypt, and Redact 100% locally in browser memory without network requests |
+| 5.7.3 | Web Worker Threading (`wasm-bindgen-rayon`) | Multi-threaded page processing in web browsers using Web Workers and SharedArrayBuffer |
+| 5.7.4 | WebAssembly Playground Web App | Zero-install web demo that processes PDFs in under 10MB memory, proving complete privacy to prospective users |
+
 ## Phase 6 — Enterprise
 
 **Goal:** Organizations can deploy and govern PaperPilot at scale.
