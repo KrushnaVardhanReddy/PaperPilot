@@ -658,6 +658,21 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R2.E4 | System Performance Re-Benchmark | Re-run all benchmarks; add viewer render latency (ms/page), annotation save time |
 | R2.E5 | Autonomous Agent QA Testing Suite (Vercel Agent Browser / Stagehand) | ✅ Completed — QA-1 through QA-8 fully verified and merged (PR #100 - PR #108) |
 
+---
+
+### 4.E2E Round 3 — Tri-Interface E2E Verification & Interactive Living Documentation (CLI + MCP + REST API)
+
+> **The Unified Reference & Verification Suite**: Tests all 44 tools across all three developer interfaces (CLI, MCP, and REST API). Takes pre- and post-execution PDF snapshots (file size, page counts, integrity checks), generates copy-pasteable working examples for each tool, and compiles a comprehensive Markdown reference document (`reports/TRI_INTERFACE_E2E_AND_DOCS.md`). If any tool fails on an interface, records root cause and failure details without masking.
+
+| # | Task | Notes |
+|---|---|---|
+| R3.E1 | Group 1: Structural & Page Operations Tri-Interface Test (10 tools) | `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_extract_pages`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_burst`, `pdf_crop`, `pdf_remove_blank`, `pdf_page_numbers` |
+| R3.E2 | Group 2: Security & Integrity Operations Tri-Interface Test (7 tools) | `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_sign`, `pdf_validate`, `pdf_hash`, `pdf_repair` |
+| R3.E3 | Group 3: Content Transformation & OCR Tri-Interface Test (9 tools) | `pdf_extract_text`, `pdf_extract_images`, `pdf_images_to_pdf`, `pdf_render`, `pdf_ocr`, `pdf_search`, `pdf_bates`, `pdf_watermark`, `pdf_header_footer` |
+| R3.E4 | Group 4: Forms, Metadata & Optimization Tri-Interface Test (8 tools) | `pdf_read_form`, `pdf_fill_form`, `pdf_create_form_field`, `pdf_metadata`, `pdf_bookmarks`, `pdf_compress`, `pdf_linearize`, `pdf_flatten` |
+| R3.E5 | Group 5: Advanced Conversion & Intelligence Tri-Interface Test (10 tools) | `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`, `pdf_classify_type`, `pdf_compare`, `pdf_annotate`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel` |
+| R3.E6 | Tri-Interface Automated Master Runner & Living Documentation Generator | `scripts/test_tri_interface_e2e.py` executing all 44 tools across CLI, MCP, and REST API, generating `reports/TRI_INTERFACE_E2E_AND_DOCS.md` |
+
 
 ---
 

@@ -1,0 +1,203 @@
+# Task: Phase 4.E2E-R3 — Tri-Interface E2E Verification & Interactive Living Documentation (All 44 Tools)
+# Objective: Build scripts/test_tri_interface_e2e.py to validate all 44 tools across CLI, MCP, and REST API, inspect pre/post PDF metrics, and generate reports/TRI_INTERFACE_E2E_AND_DOCS.md
+# Spec: specs/013-tri-interface-e2e-and-docs/spec.md
+
+---
+
+## MANDATORY RULES — VIOLATION = REJECTED PR
+
+1. DO NOT FIX OR MASK FAILING TOOLS. If any tool fails on CLI, MCP, or API, do NOT patch underlying tool implementations in this PR. Accurately report the failure, exit code, error message, and root cause in the generated report.
+2. Every file you modify or create MUST compile and run cleanly.
+3. Commit message MUST start with `jules: ` prefix.
+4. Python code must use standard library or existing dependencies in the workspace.
+5. All 44 operations MUST be tested across CLI, MCP, and REST API.
+
+---
+
+## CONTEXT & OBJECTIVE
+
+PaperPilot now has 44 PDF operations available across:
+1. **CLI**: `paperpilot <subcommand> ... --json`
+2. **MCP**: stdio JSON-RPC `{"jsonrpc":"2.0","method":"tools/call","params":{"name":"pdf_...","arguments":{...}}}`
+3. **REST API**: HTTP POST `http://127.0.0.1:7823/api/v1/pdf/...` or `/api/v1/pdf/tools/{tool_name}`
+
+We need an automated master verification harness and living documentation generator:
+`scripts/test_tri_interface_e2e.py`
+
+This script will run every tool, inspect the input PDF and output PDF (file size, page counts, format check), and generate a comprehensive reference manual and validation report at `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+---
+
+## STEP 1: Implement `scripts/test_tri_interface_e2e.py`
+
+The script must:
+1. **Manage Environment**:
+   - Locate/build binaries: `target/debug/paperpilot-cli`, `target/debug/paperpilot-mcp`, and `target/debug/paperpilot-gateway`.
+   - Check if `paperpilot-gateway` is running on port 7823 (e.g., ping `http://127.0.0.1:7823/health`). If not, spawn it in background and terminate on exit.
+   - Ensure fixtures in `tests/e2e_fixtures` are available.
+   - Create clean output test directory: `tests/e2e_fixtures/out/tri_e2e/`.
+
+2. **Snapshot Pre-Execution State**:
+   - For every test, record:
+     - `input_path`
+     - `input_size_bytes`
+     - `input_pages` (inspect using binary parser or quick regex / lopdf)
+
+3. **Execute across all 3 Interfaces**:
+   - **CLI**:
+     - Command: `./target/debug/paperpilot-cli <subcommand> [flags] --json`
+     - Measure latency in ms, capture exit code, stdout, and stderr.
+   - **MCP**:
+     - Command: pipe JSON-RPC `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_<name>","arguments":{...}}}` to `./target/debug/paperpilot-mcp`.
+     - Measure latency in ms, parse JSON-RPC response.
+   - **REST API**:
+     - Request: POST JSON to `http://127.0.0.1:7823/api/v1/pdf/tools/pdf_<name>` (or dedicated route).
+     - Measure latency in ms, capture HTTP status code and response payload.
+
+4. **Snapshot Post-Execution State & Assertions**:
+   - Record:
+     - `output_path`
+     - `output_size_bytes`
+     - `size_delta_bytes`
+     - `output_pages`
+     - Format integrity verification (magic bytes: `%PDF` for PDF, `PK\x03\x04` for docx/xlsx/pptx, `\x89PNG` for PNG, valid text for txt/md/json).
+   - Assert:
+     - Did output get created?
+     - Did command return success?
+     - If failed: DO NOT FIX CODE, capture exact error details.
+
+5. **Generate Living Documentation & Report**:
+   - Write to `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+---
+
+## STEP 2: The 44 Tools Catalog to Include in Test Harness
+
+Map all 44 tools with their corresponding CLI, MCP, and REST API commands:
+
+### Structural & Page Operations (10 Tools)
+1. `pdf_merge` -> CLI: `merge`, MCP: `pdf_merge`, API: `/api/v1/pdf/merge`
+2. `pdf_split` -> CLI: `split`, MCP: `pdf_split`, API: `/api/v1/pdf/split`
+3. `pdf_rotate` -> CLI: `rotate`, MCP: `pdf_rotate`, API: `/api/v1/pdf/tools/pdf_rotate`
+4. `pdf_extract_pages` -> CLI: `extract`, MCP: `pdf_extract_pages`, API: `/api/v1/pdf/tools/pdf_extract_pages`
+5. `pdf_delete_pages` -> CLI: `delete`, MCP: `pdf_delete_pages`, API: `/api/v1/pdf/tools/pdf_delete_pages`
+6. `pdf_reorder_pages` -> CLI: `reorder`, MCP: `pdf_reorder_pages`, API: `/api/v1/pdf/tools/pdf_reorder_pages`
+7. `pdf_burst` -> CLI: `burst`, MCP: `pdf_burst`, API: `/api/v1/pdf/tools/pdf_burst`
+8. `pdf_crop` -> CLI: `crop`, MCP: `pdf_crop`, API: `/api/v1/pdf/tools/pdf_crop`
+9. `pdf_remove_blank` -> CLI: `remove-blank`, MCP: `pdf_remove_blank`, API: `/api/v1/pdf/tools/pdf_remove_blank`
+10. `pdf_page_numbers` -> CLI: `page-numbers`, MCP: `pdf_page_numbers`, API: `/api/v1/pdf/tools/pdf_page_numbers`
+
+### Security & Integrity Operations (7 Tools)
+11. `pdf_encrypt` -> CLI: `encrypt`, MCP: `pdf_encrypt`, API: `/api/v1/pdf/tools/pdf_encrypt`
+12. `pdf_decrypt` -> CLI: `decrypt`, MCP: `pdf_decrypt`, API: `/api/v1/pdf/tools/pdf_decrypt`
+13. `pdf_redact` -> CLI: `redact`, MCP: `pdf_redact`, API: `/api/v1/pdf/tools/pdf_redact`
+14. `pdf_sign` -> CLI: `sign`, MCP: `pdf_sign`, API: `/api/v1/pdf/tools/pdf_sign`
+15. `pdf_validate` -> CLI: `validate`, MCP: `pdf_validate`, API: `/api/v1/pdf/tools/pdf_validate`
+16. `pdf_hash` -> CLI: `hash`, MCP: `pdf_hash`, API: `/api/v1/pdf/tools/pdf_hash`
+17. `pdf_repair` -> CLI: `repair`, MCP: `pdf_repair`, API: `/api/v1/pdf/tools/pdf_repair`
+
+### Content Transformation & OCR (9 Tools)
+18. `pdf_extract_text` -> CLI: `extract-text`, MCP: `pdf_extract_text`, API: `/api/v1/pdf/extract-text`
+19. `pdf_extract_images` -> CLI: `extract-images`, MCP: `pdf_extract_images`, API: `/api/v1/pdf/tools/pdf_extract_images`
+20. `pdf_images_to_pdf` -> CLI: `images-to-pdf`, MCP: `pdf_images_to_pdf`, API: `/api/v1/pdf/tools/pdf_images_to_pdf`
+21. `pdf_render` -> CLI: `render`, MCP: `pdf_render`, API: `/api/v1/pdf/render-page`
+22. `pdf_ocr` -> CLI: `ocr`, MCP: `pdf_ocr`, API: `/api/v1/pdf/tools/pdf_ocr`
+23. `pdf_search` -> CLI: `search`, MCP: `pdf_search`, API: `/api/v1/pdf/tools/pdf_search`
+24. `pdf_bates` -> CLI: `bates`, MCP: `pdf_bates`, API: `/api/v1/pdf/tools/pdf_bates`
+25. `pdf_watermark` -> CLI: `watermark`, MCP: `pdf_watermark`, API: `/api/v1/pdf/watermark`
+26. `pdf_header_footer` -> CLI: `header-footer`, MCP: `pdf_header_footer`, API: `/api/v1/pdf/tools/pdf_header_footer`
+
+### Forms, Metadata & Optimization (8 Tools)
+27. `pdf_read_form` -> CLI: `read-form`, MCP: `pdf_read_form`, API: `/api/v1/pdf/tools/pdf_read_form`
+28. `pdf_fill_form` -> CLI: `fill-form`, MCP: `pdf_fill_form`, API: `/api/v1/pdf/tools/pdf_fill_form`
+29. `pdf_create_form_field` -> CLI: `create-form-field`, MCP: `pdf_create_form_field`, API: `/api/v1/pdf/tools/pdf_create_form_field`
+30. `pdf_metadata` -> CLI: `metadata`, MCP: `pdf_metadata`, API: `/api/v1/pdf/info`
+31. `pdf_bookmarks` -> CLI: `bookmarks`, MCP: `pdf_bookmarks`, API: `/api/v1/pdf/tools/pdf_bookmarks`
+32. `pdf_compress` -> CLI: `compress`, MCP: `pdf_compress`, API: `/api/v1/pdf/compress`
+33. `pdf_linearize` -> CLI: `linearize`, MCP: `pdf_linearize`, API: `/api/v1/pdf/tools/pdf_linearize`
+34. `pdf_flatten` -> CLI: `flatten`, MCP: `pdf_flatten`, API: `/api/v1/pdf/tools/pdf_flatten`
+
+### Advanced Conversion & Intelligence (10 Tools)
+35. `pdf_to_docx` -> CLI: `to-docx`, MCP: `pdf_to_docx`, API: `/api/v1/pdf/convert`
+36. `pdf_to_xlsx` -> CLI: `to-xlsx`, MCP: `pdf_to_xlsx`, API: `/api/v1/pdf/tools/pdf_to_xlsx`
+37. `pdf_to_pptx` -> CLI: `to-pptx`, MCP: `pdf_to_pptx`, API: `/api/v1/pdf/tools/pdf_to_pptx`
+38. `pdf_to_pdf_a` -> CLI: `to-pdf-a`, MCP: `pdf_to_pdf_a`, API: `/api/v1/pdf/tools/pdf_to_pdf_a`
+39. `pdf_classify_type` -> CLI: `classify`, MCP: `pdf_classify_type`, API: `/api/v1/pdf/tools/pdf_classify_type`
+40. `pdf_compare` -> CLI: `compare`, MCP: `pdf_compare`, API: `/api/v1/pdf/compare`
+41. `pdf_annotate` -> CLI: `annotate`, MCP: `pdf_annotate`, API: `/api/v1/pdf/tools/pdf_annotate`
+42. `pdf_convert_html` -> CLI: `from-html`, MCP: `pdf_convert_html`, API: `/api/v1/pdf/tools/pdf_convert_html`
+43. `pdf_convert_markdown` -> CLI: `from-markdown`, MCP: `pdf_convert_markdown`, API: `/api/v1/pdf/tools/pdf_convert_markdown`
+44. `pdf_convert_excel` -> CLI: `from-excel`, MCP: `pdf_convert_excel`, API: `/api/v1/pdf/tools/pdf_convert_excel`
+
+---
+
+## STEP 3: Report Structure (`reports/TRI_INTERFACE_E2E_AND_DOCS.md`)
+
+The generated markdown report MUST be formatted as a complete developer reference manual:
+
+```markdown
+# PaperPilot Tri-Interface E2E Verification & Interactive Living Documentation
+
+Generated: <TIMESTAMP>
+
+## 1. Executive Summary & Scorecard
+- Total Operations Tested: 44
+- CLI Interface: X / 44 passed (Avg Latency: Y ms)
+- MCP Interface: X / 44 passed (Avg Latency: Y ms)
+- REST API Interface: X / 44 passed (Avg Latency: Y ms)
+
+## 2. Master Parity & Status Matrix
+| # | Tool Name | CLI Status | MCP Status | REST API Status | Primary Input | Output Type |
+|---|---|---|---|---|---|---|
+... (all 44 tools)
+
+## 3. Tool-by-Tool Living Documentation & Verification Logs
+
+### 1. Merge PDFs (`pdf_merge`)
+> Combines multiple PDF documents into a single sequential PDF.
+
+#### Working Examples
+- **CLI Command**:
+  ```bash
+  paperpilot merge --input file1.pdf file2.pdf --output merged.pdf --json
+  ```
+- **MCP Tool Call (stdio)**:
+  ```json
+  {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pdf_merge","arguments":{"inputs":["file1.pdf","file2.pdf"],"output":"merged.pdf"}}}
+  ```
+- **REST API (curl)**:
+  ```bash
+  curl -X POST http://127.0.0.1:7823/api/v1/pdf/merge \
+    -H "Content-Type: application/json" \
+    -d '{"inputs":["file1.pdf","file2.pdf"],"output":"merged.pdf"}'
+  ```
+
+#### Verification & File Metrics
+- **Input Snapshots**:
+  - `file1.pdf`: 2,007 bytes, 1 page
+  - `file2.pdf`: 2,011 bytes, 1 page
+- **Output Snapshot**:
+  - `merged.pdf`: 3,570 bytes (+1,563 bytes), 2 pages
+  - Format Check: Valid PDF (`%PDF-1.7`)
+- **Execution Results**:
+  - CLI: ✅ PASS (42 ms)
+  - MCP: ✅ PASS (18 ms)
+  - REST API: ✅ PASS (25 ms)
+
+... (repeat for all 44 tools)
+
+## 4. Failed Operations & Root Cause Analysis (If Any)
+(If any operation fails on any interface, record tool name, failing interface, error message, exit code, and root cause)
+```
+
+---
+
+## STEP 4: Makefile Target & Verification
+Add a target in `Makefile`:
+```makefile
+test-tri-e2e:
+	python3 scripts/test_tri_interface_e2e.py
+```
+
+Execute `make test-tri-e2e` to verify report generation.
+Commit the new test harness and generated report.
