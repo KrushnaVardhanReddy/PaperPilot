@@ -666,12 +666,12 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| R3.E1 | Group 1: Structural & Page Operations Tri-Interface Test (10 tools) | `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_extract_pages`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_burst`, `pdf_crop`, `pdf_remove_blank`, `pdf_page_numbers` |
-| R3.E2 | Group 2: Security & Integrity Operations Tri-Interface Test (7 tools) | `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_sign`, `pdf_validate`, `pdf_hash`, `pdf_repair` |
-| R3.E3 | Group 3: Content Transformation & OCR Tri-Interface Test (9 tools) | `pdf_extract_text`, `pdf_extract_images`, `pdf_images_to_pdf`, `pdf_render`, `pdf_ocr`, `pdf_search`, `pdf_bates`, `pdf_watermark`, `pdf_header_footer` |
-| R3.E4 | Group 4: Forms, Metadata & Optimization Tri-Interface Test (8 tools) | `pdf_read_form`, `pdf_fill_form`, `pdf_create_form_field`, `pdf_metadata`, `pdf_bookmarks`, `pdf_compress`, `pdf_linearize`, `pdf_flatten` |
-| R3.E5 | Group 5: Advanced Conversion & Intelligence Tri-Interface Test (10 tools) | `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`, `pdf_classify_type`, `pdf_compare`, `pdf_annotate`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel` |
-| R3.E6 | Tri-Interface Automated Master Runner & Living Documentation Generator | `scripts/test_tri_interface_e2e.py` executing all 44 tools across CLI, MCP, and REST API, generating `reports/TRI_INTERFACE_E2E_AND_DOCS.md` |
+| R3.E1 | Group 1: Structural & Page Operations Tri-Interface Test (10 tools) | ✅ Completed (PR #110) — Verified CLI, MCP, and REST API across tools 1–10 |
+| R3.E2 | Group 2: Security & Integrity Operations Tri-Interface Test (7 tools) | ✅ Completed (PR #112) — Verified CLI, MCP, and REST API across security operations |
+| R3.E3 | Group 3: Content Transformation & OCR Tri-Interface Test (9 tools) | ✅ Completed (PR #112 & #113) — Verified CLI, MCP, and REST API across content extraction and OCR operations |
+| R3.E4 | Group 4: Forms, Metadata & Optimization Tri-Interface Test (8 tools) | ✅ Completed (PR #111 & #113) — Verified CLI, MCP, and REST API across forms, metadata, and PDF optimization |
+| R3.E5 | Group 5: Advanced Conversion & Intelligence Tri-Interface Test (10 tools) | ✅ Completed (PR #111) — Verified CLI, MCP, and REST API across format conversions and AI helpers |
+| R3.E6 | Tri-Interface Automated Master Runner & Living Documentation Generator | ✅ Completed (PR #110–#113) — Living Documentation consolidated at `reports/TRI_INTERFACE_E2E_AND_DOCS.md` |
 
 
 ---
