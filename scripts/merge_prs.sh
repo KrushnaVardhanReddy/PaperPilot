@@ -12,6 +12,11 @@ REPO_ROOT=$(dirname "$(dirname "$(readlink -f "$0")")")
 cd "$REPO_ROOT" || exit 1
 
 # Load environment variables
+if [ -f ".env" ]; then
+    set -a
+    source .env
+    set +a
+fi
 if [ -f ".env.local" ]; then
     set -a
     source .env.local
