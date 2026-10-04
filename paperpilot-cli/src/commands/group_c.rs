@@ -30,6 +30,7 @@ pub fn handle_extract_images(
     input: &std::path::Path,
     output: &std::path::Path,
 ) -> OperationResult<()> {
+    std::fs::create_dir_all(output).map_err(paperpilot_core::error::PdfError::IoError)?;
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::extract_images::ExtractImagesOperation::new(
         output.to_path_buf(),
@@ -43,9 +44,12 @@ pub fn handle_search(input: &std::path::Path, query: &str) -> OperationResult<()
     op.execute(&mut doc)
 }
 
-pub fn handle_render(input: &std::path::Path, _output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    if let Some(parent) = output.parent() {
+        std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::render::RenderOperation;
+    let op = paperpilot_pdf::operations::render::RenderOperation::new();
     op.execute(&mut doc)
 }
 
