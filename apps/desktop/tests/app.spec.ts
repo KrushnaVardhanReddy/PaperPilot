@@ -71,6 +71,10 @@ test.describe('PaperPilot E2E Tests', () => {
 
     await page.click('#tab-btn-home');
 
+
+
+    await page.evaluate(() => { window.dispatchEvent(new CustomEvent('test-select-doc', { detail: null })) });
+    await page.waitForSelector('#tool-search-input', { timeout: 10000 });
     // Select "Merge" operation
     const opSelect = page.locator('#tool-search-input');
     await opSelect.fill('merge');

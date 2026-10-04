@@ -34,6 +34,21 @@
   function handlePointerDown(e: PointerEvent) {
     if (activeTool === 'none') return;
 
+    // Notes are placed immediately on click, disregard button check because agent fires weird button events
+    if (activeTool === 'note') {
+      const { x, y } = getMouseCoordinates(e);
+      annotations = [...annotations, {
+        id: generateId(),
+        type: 'note',
+        page: pageNum,
+        x,
+        y,
+        color: '#fef08a',
+        content: 'New Note'
+      }];
+      return;
+    }
+
     // Only handle main button clicks
     if (e.button !== 0) return;
 
@@ -48,18 +63,6 @@
       currentPath = [{ x, y }];
     } else if (['highlight', 'underline', 'strikethrough'].includes(activeTool)) {
       currentSelection = { x, y, w: 0, h: 0 };
-    } else if (activeTool === 'note') {
-      // Notes are placed immediately on click
-      annotations = [...annotations, {
-        id: generateId(),
-        type: 'note',
-        page: pageNum,
-        x,
-        y,
-        color: '#fef08a',
-        content: 'New Note'
-      }];
-      isDrawing = false;
     }
   }
 
@@ -95,6 +98,7 @@
         color: '#dc2626', // Default red pen
         path: [...currentPath]
       }];
+
       currentPath = [];
     } else if (['highlight', 'underline', 'strikethrough'].includes(activeTool) && currentSelection && currentSelection.w > 5) {
       let color = '#fef08a'; // yellow highlight
@@ -111,6 +115,7 @@
         h: currentSelection.h,
         color
       }];
+
       currentSelection = null;
     }
   }
