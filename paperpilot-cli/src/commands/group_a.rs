@@ -133,3 +133,10 @@ pub fn handle_burst(input: &std::path::Path, output: &std::path::Path) -> Operat
     };
     op.execute(&mut doc)
 }
+
+pub fn handle_remove_blank(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    let mut doc = LopdfDocument::load(input)?;
+    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(90);
+    op.execute(&mut doc)?;
+    doc.save(output)
+}

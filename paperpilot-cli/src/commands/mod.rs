@@ -38,14 +38,31 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pages,
             degrees,
             output,
-        } => group_a::handle_rotate(input, pages, *degrees, output),
+        } => group_a::handle_rotate(input, &pages.clone().unwrap_or_else(|| "all".to_string()), *degrees, output),
         Commands::Crop {
             input,
             pages,
             rect,
+            x,
+            y,
+            width,
+            height,
             output,
-        } => group_a::handle_crop(input, pages, rect, output),
+        } => {
+            let resolved_rect = rect.clone().unwrap_or_else(|| {
+                format!(
+                    "{},{},{},{}",
+                    x.unwrap_or(0.0),
+                    y.unwrap_or(0.0),
+                    width.unwrap_or(0.0),
+                    height.unwrap_or(0.0)
+                )
+            });
+            let resolved_pages = pages.clone().unwrap_or_else(|| "all".to_string());
+            group_a::handle_crop(input, &resolved_pages, &resolved_rect, output)
+        }
         Commands::Burst { input, output } => group_a::handle_burst(input, output),
+        Commands::RemoveBlank { input, output } => group_a::handle_remove_blank(input, output),
 
         // Group B
         Commands::Compress {
@@ -103,6 +120,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             start,
             output,
         } => group_b::handle_bates(input, prefix, *start, output),
+        Commands::PageNumbers { input, output, position } => group_b::handle_page_numbers(input, output, position),
 
         // Group C
         Commands::ExtractText {
@@ -112,7 +130,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => group_c::handle_extract_text(input, output, format),
         Commands::ExtractImages { input, output } => group_c::handle_extract_images(input, output),
         Commands::Search { input, query } => group_c::handle_search(input, query),
-        Commands::Render { input, output } => group_c::handle_render(input, output),
+        Commands::Render { input, page: _, output } => group_c::handle_render(input, output),
         Commands::Compare { input, input_b } => group_c::handle_compare(input, input_b),
         Commands::Ocr { input, output } => group_c::handle_ocr(input, output),
         Commands::Bookmarks { input } => group_c::handle_bookmarks(input),

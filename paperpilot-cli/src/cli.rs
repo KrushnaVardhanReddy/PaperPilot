@@ -36,7 +36,7 @@ pub struct Cli {
 pub enum Commands {
     // --- Group A: Page Manipulation ---
     Merge {
-        #[arg(long, required = true)]
+        #[arg(long, required = true, num_args = 1..)]
         input: Vec<PathBuf>,
         #[arg(long)]
         output: PathBuf,
@@ -77,8 +77,8 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
-        pages: String,
-        #[arg(long)]
+        pages: Option<String>,
+        #[arg(long, alias = "angle")]
         degrees: i32,
         #[arg(long)]
         output: PathBuf,
@@ -87,13 +87,28 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
-        pages: String,
+        pages: Option<String>,
         #[arg(long)]
-        rect: String,
+        rect: Option<String>,
+        #[arg(long)]
+        x: Option<f32>,
+        #[arg(long)]
+        y: Option<f32>,
+        #[arg(long)]
+        width: Option<f32>,
+        #[arg(long)]
+        height: Option<f32>,
         #[arg(long)]
         output: PathBuf,
     },
     Burst {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, aliases = &["output-dir"])]
+        output: PathBuf,
+    },
+    #[command(name = "remove-blank")]
+    RemoveBlank {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
@@ -209,6 +224,15 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "page-numbers")]
+    PageNumbers {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "bottom-center")]
+        position: String,
+    },
 
     // --- Group C & D: Extraction, Search & Conversion ---
     ExtractText {
@@ -234,6 +258,8 @@ pub enum Commands {
     Render {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long, default_value = "1")]
+        page: u32,
         #[arg(long)]
         output: PathBuf,
     },
@@ -254,7 +280,7 @@ pub enum Commands {
         input: PathBuf,
     },
     ImagesToPdf {
-        #[arg(long, required = true)]
+        #[arg(long, required = true, num_args = 1..)]
         images: Vec<PathBuf>,
         #[arg(long)]
         output: PathBuf,
@@ -317,7 +343,6 @@ pub enum Commands {
     },
 }
 
-
 #[derive(Subcommand, Debug)]
 pub enum FormCommands {
     Read {
@@ -343,4 +368,123 @@ pub enum FormCommands {
         #[arg(short, long)]
         output: PathBuf,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_merge_multiple_inputs() {
+        let args = vec!["paperpilot", "merge", "--input", "a.pdf", "b.pdf", "--output", "out.pdf"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Merge { input, output } => {
+                assert_eq!(input.len(), 2);
+                assert_eq!(input[0], PathBuf::from("a.pdf"));
+                assert_eq!(input[1], PathBuf::from("b.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected Merge command"),
+        }
+    }
+
+    #[test]
+    fn test_rotate_angle_alias() {
+        let args = vec!["paperpilot", "rotate", "--input", "in.pdf", "--angle", "90", "--output", "out.pdf"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Rotate { input, pages, degrees, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(pages, None);
+                assert_eq!(degrees, 90);
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected Rotate command"),
+        }
+    }
+
+    #[test]
+    fn test_burst_output_dir_alias() {
+        let args = vec!["paperpilot", "burst", "--input", "in.pdf", "--output-dir", "out_dir"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Burst { input, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(output, PathBuf::from("out_dir"));
+            }
+            _ => panic!("Expected Burst command"),
+        }
+    }
+
+    #[test]
+    fn test_crop_individual_flags() {
+        let args = vec![
+            "paperpilot", "crop", "--input", "in.pdf", "--x", "10", "--y", "20",
+            "--width", "30", "--height", "40", "--output", "out.pdf",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Crop { input, pages, rect, x, y, width, height, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(pages, None);
+                assert_eq!(rect, None);
+                assert_eq!(x, Some(10.0));
+                assert_eq!(y, Some(20.0));
+                assert_eq!(width, Some(30.0));
+                assert_eq!(height, Some(40.0));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected Crop command"),
+        }
+    }
+
+    #[test]
+    fn test_remove_blank() {
+        let args = vec!["paperpilot", "remove-blank", "--input", "in.pdf", "--output", "out.pdf"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::RemoveBlank { input, output } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected RemoveBlank command"),
+        }
+    }
+
+    #[test]
+    fn test_page_numbers() {
+        let args = vec![
+            "paperpilot", "page-numbers", "--input", "in.pdf",
+            "--output", "out.pdf", "--position", "top-left",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::PageNumbers { input, output, position } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+                assert_eq!(position, "top-left");
+            }
+            _ => panic!("Expected PageNumbers command"),
+        }
+    }
+
+    #[test]
+    fn test_images_to_pdf_multiple_inputs() {
+        let args = vec![
+            "paperpilot", "images-to-pdf", "--images", "1.png", "2.png", "--output", "out.pdf",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::ImagesToPdf { images, output } => {
+                assert_eq!(images.len(), 2);
+                assert_eq!(images[0], PathBuf::from("1.png"));
+                assert_eq!(images[1], PathBuf::from("2.png"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected ImagesToPdf command"),
+        }
+    }
 }

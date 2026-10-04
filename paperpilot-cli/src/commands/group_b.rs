@@ -169,3 +169,17 @@ pub fn handle_bates(
     op.execute(&mut doc)?;
     doc.save(output)
 }
+
+pub fn handle_page_numbers(
+    input: &std::path::Path,
+    output: &std::path::Path,
+    position: &str,
+) -> OperationResult<()> {
+    let mut doc = LopdfDocument::load(input)?;
+    let op = paperpilot_pdf::operations::page_numbers::PageNumbersOperation::new(
+        position.to_string(),
+        "Page {n} of {total}".to_string(),
+    );
+    op.execute(&mut doc)?;
+    doc.save(output)
+}
