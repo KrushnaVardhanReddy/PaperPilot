@@ -1,0 +1,75 @@
+# Task: Phase 4.FIX.3A — Core Engine Operations (paperpilot-pdf)
+
+## Objective
+Fix underlying operation issues in `paperpilot-pdf` for `decrypt`, `split`, `form`, and `ocr`.
+This task strictly and exclusively modifies the `paperpilot-pdf/` crate.
+
+**Branch**: `fix/pdf-core-operations`
+
+---
+
+## File Ownership (STRICT: ONLY touch files in paperpilot-pdf/)
+```
+paperpilot-pdf/src/operations/decrypt.rs
+paperpilot-pdf/src/operations/split.rs
+paperpilot-pdf/src/operations/form.rs
+paperpilot-pdf/src/operations/ocr.rs
+```
+DO NOT modify any files in:
+- `paperpilot-cli/` (already fixed on main)
+- `paperpilot-mcp/` (handled in separate task 3B)
+- `paperpilot-gateway/` (handled in separate task 3B)
+
+---
+
+## Required Fixes
+
+### 1. `decrypt.rs` — Remove false-positive zero pages check
+**Problem:** In `paperpilot-pdf/src/operations/decrypt.rs`, after `lopdf_doc.inner.decrypt(password)` and stream decompression, lines 41-44 check:
+```rust
+let pages = lopdf_doc.inner.get_pages();
+if pages.is_empty() {
+    return Err(PdfError::InvalidInput("Decryption resulted in 0 pages".to_string()));
+}
+```
+`lopdf_doc.inner.decrypt(password)` already validates the password. Calling `get_pages().is_empty()` fails on object-stream or certain single-page PDFs even though decryption succeeded.
+**Fix:**
+- Remove the `if pages.is_empty()` error check.
+- If password decryption fails, `lopdf_doc.inner.decrypt` returns `Err`, which is already handled above.
+- Ensure all tests in `decrypt.rs` pass.
+
+### 2. `split.rs` — Output directory & path creation
+**Problem:** When splitting into multiple page chunks, destination directories must exist and multiple files need consistent output paths.
+**Fix:**
+- Ensure that if an output directory does not exist, it is created with `std::fs::create_dir_all`.
+- Ensure split files are written properly to the target location.
+
+### 3. `form.rs` — Resilient field matching
+**Problem:** Form filling can crash if non-existent field names are supplied.
+**Fix:**
+- Gracefully skip or log fields that do not exist in the document's AcroForm rather than aborting the entire fill operation.
+- Ensure updated AcroForm field values are committed to the PDF document.
+
+### 4. `ocr.rs` — Fallback document persistence
+**Problem:** In environments where Tesseract OCR is not installed or available, the operation must not fail silently or fail to write output.
+**Fix:**
+- When OCR execution completes (or delegates to text fallback), ensure the document is saved and written to the requested destination path.
+
+---
+
+## Verification Commands
+```bash
+# 1. Compile paperpilot-pdf
+cargo check -p paperpilot-pdf
+
+# 2. Run unit tests
+cargo test -p paperpilot-pdf
+
+# 3. Verify workspace builds cleanly
+cargo check --workspace
+```
+
+## Commit Message
+```
+fix(pdf): fix decrypt empty page check, split directory creation, and form field handling
+```
