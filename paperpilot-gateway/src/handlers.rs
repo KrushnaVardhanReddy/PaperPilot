@@ -308,7 +308,15 @@ pub async fn handle_tool(
     } else if resolved_name == "pdf_convert" {
         if let Some(format_val) = args.get("format") {
             if let Some(format_str) = format_val.as_str() {
-                resolved_name = format!("pdf_to_{}", format_str);
+                resolved_name = match format_str {
+                    "docx" => "pdf_to_docx".to_string(),
+                    "xlsx" => "pdf_to_xlsx".to_string(),
+                    "pptx" => "pdf_to_pptx".to_string(),
+                    "html" => "pdf_convert_html".to_string(),
+                    "markdown" => "pdf_convert_markdown".to_string(),
+                    "excel" | "csv" => "pdf_convert_excel".to_string(),
+                    _ => format!("pdf_to_{}", format_str),
+                };
             }
         } else {
             resolved_name = "pdf_to_docx".to_string(); // default
@@ -601,6 +609,41 @@ mod tests {
         // Since we don't have invalid.pdf, execute_call_tool fails cleanly, and we return INTERNAL_SERVER_ERROR
         let res = super::convert(req).await.into_response();
         assert_eq!(res.status(), axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_convert_format_mapping() {
+        let formats = vec!["docx", "xlsx", "pptx", "html", "markdown", "excel", "csv"];
+        for format in formats {
+            let body = format!(r#"{{"input": "invalid.pdf", "output": "invalid.{}", "format": "{}"}}"#, format, format);
+            let req = Request::builder()
+                .method("POST")
+                .uri("/api/v1/pdf/convert")
+                .header("content-type", "application/json")
+                .body(Body::from(body))
+                .unwrap();
+
+            let res = super::convert(req).await.into_response();
+            let status = res.status();
+            assert_eq!(status, axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+
+            let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+            let body_str = String::from_utf8_lossy(&body_bytes);
+            // It should NOT be "Unknown tool" because the tool was mapped correctly.
+            assert!(!body_str.contains("Unknown tool"), "Format {} was not mapped correctly: {}", format, body_str);
+        }
+
+        // Test an unknown format
+        let req = Request::builder()
+            .method("POST")
+            .uri("/api/v1/pdf/convert")
+            .header("content-type", "application/json")
+            .body(Body::from(r#"{"input": "invalid.pdf", "output": "invalid.unknown", "format": "unknown"}"#))
+            .unwrap();
+        let res = super::convert(req).await.into_response();
+        let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+        let body_str = String::from_utf8_lossy(&body_bytes);
+        assert!(body_str.contains("Unknown tool"));
     }
 
     #[tokio::test]
