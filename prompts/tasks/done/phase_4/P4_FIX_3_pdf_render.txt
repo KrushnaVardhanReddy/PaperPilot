@@ -3,7 +3,7 @@
 ## Objective
 Fix the underlying operation failures in `paperpilot-pdf` and `paperpilot-mcp` so that `pdf_render`, `pdf_split`, form filling, and decryption/redaction work reliably.
 This task **exclusively** touches the `paperpilot-pdf/` crate and `paperpilot-mcp/` crate (operation logic).
-Do NOT modify any files inside `paperpilot-cli/` or `paperpilot-gateway/`.
+Do NOT modify any files inside `paperpilot-cli/` or `paperpilot-gateway/` (PRs for those crates have already been merged into `main`).
 
 **Branch**: `fix-pdf-operations-core`
 
@@ -69,11 +69,21 @@ paperpilot-mcp/src/server.rs  (only the tool execution arms for render/split/for
 ---
 
 ### Fix E: `pdf_decrypt` and `pdf_redact` — Error reporting and output file persistence
-**Issue:** Decryption or redaction errors bubble up as unhandled failures or empty files.
-**Instructions:**
+**Issue:** Decryption fails with `Invalid input: Decryption resulted in 0 pages`, or redaction errors bubble up as unhandled failures.
+**Root Cause & Instructions for `decrypt.rs`:**
 1. In `paperpilot-pdf/src/operations/decrypt.rs`:
-   - Properly inspect passwords and verify lopdf decryption state.
-   - Return clear `OperationResult::Err` with descriptive message if password is incorrect.
+   - Remove the false-positive check:
+     ```rust
+     // REMOVE this block:
+     let pages = lopdf_doc.inner.get_pages();
+     if pages.is_empty() {
+         return Err(PdfError::InvalidInput("Decryption resulted in 0 pages".to_string()));
+     }
+     ```
+   - When lopdf decrypts the document, `lopdf_doc.inner.decrypt(password)` already validates the password cryptographically. Checking `lopdf_doc.inner.get_pages().is_empty()` immediately after decryption returns empty on object-stream or certain single-page PDFs, improperly failing a valid decryption.
+   - If password is empty or invalid, lopdf returns an error: format clear `OperationResult::Err` with descriptive message.
+   - Update any unit tests in `decrypt.rs` so they test successful decryption without expecting 0 pages error.
+   - Note: The test fixture `tests/e2e_fixtures/encrypted.pdf` has already been regenerated and verified on `main` with user password `"testpass123"`.
 2. In `paperpilot-pdf/src/operations/redact.rs`:
    - Ensure text replacement / black-out box writes modified lopdf document to `output`.
 
@@ -96,14 +106,18 @@ cargo test -p paperpilot-mcp
 cargo test --workspace
 ```
 
-### 2. Verify Fixed Operations (Render, Split, Form, OCR)
+### 2. Verify Fixed Operations (Render, Split, Form, OCR, Decrypt)
 ```bash
 # Test CLI render fallback produces actual file
-./target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /tmp/rendered_test.png
+./target/debug/paperpilot render --input tests/e2e_fixtures/single_page.pdf --output /tmp/rendered_test.png
 test -s /tmp/rendered_test.png && echo "Render output OK"
 
 # Test split operation with output directory
-./target/debug/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages "1-2" --output /tmp/split_out.pdf
+./target/debug/paperpilot split --input tests/e2e_fixtures/multi_page.pdf --pages "1-2" --output /tmp/split_out.pdf
+
+# Test decrypt with fixture
+./target/debug/paperpilot decrypt --input tests/e2e_fixtures/encrypted.pdf --password testpass123 --output /tmp/decrypted_out.pdf
+test -s /tmp/decrypted_out.pdf && echo "Decrypt output OK"
 ```
 
 ### 3. Non-Regression Tri-Interface (CLI + MCP + REST API) Validation
@@ -123,6 +137,5 @@ python3 scripts/test_tri_interface_e2e.py || true
 
 ## Commit Message
 ```
-fix(core): fix render fallback output, split output_dir support, form filling, and ocr file generation
+fix(core): fix render fallback output, split output_dir support, form filling, ocr file generation, and decrypt empty pages check
 ```
-

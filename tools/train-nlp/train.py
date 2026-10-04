@@ -22,8 +22,8 @@ def main():
     train_dataset = Dataset.from_pandas(train_df)
     val_dataset = Dataset.from_pandas(val_df)
 
-    # Load model and tokenizer
-    model_name = "prajjwal1/bert-tiny"
+    # Load model and tokenizer (NeuML bert-hash-nano: <1M parameters, ~1MB ONNX)
+    model_name = "neuml/bert-hash-nano"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(
         model_name,
