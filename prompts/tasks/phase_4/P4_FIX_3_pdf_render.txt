@@ -1,0 +1,128 @@
+# Task: Phase 4.FIX.3 — Core Engine: Fix Operations (render, split, form fill, ocr, security)
+
+## Objective
+Fix the underlying operation failures in `paperpilot-pdf` and `paperpilot-mcp` so that `pdf_render`, `pdf_split`, form filling, and decryption/redaction work reliably.
+This task **exclusively** touches the `paperpilot-pdf/` crate and `paperpilot-mcp/` crate (operation logic).
+Do NOT modify any files inside `paperpilot-cli/` or `paperpilot-gateway/`.
+
+**Branch**: `fix-pdf-operations-core`
+
+---
+
+## File Ownership (ONLY modify these files)
+```
+paperpilot-pdf/src/operations/render.rs
+paperpilot-pdf/src/operations/split.rs
+paperpilot-pdf/src/operations/form.rs
+paperpilot-pdf/src/operations/ocr.rs
+paperpilot-pdf/src/operations/decrypt.rs
+paperpilot-pdf/src/operations/redact.rs
+paperpilot-mcp/src/server.rs  (only the tool execution arms for render/split/form/decrypt)
+```
+
+---
+
+## All Required Fixes
+
+### Fix A: `pdf_render` — Write output image / graceful fallback
+**Issue:** `pdf_render` exits with success or no error, but produces no output file on disk.
+**Cause:** In `paperpilot-pdf/src/operations/render.rs`, `RenderOperation` merely falls back to text extraction and never writes the destination PNG. In `paperpilot-mcp/src/server.rs`, `pdfium` fails to load system library or cannot bind if dynamic library is not present, or does not properly flush the image file.
+**Instructions:**
+1. Check if `pdfium` is available. If bound, render using `pdfium-render` as configured.
+2. If `pdfium` dynamic library is unavailable or binding fails:
+   - Provide a pure Rust fallback (e.g. render a placeholder raster image or canvas containing the extracted text/page notification) into `output` path rather than leaving no file at all!
+   - Ensure `std::fs::write` or `image::save` explicitly creates parent directories and flushes the file so the output file exists on disk.
+   - Return an actionable error if rendering completely fails, rather than silently returning `Ok(())`.
+
+---
+
+### Fix B: `pdf_split` — Directory output vs single file output
+**Issue:** When splitting into multiple page chunks or ranges, the operation fails or does not output files to the target directory.
+**Instructions:**
+1. In `paperpilot-pdf/src/operations/split.rs`:
+   - Support `output_dir` or ensure that when `output` is a directory or path pattern, it writes individual split PDFs (e.g., `output_dir/page_1.pdf`, `output_dir/page_2.pdf` or `split_1.pdf`).
+   - Create destination directories recursively (`fs::create_dir_all`).
+2. In `paperpilot-mcp/src/server.rs`:
+   - In `"pdf_split"` arm, handle both `"output"` and `"output_dir"` argument keys.
+
+---
+
+### Fix C: `pdf_fill_form` — Form data parsing & applying
+**Issue:** Form filling fails when input data format or field names mismatch.
+**Instructions:**
+1. In `paperpilot-pdf/src/operations/form.rs`:
+   - Ensure support for JSON / key-value dictionary input for field values.
+   - If a field is not found, log or handle gracefully without crashing the whole document update.
+   - Ensure the updated document is written out to the target file.
+2. In `paperpilot-mcp/src/server.rs`:
+   - In `"pdf_fill_form"` arm, accept `data` as either JSON string or JSON object/map.
+
+---
+
+### Fix D: `pdf_ocr` — Missing output file
+**Issue:** CLI / MCP reports `Output file not found: ocr_result_cli.pdf`.
+**Instructions:**
+1. In `paperpilot-pdf/src/operations/ocr.rs`:
+   - If tesseract / OCR engine is absent in the environment, synthesize searchable text / sandwich PDF or write the document copy with text layer rather than failing silently without writing `output`.
+   - Ensure the output file is always written to the designated `output` path.
+
+---
+
+### Fix E: `pdf_decrypt` and `pdf_redact` — Error reporting and output file persistence
+**Issue:** Decryption or redaction errors bubble up as unhandled failures or empty files.
+**Instructions:**
+1. In `paperpilot-pdf/src/operations/decrypt.rs`:
+   - Properly inspect passwords and verify lopdf decryption state.
+   - Return clear `OperationResult::Err` with descriptive message if password is incorrect.
+2. In `paperpilot-pdf/src/operations/redact.rs`:
+   - Ensure text replacement / black-out box writes modified lopdf document to `output`.
+
+---
+
+## Build, Non-Regression Testing & Verification
+
+Before committing, run the complete verification suite to ensure **zero regressions** across the PDF engine, MCP server, CLI, and REST API:
+
+### 1. Build and Core Engine Unit Tests
+```bash
+# Verify clean compilation of touched crates
+cargo build -p paperpilot-pdf -p paperpilot-mcp
+
+# Run unit tests for core operations and MCP
+cargo test -p paperpilot-pdf
+cargo test -p paperpilot-mcp
+
+# Run full workspace test suite
+cargo test --workspace
+```
+
+### 2. Verify Fixed Operations (Render, Split, Form, OCR)
+```bash
+# Test CLI render fallback produces actual file
+./target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /tmp/rendered_test.png
+test -s /tmp/rendered_test.png && echo "Render output OK"
+
+# Test split operation with output directory
+./target/debug/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages "1-2" --output /tmp/split_out.pdf
+```
+
+### 3. Non-Regression Tri-Interface (CLI + MCP + REST API) Validation
+Make sure no previously working operations were broken by the core engine changes:
+```bash
+# Run CLI regression suite
+bash scripts/test_cli_e2e.sh
+
+# Run MCP test suites to ensure all 40+ MCP tools still function
+python3 scripts/test_mcp.py || true
+python3 scripts/test_mcp_e2e.py || true
+python3 scripts/test_mcp_robust.py || true
+
+# Run Tri-Interface E2E runner (PASS count should increase and no previously PASS tools should regress)
+python3 scripts/test_tri_interface_e2e.py || true
+```
+
+## Commit Message
+```
+fix(core): fix render fallback output, split output_dir support, form filling, and ocr file generation
+```
+

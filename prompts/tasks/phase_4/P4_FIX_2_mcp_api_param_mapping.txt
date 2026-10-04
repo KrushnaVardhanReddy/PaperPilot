@@ -1,0 +1,235 @@
+# Task: Phase 4.FIX.2 — Gateway Crate: Fix MCP/API Parameter Mapping
+
+## Objective
+Fix all MCP and REST API parameter mismatches. This task **exclusively** touches the `paperpilot-gateway/` crate. Do NOT modify any files outside `paperpilot-gateway/`.
+
+**Branch**: `fix-gateway-api-params`
+
+---
+
+## File Ownership (ONLY modify these files)
+```
+paperpilot-gateway/src/handlers.rs   ← all MCP tool dispatch + REST endpoint logic
+paperpilot-gateway/src/server.rs     ← route registration (only if new routes needed)
+```
+
+---
+
+## All Required Fixes
+
+### Fix A: `pdf_rotate` — make `pages` optional in MCP/API
+**Error:** `"Missing or invalid 'pages' parameter"`  
+**Context:** The gateway's `handle_tool` dispatches `pdf_rotate` and tries to extract a `pages` field. Callers only send `angle` or `degrees`.
+
+In `handlers.rs`, find the `pdf_rotate` dispatch block. Change the `pages` extraction to use `.get("pages").and_then(...)` with a fallback:
+
+```rust
+// Instead of requiring pages:
+let pages = params.get("pages")
+    .and_then(|v| v.as_str())
+    .unwrap_or("all")   // default: rotate all pages
+    .to_string();
+
+// Accept both "angle" and "degrees" keys:
+let degrees = params.get("degrees")
+    .or_else(|| params.get("angle"))
+    .and_then(|v| v.as_i64())
+    .ok_or_else(|| /* missing degrees error */)? as i32;
+```
+
+---
+
+### Fix B: `pdf_crop` — accept `x, y, width, height` OR `box` parameter
+**Error:** `"Missing or invalid 'box' parameter"`  
+**Context:** MCP/API callers send `{"x": 10, "y": 10, "width": 500, "height": 700}` but the handler expects a `box` parameter.
+
+In `handlers.rs`, find the `pdf_crop` dispatch block and normalize:
+```rust
+// Accept either "box" string or individual x/y/width/height fields:
+let crop_rect = if let Some(box_param) = params.get("box") {
+    box_param.as_str().unwrap_or("").to_string()
+} else {
+    let x = params.get("x").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let y = params.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let w = params.get("width").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let h = params.get("height").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    format!("{},{},{},{}", x, y, w, h)
+};
+
+// Also make "pages" optional, defaulting to "all":
+let pages = params.get("pages").and_then(|v| v.as_str()).unwrap_or("all").to_string();
+```
+
+---
+
+### Fix C: `pdf_split` — accept `output_dir` as alias for `output`
+**Error:** `"Missing or invalid 'output_dir' parameter"`  
+**Context:** MCP/API callers send `output_dir` for split operations (to receive multiple files), but the handler looks for `output`.
+
+In `handlers.rs`, find the `pdf_split` dispatch block and normalize:
+```rust
+// Accept either "output" or "output_dir":
+let output = params.get("output")
+    .or_else(|| params.get("output_dir"))
+    .and_then(|v| v.as_str())
+    .ok_or_else(|| /* missing output error */)?;
+```
+
+---
+
+### Fix D: `pdf_burst` — create output directory before operation
+**Error:** `"I/O error: No such file or directory (os error 2)"`  
+**Context:** The `pdf_burst` tool receives an `output_dir` path that doesn't exist yet. The operation fails trying to write burst files into a non-existent directory.
+
+In `handlers.rs`, find the `pdf_burst` dispatch block and add directory creation:
+```rust
+let output_dir_path = std::path::Path::new(&output_dir);
+if !output_dir_path.exists() {
+    std::fs::create_dir_all(output_dir_path)
+        .map_err(|e| format!("I/O error: {}", e))?;
+}
+```
+
+Do this before calling the underlying operation.
+
+---
+
+### Fix E: `pdf_reorder_pages` — fix parameter name (MCP sends `order`, handler may expect different name)
+**Error:** `"Parse error: New order length (3) must match document page count (5)"`  
+**Context:** This error actually comes from the `paperpilot-pdf` core crate (not the gateway). BUT the gateway CAN help by passing the page count to the operation and truncating/extending the order list.
+
+In `handlers.rs`, for the `pdf_reorder_pages` dispatch:
+1. After parsing `order` as a Vec<usize>, get the document page count.
+2. If `order.len() < page_count`, extend the order list by appending remaining page numbers in original order:
+   ```rust
+   let mut full_order = order.clone();
+   let already_listed: std::collections::HashSet<usize> = order.iter().cloned().collect();
+   for page in 1..=page_count {
+       if !already_listed.contains(&page) {
+           full_order.push(page);
+       }
+   }
+   ```
+3. Pass `full_order` to the operation instead of the raw `order`.
+
+To get `page_count`, load the PDF using `paperpilot_pdf` before calling the operation. Check what utility function is available (e.g., `paperpilot_pdf::utils::get_page_count(path)` or open via `lopdf::Document`).
+
+---
+
+### Fix F: `pdf_render` — add JSON-based REST route
+**Error:** REST API returns `HTTP 400 Bad Request`  
+**Context:** The route `POST /api/v1/pdf/render-page` expects `multipart/form-data`. But the generic `POST /api/v1/pdf/tools/pdf_render` route (via `handle_tool`) should accept JSON.
+
+Verify that `handle_tool("pdf_render")` is correctly dispatching. If `pdf_render` is not handled in `handle_tool`, add it:
+
+```rust
+// In the handle_tool dispatch match in handlers.rs:
+"pdf_render" => {
+    let input = params.get("input").and_then(|v| v.as_str()).ok_or("missing input")?;
+    let output = params.get("output").and_then(|v| v.as_str()).ok_or("missing output")?;
+    let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
+    // call the render operation
+    paperpilot_pdf::operations::render::RenderOperation { ... }.execute()
+}
+```
+
+Also add an alias route in `server.rs` if needed:
+```rust
+.route("/api/v1/pdf/tools/pdf_render", post(handlers::handle_tool))
+// Already covered by: /api/v1/pdf/tools/{tool_name}
+```
+
+---
+
+### Fix G: `pdf_extract_text` — REST API endpoint returns empty body (HTTP None)
+**Error:** REST API returns empty body / `HTTP None: None`  
+**Context:** The route `/api/v1/pdf/extract-text` exists in `server.rs`. Verify it's correctly handling the JSON body and returning proper JSON response. Check the `extract_text` handler function — it may be panicking silently or returning an empty response on parse error.
+
+In `handlers.rs`, find the `extract_text` handler:
+1. Add proper JSON body deserialization error handling.
+2. Ensure the response is always `application/json` with `{"success": false, "error": "..."}` on failure.
+3. If `output` is provided but the file is empty after extraction, return an error response (not success with empty file).
+
+---
+
+### Fix H: `pdf_to_docx` REST API — HTTP 500 Internal Server Error  
+**Error:** `HTTP Error 500: Internal Server Error`  
+**Context:** The route is `POST /api/v1/pdf/convert` with `{"format": "docx", "input": ..., "output": ...}`.
+
+In `handlers.rs`, find the `convert` handler:
+1. Add logging to surface the actual error.
+2. Check if the conversion operation propagates errors correctly or swallows them.
+3. Ensure the handler returns a proper 400/500 JSON body instead of panicking.
+
+---
+
+## Build, Non-Regression Testing & Verification
+
+Before committing, run the complete verification suite to ensure **zero regressions** across MCP and REST API:
+
+### 1. Build and Gateway Tests
+```bash
+# Verify clean compilation
+cargo build -p paperpilot-gateway
+
+# Run all unit and integration tests in the gateway crate
+cargo test -p paperpilot-gateway
+```
+
+### 2. Verify Specific Fixed Endpoints
+Start the gateway in the background or subshell:
+```bash
+./target/debug/paperpilot-serve --port 7823 &
+SERVER_PID=$!
+sleep 1
+
+# Fix A: pdf_rotate without pages
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/single_page.pdf","angle":90,"output":"/tmp/rotated.pdf"}'
+
+# Fix B: pdf_crop with x/y/width/height
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/single_page.pdf","x":10,"y":10,"width":400,"height":600,"output":"/tmp/cropped.pdf"}'
+
+# Fix C: pdf_split with output_dir
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_split \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/multi_page.pdf","pages":"1-2","output_dir":"/tmp/split_out/"}'
+
+# Fix D: pdf_burst auto-mkdir
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/multi_page.pdf","output_dir":"/tmp/new_burst_dir/"}'
+
+# Fix E: pdf_reorder with partial order
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/multi_page.pdf","order":"3,2,1","output":"/tmp/reordered.pdf"}'
+
+# Fix F: pdf_render via generic tool route
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_render \
+  -H "Content-Type: application/json" \
+  -d '{"input":"tests/e2e_fixtures/single_page.pdf","page":1,"output":"/tmp/rendered.png"}'
+
+kill $SERVER_PID
+```
+
+### 3. Non-Regression MCP & API Validation
+Run the full MCP test suites to ensure none of the other MCP tools were broken:
+```bash
+# Run MCP test scripts to guarantee zero regressions across all MCP endpoints
+python3 scripts/test_mcp.py || true
+python3 scripts/test_mcp_e2e.py || true
+python3 scripts/test_mcp_robust.py || true
+
+# Run Tri-Interface E2E runner (API and MCP pass rates should improve with 0 regressions)
+python3 scripts/test_tri_interface_e2e.py || true
+```
+
+## Commit Message
+```
+fix(gateway): fix MCP/API param mapping — rotate pages optional, crop x/y/w/h, split output_dir alias, burst mkdir, reorder partial order, render JSON route, extract-text error handling
+```
+

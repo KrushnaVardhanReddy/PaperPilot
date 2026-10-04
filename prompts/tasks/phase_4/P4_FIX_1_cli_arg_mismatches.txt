@@ -1,0 +1,312 @@
+# Task: Phase 4.FIX.1 — CLI Crate: Fix All Argument Mismatches
+
+## Objective
+Fix **every** CLI argument mismatch identified by the Tri-Interface E2E tests.
+This task **exclusively** touches the `paperpilot-cli/` crate. Do NOT modify any files outside `paperpilot-cli/`.
+
+**Branch**: `fix-cli-arg-mismatches`
+
+---
+
+## File Ownership (ONLY modify these files)
+```
+paperpilot-cli/src/cli.rs         ← primary: all clap argument definitions
+paperpilot-cli/src/commands/mod.rs ← dispatch match arms
+paperpilot-cli/src/commands/group_a.rs  ← page manipulation handlers
+paperpilot-cli/src/commands/group_b.rs  ← document operation handlers
+paperpilot-cli/src/commands/group_c.rs  ← extraction/render handlers
+```
+
+---
+
+## Current CLI Command Structure (from `cli.rs`)
+
+The existing dispatch lives in `paperpilot-cli/src/commands/mod.rs`. The `main.rs` only calls `commands::execute_command(&cli.command)` — no changes needed to `main.rs`.
+
+---
+
+## All Required Fixes
+
+### Fix A: `pdf_merge` — multiple inputs as space-separated values
+**Error:** `"error: unexpected argument '/app/.../page_2.pdf' found"`  
+**Root cause:** `input: Vec<PathBuf>` requires `--input a --input b` by default. Tests call `--input a b`.
+
+In `cli.rs`, update the `Merge` variant:
+```rust
+Merge {
+    #[arg(long, required = true, num_args = 1..)]
+    input: Vec<PathBuf>,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+No change needed in `commands/mod.rs` — dispatch already passes `input`.
+
+---
+
+### Fix B: `pdf_rotate` — `--angle` alias + optional `--pages`
+**Error:** `"error: unexpected argument '--angle' found"` and MCP/API: `"Missing or invalid 'pages' parameter"`  
+**Root cause:** CLI requires `--pages` but tests only pass `--angle`.
+
+In `cli.rs`, update the `Rotate` variant:
+```rust
+Rotate {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    pages: Option<String>,   // make optional
+    #[arg(long, alias = "angle")]
+    degrees: i32,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+In `commands/mod.rs`, update the Rotate arm to unwrap pages:
+```rust
+Commands::Rotate { input, pages, degrees, output } =>
+    group_a::handle_rotate(input, &pages.clone().unwrap_or_else(|| "all".to_string()), *degrees, output),
+```
+
+---
+
+### Fix C: `pdf_burst` — `--output-dir` alias
+**Error:** `"error: unexpected argument '--output-dir' found"`  
+**Root cause:** CLI only has `--output` but tests pass `--output-dir`.
+
+In `cli.rs`, update the `Burst` variant:
+```rust
+Burst {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long, aliases = &["output-dir"])]
+    output: PathBuf,
+},
+```
+
+No dispatch change needed.
+
+---
+
+### Fix D: `pdf_crop` — accept `--x --y --width --height` flags
+**Error:** `"error: unexpected argument '--x' found"`. CLI expects `--rect x,y,w,h` but tests pass individual flags.
+
+In `cli.rs`, update the `Crop` variant to accept individual flags AND optionally keep `--rect`:
+```rust
+Crop {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    pages: Option<String>,      // make optional
+    #[arg(long)]
+    rect: Option<String>,       // make optional (combined form "x,y,w,h")
+    #[arg(long)]
+    x: Option<f32>,
+    #[arg(long)]
+    y: Option<f32>,
+    #[arg(long)]
+    width: Option<f32>,
+    #[arg(long)]
+    height: Option<f32>,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+In `commands/mod.rs`, update the Crop arm to build `rect` from individual fields if `rect` is None:
+```rust
+Commands::Crop { input, pages, rect, x, y, width, height, output } => {
+    let resolved_rect = rect.clone().unwrap_or_else(|| {
+        format!("{},{},{},{}", x.unwrap_or(0.0), y.unwrap_or(0.0), width.unwrap_or(0.0), height.unwrap_or(0.0))
+    });
+    let resolved_pages = pages.clone().unwrap_or_else(|| "all".to_string());
+    group_a::handle_crop(input, &resolved_pages, &resolved_rect, output)
+},
+```
+
+---
+
+### Fix E: `pdf_remove_blank` — add missing CLI subcommand
+**Error:** `"unrecognized subcommand 'remove-blank'"`  
+**Root cause:** There is NO `RemoveBlank` variant in the `Commands` enum even though the backend operation exists.
+
+In `cli.rs`, add the variant to `Commands`:
+```rust
+#[command(name = "remove-blank")]
+RemoveBlank {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+In `commands/mod.rs`, add the dispatch arm (before the `Commands::Compress` arm or at the end of Group A section):
+```rust
+Commands::RemoveBlank { input, output } => group_a::handle_remove_blank(input, output),
+```
+
+In `commands/group_a.rs`, add the handler if not present:
+```rust
+pub fn handle_remove_blank(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation {
+        input_path: input.to_path_buf(),
+        output_path: output.to_path_buf(),
+    };
+    op.execute()
+}
+```
+(Check the exact struct/method name by looking at `paperpilot-pdf/src/operations/cleanup.rs`.)
+
+---
+
+### Fix F: `pdf_page_numbers` — add missing CLI subcommand
+**Error:** `"unrecognized subcommand 'page-numbers'"`  
+**Root cause:** No `PageNumbers` variant in the `Commands` enum.
+
+In `cli.rs`, add:
+```rust
+#[command(name = "page-numbers")]
+PageNumbers {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    output: PathBuf,
+    #[arg(long, default_value = "bottom-center")]
+    position: String,
+},
+```
+
+In `commands/mod.rs`, add dispatch:
+```rust
+Commands::PageNumbers { input, output, position } => group_b::handle_page_numbers(input, output, position),
+```
+
+In `commands/group_b.rs`, add handler (check `paperpilot-pdf/src/operations/page_numbers.rs` for the exact struct):
+```rust
+pub fn handle_page_numbers(input: &std::path::Path, output: &std::path::Path, position: &str) -> OperationResult<()> {
+    use paperpilot_pdf::operations::page_numbers::PageNumbersOperation;
+    let op = PageNumbersOperation {
+        input_path: input.to_path_buf(),
+        output_path: output.to_path_buf(),
+        position: position.to_string(),
+        // fill other fields with sensible defaults
+    };
+    op.execute()
+}
+```
+
+---
+
+### Fix G: `pdf_images_to_pdf` — multiple inputs as space-separated values
+**Error:** `"error: unexpected argument '/app/.../img2.png' found"`  
+**Root cause:** Same as pdf_merge — needs `num_args = 1..`.
+
+In `cli.rs`, update the `ImagesToPdf` variant:
+```rust
+ImagesToPdf {
+    #[arg(long, required = true, num_args = 1..)]
+    images: Vec<PathBuf>,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+---
+
+### Fix H: `pdf_render` — add `--page` option
+**Root cause:** MCP/API pass `page: 1` but CLI `Render` has no `--page` argument. This causes the rendered operation to not know which page to render.
+
+In `cli.rs`, update `Render`:
+```rust
+Render {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long, default_value = "1")]
+    page: u32,
+    #[arg(long)]
+    output: PathBuf,
+},
+```
+
+In `commands/mod.rs`, update the `Render` arm:
+```rust
+Commands::Render { input, page, output } => group_c::handle_render(input, *page, output),
+```
+
+In `commands/group_c.rs`, update `handle_render` signature to accept a `page: u32` argument and pass it to the underlying operation.
+
+---
+
+### Fix I: `pdf_extract_images` — ensure output directory is created
+**Error:** `"I/O error: Failed to create output file: No such file or directory"`  
+**Root cause:** The `ExtractImages` handler doesn't create the output directory before writing.
+
+In `commands/group_c.rs`, find `handle_extract_images` and add `create_dir_all`:
+```rust
+pub fn handle_extract_images(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    std::fs::create_dir_all(output).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+    // ... rest of existing logic
+}
+```
+
+---
+
+### Fix J: Batch 4 CLI — all `paperpilot to-docx/to-xlsx/etc.` subcommands exit with code 11 (wrong binary name)
+**Error:** The Batch 4 tests call `paperpilot to-docx ...` (using binary name `paperpilot`) while the built binary is `paperpilot-cli`. Exit code 11 = binary not found.  
+**Root cause:** The binary name alias is missing. In `paperpilot-cli/Cargo.toml`, the binary is named `paperpilot-cli`. The tests expect `paperpilot`.
+
+Add an additional binary alias in `paperpilot-cli/Cargo.toml`:
+```toml
+[[bin]]
+name = "paperpilot"
+path = "src/main.rs"
+```
+Keep the existing `paperpilot-cli` binary too. OR, rename the binary to `paperpilot` (preferred for user experience).
+
+---
+
+## Build, Non-Regression Testing & Verification
+
+Before committing, run the complete verification suite to ensure **zero regressions** on existing functionality:
+
+### 1. Build and Workspace Unit/Integration Tests
+```bash
+# Verify clean compilation
+cargo build -p paperpilot-cli
+
+# Run all unit/integration tests in the CLI crate
+cargo test -p paperpilot-cli
+
+# Run full workspace tests to ensure no inter-crate regressions
+cargo test --workspace
+```
+
+### 2. Verify Fixed CLI Commands
+```bash
+./target/debug/paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output /tmp/merged.pdf
+./target/debug/paperpilot-cli rotate --input tests/e2e_fixtures/single_page.pdf --angle 90 --output /tmp/rotated.pdf
+./target/debug/paperpilot-cli burst --input tests/e2e_fixtures/multi_page.pdf --output-dir /tmp/burst_out/
+./target/debug/paperpilot-cli crop --input tests/e2e_fixtures/single_page.pdf --x 10 --y 10 --width 400 --height 600 --output /tmp/cropped.pdf
+./target/debug/paperpilot-cli remove-blank --input tests/e2e_fixtures/multi_page.pdf --output /tmp/no_blank.pdf
+./target/debug/paperpilot-cli page-numbers --input tests/e2e_fixtures/multi_page.pdf --output /tmp/numbered.pdf
+./target/debug/paperpilot-cli images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output /tmp/imgs.pdf
+./target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --page 1 --output /tmp/rendered.png
+```
+
+### 3. Non-Regression CLI & E2E Validation
+Run the full CLI E2E test suite to confirm existing tools remain intact:
+```bash
+# Run CLI regression script
+bash scripts/test_cli_e2e.sh
+
+# Run Tri-Interface E2E runner (CLI portion should show improved pass rate with 0 existing regressions)
+python3 scripts/test_tri_interface_e2e.py || true
+```
+
+## Commit Message
+```
+fix(cli): fix arg mismatches — merge/images num_args, rotate --angle alias, burst --output-dir alias, crop x/y/w/h flags, add remove-blank & page-numbers subcommands, render --page, extract-images mkdir
+```
+
