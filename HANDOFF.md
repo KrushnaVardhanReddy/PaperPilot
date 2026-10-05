@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #127 (4.0.5)**: Layer 2 Embedded ONNX Intent Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `include_bytes!` in-memory `ort` CPU inference <2ms, `reports/NLP_ONNX_VERIFIED.md`).
 - **PR #124 (4.3.7)**: Multi-Turn Chat Panel component (`PdfChatPanel.svelte`), `ViewerRightPanel.svelte` integration, and `resolve_natural_language` Tauri IPC offline NLP bridge (`reports/UI_CHAT_PANEL_REPORT.md`).
 - **PR #123 (R3.FE.2)**: Data-driven Playwright E2E Master Suite covering all 44 PDF operations with 100% green UI parity (`apps/desktop/tests/e2e_44_operations_parity.spec.ts` & `reports/UI_44_OPERATIONS_E2E_SCORECARD.md` 44/44 PASS).
 - **PR #122 (R3.FE.3)**: Visual Canvas Annotations, Sticky Notes, Markup, and Diff Slider Playwright E2E Test Suite (`apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` & `reports/UI_CANVAS_ANNOTATIONS_DIFF_REPORT.md`).
@@ -67,7 +68,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **4.0.5** | `paperpilot-nlp/` only | [Session 15656187434149356302](https://jules.google.com/session/15656187434149356302) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) with explicit `ort` 2.0 typing and committed assets |
+| **4.3.10** | `paperpilot-nlp/`, `src-tauri/`, `PdfChatPanel.svelte` | Pending Dispatch | `main` | Context-aware NLP resolution & implicit active document binding |
 
 ---
 
