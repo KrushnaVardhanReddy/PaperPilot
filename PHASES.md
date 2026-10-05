@@ -756,7 +756,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.10 | Context-Aware NLP Resolution Bridge | ✅ Completed (PR #128) — Enhances `resolve_natural_language` IPC and `paperpilot-nlp` with `ResolverContext`: automatically binds active viewer document path to operations (fixing "split pages 1 to 2 requires file path" error, `reports/CONTEXT_AWARE_NLP_REPORT.md`) |
 | 4.3.11 | Multi-Document Omnibar (`GlobalCommandBar.svelte`) | ⏳ Pending / Planned — Global command bar docked at bottom of Documents view with `@filename` autocomplete dropdown popover, multi-doc batch execution, and interactive action preview cards |
 | 4.3.12 | Real-Pipeline Unmocked E2E AI Chat Test Suite | ⏳ Pending / Planned — Playwright E2E suite (`tests/e2e_ai_chat_real_pipeline.spec.ts`) executing un-mocked Tauri IPC calls (`resolve_natural_language` + `invoke_mcp_tool`) with real PDF fixtures to verify true end-to-end execution on disk |
-| 4.3.13 | Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) | ⏳ Pending / Planned — Searchable palette and cheat sheet drawer inside `PdfChatPanel.svelte` showing categorized example natural language prompts across all 44 tools with one-click prompt insertion |
+| 4.3.13 | Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) & Adjustable Right Panel | ✅ Completed (PR #129) — Searchable command palette and cheat sheet drawer inside `PdfChatPanel.svelte` covering all 44 PDF operations, hotkey `?` / `💡 Examples` button, one-click prompt insertion, plus dynamic width scaling (240px–800px) and auto-comfort chat width in `ViewerRightPanel.svelte` (`reports/UI_CHAT_CHEATSHEET_REPORT.md`) |
 
 ---
 

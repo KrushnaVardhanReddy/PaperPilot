@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #129 (4.3.13)**: Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) with 44-tool categorized directory, hotkey `?`, one-click prompt insertion, plus dynamic width scaling (240px–800px) and auto-comfort chat width in `ViewerRightPanel.svelte` (`reports/UI_CHAT_CHEATSHEET_REPORT.md`).
 - **PR #128 (4.3.10)**: Context-Aware NLP Resolution Bridge (`ResolverContext`) with implicit active document binding (`reports/CONTEXT_AWARE_NLP_REPORT.md`).
 - **PR #127 (4.0.5)**: Layer 2 Embedded ONNX Intent Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `include_bytes!` in-memory `ort` CPU inference <2ms, `reports/NLP_ONNX_VERIFIED.md`).
 - **PR #124 (4.3.7)**: Multi-Turn Chat Panel component (`PdfChatPanel.svelte`), `ViewerRightPanel.svelte` integration, and `resolve_natural_language` Tauri IPC offline NLP bridge (`reports/UI_CHAT_PANEL_REPORT.md`).
