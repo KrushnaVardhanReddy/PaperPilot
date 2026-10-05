@@ -1,48 +1,115 @@
-TASK: Task 4.8.4 — Expand WASM Engine and Web Suite to 12 Pure-Rust Tools
-BRANCH: feat/wasm-12-tools-expansion
-RELEVANT SPECS: specs/015-client-side-wasm-edge-engine/spec.md
-REPORT: reports/WASM_12_TOOLS_EXPANSION_REPORT.md
-WIKI: wiki/06-Wasm-12-Tools-Suite.md
+# Task: Phase 4.8.4 — Expand WASM Engine and Web Suite to 12 Pure-Rust Tools
 
-OBJECTIVE:
+## Objective
 Expand `paperpilot-wasm` and `apps/web/` from 6 tools to 12 pure-Rust in-browser tools.
 All operations execute 100% in browser memory with zero filesystem access and zero network requests.
 
-NEW OPERATIONS TO ADD:
-1. `delete_pages(input_bytes: &[u8], pages: &str) -> Vec<u8>`:
-   - Parse comma/range list (e.g. "2, 4" or "1-3").
-   - Delete specified 1-based pages and return updated PDF bytes.
-2. `extract_pages(input_bytes: &[u8], pages: &str) -> Vec<u8>`:
-   - Extract specified 1-based pages into a new standalone PDF.
-3. `reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> Vec<u8>`:
-   - Reorganize pages according to 1-based order array (e.g. [3, 1, 2]).
-4. `crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Vec<u8>`:
-   - Set `/CropBox` array on all pages.
-5. `flatten(input_bytes: &[u8]) -> Vec<u8>`:
-   - Remove `/AcroForm` interactive fields from root catalog to flatten forms.
-6. `set_metadata(input_bytes: &[u8], title: Option<String>, author: Option<String>, subject: Option<String>, keywords: Option<String>) -> Vec<u8>`:
-   - Update `/Info` dictionary entries with provided values.
+## Requirements
+- Use pure Rust (`lopdf`) in `paperpilot-wasm` to process in-memory buffers (`&[u8]` and `Vec<u8>`).
+- Expose all 6 new operations through `wasm-bindgen` on `WasmPdfEngine`.
+- Update the Web Worker bridge in both `apps/desktop` and `apps/web` to pass messages asynchronously off the main thread.
+- Build dedicated interactive UI cards with parameter controls in `apps/web/src/views/OperationsView.svelte` with instant browser downloads.
+- Generate verification report at `reports/WASM_12_TOOLS_EXPANSION_REPORT.md` and documentation in `wiki/06-Wasm-12-Tools-Suite.md`.
 
-CRITICAL IMPLEMENTATION DETAILS:
-1. `paperpilot-wasm`:
-   - Implement the 6 operations in `paperpilot-wasm/src/operations.rs` using `lopdf::Document::load_mem()` and `doc.save_to(&mut buf)`.
-   - Export corresponding methods on `WasmPdfEngine` in `paperpilot-wasm/src/lib.rs`.
-   - Add unit tests in `paperpilot-wasm/tests/wasm_tests.rs` covering the new operations.
-2. Web Worker Bridge:
-   - Update `apps/desktop/src/lib/wasm/pdfWorker.ts` and `apps/desktop/src/lib/wasm/index.ts` to expose the 6 new operations.
-   - Update `apps/web/src/lib/wasm/pdfWorker.ts` and `apps/web/src/lib/wasm/index.ts` to match.
-3. Web App UI (`apps/web/src/views/OperationsView.svelte`):
-   - Add tool definitions and icons to the `tools` array for all 6 new tools:
-     - Delete Pages (🗑️)
-     - Extract Pages (📤)
-     - Reorder Pages (🔀)
-     - Crop PDF (📐)
-     - Flatten Forms (📄)
-     - Edit Metadata (🏷️)
-   - Add dedicated interactive parameter cards and action handlers for each new tool.
-   - Ensure instant browser file download on completion.
-4. Testing & Documentation:
-   - Ensure `cargo test -p paperpilot-wasm` passes.
-   - Ensure `npm run check` in `apps/web/` passes with 0 errors.
-   - Create verification report at `reports/WASM_12_TOOLS_EXPANSION_REPORT.md`.
-   - Create wiki at `wiki/06-Wasm-12-Tools-Suite.md`.
+### 1. Component Structure
+You will need to create or update the following files:
+1. **`paperpilot-wasm/src/operations.rs`** -> Implement the 6 pure-memory Rust operations.
+2. **`paperpilot-wasm/src/lib.rs`** -> Export the 6 operations via `WasmPdfEngine` methods.
+3. **`paperpilot-wasm/tests/wasm_tests.rs`** -> Add comprehensive unit tests for each new operation.
+4. **`apps/web/src/lib/wasm/pdfWorker.ts`** & **`apps/web/src/lib/wasm/index.ts`** -> Web Worker message dispatch and client interface.
+5. **`apps/desktop/src/lib/wasm/pdfWorker.ts`** & **`apps/desktop/src/lib/wasm/index.ts`** -> Keep desktop WASM client parity aligned.
+6. **`apps/web/src/views/OperationsView.svelte`** -> Expand the `tools` array to 12 tools and add parameter inputs/actions.
+
+### 2. Implementation Details
+
+#### A. The 6 New In-Memory Operations (`paperpilot-wasm/src/operations.rs`)
+Implement the following pure `lopdf` memory operations returning `OperationResult<Vec<u8>>`:
+
+1. **Delete Pages (`delete_pages`)**:
+   ```rust
+   pub fn delete_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<u8>>
+   ```
+   Parse comma and range format (e.g. `"2, 4"` or `"1-3"`), validate 1-based page indices against `doc.get_pages()`, call `doc.delete_pages(&to_delete)`, and save to memory buffer.
+
+2. **Extract Pages (`extract_pages`)**:
+   ```rust
+   pub fn extract_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<u8>>
+   ```
+   Parse 1-based target pages, calculate complement `pages_to_delete = (1..=total).filter(|p| !targets.contains(p))`, delete them from cloned document, and save to memory buffer.
+
+3. **Reorder Pages (`reorder_pages`)**:
+   ```rust
+   pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> OperationResult<Vec<u8>>
+   ```
+   Validate that `new_order.len() == total_pages` with no duplicates. Re-index pages according to the array order and emit result bytes.
+
+4. **Crop Pages (`crop`)**:
+   ```rust
+   pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> OperationResult<Vec<u8>>
+   ```
+   Iterate over `doc.get_pages()`, set `/CropBox` array `[Real(left), Real(bottom), Real(right), Real(top)]` on each page dictionary.
+
+5. **Flatten Form Fields (`flatten`)**:
+   ```rust
+   pub fn flatten(input_bytes: &[u8]) -> OperationResult<Vec<u8>>
+   ```
+   Find root `/Catalog` object in `doc.trailer`, remove `/AcroForm` entry from dictionary, and serialize bytes.
+
+6. **Edit Metadata (`set_metadata`)**:
+   ```rust
+   pub fn set_metadata(
+       input_bytes: &[u8],
+       title: Option<String>,
+       author: Option<String>,
+       subject: Option<String>,
+       keywords: Option<String>,
+   ) -> OperationResult<Vec<u8>>
+   ```
+   Find or create `/Info` dictionary reference in trailer, update provided `/Title`, `/Author`, `/Subject`, `/Keywords` as `Object::String` (PDF DocEncoding), and emit bytes.
+
+#### B. Wasm Exports (`paperpilot-wasm/src/lib.rs`)
+Export each method on `WasmPdfEngine` with appropriate `js_sys` / `wasm_bindgen` types:
+- `pub fn delete_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue>`
+- `pub fn extract_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue>`
+- `pub fn reorder_pages(input_bytes: &[u8], new_order: Vec<u32>) -> Result<js_sys::Uint8Array, JsValue>`
+- `pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Result<js_sys::Uint8Array, JsValue>`
+- `pub fn flatten(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue>`
+- `pub fn set_metadata(input_bytes: &[u8], title: Option<String>, author: Option<String>, subject: Option<String>, keywords: Option<String>) -> Result<js_sys::Uint8Array, JsValue>`
+
+#### C. Web Worker Bridge (`apps/web/src/lib/wasm/`)
+Update `pdfWorker.ts` and `index.ts`:
+- Extend message actions to handle `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, and `set_metadata`.
+- Expose typed async methods on `WasmPdfClient`.
+
+#### D. Web UI Expansion (`apps/web/src/views/OperationsView.svelte`)
+Expand the tools list to 12 tools:
+```typescript
+const tools = [
+  { id: 'merge', title: 'Merge PDFs', icon: '📑' },
+  { id: 'split', title: 'Split PDF', icon: '✂️' },
+  { id: 'rotate', title: 'Rotate Pages', icon: '🔄' },
+  { id: 'compress', title: 'Compress PDF', icon: '🗜️' },
+  { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒' },
+  { id: 'watermark', title: 'Watermark', icon: '©️' },
+  { id: 'delete', title: 'Delete Pages', icon: '🗑️' },
+  { id: 'extract', title: 'Extract Pages', icon: '📤' },
+  { id: 'reorder', title: 'Reorder Pages', icon: '🔀' },
+  { id: 'crop', title: 'Crop PDF', icon: '📐' },
+  { id: 'flatten', title: 'Flatten Forms', icon: '📄' },
+  { id: 'metadata', title: 'Edit Metadata', icon: '🏷️' }
+];
+```
+For each tool, add the necessary input fields:
+- Delete Pages: text input for page ranges (e.g. `"2, 4"`).
+- Extract Pages: text input for target pages (e.g. `"1-3"`).
+- Reorder Pages: text input for new page order (e.g. `"3, 1, 2"`).
+- Crop PDF: inputs for margins (left, bottom, right, top).
+- Flatten Forms: confirmation button to strip interactive AcroForms.
+- Metadata: inputs for Title, Author, Subject, Keywords.
+
+### 3. Verification Steps
+1. Run `cargo test -p paperpilot-wasm` and ensure all unit tests pass.
+2. Build WASM package: `wasm-pack build --target web paperpilot-wasm`.
+3. In `apps/web/`, run `npm run check` and `npm run build` and ensure 0 errors.
+4. Record performance and bundle metrics in `reports/WASM_12_TOOLS_EXPANSION_REPORT.md`.
+5. Update repository documentation in `wiki/06-Wasm-12-Tools-Suite.md`.
