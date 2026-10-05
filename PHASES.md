@@ -719,6 +719,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.1.5 | OpenAI-compatible API client | Works with OpenAI, Gemini, Groq, LM Studio, etc. (BYOK - Bring Your Own Key) |
 | 4.1.6 | AI provider config in settings | User picks resolver: Offline / Ollama / OpenAI-compatible; enters endpoint + key |
 | 4.1.7 | Auto-fallback logic | If LLM resolver fails or has no key, fall back to offline NLP and inform the user |
+| 4.1.8 | Embedded Documentation RAG (`sqlite-vec`) | In-memory/embedded SQLite vector store indexing all living documentation (`TRI_INTERFACE_E2E_AND_DOCS.md`, user guides, tool specs). Answers user questions directly in the chat with zero hallucinations, exact copy-pasteable CLI/API snippets, and sub-millisecond retrieval |
 
 ---
 
