@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #122 (R3.FE.3)**: Visual Canvas Annotations, Sticky Notes, Markup, and Diff Slider Playwright E2E Test Suite (`apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` & `reports/UI_CANVAS_ANNOTATIONS_DIFF_REPORT.md`).
 - **PR #121 (R3.FE.1)**: Registered all 44 PDF operations with parameter cards and invocation mappings in `OperationsPanel.svelte` (`reports/UI_44_TOOLS_PANEL_REPORT.md`).
 - **PR #114 (FIX 1)**: CLI flag normalization, `--angle` alias on rotate, multi-argument support on merge & images-to-pdf.
 - **PR #115 (FIX 2)**: Gateway parameter mapping for `rotate`, `crop`, and `split`.
@@ -65,7 +66,6 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
 | **R3.FE.2** | `tests/e2e_44_operations_parity.spec.ts` only | [Session 10690891751709790998](https://jules.google.com/session/10690891751709790998) | `main` | Data-driven Playwright test verifying search, form inputs & IPC invoke for all 44 tools |
-| **R3.FE.3** | `tests/e2e_canvas_viewer_features.spec.ts` only | [Session 13554866274792768778](https://jules.google.com/session/13554866274792768778) | `main` | Playwright test for Sticky Notes, Drawing/Markup, Diff Slider & Zoom Toolbar |
 | **4.0.5** | `paperpilot-nlp/` only | [Session 11919801443565645570](https://jules.google.com/session/11919801443565645570) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) |
 | **4.3.7** | `PdfChatPanel.svelte`, `ViewerRightPanel.svelte`, `src-tauri/src/lib.rs` | [Session 10653271523477944140](https://jules.google.com/session/10653271523477944140) | `main` | Multi-turn Chat Panel component embedding collapsible drawer, quick chips, offline NLP IPC resolver bridge & execution cards |
 
