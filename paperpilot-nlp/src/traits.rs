@@ -3,6 +3,7 @@ use crate::entities::ExtractedEntities;
 
 /// Represents a sequence of PDF operations to execute.
 #[derive(Debug, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct OperationPlan {
     pub intent: Intent,
     pub input_files: Vec<String>,

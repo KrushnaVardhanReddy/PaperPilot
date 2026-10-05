@@ -19,6 +19,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 paperpilot-mcp = { path = "../../../paperpilot-mcp" }
+paperpilot-nlp = { path = "../../../paperpilot-nlp" }
 paperpilot-gateway = { path = "../../../paperpilot-gateway" }
 tokio = { version = "1", features = ["full"] }
 rmcp = { version = "3.5.0" }

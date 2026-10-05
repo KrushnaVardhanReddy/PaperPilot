@@ -1534,6 +1534,7 @@ dependencies = [
  "lazy_static",
  "paperpilot-gateway",
  "paperpilot-mcp",
+ "paperpilot-nlp",
  "rmcp",
  "serde",
  "serde_json",
@@ -4288,6 +4289,7 @@ dependencies = [
  "paperpilot-mcp",
  "regex",
  "rmcp",
+ "serde",
  "serde_json",
  "thiserror 2.0.21",
 ]
