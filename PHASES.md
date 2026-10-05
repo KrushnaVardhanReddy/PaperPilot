@@ -839,7 +839,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge ✅ | Merged (Session 14466591561004330997, PR #135) — Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
 | 4.8.2 | Zero-Install Web App Demo ✅ | Merged (Session 10211896095989692590, PR #137) — Standalone web application in `apps/web/` (Vite + Svelte 5 / TS) powered by `paperpilot-wasm` Web Worker bridge. Supports 6 core ops in-browser, privacy badge, and high-converting Desktop download funnel CTA. |
-| 4.8.4 | Expand WASM Engine & Web Suite to 12 Pure-Rust Tools | ⏳ In-Progress — Implement 6 additional pure-memory operations (`delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata`) in `paperpilot-wasm`, update Web Worker bridge, and add full interactive UI cards in `apps/web/`. |
+| 4.8.4 | Expand WASM Engine & Web Suite to 12 Pure-Rust Tools ✅ | Merged (Session 16017685921024489423, PR #138) — Implemented 6 additional pure-memory operations (`delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata`) in `paperpilot-wasm`, updated Web Worker bridge, and added full interactive UI cards in `apps/web/`. |
 | 4.8.3 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
 
 ## Phase 5 — Advanced Intelligence
