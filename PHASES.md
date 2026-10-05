@@ -750,7 +750,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
 | 4.3.5 | Voice input | Microphone → speech-to-text → feeds the NLP command box (integrates with Phase 2 MCP) |
 | 4.3.6 | NLP mode toggle in settings | Simple switch: "Use Offline NLP" / "Use AI (requires key)" |
-| 4.3.7 | Multi-turn Chat Panel (`PdfChatPanel.svelte`) | Embed zero-dependency [`quikchat`](https://github.com/deftio/quikchat) as a collapsible side-drawer next to `PdfViewer.svelte`. Supports multi-turn document Q&A, markdown formatting, per-tab history save/restore, and interactive action confirmation cards |
+| 4.3.7 | Multi-turn Chat Panel (`PdfChatPanel.svelte`) | 🚧 In-Progress (Session `10653271523477944140`) — Collapsible side-drawer in `ViewerRightPanel.svelte` with natural language command prompt, quick suggestion chips, IPC resolver bridge, and interactive action execution cards |
 | 4.3.8 | Developer Mode: Tri-Interface Action Inspector & CodeGen (`ActionInspector.svelte`) | Toggleable Dev Mode in Desktop GUI (Ctrl+Shift+I). Reactive inspector showing live code generation across 4 tabs: CLI command (with batch loop toggle), cURL REST API, native MCP tool call payload JSON, and Python/Node/Rust scripts. Includes session action log and "Export Workflow as Pipeline" script generation |
 | 4.3.9 | Actionable RAG Workspace & Bi-Directional Citation Canvas | Bridges document chat with canvas viewer: clicking citations jumps directly to page/bounding-box with visual highlight pulse. Allows chat prompts to directly propose and trigger execution plans on active document (beating Adobe Acrobat AI Assistant with 100% offline privacy and zero subscription) |
 

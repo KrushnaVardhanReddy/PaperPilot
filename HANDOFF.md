@@ -66,6 +66,8 @@ All 3 tasks have been partitioned with **strict file ownership** so that they ru
 | **R3.FE.1** | `OperationsPanel.svelte` only | [Session 15233664947548284011](https://jules.google.com/session/15233664947548284011) | `main` | Register all 44 tools in `allTools` with cards & invocation mappings |
 | **R3.FE.2** | `tests/e2e_44_operations_parity.spec.ts` only | [Session 10690891751709790998](https://jules.google.com/session/10690891751709790998) | `main` | Data-driven Playwright test verifying search, form inputs & IPC invoke for all 44 tools |
 | **R3.FE.3** | `tests/e2e_canvas_viewer_features.spec.ts` only | [Session 13554866274792768778](https://jules.google.com/session/13554866274792768778) | `main` | Playwright test for Sticky Notes, Drawing/Markup, Diff Slider & Zoom Toolbar |
+| **4.0.5** | `paperpilot-nlp/` only | [Session 11919801443565645570](https://jules.google.com/session/11919801443565645570) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) |
+| **4.3.7** | `PdfChatPanel.svelte`, `ViewerRightPanel.svelte`, `src-tauri/src/lib.rs` | [Session 10653271523477944140](https://jules.google.com/session/10653271523477944140) | `main` | Multi-turn Chat Panel component embedding collapsible drawer, quick chips, offline NLP IPC resolver bridge & execution cards |
 
 ---
 
