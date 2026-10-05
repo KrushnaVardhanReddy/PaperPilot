@@ -24,3 +24,4 @@ venv/
 tests/e2e_fixtures/
 tests/bench_fixtures/
 .venv
+jules*.zip
