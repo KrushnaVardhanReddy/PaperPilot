@@ -129,7 +129,8 @@ fn test_offline_resolver_accuracy() {
 
 #[test]
 fn test_offline_resolver_failures() {
-    let resolver = OfflineNlpResolver::new();
+    let mut resolver = OfflineNlpResolver::new();
+    resolver.layer2 = None; // Disable untrained Layer 2
 
     // Ambiguous Intent
     let res1 = resolver.resolve("make the font bigger");

@@ -5,7 +5,8 @@ use crate::ambiguity::check_completeness;
 
 pub struct OfflineNlpResolver {
     engine: RuleEngine,
-    layer2: Option<crate::layer2::OnnxClassifier>,
+    #[doc(hidden)]
+    pub layer2: Option<crate::layer2::OnnxClassifier>,
 }
 
 impl Default for OfflineNlpResolver {
