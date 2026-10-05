@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all lint format clean dev
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e
 
 # Default target
 all: format lint test-all build
@@ -72,11 +72,19 @@ lint:
 # Clean build artifacts
 clean:
 	cargo clean
-	rm -rf apps/desktop/node_modules apps/desktop/.svelte-kit apps/desktop/playwright-report apps/desktop/test-results
+	rm -rf apps/desktop/node_modules apps/desktop/.svelte-kit apps/desktop/playwright-report apps/desktop/test-results paperpilot-wasm/pkg
 
-# Start the Tauri dev environment
-dev:
-	cd apps/desktop && npm run tauri dev
+# Build client-side WebAssembly package
+build-wasm:
+	wasm-pack build --target web paperpilot-wasm
+
+# Test client-side WebAssembly crate natively
+test-wasm:
+	cargo test -p paperpilot-wasm
+
+# Check WebAssembly crate compilation
+check-wasm:
+	cargo check -p paperpilot-wasm --target wasm32-unknown-unknown || cargo check -p paperpilot-wasm
 
 # Run Tri-Interface E2E Test (Batch 1: Structural)
 test-tri-e2e:
