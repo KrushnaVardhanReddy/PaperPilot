@@ -96,6 +96,43 @@
 
 ---
 
+## 🏢 Enterprise Delivery Models: Managed White-Label Edge vs. Self-Hosted On-Prem
+
+Enterprise customers fall into two distinct buyer categories with completely different infrastructure preferences:
+
+| Attribute | **Managed White-Label Edge (SaaS)** | **Self-Hosted Enterprise License (On-Prem)** |
+|---|---|---|
+| **Target Buyer** | Mid-market businesses, law firms, CPAs, clinics, agencies wanting their own branded portal without IT ops. | Banks, defense, healthcare giants, strict air-gapped orgs with dedicated SecOps/DevOps teams. |
+| **Delivery Model** | **Cloudflare Workers (WASM Isolates)** with SSL for SaaS. | **Docker Container / Standalone Binary** (`paperpilot-gateway` / desktop). |
+| **Domain Setup** | Custom enterprise CNAME (e.g. `pdf.firmname.com`). | Internal intranet / VPC URL (e.g. `pdf.internal.bank.com`). |
+| **Maintenance** | **Zero Ops**: Cloudflare handles SSL, global CDN, and automated WASM upgrades. Zero disk storage. | **Client Managed**: Installed on customer's AWS/Azure VPC or bare-metal servers. |
+| **Compliance** | HIPAA/SOC2 compliance through physical zero-disk V8 Isolates and in-memory execution. | 100% air-gapped network isolation. Zero external network egress. |
+| **Pricing** | **$149 – $399 / month** (or $1,500 – $3,900 / year). | **$2,500 – $10,000 / year** (flat per-server or per-seat license). |
+
+### 1. Managed White-Label Edge ($149 – $399/mo)
+* **The Value Proposition:** A 30-person law or accounting firm cannot afford a full-time DevOps engineer to babysit a Linux/Docker server, update SSL certificates, and debug crashes. Paying $199/month for a fully managed Cloudflare custom domain (`pdf.smithlegal.com`) is **dramatically cheaper than hiring an IT consultant ($150/hr)**.
+* **White-Label Features:**
+  - Dynamic CNAME routing (`pdf.customer.com` -> PaperPilot Edge Worker).
+  - Client logo, custom favicon, primary brand colors, and custom email notifications.
+  - Automated SSL provisioning via Cloudflare Custom Hostnames (SSL for SaaS).
+  - Multi-tenant isolated Cloudflare KV configuration for access controls and API key management.
+  - Physical zero-disk guarantee: all documents execute in V8 RAM buffers and are immediately wiped.
+* **Unit Economics & Margin:**
+  - Cloudflare Workers cost: $5/mo base + $2/mo per custom hostname.
+  - Cost to serve: ~$7.00/mo per tenant.
+  - Price charged: $149 – $399/mo.
+  - **Gross Margin: >95%**.
+
+### 2. Self-Hosted Enterprise License ($2,500 – $10,000/yr)
+* **The Value Proposition:** Banks, government agencies, and defense contractors whose compliance rules strictly forbid sending document bytes outside their firewall. They pay an annual software license to run our single-binary Rust server or Docker image entirely inside their own AWS/Azure/On-Prem VPC.
+* **Deliverables:**
+  - Single standalone binary (or lightweight Docker image <25MB).
+  - Offline license file activation (zero phone-home requirement).
+  - SAML 2.0 / SCIM 2.0 enterprise identity integration.
+  - Annual upgrade entitlement, security patches, and 24/7 priority SLA.
+
+---
+
 ## Tier 5: PaperPilot Cloud (Web SaaS & Developer API)
  
 PaperPilot Cloud unlocks the power of our Rust engine directly in the browser and via cloud endpoints for users who cannot or prefer not to install local binaries.
