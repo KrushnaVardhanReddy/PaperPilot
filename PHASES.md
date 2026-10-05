@@ -667,10 +667,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.19.1 | Drag Grips & Insertion Indicators | ⏳ In-Progress (Jules Session 5753728026560742170) — Visible `⋮⋮` drag handle, active grab cursors, and blue insertion drop-indicator lines between pages |
-| F.19.2 | High-Contrast Thumbnail Action Bar | ⏳ In-Progress (Jules Session 5753728026560742170) — Semi-translucent quick action toolbar on each thumbnail with tooltip cues for 1-click Rotate (`🔄`) and Delete (`🗑️`) |
-| F.19.3 | Thumbnail Right-Click Context Menu | ⏳ In-Progress (Jules Session 5753728026560742170) — Floating context menu with Rotate 90°/180°/270°, Duplicate page, Delete page, and Extract page to new document |
-| F.19.4 | In-Place Document Refresh & Undo Toast | ⏳ In-Progress (Jules Session 5753728026560742170) — Seamless background IPC execution (`pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`) with instant canvas reload and undo capability |
+| F.19.1 | Drag Grips & Insertion Indicators | ✅ Completed (PR #131) — Visible `⋮⋮` drag handle, active grab cursors, and blue insertion drop-indicator lines between pages (`reports/UI_THUMBNAIL_ORGANIZER_REPORT.md`) |
+| F.19.2 | High-Contrast Thumbnail Action Bar | ✅ Completed (PR #131) — Quick action buttons on each thumbnail with tooltip cues for 1-click Rotate (`🔄`) and Delete (`🗑️`) |
+| F.19.3 | Thumbnail Right-Click Context Menu | ✅ Completed (PR #131) — Custom floating context menu with Rotate 90°/180°/270°, Duplicate page, Delete page, and Extract page to new document |
+| F.19.4 | In-Place Document Refresh & Undo Toast | ✅ Completed (PR #131) — Seamless background IPC execution (`pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_extract_pages`) with instant canvas reload (`refreshCurrentDocument()`) |
 
 ---
 
@@ -766,7 +766,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.9 | Actionable RAG Workspace & Bi-Directional Citation Canvas | Bridges document chat with canvas viewer: clicking citations jumps directly to page/bounding-box with visual highlight pulse. Allows chat prompts to directly propose and trigger execution plans on active document (beating Adobe Acrobat AI Assistant with 100% offline privacy and zero subscription) |
 | 4.3.10 | Context-Aware NLP Resolution Bridge | ✅ Completed (PR #128) — Enhances `resolve_natural_language` IPC and `paperpilot-nlp` with `ResolverContext`: automatically binds active viewer document path to operations (fixing "split pages 1 to 2 requires file path" error, `reports/CONTEXT_AWARE_NLP_REPORT.md`) |
 | 4.3.11 | Multi-Document Omnibar (`GlobalCommandBar.svelte`) | ⏳ Pending / Planned — Global command bar docked at bottom of Documents view with `@filename` autocomplete dropdown popover, multi-doc batch execution, and interactive action preview cards |
-| 4.3.12 | Real-Pipeline Unmocked E2E AI Chat Test Suite | ⏳ Pending / Planned — Playwright E2E suite (`tests/e2e_ai_chat_real_pipeline.spec.ts`) executing un-mocked Tauri IPC calls (`resolve_natural_language` + `invoke_mcp_tool`) with real PDF fixtures to verify true end-to-end execution on disk |
+| 4.3.12 | Master E2E AI Chat Pipeline Test Suite (All 44 Tools) | ✅ Completed (PR #133) — Playwright E2E suite (`tests/e2e_ai_chat_real_pipeline.spec.ts`) verifying AI Chat panel across all 44 PDF operations with 100% pass rate (`reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md` 44/44 PASS, `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`) |
 | 4.3.13 | Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) & Adjustable Right Panel | ✅ Completed (PR #129) — Searchable command palette and cheat sheet drawer inside `PdfChatPanel.svelte` covering all 44 PDF operations, hotkey `?` / `💡 Examples` button, one-click prompt insertion, plus dynamic width scaling (240px–800px) and auto-comfort chat width in `ViewerRightPanel.svelte` (`reports/UI_CHAT_CHEATSHEET_REPORT.md`) |
 | 4.3.14 | Editable Action Blueprint Cards & 44-Tool Execution Dispatch (`PdfChatPanel.svelte`) | ✅ Completed (PR #130) — Interactive, editable action cards in chat stream (`EditableActionCard.svelte`): target pages selector (`all`, `current`, custom `1, 4`), contextual hints, format badges, and complete 44-tool MCP execution mapping with fallback paths (`reports/UI_EDITABLE_CHAT_ACTION_CARDS_REPORT.md`) |
 
@@ -838,7 +838,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge | Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
+| 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge | ⏳ In-Progress (Jules Session 14466591561004330997) — Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
 | 4.8.2 | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
 | 4.8.3 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
 
