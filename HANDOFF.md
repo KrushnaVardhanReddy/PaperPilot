@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #137 (4.8.2)**: Zero-Install Client-Side Web App Demo (`apps/web/` Vite + Svelte 5 + Web Worker bridge, 6 core ops in-browser, privacy badge, desktop download funnel CTA, `reports/ZERO_INSTALL_WEB_APP_REPORT.md`, `wiki/05-Zero-Install-Web-App.md`).
 - **PR #136 (4.1.8)**: Embedded Documentation RAG (`sqlite-vec` / TF-IDF) & Chat Integration (`paperpilot-nlp/src/rag.rs`, `query_documentation_rag` Tauri IPC, `.docs-answer-card` UI in `PdfChatPanel.svelte`, `wiki/04-Documentation-RAG.md`, and `reports/DOCUMENTATION_RAG_REPORT.md`).
 - **PR #135 (4.8.1)**: `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge (`paperpilot-wasm` crate with `wasm-bindgen`, in-memory buffer adapters for 6 core ops, `pdfWorker.ts`, `wiki/03-Wasm-Client-Engine.md`, and `reports/WASM_CLIENT_ENGINE_REPORT.md`).
 - **PR #134 (4.3.11)**: Universal Multi-Document Omnibar (`GlobalCommandBar.svelte`) docked at bottom of Documents view (`Ctrl+K` / `Cmd+K`) with `@filename` autocomplete popover, suggestion chips, offline NLP plan resolution, and inline blueprint preview (`reports/UI_GLOBAL_COMMAND_BAR_REPORT.md`).
@@ -74,9 +75,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
-|---|---|---|---|---|
-| **4.8.2** | `apps/web/*`, `reports/ZERO_INSTALL_WEB_APP_REPORT.md`, `wiki/05-Zero-Install-Web-App.md` | [Session 10211896095989692590](https://jules.google.com/session/10211896095989692590) | `main` | Zero-Install Client-Side Web App Demo (Viral Growth Hook) |
+*No active Jules sessions currently in-flight. All dispatched tasks merged!*
 
 ---
 

@@ -23,6 +23,6 @@
     "vite-plugin-wasm": "^3.6.0"
   },
   "dependencies": {
-    "paperpilot-wasm": "link:../../paperpilot-wasm/pkg"
+    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg"
   }
 }
