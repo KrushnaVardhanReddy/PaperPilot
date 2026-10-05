@@ -1,3 +1,4 @@
+pub mod rag;
 pub mod ambiguity;
 pub mod entities;
 pub mod intent;

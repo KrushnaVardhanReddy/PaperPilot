@@ -3114,6 +3114,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4478,6 +4487,7 @@ version = "0.1.0"
 dependencies = [
  "aho-corasick",
  "criterion",
+ "itertools 0.15.0",
  "lazy_static",
  "lopdf",
  "ndarray",
@@ -4486,6 +4496,7 @@ dependencies = [
  "paperpilot-mcp",
  "regex",
  "rmcp",
+ "rust-stemmers",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -4602,7 +4613,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "image",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "js-sys",
  "libloading",
  "log 0.4.34",
@@ -5664,6 +5675,16 @@ dependencies = [
  "quote",
  "serde_json",
  "syn 3.0.6",
+]
+
+[[package]]
+name = "rust-stemmers"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e46a2036019fdb888131db7a4c847a1063a7493f971ed94ea82c67eada63ca54"
+dependencies = [
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]

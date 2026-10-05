@@ -177,6 +177,16 @@ fn resolve_natural_language(
     }
 }
 
+
+#[tauri::command]
+fn query_documentation_rag(query: String, engine: tauri::State<paperpilot_nlp::rag::DocumentationRagEngine>) -> Result<paperpilot_nlp::rag::RagAnswer, String> {
+    if let Some(ans) = engine.query(&query) {
+        Ok(ans)
+    } else {
+        Err("No matching documentation found.".into())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -197,14 +207,15 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, resolve_natural_language])
+        .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, query_documentation_rag, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, resolve_natural_language])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cancel_job, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX};
+    use crate::{cancel_job, query_documentation_rag, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX};
     use serde_json::json;
     use std::io::Write;
 
