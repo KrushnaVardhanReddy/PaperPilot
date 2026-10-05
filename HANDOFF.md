@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #130 (4.3.14)**: Editable Action Blueprint Cards (`EditableActionCard.svelte`) with target pages selector (`all`, `current`, custom `1, 4`), contextual hints, format badges, and complete 44-tool MCP execution mapping (`reports/UI_EDITABLE_CHAT_ACTION_CARDS_REPORT.md`).
 - **PR #129 (4.3.13)**: Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) with 44-tool categorized directory, hotkey `?`, one-click prompt insertion, plus dynamic width scaling (240px–800px) and auto-comfort chat width in `ViewerRightPanel.svelte` (`reports/UI_CHAT_CHEATSHEET_REPORT.md`).
 - **PR #128 (4.3.10)**: Context-Aware NLP Resolution Bridge (`ResolverContext`) with implicit active document binding (`reports/CONTEXT_AWARE_NLP_REPORT.md`).
 - **PR #127 (4.0.5)**: Layer 2 Embedded ONNX Intent Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `include_bytes!` in-memory `ort` CPU inference <2ms, `reports/NLP_ONNX_VERIFIED.md`).
