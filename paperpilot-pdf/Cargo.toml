@@ -12,9 +12,13 @@ headless_chrome = "1.0.22"
 html-escape = "0.2.15"
 image = { version = "0.25.10", features = ["jpeg", "png"] }
 lopdf = "0.45.0"
+ocrs = "0.10.4"
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
 pulldown-cmark = "0.13.4"
 regex = "1.13.1"
+rten = "0.21"
+rten-imageproc = "0.21"
+rten-tensor = "0.21"
 rust_xlsxwriter = "0.99.1"
 scraper = "0.27.0"
 serde = { version = "1.0.229", features = ["derive"] }
