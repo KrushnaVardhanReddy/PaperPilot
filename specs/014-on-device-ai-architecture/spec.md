@@ -18,10 +18,15 @@ PaperPilot requires a responsive, 100% offline natural language interface that p
 * **Pro / Teams Tier**: `SmolLM-135M-Instruct` (Q4 GGUF, ~75MB) + Bring-Your-Own-Key (BYOK) cloud APIs (OpenAI, Gemini, Claude) + Local Ollama.
   - Capabilities: Multi-step conversational agent planning and chained execution recipes.
 
-### 2. Embedded Documentation RAG (`sqlite-vec`)
-Rather than fine-tuning models on rapidly changing documentation (which causes hallucinations), PaperPilot embeds the living documentation (`TRI_INTERFACE_E2E_AND_DOCS.md`, user guides) into an embedded SQLite database using `sqlite-vec`.
-* Questions in the desktop chat query the embedded vector index in <0.5ms.
-* Exact, copy-pasteable CLI and REST API snippets are returned directly with 100% factual accuracy.
+### 2. Embedded Documentation RAG (`sqlite-vec` / In-Memory Vector Store)
+Rather than fine-tuning models on rapidly changing documentation (which causes hallucinations), PaperPilot embeds the living documentation (`TRI_INTERFACE_E2E_AND_DOCS.md`, user guides, tool specs) into an embedded SQLite database using `sqlite-vec`.
+* **Architecture**:
+  - `paperpilot-nlp/src/rag.rs`: In-memory SQLite vector index with cosine similarity search.
+  - Ingestion: Pre-computed embeddings or fast token n-gram/hash embeddings over tool specifications, CLI commands, REST endpoints, and cheat sheet guides.
+  - Queries: User natural language questions like `"How to encrypt with password?"`, `"CLI command for rotate"`, `"What is Bates numbering?"` trigger vector search in <0.5ms.
+* **Response Format**: Exact, copy-pasteable CLI commands, cURL requests, and MCP tool call snippets returned with 100% factual accuracy and zero hallucinations.
+* **IPC Integration**: Exposed to desktop UI via `query_documentation_rag(query: String) -> Result<RagAnswer, String>`.
+* **Licensing & Cost**: 100% Free / Community Tier (runs entirely on-device with $0 compute overhead).
 
 ### 3. Anti-Brute-Force & Offline Memory-Burn
 For encrypted PDFs, brute-force protection is enforced without server phone-home dependencies using **Argon2id Memory-Hard Key Derivation** (1–2GB RAM cost per attempt). Optional enterprise KMS key escrow allows remote burn-switches when connected.

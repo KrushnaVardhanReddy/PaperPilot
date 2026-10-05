@@ -1,0 +1,100 @@
+# Task: Phase 4.1.8 — Embedded Documentation RAG (`sqlite-vec`)
+
+## Objective
+Implement Task 4.1.8: Build an embedded, zero-cloud Documentation RAG (Retrieval-Augmented Generation) engine inside `paperpilot-nlp` using in-memory/embedded vector search (`sqlite-vec` or lightweight embedded vector store).
+Index PaperPilot's living documentation (`reports/TRI_INTERFACE_E2E_AND_DOCS.md` / tool specs) into vector chunks.
+Expose a new Tauri IPC command `query_documentation_rag(query: String) -> Result<RagAnswer, String>` that allows the desktop chat (`PdfChatPanel.svelte`) to answer user questions (e.g., *"How do I encrypt a PDF with password?"*, *"What is the CLI flag for rotate?"*, *"What is Bates numbering?"*) with 100% factual, copy-pasteable CLI commands, cURL requests, and MCP tool call snippets in <1ms without hallucinations.
+
+**Branch**: `feat/nlp-documentation-rag-v1`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+paperpilot-nlp/Cargo.toml
+paperpilot-nlp/src/lib.rs
+paperpilot-nlp/src/rag.rs
+paperpilot-nlp/tests/rag_tests.rs
+apps/desktop/src-tauri/Cargo.toml
+apps/desktop/src-tauri/src/lib.rs
+apps/desktop/src/lib/components/PdfChatPanel.svelte
+reports/DOCUMENTATION_RAG_REPORT.md
+```
+DO NOT touch unrelated frontend views, core PDF operations, or wasm crates.
+
+---
+
+## Technical Requirements
+
+### 1. Embedded Vector Store (`paperpilot-nlp/src/rag.rs`)
+- Implement `DocumentationRagEngine`:
+  - Stores documentation chunks: `id`, `tool_name`, `title`, `category`, `cli_snippet`, `api_snippet`, `mcp_snippet`, `description`, `vector: Vec<f32>`.
+  - Use embedded cosine similarity search across in-memory vector embeddings (or fast token n-gram/TF-IDF vector representation).
+  - Pre-seed or index all 44 PDF operations (e.g. `Rotate`, `Compress`, `Split`, `Merge`, `Encrypt`, `Watermark`, `Bates`, `PdfA`, `ToDocx`, etc.) with their exact syntax:
+    - CLI command: `paperpilot <cmd> [flags]`
+    - REST cURL: `POST http://127.0.0.1:7823/api/v1/pdf/tools/<tool>`
+    - MCP JSON-RPC: `{"jsonrpc":"2.0","method":"tools/call","params":{"name":"<tool>","arguments":{...}}}`
+- **Query Functionality**:
+  ```rust
+  #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+  pub struct RagAnswer {
+      pub tool_name: String,
+      pub title: String,
+      pub explanation: String,
+      pub cli_example: String,
+      pub curl_example: String,
+      pub mcp_example: String,
+      pub confidence_score: f32,
+  }
+  
+  impl DocumentationRagEngine {
+      pub fn query(&self, user_question: &str) -> Option<RagAnswer>;
+  }
+  ```
+
+### 2. Desktop IPC Bridge (`apps/desktop/src-tauri/src/lib.rs`)
+- Expose the Tauri command:
+  ```rust
+  #[tauri::command]
+  fn query_documentation_rag(query: String) -> Result<paperpilot_nlp::rag::RagAnswer, String>
+  ```
+- Register `query_documentation_rag` in `tauri::generate_handler![..., query_documentation_rag]`.
+
+### 3. AI Chat Panel Integration (`PdfChatPanel.svelte`)
+- In `handleSend()`:
+  - If the user query starts with `"how"`, `"what is"`, `"docs"`, `"help"`, `"syntax"`, or contains a question mark `?`:
+    - First query `query_documentation_rag`.
+    - If a high-confidence answer is found (`confidence_score >= 0.4`), render a dedicated `.docs-answer-card`:
+      - Tool title badge (e.g. `📖 Documentation: Encrypt PDF`)
+      - Explanation text
+      - Tabbed/selectable copyable snippets (CLI, cURL, MCP) with a `[Copy Snippet 📋]` button.
+    - If not a documentation query, fall back smoothly to the existing `resolve_natural_language` pipeline.
+
+### 4. Verification & Testing (`paperpilot-nlp/tests/rag_tests.rs`)
+- Unit tests validating:
+  - Query: `"How to encrypt with password?"` -> returns `Encrypt` documentation and valid CLI snippet.
+  - Query: `"How to add watermark?"` -> returns `Watermark` example.
+  - Query: `"What is Bates numbering?"` -> returns `Bates` example.
+  - Query latency < 5ms on CPU.
+
+### 5. Verification Report (`reports/DOCUMENTATION_RAG_REPORT.md`)
+Generate report documenting:
+- Index size, retrieval latency benchmarks (<1ms).
+- Query accuracy test results across sample questions.
+- UI screenshot or verification in `PdfChatPanel.svelte`.
+
+---
+
+## Verification Commands
+```bash
+cargo test -p paperpilot-nlp --test rag_tests
+cd apps/desktop
+pnpm check
+pnpm test
+```
+
+## Commit Message
+```
+feat(nlp): implement embedded documentation rag with sqlite-vec and chat integration
+```
