@@ -78,7 +78,8 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **4.8.5** | `apps/web/playwright.config.ts`, `apps/web/tests/e2e_wasm_12_tools.spec.ts`, `reports/WASM_12_TOOLS_E2E_SCORECARD.md`, `wiki/08-Wasm-E2E-Testing.md` | [Session 10562587771207472872](https://jules.google.com/session/10562587771207472872) | `main` | WASM 12 Tools Playwright E2E Suite & Verification Scorecard |
+| **4.8.5** | `apps/web/playwright.config.ts`, `apps/web/tests/e2e_wasm_12_tools.spec.ts`, `reports/WASM_12_TOOLS_E2E_SCORECARD.md`, `wiki/08-Wasm-E2E-Testing.md` | [Session 10562587771207472872](https://jules.google.com/session/10562587771207472872) | `main` | WASM 12 Tools Playwright E2E Suite (Original Session) |
+| **4.8.5B** | `paperpilot-wasm/src/operations.rs`, `apps/web/playwright.config.ts`, `apps/web/tests/e2e_wasm_12_tools.spec.ts`, `reports/WASM_12_TOOLS_E2E_SCORECARD.md`, `wiki/08-Wasm-E2E-Testing.md` | [Session 10456710787805826784](https://jules.google.com/session/10456710787805826784) | `main` | WASM 12 Tools Playwright E2E Suite + Pure-Rust Encrypt (Revised Session) |
 
 ---
 
