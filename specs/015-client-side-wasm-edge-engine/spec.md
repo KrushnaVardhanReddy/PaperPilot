@@ -1,11 +1,11 @@
 # Spec 015: Client-Side WebAssembly (WASM) & Edge Engine (`paperpilot-wasm`)
 
-## Status: PROPOSED (Target: Phase 4.5)
+## Status: APPROVED & ACTIVE (Phase 4.8)
 
 ## 1. Context & Motivation
 PaperPilot's desktop application provides 44 native PDF tools with complete local privacy. However, acquiring users via a 50MB desktop installer (`.deb`, `.dmg`, `.exe`) has high friction for casual users, students, Chromebook owners, and mobile/tablet users.
 
-By leveraging PaperPilot's pure native Rust engine (`lopdf`, `pdf-writer`, etc.), we can compile the core operations directly to **WebAssembly (`wasm32-unknown-unknown` and `wasm32-wasi`)**.
+By leveraging PaperPilot's pure native Rust engine (`lopdf`, `pdf-writer`, etc.), we compile the core operations directly to **WebAssembly (`wasm32-unknown-unknown`)**.
 This unlocks:
 1. **The Viral Growth Hook (Zero-Install Client-Side Web App)**: Users drag & drop files on `paperpilot.app` and execute core PDF operations (merge, split, rotate, compress, watermark, encrypt) **100% inside their browser memory** in <10ms. No files are uploaded to any server ($0 server cost).
 2. **Cloudflare Workers Edge Microservice**: The same WASM module deploys into Cloudflare V8 Isolates across 300+ edge locations for sub-10ms API processing with a physical zero-disk guarantee.
@@ -19,16 +19,24 @@ This unlocks:
 PaperPilot/
 ├── paperpilot-core/        # Shared core traits & error types
 ├── paperpilot-pdf/         # 44 PDF operation implementations
-├── paperpilot-wasm/        # NEW: wasm-bindgen bindings & in-memory stream adapters
+├── paperpilot-wasm/        # wasm-bindgen bindings & in-memory stream adapters
 └── apps/
     ├── desktop/            # Svelte 5 + Tauri desktop app
-    └── web/                # Zero-install browser demo (Svelte 5 + paperpilot-wasm)
+    └── web/                # Zero-install browser demo (Vite + Svelte 5 / TS + paperpilot-wasm)
 ```
 
-### Crate: `paperpilot-wasm`
-- **Target**: `wasm32-unknown-unknown`
-- **Dependencies**: `wasm-bindgen`, `js-sys`, `web-sys`, `paperpilot-core`, `paperpilot-pdf`
-- **Memory Model**: Pure in-memory `Uint8Array` / `Vec<u8>` buffers. Zero filesystem calls.
+### Application: `apps/web/`
+- **Framework**: Vite + Svelte 5 + TypeScript + Vanilla CSS (dark theme, glassmorphic accents matching PaperPilot design language).
+- **Core Engine Integration**: Imports the Web Worker bridge or compiled WASM from `paperpilot-wasm` to run computations off the main UI thread.
+- **Tools Included**:
+  1. **Merge PDFs**: Multiple file drop, visual reorder, instant merge & download.
+  2. **Split PDF**: Split by page ranges or into individual pages.
+  3. **Rotate Pages**: 90°/180°/270° clockwise rotation.
+  4. **Compress PDF**: In-browser byte deflation with percentage size reduction badge.
+  5. **Encrypt PDF**: Standard password protection.
+  6. **Watermark PDF**: Custom textual stamps.
+- **Privacy Assurance Badge**: Prominent banner confirming *"100% Client-Side. Your documents never leave your browser."*
+- **Desktop Download CTA**: High-converting banner/footer driving visitors to download PaperPilot Desktop for 44+ tools and AI assistant.
 
 ---
 
@@ -74,9 +82,9 @@ impl WasmPdfEngine {
 
 | # | Task | Objective | Status |
 |---|---|---|---|
-| **4.8.1** | `paperpilot-wasm` Complete Client-Side Engine | `paperpilot-wasm` crate with `wasm-bindgen`, 6 core in-memory operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) | **In-Flight** |
-| **4.8.2** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages | Next |
-| **4.8.3** | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) | Backlog |
+| **4.8.1** | `paperpilot-wasm` Complete Client-Side Engine | `paperpilot-wasm` crate with `wasm-bindgen`, 6 core in-memory operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) | ✅ **Completed** (PR #135) |
+| **4.8.2** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite in `apps/web/` deployed to Cloudflare Pages / GitHub Pages with desktop CTA | ⏳ **In-Progress** |
+| **4.8.3** | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) | 📋 Pending |
 
 ---
 

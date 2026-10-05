@@ -1,0 +1,44 @@
+TASK: Task 4.8.2 — Zero-Install Client-Side Web App Demo (Viral Growth Hook)
+BRANCH: feat/wasm-web-app-demo
+RELEVANT SPECS: specs/015-client-side-wasm-edge-engine/spec.md
+REPORT: reports/ZERO_INSTALL_WEB_APP_REPORT.md
+WIKI: wiki/05-Zero-Install-Web-App.md
+
+OBJECTIVE:
+Build a standalone, high-performance, beautiful zero-install client-side web application in `apps/web/` powered entirely by `paperpilot-wasm` through a Web Worker.
+The app allows users to perform 6 core PDF operations (Merge, Split, Rotate, Compress, Encrypt, Watermark) directly in their web browser with 0 server uploads ($0 server cost, 100% privacy), accompanied by a high-converting "Download PaperPilot Desktop" funnel call-to-action.
+
+CRITICAL DESIGN & ARCHITECTURE RULES:
+1. PURE CLIENT-SIDE PRIVACY:
+   - All document processing MUST occur in the user's browser memory (WebAssembly + Web Worker).
+   - Zero files may ever be sent over HTTP to any backend server.
+   - Display a prominent trust badge: "🔒 100% Client-Side Processing — Your documents never leave your device".
+2. TECH STACK:
+   - Location: `apps/web/`
+   - Setup: Vite + Svelte 5 (or Vanilla TS/HTML/CSS if simpler, but Svelte 5 + Vite matching `apps/desktop` is preferred for component reuse)
+   - Worker Bridge: Use the compiled `paperpilot-wasm` package or the Web Worker pattern established in `apps/desktop/src/lib/wasm/pdfWorker.ts`.
+3. USER EXPERIENCE & 6 CORE TOOLS:
+   - Drag-and-drop file upload zone (multi-file for merge, single-file for others).
+   - Tool 1: **Merge PDFs** (Drop multiple PDFs, drag to reorder, one-click merge & instant browser download).
+   - Tool 2: **Split PDF** (Input page range e.g. "1-2, 3" and download resulting split parts).
+   - Tool 3: **Rotate Pages** (Rotate all or specific pages 90°, 180°, or 270° clockwise).
+   - Tool 4: **Compress PDF** (Deflate streams, display before/after size reduction badge e.g. "-42%").
+   - Tool 5: **Encrypt PDF** (Password protect PDF using standard PDF encryption).
+   - Tool 6: **Watermark PDF** (Stamp custom text like "CONFIDENTIAL" or "DRAFT").
+4. VIRAL CTA FUNNEL:
+   - Floating header/footer banner: "Need OCR, Semantic Search, or Offline AI? Download PaperPilot Desktop (Free & Open Source)".
+   - Direct download links for Linux (.deb / AppImage), Windows (.exe / .msi), macOS (.dmg).
+5. AESTHETICS:
+   - Dark theme, glassmorphic UI, sleek typography matching the PaperPilot desktop design system.
+   - Micro-animations, progress feedback, and instant downloads.
+
+DELIVERABLES:
+1. `apps/web/package.json` with scripts: `dev`, `build`, `check`.
+2. `apps/web/vite.config.ts` (configured to support wasm & web workers).
+3. `apps/web/src/` containing the UI components, tool views, and worker bridge.
+4. Comprehensive verification report at `reports/ZERO_INSTALL_WEB_APP_REPORT.md` documenting bundle size, memory benchmarks, and browser test results.
+5. Wiki documentation at `wiki/05-Zero-Install-Web-App.md`.
+
+VERIFICATION:
+- Must run `npm run check` and `npm run build` in `apps/web/` successfully with 0 errors.
+- Ensure the bundle size is lightweight and production-ready for deployment to GitHub Pages / Cloudflare Pages.
