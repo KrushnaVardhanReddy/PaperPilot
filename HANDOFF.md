@@ -102,6 +102,15 @@ While Jules runs the frontend suites in the background:
 
 ---
 
+## 🔄 Post-Migration Re-Export: WASM & Edge Re-Sync (Task 5.5.1)
+Once pure-Rust migrations (OCR `ocrs`, Page Rasterizer `hayro`, Images, Hash) land in `paperpilot-pdf`:
+1. Re-export the new operations from `paperpilot-wasm` using `wasm-bindgen`.
+2. Recompile: `make build-wasm`.
+3. Synchronize `apps/web/node_modules/paperpilot-wasm/` and `apps/edge/node_modules/paperpilot-wasm/`.
+4. Update `apps/web` (OperationsView + Playwright E2E) and `apps/edge` (worker routes + Vitest) to unlock 20+ in-browser & edge tools.
+
+---
+
 ## 🛠️ Useful Commands
 
 ```bash

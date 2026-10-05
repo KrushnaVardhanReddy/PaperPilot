@@ -843,6 +843,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.8.5 | WASM 12 Tools Playwright E2E Suite & Scorecard ✅ | Merged (Session 10562587771207472872, PR #139) — Automated in-browser Playwright E2E suite (`apps/web/tests/e2e_wasm_12_tools.spec.ts`), pure-Rust in-memory encryption, living scorecard at `reports/WASM_12_TOOLS_E2E_SCORECARD.md` (12/12 PASS), and documentation in `wiki/08-Wasm-E2E-Testing.md`. |
 | 4.8.3 | Cloudflare Workers Edge Microservice ✅ | Merged (Session 803293663318829942, PR #140) — Deployed `paperpilot-wasm` into Cloudflare Workers standalone service in `apps/edge/` with 12 sub-10ms memory REST endpoints, Vitest suite (14/14 PASS), `reports/EDGE_MICROSERVICE_REPORT.md`, and `wiki/10-Cloudflare-Edge-Service.md`. |
 
+### Phase 5.5 — WASM Re-Export & Edge Sync Post-Migration
+| # | Task | Notes |
+|---|---|---|
+| 5.5.1 | Redo & Re-Export WASM Engine Post-Migration | Once pure-Rust migrations (OCR `ocrs`, Render `hayro`, Images, Hash) land in `paperpilot-pdf`, re-export them into `paperpilot-wasm`, rebuild via `make build-wasm`, and synchronize `apps/web/` and `apps/edge/` to unlock 20+ in-browser tools. |
+
 ## Phase 5 — Advanced Intelligence
 
 **Goal:** PaperPilot understands document content, not just structure.
