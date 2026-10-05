@@ -46,7 +46,8 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **MCP (`paperpilot-mcp` stdio)**: 44 / 44 (100.0% PASS)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
-### 2. Merged Bug Fix PRs
+### 2. Merged Frontend & Bug Fix PRs
+- **PR #121 (R3.FE.1)**: Registered all 44 PDF operations with parameter cards and invocation mappings in `OperationsPanel.svelte` (`reports/UI_44_TOOLS_PANEL_REPORT.md`).
 - **PR #114 (FIX 1)**: CLI flag normalization, `--angle` alias on rotate, multi-argument support on merge & images-to-pdf.
 - **PR #115 (FIX 2)**: Gateway parameter mapping for `rotate`, `crop`, and `split`.
 - **PR #116 (FIX 3B)**: MCP & Gateway E2E parameter stability and fallback render routing.
@@ -57,13 +58,12 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
-## 🚧 Active Jules Sessions (In-Flight Frontend Parity)
+## 🚧 Active Jules Sessions (In-Flight Frontend Parity & Phase 4)
 
-All 3 tasks have been partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
+All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **R3.FE.1** | `OperationsPanel.svelte` only | [Session 15233664947548284011](https://jules.google.com/session/15233664947548284011) | `main` | Register all 44 tools in `allTools` with cards & invocation mappings |
 | **R3.FE.2** | `tests/e2e_44_operations_parity.spec.ts` only | [Session 10690891751709790998](https://jules.google.com/session/10690891751709790998) | `main` | Data-driven Playwright test verifying search, form inputs & IPC invoke for all 44 tools |
 | **R3.FE.3** | `tests/e2e_canvas_viewer_features.spec.ts` only | [Session 13554866274792768778](https://jules.google.com/session/13554866274792768778) | `main` | Playwright test for Sticky Notes, Drawing/Markup, Diff Slider & Zoom Toolbar |
 | **4.0.5** | `paperpilot-nlp/` only | [Session 11919801443565645570](https://jules.google.com/session/11919801443565645570) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) |
