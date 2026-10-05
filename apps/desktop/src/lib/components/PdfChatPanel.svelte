@@ -5,8 +5,15 @@
     import ChatCheatSheet from '$lib/components/ChatCheatSheet.svelte';
     import EditableActionCard from './EditableActionCard.svelte';
 
+    interface ChatMessage {
+        role: 'user' | 'assistant';
+        content: string;
+        plan?: any;
+        result?: any;
+    }
+
     let query = $state('');
-    let messages = $state<{role: 'user' | 'assistant', content: string, plan?: any}[]>([]);
+    let messages = $state<ChatMessage[]>([]);
     let isThinking = $state(false);
     let isCheatSheetOpen = $state(false);
     let chatInputRef = $state<HTMLInputElement | null>(null);
@@ -119,9 +126,15 @@
             });
             toastState.success(`Action completed successfully!`);
 
-            messages = [...messages, { role: 'assistant', content: `Execution successful: ${JSON.stringify(result)}` }];
+            const resultObj: any = typeof result === 'object' && result !== null ? result : { message: String(result), success: true };
+            messages = [...messages, { 
+                role: 'assistant', 
+                content: resultObj.message || 'Action completed successfully.',
+                result: resultObj
+            }];
         } catch (error) {
             toastState.error(`Failed to execute: ${error}`);
+            messages = [...messages, { role: 'assistant', content: `Error: ${error}` }];
         }
     }
 
@@ -155,6 +168,20 @@
                 </div>
                 {#if msg.plan}
                     <EditableActionCard plan={msg.plan} onExecute={executePlan} />
+                {/if}
+                {#if msg.result}
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-badge">✅ Success</span>
+                            <span class="result-title">{msg.result.message || 'Completed'}</span>
+                        </div>
+                        {#if msg.result.output_path}
+                            <div class="result-path-box">
+                                <span class="path-label">Output file:</span>
+                                <code class="path-value">{msg.result.output_path}</code>
+                            </div>
+                        {/if}
+                    </div>
                 {/if}
             </div>
         {/each}
@@ -301,20 +328,67 @@
         color: var(--text-secondary);
     }
 
-    .execute-btn {
-        width: 100%;
-        background: var(--accent-primary);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 0.5rem;
-        cursor: pointer;
-        font-weight: bold;
-        transition: opacity 0.2s;
+    .result-card {
+        margin-top: 0.5rem;
+        background: var(--bg-surface);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        animation: fadeIn 0.2s ease-out;
     }
 
-    .execute-btn:hover {
-        opacity: 0.9;
+    .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .result-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(74, 222, 128, 0.15);
+        color: #4ade80;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .result-title {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .result-path-box {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .path-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .path-value {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        word-break: break-all;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .chat-footer {
