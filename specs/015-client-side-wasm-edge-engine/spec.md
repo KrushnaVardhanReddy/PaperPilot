@@ -70,15 +70,13 @@ impl WasmPdfEngine {
 
 ---
 
-## 4. Phase 4.5 Task Breakdown
+## 4. Phase 4.8 Task Breakdown
 
-| # | Task | Objective |
-|---|---|---|
-| **4.5.1** | `paperpilot-wasm` Crate Scaffold | Create `paperpilot-wasm` crate with `wasm-bindgen` and in-memory buffer adapters |
-| **4.5.2** | Core Operations WASM Compilation | Compile `merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark` to Wasm (<2MB binary) |
-| **4.5.3** | Web Worker Bridge (`pdfWorker.ts`) | Background Web Worker integration for non-blocking UI in browser |
-| **4.5.4** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
-| **4.5.5** | Cloudflare Workers Edge API Hook | Cloudflare Worker microservice exposing `paperpilot-wasm` as an HTTP endpoint |
+| # | Task | Objective | Status |
+|---|---|---|---|
+| **4.8.1** | `paperpilot-wasm` Complete Client-Side Engine | `paperpilot-wasm` crate with `wasm-bindgen`, 6 core in-memory operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) | **In-Flight** |
+| **4.8.2** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages | Next |
+| **4.8.3** | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) | Backlog |
 
 ---
 

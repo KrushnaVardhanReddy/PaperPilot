@@ -838,11 +838,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.8.1 | `paperpilot-wasm` Crate Scaffold | Create `paperpilot-wasm` crate with `wasm-bindgen` and in-memory `Uint8Array` / buffer adapters |
-| 4.8.2 | Core Operations WASM Compilation | Compile `merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark` to Wasm (<2MB binary) |
-| 4.8.3 | In-Browser Web Worker Bridge (`pdfWorker.ts`) | Background Web Worker integration for non-blocking UI in browser |
-| 4.8.4 | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
-| 4.8.5 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
+| 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge | Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
+| 4.8.2 | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
+| 4.8.3 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
 
 ## Phase 5 — Advanced Intelligence
 
