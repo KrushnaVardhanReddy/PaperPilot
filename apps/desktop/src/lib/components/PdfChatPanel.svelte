@@ -33,6 +33,29 @@
         query = '';
         isThinking = true;
 
+        const lowerQuery = textToSend.toLowerCase();
+        const isDocQuery = lowerQuery.startsWith('how') || lowerQuery.startsWith('what is') || lowerQuery.includes('docs') || lowerQuery.includes('help') || lowerQuery.includes('syntax') || lowerQuery.includes('?');
+
+        if (isDocQuery) {
+            try {
+                const docAns = await invoke('query_documentation_rag', { query: textToSend }) as any;
+                if (docAns && docAns.confidence_score >= 0.39) {
+                    messages = [...messages, {
+                        role: 'assistant',
+                        content: `**📖 Documentation: ${docAns.title}**\n${docAns.explanation}`,
+                        result: {
+                            is_docs: true,
+                            docAns
+                        }
+                    }];
+                    isThinking = false;
+                    return;
+                }
+            } catch (err) {
+                // fall back to resolve_natural_language silently
+            }
+        }
+
         try {
             const activeDoc = appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null;
             const activePath = activeDoc ? ((activeDoc as any)._localPath || activeDoc.name) : undefined;
@@ -170,18 +193,44 @@
                     <EditableActionCard plan={msg.plan} onExecute={executePlan} />
                 {/if}
                 {#if msg.result}
-                    <div class="result-card">
-                        <div class="result-header">
-                            <span class="result-badge">✅ Success</span>
-                            <span class="result-title">{msg.result.message || 'Completed'}</span>
-                        </div>
-                        {#if msg.result.output_path}
-                            <div class="result-path-box">
-                                <span class="path-label">Output file:</span>
-                                <code class="path-value">{msg.result.output_path}</code>
+                    {#if msg.result.is_docs}
+                        <div class="docs-answer-card">
+                            <div class="docs-header">
+                                <span class="docs-badge">📖 Documentation: {msg.result.docAns.title}</span>
                             </div>
-                        {/if}
-                    </div>
+                            <div class="docs-explanation">{msg.result.docAns.explanation}</div>
+                            <div class="docs-snippets">
+                                <div class="snippet-box">
+                                    <span class="snippet-label">CLI</span>
+                                    <code class="snippet-value">{msg.result.docAns.cli_example}</code>
+                                    <button class="copy-btn" onclick={() => navigator.clipboard.writeText(msg.result.docAns.cli_example)}>[Copy Snippet 📋]</button>
+                                </div>
+                                <div class="snippet-box">
+                                    <span class="snippet-label">cURL</span>
+                                    <code class="snippet-value">{msg.result.docAns.curl_example}</code>
+                                    <button class="copy-btn" onclick={() => navigator.clipboard.writeText(msg.result.docAns.curl_example)}>[Copy Snippet 📋]</button>
+                                </div>
+                                <div class="snippet-box">
+                                    <span class="snippet-label">MCP</span>
+                                    <code class="snippet-value">{msg.result.docAns.mcp_example}</code>
+                                    <button class="copy-btn" onclick={() => navigator.clipboard.writeText(msg.result.docAns.mcp_example)}>[Copy Snippet 📋]</button>
+                                </div>
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="result-card">
+                            <div class="result-header">
+                                <span class="result-badge">✅ Success</span>
+                                <span class="result-title">{msg.result.message || 'Completed'}</span>
+                            </div>
+                            {#if msg.result.output_path}
+                                <div class="result-path-box">
+                                    <span class="path-label">Output file:</span>
+                                    <code class="path-value">{msg.result.output_path}</code>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
                 {/if}
             </div>
         {/each}
@@ -285,10 +334,12 @@
         align-self: flex-start;
     }
 
+
     .bubble {
         padding: 0.75rem 1rem;
         border-radius: 8px;
         font-size: 0.9rem;
+        white-space: pre-wrap;
     }
 
     .message.user .bubble {
@@ -446,4 +497,44 @@
         border-radius: 0 4px 4px 0;
         cursor: pointer;
     }
+
+    .docs-answer-card {
+        margin-top: 0.5rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--accent-primary);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+    }
+    .docs-header { display: flex; align-items: center; }
+    .docs-badge { font-weight: 600; color: var(--accent-primary); font-size: 0.9rem; }
+    .docs-explanation { color: var(--text-secondary); }
+    .docs-snippets { display: flex; flex-direction: column; gap: 0.5rem; }
+    .snippet-box {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        position: relative;
+    }
+    .snippet-label { font-size: 0.7rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+    .snippet-value { font-family: monospace; font-size: 0.75rem; color: var(--text-primary); word-break: break-all; white-space: pre-wrap; margin-bottom: 0.5rem; }
+    .copy-btn {
+        align-self: flex-start;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--bg-surface); color: var(--text-primary); border-color: var(--accent-primary); }
 </style>
