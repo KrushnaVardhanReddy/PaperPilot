@@ -35,6 +35,12 @@ PaperPilot/
   4. **Compress PDF**: In-browser byte deflation with percentage size reduction badge.
   5. **Encrypt PDF**: Standard password protection.
   6. **Watermark PDF**: Custom textual stamps.
+  7. **Delete Pages**: Remove selected pages (e.g. "2, 4" or "1-3").
+  8. **Extract Pages**: Extract target page range into a standalone PDF.
+  9. **Reorder Pages**: Re-sequence document pages (e.g. "3, 1, 2").
+  10. **Crop Pages**: Adjust document boundary box (`left, bottom, right, top`).
+  11. **Flatten PDF**: Flatten interactive AcroForm fields into permanent page content.
+  12. **Metadata Editor**: Read and modify Title, Author, Subject, and Keywords.
 - **Privacy Assurance Badge**: Prominent banner confirming *"100% Client-Side. Your documents never leave your browser."*
 - **Desktop Download CTA**: High-converting banner/footer driving visitors to download PaperPilot Desktop for 44+ tools and AI assistant.
 
@@ -73,6 +79,30 @@ impl WasmPdfEngine {
     /// Add text watermark
     #[wasm_bindgen]
     pub fn watermark(input_bytes: &[u8], text: &str) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Delete specific pages from a PDF buffer
+    #[wasm_bindgen]
+    pub fn delete_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Extract specific pages into a new PDF buffer
+    #[wasm_bindgen]
+    pub fn extract_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Reorder pages according to a 1-based order array (e.g. [3, 1, 2])
+    #[wasm_bindgen]
+    pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Crop pages to a given bounding box
+    #[wasm_bindgen]
+    pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Flatten form fields into regular PDF content
+    #[wasm_bindgen]
+    pub fn flatten(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Set PDF metadata (title, author, subject, keywords)
+    #[wasm_bindgen]
+    pub fn set_metadata(input_bytes: &[u8], title: Option<String>, author: Option<String>, subject: Option<String>, keywords: Option<String>) -> Result<js_sys::Uint8Array, JsValue>;
 }
 ```
 
@@ -83,7 +113,8 @@ impl WasmPdfEngine {
 | # | Task | Objective | Status |
 |---|---|---|---|
 | **4.8.1** | `paperpilot-wasm` Complete Client-Side Engine | `paperpilot-wasm` crate with `wasm-bindgen`, 6 core in-memory operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) | ✅ **Completed** (PR #135) |
-| **4.8.2** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite in `apps/web/` deployed to Cloudflare Pages / GitHub Pages with desktop CTA | ⏳ **In-Progress** |
+| **4.8.2** | Zero-Install Web App Demo | Web-based drag-and-drop tool suite in `apps/web/` deployed to Cloudflare Pages / GitHub Pages with desktop CTA | ✅ **Completed** (PR #137) |
+| **4.8.4** | Expand WASM Engine & Web Suite to 12 Pure-Rust Tools | Implement `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, and `set_metadata` in `paperpilot-wasm` and add interactive UI cards in `apps/web/src/views/OperationsView.svelte` | ⏳ **In-Progress** |
 | **4.8.3** | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) | 📋 Pending |
 
 ---

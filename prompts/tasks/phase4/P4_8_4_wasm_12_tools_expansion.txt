@@ -1,0 +1,48 @@
+TASK: Task 4.8.4 — Expand WASM Engine and Web Suite to 12 Pure-Rust Tools
+BRANCH: feat/wasm-12-tools-expansion
+RELEVANT SPECS: specs/015-client-side-wasm-edge-engine/spec.md
+REPORT: reports/WASM_12_TOOLS_EXPANSION_REPORT.md
+WIKI: wiki/06-Wasm-12-Tools-Suite.md
+
+OBJECTIVE:
+Expand `paperpilot-wasm` and `apps/web/` from 6 tools to 12 pure-Rust in-browser tools.
+All operations execute 100% in browser memory with zero filesystem access and zero network requests.
+
+NEW OPERATIONS TO ADD:
+1. `delete_pages(input_bytes: &[u8], pages: &str) -> Vec<u8>`:
+   - Parse comma/range list (e.g. "2, 4" or "1-3").
+   - Delete specified 1-based pages and return updated PDF bytes.
+2. `extract_pages(input_bytes: &[u8], pages: &str) -> Vec<u8>`:
+   - Extract specified 1-based pages into a new standalone PDF.
+3. `reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> Vec<u8>`:
+   - Reorganize pages according to 1-based order array (e.g. [3, 1, 2]).
+4. `crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Vec<u8>`:
+   - Set `/CropBox` array on all pages.
+5. `flatten(input_bytes: &[u8]) -> Vec<u8>`:
+   - Remove `/AcroForm` interactive fields from root catalog to flatten forms.
+6. `set_metadata(input_bytes: &[u8], title: Option<String>, author: Option<String>, subject: Option<String>, keywords: Option<String>) -> Vec<u8>`:
+   - Update `/Info` dictionary entries with provided values.
+
+CRITICAL IMPLEMENTATION DETAILS:
+1. `paperpilot-wasm`:
+   - Implement the 6 operations in `paperpilot-wasm/src/operations.rs` using `lopdf::Document::load_mem()` and `doc.save_to(&mut buf)`.
+   - Export corresponding methods on `WasmPdfEngine` in `paperpilot-wasm/src/lib.rs`.
+   - Add unit tests in `paperpilot-wasm/tests/wasm_tests.rs` covering the new operations.
+2. Web Worker Bridge:
+   - Update `apps/desktop/src/lib/wasm/pdfWorker.ts` and `apps/desktop/src/lib/wasm/index.ts` to expose the 6 new operations.
+   - Update `apps/web/src/lib/wasm/pdfWorker.ts` and `apps/web/src/lib/wasm/index.ts` to match.
+3. Web App UI (`apps/web/src/views/OperationsView.svelte`):
+   - Add tool definitions and icons to the `tools` array for all 6 new tools:
+     - Delete Pages (🗑️)
+     - Extract Pages (📤)
+     - Reorder Pages (🔀)
+     - Crop PDF (📐)
+     - Flatten Forms (📄)
+     - Edit Metadata (🏷️)
+   - Add dedicated interactive parameter cards and action handlers for each new tool.
+   - Ensure instant browser file download on completion.
+4. Testing & Documentation:
+   - Ensure `cargo test -p paperpilot-wasm` passes.
+   - Ensure `npm run check` in `apps/web/` passes with 0 errors.
+   - Create verification report at `reports/WASM_12_TOOLS_EXPANSION_REPORT.md`.
+   - Create wiki at `wiki/06-Wasm-12-Tools-Suite.md`.
