@@ -83,7 +83,10 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-*No active Jules sessions currently in-flight. Task 5.2.1 merged cleanly via PR #141!*
+| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
+|---|---|---|---|---|
+| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 7853365080299689953](https://jules.google.com/session/7853365080299689953) | `main` | Expand WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
+| **5.3.1** | `paperpilot-pdf/Cargo.toml`, `paperpilot-pdf/src/operations/render.rs`, `reports/RENDERING_PURE_RUST_REPORT.md`, `wiki/12-Pure-Rust-Rendering.md` | [Session 15128032333344162811](https://jules.google.com/session/15128032333344162811) | `main` | Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia` replacing PDFium) |
 
 ---
 
