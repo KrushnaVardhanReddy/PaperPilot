@@ -1,0 +1,60 @@
+# Task: Phase 4.E2E-FE — Playwright E2E UI Suite: Verify Operations Panel, Viewer & Parity
+
+## Objective
+Implement comprehensive Playwright end-to-end tests in `apps/desktop/tests/e2e_operations_parity.spec.ts` covering the desktop frontend UI execution of operations, the Operations Panel, and the Canvas Viewer.
+
+**Branch**: `feat/frontend-e2e-operations-parity`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch desktop tests and reports)
+```
+apps/desktop/tests/e2e_operations_parity.spec.ts
+reports/UI_OPERATIONS_E2E_REPORT.md
+```
+DO NOT modify:
+- Rust backend crates (`paperpilot-pdf`, `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`)
+- Shared master documents (`PHASES.md`, `reports/TRI_INTERFACE_E2E_AND_DOCS.md`)
+
+---
+
+## Required Test Coverage in `apps/desktop/tests/e2e_operations_parity.spec.ts`
+
+### 1. Operations Panel Navigation & Search
+- Verify all operation categories (Organize, Convert, Security, Forms, Optimize, Edit) display cleanly.
+- Verify searching in the operations search bar filters tools accurately.
+- Verify clicking a tool opens its parameter configuration card/dialog.
+
+### 2. Operation Form Inputs & Execution Mock
+- Test form field validations for common operations:
+  - **Merge**: Multi-file input list.
+  - **Split & Reorder**: Page input fields and ranges (`1-5`, `2,1,3,4,5`).
+  - **Encrypt & Decrypt**: Password input fields.
+  - **Convert**: Format dropdown selection (`docx`, `xlsx`, `pptx`, `html`, `markdown`).
+  - **Watermark & Header/Footer**: Text input fields and position toggles.
+- Verify mock Tauri IPC invoke `invoke_mcp_tool` receives the properly formatted arguments when clicking "Run Operation" or "Execute".
+
+### 3. Viewer Interaction & Canvas
+- Verify loading a document into the viewer renders canvas pages.
+- Verify zoom toolbar controls (zoom in, zoom out, fit to width, reset).
+- Verify page navigation buttons and thumbnail sidebar.
+
+### 4. Output Report
+Generate a detailed test execution summary report at:
+`reports/UI_OPERATIONS_E2E_REPORT.md`
+Detailing the pass/fail status and coverage metrics.
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm test
+pnpm exec playwright test tests/e2e_operations_parity.spec.ts
+```
+
+## Commit Message
+```
+test(desktop): add comprehensive playwright e2e suite for operations panel and viewer
+```
