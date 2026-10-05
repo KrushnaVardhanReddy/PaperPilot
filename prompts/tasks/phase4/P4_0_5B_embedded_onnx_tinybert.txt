@@ -1,0 +1,171 @@
+# Task: Phase 4.0.5B — Embedded ONNX Intent Classifier (TinyBERT-4L-312D) with Committed Artifacts
+
+## Objective
+Implement Task 4.0.5: Integrate the embedded ONNX intent classifier into `paperpilot-nlp` using `TinyBERT-4L-312D` (INT8 ONNX compressed with `zstd` down to ~7MB). Ensure the exported ONNX model, tokenizer, and config files are explicitly added and committed into git so that `include_bytes!` compiles cleanly on fresh checkouts.
+
+**Branch**: `feat/nlp-embedded-onnx-tinybert-v2`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+paperpilot-nlp/Cargo.toml
+paperpilot-nlp/src/layer2.rs
+paperpilot-nlp/src/lib.rs
+paperpilot-nlp/src/resolver.rs
+tools/train-nlp/train.py
+tools/train-nlp/output/tinybert_int8.onnx.zst
+tools/train-nlp/output/tokenizer.json
+tools/train-nlp/output/config.json
+reports/NLP_ONNX_VERIFIED.md
+```
+DO NOT modify any other crates or frontend files.
+
+---
+
+## CRITICAL FIXES FOR THIS SESSION
+1. **Committed Model Assets**: In the previous session, `tools/train-nlp/output/` was gitignored, which caused `include_bytes!` in `layer2.rs` to fail with `No such file or directory (os error 2)` on fresh clones. The base branch `main` has now updated `.gitignore` to allow `*.zst` and `*.json` inside `tools/train-nlp/output/`. You MUST commit `tinybert_int8.onnx.zst`, `tokenizer.json`, and `config.json` into git so the project builds out-of-the-box!
+2. **Deterministic Offline Build**: Feature flag the ONNX dependency under `features = ["onnx"]` (or ensure `default = ["onnx"]` compiles without error because the committed files are present in the repo).
+3. **Execution Latency**: Verify sub-2ms CPU execution latency with `TinyBERT-4L-312D`.
+
+---
+
+### 1. Component Structure
+You will need to create or update the following files:
+1. **`tools/train-nlp/train.py`** -> Script exporting `TinyBERT_General_4L_312D` to INT8 ONNX, compressed via `zstd` level 19 to `tools/train-nlp/output/tinybert_int8.onnx.zst`.
+2. **`tools/train-nlp/output/`** -> Generated and COMMITTED files: `tinybert_int8.onnx.zst`, `tokenizer.json`, and `config.json`.
+3. **`paperpilot-nlp/Cargo.toml`** -> Dependencies for `ort`, `tokenizers`, `zstd`, and `ndarray` with `download-binaries` and `tls-rustls` features.
+4. **`paperpilot-nlp/src/layer2.rs`** -> `OnnxClassifier` loading the embedded bytes in-memory and running inference.
+5. **`paperpilot-nlp/src/resolver.rs`** -> Wire `OnnxClassifier` as Layer 2 fallback when Layer 1 (`RuleEngine`) returns `None`.
+6. **`reports/NLP_ONNX_VERIFIED.md`** -> Verification report confirming passing tests and performance.
+
+---
+
+### 2. Implementation Details
+
+#### 1. Training Script & Model Export (`tools/train-nlp/train.py`)
+- Export `TinyBERT_General_4L_312D` with INT8 dynamic quantization.
+- Compress output `.onnx` using `zstd` to `tools/train-nlp/output/tinybert_int8.onnx.zst`.
+- Save `tokenizer.json` and `config.json` alongside it.
+
+#### 2. Cargo Dependencies (`paperpilot-nlp/Cargo.toml`)
+```toml
+[features]
+default = ["onnx"]
+onnx = ["dep:ort", "dep:tokenizers", "dep:zstd", "dep:ndarray", "ort/ndarray"]
+
+[dependencies]
+ort = { version = "2.0.0-rc.9", default-features = false, features = ["copy-dylibs", "download-binaries", "tls-rustls"], optional = true }
+tokenizers = { version = "0.21.0", default-features = false, features = ["onig"], optional = true }
+zstd = { version = "0.13.2", optional = true }
+ndarray = { version = "0.17.2", optional = true }
+```
+
+#### 3. Layer 2 Implementation (`paperpilot-nlp/src/layer2.rs`)
+```rust
+use crate::intent::Intent;
+use crate::traits::NlpError;
+
+#[cfg(feature = "onnx")]
+use std::sync::Mutex;
+
+#[cfg(feature = "onnx")]
+pub struct OnnxClassifier {
+    session: Mutex<ort::session::Session>,
+    tokenizer: tokenizers::Tokenizer,
+    labels: Vec<String>,
+}
+
+#[cfg(not(feature = "onnx"))]
+pub struct OnnxClassifier {}
+
+impl OnnxClassifier {
+    #[cfg(feature = "onnx")]
+    pub fn new() -> Result<Self, NlpError> {
+        let compressed_model = include_bytes!("../../tools/train-nlp/output/tinybert_int8.onnx.zst");
+        let mut decoder = zstd::stream::read::Decoder::new(&compressed_model[..])
+            .map_err(|e| NlpError::InternalError(format!("Failed to decompress ONNX model: {}", e)))?;
+        let mut model_bytes = Vec::new();
+        std::io::Read::read_to_end(&mut decoder, &mut model_bytes)
+            .map_err(|e| NlpError::InternalError(format!("Failed to read decompressed ONNX: {}", e)))?;
+
+        let tokenizer_bytes = include_bytes!("../../tools/train-nlp/output/tokenizer.json");
+        let tokenizer = tokenizers::Tokenizer::from_bytes(tokenizer_bytes)
+            .map_err(|e| NlpError::InternalError(format!("Failed to load tokenizer: {}", e)))?;
+
+        let config_bytes = include_bytes!("../../tools/train-nlp/output/config.json");
+        let config: serde_json::Value = serde_json::from_slice(config_bytes)
+            .map_err(|e| NlpError::InternalError(format!("Failed to parse config: {}", e)))?;
+
+        let id2label = config.get("id2label")
+            .and_then(|v| v.as_object())
+            .ok_or_else(|| NlpError::InternalError("config.json missing id2label".to_string()))?;
+
+        let mut labels = vec![String::new(); id2label.len()];
+        for (id_str, label_val) in id2label {
+            let id: usize = id_str.parse().map_err(|_| NlpError::InternalError("Invalid ID in id2label".to_string()))?;
+            let label = label_val.as_str().ok_or_else(|| NlpError::InternalError("Invalid label string".to_string()))?;
+            if id < labels.len() {
+                labels[id] = label.to_string();
+            }
+        }
+
+        let session = ort::session::Session::builder()
+            .map_err(|e| NlpError::InternalError(e.to_string()))?
+            .commit_from_memory(&model_bytes)
+            .map_err(|e| NlpError::InternalError(e.to_string()))?;
+
+        Ok(Self {
+            session: Mutex::new(session),
+            tokenizer,
+            labels,
+        })
+    }
+
+    #[cfg(not(feature = "onnx"))]
+    pub fn new() -> Result<Self, NlpError> {
+        Ok(Self {})
+    }
+
+    #[cfg(feature = "onnx")]
+    pub fn predict(&self, query: &str) -> Option<Intent> {
+        // Tokenize and run session inference
+        // Return detected Intent if confidence passes threshold
+    }
+
+    #[cfg(not(feature = "onnx"))]
+    pub fn predict(&self, _query: &str) -> Option<Intent> {
+        None
+    }
+}
+```
+
+#### 4. Fallback in `OfflineNlpResolver` (`paperpilot-nlp/src/resolver.rs`)
+```rust
+// 1. Try Layer 1
+if let Some(intent) = self.engine.predict(query) {
+    return self.build_plan(intent, query);
+}
+
+// 2. Fallback to Layer 2 ONNX if enabled
+#[cfg(feature = "onnx")]
+if let Ok(classifier) = crate::layer2::OnnxClassifier::new() {
+    if let Some(intent) = classifier.predict(query) {
+        return self.build_plan(intent, query);
+    }
+}
+```
+
+---
+
+## Verification Commands
+```bash
+cargo check -p paperpilot-nlp
+cargo test -p paperpilot-nlp
+```
+
+## Commit Message
+```
+feat(nlp): embed TinyBERT INT8 ONNX intent classifier as Layer 2 with committed assets
+```
