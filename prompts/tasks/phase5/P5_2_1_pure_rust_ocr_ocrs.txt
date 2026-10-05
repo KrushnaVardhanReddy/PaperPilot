@@ -1,0 +1,65 @@
+# Task: Phase 5.2.1 — Pure-Rust OCR Engine Migration (ocrs via rten)
+# Base Branch: main
+# Spec: specs/017-pure-rust-ocr-ocrs/spec.md
+
+## Objective
+Migrate `pdf_ocr` in `paperpilot-pdf/src/operations/ocr.rs` to use Robert Knight's **`ocrs`** (pure-Rust OCR engine powered by **`rten`**).
+This completely eliminates external host C/C++ dependencies (`tesseract-ocr`, Leptonica) and makes OCR fully self-contained on CPU and portable to WebAssembly.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+paperpilot-pdf/Cargo.toml
+paperpilot-pdf/src/operations/ocr.rs
+reports/OCR_PURE_RUST_REPORT.md
+wiki/09-Pure-Rust-OCR.md
+```
+DO NOT modify any other operation files, `apps/desktop`, `apps/web`, or `apps/edge`.
+
+---
+
+## 1. Dependency Configuration (`paperpilot-pdf/Cargo.toml`)
+
+Add `ocrs` and `rten` to `paperpilot-pdf/Cargo.toml`:
+```toml
+ocrs = "0.10"
+rten = "0.14"
+rten-imageproc = "0.14"
+```
+*(Check and use latest compatible versions that compile cleanly with your Rust toolchain)*.
+
+---
+
+## 2. Implementation Details: `paperpilot-pdf/src/operations/ocr.rs`
+
+### Architecture & Engine Wiring
+1. Implement `OcrOperationImpl` adhering to `PdfOperation` trait:
+   ```rust
+   pub struct OcrOperationImpl {
+       pub output_path: Option<PathBuf>,
+       pub language: Option<String>,
+   }
+   ```
+2. When executing on a document:
+   - Extract embedded image streams or page graphics using `lopdf`.
+   - Convert image bytes to dynamic images using the `image` crate (already in `paperpilot-pdf/Cargo.toml`).
+   - Run `ocrs::OcrEngine` (text detection with DBNet, text recognition with CTC/Transformer decoder).
+   - Collect recognized words, bounding boxes, and lines.
+   - Inject text layer onto the PDF document and save to `output_path` if specified.
+3. Fallback Mechanism:
+   - If model weights are not loaded, gracefully fall back to extracting and preserving text content so that `OcrOperation` never panics.
+
+---
+
+## 3. Mandatory Quality Gate & Verification Commands
+
+Before opening the PR, run:
+```bash
+cargo test -p paperpilot-pdf
+python3 scripts/test_tri_interface_e2e.py
+```
+- `python3 scripts/test_tri_interface_e2e.py` MUST maintain **44 / 44 PASS (100%)** across CLI, MCP, and REST API.
+- Generate `reports/OCR_PURE_RUST_REPORT.md` documenting performance metrics, memory usage, and verification.
+- Document the architecture in `wiki/09-Pure-Rust-OCR.md`.

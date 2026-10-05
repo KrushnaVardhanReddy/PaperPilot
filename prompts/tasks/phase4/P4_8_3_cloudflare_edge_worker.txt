@@ -1,0 +1,143 @@
+# Task: Phase 4.8.3 — Cloudflare Workers Edge Microservice (apps/edge)
+# Base Branch: main
+# Spec: specs/018-cloudflare-edge-microservice/spec.md
+
+## Objective
+Create a standalone Cloudflare Workers edge microservice in `apps/edge/` powered by `paperpilot-wasm`.
+The worker runs 100% in V8 Isolate memory (zero disk, sub-10ms response times) exposing the 12 core PDF operations as clean HTTP REST endpoints.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/edge/package.json
+apps/edge/wrangler.jsonc
+apps/edge/tsconfig.json
+apps/edge/src/index.ts
+apps/edge/tests/edge.spec.ts
+reports/EDGE_MICROSERVICE_REPORT.md
+wiki/10-Cloudflare-Edge-Service.md
+```
+DO NOT touch any Rust files in `paperpilot-pdf/`, `paperpilot-nlp/`, or any files in `apps/desktop/` or `apps/web/`.
+
+---
+
+## 1. Project Scaffold: `apps/edge/`
+
+### A. `apps/edge/package.json`
+```json
+{
+  "name": "edge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3",
+    "wrangler": "^3.84.0"
+  }
+}
+```
+
+### B. `apps/edge/wrangler.jsonc`
+```json
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "paperpilot-edge",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-10-01",
+  "compatibility_flags": ["nodejs_compat"]
+}
+```
+
+---
+
+## 2. Implementation Details: `apps/edge/src/index.ts`
+
+Initialize `paperpilot-wasm` and route incoming REST requests:
+```typescript
+import init, { WasmPdfEngine } from 'paperpilot-wasm';
+
+let wasmReady: Promise<any> | null = null;
+async function ensureWasm() {
+  if (!wasmReady) {
+    wasmReady = init();
+  }
+  await wasmReady;
+}
+
+export default {
+  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (request.method === 'GET' && url.pathname === '/health') {
+      return Response.json({ status: 'ok', engine: 'paperpilot-wasm', version: '0.1.0' });
+    }
+
+    await ensureWasm();
+
+    if (request.method === 'POST') {
+      try {
+        if (url.pathname === '/api/v1/rotate') {
+          const body = await request.arrayBuffer();
+          const angle = parseInt(url.searchParams.get('angle') || '90');
+          const pages = url.searchParams.get('pages') || 'all';
+          const result = WasmPdfEngine.rotate(new Uint8Array(body), angle, pages);
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
+        if (url.pathname === '/api/v1/compress') {
+          const body = await request.arrayBuffer();
+          const result = WasmPdfEngine.compress(new Uint8Array(body));
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
+        if (url.pathname === '/api/v1/watermark') {
+          const body = await request.arrayBuffer();
+          const text = url.searchParams.get('text') || 'CONFIDENTIAL';
+          const result = WasmPdfEngine.watermark(new Uint8Array(body), text);
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
+        if (url.pathname === '/api/v1/merge') {
+          const formData = await request.formData();
+          const files: Uint8Array[] = [];
+          for (const entry of formData.values()) {
+            if (entry instanceof File) {
+              files.push(new Uint8Array(await entry.arrayBuffer()));
+            }
+          }
+          if (files.length < 2) {
+            return new Response('At least 2 files required', { status: 400 });
+          }
+          const result = WasmPdfEngine.merge(files);
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
+        // Support remaining tools: split, encrypt, delete_pages, extract_pages, reorder_pages, crop, flatten, set_metadata
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message || String(err) }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    return new Response('Not Found', { status: 404 });
+  }
+};
+```
+
+---
+
+## 3. Verification & Deliverables
+1. Add tests in `apps/edge/tests/edge.spec.ts` testing `/health`, `/api/v1/rotate`, `/api/v1/compress`, etc.
+2. Run tests to confirm all edge endpoints respond with valid `%PDF-` payloads.
+3. Write `reports/EDGE_MICROSERVICE_REPORT.md` documenting cold-start, latency, and memory footprint.
+4. Write `wiki/10-Cloudflare-Edge-Service.md` with deployment instructions.
