@@ -12,6 +12,7 @@ Implement Task 4.3.13: Create a responsive, searchable Command Help & Cheat Shee
 ```
 apps/desktop/src/lib/components/ChatCheatSheet.svelte
 apps/desktop/src/lib/components/PdfChatPanel.svelte
+apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte
 reports/UI_CHAT_CHEATSHEET_REPORT.md
 ```
 DO NOT touch Rust crates, core PDF operations, or unrelated viewer components.
@@ -74,10 +75,19 @@ DO NOT touch Rust crates, core PDF operations, or unrelated viewer components.
 - When an example is picked via `onSelectPrompt`, set `query = promptText` and focus the input.
 - Support pressing `Escape` to close the cheat sheet.
 
-### 3. Verification Report
+### 3. Right Panel Width & Resizability Enhancements (`apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte`)
+- **Max Width Increase**: Expand the resize clamping range in `onMouseMove` from `max(..., 600)` up to `800px` (min 240px, max 800px) so users can widen the chat panel comfortably on desktop monitors.
+- **Auto-Comfort Width on Chat Tab**: When switching to the `'chat'` tab, if the current `panelWidth < 420px`, automatically bump it to `420px` (or preserve user width if already >= 420px) to provide ample room for multi-turn chat bubbles and cheat sheet items.
+- **Splitter Drag Handle Visual UX**:
+  - Enhance `.resize-handle` with a clear hover affordance (`cursor: col-resize`, subtle hover color `var(--accent-primary)`, transition, and width of 4-6px for easy grabbing).
+  - Preserve double-click to toggle width (`300px` <-> `500px`).
+  - Maintain `localStorage` persistence under `'viewer-right-panel-width'`.
+
+### 4. Verification Report
 Generate `reports/UI_CHAT_CHEATSHEET_REPORT.md` confirming:
-- Component implementation and styling.
+- Component implementation and styling for `ChatCheatSheet.svelte`.
 - All 44 operation categories represented in the cheat sheet database.
+- Enhanced resizability and width range (240px - 800px) in `ViewerRightPanel.svelte`.
 - Unit and UI test verification.
 
 ---

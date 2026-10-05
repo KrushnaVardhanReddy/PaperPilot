@@ -53,11 +53,15 @@ To ensure the AI chat and NLP subsystem functions reliably from prompt to PDF ou
   4. Clicking `[Execute Action]` invokes the actual `invoke_mcp_tool` engine which executes the underlying PDF operation (`paperpilot-pdf`).
   5. Verifies output file generation on disk and validates output integrity (e.g., page count / rotation state).
 
-### 7. Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`)
+### 7. Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`) & Adjustable Right Panel
 To resolve the "blank canvas" discoverability challenge for users, the chat interface includes a searchable command palette:
 * **Entry Point**: A `💡 Examples` button in `PdfChatPanel.svelte` (and hotkey `Ctrl+/` / `?`).
 * **Search & Filter**: Real-time search filter categorizing supported natural language queries across all 44 tools (`Pages & Structure`, `Optimize & Repair`, `Security & Privacy`, `Conversions & Extraction`, `Edit & Markup`, `Multi-Document Merge/Compare`).
 * **One-Click Insert**: Clicking any example prompt automatically populates the chat prompt input, allowing users to modify arguments (e.g. page numbers or passwords) and submit immediately.
+* **Adjustable Right Panel Resizability**:
+  - The right panel splitter (`ViewerRightPanel.svelte`) supports dynamic dragging up to **`800px`** (clamped between 240px and 800px).
+  - Switching to the AI Chat tab automatically ensures a comfortable reading width (bumps to at least `420px` if currently narrow).
+  - Visual hover cues on the splitter handle (`col-resize`) and double-click toggle (`300px` / `500px`) ensure effortless resizing on desktop viewports.
 
 ## Consequences
 * Total application size remains ~50MB, well under the 100MB constraint.
