@@ -2,10 +2,13 @@
     import { invoke } from '@tauri-apps/api/core';
     import { toastState } from '$lib/state/toast.svelte';
     import { appState } from '$lib/state/app.svelte';
+    import ChatCheatSheet from '$lib/components/ChatCheatSheet.svelte';
 
     let query = $state('');
     let messages = $state<{role: 'user' | 'assistant', content: string, plan?: any}[]>([]);
     let isThinking = $state(false);
+    let isCheatSheetOpen = $state(false);
+    let chatInputRef = $state<HTMLInputElement | null>(null);
 
     const suggestions = [
         "Compress this PDF",
@@ -79,6 +82,13 @@
             toastState.error(`Failed to execute: ${error}`);
         }
     }
+
+    function handleSelectPrompt(prompt: string) {
+        query = prompt;
+        if (chatInputRef) {
+            setTimeout(() => chatInputRef?.focus(), 0);
+        }
+    }
 </script>
 
 <div class="chat-panel">
@@ -129,16 +139,36 @@
         {/if}
     </div>
 
-    <div class="input-area">
-        <input
-            type="text"
-            bind:value={query}
-            placeholder="Type a command..."
-            onkeydown={(e) => e.key === 'Enter' && handleSend()}
-        />
-        <button onclick={() => handleSend()}>Send</button>
+    <div class="chat-footer">
+        <div class="footer-actions">
+            <button class="examples-btn" onclick={() => isCheatSheetOpen = true} title="View examples (press ?)">
+                💡 Examples
+            </button>
+        </div>
+        <div class="input-area">
+            <input
+                type="text"
+                bind:this={chatInputRef}
+                bind:value={query}
+                placeholder="Type a command (press ? for examples)..."
+                onkeydown={(e) => {
+                    if (e.key === 'Enter') handleSend();
+                    if (e.key === '?' && query === '') {
+                        e.preventDefault();
+                        isCheatSheetOpen = true;
+                    }
+                }}
+            />
+            <button onclick={() => handleSend()}>Send</button>
+        </div>
     </div>
 </div>
+
+<ChatCheatSheet
+    bind:isOpen={isCheatSheetOpen}
+    onSelectPrompt={handleSelectPrompt}
+    onClose={() => isCheatSheetOpen = false}
+/>
 
 <style>
     .chat-panel {
@@ -261,11 +291,42 @@
         opacity: 0.9;
     }
 
-    .input-area {
+    .chat-footer {
         display: flex;
-        padding: 1rem;
+        flex-direction: column;
         border-top: 1px solid var(--border-color);
         background: var(--bg-secondary);
+    }
+
+    .footer-actions {
+        padding: 0.5rem 1rem 0;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .examples-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .examples-btn:hover {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border-color: var(--accent-primary);
+    }
+
+    .input-area {
+        display: flex;
+        padding: 0.75rem 1rem 1rem;
     }
 
     .input-area input {
