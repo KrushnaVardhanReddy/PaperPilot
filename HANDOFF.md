@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #134 (4.3.11)**: Universal Multi-Document Omnibar (`GlobalCommandBar.svelte`) docked at bottom of Documents view (`Ctrl+K` / `Cmd+K`) with `@filename` autocomplete popover, suggestion chips, offline NLP plan resolution, and inline blueprint preview (`reports/UI_GLOBAL_COMMAND_BAR_REPORT.md`).
 - **PR #133 (4.3.12)**: Master E2E AI Chat Pipeline Test Suite (`e2e_ai_chat_real_pipeline.spec.ts`) across all 44 PDF operations with 100% pass rate (`reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md` 44/44 PASS, `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`).
 - **PR #131 (4.F.19)**: Interactive Thumbnail Page Organizer (`PdfThumbnails.svelte` & `+page.svelte`) with `⋮⋮` drag grip handles, visual top/bottom blue drop insertion lines, hover actions, and custom right-click context menu (Rotate 90°/180°/270°, Duplicate Page, Extract Page, Delete Page) with live canvas reload (`reports/UI_THUMBNAIL_ORGANIZER_REPORT.md`).
 - **PR #130 (4.3.14)**: Editable Action Blueprint Cards (`EditableActionCard.svelte`) with target pages selector (`all`, `current`, custom `1, 4`), contextual hints, format badges, and complete 44-tool MCP execution mapping (`reports/UI_EDITABLE_CHAT_ACTION_CARDS_REPORT.md`).
@@ -74,7 +75,6 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
 | **4.8.1** | `Cargo.toml`, `paperpilot-wasm/*`, `apps/desktop/src/lib/wasm/*`, `reports/WASM_CLIENT_ENGINE_REPORT.md` | [Session 14466591561004330997](https://jules.google.com/session/14466591561004330997) | `main` | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge |
-| **4.3.11** | `apps/desktop/src/lib/components/GlobalCommandBar.svelte`, `apps/desktop/src/routes/+page.svelte`, `reports/UI_GLOBAL_COMMAND_BAR_REPORT.md` | [Session 4067768037229900419](https://jules.google.com/session/4067768037229900419) | `main` | Multi-Document Omnibar (`GlobalCommandBar.svelte`), `@filename` autocomplete popover, and offline NLP resolution |
 
 ---
 
