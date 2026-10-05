@@ -43,9 +43,20 @@ In addition to the side-drawer chat in `PdfViewer`, a global command bar is embe
 * **Batch Operations**: Supports commands like `"Compress all documents by 50%"` or `"Convert all to PDF/A"`.
 * **Execution Plan Cards**: Emits the structured `OperationPlan` preview card with interactive `[Execute Action]` triggers before dispatching to `invoke_mcp_tool`.
 
+### 6. Unmocked E2E Natural Language & Execution Verification
+To ensure the AI chat and NLP subsystem functions reliably from prompt to PDF output on disk without synthetic test artifacts:
+* An unmocked E2E test suite (`tests/e2e_ai_chat_real_pipeline.spec.ts`) runs directly against real test fixtures (e.g. `tests/fixtures/sample.pdf`).
+* **Verifications**:
+  1. User enters natural language command (`"rotate 90 degrees"`, `"split pages 1 to 2"`).
+  2. IPC bridge resolves via the real `OfflineNlpResolver` (combining RuleEngine Layer 1 and TinyBERT ONNX Layer 2).
+  3. Action card renders with accurate parameters and confirmation button.
+  4. Clicking `[Execute Action]` invokes the actual `invoke_mcp_tool` engine which executes the underlying PDF operation (`paperpilot-pdf`).
+  5. Verifies output file generation on disk and validates output integrity (e.g., page count / rotation state).
+
 ## Consequences
 * Total application size remains ~50MB, well under the 100MB constraint.
 * Zero external Python, server, or cloud dependencies for AI operation.
 * Instant sub-2ms response times on any desktop hardware.
 * Flawless user experience in single-document viewer mode (no redundant typing of file names).
 * Frictionless multi-document batch and merge workflows from the central Documents hub.
+* Real end-to-end pipeline confidence with zero mocking.

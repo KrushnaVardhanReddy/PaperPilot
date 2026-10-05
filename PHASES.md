@@ -755,6 +755,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.9 | Actionable RAG Workspace & Bi-Directional Citation Canvas | Bridges document chat with canvas viewer: clicking citations jumps directly to page/bounding-box with visual highlight pulse. Allows chat prompts to directly propose and trigger execution plans on active document (beating Adobe Acrobat AI Assistant with 100% offline privacy and zero subscription) |
 | 4.3.10 | Context-Aware NLP Resolution Bridge | 🚧 In-Progress (Session `3666416429459168501`) — Enhances `resolve_natural_language` IPC and `paperpilot-nlp` with `ResolverContext`: automatically binds active viewer document path to operations (fixing "split pages 1 to 2 requires file path" error) |
 | 4.3.11 | Multi-Document Omnibar (`GlobalCommandBar.svelte`) | ⏳ Pending / Planned — Global command bar docked at bottom of Documents view with `@filename` autocomplete dropdown popover, multi-doc batch execution, and interactive action preview cards |
+| 4.3.12 | Real-Pipeline Unmocked E2E AI Chat Test Suite | ⏳ Pending / Planned — Playwright E2E suite (`tests/e2e_ai_chat_real_pipeline.spec.ts`) executing un-mocked Tauri IPC calls (`resolve_natural_language` + `invoke_mcp_tool`) with real PDF fixtures to verify true end-to-end execution on disk |
 
 ---
 
