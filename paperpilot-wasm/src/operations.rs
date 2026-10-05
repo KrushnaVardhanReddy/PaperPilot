@@ -246,7 +246,37 @@ pub fn compress(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
 }
 
 pub fn encrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
-    Err(PdfError::UnsupportedOperation("encrypt not implemented for wasm".into()))
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    if doc.trailer.get(b"ID").is_err() {
+        let id_str = lopdf::Object::String(
+            b"default_id_placeholder".to_vec(),
+            lopdf::StringFormat::Literal,
+        );
+        doc.trailer
+            .set("ID", lopdf::Object::Array(vec![id_str.clone(), id_str]));
+    }
+
+    let version = lopdf::EncryptionVersion::V2 {
+        document: &doc,
+        owner_password: password,
+        user_password: password,
+        key_length: 128,
+        permissions: lopdf::Permissions::all(),
+    };
+
+    let state = lopdf::EncryptionState::try_from(version)
+        .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
+
+    doc.encrypt(&state)
+        .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
 }
 
 pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {

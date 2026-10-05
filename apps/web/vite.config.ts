@@ -13,4 +13,9 @@ export default defineConfig({
     (wasm as any)(),
     (topLevelAwait as any)()
   ],
+  server: {
+    fs: {
+      allow: ['..', '../../paperpilot-wasm/pkg']
+    }
+  }
 })
