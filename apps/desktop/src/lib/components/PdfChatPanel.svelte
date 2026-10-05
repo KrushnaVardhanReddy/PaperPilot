@@ -3,6 +3,7 @@
     import { toastState } from '$lib/state/toast.svelte';
     import { appState } from '$lib/state/app.svelte';
     import ChatCheatSheet from '$lib/components/ChatCheatSheet.svelte';
+    import EditableActionCard from './EditableActionCard.svelte';
 
     let query = $state('');
     let messages = $state<{role: 'user' | 'assistant', content: string, plan?: any}[]>([]);
@@ -45,32 +46,73 @@
         }
     }
 
-    async function executePlan(plan: any) {
+        async function executePlan(args: Record<string, any>) {
         try {
-            const args: Record<string, any> = {};
-
-            // Map plan inputs to MCP args based on intent
-            if (plan.input_files && plan.input_files.length > 0) {
-                // If there's an active document, prioritize it unless plan specifies otherwise
-                // For now, let's use the first input file or active document
-                args.input = plan.input_files[0];
-            }
-
-            if (plan.output_file) args.output = plan.output_file;
-            if (plan.angles && plan.angles.length > 0) args.angle = plan.angles[0];
-
             let toolName = "";
-            switch (plan.intent) {
+            let intent = args.intent;
+            delete args.intent; // Remove from MCP args
+
+            switch (intent) {
                 case "Rotate": toolName = "pdf_rotate"; break;
-                case "Merge": toolName = "pdf_merge"; args.inputs = plan.input_files; delete args.input; break;
+                case "Merge": toolName = "pdf_merge"; break;
                 case "Split": toolName = "pdf_split"; break;
-                // Add more mappings
+                case "Compress": toolName = "pdf_compress"; break;
+                case "Delete": toolName = "pdf_delete_pages"; break;
+                case "Reorder": toolName = "pdf_reorder_pages"; break;
+                case "Burst": toolName = "pdf_burst"; break;
+                case "Crop": toolName = "pdf_crop"; break;
+                case "Extract": toolName = "pdf_extract_pages"; break;
+                // Add Stirling parity
+                case "RemoveBlank": toolName = "pdf_remove_blank"; break;
+                case "PageNumbers": toolName = "pdf_page_numbers"; break;
+
+                // Edit & Markup
+                case "Watermark": toolName = "pdf_watermark"; break;
+                case "Bates": toolName = "pdf_bates"; break;
+                case "HeaderFooter": toolName = "pdf_header_footer"; break;
+                case "Flatten": toolName = "pdf_flatten"; break;
+                case "Annotate": toolName = "pdf_annotate"; break;
+
+                // Security
+                case "Encrypt": toolName = "pdf_encrypt"; break;
+                case "Decrypt": toolName = "pdf_decrypt"; break;
+                case "Redact": toolName = "pdf_redact"; break;
+                case "Sign": toolName = "pdf_sign"; break;
+                case "Metadata": toolName = "pdf_metadata"; break;
+                case "Validate": toolName = "pdf_validate"; break;
+                case "Hash": toolName = "pdf_hash"; break;
+
+                // Conversions
+                case "ToDocx": toolName = "pdf_to_docx"; break;
+                case "ToXlsx": toolName = "pdf_to_xlsx"; break;
+                case "ToPptx": toolName = "pdf_to_pptx"; break;
+                case "PdfA": toolName = "pdf_to_pdf_a"; break;
+                case "ExtractText": toolName = "pdf_extract_text"; break;
+                case "ExtractImages": toolName = "pdf_extract_images"; break;
+                case "ToMarkdown": toolName = "pdf_convert_markdown"; break;
+                case "ToHtml": toolName = "pdf_convert_html"; break;
+                case "ImagesToPdf": toolName = "pdf_images_to_pdf"; break;
+                case "Render": toolName = "pdf_render"; break;
+
+                // Forms
+                case "FormRead": toolName = "pdf_read_form"; break;
+                case "FormFill": toolName = "pdf_fill_form"; break;
+                case "FormCreate": toolName = "pdf_create_form_field"; break;
+
+                // Extra
+                case "Bookmarks": toolName = "pdf_bookmarks"; break;
+                case "Search": toolName = "pdf_search"; break;
+                case "Ocr": toolName = "pdf_ocr"; break;
+                case "Compare": toolName = "pdf_compare"; break; // Needs custom handling if diff view
+                case "Linearize": toolName = "pdf_linearize"; break;
+                case "Classify": toolName = "pdf_classify_type"; break;
+
                 default:
-                    toastState.error(`Unsupported intent via UI: ${plan.intent}`);
+                    toastState.error(`Unsupported intent via UI: ${intent}`);
                     return;
             }
 
-            toastState.info(`Executing ${plan.intent}...`);
+            toastState.info(`Executing ${intent}...`);
             const result = await invoke('invoke_mcp_tool', {
                 toolName,
                 arguments: args
@@ -112,23 +154,7 @@
                     {msg.content}
                 </div>
                 {#if msg.plan}
-                    <div class="plan-card">
-                        <h4>{msg.plan.intent} Operation</h4>
-                        <div class="plan-details">
-                            {#if msg.plan.input_files?.length > 0}
-                                <div><strong>Inputs:</strong> {msg.plan.input_files.join(', ')}</div>
-                            {/if}
-                            {#if msg.plan.output_file}
-                                <div><strong>Output:</strong> {msg.plan.output_file}</div>
-                            {/if}
-                            {#if msg.plan.angles?.length > 0}
-                                <div><strong>Angle:</strong> {msg.plan.angles.join(', ')}</div>
-                            {/if}
-                        </div>
-                        <button class="execute-btn" onclick={() => executePlan(msg.plan)}>
-                            ⚡ Execute Action
-                        </button>
-                    </div>
+                    <EditableActionCard plan={msg.plan} onExecute={executePlan} />
                 {/if}
             </div>
         {/each}
