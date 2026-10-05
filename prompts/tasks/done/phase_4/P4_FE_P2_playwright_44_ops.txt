@@ -1,0 +1,65 @@
+# Task: Phase 4.FE_P2 — Playwright E2E Test Suite for 44 Desktop Operations
+
+## Objective
+Create a comprehensive, data-driven Playwright E2E test suite in `apps/desktop/tests/e2e_44_operations_parity.spec.ts` that systematically tests the desktop UI across all 44 PDF operations.
+
+**Branch**: `feat/fe-playwright-44-operations`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch this test file and its report)
+```
+apps/desktop/tests/e2e_44_operations_parity.spec.ts
+reports/UI_44_OPERATIONS_E2E_SCORECARD.md
+```
+DO NOT modify any production Svelte components, Rust crates, or other tests.
+
+## Mandatory Reference for UI Parameters & Fixes
+Jules: You MUST inspect `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`) as the single source of truth for all 44 tool names and exact payload arguments to mock and verify, fixing any UI test issues accordingly!
+
+---
+
+## Required Test Coverage in `apps/desktop/tests/e2e_44_operations_parity.spec.ts`
+
+### 1. Mock IPC Setup
+In `test.beforeEach`, mock Tauri internals:
+```typescript
+await page.addInitScript(() => {
+  (window as any).__TAURI_INTERNALS__ = {
+    invoke: async (cmd: string, args: any) => {
+      if (cmd === 'invoke_mcp_tool') {
+        return { success: true, message: 'Mock success', output_path: 'mock_out.pdf' };
+      }
+      return { success: true };
+    }
+  };
+});
+```
+
+### 2. Data-Driven 44 Operations Test
+Iterate through all 44 tools:
+1. Search tool by name/tag in `.operations-panel` search bar.
+2. Verify tool card appears and click it.
+3. Verify parameter view opens.
+4. Click "Run Operation" (or equivalent action trigger).
+5. Verify success toast or output message appears.
+6. Click "Back" to return to directory.
+
+### 3. Generate Scorecard Report
+Generate `reports/UI_44_OPERATIONS_E2E_SCORECARD.md` with:
+- Scorecard: Total Tested, Passed, Failed
+- Table of all 44 operations with UI search latency and execution status
+
+---
+
+## Verification
+```bash
+cd apps/desktop
+pnpm exec playwright test tests/e2e_44_operations_parity.spec.ts
+```
+
+## Commit Message
+```
+test(desktop): add data-driven playwright e2e suite covering all 44 operations
+```

@@ -1,0 +1,58 @@
+# Task: Phase 4.FE_P3 — Visual Canvas, Notes, Annotations & Diff Slider E2E Test Suite
+
+## Objective
+Create comprehensive Playwright tests in `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` testing the visual interactive canvas features: Sticky Notes, Annotations, Pointer/Drawing, Zoom Toolbar, Thumbnails, and the Visual Pixel Diff Slider.
+
+**Branch**: `feat/fe-canvas-annotations-diff-suite`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch this test file and its report)
+```
+apps/desktop/tests/e2e_canvas_viewer_features.spec.ts
+reports/UI_CANVAS_ANNOTATIONS_DIFF_REPORT.md
+```
+DO NOT modify any production Svelte components, Rust crates, or other test files.
+
+---
+
+## Required Test Coverage in `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts`
+
+### 1. Sticky Notes & Annotations
+- Create a text note / sticky note on canvas.
+- Edit sticky note content.
+- Reposition / drag note on canvas.
+- Delete sticky note and verify removal from DOM.
+
+### 2. Pointer, Highlighting & Markup Tools
+- Select highlight / pen tool from `PdfToolbar.svelte`.
+- Trigger draw stroke on canvas.
+- Verify stroke or markup is recorded in active annotations array.
+
+### 3. Visual Pixel Diff Slider (`PdfVisualDiff.svelte`)
+- Open comparison view between two documents.
+- Verify side-by-side view and overlay split slider exist.
+- Interact with slider position (drag between 0% and 100%) and assert visual split style updates.
+
+### 4. Zoom Toolbar & Thumbnail Navigation
+- Test Zoom In (+), Zoom Out (-), Fit to Width, and Reset buttons.
+- Click a page in `PdfThumbnails.svelte` and verify main canvas scrolls/switches to that page.
+
+### 5. Output Report
+Generate a summary report at:
+`reports/UI_CANVAS_ANNOTATIONS_DIFF_REPORT.md`
+Detailing test results across notes, markup, diff slider, and zoom controls.
+
+---
+
+## Verification
+```bash
+cd apps/desktop
+pnpm exec playwright test tests/e2e_canvas_viewer_features.spec.ts
+```
+
+## Commit Message
+```
+test(desktop): add visual canvas annotations, sticky notes, and diff slider e2e tests
+```

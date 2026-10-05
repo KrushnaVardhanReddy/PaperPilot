@@ -1,0 +1,65 @@
+# Task: Phase 4.FE_P1 — OperationsPanel 44 Tools Complete Registration & Invocation Mapping
+
+## Objective
+Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` so that it registers all 44 PDF operations in `allTools` with appropriate icons, categories, tags, parameter input forms, and proper `invoke_mcp_tool` mapping.
+
+**Branch**: `feat/fe-operations-panel-44-tools`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch this component and its dedicated report)
+```
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte
+reports/UI_44_TOOLS_PANEL_REPORT.md
+```
+DO NOT modify any test files, Rust crates, or other components.
+
+## Mandatory Reference for UI Parameters & Fixes
+Jules: You MUST inspect `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`) as the single source of truth for exact tool names, parameter keys, argument formats, and fix any UI issues accordingly! Do not guess argument names.
+
+---
+
+## Required Changes in `OperationsPanel.svelte`
+
+### 1. Register Missing Tools in `allTools`
+Ensure all 44 operations matching `paperpilot-mcp` exist with distinct IDs:
+- **Organize & Pages**: `merge`, `split`, `rotate`, `extract_pages`, `delete_pages`, `reorder_pages`, `burst`, `crop`, `remove_blank`, `page_numbers`
+- **Security & Integrity**: `encrypt`, `decrypt`, `redact`, `sign`, `validate`, `hash`, `repair`
+- **Content & OCR**: `extract_text`, `extract_images`, `images_to_pdf`, `render`, `ocr`, `search`, `bates`, `watermark`, `header_footer`
+- **Forms & Optimization**: `read_form`, `fill_form`, `create_form_field`, `metadata`, `bookmarks`, `compress`, `linearize`, `flatten`
+- **Conversions & Intelligence**: `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`, `classify_type`, `compare`, `annotate`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`
+
+### 2. Parameter Cards & Forms
+Add interactive parameter controls when a tool is selected:
+- `bates`: Prefix, start number, padding
+- `reorder_pages`: Order permutation text input (e.g., `2,1,3,4,5`)
+- `crop`: x, y, width, height inputs
+- `sign`: Certificate path selector / file picker input
+- `header_footer`: Header text, footer text inputs
+- `pdf_to_pptx` / `pdf_to_pdf_a`: Export destination buttons
+
+### 3. IPC Mapping in `handleRunOperation()`
+Ensure `toolName` maps accurately:
+- Form tools: `pdf_create_form_field`, `pdf_fill_form`, `pdf_read_form`
+- Conversions: `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel`
+- All other tools map to `pdf_<activeTool.id>` or existing mappings.
+
+### 4. Output Report
+Generate a summary report at:
+`reports/UI_44_TOOLS_PANEL_REPORT.md`
+Listing all 44 tools registered in the panel UI with their categories and invocation mappings.
+
+---
+
+## Verification
+```bash
+cd apps/desktop
+pnpm check
+pnpm build
+```
+
+## Commit Message
+```
+feat(desktop): register all 44 pdf operations with parameter cards and invocation mappings
+```
