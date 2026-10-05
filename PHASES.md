@@ -696,7 +696,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R3.FIX.4A | CLI Polish: Inline JSON Annotate, Burst Dir Creation & Sign Alias | ✅ Completed (PR #119) — `paperpilot-cli` |
 | R3.FIX.4B | Gateway REST API: Format-to-Tool JSON Mapping for `/convert` | ✅ Completed (PR #118) — `paperpilot-gateway` |
 | R3.FIX.4C | Master Tri-Interface E2E Suite: All 44 Tools, 100% Parity | ✅ Completed (PR #120) — 100% Parity (44/44 CLI, 44/44 MCP, 44/44 API) verified at `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` |
-| R3.FE.1 | OperationsPanel: Register All 44 Operations & Parameter Cards | 🚧 In-Progress (Session `15233664947548284011`) — `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` |
+| R3.FE.1 | OperationsPanel: Register All 44 Operations & Parameter Cards | ✅ Completed (PR #121) — `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` (`reports/UI_44_TOOLS_PANEL_REPORT.md`) |
 | R3.FE.2 | Playwright E2E Suite: Data-Driven 44-Operations Parity Test | 🚧 In-Progress (Session `10690891751709790998`) — `apps/desktop/tests/e2e_44_operations_parity.spec.ts` |
 | R3.FE.3 | Canvas Interactive E2E: Sticky Notes, Markup & Visual Diff Slider | 🚧 In-Progress (Session `13554866274792768778`) — `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` |
 
