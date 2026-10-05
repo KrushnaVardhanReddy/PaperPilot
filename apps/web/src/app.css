@@ -1,0 +1,201 @@
+:root {
+  /* Colors - Dark mode by default */
+  --bg-primary: #0F1115;
+  --bg-secondary: #191B22;
+  --bg-surface: #22252E;
+  --bg-surface-hover: #2D313C;
+
+  --surface-0: #0d0d0f; /* Base window background */
+  --surface-1: #141416; /* Sidebar, panels, tab bar */
+  --surface-2: #1c1c1f; /* Cards, rows, dropzones */
+  --surface-3: #242428; /* Hover states, pill buttons */
+  --surface-4: #2c2c31; /* Active/selected items */
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A7B3;
+  --text-muted: #6B7280;
+
+  --accent-primary: #5E6AD2;
+  --accent-hover: #6E79D6;
+  --accent-active: #4E59C2;
+
+  --border-color: #2D313C;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 48px;
+  --ops-panel-width: 320px;
+  --breakpoint-tablet: 900px;
+  --breakpoint-mobile: 600px;
+}
+
+:root.light {
+  /* Colors - Light mode */
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #FFFFFF;
+  --bg-surface: #F0F2F5;
+  --bg-surface-hover: #E4E7EB;
+
+  --surface-0: #fcfcfc; /* Base window background */
+  --surface-1: #f3f3f3; /* Sidebar, panels, tab bar */
+  --surface-2: #eaeaec; /* Cards, rows, dropzones */
+  --surface-3: #e1e1e4; /* Hover states, pill buttons */
+  --surface-4: #d8d8db; /* Active/selected items */
+
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+
+  --accent-primary: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-active: #3730A3;
+
+  --border-color: #E5E7EB;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.main-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface-hover);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── Tablet (600–899px): sidebar collapses to icons only ───────────────── */
+@media (max-width: 899px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width) !important;
+    overflow: hidden;
+  }
+  /* Hide text labels and jobs section at tablet */
+  .nav-label,
+  .brand-title,
+  .sidebar-jobs,
+  .sidebar-footer {
+    display: none;
+  }
+  .nav-item {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .nav-icon {
+    margin-right: 0;
+    font-size: 1.3rem;
+  }
+  /* Stack ops panel below content */
+  .page-container {
+    flex-direction: column;
+  }
+  .operations-panel {
+    width: 100% !important;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    max-height: 220px;
+    overflow-y: auto;
+  }
+}
+
+/* ─── Mobile (< 600px): hide sidebar, show bottom nav ───────────────────── */
+@media (max-width: 599px) {
+  .sidebar {
+    display: none !important;
+  }
+  .app-container {
+    flex-direction: column;
+  }
+  .main-content {
+    padding-bottom: 64px; /* space for bottom nav */
+  }
+  .operations-panel {
+    width: 100% !important;
+    max-height: 260px;
+  }
+}
