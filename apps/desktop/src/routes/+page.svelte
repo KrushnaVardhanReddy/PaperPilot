@@ -47,12 +47,16 @@
     window.addEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
     window.addEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
     window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
+    window.addEventListener('paperpilot:duplicate-page', handleDuplicatePage as unknown as EventListener);
+    window.addEventListener('paperpilot:extract-single-page', handleExtractPage as unknown as EventListener);
 
     return () => {
       if (unlistenMenuToggleDiff) unlistenMenuToggleDiff();
       window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
       window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
       window.removeEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
+      window.removeEventListener('paperpilot:duplicate-page', handleDuplicatePage as unknown as EventListener);
+      window.removeEventListener('paperpilot:extract-single-page', handleExtractPage as unknown as EventListener);
     };
   });
 
@@ -60,7 +64,7 @@
   import { toastState } from '$lib/state/toast.svelte';
 
 
-  async function handleRotatePage(e: CustomEvent<{ page: number }>) {
+  async function handleRotatePage(e: CustomEvent<{ page: number, angle?: number }>) {
     if (appState.selectedDocumentIndex === null) return;
     const file = appState.documents[appState.selectedDocumentIndex];
     if (!file) return;
@@ -68,17 +72,18 @@
     appState.setLoading(true);
     try {
       const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
+      const angle = e.detail.angle ?? 90;
       await safeInvoke('invoke_mcp_tool', {
         toolName: 'pdf_rotate',
         arguments: {
           input: path,
           pages: String(e.detail.page),
-          angle: 90,
+          angle: angle,
           output: path
         }
       });
       await refreshCurrentDocument();
-      toastState.success(`Page ${e.detail.page} rotated.`);
+      toastState.success(`Page ${e.detail.page} rotated by ${angle}°.`);
     } catch (err) {
       toastState.error(`Failed to rotate page: ${err}`);
     } finally {
@@ -111,7 +116,7 @@
     }
   }
 
-  async function handleReorderPage(e: CustomEvent<{ fromPage: number, toPage: number }>) {
+  async function handleReorderPage(e: CustomEvent<{ fromPage: number, toPage: number, position?: 'top' | 'bottom' }>) {
     if (appState.selectedDocumentIndex === null || !pdfDoc) return;
     const file = appState.documents[appState.selectedDocumentIndex];
     if (!file) return;
@@ -119,7 +124,7 @@
     appState.setLoading(true);
     try {
       const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
-      const { fromPage, toPage } = e.detail;
+      const { fromPage, toPage, position } = e.detail;
 
       const pages = Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
       const [movedPage] = pages.splice(fromPage - 1, 1);
@@ -128,6 +133,9 @@
       let targetIndex = toPage - 1;
       if (fromPage < toPage) {
           targetIndex -= 1;
+      }
+      if (position === 'bottom') {
+        targetIndex += 1;
       }
       pages.splice(targetIndex, 0, movedPage);
 
@@ -140,9 +148,82 @@
         }
       });
       await refreshCurrentDocument();
-      toastState.success(`Page moved to position ${toPage}.`);
+      toastState.success(`Page moved to position ${targetIndex + 1}.`);
     } catch (err) {
       toastState.error(`Failed to reorder pages: ${err}`);
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  async function handleDuplicatePage(e: CustomEvent<{ page: number }>) {
+    if (appState.selectedDocumentIndex === null || !pdfDoc) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+
+    appState.setLoading(true);
+    try {
+      const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
+      const { page } = e.detail;
+
+      const pages = Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
+      pages.splice(page, 0, page);
+
+      await safeInvoke('invoke_mcp_tool', {
+        toolName: 'pdf_reorder_pages',
+        arguments: {
+          input: path,
+          order: pages.join(','),
+          output: path
+        }
+      });
+      await refreshCurrentDocument();
+      toastState.success(`Page ${page} duplicated.`);
+    } catch (err) {
+      toastState.error(`Failed to duplicate page: ${err}`);
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  async function handleExtractPage(e: CustomEvent<{ page: number }>) {
+    if (appState.selectedDocumentIndex === null) return;
+    const file = appState.documents[appState.selectedDocumentIndex];
+    if (!file) return;
+
+    const path = appState.documentPaths[appState.selectedDocumentIndex ?? 0] || file.name;
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    const defaultPath = docDir ? `${docDir}/${baseName}_page_${e.detail.page}.pdf` : `${baseName}_page_${e.detail.page}.pdf`;
+
+    let outputPath: string | null = null;
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      outputPath = await save({
+        title: 'Extract Page As...',
+        defaultPath: defaultPath,
+        filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+      });
+    } catch (err) {
+      console.warn('Tauri dialog unavailable, falling back:', err);
+      outputPath = defaultPath;
+    }
+
+    if (!outputPath) return; // User cancelled
+
+    appState.setLoading(true);
+    try {
+      await safeInvoke('invoke_mcp_tool', {
+        toolName: 'pdf_extract_pages',
+        arguments: {
+          input: path,
+          pages: String(e.detail.page),
+          output: outputPath
+        }
+      });
+      toastState.success(`Page ${e.detail.page} extracted to ${outputPath}`);
+    } catch (err) {
+      toastState.error(`Failed to extract page: ${err}`);
     } finally {
       appState.setLoading(false);
     }

@@ -8,6 +8,39 @@
   let canvases: Record<number, HTMLCanvasElement> = {};
   let draggedPage = $state<number | null>(null);
   let dragOverPage = $state<number | null>(null);
+  let dragInsertPosition = $state<'top' | 'bottom' | null>(null);
+
+  let contextMenu = $state({
+    visible: false,
+    x: 0,
+    y: 0,
+    page: null as number | null
+  });
+
+  function closeContextMenu() {
+    contextMenu.visible = false;
+  }
+
+  $effect(() => {
+    function handleGlobalClick() {
+      if (contextMenu.visible) {
+        closeContextMenu();
+      }
+    }
+    function handleGlobalKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && contextMenu.visible) {
+        closeContextMenu();
+      }
+    }
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('contextmenu', handleGlobalClick);
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('contextmenu', handleGlobalClick);
+      window.removeEventListener('keydown', handleGlobalKeydown);
+    };
+  });
 
   async function renderThumbnails() {
     if (!pdfDoc || numPages === 0 || isRendering) return;
@@ -73,23 +106,33 @@
     e.preventDefault();
     if (draggedPage !== null && draggedPage !== page) {
       dragOverPage = page;
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+      if (relativeY < rect.height / 2) {
+        dragInsertPosition = 'top';
+      } else {
+        dragInsertPosition = 'bottom';
+      }
     }
   }
 
   function handleDrop(e: DragEvent, targetPage: number) {
     e.preventDefault();
-    if (draggedPage !== null && draggedPage !== targetPage) {
+    if (draggedPage !== null && draggedPage !== targetPage && dragInsertPosition !== null) {
       window.dispatchEvent(new CustomEvent('paperpilot:reorder-page', {
-        detail: { fromPage: draggedPage, toPage: targetPage }
+        detail: { fromPage: draggedPage, toPage: targetPage, position: dragInsertPosition }
       }));
     }
     draggedPage = null;
     dragOverPage = null;
+    dragInsertPosition = null;
   }
 
   function handleDragEnd() {
     draggedPage = null;
     dragOverPage = null;
+    dragInsertPosition = null;
   }
 
   function rotatePage(e: MouseEvent, page: number) {
@@ -105,6 +148,42 @@
       detail: { page }
     }));
   }
+
+  function handleContextMenu(e: MouseEvent, page: number) {
+    e.preventDefault();
+    contextMenu = {
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      page
+    };
+  }
+
+  function handleContextAction(action: string, page: number | null) {
+    if (page === null) return;
+
+    switch (action) {
+      case 'rotate_90':
+        window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page, angle: 90 } }));
+        break;
+      case 'rotate_180':
+        window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page, angle: 180 } }));
+        break;
+      case 'rotate_270':
+        window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page, angle: 270 } }));
+        break;
+      case 'duplicate':
+        window.dispatchEvent(new CustomEvent('paperpilot:duplicate-page', { detail: { page } }));
+        break;
+      case 'extract':
+        window.dispatchEvent(new CustomEvent('paperpilot:extract-single-page', { detail: { page } }));
+        break;
+      case 'delete':
+        window.dispatchEvent(new CustomEvent('paperpilot:delete-single-page', { detail: { page } }));
+        break;
+    }
+    closeContextMenu();
+  }
 </script>
 
 <div class="thumbnails-container" aria-label="Page Thumbnails">
@@ -115,7 +194,8 @@
       <div
         class="thumbnail-wrapper"
         class:selected={pageNum === p}
-        class:drag-over={dragOverPage === p}
+        class:drag-over-top={dragOverPage === p && dragInsertPosition === 'top'}
+        class:drag-over-bottom={dragOverPage === p && dragInsertPosition === 'bottom'}
         class:is-dragging={draggedPage === p}
         id="thumbnail-page-{p}"
         draggable="true"
@@ -127,8 +207,10 @@
         onkeydown={(e) => e.key === 'Enter' && selectPage(p)}
         tabindex="0"
         role="button"
+        oncontextmenu={(e) => handleContextMenu(e, p)}
         aria-label="Go to page {p}"
       >
+        <div class="drag-grip">⋮⋮</div>
         <div class="canvas-box">
           <canvas bind:this={canvases[p]}></canvas>
 
@@ -157,6 +239,37 @@
         <span class="page-num">{p}</span>
       </div>
     {/each}
+  {/if}
+
+  {#if contextMenu.visible}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="context-menu"
+      style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <button class="menu-item" onclick={() => handleContextAction('rotate_90', contextMenu.page)}>
+        <span>🔄</span> Rotate Clockwise (90°)
+      </button>
+      <button class="menu-item" onclick={() => handleContextAction('rotate_270', contextMenu.page)}>
+        <span>🔄</span> Rotate Counter-Clockwise (270°)
+      </button>
+      <button class="menu-item" onclick={() => handleContextAction('rotate_180', contextMenu.page)}>
+        <span>🔄</span> Rotate 180°
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" onclick={() => handleContextAction('duplicate', contextMenu.page)}>
+        <span>📑</span> Duplicate Page
+      </button>
+      <button class="menu-item" onclick={() => handleContextAction('extract', contextMenu.page)}>
+        <span>✂️</span> Extract Page to New File
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item danger" onclick={() => handleContextAction('delete', contextMenu.page)}>
+        <span>🗑️</span> Delete Page
+      </button>
+    </div>
   {/if}
 </div>
 
@@ -194,8 +307,30 @@
     opacity: 0.4;
   }
 
-  .thumbnail-wrapper.drag-over {
+  .thumbnail-wrapper.drag-over-top {
     border-top: 2px solid var(--accent-primary, #5e6ad2);
+  }
+
+  .thumbnail-wrapper.drag-over-bottom {
+    border-bottom: 2px solid var(--accent-primary, #5e6ad2);
+  }
+
+  .drag-grip {
+    color: var(--text-tertiary, #6b7280);
+    font-size: 14px;
+    line-height: 1;
+    margin-bottom: 4px;
+    cursor: grab;
+    opacity: 0.5;
+    letter-spacing: -2px;
+  }
+
+  .drag-grip:active {
+    cursor: grabbing;
+  }
+
+  .thumbnail-wrapper:hover .drag-grip {
+    opacity: 1;
   }
 
   .thumbnail-wrapper:hover {
@@ -268,5 +403,51 @@
   .thumbnail-wrapper.selected .page-num {
     color: var(--text-primary, #ffffff);
     font-weight: 600;
+  }
+
+  .context-menu {
+    position: fixed;
+    z-index: 1000;
+    background-color: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: var(--border-radius-sm, 4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    padding: 4px 0;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary, #e2e8f0);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--transition-fast, 0.15s ease);
+    width: 100%;
+  }
+
+  .menu-item:hover {
+    background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  }
+
+  .menu-item.danger {
+    color: #f87171;
+  }
+
+  .menu-item.danger:hover {
+    background-color: rgba(248, 113, 113, 0.1);
+  }
+
+  .menu-divider {
+    height: 1px;
+    background-color: var(--border-color, #2a2a35);
+    margin: 4px 0;
   }
 </style>
