@@ -667,10 +667,10 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| F.19.1 | Drag Grips & Insertion Indicators | Visible `⋮⋮` drag handle, active grab cursors, and blue insertion drop-indicator lines between pages |
-| F.19.2 | High-Contrast Thumbnail Action Bar | Semi-translucent quick action toolbar on each thumbnail with tooltip cues for 1-click Rotate (`🔄`) and Delete (`🗑️`) |
-| F.19.3 | Thumbnail Right-Click Context Menu | Floating context menu with Rotate 90°/180°/270°, Duplicate page, Delete page, and Extract page to new document |
-| F.19.4 | In-Place Document Refresh & Undo Toast | Seamless background IPC execution (`pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`) with instant canvas reload and undo capability |
+| F.19.1 | Drag Grips & Insertion Indicators | ⏳ In-Progress (Jules Session 5753728026560742170) — Visible `⋮⋮` drag handle, active grab cursors, and blue insertion drop-indicator lines between pages |
+| F.19.2 | High-Contrast Thumbnail Action Bar | ⏳ In-Progress (Jules Session 5753728026560742170) — Semi-translucent quick action toolbar on each thumbnail with tooltip cues for 1-click Rotate (`🔄`) and Delete (`🗑️`) |
+| F.19.3 | Thumbnail Right-Click Context Menu | ⏳ In-Progress (Jules Session 5753728026560742170) — Floating context menu with Rotate 90°/180°/270°, Duplicate page, Delete page, and Extract page to new document |
+| F.19.4 | In-Place Document Refresh & Undo Toast | ⏳ In-Progress (Jules Session 5753728026560742170) — Seamless background IPC execution (`pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`) with instant canvas reload and undo capability |
 
 ---
 
