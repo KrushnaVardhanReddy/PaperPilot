@@ -1,0 +1,60 @@
+# Task: Phase 4.3.12 — Real-Pipeline Unmocked E2E AI Chat Test Suite
+
+## Objective
+Implement Task 4.3.12: Create an end-to-end integration test suite in `apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts` that verifies the AI Chat Panel without mocking IPC calls. The test suite sends natural language commands, verifies resolution against `paperpilot-nlp` (combining RuleEngine & embedded TinyBERT ONNX Layer 2), clicks `[Execute Action]`, and verifies the resulting output file on disk using real PDF test fixtures.
+
+**Branch**: `feat/test-ai-chat-real-pipeline`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts
+reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md
+```
+DO NOT modify any backend Rust crates or production Svelte components.
+
+---
+
+## Technical Requirements & Test Flow
+
+### 1. Zero Mocking (Real IPC Bridge)
+- Unlike unit/component tests, this test interacts with the live backend IPC.
+- Uses `tests/fixtures/sample.pdf` or creates a real sample PDF fixture.
+
+### 2. Required Test Scenarios
+1. **Implicit Active Document Binding**:
+   - Open a document in the viewer.
+   - Switch to the `💬 AI Chat` tab.
+   - Type `"Split pages 1 to 2"` (or click the suggestion chip).
+   - Verify the assistant responds with an Action Card targeting the open document.
+   - Click `[Execute Action]`.
+   - Verify success toast and check that output files exist.
+
+2. **Semantic / TinyBERT Classification**:
+   - Type `"rotate 90 degrees"` or `"squish this document"`.
+   - Verify the intent is resolved and action card is rendered.
+   - Execute the action and verify the rotated/compressed PDF.
+
+3. **Multi-Turn Conversation**:
+   - Verify follow-up questions or commands maintain conversation state.
+
+### 3. Generate Report
+Generate `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md` documenting:
+- Test scenarios executed.
+- Latency from user prompt to action card display.
+- Verification of actual output files generated on disk.
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm exec playwright test tests/e2e_ai_chat_real_pipeline.spec.ts
+```
+
+## Commit Message
+```
+test(desktop): add unmocked e2e test suite for ai chat real pipeline execution
+```
