@@ -32,7 +32,7 @@
     const storedWidth = localStorage.getItem('viewer-right-panel-width');
     if (storedWidth) {
       const parsed = parseInt(storedWidth, 10);
-      if (!isNaN(parsed) && parsed >= 220 && parsed <= 700) {
+      if (!isNaN(parsed) && parsed >= 220 && parsed <= 800) {
         panelWidth = parsed;
       }
     }
@@ -44,6 +44,11 @@
 
   $effect(() => {
     localStorage.setItem('viewer-right-panel-tab', activeTab);
+
+    // Auto-comfort width on chat tab
+    if (activeTab === 'chat' && !isCollapsed && panelWidth < 420) {
+      panelWidth = 420;
+    }
   });
 
   $effect(() => {
@@ -58,7 +63,7 @@
 
     function onMouseMove(moveEvent: MouseEvent) {
       const delta = startX - moveEvent.clientX;
-      const newWidth = Math.min(Math.max(startWidth + delta, 240), 600);
+      const newWidth = Math.min(Math.max(startWidth + delta, 240), 800);
       panelWidth = newWidth;
     }
 
@@ -73,7 +78,7 @@
   }
 
   function handleResizeDblClick() {
-    panelWidth = panelWidth > 350 ? 300 : 480;
+    panelWidth = panelWidth > 350 ? 300 : 500;
   }
 </script>
 
