@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import PdfAnnotationPanel from '$lib/components/PdfAnnotationPanel.svelte';
   import PdfInfoPanel from '$lib/components/PdfInfoPanel.svelte';
+  import PdfChatPanel from '$lib/components/PdfChatPanel.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
   let {
@@ -15,7 +16,7 @@
   } = $props();
 
   let isCollapsed = $state(false);
-  let activeTab = $state<'annotations' | 'info'>('annotations');
+  let activeTab = $state<'annotations' | 'info' | 'chat'>('annotations');
   let panelWidth = $state(300);
   let isDragging = $state(false);
 
@@ -126,6 +127,16 @@
       >
         Info
       </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'chat'}
+        id="right-panel-tab-chat"
+        role="tab"
+        aria-selected={activeTab === 'chat'}
+        onclick={() => activeTab = 'chat'}
+      >
+        💬 AI Chat
+      </button>
     </div>
 
     <div class="panel-content" role="tabpanel">
@@ -134,6 +145,8 @@
           bind:annotations
           {onJumpToPage}
         />
+      {:else if activeTab === 'chat'}
+        <PdfChatPanel />
       {:else}
         <PdfInfoPanel {pdfDoc} />
       {/if}
