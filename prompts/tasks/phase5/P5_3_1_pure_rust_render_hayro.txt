@@ -1,0 +1,53 @@
+# Task: Phase 5.3.1 — Pure-Rust PDF Rasterization & Rendering (hayro + tiny-skia)
+# Base Branch: main
+# Spec: docs/PURE_RUST_ARCHITECTURE_ROADMAP.md
+
+## Objective
+Migrate `pdf_render` and `pdf_to_images` in `paperpilot-pdf/src/operations/render.rs` to use **`hayro`** and **`tiny-skia`**.
+This replaces Google PDFium (`libpdfium.so`, `pdfium-render`) with a pure-Rust vector-to-pixel rasterizer that compiles natively to WebAssembly and runs with zero OS dynamic library dependencies.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+paperpilot-pdf/Cargo.toml
+paperpilot-pdf/src/operations/render.rs
+reports/RENDERING_PURE_RUST_REPORT.md
+wiki/12-Pure-Rust-Rendering.md
+```
+DO NOT touch `paperpilot-wasm/`, `apps/desktop/`, `apps/web/`, or `apps/edge/`.
+
+---
+
+## 1. Dependency Configuration (`paperpilot-pdf/Cargo.toml`)
+Add `tiny-skia` (and `hayro` or equivalent pure-Rust PDF interpreter):
+```toml
+tiny-skia = "0.11"
+```
+
+---
+
+## 2. Implementation Details: `paperpilot-pdf/src/operations/render.rs`
+
+### Rendering Architecture
+1. Implement `RenderOperation` executing against `PdfDocument`:
+   - Inspect page dictionary media box (`/MediaBox`).
+   - Create a `tiny-skia::Pixmap` buffer with target scale/DPI (e.g. 150 DPI).
+   - Interpret page content streams (paths, text glyph outlines, embedded images) and draw onto the `Pixmap`.
+   - Encode the rasterized frame into a PNG buffer using `pixmap.encode_png()`.
+   - Save rendered image to output path or return pixel buffer.
+2. Parity Assertion:
+   - Ensure rendered images produce valid PNG magic bytes (`0x89, 0x50, 0x4E, 0x47`).
+
+---
+
+## 3. Mandatory Quality Gate & Verification Commands
+Before opening PR:
+```bash
+cargo test -p paperpilot-pdf
+python3 scripts/test_tri_interface_e2e.py
+```
+- `test_tri_interface_e2e.py` MUST maintain **44 / 44 PASS (100%)** across CLI, MCP, and REST API.
+- Generate `reports/RENDERING_PURE_RUST_REPORT.md` documenting render latencies and memory usage.
+- Document in `wiki/12-Pure-Rust-Rendering.md`.
