@@ -72,6 +72,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
+- **PR #141 (5.2.1)**: Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract C++ in `paperpilot-pdf/src/operations/ocr.rs`, image stream extraction, DBNet text detection & CTC recognition with graceful fallback, `wiki/09-Pure-Rust-OCR.md`, and `reports/OCR_PURE_RUST_REPORT.md` 44/44 PASS).
 - **PR #140 (4.8.3)**: Cloudflare Workers Edge Microservice (`apps/edge/` standalone worker, REST handlers for all 12 core operations, Vitest tests 14/14 PASS, `reports/EDGE_MICROSERVICE_REPORT.md`, `wiki/10-Cloudflare-Edge-Service.md`).
 - **PR #139 (4.8.5)**: WASM 12 Tools Playwright E2E Suite & In-Memory Encryption (`apps/web/tests/e2e_wasm_12_tools.spec.ts`, `apps/web/playwright.config.ts`, pure-Rust `encrypt` in `paperpilot-wasm/src/operations.rs`, `wiki/08-Wasm-E2E-Testing.md`, and `reports/WASM_12_TOOLS_E2E_SCORECARD.md` 12/12 PASS).
 - **PR #138 (4.8.4)**: Expand WASM Engine and Web Suite to 12 Pure-Rust Tools (`paperpilot-wasm` memory operations for `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata`, Web Worker bridges, 12 interactive tool cards in `apps/web/`, `reports/WASM_12_TOOLS_EXPANSION_REPORT.md`, `wiki/06-Wasm-12-Tools-Suite.md`).
@@ -82,9 +83,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
-|---|---|---|---|---|
-| **5.2.1** | `paperpilot-pdf/Cargo.toml`, `paperpilot-pdf/src/operations/ocr.rs`, `wiki/09-Pure-Rust-OCR.md`, `reports/OCR_PURE_RUST_REPORT.md` | [Session 10581530668658369493](https://jules.google.com/session/10581530668658369493) | `main` | Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract C++) |
+*No active Jules sessions currently in-flight. Task 5.2.1 merged cleanly via PR #141!*
 
 ---
 

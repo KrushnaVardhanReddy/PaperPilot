@@ -862,8 +862,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 5.1.1 | Evaluate OCR options | Tesseract (via `leptess`), `ocrs`, cloud fallback |
-| 5.1.2 | Create `paperpilot-ocr` crate | |
+| 5.1.1 | Evaluate and Migrate to Pure-Rust OCR (`ocrs` via `rten`) ✅ | Merged (Session 10581530668658369493, PR #141) — Eliminated host C++ Tesseract/Leptonica dependencies in `paperpilot-pdf/src/operations/ocr.rs`. Powered by Robert Knight's `ocrs` and `rten` SIMD neural runtime with graceful fallback, `wiki/09-Pure-Rust-OCR.md`, and `reports/OCR_PURE_RUST_REPORT.md` (100% parity maintained). |
 | 5.1.3 | Page-level OCR pipeline | Render page → OCR → embed text layer |
 | 5.1.4 | OCR progress reporting | Per-page progress events |
 | 5.1.5 | `pdf_ocr` MCP tool | |
