@@ -5,6 +5,8 @@ use crate::ambiguity::check_completeness;
 
 pub struct OfflineNlpResolver {
     engine: RuleEngine,
+    #[doc(hidden)]
+    pub layer2: Option<crate::layer2::OnnxClassifier>,
 }
 
 impl Default for OfflineNlpResolver {
@@ -15,17 +17,28 @@ impl Default for OfflineNlpResolver {
 
 impl OfflineNlpResolver {
     pub fn new() -> Self {
-        OfflineNlpResolver { engine: RuleEngine::new() }
+        OfflineNlpResolver {
+            engine: RuleEngine::new(),
+            layer2: crate::layer2::OnnxClassifier::new().ok(),
+        }
     }
 }
 
 impl NlpResolver for OfflineNlpResolver {
     fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError> {
         // 1. Classify the intent
-        let intent = self.engine.predict(query)
-            .ok_or_else(|| NlpError::AmbiguousIntent(
-                format!("Could not identify a PDF operation in: '{}'", query)
-            ))?;
+        let mut intent = self.engine.predict(query);
+
+        // 1.b Fallback to Layer 2 if Layer 1 fails
+        if intent.is_none() {
+            if let Some(layer2) = &self.layer2 {
+                intent = layer2.predict(query);
+            }
+        }
+
+        let intent = intent.ok_or_else(|| NlpError::AmbiguousIntent(
+            format!("Could not identify a PDF operation in: '{}'", query)
+        ))?;
 
         // 2. Extract entities
         let entities = extract_entities(query);
