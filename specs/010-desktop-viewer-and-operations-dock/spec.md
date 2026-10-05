@@ -95,3 +95,17 @@ To ensure effortless page manipulation directly in the document viewport without
     - `Duplicate Page`
     - `Delete Page`
     - `Extract This Page As New Document`
+
+### 8. Multi-Document Omnibar & Quick Command Palette (`GlobalCommandBar.svelte`)
+- **Placement**: Universal keyboard-first bar docked at the bottom of the Documents view (and toggleable globally via `Ctrl+K` / `Cmd+K`).
+- **Ergonomics**:
+  - Prominent search & command input with subtle glassmorphic styling (`var(--bg-surface)`).
+  - Quick action suggestion chips: `"Rotate all 90°"`, `"Compress all"`, `"Merge open documents"`.
+- **`@filename` Targeting & Autocomplete Popover**:
+  - When typing `@`, an autocomplete popover appears displaying all open documents (`appState.documents`).
+  - Selecting a document (via keyboard arrows or click) inserts `@filename` into the query prompt.
+  - Commands without `@` target either the active document or prompt for all open documents.
+- **Offline NLP Resolution & Action Blueprint**:
+  - Dispatches natural language command to `resolve_natural_language` IPC bridge.
+  - Renders an inline preview blueprint (`EditableActionCard.svelte`) directly above the Omnibar with a 1-click `⚡ Execute Action` trigger.
+- **Target Tier**: 100% Free / Community Tier (runs entirely on local embedded NLP with zero cloud dependency).

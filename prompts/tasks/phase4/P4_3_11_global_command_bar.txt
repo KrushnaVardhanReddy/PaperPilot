@@ -1,0 +1,75 @@
+# Task: Phase 4.3.11 — Multi-Document Omnibar & Quick Command Palette (`GlobalCommandBar.svelte`)
+
+## Objective
+Implement Task 4.3.11: Create a keyboard-first universal command Omnibar (`apps/desktop/src/lib/components/GlobalCommandBar.svelte`) docked at the bottom of the Documents view (and toggleable via global shortcut `Ctrl+K` / `Cmd+K`).
+The Omnibar allows users to type natural language commands targeting open documents with an `@filename` autocomplete popover (e.g. typing `@` shows open documents), preview the generated action blueprint (`EditableActionCard.svelte`), and execute it with 1-click via the offline NLP resolution bridge (`resolve_natural_language` + `invoke_mcp_tool`).
+
+**Branch**: `feat/desktop-multi-doc-omnibar`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/src/lib/components/GlobalCommandBar.svelte
+apps/desktop/src/routes/+page.svelte
+reports/UI_GLOBAL_COMMAND_BAR_REPORT.md
+```
+DO NOT touch backend Rust crates or unrelated viewer components.
+
+---
+
+## Technical Requirements
+
+### 1. Component Implementation (`apps/desktop/src/lib/components/GlobalCommandBar.svelte`)
+- **Docked Container**:
+  - Sticky/docked at the bottom of the Documents view with modern glassmorphism styling (`background: var(--bg-surface)`, `border: 1px solid var(--border-color)`, `border-radius: var(--border-radius-md)`).
+  - Prominent text input (`#global-command-input`) with placeholder: `"Type a command or @filename (e.g., '@doc.pdf rotate 90', 'compress all', 'merge open')..."`
+  - Quick action suggestion chips below/above input:
+    - `"Rotate 90°"`
+    - `"Compress document"`
+    - `"Split pages 1-2"`
+    - `"Merge open documents"`
+- **`@filename` Autocomplete Dropdown Popover**:
+  - Detect when the user types `@`.
+  - Display a floating popover list of currently open documents from `appState.documents` (`name`, page count, or index).
+  - Support keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter` to select, `Escape` to dismiss).
+  - Selecting a document replaces `@` with `@"{doc.name}" ` and refocuses the input so the user can continue typing their command.
+- **Offline NLP Resolution**:
+  - On `Enter` or clicking `Send` / `Preview`:
+    - Extract any `@"{doc.name}"` mentions to identify target documents.
+    - If a specific document is mentioned, pass its path as `context.active_document`. If multiple documents or `"all"` are mentioned, pass them in `context.open_documents`.
+    - Invoke Tauri `resolve_natural_language` IPC bridge.
+  - Render the returned plan in an inline preview popover/card using `EditableActionCard.svelte`.
+- **Execution & In-Place Refresh**:
+  - On clicking `⚡ Execute Action` on the blueprint card:
+    - Execute the action via `invoke_mcp_tool`.
+    - Show success toast (`toastState.success(...)`).
+    - Dispatch `refreshCurrentDocument` or update `appState`.
+- **Keyboard Shortcut**:
+  - Listen for `Ctrl+K` or `Cmd+K` to focus the Omnibar input and highlight its border (`box-shadow: 0 0 0 2px var(--accent-primary)`).
+
+### 2. View Integration (`apps/desktop/src/routes/+page.svelte`)
+- Mount `<GlobalCommandBar />` at the bottom of the `.documents-layout` / `.documents-view` section.
+- Ensure smooth layout sizing and prevent scrollbar jitter.
+
+### 3. Verification Report (`reports/UI_GLOBAL_COMMAND_BAR_REPORT.md`)
+Document:
+- Omnibar layout, keyboard shortcut (`Ctrl+K`), and UI styling.
+- `@filename` autocomplete dropdown popover functionality.
+- Offline NLP plan resolution and action execution flow.
+- TypeScript verification (`pnpm check`).
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm check
+pnpm test
+```
+
+## Commit Message
+```
+feat(desktop): implement global command omnibar with document autocomplete and offline nlp
+```
