@@ -5,7 +5,7 @@
 **Goal:** Beat Stirling PDF's usage-based model with a simpler "pay once, run forever locally" message, while building a sustainable B2B revenue stream from teams and enterprise.
 
 > **Key Counter-Positioning vs. Stirling PDF:**
-> Stirling charges $0.01 per automation run (their Processor product). PaperPilot runs **100% locally** — you never pay per operation. Every automation, every pipeline run, every batch job is **free on your machine**. For developers and power users running hundreds of automations a month, we are dramatically cheaper.
+> Stirling charges $0.01 per automation run (their Processor product) — even on self-hosted setups. PaperPilot's **local processing is always free**: every automation, every pipeline run, every batch job on your machine costs $0, forever. Our Cloud API tier offers usage-based pricing for teams that need hosted infrastructure — but that's opt-in, not a tax on local workflows. For developers and power users running hundreds of automations a month on their own hardware, we are dramatically cheaper.
 
 ---
 
@@ -15,9 +15,9 @@
 |---|---|---|
 | **Community** | **Free Forever** | Everyone — individuals, students, open-source developers |
 | **Pro (Desktop)** | **$5/month** (or $48/yr) | Power users, freelancers, consultants (unlimited steps, watch folders, BYOK) |
-| **Cloud Web Pro (SaaS)**| **$4/month** (or $39/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
+| **Cloud Web Pro (SaaS)**| **$4/month** (or $38/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
 | **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
-| **Enterprise** | **$22/user/month** (or $210/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
+| **Enterprise** | **$22/user/month** (or $211/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
 | **Cloud API (Usage-Based)**| **$0.01/run** (first 1,000 runs free) | Developers, CI/CD, SaaS platforms, AI Agents (hosted MCP & REST gateway) |
 
 > Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
@@ -65,19 +65,22 @@
 * **Minimum:** 2 seats
 * **Target:** Agencies, small law firms, accounting teams, startups — 2 to 50 seats.
 * **Features (everything in Pro, plus):**
-  - **Centralized license portal** — admin manages seats, assigns roles
-  - **Shared pipeline/recipe library** — team recipes stored in a private registry
-  - **Team audit log** — searchable job history per user (what ran, when, result)
-  - **Concurrent pipeline execution** across team members
-  - **Priority support** + 4-hour response SLA
-  - **SDK access** (Python, JavaScript) — early access to PaperPilot SDK libraries
-* **Why $12:** The shared recipe library is our retention engine — once a firm standardizes their invoice, contract, or Bates stamping pipeline across staff, switching cost is high.
+  - **Centralized license portal** ✅ — admin manages seats, assigns roles, revokes access from one dashboard
+  - **Concurrent pipeline execution** ✅ — team members run pipelines simultaneously without blocking each other
+  - **Priority support** ✅ — 4-hour response SLA (vs. 48h for Pro)
+  - **Shared pipeline/recipe library** 🚧 *(Phase 3.4.11 — Q1 2025)* — team recipes stored in a private registry; once a firm standardizes their invoice, contract, or Bates stamping pipeline across staff, switching cost is high
+  - **Team audit log** 🚧 *(Phase 6.3)* — searchable job history per user (what ran, when, result)
+  - **SDK access** 🚧 *(Phase 4 early access)* — Python and JavaScript SDK libraries for embedding PaperPilot into internal tooling
+
+> **Why Teams over two individual Pro licenses?** At 2 seats you pay $24/month vs $10/month for two Pro licenses — the immediate concrete value is centralized seat management and concurrent pipeline execution. The shared recipe library (shipping Phase 3.4.11) is what makes Teams the obvious permanent home for any firm once it's live: a standardized pipeline your whole team runs is worth far more than each person maintaining their own copy.
+
+* **Why $12:** Centralized administration and concurrent execution are day-one differentiators. The recipe library becomes the retention engine the moment it ships — once a team standardizes their workflows, switching cost is high.
 
 ---
 
 ## Tier 4: Enterprise (Fleet Governance & Compliance)
 
-* **Price:** $22/user/month (~$210/user/year billed annually)
+* **Price:** $22/user/month (~$211/user/year billed annually)
 * **Minimum:** 50 seats; annual contract required.
 * **Target:** Hospitals, law firms, financial institutions, defense contractors — organizations governed by strict IT, security, and audit standards.
 * **Why Enterprise Pays (We monetize Fleet Governance, NOT the Login Button):**
@@ -102,7 +105,7 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
 * **Web Free Tier:**
   - Free web processing up to **3 tasks per day**.
   - All 44 core tools accessible via web browser.
-* **Cloud Web Pro:** **$4/month** (or **$39/year** billed annually)
+* **Cloud Web Pro:** **$4/month** (or **$38/year** billed annually)
   - **Unlimited tasks and batch runs** in any modern web browser.
   - Zero file size restrictions (up to 200MB/file).
   - High-speed cloud OCR (Tesseract / multi-lingual engine).
@@ -117,6 +120,7 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
 
 ### 5B. Cloud API & MCP Gateway ("Stripe / Cloudinary for PDFs")
 * **Target:** B2B SaaS platforms, FinTech apps, ERP platforms, and AI Agent builders (Claude, OpenAI Custom GPTs, LangChain) that need reliable programmatic PDF generation.
+* **Note:** This tier is for teams that need **hosted cloud infrastructure** — it is entirely separate from PaperPilot's local processing, which remains free forever. Think of this as renting our Rust engine on the cloud rather than running it on your own machine.
 * **Pricing:**
   - **First 1,000 runs/month FREE** (no credit card required).
   - **$0.01 per document run** for 1,001–10,000 runs.
@@ -148,6 +152,7 @@ Revenue is dynamically routed based on **plugin usage by paying customers**:
 1. Plugin author registers GitHub handle + payment info (Stripe / Wise).
 2. End of each quarter: algorithm calculates usage metrics and splits the pool automatically.
 3. Contributors submit tax form (W-9 / W-8BEN) before first payout.
+4. **Minimum pool threshold:** Distributions only begin when the **quarterly pool exceeds $500**. Below that threshold, amounts roll over to the next quarter and accumulate. This prevents a disappointing early rollout (e.g. a $30 pool split 10 ways) that would kill developer enthusiasm before the ecosystem gains traction. The threshold and current pool balance are published transparently on the website alongside the quarterly report.
 
 ### Why This Works
 > Free users become plugin developers. Plugins attract more Enterprise customers. Revenue growth increases the pool. A bigger pool attracts more developers. This is a self-reinforcing flywheel.
@@ -157,10 +162,10 @@ Revenue is dynamically routed based on **plugin usage by paying customers**:
 ## 🚀 Key Messaging vs. Competitors
 
 ### vs. Stirling PDF
-> *"Stirling charges $0.01 per automation run. PaperPilot runs locally — every automation is free, forever, no run counter, no billing surprise. For teams running hundreds of document workflows a month, that's the difference between a $50 bill and $0."*
+> *"Stirling charges $0.01 per automation run on local self-hosted workflows. PaperPilot's local processing is free, forever — no run counter, no billing surprise. For teams running hundreds of document workflows a month on their own machine, that's the difference between a $50 bill and $0. Our Cloud API tier also offers usage-based pricing for teams that need hosted infrastructure, but local processing will never cost you a cent."*
 
 ### vs. Adobe Acrobat Pro
-> *"Adobe charges $20/user/month and uploads your documents to Adobe's cloud. PaperPilot Enterprise is $22/user/year — 11x cheaper — and your documents never leave your network."*
+> *"Adobe charges $20/user/month and uploads your documents to Adobe's cloud. PaperPilot Enterprise is $22/user/month — and your documents never leave your network. At scale, the on-premise data residency alone eliminates compliance risk that money can't fully offset."*
 
 ### vs. iLovePDF / Smallpdf
 > *"Those tools require uploading your sensitive documents to a third-party server. PaperPilot processes everything on your device. Your legal briefs, medical records, and financial statements stay yours."*
