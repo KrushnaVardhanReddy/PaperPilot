@@ -15,7 +15,7 @@
 /app/target/debug/paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/merged_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 20.76 ms
+- **Latency:** 18.43 ms
 
 #### 🤖 MCP
 ```json
@@ -36,14 +36,14 @@
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 18.48 ms
+- **Latency:** 15.36 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/merged_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 64.17 ms
+- **Latency:** 65.81 ms
 
 ---
 
@@ -54,7 +54,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 /app/target/debug/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output /app/tests/e2e_fixtures/out/tri_e2e/split --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 18.68 ms
+- **Latency:** 16.44 ms
 
 #### 🤖 MCP
 ```json
@@ -72,14 +72,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 17.26 ms
+- **Latency:** 15.51 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "/app/tests/e2e_fixtures/out/tri_e2e/split"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.02 ms
+- **Latency:** 6.14 ms
 
 ---
 
@@ -90,7 +90,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 /app/target/debug/paperpilot-cli extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 17.10 ms
+- **Latency:** 14.92 ms
 
 #### 🤖 MCP
 ```json
@@ -109,14 +109,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.90 ms
+- **Latency:** 13.61 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.03 ms
+- **Latency:** 4.35 ms
 
 ---
 
@@ -127,7 +127,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
 /app/target/debug/paperpilot-cli delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output /app/tests/e2e_fixtures/out/tri_e2e/deleted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.54 ms
+- **Latency:** 16.26 ms
 
 #### 🤖 MCP
 ```json
@@ -146,14 +146,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.28 ms
+- **Latency:** 12.77 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "/app/tests/e2e_fixtures/out/tri_e2e/deleted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.75 ms
+- **Latency:** 4.10 ms
 
 ---
 
@@ -164,7 +164,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
 /app/target/debug/paperpilot-cli reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output /app/tests/e2e_fixtures/out/tri_e2e/reordered_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.76 ms
+- **Latency:** 14.95 ms
 
 #### 🤖 MCP
 ```json
@@ -183,14 +183,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.46 ms
+- **Latency:** 13.21 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "/app/tests/e2e_fixtures/out/tri_e2e/reordered_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.26 ms
+- **Latency:** 5.83 ms
 
 ---
 
@@ -201,7 +201,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
 /app/target/debug/paperpilot-cli rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output /app/tests/e2e_fixtures/out/tri_e2e/rotated_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.01 ms
+- **Latency:** 14.75 ms
 
 #### 🤖 MCP
 ```json
@@ -221,14 +221,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.33 ms
+- **Latency:** 12.26 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "/app/tests/e2e_fixtures/out/tri_e2e/rotated_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.82 ms
+- **Latency:** 3.87 ms
 
 ---
 
@@ -239,7 +239,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
 /app/target/debug/paperpilot-cli crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output /app/tests/e2e_fixtures/out/tri_e2e/cropped_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.61 ms
+- **Latency:** 14.56 ms
 
 #### 🤖 MCP
 ```json
@@ -258,14 +258,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.95 ms
+- **Latency:** 12.85 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "/app/tests/e2e_fixtures/out/tri_e2e/cropped_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.29 ms
+- **Latency:** 3.95 ms
 
 ---
 
@@ -276,7 +276,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
 /app/target/debug/paperpilot-cli burst --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/burst_dir --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 18.11 ms
+- **Latency:** 16.76 ms
 
 #### 🤖 MCP
 ```json
@@ -294,14 +294,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.40 ms
+- **Latency:** 14.79 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/burst_dir"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.35 ms
+- **Latency:** 6.59 ms
 
 ---
 
@@ -312,7 +312,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
 /app/target/debug/paperpilot-cli remove-blank --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/noblank_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.26 ms
+- **Latency:** 15.05 ms
 
 #### 🤖 MCP
 ```json
@@ -330,14 +330,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.84 ms
+- **Latency:** 13.88 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/noblank_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.40 ms
+- **Latency:** 4.67 ms
 
 ---
 
@@ -348,7 +348,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
 /app/target/debug/paperpilot-cli compress --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/compressed_cli.pdf --quality medium --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.79 ms
+- **Latency:** 16.30 ms
 
 #### 🤖 MCP
 ```json
@@ -367,14 +367,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.62 ms
+- **Latency:** 13.81 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/compressed_api.pdf", "quality": "medium"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.14 ms
+- **Latency:** 4.97 ms
 
 ---
 
@@ -385,7 +385,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
 /app/target/debug/paperpilot-cli repair --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/repaired_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.08 ms
+- **Latency:** 14.51 ms
 
 #### 🤖 MCP
 ```json
@@ -403,14 +403,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.31 ms
+- **Latency:** 12.26 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/repaired_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.87 ms
+- **Latency:** 3.64 ms
 
 ---
 
@@ -421,7 +421,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
 /app/target/debug/paperpilot-cli linearize --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/linearized_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.93 ms
+- **Latency:** 15.97 ms
 
 #### 🤖 MCP
 ```json
@@ -439,14 +439,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.58 ms
+- **Latency:** 13.64 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/linearized_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.30 ms
+- **Latency:** 4.87 ms
 
 ---
 
@@ -457,7 +457,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
 /app/target/debug/paperpilot-cli encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 17.40 ms
+- **Latency:** 16.75 ms
 
 #### 🤖 MCP
 ```json
@@ -476,14 +476,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.13 ms
+- **Latency:** 14.49 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.17 ms
+- **Latency:** 5.68 ms
 
 ---
 
@@ -494,7 +494,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
 /app/target/debug/paperpilot-cli decrypt --input /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/decrypted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 18.72 ms
+- **Latency:** 18.96 ms
 
 #### 🤖 MCP
 ```json
@@ -513,14 +513,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.72 ms
+- **Latency:** 16.66 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/decrypted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 8.50 ms
+- **Latency:** 8.37 ms
 
 ---
 
@@ -531,7 +531,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
 /app/target/debug/paperpilot-cli watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output /app/tests/e2e_fixtures/out/tri_e2e/watermarked_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.98 ms
+- **Latency:** 14.86 ms
 
 #### 🤖 MCP
 ```json
@@ -550,14 +550,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.06 ms
+- **Latency:** 12.59 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "/app/tests/e2e_fixtures/out/tri_e2e/watermarked_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.26 ms
+- **Latency:** 3.70 ms
 
 ---
 
@@ -568,7 +568,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 /app/target/debug/paperpilot-cli redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output /app/tests/e2e_fixtures/out/tri_e2e/redacted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.04 ms
+- **Latency:** 14.46 ms
 
 #### 🤖 MCP
 ```json
@@ -591,14 +591,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.03 ms
+- **Latency:** 12.62 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "/app/tests/e2e_fixtures/out/tri_e2e/redacted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.94 ms
+- **Latency:** 3.83 ms
 
 ---
 
@@ -609,7 +609,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Ty
 /app/target/debug/paperpilot-cli metadata --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/metadata.json --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.77 ms
+- **Latency:** 15.24 ms
 
 #### 🤖 MCP
 ```json
@@ -626,14 +626,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Ty
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.49 ms
+- **Latency:** 12.17 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.45 ms
+- **Latency:** 3.71 ms
 
 ---
 
@@ -644,7 +644,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
 /app/target/debug/paperpilot-cli signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output /app/tests/e2e_fixtures/out/tri_e2e/signed_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.41 ms
+- **Latency:** 14.50 ms
 
 #### 🤖 MCP
 ```json
@@ -663,14 +663,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.84 ms
+- **Latency:** 12.86 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "/app/tests/e2e_fixtures/out/tri_e2e/signed_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.75 ms
+- **Latency:** 3.60 ms
 
 ---
 
@@ -681,7 +681,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
 /app/target/debug/paperpilot-cli flatten --input tests/e2e_fixtures/form.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/flattened_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.81 ms
+- **Latency:** 15.13 ms
 
 #### 🤖 MCP
 ```json
@@ -699,14 +699,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.61 ms
+- **Latency:** 13.26 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/flattened_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 10.87 ms
+- **Latency:** 4.44 ms
 
 ---
 
@@ -717,7 +717,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
 /app/target/debug/paperpilot-cli pdf-a --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/pdf_a_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.69 ms
+- **Latency:** 15.10 ms
 
 #### 🤖 MCP
 ```json
@@ -735,14 +735,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.86 ms
+- **Latency:** 13.18 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/pdf_a_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.30 ms
+- **Latency:** 3.77 ms
 
 ---
 
@@ -753,7 +753,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
 /app/target/debug/paperpilot-cli header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output /app/tests/e2e_fixtures/out/tri_e2e/header_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.76 ms
+- **Latency:** 15.46 ms
 
 #### 🤖 MCP
 ```json
@@ -773,14 +773,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.50 ms
+- **Latency:** 14.82 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "/app/tests/e2e_fixtures/out/tri_e2e/header_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.08 ms
+- **Latency:** 4.96 ms
 
 ---
 
@@ -791,7 +791,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
 /app/target/debug/paperpilot-cli bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output /app/tests/e2e_fixtures/out/tri_e2e/bates_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.56 ms
+- **Latency:** 15.93 ms
 
 #### 🤖 MCP
 ```json
@@ -812,14 +812,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.77 ms
+- **Latency:** 15.14 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "/app/tests/e2e_fixtures/out/tri_e2e/bates_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.86 ms
+- **Latency:** 4.60 ms
 
 ---
 
@@ -830,7 +830,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
 /app/target/debug/paperpilot-cli page-numbers --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/numbers_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.52 ms
+- **Latency:** 16.84 ms
 
 #### 🤖 MCP
 ```json
@@ -850,14 +850,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.83 ms
+- **Latency:** 13.89 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "/app/tests/e2e_fixtures/out/tri_e2e/numbers_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.78 ms
+- **Latency:** 4.92 ms
 
 ---
 
@@ -868,7 +868,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
 /app/target/debug/paperpilot-cli extract-text --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/text.txt --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.09 ms
+- **Latency:** 15.25 ms
 
 #### 🤖 MCP
 ```json
@@ -886,14 +886,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.77 ms
+- **Latency:** 13.25 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/text.txt"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.06 ms
+- **Latency:** 4.15 ms
 
 ---
 
@@ -904,7 +904,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
 /app/target/debug/paperpilot-cli extract-images --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_images --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.02 ms
+- **Latency:** 14.74 ms
 
 #### 🤖 MCP
 ```json
@@ -922,14 +922,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.54 ms
+- **Latency:** 13.53 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_images"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.29 ms
+- **Latency:** 3.99 ms
 
 ---
 
@@ -940,7 +940,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Co
 /app/target/debug/paperpilot-cli search --input tests/e2e_fixtures/search_test.pdf --query test --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.00 ms
+- **Latency:** 15.13 ms
 
 #### 🤖 MCP
 ```json
@@ -958,14 +958,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Co
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 11.52 ms
+- **Latency:** 12.19 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/search_test.pdf", "query": "test"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.83 ms
+- **Latency:** 4.23 ms
 
 ---
 
@@ -976,7 +976,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
 /app/target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/rendered_cli.png --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.83 ms
+- **Latency:** 15.03 ms
 
 #### 🤖 MCP
 ```json
@@ -995,7 +995,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.08 ms
+- **Latency:** 13.55 ms
 
 #### 🌐 REST API
 ```bash
@@ -1013,7 +1013,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: a
 /app/target/debug/paperpilot-cli compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.36 ms
+- **Latency:** 16.43 ms
 
 #### 🤖 MCP
 ```json
@@ -1031,14 +1031,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: a
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.59 ms
+- **Latency:** 14.80 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/page_1.pdf", "file2": "tests/e2e_fixtures/page_2.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.84 ms
+- **Latency:** 5.56 ms
 
 ---
 
@@ -1049,7 +1049,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
 /app/target/debug/paperpilot-cli ocr --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/ocr_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.32 ms
+- **Latency:** 16.18 ms
 
 #### 🤖 MCP
 ```json
@@ -1067,14 +1067,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.63 ms
+- **Latency:** 14.50 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/ocr_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.50 ms
+- **Latency:** 4.89 ms
 
 ---
 
@@ -1085,7 +1085,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type:
 /app/target/debug/paperpilot-cli bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 17.98 ms
+- **Latency:** 16.29 ms
 
 #### 🤖 MCP
 ```json
@@ -1102,14 +1102,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type:
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.22 ms
+- **Latency:** 14.75 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/large_doc.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.96 ms
+- **Latency:** 5.45 ms
 
 ---
 
@@ -1120,7 +1120,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
 /app/target/debug/paperpilot-cli images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output /app/tests/e2e_fixtures/out/tri_e2e/images_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.66 ms
+- **Latency:** 15.70 ms
 
 #### 🤖 MCP
 ```json
@@ -1141,14 +1141,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.82 ms
+- **Latency:** 13.97 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/images_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.94 ms
+- **Latency:** 5.00 ms
 
 ---
 
@@ -1159,7 +1159,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
 /app/target/debug/paperpilot-cli annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output /app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.92 ms
+- **Latency:** 15.17 ms
 
 #### 🤖 MCP
 ```json
@@ -1190,14 +1190,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 12.77 ms
+- **Latency:** 13.44 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "/app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.26 ms
+- **Latency:** 4.40 ms
 
 ---
 
@@ -1208,7 +1208,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-
 /app/target/debug/paperpilot-cli classify --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 19.50 ms
+- **Latency:** 18.37 ms
 
 #### 🤖 MCP
 ```json
@@ -1225,14 +1225,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 22.31 ms
+- **Latency:** 17.03 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 9.69 ms
+- **Latency:** 7.56 ms
 
 ---
 
@@ -1243,7 +1243,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Con
 /app/target/debug/paperpilot-cli validate --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.00 ms
+- **Latency:** 13.96 ms
 
 #### 🤖 MCP
 ```json
@@ -1260,14 +1260,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Con
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.25 ms
+- **Latency:** 12.14 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.69 ms
+- **Latency:** 3.44 ms
 
 ---
 
@@ -1278,7 +1278,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-
 /app/target/debug/paperpilot-cli hash --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 11.98 ms
+- **Latency:** 11.51 ms
 
 #### 🤖 MCP
 ```json
@@ -1295,14 +1295,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 10.85 ms
+- **Latency:** 10.71 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.08 ms
+- **Latency:** 2.31 ms
 
 ---
 
@@ -1313,7 +1313,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type
 /app/target/debug/paperpilot-cli form read tests/e2e_fixtures/form.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.30 ms
+- **Latency:** 14.30 ms
 
 #### 🤖 MCP
 ```json
@@ -1330,14 +1330,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.96 ms
+- **Latency:** 12.24 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.46 ms
+- **Latency:** 3.58 ms
 
 ---
 
@@ -1348,7 +1348,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
 /app/target/debug/paperpilot-cli form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output /app/tests/e2e_fixtures/out/tri_e2e/filled_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.23 ms
+- **Latency:** 15.85 ms
 
 #### 🤖 MCP
 ```json
@@ -1369,14 +1369,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 14.11 ms
+- **Latency:** 13.85 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "/app/tests/e2e_fixtures/out/tri_e2e/filled_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.23 ms
+- **Latency:** 4.15 ms
 
 ---
 
@@ -1387,7 +1387,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
 /app/target/debug/paperpilot-cli form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output /app/tests/e2e_fixtures/out/tri_e2e/added_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.16 ms
+- **Latency:** 14.74 ms
 
 #### 🤖 MCP
 ```json
@@ -1411,14 +1411,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 13.72 ms
+- **Latency:** 12.95 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "/app/tests/e2e_fixtures/out/tri_e2e/added_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.36 ms
+- **Latency:** 3.92 ms
 
 ---
 
@@ -1429,7 +1429,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format docx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.docx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 17.91 ms
+- **Latency:** 17.30 ms
 
 #### 🤖 MCP
 ```json
@@ -1447,14 +1447,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 16.04 ms
+- **Latency:** 16.45 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.docx", "format": "docx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.18 ms
+- **Latency:** 6.35 ms
 
 ---
 
@@ -1465,7 +1465,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.xlsx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 34.48 ms
+- **Latency:** 33.72 ms
 
 #### 🤖 MCP
 ```json
@@ -1483,14 +1483,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 33.98 ms
+- **Latency:** 32.64 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.xlsx", "format": "xlsx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 22.18 ms
+- **Latency:** 20.94 ms
 
 ---
 
@@ -1501,7 +1501,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.pptx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 18.17 ms
+- **Latency:** 17.91 ms
 
 #### 🤖 MCP
 ```json
@@ -1519,14 +1519,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 15.91 ms
+- **Latency:** 15.44 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.pptx", "format": "pptx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.27 ms
+- **Latency:** 5.33 ms
 
 ---
 
@@ -1537,7 +1537,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.html --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_html_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2523.27 ms
+- **Latency:** 2478.15 ms
 
 #### 🤖 MCP
 ```json
@@ -1555,14 +1555,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2517.73 ms
+- **Latency:** 2420.38 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_html_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2406.03 ms
+- **Latency:** 2160.78 ms
 
 ---
 
@@ -1573,7 +1573,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.md --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_md_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2458.97 ms
+- **Latency:** 2422.38 ms
 
 #### 🤖 MCP
 ```json
@@ -1591,14 +1591,14 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2419.21 ms
+- **Latency:** 2524.65 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_md_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2499.15 ms
+- **Latency:** 2828.14 ms
 
 ---
 
@@ -1609,7 +1609,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
 /app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.csv --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_csv_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2283.29 ms
+- **Latency:** 2188.27 ms
 
 #### 🤖 MCP
 ```json
@@ -1627,13 +1627,13 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
 }
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2221.37 ms
+- **Latency:** 2124.18 ms
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_csv_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2482.41 ms
+- **Latency:** 2182.22 ms
 
 ---
