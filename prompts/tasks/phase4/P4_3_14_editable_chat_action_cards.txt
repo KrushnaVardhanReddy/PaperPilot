@@ -33,22 +33,33 @@ When a message contains a `plan`, render an interactive form instead of static r
      - If `page_ranges` is empty -> select `All Pages`.
      - If `page_ranges` contains ranges (e.g. `[(1, 1)]`) -> pre-fill `1`.
 
-2. **Operation-Specific Editable Fields**:
+2. **Operation-Specific Editable Fields with Contextual Hints & Examples**:
+   - Every input field MUST display a clear placeholder hint and helper label so the user knows exactly what format and values to enter:
+   - **Pages Field**:
+     - *Helper hint*: `"e.g. '1, 4' or range '1-5' (or 'all' for entire document)"`
+     - *Badge/Tag*: Shows total page count of active document (e.g. `Max: 4 pages`).
    - **Rotate**:
      - Segmented angle selector: `[ 90° ]` `[ 180° ]` `[ 270° ]` (pre-selecting extracted angle, defaulting to 90°).
+     - *Helper hint*: `"Clockwise rotation angle in degrees"`
    - **Split / Extract / Burst**:
-     - Split ranges input (`1-3, 4-6`), extract pages input.
+     - *Helper hint*: `"e.g. '1-2, 3-4' to split into chunks, or '2, 5' to extract"`
    - **Watermark / Stamp / Header-Footer**:
-     - Editable text input (watermark text, header text, footer text).
+     - *Helper hint*: `"e.g. 'CONFIDENTIAL', 'DRAFT', or company name"`
    - **Security (Encrypt / Decrypt / Redact / Sign)**:
-     - Password input (masked with toggle or pre-filled from extracted entities).
+     - *Helper hint*: `"e.g. Minimum 6 characters (AES-256 protected)"`
+   - **Crop**:
+     - *Helper hint*: `"Format: x,y,width,height e.g. '50,50,400,600'"`
+   - **Bates Numbering**:
+     - *Helper hint*: `"Prefix e.g. 'CASE-2024-' | Start number e.g. '001' | Padding: 6"`
    - **Conversions (DOCX, XLSX, PPTX, Markdown, Text, HTML, Images)**:
-     - Target format indicator / dropdown.
+     - Target format indicator / dropdown with file extension badge.
    - **Output Path**:
-     - Editable text field showing the target output path (auto-suggested as `{base}_rotated.pdf`, `{base}_split.pdf`, etc., or overwrite toggle).
+     - *Helper hint*: `"Destination file path (e.g. /path/to/doc_rotated.pdf)"`
+     - Auto-suggests `{base}_{operation}.pdf` with an option or toggle to overwrite original.
 
-3. **Execution Button**:
+3. **Execution Button & Validation**:
    - `[ ⚡ Execute Action ]` button that reads the *currently edited* values rather than raw static plan data.
+   - If a required field is empty or format is invalid, shows an inline validation hint beneath the input (e.g. `"Please enter valid page numbers like 1, 3"`).
    - Disable button while operation is running with an active loading spinner (`Executing...`).
 
 ---
