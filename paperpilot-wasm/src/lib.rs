@@ -1,0 +1,76 @@
+pub mod operations;
+
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub struct WasmPdfEngine;
+
+#[wasm_bindgen]
+impl WasmPdfEngine {
+    /// Merge multiple PDF buffers (Array of Uint8Array) into a single PDF Uint8Array
+    #[wasm_bindgen]
+    pub fn merge(buffers: js_sys::Array) -> Result<js_sys::Uint8Array, JsValue> {
+        let mut rust_buffers = Vec::new();
+        for i in 0..buffers.length() {
+            let item = buffers.get(i);
+            let u8_array = js_sys::Uint8Array::new(&item);
+            rust_buffers.push(u8_array.to_vec());
+        }
+
+        let result = operations::merge(rust_buffers)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    /// Rotate specific pages ("all", "1,2", or "1") by angle (90, 180, 270)
+    #[wasm_bindgen]
+    pub fn rotate(input_bytes: &[u8], angle: u16, pages: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::rotate(input_bytes, angle, pages)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    /// Split PDF by page ranges (e.g. "1-2, 3-4") returning an Array of Uint8Arrays
+    #[wasm_bindgen]
+    pub fn split(input_bytes: &[u8], ranges: &str) -> Result<js_sys::Array, JsValue> {
+        let result_buffers = operations::split(input_bytes, ranges)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        let js_array = js_sys::Array::new();
+        for buffer in result_buffers {
+            let u8_array = js_sys::Uint8Array::from(&buffer[..]);
+            js_array.push(&u8_array);
+        }
+
+        Ok(js_array)
+    }
+
+    /// Compress PDF by removing unneeded metadata, deflating streams, and cleaning cross-references
+    #[wasm_bindgen]
+    pub fn compress(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::compress(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    /// Encrypt PDF with user password (standard 128/256-bit)
+    #[wasm_bindgen]
+    pub fn encrypt(input_bytes: &[u8], password: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::encrypt(input_bytes, password)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    /// Add watermark text across pages
+    #[wasm_bindgen]
+    pub fn watermark(input_bytes: &[u8], text: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::watermark(input_bytes, text)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+}
