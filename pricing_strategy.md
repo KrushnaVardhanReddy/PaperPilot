@@ -13,13 +13,14 @@
 
 | Tier | Price | Best For |
 |---|---|---|
-| **Community** | **Free** | Everyone — individuals, students, open source |
-| **Pro** | **$5/month** (or $48/yr — save 20%) | Power users, freelancers, consultants |
-| **Teams** | **$12/user/month** (or $115/user/yr — save 20%) | Small teams, agencies, law firms, 2–50 seats |
-| **Enterprise** | **$22/user/month** (or $210/user/yr) | 50+ seats, IT-managed, compliance-driven orgs |
-| **Cloud (Usage-Based)** | **$0.01/run** (first 1000 runs free) | Serverless/CI users who can't run locally |
+| **Community** | **Free Forever** | Everyone — individuals, students, open-source developers |
+| **Pro (Desktop)** | **$5/month** (or $48/yr) | Power users, freelancers, consultants (unlimited steps, watch folders, BYOK) |
+| **Cloud Web Pro (SaaS)**| **$4/month** (or $39/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
+| **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
+| **Enterprise** | **$22/user/month** (or $210/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
+| **Cloud API (Usage-Based)**| **$0.01/run** (first 1,000 runs free) | Developers, CI/CD, SaaS platforms, AI Agents (hosted MCP & REST gateway) |
 
-> Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
+> Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
 
 ---
 
@@ -92,26 +93,40 @@
 
 ---
 
-## Tier 5: Cloud (Usage-Based) — Developer / CI Tier
+## Tier 5: PaperPilot Cloud (Web SaaS & Developer API)
+ 
+PaperPilot Cloud unlocks the power of our Rust engine directly in the browser and via cloud endpoints for users who cannot or prefer not to install local binaries.
 
-* **Price:** **$0.01 per pipeline run** (first **1,000 runs free**, no credit card required)
-* **Target:** Developers integrating PaperPilot into CI/CD pipelines, serverless functions, or automation scripts — who cannot or prefer not to run a local binary.
+### 5A. Consumer Web SaaS ("The Modern iLovePDF Alternative")
+* **Target:** Chromebooks, iPad/tablet users, students, accountants, and corporate employees whose locked-down machines forbid installing desktop binaries (`.deb`/`.dmg`/`.exe`).
+* **Web Free Tier:**
+  - Free web processing up to **3 tasks per day**.
+  - All 44 core tools accessible via web browser.
+* **Cloud Web Pro:** **$4/month** (or **$39/year** billed annually)
+  - **Unlimited tasks and batch runs** in any modern web browser.
+  - Zero file size restrictions (up to 200MB/file).
+  - High-speed cloud OCR (Tesseract / multi-lingual engine).
+  - Hybrid Perk: Desktop Pro ($5/mo) subscribers automatically receive Cloud Web Pro for free!
+* **The "Zero-Knowledge" Ephemeral Privacy Guarantee:**
+  - Files are processed **strictly in-memory (RAM / `/dev/shm`)** on secure edge workers.
+  - Documents **never touch persistent hard drives**.
+  - Immediate cryptographic wipe: files are purged immediately upon download completion (or strictly 10 minutes post-upload).
+  - No logs, no telemetry, no document indexing.
+
+---
+
+### 5B. Cloud API & MCP Gateway ("Stripe / Cloudinary for PDFs")
+* **Target:** B2B SaaS platforms, FinTech apps, ERP platforms, and AI Agent builders (Claude, OpenAI Custom GPTs, LangChain) that need reliable programmatic PDF generation.
+* **Pricing:**
+  - **First 1,000 runs/month FREE** (no credit card required).
+  - **$0.01 per document run** for 1,001–10,000 runs.
+  - **$0.007 per run** for 10,001–100,000 runs.
+  - **$0.005 per run** for 100,001–1,000,000 runs.
 * **Features:**
-  - Hosted PaperPilot MCP endpoint (Cloud MCP Gateway)
-  - All 40+ MCP tools available via HTTP
-  - Pay only for what you use; no monthly seat commitment
-  - Scales to millions of runs with volume discounts (see below)
-  - Usage dashboard with per-operation cost breakdown
-* **Volume pricing:**
-  | Monthly Runs | Price/Run |
-  |---|---|
-  | 0–1,000 | **Free** |
-  | 1,001–10,000 | $0.01/run |
-  | 10,001–100,000 | $0.007/run |
-  | 100,001–1,000,000 | $0.005/run |
-  | 1,000,000+ | Custom / negotiate |
-
-* **Why this tier:** This **directly matches and undercuts Stirling**. Stirling gives 500 free runs, we give 1,000. Stirling charges $0.01/run with no published volume discount. We start discounting at 10k runs. For DevOps teams and API integrators, this is the clear winner on price and flexibility.
+  - **Hosted Cloud MCP Server (SSE & HTTP Gateway)**: Plug directly into AI agents to perform real PDF transforms with natural language tools.
+  - **REST API Endpoints**: Full parity with `paperpilot-gateway` (`POST /api/v1/pdf/merge`, `POST /api/v1/pdf/compress`, etc.).
+  - **Blazing Speed & Low Infrastructure Cost**: Because our engine is pure Rust (sub-10ms execution, <50MB RAM), our server costs are ~50x lower than Java-based Stirling PDF or Python wrappers, allowing high-margin, aggressive pricing.
+  - **Developer Dashboard**: Live API key management, rate limits, latency telemetry, and usage metering.
 
 ---
 
