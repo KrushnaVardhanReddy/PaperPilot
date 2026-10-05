@@ -132,7 +132,54 @@
     appState.setLoading(true);
     try {
       const { intent, ...toolArgs } = args;
-      const toolName = `pdf_${intent.toLowerCase()}`;
+      let toolName = "";
+
+      switch (intent) {
+        case "Rotate": toolName = "pdf_rotate"; break;
+        case "Merge": toolName = "pdf_merge"; break;
+        case "Split": toolName = "pdf_split"; break;
+        case "Compress": toolName = "pdf_compress"; break;
+        case "Delete": toolName = "pdf_delete_pages"; break;
+        case "Reorder": toolName = "pdf_reorder_pages"; break;
+        case "Burst": toolName = "pdf_burst"; break;
+        case "Crop": toolName = "pdf_crop"; break;
+        case "Extract": toolName = "pdf_extract_pages"; break;
+        case "RemoveBlank": toolName = "pdf_remove_blank"; break;
+        case "PageNumbers": toolName = "pdf_page_numbers"; break;
+        case "Watermark": toolName = "pdf_watermark"; break;
+        case "Bates": toolName = "pdf_bates"; break;
+        case "HeaderFooter": toolName = "pdf_header_footer"; break;
+        case "Flatten": toolName = "pdf_flatten"; break;
+        case "Annotate": toolName = "pdf_annotate"; break;
+        case "Encrypt": toolName = "pdf_encrypt"; break;
+        case "Decrypt": toolName = "pdf_decrypt"; break;
+        case "Redact": toolName = "pdf_redact"; break;
+        case "Sign": toolName = "pdf_sign"; break;
+        case "Metadata": toolName = "pdf_metadata"; break;
+        case "Validate": toolName = "pdf_validate"; break;
+        case "Hash": toolName = "pdf_hash"; break;
+        case "ToDocx": toolName = "pdf_to_docx"; break;
+        case "ToXlsx": toolName = "pdf_to_xlsx"; break;
+        case "ToPptx": toolName = "pdf_to_pptx"; break;
+        case "PdfA": toolName = "pdf_to_pdf_a"; break;
+        case "ExtractText": toolName = "pdf_extract_text"; break;
+        case "ExtractImages": toolName = "pdf_extract_images"; break;
+        case "ToMarkdown": toolName = "pdf_convert_markdown"; break;
+        case "ToHtml": toolName = "pdf_convert_html"; break;
+        case "ImagesToPdf": toolName = "pdf_images_to_pdf"; break;
+        case "Render": toolName = "pdf_render"; break;
+        case "FormRead": toolName = "pdf_read_form"; break;
+        case "FormFill": toolName = "pdf_fill_form"; break;
+        case "FormCreate": toolName = "pdf_create_form_field"; break;
+        case "Bookmarks": toolName = "pdf_bookmarks"; break;
+        case "Search": toolName = "pdf_search"; break;
+        case "Ocr": toolName = "pdf_ocr"; break;
+        case "Compare": toolName = "pdf_compare"; break;
+        case "Linearize": toolName = "pdf_linearize"; break;
+        case "Classify": toolName = "pdf_classify_type"; break;
+        default:
+          toolName = `pdf_${intent.toLowerCase()}`;
+      }
 
       await safeInvoke('invoke_mcp_tool', {
         toolName: toolName,

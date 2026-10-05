@@ -49,12 +49,24 @@
         isExecuting = true;
         const args: Record<string, any> = { intent: plan.intent };
 
-        // Resolve input files
+        // Resolve input files to real local filesystem paths
+        const resolveToLocalPath = (fileNameOrPath: string): string => {
+            const idx = appState.documents.findIndex(d => d.name === fileNameOrPath || (d as any)._localPath === fileNameOrPath);
+            if (idx !== -1 && appState.documentPaths[idx]) {
+                return appState.documentPaths[idx];
+            }
+            if (idx !== -1 && (appState.documents[idx] as any)._localPath) {
+                return (appState.documents[idx] as any)._localPath;
+            }
+            return fileNameOrPath;
+        };
+
         if (plan.input_files && plan.input_files.length > 0) {
-            args.input = plan.input_files[0];
-            args.inputs = plan.input_files; // For merge
+            args.input = resolveToLocalPath(plan.input_files[0]);
+            args.inputs = plan.input_files.map(resolveToLocalPath); // For merge
         } else if (activeDoc) {
-            const path = (activeDoc as any)._localPath || activeDoc.name;
+            const activeIdx = appState.selectedDocumentIndex ?? 0;
+            const path = appState.documentPaths[activeIdx] || (activeDoc as any)._localPath || activeDoc.name;
             args.input = path;
             args.inputs = [path];
         }
