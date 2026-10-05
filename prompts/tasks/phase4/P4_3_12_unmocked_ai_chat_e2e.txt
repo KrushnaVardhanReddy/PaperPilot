@@ -1,7 +1,7 @@
 # Task: Phase 4.3.12 — Real-Pipeline Unmocked E2E AI Chat Test Suite
 
 ## Objective
-Implement Task 4.3.12: Create an end-to-end integration test suite in `apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts` that verifies the AI Chat Panel without mocking IPC calls. The test suite sends natural language commands, verifies resolution against `paperpilot-nlp` (combining RuleEngine & embedded TinyBERT ONNX Layer 2), clicks `[Execute Action]`, and verifies the resulting output file on disk using real PDF test fixtures.
+Implement Task 4.3.12: Create an end-to-end integration test suite in `apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts` that verifies the AI Chat Panel without mocking IPC calls. The test suite interacts directly with the live desktop backend IPC bridge (`resolve_natural_language` + `invoke_mcp_tool`), tests the newly updated UI (`EditableActionCard.svelte`, segmented controls, result card with output badge), and verifies the generated output files on disk.
 
 **Branch**: `feat/test-ai-chat-real-pipeline`
 **Base Branch**: `main`
@@ -17,44 +17,96 @@ DO NOT modify any backend Rust crates or production Svelte components.
 
 ---
 
-## Technical Requirements & Test Flow
+## Existing Test Architecture & Reusable Assets
+Before writing tests from scratch, follow the established conventions in the codebase:
+1. **Existing Test Patterns**:
+   - Inspect `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` and `apps/desktop/tests/viewer.spec.ts` for how fixtures are loaded into the viewer:
+     - Document upload: `input[multiple][type="file"]` (`setInputFiles`).
+     - Tab activation: `#tab-doc-0` and dispatching custom event if needed.
+     - Viewer container: `.pdf-viewer-wrapper` or `.viewer-container canvas`.
+     - Right panel activation: `#right-panel-tab-chat` toggles the AI Chat drawer.
+2. **Existing Test Fixtures (`tests/e2e_fixtures/`)**:
+   - Reuse existing fixtures instead of generating new dummy files:
+     - Multi-page document: `../../tests/e2e_fixtures/multi_page.pdf` (or `single_page.pdf`).
+     - Encrypted document: `../../tests/e2e_fixtures/encrypted.pdf`.
+     - Conversion targets: `../../tests/e2e_fixtures/form.pdf`, `../../tests/e2e_fixtures/bates.pdf`.
+3. **Output Cleanup**:
+   - Clean up any generated output files (e.g. `*_rotated.pdf`, `*_compressed.pdf`, `*_split*.pdf`) after test runs in a `test.afterEach` or `test.afterAll` block.
+
+---
+
+## Technical Requirements & Test Flow (Targeting Updated UI)
 
 ### 1. Zero Mocking (Real IPC Bridge)
-- Unlike unit/component tests, this test interacts with the live backend IPC.
-- Uses `tests/fixtures/sample.pdf` or creates a real sample PDF fixture.
+- **Do NOT mock** `(window as any).__TAURI_INTERNALS__.invoke` for `resolve_natural_language` or `invoke_mcp_tool` in this test suite.
+- Allow Playwright to invoke the real offline NLP engine (combining RuleEngine Layer 1 + embedded TinyBERT INT8 ONNX Layer 2) and real PDF operations.
 
-### 2. Required Test Scenarios
-1. **Implicit Active Document Binding**:
-   - Open a document in the viewer.
-   - Switch to the `💬 AI Chat` tab.
-   - Type `"Split pages 1 to 2"` (or click the suggestion chip).
-   - Verify the assistant responds with an Action Card targeting the open document.
-   - Click `[Execute Action]`.
-   - Verify success toast and check that output files exist.
+### 2. UI Selectors Matching the Updated Components
+Ensure test selectors accurately match the updated production UI:
+- **Chat Tab**: `#right-panel-tab-chat`
+- **Chat Input**: `.input-area input` (or `[placeholder*="Type a command"]`)
+- **Cheat Sheet Button**: `.examples-btn` (`💡 Examples`)
+- **Cheat Sheet Drawer**: `.cheatsheet-drawer` and prompt cards `.example-card`
+- **Action Blueprint Card**:
+  - Container: `.plan-card`
+  - Intent Header: `.plan-card h4`
+  - Pages Selector Segmented Buttons: `.field .segmented button` (`All Pages`, `Current Page`, `Custom Pages`)
+  - Custom Pages Input: `#custom-pages-input`
+  - Angle Buttons: `.field .segmented button` (`90°`, `180°`, `270°`)
+  - Output Path Input: `#output-path-input`
+  - Execution Trigger: `button.execute-btn` (`⚡ Execute Action`)
+- **Execution Result Card**:
+  - Container: `.result-card`
+  - Badge: `.result-badge` (`✅ Success`)
+  - Title: `.result-title`
+  - Output File Code: `.result-path-box .path-value`
 
-2. **Semantic / TinyBERT Classification**:
-   - Type `"rotate 90 degrees"` or `"squish this document"`.
-   - Verify the intent is resolved and action card is rendered.
-   - Execute the action and verify the rotated/compressed PDF.
+---
 
-3. **Multi-Turn Conversation**:
-   - Verify follow-up questions or commands maintain conversation state.
+## Required Test Scenarios
 
-### 3. Generate Report
-Generate `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md` documenting:
-- Test scenarios executed.
-- Latency from user prompt to action card display.
-- Verification of actual output files generated on disk.
+### Scenario 1: Implicit Active Document Binding & In-Place Execution
+1. Navigate to `/` and load `tests/e2e_fixtures/multi_page.pdf` via `input[type="file"]`.
+2. Click `#right-panel-tab-chat` to open the AI Chat tab.
+3. Enter natural language query: `"Rotate 90 degrees clockwise"`.
+4. Verify the assistant responds with an `EditableActionCard` (`.plan-card`):
+   - Header contains `Rotate Operation`.
+   - `All Pages` is selected by default.
+   - Angle `90°` button is `.active`.
+5. Click `button.execute-btn` (`⚡ Execute Action`).
+6. Verify `.result-card` appears with `.result-badge` displaying `✅ Success`.
+7. Verify the output file referenced in `.result-path-box .path-value` exists on disk and is non-empty.
+
+### Scenario 2: Parameter Customization in Action Blueprint
+1. In the chat, type: `"Rotate 180 degrees"`.
+2. In the resulting `.plan-card`:
+   - Click `Custom Pages` segmented button.
+   - Fill `#custom-pages-input` with `'1'`.
+   - Toggle Angle button to `270°`.
+3. Click `⚡ Execute Action`.
+4. Verify execution succeeds and `.result-card` is rendered with output path.
+
+### Scenario 3: Cheat Sheet Integration & One-Click Prompt Insertion
+1. Click `.examples-btn` (`💡 Examples`).
+2. Verify `.cheatsheet-drawer` is visible.
+3. Filter search with `"compress"`.
+4. Click `[Try Prompt ↗]` on the Compress action.
+5. Verify `.input-area input` is populated with the prompt text and the cheatsheet closes.
+6. Press Enter to submit the prompt.
+7. Verify `.plan-card` renders with `Compress Operation`.
+8. Click `⚡ Execute Action` and verify `.result-card` confirms completion.
 
 ---
 
 ## Verification Commands
 ```bash
 cd apps/desktop
+pnpm check
 pnpm exec playwright test tests/e2e_ai_chat_real_pipeline.spec.ts
 ```
 
-## Commit Message
-```
-test(desktop): add unmocked e2e test suite for ai chat real pipeline execution
-```
+## Verification Report
+Generate `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md` documenting:
+- Test execution summary (all scenarios passing).
+- Verified selectors and components tested.
+- Output files verified on disk.
