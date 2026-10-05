@@ -21,6 +21,7 @@
   import PdfThumbnails from '$lib/components/PdfThumbnails.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
+  import GlobalCommandBar from '$lib/components/GlobalCommandBar.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
   import type { Annotation } from '$lib/api/pdf';
   import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
@@ -424,6 +425,8 @@
 
               <DropZone ondrop={handleFilesDropped} />
               <DocumentList />
+
+              <GlobalCommandBar />
             </div>
             <OperationsPanel />
           </div>
