@@ -496,6 +496,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 24px;
     max-width: 900px;
     margin: 0 auto;
   }
