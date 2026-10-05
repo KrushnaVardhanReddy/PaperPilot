@@ -1,0 +1,78 @@
+# Task: Phase 4.F.19 — Interactive Page Organizer & Thumbnail Context Menu (`PdfThumbnails.svelte`)
+
+## Objective
+Implement Task 4.F.19: Upgrade the PDF page thumbnails sidebar (`apps/desktop/src/lib/components/PdfThumbnails.svelte`) into a first-class visual page organizer. Users can effortlessly rearrange pages via drag-and-drop with clear visual drop insertion cues, rotate single pages with 1-click or via right-click context menu, duplicate pages, and delete pages with instant document canvas reload.
+
+**Branch**: `feat/desktop-thumbnail-organizer-context-menu`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/src/lib/components/PdfThumbnails.svelte
+apps/desktop/src/routes/+page.svelte
+reports/UI_THUMBNAIL_ORGANIZER_REPORT.md
+```
+DO NOT touch Rust backend crates or unrelated viewer components.
+
+---
+
+## Technical Requirements
+
+### 1. Drag & Drop Ergonomics & Insertion Indicators (`PdfThumbnails.svelte`)
+- **Drag Grip Handle**:
+  - Add a subtle `⋮⋮` drag handle on each thumbnail with `cursor: grab` (and `cursor: grabbing` when dragging).
+- **Insertion Indicator**:
+  - When dragging over a target thumbnail, render a distinct blue horizontal insertion bar (`2px solid var(--accent-primary)`) at the top or bottom of the target item depending on drag position.
+  - Smooth animation/transition indicating where the page will land.
+- **Visual Feedback**:
+  - The dragged item becomes semi-transparent (`opacity: 0.4`).
+
+### 2. High-Contrast Quick Action Bar
+- Make the thumbnail action buttons visible and accessible:
+  - Rotate button `🔄`: Rotates active page 90° clockwise in-place.
+  - Delete button `🗑️`: Deletes active page in-place.
+- Add clear tooltips (`Rotate Page {p}`, `Delete Page {p}`).
+- Ensure buttons have comfortable click targets and prevent event bubbling into page selection (`e.stopPropagation()`).
+
+### 3. Right-Click Context Menu
+- When right-clicking (`oncontextmenu`) any page thumbnail:
+  - Prevent default browser context menu.
+  - Display a floating context menu at mouse coordinates (`clientX`, `clientY`):
+    - `🔄 Rotate Clockwise (90°)`
+    - `🔄 Rotate Counter-Clockwise (270°)`
+    - `🔄 Rotate 180°`
+    - `📑 Duplicate Page`
+    - `✂️ Extract Page to New File`
+    - `🗑️ Delete Page` (danger styling)
+- Clicking anywhere outside or pressing `Escape` closes the context menu.
+
+### 4. Background Execution & In-Place Viewer Refresh (`+page.svelte`)
+- Wire context menu actions to existing events or handlers:
+  - `paperpilot:rotate-single-page` (supports `angle: 90 | 180 | 270`).
+  - `paperpilot:delete-single-page` (deletes page via `pdf_delete_pages`).
+  - `paperpilot:duplicate-page` (extracts + inserts via `pdf_split`/`pdf_merge` or reorders).
+- Immediately call `refreshCurrentDocument()` and show a success toast with an undo hint.
+
+### 5. Verification Report
+Generate `reports/UI_THUMBNAIL_ORGANIZER_REPORT.md` documenting:
+- Drag-and-drop insertion indicator and grip affordance.
+- Quick action bar and right-click context menu implementation.
+- In-place document refresh verification.
+- Unit and TypeScript diagnostics verification (`pnpm check`).
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm check
+pnpm build
+pnpm test
+```
+
+## Commit Message
+```
+feat(desktop): interactive page organizer with drag insertion and thumbnail context menu
+```

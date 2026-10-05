@@ -661,6 +661,17 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | F.18.4 | API Docs UI Integration | ✅ Completed (PR #109) — Bound Developer Mode toggle to AppState, updating sidebar gateway badge and API Docs live connectivity |
 | F.18.5 | Sidecar Lifecycle Management | ✅ Completed (PR #109) — Handled graceful termination on toggle disable and Tauri application exit hooks |
 
+#### 4.F.19 — Interactive Page Organizer & Thumbnail Context Menu (`PdfThumbnails.svelte`)
+
+> **Core Ergonomics & Usability**: Elevates thumbnail page management into a first-class visual workstation with explicit drag grip affordance, drop insertion indicators, persistent quick action buttons, and a rich right-click context menu (`Rotate 90/180/270`, `Delete`, `Duplicate`, `Extract`).
+
+| # | Task | Notes |
+|---|---|---|
+| F.19.1 | Drag Grips & Insertion Indicators | Visible `⋮⋮` drag handle, active grab cursors, and blue insertion drop-indicator lines between pages |
+| F.19.2 | High-Contrast Thumbnail Action Bar | Semi-translucent quick action toolbar on each thumbnail with tooltip cues for 1-click Rotate (`🔄`) and Delete (`🗑️`) |
+| F.19.3 | Thumbnail Right-Click Context Menu | Floating context menu with Rotate 90°/180°/270°, Duplicate page, Delete page, and Extract page to new document |
+| F.19.4 | In-Place Document Refresh & Undo Toast | Seamless background IPC execution (`pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`) with instant canvas reload and undo capability |
+
 ---
 
 ### 4.E2E Round 2 — Full System Re-Validation (Post Viewer & Annotations)

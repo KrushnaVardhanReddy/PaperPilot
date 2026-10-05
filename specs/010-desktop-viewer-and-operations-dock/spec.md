@@ -78,3 +78,20 @@ Provide a unified, modern desktop workstation for viewing, navigating, annotatin
   - Retains a chronological list of recent operations executed during the desktop session.
   - "Export Workflow as Pipeline": Allows exporting multi-step user actions (e.g. *Decrypt -> Extract Pages -> Watermark*) as an executable Bash script or a multi-step MCP execution plan.
 
+### 7. Interactive Page Organizer & Thumbnail Ergonomics (`PdfThumbnails.svelte`)
+To ensure effortless page manipulation directly in the document viewport without opening separate menus:
+- **Visual Drag & Drop Reordering**:
+  - Drag grip indicator (`⋮⋮`) with `cursor: grab` / `cursor: grabbing`.
+  - Blue animated insertion drop-line showing exact target position before release.
+- **Persistent Quick-Action Controls**:
+  - High-contrast action buttons on every page thumbnail:
+    - Rotate single page (`🔄` 90° clockwise in-place).
+    - Delete single page (`🗑️` with instant viewer refresh and undo toast).
+- **Right-Click Context Menu**:
+  - Right-clicking any page thumbnail opens a contextual action menu:
+    - `Rotate Clockwise (90°)`
+    - `Rotate Counter-Clockwise (270°)`
+    - `Rotate 180°`
+    - `Duplicate Page`
+    - `Delete Page`
+    - `Extract This Page As New Document`
