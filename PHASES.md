@@ -837,7 +837,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge | ⏳ In-Progress (Jules Session 14466591561004330997) — Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
+| 4.8.1 | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge ✅ | Merged (Session 14466591561004330997, PR #135) — Complete `paperpilot-wasm` crate with `wasm-bindgen`, in-memory `Uint8Array` buffer adapters for 6 core operations (`merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark`), and TypeScript Web Worker bridge (`pdfWorker.ts`) |
 | 4.8.2 | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
 | 4.8.3 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
 

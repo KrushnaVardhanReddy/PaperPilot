@@ -69,6 +69,7 @@ MANDATORY RULES — VIOLATION = REJECTED PR:
 4. NEVER hardcode secrets, API keys, or local paths — always read from environment variables.
 5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
 6. When asking any questions, YOU MUST prefix your question with the Task Number and Title (e.g., "[P2_T1: MCP Foundation]").
+7. WIKI & DOCS REQUIREMENT: For any newly introduced feature, module, engine, or architecture component, you MUST create or update the relevant documentation in the `wiki/` directory (e.g. `wiki/XX-Module-Name.md`) reflecting the new architecture, usage, and key components.
 
 Project: PaperPilot
 Tech stack:
