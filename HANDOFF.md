@@ -75,6 +75,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
 | **4.8.1** | `Cargo.toml`, `paperpilot-wasm/*`, `apps/desktop/src/lib/wasm/*`, `reports/WASM_CLIENT_ENGINE_REPORT.md` | [Session 14466591561004330997](https://jules.google.com/session/14466591561004330997) | `main` | `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge |
+| **4.1.8** | `paperpilot-nlp/src/rag.rs`, `src-tauri/src/lib.rs`, `PdfChatPanel.svelte`, `reports/DOCUMENTATION_RAG_REPORT.md` | [Session 6788529762952435381](https://jules.google.com/session/6788529762952435381) | `main` | Embedded Documentation RAG (`sqlite-vec`), instant factual answers & snippet copying |
 
 ---
 
