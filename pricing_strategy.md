@@ -126,6 +126,17 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
   - **$0.01 per document run** for 1,001–10,000 runs.
   - **$0.007 per run** for 10,001–100,000 runs.
   - **$0.005 per run** for 100,001–1,000,000 runs.
+* **Dual-Tier Hybrid Cloud Execution Model:**
+  - **Tier A (Fast Edge): Cloudflare Workers (Rust Wasm)**:
+    - Used for 90%+ of standard operations (merge, split, rotate, compress, stamp, encrypt, metadata).
+    - **Physical Zero-Disk Guarantee**: Cloudflare V8 Isolates do not have hard drive access; files are processed in-memory and immediately destroyed.
+    - Sub-10ms latency worldwide across 300+ edge locations with 0ms cold starts.
+  - **Tier B (Heavy Compute): Ephemeral Kubernetes Sandbox**:
+    - Used for resource-heavy workloads (scanned document OCR, multi-hundred-megabyte files, and chained batch pipelines).
+    - Spawns isolated Pods on-demand (`emptyDir: { medium: "Memory" }` RAM mount) that self-destruct upon completion.
+* **Smart Hybrid Pricing**:
+  - Edge Operations (Tier A): Billed at low-cost tier (**$0.005–$0.01/run**).
+  - Heavy OCR & Bulk Compute (Tier B): Billed transparently with compute add-on (**$0.02–$0.03/run**).
 * **Features:**
   - **Hosted Cloud MCP Server (SSE & HTTP Gateway)**: Plug directly into AI agents to perform real PDF transforms with natural language tools.
   - **REST API Endpoints**: Full parity with `paperpilot-gateway` (`POST /api/v1/pdf/merge`, `POST /api/v1/pdf/compress`, etc.).

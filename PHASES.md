@@ -922,16 +922,19 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 5.7 — Pure Rust WebAssembly (WASM) Engine & Zero-Upload Web App `[PARALLEL with 5.6]`
+### 5.7 — Two-Tier Hybrid Cloud Engine: Edge Wasm (Cloudflare Workers) & Ephemeral Sandboxes (Kubernetes) `[PARALLEL with 5.6]`
 
-> Beats Adobe Acrobat Web: 100% client-side in-browser PDF manipulation without uploading files to Adobe/cloud servers.
+> Delivers the high-margin, dual-tier Cloud SaaS processing architecture: lightweight tasks execute at the edge with zero disk footprint via Cloudflare Workers (Wasm), while heavy compute pipelines run on-demand in isolated ephemeral Kubernetes Pods.
 
 | # | Task | Notes |
 |---|---|---|
-| 5.7.1 | `paperpilot-wasm` Crate | Compile core `paperpilot-pdf` algorithms to `wasm32-unknown-unknown` via `wasm-bindgen` |
+| 5.7.1 | `paperpilot-wasm` Crate & Bindings | Compile core `paperpilot-pdf` algorithms to `wasm32-unknown-unknown` / `wasm32-wasi` via `wasm-bindgen` |
 | 5.7.2 | Client-Side In-Browser Operations | Run Merge, Split, Rotate, Compress, Encrypt, and Redact 100% locally in browser memory without network requests |
 | 5.7.3 | Web Worker Threading (`wasm-bindgen-rayon`) | Multi-threaded page processing in web browsers using Web Workers and SharedArrayBuffer |
-| 5.7.4 | WebAssembly Playground Web App | Zero-install web demo that processes PDFs in under 10MB memory, proving complete privacy to prospective users |
+| 5.7.4 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk, $0.005/run) |
+| 5.7.5 | Ephemeral Kubernetes Sandbox Worker | On-demand K8s Job / KEDA runner (`emptyDir: { medium: "Memory" }`) for heavy OCR, multi-gigabyte documents, and complex pipelines that auto-terminates and wipes RAM upon job completion |
+| 5.7.6 | Smart Hybrid Dispatch Router | Gateway router that routes light operations (merge, split, rotate, stamp) to Cloudflare Workers and routes heavy compute (OCR, large rendering) to Ephemeral K8s Pods |
+| 5.7.7 | Zero-Knowledge Audit & Ephemeral Proof | Cryptographic verification asserting zero files touch persistent storage and in-memory streams are purged upon delivery |
 
 ## Phase 6 — Enterprise
 
