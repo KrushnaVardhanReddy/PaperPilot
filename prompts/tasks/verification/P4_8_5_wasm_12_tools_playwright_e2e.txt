@@ -1,0 +1,165 @@
+# Task: Phase 4.8.5 — WASM 12 Tools Playwright E2E Suite & Verification Scorecard
+# Base Branch: main
+# Spec: specs/016-wasm-web-e2e-playwright/spec.md
+
+## Objective
+Create an automated, data-driven Playwright E2E test suite in `apps/web/tests/e2e_wasm_12_tools.spec.ts` that systematically verifies all 12 pure-Rust WASM PDF operations running inside a real browser environment via the Web Worker bridge.
+Generate a comprehensive verification scorecard report at `reports/WASM_12_TOOLS_E2E_SCORECARD.md` and documentation at `wiki/08-Wasm-E2E-Testing.md`.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/web/playwright.config.ts
+apps/web/tests/e2e_wasm_12_tools.spec.ts
+reports/WASM_12_TOOLS_E2E_SCORECARD.md
+wiki/08-Wasm-E2E-Testing.md
+```
+DO NOT modify any Rust crates, backend files, or production UI components in `apps/desktop` or `apps/web`.
+
+---
+
+## 1. Environment & Playwright Configuration
+
+Create `apps/web/playwright.config.ts` using the project's Playwright standards:
+```typescript
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  fullyParallel: false,
+  forbidOnly: !!process.env.CI,
+  retries: 0,
+  workers: 1,
+  reporter: 'list',
+  use: {
+    baseURL: 'http://localhost:5173',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: {
+    command: 'npm run dev -- --host 127.0.0.1 --port 5173',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
+});
+```
+
+---
+
+## 2. Implementation Details: `apps/web/tests/e2e_wasm_12_tools.spec.ts`
+
+### Test Architecture
+1. **Fixture Files**:
+   Read test fixtures from `../../tests/e2e_fixtures/` using `fs.readFileSync`:
+   - `single_page.pdf` (539 bytes)
+   - `multi_page.pdf` (1,409 bytes, 2 pages)
+
+2. **Real Web Worker Execution**:
+   In each test step, navigate to `page.goto('/')`, and execute the operation directly through `(window as any).wasmPdfClient` inside the browser context, or test the UI workflow.
+   To make `wasmPdfClient` easily accessible during browser testing, ensure the test script exposes or tests:
+   ```typescript
+   // Direct browser execution helper
+   const resultBase64 = await page.evaluate(async ({ opName, payload }) => {
+     // Import the wasm client or use window instance
+     const { wasmPdfClient } = await import('/src/lib/wasm/index.ts');
+     let res: Uint8Array | Uint8Array[];
+     if (opName === 'merge') {
+       res = await wasmPdfClient.merge(payload.files.map((b: string) => Uint8Array.from(atob(b), c => c.charCodeAt(0))));
+     } else if (opName === 'split') {
+       res = await wasmPdfClient.split(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.ranges);
+     } else if (opName === 'rotate') {
+       res = await wasmPdfClient.rotate(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.angle, payload.pages);
+     } else if (opName === 'compress') {
+       res = await wasmPdfClient.compress(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)));
+     } else if (opName === 'encrypt') {
+       res = await wasmPdfClient.encrypt(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.password);
+     } else if (opName === 'watermark') {
+       res = await wasmPdfClient.watermark(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.text);
+     } else if (opName === 'delete_pages') {
+       res = await wasmPdfClient.delete_pages(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.pages);
+     } else if (opName === 'extract_pages') {
+       res = await wasmPdfClient.extract_pages(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.pages);
+     } else if (opName === 'reorder_pages') {
+       res = await wasmPdfClient.reorder_pages(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.new_order);
+     } else if (opName === 'crop') {
+       res = await wasmPdfClient.crop(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.left, payload.bottom, payload.right, payload.top);
+     } else if (opName === 'flatten') {
+       res = await wasmPdfClient.flatten(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)));
+     } else if (opName === 'set_metadata') {
+       res = await wasmPdfClient.set_metadata(Uint8Array.from(atob(payload.file), c => c.charCodeAt(0)), payload.title, payload.author, payload.subject, payload.keywords);
+     } else {
+       throw new Error(`Unsupported tool: ${opName}`);
+     }
+     
+     // Return byte length and header check
+     const bytes = Array.isArray(res) ? res[0] : res;
+     const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46; // %PDF
+     return { length: bytes.length, isPdf };
+   }, { opName, payload });
+   ```
+
+3. **Latency Benchmarking**:
+   Wrap each operation call with `performance.now()` before and after to capture the execution duration in milliseconds.
+
+4. **12 Operations to Test**:
+   - `merge`: Pass 2 file buffers (`single_page.pdf` and `multi_page.pdf`). Output must be valid PDF > input size.
+   - `split`: Pass `multi_page.pdf`, ranges `"1"`. Output must be array of 1 valid PDF.
+   - `rotate`: Pass `single_page.pdf`, angle `90`, pages `"all"`. Output must be valid PDF.
+   - `compress`: Pass `multi_page.pdf`. Output must be valid PDF.
+   - `encrypt`: Pass `single_page.pdf`, password `"secret123"`. Output must be valid PDF.
+   - `watermark`: Pass `single_page.pdf`, text `"WASM TEST"`. Output must be valid PDF.
+   - `delete_pages`: Pass `multi_page.pdf`, pages `"2"`. Output must be valid PDF.
+   - `extract_pages`: Pass `multi_page.pdf`, pages `"1"`. Output must be valid PDF.
+   - `reorder_pages`: Pass `multi_page.pdf`, new_order `[2, 1]`. Output must be valid PDF.
+   - `crop`: Pass `single_page.pdf`, left 10, bottom 10, right 500, top 700. Output must be valid PDF.
+   - `flatten`: Pass `single_page.pdf`. Output must be valid PDF.
+   - `set_metadata`: Pass `single_page.pdf`, title `"E2E Title"`, author `"Jules"`. Output must be valid PDF.
+
+---
+
+## 3. Scorecard Report: `reports/WASM_12_TOOLS_E2E_SCORECARD.md`
+
+The test must generate `reports/WASM_12_TOOLS_E2E_SCORECARD.md` on completion (similar to `UI_44_OPERATIONS_E2E_SCORECARD.md`).
+The report MUST contain:
+```markdown
+# WASM 12 Tools E2E Scorecard
+
+## Executive Summary
+- **Total Tested:** 12
+- **Passed:** 12
+- **Failed:** 0
+- **Environment:** Headless Chromium + WebAssembly (`wasm32-unknown-unknown`) + Web Worker
+
+## Operations Status
+
+| Tool Name | Status | Web Worker & WASM Latency (ms) | Output Size (bytes) | Verification Notes |
+|-----------|--------|--------------------------------|---------------------|-------------------|
+| `merge` | ✅ PASS | ... | ... | Valid %PDF- header |
+...
+```
+
+---
+
+## 4. Documentation: `wiki/08-Wasm-E2E-Testing.md`
+Create documentation explaining:
+- The Playwright in-browser WASM verification harness.
+- How Web Worker communication is tested without blocking the main event loop.
+- Instructions to run the tests locally and in CI.
+
+---
+
+## 5. Verification Commands
+Before submitting the PR, verify:
+```bash
+cd apps/web
+npx playwright test tests/e2e_wasm_12_tools.spec.ts
+```
+The command must exit 0 and produce `reports/WASM_12_TOOLS_E2E_SCORECARD.md` with 12/12 PASS.
