@@ -60,6 +60,7 @@
         }
 
         // Output file
+        const defaultOutput = args.input ? args.input.replace(/\.pdf$/i, `_${plan.intent.toLowerCase()}.pdf`) : 'output.pdf';
         if (outputPath) {
             // Check if it's a dir target tool
             if (['Burst', 'ExtractImages'].includes(plan.intent)) {
@@ -72,9 +73,11 @@
         } else {
             // Default mappings if empty path string
             if (['Burst', 'ExtractImages'].includes(plan.intent)) {
-                args.output_dir = 'output_dir';
+                args.output_dir = args.input ? args.input.replace(/\.pdf$/i, '_burst') : 'output_dir';
             } else if (plan.intent === 'Split') {
-                args.output_pattern = 'output_%d.pdf';
+                args.output_pattern = args.input ? args.input.replace(/\.pdf$/i, '_p%d.pdf') : 'output_%d.pdf';
+            } else {
+                args.output = defaultOutput;
             }
         }
 
