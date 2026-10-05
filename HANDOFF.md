@@ -77,11 +77,10 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
-## 🚧 Active Jules Sessions (Phase 4 In-Flight)
-
-All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
-
-*No active Jules sessions currently in-flight. Task 4.8.5 merged cleanly via PR #139!*
+| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
+|---|---|---|---|---|
+| **4.8.3** | `apps/edge/*`, `wiki/10-Cloudflare-Edge-Service.md`, `reports/EDGE_MICROSERVICE_REPORT.md` | [Session 803293663318829942](https://jules.google.com/session/803293663318829942) | `main` | Cloudflare Workers Edge Microservice (0ms cold start, sub-10ms REST edge endpoints) |
+| **5.2.1** | `paperpilot-pdf/Cargo.toml`, `paperpilot-pdf/src/operations/ocr.rs`, `wiki/09-Pure-Rust-OCR.md`, `reports/OCR_PURE_RUST_REPORT.md` | [Session 10581530668658369493](https://jules.google.com/session/10581530668658369493) | `main` | Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract C++) |
 
 ---
 
