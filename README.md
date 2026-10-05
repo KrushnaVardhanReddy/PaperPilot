@@ -134,8 +134,7 @@ Check out [`PHASES.md`](./PHASES.md) and [`HANDOFF.md`](./HANDOFF.md) for detail
   - Embedded TinyBERT Intent Classifier (Task 4.0.5): 🚧 In-Progress (Jules)
   - Multi-Turn Document Chat Drawer (`PdfChatPanel.svelte`, Task 4.3.7): 🚧 In-Progress (Jules)
 
----
+## 📄 License & Open Core Model
 
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE) for details.
+- **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 44 PDF operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, and the open-source Desktop App.
+- **Enterprise Edition (Commercial):** Hosted in a separate private repository for enterprise-grade compliance: SAML 2.0/OIDC SSO, SCIM 2.0 provisioning, multi-tenant RBAC, cryptographic audit logs, DLP policy enforcement, and dedicated SLA support. See [LICENSE](LICENSE) for details.
