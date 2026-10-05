@@ -1,0 +1,84 @@
+# Task: Phase 4.0.5 — Embedded ONNX Intent Classifier (TinyBERT-4L-312D)
+
+## Objective
+Implement Task 4.0.5: Integrate the embedded ONNX intent classifier into `paperpilot-nlp` using `TinyBERT-4L-312D` (INT8 ONNX) so that `OfflineNlpResolver` can semantically classify user queries using neural inference as Layer 2 when Layer 1 rules need semantic intent routing.
+
+**Branch**: `feat/nlp-embedded-onnx-tinybert`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+paperpilot-nlp/Cargo.toml
+paperpilot-nlp/src/layer2.rs (New or updated ONNX classifier module)
+paperpilot-nlp/src/lib.rs
+paperpilot-nlp/src/resolver.rs
+tools/train-nlp/train.py
+reports/NLP_ONNX_VERIFIED.md
+```
+DO NOT modify any other crates or desktop frontend files.
+
+---
+
+## Technical Architecture & Requirements
+
+### 1. Update Training Script for `TinyBERT-4L-312D`
+In `tools/train-nlp/train.py`:
+- Update `model_name = "huawei-noah/TinyBERT_General_4L_312D"` (or `"prajjwal1/bert-tiny"`).
+- After training, export the model to INT8 ONNX (`model_int8.onnx`).
+- Compress the ONNX model using `zstd` to produce `tools/train-nlp/output/tinybert_int8.onnx.zst` (~6–7MB).
+
+### 2. Rust In-Memory Inference in `paperpilot-nlp`
+In `paperpilot-nlp/Cargo.toml`:
+Add:
+```toml
+ort = { version = "2.0.0-rc.9", default-features = false, features = ["copy-dylibs"] }
+# or appropriate version of ort / tokenizers
+tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
+zstd = "0.13"
+```
+*(Note: If building ONNX runtime in headless CI poses download constraints, implement a clean feature flag `#[cfg(feature = "onnx")]` with an in-memory embedded fallback model or mock tensor session so tests run deterministically in any offline environment!)*
+
+### 3. Layer 2 Implementation (`paperpilot-nlp/src/layer2.rs`)
+Implement `OnnxClassifier`:
+```rust
+pub struct OnnxClassifier {
+    // Model session and tokenizer
+}
+
+impl OnnxClassifier {
+    pub fn new() -> Result<Self, NlpError> {
+        // Loads model bytes embedded via include_bytes! or decompressed via zstd
+    }
+
+    pub fn predict(&self, query: &str) -> Option<Intent> {
+        // Tokenize query -> run session -> argmax output logits -> Intent
+    }
+}
+```
+
+### 4. Wire Layer 2 into `OfflineNlpResolver` (`resolver.rs`)
+In `OfflineNlpResolver::resolve(&self, query: &str)`:
+1. Try Layer 1 `RuleEngine::predict(query)`.
+2. If Layer 1 returns `None`, fall back to Layer 2 `OnnxClassifier::predict(query)`.
+3. If both fail, return `NlpError::AmbiguousIntent`.
+
+### 5. Verification & Tests
+Write unit tests covering:
+- Semantic classification of non-keyword phrasings (e.g., "squish this document" -> `Intent::Compress`, "chop pages" -> `Intent::Split`).
+- Execution benchmarks confirming <5ms latency on CPU.
+- Generate `reports/NLP_ONNX_VERIFIED.md` documenting test results and model size.
+
+---
+
+## Verification Commands
+```bash
+cargo check -p paperpilot-nlp
+cargo test -p paperpilot-nlp
+```
+
+## Commit Message
+```
+feat(nlp): implement embedded TinyBERT INT8 ONNX intent classifier as Layer 2
+```
