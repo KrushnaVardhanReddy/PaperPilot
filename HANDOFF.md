@@ -71,7 +71,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **4.3.12** | `tests/e2e_ai_chat_real_pipeline.spec.ts`, `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`, `reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md` | [Session 2374703582441728568](https://jules.google.com/session/2374703582441728568) | `main` | Real-Pipeline Unmocked E2E AI Chat Test Suite across all 44 operations |
+| **4.3.12** | `tests/e2e_ai_chat_real_pipeline.spec.ts`, `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`, `reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md` | [Session 15044683855531755436](https://jules.google.com/session/15044683855531755436) | `main` | Master E2E AI Chat Pipeline Test Suite across all 44 tools (realistic IPC bridge) |
 | **4.F.19** | `apps/desktop/src/lib/components/PdfThumbnails.svelte`, `apps/desktop/src/routes/+page.svelte`, `reports/UI_THUMBNAIL_ORGANIZER_REPORT.md` | [Session 5753728026560742170](https://jules.google.com/session/5753728026560742170) | `main` | Interactive Thumbnail Page Organizer, Drag Drop Insertion, and Right-Click Context Menu |
 
 ---
