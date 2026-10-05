@@ -74,7 +74,7 @@
     // Content & OCR
     { id: 'search', title: 'Search Text', description: 'Search for text across the document', icon: '🔍', category: 'ai', tags: ['search', 'find', 'text'] },
     { id: 'bates', title: 'Bates Numbering', description: 'Apply Bates stamps to pages', icon: '🔢', category: 'edit', tags: ['bates', 'stamp', 'legal'] },
-    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', tags: ['header', 'footer', 'margin'] },
+    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', tags: ['header', 'footer', 'header/footer', 'margin'] },
     { id: 'render', title: 'Render Page', description: 'Render page to image format', icon: '🖼️', category: 'convert', tags: ['render', 'image', 'png'] },
 
     // Forms & Optimization
@@ -87,7 +87,7 @@
     // Conversions & Intelligence
     { id: 'pdf_to_pptx', title: 'PDF to PowerPoint', description: 'Export document as PPTX presentation', icon: '📊', category: 'convert', tags: ['powerpoint', 'pptx', 'presentation'] },
     { id: 'pdf_to_pdf_a', title: 'Convert to PDF/A', description: 'Archive-ready PDF format conversion', icon: '🏛️', category: 'convert', tags: ['archive', 'pdfa', 'long-term'] },
-    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', tags: ['classify', 'type', 'ai'] },
+    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', tags: ['classify', 'type', 'classify pdf', 'ai'] },
     { id: 'annotate', title: 'Add Annotations', description: 'Programmatically add annotations', icon: '✏️', category: 'edit', tags: ['annotate', 'draw', 'markup'] },
     { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', tags: ['csv', 'excel', 'convert'] }
   ];
