@@ -460,7 +460,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
 | 4.0.3 | Intent vocabulary definition ✅ | Merged (Session 7343236324684096962) |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine ✅ | Merged (Session 283097227045968085) |
-| 4.0.5 | Layer 2 — Embedded ONNX Intent & Entity Classifier | 🚧 In-Progress (Session `11919801443565645570`) — Architecture: `TinyBERT-4L-312D` INT8 ONNX compressed with `zstd` down to ~7MB, embedded directly inside the binary via `include_bytes!` and loaded into `ort` in-memory (<2ms CPU latency). Zero external asset dependencies. |
+| 4.0.5 | Layer 2 — Embedded ONNX Intent & Entity Classifier | 🚧 In-Progress (Session `770271872369515055` / `11919801443565645570`) — Architecture: `TinyBERT-4L-312D` INT8 ONNX compressed with `zstd` down to ~7MB, embedded directly inside the binary via `include_bytes!` and loaded into `ort` in-memory (<2ms CPU latency). Zero external asset dependencies. |
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver ✅ | Merged (Session 14288794462066623856) |
 | 4.0.8 | Offline NLP → `OperationPlan` output ✅ | Merged (Session 14288794462066623856) |
