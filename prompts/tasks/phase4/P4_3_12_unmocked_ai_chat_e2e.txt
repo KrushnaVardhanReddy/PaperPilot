@@ -12,6 +12,7 @@ Implement Task 4.3.12: Create an end-to-end integration test suite in `apps/desk
 ```
 apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts
 reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md
+reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md
 ```
 DO NOT modify any backend Rust crates or production Svelte components.
 
@@ -163,8 +164,15 @@ pnpm check
 pnpm exec playwright test tests/e2e_ai_chat_real_pipeline.spec.ts
 ```
 
-## Verification Report
-Generate `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md` documenting:
-- Test execution summary (all scenarios passing).
-- Verified selectors and components tested.
-- Output files verified on disk.
+## Verification Reports
+Generate the following reports in `reports/`:
+
+1. `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`:
+   - Comprehensive test execution summary across Scenarios 1–4.
+   - Verification of zero mocking, live IPC execution, and output file verification on disk.
+   - Latency metrics from prompt submission to `.result-card` render.
+
+2. `reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md`:
+   - A dedicated 44-row scorecard table mirroring `reports/UI_44_OPERATIONS_E2E_SCORECARD.md`:
+   - Columns: `| Tool Name | Intent | Natural Language Prompt | Status (✅ PASS / ❌ FAIL) | Latency (ms) | Notes |`
+   - Covers all 44 PDF operations executed through the AI chat panel with 100% PASS rate.
