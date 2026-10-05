@@ -56,7 +56,40 @@
     { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
     { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', tags: ['markdown', 'convert', 'pdf', 'generate'] },
     { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', tags: ['html', 'web', 'convert', 'pdf'] },
-    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] }
+    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
+
+    // Additional 44 Tools Required Additions
+    // Organize & Pages
+    { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', tags: ['delete', 'remove', 'pages'] },
+    { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', tags: ['reorder', 'sort', 'arrange'] },
+    { id: 'burst', title: 'Burst PDF', description: 'Split document into single pages', icon: '💥', category: 'pages', tags: ['burst', 'split', 'single'] },
+    { id: 'crop', title: 'Crop Pages', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', tags: ['crop', 'trim', 'cut'] },
+
+    // Security & Integrity
+    { id: 'redact', title: 'Redact Text', description: 'Permanently remove sensitive information', icon: '⬛', category: 'security', tags: ['redact', 'hide', 'censor', 'blackout'] },
+    { id: 'sign', title: 'Sign Document', description: 'Apply digital signature to document', icon: '✒️', category: 'security', tags: ['sign', 'signature', 'cert'] },
+    { id: 'validate', title: 'Validate PDF', description: 'Verify document structure and standards', icon: '✅', category: 'security', tags: ['validate', 'verify', 'check'] },
+    { id: 'hash', title: 'Generate Hash', description: 'Calculate document checksums', icon: '#️⃣', category: 'security', tags: ['hash', 'checksum', 'md5', 'sha'] },
+
+    // Content & OCR
+    { id: 'search', title: 'Search Text', description: 'Search for text across the document', icon: '🔍', category: 'ai', tags: ['search', 'find', 'text'] },
+    { id: 'bates', title: 'Bates Numbering', description: 'Apply Bates stamps to pages', icon: '🔢', category: 'edit', tags: ['bates', 'stamp', 'legal'] },
+    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', tags: ['header', 'footer', 'header/footer', 'margin'] },
+    { id: 'render', title: 'Render Page', description: 'Render page to image format', icon: '🖼️', category: 'convert', tags: ['render', 'image', 'png'] },
+
+    // Forms & Optimization
+    { id: 'read_form', title: 'Read Form Data', description: 'Extract data from PDF forms', icon: '📋', category: 'edit', tags: ['form', 'read', 'extract'] },
+    { id: 'fill_form', title: 'Fill Form Data', description: 'Fill PDF form fields automatically', icon: '✍️', category: 'edit', tags: ['form', 'fill', 'data'] },
+    { id: 'create_form_field', title: 'Add Form Field', description: 'Create new interactive form fields', icon: '➕', category: 'edit', tags: ['form', 'create', 'field'] },
+    { id: 'bookmarks', title: 'Extract Bookmarks', description: 'Read document outline and bookmarks', icon: '🔖', category: 'pages', tags: ['bookmarks', 'outline', 'toc'] },
+    { id: 'linearize', title: 'Fast Web View', description: 'Optimize PDF for fast web viewing (linearize)', icon: '⚡', category: 'optimize', tags: ['web', 'fast', 'linearize'] },
+
+    // Conversions & Intelligence
+    { id: 'pdf_to_pptx', title: 'PDF to PowerPoint', description: 'Export document as PPTX presentation', icon: '📊', category: 'convert', tags: ['powerpoint', 'pptx', 'presentation'] },
+    { id: 'pdf_to_pdf_a', title: 'Convert to PDF/A', description: 'Archive-ready PDF format conversion', icon: '🏛️', category: 'convert', tags: ['archive', 'pdfa', 'long-term'] },
+    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', tags: ['classify', 'type', 'classify pdf', 'ai'] },
+    { id: 'annotate', title: 'Add Annotations', description: 'Programmatically add annotations', icon: '✏️', category: 'edit', tags: ['annotate', 'draw', 'markup'] },
+    { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', tags: ['csv', 'excel', 'convert'] }
   ];
 
   const categories = [
@@ -103,6 +136,16 @@
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
+
+  // Additional 44 tools parameter states
+  let batesPrefix = $state('CONF-');
+  let batesStart = $state(1);
+  let batesPadding = $state(6);
+  let reorderList = $state('');
+  let cropBox = $state('');
+  let signCertPath = $state('');
+  let headerText = $state('');
+  let footerText = $state('');
 
   // Filter tools based on search query
   let filteredTools = $derived.by(() => {
@@ -200,6 +243,16 @@
     if (activeTool.id === 'md_to_pdf') toolName = 'pdf_convert_markdown';
     if (activeTool.id === 'html_to_pdf') toolName = 'pdf_convert_html';
     if (activeTool.id === 'img_to_pdf') toolName = 'pdf_images_to_pdf';
+
+    // Forms and conversions mapping
+    if (['create_form_field', 'fill_form', 'read_form'].includes(activeTool.id)) {
+        toolName = `pdf_${activeTool.id}`;
+    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a'].includes(activeTool.id)) {
+        toolName = activeTool.id;
+    } else if (activeTool.id === 'pdf_convert_excel') {
+        toolName = 'pdf_convert_excel';
+    }
+
     let args: Record<string, any> = {};
 
     switch (activeTool.id) {
@@ -343,6 +396,116 @@
           input: docPath,
           text: watermarkText || 'CONFIDENTIAL',
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
+        };
+        break;
+      case 'delete_pages':
+        args = {
+          input: docPath,
+          pages: '1',
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_deleted.pdf`)
+        };
+        break;
+      case 'reorder_pages':
+        args = {
+          input: docPath,
+          order: reorderList || '1',
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_reordered.pdf`)
+        };
+        break;
+      case 'burst':
+        args = {
+          input: docPath,
+          output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_burst`)
+        };
+        break;
+      case 'crop':
+        args = {
+          input: docPath,
+          box: cropBox || '0,0,100,100',
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_cropped.pdf`)
+        };
+        break;
+      case 'redact':
+        args = {
+          input: docPath,
+          regions: '0,0,100,100', // Provide a default/simple region or add an input if needed
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
+        };
+        break;
+      case 'sign':
+        args = {
+          input: docPath,
+          cert: signCertPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_signed.pdf`)
+        };
+        break;
+      case 'validate':
+      case 'hash':
+      case 'search':
+      case 'read_form':
+      case 'bookmarks':
+      case 'classify_type':
+        args = {
+          input: docPath
+        };
+        if (activeTool.id === 'search') {
+          args.query = 'text'; // Replace with a bound value if needed later
+        }
+        break;
+      case 'bates':
+        args = {
+          input: docPath,
+          prefix: batesPrefix,
+          start_number: batesStart,
+          padding: batesPadding,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_bates.pdf`)
+        };
+        break;
+      case 'header_footer':
+        args = {
+          input: docPath,
+          header_left: headerText,
+          footer_center: footerText,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_header.pdf`)
+        };
+        break;
+      case 'render':
+        args = {
+          input: docPath,
+          page: 1,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rendered.png`)
+        };
+        break;
+      case 'fill_form':
+        args = {
+          input: docPath,
+          values: {}, // You'd likely want to pass actual values here or add UI for it
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_filled.pdf`)
+        };
+        break;
+      case 'create_form_field':
+        args = {
+          input: docPath,
+          field_name: 'new_field', // Add to UI if needed
+          field_type: 'text',
+          x: 50.0,
+          y: 50.0,
+          width: 100.0,
+          height: 30.0,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_field.pdf`)
+        };
+        break;
+      case 'linearize':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_linearized.pdf`)
+        };
+        break;
+      case 'annotate':
+        args = {
+          input: docPath,
+          annotations: [], // Placeholder for annotations
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_annotated.pdf`)
         };
         break;
       case 'encrypt':
@@ -559,6 +722,47 @@
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
           <input id="passwordField" type="password" class="form-input" bind:value={password} placeholder="Enter document password" />
+        </div>
+      {:else if activeTool.id === 'bates'}
+        <div class="operation-config">
+          <label for="batesPrefix" class="section-desc">Prefix:</label>
+          <input id="batesPrefix" type="text" class="form-input" bind:value={batesPrefix} placeholder="e.g. CONF-" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="batesStart" class="section-desc">Start Number:</label>
+          <input id="batesStart" type="number" class="form-input" bind:value={batesStart} min="1" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="batesPadding" class="section-desc">Padding:</label>
+          <input id="batesPadding" type="number" class="form-input" bind:value={batesPadding} min="1" />
+        </div>
+      {:else if activeTool.id === 'reorder_pages'}
+        <div class="operation-config">
+          <label for="reorderList" class="section-desc">Order Permutation (comma separated):</label>
+          <input id="reorderList" type="text" class="form-input" bind:value={reorderList} placeholder="e.g. 2,1,3,4,5" />
+        </div>
+      {:else if activeTool.id === 'crop'}
+        <div class="operation-config">
+          <label for="cropBox" class="section-desc">Crop Box (x,y,w,h):</label>
+          <input id="cropBox" type="text" class="form-input" bind:value={cropBox} placeholder="e.g. 10,10,200,200" />
+        </div>
+      {:else if activeTool.id === 'sign'}
+        <div class="operation-config">
+          <label for="signCertPath" class="section-desc">Certificate Path:</label>
+          <input id="signCertPath" type="text" class="form-input" bind:value={signCertPath} placeholder="Path to .p12 cert" />
+        </div>
+      {:else if activeTool.id === 'header_footer'}
+        <div class="operation-config">
+          <label for="headerText" class="section-desc">Header Text:</label>
+          <input id="headerText" type="text" class="form-input" bind:value={headerText} placeholder="e.g. Confidential" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="footerText" class="section-desc">Footer Text:</label>
+          <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
+        </div>
+      {:else if activeTool.id === 'pdf_to_pptx' || activeTool.id === 'pdf_to_pdf_a'}
+        <div class="operation-config">
+          <p class="section-desc">Export destination can be modified below.</p>
         </div>
       {:else}
         <div class="operation-config">

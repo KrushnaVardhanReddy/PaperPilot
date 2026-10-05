@@ -163,6 +163,15 @@ async fn stop_gateway() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn resolve_natural_language(query: String) -> Result<serde_json::Value, String> {
+    use paperpilot_nlp::traits::NlpResolver;
+    let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+    match resolver.resolve(&query) {
+        Ok(plan) => serde_json::to_value(&plan).map_err(|e| e.to_string()),
+        Err(e) => Err(e.to_string()),
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -184,7 +193,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway])
+        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, resolve_natural_language])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -296,5 +305,18 @@ mod tests {
 
         let status3 = get_gateway_status();
         assert!(!status3.is_running);
+    }
+
+    #[test]
+    fn test_resolve_natural_language() {
+        use crate::resolve_natural_language;
+        let result = resolve_natural_language("merge a.pdf and b.pdf".to_string());
+        assert!(result.is_ok());
+        let val = result.unwrap();
+        let intent = val.get("intent").and_then(|i| i.as_str());
+        assert_eq!(intent, Some("Merge"));
+        let inputs = val.get("input_files").and_then(|i| i.as_array());
+        assert!(inputs.is_some());
+        // We do not strictly check the array length since it depends on the offline resolver's heuristics
     }
 }

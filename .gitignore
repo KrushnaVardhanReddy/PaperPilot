@@ -14,6 +14,10 @@ tools/train-nlp/dataset.csv
 tools/train-nlp/results/
 tools/train-nlp/temp_model/
 tools/train-nlp/output/
+!tools/train-nlp/output/*.zst
+!tools/train-nlp/output/*.onnx.zst
+!tools/train-nlp/output/tokenizer.json
+!tools/train-nlp/output/config.json
 tools/train-nlp/logs/
 __pycache__/
 venv/

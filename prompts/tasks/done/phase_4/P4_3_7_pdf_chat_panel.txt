@@ -1,0 +1,80 @@
+# Task: Phase 4.3.7 — Multi-Turn Chat Panel Component (PdfChatPanel.svelte) & IPC Resolver Bridge
+
+## Objective
+Implement Task 4.3.7: Create `apps/desktop/src/lib/components/PdfChatPanel.svelte` as a collapsible side-drawer next to `PdfViewer.svelte` and connect it via Tauri IPC to the offline NLP resolver so users can type natural language commands, receive structured action cards, and execute operations.
+
+**Branch**: `feat/desktop-pdf-chat-panel`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/src/lib/components/PdfChatPanel.svelte
+apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte
+apps/desktop/src-tauri/Cargo.toml
+apps/desktop/src-tauri/src/lib.rs
+reports/UI_CHAT_PANEL_REPORT.md
+```
+DO NOT modify any other crates or core PDF operations.
+
+---
+
+## Required Implementation Details
+
+### 1. Tauri Backend IPC Command (`apps/desktop/src-tauri/src/lib.rs`)
+- Add `paperpilot-nlp = { path = "../../../paperpilot-nlp" }` to `src-tauri/Cargo.toml`.
+- Add an IPC command in `src-tauri/src/lib.rs`:
+```rust
+#[tauri::command]
+fn resolve_natural_language(query: String) -> Result<serde_json::Value, String> {
+    use paperpilot_nlp::traits::NlpResolver;
+    let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+    match resolver.resolve(&query) {
+        Ok(plan) => serde_json::to_value(&plan).map_err(|e| e.to_string()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+```
+- Register `resolve_natural_language` in `tauri::generate_handler![...]`.
+- In `paperpilot-nlp/src/traits.rs`, ensure `OperationPlan` derives `serde::Serialize, serde::Deserialize` if not already present.
+
+### 2. Multi-Turn Chat Drawer (`apps/desktop/src/lib/components/PdfChatPanel.svelte`)
+Create a responsive, beautiful Svelte 5 component with:
+- Message history list (User bubbles and AI response cards).
+- Quick suggestion chips:
+  - 🗜️ *"Compress this PDF"*
+  - ✂️ *"Split pages 1 to 5"*
+  - 🔄 *"Rotate 90 degrees"*
+  - 📖 *"Ask docs: how to sign?"*
+- Input prompt field with "Send" button and loading indicator ("Thinking...").
+- **Action Confirmation Card**:
+  - When the resolver returns a valid `OperationPlan`, render an interactive card displaying the detected intent, input files, and parameters.
+  - Include an **"Execute Action"** button that dispatches `invoke_mcp_tool` with the parsed arguments and triggers a success toast!
+
+### 3. Integrate into `ViewerRightPanel.svelte`
+In `apps/desktop/src/lib/components/layout/ViewerRightPanel.svelte`:
+- Add a 3rd tab: `Chat` / `AI Assistant` alongside `Annotations` and `Info`:
+  ```svelte
+  <button class="tab-btn" class:active={activeTab === 'chat'} onclick={() => activeTab = 'chat'}>
+    💬 AI Chat
+  </button>
+  ```
+- Render `<PdfChatPanel />` inside the panel when the `chat` tab is active.
+
+### 4. Output Report
+Generate a summary report at `reports/UI_CHAT_PANEL_REPORT.md` confirming component creation, tab integration, and IPC resolve command functionality.
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm check
+pnpm build
+```
+
+## Commit Message
+```
+feat(desktop): implement multi-turn PdfChatPanel component with offline nlp ipc bridge
+```

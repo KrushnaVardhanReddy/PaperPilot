@@ -1,0 +1,116 @@
+# Task: Phase 4.3.10 — Context-Aware NLP Resolution & Active Document Binding
+
+## Objective
+Enhance the natural language processing bridge and `paperpilot-nlp` resolver so that user instructions inside `PdfViewer` (e.g. "Split pages 1 to 2", "Rotate 90 degrees", "Compress this") implicitly bind to the open document without requiring the user to retype the filename. Also support resolving against multi-document workspace context.
+
+**Branch**: `feat/nlp-context-aware-resolution`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+paperpilot-nlp/src/traits.rs
+paperpilot-nlp/src/resolver.rs
+apps/desktop/src-tauri/src/lib.rs
+apps/desktop/src/lib/components/PdfChatPanel.svelte
+reports/CONTEXT_AWARE_NLP_REPORT.md
+```
+DO NOT modify any core PDF operations or unrelated UI panels.
+
+---
+
+## CRITICAL FIXES FOR THIS SESSION
+1. **Implicit Active Document Binding**: When `PdfChatPanel.svelte` invokes `resolve_natural_language`, it must pass `{ query: textToSend, active_document: currentDocPath, open_documents: allDocPaths }`.
+2. **Resolver Context Handling**: In `paperpilot-nlp`, if `entities.files` is empty and an intent requires an input file (e.g. `Split`, `Rotate`, `Compress`, `ExtractPages`, `Encrypt`), the resolver must automatically bind `active_document` into `input_files` rather than failing with `MissingParameters("requires at least one PDF file path")`.
+3. **Multi-turn Chat Test Verification**: Ensure queries like `"split pages 1 to 2"` return a valid `OperationPlan` containing the active document path and page range `1-2`.
+
+---
+
+### 1. Component Structure
+You will need to update the following files:
+1. **`paperpilot-nlp/src/traits.rs`** -> Add `ResolverContext` struct (`active_document: Option<String>`, `open_documents: Vec<String>`), and add `resolve_with_context` method to `NlpResolver` trait.
+2. **`paperpilot-nlp/src/resolver.rs`** -> Implement `resolve_with_context` in `OfflineNlpResolver` falling back to `active_document` when `entities.files.is_empty()`.
+3. **`apps/desktop/src-tauri/src/lib.rs`** -> Update `resolve_natural_language` Tauri command to accept optional `context: Option<paperpilot_nlp::traits::ResolverContext>`.
+4. **`apps/desktop/src/lib/components/PdfChatPanel.svelte`** -> Pass active document path from current document state into `resolve_natural_language`.
+5. **`reports/CONTEXT_AWARE_NLP_REPORT.md`** -> Verification report documenting the fix with unit and integration tests.
+
+---
+
+### 2. Implementation Details
+
+#### 1. Trait & Context Definition (`paperpilot-nlp/src/traits.rs`)
+```rust
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct ResolverContext {
+    pub active_document: Option<String>,
+    pub open_documents: Vec<String>,
+}
+
+pub trait NlpResolver: Send + Sync {
+    fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError> {
+        self.resolve_with_context(query, &ResolverContext::default())
+    }
+
+    fn resolve_with_context(&self, query: &str, context: &ResolverContext) -> Result<OperationPlan, NlpError>;
+}
+```
+
+#### 2. Offline Resolver Implementation (`paperpilot-nlp/src/resolver.rs`)
+In `OfflineNlpResolver::resolve_with_context`:
+- Extract entities as usual: `let mut entities = extract_entities(query);`.
+- If `entities.files.is_empty()`:
+  - If `let Some(active) = &context.active_document`:
+    - Push `active.clone()` to `entities.files`.
+  - Else if `context.open_documents.len() == 1`:
+    - Push `context.open_documents[0].clone()` to `entities.files`.
+- Run `check_completeness(&intent, &entities)?`.
+- Return `Ok(OperationPlan::new(intent, entities, query.to_string()))`.
+
+#### 3. Tauri IPC Command (`apps/desktop/src-tauri/src/lib.rs`)
+```rust
+#[tauri::command]
+fn resolve_natural_language(
+    query: String,
+    context: Option<paperpilot_nlp::traits::ResolverContext>,
+) -> Result<serde_json::Value, String> {
+    use paperpilot_nlp::traits::NlpResolver;
+    let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+    let ctx = context.unwrap_or_default();
+    match resolver.resolve_with_context(&query, &ctx) {
+        Ok(plan) => serde_json::to_value(&plan).map_err(|e| e.to_string()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+```
+
+#### 4. Frontend Binding (`apps/desktop/src/lib/components/PdfChatPanel.svelte`)
+- Obtain the active document path from `appState.selectedDocumentIndex` and `appState.documents[activeIndex]`.
+- In `handleSend`:
+```typescript
+const activeDoc = appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null;
+const activePath = activeDoc ? ((activeDoc as any)._localPath || activeDoc.name) : undefined;
+const openDocs = appState.documents.map(d => (d as any)._localPath || d.name);
+
+const plan = await invoke('resolve_natural_language', {
+    query: textToSend,
+    context: {
+        active_document: activePath,
+        open_documents: openDocs
+    }
+});
+```
+
+---
+
+## Verification Commands
+```bash
+cargo test -p paperpilot-nlp
+cargo test -p desktop
+cd apps/desktop && pnpm check && pnpm build
+```
+
+## Commit Message
+```
+feat(nlp): context-aware natural language resolution with implicit active document binding
+```

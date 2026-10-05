@@ -460,7 +460,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.0.2 | Define `NlpResolver` trait | `fn resolve(input: &str) -> OperationPlan` — the single abstraction all modes implement |
 | 4.0.3 | Intent vocabulary definition ✅ | Merged (Session 7343236324684096962) |
 | 4.0.4 | Layer 1 — Keyword & regex rule engine ✅ | Merged (Session 283097227045968085) |
-| 4.0.5 | Layer 2 — Embedded ONNX Intent & Entity Classifier | ⏳ Pending / Planned — Architecture: `TinyBERT-4L-312D` INT8 ONNX compressed with `zstd` down to ~7MB, embedded directly inside the binary via `include_bytes!` and loaded into `ort` in-memory (<2ms CPU latency). Zero external asset dependencies. |
+| 4.0.5 | Layer 2 — Embedded ONNX Intent & Entity Classifier | 🚧 In-Progress (Session `15656187434149356302`) — Architecture: `TinyBERT-4L-312D` INT8 ONNX compressed with `zstd` down to ~7MB, embedded directly inside the binary via `include_bytes!` and loaded into `ort` in-memory (<2ms CPU latency). Zero external asset dependencies. |
 | 4.0.6 | Entity extractor ✅ | Merged (Session 4945848464737601940) |
 | 4.0.7 | Ambiguity resolver ✅ | Merged (Session 14288794462066623856) |
 | 4.0.8 | Offline NLP → `OperationPlan` output ✅ | Merged (Session 14288794462066623856) |
@@ -696,9 +696,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | R3.FIX.4A | CLI Polish: Inline JSON Annotate, Burst Dir Creation & Sign Alias | ✅ Completed (PR #119) — `paperpilot-cli` |
 | R3.FIX.4B | Gateway REST API: Format-to-Tool JSON Mapping for `/convert` | ✅ Completed (PR #118) — `paperpilot-gateway` |
 | R3.FIX.4C | Master Tri-Interface E2E Suite: All 44 Tools, 100% Parity | ✅ Completed (PR #120) — 100% Parity (44/44 CLI, 44/44 MCP, 44/44 API) verified at `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` |
-| R3.FE.1 | OperationsPanel: Register All 44 Operations & Parameter Cards | 🚧 In-Progress (Session `15233664947548284011`) — `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` |
-| R3.FE.2 | Playwright E2E Suite: Data-Driven 44-Operations Parity Test | 🚧 In-Progress (Session `10690891751709790998`) — `apps/desktop/tests/e2e_44_operations_parity.spec.ts` |
-| R3.FE.3 | Canvas Interactive E2E: Sticky Notes, Markup & Visual Diff Slider | 🚧 In-Progress (Session `13554866274792768778`) — `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` |
+| R3.FE.1 | OperationsPanel: Register All 44 Operations & Parameter Cards | ✅ Completed (PR #121) — `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` (`reports/UI_44_TOOLS_PANEL_REPORT.md`) |
+| R3.FE.2 | Playwright E2E Suite: Data-Driven 44-Operations Parity Test | ✅ Completed (PR #123) — `apps/desktop/tests/e2e_44_operations_parity.spec.ts` (`reports/UI_44_OPERATIONS_E2E_SCORECARD.md` 44/44 PASS) |
+| R3.FE.3 | Canvas Interactive E2E: Sticky Notes, Markup & Visual Diff Slider | ✅ Completed (PR #122) — `apps/desktop/tests/e2e_canvas_viewer_features.spec.ts` (`reports/UI_CANVAS_ANNOTATIONS_DIFF_REPORT.md`) |
 
 
 
@@ -750,9 +750,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.3.4 | Plan edit UI | Allow user to add/remove/reorder steps before running |
 | 4.3.5 | Voice input | Microphone → speech-to-text → feeds the NLP command box (integrates with Phase 2 MCP) |
 | 4.3.6 | NLP mode toggle in settings | Simple switch: "Use Offline NLP" / "Use AI (requires key)" |
-| 4.3.7 | Multi-turn Chat Panel (`PdfChatPanel.svelte`) | Embed zero-dependency [`quikchat`](https://github.com/deftio/quikchat) as a collapsible side-drawer next to `PdfViewer.svelte`. Supports multi-turn document Q&A, markdown formatting, per-tab history save/restore, and interactive action confirmation cards |
+| 4.3.7 | Multi-turn Chat Panel (`PdfChatPanel.svelte`) | ✅ Completed (PR #124) — Collapsible side-drawer in `ViewerRightPanel.svelte` with natural language command prompt, quick suggestion chips, offline NLP IPC resolver bridge (`resolve_natural_language`), and interactive action execution cards |
 | 4.3.8 | Developer Mode: Tri-Interface Action Inspector & CodeGen (`ActionInspector.svelte`) | Toggleable Dev Mode in Desktop GUI (Ctrl+Shift+I). Reactive inspector showing live code generation across 4 tabs: CLI command (with batch loop toggle), cURL REST API, native MCP tool call payload JSON, and Python/Node/Rust scripts. Includes session action log and "Export Workflow as Pipeline" script generation |
 | 4.3.9 | Actionable RAG Workspace & Bi-Directional Citation Canvas | Bridges document chat with canvas viewer: clicking citations jumps directly to page/bounding-box with visual highlight pulse. Allows chat prompts to directly propose and trigger execution plans on active document (beating Adobe Acrobat AI Assistant with 100% offline privacy and zero subscription) |
+| 4.3.10 | Context-Aware NLP Resolution Bridge | ⏳ Pending / Planned — Enhances `resolve_natural_language` IPC and `paperpilot-nlp` with `ResolverContext`: automatically binds active viewer document path to operations (fixing "split pages 1 to 2 requires file path" error) |
+| 4.3.11 | Multi-Document Omnibar (`GlobalCommandBar.svelte`) | ⏳ Pending / Planned — Global command bar docked at bottom of Documents view with `@filename` autocomplete dropdown popover, multi-doc batch execution, and interactive action preview cards |
 
 ---
 
