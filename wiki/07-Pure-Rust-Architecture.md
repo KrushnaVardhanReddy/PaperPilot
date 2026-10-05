@@ -16,3 +16,15 @@ Full architectural roadmap is maintained at [`docs/PURE_RUST_ARCHITECTURE_ROADMA
 | **Office Formats** | LibreOffice / COM Interop | **`docx-rs`** / **`rust_xlsxwriter`** | **Already in use!** Pure-Rust in-memory XML manipulation. |
 | **Image Conversion** | `libpng` / `libjpeg` | **`image`** (v0.25) | **Already in use!** Pure Rust encoders/decoders. |
 | **Cryptography** | OpenSSL / System Keyrings | **`ring`** / **`rustls`** / **`sha2`** | 100% portable cryptographic primitives. |
+
+## Mandatory Quality Gate Post-Migration
+
+Whenever any C/C++ dependency is migrated to a pure-Rust alternative, the following tests MUST be executed and maintain **100% PASS**:
+1. **Tri-Interface Suite** (`python3 scripts/test_tri_interface_e2e.py`):
+   - 44 / 44 CLI (`paperpilot-cli`)
+   - 44 / 44 MCP (`paperpilot-mcp`)
+   - 44 / 44 REST API (`paperpilot-gateway`)
+2. **Desktop UI Parity** (`npx playwright test tests/e2e_44_operations_parity.spec.ts` in `apps/desktop`):
+   - 44 / 44 UI operations
+3. **WASM In-Browser Suite** (`npx playwright test tests/e2e_wasm_12_tools.spec.ts` in `apps/web`):
+   - 12 / 12 WASM tools
