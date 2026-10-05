@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Merged Frontend & Bug Fix PRs
+- **PR #136 (4.1.8)**: Embedded Documentation RAG (`sqlite-vec` / TF-IDF) & Chat Integration (`paperpilot-nlp/src/rag.rs`, `query_documentation_rag` Tauri IPC, `.docs-answer-card` UI in `PdfChatPanel.svelte`, `wiki/04-Documentation-RAG.md`, and `reports/DOCUMENTATION_RAG_REPORT.md`).
 - **PR #135 (4.8.1)**: `paperpilot-wasm` Complete Client-Side Engine & Web Worker Bridge (`paperpilot-wasm` crate with `wasm-bindgen`, in-memory buffer adapters for 6 core ops, `pdfWorker.ts`, `wiki/03-Wasm-Client-Engine.md`, and `reports/WASM_CLIENT_ENGINE_REPORT.md`).
 - **PR #134 (4.3.11)**: Universal Multi-Document Omnibar (`GlobalCommandBar.svelte`) docked at bottom of Documents view (`Ctrl+K` / `Cmd+K`) with `@filename` autocomplete popover, suggestion chips, offline NLP plan resolution, and inline blueprint preview (`reports/UI_GLOBAL_COMMAND_BAR_REPORT.md`).
 - **PR #133 (4.3.12)**: Master E2E AI Chat Pipeline Test Suite (`e2e_ai_chat_real_pipeline.spec.ts`) across all 44 PDF operations with 100% pass rate (`reports/UI_CHAT_44_OPERATIONS_E2E_SCORECARD.md` 44/44 PASS, `reports/AI_CHAT_REAL_PIPELINE_E2E_REPORT.md`).
@@ -73,9 +74,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
-|---|---|---|---|---|
-| **4.1.8** | `paperpilot-nlp/src/rag.rs`, `src-tauri/src/lib.rs`, `PdfChatPanel.svelte`, `reports/DOCUMENTATION_RAG_REPORT.md` | [Session 6788529762952435381](https://jules.google.com/session/6788529762952435381) | `main` | Embedded Documentation RAG (`sqlite-vec`), instant factual answers & snippet copying |
+*No active Jules sessions currently in-flight. All dispatched tasks merged!*
 
 ---
 
