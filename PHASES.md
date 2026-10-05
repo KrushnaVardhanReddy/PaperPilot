@@ -446,10 +446,12 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 4.0 — Offline NLP Mode (Free Tier) `[PARALLEL]`
+### 4.0 — Offline NLP Mode (Free Personal Tier: TinyBERT-4L-312D) `[PARALLEL]`
 
-> Ships with the Personal (Free) tier. No API key, no network, no download required.
-> Handles single-intent commands covering ~80% of real-world usage.
+> Ships bundled with the Personal (Free) tier. No API key, no network, no external download required.
+> **Designated Model:** `TinyBERT-4L-312D` (INT8 ONNX, ~14MB on disk, ~25MB active RAM, ~2ms CPU latency).
+> Handles instantaneous single-intent commands & parameter slot-filling across arbitrary human phrasing (e.g. "squish this pdf", "chop first 5 pages").
+> Total desktop package remains under ~50MB (well below the 100MB budget).
 > **Licensing: Apache 2.0 (Community)**
 
 | # | Task | Notes |
@@ -700,9 +702,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 4.1 — LLM Infrastructure `[PARALLEL]`
+### 4.1 — LLM & Advanced Local SLM Infrastructure (Pro & Teams Tier) `[PARALLEL]`
 
-> Powers the Pro/Teams tier. Requires an API key or local Ollama.
+> Powers the Pro/Teams tier for complex, multi-step conversational agent planning (e.g. "Merge invoice1 and invoice2, strip page 3, rotate page 2 clockwise, and compress under 2MB").
+> **Designated Local SLM:** `SmolLM-135M-Instruct` (Q4 GGUF, ~75MB on disk, ~120MB active RAM, ~15ms latency). Zero server dependencies, private local execution.
+> **Cloud / External Options:** Local Ollama (2–8GB models) or Bring-Your-Own-Key (BYOK) OpenAI / Gemini / Claude API.
 > Implements the same `NlpResolver` trait from 4.0.2 — drop-in swap.
 > **Licensing: Apache 2.0 (Community) — key/provider config is user-supplied**
 
