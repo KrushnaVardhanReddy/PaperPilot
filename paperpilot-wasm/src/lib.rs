@@ -73,4 +73,60 @@ impl WasmPdfEngine {
 
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+
+    #[wasm_bindgen]
+    pub fn delete_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::delete_pages(input_bytes, pages)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn extract_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::extract_pages(input_bytes, pages)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn reorder_pages(input_bytes: &[u8], new_order: Vec<u32>) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::reorder_pages(input_bytes, &new_order)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::crop(input_bytes, left, bottom, right, top)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn flatten(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::flatten(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn set_metadata(
+        input_bytes: &[u8],
+        title: Option<String>,
+        author: Option<String>,
+        subject: Option<String>,
+        keywords: Option<String>,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::set_metadata(input_bytes, title, author, subject, keywords)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
 }

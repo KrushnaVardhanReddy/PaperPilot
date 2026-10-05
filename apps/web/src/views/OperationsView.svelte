@@ -1,180 +1,282 @@
 <script lang="ts">
-  import { wasmPdfClient } from '../lib/wasm/index.js';
+  import { wasmPdfClient } from '../lib/wasm';
   import DropZone from '../components/DropZone.svelte';
 
   let activeTool = $state('merge');
   let isProcessing = $state(false);
 
-  // Merge state
-  let mergeFiles: File[] = $state([]);
-
-  // Split state
-  let splitFile: File | null = $state(null);
-  let splitRanges = $state('1');
-
-  // Rotate state
-  let rotateFile: File | null = $state(null);
-  let rotateAngle = $state(90);
-  let rotatePages = $state('all');
-
-  // Compress state
-  let compressFile: File | null = $state(null);
-
-  // Encrypt state
-  let encryptFile: File | null = $state(null);
-  let encryptPassword = $state('');
-
-  // Watermark state
-  let watermarkFile: File | null = $state(null);
-  let watermarkText = $state('CONFIDENTIAL');
-
+  // Tools configuration
   const tools = [
     { id: 'merge', title: 'Merge PDFs', icon: '📑' },
     { id: 'split', title: 'Split PDF', icon: '✂️' },
     { id: 'rotate', title: 'Rotate Pages', icon: '🔄' },
     { id: 'compress', title: 'Compress PDF', icon: '🗜️' },
     { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒' },
-    { id: 'watermark', title: 'Watermark', icon: '©️' }
+    { id: 'watermark', title: 'Watermark', icon: '©️' },
+    { id: 'delete', title: 'Delete Pages', icon: '🗑️' },
+    { id: 'extract', title: 'Extract Pages', icon: '📤' },
+    { id: 'reorder', title: 'Reorder Pages', icon: '🔀' },
+    { id: 'crop', title: 'Crop PDF', icon: '📐' },
+    { id: 'flatten', title: 'Flatten Forms', icon: '📄' },
+    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️' }
   ];
 
-  async function fileToUint8Array(file: File): Promise<Uint8Array> {
-    const buffer = await file.arrayBuffer();
-    return new Uint8Array(buffer);
+  // Tool specific states
+  let mergeFiles: File[] = $state([]);
+
+  let splitFile: File | null = $state(null);
+  let splitRanges = $state('');
+
+  let rotateFile: File | null = $state(null);
+  let rotateAngle = $state(90);
+  let rotatePages = $state('all');
+
+  let compressFile: File | null = $state(null);
+
+  let encryptFile: File | null = $state(null);
+  let encryptPassword = $state('');
+
+  let watermarkFile: File | null = $state(null);
+  let watermarkText = $state('');
+
+  let deleteFile: File | null = $state(null);
+  let deletePagesStr = $state('');
+
+  let extractFile: File | null = $state(null);
+  let extractPagesStr = $state('');
+
+  let reorderFile: File | null = $state(null);
+  let reorderPagesStr = $state('');
+
+  let cropFile: File | null = $state(null);
+  let cropLeft = $state(0);
+  let cropBottom = $state(0);
+  let cropRight = $state(0);
+  let cropTop = $state(0);
+
+  let flattenFile: File | null = $state(null);
+
+  let metadataFile: File | null = $state(null);
+  let metaTitle = $state('');
+  let metaAuthor = $state('');
+  let metaSubject = $state('');
+  let metaKeywords = $state('');
+
+
+  async function readAsUint8Array(file: File): Promise<Uint8Array> {
+      const buffer = await file.arrayBuffer();
+      return new Uint8Array(buffer);
   }
 
-  function downloadBlob(data: Uint8Array, filename: string) {
-    const blob = new Blob([data as any], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  function download(data: Uint8Array, filename: string) {
+      const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
   }
 
+  // Handlers
   async function handleMerge() {
-    if (mergeFiles.length < 2) {
-      alert("Please add at least 2 files to merge.");
-      return;
-    }
-    isProcessing = true;
-    try {
-      const buffers = await Promise.all(mergeFiles.map(fileToUint8Array));
-      const result = await wasmPdfClient.merge(buffers);
-      downloadBlob(result, 'merged_document.pdf');
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (mergeFiles.length < 2) return;
+      isProcessing = true;
+      try {
+          const buffers = await Promise.all(mergeFiles.map(f => readAsUint8Array(f)));
+          const result = await wasmPdfClient.merge(buffers);
+          download(result, 'merged.pdf');
+      } catch (e: any) {
+          alert('Merge failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
   }
 
   async function handleSplit() {
-    if (!splitFile) return;
-    if (!splitRanges.trim()) {
-      alert("Please enter split ranges.");
-      return;
-    }
-    isProcessing = true;
-    try {
-      const buffer = await fileToUint8Array(splitFile);
-      const results = await wasmPdfClient.split(buffer, splitRanges);
-      results.forEach((res, i) => {
-          downloadBlob(res, `split_part_${i+1}.pdf`);
-      });
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (!splitFile || !splitRanges) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(splitFile);
+          const results = await wasmPdfClient.split(buffer, splitRanges);
+          results.forEach((res: Uint8Array, i: number) => {
+              download(res, `split_part_${i+1}.pdf`);
+          });
+      } catch (e: any) {
+          alert('Split failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
   }
 
   async function handleRotate() {
-    if (!rotateFile) return;
-    isProcessing = true;
-    try {
-      const buffer = await fileToUint8Array(rotateFile);
-      const result = await wasmPdfClient.rotate(buffer, rotateAngle, rotatePages || 'all');
-      downloadBlob(result, `rotated_${rotateFile.name}`);
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (!rotateFile) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(rotateFile);
+          const result = await wasmPdfClient.rotate(buffer, rotateAngle, rotatePages);
+          download(result, 'rotated.pdf');
+      } catch (e: any) {
+          alert('Rotate failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
   }
 
   async function handleCompress() {
-    if (!compressFile) return;
-    isProcessing = true;
-    try {
-      const buffer = await fileToUint8Array(compressFile);
-      const result = await wasmPdfClient.compress(buffer);
-      const reduction = Math.round(((buffer.length - result.length) / buffer.length) * 100);
-      alert(`Compression complete. Size reduced by ${reduction}%`);
-      downloadBlob(result, `compressed_${compressFile.name}`);
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (!compressFile) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(compressFile);
+          const result = await wasmPdfClient.compress(buffer);
+          download(result, 'compressed.pdf');
+      } catch (e: any) {
+          alert('Compress failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
   }
 
   async function handleEncrypt() {
-    if (!encryptFile) return;
-    if (!encryptPassword) {
-      alert("Please enter a password.");
-      return;
-    }
-    isProcessing = true;
-    try {
-      const buffer = await fileToUint8Array(encryptFile);
-      const result = await wasmPdfClient.encrypt(buffer, encryptPassword);
-      downloadBlob(result, `encrypted_${encryptFile.name}`);
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (!encryptFile || !encryptPassword) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(encryptFile);
+          const result = await wasmPdfClient.encrypt(buffer, encryptPassword);
+          download(result, 'encrypted.pdf');
+      } catch (e: any) {
+          alert('Encrypt failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
   }
 
   async function handleWatermark() {
-    if (!watermarkFile) return;
-    if (!watermarkText) {
-      alert("Please enter watermark text.");
-      return;
-    }
-    isProcessing = true;
-    try {
-      const buffer = await fileToUint8Array(watermarkFile);
-      const result = await wasmPdfClient.watermark(buffer, watermarkText);
-      downloadBlob(result, `watermarked_${watermarkFile.name}`);
-    } catch (e: any) {
-      alert(`Error: ${e.message || e}`);
-    } finally {
-      isProcessing = false;
-    }
+      if (!watermarkFile || !watermarkText) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(watermarkFile);
+          const result = await wasmPdfClient.watermark(buffer, watermarkText);
+          download(result, 'watermarked.pdf');
+      } catch (e: any) {
+          alert('Watermark failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleDelete() {
+      if (!deleteFile || !deletePagesStr) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(deleteFile);
+          const result = await wasmPdfClient.delete_pages(buffer, deletePagesStr);
+          download(result, 'deleted.pdf');
+      } catch (e: any) {
+          alert('Delete failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleExtract() {
+      if (!extractFile || !extractPagesStr) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(extractFile);
+          const result = await wasmPdfClient.extract_pages(buffer, extractPagesStr);
+          download(result, 'extracted.pdf');
+      } catch (e: any) {
+          alert('Extract failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleReorder() {
+      if (!reorderFile || !reorderPagesStr) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(reorderFile);
+          const orderArr = reorderPagesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+          const result = await wasmPdfClient.reorder_pages(buffer, orderArr);
+          download(result, 'reordered.pdf');
+      } catch (e: any) {
+          alert('Reorder failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleCrop() {
+      if (!cropFile) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(cropFile);
+          const result = await wasmPdfClient.crop(buffer, cropLeft, cropBottom, cropRight, cropTop);
+          download(result, 'cropped.pdf');
+      } catch (e: any) {
+          alert('Crop failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleFlatten() {
+      if (!flattenFile) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(flattenFile);
+          const result = await wasmPdfClient.flatten(buffer);
+          download(result, 'flattened.pdf');
+      } catch (e: any) {
+          alert('Flatten failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  async function handleMetadata() {
+      if (!metadataFile) return;
+      isProcessing = true;
+      try {
+          const buffer = await readAsUint8Array(metadataFile);
+          const result = await wasmPdfClient.set_metadata(
+            buffer,
+            metaTitle || undefined,
+            metaAuthor || undefined,
+            metaSubject || undefined,
+            metaKeywords || undefined
+          );
+          download(result, 'metadata_updated.pdf');
+      } catch (e: any) {
+          alert('Metadata failed: ' + e.message);
+      } finally {
+          isProcessing = false;
+      }
+  }
+
+  // Helpers for merge files
+  function removeMergeFile(index: number) {
+      mergeFiles = mergeFiles.filter((_, i) => i !== index);
   }
 
   function moveMergeFileUp(index: number) {
       if (index > 0) {
-          const newArr = [...mergeFiles];
-          [newArr[index - 1], newArr[index]] = [newArr[index], newArr[index - 1]];
-          mergeFiles = newArr;
+          const temp = mergeFiles[index];
+          mergeFiles[index] = mergeFiles[index - 1];
+          mergeFiles[index - 1] = temp;
       }
   }
 
   function moveMergeFileDown(index: number) {
       if (index < mergeFiles.length - 1) {
-          const newArr = [...mergeFiles];
-          [newArr[index + 1], newArr[index]] = [newArr[index], newArr[index + 1]];
-          mergeFiles = newArr;
+          const temp = mergeFiles[index];
+          mergeFiles[index] = mergeFiles[index + 1];
+          mergeFiles[index + 1] = temp;
       }
-  }
-
-  function removeMergeFile(index: number) {
-      mergeFiles = mergeFiles.filter((_, i) => i !== index);
   }
 </script>
 
@@ -201,7 +303,7 @@
         <h2>Merge PDFs</h2>
         <p>Combine multiple PDF files into one.</p>
 
-        <DropZone ondrop={(files) => mergeFiles = [...mergeFiles, ...files]} multiple={true} />
+        <DropZone ondrop={(files: File[]) => mergeFiles = [...mergeFiles, ...files]} multiple={true} />
 
         {#if mergeFiles.length > 0}
           <div class="file-list">
@@ -228,7 +330,7 @@
         <p>Extract pages from a PDF.</p>
 
         {#if !splitFile}
-            <DropZone ondrop={(files) => splitFile = files[0]} multiple={false} />
+            <DropZone ondrop={(files: File[]) => splitFile = files[0]} multiple={false} />
         {:else}
             <div class="selected-file">
                 <span class="file-name">{splitFile.name}</span>
@@ -252,7 +354,7 @@
         <p>Rotate pages by 90, 180, or 270 degrees.</p>
 
         {#if !rotateFile}
-            <DropZone ondrop={(files) => rotateFile = files[0]} multiple={false} />
+            <DropZone ondrop={(files: File[]) => rotateFile = files[0]} multiple={false} />
         {:else}
             <div class="selected-file">
                 <span class="file-name">{rotateFile.name}</span>
@@ -285,7 +387,7 @@
         <p>Reduce file size.</p>
 
         {#if !compressFile}
-            <DropZone ondrop={(files) => compressFile = files[0]} multiple={false} />
+            <DropZone ondrop={(files: File[]) => compressFile = files[0]} multiple={false} />
         {:else}
             <div class="selected-file">
                 <span class="file-name">{compressFile.name}</span>
@@ -304,7 +406,7 @@
         <p>Add a password to protect your document.</p>
 
         {#if !encryptFile}
-            <DropZone ondrop={(files) => encryptFile = files[0]} multiple={false} />
+            <DropZone ondrop={(files: File[]) => encryptFile = files[0]} multiple={false} />
         {:else}
             <div class="selected-file">
                 <span class="file-name">{encryptFile.name}</span>
@@ -328,7 +430,7 @@
         <p>Add a text watermark to your document.</p>
 
         {#if !watermarkFile}
-            <DropZone ondrop={(files) => watermarkFile = files[0]} multiple={false} />
+            <DropZone ondrop={(files: File[]) => watermarkFile = files[0]} multiple={false} />
         {:else}
             <div class="selected-file">
                 <span class="file-name">{watermarkFile.name}</span>
@@ -342,6 +444,169 @@
 
             <button class="action-btn" onclick={handleWatermark} disabled={isProcessing || !watermarkText}>
                 {isProcessing ? 'Processing...' : 'Watermark & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'delete'}
+      <div class="tool-pane">
+        <h2>Delete Pages</h2>
+        <p>Remove specific pages from your document.</p>
+
+        {#if !deleteFile}
+            <DropZone ondrop={(files: File[]) => deleteFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{deleteFile.name}</span>
+                <button onclick={() => deleteFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="deletePagesStr">Pages to Delete (e.g. 2, 4-6)</label>
+                <input id="deletePagesStr" type="text" bind:value={deletePagesStr} placeholder="2, 4-6" />
+            </div>
+
+            <button class="action-btn" onclick={handleDelete} disabled={isProcessing || !deletePagesStr}>
+                {isProcessing ? 'Processing...' : 'Delete Pages & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'extract'}
+      <div class="tool-pane">
+        <h2>Extract Pages</h2>
+        <p>Extract specific pages to a new document.</p>
+
+        {#if !extractFile}
+            <DropZone ondrop={(files: File[]) => extractFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{extractFile.name}</span>
+                <button onclick={() => extractFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="extractPagesStr">Target Pages (e.g. 1-3)</label>
+                <input id="extractPagesStr" type="text" bind:value={extractPagesStr} placeholder="1-3" />
+            </div>
+
+            <button class="action-btn" onclick={handleExtract} disabled={isProcessing || !extractPagesStr}>
+                {isProcessing ? 'Processing...' : 'Extract Pages & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'reorder'}
+      <div class="tool-pane">
+        <h2>Reorder Pages</h2>
+        <p>Rearrange the pages in your document.</p>
+
+        {#if !reorderFile}
+            <DropZone ondrop={(files: File[]) => reorderFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{reorderFile.name}</span>
+                <button onclick={() => reorderFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="reorderPagesStr">New Order (comma separated, e.g. 3, 1, 2)</label>
+                <input id="reorderPagesStr" type="text" bind:value={reorderPagesStr} placeholder="3, 1, 2" />
+            </div>
+
+            <button class="action-btn" onclick={handleReorder} disabled={isProcessing || !reorderPagesStr}>
+                {isProcessing ? 'Processing...' : 'Reorder & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'crop'}
+      <div class="tool-pane">
+        <h2>Crop PDF</h2>
+        <p>Crop the pages in your document.</p>
+
+        {#if !cropFile}
+            <DropZone ondrop={(files: File[]) => cropFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{cropFile.name}</span>
+                <button onclick={() => cropFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="cropLeft">Left</label>
+                <input id="cropLeft" type="number" bind:value={cropLeft} />
+            </div>
+            <div class="input-group">
+                <label for="cropBottom">Bottom</label>
+                <input id="cropBottom" type="number" bind:value={cropBottom} />
+            </div>
+            <div class="input-group">
+                <label for="cropRight">Right</label>
+                <input id="cropRight" type="number" bind:value={cropRight} />
+            </div>
+            <div class="input-group">
+                <label for="cropTop">Top</label>
+                <input id="cropTop" type="number" bind:value={cropTop} />
+            </div>
+
+            <button class="action-btn" onclick={handleCrop} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Crop & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'flatten'}
+      <div class="tool-pane">
+        <h2>Flatten Forms</h2>
+        <p>Remove interactive form elements and flatten them onto the pages.</p>
+
+        {#if !flattenFile}
+            <DropZone ondrop={(files: File[]) => flattenFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{flattenFile.name}</span>
+                <button onclick={() => flattenFile = null}>✕</button>
+            </div>
+
+            <button class="action-btn" onclick={handleFlatten} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Flatten & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'metadata'}
+      <div class="tool-pane">
+        <h2>Edit Metadata</h2>
+        <p>Update the metadata of your document.</p>
+
+        {#if !metadataFile}
+            <DropZone ondrop={(files: File[]) => metadataFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{metadataFile.name}</span>
+                <button onclick={() => metadataFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="metaTitle">Title</label>
+                <input id="metaTitle" type="text" bind:value={metaTitle} />
+            </div>
+            <div class="input-group">
+                <label for="metaAuthor">Author</label>
+                <input id="metaAuthor" type="text" bind:value={metaAuthor} />
+            </div>
+            <div class="input-group">
+                <label for="metaSubject">Subject</label>
+                <input id="metaSubject" type="text" bind:value={metaSubject} />
+            </div>
+            <div class="input-group">
+                <label for="metaKeywords">Keywords</label>
+                <input id="metaKeywords" type="text" bind:value={metaKeywords} />
+            </div>
+
+            <button class="action-btn" onclick={handleMetadata} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Update Metadata & Download'}
             </button>
         {/if}
       </div>
@@ -365,6 +630,8 @@
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--border-color);
     padding: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
   }
 
   .tools-sidebar h3 {

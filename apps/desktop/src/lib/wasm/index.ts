@@ -5,6 +5,12 @@ export interface WasmPdfClient {
     compress(file: Uint8Array): Promise<Uint8Array>;
     encrypt(file: Uint8Array, password: string): Promise<Uint8Array>;
     watermark(file: Uint8Array, text: string): Promise<Uint8Array>;
+    delete_pages(file: Uint8Array, pages: string): Promise<Uint8Array>;
+    extract_pages(file: Uint8Array, pages: string): Promise<Uint8Array>;
+    reorder_pages(file: Uint8Array, new_order: number[]): Promise<Uint8Array>;
+    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array>;
+    flatten(file: Uint8Array): Promise<Uint8Array>;
+    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -60,6 +66,30 @@ export class WasmPdfClientImpl implements WasmPdfClient {
 
     watermark(file: Uint8Array, text: string): Promise<Uint8Array> {
         return this.sendRequest('watermark', { file, text });
+    }
+
+    delete_pages(file: Uint8Array, pages: string): Promise<Uint8Array> {
+        return this.sendRequest('delete_pages', { file, pages });
+    }
+
+    extract_pages(file: Uint8Array, pages: string): Promise<Uint8Array> {
+        return this.sendRequest('extract_pages', { file, pages });
+    }
+
+    reorder_pages(file: Uint8Array, new_order: number[]): Promise<Uint8Array> {
+        return this.sendRequest('reorder_pages', { file, new_order });
+    }
+
+    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array> {
+        return this.sendRequest('crop', { file, left, bottom, right, top });
+    }
+
+    flatten(file: Uint8Array): Promise<Uint8Array> {
+        return this.sendRequest('flatten', { file });
+    }
+
+    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array> {
+        return this.sendRequest('set_metadata', { file, title, author, subject, keywords });
     }
 }
 

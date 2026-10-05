@@ -1,5 +1,5 @@
 // @ts-ignore
-import init, { WasmPdfEngine } from '../../../../../paperpilot-wasm/pkg/paperpilot_wasm.js';
+import init, { WasmPdfEngine } from 'paperpilot-wasm';
 
 let initPromise: Promise<any> | null = null;
 
@@ -36,6 +36,24 @@ self.onmessage = async (e: MessageEvent) => {
                 break;
             case 'watermark':
                 result = WasmPdfEngine.watermark(payload.file, payload.text);
+                break;
+            case 'delete_pages':
+                result = WasmPdfEngine.delete_pages(payload.file, payload.pages);
+                break;
+            case 'extract_pages':
+                result = WasmPdfEngine.extract_pages(payload.file, payload.pages);
+                break;
+            case 'reorder_pages':
+                result = WasmPdfEngine.reorder_pages(payload.file, new Uint32Array(payload.new_order));
+                break;
+            case 'crop':
+                result = WasmPdfEngine.crop(payload.file, payload.left, payload.bottom, payload.right, payload.top);
+                break;
+            case 'flatten':
+                result = WasmPdfEngine.flatten(payload.file);
+                break;
+            case 'set_metadata':
+                result = WasmPdfEngine.set_metadata(payload.file, payload.title, payload.author, payload.subject, payload.keywords);
                 break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
