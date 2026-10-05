@@ -68,7 +68,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **4.3.10** | `paperpilot-nlp/`, `src-tauri/`, `PdfChatPanel.svelte` | Pending Dispatch | `main` | Context-aware NLP resolution & implicit active document binding |
+| **4.3.10** | `paperpilot-nlp/`, `src-tauri/`, `PdfChatPanel.svelte` | [Session 3666416429459168501](https://jules.google.com/session/3666416429459168501) | `main` | Context-aware NLP resolution & implicit active document binding |
 
 ---
 
