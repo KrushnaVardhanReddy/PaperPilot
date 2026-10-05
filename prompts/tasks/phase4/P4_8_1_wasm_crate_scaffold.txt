@@ -1,0 +1,98 @@
+# Task: Phase 4.8.1 — `paperpilot-wasm` Crate Scaffold & Core In-Memory Bindings
+
+## Objective
+Implement Task 4.8.1: Create the new `paperpilot-wasm` crate in the PaperPilot Cargo workspace. Expose core PDF operations (`merge`, `rotate`, `split`, `compress`, `encrypt`, `watermark`) to WebAssembly (`wasm32-unknown-unknown`) using `wasm-bindgen`. All operations must execute strictly in memory on `Uint8Array` / byte buffers with zero filesystem access, enabling both client-side in-browser execution and Cloudflare Workers edge deployment.
+
+**Branch**: `feat/wasm-crate-scaffold`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+Cargo.toml
+paperpilot-wasm/Cargo.toml
+paperpilot-wasm/src/lib.rs
+paperpilot-wasm/src/operations.rs
+paperpilot-wasm/tests/wasm_tests.rs
+reports/WASM_SCAFFOLD_REPORT.md
+```
+DO NOT modify desktop frontend or existing core crate logic.
+
+---
+
+## Technical Requirements
+
+### 1. Workspace Registration (`Cargo.toml`)
+- Add `"paperpilot-wasm"` to the root `[workspace]` `members` list.
+
+### 2. Crate Configuration (`paperpilot-wasm/Cargo.toml`)
+- `[package]` name: `"paperpilot-wasm"`, version: `"0.1.0"`, edition: `"2021"`.
+- `[lib]` crate-type: `["cdylib", "rlib"]`.
+- Dependencies:
+  - `wasm-bindgen = "0.2"`
+  - `js-sys = "0.3"`
+  - `paperpilot-core = { path = "../paperpilot-core" }`
+  - `paperpilot-pdf = { path = "../paperpilot-pdf" }`
+  - `lopdf = { version = "0.33", default-features = false }`
+
+### 3. In-Memory API Surface (`paperpilot-wasm/src/lib.rs`)
+Implement the `WasmPdfEngine` struct with `wasm-bindgen`:
+
+```rust
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub struct WasmPdfEngine;
+
+#[wasm_bindgen]
+impl WasmPdfEngine {
+    /// Merge multiple PDF buffers into a single PDF
+    #[wasm_bindgen]
+    pub fn merge(buffers: js_sys::Array) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Rotate specific pages or 'all' pages by angle (90, 180, 270)
+    #[wasm_bindgen]
+    pub fn rotate(input_bytes: &[u8], angle: u16, pages: &str) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Split PDF by page ranges (e.g. "1-2, 3-4") returning an array of Uint8Array chunks
+    #[wasm_bindgen]
+    pub fn split(input_bytes: &[u8], ranges: &str) -> Result<js_sys::Array, JsValue>;
+
+    /// Compress PDF by removing unneeded objects and deflating streams
+    #[wasm_bindgen]
+    pub fn compress(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Encrypt PDF with password
+    #[wasm_bindgen]
+    pub fn encrypt(input_bytes: &[u8], password: &str) -> Result<js_sys::Uint8Array, JsValue>;
+
+    /// Add text watermark
+    #[wasm_bindgen]
+    pub fn watermark(input_bytes: &[u8], text: &str) -> Result<js_sys::Uint8Array, JsValue>;
+}
+```
+
+### 4. Zero Filesystem Footprint
+- Never call `std::fs::*`.
+- Load and parse directly using `lopdf::Document::load_from(input_bytes)`.
+- Save output into a `Vec<u8>` cursor (`doc.save_to(&mut buffer)`), converting back to `js_sys::Uint8Array`.
+
+### 5. Verification Report
+Generate `reports/WASM_SCAFFOLD_REPORT.md` documenting:
+- Compilation verification for native and `wasm32-unknown-unknown` targets.
+- WASM binary size (<2MB uncompressed).
+- Unit test results validating in-memory merge, rotate, and compress operations.
+
+---
+
+## Verification Commands
+```bash
+cargo test -p paperpilot-wasm
+cargo check -p paperpilot-wasm --target wasm32-unknown-unknown
+```
+
+## Commit Message
+```
+feat(wasm): scaffold paperpilot-wasm crate with in-memory buffer operations
+```

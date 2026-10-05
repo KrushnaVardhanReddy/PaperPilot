@@ -819,6 +819,20 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.7.8 | Desktop UI for Automation | "Automations" tab in desktop app: list configured watchers, enable/disable, view last execution receipt per watcher, manually trigger a recipe against open document. |
 | 4.7.9 | MCP tools for automation | `recipe_run(recipe_toml, input)`, `batch_fill(template, data_json)`, `watcher_start(dir, recipe)`, `watcher_stop(id)` — allows AI agents to orchestrate headless document automation. |
 
+---
+
+### 4.8 — Client-Side WebAssembly (WASM) & Edge Engine (`paperpilot-wasm`) `[VIRAL GROWTH HOOK]`
+
+> Delivers zero-install client-side browser execution (100% privacy, $0 server cost) to massively accelerate user adoption, paired with Cloudflare Workers Wasm edge execution. (Spec 015)
+
+| # | Task | Notes |
+|---|---|---|
+| 4.8.1 | `paperpilot-wasm` Crate Scaffold | Create `paperpilot-wasm` crate with `wasm-bindgen` and in-memory `Uint8Array` / buffer adapters |
+| 4.8.2 | Core Operations WASM Compilation | Compile `merge`, `split`, `rotate`, `compress`, `encrypt`, `watermark` to Wasm (<2MB binary) |
+| 4.8.3 | In-Browser Web Worker Bridge (`pdfWorker.ts`) | Background Web Worker integration for non-blocking UI in browser |
+| 4.8.4 | Zero-Install Web App Demo | Web-based drag-and-drop tool suite deployed to Cloudflare Pages / GitHub Pages |
+| 4.8.5 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk) |
+
 ## Phase 5 — Advanced Intelligence
 
 **Goal:** PaperPilot understands document content, not just structure.
