@@ -1,0 +1,134 @@
+# Task: Phase 4.3.14 — Editable Action Blueprint Cards & 44-Tool Execution Dispatch (`PdfChatPanel.svelte`)
+
+## Objective
+Implement Task 4.3.14: Transform the action proposal cards inside `PdfChatPanel.svelte` from static read-only text into interactive, editable Action Blueprint Cards. When the AI proposes an action (or when natural language resolution completes), the user can visually inspect and customize the parameters before triggering execution.
+Crucially, implement robust parameter mapping and dispatch for **all 44 PDF operations** (mirroring the parity in `OperationsPanel.svelte`), fixing execution failures such as `Missing or invalid 'pages' parameter` or missing output paths.
+
+**Branch**: `feat/desktop-editable-chat-action-cards`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/src/lib/components/PdfChatPanel.svelte
+reports/UI_EDITABLE_CHAT_ACTION_CARDS_REPORT.md
+```
+DO NOT touch Rust crates, core PDF operations, or unrelated viewer components.
+
+---
+
+## Technical Requirements
+
+### 1. Editable Action Blueprint UI inside `PdfChatPanel.svelte`
+When a message contains a `plan`, render an interactive form instead of static read-only text:
+
+1. **Target Pages Selector & Array Display**:
+   - Show an explicit **Pages Target** section.
+   - Segmented buttons / pills:
+     - `[ All Pages ]` (default when no specific pages extracted)
+     - `[ Current Page: {currentPage} ]` (one-click bind to the currently visible viewer page)
+     - `[ Custom Pages ]` (editable text input / tag array: e.g. `1, 4` or `1-3`)
+   - Pre-populate this based on `plan.page_ranges`:
+     - If `page_ranges` is empty -> select `All Pages`.
+     - If `page_ranges` contains ranges (e.g. `[(1, 1)]`) -> pre-fill `1`.
+
+2. **Operation-Specific Editable Fields**:
+   - **Rotate**:
+     - Segmented angle selector: `[ 90° ]` `[ 180° ]` `[ 270° ]` (pre-selecting extracted angle, defaulting to 90°).
+   - **Split / Extract / Burst**:
+     - Split ranges input (`1-3, 4-6`), extract pages input.
+   - **Watermark / Stamp / Header-Footer**:
+     - Editable text input (watermark text, header text, footer text).
+   - **Security (Encrypt / Decrypt / Redact / Sign)**:
+     - Password input (masked with toggle or pre-filled from extracted entities).
+   - **Conversions (DOCX, XLSX, PPTX, Markdown, Text, HTML, Images)**:
+     - Target format indicator / dropdown.
+   - **Output Path**:
+     - Editable text field showing the target output path (auto-suggested as `{base}_rotated.pdf`, `{base}_split.pdf`, etc., or overwrite toggle).
+
+3. **Execution Button**:
+   - `[ ⚡ Execute Action ]` button that reads the *currently edited* values rather than raw static plan data.
+   - Disable button while operation is running with an active loading spinner (`Executing...`).
+
+---
+
+### 2. Comprehensive 44-Tool Execution Mapping
+Update `executePlan(plan)` in `PdfChatPanel.svelte` to support **all 44 tools** with accurate MCP parameters, mirroring `OperationsPanel.svelte`:
+
+1. **Rotate (`pdf_rotate`)**:
+   - `input`: active document path.
+   - `pages`: `'all'` (if All Pages selected) or comma-separated string (e.g. `'1,4'`). **MUST NEVER BE MISSING**.
+   - `angle`: selected angle (number).
+   - `output`: valid destination file path.
+
+2. **Merge (`pdf_merge`)**:
+   - `inputs`: list of document paths.
+   - `output`: valid destination file path.
+
+3. **Split (`pdf_split`)**:
+   - `input`: active document path.
+   - `output_pattern`: `{dir}/{base}_p%d.pdf`.
+   - `ranges`: page ranges string (e.g. `'1-2, 3-4'`).
+
+4. **Compress (`pdf_compress`)**:
+   - `input`: docPath, `output`: outputPath.
+
+5. **Page Operations**:
+   - `delete_pages` (`pdf_delete_pages`): `input`, `pages`, `output`.
+   - `reorder_pages` (`pdf_reorder_pages`): `input`, `order`, `output`.
+   - `burst` (`pdf_burst`): `input`, `output_dir`.
+   - `crop` (`pdf_crop`): `input`, `box`, `output`.
+   - `extract_pages` (`pdf_extract_pages`): `input`, `pages`, `output`.
+   - `remove_blank` (`pdf_remove_blank`): `input`, `output`.
+   - `page_numbers` (`pdf_page_numbers`): `input`, `output`.
+
+6. **Edit & Markup**:
+   - `watermark` (`pdf_watermark`): `input`, `text`, `output`.
+   - `bates` (`pdf_bates`): `input`, `prefix`, `start_number`, `padding`, `output`.
+   - `header_footer` (`pdf_header_footer`): `input`, `header_left`, `footer_center`, `output`.
+   - `flatten` (`pdf_flatten`): `input`, `output`.
+   - `annotate` (`pdf_annotate`): `input`, `output`.
+
+7. **Security & Privacy**:
+   - `encrypt` (`pdf_encrypt`): `input`, `user_password`, `output`.
+   - `decrypt` (`pdf_decrypt`): `input`, `password`, `output`.
+   - `redact` (`pdf_redact`): `input`, `regions`, `output`.
+   - `sign` (`pdf_sign`): `input`, `cert`, `output`.
+   - `metadata` (`pdf_metadata`): `input`, `output`.
+   - `validate` (`pdf_validate`): `input`.
+   - `hash` (`pdf_hash`): `input`.
+
+8. **Conversions & Extraction**:
+   - `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`: `input`, `output`.
+   - `extract_text` (`pdf_extract_text`): `input`, `output`.
+   - `extract_images` (`pdf_extract_images`): `input`, `output_dir`.
+   - `pdf_convert_markdown` / `pdf_convert_html` / `pdf_images_to_pdf`.
+   - `render` (`pdf_render`): `input`, `page`, `output`.
+
+9. **Forms & Intel**:
+   - `read_form`, `fill_form`, `create_form_field`, `bookmarks`, `search`, `ocr`, `compare`, `linearize`, `classify_type`.
+
+---
+
+### 3. Verification Report
+Generate `reports/UI_EDITABLE_CHAT_ACTION_CARDS_REPORT.md` documenting:
+- Verification of editable UI elements in the action plan card.
+- Resolution of the missing `pages` parameter bug.
+- Complete 44-tool mapping table in `PdfChatPanel.svelte`.
+- Test results from `pnpm check`, `pnpm build`, and component tests.
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm check
+pnpm build
+pnpm test
+```
+
+## Commit Message
+```
+feat(desktop): editable action blueprint cards with 44-tool execution dispatch in chat panel
+```

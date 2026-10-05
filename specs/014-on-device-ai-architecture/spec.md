@@ -63,6 +63,16 @@ To resolve the "blank canvas" discoverability challenge for users, the chat inte
   - Switching to the AI Chat tab automatically ensures a comfortable reading width (bumps to at least `420px` if currently narrow).
   - Visual hover cues on the splitter handle (`col-resize`) and double-click toggle (`300px` / `500px`) ensure effortless resizing on desktop viewports.
 
+### 8. Interactive & Editable Action Cards for All 44 Operations (`PdfChatPanel.svelte`)
+When the AI assistant proposes an `OperationPlan`, the card in the chat stream must NOT be a static read-only confirmation box:
+* **Interactive Parameter Editing**:
+  - **Pages Target Array/Selector**: Shows where the operation will be applied with an explicit pages target (e.g. `all`, or page chips/inputs `[1, 4]`, with a quick-select `[Current Page]` chip). Users can add, edit, or remove target pages before execution.
+  - **Dynamic Parameter Fields**: Depending on the detected operation, renders editable inputs pre-populated with NLP extraction values (e.g. `angle` selector: 90°/180°/270°, watermark text, password, output file path, crop box, bates prefix/start, header/footer text).
+* **Comprehensive 44-Tool Execution Dispatch**:
+  - Full parameter mapping for all 44 PDF operations (matching `OperationsPanel.svelte` parity), passing valid required arguments (e.g. `pages: "all"`, default output paths, format targets) so execution never fails with `Missing or invalid parameter`.
+* **Execution & In-Place State Refresh**:
+  - Clicking `[⚡ Execute Action]` executes `invoke_mcp_tool` with the user-edited parameters, provides instant toast feedback, and triggers a document canvas reload if modifying the active document.
+
 ## Consequences
 * Total application size remains ~50MB, well under the 100MB constraint.
 * Zero external Python, server, or cloud dependencies for AI operation.
