@@ -74,7 +74,9 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-*No active Jules sessions currently in-flight. All dispatched tasks merged!*
+| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
+|---|---|---|---|---|
+| **4.8.2** | `apps/web/*`, `reports/ZERO_INSTALL_WEB_APP_REPORT.md`, `wiki/05-Zero-Install-Web-App.md` | [Session 10211896095989692590](https://jules.google.com/session/10211896095989692590) | `main` | Zero-Install Client-Side Web App Demo (Viral Growth Hook) |
 
 ---
 
