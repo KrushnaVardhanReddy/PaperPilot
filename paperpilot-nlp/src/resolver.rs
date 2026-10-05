@@ -1,4 +1,4 @@
-use crate::traits::{NlpResolver, OperationPlan, NlpError};
+use crate::traits::{NlpResolver, OperationPlan, NlpError, ResolverContext};
 use crate::layer1::RuleEngine;
 use crate::entities::extract_entities;
 use crate::ambiguity::check_completeness;
@@ -20,10 +20,17 @@ impl OfflineNlpResolver {
 }
 
 impl NlpResolver for OfflineNlpResolver {
-    fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError> {
+    fn resolve_with_context(&self, query: &str, context: &ResolverContext) -> Result<OperationPlan, NlpError> {
         // 1. Try Layer 1
         if let Some(intent) = self.engine.predict(query) {
-            let entities = extract_entities(query);
+            let mut entities = extract_entities(query);
+            if entities.files.is_empty() {
+                if let Some(active) = &context.active_document {
+                    entities.files.push(active.clone());
+                } else if context.open_documents.len() == 1 {
+                    entities.files.push(context.open_documents[0].clone());
+                }
+            }
             check_completeness(&intent, &entities)?;
             return Ok(OperationPlan::new(intent, entities, query.to_string()));
         }
@@ -32,7 +39,14 @@ impl NlpResolver for OfflineNlpResolver {
         #[cfg(feature = "onnx")]
         if let Ok(classifier) = crate::layer2::OnnxClassifier::new() {
             if let Some(intent) = classifier.predict(query) {
-                let entities = extract_entities(query);
+                let mut entities = extract_entities(query);
+                if entities.files.is_empty() {
+                    if let Some(active) = &context.active_document {
+                        entities.files.push(active.clone());
+                    } else if context.open_documents.len() == 1 {
+                        entities.files.push(context.open_documents[0].clone());
+                    }
+                }
                 check_completeness(&intent, &entities)?;
                 return Ok(OperationPlan::new(intent, entities, query.to_string()));
             }
@@ -98,5 +112,36 @@ mod tests {
         } else {
             panic!("Expected MissingParameters error");
         }
+    }
+
+    #[test]
+    fn test_resolve_with_active_document_context() {
+        let resolver = OfflineNlpResolver::new();
+        let context = ResolverContext {
+            active_document: Some("current_active.pdf".to_string()),
+            open_documents: vec!["current_active.pdf".to_string(), "other.pdf".to_string()],
+        };
+        // Query has no explicit files, but requires one (e.g. split)
+        // using "1-2" instead of "1 to 2" for consistent page range extraction based on the regex
+        let plan = resolver.resolve_with_context("split pages 1-2", &context).unwrap();
+        assert_eq!(plan.intent, Intent::Split);
+        assert_eq!(plan.input_files.len(), 1);
+        assert_eq!(plan.input_files[0], "current_active.pdf");
+        assert_eq!(plan.page_ranges, vec!["1-2"]);
+    }
+
+    #[test]
+    fn test_resolve_with_single_open_document_context() {
+        let resolver = OfflineNlpResolver::new();
+        let context = ResolverContext {
+            active_document: None,
+            open_documents: vec!["only_open.pdf".to_string()],
+        };
+        // Fallback to the only open document
+        let plan = resolver.resolve_with_context("rotate 90 degrees", &context).unwrap();
+        assert_eq!(plan.intent, Intent::Rotate);
+        assert_eq!(plan.input_files.len(), 1);
+        assert_eq!(plan.input_files[0], "only_open.pdf");
+        assert_eq!(plan.angles, vec![90]);
     }
 }

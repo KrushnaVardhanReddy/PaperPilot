@@ -164,10 +164,14 @@ async fn stop_gateway() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn resolve_natural_language(query: String) -> Result<serde_json::Value, String> {
+fn resolve_natural_language(
+    query: String,
+    context: Option<paperpilot_nlp::traits::ResolverContext>,
+) -> Result<serde_json::Value, String> {
     use paperpilot_nlp::traits::NlpResolver;
     let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
-    match resolver.resolve(&query) {
+    let ctx = context.unwrap_or_default();
+    match resolver.resolve_with_context(&query, &ctx) {
         Ok(plan) => serde_json::to_value(&plan).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     }
@@ -310,7 +314,7 @@ mod tests {
     #[test]
     fn test_resolve_natural_language() {
         use crate::resolve_natural_language;
-        let result = resolve_natural_language("merge a.pdf and b.pdf".to_string());
+        let result = resolve_natural_language("merge a.pdf and b.pdf".to_string(), None);
         assert!(result.is_ok());
         let val = result.unwrap();
         let intent = val.get("intent").and_then(|i| i.as_str());
@@ -318,5 +322,28 @@ mod tests {
         let inputs = val.get("input_files").and_then(|i| i.as_array());
         assert!(inputs.is_some());
         // We do not strictly check the array length since it depends on the offline resolver's heuristics
+    }
+
+    #[test]
+    fn test_resolve_natural_language_with_context() {
+        use crate::resolve_natural_language;
+        use paperpilot_nlp::traits::ResolverContext;
+
+        let ctx = ResolverContext {
+            active_document: Some("active_doc.pdf".to_string()),
+            open_documents: vec!["active_doc.pdf".to_string()],
+        };
+
+        // Command missing explicit file should use active_document from context
+        let result = resolve_natural_language("rotate 90 degrees".to_string(), Some(ctx));
+        assert!(result.is_ok());
+        let val = result.unwrap();
+        let intent = val.get("intent").and_then(|i| i.as_str());
+        assert_eq!(intent, Some("Rotate"));
+
+        let inputs = val.get("input_files").and_then(|i| i.as_array());
+        assert!(inputs.is_some());
+        assert_eq!(inputs.unwrap().len(), 1);
+        assert_eq!(inputs.unwrap()[0].as_str(), Some("active_doc.pdf"));
     }
 }

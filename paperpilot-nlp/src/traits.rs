@@ -52,13 +52,25 @@ pub enum NlpError {
     InternalError(String),
 }
 
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct ResolverContext {
+    pub active_document: Option<String>,
+    pub open_documents: Vec<String>,
+}
+
 /// The core abstraction for natural language command processing.
 /// This trait is implemented by both the embedded Offline NLP engine
 /// and the cloud/local LLM providers (via `paperpilot-ai`).
 pub trait NlpResolver: Send + Sync {
     /// Takes a natural language string and attempts to resolve it into a structured
     /// `OperationPlan` that the PaperPilot engine can execute.
-    fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError>;
+    fn resolve(&self, query: &str) -> Result<OperationPlan, NlpError> {
+        self.resolve_with_context(query, &ResolverContext::default())
+    }
+
+    /// Takes a natural language string and attempts to resolve it into a structured
+    /// `OperationPlan`, using the provided context for implicit document binding.
+    fn resolve_with_context(&self, query: &str, context: &ResolverContext) -> Result<OperationPlan, NlpError>;
 }
 
 #[cfg(test)]
@@ -89,5 +101,22 @@ mod tests {
         let plan = OperationPlan::new(intent, entities, "rotate a b".to_string());
         assert_eq!(plan.input_files, vec!["a.pdf", "b.pdf"]);
         assert_eq!(plan.output_file, None);
+    }
+
+    #[test]
+    fn test_resolver_context_default() {
+        let ctx = ResolverContext::default();
+        assert_eq!(ctx.active_document, None);
+        assert!(ctx.open_documents.is_empty());
+    }
+
+    #[test]
+    fn test_resolver_context_creation() {
+        let ctx = ResolverContext {
+            active_document: Some("a.pdf".to_string()),
+            open_documents: vec!["a.pdf".to_string(), "b.pdf".to_string()],
+        };
+        assert_eq!(ctx.active_document, Some("a.pdf".to_string()));
+        assert_eq!(ctx.open_documents.len(), 2);
     }
 }

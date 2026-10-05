@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/core';
     import { toastState } from '$lib/state/toast.svelte';
+    import { appState } from '$lib/state/app.svelte';
 
     let query = $state('');
     let messages = $state<{role: 'user' | 'assistant', content: string, plan?: any}[]>([]);
@@ -22,7 +23,17 @@
         isThinking = true;
 
         try {
-            const plan = await invoke('resolve_natural_language', { query: textToSend });
+            const activeDoc = appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null;
+            const activePath = activeDoc ? ((activeDoc as any)._localPath || activeDoc.name) : undefined;
+            const openDocs = appState.documents.map(d => (d as any)._localPath || d.name);
+
+            const plan = await invoke('resolve_natural_language', {
+                query: textToSend,
+                context: {
+                    active_document: activePath || null,
+                    open_documents: openDocs
+                }
+            });
             messages = [...messages, { role: 'assistant', content: "Here's what I can do:", plan }];
         } catch (error) {
             messages = [...messages, { role: 'assistant', content: `Error: ${error}` }];
