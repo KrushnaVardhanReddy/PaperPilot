@@ -76,7 +76,9 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-*No active Jules sessions currently in-flight. All dispatched tasks merged!*
+| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
+|---|---|---|---|---|
+| **4.8.5** | `apps/web/playwright.config.ts`, `apps/web/tests/e2e_wasm_12_tools.spec.ts`, `reports/WASM_12_TOOLS_E2E_SCORECARD.md`, `wiki/08-Wasm-E2E-Testing.md` | [Session 10562587771207472872](https://jules.google.com/session/10562587771207472872) | `main` | WASM 12 Tools Playwright E2E Suite & Verification Scorecard |
 
 ---
 
