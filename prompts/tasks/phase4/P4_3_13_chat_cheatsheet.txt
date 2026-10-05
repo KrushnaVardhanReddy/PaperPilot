@@ -1,0 +1,96 @@
+# Task: Phase 4.3.13 — Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`)
+
+## Objective
+Implement Task 4.3.13: Create a responsive, searchable Command Help & Cheat Sheet component (`apps/desktop/src/lib/components/ChatCheatSheet.svelte`) integrated into `PdfChatPanel.svelte`. Users can click `💡 Examples` (or press `?`) to open a searchable palette of example natural language commands organized across all 44 PDF operations. Clicking any example prompt automatically populates the chat input box so users can run or customize it instantly.
+
+**Branch**: `feat/desktop-chat-cheatsheet`
+**Base Branch**: `main`
+
+---
+
+## File Ownership (STRICT: ONLY touch these files)
+```
+apps/desktop/src/lib/components/ChatCheatSheet.svelte
+apps/desktop/src/lib/components/PdfChatPanel.svelte
+reports/UI_CHAT_CHEATSHEET_REPORT.md
+```
+DO NOT touch Rust crates, core PDF operations, or unrelated viewer components.
+
+---
+
+## Technical Requirements
+
+### 1. Component Design (`apps/desktop/src/lib/components/ChatCheatSheet.svelte`)
+- **Props**:
+  - `isOpen: boolean`
+  - `onSelectPrompt: (promptText: string) => void`
+  - `onClose: () => void`
+- **Search Bar**:
+  - Auto-focused `<input type="text" placeholder="Search examples (e.g. split, word, encrypt, bates)..." />`.
+  - Filters real-time across prompt text, categories, and tags.
+- **Categorized Examples Directory (Covering all 44 tools)**:
+  - **⚡ Quick Actions**:
+    - `"Rotate 90 degrees clockwise"`
+    - `"Rotate 180 degrees upside down"`
+    - `"Compress this PDF"`
+    - `"Squish this document"`
+  - **📑 Pages & Organization**:
+    - `"Split pages 1 to 5"`
+    - `"Extract pages 2, 4, and 6"`
+    - `"Delete pages 3 and 7"`
+    - `"Reorder pages 3, 1, 2"`
+    - `"Burst into single page files"`
+    - `"Remove all blank pages"`
+    - `"Crop margins 10,10,200,200"`
+  - **🔄 Conversions & Extraction**:
+    - `"Convert to Word (docx)"`
+    - `"Convert to Excel spreadsheet"`
+    - `"Convert to Markdown"`
+    - `"Extract all plain text"`
+    - `"Extract embedded images"`
+    - `"Convert to PDF/A archive"`
+  - **🔒 Security & Integrity**:
+    - `"Encrypt with password mysecret123"`
+    - `"Remove password from PDF"`
+    - `"Redact confidential text"`
+    - `"Add digital signature"`
+    - `"Sanitize author metadata"`
+    - `"Validate PDF structure"`
+    - `"Generate SHA-256 hash"`
+  - **✍️ Edit, Stamps & Forms**:
+    - `"Add watermark CONFIDENTIAL"`
+    - `"Add Bates numbering prefix LAW-"`
+    - `"Add header Confidential and footer Page 1"`
+    - `"Add page numbers at bottom"`
+    - `"Flatten all annotations"`
+    - `"Read form field values"`
+- **Interaction**:
+  - Each item displays the prompt string with a `[Try Prompt ↗]` button.
+  - Clicking calls `onSelectPrompt(prompt)` and closes the drawer.
+
+### 2. Integration into `PdfChatPanel.svelte`
+- Add a `💡 Examples` button in the chat header or near the prompt input.
+- When clicked, toggles `isCheatSheetOpen = true`.
+- When an example is picked via `onSelectPrompt`, set `query = promptText` and focus the input.
+- Support pressing `Escape` to close the cheat sheet.
+
+### 3. Verification Report
+Generate `reports/UI_CHAT_CHEATSHEET_REPORT.md` confirming:
+- Component implementation and styling.
+- All 44 operation categories represented in the cheat sheet database.
+- Unit and UI test verification.
+
+---
+
+## Verification Commands
+```bash
+cd apps/desktop
+pnpm check
+pnpm build
+pnpm test
+```
+
+## Commit Message
+```
+feat(desktop): add searchable command help and cheat sheet drawer in pdf chat panel
+```

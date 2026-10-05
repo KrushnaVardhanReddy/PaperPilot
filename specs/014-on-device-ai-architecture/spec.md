@@ -53,10 +53,17 @@ To ensure the AI chat and NLP subsystem functions reliably from prompt to PDF ou
   4. Clicking `[Execute Action]` invokes the actual `invoke_mcp_tool` engine which executes the underlying PDF operation (`paperpilot-pdf`).
   5. Verifies output file generation on disk and validates output integrity (e.g., page count / rotation state).
 
+### 7. Searchable Command Help & Cheat Sheet Drawer (`ChatCheatSheet.svelte`)
+To resolve the "blank canvas" discoverability challenge for users, the chat interface includes a searchable command palette:
+* **Entry Point**: A `💡 Examples` button in `PdfChatPanel.svelte` (and hotkey `Ctrl+/` / `?`).
+* **Search & Filter**: Real-time search filter categorizing supported natural language queries across all 44 tools (`Pages & Structure`, `Optimize & Repair`, `Security & Privacy`, `Conversions & Extraction`, `Edit & Markup`, `Multi-Document Merge/Compare`).
+* **One-Click Insert**: Clicking any example prompt automatically populates the chat prompt input, allowing users to modify arguments (e.g. page numbers or passwords) and submit immediately.
+
 ## Consequences
 * Total application size remains ~50MB, well under the 100MB constraint.
 * Zero external Python, server, or cloud dependencies for AI operation.
 * Instant sub-2ms response times on any desktop hardware.
 * Flawless user experience in single-document viewer mode (no redundant typing of file names).
 * Frictionless multi-document batch and merge workflows from the central Documents hub.
+* Immediate discoverability and rapid prompt formulation for all 44 operations via the interactive cheat sheet.
 * Real end-to-end pipeline confidence with zero mocking.
