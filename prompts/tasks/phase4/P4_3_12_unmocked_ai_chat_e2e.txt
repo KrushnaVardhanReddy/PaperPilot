@@ -96,6 +96,64 @@ Ensure test selectors accurately match the updated production UI:
 7. Verify `.plan-card` renders with `Compress Operation`.
 8. Click `⚡ Execute Action` and verify `.result-card` confirms completion.
 
+### Scenario 4: Master 44-Operation NLP & Action Card Parity Sweep
+To guarantee complete 44-tool coverage matching `apps/desktop/tests/e2e_44_operations_parity.spec.ts`:
+- Create a data-driven test loop over all 44 PDF operations:
+  ```typescript
+  const all44ChatOperations = [
+    { intent: 'Merge', prompt: 'Merge this document' },
+    { intent: 'Split', prompt: 'Split pages 1 to 2' },
+    { intent: 'Extract', prompt: 'Extract pages 1, 2' },
+    { intent: 'Delete', prompt: 'Delete page 1' },
+    { intent: 'Reorder', prompt: 'Reorder pages 2, 1' },
+    { intent: 'Rotate', prompt: 'Rotate 90 degrees' },
+    { intent: 'Crop', prompt: 'Crop margins 0,0,100,100' },
+    { intent: 'Burst', prompt: 'Burst PDF into single pages' },
+    { intent: 'RemoveBlank', prompt: 'Remove all blank pages' },
+    { intent: 'Compress', prompt: 'Compress this PDF' },
+    { intent: 'Repair', prompt: 'Repair this PDF' },
+    { intent: 'Linearize', prompt: 'Linearize for fast web view' },
+    { intent: 'Encrypt', prompt: 'Encrypt with password secret123' },
+    { intent: 'Decrypt', prompt: 'Remove password from PDF' },
+    { intent: 'Watermark', prompt: 'Add watermark CONFIDENTIAL' },
+    { intent: 'Redact', prompt: 'Redact text' },
+    { intent: 'Metadata', prompt: 'Sanitize metadata' },
+    { intent: 'Sign', prompt: 'Sign document' },
+    { intent: 'Flatten', prompt: 'Flatten annotations' },
+    { intent: 'PdfA', prompt: 'Convert to PDF/A archive' },
+    { intent: 'HeaderFooter', prompt: 'Add header and footer' },
+    { intent: 'Bates', prompt: 'Add Bates numbering prefix CASE-' },
+    { intent: 'PageNumbers', prompt: 'Add page numbers' },
+    { intent: 'ExtractText', prompt: 'Extract all text' },
+    { intent: 'ExtractImages', prompt: 'Extract embedded images' },
+    { intent: 'Search', prompt: 'Search text' },
+    { intent: 'Render', prompt: 'Render page to image' },
+    { intent: 'Compare', prompt: 'Compare documents' },
+    { intent: 'Ocr', prompt: 'Run OCR text recognition' },
+    { intent: 'Bookmarks', prompt: 'Extract bookmarks outline' },
+    { intent: 'ImagesToPdf', prompt: 'Convert images to PDF' },
+    { intent: 'Annotate', prompt: 'Add annotation' },
+    { intent: 'Classify', prompt: 'Classify document type' },
+    { intent: 'Validate', prompt: 'Validate PDF structure' },
+    { intent: 'Hash', prompt: 'Generate SHA-256 hash' },
+    { intent: 'FormRead', prompt: 'Read form data' },
+    { intent: 'FormFill', prompt: 'Fill form data' },
+    { intent: 'FormCreate', prompt: 'Add form field' },
+    { intent: 'ToDocx', prompt: 'Convert to Word docx' },
+    { intent: 'ToXlsx', prompt: 'Convert to Excel spreadsheet' },
+    { intent: 'ToPptx', prompt: 'Convert to PowerPoint presentation' },
+    { intent: 'ToHtml', prompt: 'Convert to HTML' },
+    { intent: 'ToMarkdown', prompt: 'Convert to Markdown' },
+    { intent: 'ExcelToPdf', prompt: 'Convert CSV/Excel to PDF' }
+  ];
+  ```
+- For each of the 44 operations:
+  1. Input the natural language prompt into the chat input.
+  2. Verify offline NLP resolves the query without error and renders an `.plan-card`.
+  3. Verify the plan card displays the expected operation intent title (`.plan-card h4`).
+  4. Verify the `⚡ Execute Action` button is visible and interactive.
+  5. Click `⚡ Execute Action` and verify the execution dispatches to the correct MCP tool without `Missing parameter` errors, producing a `.result-card` or success message.
+
 ---
 
 ## Verification Commands
