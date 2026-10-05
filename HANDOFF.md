@@ -67,7 +67,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **4.0.5** | `paperpilot-nlp/` only | [Session 770271872369515055](https://jules.google.com/session/770271872369515055) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) with committed model assets |
+| **4.0.5** | `paperpilot-nlp/` only | [Session 15656187434149356302](https://jules.google.com/session/15656187434149356302) | `main` | Embedded ONNX Intent & Entity Classifier (`TinyBERT-4L-312D` INT8 ONNX compressed with `zstd`, `ort` in-memory) with explicit `ort` 2.0 typing and committed assets |
 
 ---
 
