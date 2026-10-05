@@ -325,3 +325,172 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
 
     Ok(buffer)
 }
+pub fn delete_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let pages = doc.get_pages();
+    let total_pages = pages.len() as u32;
+    let pages_to_delete = parse_pages(pages_str, total_pages)?;
+
+    doc.delete_pages(&pages_to_delete);
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn extract_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let pages = doc.get_pages();
+    let total_pages = pages.len() as u32;
+    let target_pages = parse_pages(pages_str, total_pages)?;
+
+    let mut pages_to_delete = Vec::new();
+    for p in 1..=total_pages {
+        if !target_pages.contains(&p) {
+            pages_to_delete.push(p);
+        }
+    }
+
+    doc.delete_pages(&pages_to_delete);
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let pages = doc.get_pages();
+    let total_pages = pages.len() as u32;
+
+    if new_order.len() != total_pages as usize {
+        return Err(PdfError::InvalidInput(format!("New order length {} does not match total pages {}", new_order.len(), total_pages)));
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    for &page_num in new_order {
+        if page_num < 1 || page_num > total_pages {
+             return Err(PdfError::InvalidInput(format!("Invalid page number in new order: {}", page_num)));
+        }
+        if !seen.insert(page_num) {
+            return Err(PdfError::InvalidInput(format!("Duplicate page number in new order: {}", page_num)));
+        }
+    }
+
+    // Build the new Kids array
+    let mut new_kids = Vec::new();
+    for page_num in new_order {
+        if let Some(&page_id) = pages.get(page_num) {
+            new_kids.push(lopdf::Object::Reference(page_id));
+        }
+    }
+
+    // Find the Pages object and update Kids
+    if let Ok(catalog_id) = doc.trailer.get(b"Root").and_then(|root| root.as_reference()) {
+        if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object(catalog_id) {
+            if let Ok(pages_id) = catalog.get(b"Pages").and_then(|p| p.as_reference()) {
+                 if let Ok(lopdf::Object::Dictionary(pages_dict)) = doc.get_object_mut(pages_id) {
+                     pages_dict.set("Kids", lopdf::Object::Array(new_kids));
+                 }
+            }
+        }
+    }
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let crop_box_array = vec![
+        lopdf::Object::Real(left),
+        lopdf::Object::Real(bottom),
+        lopdf::Object::Real(right),
+        lopdf::Object::Real(top),
+    ];
+
+    for (_, page_id) in doc.get_pages() {
+        if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(page_id) {
+            dict.set("CropBox", lopdf::Object::Array(crop_box_array.clone()));
+        }
+    }
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn flatten(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    if let Ok(catalog_id) = doc.trailer.get(b"Root").and_then(|root| root.as_reference()) {
+        if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object_mut(catalog_id) {
+            catalog.remove(b"AcroForm");
+        }
+    }
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn set_metadata(
+    input_bytes: &[u8],
+    title: Option<String>,
+    author: Option<String>,
+    subject: Option<String>,
+    keywords: Option<String>,
+) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    // Get or create the Info dictionary reference
+    let info_id = if let Ok(info_ref) = doc.trailer.get(b"Info").and_then(|info| info.as_reference()) {
+        info_ref
+    } else {
+        let new_info_id = doc.add_object(lopdf::Object::Dictionary(lopdf::Dictionary::new()));
+        doc.trailer.set("Info", lopdf::Object::Reference(new_info_id));
+        new_info_id
+    };
+
+    if let Ok(lopdf::Object::Dictionary(info_dict)) = doc.get_object_mut(info_id) {
+        if let Some(t) = title {
+            info_dict.set("Title", lopdf::Object::String(t.into_bytes(), lopdf::StringFormat::Literal));
+        }
+        if let Some(a) = author {
+            info_dict.set("Author", lopdf::Object::String(a.into_bytes(), lopdf::StringFormat::Literal));
+        }
+        if let Some(s) = subject {
+            info_dict.set("Subject", lopdf::Object::String(s.into_bytes(), lopdf::StringFormat::Literal));
+        }
+        if let Some(k) = keywords {
+            info_dict.set("Keywords", lopdf::Object::String(k.into_bytes(), lopdf::StringFormat::Literal));
+        }
+    }
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
