@@ -3,7 +3,7 @@
 ## Executive Scorecard
 - **Total Tools Verified:** 44
 - **CLI Pass Rate:** 44 / 44
-- **MCP Pass Rate:** 44 / 44
+- **MCP Pass Rate:** 0 / 44
 - **API Pass Rate:** 44 / 44
 
 ## Detailed Tool-by-Tool Documentation
@@ -12,10 +12,10 @@
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/merged_cli.pdf --json
+/app/target/debug/paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/merged_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 19.96 ms
+- **Latency:** 24.95 ms
 
 #### 🤖 MCP
 ```json
@@ -30,20 +30,21 @@
         "tests/e2e_fixtures/page_1.pdf",
         "tests/e2e_fixtures/page_2.pdf"
       ],
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/merged_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/merged_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 19.97 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.70 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/merged_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/merged_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 30.64 ms
+- **Latency:** 97.94 ms
 
 ---
 
@@ -51,10 +52,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/split --json
+/app/target/debug/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output /app/tests/e2e_fixtures/out/tri_e2e/split --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.09 ms
+- **Latency:** 35.93 ms
 
 #### 🤖 MCP
 ```json
@@ -66,20 +67,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
     "name": "pdf_split",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/split"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/split"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.81 ms
+- **Status:** ❌ FAIL
+- **Latency:** 1.20 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/split"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "/app/tests/e2e_fixtures/out/tri_e2e/split"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2.62 ms
+- **Latency:** 7.16 ms
 
 ---
 
@@ -87,10 +89,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_cli.pdf --json
+/app/target/debug/paperpilot-cli extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.76 ms
+- **Latency:** 20.06 ms
 
 #### 🤖 MCP
 ```json
@@ -103,20 +105,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "pages": "1,3",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.93 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.66 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.67 ms
+- **Latency:** 5.29 ms
 
 ---
 
@@ -124,10 +127,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/deleted_cli.pdf --json
+/app/target/debug/paperpilot-cli delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output /app/tests/e2e_fixtures/out/tri_e2e/deleted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.47 ms
+- **Latency:** 18.68 ms
 
 #### 🤖 MCP
 ```json
@@ -140,20 +143,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "pages": "2,4",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/deleted_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/deleted_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.55 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.66 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/deleted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "/app/tests/e2e_fixtures/out/tri_e2e/deleted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.99 ms
+- **Latency:** 5.00 ms
 
 ---
 
@@ -161,10 +165,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/reordered_cli.pdf --json
+/app/target/debug/paperpilot-cli reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output /app/tests/e2e_fixtures/out/tri_e2e/reordered_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.69 ms
+- **Latency:** 18.76 ms
 
 #### 🤖 MCP
 ```json
@@ -177,20 +181,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "order": "2,1,3,4,5",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/reordered_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/reordered_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.71 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.82 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/reordered_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "/app/tests/e2e_fixtures/out/tri_e2e/reordered_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.45 ms
+- **Latency:** 7.59 ms
 
 ---
 
@@ -198,10 +203,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rotated_cli.pdf --json
+/app/target/debug/paperpilot-cli rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output /app/tests/e2e_fixtures/out/tri_e2e/rotated_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.80 ms
+- **Latency:** 19.02 ms
 
 #### 🤖 MCP
 ```json
@@ -215,20 +220,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
       "input": "tests/e2e_fixtures/single_page.pdf",
       "angle": 90,
       "pages": "1",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rotated_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/rotated_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.85 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.58 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rotated_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "/app/tests/e2e_fixtures/out/tri_e2e/rotated_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.94 ms
+- **Latency:** 4.18 ms
 
 ---
 
@@ -236,10 +242,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/cropped_cli.pdf --json
+/app/target/debug/paperpilot-cli crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output /app/tests/e2e_fixtures/out/tri_e2e/cropped_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.84 ms
+- **Latency:** 17.31 ms
 
 #### 🤖 MCP
 ```json
@@ -252,20 +258,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "box": "10,10,200,200",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/cropped_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/cropped_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.83 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.67 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/cropped_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "/app/tests/e2e_fixtures/out/tri_e2e/cropped_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.90 ms
+- **Latency:** 4.02 ms
 
 ---
 
@@ -273,10 +280,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli burst --input tests/e2e_fixtures/multi_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/burst_dir --json
+/app/target/debug/paperpilot-cli burst --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/burst_dir --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.97 ms
+- **Latency:** 19.99 ms
 
 #### 🤖 MCP
 ```json
@@ -288,20 +295,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
     "name": "pdf_burst",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/burst_dir"
+      "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/burst_dir"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.60 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.76 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/burst_dir"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/burst_dir"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.95 ms
+- **Latency:** 6.83 ms
 
 ---
 
@@ -309,10 +317,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli remove-blank --input tests/e2e_fixtures/multi_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/noblank_cli.pdf --json
+/app/target/debug/paperpilot-cli remove-blank --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/noblank_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.74 ms
+- **Latency:** 17.65 ms
 
 #### 🤖 MCP
 ```json
@@ -324,20 +332,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
     "name": "pdf_remove_blank",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/noblank_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/noblank_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.07 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.66 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/noblank_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/noblank_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.27 ms
+- **Latency:** 4.47 ms
 
 ---
 
@@ -345,10 +354,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli compress --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/compressed_cli.pdf --quality medium --json
+/app/target/debug/paperpilot-cli compress --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/compressed_cli.pdf --quality medium --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.67 ms
+- **Latency:** 18.45 ms
 
 #### 🤖 MCP
 ```json
@@ -360,21 +369,22 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
     "name": "pdf_compress",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/compressed_mcp.pdf",
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/compressed_mcp.pdf",
       "quality": "medium"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.14 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.64 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/compressed_api.pdf", "quality": "medium"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/compressed_api.pdf", "quality": "medium"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.07 ms
+- **Latency:** 5.62 ms
 
 ---
 
@@ -382,10 +392,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli repair --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/repaired_cli.pdf --json
+/app/target/debug/paperpilot-cli repair --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/repaired_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.96 ms
+- **Latency:** 16.83 ms
 
 #### 🤖 MCP
 ```json
@@ -397,20 +407,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
     "name": "pdf_repair",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/repaired_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/repaired_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.58 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.55 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/repaired_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/repaired_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.78 ms
+- **Latency:** 4.02 ms
 
 ---
 
@@ -418,10 +429,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli linearize --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/linearized_cli.pdf --json
+/app/target/debug/paperpilot-cli linearize --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/linearized_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.16 ms
+- **Latency:** 18.40 ms
 
 #### 🤖 MCP
 ```json
@@ -433,20 +444,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
     "name": "pdf_linearize",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/linearized_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/linearized_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.37 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.78 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/linearized_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/linearized_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.01 ms
+- **Latency:** 4.76 ms
 
 ---
 
@@ -454,10 +466,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --json
+/app/target/debug/paperpilot-cli encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.26 ms
+- **Latency:** 19.50 ms
 
 #### 🤖 MCP
 ```json
@@ -470,20 +482,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "password": "secret123",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.37 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.65 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.27 ms
+- **Latency:** 6.20 ms
 
 ---
 
@@ -491,10 +504,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli decrypt --input /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --password secret123 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/decrypted_cli.pdf --json
+/app/target/debug/paperpilot-cli decrypt --input /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/decrypted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.37 ms
+- **Latency:** 20.45 ms
 
 #### 🤖 MCP
 ```json
@@ -505,22 +518,23 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
   "params": {
     "name": "pdf_decrypt",
     "arguments": {
-      "input": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf",
+      "input": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf",
       "password": "secret123",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/decrypted_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/decrypted_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.65 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.65 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf", "password": "secret123", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/decrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/decrypted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.91 ms
+- **Latency:** 8.74 ms
 
 ---
 
@@ -528,10 +542,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/watermarked_cli.pdf --json
+/app/target/debug/paperpilot-cli watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output /app/tests/e2e_fixtures/out/tri_e2e/watermarked_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.11 ms
+- **Latency:** 31.07 ms
 
 #### 🤖 MCP
 ```json
@@ -544,20 +558,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "text": "CONFIDENTIAL",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/watermarked_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/watermarked_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.33 ms
+- **Status:** ❌ FAIL
+- **Latency:** 1.09 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/watermarked_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "/app/tests/e2e_fixtures/out/tri_e2e/watermarked_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.00 ms
+- **Latency:** 4.71 ms
 
 ---
 
@@ -565,10 +580,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/redacted_cli.pdf --json
+/app/target/debug/paperpilot-cli redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output /app/tests/e2e_fixtures/out/tri_e2e/redacted_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.94 ms
+- **Latency:** 20.64 ms
 
 #### 🤖 MCP
 ```json
@@ -585,20 +600,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
       "y": 50,
       "width": 200,
       "height": 50,
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/redacted_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/redacted_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.11 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.64 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/redacted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "/app/tests/e2e_fixtures/out/tri_e2e/redacted_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.95 ms
+- **Latency:** 4.27 ms
 
 ---
 
@@ -606,10 +622,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Ty
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli metadata --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/metadata.json --json
+/app/target/debug/paperpilot-cli metadata --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/metadata.json --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.11 ms
+- **Latency:** 17.21 ms
 
 #### 🤖 MCP
 ```json
@@ -625,15 +641,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Ty
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 3.46 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.81 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.58 ms
+- **Latency:** 4.03 ms
 
 ---
 
@@ -641,10 +658,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/signed_cli.pdf --json
+/app/target/debug/paperpilot-cli signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output /app/tests/e2e_fixtures/out/tri_e2e/signed_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.39 ms
+- **Latency:** 17.21 ms
 
 #### 🤖 MCP
 ```json
@@ -657,20 +674,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/signed_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/signed_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.82 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.47 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/signed_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "/app/tests/e2e_fixtures/out/tri_e2e/signed_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.99 ms
+- **Latency:** 4.68 ms
 
 ---
 
@@ -678,10 +696,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli flatten --input tests/e2e_fixtures/form.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/flattened_cli.pdf --json
+/app/target/debug/paperpilot-cli flatten --input tests/e2e_fixtures/form.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/flattened_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.92 ms
+- **Latency:** 20.82 ms
 
 #### 🤖 MCP
 ```json
@@ -693,20 +711,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
     "name": "pdf_flatten",
     "arguments": {
       "input": "tests/e2e_fixtures/form.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/flattened_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/flattened_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.59 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.72 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/flattened_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/flattened_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.92 ms
+- **Latency:** 4.80 ms
 
 ---
 
@@ -714,10 +733,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli pdf-a --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/pdf_a_cli.pdf --json
+/app/target/debug/paperpilot-cli pdf-a --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/pdf_a_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.91 ms
+- **Latency:** 18.40 ms
 
 #### 🤖 MCP
 ```json
@@ -729,20 +748,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
     "name": "pdf_to_pdf_a",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/pdf_a_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/pdf_a_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.24 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.68 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/pdf_a_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/pdf_a_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.84 ms
+- **Latency:** 4.69 ms
 
 ---
 
@@ -750,10 +770,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/header_cli.pdf --json
+/app/target/debug/paperpilot-cli header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output /app/tests/e2e_fixtures/out/tri_e2e/header_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.66 ms
+- **Latency:** 18.94 ms
 
 #### 🤖 MCP
 ```json
@@ -767,20 +787,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "header_left": "Confidential",
       "footer_center": "Page",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/header_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/header_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.33 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.66 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/header_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "/app/tests/e2e_fixtures/out/tri_e2e/header_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.22 ms
+- **Latency:** 5.18 ms
 
 ---
 
@@ -788,10 +809,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/bates_cli.pdf --json
+/app/target/debug/paperpilot-cli bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output /app/tests/e2e_fixtures/out/tri_e2e/bates_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.41 ms
+- **Latency:** 20.57 ms
 
 #### 🤖 MCP
 ```json
@@ -806,20 +827,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
       "prefix": "CONF-",
       "start_number": 1,
       "padding": 6,
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/bates_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/bates_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.37 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.75 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/bates_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "/app/tests/e2e_fixtures/out/tri_e2e/bates_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.95 ms
+- **Latency:** 5.97 ms
 
 ---
 
@@ -827,10 +849,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli page-numbers --input tests/e2e_fixtures/multi_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/numbers_cli.pdf --json
+/app/target/debug/paperpilot-cli page-numbers --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/numbers_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.12 ms
+- **Latency:** 20.30 ms
 
 #### 🤖 MCP
 ```json
@@ -844,20 +866,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "position": "bottom-right",
       "start_number": 1,
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/numbers_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/numbers_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.66 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.61 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/numbers_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "/app/tests/e2e_fixtures/out/tri_e2e/numbers_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.15 ms
+- **Latency:** 4.93 ms
 
 ---
 
@@ -865,10 +888,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli extract-text --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/text.txt --json
+/app/target/debug/paperpilot-cli extract-text --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/text.txt --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.74 ms
+- **Latency:** 17.29 ms
 
 #### 🤖 MCP
 ```json
@@ -880,20 +903,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
     "name": "pdf_extract_text",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/text.txt"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/text.txt"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.85 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.65 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/text.txt"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/text.txt"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.73 ms
+- **Latency:** 3.66 ms
 
 ---
 
@@ -901,10 +925,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli extract-images --input tests/e2e_fixtures/image_doc.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_images --json
+/app/target/debug/paperpilot-cli extract-images --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_images --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.34 ms
+- **Latency:** 17.97 ms
 
 #### 🤖 MCP
 ```json
@@ -916,20 +940,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
     "name": "pdf_extract_images",
     "arguments": {
       "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_images"
+      "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_images"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.38 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.62 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/extracted_images"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_images"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.22 ms
+- **Latency:** 4.00 ms
 
 ---
 
@@ -937,10 +962,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Co
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli search --input tests/e2e_fixtures/search_test.pdf --query test --json
+/app/target/debug/paperpilot-cli search --input tests/e2e_fixtures/search_test.pdf --query test --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.93 ms
+- **Latency:** 16.89 ms
 
 #### 🤖 MCP
 ```json
@@ -957,15 +982,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Co
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.02 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.64 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/search_test.pdf", "query": "test"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.67 ms
+- **Latency:** 3.52 ms
 
 ---
 
@@ -973,10 +999,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rendered_cli.png --json
+/app/target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/rendered_cli.png --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.61 ms
+- **Latency:** 16.99 ms
 
 #### 🤖 MCP
 ```json
@@ -989,20 +1015,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "page": 1,
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rendered_mcp.png"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/rendered_mcp.png"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.81 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.55 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/rendered_api.png"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "output": "/app/tests/e2e_fixtures/out/tri_e2e/rendered_api.png"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2.59 ms
+- **Latency:** 4.43 ms
 
 ---
 
@@ -1010,10 +1037,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: a
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
+/app/target/debug/paperpilot-cli compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.32 ms
+- **Latency:** 18.62 ms
 
 #### 🤖 MCP
 ```json
@@ -1030,15 +1057,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: a
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.30 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.56 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/page_1.pdf", "file2": "tests/e2e_fixtures/page_2.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.37 ms
+- **Latency:** 21.48 ms
 
 ---
 
@@ -1046,10 +1074,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli ocr --input tests/e2e_fixtures/image_doc.pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/ocr_cli.pdf --json
+/app/target/debug/paperpilot-cli ocr --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/ocr_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.42 ms
+- **Latency:** 18.31 ms
 
 #### 🤖 MCP
 ```json
@@ -1061,20 +1089,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
     "name": "pdf_ocr",
     "arguments": {
       "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/ocr_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/ocr_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.57 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.85 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/ocr_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/ocr_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.86 ms
+- **Latency:** 5.02 ms
 
 ---
 
@@ -1082,10 +1111,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type:
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
+/app/target/debug/paperpilot-cli bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.94 ms
+- **Latency:** 19.17 ms
 
 #### 🤖 MCP
 ```json
@@ -1101,15 +1130,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type:
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.84 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.57 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/large_doc.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.81 ms
+- **Latency:** 4.89 ms
 
 ---
 
@@ -1117,10 +1147,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/images_cli.pdf --json
+/app/target/debug/paperpilot-cli images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output /app/tests/e2e_fixtures/out/tri_e2e/images_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.35 ms
+- **Latency:** 19.66 ms
 
 #### 🤖 MCP
 ```json
@@ -1135,20 +1165,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
         "tests/e2e_fixtures/img1.png",
         "tests/e2e_fixtures/img2.png"
       ],
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/images_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/images_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.01 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.73 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/images_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/images_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.91 ms
+- **Latency:** 5.71 ms
 
 ---
 
@@ -1156,10 +1187,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/annotated.pdf --json
+/app/target/debug/paperpilot-cli annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output /app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 6.09 ms
+- **Latency:** 16.96 ms
 
 #### 🤖 MCP
 ```json
@@ -1184,20 +1215,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
           "content": "Test"
         }
       ],
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 6.24 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.85 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "/app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.99 ms
+- **Latency:** 4.00 ms
 
 ---
 
@@ -1205,10 +1237,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli classify --input tests/e2e_fixtures/single_page.pdf --json
+/app/target/debug/paperpilot-cli classify --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.32 ms
+- **Latency:** 20.36 ms
 
 #### 🤖 MCP
 ```json
@@ -1224,15 +1256,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.88 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.59 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.87 ms
+- **Latency:** 7.34 ms
 
 ---
 
@@ -1240,10 +1273,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Con
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli validate --input tests/e2e_fixtures/single_page.pdf --json
+/app/target/debug/paperpilot-cli validate --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.80 ms
+- **Latency:** 17.09 ms
 
 #### 🤖 MCP
 ```json
@@ -1259,15 +1292,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Con
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.09 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.71 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.81 ms
+- **Latency:** 3.66 ms
 
 ---
 
@@ -1275,10 +1309,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli hash --input tests/e2e_fixtures/single_page.pdf --json
+/app/target/debug/paperpilot-cli hash --input tests/e2e_fixtures/single_page.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.00 ms
+- **Latency:** 14.96 ms
 
 #### 🤖 MCP
 ```json
@@ -1294,15 +1328,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 4.50 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.70 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.68 ms
+- **Latency:** 2.22 ms
 
 ---
 
@@ -1310,10 +1345,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli form read tests/e2e_fixtures/form.pdf --json
+/app/target/debug/paperpilot-cli form read tests/e2e_fixtures/form.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 5.09 ms
+- **Latency:** 16.03 ms
 
 #### 🤖 MCP
 ```json
@@ -1329,15 +1364,16 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.90 ms
+- **Status:** ❌ FAIL
+- **Latency:** 1.22 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.71 ms
+- **Latency:** 3.83 ms
 
 ---
 
@@ -1345,10 +1381,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/filled_cli.pdf --json
+/app/target/debug/paperpilot-cli form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output /app/tests/e2e_fixtures/out/tri_e2e/filled_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.26 ms
+- **Latency:** 19.23 ms
 
 #### 🤖 MCP
 ```json
@@ -1363,20 +1399,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
       "values": {
         "TestText": "Alice"
       },
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/filled_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/filled_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 3.77 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.62 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/filled_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "/app/tests/e2e_fixtures/out/tri_e2e/filled_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.76 ms
+- **Latency:** 4.85 ms
 
 ---
 
@@ -1384,10 +1421,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/added_cli.pdf --json
+/app/target/debug/paperpilot-cli form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output /app/tests/e2e_fixtures/out/tri_e2e/added_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 4.96 ms
+- **Latency:** 17.95 ms
 
 #### 🤖 MCP
 ```json
@@ -1405,20 +1442,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
       "y": 50.0,
       "width": 100.0,
       "height": 30.0,
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/added_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/added_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 5.83 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.67 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/added_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "/app/tests/e2e_fixtures/out/tri_e2e/added_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 0.91 ms
+- **Latency:** 4.01 ms
 
 ---
 
@@ -1426,10 +1464,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format docx --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_cli.docx --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format docx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.docx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 7.01 ms
+- **Latency:** 19.37 ms
 
 #### 🤖 MCP
 ```json
@@ -1441,20 +1479,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
     "name": "pdf_to_docx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_mcp.docx"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.docx"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 9.41 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.61 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_api.docx", "format": "docx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.docx", "format": "docx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.51 ms
+- **Latency:** 5.84 ms
 
 ---
 
@@ -1462,10 +1501,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_cli.xlsx --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.xlsx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 8.66 ms
+- **Latency:** 35.36 ms
 
 #### 🤖 MCP
 ```json
@@ -1477,20 +1516,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_to_xlsx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_mcp.xlsx"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.xlsx"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 10.84 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.70 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_api.xlsx", "format": "xlsx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.xlsx", "format": "xlsx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 3.81 ms
+- **Latency:** 21.24 ms
 
 ---
 
@@ -1498,10 +1538,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_cli.pptx --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.pptx --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 9.58 ms
+- **Latency:** 19.03 ms
 
 #### 🤖 MCP
 ```json
@@ -1513,20 +1553,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_to_pptx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_mcp.pptx"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.pptx"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 7.85 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.63 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_api.pptx", "format": "pptx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.pptx", "format": "pptx"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 1.37 ms
+- **Latency:** 5.52 ms
 
 ---
 
@@ -1534,10 +1575,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/test.html --format pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_html_cli.pdf --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.html --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_html_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2754.53 ms
+- **Latency:** 247.38 ms
 
 #### 🤖 MCP
 ```json
@@ -1549,20 +1590,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_convert_html",
     "arguments": {
       "input": "tests/e2e_fixtures/test.html",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_html_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_html_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 2432.63 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.63 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_html_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_html_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2550.61 ms
+- **Latency:** 58.47 ms
 
 ---
 
@@ -1570,10 +1612,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/test.md --format pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_md_cli.pdf --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.md --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_md_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2263.02 ms
+- **Latency:** 73.67 ms
 
 #### 🤖 MCP
 ```json
@@ -1585,20 +1627,21 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
     "name": "pdf_convert_markdown",
     "arguments": {
       "input": "tests/e2e_fixtures/test.md",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_md_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_md_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 2542.08 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.74 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_md_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_md_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2508.07 ms
+- **Latency:** 55.09 ms
 
 ---
 
@@ -1606,10 +1649,10 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
 
 #### 💻 CLI
 ```bash
-/home/krushna/Project/PaperPilot/target/release/paperpilot-cli convert --input tests/e2e_fixtures/test.csv --format pdf --output /home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_csv_cli.pdf --json
+/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.csv --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_csv_cli.pdf --json
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2289.06 ms
+- **Latency:** 2113.85 ms
 
 #### 🤖 MCP
 ```json
@@ -1621,19 +1664,20 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
     "name": "pdf_convert_excel",
     "arguments": {
       "input": "tests/e2e_fixtures/test.csv",
-      "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_csv_mcp.pdf"
+      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_csv_mcp.pdf"
     }
   }
 }
 ```
-- **Status:** ✅ PASS
-- **Latency:** 2610.94 ms
+- **Status:** ❌ FAIL
+- **Latency:** 0.82 ms
+- **Error:** [Errno 2] No such file or directory: '/app/target/debug/paperpilot-mcp'
 
 #### 🌐 REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/tri_e2e/out_csv_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_csv_api.pdf"}'
 ```
 - **Status:** ✅ PASS
-- **Latency:** 2601.53 ms
+- **Latency:** 2111.58 ms
 
 ---
