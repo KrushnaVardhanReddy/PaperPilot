@@ -843,10 +843,34 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.8.5 | WASM 12 Tools Playwright E2E Suite & Scorecard ✅ | Merged (Session 10562587771207472872, PR #139) — Automated in-browser Playwright E2E suite (`apps/web/tests/e2e_wasm_12_tools.spec.ts`), pure-Rust in-memory encryption, living scorecard at `reports/WASM_12_TOOLS_E2E_SCORECARD.md` (12/12 PASS), and documentation in `wiki/08-Wasm-E2E-Testing.md`. |
 | 4.8.3 | Cloudflare Workers Edge Microservice ✅ | Merged (Session 803293663318829942, PR #140) — Deployed `paperpilot-wasm` into Cloudflare Workers standalone service in `apps/edge/` with 12 sub-10ms memory REST endpoints, Vitest suite (14/14 PASS), `reports/EDGE_MICROSERVICE_REPORT.md`, and `wiki/10-Cloudflare-Edge-Service.md`. |
 
+---
+
+### 4.9 — Embedded Web Distribution: Drop-In Widget & CMS Plugins `[DISTRIBUTION FLYWHEEL]`
+
+> Turns PaperPilot into a drop-in embeddable tool for any website. Website owners paste 2 lines of HTML and get a full, branded, client-side PDF portal — powered by `paperpilot-wasm` with zero server load and zero hosting cost. (Spec 019)
+
+**[v1.0 CO-LAUNCH TARGET]** — Released simultaneously with PaperPilot Free Desktop and Cloudflare Edge. Powered by `paperpilot-wasm` (expanded via Phase 5.1.1 / 5.5.1).
+
+| # | Task | Notes |
+|---|---|---|
+| 4.9.1 | `embed.js` Universal Drop-In CDN Script | Tiny JS loader (< 5KB gzip) served from Cloudflare CDN. Reads `data-tools`, `data-theme`, `data-brand-color`, and `data-logo-url` attributes from the host `<div>`. Mounts a Shadow DOM container to isolate styles from the host site. Lazy-loads the `paperpilot_wasm_bg.wasm` bundle and the Svelte 5 widget. |
+| 4.9.2 | Brandable Svelte 5 Embed Widget (`apps/embed/`) | Configurable, responsive, iframe-safe Svelte 5 UI component. Accepts theme tokens from `embed.js`. Renders the selected tool subset (e.g. only `merge,compress`). Includes the "⚡ Powered by PaperPilot" viral badge (removable in Pro tier). |
+| 4.9.3 | Shadow DOM Isolation & CSS Theme Tokens | Widget renders inside a Shadow DOM root so host site CSS never bleeds in. Brand colors, font size, and border-radius exposed as `--pp-brand-color`, `--pp-radius` CSS custom properties, settable via `data-` attributes or JS API. |
+| 4.9.4 | JavaScript Embed API (`window.PaperPilot`) | Programmatic API for advanced users: `PaperPilot.mount('#target', { tools: ['merge'], theme: 'light' })`, `PaperPilot.on('complete', callback)`, `PaperPilot.unmount()`. Enables headless integration into React/Vue/Angular apps. |
+| 4.9.5 | WordPress Plugin (`paperpilot-wp`) — Gutenberg Block | PHP plugin published to `wordpress.org` registry. Registers a Gutenberg Editor block (`PaperPilot PDF Portal`) and a legacy shortcode `[paperpilot_tools]`. Block settings panel exposes tool selection, theme, and brand color. Covers 43% of the web (800M+ sites). |
+| 4.9.6 | WordPress Plugin — WooCommerce Digital Downloads Integration | On WooCommerce order completion webhook, call Cloudflare Edge API to auto-watermark (`Licensed to {email} — Order #{id}`) and optionally encrypt purchased PDF products. All server-side via `apps/edge/`, no customer data stored. |
+| 4.9.7 | Webflow App & Framer Component | Package embed widget as a verified Webflow App and Framer Community Component. Agencies can install on unlimited client sites (lawyers, accountants, HR portals). |
+| 4.9.8 | Shopify App ("Secure PDF Delivery") | Shopify App Bridge integration. Intercepts digital product fulfillment webhooks to auto-stamp and encrypt PDF downloads with order metadata via the Cloudflare Edge API (< 10ms). Submit to Shopify App Store. |
+| 4.9.9 | Embed E2E Playwright Test Suite | Playwright tests that inject the `embed.js` script into a bare HTML fixture page, exercise all configurable `data-` attributes, run a PDF merge end-to-end through the widget, and assert the download is a valid `%PDF-` binary. |
+| 4.9.10 | Embed Analytics & Upgrade Funnel | Anonymous, privacy-safe usage telemetry (tool name, file size bucket, success/error — no file content). Powers the "⚡ Powered by PaperPilot" badge click-through funnel to `paperpilot.app` for Desktop or Cloud Pro conversion. |
+
 ### Phase 5.5 — WASM Re-Export & Edge Sync Post-Migration
 | # | Task | Notes |
 |---|---|---|
-| 5.5.1 | Redo & Re-Export WASM Engine Post-Migration | Once pure-Rust migrations (OCR `ocrs`, Render `hayro`, Images, Hash) land in `paperpilot-pdf`, re-export them into `paperpilot-wasm`, rebuild via `make build-wasm`, and synchronize `apps/web/` and `apps/edge/` to unlock 20+ in-browser tools. |
+| 5.2.1 | Pure-Rust OCR Engine Migration (`ocrs` via `rten`) ✅ | Merged (Session 10581530668658369493, PR #141) — Eliminated host C++ Tesseract/Leptonica dependencies in `paperpilot-pdf/src/operations/ocr.rs`. Powered by Robert Knight's `ocrs` and `rten` SIMD neural runtime with graceful fallback, `wiki/09-Pure-Rust-OCR.md`, and `reports/OCR_PURE_RUST_REPORT.md` (100% parity maintained). |
+| 5.3.1 | Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia`) ✅ | Merged (Session 15128032333344162811, PR #142) — Eliminated Google PDFium (`libpdfium.so`, `pdfium-render`) dependency in `paperpilot-pdf/src/operations/render.rs` using pure-Rust `hayro` vector interpreter and `tiny-skia` 2D rasterizer, `wiki/12-Pure-Rust-Rendering.md`, and `reports/RENDERING_PURE_RUST_REPORT.md` (100% parity maintained). |
+| 5.1.1 | Pure-Rust Image & Hash WASM Expansion (15 Tools Suite) ⏳ | In Flight (Session 15762776336095880921) — Expand `paperpilot-wasm` and `apps/web/` to 15 tools with in-memory `images_to_pdf`, `extract_images`, and `pdf_hash` via `image` and `sha2`. |
+| 5.5.1 | Redo & Re-Export WASM Engine Post-Migration | Once pure-Rust migrations (OCR `ocrs`, Render `hayro`, Images, Hash) land in `paperpilot-pdf`, re-export them into `paperpilot-wasm`, rebuild via `make build-wasm`, and synchronize `apps/web/` and `apps/edge/` to unlock 20+ in-browser tools. (5.2.1 & 5.3.1 completed, awaiting 5.1.1). |
 
 ## Phase 5 — Advanced Intelligence
 
@@ -1051,6 +1075,21 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 6.6.3 | Coercion / Duress Password & Honeypot Decoy | Secondary password triggers silent decoy mode: opens sanitized mock PDF while quietly wiping sensitive memory/cache |
 | 6.6.4 | Optional Enterprise Remote Burn Switch (Key Escrow / KMS) | Optional cloud/VPC policy: Master key $K_{doc}$ stored in Vault/HSM; after $N$ failed verification attempts or revoke signal, purges key rendering copies unreadable |
 | 6.6.5 | Exfiltration & Brute-Force Alerting Webhooks | Fire real-time SIEM alerts (PagerDuty, Slack, Syslog) when repeated decryption failures indicate brute-force reconnaissance |
+
+---
+
+### 6.7 — Enterprise Document Engine Parity (Apryse / PDFTron Gap Closure) `[POST-v1.0 ROADMAP]`
+
+> Closes the capability gap with heavy enterprise document SDKs (Apryse / formerly PDFTron) while maintaining PaperPilot's lightweight pure-Rust speed and client-side privacy. (Reference: `docs/COMPETITIVE_GAP_ANALYSIS_APRYSE.md`)
+
+| # | Task | Notes |
+|---|---|---|
+| 6.7.1 | Interactive PDF Form Engine (AcroForms & XFA) | Interactive HTML5/canvas input overlay over `hayro` mapped to `/AcroForm` and `/Annots` dictionaries in `lopdf`. Read, fill, validate, and serialize field values back to binary without third-party plugins. |
+| 6.7.2 | Collaborative SVG Annotation & Markup Layer | Freehand ink drawing with stylus pressure sensitivity, comment threads, callouts, text highlights, and sticky notes. Export/import via Adobe-standard XFDF (XML) and permanent burn-in support. |
+| 6.7.3 | Certified Cryptographic Signatures (PAdES / PKCS#7) | X.509 digital certificate signing using Rust cryptographic crates (`rsa`, `ed25519-dalek`, `x509-parser`). Adobe-compliant ByteRange cryptographic hashing, LTV (Long-Term Validation), and TSA timestamping. |
+| 6.7.4 | Semantic Glyph & Vector Redaction Engine | Parse `/Contents` streams via `hayro_syntax` and `lopdf` to completely excise intersected glyphs, vector paths, and metadata under redaction bounding boxes (guaranteed zero text extraction leakage). |
+| 6.7.5 | Client-Side MS Office Document Viewer (`.docx` / `.xlsx` to PDF) | In-browser pure-Rust OpenXML parser (`docx-rs`) or sandboxed micro-WASM converter enabling direct drag-and-drop conversion of Office files to PDF without Microsoft Office or server dependencies. |
+| 6.7.6 | 2D CAD & BIM Blueprint Vector Viewer (`.dxf` / `.dwg`) | Pure-Rust CAD entity parser (`dxf` crate) converting blueprint layers and 2D vector primitives directly into `tiny-skia` paths for high-precision architectural viewing and measurement. |
 
 ---
 

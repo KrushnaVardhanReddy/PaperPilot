@@ -72,6 +72,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
+- **PR #142 (5.3.1)**: Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia` replacing PDFium in `paperpilot-pdf/src/operations/render.rs`, `wiki/12-Pure-Rust-Rendering.md`, and `reports/RENDERING_PURE_RUST_REPORT.md` 100% PASS).
 - **PR #141 (5.2.1)**: Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract C++ in `paperpilot-pdf/src/operations/ocr.rs`, image stream extraction, DBNet text detection & CTC recognition with graceful fallback, `wiki/09-Pure-Rust-OCR.md`, and `reports/OCR_PURE_RUST_REPORT.md` 44/44 PASS).
 - **PR #140 (4.8.3)**: Cloudflare Workers Edge Microservice (`apps/edge/` standalone worker, REST handlers for all 12 core operations, Vitest tests 14/14 PASS, `reports/EDGE_MICROSERVICE_REPORT.md`, `wiki/10-Cloudflare-Edge-Service.md`).
 - **PR #139 (4.8.5)**: WASM 12 Tools Playwright E2E Suite & In-Memory Encryption (`apps/web/tests/e2e_wasm_12_tools.spec.ts`, `apps/web/playwright.config.ts`, pure-Rust `encrypt` in `paperpilot-wasm/src/operations.rs`, `wiki/08-Wasm-E2E-Testing.md`, and `reports/WASM_12_TOOLS_E2E_SCORECARD.md` 12/12 PASS).
@@ -85,8 +86,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 7853365080299689953](https://jules.google.com/session/7853365080299689953) | `main` | Expand WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
-| **5.3.1** | `paperpilot-pdf/Cargo.toml`, `paperpilot-pdf/src/operations/render.rs`, `reports/RENDERING_PURE_RUST_REPORT.md`, `wiki/12-Pure-Rust-Rendering.md` | [Session 15128032333344162811](https://jules.google.com/session/15128032333344162811) | `main` | Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia` replacing PDFium) |
+| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 15762776336095880921](https://jules.google.com/session/15762776336095880921) | `main` | Expand WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
 
 ---
 

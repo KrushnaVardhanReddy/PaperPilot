@@ -79,3 +79,30 @@ npm --prefix apps/web run build
 cd apps/web && npx playwright test
 ```
 Generate `reports/WASM_15_TOOLS_EXPANSION_REPORT.md` and document in `wiki/11-Wasm-15-Tools-Suite.md`.
+
+---
+
+## 4. Code Review Fixes (IMPORTANT)
+
+Please address the following code review flags in your next iteration:
+
+### 1. `images_to_pdf` Invalid PDF / PNG Chunking
+Do not embed a raw `.png` file directly into a `FlateDecode` stream, as PNGs have their own headers.
+*   **For PNGs:** Decode the image using the `image` crate, extract the raw RGB bytes (`img.to_rgb8().into_raw()`), compress *those* bytes using `flate2` (Zlib compression), and set the stream dictionary to `/Filter /FlateDecode`, `/Width`, `/Height`, `/ColorSpace /DeviceRGB`, and `/BitsPerComponent 8`.
+*   **For JPEGs:** You can embed the raw JPEG bytes directly. Just set the stream dictionary to `/Filter /DCTDecode`, along with the width, height, and color space.
+
+### 2. `extract_images` Raw `.bin` Outputs
+Convert the extracted streams back into standard image formats using the `image` crate:
+*   **If `/DCTDecode`:** The extracted bytes are already a valid JPEG. Return them with a `.jpg` extension.
+*   **If `/FlateDecode`:** Decompress the stream to get the raw bytes. Use `image::ImageBuffer::from_raw(width, height, bytes)` to reconstruct the image, then encode it to a valid `.png` byte array using `image::codecs::png::PngEncoder`. Return the encoded `.png` bytes.
+
+### 3. Playwright Dynamic Imports Failing in Prod
+A raw dynamic import to `/src/lib/wasm/index.ts` inside `page.evaluate()` fails in Vite's production build.
+*   **Fix:** Instead of bypassing the app to import the raw TypeScript file, inject the test payload directly into your Web Worker bridge (`pdfWorker.ts`), or expose the WASM module globally in your layout component specifically for E2E testing:
+    ```typescript
+    // In +layout.svelte (conditionally added in test environments)
+    if (import.meta.env.MODE === 'test') {
+        window.__WASM_MODULE__ = await import('$lib/wasm/index');
+    }
+    ```
+    Then, in your Playwright test, invoke `window.__WASM_MODULE__.images_to_pdf(...)`.
