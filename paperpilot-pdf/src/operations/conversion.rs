@@ -211,33 +211,13 @@ impl HtmlToPdfOperation {
         );
         let styled_html = inject_css_into_html(&self.input_html, &css);
 
-        use headless_chrome::{Browser, LaunchOptions};
+        let engine = fulgur::Engine::builder().build();
+        let pdf_data = engine.render(&styled_html)
+            .map_err(|e| PdfError::Other(format!("Failed to render pdf: {:?}", e)))?;
 
-        let browser = Browser::new(LaunchOptions {
-            headless: true,
-            sandbox: false,
-            ..Default::default()
-        }).map_err(|e| PdfError::Other(format!("Failed to launch browser: {}", e)))?;
-
-        let tab = browser.new_tab().map_err(|e| PdfError::Other(format!("Failed to create tab: {}", e)))?;
-
-        let mut temp_file = tempfile::NamedTempFile::new()
-            .map_err(|e| PdfError::Other(format!("Failed to create temp file: {}", e)))?;
-        temp_file.write_all(styled_html.as_bytes())
-            .map_err(|e| PdfError::Other(format!("Failed to write to temp file: {}", e)))?;
-        let temp_url = format!("file://{}", temp_file.path().to_string_lossy());
-
-        tab.navigate_to(&temp_url).map_err(|e| PdfError::Other(format!("Failed to navigate: {}", e)))?;
-        tab.wait_until_navigated().map_err(|e| PdfError::Other(format!("Failed to wait for navigation: {}", e)))?;
-
-        let pdf_data = tab.print_to_pdf(Some(headless_chrome::types::PrintToPdfOptions {
-            prefer_css_page_size: Some(true),
-            print_background: Some(true),
-            paper_width: Some(8.27),
-            paper_height: Some(11.69),
-            ..Default::default()
-        }))
-            .map_err(|e| PdfError::Other(format!("Failed to print to pdf: {}", e)))?;
+        if pdf_data.is_empty() || !pdf_data.starts_with(b"%PDF-") {
+            return Err(PdfError::Other("Fulgur rendered invalid or empty PDF bytes".to_string()));
+        }
 
         std::fs::write(&self.output_path, pdf_data)
             .map_err(|e| PdfError::Other(format!("Failed to write pdf file: {}", e)))?;
@@ -1047,5 +1027,53 @@ mod tests {
 
         assert!(out_path.exists());
         assert!(out_path.metadata().unwrap().len() > 0);
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_html_to_pdf_operation_fulgur() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_fulgur.pdf");
+        let options = HtmlToPdfOptions {
+            preset: Some("minimal".to_string()),
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+
+        let html = "<html><body><h1>Test HTML</h1><p>Rendering via fulgur.</p></body></html>".to_string();
+        let op = HtmlToPdfOperation::new(html, out_path.clone(), options);
+        let res = op.render();
+
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_markdown_to_pdf_operation_fulgur() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_md_fulgur.pdf");
+        let options = HtmlToPdfOptions {
+            preset: Some("github".to_string()),
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+
+        let md = "# Test Markdown\n\nRendering via **fulgur**.".to_string();
+        let op = MarkdownToPdfOperation::new(md, out_path.clone(), options);
+        let res = op.render();
+
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
     }
 }

@@ -12,7 +12,7 @@ js-sys = "0.3"
 lopdf = { version = "0.45.0", default-features = false }
 paperpilot-core = { path = "../paperpilot-core" }
 getrandom = { version = "0.4", features = ["wasm_js"] }
-image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.25.6", default-features = false, features = ["jpeg", "png"] }
 flate2 = "1.1.10"
 sha2 = "0.11.0"
 base64 = "0.23.1"
