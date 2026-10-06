@@ -1,0 +1,99 @@
+# Task: Phase 4.9.11 — `usepaperpilot.com` Official Web Portal & Interactive Playground
+# Base Branch: main
+# Target Branch: feat-usepaperpilot-official-portal
+# Spec: specs/021-usepaperpilot-web-portal/spec.md
+
+## Objective
+Transform `apps/web/` from a raw tool grid into the official **`usepaperpilot.com`** landing page and conversion portal:
+1. **Hero Playground**: Fast headline + integrated live 22-tool WASM drag-and-drop playground ("The Product IS the Landing Page").
+2. **Tri-Surface Showcase**: Visual breakdown of (1) Free Desktop App, (2) Drop-In Embed Widget, (3) Headless API / MCP.
+3. **Interactive Embed Generator**: Configurator allowing visitors to choose tools, brand color, and theme, copying a 2-line HTML snippet.
+4. **Developer API & Swagger Explorer**: Tabbed code block (cURL / TypeScript / Python / MCP JSON) with link to `/swagger-ui`.
+5. **Speed & Privacy Matrix**: Comparison against Adobe Acrobat, iLovePDF, and Stirling PDF.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and modify files inside these paths:
+```
+apps/web/src/App.svelte
+apps/web/src/components/*
+apps/web/src/app.css
+apps/web/tests/portal_landing.spec.ts
+reports/OFFICIAL_PORTAL_REPORT.md
+wiki/15-Official-Web-Portal.md
+```
+
+### Prohibited Files:
+DO NOT modify `apps/embed/` (actively in-flight with another session), `apps/desktop/`, `paperpilot-pdf/`, `paperpilot-wasm/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Component Implementation Requirements
+
+### A. `apps/web/src/components/HeroPlayground.svelte`
+- Prominent headline: *"The Pure-Rust, Zero-Cloud PDF Powerhouse."*
+- Tagline: *"100% Client-Side. 0 Bytes Uploaded. Sub-10ms Execution."*
+- Mounts our verified 22-tool WASM interface directly into the hero zone.
+- Dual CTAs:
+  - `[ ⚡ Download Desktop (Free & Open Source) ]` (links to `#download` / GitHub releases).
+  - `[ < / > Get Embed Code ]` (smooth scrolls to `#embed-generator`).
+
+### B. `apps/web/src/components/TriSurfaceShowcase.svelte`
+- Three clean cards showcasing PaperPilot's distribution surfaces:
+  1. **Desktop App**: 44 tools, batch folders, offline AI chat, local privacy.
+  2. **Drop-In Embed Widget**: 2 lines of HTML for any website (WordPress, Webflow, Shopify).
+  3. **Cloud API & MCP Gateway**: Sub-10ms Edge WASM, Swagger UI, Claude/Cursor integration.
+
+### C. `apps/web/src/components/EmbedGenerator.svelte`
+- Interactive reactive configurator using Svelte 5 runes (`$state`, `$derived`):
+  - Theme selector: Dark / Light.
+  - Brand color picker: live hex input.
+  - Tool multi-select pills (`merge`, `compress`, `watermark`, `ocr`, etc.).
+  - Toggle: "Hide Powered by PaperPilot Badge".
+- Live code display showing:
+  ```html
+  <script src="https://cdn.usepaperpilot.com/v1/embed.js" async></script>
+  <div id="paperpilot-portal" data-theme="..." data-tools="..." data-brand-color="..."></div>
+  ```
+- Copy to clipboard button with feedback (`Copied!`).
+
+### D. `apps/web/src/components/ApiExplorer.svelte`
+- Interactive code switcher showing how developers call PaperPilot:
+  - Tab 1: cURL REST API.
+  - Tab 2: TypeScript / Node.js.
+  - Tab 3: Python.
+  - Tab 4: Claude Desktop MCP Config JSON.
+- Direct link button to interactive `/swagger-ui`.
+
+### E. `apps/web/src/components/BenchmarkMatrix.svelte`
+- Clean comparison table:
+  - Metrics: Server Uploads, Execution Speed, Licensing, Bundle Size, C++ Security Vulnerabilities.
+  - Columns: PaperPilot vs. Adobe Acrobat Pro vs. iLovePDF vs. Stirling-PDF.
+
+---
+
+## 2. Verification & Deliverables
+
+1. **Type & Syntax Check**:
+   ```bash
+   npm --prefix apps/web run check
+   ```
+   Must pass with **0 errors and 0 warnings**.
+
+2. **Production Build**:
+   ```bash
+   npm --prefix apps/web run build
+   ```
+   Must compile cleanly without build errors.
+
+3. **Playwright E2E**:
+   Create `apps/web/tests/portal_landing.spec.ts` asserting:
+   - Hero playground loads and accepts file drop.
+   - Embed generator updates snippet reactively when toggles change.
+   - Copy button writes snippet to clipboard.
+   - Tri-surface links and navigation buttons function.
+
+4. **Reports**:
+   - `reports/OFFICIAL_PORTAL_REPORT.md`: Screenshots/summary of landing portal.
+   - `wiki/15-Official-Web-Portal.md`: Overview of the portal architecture.
