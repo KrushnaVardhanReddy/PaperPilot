@@ -10,8 +10,7 @@ export default defineConfig({
   },
   plugins: [
     svelte(),
-    (wasm as any)(),
-    (topLevelAwait as any)()
+    (wasm as any)()
   ],
   server: {
     fs: {
