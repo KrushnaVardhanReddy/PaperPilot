@@ -1,0 +1,87 @@
+# Task: Phase 5.6.1 — Pure-Rust High-Speed Office & HTML Conversions (Excel via genpdf, Markdown via typst, HTML via fulgur)
+# Base Branch: main
+# Target Branch: feat-pure-rust-office-conversions
+# Priority: HIGH — Sub-50ms Universal Conversion Latency
+# Spec: specs/024-pure-rust-office-conversions/spec.md
+
+## Objective
+Eliminate slow `headless_chrome` execution (~2,500ms) across all 3 document conversion tools by migrating to pure-Rust engines:
+1. **Excel to PDF (`pdf_convert_excel`)**: Replace Chromium browser launch with **`genpdf`** reading cell tabular matrices via **`calamine`** directly. Latency target: **< 25ms** (down from 2,500ms).
+2. **Markdown to PDF (`pdf_convert_markdown`)**: Replace Chromium browser launch with pure-Rust **`typst`** rendering engine. Latency target: **< 35ms** (down from 2,500ms).
+3. **HTML to PDF (`pdf_convert_html`)**: Replace Chromium browser launch with pure-Rust **`fulgur`** (pure-Rust HTML/CSS-to-PDF engine with CSS Paged Media `@page` support). Latency target: **< 50ms** (down from 2,750ms).
+4. **MANDATORY Tri-Interface Verification Gate**: Post-changes, run `python3 scripts/test_tri_interface_e2e.py` and ensure **ALL 44 TOOLS PASS (44/44 GREENS across CLI, MCP, and REST API = 132/132 successful assertions)** with zero failures or regressions.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** modify or create files in these paths:
+```
+paperpilot-pdf/Cargo.toml
+paperpilot-pdf/src/operations/conversion.rs
+reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md
+wiki/18-Pure-Rust-Office-Conversions.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `apps/desktop/`, `apps/web/`, `apps/docs/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Dependencies (`paperpilot-pdf/Cargo.toml`)
+Add:
+- `genpdf = "0.2"` (or compatible pure-Rust vector document generator)
+- `typst = "0.13"` (or latest compatible typst compiler/pdf export crate)
+- `fulgur = "0.40"` (or compatible pure-Rust HTML/CSS-to-PDF engine)
+Remove `headless_chrome` if completely unneeded, or keep as optional fallback.
+Ensure `cargo check -p paperpilot-pdf` passes cleanly without dependency conflicts.
+
+---
+
+## 2. Implementation (`paperpilot-pdf/src/operations/conversion.rs`)
+
+### A. Excel to PDF (`ExcelToPdfOperation`)
+- Open the `.xlsx` / `.xls` workbook with `calamine`.
+- Iterate through sheets and cells, extracting values and tabular grid layout.
+- Build a structured vector PDF document using `genpdf` with clean borders, header formatting, and automatic column widths.
+- Output directly to the specified destination PDF.
+- **Latency Target**: Drop from ~2,500ms to < 25ms.
+
+### B. Markdown to PDF (`MarkdownToPdfOperation`)
+- Parse input markdown string or translate markdown elements into `typst` content/AST.
+- Compile and export the document directly into vector PDF bytes using `typst::compile` / `typst_pdf`.
+- Output crisp vector typography, headers, lists, code blocks, and blockquotes.
+- **Latency Target**: Drop from ~2,400ms to < 35ms.
+
+### C. HTML to PDF (`HtmlToPdfOperation`)
+- Ingest input HTML string with resolved CSS styling (presets or custom CSS).
+- Render directly to vector PDF bytes using `fulgur`.
+- Eliminate all `headless_chrome::Browser` cold-start and tempfile browser spawning.
+- **Latency Target**: Drop from ~2,750ms to < 50ms.
+
+### D. Error Handling & Stability
+- Graceful fallbacks: If an exotic font or unsupported layout element is encountered, fall back cleanly without panicking.
+- Always generate a non-empty, valid PDF file conforming to `%PDF-` binary magic bytes.
+
+---
+
+## 3. MANDATORY Quality Gate & Verification (MUST PASS 100%)
+
+Before submitting code review and opening your PR, execute these verification steps in order:
+
+1. **Unit Tests**:
+   ```bash
+   cargo test -p paperpilot-pdf
+   ```
+   Must pass with 0 errors.
+
+2. **Master Tri-Interface 44-Tool E2E Gate (CRITICAL)**:
+   ```bash
+   python3 scripts/test_tri_interface_e2e.py
+   ```
+   - **MUST achieve 44 / 44 Tools PASSING across all three interfaces (CLI, MCP, and REST API)**.
+   - Total of **132 / 132 successful assertions** (44 x 3).
+   - If any tool fails, DO NOT open the PR until resolved.
+
+3. **Produce Reports**:
+   - `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`: Document latency before vs after (e.g. 2,500ms -> <50ms), memory impact, and verification scorecard.
+   - `wiki/18-Pure-Rust-Office-Conversions.md`: Architectural documentation for pure-Rust office and HTML rendering.
