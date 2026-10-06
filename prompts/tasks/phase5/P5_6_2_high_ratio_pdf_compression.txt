@@ -71,9 +71,9 @@ DO NOT modify `paperpilot-core/`, `apps/web/`, `apps/docs/`, `PHASES.md`, `v1_la
 3. **Gateway (`paperpilot-gateway/src/handlers.rs`)**:
    - Ensure `CompressJsonRequest` / multipart extract `quality` and pass to `CompressOperation`.
 4. **Desktop UI (`apps/desktop/src/lib/components/layout/OperationsPanel.svelte`)**:
-   - In `case 'compress'`, include `quality: compressQuality.toString()` (or mapped preset) in the `args` object sent to `invoke_mcp_tool`.
-5. **WASM (`paperpilot-wasm/src/operations.rs`)**:
-   - Update `compress(input_bytes: &[u8], quality: Option<&str>)` (or default to medium) to perform the same stream image optimization.
+   - In `case 'compress'`, include `quality: compressQuality.toString()` (e.g. `'80'` or preset `'medium'`) in `args = { input: docPath, quality: compressQuality.toString(), output: ... }` so the slider value is actually forwarded to `pdf_compress`.
+5. **WASM (`paperpilot-wasm/src/operations.rs` & `paperpilot-wasm/src/lib.rs`)**:
+   - Update `compress(input_bytes: &[u8], quality: Option<&str>)` (or expose `compress_with_quality`) so in-browser compression also supports quality control.
 
 ---
 
