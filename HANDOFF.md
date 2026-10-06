@@ -86,7 +86,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 15762776336095880921](https://jules.google.com/session/15762776336095880921) | `main` | Expand WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
+| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 15762776336095880921](https://jules.google.com/session/15762776336095880921) | `main` | ✅ **Merged (PR #143)** — Expanded WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
 
 ---
 
