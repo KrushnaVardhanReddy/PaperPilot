@@ -65,7 +65,13 @@
         </div>
 
         <div class="control-group">
-          <span id="tools-label" class="group-label">Available Tools</span>
+          <div class="tools-header">
+            <span id="tools-label" class="group-label">Available Tools</span>
+            <div class="tools-actions">
+              <button class="text-btn" onclick={() => selectedTools = [...availableTools]}>Select All</button>
+              <button class="text-btn" onclick={() => selectedTools = []}>Clear</button>
+            </div>
+          </div>
           <div class="tools-grid" role="group" aria-labelledby="tools-label">
             {#each availableTools as tool}
               <button
@@ -151,6 +157,30 @@
   .control-group label, .group-label {
     font-weight: 500;
     color: var(--text-primary);
+  }
+
+  .tools-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tools-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .text-btn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .text-btn:hover {
+    text-decoration: underline;
   }
 
   select, input[type="text"].color-text {
