@@ -130,6 +130,9 @@
     max-width: 1200px;
     margin: 0 auto;
     perspective: 1000px;
+    min-height: 700px;
+    position: relative;
+    z-index: 10;
   }
 
   .playground-wrapper {

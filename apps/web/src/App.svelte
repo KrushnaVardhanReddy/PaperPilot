@@ -10,7 +10,7 @@
   <header class="app-header">
     <div class="header-content">
       <div class="logo">
-        <img src="/favicon.svg" alt="PaperPilot Logo" class="icon" />
+        <img src="/logo.png" alt="PaperPilot Logo" class="icon" />
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
       <div class="cta-banner">
