@@ -1,5 +1,9 @@
 <script lang="ts">
-  import OperationsView from './views/OperationsView.svelte';
+  import HeroPlayground from './components/HeroPlayground.svelte';
+  import TriSurfaceShowcase from './components/TriSurfaceShowcase.svelte';
+  import EmbedGenerator from './components/EmbedGenerator.svelte';
+  import ApiExplorer from './components/ApiExplorer.svelte';
+  import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
 </script>
 
 <div class="app-container">
@@ -19,7 +23,11 @@
   </header>
 
   <main class="main-content">
-    <OperationsView />
+    <HeroPlayground />
+    <TriSurfaceShowcase />
+    <EmbedGenerator />
+    <ApiExplorer />
+    <BenchmarkMatrix />
   </main>
 
   <footer class="app-footer">
@@ -119,7 +127,6 @@
 
   .main-content {
     flex: 1;
-    padding: 32px;
     background-color: var(--bg-primary);
     overflow-y: auto;
   }
