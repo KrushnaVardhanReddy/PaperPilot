@@ -10,7 +10,7 @@
   <header class="app-header">
     <div class="header-content">
       <div class="logo">
-        <span class="icon">✈️</span>
+        <img src="/favicon.svg" alt="PaperPilot Logo" class="icon" />
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
       <div class="cta-banner">
@@ -81,7 +81,8 @@
   }
 
   .logo .icon {
-    font-size: 1.5rem;
+    width: 32px;
+    height: 32px;
   }
 
   .logo h1 {
