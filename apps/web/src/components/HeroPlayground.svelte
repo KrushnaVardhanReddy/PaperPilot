@@ -39,9 +39,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 64px 32px 32px;
+    padding: 64px 32px 120px;
     background: radial-gradient(circle at top center, rgba(94, 106, 210, 0.15) 0%, transparent 70%);
-    min-height: 80vh;
+    height: auto;
   }
 
   .hero-content {
@@ -128,7 +128,7 @@
   .hero-playground {
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 0 auto 64px auto;
     perspective: 1000px;
     min-height: 700px;
     position: relative;
