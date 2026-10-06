@@ -4,11 +4,17 @@
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+  import {
+    DOWNLOAD_URL,
+    DOWNLOAD_LINUX_URL,
+    DOWNLOAD_WINDOWS_URL,
+    DOWNLOAD_MACOS_URL,
+    getDocsBaseUrl,
+    getToolsHandbookUrl
+  } from './constants';
 
-  // Automatically use local docs dev server when running locally
-  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const docsBaseUrl = isLocal ? 'http://localhost:4321' : 'https://docs.usepaperpilot.com';
-  const toolsHandbookUrl = `${docsBaseUrl}/reference/44-tools-handbook/`;
+  const docsBaseUrl = getDocsBaseUrl();
+  const toolsHandbookUrl = getToolsHandbookUrl();
 </script>
 
 <div class="app-container">
@@ -21,7 +27,7 @@
 
       <div class="cta-banner">
         <span>Need OCR or Offline AI?</span>
-        <a href="https://paperpilot.app/download" target="_blank" rel="noopener noreferrer" class="download-btn">
+        <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" class="download-btn">
           Download Desktop
         </a>
       </div>
@@ -46,11 +52,11 @@
         <span class="separator">•</span>
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">44 Tools Handbook</a>
         <span class="separator">•</span>
-        <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux</a>
+        <a href={DOWNLOAD_LINUX_URL} target="_blank" rel="noopener noreferrer">Linux</a>
         <span class="separator">•</span>
-        <a href="https://paperpilot.app/download/windows" target="_blank" rel="noopener noreferrer">Windows</a>
+        <a href={DOWNLOAD_WINDOWS_URL} target="_blank" rel="noopener noreferrer">Windows</a>
         <span class="separator">•</span>
-        <a href="https://paperpilot.app/download/macos" target="_blank" rel="noopener noreferrer">macOS</a>
+        <a href={DOWNLOAD_MACOS_URL} target="_blank" rel="noopener noreferrer">macOS</a>
       </div>
     </div>
   </footer>

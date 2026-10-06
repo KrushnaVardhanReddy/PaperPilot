@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { DOWNLOAD_URL } from "../constants";
 </script>
 
 <section class="showcase-section">
@@ -24,7 +25,7 @@
         <li>✓ Zero data collection</li>
       </ul>
       <a
-        href="https://paperpilot.app/download"
+        href={DOWNLOAD_URL}
         target="_blank"
         rel="noopener noreferrer"
         class="card-link">Download Free &rarr;</a

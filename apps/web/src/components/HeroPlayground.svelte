@@ -1,5 +1,6 @@
 <script lang="ts">
   import OperationsView from "../views/OperationsView.svelte";
+  import { DOWNLOAD_URL } from "../constants";
 </script>
 
 <div class="hero-section">
@@ -11,7 +12,7 @@
 
     <div class="hero-ctas">
       <a
-        href="https://github.com/paperpilot/paperpilot/releases"
+        href={DOWNLOAD_URL}
         target="_blank"
         rel="noopener noreferrer"
         class="cta-btn primary"
