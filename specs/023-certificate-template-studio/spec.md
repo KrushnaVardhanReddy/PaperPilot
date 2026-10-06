@@ -17,19 +17,21 @@ PaperPilot solves this by offering a **100% Client-Side / Zero-Cloud Certificate
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. TEMPLATE ENGINE (SVG / Vector PDF Base)                                   │
+│ 1. TEMPLATE ENGINE (HTML5 / CSS3 / SVG Component Architecture)              │
 │    • Parametric placeholders: {{recipient_name}}, {{title}}, {{date}},      │
 │      {{issuer_name}}, {{cert_id}}, {{qr_code}}                              │
+│    • Modern typography & CSS layout: Flexbox/Grid, Gold Foil Gradients,     │
+│      decorative SVG borders, Google Fonts. 0ms instant DOM preview.         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 2. DATA INTAKE LAYER                                                        │
-│    • Interactive Form (Single recipient test & tweak)                       │
+│    • Interactive Svelte 5 Form (Single recipient live testing & tweaking)   │
 │    • CSV File Parser (Bulk upload with client-side column mapping)          │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 3. PURE-RUST GENERATOR PIPELINE (`paperpilot-wasm` & `paperpilot-pdf`)       │
-│    • Text & Glyph Rendering: Crisp typography via Rust font engine          │
-│    • Watermark & Border Stamping: High-resolution vector borders            │
-│    • Optional QR Code & Hash: SHA-256 hash stamped for authenticity         │
-│    • Parallel Batch Runner: Web Workers / Rayon parallel rendering          │
+│ 3. 100% CLIENT-SIDE GENERATION PIPELINE                                     │
+│    • Single: Instant high-DPI (300 DPI) PDF export or browser vector print  │
+│    • Batch Runner: In-browser Worker loop applying HTML/SVG templates to    │
+│      each CSV row without hitting any server or uploading data.             │
+│    • Authenticity & Tamper-Proofing: SHA-256 integrity stamp + QR link      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 4. OUTPUT PACKAGING                                                         │
 │    • Single: Instant direct PDF download (<15ms)                            │
@@ -52,7 +54,7 @@ PaperPilot solves this by offering a **100% Client-Side / Zero-Cloud Certificate
 ---
 
 ## 4. Phased Milestones
-- **6.1.1 Core Engine**: Vector certificate rendering and dynamic variable replacement in `paperpilot-pdf`.
-- **6.1.2 Web & Desktop UI**: Svelte 5 Template Studio with live preview and typography controls.
-- **6.1.3 CSV Batch Processing**: Client-side worker queue and in-memory zip bundler.
-- **6.1.4 Verification & Viral Loop**: Verifiable QR code linking to `usepaperpilot.com/verify`.
+- **6.1.1 Template Designs & Schema**: 4 responsive HTML5/SVG certificate templates with Google Fonts typography & CSS foil styling.
+- **6.1.2 Interactive Studio View**: Svelte 5 live preview studio with realtime property binding (recipient, course, signatures, date).
+- **6.1.3 Client-Side PDF Export & Tamper Verification**: High-DPI client-side PDF rendering, print vector stylesheet, and SHA-256 integrity hash stamp.
+- **6.1.4 Bulk CSV Engine & ZIP Bundler**: In-browser CSV parse, row mapping, progress bar, and JSZip single-archive download.

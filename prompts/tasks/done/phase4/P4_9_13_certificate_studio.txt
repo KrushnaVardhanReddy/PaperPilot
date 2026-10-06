@@ -1,0 +1,95 @@
+# Task: Phase 4.9.13 — Certificate & Template Studio (HTML/SVG Component Architecture)
+# Base Branch: main
+# Target Branch: feat-certificate-studio
+# Spec: specs/023-certificate-template-studio/spec.md
+
+## Objective
+Implement the 100% Client-Side **Certificate & Template Studio** in `apps/web/` based on Spec 023:
+1. Provide 4 responsive, beautifully styled HTML5/CSS3/SVG certificate templates.
+2. Build an interactive Svelte 5 Studio view with real-time (0ms) preview, typography controls, and single-click client-side PDF export.
+3. Build a client-side CSV bulk generator with column mapping that processes attendee lists entirely in browser memory and bundles individual certificates into a downloadable `.zip` file using `jszip`.
+4. Include tamper-evident SHA-256 integrity hash verification and an unobtrusive "Verified with PaperPilot" branding badge driving viral referral traffic.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and modify files inside these paths:
+```
+apps/web/src/components/certificate/**
+apps/web/src/views/CertificateStudioView.svelte
+apps/web/src/lib/certificate/**
+apps/web/package.json
+apps/web/src/App.svelte
+reports/CERTIFICATE_STUDIO_REPORT.md
+wiki/17-Certificate-Template-Studio.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-core/`, `paperpilot-cli/`, `apps/desktop/`, `apps/docs/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Package Dependencies (`apps/web/package.json`)
+- Add `jszip` to `apps/web/package.json` for client-side in-memory `.zip` generation.
+- Ensure `npm run check` and `npm run build` succeed cleanly.
+
+---
+
+## 2. Certificate Templates (`apps/web/src/components/certificate/templates/`)
+Create 4 polished, professional HTML5/CSS3/SVG vector certificate templates:
+1. **ClassicGold.svelte**: Traditional diploma style with ornate gold foil borders, serif typography, decorative ribbon/seal, and dual signature lines.
+2. **ModernMinimalist.svelte**: Clean architectural layout, subtle geometric accents, modern sans-serif typography, and sleek lines.
+3. **TechHackathon.svelte**: Dark/cyber aesthetic, glowing neon borders, tech grid accents, and badge placeholder.
+4. **AcademicDiploma.svelte**: Formal university style with gothic/calligraphic headings, embossed seal effect, and honor recognition banner.
+
+Each template must accept reactive props:
+- `recipientName`: string (e.g. "Alex Morgan")
+- `title`: string (e.g. "Certificate of Achievement" or "Full Stack Rust & WASM Mastery")
+- `description`: string (e.g. "For successfully completing the intensive curriculum...")
+- `date`: string (e.g. "October 2026")
+- `issuerName`: string (e.g. "PaperPilot Academy")
+- `issuerTitle`: string (e.g. "Lead Instructor")
+- `certId`: string (unique verification identifier)
+- `verificationUrl`: string (e.g. `https://usepaperpilot.com/verify?id=...`)
+- `sha256Hash`: string (optional authenticity hash)
+
+---
+
+## 3. Interactive Studio View (`apps/web/src/views/CertificateStudioView.svelte`)
+Provide a split-pane interactive studio layout:
+- **Left Panel (Controls & Customization)**:
+  - Template Selector (tabs/cards switching between the 4 templates).
+  - Form Fields: Recipient Name, Title, Description, Date, Issuer Name, Issuer Title.
+  - Action Buttons:
+    - **"Download PDF (Instant)"**: Export high-resolution certificate directly.
+    - **"Print / Vector Save"**: Trigger `@media print` optimized for landscape 0-margin certificate output.
+- **Right Panel (Live Canvas / Preview)**:
+  - 16:9 / Landscape certificate container with realistic shadow and scaling.
+  - Zero-latency, 60 FPS live rendering as the user types.
+  - Footer with subtle *"Verified with PaperPilot"* viral watermark badge and integrity hash.
+
+---
+
+## 4. Bulk CSV Generation Engine (`apps/web/src/components/certificate/BulkCsvGenerator.svelte`)
+Enable zero-cloud batch certificate processing:
+1. Drag-and-drop CSV upload zone.
+2. Auto-detection / mapping for columns (`recipient_name`, `title`, `date`, `cert_id`).
+3. Client-side batch progress bar (e.g. "Processing 45 of 200 certificates...").
+4. Bundle all generated certificates into a single `.zip` file using `JSZip` and prompt the user to download.
+5. Display a privacy badge: *"100% Client-Side — Roster data is never sent to any server."*
+
+---
+
+## 5. Navigation Integration (`apps/web/src/App.svelte`)
+- Add a tab or toggle in `App.svelte` allowing navigation between the primary Playground and the **Certificate Studio**.
+- Ensure the header branding and responsive design remain clean and cohesive.
+
+---
+
+## 6. Verification & Deliverables
+1. Run `npm --prefix apps/web run build` and ensure build passes with 0 errors.
+2. Produce `reports/CERTIFICATE_STUDIO_REPORT.md` documenting:
+   - Template catalogue and screenshots/descriptions.
+   - Client-side export mechanics and performance benchmarks.
+   - Bulk CSV processing throughput (certificates per second).
+3. Produce `wiki/17-Certificate-Template-Studio.md` with usage instructions and template developer guide.
