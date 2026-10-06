@@ -863,6 +863,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 4.9.8 | Shopify App ("Secure PDF Delivery") | Shopify App Bridge integration. Intercepts digital product fulfillment webhooks to auto-stamp and encrypt PDF downloads with order metadata via the Cloudflare Edge API (< 10ms). Submit to Shopify App Store. |
 | 4.9.9 | Embed E2E Playwright Test Suite | Playwright tests that inject the `embed.js` script into a bare HTML fixture page, exercise all configurable `data-` attributes, run a PDF merge end-to-end through the widget, and assert the download is a valid `%PDF-` binary. |
 | 4.9.10 | Embed Analytics & Upgrade Funnel | Anonymous, privacy-safe usage telemetry (tool name, file size bucket, success/error — no file content). Powers the "⚡ Powered by PaperPilot" badge click-through funnel to `paperpilot.app` for Desktop or Cloud Pro conversion. |
+| 4.9.11 | `usepaperpilot.com` Official Web Portal & Playground | Official marketing and playground portal deployed to Cloudflare Pages. Features live Hero Embed Playground (dogfooding), Interactive Embed Code Generator for agencies, and Swagger/OpenAPI explorer for developers (`docs/OFFICIAL_WEBSITE_STRATEGY.md`). |
 
 ### Phase 5.5 — WASM Re-Export & Edge Sync Post-Migration
 | # | Task | Notes |
