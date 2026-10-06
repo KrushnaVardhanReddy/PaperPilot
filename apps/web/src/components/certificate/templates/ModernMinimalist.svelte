@@ -7,8 +7,9 @@
     issuerName = "PaperPilot Academy",
     issuerTitle = "Lead Instructor",
     certId = "CERT-000000",
-    verificationUrl = "https://usepaperpilot.com/verify",
-    sha256Hash = ""
+    sha256Hash = "",
+    qrCodeDataUrl = "",
+    showQrCode = false
   } = $props();
 </script>
 
@@ -46,16 +47,18 @@
       </div>
     </div>
 
-    <div class="verification-badge">
+    <div class="bottom-metadata">
       <div class="cert-info">
-        <span class="id">ID: {certId}</span>
+        <span class="id">Certificate ID: {certId}</span>
         {#if sha256Hash}
           <span class="hash">Hash: {sha256Hash.substring(0, 16)}...</span>
         {/if}
       </div>
-      <div class="verify-branding">
-        Verified with PaperPilot <span class="url">{verificationUrl}</span>
-      </div>
+      {#if showQrCode && qrCodeDataUrl}
+        <div class="qr-container">
+          <img src={qrCodeDataUrl} alt="Verification QR Code" class="qr-code-img" />
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -191,23 +194,27 @@
     color: #2C3E50;
   }
 
-  .verification-badge {
+  .bottom-metadata {
     position: absolute;
     bottom: 24px;
     left: 80px;
     right: 80px;
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
     font-size: 0.75rem;
     color: #95A5A6;
   }
 
-  .verify-branding {
-    font-weight: 500;
+  .qr-container {
+    display: flex;
+    align-items: center;
   }
 
-  .verify-branding .url {
-    color: #3498DB;
-    margin-left: 4px;
+  .qr-code-img {
+    width: 44px;
+    height: 44px;
+    display: block;
+    border-radius: 2px;
   }
 </style>

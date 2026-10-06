@@ -39,8 +39,29 @@
     issuerName: 'PaperPilot Academy',
     issuerTitle: 'Lead Instructor',
     certId: `CERT-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-    verificationUrl: 'https://usepaperpilot.com/verify',
-    sha256Hash: ''
+    sha256Hash: '',
+    websiteUrl: 'https://example.com',
+    showQrCode: false,
+    qrCodeDataUrl: ''
+  });
+
+  // Dynamically update QR code when websiteUrl or showQrCode changes
+  $effect(() => {
+    if (certificateData.showQrCode && certificateData.websiteUrl && certificateData.websiteUrl.trim()) {
+      import('qrcode').then((QRCode) => {
+        QRCode.toDataURL(certificateData.websiteUrl.trim(), {
+          width: 140,
+          margin: 1,
+          color: { dark: '#000000', light: '#ffffff' }
+        }).then((url) => {
+          certificateData.qrCodeDataUrl = url;
+        }).catch(() => {
+          certificateData.qrCodeDataUrl = '';
+        });
+      });
+    } else {
+      certificateData.qrCodeDataUrl = '';
+    }
   });
 
   const getActiveTemplate = () => {
@@ -159,6 +180,16 @@
               <label for="certId">Certificate ID</label>
               <input id="certId" type="text" bind:value={certificateData.certId} />
             </div>
+          </div>
+          <div class="form-group">
+            <label for="websiteUrl">Organization / Credential URL</label>
+            <input id="websiteUrl" type="url" placeholder="https://example.com" bind:value={certificateData.websiteUrl} />
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" bind:checked={certificateData.showQrCode} />
+              <span>Include Verification QR Code on Certificate</span>
+            </label>
           </div>
         </div>
 
@@ -317,6 +348,29 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+  }
+
+  .checkbox-group {
+    margin-top: 4px;
+    margin-bottom: 12px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary, #ffffff);
+    user-select: none;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary, #5e6ad2);
+    cursor: pointer;
+    margin: 0;
   }
 
   .form-row {
