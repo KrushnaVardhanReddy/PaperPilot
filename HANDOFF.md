@@ -72,6 +72,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
+- **PR #151 (5.7.1)**: 1-Hour Sustained Soak & Endurance Benchmark across 44 pure-Rust tools (353,892 operations, 98.3 ops/s sustained throughput, 100.00% success rate, 0 panics/crashes, 25 MB flat RSS memory curve, `wiki/19-One-Hour-Endurance-Benchmark.md`, `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`).
 - **PR #150 (5.6.1)**: Pure-Rust High-Speed Office & Document Conversions (`fulgur` engine replacing `headless_chrome` in `paperpilot-pdf/src/operations/conversion.rs`, sub-60ms conversion latency for HTML, Markdown, and Excel, `wiki/18-Pure-Rust-Office-Conversions.md`, `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md` 132/132 assertions PASS).
 - **PR #148 (4.9.13)**: Certificate & Template Studio (HTML/SVG template engine, dynamic customization, bulk CSV certificate generator, `apps/web/`).
 - **PR #147 (4.9.12)**: `docs.usepaperpilot.com` Official Starlight Docs Hub (4-pillar guides, tri-interface reference, `apps/docs/`).
