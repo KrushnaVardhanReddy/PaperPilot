@@ -1,0 +1,133 @@
+# Task: Phase 4.9 Core — Embedded Web Distribution (`apps/embed/`, `embed.js`, Svelte 5 Widget & E2E)
+# Base Branch: main
+# Target Branch: phase-4-9-embedded-web-distribution
+# Spec: specs/019-embedded-web-distribution/spec.md
+
+## CRITICAL EXECUTION RULE — READ THIS FIRST
+**Do NOT loop on test files.** If a test fails, fix the IMPLEMENTATION (source code), not the test.
+The test is the acceptance criterion — it must not be weakened, skipped, or rewritten to accommodate broken code.
+If you cannot make a test pass, document WHY in `reports/EMBED_WIDGET_REPORT.md` and move on.
+**Under no circumstances should you edit `e2e_embed.spec.ts` more than once.**
+
+## Priority Order (Strict — Complete Each Step Before Moving to the Next)
+1. Build the project successfully (`npm run build` exits with code 0, `dist/embed.js` is produced).
+2. Confirm bundle size of `dist/embed.js` is < 15KB uncompressed.
+3. Write the Svelte 5 Widget and the embed loader.
+4. Write the Playwright tests ONCE.
+5. Run Playwright tests. If any test fails, fix the IMPLEMENTATION, not the test file.
+
+---
+
+## Objective
+Implement the core Embedded Web Distribution layer (`apps/embed/`) so that any website can embed PaperPilot's client-side WASM engine using 2 lines of HTML:
+1. `embed.js` CDN loader (< 5KB gzip) with Shadow DOM container mounting and stylesheet encapsulation.
+2. Configurable Svelte 5 Embed Widget (`apps/embed/src/Widget.svelte`) reading `data-*` attributes.
+3. JavaScript programmatic API on `window.PaperPilot` (`mount`, `on`, `unmount`).
+4. End-to-end Playwright test suite (`apps/embed/tests/e2e_embed.spec.ts`) — written once, fixed by fixing source.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and modify files inside these paths:
+```
+apps/embed/*
+reports/EMBED_WIDGET_REPORT.md
+wiki/14-Embedded-Web-Widget.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-mcp/`, `paperpilot-cli/`, `apps/desktop/`, `apps/web/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Directory Structure
+
+```
+apps/embed/
+├── package.json               # svelte@5, vite, typescript, @playwright/test
+├── tsconfig.json
+├── vite.config.ts             # Rollup IIFE build → dist/embed.js
+├── src/
+│   ├── embed.ts               # Auto-scanning loader script (< 5KB gzip)
+│   ├── Widget.svelte          # Svelte 5 embed UI ($state, $props runes)
+│   ├── theme.ts               # CSS custom property tokens
+│   └── api.ts                 # window.PaperPilot API surface
+├── tests/
+│   ├── fixtures/
+│   │   └── host_page.html     # Bare HTML fixture page with adversarial host styles
+│   └── e2e_embed.spec.ts      # Playwright tests — written ONCE, never looped on
+└── README.md
+```
+
+---
+
+## 2. Implementation Details
+
+### A. `embed.ts` Loader
+1. Scans DOM for `[data-paperpilot-portal]` or `#paperpilot-portal` on load.
+2. Reads config attributes: `data-tools` (comma-separated or `"all"`), `data-theme` (`dark|light|system`), `data-brand-color` (hex), `data-logo-url`, `data-hide-badge`.
+3. Creates Shadow DOM root (`attachShadow({ mode: 'open' })`).
+4. Mounts `Widget.svelte` inside shadow root with CSS custom properties:
+   ```css
+   :host {
+     --pp-brand-color: #2563eb;
+     --pp-radius: 8px;
+     --pp-font-family: system-ui, sans-serif;
+   }
+   ```
+5. Initialises `window.PaperPilot` API.
+
+### B. Widget.svelte (Svelte 5 Runes)
+- Tool grid / toolbar based on `data-tools`.
+- Drag-and-drop file zone.
+- Viral badge (shown unless `data-hide-badge="true"`):
+  ```html
+  {#if !hideBadge}
+    <a href="https://usepaperpilot.com" target="_blank" rel="noopener" class="pp-badge">
+      ⚡ Powered by PaperPilot
+    </a>
+  {/if}
+  ```
+- Emits custom DOM events: `paperpilot:ready`, `paperpilot:process-start`, `paperpilot:process-complete`, `paperpilot:error`.
+
+### C. window.PaperPilot API (`api.ts`)
+```typescript
+interface PaperPilotAPI {
+  mount(selector: string | HTMLElement, options?: EmbedOptions): EmbedInstance;
+  unmount(selector: string | HTMLElement): void;
+  on(event: string, callback: (data: any) => void): void;
+}
+```
+
+---
+
+## 3. Playwright Tests (`e2e_embed.spec.ts`) — Write ONCE
+
+The following test cases must all be in one file, written once:
+1. **Shadow DOM Encapsulation**: Host page injects `div { color: red !important; }` globally. Assert widget internals retain their own styles.
+2. **Tool Filtering**: `data-tools="merge,compress"` → only merge and compress operations visible.
+3. **Badge Visibility (on by default)**: Assert `⚡ Powered by PaperPilot` is visible when no `data-hide-badge` attribute is set.
+4. **Badge Hidden**: Assert badge is absent when `data-hide-badge="true"`.
+5. **Programmatic Mount/Unmount**: Call `PaperPilot.mount()` and `PaperPilot.unmount()` via `page.evaluate()`, assert widget appears and disappears cleanly.
+
+> NOTE: Do NOT test actual PDF processing via WASM in E2E (WASM binary may not be available in CI). Test widget mounting, DOM structure, attribute binding, and events only.
+
+---
+
+## 4. Verification & Deliverables
+
+1. **Build**:
+   ```bash
+   cd apps/embed && npm install && npm run build
+   ```
+   Must exit with code 0. `dist/embed.js` must exist and be < 15KB uncompressed.
+
+2. **Playwright**:
+   ```bash
+   cd apps/embed && npx playwright test
+   ```
+   All tests green. If a test fails — fix source code, not the test file.
+
+3. **Documentation**:
+   - `reports/EMBED_WIDGET_REPORT.md`: Bundle size, architecture summary, any known limitations.
+   - `wiki/14-Embedded-Web-Widget.md`: 2-line HTML quickstart for website owners.

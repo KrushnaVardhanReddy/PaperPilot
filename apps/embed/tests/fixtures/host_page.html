@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperPilot Embed Test</title>
+  <style>
+    /* Adversarial host styles to test Shadow DOM encapsulation */
+    div {
+      color: red !important;
+      background-color: yellow !important;
+      padding: 50px;
+    }
+    .pp-widget {
+      border: 10px solid red !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Embed Test Page</h1>
+
+  <!-- Auto-mount test container -->
+  <div
+    id="paperpilot-portal"
+    data-theme="dark"
+    data-tools="merge,compress"
+    data-brand-color="#ff00ff"
+  ></div>
+
+  <!-- Manual mount test container -->
+  <div id="manual-portal"></div>
+
+  <!-- Auto-mount badge hidden -->
+  <div id="nobadge-portal" data-hide-badge="true"></div>
+
+  <script src="../../dist/embed.js"></script>
+</body>
+</html>

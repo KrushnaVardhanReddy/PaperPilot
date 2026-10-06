@@ -1,9 +1,10 @@
 import init, { WasmPdfEngine } from 'paperpilot-wasm';
+import wasmModule from 'paperpilot-wasm/paperpilot_wasm_bg.wasm';
 
 let wasmReady: Promise<any> | null = null;
 async function ensureWasm() {
   if (!wasmReady) {
-    wasmReady = init();
+    wasmReady = init(wasmModule);
   }
   await wasmReady;
 }
