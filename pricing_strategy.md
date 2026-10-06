@@ -18,7 +18,7 @@
 | **Cloud Web Pro (SaaS)**| **$4/month** (or $38/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
 | **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
 | **Enterprise** | **$22/user/month** (or $211/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
-| **Cloud API (Hosted Edge)**| **$0.01/run** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (Internal & Demo for v1.0; Managed Auth & Billing in Phase 7) |
+| **Cloud API Packages**| **$0 / $29 / $89 / mo** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (1k Free, 5k Dev, 20k Scale; sub-10ms pure-Rust edge) |
 
 > Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
 
@@ -161,11 +161,15 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
   - For the **v1.0 launch**, the Cloudflare Edge engine (`apps/edge/`) is deployed strictly for **Internal Web Demo support, WooCommerce watermarking webhooks, and public demonstration**.
   - No public unauthenticated write endpoints are exposed without rate limiting.
   - Public commercial usage-based API key management, domain whitelisting, and Stripe metered billing are scheduled for **Phase 7 (Managed Cloud)**. A "Join Developer API Waitlist" CTA captures inbound demand during v1.0.
-* **Planned Commercial Pricing (Phase 7):**
-  - **First 1,000 runs/month FREE** (no credit card required).
-  - **$0.01 per document run** for 1,001–10,000 runs.
-  - **$0.007 per run** for 10,001–100,000 runs.
-  - **$0.005 per run** for 100,001–1,000,000 runs.
+* **Planned Commercial Pricing (Phase 7 — Strategy 2 Developer Packages):**
+  - **Hobby / Free**: **$0/month** (1,000 runs/mo included, hard stop — perfect for evaluation & hackathons).
+  - **Developer / Startup**: **$29/month** (5,000 runs/mo included, +$0.008/run overage).
+  - **Growth / Scale**: **$89/month** (20,000 runs/mo included, +$0.005/run overage).
+  - **Enterprise**: **Custom quote** (100k+ runs, dedicated SLA, custom data residency).
+* **Unit Economics & Margin Assurance (Zero Harm Guarantee):**
+  - Developer Tier ($29/mo for 5,000 runs): Cloudflare compute cost is **~$0.0025** (a quarter of a cent). Net profit after Stripe fees ($1.14) is **$27.83 (96.0% profit margin)**.
+  - Growth Tier ($89/mo for 20,000 runs): Cloudflare compute cost is **~$0.010** (one cent). Net profit after Stripe fees ($2.88) is **$86.11 (96.8% profit margin)**.
+  - The business cannot be harmed by high volume because Cloudflare's marginal CPU cost is fractions of a millicent.
 * **Dual-Tier Hybrid Cloud Execution Model:**
   - **Tier A (Fast Edge): Cloudflare Workers (Rust Wasm)**:
     - Used for 90%+ of standard operations (merge, split, rotate, compress, stamp, encrypt, metadata).

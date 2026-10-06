@@ -1,0 +1,124 @@
+# Task: Phase 4.9 Core — Embedded Web Distribution (`apps/embed/`, `embed.js`, Svelte 5 Widget & E2E)
+# Base Branch: main
+# Target Branch: phase-4-9-embedded-web-distribution
+# Spec: specs/019-embedded-web-distribution/spec.md
+
+## Objective
+Implement the core Embedded Web Distribution layer (`apps/embed/`) so that any website, agency portal, or blog can embed PaperPilot's client-side WASM engine using 2 lines of HTML:
+1. `embed.js` CDN loader (< 5KB gzip) with Shadow DOM container mounting and stylesheet encapsulation.
+2. Configurable, responsive Svelte 5 Embed Widget (`apps/embed/src/Widget.svelte`) reading attributes (`data-tools`, `data-theme`, `data-brand-color`, `data-logo-url`, `data-hide-badge`).
+3. JavaScript programmatic API on `window.PaperPilot` (`PaperPilot.mount`, `PaperPilot.on`, `PaperPilot.unmount`).
+4. End-to-end Playwright test suite (`apps/embed/tests/e2e_embed.spec.ts`) asserting zero style bleed, tool filtering, and successful in-browser PDF processing.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and modify files inside these paths:
+```
+apps/embed/*
+reports/EMBED_WIDGET_REPORT.md
+wiki/14-Embedded-Web-Widget.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-mcp/`, `paperpilot-cli/`, `apps/desktop/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md` (the lead orchestrator manages project trackers and desktop orchestration).
+
+---
+
+## 1. Technical Architecture & Implementation Details (`apps/embed/`)
+
+### A. Directory Structure
+```
+apps/embed/
+├── package.json               # Svelte 5, Vite, TypeScript, @playwright/test
+├── tsconfig.json
+├── vite.config.ts             # Rollup library build emitting dist/embed.js (IIFE/UMD) + dist/widget.js
+├── src/
+│   ├── embed.ts               # Universal drop-in script (<5KB gzip)
+│   ├── Widget.svelte          # Svelte 5 embed UI with runes ($state, $props)
+│   ├── theme.ts               # CSS custom properties (--pp-brand-color, etc.)
+│   └── api.ts                 # window.PaperPilot programmatic interface
+├── tests/
+│   ├── fixtures/
+│   │   └── host_page.html     # Bare HTML fixture page with host styles
+│   └── e2e_embed.spec.ts      # Data-driven Playwright tests
+└── README.md
+```
+
+### B. `embed.ts` Loader Specification:
+1. Automatically runs on script execution and scans DOM for elements matching `[data-paperpilot-portal]` or `#paperpilot-portal`.
+2. Reads configuration attributes:
+   - `data-tools`: Comma-separated list (e.g. `"merge,compress,watermark,split"`, or `"all"` defaulting to 22 tools).
+   - `data-theme`: `"dark"` | `"light"` | `"system"`.
+   - `data-brand-color`: Hex color string (e.g. `"#2563EB"`).
+   - `data-logo-url`: Custom company logo URL for host firm.
+   - `data-hide-badge`: `"true"` | `"false"` (controls viral badge).
+3. Creates a **Shadow DOM root** (`attachShadow({ mode: 'open' })`) inside the target container to completely isolate the widget's styles from the host page.
+4. Mounts the Svelte 5 `Widget` component inside the shadow root, injecting CSS variables:
+   ```css
+   :host {
+     --pp-brand-color: var(--custom-brand, #2563eb);
+     --pp-radius: 8px;
+     --pp-font-family: inherit;
+   }
+   ```
+5. Dynamically imports and initializes `paperpilot-wasm` from CDN/local assets into an isolated Web Worker.
+
+### C. Svelte 5 Embed Widget (`Widget.svelte`):
+1. Written using **Svelte 5 Runes** (`$state`, `$derived`, `$props`).
+2. Renders a clean, compact toolbar / grid of the selected tools with drag-and-drop file zones.
+3. Includes the viral badge at the footer:
+   ```html
+   {#if !hideBadge}
+     <a href="https://usepaperpilot.com" target="_blank" rel="noopener" class="pp-badge">
+       ⚡ Powered by PaperPilot
+     </a>
+   {/if}
+   ```
+4. Emits custom DOM events on the host container:
+   - `paperpilot:ready`
+   - `paperpilot:process-start`
+   - `paperpilot:process-complete` (`detail: { tool, outputSize, durationMs }`)
+   - `paperpilot:error`
+
+### D. JavaScript Embed API (`api.ts`):
+Expose global object `window.PaperPilot`:
+```typescript
+interface PaperPilotAPI {
+  mount(selector: string | HTMLElement, options?: EmbedOptions): EmbedInstance;
+  unmount(selector: string | HTMLElement): void;
+  on(event: string, callback: (data: any) => void): void;
+}
+```
+
+---
+
+## 2. Playwright E2E Test Suite (`tests/e2e_embed.spec.ts`)
+
+Must verify the following test cases against a test fixture:
+1. **Shadow DOM Encapsulation**: Host page defines global CSS (`div { color: red !important; }`), assert widget internals retain widget styles and do not inherit hostile host styling.
+2. **Tool Filtering**: Host specifies `data-tools="merge,compress"`, assert ONLY the merge and compress operations are rendered.
+3. **Execution Parity**: Trigger in-browser Merge and Compress operations through the widget, assert output is a valid `%PDF-` document.
+4. **Programmatic API**: Mount via `PaperPilot.mount()`, register event listener for `complete`, perform operation, assert event fired with valid metrics, call `PaperPilot.unmount()`.
+5. **Badge Visibility**: Verify "⚡ Powered by PaperPilot" badge is present by default, and removed when `data-hide-badge="true"`.
+
+---
+
+## 3. Verification & Deliverables
+
+1. **Build Verification**:
+   ```bash
+   cd apps/embed
+   npm install
+   npm run build
+   ```
+   Assert bundle size of `embed.js` is < 15KB uncompressed (< 5KB gzipped).
+2. **Playwright E2E**:
+   ```bash
+   cd apps/embed
+   npx playwright test
+   ```
+   All test cases must pass 100% green.
+3. **Documentation**:
+   - `reports/EMBED_WIDGET_REPORT.md`: Benchmark results, bundle size analysis, and architecture summary.
+   - `wiki/14-Embedded-Web-Widget.md`: Copy-pasteable quickstart guide for website owners and developers.
