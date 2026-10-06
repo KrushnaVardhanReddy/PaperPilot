@@ -19,15 +19,6 @@
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
 
-      <nav class="nav-links">
-        <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer" class="nav-link">
-          📚 Docs
-        </a>
-        <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer" class="nav-link">
-          ⚡ 44 Tools
-        </a>
-      </nav>
-
       <div class="cta-banner">
         <span>Need OCR or Offline AI?</span>
         <a href="https://paperpilot.app/download" target="_blank" rel="noopener noreferrer" class="download-btn">
@@ -52,6 +43,8 @@
       </div>
       <div class="footer-links">
         <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
+        <span class="separator">•</span>
+        <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">44 Tools Handbook</a>
         <span class="separator">•</span>
         <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux</a>
         <span class="separator">•</span>
@@ -122,30 +115,6 @@
     border-radius: 12px;
     font-weight: 600;
     text-transform: uppercase;
-  }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .nav-link {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.9rem;
-    padding: 6px 12px;
-    border-radius: var(--border-radius-md);
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .nav-link:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-tertiary);
   }
 
   .cta-banner {
