@@ -17,7 +17,7 @@ export default defineConfig({
     lib: {
       entry: 'src/embed.ts',
       name: 'PaperPilot',
-      fileName: 'embed',
+      fileName: () => 'embed.js',
       formats: ['iife'],
     },
     rollupOptions: {
