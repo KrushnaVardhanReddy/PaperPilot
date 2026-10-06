@@ -54,7 +54,19 @@ test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
 
 # Run all tests across the stack
-test-all: test-backend test-frontend test-e2e
+test-all: test-backend test-frontend test-e2e test-edge test-embed test-web test-tri-e2e
+
+# Run Edge Microservice tests
+test-edge:
+	cd apps/edge && npm run test
+
+# Run Embed Widget tests
+test-embed:
+	cd apps/embed && npx playwright test
+
+# Run Web Portal tests
+test-web:
+	cd apps/web && npx playwright test
 
 # Backwards compatibility alias for backend tests
 test: test-backend
