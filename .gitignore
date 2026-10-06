@@ -26,3 +26,4 @@ tests/bench_fixtures/
 .venv
 jules*.zip
 .wrangler/
+.astro/
