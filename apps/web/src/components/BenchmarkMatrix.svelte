@@ -5,7 +5,7 @@
   <div class="benchmark-container">
     <div class="benchmark-header">
       <h2>Why PaperPilot?</h2>
-      <p>Compare how we stack up against the competition in speed, privacy, and security.</p>
+      <p>Here is what makes our purely client-side approach so powerful.</p>
     </div>
 
     <div class="table-wrapper">
@@ -14,46 +14,28 @@
           <tr>
             <th>Feature</th>
             <th class="highlight-col">PaperPilot</th>
-            <th>Adobe Acrobat Pro</th>
-            <th>iLovePDF</th>
-            <th>Stirling-PDF</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="feature-name">Server Uploads Required</td>
             <td class="highlight-col text-success">None (100% Client-Side)</td>
-            <td class="text-danger">Yes (Cloud)</td>
-            <td class="text-danger">Yes (Cloud)</td>
-            <td class="text-warning">Optional (Self-Hosted)</td>
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
-            <td class="highlight-col text-success">&lt; 10ms</td>
-            <td class="text-warning">Network Dependent</td>
-            <td class="text-warning">Network Dependent</td>
-            <td class="text-warning">Server Dependent</td>
+            <td class="highlight-col text-success">~50-100ms</td>
           </tr>
           <tr>
             <td class="feature-name">C++ Security Vulnerabilities</td>
             <td class="highlight-col text-success">Zero (Memory-Safe Rust)</td>
-            <td class="text-danger">High Risk</td>
-            <td class="text-warning">Unknown</td>
-            <td class="text-danger">Yes (Java/C++ bindings)</td>
           </tr>
           <tr>
             <td class="feature-name">Licensing</td>
             <td class="highlight-col text-success">Free & Open Source</td>
-            <td class="text-danger">$19.99/month</td>
-            <td class="text-danger">Freemium / Ads</td>
-            <td class="text-success">Free & Open Source</td>
           </tr>
           <tr>
             <td class="feature-name">Bundle Size</td>
             <td class="highlight-col text-success">~4MB (WASM)</td>
-            <td class="text-danger">Gigabytes</td>
-            <td class="text-success">N/A (Web)</td>
-            <td class="text-danger">~1GB (Docker)</td>
           </tr>
         </tbody>
       </table>
