@@ -1,17 +1,31 @@
 <script lang="ts">
-  import OperationsView from '../views/OperationsView.svelte';
+  import OperationsView from "../views/OperationsView.svelte";
 </script>
 
 <div class="hero-section">
   <div class="hero-content">
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
-    <p class="hero-tagline">100% Client-Side. 0 Bytes Uploaded. ~50–100ms WASM Execution.</p>
+    <p class="hero-tagline">
+      100% Client-Side. 0 Bytes Uploaded. ~50–100ms WASM Execution.
+    </p>
 
     <div class="hero-ctas">
-      <a href="https://github.com/paperpilot/paperpilot/releases" target="_blank" rel="noopener noreferrer" class="cta-btn primary">
-        <span class="icon">⚡</span> Download Desktop <span class="muted">(Free & Open Source)</span>
+      <a
+        href="https://github.com/paperpilot/paperpilot/releases"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="cta-btn primary"
+      >
+        <span class="icon">⚡</span> Download Desktop
+        <span class="muted">(Free & Open Source)</span>
       </a>
-      <button class="cta-btn secondary" onclick={() => document.getElementById('embed-generator')?.scrollIntoView({ behavior: 'smooth' })}>
+      <button
+        class="cta-btn secondary"
+        onclick={() =>
+          document
+            .getElementById("embed-generator")
+            ?.scrollIntoView({ behavior: "smooth" })}
+      >
         <span class="icon">&lt; / &gt;</span> Get Embed Code
       </button>
     </div>
@@ -40,7 +54,11 @@
     flex-direction: column;
     align-items: center;
     padding: 64px 32px 120px;
-    background: radial-gradient(circle at top center, rgba(94, 106, 210, 0.15) 0%, transparent 70%);
+    background: radial-gradient(
+      circle at top center,
+      rgba(94, 106, 210, 0.15) 0%,
+      transparent 70%
+    );
     height: auto;
   }
 
@@ -139,7 +157,9 @@
     background-color: var(--surface-0);
     border-radius: var(--border-radius-xl);
     border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow:
+      var(--shadow-lg),
+      0 20px 40px rgba(0, 0, 0, 0.4);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -149,9 +169,15 @@
   }
 
   @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
   }
 
   .playground-header {
@@ -173,9 +199,15 @@
     border-radius: 50%;
   }
 
-  .dot.close { background-color: #ff5f56; }
-  .dot.minimize { background-color: #ffbd2e; }
-  .dot.maximize { background-color: #27c93f; }
+  .dot.close {
+    background-color: #ff5f56;
+  }
+  .dot.minimize {
+    background-color: #ffbd2e;
+  }
+  .dot.maximize {
+    background-color: #27c93f;
+  }
 
   .window-title {
     flex: 1;

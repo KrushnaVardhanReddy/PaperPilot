@@ -4,44 +4,74 @@
 <section class="showcase-section">
   <div class="showcase-header">
     <h2>One Engine. Three Surfaces.</h2>
-    <p>Deploy PaperPilot exactly where you need it, powered by the same blazing-fast Rust core.</p>
+    <p>
+      Deploy PaperPilot exactly where you need it, powered by the same
+      blazing-fast Rust core.
+    </p>
   </div>
 
   <div class="showcase-grid">
     <div class="surface-card">
       <div class="card-icon">🖥️</div>
       <h3>Desktop App</h3>
-      <p class="card-desc">44 native tools, batch folder processing, and offline AI chat. 100% local privacy for sensitive documents.</p>
+      <p class="card-desc">
+        44 native tools, batch folder processing, and offline AI chat. 100%
+        local privacy for sensitive documents.
+      </p>
       <ul class="feature-list">
         <li>✓ Mac, Windows & Linux</li>
         <li>✓ Batch processing</li>
         <li>✓ Zero data collection</li>
       </ul>
-      <a href="https://paperpilot.app/download" target="_blank" rel="noopener noreferrer" class="card-link">Download Free &rarr;</a>
+      <a
+        href="https://paperpilot.app/download"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="card-link">Download Free &rarr;</a
+      >
     </div>
 
     <div class="surface-card highlight">
       <div class="card-icon">🧩</div>
       <h3>Drop-In Embed Widget</h3>
-      <p class="card-desc">Add client-side PDF powers to any website with just 2 lines of HTML. Integrates with WordPress, Webflow, and Shopify.</p>
+      <p class="card-desc">
+        Add client-side PDF powers to any website with just 2 lines of HTML.
+        Integrates with WordPress, Webflow, and Shopify.
+      </p>
       <ul class="feature-list">
         <li>✓ Zero server costs</li>
         <li>✓ Customizable branding</li>
         <li>✓ ~50–100ms WASM execution</li>
       </ul>
-      <button class="card-link" onclick={() => document.getElementById('embed-generator')?.scrollIntoView({ behavior: 'smooth' })}>Configure Widget &rarr;</button>
+      <button
+        class="card-link"
+        onclick={() =>
+          document
+            .getElementById("embed-generator")
+            ?.scrollIntoView({ behavior: "smooth" })}
+        >Configure Widget &rarr;</button
+      >
     </div>
 
     <div class="surface-card">
       <div class="card-icon">☁️</div>
       <h3>Cloud API & MCP Gateway</h3>
-      <p class="card-desc">Headless REST API running on Edge WASM, plus direct MCP integration for Claude and Cursor AI assistants.</p>
+      <p class="card-desc">
+        Headless REST API running on Edge WASM, plus direct MCP integration for
+        Claude and Cursor AI assistants.
+      </p>
       <ul class="feature-list">
         <li>✓ Swagger UI included</li>
         <li>✓ Standard JSON-RPC</li>
         <li>✓ Serverless ready</li>
       </ul>
-      <button class="card-link" onclick={() => document.getElementById('api-explorer')?.scrollIntoView({ behavior: 'smooth' })}>Explore API &rarr;</button>
+      <button
+        class="card-link"
+        onclick={() =>
+          document
+            .getElementById("api-explorer")
+            ?.scrollIntoView({ behavior: "smooth" })}>Explore API &rarr;</button
+      >
     </div>
   </div>
 </section>
@@ -85,7 +115,9 @@
     padding: 32px;
     display: flex;
     flex-direction: column;
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    transition:
+      transform var(--transition-normal),
+      box-shadow var(--transition-normal);
   }
 
   .surface-card:hover {
@@ -95,12 +127,16 @@
 
   .surface-card.highlight {
     border-color: var(--accent-primary);
-    background: linear-gradient(to bottom, var(--surface-1), rgba(94, 106, 210, 0.05));
+    background: linear-gradient(
+      to bottom,
+      var(--surface-1),
+      rgba(94, 106, 210, 0.05)
+    );
     position: relative;
   }
 
   .surface-card.highlight::before {
-    content: 'Most Popular';
+    content: "Most Popular";
     position: absolute;
     top: -12px;
     left: 50%;
