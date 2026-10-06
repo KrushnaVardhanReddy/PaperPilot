@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e preview-docs build-docs run-docs
 
 # Default target
 all: format lint test-all build
@@ -35,9 +35,13 @@ run-docs:
 run-all-web:
 	npx concurrently -n "web,docs" -c "blue,green" "cd apps/web && npm run dev" "cd apps/docs && npm run dev"
 
-# Build documentation portal static bundle
+# Build documentation portal static bundle (with search index)
 build-docs:
 	cd apps/docs && npm run build
+
+# Preview documentation portal production build with working Pagefind search
+preview-docs: build-docs
+	cd apps/docs && npm run preview
 
 # Build the production standalone desktop app (release) with embedded frontend
 build-release:
