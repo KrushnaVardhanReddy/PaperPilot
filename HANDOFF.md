@@ -88,6 +88,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 |---|---|---|---|---|
 | **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 15762776336095880921](https://jules.google.com/session/15762776336095880921) | `main` | ✅ **Merged (PR #143)** — Expanded WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
 | **5.5.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_22_TOOLS_E2E_SCORECARD.md`, `wiki/13-Wasm-22-Tools-Suite.md` | [Session 8898129496130614008](https://jules.google.com/session/8898129496130614008) | `main` | ✅ **Completed** — Re-exported Render (`hayro`), OCR (`ocrs`), text extraction, decrypt, and numbering into WASM (15 → 22 tools) |
+| **4.9 Core** | `apps/embed/*`, `reports/EMBED_WIDGET_REPORT.md`, `wiki/14-Embedded-Web-Widget.md` | [Session 11292841270028301362](https://jules.google.com/session/11292841270028301362) | `main` | ⏳ **In Flight** — Build `embed.js` CDN loader, Svelte 5 Embed Widget with Shadow DOM isolation, and Playwright E2E tests |
 
 ---
 
