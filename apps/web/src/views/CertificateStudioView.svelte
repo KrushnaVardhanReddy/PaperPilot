@@ -225,19 +225,19 @@
   .header h2 {
     margin: 0 0 8px 0;
     font-size: 1.8rem;
-    color: var(--text-primary, #333);
+    color: var(--text-primary, #ffffff);
   }
 
   .header p {
     margin: 0;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, #a1a7b3);
   }
 
   .tabs {
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
-    border-bottom: 1px solid var(--border-color, #eee);
+    border-bottom: 1px solid var(--border-color, #2d313c);
     padding-bottom: 8px;
   }
 
@@ -247,14 +247,14 @@
     padding: 8px 16px;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, #a1a7b3);
     cursor: pointer;
     border-bottom: 3px solid transparent;
   }
 
   .tabs button.active {
-    color: var(--accent-primary, #3498db);
-    border-bottom-color: var(--accent-primary, #3498db);
+    color: var(--accent-primary, #5e6ad2);
+    border-bottom-color: var(--accent-primary, #5e6ad2);
   }
 
   .studio-workspace {
@@ -277,7 +277,8 @@
   .section h3 {
     margin: 0 0 16px 0;
     font-size: 1.1rem;
-    border-bottom: 1px solid var(--border-color, #eee);
+    color: var(--text-primary, #ffffff);
+    border-bottom: 1px solid var(--border-color, #2d313c);
     padding-bottom: 8px;
   }
 
@@ -289,22 +290,26 @@
 
   .template-selector button {
     padding: 12px;
-    background: var(--bg-secondary, #f9f9f9);
-    border: 1px solid var(--border-color, #ddd);
-    border-radius: 6px;
+    background: var(--surface-2, #1c1c1f);
+    color: var(--text-primary, #ffffff);
+    border: 1px solid var(--border-color, #2d313c);
+    border-radius: var(--border-radius-md, 8px);
     cursor: pointer;
     font-weight: 500;
+    font-size: 0.95rem;
     transition: all 0.2s;
   }
 
   .template-selector button:hover {
-    background: #eee;
+    background: var(--surface-3, #242428);
+    border-color: var(--accent-primary, #5e6ad2);
   }
 
   .template-selector button.selected {
-    background: var(--accent-primary, #3498db);
-    color: white;
-    border-color: var(--accent-primary, #3498db);
+    background: var(--accent-primary, #5e6ad2);
+    color: #ffffff;
+    border-color: var(--accent-primary, #5e6ad2);
+    font-weight: 600;
   }
 
   .form-group {
@@ -326,20 +331,23 @@
   label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary, #555);
+    color: var(--text-secondary, #a1a7b3);
   }
 
   input, textarea {
-    padding: 8px 12px;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 4px;
+    padding: 10px 12px;
+    background: var(--surface-2, #1c1c1f);
+    color: #ffffff;
+    border: 1px solid var(--border-color, #2d313c);
+    border-radius: var(--border-radius-sm, 4px);
     font-size: 0.95rem;
     font-family: inherit;
   }
 
   input:focus, textarea:focus {
     outline: none;
-    border-color: var(--accent-primary, #3498db);
+    border-color: var(--accent-primary, #5e6ad2);
+    box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.25);
   }
 
   .action-buttons {
@@ -351,21 +359,32 @@
   .btn {
     padding: 12px 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--border-radius-md, 8px);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     text-align: center;
+    transition: all var(--transition-fast, 150ms);
   }
 
   .btn-primary {
-    background: var(--accent-primary, #3498db);
-    color: white;
+    background: var(--accent-primary, #5e6ad2);
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover, #6e79d6);
   }
 
   .btn-secondary {
-    background: var(--bg-secondary, #eee);
-    color: var(--text-primary, #333);
+    background: var(--surface-2, #1c1c1f);
+    color: var(--text-primary, #ffffff);
+    border: 1px solid var(--border-color, #2d313c);
+  }
+
+  .btn-secondary:hover {
+    background: var(--surface-3, #242428);
+    border-color: var(--text-secondary, #a1a7b3);
   }
 
   .preview-panel {
@@ -373,9 +392,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--bg-secondary, #f5f5f5);
+    background: var(--surface-1, #141416);
+    border: 1px solid var(--border-color, #2d313c);
     border-radius: 12px;
-    padding: 32px;
+    padding: 24px;
     overflow-y: auto;
   }
 

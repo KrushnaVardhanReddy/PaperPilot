@@ -68,17 +68,19 @@
   </main>
 
   <footer class="app-footer">
-    <div class="privacy-badge">
-      <span class="icon">🔒</span> 100% Client-Side Web & Desktop <span class="muted">— Zero data collection. Documents never leave your device.</span>
-    </div>
-    <div class="footer-links">
-      <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Documentation Hub</a>
-      <span class="separator">•</span>
-      <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux (.deb / AppImage)</a>
-      <span class="separator">•</span>
-      <a href="https://paperpilot.app/download/windows" target="_blank" rel="noopener noreferrer">Windows (.exe / .msi)</a>
-      <span class="separator">•</span>
-      <a href="https://paperpilot.app/download/macos" target="_blank" rel="noopener noreferrer">macOS (.dmg)</a>
+    <div class="footer-inner">
+      <div class="privacy-badge">
+        <span class="icon">🔒</span> 100% Client-Side <span class="muted">— Documents never leave your device.</span>
+      </div>
+      <div class="footer-links">
+        <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
+        <span class="separator">•</span>
+        <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux</a>
+        <span class="separator">•</span>
+        <a href="https://paperpilot.app/download/windows" target="_blank" rel="noopener noreferrer">Windows</a>
+        <span class="separator">•</span>
+        <a href="https://paperpilot.app/download/macos" target="_blank" rel="noopener noreferrer">macOS</a>
+      </div>
     </div>
   </footer>
 </div>
@@ -227,11 +229,20 @@
   .app-footer {
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-    padding: 24px;
+    padding: 8px 32px;
+    height: 48px;
+    box-sizing: border-box;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
   }
 
   .trust-badge {
@@ -246,15 +257,15 @@
   }
 
   .privacy-badge {
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: rgba(16, 185, 129, 0.08);
     color: #10B981;
-    padding: 8px 16px;
-    border-radius: var(--border-radius-full);
-    font-size: 0.9rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
     border: 1px solid rgba(16, 185, 129, 0.2);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .privacy-badge .muted {

@@ -117,15 +117,15 @@
 
   .header {
     text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .logo {
     margin-bottom: 1rem;
   }
 
+  .logo {
+    margin-bottom: 0.5rem;
+  }
+
   .title {
-    font-size: 3rem;
+    font-size: 2.4rem;
     font-weight: bold;
     text-transform: uppercase;
     color: #2C3E50;
@@ -143,28 +143,28 @@
 
   .presents {
     font-style: italic;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: #555;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
 
   .recipient {
-    font-size: 4rem;
+    font-size: 3.2rem;
     font-family: 'Georgia', serif;
     color: #D4AF37;
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 1rem 0;
     font-weight: normal;
     font-style: italic;
     border-bottom: 2px solid #D4AF37;
     display: inline-block;
-    padding: 0 2rem 0.5rem 2rem;
+    padding: 0 2rem 0.4rem 2rem;
     align-self: center;
   }
 
   .description {
-    font-size: 1.25rem;
-    line-height: 1.6;
-    max-width: 80%;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    max-width: 82%;
     margin: 0 auto;
     color: #444;
   }
@@ -173,7 +173,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-top: 3rem;
+    margin-top: 1.5rem;
     padding-bottom: 2rem;
   }
 

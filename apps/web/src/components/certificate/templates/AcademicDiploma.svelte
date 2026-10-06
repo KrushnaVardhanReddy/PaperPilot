@@ -16,7 +16,7 @@
   <div class="content-wrapper">
     <div class="header">
       <div class="university-seal">
-        <svg width="80" height="80" viewBox="0 0 100 100">
+        <svg width="60" height="60" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="48" fill="none" stroke="#1A365D" stroke-width="2"/>
           <circle cx="50" cy="50" r="42" fill="none" stroke="#1A365D" stroke-width="1"/>
           <path d="M50 20 L80 80 L20 80 Z" fill="none" stroke="#1A365D" stroke-width="2"/>
@@ -96,15 +96,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 12px;
   }
 
   .university-name {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 4px;
-    margin-top: 16px;
+    letter-spacing: 3px;
+    margin-top: 8px;
     color: #1A365D;
   }
 
@@ -114,40 +114,41 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    justify-content: center;
   }
 
   .title {
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-family: 'Old English Text MT', 'Engravers Old English', 'Georgia', serif;
     font-weight: normal;
     color: #1A365D;
-    margin: 0 0 24px 0;
+    margin: 0 0 12px 0;
   }
 
   .confer-text {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-style: italic;
     color: #4A5568;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
   }
 
   .recipient {
-    font-size: 3.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
     font-family: 'Georgia', serif;
     color: #000000;
-    margin: 0 0 32px 0;
+    margin: 0 0 16px 0;
     border-bottom: 1px solid #CBD5E0;
-    padding-bottom: 8px;
-    min-width: 60%;
+    padding-bottom: 6px;
+    min-width: 55%;
   }
 
   .description {
-    font-size: 1.2rem;
-    line-height: 1.8;
+    font-size: 1.05rem;
+    line-height: 1.6;
     color: #2D3748;
-    max-width: 75%;
-    margin: 0;
+    max-width: 80%;
+    margin: 0 0 16px 0;
   }
 
   .footer {
@@ -155,7 +156,7 @@
     justify-content: space-between;
     align-items: flex-end;
     margin-top: auto;
-    padding-bottom: 30px;
+    padding-bottom: 42px;
   }
 
   .signature-line {
@@ -169,7 +170,7 @@
     font-family: 'Brush Script MT', cursive, serif;
     font-size: 1.5rem;
     color: #1A365D;
-    height: 40px;
+    height: 36px;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -230,14 +231,16 @@
 
   .verification-badge {
     position: absolute;
-    bottom: 16px;
+    bottom: 12px;
     left: 40px;
     right: 40px;
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-family: sans-serif;
     color: #718096;
+    border-top: 1px solid rgba(26, 54, 93, 0.15);
+    padding-top: 8px;
   }
 
   .verify-branding {
