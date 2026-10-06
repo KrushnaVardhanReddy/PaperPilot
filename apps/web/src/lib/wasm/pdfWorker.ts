@@ -52,8 +52,17 @@ self.onmessage = async (e: MessageEvent) => {
             case 'flatten':
                 result = WasmPdfEngine.flatten(payload.file);
                 break;
-            case 'set_metadata':
+case 'set_metadata':
                 result = WasmPdfEngine.set_metadata(payload.file, payload.title, payload.author, payload.subject, payload.keywords);
+                break;
+            case 'images_to_pdf':
+                result = WasmPdfEngine.images_to_pdf(payload.images);
+                break;
+            case 'extract_images':
+                result = WasmPdfEngine.extract_images(payload.file);
+                break;
+            case 'pdf_hash':
+                result = WasmPdfEngine.pdf_hash(payload.file);
                 break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);

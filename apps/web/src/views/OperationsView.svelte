@@ -56,11 +56,16 @@
 
   let flattenFile: File | null = $state(null);
 
-  let metadataFile: File | null = $state(null);
+let metadataFile: File | null = $state(null);
   let metaTitle = $state('');
   let metaAuthor = $state('');
   let metaSubject = $state('');
   let metaKeywords = $state('');
+
+  let imagesToPdfFiles: File[] = $state([]);
+  let extractImagesFile: File | null = $state(null);
+  let pdfHashFile: File | null = $state(null);
+  let computedPdfHash: string | null = $state(null);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -238,25 +243,65 @@
       }
   }
 
+
   async function handleMetadata() {
-      if (!metadataFile) return;
+    if (!metadataFile) return;
+    try {
       isProcessing = true;
-      try {
-          const buffer = await readAsUint8Array(metadataFile);
-          const result = await wasmPdfClient.set_metadata(
-            buffer,
-            metaTitle || undefined,
-            metaAuthor || undefined,
-            metaSubject || undefined,
-            metaKeywords || undefined
-          );
-          download(result, 'metadata_updated.pdf');
-      } catch (e: any) {
-          alert('Metadata failed: ' + e.message);
-      } finally {
-          isProcessing = false;
-      }
+      const buffer = new Uint8Array(await metadataFile.arrayBuffer());
+      const result = await wasmPdfClient.set_metadata(buffer, metaTitle, metaAuthor, metaSubject, metaKeywords);
+      download(result, `metadata_${metadataFile.name}`);
+    } catch (e) {
+      alert(`Error updating metadata: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
   }
+
+  async function handleImagesToPdf() {
+    if (imagesToPdfFiles.length === 0) return;
+    try {
+      isProcessing = true;
+      const buffers = await Promise.all(imagesToPdfFiles.map(async (f) => new Uint8Array(await f.arrayBuffer())));
+      const result = await wasmPdfClient.images_to_pdf(buffers);
+      download(result, `images_to_pdf.pdf`);
+    } catch (e) {
+      alert(`Error converting images: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleExtractImages() {
+    if (!extractImagesFile) return;
+    try {
+      isProcessing = true;
+      const buffer = new Uint8Array(await extractImagesFile.arrayBuffer());
+      const result = await wasmPdfClient.extract_images(buffer);
+      for (let i = 0; i < result.length; i++) {
+        const ext = (result[i][0] === 0xFF && result[i][1] === 0xD8) ? 'jpg' : 'png';
+        download(result[i], `image_${i + 1}.${ext}`);
+      }
+    } catch (e) {
+      alert(`Error extracting images: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePdfHash() {
+    if (!pdfHashFile) return;
+    try {
+      isProcessing = true;
+      const buffer = new Uint8Array(await pdfHashFile.arrayBuffer());
+      computedPdfHash = await wasmPdfClient.pdf_hash(buffer);
+    } catch (e) {
+      alert(`Error hashing pdf: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
 
   // Helpers for merge files
   function removeMergeFile(index: number) {
@@ -575,7 +620,7 @@
         {/if}
       </div>
 
-    {:else if activeTool === 'metadata'}
+{:else if activeTool === 'metadata'}
       <div class="tool-pane">
         <h2>Edit Metadata</h2>
         <p>Update the metadata of your document.</p>
@@ -608,6 +653,81 @@
             <button class="action-btn" onclick={handleMetadata} disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : 'Update Metadata & Download'}
             </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'images_to_pdf'}
+      <div class="tool-pane">
+        <h2>Images to PDF</h2>
+        <p>Convert multiple images (PNG/JPEG) into a single PDF document.</p>
+
+        {#if imagesToPdfFiles.length === 0}
+            <DropZone ondrop={(files: File[]) => imagesToPdfFiles = [...imagesToPdfFiles, ...files]} multiple={true} />
+        {:else}
+            <div class="file-list">
+                {#each imagesToPdfFiles as file, i}
+                    <div class="file-item">
+                        <span class="file-name">{file.name}</span>
+                        <div class="file-controls">
+                            <button onclick={() => {
+                                const newFiles = [...imagesToPdfFiles];
+                                newFiles.splice(i, 1);
+                                imagesToPdfFiles = newFiles;
+                            }}>✕</button>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+            <DropZone ondrop={(files: File[]) => imagesToPdfFiles = [...imagesToPdfFiles, ...files]} multiple={true} />
+            <button class="action-btn" onclick={handleImagesToPdf} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Convert Images & Download PDF'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'extract_images'}
+      <div class="tool-pane">
+        <h2>Extract Images</h2>
+        <p>Extract embedded images from a PDF.</p>
+
+        {#if !extractImagesFile}
+            <DropZone ondrop={(files: File[]) => extractImagesFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{extractImagesFile.name}</span>
+                <button onclick={() => extractImagesFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleExtractImages} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Extract Images & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_hash'}
+      <div class="tool-pane">
+        <h2>PDF Hash / Checksum</h2>
+        <p>Calculate the cryptographic SHA-256 integrity hash of your PDF document locally.</p>
+
+        {#if !pdfHashFile}
+            <DropZone ondrop={(files: File[]) => { pdfHashFile = files[0]; computedPdfHash = null; }} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{pdfHashFile.name}</span>
+                <button onclick={() => { pdfHashFile = null; computedPdfHash = null; }}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handlePdfHash} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Calculate Hash'}
+            </button>
+
+            {#if computedPdfHash}
+                <div class="hash-result" style="margin-top: 24px; padding: 16px; background-color: var(--bg-surface); border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-secondary);">SHA-256 Hash</h3>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" readonly value={computedPdfHash} style="flex: 1; padding: 8px; font-family: monospace; font-size: 0.9rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;" />
+                        <button onclick={() => navigator.clipboard.writeText(computedPdfHash || '')} style="padding: 8px 16px; background-color: var(--accent-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Copy</button>
+                    </div>
+                </div>
+            {/if}
         {/if}
       </div>
     {/if}

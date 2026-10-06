@@ -253,3 +253,37 @@ fn test_set_metadata() {
     let keywords = info.get(b"Keywords").unwrap().as_str().unwrap();
     assert_eq!(keywords, b"Test Keywords", "Keywords should match");
 }
+
+use paperpilot_wasm::operations::{images_to_pdf, extract_images, pdf_hash};
+
+#[test]
+fn test_images_to_pdf() {
+    let pixel = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 218, 99, 252, 207, 192, 80, 15, 0, 4, 133, 1, 128, 132, 169, 140, 33, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130];
+    let buffers: Vec<&[u8]> = vec![&pixel];
+    let result = images_to_pdf(&buffers);
+    assert!(result.is_ok(), "Images to PDF operation failed: {:?}", result.err());
+    let pdf_bytes = result.unwrap();
+    let doc = Document::load_mem(&pdf_bytes).unwrap();
+    assert_eq!(doc.get_pages().len(), 1, "Should create a 1-page PDF");
+}
+
+#[test]
+fn test_extract_images() {
+    let pixel = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 218, 99, 252, 207, 192, 80, 15, 0, 4, 133, 1, 128, 132, 169, 140, 33, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130];
+    let buffers: Vec<&[u8]> = vec![&pixel];
+    let pdf_bytes = images_to_pdf(&buffers).unwrap();
+
+    let result = extract_images(&pdf_bytes);
+    assert!(result.is_ok(), "Extract images operation failed: {:?}", result.err());
+    let images = result.unwrap();
+    assert_eq!(images.len(), 1, "Should extract 1 image");
+}
+
+#[test]
+fn test_pdf_hash() {
+    let doc = create_dummy_pdf();
+    let result = pdf_hash(&doc);
+    assert!(result.is_ok(), "PDF hash operation failed: {:?}", result.err());
+    let hash = result.unwrap();
+    assert_eq!(hash.len(), 64, "SHA-256 hash should be 64 hex characters");
+}
