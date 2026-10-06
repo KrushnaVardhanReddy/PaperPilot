@@ -15,6 +15,18 @@ run: build-release
 dev:
 	cd apps/desktop && npm run tauri dev
 
+# Run web portal in live-reload dev mode
+run-web:
+	cd apps/web && npm run dev
+
+# Run embed widget dev server
+run-embed:
+	cd apps/embed && npm run dev
+
+# Run Cloudflare edge worker locally
+run-edge:
+	cd apps/edge && npm run dev
+
 # Build the production standalone desktop app (release) with embedded frontend
 build-release:
 	cd apps/desktop && npx tauri build --no-bundle
