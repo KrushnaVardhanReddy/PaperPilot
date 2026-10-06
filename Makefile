@@ -27,6 +27,14 @@ run-embed:
 run-edge:
 	cd apps/edge && npm run dev
 
+# Run documentation portal in live-reload dev mode
+run-docs:
+	cd apps/docs && npm run dev
+
+# Build documentation portal static bundle
+build-docs:
+	cd apps/docs && npm run build
+
 # Build the production standalone desktop app (release) with embedded frontend
 build-release:
 	cd apps/desktop && npx tauri build --no-bundle

@@ -13,10 +13,18 @@
         <img src="/logo.png" alt="PaperPilot Logo" class="icon" />
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
+      <nav class="nav-links">
+        <a href="https://docs.usepaperpilot.com" target="_blank" rel="noopener noreferrer" class="nav-link">
+          📚 Documentation
+        </a>
+        <a href="https://docs.usepaperpilot.com/reference/44-tools-handbook/" target="_blank" rel="noopener noreferrer" class="nav-link">
+          ⚡ 44 Tools
+        </a>
+      </nav>
       <div class="cta-banner">
         <span>Need OCR, Semantic Search, or Offline AI?</span>
         <a href="https://paperpilot.app/download" target="_blank" rel="noopener noreferrer" class="download-btn">
-          Download PaperPilot Desktop (Free & Open Source)
+          Download Desktop
         </a>
       </div>
     </div>
@@ -35,6 +43,8 @@
       <span class="icon">🔒</span> 100% Client-Side Web & Desktop <span class="muted">— Zero data collection. Documents never leave your device.</span>
     </div>
     <div class="footer-links">
+      <a href="https://docs.usepaperpilot.com" target="_blank" rel="noopener noreferrer">Documentation Hub</a>
+      <span class="separator">•</span>
       <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux (.deb / AppImage)</a>
       <span class="separator">•</span>
       <a href="https://paperpilot.app/download/windows" target="_blank" rel="noopener noreferrer">Windows (.exe / .msi)</a>
@@ -102,6 +112,30 @@
     border-radius: 12px;
     font-weight: 600;
     text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
   }
 
   .cta-banner {
