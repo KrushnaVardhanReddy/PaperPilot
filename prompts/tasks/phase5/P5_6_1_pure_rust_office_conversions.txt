@@ -1,0 +1,32 @@
+# Task: Phase 5.6.1 — Pure-Rust High-Speed Office & Document Conversions (Zero-Chrome)
+# Base Branch: main
+# Target Branch: feat-pure-rust-office-conversions
+# Priority: HIGH — Sub-50ms Universal Conversion Latency
+# Spec: specs/024-pure-rust-office-conversions/spec.md
+
+## Objective
+Eliminate slow `headless_chrome` execution (~2,500ms) across all 3 document conversion tools by migrating to pure-Rust engines:
+1. Excel to PDF (`pdf_convert_excel`): Convert tabular data via `calamine` -> HTML table -> `fulgur` (or `genpdf`). Latency: < 25ms.
+2. Markdown to PDF (`pdf_convert_markdown`): Parse markdown via `pulldown-cmark` -> HTML -> `fulgur`. (Avoids Typst custom font-world complexity and font panics). Latency: < 25ms.
+3. HTML to PDF (`pdf_convert_html`): Render HTML/CSS to PDF via `fulgur`. Latency: < 50ms.
+4. Tri-Interface Parity Gate: MUST run `python3 scripts/test_tri_interface_e2e.py` and get 44/44 PASSING (132/132 assertions green).
+
+## STRICT File Ownership
+You may ONLY modify or create files in these paths:
+```
+paperpilot-pdf/Cargo.toml
+paperpilot-pdf/src/operations/conversion.rs
+reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md
+wiki/18-Pure-Rust-Office-Conversions.md
+```
+
+## Instructions & Key Implementation Rule
+1. In `paperpilot-pdf/Cargo.toml`, add `fulgur = "0.40"`, `pulldown-cmark = "0.12"`, `calamine = "0.26"`. Remove `headless_chrome`.
+2. In `conversion.rs`:
+   - `HtmlToPdfOperation::render`: Render directly using `fulgur::render_to_pdf` (or `fulgur` builder).
+   - `MarkdownToPdfOperation::render`: Use `pulldown_cmark::html::push_html` to produce HTML, then render via `HtmlToPdfOperation`.
+   - `ExcelToPdfOperation::render` (or former `ExcelToStyledHtmlOperation`): Read sheets with `calamine`, format into an HTML table with borders, and render via `HtmlToPdfOperation`.
+3. Quality Gate:
+   - Run `cargo test -p paperpilot-pdf`
+   - Run `python3 scripts/test_tri_interface_e2e.py` (ensure 44/44 tools pass with 132/132 green assertions).
+   - Document latency before vs after in `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`.
