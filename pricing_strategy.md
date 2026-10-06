@@ -18,7 +18,7 @@
 | **Cloud Web Pro (SaaS)**| **$4/month** (or $38/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
 | **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
 | **Enterprise** | **$22/user/month** (or $211/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
-| **Cloud API (Usage-Based)**| **$0.01/run** (first 1,000 runs free) | Developers, CI/CD, SaaS platforms, AI Agents (hosted MCP & REST gateway) |
+| **Cloud API (Hosted Edge)**| **$0.01/run** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (Internal & Demo for v1.0; Managed Auth & Billing in Phase 7) |
 
 > Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
 
@@ -157,8 +157,11 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
 
 ### 5B. Cloud API & MCP Gateway ("Stripe / Cloudinary for PDFs")
 * **Target:** B2B SaaS platforms, FinTech apps, ERP platforms, and AI Agent builders (Claude, OpenAI Custom GPTs, LangChain) that need reliable programmatic PDF generation.
-* **Note:** This tier is for teams that need **hosted cloud infrastructure** — it is entirely separate from PaperPilot's local processing, which remains free forever. Think of this as renting our Rust engine on the cloud rather than running it on your own machine.
-* **Pricing:**
+* **v1.0 Launch Strategy (Safest Rollout):** 
+  - For the **v1.0 launch**, the Cloudflare Edge engine (`apps/edge/`) is deployed strictly for **Internal Web Demo support, WooCommerce watermarking webhooks, and public demonstration**.
+  - No public unauthenticated write endpoints are exposed without rate limiting.
+  - Public commercial usage-based API key management, domain whitelisting, and Stripe metered billing are scheduled for **Phase 7 (Managed Cloud)**. A "Join Developer API Waitlist" CTA captures inbound demand during v1.0.
+* **Planned Commercial Pricing (Phase 7):**
   - **First 1,000 runs/month FREE** (no credit card required).
   - **$0.01 per document run** for 1,001–10,000 runs.
   - **$0.007 per run** for 10,001–100,000 runs.
