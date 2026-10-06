@@ -5,7 +5,7 @@
 <div class="hero-section">
   <div class="hero-content">
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
-    <p class="hero-tagline">100% Client-Side. 0 Bytes Uploaded. Sub-10ms Execution.</p>
+    <p class="hero-tagline">100% Client-Side. 0 Bytes Uploaded. ~50–100ms WASM Execution.</p>
 
     <div class="hero-ctas">
       <a href="https://github.com/paperpilot/paperpilot/releases" target="_blank" rel="noopener noreferrer" class="cta-btn primary">

@@ -27,7 +27,7 @@
       <ul class="feature-list">
         <li>✓ Zero server costs</li>
         <li>✓ Customizable branding</li>
-        <li>✓ Sub-10ms load time</li>
+        <li>✓ ~50–100ms WASM execution</li>
       </ul>
       <button class="card-link" onclick={() => document.getElementById('embed-generator')?.scrollIntoView({ behavior: 'smooth' })}>Configure Widget &rarr;</button>
     </div>
