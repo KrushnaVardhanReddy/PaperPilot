@@ -4,6 +4,9 @@
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+  import CertificateStudioView from './views/CertificateStudioView.svelte';
+
+  let currentView = $state<'playground' | 'certificate-studio'>('playground');
 </script>
 
 <div class="app-container">
@@ -13,6 +16,21 @@
         <img src="/logo.png" alt="PaperPilot Logo" class="icon" />
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
+      <div class="navigation-tabs">
+        <button
+          class="nav-tab {currentView === 'playground' ? 'active' : ''}"
+          onclick={() => currentView = 'playground'}
+        >
+          Playground
+        </button>
+        <button
+          class="nav-tab {currentView === 'certificate-studio' ? 'active' : ''}"
+          onclick={() => currentView = 'certificate-studio'}
+        >
+          Certificate Studio
+        </button>
+      </div>
+
       <div class="cta-banner">
         <span>Need OCR, Semantic Search, or Offline AI?</span>
         <a href="https://paperpilot.app/download" target="_blank" rel="noopener noreferrer" class="download-btn">
@@ -23,11 +41,15 @@
   </header>
 
   <main class="main-content">
-    <HeroPlayground />
-    <TriSurfaceShowcase />
-    <EmbedGenerator />
-    <ApiExplorer />
-    <BenchmarkMatrix />
+    {#if currentView === 'playground'}
+      <HeroPlayground />
+      <TriSurfaceShowcase />
+      <EmbedGenerator />
+      <ApiExplorer />
+      <BenchmarkMatrix />
+    {:else if currentView === 'certificate-studio'}
+      <CertificateStudioView />
+    {/if}
   </main>
 
   <footer class="app-footer">
@@ -69,9 +91,38 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
     width: 100%;
+    gap: 24px;
+  }
+
+  .navigation-tabs {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    margin-left: 32px;
+  }
+
+  .nav-tab {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+  }
+
+  .nav-tab:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-tab.active {
+    background: var(--accent-primary);
+    color: white;
   }
 
   .logo {
