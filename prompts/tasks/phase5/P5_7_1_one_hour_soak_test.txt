@@ -44,17 +44,20 @@ DO NOT modify `paperpilot-pdf/`, `paperpilot-core/`, `paperpilot-cli/`, `apps/de
    ```bash
    cargo build --release -p paperpilot-cli
    ```
-2. Run the 1-hour endurance suite:
+2. Run the 1-hour sustained endurance soak suite:
    ```bash
    python3 scripts/stress_test.py 3600
    ```
-3. **Mandatory Acceptance Criteria**:
-   - **100% Success Rate**: 0 crashes, 0 unexpected panics, 0 failed exits across 3,600 seconds.
-   - **Zero Leaks**: Peak memory usage at minute 60 must not diverge or steadily grow compared to minute 5.
-   - **Documented Tail Latencies**: Capture Min, Mean, Median (P50), P90, P95, P99, P99.9, and Max latency for every tested operation.
+3. Mandatory Acceptance Criteria:
+   - **Full 1-Hour Execution (3,600s)**: The test harness must run continuously for the full 3,600 seconds across all 44 tools without early termination.
+   - **100% Success Rate**: 0 crashes, 0 unexpected panics, 0 failed exits across the entire 1-hour duration.
+   - **Zero Leaks**: Peak memory usage (RSS MB) at minute 60 must not diverge or steadily grow compared to minute 5.
+   - **Documented Tail Latencies**: Capture Min, Mean, Median (P50), P90, P95, P99, P99.9, and Max latency for every tested operation across all 44 tools.
+   - **Definitive Report Generation**: The script `scripts/stress_test.py` MUST automatically compile all statistics and write the official benchmark markdown report directly to `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md` upon completion, as well as the wiki at `wiki/19-One-Hour-Endurance-Benchmark.md`.
 
 ---
 
 ## 3. Deliverables
-- **`reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`**: Complete benchmark report with throughput curves, latency percentile matrix, and memory stability graph/summary.
+- **`reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`**: Complete benchmark report with throughput curves, 44-tool latency percentile matrix, and minute-by-minute memory stability graph/summary.
 - **`wiki/19-One-Hour-Endurance-Benchmark.md`**: Documentation on soak testing methodology, hardware specifications, and long-term endurance SLA results.
+- **`scripts/stress_test.py`**: Clean, modular soak and endurance benchmark test runner.
