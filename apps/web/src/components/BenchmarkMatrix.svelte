@@ -19,7 +19,7 @@
         <tbody>
           <tr>
             <td class="feature-name">Server Uploads Required</td>
-            <td class="highlight-col text-success">None (100% Client-Side)</td>
+            <td class="highlight-col text-success">Optional (100% Local via Desktop/Widget, Edge via API)</td>
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
