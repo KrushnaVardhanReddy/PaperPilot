@@ -67,6 +67,31 @@ let metadataFile: File | null = $state(null);
   let pdfHashFile: File | null = $state(null);
   let computedPdfHash: string | null = $state(null);
 
+  let renderFile: File | null = $state(null);
+  let renderPageIndex: number = $state(0);
+  let renderScale: number = $state(2.0);
+  let renderOutputUrl: string | null = $state(null);
+
+  let extractTextFile: File | null = $state(null);
+  let extractedText: string = $state("");
+
+  let decryptFile: File | null = $state(null);
+  let decryptPassword: string = $state("");
+
+  let pageNumbersFile: File | null = $state(null);
+  let pageNumbersFormat: string = $state("Page {n} of {total}");
+  let pageNumbersPosition: string = $state("bottom-center");
+
+  let headerFooterFile: File | null = $state(null);
+  let headerText: string = $state("");
+  let footerText: string = $state("");
+
+  let pdfInfoFile: File | null = $state(null);
+  let pdfInfoData: string = $state("");
+
+  let ocrFile: File | null = $state(null);
+  let ocrData: string = $state("");
+
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
       const buffer = await file.arrayBuffer();
@@ -287,6 +312,97 @@ let metadataFile: File | null = $state(null);
     } finally {
       isProcessing = false;
     }
+  }
+
+
+  async function handleRenderPage() {
+    if (!renderFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await renderFile.arrayBuffer());
+      const resBytes = await wasmPdfClient.render_page(bytes, renderPageIndex, renderScale);
+      const blob = new Blob([resBytes as any], { type: 'image/png' });
+      renderOutputUrl = URL.createObjectURL(blob);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handleExtractText() {
+    if (!extractTextFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await extractTextFile.arrayBuffer());
+      extractedText = await wasmPdfClient.extract_text(bytes);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handleDecrypt() {
+    if (!decryptFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await decryptFile.arrayBuffer());
+      const resBytes = await wasmPdfClient.decrypt(bytes, decryptPassword);
+      download(resBytes, `decrypted_${decryptFile.name}`);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handlePageNumbers() {
+    if (!pageNumbersFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await pageNumbersFile.arrayBuffer());
+      const resBytes = await wasmPdfClient.page_numbers(bytes, pageNumbersFormat, pageNumbersPosition);
+      download(resBytes, `numbered_${pageNumbersFile.name}`);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handleHeaderFooter() {
+    if (!headerFooterFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await headerFooterFile.arrayBuffer());
+      const resBytes = await wasmPdfClient.header_footer(bytes, headerText, footerText);
+      download(resBytes, `header_footer_${headerFooterFile.name}`);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handlePdfInfo() {
+    if (!pdfInfoFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await pdfInfoFile.arrayBuffer());
+      const jsonStr = await wasmPdfClient.pdf_info(bytes);
+      pdfInfoData = JSON.stringify(JSON.parse(jsonStr), null, 2);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
+  }
+
+  async function handleOcr() {
+    if (!ocrFile) return;
+    isProcessing = true;
+    try {
+      const bytes = new Uint8Array(await ocrFile.arrayBuffer());
+      ocrData = await wasmPdfClient.ocr(bytes);
+    } catch (e) {
+      alert("Error: " + e);
+    }
+    isProcessing = false;
   }
 
   async function handlePdfHash() {
@@ -727,6 +843,172 @@ let metadataFile: File | null = $state(null);
                         <button onclick={() => navigator.clipboard.writeText(computedPdfHash || '')} style="padding: 8px 16px; background-color: var(--accent-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Copy</button>
                     </div>
                 </div>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'render_page'}
+      <div class="tool-pane">
+        <h2>Render Page</h2>
+        <p>Render a PDF page to PNG.</p>
+        {#if !renderFile}
+            <DropZone ondrop={(files: File[]) => renderFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{renderFile.name}</span>
+                <button onclick={() => renderFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="renderPageIndex">Page Index (0-based)</label>
+                <input id="renderPageIndex" type="number" bind:value={renderPageIndex} min="0" />
+            </div>
+            <div class="input-group">
+                <label for="renderScale">Scale</label>
+                <input id="renderScale" type="number" step="0.1" bind:value={renderScale} />
+            </div>
+            <button class="action-btn" onclick={handleRenderPage} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Render'}
+            </button>
+            {#if renderOutputUrl}
+                <div style="margin-top: 16px;">
+                    <img alt="Rendered PDF Page" src={renderOutputUrl} style="max-width: 100%; border: 1px solid var(--border-color); border-radius: var(--border-radius-md);" />
+                </div>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'extract_text'}
+      <div class="tool-pane">
+        <h2>Extract Text</h2>
+        <p>Extract all text content from the PDF.</p>
+        {#if !extractTextFile}
+            <DropZone ondrop={(files: File[]) => extractTextFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{extractTextFile.name}</span>
+                <button onclick={() => extractTextFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleExtractText} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Extract'}
+            </button>
+            {#if extractedText}
+                <textarea readonly rows="10" style="width: 100%; margin-top: 16px; font-family: monospace; padding: 8px;">{extractedText}</textarea>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'decrypt'}
+      <div class="tool-pane">
+        <h2>Decrypt</h2>
+        <p>Decrypt a password-protected PDF.</p>
+        {#if !decryptFile}
+            <DropZone ondrop={(files: File[]) => decryptFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{decryptFile.name}</span>
+                <button onclick={() => decryptFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="decryptPassword">Password</label>
+                <input id="decryptPassword" type="password" bind:value={decryptPassword} />
+            </div>
+            <button class="action-btn" onclick={handleDecrypt} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Decrypt & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'page_numbers'}
+      <div class="tool-pane">
+        <h2>Page Numbers</h2>
+        <p>Add page numbers to the PDF.</p>
+        {#if !pageNumbersFile}
+            <DropZone ondrop={(files: File[]) => pageNumbersFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{pageNumbersFile.name}</span>
+                <button onclick={() => pageNumbersFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="pageNumbersFormat">Format</label>
+                <input id="pageNumbersFormat" type="text" bind:value={pageNumbersFormat} />
+            </div>
+            <div class="input-group">
+                <label for="pageNumbersPosition">Position</label>
+                <select id="pageNumbersPosition" bind:value={pageNumbersPosition}>
+                    <option value="bottom-center">Bottom Center</option>
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="top-center">Top Center</option>
+                    <option value="top-right">Top Right</option>
+                </select>
+            </div>
+            <button class="action-btn" onclick={handlePageNumbers} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Add Numbers & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'header_footer'}
+      <div class="tool-pane">
+        <h2>Header & Footer</h2>
+        <p>Add header and footer text to the PDF.</p>
+        {#if !headerFooterFile}
+            <DropZone ondrop={(files: File[]) => headerFooterFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{headerFooterFile.name}</span>
+                <button onclick={() => headerFooterFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="headerText">Header Text</label>
+                <input id="headerText" type="text" bind:value={headerText} />
+            </div>
+            <div class="input-group">
+                <label for="footerText">Footer Text</label>
+                <input id="footerText" type="text" bind:value={footerText} />
+            </div>
+            <button class="action-btn" onclick={handleHeaderFooter} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Add & Download'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_info'}
+      <div class="tool-pane">
+        <h2>PDF Info</h2>
+        <p>Get metadata and info about the PDF.</p>
+        {#if !pdfInfoFile}
+            <DropZone ondrop={(files: File[]) => pdfInfoFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{pdfInfoFile.name}</span>
+                <button onclick={() => pdfInfoFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handlePdfInfo} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Get Info'}
+            </button>
+            {#if pdfInfoData}
+                <pre style="margin-top: 16px; padding: 16px; background: var(--bg-surface); border-radius: var(--border-radius-md); overflow-x: auto;">{pdfInfoData}</pre>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'ocr'}
+      <div class="tool-pane">
+        <h2>OCR</h2>
+        <p>Extract text from images using local WASM OCR.</p>
+        {#if !ocrFile}
+            <DropZone ondrop={(files: File[]) => ocrFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{ocrFile.name}</span>
+                <button onclick={() => ocrFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleOcr} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Run OCR'}
+            </button>
+            {#if ocrData}
+                <textarea readonly rows="10" style="width: 100%; margin-top: 16px; font-family: monospace; padding: 8px;">{ocrData}</textarea>
             {/if}
         {/if}
       </div>

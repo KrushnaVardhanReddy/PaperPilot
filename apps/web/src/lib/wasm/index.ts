@@ -14,6 +14,15 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     images_to_pdf(images: Uint8Array[]): Promise<Uint8Array>;
     extract_images(file: Uint8Array): Promise<Uint8Array[]>;
     pdf_hash(file: Uint8Array): Promise<string>;
+
+    render_page(file: Uint8Array, page_index: number, scale: number): Promise<Uint8Array>;
+    extract_text(file: Uint8Array): Promise<string>;
+    decrypt(file: Uint8Array, password: string): Promise<Uint8Array>;
+    page_numbers(file: Uint8Array, format: string, position: string): Promise<Uint8Array>;
+    header_footer(file: Uint8Array, header: string, footer: string): Promise<Uint8Array>;
+    pdf_info(file: Uint8Array): Promise<string>;
+    ocr(file: Uint8Array): Promise<string>;
+
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -106,6 +115,35 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
     pdf_hash(file: Uint8Array): Promise<string> {
         return this.sendRequest('pdf_hash', { file });
     }
+
+    render_page(file: Uint8Array, page_index: number, scale: number): Promise<Uint8Array> {
+        return this.sendRequest('render_page', { file, page_index, scale });
+    }
+
+    extract_text(file: Uint8Array): Promise<string> {
+        return this.sendRequest('extract_text', { file });
+    }
+
+    decrypt(file: Uint8Array, password: string): Promise<Uint8Array> {
+        return this.sendRequest('decrypt', { file, password });
+    }
+
+    page_numbers(file: Uint8Array, format: string, position: string): Promise<Uint8Array> {
+        return this.sendRequest('page_numbers', { file, format, position });
+    }
+
+    header_footer(file: Uint8Array, header: string, footer: string): Promise<Uint8Array> {
+        return this.sendRequest('header_footer', { file, header, footer });
+    }
+
+    pdf_info(file: Uint8Array): Promise<string> {
+        return this.sendRequest('pdf_info', { file });
+    }
+
+    ocr(file: Uint8Array): Promise<string> {
+        return this.sendRequest('ocr', { file });
+    }
+
 }
 
 export const wasmPdfClient = new WasmPdfClientImpl();

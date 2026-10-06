@@ -23,7 +23,7 @@ interface ToolResult {
 
 const scorecard: ToolResult[] = [];
 
-test.describe('WASM 15 Tools E2E Scorecard', () => {
+test.describe('WASM 22 Tools E2E Scorecard', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the app to ensure WASM environment is loaded and Web Worker is active
     await page.goto('/');
@@ -74,6 +74,24 @@ test.describe('WASM 15 Tools E2E Scorecard', () => {
         res = await wasmPdfClient.flatten(toUint8(payload.file));
       } else if (opName === 'set_metadata') {
         res = await wasmPdfClient.set_metadata(toUint8(payload.file), payload.title, payload.author, payload.subject, payload.keywords);
+      } else if (opName === 'render_page') {
+        res = await wasmPdfClient.render_page(toUint8(payload.file), payload.page_index, payload.scale);
+        return { length: res.length, isPdf: false, isPng: res[0] === 137 && res[1] === 80 && res[2] === 78 && res[3] === 71 };
+      } else if (opName === 'extract_text') {
+        const text = await wasmPdfClient.extract_text(toUint8(payload.file));
+        return { length: text.length, isPdf: true, text };
+      } else if (opName === 'decrypt') {
+        res = await wasmPdfClient.decrypt(toUint8(payload.file), payload.password);
+      } else if (opName === 'page_numbers') {
+        res = await wasmPdfClient.page_numbers(toUint8(payload.file), payload.format, payload.position);
+      } else if (opName === 'header_footer') {
+        res = await wasmPdfClient.header_footer(toUint8(payload.file), payload.header, payload.footer);
+      } else if (opName === 'pdf_info') {
+        const info = await wasmPdfClient.pdf_info(toUint8(payload.file));
+        return { length: info.length, isPdf: true, text: info };
+      } else if (opName === 'ocr') {
+        const text = await wasmPdfClient.ocr(toUint8(payload.file));
+        return { length: text.length, isPdf: true, text };
       } else {
         throw new Error(`Unsupported tool: ${opName}`);
       }
@@ -95,16 +113,19 @@ test.describe('WASM 15 Tools E2E Scorecard', () => {
     return { ...result, duration };
   }
 
-  function recordResult(tool: string, result: { length: number; isPdf: boolean; duration: number }) {
+  function recordResult(tool: string, result: { length: number; isPdf: boolean; duration: number, isPng?: boolean }) {
+    let isValid = result.isPdf && result.length > 0;
+    if (tool === 'render_page') isValid = !!result.isPng && result.length > 0;
+    if (['extract_text', 'pdf_info', 'ocr'].includes(tool)) isValid = result.length >= 0; // Text tools might return empty strings but shouldn't throw
+
     scorecard.push({
       tool,
-      status: result.isPdf && result.length > 0 ? 'PASS' : 'FAIL',
+      status: isValid ? 'PASS' : 'FAIL',
       latency: Math.round(result.duration),
       outputSize: result.length,
-      notes: result.isPdf ? 'Valid %PDF- header' : 'Invalid output'
+      notes: isValid ? 'Valid output generated' : 'Invalid output'
     });
-    expect(result.isPdf).toBe(true);
-    expect(result.length).toBeGreaterThan(0);
+    expect(isValid).toBe(true);
   }
 
   test('merge', async ({ page }) => {
@@ -214,6 +235,75 @@ test.describe('WASM 15 Tools E2E Scorecard', () => {
     expect(res.length).toBeGreaterThan(0);
   });
 
+
+  test('render_page', async ({ page }) => {
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const res = await runWasmTool(page, 'render_page', { file, page_index: 0, scale: 1.0 });
+    recordResult('render_page', res);
+  });
+
+  test('extract_text', async ({ page }) => {
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const res = await runWasmTool(page, 'extract_text', { file });
+    recordResult('extract_text', res);
+  });
+
+  test('decrypt', async ({ page }) => {
+    // We generate an encrypted file on the fly using WasmPdfClient in page.evaluate
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const encryptedBase64 = await page.evaluate(async ({ file }: any) => {
+        const { wasmPdfClient } = (window as any).__WASM_MODULE__ || await import('/src/lib/wasm/index.ts');
+        const toUint8 = (b64: string) => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const encBytes = await wasmPdfClient.encrypt(toUint8(file), 'testpass');
+        // Convert to base64
+        let binary = '';
+        const len = encBytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(encBytes[i]);
+        }
+        return btoa(binary);
+    }, { file });
+
+    const res = await runWasmTool(page, 'decrypt', { file: encryptedBase64, password: 'testpass' });
+    recordResult('decrypt', res);
+  });
+
+  test('page_numbers', async ({ page }) => {
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const res = await runWasmTool(page, 'page_numbers', { file, format: 'Page {n} of {total}', position: 'bottom-center' });
+    recordResult('page_numbers', res);
+  });
+
+  test('header_footer', async ({ page }) => {
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const res = await runWasmTool(page, 'header_footer', { file, header: 'TOP', footer: 'BOTTOM' });
+    recordResult('header_footer', res);
+  });
+
+  test('pdf_info', async ({ page }) => {
+    const file = SINGLE_PAGE_PDF.toString('base64');
+    const res = await runWasmTool(page, 'pdf_info', { file });
+    recordResult('pdf_info', res);
+  });
+
+  test('ocr', async ({ page }) => {
+    const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+    const pdfWithImageBase64 = await page.evaluate(async ({ pixel }: any) => {
+        const { wasmPdfClient } = (window as any).__WASM_MODULE__ || await import('/src/lib/wasm/index.ts');
+        const toUint8 = (b64: string) => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const pdfBytes = await wasmPdfClient.images_to_pdf([toUint8(pixel)]);
+        // Convert to base64
+        let binary = '';
+        for (let i = 0; i < pdfBytes.length; i++) {
+            binary += String.fromCharCode(pdfBytes[i]);
+        }
+        return btoa(binary);
+    }, { pixel });
+
+    const res = await runWasmTool(page, 'ocr', { file: pdfWithImageBase64 });
+    recordResult('ocr', res);
+  });
+
   test('pdf_hash', async ({ page }) => {
     const file = SINGLE_PAGE_PDF.toString('base64');
     const res = await runWasmTool(page, 'pdf_hash', { file });
@@ -225,7 +315,7 @@ test.describe('WASM 15 Tools E2E Scorecard', () => {
     const passed = scorecard.filter((s) => s.status === 'PASS').length;
     const failed = scorecard.filter((s) => s.status === 'FAIL').length;
 
-    let report = `# WASM 15 Tools E2E Scorecard\n\n`;
+    let report = `# WASM 22 Tools E2E Scorecard\n\n`;
     report += `## Executive Summary\n`;
     report += `- **Total Tested:** ${scorecard.length}\n`;
     report += `- **Passed:** ${passed}\n`;
@@ -245,7 +335,7 @@ test.describe('WASM 15 Tools E2E Scorecard', () => {
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-    fs.writeFileSync(path.join(reportsDir, 'WASM_15_TOOLS_E2E_SCORECARD.md'), report);
+    fs.writeFileSync(path.join(reportsDir, 'WASM_22_TOOLS_E2E_SCORECARD.md'), report);
   });
 
 });

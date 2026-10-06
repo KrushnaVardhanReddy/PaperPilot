@@ -168,4 +168,60 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(result)
     }
+
+    #[wasm_bindgen]
+    pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::render_page(input_bytes, page_index, scale)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn extract_text(input_bytes: &[u8]) -> Result<String, JsValue> {
+        let result = operations::extract_text(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(result)
+    }
+
+    #[wasm_bindgen]
+    pub fn decrypt(input_bytes: &[u8], password: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::decrypt(input_bytes, password)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::page_numbers(input_bytes, format, position)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::header_footer(input_bytes, header, footer)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_info(input_bytes: &[u8]) -> Result<String, JsValue> {
+        let result = operations::pdf_info(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(result)
+    }
+
+    #[wasm_bindgen]
+    pub fn ocr(image_or_pdf_bytes: &[u8]) -> Result<String, JsValue> {
+        let result = operations::ocr(image_or_pdf_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(result)
+    }
 }

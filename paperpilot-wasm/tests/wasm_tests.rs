@@ -287,3 +287,79 @@ fn test_pdf_hash() {
     let hash = result.unwrap();
     assert_eq!(hash.len(), 64, "SHA-256 hash should be 64 hex characters");
 }
+
+use paperpilot_wasm::operations::{render_page, extract_text, decrypt, page_numbers, header_footer, pdf_info, ocr};
+
+#[test]
+fn test_render_page() {
+    let doc = create_dummy_pdf();
+    let result = render_page(&doc, 0, 1.0);
+    assert!(result.is_ok(), "Render page failed: {:?}", result.err());
+    let png_bytes = result.unwrap();
+    assert!(png_bytes.len() > 8);
+    assert_eq!(&png_bytes[0..8], &[137, 80, 78, 71, 13, 10, 26, 10], "Should be valid PNG signature");
+}
+
+#[test]
+fn test_extract_text() {
+    let doc = create_dummy_pdf(); // create_dummy_pdf only has an empty catalog/pages
+    // We expect an empty string but we check if it succeeds.
+    let result = extract_text(&doc);
+    assert!(result.is_ok(), "Extract text failed: {:?}", result.err());
+    assert_eq!(result.unwrap(), "");
+}
+
+#[test]
+fn test_decrypt() {
+    // Create an encrypted dummy PDF. We'll use operations::encrypt to create it first.
+    let doc = create_dummy_pdf();
+    let encrypted = paperpilot_wasm::operations::encrypt(&doc, "secret").unwrap();
+    
+    // Now test decrypt
+    let result = decrypt(&encrypted, "secret");
+    assert!(result.is_ok(), "Decrypt failed: {:?}", result.err());
+    
+    // Test wrong password
+    let fail_result = decrypt(&encrypted, "wrong");
+    assert!(fail_result.is_err(), "Decrypt should fail with wrong password");
+}
+
+#[test]
+fn test_page_numbers() {
+    let doc = create_dummy_pdf();
+    let result = page_numbers(&doc, "Page {n} of {total}", "bottom-center");
+    assert!(result.is_ok(), "Page numbers failed: {:?}", result.err());
+    let res_doc = Document::load_mem(&result.unwrap()).unwrap();
+    assert_eq!(res_doc.get_pages().len(), 1);
+}
+
+#[test]
+fn test_header_footer() {
+    let doc = create_dummy_pdf();
+    let result = header_footer(&doc, "Header", "Footer");
+    assert!(result.is_ok(), "Header Footer failed: {:?}", result.err());
+    let res_doc = Document::load_mem(&result.unwrap()).unwrap();
+    assert_eq!(res_doc.get_pages().len(), 1);
+}
+
+#[test]
+fn test_pdf_info() {
+    let doc = create_dummy_pdf();
+    let result = pdf_info(&doc);
+    assert!(result.is_ok(), "PDF Info failed: {:?}", result.err());
+    let json = result.unwrap();
+    assert!(json.contains("\"page_count\": 1"));
+    assert!(json.contains("\"encrypted\": false"));
+}
+
+#[test]
+fn test_ocr() {
+    // create a simple dummy image
+    let pixel = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 218, 99, 252, 207, 192, 80, 15, 0, 4, 133, 1, 128, 132, 169, 140, 33, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130];
+    let buffers: Vec<&[u8]> = vec![&pixel];
+    let pdf_bytes = paperpilot_wasm::operations::images_to_pdf(&buffers).unwrap();
+    
+    // OCR should not panic, though the small image won't have text.
+    let result = ocr(&pdf_bytes);
+    assert!(result.is_ok(), "OCR failed: {:?}", result.err());
+}

@@ -64,6 +64,28 @@ case 'set_metadata':
             case 'pdf_hash':
                 result = WasmPdfEngine.pdf_hash(payload.file);
                 break;
+            
+            case 'render_page':
+                result = WasmPdfEngine.render_page(payload.file, payload.page_index, payload.scale);
+                break;
+            case 'extract_text':
+                result = WasmPdfEngine.extract_text(payload.file);
+                break;
+            case 'decrypt':
+                result = WasmPdfEngine.decrypt(payload.file, payload.password);
+                break;
+            case 'page_numbers':
+                result = WasmPdfEngine.page_numbers(payload.file, payload.format, payload.position);
+                break;
+            case 'header_footer':
+                result = WasmPdfEngine.header_footer(payload.file, payload.header, payload.footer);
+                break;
+            case 'pdf_info':
+                result = WasmPdfEngine.pdf_info(payload.file);
+                break;
+            case 'ocr':
+                result = WasmPdfEngine.ocr(payload.file);
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

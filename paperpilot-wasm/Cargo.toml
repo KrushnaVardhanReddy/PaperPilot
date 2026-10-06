@@ -17,3 +17,13 @@ flate2 = "1.1.10"
 sha2 = "0.11.0"
 base64 = "0.23.1"
 hex = "0.4.3"
+
+# New dependencies for 22-tools expansion
+hayro = { version = "0.8.0", default-features = false }
+hayro-syntax = { version = "0.8.0", default-features = false }
+tiny-skia = { version = "0.11", default-features = false, features = ["simd", "std"] }
+bytemuck = "1.25.0"
+ocrs = { version = "0.10.4", default-features = false }
+rten = { version = "0.21.0", default-features = false }
+rten-tensor = "0.21.0"
+
