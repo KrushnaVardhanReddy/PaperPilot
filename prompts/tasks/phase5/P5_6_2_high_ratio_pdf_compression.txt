@@ -1,0 +1,90 @@
+# Task: Universal High-Ratio PDF Compression Engine (Image Re-encoding & Tri-Interface Parity)
+# Base Branch: main
+# Target Branch: feat-high-ratio-pdf-compression
+# Priority: HIGH (Core Quality Fix)
+# Spec: specs/026-high-ratio-pdf-compression/spec.md
+
+## Objective
+Upgrade PaperPilot's `compress` operation across all surfaces (`paperpilot-pdf`, `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-wasm`, and `apps/desktop/`):
+1. Replace no-op stream compression in `paperpilot-pdf/src/operations/compress.rs` with true image stream re-encoding and downsampling via the workspace `image` crate (`image::codecs::jpeg::JpegEncoder`).
+2. Add support for `--quality` / `quality` argument (`low`, `medium`, `high`, or integer 1-100).
+3. Connect `quality` across CLI, MCP (`pdf_compress` schema & handler), REST Gateway (`/api/v1/pdf/compress`), Desktop UI (`OperationsPanel.svelte`), and WASM (`paperpilot-wasm/src/operations.rs`).
+4. Prove actual 40%+ size reduction on image-heavy PDFs in automated tests while maintaining 100% tri-interface test parity (132/132 pass).
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may modify or create files in these paths:
+```
+paperpilot-pdf/src/operations/compress.rs
+paperpilot-cli/src/commands/group_b.rs
+paperpilot-mcp/src/server.rs
+paperpilot-gateway/src/handlers.rs
+paperpilot-wasm/src/operations.rs
+paperpilot-wasm/src/lib.rs
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte
+reports/COMPRESSION_RATIO_VERIFICATION_REPORT.md
+wiki/20-High-Ratio-PDF-Compression.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `apps/web/`, `apps/docs/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Core Engine Implementation (`paperpilot-pdf/src/operations/compress.rs`)
+1. Define `pub struct CompressOperation`:
+   ```rust
+   pub struct CompressOperation {
+       pub quality: Option<String>,
+   }
+   ```
+   Provide `CompressOperation::new(quality: Option<String>)`.
+2. Parse `quality`:
+   - `"low"` -> JPEG quality 45, max image dimension 1024px.
+   - `"medium"` (default) -> JPEG quality 70, max image dimension 1600px.
+   - `"high"` -> JPEG quality 85, max image dimension 2400px.
+   - Integer `"50"` -> JPEG quality 50.
+3. Traverse `doc.objects`:
+   - Inspect streams where `/Type /XObject` and `/Subtype /Image` (or streams in `/XObject` dictionaries with `/Subtype /Image`).
+   - Extract raw or decompressed image bytes via `stream.decompressed_content()`.
+   - Read image dimensions (`/Width`, `/Height`), color space (`/DeviceRGB`, `/DeviceGray`, etc.).
+   - Decode into an `image::DynamicImage` or `RgbImage`/`GrayImage`.
+   - If image dimensions exceed `max_dimension`, downsample with `image::imageops::resize`.
+   - Encode to JPEG using `JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality)`.
+   - Only replace stream contents if `jpeg_bytes.len() < original_bytes.len()`.
+   - Update dictionary keys:
+     - `/Filter` = `Object::Name(b"DCTDecode".to_vec())`
+     - Remove `/DecodeParms`
+     - Update `/Width`, `/Height`
+     - Update `/Length` = `jpeg_bytes.len()`
+4. Finalize with `doc.inner.compress()` to compress all non-image streams.
+
+---
+
+## 2. Multi-Interface Plumbing
+1. **CLI (`paperpilot-cli/src/commands/group_b.rs`)**:
+   - Forward `quality` into `CompressOperation::new(Some(quality.to_string()))`.
+2. **MCP (`paperpilot-mcp/src/server.rs`)**:
+   - Update `pdf_compress` schema to include optional `quality` property (string, default `"medium"`, enum: `["low", "medium", "high"]` or description).
+   - In `pdf_compress` handler, read `let quality = get_optional_string("quality");` and pass to `CompressOperation::new(quality)`.
+3. **Gateway (`paperpilot-gateway/src/handlers.rs`)**:
+   - Ensure `CompressJsonRequest` / multipart extract `quality` and pass to `CompressOperation`.
+4. **Desktop UI (`apps/desktop/src/lib/components/layout/OperationsPanel.svelte`)**:
+   - In `case 'compress'`, include `quality: compressQuality.toString()` (or mapped preset) in the `args` object sent to `invoke_mcp_tool`.
+5. **WASM (`paperpilot-wasm/src/operations.rs`)**:
+   - Update `compress(input_bytes: &[u8], quality: Option<&str>)` (or default to medium) to perform the same stream image optimization.
+
+---
+
+## 3. Execution & Quality Gate
+1. `cargo check --workspace`
+2. `cargo test -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp`
+3. Verify Master Tri-Interface Suite:
+   ```bash
+   python3 scripts/test_tri_interface_e2e.py
+   ```
+   Must score **44 / 44 Tools PASSING (132 / 132 assertions)**.
+4. Verify compression benchmark test:
+   - Run compression on a test PDF with embedded images and verify measurable file size reduction (e.g. > 30% reduction).
+   - Document before and after metrics in `reports/COMPRESSION_RATIO_VERIFICATION_REPORT.md` and `wiki/20-High-Ratio-PDF-Compression.md`.
