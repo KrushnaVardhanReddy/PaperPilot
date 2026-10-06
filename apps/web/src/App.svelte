@@ -32,7 +32,7 @@
 
   <footer class="app-footer">
     <div class="trust-badge">
-      🔒 <strong>100% Client-Side Processing</strong> — Your documents never leave your device.
+      🔒 <strong>100% Client-Side Web & Desktop</strong> — Zero data collection. Documents never leave your device.
     </div>
     <div class="footer-links">
       <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux (.deb / AppImage)</a>
