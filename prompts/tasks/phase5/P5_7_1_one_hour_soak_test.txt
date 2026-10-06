@@ -1,0 +1,57 @@
+# Task: Phase 5.7.1 — 1-Hour Sustained Soak, Stress & Endurance Benchmark (Post Zero-Chrome)
+# Base Branch: main
+# Target Branch: feat-one-hour-endurance-benchmark
+# Priority: MEDIUM (Post-Zero-Chrome Verification Gate)
+# Spec: specs/025-one-hour-endurance-benchmark/spec.md
+
+## Objective
+Execute and document an automated **1-Hour (3,600 Seconds) Continuous Soak & Endurance Benchmark** on the pure-Rust release binary post-`headless_chrome` migration:
+1. Run continuous multi-cycle performance stress across all operation categories (manipulation, optimization, security, analysis, OCR, and pure-Rust office/HTML conversions).
+2. Measure and log sustained throughput (ops/sec), P50, P90, P95, P99, and P99.9 tail latencies across 500,000+ total invocations.
+3. Track memory stability over time (verifying zero memory leaks or memory bloat across 60 minutes).
+4. Generate the official report at `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md` and wiki documentation at `wiki/19-One-Hour-Endurance-Benchmark.md`.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files in these paths:
+```
+scripts/stress_test.py
+reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md
+wiki/19-One-Hour-Endurance-Benchmark.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-core/`, `paperpilot-cli/`, `apps/desktop/`, `apps/web/`, `apps/docs/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Test Configuration (`scripts/stress_test.py`)
+- Configure test harness to accept `--duration 3600` (or default 3600 seconds = 1 hour).
+- Include all 100% pure-Rust conversion operations alongside standard core operations:
+  - `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_compress`, `pdf_watermark`, `pdf_encrypt`
+  - `pdf_extract_text`, `pdf_search`, `pdf_hash`, `pdf_ocr`, `pdf_bates`, `pdf_flatten`
+  - `pdf_convert_excel`, `pdf_convert_markdown`, `pdf_convert_html`
+- Log telemetry every 60 seconds (elapsed time, total operations, ops/sec, current RSS in MB, failures).
+
+---
+
+## 2. Execution & Quality Gate
+1. Build the production release binary:
+   ```bash
+   cargo build --release -p paperpilot-cli
+   ```
+2. Run the 1-hour endurance suite:
+   ```bash
+   python3 scripts/stress_test.py 3600
+   ```
+3. **Mandatory Acceptance Criteria**:
+   - **100% Success Rate**: 0 crashes, 0 unexpected panics, 0 failed exits across 3,600 seconds.
+   - **Zero Leaks**: Peak memory usage at minute 60 must not diverge or steadily grow compared to minute 5.
+   - **Documented Tail Latencies**: Capture Min, Mean, Median (P50), P90, P95, P99, P99.9, and Max latency for every tested operation.
+
+---
+
+## 3. Deliverables
+- **`reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`**: Complete benchmark report with throughput curves, latency percentile matrix, and memory stability graph/summary.
+- **`wiki/19-One-Hour-Endurance-Benchmark.md`**: Documentation on soak testing methodology, hardware specifications, and long-term endurance SLA results.
