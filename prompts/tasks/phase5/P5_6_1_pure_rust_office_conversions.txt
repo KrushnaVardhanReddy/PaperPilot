@@ -4,14 +4,16 @@
 # Priority: HIGH — Sub-50ms Universal Conversion Latency
 # Spec: specs/024-pure-rust-office-conversions/spec.md
 
-## Objective
-Eliminate slow `headless_chrome` execution (~2,500ms) across all 3 document conversion tools by migrating to pure-Rust engines:
-1. Excel to PDF (`pdf_convert_excel`): Convert tabular data via `calamine` -> HTML table -> `fulgur` (or `genpdf`). Latency: < 25ms.
-2. Markdown to PDF (`pdf_convert_markdown`): Parse markdown via `pulldown-cmark` -> HTML -> `fulgur`. (Avoids Typst custom font-world complexity and font panics). Latency: < 25ms.
-3. HTML to PDF (`pdf_convert_html`): Render HTML/CSS to PDF via `fulgur`. Latency: < 50ms.
-4. Tri-Interface Parity Gate: MUST run `python3 scripts/test_tri_interface_e2e.py` and get 44/44 PASSING (132/132 assertions green).
+## Repository & Project Context
+- Workspace root contains: `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`.
+- In `paperpilot-pdf/Cargo.toml`, we already have:
+  - `pulldown-cmark = "0.13.4"`
+  - `calamine = "0.36.1"`
+  - `csv = "1.4.0"`
+  - `html-escape = "0.2.15"`
+- We currently have `headless_chrome = "1.0.22"`, which launches Chromium and causes ~2,500ms latency. We want to eliminate Chromium browser spawning and make all document conversions pure Rust.
 
-## STRICT File Ownership
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
 You may ONLY modify or create files in these paths:
 ```
 paperpilot-pdf/Cargo.toml
@@ -19,14 +21,52 @@ paperpilot-pdf/src/operations/conversion.rs
 reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md
 wiki/18-Pure-Rust-Office-Conversions.md
 ```
+DO NOT modify any files outside these paths.
 
-## Instructions & Key Implementation Rule
-1. In `paperpilot-pdf/Cargo.toml`, add `fulgur = "0.40"`, `pulldown-cmark = "0.12"`, `calamine = "0.26"`. Remove `headless_chrome`.
-2. In `conversion.rs`:
-   - `HtmlToPdfOperation::render`: Render directly using `fulgur::render_to_pdf` (or `fulgur` builder).
-   - `MarkdownToPdfOperation::render`: Use `pulldown_cmark::html::push_html` to produce HTML, then render via `HtmlToPdfOperation`.
-   - `ExcelToPdfOperation::render` (or former `ExcelToStyledHtmlOperation`): Read sheets with `calamine`, format into an HTML table with borders, and render via `HtmlToPdfOperation`.
-3. Quality Gate:
-   - Run `cargo test -p paperpilot-pdf`
-   - Run `python3 scripts/test_tri_interface_e2e.py` (ensure 44/44 tools pass with 132/132 green assertions).
-   - Document latency before vs after in `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`.
+---
+
+## Technical Context & How Existing Code is Structured
+In `paperpilot-pdf/src/operations/conversion.rs`:
+1. `HtmlToPdfOperation`:
+   - Takes `pub input_html: String`, `pub output_path: PathBuf`, `pub options: HtmlToPdfOptions`.
+   - Has `pub fn render(&self) -> OperationResult<()>`.
+2. `MarkdownToPdfOperation`:
+   - Takes `pub input_md: String`, `pub output_path: PathBuf`, `pub options: HtmlToPdfOptions`.
+   - Has `pub fn render(&self) -> OperationResult<()>`.
+   - Already uses `pulldown_cmark::Parser` and `pulldown_cmark::html::push_html` to generate HTML, then calls `HtmlToPdfOperation::render()`.
+3. `ExcelToStyledHtmlOperation`:
+   - Takes `pub input_path: PathBuf`, `pub output_path: PathBuf`, `pub options: HtmlToPdfOptions`.
+   - Parses sheets with `calamine::open_workbook_auto` (or CSV with `csv::Reader`), generates an HTML table with CSS, and delegates to `HtmlToPdfOperation::render()`.
+
+Because `MarkdownToPdfOperation` and `ExcelToStyledHtmlOperation` already convert their documents to HTML, **upgrading `HtmlToPdfOperation` to pure-Rust automatically upgrades Markdown and Excel as well!**
+
+---
+
+## Concrete Requirements
+
+### 1. Pure-Rust HTML to PDF (`HtmlToPdfOperation`)
+- Add `fulgur = "0.40"` to `paperpilot-pdf/Cargo.toml`.
+- In `HtmlToPdfOperation::render(&self)`:
+  - Resolve and inject CSS as usual (`resolve_css`, `inject_css_into_html`).
+  - Render directly to vector PDF bytes using `fulgur`.
+  - Write bytes to `self.output_path`.
+  - Remove all Chromium browser spawning, `headless_chrome::Browser::new`, `tab.navigate_to`, and `tempfile` browser scripts.
+  - Latency target: `< 50ms`.
+
+### 2. Markdown & Excel Latency Targets
+- With `fulgur` replacing Chromium:
+  - `MarkdownToPdfOperation`: `pulldown-cmark` parses in < 1ms, `fulgur` renders in ~15ms. Total latency: `< 25ms`.
+  - `ExcelToStyledHtmlOperation`: `calamine` extracts rows in ~3ms, `fulgur` renders in ~15ms. Total latency: `< 25ms`.
+- Ensure output PDFs start with valid `%PDF-` header bytes and are not empty.
+
+### 3. MANDATORY Quality Gate (MUST PASS BEFORE OPENING PR)
+Execute these in terminal in order:
+1. `cargo check -p paperpilot-pdf`
+2. `cargo test -p paperpilot-pdf`
+3. Run the Master Tri-Interface Test Suite:
+   ```bash
+   python3 scripts/test_tri_interface_e2e.py
+   ```
+   - **MUST achieve 44 / 44 Tools PASSING across all three interfaces (CLI, MCP, and REST API)**.
+   - Total of **132 / 132 successful assertions** (44 x 3).
+4. Document the before/after latency benchmarks in `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`.
