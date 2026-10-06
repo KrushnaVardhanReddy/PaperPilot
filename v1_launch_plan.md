@@ -25,7 +25,7 @@
 | **4.9.13** | Certificate & Template Studio | Growth & Bulk Generation | HTML/SVG template engine, live browser customizer, and client-side CSV bulk generator (Spec 023) with viral verification watermark. | ⏳ **In Flight** (Session 10966084636858694762) |
 | **4.1.8** | Embedded Documentation RAG (`sqlite-vec`) | Local AI Assistant | In-memory/embedded SQLite vector store indexing `TRI_INTERFACE_E2E_AND_DOCS.md` and user guides. Answers user questions directly in chat with exact copy-pasteable CLI/API snippets and 0 hallucinations. | ✅ **Completed** (PR #136) |
 | **3.1.7** | iOS Target Build & Packaging | Mobile Port | Compile and test desktop frontend for iOS / iPadOS via Tauri mobile bindings. | 📋 **Pending** (Requires macOS / Xcode) |
-| **R2.E4** | System Performance & Latency Re-Benchmark | Final Verification | End-to-end benchmark measuring canvas viewer page render latency, memory footprint across 50+ open tabs, and operation execution times. | 📋 **Pending** (Pre-release gate) |
+| **R2.E4** | System Performance & Latency Re-Benchmark | Final Verification | End-to-end benchmark measuring 44 tools across 3 interfaces, 50 fixture files, 129 test pages, and in-browser WASM latency. | ✅ **Completed** (Report in `SYSTEM_BENCHMARK_REPORT.md`) |
 
 ---
 
