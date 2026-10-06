@@ -990,6 +990,21 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.7.6 | Smart Hybrid Dispatch Router | Gateway router that routes light operations (merge, split, rotate, stamp) to Cloudflare Workers and routes heavy compute (OCR, large rendering) to Ephemeral K8s Pods |
 | 5.7.7 | Zero-Knowledge Audit & Ephemeral Proof | Cryptographic verification asserting zero files touch persistent storage and in-memory streams are purged upon delivery |
 
+---
+
+### 5.8 — AI Document Parsing & LLM/RAG Extraction Engine (Zero-Python, Pure-Rust) `[PARALLEL with 5.7]`
+
+> Directly captures the high-growth AI Engineering & RAG pipeline market (displacing bloated Python stacks like Docling, Marker, PyMuPDF4LLM, and Camelot) with sub-10ms, pure-Rust, on-device parsing.
+
+| # | Task | Notes |
+|---|---|---|
+| 5.8.1 | RAG-Ready Markdown Extractor (`pdf_to_markdown` / `pdf_extract_structure`) | Extract document visual hierarchy into clean Markdown (`# H1`, `## H2`, bullet lists, code blocks, bold/italics) preserving reading order via pure-Rust font heuristics and spatial clustering (< 10ms/page) |
+| 5.8.2 | Vector Table Extractor to CSV/JSON (`pdf_extract_tables`) | Pure-Rust table grid and cell line detector traversing `lopdf` path drawing operators (`re`, `m`, `l`) to extract financial & tabular data directly to JSON/CSV (Camelot/pdfplumber killer) |
+| 5.8.3 | Layout-Aware Semantic Chunker (`pdf_chunk_rag`) | Chunk documents by natural semantic boundaries (headers, paragraphs, callout boxes) rather than arbitrary character splits, outputting token-counted JSON chunks ready for vector DB insertion (Pinecone, Qdrant, Chroma) |
+| 5.8.4 | Key-Value & Form Entity Extraction (`pdf_extract_kv`) | Heuristic and layout-based key-value pair extractor for invoices, receipts, tax forms, and W-2/1099 documents without cloud LLM dependencies |
+| 5.8.5 | Local Embedding & Vector Export (`pdf_embed`) | Offline document vectorization via pure-Rust embedding crates (`candle` / `fastembed-rs`) generating 384/768-dim float arrays locally on CPU/WASM |
+| 5.8.6 | Tri-Interface & Python SDK Bindings (`paperpilot-py` via PyO3) | Expose fast Rust document parsers across CLI, MCP, REST Gateway, and a lightweight zero-dependency Python wheel (`pip install paperpilot`) to easily capture Python AI engineers |
+
 ## Phase 6 — Enterprise
 
 **Goal:** Organizations can deploy and govern PaperPilot at scale.
