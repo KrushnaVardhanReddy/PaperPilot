@@ -129,4 +129,43 @@ impl WasmPdfEngine {
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
 
+
+
+    #[wasm_bindgen]
+    pub fn images_to_pdf(image_buffers: js_sys::Array) -> Result<js_sys::Uint8Array, JsValue> {
+        let mut rust_buffers = Vec::new();
+        for i in 0..image_buffers.length() {
+            let item = image_buffers.get(i);
+            let u8_array = js_sys::Uint8Array::new(&item);
+            rust_buffers.push(u8_array.to_vec());
+        }
+
+        let refs: Vec<&[u8]> = rust_buffers.iter().map(|v| v.as_slice()).collect();
+
+        let result = operations::images_to_pdf(&refs)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn extract_images(input_bytes: &[u8]) -> Result<js_sys::Array, JsValue> {
+        let result_buffers = operations::extract_images(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        let js_array = js_sys::Array::new();
+        for buffer in result_buffers {
+            let u8_array = js_sys::Uint8Array::from(&buffer[..]);
+            js_array.push(&u8_array);
+        }
+
+        Ok(js_array)
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_hash(input_bytes: &[u8]) -> Result<String, JsValue> {
+        let result = operations::pdf_hash(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(result)
+    }
 }

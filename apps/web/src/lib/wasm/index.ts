@@ -9,8 +9,11 @@ export interface WasmPdfClient {
     extract_pages(file: Uint8Array, pages: string): Promise<Uint8Array>;
     reorder_pages(file: Uint8Array, new_order: number[]): Promise<Uint8Array>;
     crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array>;
-    flatten(file: Uint8Array): Promise<Uint8Array>;
+flatten(file: Uint8Array): Promise<Uint8Array>;
     set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array>;
+    images_to_pdf(images: Uint8Array[]): Promise<Uint8Array>;
+    extract_images(file: Uint8Array): Promise<Uint8Array[]>;
+    pdf_hash(file: Uint8Array): Promise<string>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -88,8 +91,20 @@ export class WasmPdfClientImpl implements WasmPdfClient {
         return this.sendRequest('flatten', { file });
     }
 
-    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array> {
+set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array> {
         return this.sendRequest('set_metadata', { file, title, author, subject, keywords });
+    }
+
+    images_to_pdf(images: Uint8Array[]): Promise<Uint8Array> {
+        return this.sendRequest('images_to_pdf', { images });
+    }
+
+    extract_images(file: Uint8Array): Promise<Uint8Array[]> {
+        return this.sendRequest('extract_images', { file });
+    }
+
+    pdf_hash(file: Uint8Array): Promise<string> {
+        return this.sendRequest('pdf_hash', { file });
     }
 }
 

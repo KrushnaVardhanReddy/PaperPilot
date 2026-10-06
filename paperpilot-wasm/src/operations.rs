@@ -524,3 +524,192 @@ pub fn set_metadata(
 
     Ok(buffer)
 }
+
+use image::{ImageFormat, GenericImageView, ImageEncoder};
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
+use std::io::Write;
+use sha2::{Sha256, Digest};
+use lopdf::Dictionary as LopdfDictionary;
+
+pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let mut kids = Vec::new();
+
+    for img_buf in image_buffers {
+        let format = image::guess_format(img_buf).unwrap_or(ImageFormat::Png);
+        let img = image::load_from_memory(img_buf)
+            .map_err(|e| PdfError::Other(format!("Failed to load image: {}", e)))?;
+
+        let (width, height) = img.dimensions();
+
+        let mut dict = LopdfDictionary::new();
+        dict.set("Type", Object::Name(b"XObject".to_vec()));
+        dict.set("Subtype", Object::Name(b"Image".to_vec()));
+        dict.set("Width", Object::Integer(width as i64));
+        dict.set("Height", Object::Integer(height as i64));
+        dict.set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
+        dict.set("BitsPerComponent", Object::Integer(8));
+
+        let stream_bytes = if format == ImageFormat::Jpeg {
+            dict.set("Filter", Object::Name(b"DCTDecode".to_vec()));
+            img_buf.to_vec()
+        } else {
+            dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
+            let rgb = img.to_rgb8().into_raw();
+            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(&rgb).map_err(|e| PdfError::Other(format!("Compression failed: {}", e)))?;
+            encoder.finish().map_err(|e| PdfError::Other(format!("Compression finish failed: {}", e)))?
+        };
+
+        let stream = lopdf::Stream::new(dict, stream_bytes);
+        let xobj_id = doc.add_object(stream);
+
+        let mut resources = LopdfDictionary::new();
+        let mut xobjects = LopdfDictionary::new();
+        xobjects.set("Im1", Object::Reference(xobj_id));
+        resources.set("XObject", Object::Dictionary(xobjects));
+
+        let content = format!("q\n{} 0 0 {} 0 0 cm\n/Im1 Do\nQ\n", width, height);
+        let content_stream = lopdf::Stream::new(LopdfDictionary::new(), content.as_bytes().to_vec());
+        let content_id = doc.add_object(content_stream);
+
+        let page_id = doc.new_object_id();
+        let mut page_dict = LopdfDictionary::new();
+        page_dict.set("Type", Object::Name(b"Page".to_vec()));
+        page_dict.set("Parent", Object::Reference(pages_id));
+        page_dict.set("MediaBox", Object::Array(vec![
+            Object::Integer(0),
+            Object::Integer(0),
+            Object::Integer(width as i64),
+            Object::Integer(height as i64),
+        ]));
+        page_dict.set("Resources", Object::Dictionary(resources));
+        page_dict.set("Contents", Object::Reference(content_id));
+
+        doc.objects.insert(page_id, Object::Dictionary(page_dict));
+        kids.push(Object::Reference(page_id));
+    }
+
+    let mut pages_dict = LopdfDictionary::new();
+    pages_dict.set("Type", Object::Name(b"Pages".to_vec()));
+    pages_dict.set("Count", Object::Integer(kids.len() as i64));
+    pages_dict.set("Kids", Object::Array(kids));
+    doc.objects.insert(pages_id, Object::Dictionary(pages_dict));
+
+    let catalog_id = doc.new_object_id();
+    let mut catalog_dict = LopdfDictionary::new();
+    catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
+    catalog_dict.set("Pages", Object::Reference(pages_id));
+    doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+
+    doc.trailer.set("Root", Object::Reference(catalog_id));
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    Ok(buffer)
+}
+
+pub fn extract_images(input_bytes: &[u8]) -> OperationResult<Vec<Vec<u8>>> {
+    let doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let mut extracted = Vec::new();
+
+    for (_page_num, page_id) in doc.get_pages() {
+        let page_dict = match doc.get_object(page_id) {
+            Ok(Object::Dictionary(d)) => d,
+            _ => continue,
+        };
+
+        let resources = match page_dict.get(b"Resources") {
+            Ok(Object::Dictionary(d)) => d,
+            Ok(Object::Reference(id)) => {
+                match doc.get_object(*id) {
+                    Ok(Object::Dictionary(d)) => d,
+                    _ => continue,
+                }
+            }
+            _ => continue,
+        };
+
+        let xobjects = match resources.get(b"XObject") {
+            Ok(Object::Dictionary(d)) => d,
+            Ok(Object::Reference(id)) => {
+                match doc.get_object(*id) {
+                    Ok(Object::Dictionary(d)) => d,
+                    _ => continue,
+                }
+            }
+            _ => continue,
+        };
+
+        for (_name, obj) in xobjects.iter() {
+            let stream_ref = match obj {
+                Object::Reference(id) => *id,
+                _ => continue,
+            };
+
+            let stream = match doc.get_object(stream_ref) {
+                Ok(Object::Stream(s)) => s,
+                _ => continue,
+            };
+
+            let dict = &stream.dict;
+            if let Ok(Object::Name(subtype)) = dict.get(b"Subtype") {
+                if subtype == b"Image" {
+                    let is_jpeg = match dict.get(b"Filter") {
+                        Ok(Object::Name(filter)) => filter == b"DCTDecode",
+                        Ok(Object::Array(arr)) => {
+                            arr.iter().any(|f| if let Object::Name(n) = f { n == b"DCTDecode" } else { false })
+                        }
+                        _ => false,
+                    };
+
+                    if is_jpeg {
+                        extracted.push(stream.content.clone());
+                    } else {
+                        // Attempt to decode flate and output PNG
+                        if let Ok(decompressed) = stream.decompressed_content() {
+                            let width = dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
+                            let height = dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
+                            if width > 0 && height > 0 {
+                                if decompressed.len() >= (width * height * 3) as usize {
+                                    // Assume RGB
+                                    if let Some(img_buf) = image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                                        let mut png_bytes = Vec::new();
+                                        let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                        if encoder.write_image(&img_buf, width, height, image::ColorType::Rgb8.into()).is_ok() {
+                                            extracted.push(png_bytes);
+                                        }
+                                    }
+                                } else if decompressed.len() >= (width * height) as usize {
+                                    // Assume Gray
+                                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                                        let mut png_bytes = Vec::new();
+                                        let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                        if encoder.write_image(&img_buf, width, height, image::ColorType::L8.into()).is_ok() {
+                                            extracted.push(png_bytes);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(extracted)
+}
+
+pub fn pdf_hash(input_bytes: &[u8]) -> OperationResult<String> {
+    let mut hasher = Sha256::new();
+    hasher.update(input_bytes);
+    let result = hasher.finalize();
+    Ok(hex::encode(result))
+}
