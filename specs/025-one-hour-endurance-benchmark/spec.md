@@ -5,13 +5,13 @@
 ## 1. Executive Summary & Purpose
 Following the migration from `headless_chrome` to pure-Rust vector engines (`genpdf`, `typst`, `fulgur` in Spec 024), PaperPilot operates 100% in pure Rust across all 44 operations.
 
-To guarantee that PaperPilot satisfies enterprise-grade reliability, SLA uptime, and zero-degradation criteria, this specification defines a **1-Hour (3,600 Seconds) Sustained Soak & Endurance Test**.
+To guarantee that PaperPilot satisfies enterprise-grade reliability, SLA uptime, and zero-degradation criteria, this specification defines a **1-Hour (3,600 Seconds) Sustained Soak & Endurance Test** covering **ALL 44 operations** across the complete tool suite.
 
 The objective is to:
-1. Subject the entire pure-Rust toolchain to ~500,000+ continuous operations without pause.
+1. Subject the full suite of **all 44 operations** to ~250,000+ continuous multi-cycle executions without pause.
 2. Measure long-term **Resident Set Size (RSS)** memory stability to mathematically confirm zero memory leaks, heap bloat, or memory fragmentation.
 3. Quantify throughput consistency over time (proving zero CPU throttling or resource exhaustion).
-4. Measure true statistical latency percentiles (**P50, P90, P95, P99, and P99.9 tail latencies**) across all 44 tools.
+4. Measure true statistical latency percentiles (**P50, P90, P95, P99, and P99.9 tail latencies**) individually for **every single one of the 44 tools**.
 
 ---
 
@@ -20,8 +20,9 @@ The objective is to:
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 1. SUSTAINED SOAK HARNESS: scripts/stress_test.py (3,600s / 1 Hour)         │
-│    • Ingestion: 50 fixture files, 129 PDF pages, across all operation types │
-│    • Continuous loop: Core manipulation, security, OCR, tables, conversions │
+│    • Complete Coverage: Loops across ALL 44 distinct operation definitions  │
+│      imported directly from test_tri_interface_e2e.py                       │
+│    • Ingestion: 50 fixture files, 129 PDF pages, all document formats       │
 │    • Execution layer: Compiled release binary (target/release/paperpilot-cli)│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 2. CONTINUOUS TELEMETRY TRACKING (Every 60 Seconds)                         │

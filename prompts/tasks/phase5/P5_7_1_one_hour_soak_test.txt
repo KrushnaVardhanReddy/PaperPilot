@@ -28,11 +28,14 @@ DO NOT modify `paperpilot-pdf/`, `paperpilot-core/`, `paperpilot-cli/`, `apps/de
 
 ## 1. Test Configuration (`scripts/stress_test.py`)
 - Configure test harness to accept `--duration 3600` (or default 3600 seconds = 1 hour).
-- Include all 100% pure-Rust conversion operations alongside standard core operations:
-  - `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_compress`, `pdf_watermark`, `pdf_encrypt`
-  - `pdf_extract_text`, `pdf_search`, `pdf_hash`, `pdf_ocr`, `pdf_bates`, `pdf_flatten`
-  - `pdf_convert_excel`, `pdf_convert_markdown`, `pdf_convert_html`
-- Log telemetry every 60 seconds (elapsed time, total operations, ops/sec, current RSS in MB, failures).
+- **CRITICAL REQUIREMENT**: Must import and iterate through **ALL 44 TOOLS** directly from `scripts/test_tri_interface_e2e.py`'s verified tool definitions.
+- Every cycle runs the complete battery of 44 operations:
+  - Document manipulation (`merge`, `split`, `extract_pages`, `delete_pages`, `reorder_pages`, `rotate`, `crop`, `burst`, `remove_blank`)
+  - Optimization & security (`compress`, `repair`, `linearize`, `encrypt`, `decrypt`, `watermark`, `redact`, `sign`, `flatten`, `to_pdf_a`)
+  - Analysis & OCR (`extract_text`, `extract_images`, `search`, `render`, `compare`, `ocr`, `classify_type`, `validate`, `hash`)
+  - Formatting & forms (`header_footer`, `bates`, `page_numbers`, `bookmarks`, `images_to_pdf`, `annotate`, `read_form`, `fill_form`, `create_form_field`)
+  - Pure-Rust conversions (`to_docx`, `to_xlsx`, `to_pptx`, `convert_html`, `convert_markdown`, `convert_excel`)
+- Log telemetry every 60 seconds (elapsed time, cycles completed, total operations, ops/sec, RSS in MB, failures).
 
 ---
 
