@@ -72,6 +72,12 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
+- **PR #150 (5.6.1)**: Pure-Rust High-Speed Office & Document Conversions (`fulgur` engine replacing `headless_chrome` in `paperpilot-pdf/src/operations/conversion.rs`, sub-60ms conversion latency for HTML, Markdown, and Excel, `wiki/18-Pure-Rust-Office-Conversions.md`, `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md` 132/132 assertions PASS).
+- **PR #148 (4.9.13)**: Certificate & Template Studio (HTML/SVG template engine, dynamic customization, bulk CSV certificate generator, `apps/web/`).
+- **PR #147 (4.9.12)**: `docs.usepaperpilot.com` Official Starlight Docs Hub (4-pillar guides, tri-interface reference, `apps/docs/`).
+- **PR #146 (4.9.11)**: `usepaperpilot.com` Official Marketing & Embed Playground Portal.
+- **PR #145 (4.9 Core)**: `embed.js` CDN loader and Svelte 5 embed widget with Shadow DOM style isolation (`apps/embed/`).
+- **PR #143 (5.1.1)**: Pure-Rust Image & Hash WASM Expansion to 15 Tools (`paperpilot-wasm`, `apps/web/`).
 - **PR #142 (5.3.1)**: Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia` replacing PDFium in `paperpilot-pdf/src/operations/render.rs`, `wiki/12-Pure-Rust-Rendering.md`, and `reports/RENDERING_PURE_RUST_REPORT.md` 100% PASS).
 - **PR #141 (5.2.1)**: Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract C++ in `paperpilot-pdf/src/operations/ocr.rs`, image stream extraction, DBNet text detection & CTC recognition with graceful fallback, `wiki/09-Pure-Rust-OCR.md`, and `reports/OCR_PURE_RUST_REPORT.md` 44/44 PASS).
 - **PR #140 (4.8.3)**: Cloudflare Workers Edge Microservice (`apps/edge/` standalone worker, REST handlers for all 12 core operations, Vitest tests 14/14 PASS, `reports/EDGE_MICROSERVICE_REPORT.md`, `wiki/10-Cloudflare-Edge-Service.md`).
