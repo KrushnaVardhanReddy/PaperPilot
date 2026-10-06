@@ -31,8 +31,8 @@
   </main>
 
   <footer class="app-footer">
-    <div class="trust-badge">
-      🔒 <strong>100% Client-Side Web & Desktop</strong> — Zero data collection. Documents never leave your device.
+    <div class="privacy-badge">
+      <span class="icon">🔒</span> 100% Client-Side Web & Desktop <span class="muted">— Zero data collection. Documents never leave your device.</span>
     </div>
     <div class="footer-links">
       <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux (.deb / AppImage)</a>
@@ -151,6 +151,22 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .privacy-badge {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-full);
+    font-size: 0.9rem;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .privacy-badge .muted {
+    opacity: 0.8;
   }
 
   .footer-links {

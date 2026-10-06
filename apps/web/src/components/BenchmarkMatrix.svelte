@@ -14,28 +14,34 @@
           <tr>
             <th>Feature</th>
             <th class="highlight-col">PaperPilot</th>
+            <th>Traditional Cloud SaaS</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="feature-name">Server Uploads Required</td>
             <td class="highlight-col text-success">Optional (100% Local via Desktop/Widget, Edge via API)</td>
+            <td class="text-danger">Yes (Always)</td>
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
             <td class="highlight-col text-success">~50-100ms</td>
+            <td class="text-warning">Network/Queue Dependent</td>
           </tr>
           <tr>
             <td class="feature-name">C++ Security Vulnerabilities</td>
             <td class="highlight-col text-success">Zero (Memory-Safe Rust)</td>
+            <td class="text-danger">High Risk (C/C++ Backends)</td>
           </tr>
           <tr>
             <td class="feature-name">Licensing</td>
             <td class="highlight-col text-success">Free & Open Source</td>
+            <td class="text-danger">Proprietary / Subscription</td>
           </tr>
           <tr>
-            <td class="feature-name">Bundle Size</td>
+            <td class="feature-name">Deployment Size</td>
             <td class="highlight-col text-success">~4MB (WASM)</td>
+            <td class="text-danger">Gigabytes (Docker/VMs)</td>
           </tr>
         </tbody>
       </table>
