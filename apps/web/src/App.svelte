@@ -4,6 +4,11 @@
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+
+  // Automatically use local docs dev server when running locally
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const docsBaseUrl = isLocal ? 'http://localhost:4321' : 'https://docs.usepaperpilot.com';
+  const toolsHandbookUrl = `${docsBaseUrl}/reference/44-tools-handbook/`;
 </script>
 
 <div class="app-container">
@@ -14,10 +19,10 @@
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
       <nav class="nav-links">
-        <a href="https://docs.usepaperpilot.com" target="_blank" rel="noopener noreferrer" class="nav-link">
+        <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer" class="nav-link">
           📚 Documentation
         </a>
-        <a href="https://docs.usepaperpilot.com/reference/44-tools-handbook/" target="_blank" rel="noopener noreferrer" class="nav-link">
+        <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer" class="nav-link">
           ⚡ 44 Tools
         </a>
       </nav>
@@ -43,7 +48,7 @@
       <span class="icon">🔒</span> 100% Client-Side Web & Desktop <span class="muted">— Zero data collection. Documents never leave your device.</span>
     </div>
     <div class="footer-links">
-      <a href="https://docs.usepaperpilot.com" target="_blank" rel="noopener noreferrer">Documentation Hub</a>
+      <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Documentation Hub</a>
       <span class="separator">•</span>
       <a href="https://paperpilot.app/download/linux" target="_blank" rel="noopener noreferrer">Linux (.deb / AppImage)</a>
       <span class="separator">•</span>

@@ -3,6 +3,10 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://docs.usepaperpilot.com',
+  server: {
+    port: 4321,
+    host: true,
+  },
   integrations: [
     starlight({
       title: 'PaperPilot Documentation',

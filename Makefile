@@ -31,6 +31,10 @@ run-edge:
 run-docs:
 	cd apps/docs && npm run dev
 
+# Run both web portal (5173) and docs portal (4321) concurrently
+run-all-web:
+	npx concurrently -n "web,docs" -c "blue,green" "cd apps/web && npm run dev" "cd apps/docs && npm run dev"
+
 # Build documentation portal static bundle
 build-docs:
 	cd apps/docs && npm run build
