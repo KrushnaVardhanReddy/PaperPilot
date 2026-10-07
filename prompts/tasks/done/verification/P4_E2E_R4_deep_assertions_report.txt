@@ -1,0 +1,123 @@
+# Task: Tri-Interface E2E Deep Assertions & Unified Comparison Matrix (Expected vs Actual)
+# Base Branch: main
+# Target Branch: feat-tri-interface-deep-assertions
+# Priority: MEDIUM (Quality & Documentation Polish)
+# Spec: specs/027-tri-interface-deep-assertions/spec.md
+
+## Objective
+Upgrade `scripts/test_tri_interface_e2e.py` to perform deep behavioral validations (Expected vs Received/Actual outcomes) and format the official E2E report with a clean, unified comparison matrix per tool.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** modify or create files in these paths:
+```
+scripts/test_tri_interface_e2e.py
+reports/TRI_INTERFACE_E2E_100_VERIFIED.md
+reports/TRI_INTERFACE_E2E_AND_DOCS.md
+wiki/21-Tri-Interface-Deep-Assertions.md
+```
+
+### Prohibited Files:
+DO NOT modify any Rust crates (`paperpilot-pdf/`, `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`), frontend code (`apps/`), `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Context: Before vs After Report Format
+
+### Current Report Format (What we currently have):
+Currently, each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` outputs disconnected paragraphs like this:
+```markdown
+### Tool: `pdf_merge`
+
+#### 💻 CLI
+```bash
+paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output out/merged_cli.pdf --json
+```
+- **Status:** ✅ PASS
+- **Latency:** 19.96 ms
+
+#### 🤖 MCP
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {"name": "pdf_merge", "arguments": {...}}
+}
+```
+- **Status:** ✅ PASS
+- **Latency:** 19.97 ms
+
+#### 🌐 REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{...}'
+```
+- **Status:** ✅ PASS
+- **Latency:** 30.64 ms
+```
+*Problem:* It does not show what was being tested (the use case), what was expected, or what was actually produced in the output file!
+
+---
+
+### Expected Report Format (What you must implement):
+Each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`) must now output a clean, consolidated table with Tool as the first column, along with interfaces (CLI, MCP, REST API, Client-Side WASM, Cloudflare Edge):
+
+```markdown
+### Tool: `pdf_merge`
+> **Use Case**: Merge two separate single-page PDFs (`page_1.pdf` [1 pg] + `page_2.pdf` [1 pg]) into a single continuous 2-page document.
+
+| Tool | Interface | Command / Invocation | Latency | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|
+| `pdf_merge` | **💻 CLI** | `paperpilot merge --input page_1.pdf page_2.pdf --output out/merged_cli.pdf --json` | `19.96 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,711 bytes | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | `tools/call {"name": "pdf_merge", "arguments": {"inputs": [...], "output": "..."}}` | `19.97 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | `POST /api/v1/pdf/merge {"inputs": [...], "output": "..."}` | `30.64 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | `WasmPdfEngine.merge([file1, file2])` | `3.20 ms` | In-memory 2-page Uint8Array | Valid PDF buffer, 2 pages, 1,708 bytes | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | `POST /api/v1/merge (multipart/form-data)` | `8.50 ms` | Edge serverless streamed PDF | Valid PDF stream, 2 pages, 1,708 bytes | ✅ PASS |
+```
+
+> **Note on WASM & Edge Rows**:
+> - For tools supported in `paperpilot-wasm` (22 tools) and Cloudflare Workers `apps/edge` (12 tools), report their in-memory / edge latency and byte verification.
+> - For tools that are Desktop/Server-only (e.g. heavy OCR, Docx conversions), mark as `N/A (Desktop/Server only)`.
+
+---
+
+## 2. Requirements for `scripts/test_tri_interface_e2e.py`
+
+1. **Add Metadata to Every Tool Definition**:
+   In `tools_definitions`, enrich each tool entry with:
+   - `tool_id`: The canonical tool name (e.g. `pdf_merge`).
+   - `use_case`: A concise 1-sentence description explaining the input document(s) and the operation being performed.
+   - `expected_desc`: Human-readable expectation (e.g. `"Valid 2-page PDF (%PDF-)"`, `"JSON with 3 form fields"`, `"Rendered PNG image (> 5 KB)"`, `"Extracted text containing 'Chapter 1'"`).
+   - `expected_type`: Output classification: `"pdf"`, `"json"`, `"text"`, `"image"`, `"dir"`, etc.
+   - `expected_pages`: (optional integer) Exact expected page count if output is a PDF.
+   - `wasm_supported`: Boolean flag or snippet if operation is available in WASM / Edge.
+
+2. **Implement Artifact Deep Validation**:
+   When recording the execution result, inspect the generated output file or stdout:
+   - For PDFs:
+     - Check file exists and size > 0.
+     - Check file starts with `%PDF-`.
+     - Count pages by inspecting `/Type /Page` dictionary objects or standard regex (`len(re.findall(rb'/Type\s*/Page\b', content))`).
+     - Record actual summary: `f"Valid PDF, {pages} pages, {size:,} bytes"`.
+   - For text / CSV / JSON outputs:
+     - Check file exists and size > 0.
+     - Record actual summary: `f"Valid {ext.upper()} file, {size:,} bytes"`.
+   - For query / stdout operations without file output (e.g. `hash`, `search`, `classify`):
+     - Parse JSON output.
+     - Record actual summary: `f"Success: {parsed_summary}"`.
+
+3. **Report Generation**:
+   Update report template generation logic in `test_tri_interface_e2e.py` to render the clean Markdown comparison table illustrated above with `Tool` as the first column.
+   Write to both `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
+
+---
+
+## 3. Quality Gate & Acceptance Criteria
+1. Run the test suite:
+   ```bash
+   python3 scripts/test_tri_interface_e2e.py
+   ```
+2. Must achieve **44 / 44 Tools PASSING across CLI, MCP, and REST API** (132 / 132 assertions).
+3. The generated report must contain all 44 unified tables without missing entries, broken markdown formatting, or empty cells.
+4. Document the enhanced verification methodology in `wiki/21-Tri-Interface-Deep-Assertions.md`.
