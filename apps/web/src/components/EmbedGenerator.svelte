@@ -23,7 +23,7 @@
 <div id="paperpilot-portal"
      data-theme="${theme}"
      data-tools="${selectedTools.join(',')}"
-     data-brand-color="${brandColor}"${hideBadge ? '\n     data-hide-badge="true"' : ''}>
+     data-brand-color="${brandColor}"${hideBadge ? '\n     data-hide-badge="true"\n     data-license-key="YOUR_PRO_LICENSE_KEY"' : ''}>
 </div>`
   );
 
@@ -89,6 +89,11 @@
           <input id="hide-badge" type="checkbox" bind:checked={hideBadge} />
           <label for="hide-badge">Hide "Powered by PaperPilot" Badge (Pro)</label>
         </div>
+        {#if hideBadge}
+          <div class="pro-license-note">
+            🔒 <span>Whitelabeling requires an active PaperPilot Pro license key in production.</span>
+          </div>
+        {/if}
       </div>
 
       <div class="code-panel">
@@ -240,6 +245,19 @@
     flex-direction: row;
     align-items: center;
     gap: 12px;
+  }
+
+  .pro-license-note {
+    font-size: 0.85rem;
+    color: #93C5FD;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: -8px;
   }
 
   .code-panel {
