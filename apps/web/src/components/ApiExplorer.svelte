@@ -54,9 +54,12 @@ const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
           <li>✓ Fully typed OpenAPI 3.0 spec for local REST gateway</li>
         </ul>
 
-        <a href="/swagger-ui" class="swagger-btn">
-          Launch Swagger Explorer &rarr;
-        </a>
+        <div class="swagger-action-box">
+          <a href="/swagger-ui" target="_blank" rel="noopener noreferrer" class="swagger-btn">
+            Launch Swagger Explorer &rarr;
+          </a>
+          <span class="swagger-hint">Proxies to local Gateway (port 7823)</span>
+        </div>
       </div>
     </div>
   </div>
@@ -176,6 +179,18 @@ const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
     text-decoration: none;
     font-weight: 600;
     transition: all var(--transition-fast);
+  }
+
+  .swagger-action-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .swagger-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
   }
 
   .swagger-btn:hover {
