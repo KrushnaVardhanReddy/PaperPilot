@@ -60,7 +60,7 @@ This document provides exact, copy-pasteable snippets for invoking every tool ac
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/merged_cli.pdf --json
+paperpilot merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output out/merged_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -76,7 +76,7 @@ This document provides exact, copy-pasteable snippets for invoking every tool ac
         "tests/e2e_fixtures/page_1.pdf",
         "tests/e2e_fixtures/page_2.pdf"
       ],
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/merged_mcp.pdf"
+      "output": "out/merged_mcp.pdf"
     }
   }
 }
@@ -84,7 +84,7 @@ This document provides exact, copy-pasteable snippets for invoking every tool ac
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/merged_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "out/merged_api.pdf"}'
 ```
 
 ---
@@ -93,7 +93,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output /app/tests/e2e_fixtures/out/tri_e2e/split --json
+paperpilot split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output out/split --json
 ```
 
 ### MCP (JSON-RPC)
@@ -106,7 +106,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
     "name": "pdf_split",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/split"
+      "output": "out/split"
     }
   }
 }
@@ -114,7 +114,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "/app/tests/e2e_fixtures/out/tri_e2e/split"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "out/split"}'
 ```
 
 ---
@@ -123,7 +123,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_cli.pdf --json
+paperpilot extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output out/extracted_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -137,7 +137,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "pages": "1,3",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_mcp.pdf"
+      "output": "out/extracted_mcp.pdf"
     }
   }
 }
@@ -145,7 +145,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "out/extracted_api.pdf"}'
 ```
 
 ---
@@ -154,7 +154,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output /app/tests/e2e_fixtures/out/tri_e2e/deleted_cli.pdf --json
+paperpilot delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output out/deleted_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -168,7 +168,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "pages": "2,4",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/deleted_mcp.pdf"
+      "output": "out/deleted_mcp.pdf"
     }
   }
 }
@@ -176,7 +176,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Con
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "/app/tests/e2e_fixtures/out/tri_e2e/deleted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "out/deleted_api.pdf"}'
 ```
 
 ---
@@ -185,7 +185,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output /app/tests/e2e_fixtures/out/tri_e2e/reordered_cli.pdf --json
+paperpilot reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output out/reordered_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -199,7 +199,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "order": "2,1,3,4,5",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/reordered_mcp.pdf"
+      "output": "out/reordered_mcp.pdf"
     }
   }
 }
@@ -207,7 +207,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Cont
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "/app/tests/e2e_fixtures/out/tri_e2e/reordered_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "out/reordered_api.pdf"}'
 ```
 
 ---
@@ -216,7 +216,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output /app/tests/e2e_fixtures/out/tri_e2e/rotated_cli.pdf --json
+paperpilot rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output out/rotated_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -231,7 +231,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
       "input": "tests/e2e_fixtures/single_page.pdf",
       "angle": 90,
       "pages": "1",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/rotated_mcp.pdf"
+      "output": "out/rotated_mcp.pdf"
     }
   }
 }
@@ -239,7 +239,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Con
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "/app/tests/e2e_fixtures/out/tri_e2e/rotated_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "out/rotated_api.pdf"}'
 ```
 
 ---
@@ -248,7 +248,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output /app/tests/e2e_fixtures/out/tri_e2e/cropped_cli.pdf --json
+paperpilot crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output out/cropped_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -262,7 +262,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "box": "10,10,200,200",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/cropped_mcp.pdf"
+      "output": "out/cropped_mcp.pdf"
     }
   }
 }
@@ -270,7 +270,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Ty
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "/app/tests/e2e_fixtures/out/tri_e2e/cropped_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "out/cropped_api.pdf"}'
 ```
 
 ---
@@ -279,7 +279,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli burst --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/burst_dir --json
+paperpilot burst --input tests/e2e_fixtures/multi_page.pdf --output out/burst_dir --json
 ```
 
 ### MCP (JSON-RPC)
@@ -292,7 +292,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
     "name": "pdf_burst",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/burst_dir"
+      "output_dir": "out/burst_dir"
     }
   }
 }
@@ -300,7 +300,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/burst_dir"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "out/burst_dir"}'
 ```
 
 ---
@@ -309,7 +309,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli remove-blank --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/noblank_cli.pdf --json
+paperpilot remove-blank --input tests/e2e_fixtures/multi_page.pdf --output out/noblank_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -322,7 +322,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
     "name": "pdf_remove_blank",
     "arguments": {
       "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/noblank_mcp.pdf"
+      "output": "out/noblank_mcp.pdf"
     }
   }
 }
@@ -330,7 +330,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Typ
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/noblank_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "out/noblank_api.pdf"}'
 ```
 
 ---
@@ -339,7 +339,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli compress --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/compressed_cli.pdf --quality medium --json
+# Quality accepts numeric values 1-100 or presets: low, medium, high
+paperpilot compress --input tests/e2e_fixtures/single_page.pdf --quality 75 --output out/compressed_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -352,8 +353,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
     "name": "pdf_compress",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/compressed_mcp.pdf",
-      "quality": "medium"
+      "output": "out/compressed_mcp.pdf",
+      "quality": "75"
     }
   }
 }
@@ -361,7 +362,9 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Cont
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/compressed_api.pdf", "quality": "medium"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/compressed_api.pdf", "quality": "75"}'
 ```
 
 ---
@@ -370,7 +373,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli repair --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/repaired_cli.pdf --json
+paperpilot repair --input tests/e2e_fixtures/single_page.pdf --output out/repaired_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -383,7 +386,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
     "name": "pdf_repair",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/repaired_mcp.pdf"
+      "output": "out/repaired_mcp.pdf"
     }
   }
 }
@@ -391,7 +394,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: appl
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/repaired_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/repaired_api.pdf"}'
 ```
 
 ---
@@ -400,7 +403,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli linearize --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/linearized_cli.pdf --json
+paperpilot linearize --input tests/e2e_fixtures/single_page.pdf --output out/linearized_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -413,7 +416,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
     "name": "pdf_linearize",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/linearized_mcp.pdf"
+      "output": "out/linearized_mcp.pdf"
     }
   }
 }
@@ -421,7 +424,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Ty
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/linearized_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/linearized_api.pdf"}'
 ```
 
 ---
@@ -430,7 +433,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --json
+paperpilot encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output out/encrypted_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -444,7 +447,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "password": "secret123",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf"
+      "output": "out/encrypted_mcp.pdf"
     }
   }
 }
@@ -452,7 +455,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "out/encrypted_api.pdf"}'
 ```
 
 ---
@@ -461,7 +464,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli decrypt --input /app/tests/e2e_fixtures/out/tri_e2e/encrypted_cli.pdf --password secret123 --output /app/tests/e2e_fixtures/out/tri_e2e/decrypted_cli.pdf --json
+paperpilot decrypt --input out/encrypted_cli.pdf --password secret123 --output out/decrypted_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -473,9 +476,9 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
   "params": {
     "name": "pdf_decrypt",
     "arguments": {
-      "input": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_mcp.pdf",
+      "input": "out/encrypted_mcp.pdf",
       "password": "secret123",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/decrypted_mcp.pdf"
+      "output": "out/decrypted_mcp.pdf"
     }
   }
 }
@@ -483,7 +486,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-T
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "/app/tests/e2e_fixtures/out/tri_e2e/encrypted_api.pdf", "password": "secret123", "output": "/app/tests/e2e_fixtures/out/tri_e2e/decrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "out/encrypted_api.pdf", "password": "secret123", "output": "out/decrypted_api.pdf"}'
 ```
 
 ---
@@ -492,7 +495,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output /app/tests/e2e_fixtures/out/tri_e2e/watermarked_cli.pdf --json
+paperpilot watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output out/watermarked_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -506,7 +509,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "text": "CONFIDENTIAL",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/watermarked_mcp.pdf"
+      "output": "out/watermarked_mcp.pdf"
     }
   }
 }
@@ -514,7 +517,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-T
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "/app/tests/e2e_fixtures/out/tri_e2e/watermarked_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "out/watermarked_api.pdf"}'
 ```
 
 ---
@@ -523,7 +526,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output /app/tests/e2e_fixtures/out/tri_e2e/redacted_cli.pdf --json
+paperpilot redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output out/redacted_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -541,7 +544,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
       "y": 50,
       "width": 200,
       "height": 50,
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/redacted_mcp.pdf"
+      "output": "out/redacted_mcp.pdf"
     }
   }
 }
@@ -549,7 +552,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "/app/tests/e2e_fixtures/out/tri_e2e/redacted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "out/redacted_api.pdf"}'
 ```
 
 ---
@@ -558,7 +561,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Ty
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli metadata --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/metadata.json --json
+paperpilot metadata --input tests/e2e_fixtures/single_page.pdf --output out/metadata.json --json
 ```
 
 ### MCP (JSON-RPC)
@@ -587,7 +590,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output /app/tests/e2e_fixtures/out/tri_e2e/signed_cli.pdf --json
+paperpilot signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output out/signed_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -601,7 +604,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/signed_mcp.pdf"
+      "output": "out/signed_mcp.pdf"
     }
   }
 }
@@ -609,7 +612,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: applicat
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "/app/tests/e2e_fixtures/out/tri_e2e/signed_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "out/signed_api.pdf"}'
 ```
 
 ---
@@ -618,7 +621,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli flatten --input tests/e2e_fixtures/form.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/flattened_cli.pdf --json
+paperpilot flatten --input tests/e2e_fixtures/form.pdf --output out/flattened_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -631,7 +634,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
     "name": "pdf_flatten",
     "arguments": {
       "input": "tests/e2e_fixtures/form.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/flattened_mcp.pdf"
+      "output": "out/flattened_mcp.pdf"
     }
   }
 }
@@ -639,7 +642,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/flattened_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "out/flattened_api.pdf"}'
 ```
 
 ---
@@ -648,7 +651,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli pdf-a --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/pdf_a_cli.pdf --json
+paperpilot pdf-a --input tests/e2e_fixtures/single_page.pdf --output out/pdf_a_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -661,7 +664,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
     "name": "pdf_to_pdf_a",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/pdf_a_mcp.pdf"
+      "output": "out/pdf_a_mcp.pdf"
     }
   }
 }
@@ -669,7 +672,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-T
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/pdf_a_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/pdf_a_api.pdf"}'
 ```
 
 ---
@@ -678,7 +681,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output /app/tests/e2e_fixtures/out/tri_e2e/header_cli.pdf --json
+paperpilot header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output out/header_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -693,7 +696,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "header_left": "Confidential",
       "footer_center": "Page",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/header_mcp.pdf"
+      "output": "out/header_mcp.pdf"
     }
   }
 }
@@ -701,7 +704,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "/app/tests/e2e_fixtures/out/tri_e2e/header_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "out/header_api.pdf"}'
 ```
 
 ---
@@ -710,7 +713,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output /app/tests/e2e_fixtures/out/tri_e2e/bates_cli.pdf --json
+paperpilot bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output out/bates_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -726,7 +729,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
       "prefix": "CONF-",
       "start_number": 1,
       "padding": 6,
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/bates_mcp.pdf"
+      "output": "out/bates_mcp.pdf"
     }
   }
 }
@@ -734,7 +737,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Con
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "/app/tests/e2e_fixtures/out/tri_e2e/bates_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "out/bates_api.pdf"}'
 ```
 
 ---
@@ -743,7 +746,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli page-numbers --input tests/e2e_fixtures/multi_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/numbers_cli.pdf --json
+paperpilot page-numbers --input tests/e2e_fixtures/multi_page.pdf --output out/numbers_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -758,7 +761,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
       "input": "tests/e2e_fixtures/multi_page.pdf",
       "position": "bottom-right",
       "start_number": 1,
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/numbers_mcp.pdf"
+      "output": "out/numbers_mcp.pdf"
     }
   }
 }
@@ -766,7 +769,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Typ
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "/app/tests/e2e_fixtures/out/tri_e2e/numbers_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "out/numbers_api.pdf"}'
 ```
 
 ---
@@ -775,7 +778,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli extract-text --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/text.txt --json
+paperpilot extract-text --input tests/e2e_fixtures/single_page.pdf --output out/text.txt --json
 ```
 
 ### MCP (JSON-RPC)
@@ -788,7 +791,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
     "name": "pdf_extract_text",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/text.txt"
+      "output": "out/text.txt"
     }
   }
 }
@@ -796,7 +799,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Cont
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/text.txt"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/text.txt"}'
 ```
 
 ---
@@ -805,7 +808,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli extract-images --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/extracted_images --json
+paperpilot extract-images --input tests/e2e_fixtures/image_doc.pdf --output out/extracted_images --json
 ```
 
 ### MCP (JSON-RPC)
@@ -818,7 +821,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
     "name": "pdf_extract_images",
     "arguments": {
       "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_images"
+      "output_dir": "out/extracted_images"
     }
   }
 }
@@ -826,7 +829,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: 
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "/app/tests/e2e_fixtures/out/tri_e2e/extracted_images"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "out/extracted_images"}'
 ```
 
 ---
@@ -835,7 +838,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Co
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli search --input tests/e2e_fixtures/search_test.pdf --query test --json
+paperpilot search --input tests/e2e_fixtures/search_test.pdf --query test --json
 ```
 
 ### MCP (JSON-RPC)
@@ -865,7 +868,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli render --input tests/e2e_fixtures/single_page.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/rendered_cli.png --json
+paperpilot render --input tests/e2e_fixtures/single_page.pdf --output out/rendered_cli.png --json
 ```
 
 ### MCP (JSON-RPC)
@@ -879,7 +882,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
       "page": 1,
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/rendered_mcp.png"
+      "output": "out/rendered_mcp.png"
     }
   }
 }
@@ -887,7 +890,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Ty
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "output": "/app/tests/e2e_fixtures/out/tri_e2e/rendered_api.png"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "output": "out/rendered_api.png"}'
 ```
 
 ---
@@ -896,7 +899,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: a
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
+paperpilot compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -926,7 +929,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli ocr --input tests/e2e_fixtures/image_doc.pdf --output /app/tests/e2e_fixtures/out/tri_e2e/ocr_cli.pdf --json
+paperpilot ocr --input tests/e2e_fixtures/image_doc.pdf --output out/ocr_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -939,7 +942,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
     "name": "pdf_ocr",
     "arguments": {
       "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/ocr_mcp.pdf"
+      "output": "out/ocr_mcp.pdf"
     }
   }
 }
@@ -947,7 +950,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: appli
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/ocr_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "out/ocr_api.pdf"}'
 ```
 
 ---
@@ -956,7 +959,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type:
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
+paperpilot bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -985,7 +988,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output /app/tests/e2e_fixtures/out/tri_e2e/images_cli.pdf --json
+paperpilot images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output out/images_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1001,7 +1004,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
         "tests/e2e_fixtures/img1.png",
         "tests/e2e_fixtures/img2.png"
       ],
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/images_mcp.pdf"
+      "output": "out/images_mcp.pdf"
     }
   }
 }
@@ -1009,7 +1012,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "/app/tests/e2e_fixtures/out/tri_e2e/images_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "out/images_api.pdf"}'
 ```
 
 ---
@@ -1018,7 +1021,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output /app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf --json
+paperpilot annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output out/annotated.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1044,7 +1047,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
           "content": "Test"
         }
       ],
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"
+      "output": "out/annotated.pdf"
     }
   }
 }
@@ -1052,7 +1055,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Con
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "/app/tests/e2e_fixtures/out/tri_e2e/annotated.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "out/annotated.pdf"}'
 ```
 
 ---
@@ -1061,7 +1064,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli classify --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot classify --input tests/e2e_fixtures/single_page.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1090,7 +1093,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Con
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli validate --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot validate --input tests/e2e_fixtures/single_page.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1119,7 +1122,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli hash --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot hash --input tests/e2e_fixtures/single_page.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1148,7 +1151,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli form read tests/e2e_fixtures/form.pdf --json
+paperpilot form read tests/e2e_fixtures/form.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1177,7 +1180,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output /app/tests/e2e_fixtures/out/tri_e2e/filled_cli.pdf --json
+paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output out/filled_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1193,7 +1196,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
       "values": {
         "TestText": "Alice"
       },
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/filled_mcp.pdf"
+      "output": "out/filled_mcp.pdf"
     }
   }
 }
@@ -1201,7 +1204,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "/app/tests/e2e_fixtures/out/tri_e2e/filled_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "out/filled_api.pdf"}'
 ```
 
 ---
@@ -1210,7 +1213,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output /app/tests/e2e_fixtures/out/tri_e2e/added_cli.pdf --json
+paperpilot form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output out/added_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1229,7 +1232,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
       "y": 50.0,
       "width": 100.0,
       "height": 30.0,
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/added_mcp.pdf"
+      "output": "out/added_mcp.pdf"
     }
   }
 }
@@ -1237,7 +1240,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "/app/tests/e2e_fixtures/out/tri_e2e/added_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "out/added_api.pdf"}'
 ```
 
 ---
@@ -1246,7 +1249,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format docx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.docx --json
+paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format docx --output out/out_cli.docx --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1259,7 +1262,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
     "name": "pdf_to_docx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.docx"
+      "output": "out/out_mcp.docx"
     }
   }
 }
@@ -1267,7 +1270,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.docx", "format": "docx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.docx", "format": "docx"}'
 ```
 
 ---
@@ -1276,7 +1279,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.xlsx --json
+paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output out/out_cli.xlsx --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1289,7 +1292,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_to_xlsx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.xlsx"
+      "output": "out/out_mcp.xlsx"
     }
   }
 }
@@ -1297,7 +1300,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.xlsx", "format": "xlsx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.xlsx", "format": "xlsx"}'
 ```
 
 ---
@@ -1306,7 +1309,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output /app/tests/e2e_fixtures/out/tri_e2e/out_cli.pptx --json
+paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output out/out_cli.pptx --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1319,7 +1322,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_to_pptx",
     "arguments": {
       "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_mcp.pptx"
+      "output": "out/out_mcp.pptx"
     }
   }
 }
@@ -1327,7 +1330,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_api.pptx", "format": "pptx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.pptx", "format": "pptx"}'
 ```
 
 ---
@@ -1336,7 +1339,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.html --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_html_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/test.html --format pdf --output out/out_html_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1349,7 +1352,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
     "name": "pdf_convert_html",
     "arguments": {
       "input": "tests/e2e_fixtures/test.html",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_html_mcp.pdf"
+      "output": "out/out_html_mcp.pdf"
     }
   }
 }
@@ -1357,7 +1360,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_html_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "out/out_html_api.pdf"}'
 ```
 
 ---
@@ -1366,7 +1369,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.md --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_md_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/test.md --format pdf --output out/out_md_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1379,7 +1382,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
     "name": "pdf_convert_markdown",
     "arguments": {
       "input": "tests/e2e_fixtures/test.md",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_md_mcp.pdf"
+      "output": "out/out_md_mcp.pdf"
     }
   }
 }
@@ -1387,7 +1390,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_md_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "out/out_md_api.pdf"}'
 ```
 
 ---
@@ -1396,7 +1399,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
 
 ### CLI
 ```bash
-/app/target/debug/paperpilot-cli convert --input tests/e2e_fixtures/test.csv --format pdf --output /app/tests/e2e_fixtures/out/tri_e2e/out_csv_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/test.csv --format pdf --output out/out_csv_cli.pdf --json
 ```
 
 ### MCP (JSON-RPC)
@@ -1409,7 +1412,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
     "name": "pdf_convert_excel",
     "arguments": {
       "input": "tests/e2e_fixtures/test.csv",
-      "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_csv_mcp.pdf"
+      "output": "out/out_csv_mcp.pdf"
     }
   }
 }
@@ -1417,7 +1420,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H '
 
 ### REST API (cURL)
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "/app/tests/e2e_fixtures/out/tri_e2e/out_csv_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "out/out_csv_api.pdf"}'
 ```
 
 ---
