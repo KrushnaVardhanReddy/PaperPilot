@@ -8,7 +8,8 @@
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | [Spec 028](file:///home/krushna/Project/PaperPilot/specs/028-desktop-binary-optimization/spec.md) | Drop standalone Desktop executable from **107 MB to < 75 MB** via root workspace release profile (strip, LTO, abort) and migrate `paperpilot-nlp` from heavy C++ `ort` to pure-Rust `rten` SIMD engine. Validated with full 44-tool test round across CLI, REST, MCP, WASM, and Edge. | ⏳ **In Flight** ([Jules Session 4914648655277667147](https://jules.google.com/session/4914648655277667147)) |
+| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | [Spec 028](file:///home/krushna/Project/PaperPilot/specs/028-desktop-binary-optimization/spec.md) | Drop standalone Desktop executable from **107 MB to < 75 MB** via root workspace release profile (strip, LTO, abort) and migrate `paperpilot-nlp` from heavy C++ `ort` to pure-Rust `rten` SIMD engine. Validated with full 44-tool test round across CLI, REST, MCP, WASM, and Edge. | ⏳ **In Flight** ([Jules Session 11361744507474308005](https://jules.google.com/session/11361744507474308005)) |
+| **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Web & Embed Test Coverage | [Spec 030](file:///home/krushna/Project/PaperPilot/specs/030-web-and-embed-batch-unit-tests/spec.md) | Dedicated Playwright unit test suite for interactive embed configuration panels, page range inputs, and web WASM multi-file batch execution queue. | ⏳ **In Flight** ([Jules Session 236392176878863235](https://jules.google.com/session/236392176878863235)) |
 
 ---
 

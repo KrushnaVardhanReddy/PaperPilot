@@ -1,0 +1,224 @@
+# Task: Phase 5.9.3 — Unit Tests for Embed Widget Config Panel & Web WASM Batch Processing
+# Base Branch: main
+# Target Branch: feat-web-embed-batch-unit-tests
+# Priority: MEDIUM (Web & Embed Test Coverage Expansion)
+# Spec: specs/030-web-and-embed-batch-unit-tests/spec.md
+
+## Objective
+Write comprehensive Playwright unit/E2E tests for the newly added batch multi-file processing and interactive parameter configuration features in both `apps/embed` (`Widget.svelte`) and `apps/web` (`OperationsView.svelte`), and verify 100% test pass.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files in these paths:
+```
+apps/embed/tests/widget_batch_and_config.spec.ts
+apps/web/tests/operations_batch_processing.spec.ts
+reports/WEB_AND_EMBED_BATCH_UNIT_TESTS_REPORT.md
+wiki/24-Web-And-Embed-Batch-Testing.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/desktop/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+DO NOT break existing tests in `apps/embed/tests/e2e_embed.spec.ts` or `apps/web/tests/`.
+
+---
+
+## 1. Concrete Implementation Blueprints for Jules
+
+### A. Embed Widget Unit Tests (`apps/embed/tests/widget_batch_and_config.spec.ts`)
+Write the complete Playwright spec testing shadow DOM encapsulation, interactive config panels, page range inputs, and batch downloads:
+```typescript
+import { test, expect } from '@playwright/test';
+import { resolve } from 'path';
+
+test.describe('Embed Widget Config Panel & Batch Processing', () => {
+  const fixtureUrl = `file://${resolve(import.meta.dirname, 'fixtures/host_page.html')}`;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(fixtureUrl);
+    await page.waitForSelector('#paperpilot-portal');
+  });
+
+  test('1. Interactive Config Panel opens on tool selection', async ({ page }) => {
+    const portal = page.locator('#paperpilot-portal');
+
+    // Click 'Extract Pages' tool card inside shadow root
+    await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const extractBtn = Array.from(shadow?.querySelectorAll('.pp-tool-card') || [])
+        .find(b => b.textContent?.includes('Extract')) as HTMLElement;
+      extractBtn?.click();
+    });
+
+    // Check config panel is rendered with page input
+    const hasConfigPanel = await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const panel = shadow?.querySelector('.pp-config-panel');
+      const pageInput = shadow?.querySelector('#page-input');
+      return !!panel && !!pageInput;
+    });
+    expect(hasConfigPanel).toBe(true);
+  });
+
+  test('2. Rotation tool opens rotation angle dropdown and page targets', async ({ page }) => {
+    const portal = page.locator('#paperpilot-portal');
+
+    await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const rotateBtn = Array.from(shadow?.querySelectorAll('.pp-tool-card') || [])
+        .find(b => b.textContent?.includes('Rotate')) as HTMLElement;
+      rotateBtn?.click();
+    });
+
+    const hasRotateControls = await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const angleSelect = shadow?.querySelector('#rotate-angle') as HTMLSelectElement;
+      const pagesInput = shadow?.querySelector('#rotate-pages') as HTMLInputElement;
+      return !!angleSelect && !!pagesInput && angleSelect.value === '90';
+    });
+    expect(hasRotateControls).toBe(true);
+  });
+
+  test('3. Page range input updates reactively in state', async ({ page }) => {
+    const portal = page.locator('#paperpilot-portal');
+
+    await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const extractBtn = Array.from(shadow?.querySelectorAll('.pp-tool-card') || [])
+        .find(b => b.textContent?.includes('Extract')) as HTMLElement;
+      extractBtn?.click();
+    });
+
+    await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      const pageInput = shadow?.querySelector('#page-input') as HTMLInputElement;
+      if (pageInput) {
+        pageInput.value = '2-4';
+        pageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
+    const inputValue = await portal.evaluate((el) => {
+      const shadow = el.shadowRoot;
+      return (shadow?.querySelector('#page-input') as HTMLInputElement)?.value;
+    });
+    expect(inputValue).toBe('2-4');
+  });
+
+  test('4. Batch file upload renders multi-file drop state and separate cards', async ({ page }) => {
+    const portal = page.locator('#paperpilot-portal');
+
+    // Simulate multi-file drop into widget
+    const fileCount = await portal.evaluate(async (el) => {
+      const shadow = el.shadowRoot;
+      const dropzone = shadow?.querySelector('.pp-dropzone') as HTMLElement;
+      if (!dropzone) return 0;
+
+      const f1 = new File(['%PDF-1.4 test 1'], 'doc1.pdf', { type: 'application/pdf' });
+      const f2 = new File(['%PDF-1.4 test 2'], 'doc2.pdf', { type: 'application/pdf' });
+      const dt = new DataTransfer();
+      dt.items.add(f1);
+      dt.items.add(f2);
+
+      const event = new DragEvent('drop', {
+        bubbles: true,
+        composed: true,
+        dataTransfer: dt
+      });
+      dropzone.dispatchEvent(event);
+      return 2;
+    });
+
+    expect(fileCount).toBe(2);
+  });
+});
+```
+
+---
+
+### B. Web WASM Operations Batch Processing Tests (`apps/web/tests/operations_batch_processing.spec.ts`)
+Write the Playwright spec testing `OperationsView.svelte` multi-file queueing, reactive button counts, and remove handlers:
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Web Operations Batch Multi-File Processing', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/#operations');
+    await page.waitForSelector('.app-container', { state: 'visible' });
+  });
+
+  test('1. Multi-file queueing and remove button in Extract tool', async ({ page }) => {
+    // Select Extract tool in navigation
+    const extractTab = page.locator('.tool-nav-item', { hasText: 'Extract Pages' });
+    if (await extractTab.isVisible()) {
+      await extractTab.click();
+    }
+
+    // Simulate dropping 2 files via input[type="file"]
+    const fileInput = page.locator('input[type="file"]').first();
+    await fileInput.setInputFiles([
+      { name: 'test_a.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 sample A') },
+      { name: 'test_b.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 sample B') }
+    ]);
+
+    // Verify both files appear in the queue (.file-list .file-item)
+    await expect(page.locator('.file-item')).toHaveCount(2);
+    await expect(page.locator('.file-item').first()).toContainText('test_a.pdf');
+    await expect(page.locator('.file-item').nth(1)).toContainText('test_b.pdf');
+
+    // Remove first file
+    await page.locator('.file-item').first().locator('button', { hasText: '✕' }).click();
+    await expect(page.locator('.file-item')).toHaveCount(1);
+    await expect(page.locator('.file-item').first()).toContainText('test_b.pdf');
+  });
+
+  test('2. Action button reactively reflects batch file count', async ({ page }) => {
+    const extractTab = page.locator('.tool-nav-item', { hasText: 'Extract Pages' });
+    if (await extractTab.isVisible()) {
+      await extractTab.click();
+    }
+
+    const fileInput = page.locator('input[type="file"]').first();
+    await fileInput.setInputFiles([
+      { name: 'file1.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 sample 1') },
+      { name: 'file2.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 sample 2') }
+    ]);
+
+    // Fill page range
+    await page.locator('#extractPagesStr').fill('1-2');
+
+    // Check button label
+    const actionBtn = page.locator('.action-btn');
+    await expect(actionBtn).toContainText('Extract Pages & Download (2 files)');
+  });
+});
+```
+
+---
+
+## 2. Resource & Execution Guidelines
+Run tests using non-interactive mode:
+```bash
+# Embed tests
+cd apps/embed && npx playwright test tests/widget_batch_and_config.spec.ts
+
+# Web tests
+cd apps/web && npx playwright test tests/operations_batch_processing.spec.ts
+```
+
+
+All existing tests in `apps/embed` and `apps/web` must also continue to pass:
+```bash
+cd apps/embed && npx playwright test
+cd apps/web && npx playwright test
+```
+
+---
+
+## 3. Deliverables
+1. Write tests in `apps/embed/tests/widget_batch_and_config.spec.ts`.
+2. Write tests in `apps/web/tests/operations_batch_processing.spec.ts`.
+3. Generate detailed test report at `reports/WEB_AND_EMBED_BATCH_UNIT_TESTS_REPORT.md` documenting every test case, assertion, and execution timing.
+4. Add reference documentation in `wiki/24-Web-And-Embed-Batch-Testing.md`.
+5. Open PR to `main` with summary of all test cases.
