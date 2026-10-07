@@ -380,6 +380,7 @@
       case 'compress':
         args = {
           input: docPath,
+          quality: compressQuality.toString(),
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_compressed.pdf`)
         };
         break;

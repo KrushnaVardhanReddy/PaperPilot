@@ -75,7 +75,7 @@ fn test_rotate() {
 fn test_compress() {
     let doc = create_dummy_pdf();
 
-    let result = compress(&doc);
+    let result = compress(&doc, None);
     assert!(result.is_ok(), "Compress operation failed: {:?}", result.err());
 
     let compressed_bytes = result.unwrap();

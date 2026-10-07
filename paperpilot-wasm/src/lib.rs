@@ -49,8 +49,9 @@ impl WasmPdfEngine {
 
     /// Compress PDF by removing unneeded metadata, deflating streams, and cleaning cross-references
     #[wasm_bindgen]
-    pub fn compress(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
-        let result = operations::compress(input_bytes)
+    pub fn compress(input_bytes: &[u8], quality: Option<String>) -> Result<js_sys::Uint8Array, JsValue> {
+        let quality_str = quality.as_deref();
+        let result = operations::compress(input_bytes, quality_str)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(js_sys::Uint8Array::from(&result[..]))

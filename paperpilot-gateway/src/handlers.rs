@@ -393,7 +393,7 @@ pub async fn split(req: axum::extract::Request) -> impl IntoResponse {
     )
 )]
 pub async fn compress(req: axum::extract::Request) -> impl IntoResponse {
-    handle_tool(Path("compress".to_string()), req).await
+    handle_tool(Path("pdf_compress".to_string()), req).await
 }
 
 /// Extract clean text from a PDF document

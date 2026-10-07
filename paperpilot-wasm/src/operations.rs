@@ -233,9 +233,96 @@ pub fn split(input_bytes: &[u8], ranges: &str) -> OperationResult<Vec<Vec<u8>>> 
     Ok(output_buffers)
 }
 
-pub fn compress(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
+pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Vec<u8>> {
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
+
+    let (max_dim, jpeg_quality) = match quality {
+        Some("low") => (1024, 45),
+        Some("medium") => (1600, 70),
+        Some("high") => (2400, 85),
+        Some(s) if s.parse::<u8>().is_ok() => (1600, s.parse::<u8>().unwrap()),
+        _ => (1600, 70), // default to medium
+    };
+
+    let object_ids: Vec<lopdf::ObjectId> = doc.objects.keys().copied().collect();
+
+    for object_id in object_ids {
+        if let Ok(lopdf::Object::Stream(stream)) = doc.get_object_mut(object_id) {
+            let is_image = stream.dict.get(b"Subtype")
+                .and_then(|obj| obj.as_name())
+                .map(|name| name == b"Image")
+                .unwrap_or(false);
+
+            if !is_image {
+                continue;
+            }
+
+            let decompressed = match stream.decompressed_content() {
+                Ok(bytes) => bytes,
+                Err(_) => continue,
+            };
+            
+            let original_len = stream.content.len();
+
+            let width = match stream.dict.get(b"Width").and_then(|w| w.as_i64()) {
+                Ok(w) => w as u32,
+                Err(_) => continue,
+            };
+            
+            let height = match stream.dict.get(b"Height").and_then(|h| h.as_i64()) {
+                Ok(h) => h as u32,
+                Err(_) => continue,
+            };
+
+            let color_space = stream.dict.get(b"ColorSpace")
+                .and_then(|c| c.as_name())
+                .unwrap_or(b"DeviceRGB")
+                .to_vec();
+            
+            let mut dyn_img_opt = image::load_from_memory(&decompressed).ok();
+            
+            if dyn_img_opt.is_none() {
+                if color_space == b"DeviceRGB" && decompressed.len() >= (width * height * 3) as usize {
+                    if let Some(img_buf) = image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                        dyn_img_opt = Some(image::DynamicImage::ImageRgb8(img_buf));
+                    }
+                } else if color_space == b"DeviceGray" && decompressed.len() >= (width * height) as usize {
+                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                        dyn_img_opt = Some(image::DynamicImage::ImageLuma8(img_buf));
+                    }
+                }
+            }
+            
+            if let Some(mut dyn_img) = dyn_img_opt {
+                let (w, h) = (dyn_img.width(), dyn_img.height());
+                if w > max_dim || h > max_dim {
+                    dyn_img = dyn_img.resize(max_dim, max_dim, image::imageops::FilterType::Triangle);
+                }
+                
+                let mut jpeg_bytes = Vec::new();
+                let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality);
+                
+                if let Ok(_) = dyn_img.write_with_encoder(encoder) {
+                    if jpeg_bytes.len() < original_len {
+                        stream.content = jpeg_bytes;
+                        stream.dict.set("Filter", lopdf::Object::Name(b"DCTDecode".to_vec()));
+                        stream.dict.remove(b"DecodeParms");
+                        stream.dict.set("Width", lopdf::Object::Integer(dyn_img.width() as i64));
+                        stream.dict.set("Height", lopdf::Object::Integer(dyn_img.height() as i64));
+                        stream.dict.set("Length", lopdf::Object::Integer(stream.content.len() as i64));
+                        if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
+                            if dyn_img.color() == image::ColorType::L8 || dyn_img.color() == image::ColorType::La8 {
+                                stream.dict.set("ColorSpace", lopdf::Object::Name(b"DeviceGray".to_vec()));
+                            } else {
+                                stream.dict.set("ColorSpace", lopdf::Object::Name(b"DeviceRGB".to_vec()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     doc.compress();
 

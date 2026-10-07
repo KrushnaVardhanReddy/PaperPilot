@@ -679,6 +679,21 @@ impl PaperPilotMcpServer {
             "output".to_string(),
             serde_json::Value::Object(prop_output_c),
         );
+        
+        let mut prop_quality = serde_json::Map::new();
+        prop_quality.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_quality.insert(
+            "description".to_string(),
+            serde_json::Value::String("Compression quality preset (low, medium, high) or integer 1-100".to_string()),
+        );
+        prop_compress.insert(
+            "quality".to_string(),
+            serde_json::Value::Object(prop_quality),
+        );
+        
         schema_compress.insert(
             "properties".to_string(),
             serde_json::Value::Object(prop_compress),
@@ -3017,12 +3032,13 @@ impl PaperPilotMcpServer {
             "pdf_compress" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
+                let quality = get_string("quality").ok();
 
                 ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::compress::CompressOperation::new();
+                let op = paperpilot_pdf::operations::compress::CompressOperation::new(quality);
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 doc.save(&std::path::PathBuf::from(&output))
                     .map_err(crate::error::to_mcp_error)?;

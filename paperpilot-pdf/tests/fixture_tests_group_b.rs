@@ -33,7 +33,7 @@ fn test_compress() {
     let output_path = temp_dir.path().join("compressed.pdf");
 
     let mut doc = LopdfDocument::load(&get_simple_pdf_path()).expect("Failed to load simple.pdf");
-    let op = CompressOperation::new();
+    let op = CompressOperation::new(None);
 
     assert!(op.execute(&mut doc).is_ok());
 
