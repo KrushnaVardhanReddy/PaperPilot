@@ -8,7 +8,6 @@
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **4.E2E.R4** | Tri-Interface Deep Assertions & Unified Matrix | Multi-Surface Parity | [Spec 027](file:///home/krushna/Project/PaperPilot/specs/027-tri-interface-deep-assertions/spec.md) | Deep behavioral verification (Expected vs Actual, page counts, bytes, magic headers) across CLI, MCP, REST API, WASM, and Cloudflare Edge in unified comparison matrix tables (`reports/TRI_INTERFACE_E2E_100_VERIFIED.md`). | ⏳ **In Flight** ([Jules Session 13099315791828528723](https://jules.google.com/session/13099315791828528723)) |
 | **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | [Spec 028](file:///home/krushna/Project/PaperPilot/specs/028-desktop-binary-optimization/spec.md) | Drop standalone Desktop executable from **107 MB to < 75 MB** via root workspace release profile (strip, LTO, abort) and migrate `paperpilot-nlp` from heavy C++ `ort` to pure-Rust `rten` SIMD engine. Validated with full 44-tool test round across CLI, REST, MCP, WASM, and Edge. | ⏳ **In Flight** ([Jules Session 4914648655277667147](https://jules.google.com/session/4914648655277667147)) |
 
 ---
@@ -25,7 +24,7 @@
 ## 🏆 Completed v1.0 Milestones Archive
 
 <details>
-<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (18 Milestones)</b></summary>
+<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (19 Milestones)</b></summary>
 
 | # | Task | Area | Milestone Summary | Resolution |
 |---|---|---|---|---|
@@ -47,9 +46,10 @@
 | **5.6.1** | Pure-Rust Office & Document Conversions (Zero-Chrome) | Conversions | Pure-Rust `fulgur` engine for HTML, Markdown, and Excel to PDF; eliminated `headless_chrome` (sub-60ms). | ✅ **Completed** (PR #150, `9c3f5cc`) |
 | **5.6.2** | Universal High-Ratio PDF Compression Engine | Optimization | True image recompression (JPEG encoder), downsampling, and quality control across all surfaces. | ✅ **Completed** (`16f8ede`) |
 | **5.7.1** | 1-Hour Sustained Soak & Endurance Benchmark | Reliability | 60-minute stress test across all 44 tools (353,892 ops, 98.3 ops/s, 100% pass, flat 25MB RSS memory). | ✅ **Completed** (PR #151, `987cc0d`) |
+| **4.E2E.R4** | Tri-Interface Deep Behavioral Assertions & Unified Matrix | Multi-Surface Parity | Validated Expected vs Actual outcomes (pages, bytes, magic headers) across CLI, MCP, REST, WASM, and Edge in unified tables (Spec 027). | ✅ **Completed** (PR #153, `843ea9e`) |
 
 </details>
 
 ---
 
-*Last updated: 2026-10-07 (Spec 027 Tri-Interface Assertions & Spec 028 Desktop Binary Optimization Active)*
+*Last updated: 2026-10-07 (PR #153 Deep Assertions Merged, Spec 028 Desktop Binary Optimization Active)*
