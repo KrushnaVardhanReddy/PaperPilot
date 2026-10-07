@@ -1,0 +1,76 @@
+# Task: Phase 5.9.2 — Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`)
+# Base Branch: main
+# Target Branch: feat-pure-rust-jules-submitter
+# Priority: MEDIUM (Zero-Python Tooling Migration)
+# Spec: specs/029-pure-rust-jules-submitter/spec.md
+
+## Objective
+Replace `scripts/jules_submit.py` with a 100% pure-Rust CLI tool in `tools/jules-submit/` that handles prompt discovery, API key loading, Jules REST API communication, and atomic archiving to eliminate Python dependencies from the agent workflow.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files in these paths:
+```
+Cargo.toml
+tools/jules-submit/
+scripts/jules_submit.sh
+reports/JULES_SUBMIT_RUST_MIGRATION_REPORT.md
+wiki/23-Pure-Rust-Jules-Submitter.md
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Requirements & Features
+
+### A. CLI Interface (`tools/jules-submit`)
+Implement using `clap` (derive):
+- `--list`: List all pending task prompts under `prompts/tasks/` (recursively, excluding `done/`).
+- `--file <path>`: Submit a specific prompt file.
+- `--task <id>`: Fuzzy-find by task ID (e.g. `P1-T1` or `P5_7_1`).
+- `--phase <num>`: Batch-submit all pending prompts in `prompts/tasks/phase{N}/`.
+- `--branch <name>`: Target Git starting branch (default: `main`).
+- `--dry-run`: Format payload and display target without making network call.
+
+### B. Environment & API Key Handling
+- Automatically check `JULES_API_KEY` from process environment.
+- If not set, parse `.env.local` or `.env` in repository root.
+- Never log or print the API key to console.
+
+### C. Submission & Safety Rule Injection
+- Target URL: `https://jules.googleapis.com/v1alpha/sessions`
+- Prepend the mandatory `SAFETY_RULES` block to prompt text.
+- Header: `x-goog-api-key: <KEY>`, `Content-Type: application/json`.
+- Payload structure:
+  ```json
+  {
+    "prompt": "<SAFETY_RULES + PROMPT_CONTENT>",
+    "sourceContext": {
+      "source": "sources/github/KrushnaVardhanReddy/PaperPilot",
+      "githubRepoContext": { "startingBranch": "<BRANCH>" }
+    }
+  }
+  ```
+- Parse returned JSON session ID from `name` field (e.g. `sessions/<ID>`).
+- Print the live dashboard link: `https://jules.google.com/session/<ID>`.
+
+### D. Atomic Archiving
+- Upon successful session creation, move prompt file to `prompts/tasks/done/<relative_path>`, preserving folder hierarchy.
+
+---
+
+## 2. Quality Gate & Acceptance Criteria
+1. Add `tools/jules-submit` to root `Cargo.toml` `workspace.members`.
+2. Must compile with `cargo check -p jules-submit`.
+3. Unit tests for task finding, `.env` parsing, and archiving logic must pass:
+   ```bash
+   cargo test -p jules-submit -j 2
+   ```
+4. Verification:
+   - `cargo run -p jules-submit -- --list` lists pending prompt files.
+   - `cargo run -p jules-submit -- --file ... --dry-run` prints dry run payload.
+5. Create lightweight forwarder `scripts/jules_submit.sh` (or replace Python script).
+6. Document in `reports/JULES_SUBMIT_RUST_MIGRATION_REPORT.md` and `wiki/23-Pure-Rust-Jules-Submitter.md`.
