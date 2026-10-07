@@ -35,8 +35,12 @@ strip = true
 - Update `paperpilot-nlp/src/layer2.rs` to load the `.rten` model and run SIMD inference directly in Rust memory without C++ bindings.
 - Preserve identical intent classification API (`OnnxClassifier` / `NlpClassifier::predict`) and <2ms latency.
 
-### 3. Verification & Metrics
+### 3. Verification & Multi-Interface Quality Gate
 - Measure binary size before and after using `ls -lh`, `file`, and symbol categorization.
 - Execute unit & integration tests (`cargo test -p paperpilot-nlp -j 2`).
 - Execute Playwright UI chat test (`apps/desktop/tests/e2e_ai_chat_real_pipeline.spec.ts`).
+- **Complete Multi-Interface Battery (All 44 Tools)**:
+  - CLI, MCP, REST Gateway: `python3 scripts/test_tri_interface_e2e.py` (132/132 assertions pass).
+  - Browser WASM (Web): `cd apps/web && pnpm exec playwright test` (100% pass).
+  - Cloudflare Edge: `cd apps/edge && pnpm test` (100% pass).
 - Record official report at `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md` and wiki at `wiki/22-Desktop-Binary-Optimization.md`.
