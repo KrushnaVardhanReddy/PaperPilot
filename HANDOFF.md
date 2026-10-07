@@ -99,21 +99,113 @@ Once pure-Rust migrations (OCR `ocrs`, Page Rasterizer `hayro`, Images, Hash) la
 
 ## 🛠️ Useful Commands
 
+### 🤖 Multi-Agent Orchestration & Invocation
+
+PaperPilot leverages a multi-tiered agent setup:
+1. **Jules (Google Async Cloud Agent)**: Asynchronous cloud PR generator for isolated tasks, end-to-end integration tests, benchmarks, docs, and lint cleanups without consuming local tokens.
+2. **OpenCode (Local Terminal LLM)**: Fast on-device terminal assistant (`/home/krushna/.opencode/bin/opencode`) for rapid local edits, interactive diff inspections, and non-blocking shell workflows.
+3. **Claude Code (`claude`) / OpenAI Codex (`codex`)**: Local AI coding CLI assistants for interactive, context-heavy pair programming.
+4. **Antigravity (IDE Agent)**: Complex architecture, cross-crate debugging, visual UI validation, and orchestrating the other agents.
+
+#### 1. Invoking Jules (Batch Submitter & API)
 ```bash
-# Run workspace build & unit tests
-cargo test --workspace
+# List pending prompts in prompts/tasks/
+python3 scripts/jules_submit.py --list
 
-# Start the REST/MCP Gateway Server
-./target/release/paperpilot-cli serve --port 7823
+# Submit a single prompt file (automatically creates a Jules session & moves prompt to prompts/tasks/done/)
+python3 scripts/jules_submit.py --file prompts/tasks/verification/P4_E2E_R4_deep_assertions_report.txt
 
-# Run the complete Tri-Interface E2E verification
-python3 scripts/test_tri_interface_e2e.py
+# Preview the submission payload and target repository without triggering API (Dry Run)
+python3 scripts/jules_submit.py --file prompts/tasks/verification/P4_E2E_R4_deep_assertions_report.txt --dry-run
 
-# Run Frontend Playwright E2E tests
-cd apps/desktop && pnpm exec playwright test
+# Submit all tasks under a specific phase folder
+python3 scripts/jules_submit.py --phase 5
+
+# Submit targeting a specific Git base branch
+python3 scripts/jules_submit.py --file prompts/tasks/phase5/P5_7_1_one_hour_soak_test.txt --branch main
+
+# Direct curl invocation against Google Jules API (uses JULES_API_KEY from .env / .env.local):
+curl -X POST "https://jules.googleapis.com/v1alpha/sessions" \
+  -H "X-Goog-Api-Key: $(grep JULES_API_KEY .env.local | cut -d= -f2)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "MANDATORY RULES: 1. Keep all existing code. 2. Must pass cargo check. Task: Update scripts/test_tri_interface_e2e.py to record Expected vs Actual results in unified report.",
+    "sourceContext": {
+      "source": "sources/github/KrushnaVardhanReddy/PaperPilot",
+      "githubRepoContext": { "startingBranch": "main" }
+    }
+  }'
+```
+
+#### 2. Invoking Local Agents (OpenCode, Claude, Codex)
+```bash
+# OpenCode (Terminal interactive UI or non-interactive pipe)
+opencode                                     # Launch interactive TUI
+opencode -p "Review diff between origin/main and HEAD"   # Run one-shot prompt
+
+# Claude Code CLI
+claude                                       # Launch interactive REPL
+claude -p "Check Rust crate clippy warnings across workspace"
+
+# Codex CLI
+codex "Generate mock fixture for PDF form flattening test"
 ```
 
 ---
 
-*Last updated: 2026-10-05 11:11 EDT (PR #131 Thumbnail Organizer Merged, PR #133 Master AI Chat E2E Merged, Phase 4.8.1 WASM Dispatched to Jules)*
+### 🦀 Rust Workspace Building & Testing
+```bash
+# Fast workspace type check across all crates & targets
+cargo check --workspace --tests
+
+# Run unit & integration tests with low concurrency (prevents memory spikes / IDE OOM kills)
+cargo test --workspace -- -j 2
+
+# Test specific crates individually
+cargo test -p paperpilot-pdf --lib -j 2
+cargo test -p paperpilot-mcp --lib -j 2
+cargo test -p paperpilot-gateway --lib -j 2
+cargo test -p paperpilot-wasm --test wasm_tests
+
+# Build optimized release binaries for CLI, MCP, and Gateway
+cargo build --release -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
+```
+
+---
+
+### 🌐 Server & Multi-Interface Testing
+```bash
+# Start the local REST & MCP Gateway Server (port 7823)
+./target/release/paperpilot-cli serve --port 7823
+
+# Direct MCP JSON-RPC invocation via stdio (no Python needed)
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "pdf_info", "arguments": {"input": "tests/e2e_fixtures/page_1.pdf"}}}' | ./target/release/paperpilot-mcp
+
+# Run the Master Tri-Interface E2E suite (132 assertions across CLI, MCP, and REST API)
+python3 scripts/test_tri_interface_e2e.py
+
+# Run the 1-Hour continuous soak & endurance stress test harness (or custom duration in seconds)
+python3 scripts/stress_test.py 3600
+```
+
+---
+
+### 🖥️ Frontend & WASM Suites
+```bash
+# Compile client-side WASM engine with wasm-pack
+make build-wasm
+
+# Run Desktop app Playwright E2E suite
+cd apps/desktop && pnpm exec playwright test
+
+# Run Web App WASM Playwright E2E suite (in-browser 22 tools)
+cd apps/web && pnpm exec playwright test
+
+# Run Cloudflare Edge microservice Vitest suite
+cd apps/edge && pnpm test
+```
+
+---
+
+*Last updated: 2026-10-07 02:08 EDT (Spec 026 High-Ratio Compression Merged, Spec 027 Deep Assertions Tri-Interface Dispatched to Jules Session 13099315791828528723)*
 
