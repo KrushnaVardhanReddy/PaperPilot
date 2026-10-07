@@ -72,6 +72,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 ---
 
+- **5.6.2 (Spec 026)**: Universal High-Ratio PDF Compression Engine (JPEG recompression and downsampling via `image` crate, quality control across CLI, MCP, API, WASM, and UI slider, commit `16f8ede`).
 - **PR #151 (5.7.1)**: 1-Hour Sustained Soak & Endurance Benchmark across 44 pure-Rust tools (353,892 operations, 98.3 ops/s sustained throughput, 100.00% success rate, 0 panics/crashes, 25 MB flat RSS memory curve, `wiki/19-One-Hour-Endurance-Benchmark.md`, `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`).
 - **PR #150 (5.6.1)**: Pure-Rust High-Speed Office & Document Conversions (`fulgur` engine replacing `headless_chrome` in `paperpilot-pdf/src/operations/conversion.rs`, sub-60ms conversion latency for HTML, Markdown, and Excel, `wiki/18-Pure-Rust-Office-Conversions.md`, `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md` 132/132 assertions PASS).
 - **PR #148 (4.9.13)**: Certificate & Template Studio (HTML/SVG template engine, dynamic customization, bulk CSV certificate generator, `apps/web/`).
@@ -93,9 +94,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
-| **5.1.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_15_TOOLS_EXPANSION_REPORT.md`, `wiki/11-Wasm-15-Tools-Suite.md` | [Session 15762776336095880921](https://jules.google.com/session/15762776336095880921) | `main` | ✅ **Merged (PR #143)** — Expanded WASM Engine & Web Suite to 15 Tools (`images_to_pdf`, `extract_images`, `pdf_hash`) |
-| **5.5.1** | `paperpilot-wasm/*`, `apps/web/*`, `reports/WASM_22_TOOLS_E2E_SCORECARD.md`, `wiki/13-Wasm-22-Tools-Suite.md` | [Session 8898129496130614008](https://jules.google.com/session/8898129496130614008) | `main` | ✅ **Completed** — Re-exported Render (`hayro`), OCR (`ocrs`), text extraction, decrypt, and numbering into WASM (15 → 22 tools) |
-| **4.9 Core** | `apps/embed/*`, `reports/EMBED_WIDGET_REPORT.md`, `wiki/14-Embedded-Web-Widget.md` | [Session 11292841270028301362](https://jules.google.com/session/11292841270028301362) | `main` | ⏳ **In Flight** — Build `embed.js` CDN loader, Svelte 5 Embed Widget with Shadow DOM isolation, and Playwright E2E tests |
+| **4.E2E.R4** | `scripts/test_tri_interface_e2e.py`, `reports/TRI_INTERFACE_E2E_100_VERIFIED.md`, `reports/TRI_INTERFACE_E2E_AND_DOCS.md`, `wiki/21-Tri-Interface-Deep-Assertions.md` | [Session 13099315791828528723](https://jules.google.com/session/13099315791828528723) | `main` | ⏳ **In Flight** — Upgrade tri-interface E2E test harness to validate Expected vs Actual outcomes (pages, bytes) across CLI, MCP, REST, WASM, and Cloudflare Edge in unified comparison matrix tables |
 
 ---
 
