@@ -73,7 +73,7 @@
   }
 
   let isProcessing = $state(false);
-  let processedFile = $state<{ name: string; url: string; size: number } | null>(null);
+  let processedFiles = $state<Array<{ name: string; url: string; size: number }>>([]);
 
   function handleDrop(e: DragEvent) {
     e.preventDefault();
@@ -86,7 +86,7 @@
       const toAdd = pdfs.length > 0 ? pdfs : incoming;
       // Append to support multiple uploads over time
       droppedFiles = [...droppedFiles, ...toAdd];
-      processedFile = null;
+      processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
     }
   }
@@ -96,7 +96,7 @@
     if (target.files && target.files.length > 0) {
       const incoming = Array.from(target.files);
       droppedFiles = [...droppedFiles, ...incoming];
-      processedFile = null;
+      processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
     }
   }
@@ -122,8 +122,8 @@
     dispatchEvent('process-start', { tool: toolId, files: droppedFiles.map(f => f.name) });
 
     try {
-      let finalBytes: Uint8Array;
-      let outName: string;
+      const { PDFDocument, degrees, rgb, StandardFonts } = await import('pdf-lib');
+      const outputs: Array<{ name: string; url: string; size: number }> = [];
 
       function parsePageNumbers(input: string, totalPages: number): number[] {
         const result = new Set<number>();
@@ -149,7 +149,6 @@
       }
 
       if (toolId === 'merge') {
-        const { PDFDocument } = await import('pdf-lib');
         const mergedDoc = await PDFDocument.create();
 
         for (const file of droppedFiles) {
@@ -160,118 +159,126 @@
           copiedPages.forEach(page => mergedDoc.addPage(page));
         }
 
-        finalBytes = await mergedDoc.save();
-        outName = 'merged_document.pdf';
-      } else if (toolId === 'rotate') {
-        const { PDFDocument, degrees } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const doc = await PDFDocument.load(arrayBuffer);
-        const pages = doc.getPages();
-        const angleNum = parseInt(rotateAngle, 10) || 90;
+        const finalBytes = await mergedDoc.save();
+        const finalBlob = new Blob([finalBytes], { type: 'application/pdf' });
+        outputs.push({
+          name: 'merged_document.pdf',
+          url: URL.createObjectURL(finalBlob),
+          size: finalBlob.size
+        });
+      } else {
+        // Batch process each file individually
+        for (const file of droppedFiles) {
+          const arrayBuffer = await file.arrayBuffer();
+          let finalBytes: Uint8Array;
+          let outName: string;
 
-        let targetIndices: number[];
-        if (rotatePages.trim().toLowerCase() === 'all' || !rotatePages.trim()) {
-          targetIndices = pages.map((_, i) => i);
-        } else {
-          targetIndices = parsePageNumbers(rotatePages, pages.length);
-        }
+          if (toolId === 'rotate') {
+            const doc = await PDFDocument.load(arrayBuffer);
+            const pages = doc.getPages();
+            const angleNum = parseInt(rotateAngle, 10) || 90;
 
-        for (const idx of targetIndices) {
-          if (pages[idx]) {
-            const currentRotation = pages[idx].getRotation().angle;
-            pages[idx].setRotation(degrees((currentRotation + angleNum) % 360));
+            let targetIndices: number[];
+            if (rotatePages.trim().toLowerCase() === 'all' || !rotatePages.trim()) {
+              targetIndices = pages.map((_, i) => i);
+            } else {
+              targetIndices = parsePageNumbers(rotatePages, pages.length);
+            }
+
+            for (const idx of targetIndices) {
+              if (pages[idx]) {
+                const currentRotation = pages[idx].getRotation().angle;
+                pages[idx].setRotation(degrees((currentRotation + angleNum) % 360));
+              }
+            }
+            finalBytes = await doc.save();
+            outName = `rotated_${file.name}`;
+          } else if (toolId === 'watermark') {
+            const doc = await PDFDocument.load(arrayBuffer);
+            const font = await doc.embedFont(StandardFonts.HelveticaBold);
+            const pages = doc.getPages();
+            const stamp = watermarkText.trim() || 'CONFIDENTIAL';
+            for (const page of pages) {
+              const { width, height } = page.getSize();
+              page.drawText(stamp, {
+                x: width / 6,
+                y: height / 2,
+                size: Math.min(width, height) / 14,
+                font,
+                color: rgb(0.85, 0.2, 0.2),
+                opacity: 0.35,
+                rotate: { type: 'degrees', angle: 45 } as any
+              });
+            }
+            finalBytes = await doc.save();
+            outName = `watermarked_${file.name}`;
+          } else if (toolId === 'split' || toolId === 'extract') {
+            const srcDoc = await PDFDocument.load(arrayBuffer);
+            const newDoc = await PDFDocument.create();
+            const total = srcDoc.getPageCount();
+            const indices = parsePageNumbers(pageInput, total);
+            const validIndices = indices.length > 0 ? indices : [0];
+
+            const copiedPages = await newDoc.copyPages(srcDoc, validIndices);
+            copiedPages.forEach(p => newDoc.addPage(p));
+            finalBytes = await newDoc.save();
+            outName = `${toolId}_p${validIndices.map(i => i + 1).join('_')}_${file.name}`;
+          } else if (toolId === 'delete') {
+            const doc = await PDFDocument.load(arrayBuffer);
+            const total = doc.getPageCount();
+            const indices = parsePageNumbers(pageInput, total);
+            const sortedDesc = [...indices].sort((a, b) => b - a);
+            for (const idx of sortedDesc) {
+              if (doc.getPageCount() > 1 && idx < doc.getPageCount()) {
+                doc.removePage(idx);
+              }
+            }
+            finalBytes = await doc.save();
+            outName = `deleted_pages_${file.name}`;
+          } else if (toolId === 'reorder') {
+            const srcDoc = await PDFDocument.load(arrayBuffer);
+            const newDoc = await PDFDocument.create();
+            const count = srcDoc.getPageCount();
+            const reversedIndices = Array.from({ length: count }, (_, i) => count - 1 - i);
+            const copied = await newDoc.copyPages(srcDoc, reversedIndices);
+            copied.forEach(p => newDoc.addPage(p));
+            finalBytes = await newDoc.save();
+            outName = `reversed_${file.name}`;
+          } else {
+            // compress / optimize or default
+            const doc = await PDFDocument.load(arrayBuffer);
+            finalBytes = await doc.save({ useObjectStreams: true });
+            outName = `optimized_${file.name}`;
           }
-        }
-        finalBytes = await doc.save();
-        outName = `rotated_${droppedFiles[0].name}`;
-      } else if (toolId === 'watermark') {
-        const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const doc = await PDFDocument.load(arrayBuffer);
-        const font = await doc.embedFont(StandardFonts.HelveticaBold);
-        const pages = doc.getPages();
-        const stamp = watermarkText.trim() || 'CONFIDENTIAL';
-        for (const page of pages) {
-          const { width, height } = page.getSize();
-          page.drawText(stamp, {
-            x: width / 6,
-            y: height / 2,
-            size: Math.min(width, height) / 14,
-            font,
-            color: rgb(0.85, 0.2, 0.2),
-            opacity: 0.35,
-            rotate: { type: 'degrees', angle: 45 } as any
+
+          const blob = new Blob([finalBytes], { type: 'application/pdf' });
+          outputs.push({
+            name: outName,
+            url: URL.createObjectURL(blob),
+            size: blob.size
           });
         }
-        finalBytes = await doc.save();
-        outName = `watermarked_${droppedFiles[0].name}`;
-      } else if (toolId === 'split' || toolId === 'extract') {
-        const { PDFDocument } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const srcDoc = await PDFDocument.load(arrayBuffer);
-        const newDoc = await PDFDocument.create();
-        const total = srcDoc.getPageCount();
-        const indices = parsePageNumbers(pageInput, total);
-        const validIndices = indices.length > 0 ? indices : [0];
-
-        const copiedPages = await newDoc.copyPages(srcDoc, validIndices);
-        copiedPages.forEach(p => newDoc.addPage(p));
-        finalBytes = await newDoc.save();
-        outName = `${toolId}_p${validIndices.map(i => i + 1).join('_')}_${droppedFiles[0].name}`;
-      } else if (toolId === 'delete') {
-        const { PDFDocument } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const doc = await PDFDocument.load(arrayBuffer);
-        const total = doc.getPageCount();
-        const indices = parsePageNumbers(pageInput, total);
-        // Remove from highest index to lowest so subsequent indices remain valid
-        const sortedDesc = [...indices].sort((a, b) => b - a);
-        for (const idx of sortedDesc) {
-          if (doc.getPageCount() > 1 && idx < doc.getPageCount()) {
-            doc.removePage(idx);
-          }
-        }
-        finalBytes = await doc.save();
-        outName = `deleted_pages_${droppedFiles[0].name}`;
-      } else if (toolId === 'reorder') {
-        const { PDFDocument } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const srcDoc = await PDFDocument.load(arrayBuffer);
-        const newDoc = await PDFDocument.create();
-        const count = srcDoc.getPageCount();
-        const reversedIndices = Array.from({ length: count }, (_, i) => count - 1 - i);
-        const copied = await newDoc.copyPages(srcDoc, reversedIndices);
-        copied.forEach(p => newDoc.addPage(p));
-        finalBytes = await newDoc.save();
-        outName = `reversed_${droppedFiles[0].name}`;
-      } else {
-        // compress / optimize or default
-        const { PDFDocument } = await import('pdf-lib');
-        const arrayBuffer = await droppedFiles[0].arrayBuffer();
-        const doc = await PDFDocument.load(arrayBuffer);
-        finalBytes = await doc.save({ useObjectStreams: true });
-        outName = `optimized_${droppedFiles[0].name}`;
       }
 
-      const finalBlob = new Blob([finalBytes], { type: 'application/pdf' });
-      const downloadUrl = URL.createObjectURL(finalBlob);
-
-      processedFile = {
-        name: outName,
-        url: downloadUrl,
-        size: finalBlob.size
-      };
-
+      processedFiles = outputs;
       isProcessing = false;
-      dispatchEvent('process-complete', { tool: toolId, outputSizeBytes: finalBlob.size, fileName: outName });
+      dispatchEvent('process-complete', {
+        tool: toolId,
+        count: outputs.length,
+        files: outputs.map(o => o.name)
+      });
 
-      // Automatically trigger download
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = outName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Automatically trigger downloads for generated files
+      outputs.forEach((item, index) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = item.url;
+          a.download = item.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }, index * 250); // slight stagger so browser doesn't block multi-download
+      });
     } catch (err: any) {
       isProcessing = false;
       console.error('[PaperPilot Embed] Error processing PDF:', err);
@@ -327,18 +334,22 @@
     {/if}
   </div>
 
-  {#if processedFile}
-    <div class="pp-download-card">
-      <div class="download-info">
-        <span class="download-icon">✅</span>
-        <div>
-          <strong>{processedFile.name}</strong>
-          <span class="download-meta">{(processedFile.size / 1024).toFixed(1)} KB &bull; Processed Successfully</span>
+  {#if processedFiles.length > 0}
+    <div class="pp-download-container">
+      {#each processedFiles as file}
+        <div class="pp-download-card">
+          <div class="download-info">
+            <span class="download-icon">✅</span>
+            <div>
+              <strong>{file.name}</strong>
+              <span class="download-meta">{(file.size / 1024).toFixed(1)} KB &bull; Processed Successfully</span>
+            </div>
+          </div>
+          <a href={file.url} download={file.name} class="download-btn">
+            📥 Download
+          </a>
         </div>
-      </div>
-      <a href={processedFile.url} download={processedFile.name} class="download-btn">
-        📥 Download Result
-      </a>
+      {/each}
     </div>
   {/if}
 
@@ -603,6 +614,12 @@
     cursor: pointer;
     text-decoration: underline;
     padding: 0;
+  }
+
+  .pp-download-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .pp-download-card {
