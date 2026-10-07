@@ -12,11 +12,13 @@ export default defineConfig({
     svelte(),
     (wasm as any)(),
     {
-      name: 'swagger-ui-rewriter',
+      name: 'portal-page-rewriter',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           if (req.url === '/swagger-ui' || req.url === '/swagger-ui/') {
             req.url = '/swagger-ui.html';
+          } else if (req.url === '/embed-test' || req.url === '/embed-test/') {
+            req.url = '/embed-test.html';
           }
           next();
         });
