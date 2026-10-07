@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import worker from '../src/index';
 
-// Mock the init function since it will attempt to fetch/load WASM natively
-// which fails in node environment.
+// Mock the wasm module and init function since Node ESM does not support native .wasm imports without flags
+vi.mock('paperpilot-wasm/paperpilot_wasm_bg.wasm', () => {
+  return {
+    default: new WebAssembly.Module(new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]))
+  };
+});
+
 vi.mock('paperpilot-wasm', () => {
   return {
     default: vi.fn().mockResolvedValue(undefined),
