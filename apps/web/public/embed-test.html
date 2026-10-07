@@ -51,13 +51,14 @@
     <h1>PaperPilot Embed Demonstration</h1>
     <p>Testing drop-in Shadow DOM widget integration.</p>
 
-    <!-- Demo 1: Free Tier Embed (Badge visible) -->
+    <!-- Demo 1: Full Suite Sandbox Embed (Badge visible) -->
     <div class="card">
-      <h2>1. Standard Embed (Badge Visible)</h2>
+      <h2>1. Full Suite Sandbox Embed (All Supported In-Browser Tools)</h2>
+      <p style="margin-bottom: 16px; font-size: 0.9rem;">Runs 100% locally in browser memory via Shadow DOM + WebAssembly/PDF Engine. No server uploads.</p>
       <div
         id="paperpilot-portal"
         data-theme="dark"
-        data-tools="merge,compress,watermark,encrypt"
+        data-tools="merge,split,rotate,watermark,extract,delete,reorder,compress"
         data-brand-color="#5E6AD2"
       ></div>
     </div>
@@ -68,7 +69,7 @@
       <div
         id="nobadge-portal"
         data-theme="dark"
-        data-tools="merge,split,ocr,convert"
+        data-tools="merge,split,rotate,compress"
         data-brand-color="#10B981"
         data-hide-badge="true"
         data-license-key="PRO_DEMO_KEY"

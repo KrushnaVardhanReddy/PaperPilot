@@ -99,9 +99,14 @@
       <div class="code-panel">
         <div class="code-header">
           <span class="code-title">index.html</span>
-          <button class="copy-btn" onclick={copyToClipboard}>
-            {copyFeedback ? '✓ Copied!' : '📋 Copy Code'}
-          </button>
+          <div class="header-actions">
+            <a href="/embed-test" target="_blank" rel="noopener noreferrer" class="test-sandbox-btn">
+              🚀 Try Live Sandbox &rarr;
+            </a>
+            <button class="copy-btn" onclick={copyToClipboard}>
+              {copyFeedback ? '✓ Copied!' : '📋 Copy Code'}
+            </button>
+          </div>
         </div>
         <pre class="code-block"><code>{embedCode}</code></pre>
       </div>
@@ -282,6 +287,29 @@
     color: #a1a7b3;
     font-size: 0.9rem;
     font-family: monospace;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .test-sandbox-btn {
+    color: #38bdf8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    transition: all 0.2s;
+  }
+
+  .test-sandbox-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.4);
   }
 
   .copy-btn {

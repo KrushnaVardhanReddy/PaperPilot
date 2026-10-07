@@ -48,6 +48,8 @@
         <span class="icon">🔒</span> 100% Client-Side <span class="muted">— Documents never leave your device.</span>
       </div>
       <div class="footer-links">
+        <a href="/embed-test" target="_blank" rel="noopener noreferrer">Embed Sandbox</a>
+        <span class="separator">•</span>
         <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
         <span class="separator">•</span>
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">44 Tools Handbook</a>

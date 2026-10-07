@@ -11,15 +11,19 @@
 
   const allTools = [
     { id: 'merge', name: 'Merge PDF' },
-    { id: 'compress', name: 'Compress PDF' },
+    { id: 'split', name: 'Split PDF' },
+    { id: 'rotate', name: 'Rotate 90°' },
     { id: 'watermark', name: 'Watermark' },
-    { id: 'split', name: 'Split PDF' }
+    { id: 'extract', name: 'Extract Page 1' },
+    { id: 'delete', name: 'Delete Page 1' },
+    { id: 'reorder', name: 'Reverse Order' },
+    { id: 'compress', name: 'Optimize/Save' }
   ];
 
   let availableTools = $derived(
     tools === 'all'
       ? allTools
-      : allTools.filter(t => tools.split(',').map(s => s.trim()).includes(t.id))
+      : allTools.filter(t => tools.split(',').map(s => s.trim().toLowerCase()).includes(t.id))
   );
 
   function dispatchEvent(eventName: string, detail: any = {}) {
@@ -115,10 +119,75 @@
 
         finalBytes = await mergedDoc.save();
         outName = 'merged_document.pdf';
+      } else if (toolId === 'rotate') {
+        const { PDFDocument, degrees } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const doc = await PDFDocument.load(arrayBuffer);
+        const pages = doc.getPages();
+        for (const page of pages) {
+          const currentRotation = page.getRotation().angle;
+          page.setRotation(degrees((currentRotation + 90) % 360));
+        }
+        finalBytes = await doc.save();
+        outName = `rotated_${droppedFiles[0].name}`;
+      } else if (toolId === 'watermark') {
+        const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const doc = await PDFDocument.load(arrayBuffer);
+        const font = await doc.embedFont(StandardFonts.HelveticaBold);
+        const pages = doc.getPages();
+        for (const page of pages) {
+          const { width, height } = page.getSize();
+          page.drawText('CONFIDENTIAL • PAPERPILOT', {
+            x: width / 6,
+            y: height / 2,
+            size: Math.min(width, height) / 16,
+            font,
+            color: rgb(0.8, 0.2, 0.2),
+            opacity: 0.35,
+            rotate: { type: 'degrees', angle: 45 } as any
+          });
+        }
+        finalBytes = await doc.save();
+        outName = `watermarked_${droppedFiles[0].name}`;
+      } else if (toolId === 'split' || toolId === 'extract') {
+        const { PDFDocument } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const srcDoc = await PDFDocument.load(arrayBuffer);
+        const newDoc = await PDFDocument.create();
+        if (srcDoc.getPageCount() > 0) {
+          const [page1] = await newDoc.copyPages(srcDoc, [0]);
+          newDoc.addPage(page1);
+        }
+        finalBytes = await newDoc.save();
+        outName = `${toolId}_page_1_${droppedFiles[0].name}`;
+      } else if (toolId === 'delete') {
+        const { PDFDocument } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const doc = await PDFDocument.load(arrayBuffer);
+        if (doc.getPageCount() > 1) {
+          doc.removePage(0);
+        }
+        finalBytes = await doc.save();
+        outName = `deleted_p1_${droppedFiles[0].name}`;
+      } else if (toolId === 'reorder') {
+        const { PDFDocument } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const srcDoc = await PDFDocument.load(arrayBuffer);
+        const newDoc = await PDFDocument.create();
+        const count = srcDoc.getPageCount();
+        const reversedIndices = Array.from({ length: count }, (_, i) => count - 1 - i);
+        const copied = await newDoc.copyPages(srcDoc, reversedIndices);
+        copied.forEach(p => newDoc.addPage(p));
+        finalBytes = await newDoc.save();
+        outName = `reversed_${droppedFiles[0].name}`;
       } else {
-        const first = await droppedFiles[0].arrayBuffer();
-        finalBytes = new Uint8Array(first);
-        outName = `${toolId}_${droppedFiles[0].name}`;
+        // compress / optimize or default
+        const { PDFDocument } = await import('pdf-lib');
+        const arrayBuffer = await droppedFiles[0].arrayBuffer();
+        const doc = await PDFDocument.load(arrayBuffer);
+        finalBytes = await doc.save({ useObjectStreams: true });
+        outName = `optimized_${droppedFiles[0].name}`;
       }
 
       const finalBlob = new Blob([finalBytes], { type: 'application/pdf' });
