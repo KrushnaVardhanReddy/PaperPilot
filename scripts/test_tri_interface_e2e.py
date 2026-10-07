@@ -1249,7 +1249,35 @@ def main():
              report_content.append(f"| `{tool_name}` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |")
              report_content.append(f"| `{tool_name}` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |")
 
+        # Collapsible Code Blocks for 1-Click Copying (GitHub standard copy button on fenced blocks)
+        mcp_cmd_raw = ""
+        if "tools/call" in mcp.get('command', ''):
+            try:
+                p = json.loads(mcp.get('command', ''))
+                args = p.get("params", {}).get("arguments", {})
+                mcp_cmd_raw = json.dumps({"jsonrpc": "2.0", "method": "tools/call", "params": {"name": tool_name, "arguments": args}}, indent=2)
+            except:
+                mcp_cmd_raw = mcp.get('command', '')
+
+        wasm_snippet = wasm_sig if (wasm_supported and tool_name in WASM_SIGNATURES) else "N/A"
+        edge_snippet = edge_ep if (wasm_supported and tool_name in WASM_SIGNATURES) else "N/A"
+
         report_content.append("")
+        report_content.append("<details>")
+        report_content.append("<summary>📋 <b>Copy Invocations (Click to expand)</b></summary>\n")
+        report_content.append("**CLI**:")
+        report_content.append(f"```bash\n{cmd_cli}\n```")
+        if mcp_cmd_raw:
+            report_content.append("**MCP Payload**:")
+            report_content.append(f"```json\n{mcp_cmd_raw}\n```")
+        report_content.append("**REST API**:")
+        report_content.append(f"```http\n{cmd_api}\n```")
+        if wasm_snippet != "N/A":
+            report_content.append("**WASM (TypeScript / JS)**:")
+            report_content.append(f"```javascript\n{wasm_snippet}\n```")
+            report_content.append("**Cloudflare Edge Endpoint**:")
+            report_content.append(f"```http\n{edge_snippet}\n```")
+        report_content.append("</details>\n")
 
     with open(REPORT_PATH, 'w') as f:
         f.write('\n'.join(report_content))
