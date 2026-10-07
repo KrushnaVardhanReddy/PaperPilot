@@ -46,7 +46,11 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **MCP (`paperpilot-mcp` stdio)**: 44 / 44 (100.0% PASS)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
-### 2. Recent Major Milestones & Merged PRs
+### 2. Recent Major Milestones & Merged Changes
+- **Spec 030 / Web & Embed Batch Suite (`dbe3ba1`, `ef77956`, `086231b`, `b60f41e`)**:
+  - **Embedded Widget (`apps/embed/`)**: Real `pdf-lib` multi-page merging, multi-file batch execution across `extract`, `delete`, `rotate`, `watermark`, `split`, `reorder`, and `compress`. Added interactive tool configuration panel for custom page numbers, rotation angles, and watermark text stamps.
+  - **Live Embed Sandbox (`/embed-test`)**: Showcasing standard and whitelisted/pro embeds live in browser with direct links from Web Portal footer, Embed Generator, and documentation.
+  - **PaperPilot WASM Engine (`apps/web/`)**: Migrated `OperationsView.svelte` to support multi-file batch queues across all WASM operations with staggered downloads and individual file removal controls.
 - **5.6.2 (Spec 026)**: Universal High-Ratio PDF Compression Engine (`image` JPEG recompression and downsampling, `--quality` control across CLI, MCP, REST, UI, and WASM, `reports/COMPRESSION_RATIO_VERIFICATION_REPORT.md`, `wiki/20-High-Ratio-PDF-Compression.md`).
 - **PR #151 (5.7.1)**: 1-Hour Sustained Soak & Endurance Benchmark (353,892 ops, 98.3 ops/s, 100% success rate, flat 25MB RSS, `wiki/19-One-Hour-Endurance-Benchmark.md`, `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`).
 - **PR #150 (5.6.1)**: Pure-Rust High-Speed Office Conversions (`fulgur` engine replacing `headless_chrome`, sub-60ms conversion latency, `wiki/18-Pure-Rust-Office-Conversions.md`, `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`).
@@ -68,9 +72,10 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 
 All tasks are partitioned with **strict file ownership** so that they run simultaneously with **zero merge conflicts**:
 
-| Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
+| Task | Scope (Owned Files) | Session URL | Target Branch | Focus & Current Status |
 |---|---|---|---|---|
-| **5.9.1** | `Cargo.toml`, `apps/desktop/src-tauri/Cargo.toml`, `paperpilot-nlp/`, `tools/train-nlp/`, `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md` | [Session 4914648655277667147](https://jules.google.com/session/4914648655277667147) | `main` | ⏳ **In Flight** — Desktop release binary size optimization (<75MB target) via root workspace release profile (strip, LTO) and pure-Rust `rten` inference migration with multi-interface validation |
+| **5.9.1 (Re-triggered)** | `Cargo.toml`, `apps/desktop/src-tauri/Cargo.toml`, `paperpilot-nlp/`, `tools/train-nlp/`, `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md` | [Session 1994491928465285687](https://jules.google.com/session/1994491928465285687) | `main` | ⏳ **In Flight** — Desktop binary optimization (<75MB) via workspace profile (strip, LTO) and FP32 `rten` conversion to resolve MatMul quantized operator errors. *(Prior session 4914648655277667147)* |
+| **5.9.3 (Web & Embed Unit Tests)** | `apps/embed/tests/widget_batch_and_config.spec.ts`, `apps/web/tests/operations_batch_processing.spec.ts`, `reports/WEB_AND_EMBED_BATCH_UNIT_TESTS_REPORT.md`, `wiki/24-Web-And-Embed-Batch-Testing.md` | [Session 9023730240826721102](https://jules.google.com/session/9023730240826721102) | `main` | ⏳ **In Flight** — Writing and validating Playwright unit tests for embed widget config panel, page ranges, and web batch processing. |
 
 ---
 
@@ -207,5 +212,5 @@ cd apps/edge && pnpm test
 
 ---
 
-*Last updated: 2026-10-07 02:08 EDT (Spec 026 High-Ratio Compression Merged, Spec 027 Deep Assertions Tri-Interface Dispatched to Jules Session 13099315791828528723)*
+*Last updated: 2026-10-07 06:58 EDT (Spec 030 Web & Embed Batch Suite live on main; Dispatched Jules Sessions: 5.9.1 [1994491928465285687] and 5.9.3 [9023730240826721102])*
 
