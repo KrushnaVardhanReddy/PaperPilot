@@ -325,42 +325,42 @@ pub async fn handle_tool(
             }
         }
     } else if resolved_name == "pdf_burst" {
-        if let Some(out_dir) = args.get("output_dir") {
-            if let Some(path) = out_dir.as_str() {
-                let path_obj = std::path::Path::new(path);
-                if !path_obj.exists() {
-                    let _ = std::fs::create_dir_all(path_obj);
-                }
+        if let Some(out_dir) = args.get("output_dir")
+            && let Some(path) = out_dir.as_str()
+        {
+            let path_obj = std::path::Path::new(path);
+            if !path_obj.exists() {
+                let _ = std::fs::create_dir_all(path_obj);
             }
         }
     } else if resolved_name == "pdf_reorder_pages" {
-        if let (Some(order_val), Some(input_val)) = (args.get("order"), args.get("input")) {
-            if let (Some(order_str), Some(input_path)) = (order_val.as_str(), input_val.as_str()) {
-                let order_parts: Vec<usize> = order_str
-                    .split(',')
-                    .filter_map(|s| s.trim().parse().ok())
-                    .collect();
-                if let Ok(doc) = lopdf::Document::load(input_path) {
-                    let page_count = doc.get_pages().len() as usize;
-                    if order_parts.len() < page_count {
-                        let mut full_order = order_parts.clone();
-                        let already_listed: std::collections::HashSet<usize> =
-                            order_parts.into_iter().collect();
-                        for page in 1..=page_count {
-                            if !already_listed.contains(&page) {
-                                full_order.push(page);
-                            }
+        if let (Some(order_val), Some(input_val)) = (args.get("order"), args.get("input"))
+            && let (Some(order_str), Some(input_path)) = (order_val.as_str(), input_val.as_str())
+        {
+            let order_parts: Vec<usize> = order_str
+                .split(',')
+                .filter_map(|s| s.trim().parse().ok())
+                .collect();
+            if let Ok(doc) = lopdf::Document::load(input_path) {
+                let page_count = doc.get_pages().len();
+                if order_parts.len() < page_count {
+                    let mut full_order = order_parts.clone();
+                    let already_listed: std::collections::HashSet<usize> =
+                        order_parts.into_iter().collect();
+                    for page in 1..=page_count {
+                        if !already_listed.contains(&page) {
+                            full_order.push(page);
                         }
-                        let new_order_str = full_order
-                            .into_iter()
-                            .map(|p| p.to_string())
-                            .collect::<Vec<_>>()
-                            .join(",");
-                        args.insert(
-                            "order".to_string(),
-                            serde_json::Value::String(new_order_str),
-                        );
                     }
+                    let new_order_str = full_order
+                        .into_iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    args.insert(
+                        "order".to_string(),
+                        serde_json::Value::String(new_order_str),
+                    );
                 }
             }
         }
@@ -380,10 +380,8 @@ pub async fn handle_tool(
         } else {
             resolved_name = "pdf_to_docx".to_string(); // default
         }
-    } else if resolved_name == "pdf_render" {
-        if !args.contains_key("page") {
-            args.insert("page".to_string(), serde_json::Value::Number(1.into()));
-        }
+    } else if resolved_name == "pdf_render" && !args.contains_key("page") {
+        args.insert("page".to_string(), serde_json::Value::Number(1.into()));
     }
 
     request.name = resolved_name.clone().into();
@@ -391,16 +389,17 @@ pub async fn handle_tool(
 
     match PaperPilotMcpServer::execute_call_tool(request) {
         Ok(CallToolResponse::Complete(result)) => {
-            if resolved_name == "pdf_extract_text" {
-                if let Some(output_val) = args.get("output") {
-                    if let Some(output_path) = output_val.as_str() {
-                        if let Ok(metadata) = std::fs::metadata(output_path) {
-                            if metadata.len() == 0 {
-                                return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"success": false, "error": "Extracted text is empty"}))).into_response();
-                            }
-                        }
-                    }
-                }
+            if resolved_name == "pdf_extract_text"
+                && let Some(output_val) = args.get("output")
+                && let Some(output_path) = output_val.as_str()
+                && let Ok(metadata) = std::fs::metadata(output_path)
+                && metadata.len() == 0
+            {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({"success": false, "error": "Extracted text is empty"})),
+                )
+                    .into_response();
             }
             (
                 StatusCode::OK,
@@ -613,7 +612,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
                 };
                 let path = temp_file.path().to_owned();
                 use std::io::Write;
-                if let Err(_) = temp_file.write_all(&data) {
+                if temp_file.write_all(&data).is_err() {
                     return (
                         axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                         "Failed to write data",

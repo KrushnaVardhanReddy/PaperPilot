@@ -1,6 +1,5 @@
 use lopdf::Document;
 use paperpilot_wasm::operations::{compress, merge, rotate};
-use std::collections::BTreeMap;
 
 fn create_dummy_pdf() -> Vec<u8> {
     let mut doc = Document::with_version("1.5");

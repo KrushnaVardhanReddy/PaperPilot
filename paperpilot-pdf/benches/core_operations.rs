@@ -36,10 +36,10 @@ fn measure_peak_rss<F: FnOnce()>(f: F) -> u64 {
         let mut peak: u64 = 0;
         while *is_running_clone.lock().unwrap() {
             sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
-            if let Some(p) = sys.process(pid) {
-                if p.memory() > peak {
-                    peak = p.memory();
-                }
+            if let Some(p) = sys.process(pid)
+                && p.memory() > peak
+            {
+                peak = p.memory();
             }
             std::thread::sleep(std::time::Duration::from_millis(1));
         }
@@ -188,7 +188,7 @@ fn bench_compress(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
             };
-            let compress_op = CompressOperation::new();
+            let compress_op = CompressOperation::default();
             compress_op.execute(&mut doc).unwrap();
         });
         println!("SYSTEM_BENCHMARK_MEMORY|Compress_{}|{}", pages, peak_mem);
@@ -199,7 +199,7 @@ fn bench_compress(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                 };
-                let compress_op = CompressOperation::new();
+                let compress_op = CompressOperation::default();
                 compress_op.execute(&mut doc).unwrap();
             });
         });
@@ -325,7 +325,7 @@ fn bench_pdf_to_image(c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&path).unwrap(),
         };
-        let render_op = paperpilot_pdf::operations::render::RenderOperation;
+        let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
         let _ = render_op.execute(&mut doc);
     });
     println!("SYSTEM_BENCHMARK_MEMORY|Render_50|{}", peak_mem);
@@ -338,7 +338,7 @@ fn bench_pdf_to_image(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
             };
-            let render_op = paperpilot_pdf::operations::render::RenderOperation;
+            let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
             let _ = render_op.execute(&mut doc);
         });
     });
@@ -406,9 +406,7 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
         cold_merge, warm_merge
     );
 
-    let mut small_batch_paths = Vec::new();
-    small_batch_paths.push(batch_dir.join("doc_001.pdf"));
-    small_batch_paths.push(batch_dir.join("doc_002.pdf"));
+    let small_batch_paths = vec![batch_dir.join("doc_001.pdf"), batch_dir.join("doc_002.pdf")];
 
     for i in 1..=1000 {
         let mut main_doc = LopdfDocument::new();

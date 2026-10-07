@@ -173,10 +173,10 @@ pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
         _ => CSS_PRESET_GITHUB,
     };
 
-    if let Some(custom) = custom_css {
-        if !custom.trim().is_empty() {
-            return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
-        }
+    if let Some(custom) = custom_css
+        && !custom.trim().is_empty()
+    {
+        return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
     }
     preset_css.to_string()
 }
@@ -302,14 +302,12 @@ impl ExcelToStyledHtmlOperation {
                 html.push_str("</tr>");
             }
 
-            for result in rdr.records() {
-                if let Ok(record) = result {
-                    html.push_str("<tr>");
-                    for field in record.iter() {
-                        html.push_str(&format!("<td>{}</td>", html_escape::encode_text(field)));
-                    }
-                    html.push_str("</tr>");
+            for record in rdr.records().flatten() {
+                html.push_str("<tr>");
+                for field in record.iter() {
+                    html.push_str(&format!("<td>{}</td>", html_escape::encode_text(field)));
                 }
+                html.push_str("</tr>");
             }
             html.push_str("</table>");
         } else {

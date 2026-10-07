@@ -1,7 +1,6 @@
 use lopdf::{Document, Object, dictionary};
 use paperpilot_core::error::{OperationResult, PdfError};
 use std::collections::BTreeMap;
-use tiny_skia::Pixmap;
 
 pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
     if buffers.is_empty() {
@@ -107,12 +106,9 @@ pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
     }
 
     let mut buffer = Vec::new();
-    merged_doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    merged_doc
+        .save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -149,20 +145,16 @@ pub fn rotate(input_bytes: &[u8], angle: u16, pages_str: &str) -> OperationResul
     let pages_to_rotate = parse_pages(pages_str, pages.len() as u32)?;
 
     for page_num in pages_to_rotate {
-        if let Some(&page_id) = pages.get(&page_num) {
-            if let Ok(Object::Dictionary(dict)) = doc.get_object_mut(page_id) {
-                dict.set("Rotate", Object::Integer(angle as i64));
-            }
+        if let Some(&page_id) = pages.get(&page_num)
+            && let Ok(Object::Dictionary(dict)) = doc.get_object_mut(page_id)
+        {
+            dict.set("Rotate", Object::Integer(angle as i64));
         }
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -251,12 +243,9 @@ pub fn split(input_bytes: &[u8], ranges: &str) -> OperationResult<Vec<Vec<u8>>> 
         }
 
         let mut buffer = Vec::new();
-        part_doc.save_to(&mut buffer).map_err(|e| {
-            PdfError::IoError(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                e.to_string(),
-            ))
-        })?;
+        part_doc
+            .save_to(&mut buffer)
+            .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
         output_buffers.push(buffer);
     }
@@ -330,14 +319,13 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
                     }
                 } else if color_space == b"DeviceGray"
                     && decompressed.len() >= (width * height) as usize
-                {
-                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                    && let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
                         width,
                         height,
                         decompressed.clone(),
-                    ) {
-                        dyn_img_opt = Some(image::DynamicImage::ImageLuma8(img_buf));
-                    }
+                    )
+                {
+                    dyn_img_opt = Some(image::DynamicImage::ImageLuma8(img_buf));
                 }
             }
 
@@ -354,35 +342,35 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
                     jpeg_quality,
                 );
 
-                if let Ok(_) = dyn_img.write_with_encoder(encoder) {
-                    if jpeg_bytes.len() < original_len {
-                        stream.content = jpeg_bytes;
-                        stream
-                            .dict
-                            .set("Filter", lopdf::Object::Name(b"DCTDecode".to_vec()));
-                        stream.dict.remove(b"DecodeParms");
-                        stream
-                            .dict
-                            .set("Width", lopdf::Object::Integer(dyn_img.width() as i64));
-                        stream
-                            .dict
-                            .set("Height", lopdf::Object::Integer(dyn_img.height() as i64));
-                        stream.dict.set(
-                            "Length",
-                            lopdf::Object::Integer(stream.content.len() as i64),
-                        );
-                        if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
-                            if dyn_img.color() == image::ColorType::L8
-                                || dyn_img.color() == image::ColorType::La8
-                            {
-                                stream
-                                    .dict
-                                    .set("ColorSpace", lopdf::Object::Name(b"DeviceGray".to_vec()));
-                            } else {
-                                stream
-                                    .dict
-                                    .set("ColorSpace", lopdf::Object::Name(b"DeviceRGB".to_vec()));
-                            }
+                if let Ok(_) = dyn_img.write_with_encoder(encoder)
+                    && jpeg_bytes.len() < original_len
+                {
+                    stream.content = jpeg_bytes;
+                    stream
+                        .dict
+                        .set("Filter", lopdf::Object::Name(b"DCTDecode".to_vec()));
+                    stream.dict.remove(b"DecodeParms");
+                    stream
+                        .dict
+                        .set("Width", lopdf::Object::Integer(dyn_img.width() as i64));
+                    stream
+                        .dict
+                        .set("Height", lopdf::Object::Integer(dyn_img.height() as i64));
+                    stream.dict.set(
+                        "Length",
+                        lopdf::Object::Integer(stream.content.len() as i64),
+                    );
+                    if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
+                        if dyn_img.color() == image::ColorType::L8
+                            || dyn_img.color() == image::ColorType::La8
+                        {
+                            stream
+                                .dict
+                                .set("ColorSpace", lopdf::Object::Name(b"DeviceGray".to_vec()));
+                        } else {
+                            stream
+                                .dict
+                                .set("ColorSpace", lopdf::Object::Name(b"DeviceRGB".to_vec()));
                         }
                     }
                 }
@@ -393,12 +381,8 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
     doc.compress();
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -431,12 +415,8 @@ pub fn encrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
         .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -513,12 +493,8 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -533,12 +509,8 @@ pub fn delete_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<
     doc.delete_pages(&pages_to_delete);
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -561,12 +533,8 @@ pub fn extract_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec
     doc.delete_pages(&pages_to_delete);
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -615,23 +583,16 @@ pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> OperationResult<V
         .trailer
         .get(b"Root")
         .and_then(|root| root.as_reference())
+        && let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object(catalog_id)
+        && let Ok(pages_id) = catalog.get(b"Pages").and_then(|p| p.as_reference())
+        && let Ok(lopdf::Object::Dictionary(pages_dict)) = doc.get_object_mut(pages_id)
     {
-        if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object(catalog_id) {
-            if let Ok(pages_id) = catalog.get(b"Pages").and_then(|p| p.as_reference()) {
-                if let Ok(lopdf::Object::Dictionary(pages_dict)) = doc.get_object_mut(pages_id) {
-                    pages_dict.set("Kids", lopdf::Object::Array(new_kids));
-                }
-            }
-        }
+        pages_dict.set("Kids", lopdf::Object::Array(new_kids));
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -660,12 +621,8 @@ pub fn crop(
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -678,19 +635,14 @@ pub fn flatten(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
         .trailer
         .get(b"Root")
         .and_then(|root| root.as_reference())
+        && let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object_mut(catalog_id)
     {
-        if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object_mut(catalog_id) {
-            catalog.remove(b"AcroForm");
-        }
+        catalog.remove(b"AcroForm");
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -747,12 +699,8 @@ pub fn set_metadata(
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -848,12 +796,8 @@ pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
     doc.trailer.set("Root", Object::Reference(catalog_id));
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -900,77 +844,76 @@ pub fn extract_images(input_bytes: &[u8]) -> OperationResult<Vec<Vec<u8>>> {
             };
 
             let dict = &stream.dict;
-            if let Ok(Object::Name(subtype)) = dict.get(b"Subtype") {
-                if subtype == b"Image" {
-                    let is_jpeg = match dict.get(b"Filter") {
-                        Ok(Object::Name(filter)) => filter == b"DCTDecode",
-                        Ok(Object::Array(arr)) => arr.iter().any(|f| {
-                            if let Object::Name(n) = f {
-                                n == b"DCTDecode"
-                            } else {
-                                false
-                            }
-                        }),
-                        _ => false,
-                    };
+            if let Ok(Object::Name(subtype)) = dict.get(b"Subtype")
+                && subtype == b"Image"
+            {
+                let is_jpeg = match dict.get(b"Filter") {
+                    Ok(Object::Name(filter)) => filter == b"DCTDecode",
+                    Ok(Object::Array(arr)) => arr.iter().any(|f| {
+                        if let Object::Name(n) = f {
+                            n == b"DCTDecode"
+                        } else {
+                            false
+                        }
+                    }),
+                    _ => false,
+                };
 
-                    if is_jpeg {
-                        extracted.push(stream.content.clone());
-                    } else {
-                        // Attempt to decode flate and output PNG
-                        if let Ok(decompressed) = stream.decompressed_content() {
-                            let width =
-                                dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
-                            let height =
-                                dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
-                            if width > 0 && height > 0 {
-                                if decompressed.len() >= (width * height * 3) as usize {
-                                    // Assume RGB
-                                    if let Some(img_buf) =
-                                        image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                if is_jpeg {
+                    extracted.push(stream.content.clone());
+                } else {
+                    // Attempt to decode flate and output PNG
+                    if let Ok(decompressed) = stream.decompressed_content() {
+                        let width = dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
+                        let height =
+                            dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
+                        if width > 0 && height > 0 {
+                            if decompressed.len() >= (width * height * 3) as usize {
+                                // Assume RGB
+                                if let Some(img_buf) =
+                                    image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                                        width,
+                                        height,
+                                        decompressed.clone(),
+                                    )
+                                {
+                                    let mut png_bytes = Vec::new();
+                                    let encoder =
+                                        image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                    if encoder
+                                        .write_image(
+                                            &img_buf,
                                             width,
                                             height,
-                                            decompressed.clone(),
+                                            image::ColorType::Rgb8.into(),
                                         )
+                                        .is_ok()
                                     {
-                                        let mut png_bytes = Vec::new();
-                                        let encoder =
-                                            image::codecs::png::PngEncoder::new(&mut png_bytes);
-                                        if encoder
-                                            .write_image(
-                                                &img_buf,
-                                                width,
-                                                height,
-                                                image::ColorType::Rgb8.into(),
-                                            )
-                                            .is_ok()
-                                        {
-                                            extracted.push(png_bytes);
-                                        }
+                                        extracted.push(png_bytes);
                                     }
-                                } else if decompressed.len() >= (width * height) as usize {
-                                    // Assume Gray
-                                    if let Some(img_buf) =
-                                        image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                                }
+                            } else if decompressed.len() >= (width * height) as usize {
+                                // Assume Gray
+                                if let Some(img_buf) =
+                                    image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                                        width,
+                                        height,
+                                        decompressed.clone(),
+                                    )
+                                {
+                                    let mut png_bytes = Vec::new();
+                                    let encoder =
+                                        image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                    if encoder
+                                        .write_image(
+                                            &img_buf,
                                             width,
                                             height,
-                                            decompressed.clone(),
+                                            image::ColorType::L8.into(),
                                         )
+                                        .is_ok()
                                     {
-                                        let mut png_bytes = Vec::new();
-                                        let encoder =
-                                            image::codecs::png::PngEncoder::new(&mut png_bytes);
-                                        if encoder
-                                            .write_image(
-                                                &img_buf,
-                                                width,
-                                                height,
-                                                image::ColorType::L8.into(),
-                                            )
-                                            .is_ok()
-                                        {
-                                            extracted.push(png_bytes);
-                                        }
+                                        extracted.push(png_bytes);
                                     }
                                 }
                             }
@@ -1008,13 +951,13 @@ pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> Operation
 
     let cache = hayro::RenderCache::new();
     let render_settings = hayro::RenderSettings::default();
-
-    let mut render_settings = hayro::RenderSettings::default();
-    let mut pixmap_settings = hayro::PixmapSettings::default();
-    pixmap_settings.x_scale = scale;
-    pixmap_settings.y_scale = scale;
+    let pixmap_settings = hayro::PixmapSettings {
+        x_scale: scale,
+        y_scale: scale,
+        ..Default::default()
+    };
     let pixmap = hayro::render(
-        &page,
+        page,
         &cache,
         &Default::default(),
         &render_settings,
@@ -1051,7 +994,7 @@ pub fn extract_text(input_bytes: &[u8]) -> OperationResult<String> {
     sorted_page_numbers.sort_unstable();
 
     for page_num in sorted_page_numbers {
-        if let Some(&page_id) = pages.get(&page_num) {
+        if let Some(&_page_id) = pages.get(&page_num) {
             match doc.extract_text(&[page_num]) {
                 Ok(text) => extracted_texts.push(text),
                 Err(e) => {
@@ -1078,16 +1021,12 @@ pub fn decrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
         )));
     }
 
-    let _ = doc.decompress();
+    doc.decompress();
     doc.trailer.remove(b"Encrypt");
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -1114,15 +1053,13 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
         let mut width = 595.0;
         let mut height = 842.0;
 
-        if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object(object_id) {
-            if let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox") {
-                if rect.len() == 4 {
-                    if let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32()) {
-                        width = x2;
-                        height = y2;
-                    }
-                }
-            }
+        if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object(object_id)
+            && let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox")
+            && rect.len() == 4
+            && let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32())
+        {
+            width = x2;
+            height = y2;
         }
 
         if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(object_id) {
@@ -1198,12 +1135,8 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -1222,22 +1155,20 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
     let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
     sorted_page_numbers.sort_unstable();
 
-    for (page_number, object_id) in sorted_page_numbers
+    for (_page_number, object_id) in sorted_page_numbers
         .into_iter()
         .map(|n| (n, *pages.get(&n).unwrap()))
     {
         let mut width = 595.0;
         let mut height = 842.0;
 
-        if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object(object_id) {
-            if let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox") {
-                if rect.len() == 4 {
-                    if let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32()) {
-                        width = x2;
-                        height = y2;
-                    }
-                }
-            }
+        if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object(object_id)
+            && let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox")
+            && rect.len() == 4
+            && let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32())
+        {
+            width = x2;
+            height = y2;
         }
 
         if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(object_id) {
@@ -1325,12 +1256,8 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer).map_err(|e| {
-        PdfError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            e.to_string(),
-        ))
-    })?;
+    doc.save_to(&mut buffer)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
 
     Ok(buffer)
 }
@@ -1350,14 +1277,13 @@ pub fn pdf_info(input_bytes: &[u8]) -> OperationResult<String> {
         .trailer
         .get(b"Info")
         .and_then(|info| info.as_reference())
+        && let Ok(lopdf::Object::Dictionary(info_dict)) = doc.get_object(info_ref)
     {
-        if let Ok(lopdf::Object::Dictionary(info_dict)) = doc.get_object(info_ref) {
-            if let Ok(t) = info_dict.get(b"Title").and_then(|t| t.as_str()) {
-                title = String::from_utf8_lossy(t).into_owned();
-            }
-            if let Ok(a) = info_dict.get(b"Author").and_then(|a| a.as_str()) {
-                author = String::from_utf8_lossy(a).into_owned();
-            }
+        if let Ok(t) = info_dict.get(b"Title").and_then(|t| t.as_str()) {
+            title = String::from_utf8_lossy(t).into_owned();
+        }
+        if let Ok(a) = info_dict.get(b"Author").and_then(|a| a.as_str()) {
+            author = String::from_utf8_lossy(a).into_owned();
         }
     }
 
@@ -1398,12 +1324,11 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
             }
         }
 
-        if let Ok(image_source) = ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw) {
-            if let Ok(img_input) = engine.prepare_input(image_source) {
-                if let Ok(texts) = engine.get_text(&img_input) {
-                    words_collected.push(texts);
-                }
-            }
+        if let Ok(image_source) = ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
+            && let Ok(img_input) = engine.prepare_input(image_source)
+            && let Ok(texts) = engine.get_text(&img_input)
+        {
+            words_collected.push(texts);
         }
 
         return Ok(words_collected.join("\n"));
@@ -1484,12 +1409,10 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
 
                 if let Ok(image_source) =
                     ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
+                    && let Ok(img_input) = engine.prepare_input(image_source)
+                    && let Ok(texts) = engine.get_text(&img_input)
                 {
-                    if let Ok(img_input) = engine.prepare_input(image_source) {
-                        if let Ok(texts) = engine.get_text(&img_input) {
-                            words_collected.push(texts);
-                        }
-                    }
+                    words_collected.push(texts);
                 }
             }
         }

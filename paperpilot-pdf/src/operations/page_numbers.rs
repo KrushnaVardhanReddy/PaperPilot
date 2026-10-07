@@ -43,15 +43,13 @@ impl PdfOperation for PageNumbersOperation {
             let mut width = 595.0;
             let mut height = 842.0;
 
-            if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object(object_id) {
-                if let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox") {
-                    if rect.len() == 4 {
-                        if let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32()) {
-                            width = x2;
-                            height = y2;
-                        }
-                    }
-                }
+            if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object(object_id)
+                && let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox")
+                && rect.len() == 4
+                && let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32())
+            {
+                width = x2;
+                height = y2;
             }
 
             if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object_mut(object_id) {

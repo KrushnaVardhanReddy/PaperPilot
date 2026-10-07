@@ -115,29 +115,29 @@ fn test_offline_resolver_accuracy() {
                             failed.push(format!("Query: '{}'\nExpected file count: {}, Got: {} (inputs: {:?}, output: {:?})", case.query, expected_count, actual_count, plan.input_files, plan.output_file));
                         }
                     }
-                    if let Some(expected_pages) = case.expected_page_ranges {
-                        if plan.page_ranges != expected_pages {
-                            failed.push(format!(
-                                "Query: '{}'\nExpected pages: {:?}, Got: {:?}",
-                                case.query, expected_pages, plan.page_ranges
-                            ));
-                        }
+                    if let Some(expected_pages) = case.expected_page_ranges
+                        && plan.page_ranges != expected_pages
+                    {
+                        failed.push(format!(
+                            "Query: '{}'\nExpected pages: {:?}, Got: {:?}",
+                            case.query, expected_pages, plan.page_ranges
+                        ));
                     }
-                    if let Some(expected_angles) = case.expected_angles {
-                        if plan.angles != expected_angles {
-                            failed.push(format!(
-                                "Query: '{}'\nExpected angles: {:?}, Got: {:?}",
-                                case.query, expected_angles, plan.angles
-                            ));
-                        }
+                    if let Some(expected_angles) = case.expected_angles
+                        && plan.angles != expected_angles
+                    {
+                        failed.push(format!(
+                            "Query: '{}'\nExpected angles: {:?}, Got: {:?}",
+                            case.query, expected_angles, plan.angles
+                        ));
                     }
-                    if let Some(expected_passwords) = case.expected_passwords {
-                        if plan.passwords != expected_passwords {
-                            failed.push(format!(
-                                "Query: '{}'\nExpected passwords: {:?}, Got: {:?}",
-                                case.query, expected_passwords, plan.passwords
-                            ));
-                        }
+                    if let Some(expected_passwords) = case.expected_passwords
+                        && plan.passwords != expected_passwords
+                    {
+                        failed.push(format!(
+                            "Query: '{}'\nExpected passwords: {:?}, Got: {:?}",
+                            case.query, expected_passwords, plan.passwords
+                        ));
                     }
                 }
             }

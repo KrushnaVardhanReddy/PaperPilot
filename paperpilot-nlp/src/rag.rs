@@ -184,18 +184,18 @@ impl DocumentationRagEngine {
         }
 
         // Add 0.0001 to pass any floating point precision checks exactly at 0.4
-        if best_score >= 0.39 {
-            if let Some(chunk) = best_chunk {
-                return Some(RagAnswer {
-                    tool_name: chunk.tool_name.clone(),
-                    title: chunk.title.clone(),
-                    explanation: chunk.description.clone(),
-                    cli_example: chunk.cli_snippet.clone(),
-                    curl_example: chunk.api_snippet.clone(),
-                    mcp_example: chunk.mcp_snippet.clone(),
-                    confidence_score: best_score,
-                });
-            }
+        if best_score >= 0.39
+            && let Some(chunk) = best_chunk
+        {
+            return Some(RagAnswer {
+                tool_name: chunk.tool_name.clone(),
+                title: chunk.title.clone(),
+                explanation: chunk.description.clone(),
+                cli_example: chunk.cli_snippet.clone(),
+                curl_example: chunk.api_snippet.clone(),
+                mcp_example: chunk.mcp_snippet.clone(),
+                confidence_score: best_score,
+            });
         }
         None
     }

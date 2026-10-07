@@ -108,13 +108,11 @@ impl PdfOperation for OcrOperationImpl {
                             // fallback format handling due to missing DimOrder
                             if let Ok(image_source) =
                                 ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
+                                && let Ok(img_input) = engine.prepare_input(image_source)
+                                && let Ok(texts) = engine.get_text(&img_input)
                             {
-                                if let Ok(img_input) = engine.prepare_input(image_source) {
-                                    if let Ok(texts) = engine.get_text(&img_input) {
-                                        words_collected.push(texts);
-                                        executed_ocr = true;
-                                    }
-                                }
+                                words_collected.push(texts);
+                                executed_ocr = true;
                             }
                         }
                     }

@@ -112,7 +112,7 @@ impl OnnxClassifier {
         let outputs = session.run(inputs).ok()?;
         let (_shape, logits_data) = outputs["logits"].try_extract_tensor::<f32>().ok()?;
 
-        let mut max_val = std::f32::NEG_INFINITY;
+        let mut max_val = f32::NEG_INFINITY;
         let mut max_idx = 0;
 
         for (i, &val) in logits_data.iter().enumerate() {
@@ -128,13 +128,9 @@ impl OnnxClassifier {
 
         let label_str = self.labels.get(max_idx)?;
 
-        for intent in Intent::all() {
-            if intent.definition().canonical_name == label_str {
-                return Some(intent);
-            }
-        }
-
-        None
+        Intent::all()
+            .into_iter()
+            .find(|&intent| intent.definition().canonical_name == label_str)
     }
 
     #[cfg(not(feature = "onnx"))]

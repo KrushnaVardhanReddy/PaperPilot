@@ -98,14 +98,13 @@ impl PdfOperation for CompressOperation {
                         }
                     } else if color_space == b"DeviceGray"
                         && decompressed.len() >= (width * height) as usize
-                    {
-                        if let Some(img_buf) = ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                        && let Some(img_buf) = ImageBuffer::<image::Luma<u8>, _>::from_raw(
                             width,
                             height,
                             decompressed.clone(),
-                        ) {
-                            dyn_img_opt = Some(DynamicImage::ImageLuma8(img_buf));
-                        }
+                        )
+                    {
+                        dyn_img_opt = Some(DynamicImage::ImageLuma8(img_buf));
                     }
                 }
 
@@ -118,38 +117,37 @@ impl PdfOperation for CompressOperation {
                     }
 
                     let mut jpeg_bytes = Vec::new();
-                    let mut encoder = JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality);
+                    let encoder = JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality);
 
                     // Encode to JPEG
-                    if let Ok(_) = dyn_img.write_with_encoder(encoder) {
-                        if jpeg_bytes.len() < original_len {
-                            // Update the stream
-                            stream.content = jpeg_bytes;
-                            stream
-                                .dict
-                                .set("Filter", Object::Name(b"DCTDecode".to_vec()));
-                            stream.dict.remove(b"DecodeParms");
-                            stream
-                                .dict
-                                .set("Width", Object::Integer(dyn_img.width() as i64));
-                            stream
-                                .dict
-                                .set("Height", Object::Integer(dyn_img.height() as i64));
-                            stream
-                                .dict
-                                .set("Length", Object::Integer(stream.content.len() as i64));
-                            if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
-                                if dyn_img.color() == ColorType::L8
-                                    || dyn_img.color() == ColorType::La8
-                                {
-                                    stream
-                                        .dict
-                                        .set("ColorSpace", Object::Name(b"DeviceGray".to_vec()));
-                                } else {
-                                    stream
-                                        .dict
-                                        .set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
-                                }
+                    if let Ok(_) = dyn_img.write_with_encoder(encoder)
+                        && jpeg_bytes.len() < original_len
+                    {
+                        // Update the stream
+                        stream.content = jpeg_bytes;
+                        stream
+                            .dict
+                            .set("Filter", Object::Name(b"DCTDecode".to_vec()));
+                        stream.dict.remove(b"DecodeParms");
+                        stream
+                            .dict
+                            .set("Width", Object::Integer(dyn_img.width() as i64));
+                        stream
+                            .dict
+                            .set("Height", Object::Integer(dyn_img.height() as i64));
+                        stream
+                            .dict
+                            .set("Length", Object::Integer(stream.content.len() as i64));
+                        if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
+                            if dyn_img.color() == ColorType::L8 || dyn_img.color() == ColorType::La8
+                            {
+                                stream
+                                    .dict
+                                    .set("ColorSpace", Object::Name(b"DeviceGray".to_vec()));
+                            } else {
+                                stream
+                                    .dict
+                                    .set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
                             }
                         }
                     }
@@ -195,7 +193,7 @@ mod tests {
             *pixel = image::Rgb([255_u8, 0_u8, 0_u8]);
         }
 
-        let mut raw_bytes = img.into_raw();
+        let raw_bytes = img.into_raw();
         // Artificially inflate the size to ensure JPEG compression will definitely be smaller
         let original_len = raw_bytes.len();
 

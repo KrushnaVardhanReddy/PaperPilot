@@ -227,9 +227,8 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use crate::{
-        cancel_job, get_file_metadata, get_gateway_status, invoke_mcp_tool,
-        query_documentation_rag, start_gateway, stop_gateway, CANCEL_FLAGS, GATEWAY_RUNNING,
-        GATEWAY_SHUTDOWN_TX,
+        cancel_job, get_file_metadata, get_gateway_status, invoke_mcp_tool, start_gateway,
+        stop_gateway, CANCEL_FLAGS, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX,
     };
     use serde_json::json;
     use std::io::Write;

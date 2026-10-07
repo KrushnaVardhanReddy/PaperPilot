@@ -35,12 +35,12 @@ impl PdfOperation for RenderOperation {
             .downcast_mut::<crate::document::LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Expected LopdfDocument".to_string()))?;
 
-        let mut temp_file = NamedTempFile::new().map_err(|e| PdfError::IoError(e))?;
+        let mut temp_file = NamedTempFile::new().map_err(PdfError::IoError)?;
         doc.inner
             .save_to(&mut temp_file)
             .map_err(|e| PdfError::ParseError(e.to_string()))?;
 
-        let pdf_bytes = std::fs::read(temp_file.path()).map_err(|e| PdfError::IoError(e))?;
+        let pdf_bytes = std::fs::read(temp_file.path()).map_err(PdfError::IoError)?;
         let pdf = hayro_syntax::Pdf::new(pdf_bytes)
             .map_err(|e| PdfError::ParseError(format!("{:?}", e)))?;
 
@@ -84,7 +84,7 @@ impl PdfOperation for RenderOperation {
             pixmap_settings.y_scale = scale_factor;
 
             let pixmap = hayro::render(
-                &page,
+                page,
                 &cache,
                 &Default::default(),
                 &render_settings,
@@ -113,7 +113,7 @@ impl PdfOperation for RenderOperation {
                 } else {
                     out_path.clone()
                 };
-                std::fs::write(&current_out_path, &png_bytes).map_err(|e| PdfError::IoError(e))?;
+                std::fs::write(&current_out_path, &png_bytes).map_err(PdfError::IoError)?;
             }
 
             out_images.push(png_bytes);

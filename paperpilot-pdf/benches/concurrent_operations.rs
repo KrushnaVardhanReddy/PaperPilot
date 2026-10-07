@@ -60,7 +60,7 @@ fn bench_concurrent(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&medium_pdf_path).unwrap(),
         };
-        let compress_op = CompressOperation::new();
+        let compress_op = CompressOperation::default();
         compress_op.execute(&mut doc).unwrap();
     }
 
@@ -103,7 +103,7 @@ fn bench_concurrent(_c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&medium_pdf_path).unwrap(),
             };
-            let compress_op = CompressOperation::new();
+            let compress_op = CompressOperation::default();
             compress_op.execute(&mut doc).unwrap();
         }
     });

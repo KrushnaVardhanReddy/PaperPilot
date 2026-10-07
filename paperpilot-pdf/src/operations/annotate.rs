@@ -125,10 +125,10 @@ impl AnnotateOperation {
 
                 // Resolve any references first to avoid double mutable borrow
                 let mut resolved_annots_ref = None;
-                if let Ok(Object::Dictionary(page_dict)) = doc.get_object(page_id) {
-                    if let Ok(Object::Reference(ref_id)) = page_dict.get(b"Annots") {
-                        resolved_annots_ref = Some(*ref_id);
-                    }
+                if let Ok(Object::Dictionary(page_dict)) = doc.get_object(page_id)
+                    && let Ok(Object::Reference(ref_id)) = page_dict.get(b"Annots")
+                {
+                    resolved_annots_ref = Some(*ref_id);
                 }
 
                 let mut annots_array = vec![];
@@ -136,10 +136,10 @@ impl AnnotateOperation {
                     if let Ok(Object::Array(arr)) = doc.get_object_mut(ref_id) {
                         annots_array = arr.clone();
                     }
-                } else if let Ok(Object::Dictionary(page_dict)) = doc.get_object(page_id) {
-                    if let Ok(Object::Array(arr)) = page_dict.get(b"Annots") {
-                        annots_array = arr.clone();
-                    }
+                } else if let Ok(Object::Dictionary(page_dict)) = doc.get_object(page_id)
+                    && let Ok(Object::Array(arr)) = page_dict.get(b"Annots")
+                {
+                    annots_array = arr.clone();
                 }
 
                 annots_array.push(Object::Reference(annot_id));

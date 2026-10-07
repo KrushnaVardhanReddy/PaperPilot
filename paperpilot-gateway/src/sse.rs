@@ -38,49 +38,48 @@ pub async fn messages_handler(
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
     // For a minimal HTTP adapter, we assume standard jsonrpc payload for CallTool
-    if let Some(method) = payload.get("method").and_then(|m| m.as_str()) {
-        if method == "tools/call" {
-            if let Some(params) = payload.get("params") {
-                let name = params
-                    .get("name")
-                    .and_then(|n| n.as_str())
-                    .unwrap_or("")
-                    .to_string();
-                let args = params.get("arguments").and_then(|a| a.as_object()).cloned();
+    if let Some(method) = payload.get("method").and_then(|m| m.as_str())
+        && method == "tools/call"
+        && let Some(params) = payload.get("params")
+    {
+        let name = params
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("")
+            .to_string();
+        let args = params.get("arguments").and_then(|a| a.as_object()).cloned();
 
-                let mut req = CallToolRequestParams::default();
-                req.name = name.into();
-                req.arguments = args;
+        let mut req = CallToolRequestParams::default();
+        req.name = name.into();
+        req.arguments = args;
 
-                match PaperPilotMcpServer::execute_call_tool(req) {
-                    Ok(CallToolResponse::Complete(result)) => {
-                        return Json(serde_json::json!({
-                            "jsonrpc": "2.0",
-                            "id": payload.get("id"),
-                            "result": result
-                        }));
+        match PaperPilotMcpServer::execute_call_tool(req) {
+            Ok(CallToolResponse::Complete(result)) => {
+                return Json(serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "id": payload.get("id"),
+                    "result": result
+                }));
+            }
+            Ok(_) => {
+                return Json(serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "id": payload.get("id"),
+                    "error": {
+                        "code": -32603,
+                        "message": "Unknown response type"
                     }
-                    Ok(_) => {
-                        return Json(serde_json::json!({
-                            "jsonrpc": "2.0",
-                            "id": payload.get("id"),
-                            "error": {
-                                "code": -32603,
-                                "message": "Unknown response type"
-                            }
-                        }));
+                }));
+            }
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "id": payload.get("id"),
+                    "error": {
+                        "code": e.code.0,
+                        "message": e.message
                     }
-                    Err(e) => {
-                        return Json(serde_json::json!({
-                            "jsonrpc": "2.0",
-                            "id": payload.get("id"),
-                            "error": {
-                                "code": e.code.0,
-                                "message": e.message
-                            }
-                        }));
-                    }
-                }
+                }));
             }
         }
     }

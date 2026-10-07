@@ -40,12 +40,11 @@ impl PdfOperation for RemoveBlankPagesOperation {
                         lopdf::Object::Array(arr) => {
                             let mut total_len = 0;
                             for obj in arr {
-                                if let lopdf::Object::Reference(ref_id) = obj {
-                                    if let Ok(lopdf::Object::Stream(stream)) =
+                                if let lopdf::Object::Reference(ref_id) = obj
+                                    && let Ok(lopdf::Object::Stream(stream)) =
                                         inner.get_object(*ref_id)
-                                    {
-                                        total_len += stream.content.len();
-                                    }
+                                {
+                                    total_len += stream.content.len();
                                 }
                             }
                             total_len

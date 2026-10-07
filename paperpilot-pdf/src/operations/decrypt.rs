@@ -31,7 +31,7 @@ impl PdfOperation for DecryptOperation {
         }
 
         // 1. Decompress streams to expand any /ObjStm objects into the main objects table
-        let _ = lopdf_doc.inner.decompress();
+        lopdf_doc.inner.decompress();
 
         // 2. Strip encryption dictionary from trailer
         lopdf_doc.inner.trailer.remove(b"Encrypt");

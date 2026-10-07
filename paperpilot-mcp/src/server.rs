@@ -3502,12 +3502,10 @@ impl PaperPilotMcpServer {
 
                 let message = if is_update {
                     "Metadata updated successfully.".to_string()
+                } else if map.is_empty() {
+                    "No metadata found.".to_string()
                 } else {
-                    if map.is_empty() {
-                        "No metadata found.".to_string()
-                    } else {
-                        format!("Metadata: {:?}", map)
-                    }
+                    format!("Metadata: {:?}", map)
                 };
 
                 // Convert keys to lowercase to strictly match the grep requirement natively if present
@@ -3827,10 +3825,8 @@ impl PaperPilotMcpServer {
                     .and_then(|v| {
                         if let Some(s) = v.as_str() {
                             s.parse::<u32>().ok()
-                        } else if let Some(n) = v.as_u64() {
-                            Some(n as u32)
                         } else {
-                            None
+                            v.as_u64().map(|n| n as u32)
                         }
                     })
                     .unwrap_or(1);
@@ -3839,10 +3835,8 @@ impl PaperPilotMcpServer {
                     .and_then(|v| {
                         if let Some(s) = v.as_str() {
                             s.parse::<f32>().ok()
-                        } else if let Some(n) = v.as_f64() {
-                            Some(n as f32)
                         } else {
-                            None
+                            v.as_f64().map(|n| n as f32)
                         }
                     })
                     .unwrap_or(150.0);
@@ -3857,7 +3851,7 @@ impl PaperPilotMcpServer {
                 let total_pages = lopdf_doc.page_count().map_err(crate::error::to_mcp_error)?;
                 if page == 0 || page > total_pages {
                     return Err(rmcp::ErrorData::invalid_params(
-                        format!("Page out of bounds"),
+                        "Page out of bounds".to_string(),
                         None,
                     ));
                 }
@@ -3999,11 +3993,11 @@ impl PaperPilotMcpServer {
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
                 let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
-                let op_res = op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
                     data: Some(
-                        serde_json::to_value(op_res)
+                        serde_json::to_value(())
                             .unwrap_or(serde_json::json!({"bookmarks": "outline"})),
                     ),
                     success: true,

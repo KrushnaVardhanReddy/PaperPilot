@@ -185,10 +185,10 @@ fn main() {
 
     let mut add_text_cmd = Command::new(cli_path_str);
     if !cli_path.exists() {
-        add_text_cmd.args(&["run", "-p", "paperpilot-cli", "--"]);
+        add_text_cmd.args(["run", "-p", "paperpilot-cli", "--"]);
     }
     add_text_cmd
-        .args(&[
+        .args([
             "form",
             "add-field",
             fixtures_dir.join("single_page.pdf").to_str().unwrap(),
@@ -208,10 +208,10 @@ fn main() {
 
     let mut add_cb_cmd = Command::new(cli_path_str);
     if !cli_path.exists() {
-        add_cb_cmd.args(&["run", "-p", "paperpilot-cli", "--"]);
+        add_cb_cmd.args(["run", "-p", "paperpilot-cli", "--"]);
     }
     add_cb_cmd
-        .args(&[
+        .args([
             "form",
             "add-field",
             fixtures_dir.join("form.pdf").to_str().unwrap(),
@@ -243,10 +243,10 @@ fn main() {
 
     let mut fill_cmd = Command::new(cli_path_str);
     if !cli_path.exists() {
-        fill_cmd.args(&["run", "-p", "paperpilot-cli", "--"]);
+        fill_cmd.args(["run", "-p", "paperpilot-cli", "--"]);
     }
     fill_cmd
-        .args(&[
+        .args([
             "form",
             "fill",
             fixtures_dir.join("form.pdf").to_str().unwrap(),

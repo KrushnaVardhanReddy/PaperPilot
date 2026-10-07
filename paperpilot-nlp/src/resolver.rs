@@ -43,19 +43,19 @@ impl NlpResolver for OfflineNlpResolver {
 
         // 2. Fallback to Layer 2 ONNX if enabled
         #[cfg(feature = "onnx")]
-        if let Ok(classifier) = crate::layer2::OnnxClassifier::new() {
-            if let Some(intent) = classifier.predict(query) {
-                let mut entities = extract_entities(query);
-                if entities.files.is_empty() {
-                    if let Some(active) = &context.active_document {
-                        entities.files.push(active.clone());
-                    } else if context.open_documents.len() == 1 {
-                        entities.files.push(context.open_documents[0].clone());
-                    }
+        if let Ok(classifier) = crate::layer2::OnnxClassifier::new()
+            && let Some(intent) = classifier.predict(query)
+        {
+            let mut entities = extract_entities(query);
+            if entities.files.is_empty() {
+                if let Some(active) = &context.active_document {
+                    entities.files.push(active.clone());
+                } else if context.open_documents.len() == 1 {
+                    entities.files.push(context.open_documents[0].clone());
                 }
-                check_completeness(&intent, &entities)?;
-                return Ok(OperationPlan::new(intent, entities, query.to_string()));
             }
+            check_completeness(&intent, &entities)?;
+            return Ok(OperationPlan::new(intent, entities, query.to_string()));
         }
 
         Err(NlpError::AmbiguousIntent(format!(
