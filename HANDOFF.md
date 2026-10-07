@@ -71,6 +71,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus |
 |---|---|---|---|---|
 | **4.E2E.R4** | `scripts/test_tri_interface_e2e.py`, `reports/TRI_INTERFACE_E2E_100_VERIFIED.md`, `reports/TRI_INTERFACE_E2E_AND_DOCS.md`, `wiki/21-Tri-Interface-Deep-Assertions.md` | [Session 13099315791828528723](https://jules.google.com/session/13099315791828528723) | `main` | ⏳ **In Flight** — Upgrade tri-interface E2E test harness to validate Expected vs Actual outcomes (pages, bytes) across CLI, MCP, REST, WASM, and Cloudflare Edge in unified comparison matrix tables |
+| **5.9.1** | `Cargo.toml`, `apps/desktop/src-tauri/Cargo.toml`, `paperpilot-nlp/`, `tools/train-nlp/`, `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md` | [Session 4914648655277667147](https://jules.google.com/session/4914648655277667147) | `main` | ⏳ **In Flight** — Desktop release binary size optimization (<75MB target) via root workspace release profile (strip, LTO) and pure-Rust `rten` inference migration with multi-interface validation |
 
 ---
 
