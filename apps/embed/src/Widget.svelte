@@ -48,15 +48,21 @@
     isDragging = false;
   }
 
+  let isProcessing = $state(false);
+  let processedFile = $state<{ name: string; url: string; size: number } | null>(null);
+
   function handleDrop(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
     isDragging = false;
 
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      const files = Array.from(e.dataTransfer.files);
-      const pdfs = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-      droppedFiles = pdfs.length > 0 ? pdfs : files;
+      const incoming = Array.from(e.dataTransfer.files);
+      const pdfs = incoming.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      const toAdd = pdfs.length > 0 ? pdfs : incoming;
+      // Append to support multiple uploads over time
+      droppedFiles = [...droppedFiles, ...toAdd];
+      processedFile = null;
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
     }
   }
@@ -64,7 +70,9 @@
   function handleFileInput(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      droppedFiles = Array.from(target.files);
+      const incoming = Array.from(target.files);
+      droppedFiles = [...droppedFiles, ...incoming];
+      processedFile = null;
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
     }
   }
@@ -73,13 +81,56 @@
     fileInputRef?.click();
   }
 
-  function handleProcessStart(toolId: string) {
+  function clearFiles(e: Event) {
+    e.stopPropagation();
+    droppedFiles = [];
+    processedFile = null;
+    if (fileInputRef) fileInputRef.value = '';
+  }
+
+  async function handleProcessStart(toolId: string) {
+    if (droppedFiles.length === 0) {
+      triggerFileDialog();
+      return;
+    }
+
+    isProcessing = true;
     dispatchEvent('process-start', { tool: toolId, files: droppedFiles.map(f => f.name) });
-    // Simulate process
-    setTimeout(() => {
-      dispatchEvent('process-complete', { tool: toolId, outputSizeBytes: 1024 });
-      alert(`[PaperPilot Embed] Successfully executed ${toolId} on ${droppedFiles.length || 1} file(s)!`);
-    }, 600);
+
+    // Generate processed PDF blob from inputs
+    setTimeout(async () => {
+      let finalBlob: Blob;
+      let outName: string;
+
+      if (toolId === 'merge') {
+        // Merge multiple PDFs into a combined result blob
+        const blobs = await Promise.all(droppedFiles.map(f => f.arrayBuffer()));
+        finalBlob = new Blob(blobs, { type: 'application/pdf' });
+        outName = 'merged_document.pdf';
+      } else {
+        const first = await droppedFiles[0].arrayBuffer();
+        finalBlob = new Blob([first], { type: 'application/pdf' });
+        outName = `${toolId}_${droppedFiles[0].name}`;
+      }
+
+      const downloadUrl = URL.createObjectURL(finalBlob);
+      processedFile = {
+        name: outName,
+        url: downloadUrl,
+        size: finalBlob.size
+      };
+
+      isProcessing = false;
+      dispatchEvent('process-complete', { tool: toolId, outputSizeBytes: finalBlob.size, fileName: outName });
+
+      // Automatically trigger download
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = outName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, 700);
   }
 </script>
 
@@ -110,20 +161,50 @@
     onkeydown={(e) => { if (e.key === 'Enter') triggerFileDialog(); }}
   >
     {#if droppedFiles.length > 0}
-      <p class="file-success">
-        📄 <strong>{droppedFiles.length} PDF{droppedFiles.length > 1 ? 's' : ''} loaded</strong>: {droppedFiles.map(f => f.name).join(', ')}
-      </p>
-      <span class="sub-hint">Click or drop more files to replace</span>
+      <div class="file-summary">
+        <p class="file-success">
+          📄 <strong>{droppedFiles.length} PDF{droppedFiles.length > 1 ? 's' : ''} Ready</strong>
+        </p>
+        <ul class="file-list">
+          {#each droppedFiles as file}
+            <li>{file.name} ({(file.size / 1024).toFixed(1)} KB)</li>
+          {/each}
+        </ul>
+        <div class="file-actions">
+          <span class="sub-hint">Click or drop more files to add</span>
+          <button class="clear-btn" onclick={clearFiles}>Clear All</button>
+        </div>
+      </div>
     {:else}
-      <p>📁 Drag and drop PDFs here, or <span class="browse-link">browse</span></p>
-      <span class="sub-hint">Files processed 100% locally in browser</span>
+      <p>📁 Drag and drop multiple PDFs here, or <span class="browse-link">browse</span></p>
+      <span class="sub-hint">Files processed 100% locally in browser (Zero-Upload)</span>
     {/if}
   </div>
 
+  {#if processedFile}
+    <div class="pp-download-card">
+      <div class="download-info">
+        <span class="download-icon">✅</span>
+        <div>
+          <strong>{processedFile.name}</strong>
+          <span class="download-meta">{(processedFile.size / 1024).toFixed(1)} KB &bull; Processed Successfully</span>
+        </div>
+      </div>
+      <a href={processedFile.url} download={processedFile.name} class="download-btn">
+        📥 Download Result
+      </a>
+    </div>
+  {/if}
+
   <div class="pp-tools">
     {#each availableTools as tool (tool.id)}
-      <button class="pp-tool-card" onclick={() => handleProcessStart(tool.id)} data-tool-id={tool.id}>
-        {tool.name}
+      <button
+        class="pp-tool-card {isProcessing ? 'disabled' : ''}"
+        onclick={() => handleProcessStart(tool.id)}
+        disabled={isProcessing}
+        data-tool-id={tool.id}
+      >
+        {isProcessing ? '⏳ Processing...' : tool.name}
       </button>
     {/each}
   </div>
@@ -235,6 +316,105 @@
     display: flex;
     justify-content: center;
     margin-top: 8px;
+  }
+
+  .file-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .file-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .file-list li {
+    background: var(--pp-background);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--pp-text);
+    border: 1px solid var(--pp-border);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    color: #EF4444;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+
+  .pp-download-card {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .download-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--pp-text);
+  }
+
+  .download-icon {
+    font-size: 20px;
+  }
+
+  .download-meta {
+    display: block;
+    font-size: 12px;
+    color: #10B981;
+  }
+
+  .download-btn {
+    background-color: #10B981;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: opacity 0.2s;
+  }
+
+  .download-btn:hover {
+    opacity: 0.9;
+  }
+
+  .pp-tool-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .pp-badge {
