@@ -97,23 +97,33 @@
     isProcessing = true;
     dispatchEvent('process-start', { tool: toolId, files: droppedFiles.map(f => f.name) });
 
-    // Generate processed PDF blob from inputs
-    setTimeout(async () => {
-      let finalBlob: Blob;
+    try {
+      let finalBytes: Uint8Array;
       let outName: string;
 
       if (toolId === 'merge') {
-        // Merge multiple PDFs into a combined result blob
-        const blobs = await Promise.all(droppedFiles.map(f => f.arrayBuffer()));
-        finalBlob = new Blob(blobs, { type: 'application/pdf' });
+        const { PDFDocument } = await import('pdf-lib');
+        const mergedDoc = await PDFDocument.create();
+
+        for (const file of droppedFiles) {
+          const arrayBuffer = await file.arrayBuffer();
+          const loadedDoc = await PDFDocument.load(arrayBuffer);
+          const pageIndices = loadedDoc.getPageIndices();
+          const copiedPages = await mergedDoc.copyPages(loadedDoc, pageIndices);
+          copiedPages.forEach(page => mergedDoc.addPage(page));
+        }
+
+        finalBytes = await mergedDoc.save();
         outName = 'merged_document.pdf';
       } else {
         const first = await droppedFiles[0].arrayBuffer();
-        finalBlob = new Blob([first], { type: 'application/pdf' });
+        finalBytes = new Uint8Array(first);
         outName = `${toolId}_${droppedFiles[0].name}`;
       }
 
+      const finalBlob = new Blob([finalBytes], { type: 'application/pdf' });
       const downloadUrl = URL.createObjectURL(finalBlob);
+
       processedFile = {
         name: outName,
         url: downloadUrl,
@@ -130,7 +140,11 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    }, 700);
+    } catch (err: any) {
+      isProcessing = false;
+      console.error('[PaperPilot Embed] Error processing PDF:', err);
+      alert(`[PaperPilot Embed] Error: ${err?.message || 'Failed to process PDF'}`);
+    }
   }
 </script>
 
