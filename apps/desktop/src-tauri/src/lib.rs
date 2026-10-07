@@ -74,11 +74,7 @@ async fn save_annotations(
     args.insert("output".to_string(), serde_json::Value::String(output_path));
     args.insert("annotations".to_string(), annotations);
 
-    invoke_mcp_tool(
-        "pdf_annotate".to_string(),
-        serde_json::Value::Object(args),
-    )
-    .await
+    invoke_mcp_tool("pdf_annotate".to_string(), serde_json::Value::Object(args)).await
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
@@ -139,7 +135,8 @@ async fn start_gateway() -> Result<(), String> {
         let shutdown_signal = async {
             let _ = rx.await;
         };
-        if let Err(e) = paperpilot_gateway::server::start(7823, "127.0.0.1", shutdown_signal).await {
+        if let Err(e) = paperpilot_gateway::server::start(7823, "127.0.0.1", shutdown_signal).await
+        {
             eprintln!("Gateway server failed: {}", e);
         }
 
@@ -177,9 +174,11 @@ fn resolve_natural_language(
     }
 }
 
-
 #[tauri::command]
-fn query_documentation_rag(query: String, engine: tauri::State<paperpilot_nlp::rag::DocumentationRagEngine>) -> Result<paperpilot_nlp::rag::RagAnswer, String> {
+fn query_documentation_rag(
+    query: String,
+    engine: tauri::State<paperpilot_nlp::rag::DocumentationRagEngine>,
+) -> Result<paperpilot_nlp::rag::RagAnswer, String> {
     if let Some(ans) = engine.query(&query) {
         Ok(ans)
     } else {
@@ -208,14 +207,30 @@ pub fn run() {
             Ok(())
         })
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
-        .invoke_handler(tauri::generate_handler![greet, invoke_mcp_tool, cancel_job, query_documentation_rag, save_annotations, read_file_bytes, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, resolve_natural_language])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            invoke_mcp_tool,
+            cancel_job,
+            query_documentation_rag,
+            save_annotations,
+            read_file_bytes,
+            get_file_metadata,
+            get_gateway_status,
+            start_gateway,
+            stop_gateway,
+            resolve_natural_language
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cancel_job, query_documentation_rag, invoke_mcp_tool, CANCEL_FLAGS, get_file_metadata, get_gateway_status, start_gateway, stop_gateway, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX};
+    use crate::{
+        cancel_job, get_file_metadata, get_gateway_status, invoke_mcp_tool,
+        query_documentation_rag, start_gateway, stop_gateway, CANCEL_FLAGS, GATEWAY_RUNNING,
+        GATEWAY_SHUTDOWN_TX,
+    };
     use serde_json::json;
     use std::io::Write;
 

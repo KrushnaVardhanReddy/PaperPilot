@@ -1,10 +1,19 @@
-use criterion::{criterion_group, criterion_main, Criterion, Throughput, BatchSize};
+use criterion::{BatchSize, Criterion, Throughput, criterion_group, criterion_main};
 use paperpilot_nlp::resolver::OfflineNlpResolver;
 use paperpilot_nlp::traits::NlpResolver;
 
 fn generate_queries() -> Vec<String> {
     let simple_commands = vec![
-        "merge", "split", "compress", "watermark", "encrypt", "decrypt", "extract text", "ocr", "render", "delete pages"
+        "merge",
+        "split",
+        "compress",
+        "watermark",
+        "encrypt",
+        "decrypt",
+        "extract text",
+        "ocr",
+        "render",
+        "delete pages",
     ];
     let medium_commands = vec![
         "please compress this report.pdf",
@@ -24,13 +33,19 @@ fn generate_queries() -> Vec<String> {
     let mut queries = Vec::with_capacity(10000);
     for _ in 0..(10000 / 150 + 1) {
         for _ in 0..5 {
-            for q in &simple_commands { queries.push(q.to_string()); }
+            for q in &simple_commands {
+                queries.push(q.to_string());
+            }
         }
         for _ in 0..10 {
-            for q in &medium_commands { queries.push(q.to_string()); }
+            for q in &medium_commands {
+                queries.push(q.to_string());
+            }
         }
         for _ in 0..10 {
-            for q in &complex_commands { queries.push(q.to_string()); }
+            for q in &complex_commands {
+                queries.push(q.to_string());
+            }
         }
     }
     queries.truncate(10000);

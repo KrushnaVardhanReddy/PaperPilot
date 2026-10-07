@@ -1,9 +1,9 @@
+pub mod annotate;
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
 pub mod group_d;
 pub mod group_e;
-pub mod annotate;
 pub mod validate;
 
 use crate::cli::Commands;
@@ -38,7 +38,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pages,
             degrees,
             output,
-        } => group_a::handle_rotate(input, &pages.clone().unwrap_or_else(|| "all".to_string()), *degrees, output),
+        } => group_a::handle_rotate(
+            input,
+            &pages.clone().unwrap_or_else(|| "all".to_string()),
+            *degrees,
+            output,
+        ),
         Commands::Crop {
             input,
             pages,
@@ -120,7 +125,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             start,
             output,
         } => group_b::handle_bates(input, prefix, *start, output),
-        Commands::PageNumbers { input, output, position } => group_b::handle_page_numbers(input, output, position),
+        Commands::PageNumbers {
+            input,
+            output,
+            position,
+        } => group_b::handle_page_numbers(input, output, position),
 
         // Group C
         Commands::ExtractText {
@@ -130,7 +139,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => group_c::handle_extract_text(input, output, format),
         Commands::ExtractImages { input, output } => group_c::handle_extract_images(input, output),
         Commands::Search { input, query } => group_c::handle_search(input, query),
-        Commands::Render { input, page: _, output } => group_c::handle_render(input, output),
+        Commands::Render {
+            input,
+            page: _,
+            output,
+        } => group_c::handle_render(input, output),
         Commands::Compare { input, input_b } => group_c::handle_compare(input, input_b),
         Commands::Ocr { input, output } => group_c::handle_ocr(input, output),
         Commands::Bookmarks { input } => group_c::handle_bookmarks(input),
@@ -153,10 +166,19 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         // Group E
         Commands::Form { command: form_cmd } => match form_cmd {
             crate::cli::FormCommands::Read { input } => group_e::handle_form_read(input),
-            crate::cli::FormCommands::Fill { input, data, output } => group_e::handle_form_fill(input, data, output),
-            crate::cli::FormCommands::AddField { input, name, r#type, page, rect, output } => {
-                group_e::handle_form_add_field(input, name, r#type, *page, rect, output)
-            }
+            crate::cli::FormCommands::Fill {
+                input,
+                data,
+                output,
+            } => group_e::handle_form_fill(input, data, output),
+            crate::cli::FormCommands::AddField {
+                input,
+                name,
+                r#type,
+                page,
+                rect,
+                output,
+            } => group_e::handle_form_add_field(input, name, r#type, *page, rect, output),
         },
         Commands::Convert {
             format,
@@ -175,12 +197,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         ),
         Commands::Classify { input } => group_d::handle_classify(input),
         Commands::Serve { port, bind } => {
-            let rt = tokio::runtime::Runtime::new().map_err(|e| {
-                paperpilot_core::error::PdfError::IoError(e)
-            })?;
+            let rt = tokio::runtime::Runtime::new()
+                .map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             rt.block_on(async {
                 paperpilot_gateway::server::start(*port, bind, std::future::pending()).await
-            }).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+            })
+            .map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             Ok(())
         }
     }

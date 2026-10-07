@@ -1,11 +1,11 @@
-use paperpilot_core::error::OperationResult;
-use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use std::path::PathBuf;
-use ocrs::{OcrEngine, OcrEngineParams, ImageSource};
-use rten_tensor::prelude::*;
-use rten_tensor::NdTensor;
 use crate::document::LopdfDocument;
 use image;
+use ocrs::{ImageSource, OcrEngine, OcrEngineParams};
+use paperpilot_core::error::OperationResult;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use rten_tensor::NdTensor;
+use rten_tensor::prelude::*;
+use std::path::PathBuf;
 
 pub struct OcrOperationImpl {
     pub output_path: Option<PathBuf>,
@@ -44,8 +44,11 @@ impl PdfOperation for OcrOperationImpl {
                         Err(_) => continue,
                     };
 
-                    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res {
-                        lopdf::Object::Reference(res_id) => inner.get_object(*res_id).and_then(|obj| obj.as_dict()),
+                    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res
+                    {
+                        lopdf::Object::Reference(res_id) => {
+                            inner.get_object(*res_id).and_then(|obj| obj.as_dict())
+                        }
                         lopdf::Object::Dictionary(dict) => Ok(dict),
                         _ => Err(lopdf::Error::DictKey("Invalid resources".to_string())),
                     }) {
@@ -53,14 +56,17 @@ impl PdfOperation for OcrOperationImpl {
                         Err(_) => continue,
                     };
 
-                    let xobject_dict = match resources_dict.get(b"XObject").and_then(|xobj| match xobj {
-                        lopdf::Object::Reference(xobj_id) => inner.get_object(*xobj_id).and_then(|obj| obj.as_dict()),
-                        lopdf::Object::Dictionary(dict) => Ok(dict),
-                        _ => Err(lopdf::Error::DictKey("Invalid XObject".to_string())),
-                    }) {
-                        Ok(dict) => dict,
-                        Err(_) => continue,
-                    };
+                    let xobject_dict =
+                        match resources_dict.get(b"XObject").and_then(|xobj| match xobj {
+                            lopdf::Object::Reference(xobj_id) => {
+                                inner.get_object(*xobj_id).and_then(|obj| obj.as_dict())
+                            }
+                            lopdf::Object::Dictionary(dict) => Ok(dict),
+                            _ => Err(lopdf::Error::DictKey("Invalid XObject".to_string())),
+                        }) {
+                            Ok(dict) => dict,
+                            Err(_) => continue,
+                        };
 
                     for (_, obj) in xobject_dict.iter() {
                         let stream_id = match obj.as_reference() {
@@ -68,15 +74,17 @@ impl PdfOperation for OcrOperationImpl {
                             Err(_) => continue,
                         };
 
-                        let stream = match inner.get_object(stream_id).and_then(|obj| obj.as_stream()) {
-                            Ok(stream) => stream,
-                            Err(_) => continue,
-                        };
+                        let stream =
+                            match inner.get_object(stream_id).and_then(|obj| obj.as_stream()) {
+                                Ok(stream) => stream,
+                                Err(_) => continue,
+                            };
 
-                        let subtype = match stream.dict.get(b"Subtype").and_then(|name| name.as_name()) {
-                            Ok(name) => name,
-                            Err(_) => continue,
-                        };
+                        let subtype =
+                            match stream.dict.get(b"Subtype").and_then(|name| name.as_name()) {
+                                Ok(name) => name,
+                                Err(_) => continue,
+                            };
 
                         if subtype != b"Image" {
                             continue;
@@ -86,7 +94,8 @@ impl PdfOperation for OcrOperationImpl {
                             let rgb = dyn_img.into_rgb8();
                             let (width, height) = rgb.dimensions();
 
-                            let mut tensor: NdTensor<f32, 3> = NdTensor::zeros([3, height as usize, width as usize]);
+                            let mut tensor: NdTensor<f32, 3> =
+                                NdTensor::zeros([3, height as usize, width as usize]);
                             for y in 0..height {
                                 for x in 0..width {
                                     let pixel = rgb.get_pixel(x, y);
@@ -97,7 +106,9 @@ impl PdfOperation for OcrOperationImpl {
                             }
 
                             // fallback format handling due to missing DimOrder
-                            if let Ok(image_source) = ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw) {
+                            if let Ok(image_source) =
+                                ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
+                            {
                                 if let Ok(img_input) = engine.prepare_input(image_source) {
                                     if let Ok(texts) = engine.get_text(&img_input) {
                                         words_collected.push(texts);
@@ -126,7 +137,10 @@ impl PdfOperation for OcrOperationImpl {
 
 pub type OcrOperation = OcrOperationImpl;
 #[allow(non_upper_case_globals)]
-pub const OcrOperation: OcrOperationImpl = OcrOperationImpl { output_path: None, language: None };
+pub const OcrOperation: OcrOperationImpl = OcrOperationImpl {
+    output_path: None,
+    language: None,
+};
 
 #[cfg(test)]
 mod tests {

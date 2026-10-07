@@ -150,8 +150,6 @@ impl PdfOperation for FillFormOperation {
             }
         }
 
-
-
         for (field_id, new_value) in fields_to_update {
             if let Ok(field_dict) = doc
                 .inner
@@ -177,7 +175,11 @@ impl PdfOperation for FillFormOperation {
         }
 
         // Set NeedAppearances to true so the viewer renders the filled values
-        if let Ok(acroform) = doc.inner.get_object_mut(acroform_ref).and_then(Object::as_dict_mut) {
+        if let Ok(acroform) = doc
+            .inner
+            .get_object_mut(acroform_ref)
+            .and_then(Object::as_dict_mut)
+        {
             acroform.set("NeedAppearances", Object::Boolean(true));
         }
 

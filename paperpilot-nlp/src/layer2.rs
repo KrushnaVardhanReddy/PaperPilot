@@ -17,12 +17,15 @@ pub struct OnnxClassifier {}
 impl OnnxClassifier {
     #[cfg(feature = "onnx")]
     pub fn new() -> Result<Self, NlpError> {
-        let compressed_model = include_bytes!("../../tools/train-nlp/output/tinybert_int8.onnx.zst");
-        let mut decoder = zstd::stream::read::Decoder::new(&compressed_model[..])
-            .map_err(|e| NlpError::InternalError(format!("Failed to decompress ONNX model: {}", e)))?;
+        let compressed_model =
+            include_bytes!("../../tools/train-nlp/output/tinybert_int8.onnx.zst");
+        let mut decoder = zstd::stream::read::Decoder::new(&compressed_model[..]).map_err(|e| {
+            NlpError::InternalError(format!("Failed to decompress ONNX model: {}", e))
+        })?;
         let mut model_bytes = Vec::new();
-        std::io::Read::read_to_end(&mut decoder, &mut model_bytes)
-            .map_err(|e| NlpError::InternalError(format!("Failed to read decompressed ONNX: {}", e)))?;
+        std::io::Read::read_to_end(&mut decoder, &mut model_bytes).map_err(|e| {
+            NlpError::InternalError(format!("Failed to read decompressed ONNX: {}", e))
+        })?;
 
         let tokenizer_bytes = include_bytes!("../../tools/train-nlp/output/tokenizer.json");
         let tokenizer = tokenizers::Tokenizer::from_bytes(tokenizer_bytes)
@@ -32,14 +35,19 @@ impl OnnxClassifier {
         let config: serde_json::Value = serde_json::from_slice(config_bytes)
             .map_err(|e| NlpError::InternalError(format!("Failed to parse config: {}", e)))?;
 
-        let id2label = config.get("id2label")
+        let id2label = config
+            .get("id2label")
             .and_then(|v| v.as_object())
             .ok_or_else(|| NlpError::InternalError("config.json missing id2label".to_string()))?;
 
         let mut labels = vec![String::new(); id2label.len()];
         for (id_str, label_val) in id2label {
-            let id: usize = id_str.parse().map_err(|_| NlpError::InternalError("Invalid ID in id2label".to_string()))?;
-            let label = label_val.as_str().ok_or_else(|| NlpError::InternalError("Invalid label string".to_string()))?;
+            let id: usize = id_str
+                .parse()
+                .map_err(|_| NlpError::InternalError("Invalid ID in id2label".to_string()))?;
+            let label = label_val
+                .as_str()
+                .ok_or_else(|| NlpError::InternalError("Invalid label string".to_string()))?;
             if id < labels.len() {
                 labels[id] = label.to_string();
             }
@@ -65,15 +73,29 @@ impl OnnxClassifier {
     #[cfg(feature = "onnx")]
     pub fn predict(&self, query: &str) -> Option<Intent> {
         let encoding = self.tokenizer.encode(query, true).ok()?;
-        let input_ids = encoding.get_ids().iter().map(|&x| x as i64).collect::<Vec<_>>();
-        let attention_mask = encoding.get_attention_mask().iter().map(|&x| x as i64).collect::<Vec<_>>();
-        let token_type_ids = encoding.get_type_ids().iter().map(|&x| x as i64).collect::<Vec<_>>();
+        let input_ids = encoding
+            .get_ids()
+            .iter()
+            .map(|&x| x as i64)
+            .collect::<Vec<_>>();
+        let attention_mask = encoding
+            .get_attention_mask()
+            .iter()
+            .map(|&x| x as i64)
+            .collect::<Vec<_>>();
+        let token_type_ids = encoding
+            .get_type_ids()
+            .iter()
+            .map(|&x| x as i64)
+            .collect::<Vec<_>>();
 
         let len = input_ids.len();
 
         let input_ids_array = ndarray::Array2::from_shape_vec((1, len), input_ids).ok()?;
-        let attention_mask_array = ndarray::Array2::from_shape_vec((1, len), attention_mask).ok()?;
-        let token_type_ids_array = ndarray::Array2::from_shape_vec((1, len), token_type_ids).ok()?;
+        let attention_mask_array =
+            ndarray::Array2::from_shape_vec((1, len), attention_mask).ok()?;
+        let token_type_ids_array =
+            ndarray::Array2::from_shape_vec((1, len), token_type_ids).ok()?;
 
         let mut session = self.session.lock().unwrap();
 

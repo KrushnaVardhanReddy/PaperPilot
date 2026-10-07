@@ -40,11 +40,11 @@ impl PdfOperation for CompareOperation {
         let pages_a = lopdf_doc_a.inner.get_pages();
         let pages_b = doc_b.inner.get_pages();
         if pages_a.len() != pages_b.len() {
-             *self.result.lock().unwrap() = Some(CompareResult {
-                 diff_detected: true,
-                 pages: vec![1],
-             });
-             return Ok(());
+            *self.result.lock().unwrap() = Some(CompareResult {
+                diff_detected: true,
+                pages: vec![1],
+            });
+            return Ok(());
         }
 
         // Extract and compare text
@@ -64,8 +64,8 @@ impl PdfOperation for CompareOperation {
         let diff_detected = text_a_opt != text_b_opt;
         let mut pages = vec![];
         if diff_detected {
-             // For now we just return page 1 if there's a diff, but ideally we'd compare page by page.
-             pages.push(1);
+            // For now we just return page 1 if there's a diff, but ideally we'd compare page by page.
+            pages.push(1);
         }
 
         *self.result.lock().unwrap() = Some(CompareResult {

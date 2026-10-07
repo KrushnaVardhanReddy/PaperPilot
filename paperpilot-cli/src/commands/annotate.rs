@@ -57,13 +57,12 @@ mod tests {
 
         std::fs::copy(actual_fixture, &input_path).unwrap();
 
-
         let json_str = "[{\"id\": \"test-id-1\",\"type\": \"note\",\"page\": 1,\"x\": 50.0,\"y\": 50.0,\"content\": \"Test Annotation\",\"color\": \"#FF0000\"}]";
 
         let result = handle_annotate(&input_path, Path::new(json_str), &output_path);
 
         if let Err(e) = &result {
-             println!("Error from handle_annotate: {:?}", e);
+            println!("Error from handle_annotate: {:?}", e);
         }
         assert!(result.is_ok(), "Failed to handle inline JSON");
 

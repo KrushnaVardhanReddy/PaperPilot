@@ -33,15 +33,16 @@ impl PdfOperation for RenderOperation {
         let doc = document
             .as_any_mut()
             .downcast_mut::<crate::document::LopdfDocument>()
-            .ok_or_else(|| {
-                PdfError::UnsupportedOperation("Expected LopdfDocument".to_string())
-            })?;
+            .ok_or_else(|| PdfError::UnsupportedOperation("Expected LopdfDocument".to_string()))?;
 
         let mut temp_file = NamedTempFile::new().map_err(|e| PdfError::IoError(e))?;
-        doc.inner.save_to(&mut temp_file).map_err(|e| PdfError::ParseError(e.to_string()))?;
+        doc.inner
+            .save_to(&mut temp_file)
+            .map_err(|e| PdfError::ParseError(e.to_string()))?;
 
         let pdf_bytes = std::fs::read(temp_file.path()).map_err(|e| PdfError::IoError(e))?;
-        let pdf = hayro_syntax::Pdf::new(pdf_bytes).map_err(|e| PdfError::ParseError(format!("{:?}", e)))?;
+        let pdf = hayro_syntax::Pdf::new(pdf_bytes)
+            .map_err(|e| PdfError::ParseError(format!("{:?}", e)))?;
 
         let pages = pdf.pages();
         let total_pages = pages.len();
@@ -65,11 +66,15 @@ impl PdfOperation for RenderOperation {
             total_pages
         };
 
-        let mut out_images = self.rendered_images.lock()
+        let mut out_images = self
+            .rendered_images
+            .lock()
             .map_err(|_| PdfError::Other("Mutex lock poisoned".to_string()))?;
 
         for i in start_page..end_page {
-            let page = pages.get(i).ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
+            let page = pages
+                .get(i)
+                .ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
             let cache = hayro::RenderCache::new();
             let render_settings = hayro::RenderSettings::default();
             // Setting scale based on DPI (72 DPI is scale 1.0)
@@ -78,15 +83,24 @@ impl PdfOperation for RenderOperation {
             pixmap_settings.x_scale = scale_factor;
             pixmap_settings.y_scale = scale_factor;
 
-            let pixmap = hayro::render(&page, &cache, &Default::default(), &render_settings, &pixmap_settings);
+            let pixmap = hayro::render(
+                &page,
+                &cache,
+                &Default::default(),
+                &render_settings,
+                &pixmap_settings,
+            );
             let width = pixmap.width() as u32;
             let height = pixmap.height() as u32;
             let data = bytemuck::cast_slice(pixmap.data());
 
-            let mut skia_pixmap = tiny_skia::Pixmap::new(width, height).ok_or_else(|| PdfError::ParseError("Failed to allocate Pixmap".to_string()))?;
+            let mut skia_pixmap = tiny_skia::Pixmap::new(width, height)
+                .ok_or_else(|| PdfError::ParseError("Failed to allocate Pixmap".to_string()))?;
             skia_pixmap.data_mut().copy_from_slice(data);
 
-            let png_bytes = skia_pixmap.encode_png().map_err(|e| PdfError::ParseError(e.to_string()))?;
+            let png_bytes = skia_pixmap
+                .encode_png()
+                .map_err(|e| PdfError::ParseError(e.to_string()))?;
 
             if let Some(out_path) = &self.output_path {
                 let current_out_path = if self.page.is_none() && total_pages > 1 {

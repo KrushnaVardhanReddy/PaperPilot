@@ -150,19 +150,25 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
     if let Some(Value::Object(args)) = payload.arguments {
         request.arguments = Some(args);
     } else if payload.arguments.is_some() {
-        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "arguments must be an object"})));
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "arguments must be an object"})),
+        );
     }
 
     match PaperPilotMcpServer::execute_call_tool(request) {
-        Ok(CallToolResponse::Complete(result)) => {
-            (StatusCode::OK, Json(serde_json::json!({"success": true, "result": result})))
-        },
-        Ok(_) => {
-             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"success": false, "error": "Unknown response format"})))
-        },
-        Err(e) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"success": false, "error": e.message})))
-        }
+        Ok(CallToolResponse::Complete(result)) => (
+            StatusCode::OK,
+            Json(serde_json::json!({"success": true, "result": result})),
+        ),
+        Ok(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"success": false, "error": "Unknown response format"})),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"success": false, "error": e.message})),
+        ),
     }
 }
 
@@ -184,24 +190,39 @@ pub async fn handle_tool(
     Path(tool_name): Path<String>,
     req: axum::extract::Request,
 ) -> impl IntoResponse {
-    let content_type = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
     let mut args = serde_json::Map::new();
     let mut temp_files = vec![];
 
     if content_type.starts_with("application/json") {
-        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX).await.unwrap_or_default();
+        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX)
+            .await
+            .unwrap_or_default();
         if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
             args = map;
         }
     } else {
         use axum::extract::FromRequest;
-        let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
-            Ok(m) => m,
-            Err(_) => return (axum::http::StatusCode::BAD_REQUEST, Json(serde_json::json!({"success": false, "error": "Invalid multipart request"}))).into_response(),
-        };
+        let mut multipart =
+            match axum::extract::Multipart::from_request(req, &()).await {
+                Ok(m) => m,
+                Err(_) => return (
+                    axum::http::StatusCode::BAD_REQUEST,
+                    Json(
+                        serde_json::json!({"success": false, "error": "Invalid multipart request"}),
+                    ),
+                )
+                    .into_response(),
+            };
         while let Ok(Some(field)) = multipart.next_field().await {
             let name = field.name().unwrap_or("").to_string();
-            if name.is_empty() { continue; }
+            if name.is_empty() {
+                continue;
+            }
 
             let file_name = field.file_name().map(|s| s.to_string());
 
@@ -210,28 +231,43 @@ pub async fn handle_tool(
                 Err(_) => continue,
             };
 
-            if file_name.is_some() || name == "file" || name == "input" || name == "file1" || name == "file2" || name == "file_a" || name == "file_b" || name == "input_a" || name == "input_b" {
+            if file_name.is_some()
+                || name == "file"
+                || name == "input"
+                || name == "file1"
+                || name == "file2"
+                || name == "file_a"
+                || name == "file_b"
+                || name == "input_a"
+                || name == "input_b"
+            {
                 let temp_file = NamedTempFile::new().unwrap();
                 let path = temp_file.path().to_owned();
                 let mut file = File::create(&path).unwrap();
                 file.write_all(&data).unwrap();
 
                 if name == "input" || name == "file" {
-                    args.insert("input".to_string(), Value::String(path.to_string_lossy().to_string()));
+                    args.insert(
+                        "input".to_string(),
+                        Value::String(path.to_string_lossy().to_string()),
+                    );
                 } else if args.contains_key(&name) {
                     if let Value::Array(arr) = args.get_mut(&name).unwrap() {
                         arr.push(Value::String(path.to_string_lossy().to_string()));
                     }
                 } else {
-                    args.insert(name.clone(), Value::String(path.to_string_lossy().to_string()));
+                    args.insert(
+                        name.clone(),
+                        Value::String(path.to_string_lossy().to_string()),
+                    );
                 }
                 temp_files.push(temp_file);
             } else {
                 let s = String::from_utf8_lossy(&data).to_string();
                 if let Ok(val) = serde_json::from_str::<Value>(&s) {
-                     args.insert(name, val);
+                    args.insert(name, val);
                 } else {
-                     args.insert(name, Value::String(s));
+                    args.insert(name, Value::String(s));
                 }
             }
         }
@@ -247,7 +283,10 @@ pub async fn handle_tool(
 
     if resolved_name == "pdf_rotate" {
         if !args.contains_key("pages") {
-            args.insert("pages".to_string(), serde_json::Value::String("all".to_string()));
+            args.insert(
+                "pages".to_string(),
+                serde_json::Value::String("all".to_string()),
+            );
         }
         if let Some(angle) = args.get("degrees").or_else(|| args.get("angle")) {
             let angle_val = angle.clone();
@@ -259,13 +298,22 @@ pub async fn handle_tool(
             let y = args.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0);
             let w = args.get("width").and_then(|v| v.as_f64()).unwrap_or(0.0);
             let h = args.get("height").and_then(|v| v.as_f64()).unwrap_or(0.0);
-            args.insert("box".to_string(), serde_json::Value::String(format!("{},{},{},{}", x, y, w, h)));
+            args.insert(
+                "box".to_string(),
+                serde_json::Value::String(format!("{},{},{},{}", x, y, w, h)),
+            );
         }
         if !args.contains_key("pages") {
-            args.insert("pages".to_string(), serde_json::Value::String("all".to_string()));
+            args.insert(
+                "pages".to_string(),
+                serde_json::Value::String("all".to_string()),
+            );
         }
     } else if resolved_name == "pdf_split" {
-        let out_opt = args.get("output").or_else(|| args.get("output_dir")).cloned();
+        let out_opt = args
+            .get("output")
+            .or_else(|| args.get("output_dir"))
+            .cloned();
         if let Some(out_val) = out_opt {
             args.insert("output_dir".to_string(), out_val.clone());
             args.insert("output".to_string(), out_val.clone());
@@ -288,19 +336,30 @@ pub async fn handle_tool(
     } else if resolved_name == "pdf_reorder_pages" {
         if let (Some(order_val), Some(input_val)) = (args.get("order"), args.get("input")) {
             if let (Some(order_str), Some(input_path)) = (order_val.as_str(), input_val.as_str()) {
-                let order_parts: Vec<usize> = order_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
+                let order_parts: Vec<usize> = order_str
+                    .split(',')
+                    .filter_map(|s| s.trim().parse().ok())
+                    .collect();
                 if let Ok(doc) = lopdf::Document::load(input_path) {
                     let page_count = doc.get_pages().len() as usize;
                     if order_parts.len() < page_count {
                         let mut full_order = order_parts.clone();
-                        let already_listed: std::collections::HashSet<usize> = order_parts.into_iter().collect();
+                        let already_listed: std::collections::HashSet<usize> =
+                            order_parts.into_iter().collect();
                         for page in 1..=page_count {
                             if !already_listed.contains(&page) {
                                 full_order.push(page);
                             }
                         }
-                        let new_order_str = full_order.into_iter().map(|p| p.to_string()).collect::<Vec<_>>().join(",");
-                        args.insert("order".to_string(), serde_json::Value::String(new_order_str));
+                        let new_order_str = full_order
+                            .into_iter()
+                            .map(|p| p.to_string())
+                            .collect::<Vec<_>>()
+                            .join(",");
+                        args.insert(
+                            "order".to_string(),
+                            serde_json::Value::String(new_order_str),
+                        );
                     }
                 }
             }
@@ -343,14 +402,22 @@ pub async fn handle_tool(
                     }
                 }
             }
-            (StatusCode::OK, Json(serde_json::json!({"success": true, "result": result}))).into_response()
-        },
-        Ok(_) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"success": false, "error": "Unknown response type"}))).into_response()
-        },
-        Err(e) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"success": false, "error": e.message}))).into_response()
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({"success": true, "result": result})),
+            )
+                .into_response()
         }
+        Ok(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"success": false, "error": "Unknown response type"})),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"success": false, "error": e.message})),
+        )
+            .into_response(),
     }
 }
 
@@ -423,7 +490,9 @@ pub async fn extract_text(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
     // Add logging and surface errors dynamically
     tracing::info!("Received convert request");
-    let res = handle_tool(Path("convert".to_string()), req).await.into_response();
+    let res = handle_tool(Path("convert".to_string()), req)
+        .await
+        .into_response();
     if res.status().is_server_error() || res.status().is_client_error() {
         tracing::error!("Convert failed with status: {}", res.status());
     }
@@ -489,7 +558,11 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     let mut args = serde_json::Map::new();
     let mut temp_files = vec![];
 
-    let content_type = req.headers().get(axum::http::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("");
+    let content_type = req
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
     let is_json = content_type.starts_with("application/json");
 
     if is_json {
@@ -501,7 +574,8 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
             if let Some(obj) = json_val.as_object() {
                 args = obj.clone();
             } else {
-                return (axum::http::StatusCode::BAD_REQUEST, "Invalid JSON object").into_response();
+                return (axum::http::StatusCode::BAD_REQUEST, "Invalid JSON object")
+                    .into_response();
             }
         } else {
             return (axum::http::StatusCode::BAD_REQUEST, "Invalid JSON").into_response();
@@ -509,12 +583,16 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     } else {
         let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
             Ok(m) => m,
-            Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid multipart").into_response(),
+            Err(_) => {
+                return (axum::http::StatusCode::BAD_REQUEST, "Invalid multipart").into_response();
+            }
         };
 
         while let Ok(Some(field)) = multipart.next_field().await {
             let name = field.name().unwrap_or("").to_string();
-            if name.is_empty() { continue; }
+            if name.is_empty() {
+                continue;
+            }
 
             let file_name = field.file_name().map(|s| s.to_string());
             let data = match field.bytes().await {
@@ -525,27 +603,43 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
             if file_name.is_some() || name == "file" || name == "input" {
                 let mut temp_file = match tempfile::NamedTempFile::new() {
                     Ok(tf) => tf,
-                    Err(_) => return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to create temp file").into_response(),
+                    Err(_) => {
+                        return (
+                            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            "Failed to create temp file",
+                        )
+                            .into_response();
+                    }
                 };
                 let path = temp_file.path().to_owned();
                 use std::io::Write;
                 if let Err(_) = temp_file.write_all(&data) {
-                    return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to write data").into_response();
+                    return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to write data",
+                    )
+                        .into_response();
                 };
-                args.insert("input".to_string(), serde_json::Value::String(path.to_string_lossy().to_string()));
+                args.insert(
+                    "input".to_string(),
+                    serde_json::Value::String(path.to_string_lossy().to_string()),
+                );
                 temp_files.push(temp_file);
             } else {
                 let s = String::from_utf8_lossy(&data).to_string();
                 if let Ok(val) = serde_json::from_str::<serde_json::Value>(&s) {
-                     args.insert(name, val);
+                    args.insert(name, val);
                 } else {
-                     args.insert(name, serde_json::Value::String(s));
+                    args.insert(name, serde_json::Value::String(s));
                 }
             }
         }
     }
 
-    let caller_provided_output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let caller_provided_output = args
+        .get("output")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     let output_path = if let Some(out) = &caller_provided_output {
         std::path::PathBuf::from(out)
@@ -553,7 +647,10 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
         std::env::temp_dir().join(format!("{}.png", uuid::Uuid::new_v4()))
     };
 
-    args.insert("output".to_string(), serde_json::Value::String(output_path.to_string_lossy().to_string()));
+    args.insert(
+        "output".to_string(),
+        serde_json::Value::String(output_path.to_string_lossy().to_string()),
+    );
 
     let mut request = rmcp::model::CallToolRequestParams::default();
     request.name = "pdf_render".into();
@@ -581,16 +678,25 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
                 if let Ok(bytes) = std::fs::read(&output_path) {
                     let _ = std::fs::remove_file(&output_path);
                     let mut res = axum::response::Response::new(axum::body::Body::from(bytes));
-                    res.headers_mut().insert(axum::http::header::CONTENT_TYPE, axum::http::HeaderValue::from_static("image/png"));
+                    res.headers_mut().insert(
+                        axum::http::header::CONTENT_TYPE,
+                        axum::http::HeaderValue::from_static("image/png"),
+                    );
                     res.into_response()
                 } else {
-                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "File generated but could not be read").into_response()
+                    (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        "File generated but could not be read",
+                    )
+                        .into_response()
                 }
             }
-        },
-        Err(e) => {
-            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.message.clone()).into_response()
         }
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            e.message.clone(),
+        )
+            .into_response(),
     }
 }
 
@@ -602,7 +708,9 @@ mod tests {
             .method("POST")
             .uri("/api/v1/pdf/convert")
             .header("content-type", "application/json")
-            .body(Body::from(r#"{"input": "invalid.pdf", "output": "invalid.docx", "format": "docx"}"#))
+            .body(Body::from(
+                r#"{"input": "invalid.pdf", "output": "invalid.docx", "format": "docx"}"#,
+            ))
             .unwrap();
 
         // This should not panic, but return a proper error (likely 500 or 400 depending on MCP)
@@ -615,7 +723,10 @@ mod tests {
     async fn test_convert_format_mapping() {
         let formats = vec!["docx", "xlsx", "pptx", "html", "markdown", "excel", "csv"];
         for format in formats {
-            let body = format!(r#"{{"input": "invalid.pdf", "output": "invalid.{}", "format": "{}"}}"#, format, format);
+            let body = format!(
+                r#"{{"input": "invalid.pdf", "output": "invalid.{}", "format": "{}"}}"#,
+                format, format
+            );
             let req = Request::builder()
                 .method("POST")
                 .uri("/api/v1/pdf/convert")
@@ -627,10 +738,17 @@ mod tests {
             let status = res.status();
             assert_eq!(status, axum::http::StatusCode::INTERNAL_SERVER_ERROR);
 
-            let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+            let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+                .await
+                .unwrap();
             let body_str = String::from_utf8_lossy(&body_bytes);
             // It should NOT be "Unknown tool" because the tool was mapped correctly.
-            assert!(!body_str.contains("Unknown tool"), "Format {} was not mapped correctly: {}", format, body_str);
+            assert!(
+                !body_str.contains("Unknown tool"),
+                "Format {} was not mapped correctly: {}",
+                format,
+                body_str
+            );
         }
 
         // Test an unknown format
@@ -638,10 +756,14 @@ mod tests {
             .method("POST")
             .uri("/api/v1/pdf/convert")
             .header("content-type", "application/json")
-            .body(Body::from(r#"{"input": "invalid.pdf", "output": "invalid.unknown", "format": "unknown"}"#))
+            .body(Body::from(
+                r#"{"input": "invalid.pdf", "output": "invalid.unknown", "format": "unknown"}"#,
+            ))
             .unwrap();
         let res = super::convert(req).await.into_response();
-        let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+        let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .unwrap();
         let body_str = String::from_utf8_lossy(&body_bytes);
         assert!(body_str.contains("Unknown tool"));
     }
@@ -657,10 +779,10 @@ mod tests {
     }
 
     use super::*;
-    use axum::http::Request;
     use axum::body::Body;
-    use serde_json::json;
+    use axum::http::Request;
     use axum::response::IntoResponse;
+    use serde_json::json;
 
     #[tokio::test]
     async fn test_mcp_exec_handles_invalid_arguments() {
@@ -669,7 +791,10 @@ mod tests {
             arguments: Some(json!("not an object")),
         };
         let res = mcp_exec(axum::Json(req)).await;
-        assert_eq!(res.into_response().status(), axum::http::StatusCode::BAD_REQUEST);
+        assert_eq!(
+            res.into_response().status(),
+            axum::http::StatusCode::BAD_REQUEST
+        );
     }
 
     #[tokio::test]
@@ -681,7 +806,10 @@ mod tests {
             .unwrap();
 
         let res = render_page(req).await;
-        assert_eq!(res.into_response().status(), axum::http::StatusCode::BAD_REQUEST);
+        assert_eq!(
+            res.into_response().status(),
+            axum::http::StatusCode::BAD_REQUEST
+        );
     }
 
     #[tokio::test]
@@ -690,7 +818,9 @@ mod tests {
             .method("POST")
             .uri("/api/v1/pdf/render-page")
             .header("content-type", "application/json")
-            .body(Body::from(r#"{"input": "invalid.pdf", "page": 1, "output": "/tmp/out.png"}"#))
+            .body(Body::from(
+                r#"{"input": "invalid.pdf", "page": 1, "output": "/tmp/out.png"}"#,
+            ))
             .unwrap();
 
         let res = render_page(req).await.into_response();

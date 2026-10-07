@@ -40,9 +40,10 @@ impl PdfOperation for SignatureOperation {
             .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
 
         if let Ok(catalog) = lopdf_doc.inner.get_object_mut(catalog_ref)
-            && let Ok(dict) = catalog.as_dict_mut() {
-                dict.set("AcroForm", lopdf::Object::Reference(acroform_id));
-            }
+            && let Ok(dict) = catalog.as_dict_mut()
+        {
+            dict.set("AcroForm", lopdf::Object::Reference(acroform_id));
+        }
 
         Ok(())
     }

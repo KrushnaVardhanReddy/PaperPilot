@@ -37,7 +37,11 @@ impl PdfOperation for SearchOperation {
         for (page_idx, _page_id) in all_pages {
             match inner.extract_text(&[*page_idx]) {
                 Ok(text) => {
-                    if text.replace(" ", "").to_lowercase().contains(&self.search_query.replace(" ", "").to_lowercase()) {
+                    if text
+                        .replace(" ", "")
+                        .to_lowercase()
+                        .contains(&self.search_query.replace(" ", "").to_lowercase())
+                    {
                         found_pages.push(*page_idx);
                     }
                 }

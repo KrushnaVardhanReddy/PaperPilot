@@ -1,9 +1,8 @@
-use crate::intent::Intent;
 use crate::entities::ExtractedEntities;
+use crate::intent::Intent;
 
 /// Represents a sequence of PDF operations to execute.
-#[derive(Debug, Clone)]
-#[derive(serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct OperationPlan {
     pub intent: Intent,
     pub input_files: Vec<String>,
@@ -70,20 +69,28 @@ pub trait NlpResolver: Send + Sync {
 
     /// Takes a natural language string and attempts to resolve it into a structured
     /// `OperationPlan`, using the provided context for implicit document binding.
-    fn resolve_with_context(&self, query: &str, context: &ResolverContext) -> Result<OperationPlan, NlpError>;
+    fn resolve_with_context(
+        &self,
+        query: &str,
+        context: &ResolverContext,
+    ) -> Result<OperationPlan, NlpError>;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::intent::Intent;
     use crate::entities::ExtractedEntities;
+    use crate::intent::Intent;
 
     #[test]
     fn test_operation_plan_split_io_merge() {
         let intent = Intent::Merge;
         let entities = ExtractedEntities {
-            files: vec!["a.pdf".to_string(), "b.pdf".to_string(), "out.pdf".to_string()],
+            files: vec![
+                "a.pdf".to_string(),
+                "b.pdf".to_string(),
+                "out.pdf".to_string(),
+            ],
             ..Default::default()
         };
         let plan = OperationPlan::new(intent, entities, "merge a b to out".to_string());

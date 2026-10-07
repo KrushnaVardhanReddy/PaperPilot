@@ -3,8 +3,8 @@ use axum::{
     http::{Request, StatusCode},
 };
 use paperpilot_gateway::server::build_app;
-use tower::ServiceExt;
 use serde_json::Value;
+use tower::ServiceExt;
 
 #[tokio::test]
 async fn test_health_endpoint() {
@@ -107,7 +107,13 @@ async fn test_swagger_ui_endpoint() {
 
     // Export static docs/api/openapi.json
     let _ = std::fs::create_dir_all("../docs/api");
-    let _ = std::fs::write("../docs/api/openapi.json", serde_json::to_string_pretty(&json).unwrap());
+    let _ = std::fs::write(
+        "../docs/api/openapi.json",
+        serde_json::to_string_pretty(&json).unwrap(),
+    );
     let _ = std::fs::create_dir_all("docs/api");
-    let _ = std::fs::write("docs/api/openapi.json", serde_json::to_string_pretty(&json).unwrap());
+    let _ = std::fs::write(
+        "docs/api/openapi.json",
+        serde_json::to_string_pretty(&json).unwrap(),
+    );
 }

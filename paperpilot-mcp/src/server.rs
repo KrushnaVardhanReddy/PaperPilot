@@ -1,12 +1,14 @@
 use crate::schema::OperationResult;
-use rmcp::handler::server::ServerHandler;
 use lazy_static::lazy_static;
 use pdfium_render::prelude::*;
+use rmcp::handler::server::ServerHandler;
 
 lazy_static! {
     static ref PDFIUM: Result<Pdfium, PdfiumError> = {
-        let bindings = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(&std::env::var("PDFIUM_PATH").unwrap_or_else(|_| "".to_string())))
-            .or_else(|_| Pdfium::bind_to_system_library());
+        let bindings = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+            &std::env::var("PDFIUM_PATH").unwrap_or_else(|_| "".to_string()),
+        ))
+        .or_else(|_| Pdfium::bind_to_system_library());
         match bindings {
             Ok(b) => Ok(Pdfium::new(b)),
             Err(e) => Err(e),
@@ -73,52 +75,104 @@ impl PaperPilotMcpServer {
         };
 
         add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
-        add_styled_tool(&mut tools, "pdf_convert_markdown", "Convert Markdown to styled PDF");
-        add_styled_tool(&mut tools, "pdf_convert_excel", "Convert Excel/CSV to styled PDF via semantic HTML");
-
+        add_styled_tool(
+            &mut tools,
+            "pdf_convert_markdown",
+            "Convert Markdown to styled PDF",
+        );
+        add_styled_tool(
+            &mut tools,
+            "pdf_convert_excel",
+            "Convert Excel/CSV to styled PDF via semantic HTML",
+        );
 
         // Tool: pdf_remove_blank
         let mut schema_rb = serde_json::Map::new();
-        schema_rb.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        schema_rb.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
         let mut props_rb = serde_json::Map::new();
         let mut prop_in_rb = serde_json::Map::new();
-        prop_in_rb.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_in_rb.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_rb.insert("input".to_string(), serde_json::Value::Object(prop_in_rb));
         let mut prop_out_rb = serde_json::Map::new();
-        prop_out_rb.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_out_rb.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_rb.insert("output".to_string(), serde_json::Value::Object(prop_out_rb));
         let mut prop_sens = serde_json::Map::new();
-        prop_sens.insert("type".to_string(), serde_json::Value::String("number".to_string()));
-        props_rb.insert("sensitivity".to_string(), serde_json::Value::Object(prop_sens));
-        schema_rb.insert("properties".to_string(), serde_json::Value::Object(props_rb));
-        schema_rb.insert("required".to_string(), serde_json::Value::Array(vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ]));
+        prop_sens.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        props_rb.insert(
+            "sensitivity".to_string(),
+            serde_json::Value::Object(prop_sens),
+        );
+        schema_rb.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_rb),
+        );
+        schema_rb.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
         let mut tool_rb = Tool::default();
         tool_rb.name = "pdf_remove_blank".into();
         tool_rb.description = Some("Removes blank pages from a PDF.".into());
         tool_rb.input_schema = std::sync::Arc::new(schema_rb);
         tools.push(tool_rb);
 
-
         // Tool: pdf_page_numbers
         let mut schema_pn = serde_json::Map::new();
-        schema_pn.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        schema_pn.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
         let mut props_pn = serde_json::Map::new();
-        let mut p1 = serde_json::Map::new(); p1.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        let mut p1 = serde_json::Map::new();
+        p1.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_pn.insert("input".to_string(), serde_json::Value::Object(p1));
-        let mut p2 = serde_json::Map::new(); p2.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        let mut p2 = serde_json::Map::new();
+        p2.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_pn.insert("output".to_string(), serde_json::Value::Object(p2));
-        let mut p3 = serde_json::Map::new(); p3.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        let mut p3 = serde_json::Map::new();
+        p3.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_pn.insert("position".to_string(), serde_json::Value::Object(p3));
-        let mut p4 = serde_json::Map::new(); p4.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        let mut p4 = serde_json::Map::new();
+        p4.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         props_pn.insert("format".to_string(), serde_json::Value::Object(p4));
-        schema_pn.insert("properties".to_string(), serde_json::Value::Object(props_pn));
-        schema_pn.insert("required".to_string(), serde_json::Value::Array(vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ]));
+        schema_pn.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pn),
+        );
+        schema_pn.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
         let mut tool_pn = Tool::default();
         tool_pn.name = "pdf_page_numbers".into();
         tool_pn.description = Some("Adds page numbers to a PDF.".into());
@@ -679,7 +733,7 @@ impl PaperPilotMcpServer {
             "output".to_string(),
             serde_json::Value::Object(prop_output_c),
         );
-        
+
         let mut prop_quality = serde_json::Map::new();
         prop_quality.insert(
             "type".to_string(),
@@ -687,13 +741,15 @@ impl PaperPilotMcpServer {
         );
         prop_quality.insert(
             "description".to_string(),
-            serde_json::Value::String("Compression quality preset (low, medium, high) or integer 1-100".to_string()),
+            serde_json::Value::String(
+                "Compression quality preset (low, medium, high) or integer 1-100".to_string(),
+            ),
         );
         prop_compress.insert(
             "quality".to_string(),
             serde_json::Value::Object(prop_quality),
         );
-        
+
         schema_compress.insert(
             "properties".to_string(),
             serde_json::Value::Object(prop_compress),
@@ -1084,10 +1140,7 @@ impl PaperPilotMcpServer {
             "properties".to_string(),
             serde_json::Value::Object(props_info),
         );
-        schema_info.insert(
-            "required".to_string(),
-            serde_json::json!(["input"]),
-        );
+        schema_info.insert("required".to_string(), serde_json::json!(["input"]));
         let mut tool_info = Tool::default();
         tool_info.name = "pdf_info".into();
         tool_info.description = Some("Get basic PDF information like page_count.".into());
@@ -2214,10 +2267,7 @@ impl PaperPilotMcpServer {
             "properties".to_string(),
             serde_json::Value::Object(props_compare),
         );
-        schema_compare.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![]),
-        );
+        schema_compare.insert("required".to_string(), serde_json::Value::Array(vec![]));
 
         let mut tool_compare = Tool::default();
         tool_compare.name = "pdf_compare".into();
@@ -2646,9 +2696,18 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
-                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let preset = args
+                    .get("preset")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let custom_css = args
+                    .get("custom_css")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let page_size = args
+                    .get("page_size")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
@@ -2672,7 +2731,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "HTML converted to PDF successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2683,9 +2742,18 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
-                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let preset = args
+                    .get("preset")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let custom_css = args
+                    .get("custom_css")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let page_size = args
+                    .get("page_size")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
@@ -2709,7 +2777,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Markdown converted to PDF successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2720,9 +2788,18 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
-                let preset = args.get("preset").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let custom_css = args.get("custom_css").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let page_size = args.get("page_size").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let preset = args
+                    .get("preset")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let custom_css = args
+                    .get("custom_css")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let page_size = args
+                    .get("page_size")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
@@ -2742,7 +2819,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Excel converted to PDF successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2753,12 +2830,17 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
-                let sensitivity = args.get("sensitivity").and_then(|v| v.as_u64()).unwrap_or(95) as u8;
+                let sensitivity = args
+                    .get("sensitivity")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(95) as u8;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
 
-                let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(sensitivity);
+                let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(
+                    sensitivity,
+                );
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 doc.save(&std::path::PathBuf::from(&output))
@@ -2767,25 +2849,34 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Blank pages removed successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })
             }
 
-
             "pdf_page_numbers" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
-                let position = args.get("position").and_then(|v| v.as_str()).unwrap_or("bottom-right").to_string();
-                let format = args.get("format").and_then(|v| v.as_str()).unwrap_or("Page {n} of {total}").to_string();
+                let position = args
+                    .get("position")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("bottom-right")
+                    .to_string();
+                let format = args
+                    .get("format")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Page {n} of {total}")
+                    .to_string();
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
 
-                let op = paperpilot_pdf::operations::page_numbers::PageNumbersOperation::new(position, format);
+                let op = paperpilot_pdf::operations::page_numbers::PageNumbersOperation::new(
+                    position, format,
+                );
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 doc.save(&std::path::PathBuf::from(&output))
@@ -2794,7 +2885,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Page numbers added successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2816,7 +2907,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDFs merged successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2840,7 +2931,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF split successfully.".to_string(),
                     output_path: Some(output_dir),
                     diff_detected: None,
@@ -2866,7 +2957,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Pages extracted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2892,7 +2983,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Pages deleted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2917,7 +3008,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Pages reordered successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -2951,7 +3042,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Pages rotated successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3002,7 +3093,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Pages cropped successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3022,7 +3113,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF burst successfully.".to_string(),
                     output_path: Some(output_dir),
                     diff_detected: None,
@@ -3046,7 +3137,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF compressed successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3092,7 +3183,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Text extracted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3116,7 +3207,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Images extracted successfully.".to_string(),
                     output_path: Some(output_dir),
                     diff_detected: None,
@@ -3143,7 +3234,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message,
                     output_path: None,
                     diff_detected: None,
@@ -3153,9 +3244,9 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
-                let annotations_value = args.get("annotations").ok_or_else(|| {
-                    ErrorData::invalid_params("Missing 'annotations'", None)
-                })?;
+                let annotations_value = args
+                    .get("annotations")
+                    .ok_or_else(|| ErrorData::invalid_params("Missing 'annotations'", None))?;
 
                 let annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> =
                     serde_json::from_value(annotations_value.clone()).map_err(|e| {
@@ -3182,7 +3273,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Annotations applied successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3207,7 +3298,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Watermark applied successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3235,7 +3326,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF encrypted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3260,7 +3351,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF decrypted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3286,7 +3377,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message,
                     output_path: None,
                     diff_detected: None,
@@ -3321,7 +3412,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Form filled successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3357,7 +3448,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Form field added successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3365,8 +3456,10 @@ impl PaperPilotMcpServer {
             }
             "pdf_info" => {
                 let input = get_string("input")?;
-                let mut doc = paperpilot_pdf::document::LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
+                let mut doc = paperpilot_pdf::document::LopdfDocument::load(
+                    &std::path::PathBuf::from(&input),
+                )
+                .map_err(crate::error::to_mcp_error)?;
 
                 let op = paperpilot_pdf::operations::info::InfoOperation::new();
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
@@ -3426,7 +3519,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message,
                     output_path: output,
                     diff_detected: None,
@@ -3449,7 +3542,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Converted to DOCX successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3472,7 +3565,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Converted to XLSX successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3495,7 +3588,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Converted to PPTX successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3521,7 +3614,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message,
                     output_path: None,
                     diff_detected: None,
@@ -3544,7 +3637,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF repaired successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3566,7 +3659,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF linearized successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3588,7 +3681,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF flattened successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3610,7 +3703,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF converted to PDF/A successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3643,7 +3736,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF redacted successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3652,8 +3745,30 @@ impl PaperPilotMcpServer {
             "pdf_header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let text = args.get("text").and_then(|v| v.as_str()).unwrap_or_else(|| args.get("header_left").and_then(|v| v.as_str()).unwrap_or_else(|| args.get("footer_center").and_then(|v| v.as_str()).unwrap_or("Header"))).to_string();
-                let position = args.get("position").and_then(|v| v.as_str()).unwrap_or_else(|| if args.get("footer_center").is_some() { "bottom-center" } else { "top-left" }).to_string();
+                let text = args
+                    .get("text")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_else(|| {
+                        args.get("header_left")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or_else(|| {
+                                args.get("footer_center")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("Header")
+                            })
+                    })
+                    .to_string();
+                let position = args
+                    .get("position")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_else(|| {
+                        if args.get("footer_center").is_some() {
+                            "bottom-center"
+                        } else {
+                            "top-left"
+                        }
+                    })
+                    .to_string();
 
                 ensure_parent_dir(&output)?;
 
@@ -3669,7 +3784,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Header/footer added successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3698,7 +3813,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Bates numbering applied successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3707,33 +3822,44 @@ impl PaperPilotMcpServer {
             "pdf_render" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let page = args.get("page").and_then(|v| {
-                    if let Some(s) = v.as_str() {
-                        s.parse::<u32>().ok()
-                    } else if let Some(n) = v.as_u64() {
-                        Some(n as u32)
-                    } else {
-                        None
-                    }
-                }).unwrap_or(1);
-                let dpi = args.get("dpi").and_then(|v| {
-                    if let Some(s) = v.as_str() {
-                        s.parse::<f32>().ok()
-                    } else if let Some(n) = v.as_f64() {
-                        Some(n as f32)
-                    } else {
-                        None
-                    }
-                }).unwrap_or(150.0);
+                let page = args
+                    .get("page")
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<u32>().ok()
+                        } else if let Some(n) = v.as_u64() {
+                            Some(n as u32)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(1);
+                let dpi = args
+                    .get("dpi")
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<f32>().ok()
+                        } else if let Some(n) = v.as_f64() {
+                            Some(n as f32)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(150.0);
 
                 ensure_parent_dir(&output)?;
 
                 // Pre-check page bounds using lopdf to ensure out-of-bounds error is thrown correctly even if pdfium is unavailable.
-                let lopdf_doc = paperpilot_pdf::document::LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
+                let lopdf_doc = paperpilot_pdf::document::LopdfDocument::load(
+                    &std::path::PathBuf::from(&input),
+                )
+                .map_err(crate::error::to_mcp_error)?;
                 let total_pages = lopdf_doc.page_count().map_err(crate::error::to_mcp_error)?;
                 if page == 0 || page > total_pages {
-                    return Err(rmcp::ErrorData::invalid_params(format!("Page out of bounds"), None));
+                    return Err(rmcp::ErrorData::invalid_params(
+                        format!("Page out of bounds"),
+                        None,
+                    ));
                 }
 
                 use pdfium_render::prelude::*;
@@ -3744,17 +3870,31 @@ impl PaperPilotMcpServer {
                         Err(e) => return Err(format!("Failed to bind to pdfium: {:?}", e)),
                     };
 
-                    let doc = pdfium.load_pdf_from_file(&input, None).map_err(|e| format!("Failed to load pdf: {:?}", e))?;
+                    let doc = pdfium
+                        .load_pdf_from_file(&input, None)
+                        .map_err(|e| format!("Failed to load pdf: {:?}", e))?;
                     let page_index = if page > 0 { (page - 1) as i32 } else { 0 };
                     let pages = doc.pages();
 
-                    let pdf_page = pages.get((page_index as u16).into()).map_err(|e| format!("Failed to get page: {:?}", e))?;
+                    let pdf_page = pages
+                        .get((page_index as u16).into())
+                        .map_err(|e| format!("Failed to get page: {:?}", e))?;
 
                     let target_w = (pdf_page.width().value * dpi / 72.0) as u16;
-                    let bitmap = pdf_page.render_with_config(&PdfRenderConfig::new().set_target_width(target_w.into()).set_clear_color(PdfColor::WHITE)).map_err(|e| format!("Failed to render page: {:?}", e))?;
+                    let bitmap = pdf_page
+                        .render_with_config(
+                            &PdfRenderConfig::new()
+                                .set_target_width(target_w.into())
+                                .set_clear_color(PdfColor::WHITE),
+                        )
+                        .map_err(|e| format!("Failed to render page: {:?}", e))?;
 
-                    let img = bitmap.as_image().map_err(|e| format!("Failed to get image: {:?}", e))?;
-                    img.into_rgba8().save_with_format(&output, image::ImageFormat::Png).map_err(|e| format!("Failed to save png: {:?}", e))?;
+                    let img = bitmap
+                        .as_image()
+                        .map_err(|e| format!("Failed to get image: {:?}", e))?;
+                    img.into_rgba8()
+                        .save_with_format(&output, image::ImageFormat::Png)
+                        .map_err(|e| format!("Failed to save png: {:?}", e))?;
 
                     Ok(())
                 })();
@@ -3763,13 +3903,19 @@ impl PaperPilotMcpServer {
                     // Fallback for headless environments without libpdfium.so
                     let mut img = image::RgbaImage::new(1, 1);
                     img.put_pixel(0, 0, image::Rgba([255, 255, 255, 255]));
-                    img.save_with_format(&output, image::ImageFormat::Png).map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to save dummy png: {:?}", e), None))?;
+                    img.save_with_format(&output, image::ImageFormat::Png)
+                        .map_err(|e| {
+                            rmcp::ErrorData::invalid_params(
+                                format!("Failed to save dummy png: {:?}", e),
+                                None,
+                            )
+                        })?;
                 }
 
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF rendered successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3794,16 +3940,21 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "Images converted to PDF successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })
             }
             "pdf_compare" => {
-                let input_a = get_string("input_a").or_else(|_| get_string("file_a")).or_else(|_| get_string("file1"))?;
-                let input_b = get_string("input_b").or_else(|_| get_string("file_b")).or_else(|_| get_string("file2"))?;
-                let output = get_string("output").unwrap_or_else(|_| "diff_report.json".to_string());
+                let input_a = get_string("input_a")
+                    .or_else(|_| get_string("file_a"))
+                    .or_else(|_| get_string("file1"))?;
+                let input_b = get_string("input_b")
+                    .or_else(|_| get_string("file_b"))
+                    .or_else(|_| get_string("file2"))?;
+                let output =
+                    get_string("output").unwrap_or_else(|_| "diff_report.json".to_string());
 
                 ensure_parent_dir(&output)?;
 
@@ -3815,7 +3966,10 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc_a).map_err(crate::error::to_mcp_error)?;
 
                 let result_opt = op.result.lock().unwrap().take();
-                let diff_detected = result_opt.as_ref().map(|r| r.diff_detected).unwrap_or(false);
+                let diff_detected = result_opt
+                    .as_ref()
+                    .map(|r| r.diff_detected)
+                    .unwrap_or(false);
 
                 let diff_report = if let Some(res) = result_opt {
                     serde_json::to_string_pretty(&res).unwrap_or_else(|_| "[]".to_string())
@@ -3823,12 +3977,19 @@ impl PaperPilotMcpServer {
                     "[]".to_string()
                 };
 
-                std::fs::write(&output, diff_report).map_err(|e| crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e)))?;
+                std::fs::write(&output, diff_report).map_err(|e| {
+                    crate::error::to_mcp_error(paperpilot_core::error::PdfError::IoError(e))
+                })?;
 
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    message: if diff_detected { "Differences detected.".to_string() } else { "PDF comparison completed successfully. No differences detected.".to_string() },
+                    message: if diff_detected {
+                        "Differences detected.".to_string()
+                    } else {
+                        "PDF comparison completed successfully. No differences detected."
+                            .to_string()
+                    },
                     output_path: Some(output),
                     diff_detected: Some(diff_detected),
                 })
@@ -3841,7 +4002,10 @@ impl PaperPilotMcpServer {
                 let op_res = op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
-                    data: Some(serde_json::to_value(op_res).unwrap_or(serde_json::json!({"bookmarks": "outline"}))),
+                    data: Some(
+                        serde_json::to_value(op_res)
+                            .unwrap_or(serde_json::json!({"bookmarks": "outline"})),
+                    ),
                     success: true,
                     message: "Bookmarks operation completed successfully.".to_string(),
                     output_path: None,
@@ -3864,7 +4028,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "OCR operation completed successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3888,7 +4052,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     data: None,
                     success: true,
-                    
+
                     message: "PDF signed successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
@@ -3908,7 +4072,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                     data: Some(serde_json::json!({"hash": hash.clone()})),
                     success: true,
-                    
+
                     message: "Hash calculated".to_string(),
                     output_path: Some(hash.clone()),
                 })
@@ -3925,7 +4089,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                     data: Some(serde_json::json!({"is_valid": true})),
                     success: true,
-                    
+
                     message: "Document is valid".to_string(),
                     output_path: Some("true".to_string()),
                 })
@@ -3969,16 +4133,26 @@ mod tests {
         let mut req = CallToolRequestParams::default();
         req.name = "pdf_render".into();
         let mut args = serde_json::Map::new();
-        args.insert("input".to_string(), serde_json::json!("tests/e2e_fixtures/multi_page_numbered.pdf"));
-        args.insert("output".to_string(), serde_json::json!("/tmp/render_test_mcp_bounds.png"));
+        args.insert(
+            "input".to_string(),
+            serde_json::json!("tests/e2e_fixtures/multi_page_numbered.pdf"),
+        );
+        args.insert(
+            "output".to_string(),
+            serde_json::json!("/tmp/render_test_mcp_bounds.png"),
+        );
         args.insert("page".to_string(), serde_json::json!(999));
         req.arguments = Some(args);
 
         let res = PaperPilotMcpServer::execute_call_tool(req);
-        assert!(res.is_err() || (res.is_ok() && match res.unwrap() {
-            CallToolResponse::Complete(r) => r.is_error.unwrap_or(false),
-            _ => false
-        }));
+        assert!(
+            res.is_err()
+                || (res.is_ok()
+                    && match res.unwrap() {
+                        CallToolResponse::Complete(r) => r.is_error.unwrap_or(false),
+                        _ => false,
+                    })
+        );
     }
 
     use super::*;

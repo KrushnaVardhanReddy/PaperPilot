@@ -47,12 +47,24 @@ impl TestCase {
 #[test]
 fn test_offline_resolver_accuracy() {
     let cases = vec![
-        TestCase::new("Please merge document A.pdf and B.pdf into output.pdf", Intent::Merge).files(3),
-        TestCase::new("Extract pages 1-5 from my_file.pdf", Intent::Extract).pages(vec!["1-5"]).files(1),
-        TestCase::new("Rotate this scanned.pdf by 90 degrees", Intent::Rotate).angles(vec![90]).files(1),
+        TestCase::new(
+            "Please merge document A.pdf and B.pdf into output.pdf",
+            Intent::Merge,
+        )
+        .files(3),
+        TestCase::new("Extract pages 1-5 from my_file.pdf", Intent::Extract)
+            .pages(vec!["1-5"])
+            .files(1),
+        TestCase::new("Rotate this scanned.pdf by 90 degrees", Intent::Rotate)
+            .angles(vec![90])
+            .files(1),
         TestCase::new("Compress financial_report.pdf", Intent::Compress).files(1),
-        TestCase::new("encrypt secret.pdf. password is '12345'", Intent::Encrypt).passwords(vec!["12345"]).files(1),
-        TestCase::new("Remove pages 2,4,6 from draft.pdf", Intent::Delete).pages(vec!["2,4,6"]).files(1),
+        TestCase::new("encrypt secret.pdf. password is '12345'", Intent::Encrypt)
+            .passwords(vec!["12345"])
+            .files(1),
+        TestCase::new("Remove pages 2,4,6 from draft.pdf", Intent::Delete)
+            .pages(vec!["2,4,6"])
+            .files(1),
         TestCase::new("convert images image.png to PDF", Intent::ImagesToPdf).files(1),
         TestCase::new("split large_book.pdf", Intent::Split).files(1),
         TestCase::new("Add a watermark to confidential.pdf", Intent::Watermark).files(1),
@@ -88,36 +100,52 @@ fn test_offline_resolver_accuracy() {
             Ok(plan) => {
                 let mut case_failed = false;
                 if plan.intent != case.expected_intent {
-                    failed.push(format!("Query: '{}'\nExpected Intent: {:?}, Got: {:?}", case.query, case.expected_intent, plan.intent));
+                    failed.push(format!(
+                        "Query: '{}'\nExpected Intent: {:?}, Got: {:?}",
+                        case.query, case.expected_intent, plan.intent
+                    ));
                     case_failed = true;
                 }
 
                 if !case_failed {
                     if let Some(expected_count) = case.expected_file_count {
-                        let actual_count = plan.input_files.len() + plan.output_file.as_ref().map_or(0, |_| 1);
+                        let actual_count =
+                            plan.input_files.len() + plan.output_file.as_ref().map_or(0, |_| 1);
                         if actual_count != expected_count {
                             failed.push(format!("Query: '{}'\nExpected file count: {}, Got: {} (inputs: {:?}, output: {:?})", case.query, expected_count, actual_count, plan.input_files, plan.output_file));
                         }
                     }
                     if let Some(expected_pages) = case.expected_page_ranges {
                         if plan.page_ranges != expected_pages {
-                            failed.push(format!("Query: '{}'\nExpected pages: {:?}, Got: {:?}", case.query, expected_pages, plan.page_ranges));
+                            failed.push(format!(
+                                "Query: '{}'\nExpected pages: {:?}, Got: {:?}",
+                                case.query, expected_pages, plan.page_ranges
+                            ));
                         }
                     }
                     if let Some(expected_angles) = case.expected_angles {
                         if plan.angles != expected_angles {
-                            failed.push(format!("Query: '{}'\nExpected angles: {:?}, Got: {:?}", case.query, expected_angles, plan.angles));
+                            failed.push(format!(
+                                "Query: '{}'\nExpected angles: {:?}, Got: {:?}",
+                                case.query, expected_angles, plan.angles
+                            ));
                         }
                     }
                     if let Some(expected_passwords) = case.expected_passwords {
                         if plan.passwords != expected_passwords {
-                            failed.push(format!("Query: '{}'\nExpected passwords: {:?}, Got: {:?}", case.query, expected_passwords, plan.passwords));
+                            failed.push(format!(
+                                "Query: '{}'\nExpected passwords: {:?}, Got: {:?}",
+                                case.query, expected_passwords, plan.passwords
+                            ));
                         }
                     }
                 }
             }
             Err(e) => {
-                failed.push(format!("Query: '{}'\nFailed with error: {:?}", case.query, e));
+                failed.push(format!(
+                    "Query: '{}'\nFailed with error: {:?}",
+                    case.query, e
+                ));
             }
         }
     }
@@ -135,17 +163,32 @@ fn test_offline_resolver_failures() {
     let res1 = resolver.resolve("xxxxxxx yyyyyy zzzzzzzz");
     // With fallback, it might hit NlpError::MissingParameters due to a guess, which is fine
     assert!(
-        matches!(res1, Err(NlpError::AmbiguousIntent(_))) || matches!(res1, Err(NlpError::MissingParameters(_))) || res1.is_ok(),
-        "Expected AmbiguousIntent, MissingParameters, or a fallback success, got {:?}", res1
+        matches!(res1, Err(NlpError::AmbiguousIntent(_)))
+            || matches!(res1, Err(NlpError::MissingParameters(_)))
+            || res1.is_ok(),
+        "Expected AmbiguousIntent, MissingParameters, or a fallback success, got {:?}",
+        res1
     );
 
     // Missing Parameters
     let res2 = resolver.resolve("rotate");
-    assert!(matches!(res2, Err(NlpError::MissingParameters(_))), "Expected MissingParameters, got {:?}", res2);
+    assert!(
+        matches!(res2, Err(NlpError::MissingParameters(_))),
+        "Expected MissingParameters, got {:?}",
+        res2
+    );
 
     let res3 = resolver.resolve("merge");
-    assert!(matches!(res3, Err(NlpError::MissingParameters(_))), "Expected MissingParameters, got {:?}", res3);
+    assert!(
+        matches!(res3, Err(NlpError::MissingParameters(_))),
+        "Expected MissingParameters, got {:?}",
+        res3
+    );
 
     let res4 = resolver.resolve("extract");
-    assert!(matches!(res4, Err(NlpError::MissingParameters(_))), "Expected MissingParameters, got {:?}", res4);
+    assert!(
+        matches!(res4, Err(NlpError::MissingParameters(_))),
+        "Expected MissingParameters, got {:?}",
+        res4
+    );
 }

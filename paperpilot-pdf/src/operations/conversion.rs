@@ -5,10 +5,10 @@ use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use rust_xlsxwriter::Workbook;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
-use std::path::PathBuf;
 
 pub const CSS_PRESET_GITHUB: &str = r#"
 @page { margin: 20mm; size: A4; }
@@ -147,10 +147,10 @@ tr { page-break-inside: avoid; }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HtmlToPdfOptions {
-    pub preset: Option<String>,      // "github", "elegant", "minimal", "branded", "compact"
-    pub custom_css: Option<String>,  // inline CSS string
-    pub page_size: Option<String>,   // "A4", "Letter", etc.
-    pub margin_mm: Option<f32>,      // default 20mm
+    pub preset: Option<String>, // "github", "elegant", "minimal", "branded", "compact"
+    pub custom_css: Option<String>, // inline CSS string
+    pub page_size: Option<String>, // "A4", "Letter", etc.
+    pub margin_mm: Option<f32>, // default 20mm
 }
 
 impl Default for HtmlToPdfOptions {
@@ -189,7 +189,10 @@ pub fn inject_css_into_html(html: &str, css: &str) -> String {
         out.push_str(&html[pos..]);
         out
     } else {
-        format!("<!DOCTYPE html><html><head>{}</head><body>{}</body></html>", style_tag, html)
+        format!(
+            "<!DOCTYPE html><html><head>{}</head><body>{}</body></html>",
+            style_tag, html
+        )
     }
 }
 
@@ -201,7 +204,11 @@ pub struct HtmlToPdfOperation {
 
 impl HtmlToPdfOperation {
     pub fn new(input_html: String, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
-        Self { input_html, output_path, options }
+        Self {
+            input_html,
+            output_path,
+            options,
+        }
     }
 
     pub fn render(&self) -> OperationResult<()> {
@@ -212,11 +219,14 @@ impl HtmlToPdfOperation {
         let styled_html = inject_css_into_html(&self.input_html, &css);
 
         let engine = fulgur::Engine::builder().build();
-        let pdf_data = engine.render(&styled_html)
+        let pdf_data = engine
+            .render(&styled_html)
             .map_err(|e| PdfError::Other(format!("Failed to render pdf: {:?}", e)))?;
 
         if pdf_data.is_empty() || !pdf_data.starts_with(b"%PDF-") {
-            return Err(PdfError::Other("Fulgur rendered invalid or empty PDF bytes".to_string()));
+            return Err(PdfError::Other(
+                "Fulgur rendered invalid or empty PDF bytes".to_string(),
+            ));
         }
 
         std::fs::write(&self.output_path, pdf_data)
@@ -234,7 +244,11 @@ pub struct MarkdownToPdfOperation {
 
 impl MarkdownToPdfOperation {
     pub fn new(input_md: String, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
-        Self { input_md, output_path, options }
+        Self {
+            input_md,
+            output_path,
+            options,
+        }
     }
 
     pub fn render(&self) -> OperationResult<()> {
@@ -243,9 +257,13 @@ impl MarkdownToPdfOperation {
         let mut html_output = String::new();
         html::push_html(&mut html_output, parser);
 
-        let full_html = format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>{}</body></html>", html_output);
+        let full_html = format!(
+            "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>{}</body></html>",
+            html_output
+        );
 
-        let html_op = HtmlToPdfOperation::new(full_html, self.output_path.clone(), self.options.clone());
+        let html_op =
+            HtmlToPdfOperation::new(full_html, self.output_path.clone(), self.options.clone());
         html_op.render()
     }
 }
@@ -258,13 +276,18 @@ pub struct ExcelToStyledHtmlOperation {
 
 impl ExcelToStyledHtmlOperation {
     pub fn new(input_path: PathBuf, output_path: PathBuf, options: HtmlToPdfOptions) -> Self {
-        Self { input_path, output_path, options }
+        Self {
+            input_path,
+            output_path,
+            options,
+        }
     }
 
     pub fn render(&self) -> OperationResult<()> {
-        use calamine::{Reader, open_workbook_auto, Data};
+        use calamine::{Data, Reader, open_workbook_auto};
 
-        let mut html = String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
+        let mut html =
+            String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
 
         if self.input_path.extension().and_then(|s| s.to_str()) == Some("csv") {
             let mut rdr = csv::Reader::from_path(&self.input_path)
@@ -295,7 +318,10 @@ impl ExcelToStyledHtmlOperation {
 
             let sheets = workbook.sheet_names().to_owned();
             for sheet_name in sheets {
-                html.push_str(&format!("<h2>{}</h2>", html_escape::encode_text(&sheet_name)));
+                html.push_str(&format!(
+                    "<h2>{}</h2>",
+                    html_escape::encode_text(&sheet_name)
+                ));
                 if let Ok(range) = workbook.worksheet_range(&sheet_name) {
                     html.push_str("<table>");
                     let mut is_first_row = true;
@@ -314,7 +340,12 @@ impl ExcelToStyledHtmlOperation {
                                 Data::DateTimeIso(d) => d.to_string(),
                                 Data::DurationIso(d) => d.to_string(),
                             };
-                            html.push_str(&format!("<{}>{}</{}>", cell_tag, html_escape::encode_text(&cell_val), cell_tag));
+                            html.push_str(&format!(
+                                "<{}>{}</{}>",
+                                cell_tag,
+                                html_escape::encode_text(&cell_val),
+                                cell_tag
+                            ));
                         }
                         html.push_str("</tr>");
                         is_first_row = false;
@@ -329,7 +360,6 @@ impl ExcelToStyledHtmlOperation {
         html_op.render()
     }
 }
-
 
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
@@ -905,12 +935,18 @@ mod tests {
         let css = "body { color: red; }";
         let injected = inject_css_into_html(html, css);
 
-        assert!(injected.contains("<style id=\"paperpilot-injected-css\">\nbody { color: red; }\n</style>"));
+        assert!(
+            injected
+                .contains("<style id=\"paperpilot-injected-css\">\nbody { color: red; }\n</style>")
+        );
         assert!(injected.contains("</head>"));
 
         let html_no_head = "<body><h1>Hello</h1></body>";
         let injected_no_head = inject_css_into_html(html_no_head, css);
-        assert!(injected_no_head.starts_with("<!DOCTYPE html><html><head><style id=\"paperpilot-injected-css\">"));
+        assert!(
+            injected_no_head
+                .starts_with("<!DOCTYPE html><html><head><style id=\"paperpilot-injected-css\">")
+        );
         assert!(injected_no_head.contains("<body><body><h1>Hello</h1></body></body></html>"));
     }
 
@@ -1042,7 +1078,8 @@ mod tests {
             margin_mm: None,
         };
 
-        let html = "<html><body><h1>Test HTML</h1><p>Rendering via fulgur.</p></body></html>".to_string();
+        let html =
+            "<html><body><h1>Test HTML</h1><p>Rendering via fulgur.</p></body></html>".to_string();
         let op = HtmlToPdfOperation::new(html, out_path.clone(), options);
         let res = op.render();
 

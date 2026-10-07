@@ -137,7 +137,10 @@ pub fn handle_burst(input: &std::path::Path, output: &std::path::Path) -> Operat
     op.execute(&mut doc)
 }
 
-pub fn handle_remove_blank(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+pub fn handle_remove_blank(
+    input: &std::path::Path,
+    output: &std::path::Path,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(90);
     op.execute(&mut doc)?;
@@ -158,7 +161,13 @@ mod tests {
 
         let fixture_path = std::path::Path::new("../tests/e2e_fixtures/multi_page.pdf");
         let fixture_path2 = std::path::Path::new("tests/e2e_fixtures/multi_page.pdf");
-        let actual_fixture = if fixture_path.exists() { fixture_path } else if fixture_path2.exists() { fixture_path2 } else { return; };
+        let actual_fixture = if fixture_path.exists() {
+            fixture_path
+        } else if fixture_path2.exists() {
+            fixture_path2
+        } else {
+            return;
+        };
 
         fs::copy(actual_fixture, &input_path).unwrap();
 

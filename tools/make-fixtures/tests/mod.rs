@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::path::PathBuf;
+use std::process::Command;
 
 #[test]
 fn test_make_fixtures_runs_successfully() {

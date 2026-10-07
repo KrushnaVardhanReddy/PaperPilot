@@ -11,30 +11,38 @@ pub fn handle_convert(
     css_preset: Option<&str>,
     inline_css: Option<&str>,
 ) -> OperationResult<()> {
-
-    let build_options = || -> OperationResult<paperpilot_pdf::operations::conversion::HtmlToPdfOptions> {
-        let mut custom_css_str = String::new();
-        if let Some(css_path) = css {
-            let file_content = std::fs::read_to_string(css_path)
-                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read css file: {}", e)))?;
-            custom_css_str.push_str(&file_content);
-        }
-        if let Some(inline) = inline_css {
-            if !custom_css_str.is_empty() {
-                custom_css_str.push('\n');
+    let build_options =
+        || -> OperationResult<paperpilot_pdf::operations::conversion::HtmlToPdfOptions> {
+            let mut custom_css_str = String::new();
+            if let Some(css_path) = css {
+                let file_content = std::fs::read_to_string(css_path).map_err(|e| {
+                    paperpilot_core::error::PdfError::Other(format!(
+                        "Failed to read css file: {}",
+                        e
+                    ))
+                })?;
+                custom_css_str.push_str(&file_content);
             }
-            custom_css_str.push_str(inline);
-        }
+            if let Some(inline) = inline_css {
+                if !custom_css_str.is_empty() {
+                    custom_css_str.push('\n');
+                }
+                custom_css_str.push_str(inline);
+            }
 
-        let final_css = if custom_css_str.is_empty() { None } else { Some(custom_css_str) };
+            let final_css = if custom_css_str.is_empty() {
+                None
+            } else {
+                Some(custom_css_str)
+            };
 
-        Ok(paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
-            preset: css_preset.map(|s| s.to_string()),
-            custom_css: final_css,
-            page_size: Some("A4".to_string()),
-            margin_mm: Some(20.0),
-        })
-    };
+            Ok(paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
+                preset: css_preset.map(|s| s.to_string()),
+                custom_css: final_css,
+                page_size: Some("A4".to_string()),
+                margin_mm: Some(20.0),
+            })
+        };
 
     let actual_format = if format == "pdf" {
         if let Some(ext) = input.extension().and_then(|s| s.to_str()) {
@@ -42,10 +50,16 @@ pub fn handle_convert(
                 "md" => "md_to_pdf",
                 "html" | "htm" => "html_to_pdf",
                 "xlsx" | "csv" => "excel_to_pdf",
-                _ => return Err(paperpilot_core::error::PdfError::Other("Unsupported file extension for format 'pdf'".to_string())),
+                _ => {
+                    return Err(paperpilot_core::error::PdfError::Other(
+                        "Unsupported file extension for format 'pdf'".to_string(),
+                    ));
+                }
             }
         } else {
-            return Err(paperpilot_core::error::PdfError::Other("Input file has no extension".to_string()));
+            return Err(paperpilot_core::error::PdfError::Other(
+                "Input file has no extension".to_string(),
+            ));
         }
     } else {
         format
@@ -54,24 +68,26 @@ pub fn handle_convert(
     match actual_format {
         "html_to_pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
-            let input_str = std::fs::read_to_string(input)
-                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e)))?;
+            let input_str = std::fs::read_to_string(input).map_err(|e| {
+                paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))
+            })?;
             let op = paperpilot_pdf::operations::conversion::HtmlToPdfOperation::new(
                 input_str,
                 out_path.to_path_buf(),
-                build_options()?
+                build_options()?,
             );
             op.render()?;
             return Ok(());
         }
         "md_to_pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
-            let input_str = std::fs::read_to_string(input)
-                .map_err(|e| paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e)))?;
+            let input_str = std::fs::read_to_string(input).map_err(|e| {
+                paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))
+            })?;
             let op = paperpilot_pdf::operations::conversion::MarkdownToPdfOperation::new(
                 input_str,
                 out_path.to_path_buf(),
-                build_options()?
+                build_options()?,
             );
             op.render()?;
             return Ok(());
@@ -81,7 +97,7 @@ pub fn handle_convert(
             let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(
                 input.to_path_buf(),
                 out_path.to_path_buf(),
-                build_options()?
+                build_options()?,
             );
             op.render()?;
             return Ok(());
@@ -163,17 +179,23 @@ pub fn handle_convert(
         }
         "docx" => {
             let out_path = output.unwrap_or(Path::new("output.docx"));
-            let op = paperpilot_pdf::operations::conversion::PdfToDocxOperation::new(out_path.to_path_buf());
+            let op = paperpilot_pdf::operations::conversion::PdfToDocxOperation::new(
+                out_path.to_path_buf(),
+            );
             op.execute(&mut doc)?;
         }
         "xlsx" => {
             let out_path = output.unwrap_or(Path::new("output.xlsx"));
-            let op = paperpilot_pdf::operations::conversion::PdfToXlsxOperation::new(out_path.to_path_buf());
+            let op = paperpilot_pdf::operations::conversion::PdfToXlsxOperation::new(
+                out_path.to_path_buf(),
+            );
             op.execute(&mut doc)?;
         }
         "pptx" => {
             let out_path = output.unwrap_or(Path::new("output.pptx"));
-            let op = paperpilot_pdf::operations::conversion::PdfToPptxOperation::new(out_path.to_path_buf());
+            let op = paperpilot_pdf::operations::conversion::PdfToPptxOperation::new(
+                out_path.to_path_buf(),
+            );
             op.execute(&mut doc)?;
         }
         _ => {
@@ -185,8 +207,6 @@ pub fn handle_convert(
 
     Ok(())
 }
-
-
 
 pub fn handle_classify(input: &Path) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;

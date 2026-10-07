@@ -118,12 +118,7 @@ impl DocumentationRagEngine {
         self.chunk_norms = self
             .chunk_vectors
             .iter()
-            .map(|vec| {
-                vec.values()
-                    .map(|v| v * v)
-                    .sum::<f32>()
-                    .sqrt()
-            })
+            .map(|vec| vec.values().map(|v| v * v).sum::<f32>().sqrt())
             .collect();
     }
 
@@ -639,4 +634,5 @@ impl DocumentationRagEngine {
             },
 
         ]
-    }}
+    }
+}

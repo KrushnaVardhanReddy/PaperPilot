@@ -380,7 +380,15 @@ mod tests {
 
     #[test]
     fn test_merge_multiple_inputs() {
-        let args = vec!["paperpilot", "merge", "--input", "a.pdf", "b.pdf", "--output", "out.pdf"];
+        let args = vec![
+            "paperpilot",
+            "merge",
+            "--input",
+            "a.pdf",
+            "b.pdf",
+            "--output",
+            "out.pdf",
+        ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
             Commands::Merge { input, output } => {
@@ -395,10 +403,24 @@ mod tests {
 
     #[test]
     fn test_rotate_angle_alias() {
-        let args = vec!["paperpilot", "rotate", "--input", "in.pdf", "--angle", "90", "--output", "out.pdf"];
+        let args = vec![
+            "paperpilot",
+            "rotate",
+            "--input",
+            "in.pdf",
+            "--angle",
+            "90",
+            "--output",
+            "out.pdf",
+        ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::Rotate { input, pages, degrees, output } => {
+            Commands::Rotate {
+                input,
+                pages,
+                degrees,
+                output,
+            } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
                 assert_eq!(pages, None);
                 assert_eq!(degrees, 90);
@@ -410,7 +432,14 @@ mod tests {
 
     #[test]
     fn test_burst_output_dir_alias() {
-        let args = vec!["paperpilot", "burst", "--input", "in.pdf", "--output-dir", "out_dir"];
+        let args = vec![
+            "paperpilot",
+            "burst",
+            "--input",
+            "in.pdf",
+            "--output-dir",
+            "out_dir",
+        ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
             Commands::Burst { input, output } => {
@@ -424,12 +453,33 @@ mod tests {
     #[test]
     fn test_crop_individual_flags() {
         let args = vec![
-            "paperpilot", "crop", "--input", "in.pdf", "--x", "10", "--y", "20",
-            "--width", "30", "--height", "40", "--output", "out.pdf",
+            "paperpilot",
+            "crop",
+            "--input",
+            "in.pdf",
+            "--x",
+            "10",
+            "--y",
+            "20",
+            "--width",
+            "30",
+            "--height",
+            "40",
+            "--output",
+            "out.pdf",
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::Crop { input, pages, rect, x, y, width, height, output } => {
+            Commands::Crop {
+                input,
+                pages,
+                rect,
+                x,
+                y,
+                width,
+                height,
+                output,
+            } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
                 assert_eq!(pages, None);
                 assert_eq!(rect, None);
@@ -445,7 +495,14 @@ mod tests {
 
     #[test]
     fn test_remove_blank() {
-        let args = vec!["paperpilot", "remove-blank", "--input", "in.pdf", "--output", "out.pdf"];
+        let args = vec![
+            "paperpilot",
+            "remove-blank",
+            "--input",
+            "in.pdf",
+            "--output",
+            "out.pdf",
+        ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
             Commands::RemoveBlank { input, output } => {
@@ -459,12 +516,22 @@ mod tests {
     #[test]
     fn test_page_numbers() {
         let args = vec![
-            "paperpilot", "page-numbers", "--input", "in.pdf",
-            "--output", "out.pdf", "--position", "top-left",
+            "paperpilot",
+            "page-numbers",
+            "--input",
+            "in.pdf",
+            "--output",
+            "out.pdf",
+            "--position",
+            "top-left",
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::PageNumbers { input, output, position } => {
+            Commands::PageNumbers {
+                input,
+                output,
+                position,
+            } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
                 assert_eq!(output, PathBuf::from("out.pdf"));
                 assert_eq!(position, "top-left");
@@ -476,7 +543,13 @@ mod tests {
     #[test]
     fn test_images_to_pdf_multiple_inputs() {
         let args = vec![
-            "paperpilot", "images-to-pdf", "--images", "1.png", "2.png", "--output", "out.pdf",
+            "paperpilot",
+            "images-to-pdf",
+            "--images",
+            "1.png",
+            "2.png",
+            "--output",
+            "out.pdf",
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
@@ -493,11 +566,22 @@ mod tests {
     #[test]
     fn test_signature_alias() {
         let args = vec![
-            "paperpilot", "sign", "--input", "in.pdf", "--cert", "cert.pem", "--output", "out.pdf",
+            "paperpilot",
+            "sign",
+            "--input",
+            "in.pdf",
+            "--cert",
+            "cert.pem",
+            "--output",
+            "out.pdf",
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::Signature { input, cert, output } => {
+            Commands::Signature {
+                input,
+                cert,
+                output,
+            } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
                 assert_eq!(cert, PathBuf::from("cert.pem"));
                 assert_eq!(output, PathBuf::from("out.pdf"));
@@ -509,7 +593,12 @@ mod tests {
     #[test]
     fn test_pdfa_alias() {
         let args = vec![
-            "paperpilot", "to-pdf-a", "--input", "in.pdf", "--output", "out.pdf",
+            "paperpilot",
+            "to-pdf-a",
+            "--input",
+            "in.pdf",
+            "--output",
+            "out.pdf",
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {

@@ -1,7 +1,7 @@
-use crate::traits::{NlpResolver, OperationPlan, NlpError, ResolverContext};
-use crate::layer1::RuleEngine;
-use crate::entities::extract_entities;
 use crate::ambiguity::check_completeness;
+use crate::entities::extract_entities;
+use crate::layer1::RuleEngine;
+use crate::traits::{NlpError, NlpResolver, OperationPlan, ResolverContext};
 
 pub struct OfflineNlpResolver {
     engine: RuleEngine,
@@ -15,12 +15,18 @@ impl Default for OfflineNlpResolver {
 
 impl OfflineNlpResolver {
     pub fn new() -> Self {
-        OfflineNlpResolver { engine: RuleEngine::new() }
+        OfflineNlpResolver {
+            engine: RuleEngine::new(),
+        }
     }
 }
 
 impl NlpResolver for OfflineNlpResolver {
-    fn resolve_with_context(&self, query: &str, context: &ResolverContext) -> Result<OperationPlan, NlpError> {
+    fn resolve_with_context(
+        &self,
+        query: &str,
+        context: &ResolverContext,
+    ) -> Result<OperationPlan, NlpError> {
         // 1. Try Layer 1
         if let Some(intent) = self.engine.predict(query) {
             let mut entities = extract_entities(query);
@@ -52,9 +58,10 @@ impl NlpResolver for OfflineNlpResolver {
             }
         }
 
-        Err(NlpError::AmbiguousIntent(
-            format!("Could not identify a PDF operation in: '{}'", query)
-        ))
+        Err(NlpError::AmbiguousIntent(format!(
+            "Could not identify a PDF operation in: '{}'",
+            query
+        )))
     }
 }
 
@@ -66,7 +73,9 @@ mod tests {
     #[test]
     fn test_resolve_merge() {
         let resolver = OfflineNlpResolver::new();
-        let plan = resolver.resolve("merge a.pdf and b.pdf into output.pdf").unwrap();
+        let plan = resolver
+            .resolve("merge a.pdf and b.pdf into output.pdf")
+            .unwrap();
         assert_eq!(plan.intent, Intent::Merge);
         assert_eq!(plan.input_files.len(), 2);
         assert_eq!(plan.input_files[0], "a.pdf");
@@ -93,7 +102,9 @@ mod tests {
         let res = resolver.resolve("x x x x x x x x x x x x x x x x x x x x x x x x x x");
         assert!(res.is_err());
         match res {
-            Err(NlpError::AmbiguousIntent(msg)) => assert!(msg.contains("Could not identify a PDF operation in")),
+            Err(NlpError::AmbiguousIntent(msg)) => {
+                assert!(msg.contains("Could not identify a PDF operation in"))
+            }
             Err(NlpError::MissingParameters(_)) => {
                 // With layer2 onnx fallback, it could predict an intent, but fail completeness because no files exist.
                 // We will treat that as acceptable in an end-to-end integration context as the intent was "guessed" but rejected due to lack of parameters.
@@ -123,7 +134,9 @@ mod tests {
         };
         // Query has no explicit files, but requires one (e.g. split)
         // using "1-2" instead of "1 to 2" for consistent page range extraction based on the regex
-        let plan = resolver.resolve_with_context("split pages 1-2", &context).unwrap();
+        let plan = resolver
+            .resolve_with_context("split pages 1-2", &context)
+            .unwrap();
         assert_eq!(plan.intent, Intent::Split);
         assert_eq!(plan.input_files.len(), 1);
         assert_eq!(plan.input_files[0], "current_active.pdf");
@@ -138,7 +151,9 @@ mod tests {
             open_documents: vec!["only_open.pdf".to_string()],
         };
         // Fallback to the only open document
-        let plan = resolver.resolve_with_context("rotate 90 degrees", &context).unwrap();
+        let plan = resolver
+            .resolve_with_context("rotate 90 degrees", &context)
+            .unwrap();
         assert_eq!(plan.intent, Intent::Rotate);
         assert_eq!(plan.input_files.len(), 1);
         assert_eq!(plan.input_files[0], "only_open.pdf");

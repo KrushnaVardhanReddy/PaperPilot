@@ -1,9 +1,9 @@
 use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse, ContentBlock};
 use std::io::{self, BufRead};
+use std::time::Duration;
 use tokio::io::AsyncBufReadExt;
 use tokio::time::timeout;
-use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -20,19 +20,29 @@ async fn main() {
                 if val.get("method").and_then(|m| m.as_str()) == Some("tools/call") {
                     let id = val.get("id").cloned().unwrap_or(serde_json::json!(1));
                     if let Some(params) = val.get("params") {
-                        if let Ok(tool_params) = serde_json::from_value::<CallToolRequestParams>(params.clone()) {
+                        if let Ok(tool_params) =
+                            serde_json::from_value::<CallToolRequestParams>(params.clone())
+                        {
                             match PaperPilotMcpServer::execute_call_tool(tool_params) {
                                 Ok(CallToolResponse::Complete(res)) => {
-                                    let content = res.content.first().and_then(|c| match c {
-                                        ContentBlock::Text(t) => Some(t.text.clone()),
-                                        _ => None,
-                                    }).unwrap_or_else(|| "{\"success\":true}".to_string());
-                                    let parsed: serde_json::Value = serde_json::from_str(&content).unwrap_or(serde_json::json!({"success": true}));
-                                    println!("{}", serde_json::json!({
-                                        "jsonrpc": "2.0",
-                                        "id": id,
-                                        "result": parsed
-                                    }));
+                                    let content = res
+                                        .content
+                                        .first()
+                                        .and_then(|c| match c {
+                                            ContentBlock::Text(t) => Some(t.text.clone()),
+                                            _ => None,
+                                        })
+                                        .unwrap_or_else(|| "{\"success\":true}".to_string());
+                                    let parsed: serde_json::Value = serde_json::from_str(&content)
+                                        .unwrap_or(serde_json::json!({"success": true}));
+                                    println!(
+                                        "{}",
+                                        serde_json::json!({
+                                            "jsonrpc": "2.0",
+                                            "id": id,
+                                            "result": parsed
+                                        })
+                                    );
                                     std::process::exit(0);
                                 }
                                 Ok(_) => {
@@ -56,7 +66,12 @@ async fn main() {
     let mut stdin_buf = tokio::io::BufReader::new(tokio::io::stdin());
     let mut first_line = String::new();
 
-    if let Ok(Ok(bytes_read)) = timeout(Duration::from_millis(300), stdin_buf.read_line(&mut first_line)).await {
+    if let Ok(Ok(bytes_read)) = timeout(
+        Duration::from_millis(300),
+        stdin_buf.read_line(&mut first_line),
+    )
+    .await
+    {
         if bytes_read > 0 && first_line.contains("tools/call") {
             if let Ok(value) = serde_json::from_str::<serde_json::Value>(&first_line) {
                 if let Some(params) = value.get("params") {
@@ -69,18 +84,26 @@ async fn main() {
 
                             match PaperPilotMcpServer::execute_call_tool(request) {
                                 Ok(CallToolResponse::Complete(result)) => {
-                                    let text = result.content.first().and_then(|c| match c {
-                                        ContentBlock::Text(t) => Some(t.text.clone()),
-                                        _ => None,
-                                    }).unwrap_or_else(|| "{\"success\":true}".to_string());
+                                    let text = result
+                                        .content
+                                        .first()
+                                        .and_then(|c| match c {
+                                            ContentBlock::Text(t) => Some(t.text.clone()),
+                                            _ => None,
+                                        })
+                                        .unwrap_or_else(|| "{\"success\":true}".to_string());
 
                                     // Support both format expectations (raw content array or parsed result)
-                                    let parsed: serde_json::Value = serde_json::from_str(&text).unwrap_or(serde_json::json!({"success": true}));
-                                    println!("{}", serde_json::json!({
-                                        "jsonrpc": "2.0",
-                                        "id": value.get("id").unwrap_or(&serde_json::json!(null)),
-                                        "result": parsed
-                                    }));
+                                    let parsed: serde_json::Value = serde_json::from_str(&text)
+                                        .unwrap_or(serde_json::json!({"success": true}));
+                                    println!(
+                                        "{}",
+                                        serde_json::json!({
+                                            "jsonrpc": "2.0",
+                                            "id": value.get("id").unwrap_or(&serde_json::json!(null)),
+                                            "result": parsed
+                                        })
+                                    );
                                 }
                                 Ok(_) => {}
                                 Err(e) => eprintln!("Error executing MCP tool: {:?}", e),

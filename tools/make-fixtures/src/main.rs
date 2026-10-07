@@ -1,4 +1,7 @@
-use lopdf::{Document, Object, Stream, dictionary, content::{Content, Operation}};
+use lopdf::{
+    content::{Content, Operation},
+    dictionary, Document, Object, Stream,
+};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -30,7 +33,7 @@ fn create_simple_pdf(text: &str) -> Document {
         ],
     };
     let content_bytes = content.encode().unwrap();
-    let content_id = doc.add_object(Stream::new(dictionary!{}, content_bytes));
+    let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
 
     let page_id = doc.add_object(dictionary! {
         "Type" => "Page",
@@ -44,11 +47,14 @@ fn create_simple_pdf(text: &str) -> Document {
         }
     });
 
-    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
-        "Type" => "Pages",
-        "Kids" => vec![page_id.into()],
-        "Count" => 1,
-    }));
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
 
     let catalog_id = doc.add_object(dictionary! {
         "Type" => "Catalog",
@@ -79,7 +85,7 @@ fn create_multi_page_pdf(pages_text: &[&str]) -> Document {
             ],
         };
         let content_bytes = content.encode().unwrap();
-        let content_id = doc.add_object(Stream::new(dictionary!{}, content_bytes));
+        let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
 
         let page_id = doc.add_object(dictionary! {
             "Type" => "Page",
@@ -96,11 +102,14 @@ fn create_multi_page_pdf(pages_text: &[&str]) -> Document {
     }
 
     let count = kids.len() as i32;
-    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
-        "Type" => "Pages",
-        "Kids" => kids,
-        "Count" => count,
-    }));
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => kids,
+            "Count" => count,
+        }),
+    );
 
     let catalog_id = doc.add_object(dictionary! {
         "Type" => "Catalog",
@@ -130,7 +139,7 @@ fn create_form_fields_pdf() -> Document {
         ],
     };
     let content_bytes = content.encode().unwrap();
-    let content_id = doc.add_object(Stream::new(dictionary!{}, content_bytes));
+    let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
 
     let field_id = doc.add_object(dictionary! {
         "Type" => "Annot",
@@ -163,11 +172,14 @@ fn create_form_fields_pdf() -> Document {
         "Annots" => vec![field_id.into(), checkbox_id.into()]
     });
 
-    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
-        "Type" => "Pages",
-        "Kids" => vec![page_id.into()],
-        "Count" => 1,
-    }));
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
 
     let acroform_id = doc.add_object(dictionary! {
         "Fields" => vec![field_id.into(), checkbox_id.into()]
@@ -199,26 +211,39 @@ fn create_scanned_pdf() -> Document {
     let mut doc = Document::with_version("1.5");
     let pages_id = doc.new_object_id();
 
-    let image_stream = Stream::new(dictionary! {
-        "Type" => "XObject",
-        "Subtype" => "Image",
-        "Width" => 100,
-        "Height" => 100,
-        "ColorSpace" => "DeviceRGB",
-        "BitsPerComponent" => 8,
-    }, vec![255; 100 * 100 * 3]); // dummy white image
+    let image_stream = Stream::new(
+        dictionary! {
+            "Type" => "XObject",
+            "Subtype" => "Image",
+            "Width" => 100,
+            "Height" => 100,
+            "ColorSpace" => "DeviceRGB",
+            "BitsPerComponent" => 8,
+        },
+        vec![255; 100 * 100 * 3],
+    ); // dummy white image
     let image_id = doc.add_object(image_stream);
 
     let content = Content {
         operations: vec![
             Operation::new("q", vec![]),
-            Operation::new("cm", vec![100.into(), 0.into(), 0.into(), 100.into(), 0.into(), 0.into()]),
+            Operation::new(
+                "cm",
+                vec![
+                    100.into(),
+                    0.into(),
+                    0.into(),
+                    100.into(),
+                    0.into(),
+                    0.into(),
+                ],
+            ),
             Operation::new("Do", vec!["Im1".into()]),
             Operation::new("Q", vec![]),
         ],
     };
     let content_bytes = content.encode().unwrap();
-    let content_id = doc.add_object(Stream::new(dictionary!{}, content_bytes));
+    let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
 
     let page_id = doc.add_object(dictionary! {
         "Type" => "Page",
@@ -232,11 +257,14 @@ fn create_scanned_pdf() -> Document {
         }
     });
 
-    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
-        "Type" => "Pages",
-        "Kids" => vec![page_id.into()],
-        "Count" => 1,
-    }));
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
 
     let catalog_id = doc.add_object(dictionary! {
         "Type" => "Catalog",
@@ -258,7 +286,10 @@ fn main() {
     let fixtures_dir = workspace.join("tests").join("fixtures");
     fs::create_dir_all(&fixtures_dir).unwrap();
 
-    let paperpilot_fixtures_dir = workspace.join("paperpilot-pdf").join("tests").join("fixtures");
+    let paperpilot_fixtures_dir = workspace
+        .join("paperpilot-pdf")
+        .join("tests")
+        .join("fixtures");
     fs::create_dir_all(&paperpilot_fixtures_dir).unwrap();
 
     // A. tests/fixtures/simple.pdf
@@ -267,13 +298,19 @@ fn main() {
 
     // B. tests/fixtures/multi_page.pdf
     let mut multi_page_pdf = create_multi_page_pdf(&["Page 1", "Page 2", "Page 3"]);
-    multi_page_pdf.save(fixtures_dir.join("multi_page.pdf")).unwrap();
+    multi_page_pdf
+        .save(fixtures_dir.join("multi_page.pdf"))
+        .unwrap();
 
     // C. tests/fixtures/encrypted.pdf
     create_encrypted_pdf(&fixtures_dir.join("encrypted.pdf"));
 
     // D. tests/fixtures/malformed.pdf
-    fs::write(fixtures_dir.join("malformed.pdf"), b"%PDF-1.4\n1 0 obj\n<<CORRUPT GARBAGE HERE>>\nxref\n%%EOF").unwrap();
+    fs::write(
+        fixtures_dir.join("malformed.pdf"),
+        b"%PDF-1.4\n1 0 obj\n<<CORRUPT GARBAGE HERE>>\nxref\n%%EOF",
+    )
+    .unwrap();
 
     // E. tests/fixtures/scanned.pdf
     let mut scanned_pdf = create_scanned_pdf();
@@ -281,13 +318,19 @@ fn main() {
 
     // F. tests/fixtures/form_fields.pdf
     let mut form_fields_pdf = create_form_fields_pdf();
-    form_fields_pdf.save(fixtures_dir.join("form_fields.pdf")).unwrap();
+    form_fields_pdf
+        .save(fixtures_dir.join("form_fields.pdf"))
+        .unwrap();
 
     // G. tests/fixtures/large_text.pdf
     let mut large_text_pdf = create_large_text_pdf();
-    large_text_pdf.save(fixtures_dir.join("large_text.pdf")).unwrap();
+    large_text_pdf
+        .save(fixtures_dir.join("large_text.pdf"))
+        .unwrap();
 
     // H. paperpilot-pdf/tests/fixtures/sample.pdf
     let mut sample_pdf = create_simple_pdf("Sample PDF content");
-    sample_pdf.save(paperpilot_fixtures_dir.join("sample.pdf")).unwrap();
+    sample_pdf
+        .save(paperpilot_fixtures_dir.join("sample.pdf"))
+        .unwrap();
 }

@@ -19,8 +19,7 @@ impl SplitOperation {
 
 impl PdfOperation for SplitOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        std::fs::create_dir_all(&self.output_dir)
-            .map_err(|e| PdfError::IoError(e))?;
+        std::fs::create_dir_all(&self.output_dir).map_err(|e| PdfError::IoError(e))?;
 
         let lopdf_doc = document
             .as_any_mut()

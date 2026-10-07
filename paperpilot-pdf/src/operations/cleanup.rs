@@ -41,7 +41,9 @@ impl PdfOperation for RemoveBlankPagesOperation {
                             let mut total_len = 0;
                             for obj in arr {
                                 if let lopdf::Object::Reference(ref_id) = obj {
-                                    if let Ok(lopdf::Object::Stream(stream)) = inner.get_object(*ref_id) {
+                                    if let Ok(lopdf::Object::Stream(stream)) =
+                                        inner.get_object(*ref_id)
+                                    {
                                         total_len += stream.content.len();
                                     }
                                 }
@@ -109,7 +111,8 @@ mod tests {
         pages_dict.set("Kids", Object::Array(page_ids));
 
         doc.objects.insert(pages_id, Object::Dictionary(pages_dict));
-        doc.trailer.set("Root", Object::Dictionary(Dictionary::new()));
+        doc.trailer
+            .set("Root", Object::Dictionary(Dictionary::new()));
 
         let mut catalog = Dictionary::new();
         catalog.set("Type", Object::Name(b"Catalog".to_vec()));

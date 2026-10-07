@@ -1,6 +1,6 @@
 use crate::document::LopdfDocument;
 use image::codecs::jpeg::JpegEncoder;
-use image::{DynamicImage, ImageBuffer, ColorType};
+use image::{ColorType, DynamicImage, ImageBuffer};
 use lopdf::Object;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
@@ -44,7 +44,9 @@ impl PdfOperation for CompressOperation {
         for object_id in object_ids {
             if let Ok(lopdf::Object::Stream(stream)) = lopdf_doc.inner.get_object_mut(object_id) {
                 // Check if it's an image stream
-                let is_image = stream.dict.get(b"Subtype")
+                let is_image = stream
+                    .dict
+                    .get(b"Subtype")
                     .and_then(|obj| obj.as_name())
                     .map(|name| name == b"Image")
                     .unwrap_or(false);
@@ -58,66 +60,95 @@ impl PdfOperation for CompressOperation {
                     Ok(bytes) => bytes,
                     Err(_) => continue,
                 };
-                
+
                 let original_len = stream.content.len();
 
                 let width = match stream.dict.get(b"Width").and_then(|w| w.as_i64()) {
                     Ok(w) => w as u32,
                     Err(_) => continue,
                 };
-                
+
                 let height = match stream.dict.get(b"Height").and_then(|h| h.as_i64()) {
                     Ok(h) => h as u32,
                     Err(_) => continue,
                 };
 
                 // We extract the color_space string into an owned vec so we don't hold the borrow
-                let color_space = stream.dict.get(b"ColorSpace")
+                let color_space = stream
+                    .dict
+                    .get(b"ColorSpace")
                     .and_then(|c| c.as_name())
                     .unwrap_or(b"DeviceRGB")
                     .to_vec();
-                
+
                 // Attempt to decode the image
                 let mut dyn_img_opt = image::load_from_memory(&decompressed).ok();
-                
+
                 if dyn_img_opt.is_none() {
                     // Try to reconstruct raw bytes
-                    if color_space == b"DeviceRGB" && decompressed.len() >= (width * height * 3) as usize {
-                        if let Some(img_buf) = ImageBuffer::<image::Rgb<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                    if color_space == b"DeviceRGB"
+                        && decompressed.len() >= (width * height * 3) as usize
+                    {
+                        if let Some(img_buf) = ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                            width,
+                            height,
+                            decompressed.clone(),
+                        ) {
                             dyn_img_opt = Some(DynamicImage::ImageRgb8(img_buf));
                         }
-                    } else if color_space == b"DeviceGray" && decompressed.len() >= (width * height) as usize {
-                        if let Some(img_buf) = ImageBuffer::<image::Luma<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                    } else if color_space == b"DeviceGray"
+                        && decompressed.len() >= (width * height) as usize
+                    {
+                        if let Some(img_buf) = ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                            width,
+                            height,
+                            decompressed.clone(),
+                        ) {
                             dyn_img_opt = Some(DynamicImage::ImageLuma8(img_buf));
                         }
                     }
                 }
-                
+
                 if let Some(mut dyn_img) = dyn_img_opt {
                     // Downsample if needed
                     let (w, h) = (dyn_img.width(), dyn_img.height());
                     if w > max_dim || h > max_dim {
-                        dyn_img = dyn_img.resize(max_dim, max_dim, image::imageops::FilterType::Triangle);
+                        dyn_img =
+                            dyn_img.resize(max_dim, max_dim, image::imageops::FilterType::Triangle);
                     }
-                    
+
                     let mut jpeg_bytes = Vec::new();
                     let mut encoder = JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality);
-                    
+
                     // Encode to JPEG
                     if let Ok(_) = dyn_img.write_with_encoder(encoder) {
                         if jpeg_bytes.len() < original_len {
                             // Update the stream
                             stream.content = jpeg_bytes;
-                            stream.dict.set("Filter", Object::Name(b"DCTDecode".to_vec()));
+                            stream
+                                .dict
+                                .set("Filter", Object::Name(b"DCTDecode".to_vec()));
                             stream.dict.remove(b"DecodeParms");
-                            stream.dict.set("Width", Object::Integer(dyn_img.width() as i64));
-                            stream.dict.set("Height", Object::Integer(dyn_img.height() as i64));
-                            stream.dict.set("Length", Object::Integer(stream.content.len() as i64));
+                            stream
+                                .dict
+                                .set("Width", Object::Integer(dyn_img.width() as i64));
+                            stream
+                                .dict
+                                .set("Height", Object::Integer(dyn_img.height() as i64));
+                            stream
+                                .dict
+                                .set("Length", Object::Integer(stream.content.len() as i64));
                             if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
-                                if dyn_img.color() == ColorType::L8 || dyn_img.color() == ColorType::La8 {
-                                    stream.dict.set("ColorSpace", Object::Name(b"DeviceGray".to_vec()));
+                                if dyn_img.color() == ColorType::L8
+                                    || dyn_img.color() == ColorType::La8
+                                {
+                                    stream
+                                        .dict
+                                        .set("ColorSpace", Object::Name(b"DeviceGray".to_vec()));
                                 } else {
-                                    stream.dict.set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
+                                    stream
+                                        .dict
+                                        .set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
                                 }
                             }
                         }
@@ -134,7 +165,7 @@ impl PdfOperation for CompressOperation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lopdf::{Document, Stream, Dictionary};
+    use lopdf::{Dictionary, Document, Stream};
 
     #[test]
     fn test_compress_operation_success() {
@@ -145,7 +176,7 @@ mod tests {
         let result = op.execute(&mut lopdf_doc);
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_compress_operation_image_reduction() {
         let mut doc = Document::with_version("1.5");
@@ -158,25 +189,25 @@ mod tests {
         image_stream_dict.set("Height", Object::Integer(100));
         image_stream_dict.set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
         image_stream_dict.set("BitsPerComponent", Object::Integer(8));
-        
+
         let mut img = image::ImageBuffer::new(100, 100);
         for (_, _, pixel) in img.enumerate_pixels_mut() {
             *pixel = image::Rgb([255_u8, 0_u8, 0_u8]);
         }
-        
+
         let mut raw_bytes = img.into_raw();
         // Artificially inflate the size to ensure JPEG compression will definitely be smaller
         let original_len = raw_bytes.len();
-        
+
         let image_stream = Stream::new(image_stream_dict, raw_bytes);
         doc.objects.insert(image_id, Object::Stream(image_stream));
-        
+
         let mut lopdf_doc = LopdfDocument { inner: doc };
         let op = CompressOperation::new(Some("low".to_string()));
-        
+
         let result = op.execute(&mut lopdf_doc);
         assert!(result.is_ok());
-        
+
         // Verify the stream was replaced with a smaller JPEG
         let obj = lopdf_doc.inner.get_object(image_id).unwrap();
         if let Object::Stream(s) = obj {

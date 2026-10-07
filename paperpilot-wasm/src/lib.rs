@@ -17,15 +17,19 @@ impl WasmPdfEngine {
             rust_buffers.push(u8_array.to_vec());
         }
 
-        let result = operations::merge(rust_buffers)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::merge(rust_buffers).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
 
     /// Rotate specific pages ("all", "1,2", or "1") by angle (90, 180, 270)
     #[wasm_bindgen]
-    pub fn rotate(input_bytes: &[u8], angle: u16, pages: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn rotate(
+        input_bytes: &[u8],
+        angle: u16,
+        pages: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::rotate(input_bytes, angle, pages)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -49,7 +53,10 @@ impl WasmPdfEngine {
 
     /// Compress PDF by removing unneeded metadata, deflating streams, and cleaning cross-references
     #[wasm_bindgen]
-    pub fn compress(input_bytes: &[u8], quality: Option<String>) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn compress(
+        input_bytes: &[u8],
+        quality: Option<String>,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let quality_str = quality.as_deref();
         let result = operations::compress(input_bytes, quality_str)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -75,7 +82,6 @@ impl WasmPdfEngine {
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
 
-
     #[wasm_bindgen]
     pub fn delete_pages(input_bytes: &[u8], pages: &str) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::delete_pages(input_bytes, pages)
@@ -93,7 +99,10 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn reorder_pages(input_bytes: &[u8], new_order: Vec<u32>) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn reorder_pages(
+        input_bytes: &[u8],
+        new_order: Vec<u32>,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::reorder_pages(input_bytes, &new_order)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -101,7 +110,13 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn crop(
+        input_bytes: &[u8],
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::crop(input_bytes, left, bottom, right, top)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -110,8 +125,8 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn flatten(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
-        let result = operations::flatten(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::flatten(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
@@ -130,8 +145,6 @@ impl WasmPdfEngine {
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
 
-
-
     #[wasm_bindgen]
     pub fn images_to_pdf(image_buffers: js_sys::Array) -> Result<js_sys::Uint8Array, JsValue> {
         let mut rust_buffers = Vec::new();
@@ -143,8 +156,8 @@ impl WasmPdfEngine {
 
         let refs: Vec<&[u8]> = rust_buffers.iter().map(|v| v.as_slice()).collect();
 
-        let result = operations::images_to_pdf(&refs)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::images_to_pdf(&refs).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
@@ -165,13 +178,17 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn pdf_hash(input_bytes: &[u8]) -> Result<String, JsValue> {
-        let result = operations::pdf_hash(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::pdf_hash(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(result)
     }
 
     #[wasm_bindgen]
-    pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn render_page(
+        input_bytes: &[u8],
+        page_index: u32,
+        scale: f32,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::render_page(input_bytes, page_index, scale)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -180,8 +197,8 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn extract_text(input_bytes: &[u8]) -> Result<String, JsValue> {
-        let result = operations::extract_text(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::extract_text(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(result)
     }
@@ -195,7 +212,11 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn page_numbers(
+        input_bytes: &[u8],
+        format: &str,
+        position: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::page_numbers(input_bytes, format, position)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -203,7 +224,11 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn header_footer(
+        input_bytes: &[u8],
+        header: &str,
+        footer: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::header_footer(input_bytes, header, footer)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -212,16 +237,16 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn pdf_info(input_bytes: &[u8]) -> Result<String, JsValue> {
-        let result = operations::pdf_info(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::pdf_info(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(result)
     }
 
     #[wasm_bindgen]
     pub fn ocr(image_or_pdf_bytes: &[u8]) -> Result<String, JsValue> {
-        let result = operations::ocr(image_or_pdf_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result =
+            operations::ocr(image_or_pdf_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(result)
     }

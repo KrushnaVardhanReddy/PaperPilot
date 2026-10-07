@@ -1,11 +1,13 @@
-use paperpilot_core::error::{PdfError, OperationResult};
 use lopdf::{Document, Object, dictionary};
+use paperpilot_core::error::{OperationResult, PdfError};
 use std::collections::BTreeMap;
 use tiny_skia::Pixmap;
 
 pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
     if buffers.is_empty() {
-        return Err(PdfError::InvalidInput("No buffers provided for merge".into()));
+        return Err(PdfError::InvalidInput(
+            "No buffers provided for merge".into(),
+        ));
     }
 
     let mut documents = Vec::new();
@@ -33,7 +35,11 @@ pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
 
         let pages = other_doc.get_pages();
 
-        let catalog_id = merged_doc.trailer.get(b"Root").and_then(|root| root.as_reference()).ok();
+        let catalog_id = merged_doc
+            .trailer
+            .get(b"Root")
+            .and_then(|root| root.as_reference())
+            .ok();
         let pages_id = match catalog_id {
             Some(cat_id) => {
                 let catalog = merged_doc.get_object(cat_id).unwrap();
@@ -75,7 +81,9 @@ pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
                         (b"Pages".to_vec(), Object::Reference(pages_id)),
                     ])),
                 );
-                merged_doc.trailer.set("Root", Object::Reference(new_catalog_id));
+                merged_doc
+                    .trailer
+                    .set("Root", Object::Reference(new_catalog_id));
             }
         }
 
@@ -99,8 +107,12 @@ pub fn merge(buffers: Vec<Vec<u8>>) -> OperationResult<Vec<u8>> {
     }
 
     let mut buffer = Vec::new();
-    merged_doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    merged_doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -145,8 +157,12 @@ pub fn rotate(input_bytes: &[u8], angle: u16, pages_str: &str) -> OperationResul
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -164,20 +180,29 @@ fn parse_pages(pages_str: &str, total_pages: u32) -> OperationResult<Vec<u32>> {
         }
 
         if let Some((start, end)) = part.split_once('-') {
-            let start = start.parse::<u32>()
-                .map_err(|_| PdfError::InvalidInput(format!("Invalid page range start: {}", start)))?;
-            let end = end.parse::<u32>()
+            let start = start.parse::<u32>().map_err(|_| {
+                PdfError::InvalidInput(format!("Invalid page range start: {}", start))
+            })?;
+            let end = end
+                .parse::<u32>()
                 .map_err(|_| PdfError::InvalidInput(format!("Invalid page range end: {}", end)))?;
 
             if start < 1 || end > total_pages || start > end {
-                 return Err(PdfError::InvalidInput(format!("Invalid page range: {}-{}", start, end)));
+                return Err(PdfError::InvalidInput(format!(
+                    "Invalid page range: {}-{}",
+                    start, end
+                )));
             }
             pages.extend(start..=end);
         } else {
-            let page = part.parse::<u32>()
+            let page = part
+                .parse::<u32>()
                 .map_err(|_| PdfError::InvalidInput(format!("Invalid page number: {}", part)))?;
             if page < 1 || page > total_pages {
-                 return Err(PdfError::InvalidInput(format!("Invalid page number: {}", page)));
+                return Err(PdfError::InvalidInput(format!(
+                    "Invalid page number: {}",
+                    page
+                )));
             }
             pages.push(page);
         }
@@ -205,7 +230,9 @@ pub fn split(input_bytes: &[u8], ranges: &str) -> OperationResult<Vec<Vec<u8>>> 
     }
 
     if split_groups.is_empty() {
-        return Err(PdfError::InvalidInput("No valid split ranges provided".into()));
+        return Err(PdfError::InvalidInput(
+            "No valid split ranges provided".into(),
+        ));
     }
 
     let mut output_buffers = Vec::new();
@@ -224,8 +251,12 @@ pub fn split(input_bytes: &[u8], ranges: &str) -> OperationResult<Vec<Vec<u8>>> 
         }
 
         let mut buffer = Vec::new();
-        part_doc.save_to(&mut buffer)
-            .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+        part_doc.save_to(&mut buffer).map_err(|e| {
+            PdfError::IoError(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string(),
+            ))
+        })?;
 
         output_buffers.push(buffer);
     }
@@ -249,7 +280,9 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
 
     for object_id in object_ids {
         if let Ok(lopdf::Object::Stream(stream)) = doc.get_object_mut(object_id) {
-            let is_image = stream.dict.get(b"Subtype")
+            let is_image = stream
+                .dict
+                .get(b"Subtype")
                 .and_then(|obj| obj.as_name())
                 .map(|name| name == b"Image")
                 .unwrap_or(false);
@@ -262,60 +295,93 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
                 Ok(bytes) => bytes,
                 Err(_) => continue,
             };
-            
+
             let original_len = stream.content.len();
 
             let width = match stream.dict.get(b"Width").and_then(|w| w.as_i64()) {
                 Ok(w) => w as u32,
                 Err(_) => continue,
             };
-            
+
             let height = match stream.dict.get(b"Height").and_then(|h| h.as_i64()) {
                 Ok(h) => h as u32,
                 Err(_) => continue,
             };
 
-            let color_space = stream.dict.get(b"ColorSpace")
+            let color_space = stream
+                .dict
+                .get(b"ColorSpace")
                 .and_then(|c| c.as_name())
                 .unwrap_or(b"DeviceRGB")
                 .to_vec();
-            
+
             let mut dyn_img_opt = image::load_from_memory(&decompressed).ok();
-            
+
             if dyn_img_opt.is_none() {
-                if color_space == b"DeviceRGB" && decompressed.len() >= (width * height * 3) as usize {
-                    if let Some(img_buf) = image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                if color_space == b"DeviceRGB"
+                    && decompressed.len() >= (width * height * 3) as usize
+                {
+                    if let Some(img_buf) = image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                        width,
+                        height,
+                        decompressed.clone(),
+                    ) {
                         dyn_img_opt = Some(image::DynamicImage::ImageRgb8(img_buf));
                     }
-                } else if color_space == b"DeviceGray" && decompressed.len() >= (width * height) as usize {
-                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                } else if color_space == b"DeviceGray"
+                    && decompressed.len() >= (width * height) as usize
+                {
+                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                        width,
+                        height,
+                        decompressed.clone(),
+                    ) {
                         dyn_img_opt = Some(image::DynamicImage::ImageLuma8(img_buf));
                     }
                 }
             }
-            
+
             if let Some(mut dyn_img) = dyn_img_opt {
                 let (w, h) = (dyn_img.width(), dyn_img.height());
                 if w > max_dim || h > max_dim {
-                    dyn_img = dyn_img.resize(max_dim, max_dim, image::imageops::FilterType::Triangle);
+                    dyn_img =
+                        dyn_img.resize(max_dim, max_dim, image::imageops::FilterType::Triangle);
                 }
-                
+
                 let mut jpeg_bytes = Vec::new();
-                let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg_bytes, jpeg_quality);
-                
+                let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(
+                    &mut jpeg_bytes,
+                    jpeg_quality,
+                );
+
                 if let Ok(_) = dyn_img.write_with_encoder(encoder) {
                     if jpeg_bytes.len() < original_len {
                         stream.content = jpeg_bytes;
-                        stream.dict.set("Filter", lopdf::Object::Name(b"DCTDecode".to_vec()));
+                        stream
+                            .dict
+                            .set("Filter", lopdf::Object::Name(b"DCTDecode".to_vec()));
                         stream.dict.remove(b"DecodeParms");
-                        stream.dict.set("Width", lopdf::Object::Integer(dyn_img.width() as i64));
-                        stream.dict.set("Height", lopdf::Object::Integer(dyn_img.height() as i64));
-                        stream.dict.set("Length", lopdf::Object::Integer(stream.content.len() as i64));
+                        stream
+                            .dict
+                            .set("Width", lopdf::Object::Integer(dyn_img.width() as i64));
+                        stream
+                            .dict
+                            .set("Height", lopdf::Object::Integer(dyn_img.height() as i64));
+                        stream.dict.set(
+                            "Length",
+                            lopdf::Object::Integer(stream.content.len() as i64),
+                        );
                         if color_space != b"DeviceRGB" && color_space != b"DeviceGray" {
-                            if dyn_img.color() == image::ColorType::L8 || dyn_img.color() == image::ColorType::La8 {
-                                stream.dict.set("ColorSpace", lopdf::Object::Name(b"DeviceGray".to_vec()));
+                            if dyn_img.color() == image::ColorType::L8
+                                || dyn_img.color() == image::ColorType::La8
+                            {
+                                stream
+                                    .dict
+                                    .set("ColorSpace", lopdf::Object::Name(b"DeviceGray".to_vec()));
                             } else {
-                                stream.dict.set("ColorSpace", lopdf::Object::Name(b"DeviceRGB".to_vec()));
+                                stream
+                                    .dict
+                                    .set("ColorSpace", lopdf::Object::Name(b"DeviceRGB".to_vec()));
                             }
                         }
                     }
@@ -327,8 +393,12 @@ pub fn compress(input_bytes: &[u8], quality: Option<&str>) -> OperationResult<Ve
     doc.compress();
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -361,8 +431,12 @@ pub fn encrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
         .map_err(|e| PdfError::Other(format!("Encryption failed: {}", e)))?;
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -413,7 +487,8 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
             text = escaped_text
         );
 
-        let content_stream = lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
+        let content_stream =
+            lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
         let stream_id = doc.add_object(content_stream);
 
         if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(object_id) {
@@ -438,8 +513,12 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -454,8 +533,12 @@ pub fn delete_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec<
     doc.delete_pages(&pages_to_delete);
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -478,8 +561,12 @@ pub fn extract_pages(input_bytes: &[u8], pages_str: &str) -> OperationResult<Vec
     doc.delete_pages(&pages_to_delete);
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -492,16 +579,26 @@ pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> OperationResult<V
     let total_pages = pages.len() as u32;
 
     if new_order.len() != total_pages as usize {
-        return Err(PdfError::InvalidInput(format!("New order length {} does not match total pages {}", new_order.len(), total_pages)));
+        return Err(PdfError::InvalidInput(format!(
+            "New order length {} does not match total pages {}",
+            new_order.len(),
+            total_pages
+        )));
     }
 
     let mut seen = std::collections::HashSet::new();
     for &page_num in new_order {
         if page_num < 1 || page_num > total_pages {
-             return Err(PdfError::InvalidInput(format!("Invalid page number in new order: {}", page_num)));
+            return Err(PdfError::InvalidInput(format!(
+                "Invalid page number in new order: {}",
+                page_num
+            )));
         }
         if !seen.insert(page_num) {
-            return Err(PdfError::InvalidInput(format!("Duplicate page number in new order: {}", page_num)));
+            return Err(PdfError::InvalidInput(format!(
+                "Duplicate page number in new order: {}",
+                page_num
+            )));
         }
     }
 
@@ -514,24 +611,38 @@ pub fn reorder_pages(input_bytes: &[u8], new_order: &[u32]) -> OperationResult<V
     }
 
     // Find the Pages object and update Kids
-    if let Ok(catalog_id) = doc.trailer.get(b"Root").and_then(|root| root.as_reference()) {
+    if let Ok(catalog_id) = doc
+        .trailer
+        .get(b"Root")
+        .and_then(|root| root.as_reference())
+    {
         if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object(catalog_id) {
             if let Ok(pages_id) = catalog.get(b"Pages").and_then(|p| p.as_reference()) {
-                 if let Ok(lopdf::Object::Dictionary(pages_dict)) = doc.get_object_mut(pages_id) {
-                     pages_dict.set("Kids", lopdf::Object::Array(new_kids));
-                 }
+                if let Ok(lopdf::Object::Dictionary(pages_dict)) = doc.get_object_mut(pages_id) {
+                    pages_dict.set("Kids", lopdf::Object::Array(new_kids));
+                }
             }
         }
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
 
-pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) -> OperationResult<Vec<u8>> {
+pub fn crop(
+    input_bytes: &[u8],
+    left: f32,
+    bottom: f32,
+    right: f32,
+    top: f32,
+) -> OperationResult<Vec<u8>> {
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
@@ -549,8 +660,12 @@ pub fn crop(input_bytes: &[u8], left: f32, bottom: f32, right: f32, top: f32) ->
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -559,15 +674,23 @@ pub fn flatten(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
-    if let Ok(catalog_id) = doc.trailer.get(b"Root").and_then(|root| root.as_reference()) {
+    if let Ok(catalog_id) = doc
+        .trailer
+        .get(b"Root")
+        .and_then(|root| root.as_reference())
+    {
         if let Ok(lopdf::Object::Dictionary(catalog)) = doc.get_object_mut(catalog_id) {
             catalog.remove(b"AcroForm");
         }
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -583,42 +706,63 @@ pub fn set_metadata(
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
     // Get or create the Info dictionary reference
-    let info_id = if let Ok(info_ref) = doc.trailer.get(b"Info").and_then(|info| info.as_reference()) {
+    let info_id = if let Ok(info_ref) = doc
+        .trailer
+        .get(b"Info")
+        .and_then(|info| info.as_reference())
+    {
         info_ref
     } else {
         let new_info_id = doc.add_object(lopdf::Object::Dictionary(lopdf::Dictionary::new()));
-        doc.trailer.set("Info", lopdf::Object::Reference(new_info_id));
+        doc.trailer
+            .set("Info", lopdf::Object::Reference(new_info_id));
         new_info_id
     };
 
     if let Ok(lopdf::Object::Dictionary(info_dict)) = doc.get_object_mut(info_id) {
         if let Some(t) = title {
-            info_dict.set("Title", lopdf::Object::String(t.into_bytes(), lopdf::StringFormat::Literal));
+            info_dict.set(
+                "Title",
+                lopdf::Object::String(t.into_bytes(), lopdf::StringFormat::Literal),
+            );
         }
         if let Some(a) = author {
-            info_dict.set("Author", lopdf::Object::String(a.into_bytes(), lopdf::StringFormat::Literal));
+            info_dict.set(
+                "Author",
+                lopdf::Object::String(a.into_bytes(), lopdf::StringFormat::Literal),
+            );
         }
         if let Some(s) = subject {
-            info_dict.set("Subject", lopdf::Object::String(s.into_bytes(), lopdf::StringFormat::Literal));
+            info_dict.set(
+                "Subject",
+                lopdf::Object::String(s.into_bytes(), lopdf::StringFormat::Literal),
+            );
         }
         if let Some(k) = keywords {
-            info_dict.set("Keywords", lopdf::Object::String(k.into_bytes(), lopdf::StringFormat::Literal));
+            info_dict.set(
+                "Keywords",
+                lopdf::Object::String(k.into_bytes(), lopdf::StringFormat::Literal),
+            );
         }
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
 
-use image::{ImageFormat, GenericImageView, ImageEncoder};
-use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use std::io::Write;
-use sha2::{Sha256, Digest};
+use flate2::write::ZlibEncoder;
+use image::{GenericImageView, ImageEncoder, ImageFormat};
 use lopdf::Dictionary as LopdfDictionary;
+use sha2::{Digest, Sha256};
+use std::io::Write;
 
 pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
     let mut doc = Document::with_version("1.5");
@@ -647,8 +791,12 @@ pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
             dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
             let rgb = img.to_rgb8().into_raw();
             let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-            encoder.write_all(&rgb).map_err(|e| PdfError::Other(format!("Compression failed: {}", e)))?;
-            encoder.finish().map_err(|e| PdfError::Other(format!("Compression finish failed: {}", e)))?
+            encoder
+                .write_all(&rgb)
+                .map_err(|e| PdfError::Other(format!("Compression failed: {}", e)))?;
+            encoder
+                .finish()
+                .map_err(|e| PdfError::Other(format!("Compression finish failed: {}", e)))?
         };
 
         let stream = lopdf::Stream::new(dict, stream_bytes);
@@ -660,19 +808,23 @@ pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
         resources.set("XObject", Object::Dictionary(xobjects));
 
         let content = format!("q\n{} 0 0 {} 0 0 cm\n/Im1 Do\nQ\n", width, height);
-        let content_stream = lopdf::Stream::new(LopdfDictionary::new(), content.as_bytes().to_vec());
+        let content_stream =
+            lopdf::Stream::new(LopdfDictionary::new(), content.as_bytes().to_vec());
         let content_id = doc.add_object(content_stream);
 
         let page_id = doc.new_object_id();
         let mut page_dict = LopdfDictionary::new();
         page_dict.set("Type", Object::Name(b"Page".to_vec()));
         page_dict.set("Parent", Object::Reference(pages_id));
-        page_dict.set("MediaBox", Object::Array(vec![
-            Object::Integer(0),
-            Object::Integer(0),
-            Object::Integer(width as i64),
-            Object::Integer(height as i64),
-        ]));
+        page_dict.set(
+            "MediaBox",
+            Object::Array(vec![
+                Object::Integer(0),
+                Object::Integer(0),
+                Object::Integer(width as i64),
+                Object::Integer(height as i64),
+            ]),
+        );
         page_dict.set("Resources", Object::Dictionary(resources));
         page_dict.set("Contents", Object::Reference(content_id));
 
@@ -690,13 +842,18 @@ pub fn images_to_pdf(image_buffers: &[&[u8]]) -> OperationResult<Vec<u8>> {
     let mut catalog_dict = LopdfDictionary::new();
     catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
     catalog_dict.set("Pages", Object::Reference(pages_id));
-    doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+    doc.objects
+        .insert(catalog_id, Object::Dictionary(catalog_dict));
 
     doc.trailer.set("Root", Object::Reference(catalog_id));
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -715,23 +872,19 @@ pub fn extract_images(input_bytes: &[u8]) -> OperationResult<Vec<Vec<u8>>> {
 
         let resources = match page_dict.get(b"Resources") {
             Ok(Object::Dictionary(d)) => d,
-            Ok(Object::Reference(id)) => {
-                match doc.get_object(*id) {
-                    Ok(Object::Dictionary(d)) => d,
-                    _ => continue,
-                }
-            }
+            Ok(Object::Reference(id)) => match doc.get_object(*id) {
+                Ok(Object::Dictionary(d)) => d,
+                _ => continue,
+            },
             _ => continue,
         };
 
         let xobjects = match resources.get(b"XObject") {
             Ok(Object::Dictionary(d)) => d,
-            Ok(Object::Reference(id)) => {
-                match doc.get_object(*id) {
-                    Ok(Object::Dictionary(d)) => d,
-                    _ => continue,
-                }
-            }
+            Ok(Object::Reference(id)) => match doc.get_object(*id) {
+                Ok(Object::Dictionary(d)) => d,
+                _ => continue,
+            },
             _ => continue,
         };
 
@@ -751,9 +904,13 @@ pub fn extract_images(input_bytes: &[u8]) -> OperationResult<Vec<Vec<u8>>> {
                 if subtype == b"Image" {
                     let is_jpeg = match dict.get(b"Filter") {
                         Ok(Object::Name(filter)) => filter == b"DCTDecode",
-                        Ok(Object::Array(arr)) => {
-                            arr.iter().any(|f| if let Object::Name(n) = f { n == b"DCTDecode" } else { false })
-                        }
+                        Ok(Object::Array(arr)) => arr.iter().any(|f| {
+                            if let Object::Name(n) = f {
+                                n == b"DCTDecode"
+                            } else {
+                                false
+                            }
+                        }),
                         _ => false,
                     };
 
@@ -762,24 +919,56 @@ pub fn extract_images(input_bytes: &[u8]) -> OperationResult<Vec<Vec<u8>>> {
                     } else {
                         // Attempt to decode flate and output PNG
                         if let Ok(decompressed) = stream.decompressed_content() {
-                            let width = dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
-                            let height = dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
+                            let width =
+                                dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
+                            let height =
+                                dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
                             if width > 0 && height > 0 {
                                 if decompressed.len() >= (width * height * 3) as usize {
                                     // Assume RGB
-                                    if let Some(img_buf) = image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                                    if let Some(img_buf) =
+                                        image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                                            width,
+                                            height,
+                                            decompressed.clone(),
+                                        )
+                                    {
                                         let mut png_bytes = Vec::new();
-                                        let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-                                        if encoder.write_image(&img_buf, width, height, image::ColorType::Rgb8.into()).is_ok() {
+                                        let encoder =
+                                            image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                        if encoder
+                                            .write_image(
+                                                &img_buf,
+                                                width,
+                                                height,
+                                                image::ColorType::Rgb8.into(),
+                                            )
+                                            .is_ok()
+                                        {
                                             extracted.push(png_bytes);
                                         }
                                     }
                                 } else if decompressed.len() >= (width * height) as usize {
                                     // Assume Gray
-                                    if let Some(img_buf) = image::ImageBuffer::<image::Luma<u8>, _>::from_raw(width, height, decompressed.clone()) {
+                                    if let Some(img_buf) =
+                                        image::ImageBuffer::<image::Luma<u8>, _>::from_raw(
+                                            width,
+                                            height,
+                                            decompressed.clone(),
+                                        )
+                                    {
                                         let mut png_bytes = Vec::new();
-                                        let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-                                        if encoder.write_image(&img_buf, width, height, image::ColorType::L8.into()).is_ok() {
+                                        let encoder =
+                                            image::codecs::png::PngEncoder::new(&mut png_bytes);
+                                        if encoder
+                                            .write_image(
+                                                &img_buf,
+                                                width,
+                                                height,
+                                                image::ColorType::L8.into(),
+                                            )
+                                            .is_ok()
+                                        {
                                             extracted.push(png_bytes);
                                         }
                                     }
@@ -813,17 +1002,25 @@ pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> Operation
         return Err(PdfError::ParseError("Page index out of bounds".to_string()));
     }
 
-    let page = pages.get(page_index as usize).ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
-    
+    let page = pages
+        .get(page_index as usize)
+        .ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
+
     let cache = hayro::RenderCache::new();
     let render_settings = hayro::RenderSettings::default();
-    
+
     let mut render_settings = hayro::RenderSettings::default();
     let mut pixmap_settings = hayro::PixmapSettings::default();
     pixmap_settings.x_scale = scale;
     pixmap_settings.y_scale = scale;
-    let pixmap = hayro::render(&page, &cache, &Default::default(), &render_settings, &pixmap_settings);
-    
+    let pixmap = hayro::render(
+        &page,
+        &cache,
+        &Default::default(),
+        &render_settings,
+        &pixmap_settings,
+    );
+
     let width = pixmap.width() as u32;
     let height = pixmap.height() as u32;
     let data = bytemuck::cast_slice(pixmap.data());
@@ -832,13 +1029,14 @@ pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> Operation
         .ok_or_else(|| PdfError::ParseError("Failed to allocate tiny_skia Pixmap".to_string()))?;
     skia_pixmap.data_mut().copy_from_slice(data);
 
-    
     let mut png_bytes = Vec::new();
     let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
     let rgba_data = skia_pixmap.data();
-    encoder.write_image(rgba_data, width, height, image::ColorType::Rgba8.into()).map_err(|e| PdfError::ParseError(e.to_string()))?;
+    encoder
+        .write_image(rgba_data, width, height, image::ColorType::Rgba8.into())
+        .map_err(|e| PdfError::ParseError(e.to_string()))?;
     let _ = png_bytes; // Just to align names
-    
+
     Ok(png_bytes)
 }
 
@@ -848,7 +1046,7 @@ pub fn extract_text(input_bytes: &[u8]) -> OperationResult<String> {
 
     let pages = doc.get_pages();
     let mut extracted_texts = Vec::new();
-    
+
     let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
     sorted_page_numbers.sort_unstable();
 
@@ -856,7 +1054,12 @@ pub fn extract_text(input_bytes: &[u8]) -> OperationResult<String> {
         if let Some(&page_id) = pages.get(&page_num) {
             match doc.extract_text(&[page_num]) {
                 Ok(text) => extracted_texts.push(text),
-                Err(e) => return Err(PdfError::Other(format!("Failed to extract text from page {}: {}", page_num, e))),
+                Err(e) => {
+                    return Err(PdfError::Other(format!(
+                        "Failed to extract text from page {}: {}",
+                        page_num, e
+                    )));
+                }
             }
         }
     }
@@ -869,15 +1072,22 @@ pub fn decrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
     if let Err(e) = doc.decrypt(password) {
-        return Err(PdfError::UnsupportedOperation(format!("Decryption failed or invalid password: {}", e)));
+        return Err(PdfError::UnsupportedOperation(format!(
+            "Decryption failed or invalid password: {}",
+            e
+        )));
     }
 
     let _ = doc.decompress();
     doc.trailer.remove(b"Encrypt");
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -897,7 +1107,10 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
     let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
     sorted_page_numbers.sort_unstable();
 
-    for (page_number, object_id) in sorted_page_numbers.into_iter().map(|n| (n, *pages.get(&n).unwrap())) {
+    for (page_number, object_id) in sorted_page_numbers
+        .into_iter()
+        .map(|n| (n, *pages.get(&n).unwrap()))
+    {
         let mut width = 595.0;
         let mut height = 842.0;
 
@@ -949,7 +1162,7 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
             "bottom-center" => (width / 2.0 - (text_width / 2.0), margin),
             "top-right" => (width - margin - text_width, height - margin - 12.0),
             "top-center" => (width / 2.0 - (text_width / 2.0), height - margin - 12.0),
-            _ => (width - margin - text_width, margin)
+            _ => (width - margin - text_width, margin),
         };
 
         let content = format!(
@@ -959,7 +1172,8 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
             text = escaped_text
         );
 
-        let content_stream = lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
+        let content_stream =
+            lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
         let stream_id = doc.add_object(content_stream);
 
         if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(object_id) {
@@ -984,8 +1198,12 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -1004,8 +1222,10 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
     let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
     sorted_page_numbers.sort_unstable();
 
-    for (page_number, object_id) in sorted_page_numbers.into_iter().map(|n| (n, *pages.get(&n).unwrap())) {
-        
+    for (page_number, object_id) in sorted_page_numbers
+        .into_iter()
+        .map(|n| (n, *pages.get(&n).unwrap()))
+    {
         let mut width = 595.0;
         let mut height = 842.0;
 
@@ -1019,7 +1239,7 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
                 }
             }
         }
-        
+
         if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(object_id) {
             let mut new_resources = None;
             if let Ok(res) = page_dict.get_mut(b"Resources") {
@@ -1048,7 +1268,7 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
         let escaped_footer = footer.replace("(", "\\(").replace(")", "\\)");
 
         let margin = 30.0;
-        
+
         let mut streams = Vec::new();
 
         if !header.is_empty() {
@@ -1057,7 +1277,9 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
             let hy = height - margin - 12.0;
             let content = format!(
                 "q\nBT\n/F1 12 Tf\n1 0 0 1 {} {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
-                hx, hy, text = escaped_header
+                hx,
+                hy,
+                text = escaped_header
             );
             streams.push(content);
         }
@@ -1068,13 +1290,16 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
             let fy = margin;
             let content = format!(
                 "q\nBT\n/F1 12 Tf\n1 0 0 1 {} {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
-                fx, fy, text = escaped_footer
+                fx,
+                fy,
+                text = escaped_footer
             );
             streams.push(content);
         }
 
         for content in streams {
-            let content_stream = lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
+            let content_stream =
+                lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
             let stream_id = doc.add_object(content_stream);
 
             if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(object_id) {
@@ -1100,8 +1325,12 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
     }
 
     let mut buffer = Vec::new();
-    doc.save_to(&mut buffer)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    doc.save_to(&mut buffer).map_err(|e| {
+        PdfError::IoError(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))
+    })?;
 
     Ok(buffer)
 }
@@ -1113,11 +1342,15 @@ pub fn pdf_info(input_bytes: &[u8]) -> OperationResult<String> {
     let pages = doc.get_pages();
     let version = doc.version.clone();
     let is_encrypted = doc.trailer.has(b"Encrypt");
-    
+
     let mut title = "".to_string();
     let mut author = "".to_string();
-    
-    if let Ok(info_ref) = doc.trailer.get(b"Info").and_then(|info| info.as_reference()) {
+
+    if let Ok(info_ref) = doc
+        .trailer
+        .get(b"Info")
+        .and_then(|info| info.as_reference())
+    {
         if let Ok(lopdf::Object::Dictionary(info_dict)) = doc.get_object(info_ref) {
             if let Ok(t) = info_dict.get(b"Title").and_then(|t| t.as_str()) {
                 title = String::from_utf8_lossy(t).into_owned();
@@ -1140,16 +1373,16 @@ pub fn pdf_info(input_bytes: &[u8]) -> OperationResult<String> {
     Ok(json)
 }
 
-use ocrs::{OcrEngine, OcrEngineParams, ImageSource};
-use rten_tensor::prelude::*;
+use ocrs::{ImageSource, OcrEngine, OcrEngineParams};
 use rten_tensor::NdTensor;
+use rten_tensor::prelude::*;
 
 pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
     let engine = OcrEngine::new(OcrEngineParams::default())
         .map_err(|e| PdfError::Other(format!("Failed to init OCR engine: {}", e)))?;
-        
+
     let mut words_collected = Vec::new();
-    
+
     // Attempt to load as Image directly first
     if let Ok(dyn_img) = image::load_from_memory(image_or_pdf_bytes) {
         let rgb = dyn_img.into_rgb8();
@@ -1172,10 +1405,10 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
                 }
             }
         }
-        
+
         return Ok(words_collected.join("\n"));
     }
-    
+
     // Otherwise try to load as PDF and extract images
     let doc = Document::load_mem(image_or_pdf_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document or image: {e}")))?;
@@ -1188,7 +1421,9 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
         };
 
         let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res {
-            lopdf::Object::Reference(res_id) => doc.get_object(*res_id).and_then(|obj| obj.as_dict()),
+            lopdf::Object::Reference(res_id) => {
+                doc.get_object(*res_id).and_then(|obj| obj.as_dict())
+            }
             lopdf::Object::Dictionary(dict) => Ok(dict),
             _ => Err(lopdf::Error::DictKey("Invalid resources".to_string())),
         }) {
@@ -1197,7 +1432,9 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
         };
 
         let xobject_dict = match resources_dict.get(b"XObject").and_then(|xobj| match xobj {
-            lopdf::Object::Reference(xobj_id) => doc.get_object(*xobj_id).and_then(|obj| obj.as_dict()),
+            lopdf::Object::Reference(xobj_id) => {
+                doc.get_object(*xobj_id).and_then(|obj| obj.as_dict())
+            }
             lopdf::Object::Dictionary(dict) => Ok(dict),
             _ => Err(lopdf::Error::DictKey("Invalid XObject".to_string())),
         }) {
@@ -1224,15 +1461,18 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
             if subtype != b"Image" {
                 continue;
             }
-            
+
             // Try decompressed first
-            let content_bytes = stream.decompressed_content().unwrap_or_else(|_| stream.content.clone());
+            let content_bytes = stream
+                .decompressed_content()
+                .unwrap_or_else(|_| stream.content.clone());
 
             if let Ok(dyn_img) = image::load_from_memory(&content_bytes) {
                 let rgb = dyn_img.into_rgb8();
                 let (width, height) = rgb.dimensions();
 
-                let mut tensor: NdTensor<f32, 3> = NdTensor::zeros([3, height as usize, width as usize]);
+                let mut tensor: NdTensor<f32, 3> =
+                    NdTensor::zeros([3, height as usize, width as usize]);
                 for y in 0..height {
                     for x in 0..width {
                         let pixel = rgb.get_pixel(x, y);
@@ -1242,7 +1482,9 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
                     }
                 }
 
-                if let Ok(image_source) = ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw) {
+                if let Ok(image_source) =
+                    ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
+                {
                     if let Ok(img_input) = engine.prepare_input(image_source) {
                         if let Ok(texts) = engine.get_text(&img_input) {
                             words_collected.push(texts);
@@ -1255,4 +1497,3 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
 
     Ok(words_collected.join("\n"))
 }
-

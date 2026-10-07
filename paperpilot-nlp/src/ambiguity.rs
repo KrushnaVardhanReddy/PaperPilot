@@ -1,28 +1,41 @@
-use crate::intent::Intent;
 use crate::entities::ExtractedEntities;
+use crate::intent::Intent;
 use crate::traits::NlpError;
 
 /// Check if we have enough extracted entities to proceed with the intent.
 /// Returns Ok(()) if sufficient, or Err(NlpError::MissingParameters) if not.
 pub fn check_completeness(intent: &Intent, entities: &ExtractedEntities) -> Result<(), NlpError> {
     // Operations that require at least one input file:
-    let needs_file = matches!(intent,
-        Intent::Merge | Intent::Split | Intent::Rotate | Intent::Extract |
-        Intent::Delete | Intent::Reorder | Intent::Encrypt | Intent::Decrypt |
-        Intent::Compress | Intent::Watermark | Intent::Redact | Intent::ExtractText |
-        Intent::ExtractImages | Intent::Validate | Intent::Repair
+    let needs_file = matches!(
+        intent,
+        Intent::Merge
+            | Intent::Split
+            | Intent::Rotate
+            | Intent::Extract
+            | Intent::Delete
+            | Intent::Reorder
+            | Intent::Encrypt
+            | Intent::Decrypt
+            | Intent::Compress
+            | Intent::Watermark
+            | Intent::Redact
+            | Intent::ExtractText
+            | Intent::ExtractImages
+            | Intent::Validate
+            | Intent::Repair
     );
 
     if needs_file && entities.files.is_empty() {
-        return Err(NlpError::MissingParameters(
-            format!("Operation '{:?}' requires at least one PDF file path. Example: 'rotate my_file.pdf 90 degrees'", intent)
-        ));
+        return Err(NlpError::MissingParameters(format!(
+            "Operation '{:?}' requires at least one PDF file path. Example: 'rotate my_file.pdf 90 degrees'",
+            intent
+        )));
     }
 
     // Rotation requires an angle
     if matches!(intent, Intent::Rotate) && entities.angles.is_empty() {
         return Err(NlpError::MissingParameters(
-            "Rotate operation requires an angle (90, 180, or 270).".to_string()
+            "Rotate operation requires an angle (90, 180, or 270).".to_string(),
         ));
     }
 
@@ -32,8 +45,8 @@ pub fn check_completeness(intent: &Intent, entities: &ExtractedEntities) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::intent::Intent;
     use crate::entities::ExtractedEntities;
+    use crate::intent::Intent;
 
     #[test]
     fn test_merge_with_files_ok() {

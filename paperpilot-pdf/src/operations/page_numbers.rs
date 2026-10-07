@@ -36,7 +36,10 @@ impl PdfOperation for PageNumbersOperation {
         let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
         sorted_page_numbers.sort_unstable();
 
-        for (page_number, object_id) in sorted_page_numbers.into_iter().map(|n| (n, *pages.get(&n).unwrap())) {
+        for (page_number, object_id) in sorted_page_numbers
+            .into_iter()
+            .map(|n| (n, *pages.get(&n).unwrap()))
+        {
             let mut width = 595.0;
             let mut height = 842.0;
 
@@ -75,7 +78,8 @@ impl PdfOperation for PageNumbersOperation {
                 }
             }
 
-            let text = self.format
+            let text = self
+                .format
                 .replace("{n}", &page_number.to_string())
                 .replace("{total}", &total_pages.to_string());
             let escaped_text = text.replace("(", "\\(").replace(")", "\\)");
@@ -88,7 +92,7 @@ impl PdfOperation for PageNumbersOperation {
                 "bottom-center" => (width / 2.0 - (text_width / 2.0), margin),
                 "top-right" => (width - margin - text_width, height - margin - 12.0),
                 "top-center" => (width / 2.0 - (text_width / 2.0), height - margin - 12.0),
-                _ => (width - margin - text_width, margin)
+                _ => (width - margin - text_width, margin),
             };
 
             let content = format!(
@@ -98,7 +102,8 @@ impl PdfOperation for PageNumbersOperation {
                 text = escaped_text
             );
 
-            let content_stream = lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
+            let content_stream =
+                lopdf::Stream::new(lopdf::Dictionary::new(), content.as_bytes().to_vec());
             let stream_id = inner.add_object(content_stream);
 
             if let Ok(lopdf::Object::Dictionary(dict)) = inner.get_object_mut(object_id) {
@@ -155,7 +160,9 @@ mod tests {
         catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = inner.add_object(catalog_dict);
 
-        inner.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         LopdfDocument { inner }
     }
@@ -163,7 +170,10 @@ mod tests {
     #[test]
     fn test_page_numbers() {
         let mut doc = create_test_document();
-        let op = PageNumbersOperation::new("bottom-center".to_string(), "Page {n} / {total}".to_string());
+        let op = PageNumbersOperation::new(
+            "bottom-center".to_string(),
+            "Page {n} / {total}".to_string(),
+        );
 
         op.execute(&mut doc).unwrap();
 

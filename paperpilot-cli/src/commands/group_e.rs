@@ -1,10 +1,12 @@
 use paperpilot_core::error::{OperationResult, PdfError};
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use paperpilot_pdf::operations::form::{CreateFormFieldOperation, FillFormOperation, ReadFormOperation};
-use std::path::Path;
+use paperpilot_pdf::document::LopdfDocument;
+use paperpilot_pdf::operations::form::{
+    CreateFormFieldOperation, FillFormOperation, ReadFormOperation,
+};
 use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 
 pub fn handle_form_read(input: &Path) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
@@ -24,11 +26,10 @@ pub fn handle_form_read(input: &Path) -> OperationResult<()> {
 }
 
 pub fn handle_form_fill(input: &Path, data: &Path, output: &Path) -> OperationResult<()> {
-    let data_str = fs::read_to_string(data)
-        .map_err(PdfError::IoError)?;
+    let data_str = fs::read_to_string(data).map_err(PdfError::IoError)?;
 
-    let values: HashMap<String, String> = serde_json::from_str(&data_str)
-        .map_err(|e| PdfError::InvalidInput(e.to_string()))?;
+    let values: HashMap<String, String> =
+        serde_json::from_str(&data_str).map_err(|e| PdfError::InvalidInput(e.to_string()))?;
 
     let mut doc = LopdfDocument::load(input)?;
     let op = FillFormOperation::new(values);
@@ -48,11 +49,15 @@ pub fn handle_form_add_field(
 ) -> OperationResult<()> {
     let rect_parts: Vec<&str> = rect.split(',').collect();
     if rect_parts.len() != 4 {
-        return Err(PdfError::InvalidInput("Rect must be in format 'llx,lly,urx,ury'".to_string()));
+        return Err(PdfError::InvalidInput(
+            "Rect must be in format 'llx,lly,urx,ury'".to_string(),
+        ));
     }
 
     let parse_f32 = |s: &str| -> OperationResult<f32> {
-        s.trim().parse::<f32>().map_err(|_| PdfError::InvalidInput(format!("Invalid float: {}", s)))
+        s.trim()
+            .parse::<f32>()
+            .map_err(|_| PdfError::InvalidInput(format!("Invalid float: {}", s)))
     };
 
     let rect_arr = [
@@ -63,7 +68,8 @@ pub fn handle_form_add_field(
     ];
 
     let mut doc = LopdfDocument::load(input)?;
-    let op = CreateFormFieldOperation::new(name.to_string(), field_type.to_string(), page, rect_arr);
+    let op =
+        CreateFormFieldOperation::new(name.to_string(), field_type.to_string(), page, rect_arr);
     op.execute(&mut doc)?;
     doc.save(output)?;
 

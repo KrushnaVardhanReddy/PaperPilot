@@ -8,7 +8,8 @@ pub fn handle_compress(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::compress::CompressOperation::new(Some(quality.to_string()));
+    let op =
+        paperpilot_pdf::operations::compress::CompressOperation::new(Some(quality.to_string()));
     op.execute(&mut doc)?;
     doc.save(output)
 }

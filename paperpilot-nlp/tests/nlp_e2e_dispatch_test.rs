@@ -17,10 +17,7 @@ fn create_dummy_pdf(path: &PathBuf) {
 
     let mut pages_dict = Dictionary::new();
     pages_dict.set("Type", Object::Name(b"Pages".to_vec()));
-    pages_dict.set(
-        "Kids",
-        Object::Array(vec![Object::Reference(page_id)]),
-    );
+    pages_dict.set("Kids", Object::Array(vec![Object::Reference(page_id)]));
     pages_dict.set("Count", Object::Integer(1));
     inner.set_object(pages_id, pages_dict);
 

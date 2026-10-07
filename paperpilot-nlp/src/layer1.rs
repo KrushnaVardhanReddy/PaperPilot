@@ -1,5 +1,5 @@
-use aho_corasick::{AhoCorasick, MatchKind};
 use crate::intent::Intent;
+use aho_corasick::{AhoCorasick, MatchKind};
 
 pub struct RuleEngine {
     ac: AhoCorasick,
@@ -40,7 +40,9 @@ impl RuleEngine {
     /// Attempts to find a matching intent in the text.
     /// Returns Some(Intent) if a strong keyword match is found, otherwise None.
     pub fn predict(&self, text: &str) -> Option<Intent> {
-        self.ac.find(text).map(|mat| self.pattern_to_intent[mat.pattern().as_usize()])
+        self.ac
+            .find(text)
+            .map(|mat| self.pattern_to_intent[mat.pattern().as_usize()])
     }
 }
 
@@ -78,10 +80,7 @@ mod tests {
     #[test]
     fn test_predict_case_insensitive() {
         let engine = RuleEngine::new();
-        assert_eq!(
-            engine.predict("MERGE THESE FILES"),
-            Some(Intent::Merge)
-        );
+        assert_eq!(engine.predict("MERGE THESE FILES"), Some(Intent::Merge));
     }
 
     #[test]
