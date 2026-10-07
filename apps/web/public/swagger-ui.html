@@ -310,12 +310,36 @@
       padding: 8px 0 !important;
     }
 
-    .swagger-ui .tabli button {
-      color: #94A3B8 !important;
-      font-weight: 500 !important;
+    /* "Example Value" and "Schema" tabs & tab navigation */
+    .swagger-ui .tab,
+    .swagger-ui .tabli,
+    .swagger-ui .tab-header {
+      margin-bottom: 8px !important;
     }
 
-    .swagger-ui .tabli.active button {
+    .swagger-ui .tabli button,
+    .swagger-ui .tab button,
+    .swagger-ui .tab-item button,
+    .swagger-ui a.tablinks {
+      color: #94A3B8 !important;
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+      padding: 6px 12px !important;
+      background: transparent !important;
+      border: none !important;
+      cursor: pointer !important;
+      transition: color 0.15s ease !important;
+    }
+
+    .swagger-ui .tabli button:hover,
+    .swagger-ui .tab button:hover,
+    .swagger-ui a.tablinks:hover {
+      color: #F8FAFC !important;
+    }
+
+    .swagger-ui .tabli.active button,
+    .swagger-ui .tab.active button,
+    .swagger-ui a.tablinks.active {
       color: #38BDF8 !important;
       font-weight: 700 !important;
       border-bottom: 2px solid #38BDF8 !important;

@@ -71,7 +71,69 @@ TOOL_METADATA = {
 
 paths = {
     '/health': spec['paths']['/health'],
-    '/api/v1/pdf/mcp-exec': spec['paths']['/api/v1/pdf/mcp-exec']
+    '/api/v1/pdf/mcp-exec': {
+        'post': {
+            'tags': ['MCP Protocol'],
+            'summary': 'Execute any MCP tool directly with arbitrary JSON payload',
+            'description': 'Direct MCP tool dispatcher accepting `tool` name and argument dictionary.',
+            'operationId': 'mcp_exec',
+            'requestBody': {
+                'required': True,
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            'type': 'object',
+                            'required': ['tool'],
+                            'properties': {
+                                'tool': {'type': 'string', 'example': 'pdf_merge'},
+                                'arguments': {'type': 'object', 'example': {'inputs': ['a.pdf', 'b.pdf'], 'output': 'merged.pdf'}}
+                            }
+                        }
+                    }
+                }
+            },
+            'responses': {
+                '200': {'description': 'MCP execution successful', 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/ApiResponse'}}}}
+            }
+        }
+    },
+    '/mcp/sse': {
+        'get': {
+            'tags': ['MCP Protocol'],
+            'summary': 'Server-Sent Events (SSE) stream for Model Context Protocol',
+            'description': 'Real-time bidirectional SSE streaming endpoint for AI clients (Claude Desktop, Cursor, Zed, Windsurf).',
+            'operationId': 'mcp_sse',
+            'responses': {
+                '200': {'description': 'SSE connection established', 'content': {'text/event-stream': {}}}
+            }
+        }
+    },
+    '/mcp/messages': {
+        'post': {
+            'tags': ['MCP Protocol'],
+            'summary': 'Post incoming MCP JSON-RPC messages',
+            'description': 'Receives standard JSON-RPC 2.0 messages from AI agent sessions via SSE transport.',
+            'operationId': 'mcp_post_message',
+            'requestBody': {
+                'required': True,
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            'type': 'object',
+                            'properties': {
+                                'jsonrpc': {'type': 'string', 'example': '2.0'},
+                                'method': {'type': 'string', 'example': 'tools/call'},
+                                'params': {'type': 'object'}
+                            }
+                        }
+                    }
+                }
+            },
+            'responses': {
+                '200': {'description': 'Message accepted'}
+            }
+        }
+    }
 }
 
 for tool, (cat, summary) in TOOL_METADATA.items():
