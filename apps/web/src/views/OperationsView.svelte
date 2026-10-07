@@ -21,31 +21,30 @@
     { id: 'metadata', title: 'Edit Metadata', icon: '🏷️' }
   ];
 
-  // Tool specific states
+  // Tool specific states (batch array support)
   let mergeFiles: File[] = $state([]);
-
-  let splitFile: File | null = $state(null);
+  let splitFiles: File[] = $state([]);
   let splitRanges = $state('');
 
-  let rotateFile: File | null = $state(null);
+  let rotateFiles: File[] = $state([]);
   let rotateAngle = $state(90);
   let rotatePages = $state('all');
 
-  let compressFile: File | null = $state(null);
+  let compressFiles: File[] = $state([]);
 
-  let encryptFile: File | null = $state(null);
+  let encryptFiles: File[] = $state([]);
   let encryptPassword = $state('');
 
-  let watermarkFile: File | null = $state(null);
+  let watermarkFiles: File[] = $state([]);
   let watermarkText = $state('');
 
-  let deleteFile: File | null = $state(null);
+  let deleteFiles: File[] = $state([]);
   let deletePagesStr = $state('');
 
-  let extractFile: File | null = $state(null);
+  let extractFiles: File[] = $state([]);
   let extractPagesStr = $state('');
 
-  let reorderFile: File | null = $state(null);
+  let reorderFiles: File[] = $state([]);
   let reorderPagesStr = $state('');
 
   let cropFile: File | null = $state(null);
@@ -126,14 +125,19 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleSplit() {
-      if (!splitFile || !splitRanges) return;
+      if (splitFiles.length === 0 || !splitRanges) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(splitFile);
-          const results = await wasmPdfClient.split(buffer, splitRanges);
-          results.forEach((res: Uint8Array, i: number) => {
-              download(res, `split_part_${i+1}.pdf`);
-          });
+          for (let fIdx = 0; fIdx < splitFiles.length; fIdx++) {
+              const file = splitFiles[fIdx];
+              const buffer = await readAsUint8Array(file);
+              const results = await wasmPdfClient.split(buffer, splitRanges);
+              results.forEach((res: Uint8Array, i: number) => {
+                  setTimeout(() => {
+                      download(res, `split_part_${i+1}_${file.name}`);
+                  }, (fIdx * results.length + i) * 200);
+              });
+          }
       } catch (e: any) {
           alert('Split failed: ' + e.message);
       } finally {
@@ -142,12 +146,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleRotate() {
-      if (!rotateFile) return;
+      if (rotateFiles.length === 0) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(rotateFile);
-          const result = await wasmPdfClient.rotate(buffer, rotateAngle, rotatePages);
-          download(result, 'rotated.pdf');
+          for (let i = 0; i < rotateFiles.length; i++) {
+              const file = rotateFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.rotate(buffer, rotateAngle, rotatePages);
+              setTimeout(() => {
+                  download(result, `rotated_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Rotate failed: ' + e.message);
       } finally {
@@ -156,12 +165,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleCompress() {
-      if (!compressFile) return;
+      if (compressFiles.length === 0) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(compressFile);
-          const result = await wasmPdfClient.compress(buffer);
-          download(result, 'compressed.pdf');
+          for (let i = 0; i < compressFiles.length; i++) {
+              const file = compressFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.compress(buffer);
+              setTimeout(() => {
+                  download(result, `compressed_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Compress failed: ' + e.message);
       } finally {
@@ -170,12 +184,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleEncrypt() {
-      if (!encryptFile || !encryptPassword) return;
+      if (encryptFiles.length === 0 || !encryptPassword) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(encryptFile);
-          const result = await wasmPdfClient.encrypt(buffer, encryptPassword);
-          download(result, 'encrypted.pdf');
+          for (let i = 0; i < encryptFiles.length; i++) {
+              const file = encryptFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.encrypt(buffer, encryptPassword);
+              setTimeout(() => {
+                  download(result, `encrypted_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Encrypt failed: ' + e.message);
       } finally {
@@ -184,12 +203,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleWatermark() {
-      if (!watermarkFile || !watermarkText) return;
+      if (watermarkFiles.length === 0 || !watermarkText) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(watermarkFile);
-          const result = await wasmPdfClient.watermark(buffer, watermarkText);
-          download(result, 'watermarked.pdf');
+          for (let i = 0; i < watermarkFiles.length; i++) {
+              const file = watermarkFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.watermark(buffer, watermarkText);
+              setTimeout(() => {
+                  download(result, `watermarked_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Watermark failed: ' + e.message);
       } finally {
@@ -198,12 +222,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleDelete() {
-      if (!deleteFile || !deletePagesStr) return;
+      if (deleteFiles.length === 0 || !deletePagesStr) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(deleteFile);
-          const result = await wasmPdfClient.delete_pages(buffer, deletePagesStr);
-          download(result, 'deleted.pdf');
+          for (let i = 0; i < deleteFiles.length; i++) {
+              const file = deleteFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.delete_pages(buffer, deletePagesStr);
+              setTimeout(() => {
+                  download(result, `deleted_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Delete failed: ' + e.message);
       } finally {
@@ -212,12 +241,17 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleExtract() {
-      if (!extractFile || !extractPagesStr) return;
+      if (extractFiles.length === 0 || !extractPagesStr) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(extractFile);
-          const result = await wasmPdfClient.extract_pages(buffer, extractPagesStr);
-          download(result, 'extracted.pdf');
+          for (let i = 0; i < extractFiles.length; i++) {
+              const file = extractFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.extract_pages(buffer, extractPagesStr);
+              setTimeout(() => {
+                  download(result, `extracted_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Extract failed: ' + e.message);
       } finally {
@@ -226,13 +260,18 @@ let metadataFile: File | null = $state(null);
   }
 
   async function handleReorder() {
-      if (!reorderFile || !reorderPagesStr) return;
+      if (reorderFiles.length === 0 || !reorderPagesStr) return;
       isProcessing = true;
       try {
-          const buffer = await readAsUint8Array(reorderFile);
           const orderArr = reorderPagesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-          const result = await wasmPdfClient.reorder_pages(buffer, orderArr);
-          download(result, 'reordered.pdf');
+          for (let i = 0; i < reorderFiles.length; i++) {
+              const file = reorderFiles[i];
+              const buffer = await readAsUint8Array(file);
+              const result = await wasmPdfClient.reorder_pages(buffer, orderArr);
+              setTimeout(() => {
+                  download(result, `reordered_${file.name}`);
+              }, i * 250);
+          }
       } catch (e: any) {
           alert('Reorder failed: ' + e.message);
       } finally {
@@ -488,14 +527,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'split'}
       <div class="tool-pane">
         <h2>Split PDF</h2>
-        <p>Extract pages from a PDF.</p>
+        <p>Extract pages from one or more PDFs.</p>
 
-        {#if !splitFile}
-            <DropZone ondrop={(files: File[]) => splitFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{splitFile.name}</span>
-                <button onclick={() => splitFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => splitFiles = [...splitFiles, ...files]} multiple={true} />
+
+        {#if splitFiles.length > 0}
+            <div class="file-list">
+              {#each splitFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => splitFiles = splitFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -504,7 +549,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleSplit} disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Split & Download'}
+                {isProcessing ? 'Processing...' : `Split & Download (${splitFiles.length} file${splitFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -512,14 +557,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'rotate'}
       <div class="tool-pane">
         <h2>Rotate Pages</h2>
-        <p>Rotate pages by 90, 180, or 270 degrees.</p>
+        <p>Rotate pages in one or more PDFs by 90, 180, or 270 degrees.</p>
 
-        {#if !rotateFile}
-            <DropZone ondrop={(files: File[]) => rotateFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{rotateFile.name}</span>
-                <button onclick={() => rotateFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => rotateFiles = [...rotateFiles, ...files]} multiple={true} />
+
+        {#if rotateFiles.length > 0}
+            <div class="file-list">
+              {#each rotateFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => rotateFiles = rotateFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -537,7 +588,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleRotate} disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Rotate & Download'}
+                {isProcessing ? 'Processing...' : `Rotate & Download (${rotateFiles.length} file${rotateFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -545,18 +596,24 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'compress'}
       <div class="tool-pane">
         <h2>Compress PDF</h2>
-        <p>Reduce file size.</p>
+        <p>Reduce file size across one or multiple documents.</p>
 
-        {#if !compressFile}
-            <DropZone ondrop={(files: File[]) => compressFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{compressFile.name}</span>
-                <button onclick={() => compressFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => compressFiles = [...compressFiles, ...files]} multiple={true} />
+
+        {#if compressFiles.length > 0}
+            <div class="file-list">
+              {#each compressFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => compressFiles = compressFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <button class="action-btn" onclick={handleCompress} disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Compress & Download'}
+                {isProcessing ? 'Processing...' : `Compress & Download (${compressFiles.length} file${compressFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -564,14 +621,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'encrypt'}
       <div class="tool-pane">
         <h2>Encrypt PDF</h2>
-        <p>Add a password to protect your document.</p>
+        <p>Add a password to protect your document(s).</p>
 
-        {#if !encryptFile}
-            <DropZone ondrop={(files: File[]) => encryptFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{encryptFile.name}</span>
-                <button onclick={() => encryptFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => encryptFiles = [...encryptFiles, ...files]} multiple={true} />
+
+        {#if encryptFiles.length > 0}
+            <div class="file-list">
+              {#each encryptFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => encryptFiles = encryptFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -580,7 +643,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleEncrypt} disabled={isProcessing || !encryptPassword}>
-                {isProcessing ? 'Processing...' : 'Encrypt & Download'}
+                {isProcessing ? 'Processing...' : `Encrypt & Download (${encryptFiles.length} file${encryptFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -588,14 +651,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'watermark'}
       <div class="tool-pane">
         <h2>Watermark PDF</h2>
-        <p>Add a text watermark to your document.</p>
+        <p>Add a text watermark to your document(s).</p>
 
-        {#if !watermarkFile}
-            <DropZone ondrop={(files: File[]) => watermarkFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{watermarkFile.name}</span>
-                <button onclick={() => watermarkFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => watermarkFiles = [...watermarkFiles, ...files]} multiple={true} />
+
+        {#if watermarkFiles.length > 0}
+            <div class="file-list">
+              {#each watermarkFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => watermarkFiles = watermarkFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -604,7 +673,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleWatermark} disabled={isProcessing || !watermarkText}>
-                {isProcessing ? 'Processing...' : 'Watermark & Download'}
+                {isProcessing ? 'Processing...' : `Watermark & Download (${watermarkFiles.length} file${watermarkFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -612,14 +681,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'delete'}
       <div class="tool-pane">
         <h2>Delete Pages</h2>
-        <p>Remove specific pages from your document.</p>
+        <p>Remove specific pages from your document(s).</p>
 
-        {#if !deleteFile}
-            <DropZone ondrop={(files: File[]) => deleteFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{deleteFile.name}</span>
-                <button onclick={() => deleteFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => deleteFiles = [...deleteFiles, ...files]} multiple={true} />
+
+        {#if deleteFiles.length > 0}
+            <div class="file-list">
+              {#each deleteFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => deleteFiles = deleteFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -628,7 +703,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleDelete} disabled={isProcessing || !deletePagesStr}>
-                {isProcessing ? 'Processing...' : 'Delete Pages & Download'}
+                {isProcessing ? 'Processing...' : `Delete Pages & Download (${deleteFiles.length} file${deleteFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -636,14 +711,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'extract'}
       <div class="tool-pane">
         <h2>Extract Pages</h2>
-        <p>Extract specific pages to a new document.</p>
+        <p>Extract specific pages across your document(s).</p>
 
-        {#if !extractFile}
-            <DropZone ondrop={(files: File[]) => extractFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{extractFile.name}</span>
-                <button onclick={() => extractFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => extractFiles = [...extractFiles, ...files]} multiple={true} />
+
+        {#if extractFiles.length > 0}
+            <div class="file-list">
+              {#each extractFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => extractFiles = extractFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -652,7 +733,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleExtract} disabled={isProcessing || !extractPagesStr}>
-                {isProcessing ? 'Processing...' : 'Extract Pages & Download'}
+                {isProcessing ? 'Processing...' : `Extract Pages & Download (${extractFiles.length} file${extractFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
@@ -660,14 +741,20 @@ let metadataFile: File | null = $state(null);
     {:else if activeTool === 'reorder'}
       <div class="tool-pane">
         <h2>Reorder Pages</h2>
-        <p>Rearrange the pages in your document.</p>
+        <p>Rearrange the pages in your document(s).</p>
 
-        {#if !reorderFile}
-            <DropZone ondrop={(files: File[]) => reorderFile = files[0]} multiple={false} />
-        {:else}
-            <div class="selected-file">
-                <span class="file-name">{reorderFile.name}</span>
-                <button onclick={() => reorderFile = null}>✕</button>
+        <DropZone ondrop={(files: File[]) => reorderFiles = [...reorderFiles, ...files]} multiple={true} />
+
+        {#if reorderFiles.length > 0}
+            <div class="file-list">
+              {#each reorderFiles as file, i}
+                <div class="file-item">
+                  <span class="file-name">{file.name}</span>
+                  <div class="file-controls">
+                    <button onclick={() => reorderFiles = reorderFiles.filter((_, idx) => idx !== i)}>✕</button>
+                  </div>
+                </div>
+              {/each}
             </div>
 
             <div class="input-group">
@@ -676,7 +763,7 @@ let metadataFile: File | null = $state(null);
             </div>
 
             <button class="action-btn" onclick={handleReorder} disabled={isProcessing || !reorderPagesStr}>
-                {isProcessing ? 'Processing...' : 'Reorder & Download'}
+                {isProcessing ? 'Processing...' : `Reorder & Download (${reorderFiles.length} file${reorderFiles.length > 1 ? 's' : ''})`}
             </button>
         {/if}
       </div>
