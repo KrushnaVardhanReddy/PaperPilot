@@ -244,28 +244,110 @@
     }
 
     .swagger-ui .opblock-body {
-      background: var(--surface-0) !important;
+      background: var(--surface-1) !important;
       border-top: 1px solid var(--border-color) !important;
       padding: 24px !important;
+    }
+
+    /* Parameter & Request Body Section Headers */
+    .swagger-ui .opblock-section-header {
+      background: #1A1D26 !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 8px !important;
+      padding: 12px 16px !important;
+      margin-bottom: 16px !important;
+      box-shadow: none !important;
+    }
+
+    .swagger-ui .opblock-section-header h4,
+    .swagger-ui .opblock-section-header label {
+      color: #F8FAFC !important;
+      font-weight: 700 !important;
+      font-size: 0.95rem !important;
+    }
+
+    .swagger-ui .opblock-description-wrapper,
+    .swagger-ui .opblock-description-wrapper p,
+    .swagger-ui .opblock-external-docs-wrapper,
+    .swagger-ui .opblock-title_normal {
+      color: #CBD5E1 !important;
+      font-size: 0.92rem !important;
+      line-height: 1.6 !important;
+    }
+
+    /* Request Body description text ("JSON configuration or multipart form") */
+    .swagger-ui .body-param__text,
+    .swagger-ui .body-param-options,
+    .swagger-ui .body-param-options label,
+    .swagger-ui .renderedMarkdown,
+    .swagger-ui .renderedMarkdown p {
+      color: #CBD5E1 !important;
+      font-size: 0.92rem !important;
+      line-height: 1.5 !important;
+    }
+
+    .swagger-ui .parameter__name {
+      color: #F8FAFC !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+    }
+
+    .swagger-ui .parameter__type {
+      color: #38BDF8 !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.82rem !important;
+    }
+
+    .swagger-ui .parameter__in {
+      color: #94A3B8 !important;
+      font-size: 0.8rem !important;
+    }
+
+    .swagger-ui .parameter__empty-body {
+      color: #94A3B8 !important;
+      font-style: italic !important;
+      padding: 8px 0 !important;
+    }
+
+    .swagger-ui .tabli button {
+      color: #94A3B8 !important;
+      font-weight: 500 !important;
+    }
+
+    .swagger-ui .tabli.active button {
+      color: #38BDF8 !important;
+      font-weight: 700 !important;
+      border-bottom: 2px solid #38BDF8 !important;
+    }
+
+    /* Response section headers */
+    .swagger-ui .responses-inner h4,
+    .swagger-ui .responses-inner h5 {
+      color: #F8FAFC !important;
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+    }
+
+    .swagger-ui .response-col_description {
+      color: #CBD5E1 !important;
+      font-size: 0.9rem !important;
+    }
+
+    .swagger-ui .response-col_status {
+      color: #34D399 !important;
+      font-weight: 700 !important;
+      font-size: 0.95rem !important;
     }
 
     /* Tables, inputs, and schemas */
     .swagger-ui table thead tr th,
     .swagger-ui table thead tr td {
-      color: var(--text-primary) !important;
+      color: #94A3B8 !important;
       border-bottom: 1px solid var(--border-color) !important;
-      font-size: 0.82rem !important;
+      font-size: 0.8rem !important;
       text-transform: uppercase !important;
       letter-spacing: 0.05em !important;
-    }
-
-    .swagger-ui .tabli button {
-      color: var(--text-secondary) !important;
-    }
-
-    .swagger-ui .tabli.active button {
-      color: #FFFFFF !important;
-      font-weight: 600 !important;
     }
 
     .swagger-ui .model-box,
@@ -273,7 +355,7 @@
       background: var(--surface-1) !important;
       border: 1px solid var(--border-color) !important;
       border-radius: 10px !important;
-      color: var(--text-secondary) !important;
+      color: #CBD5E1 !important;
     }
 
     .swagger-ui section.models .model-container {
@@ -281,7 +363,7 @@
     }
 
     .swagger-ui section.models h4 {
-      color: var(--text-primary) !important;
+      color: #F8FAFC !important;
       font-size: 1.15rem !important;
     }
 
@@ -322,16 +404,11 @@
 
     .swagger-ui input[type=text],
     .swagger-ui textarea {
-      background: var(--surface-2) !important;
-      color: #FFFFFF !important;
+      background: #090B0E !important;
+      color: #F8FAFC !important;
       border: 1px solid var(--border-color) !important;
       border-radius: 6px !important;
       font-family: 'JetBrains Mono', monospace !important;
-    }
-
-    .swagger-ui .response-col_status {
-      color: #34D399 !important;
-      font-weight: 700 !important;
     }
 
     .swagger-ui pre {
@@ -340,6 +417,10 @@
       border: 1px solid var(--border-color) !important;
       border-radius: 8px !important;
       font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    .swagger-ui .highlight-code pre {
+      background: #090B0E !important;
     }
   </style>
 </head>
