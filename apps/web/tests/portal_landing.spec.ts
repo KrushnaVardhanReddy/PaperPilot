@@ -88,19 +88,19 @@ test.describe('usepaperpilot.com Official Web Portal', () => {
     // Navigate to API explorer
     await page.locator('.surface-card').nth(2).locator('.card-link').click();
 
-    // Initial state (cURL)
-    await expect(page.locator('.code-content')).toContainText('curl -X POST');
-
-    // Switch to TypeScript
-    await page.locator('.tab', { hasText: 'TypeScript' }).click();
-    await expect(page.locator('.code-content')).toContainText('import { PaperPilot } from \'@paperpilot/client\'');
-
-    // Switch to Python
-    await page.locator('.tab', { hasText: 'Python' }).click();
-    await expect(page.locator('.code-content')).toContainText('from paperpilot import PaperPilot');
+    // Initial state (CLI)
+    await expect(page.locator('.code-content')).toContainText('paperpilot merge');
 
     // Switch to MCP
     await page.locator('.tab', { hasText: 'MCP' }).click();
-    await expect(page.locator('.code-content')).toContainText('"command": "npx"');
+    await expect(page.locator('.code-content')).toContainText('"command": "paperpilot"');
+
+    // Switch to cURL
+    await page.locator('.tab', { hasText: 'cURL' }).click();
+    await expect(page.locator('.code-content')).toContainText('curl -X POST');
+
+    // Switch to WASM
+    await page.locator('.tab', { hasText: 'WASM' }).click();
+    await expect(page.locator('.code-content')).toContainText('WasmPdfEngine.merge');
   });
 });

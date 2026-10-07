@@ -1,41 +1,26 @@
 <script lang="ts">
-  let activeTab = $state('curl');
+  let activeTab = $state('cli');
 
   const codeSnippets = {
-    curl: `curl -X POST https://api.usepaperpilot.com/v1/tools/merge \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -F "files=@report1.pdf" \\
-  -F "files=@report2.pdf" \\
-  -o merged_report.pdf`,
-    ts: `import { PaperPilot } from '@paperpilot/client';
-
-const client = new PaperPilot(process.env.PAPERPILOT_API_KEY);
-
-const result = await client.tools.merge({
-  files: ['report1.pdf', 'report2.pdf']
-});
-
-await result.saveAs('merged_report.pdf');`,
-    python: `from paperpilot import PaperPilot
-
-client = PaperPilot(api_key="YOUR_API_KEY")
-
-result = client.tools.merge(
-    files=["report1.pdf", "report2.pdf"]
-)
-
-result.save_as("merged_report.pdf")`,
+    cli: `# Fast, zero-config CLI — 100% offline & private
+paperpilot merge report1.pdf report2.pdf -o merged_report.pdf --json`,
     mcp: `{
   "mcpServers": {
     "paperpilot": {
-      "command": "npx",
-      "args": ["-y", "@paperpilot/mcp-server"],
-      "env": {
-        "PAPERPILOT_API_KEY": "YOUR_API_KEY"
-      }
+      "command": "paperpilot",
+      "args": ["mcp"]
     }
   }
-}`
+}`,
+    curl: `# Local self-hosted REST Gateway — zero external telemetry
+curl -X POST http://localhost:8080/api/v1/pdf/merge \\
+  -F "files=@report1.pdf" \\
+  -F "files=@report2.pdf" \\
+  -o merged_report.pdf`,
+    wasm: `// 100% In-Browser WASM Engine — files never leave client
+import { WasmPdfEngine } from '@paperpilot/wasm';
+
+const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
   };
 </script>
 
@@ -43,16 +28,16 @@ result.save_as("merged_report.pdf")`,
   <div class="api-container">
     <div class="api-header">
       <h2>Built for Developers. Ready for AI.</h2>
-      <p>Integrate PaperPilot's tools into your backend, or equip Claude and Cursor with PDF superpowers via MCP.</p>
+      <p>Integrate PaperPilot's tools into your backend, equip Claude and Cursor with native MCP, or run client-side in the browser via WASM.</p>
     </div>
 
     <div class="api-content">
       <div class="code-window">
         <div class="tabs">
-          <button class="tab {activeTab === 'curl' ? 'active' : ''}" onclick={() => activeTab = 'curl'}>cURL</button>
-          <button class="tab {activeTab === 'ts' ? 'active' : ''}" onclick={() => activeTab = 'ts'}>TypeScript</button>
-          <button class="tab {activeTab === 'python' ? 'active' : ''}" onclick={() => activeTab = 'python'}>Python</button>
+          <button class="tab {activeTab === 'cli' ? 'active' : ''}" onclick={() => activeTab = 'cli'}>CLI</button>
           <button class="tab {activeTab === 'mcp' ? 'active' : ''}" onclick={() => activeTab = 'mcp'}>MCP (Claude/Cursor)</button>
+          <button class="tab {activeTab === 'curl' ? 'active' : ''}" onclick={() => activeTab = 'curl'}>cURL (Local API)</button>
+          <button class="tab {activeTab === 'wasm' ? 'active' : ''}" onclick={() => activeTab = 'wasm'}>WASM (Browser)</button>
         </div>
         <div class="code-content">
           <pre><code>{codeSnippets[activeTab as keyof typeof codeSnippets]}</code></pre>
@@ -60,13 +45,13 @@ result.save_as("merged_report.pdf")`,
       </div>
 
       <div class="api-info">
-        <h3>Comprehensive OpenAPI Spec</h3>
-        <p>Explore all 44 tools interactively. Our API is strictly typed and built on Edge WASM for sub-10ms latency (excluding file transfer).</p>
+        <h3>100% Local & Private by Design</h3>
+        <p>Explore all 44 tools across CLI, MCP, Local REST API, and Browser WASM. No accounts, no API keys, and zero external telemetry.</p>
 
         <ul class="api-features">
-          <li>✓ Fully documented REST endpoints</li>
-          <li>✓ Official SDKs for Node.js and Python</li>
-          <li>✓ Standard Model Context Protocol (MCP) support</li>
+          <li>✓ Standard Model Context Protocol (MCP) for AI IDEs</li>
+          <li>✓ Blazing sub-10ms native execution with zero cloud lock-in</li>
+          <li>✓ Fully typed OpenAPI 3.0 spec for local REST gateway</li>
         </ul>
 
         <a href="/swagger-ui" class="swagger-btn">
