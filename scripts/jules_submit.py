@@ -70,6 +70,7 @@ MANDATORY RULES — VIOLATION = REJECTED PR:
 5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
 6. When asking any questions, YOU MUST prefix your question with the Task Number and Title (e.g., "[P2_T1: MCP Foundation]").
 7. WIKI & DOCS REQUIREMENT: For any newly introduced feature, module, engine, or architecture component, you MUST create or update the relevant documentation in the `wiki/` directory (e.g. `wiki/XX-Module-Name.md`) reflecting the new architecture, usage, and key components.
+8. PERIODIC PROGRESS UPDATES: You MUST proactively send a concise progress update message to the session conversation every 10 to 15 minutes or after completing each logical milestone/step (e.g., "Step 2/4 completed: tests passed, now modifying X..."), so the team is never left without visibility into ongoing progress.
 
 Project: PaperPilot
 Tech stack:
@@ -84,6 +85,7 @@ Critical Rules:
 - Unit tests are required for all operations.
 - Do NOT use Electron; use Tauri 2.
 - The AI should not directly manipulate document bytes, only use MCP tool operations.
+- Proactively send progress updates in chat every 10-15 minutes.
 """.strip()
 
 # ──────────────────────────────────────────────────────────────────────────────
