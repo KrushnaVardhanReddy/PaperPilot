@@ -28,6 +28,7 @@ wiki/22-Desktop-Binary-Optimization.md
 
 ### Prohibited Files:
 DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-gateway/`, `paperpilot-mcp/`, `apps/desktop/src/` (Svelte UI), `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+DO NOT modify any `.spec.ts` test files.
 
 ---
 
@@ -43,12 +44,19 @@ codegen-units = 1
 panic = "abort"
 strip = true
 ```
-Remove `[profile.release]` from `apps/desktop/src-tauri/Cargo.toml`.
+Remove `[profile.release]` from `apps/desktop/src-tauri/Cargo.toml` to eliminate workspace profile warnings.
 
-### B. Pure-Rust Inference Engine (`rten`) Migration
+### B. Pure-Rust Inference Engine (`rten`) Migration & Model Conversion
 1. In `paperpilot-nlp/Cargo.toml`, replace `ort` with `rten` (version matching `Cargo.lock` ~0.21.0) and `rten-tensor`.
-2. Convert or load the TinyBERT classification model into `.rten` format.
-3. Update `paperpilot-nlp/src/layer2.rs` so `predict(&self, query: &str) -> Option<Intent>` executes in memory using `rten::Model` with sub-2ms latency.
+2. **Model Conversion Guideline (Crucial)**:
+   - Convert from `tools/train-nlp/output/tinybert.onnx` (the unquantized FP32 model) instead of `tinybert_int8.onnx`:
+     ```bash
+     rten-convert tools/train-nlp/output/tinybert.onnx tools/train-nlp/output/tinybert.rten
+     zstd -19 tools/train-nlp/output/tinybert.rten -o tools/train-nlp/output/tinybert.rten.zst
+     ```
+   - **Why FP32 instead of INT8**: `rten` SIMD engine does not support Microsoft ONNX Runtime's custom INT8 MatMul quantization scale/zero-point operators (`OperatorError: MatMul_quant_output_scale_mul UnsupportedType`). The unquantized FP32 TinyBERT model is small (~14MB, ~4MB with zstd), executes sub-2ms, and avoids all quantization tensor type errors.
+   - Committing the converted model artifact to `tools/train-nlp/output/tinybert.rten.zst` is authorized under the `tools/train-nlp/` ownership rule.
+3. Update `paperpilot-nlp/src/layer2.rs` so `predict(&self, query: &str) -> Option<Intent>` executes in memory using `rten::Model::load_bytes` (decompressed via `zstd`).
 4. Ensure all NLP unit and integration tests pass:
    ```bash
    cargo test -p paperpilot-nlp -j 2
