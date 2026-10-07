@@ -10,21 +10,22 @@ export default defineConfig({
   },
   plugins: [
     svelte(),
-    (wasm as any)()
+    (wasm as any)(),
+    {
+      name: 'swagger-ui-rewriter',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/swagger-ui' || req.url === '/swagger-ui/') {
+            req.url = '/swagger-ui.html';
+          }
+          next();
+        });
+      }
+    }
   ],
   server: {
     fs: {
       allow: ['..', '../../paperpilot-wasm/pkg']
-    },
-    proxy: {
-      '/swagger-ui': {
-        target: 'http://127.0.0.1:7823',
-        changeOrigin: true
-      },
-      '/api-docs': {
-        target: 'http://127.0.0.1:7823',
-        changeOrigin: true
-      }
     }
   }
 })

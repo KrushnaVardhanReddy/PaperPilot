@@ -58,7 +58,7 @@ const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
           <a href="/swagger-ui" target="_blank" rel="noopener noreferrer" class="swagger-btn">
             Launch Swagger Explorer &rarr;
           </a>
-          <span class="swagger-hint">Proxies to local Gateway (port 7823)</span>
+          <span class="swagger-hint">Interactive OpenAPI 3.1 & Schema Viewer</span>
         </div>
       </div>
     </div>

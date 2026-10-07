@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PaperPilot — OpenAPI / Swagger Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    body {
+      margin: 0;
+      background: #0B0F19;
+      color: #E2E8F0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .header-bar {
+      background: #111827;
+      border-bottom: 1px solid #1F2937;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-bar .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .header-bar .logo-group img {
+      width: 28px;
+      height: 28px;
+    }
+    .header-bar .back-link {
+      color: #38BDF8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .header-bar .back-link:hover {
+      text-decoration: underline;
+    }
+    /* Dark mode Swagger overrides */
+    .swagger-ui {
+      background-color: #0B0F19;
+      color: #E2E8F0;
+    }
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui .info .title, .swagger-ui .info p, .swagger-ui .info a { color: #F8FAFC !important; }
+    .swagger-ui .opblock-tag { color: #38BDF8 !important; border-bottom: 1px solid #1E293B !important; }
+    .swagger-ui .opblock { border-radius: 8px !important; box-shadow: none !important; }
+    .swagger-ui .scheme-container { background: #111827 !important; border-bottom: 1px solid #1F2937 !important; }
+    .swagger-ui select { background: #1F2937 !important; color: #FFFFFF !important; }
+    .swagger-ui .btn { color: #FFFFFF !important; border-color: #374151 !important; }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <a href="/" class="logo-group">
+      <img src="/logo.png" alt="PaperPilot Logo" />
+      <span>PaperPilot API Explorer</span>
+    </a>
+    <a href="/" class="back-link">&larr; Return to Portal</a>
+  </div>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: '/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout"
+      });
+    };
+  </script>
+</body>
+</html>
