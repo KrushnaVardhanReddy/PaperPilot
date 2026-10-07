@@ -61,18 +61,24 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 ---
 
 ### Expected Report Format (What you must implement):
-Each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`) must now output a clean, consolidated table with Use Case, Command, Latency, Expected Result, Actual/Received Result, and Verdict:
+Each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`) must now output a clean, consolidated table with Tool as the first column, along with interfaces (CLI, MCP, REST API, Client-Side WASM, Cloudflare Edge):
 
 ```markdown
 ### Tool: `pdf_merge`
 > **Use Case**: Merge two separate single-page PDFs (`page_1.pdf` [1 pg] + `page_2.pdf` [1 pg]) into a single continuous 2-page document.
 
-| Interface | Command / Invocation | Latency | Expected Result | Actual / Received Result | Verdict |
-|---|---|---|---|---|---|
-| **💻 CLI** | `paperpilot merge --input page_1.pdf page_2.pdf --output out/merged_cli.pdf --json` | `19.96 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,711 bytes | ✅ PASS |
-| **🤖 MCP** | `tools/call {"name": "pdf_merge", "arguments": {"inputs": [...], "output": "..."}}` | `19.97 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
-| **🌐 REST API** | `POST /api/v1/pdf/merge {"inputs": [...], "output": "..."}` | `30.64 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
+| Tool | Interface | Command / Invocation | Latency | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|
+| `pdf_merge` | **💻 CLI** | `paperpilot merge --input page_1.pdf page_2.pdf --output out/merged_cli.pdf --json` | `19.96 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,711 bytes | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | `tools/call {"name": "pdf_merge", "arguments": {"inputs": [...], "output": "..."}}` | `19.97 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | `POST /api/v1/pdf/merge {"inputs": [...], "output": "..."}` | `30.64 ms` | Valid 2-page PDF (`%PDF-`) | Valid PDF, 2 pages, 1,803 bytes | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | `WasmPdfEngine.merge([file1, file2])` | `3.20 ms` | In-memory 2-page Uint8Array | Valid PDF buffer, 2 pages, 1,708 bytes | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | `POST /api/v1/merge (multipart/form-data)` | `8.50 ms` | Edge serverless streamed PDF | Valid PDF stream, 2 pages, 1,708 bytes | ✅ PASS |
 ```
+
+> **Note on WASM & Edge Rows**:
+> - For tools supported in `paperpilot-wasm` (22 tools) and Cloudflare Workers `apps/edge` (12 tools), report their in-memory / edge latency and byte verification.
+> - For tools that are Desktop/Server-only (e.g. heavy OCR, Docx conversions), mark as `N/A (Desktop/Server only)`.
 
 ---
 
@@ -80,10 +86,12 @@ Each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTER
 
 1. **Add Metadata to Every Tool Definition**:
    In `tools_definitions`, enrich each tool entry with:
+   - `tool_id`: The canonical tool name (e.g. `pdf_merge`).
    - `use_case`: A concise 1-sentence description explaining the input document(s) and the operation being performed.
    - `expected_desc`: Human-readable expectation (e.g. `"Valid 2-page PDF (%PDF-)"`, `"JSON with 3 form fields"`, `"Rendered PNG image (> 5 KB)"`, `"Extracted text containing 'Chapter 1'"`).
    - `expected_type`: Output classification: `"pdf"`, `"json"`, `"text"`, `"image"`, `"dir"`, etc.
    - `expected_pages`: (optional integer) Exact expected page count if output is a PDF.
+   - `wasm_supported`: Boolean flag or snippet if operation is available in WASM / Edge.
 
 2. **Implement Artifact Deep Validation**:
    When recording the execution result, inspect the generated output file or stdout:
@@ -100,7 +108,7 @@ Each tool in `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` (and `reports/TRI_INTER
      - Record actual summary: `f"Success: {parsed_summary}"`.
 
 3. **Report Generation**:
-   Update report template generation logic in `test_tri_interface_e2e.py` to render the clean Markdown comparison table illustrated above for all 44 tools.
+   Update report template generation logic in `test_tri_interface_e2e.py` to render the clean Markdown comparison table illustrated above with `Tool` as the first column.
    Write to both `reports/TRI_INTERFACE_E2E_100_VERIFIED.md` and `reports/TRI_INTERFACE_E2E_AND_DOCS.md`.
 
 ---

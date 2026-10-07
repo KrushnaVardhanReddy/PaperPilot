@@ -34,12 +34,16 @@ For each tool, the report must output:
 ### Tool: `<tool_id>`
 > **Use Case**: <Clear description of input and purpose>
 
-| Interface | Command / Invocation | Latency | Expected Result | Actual / Received Result | Verdict |
-|---|---|---|---|---|---|
-| **💻 CLI** | `paperpilot <cmd> ...` | `14.2 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
-| **🤖 MCP** | `tools/call {"name": "...", ...}` | `15.8 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
-| **🌐 REST API** | `POST /api/v1/pdf/... {...}` | `24.1 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
+| Tool | Interface | Command / Invocation | Latency | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|
+| `<tool_id>` | **💻 CLI** | `paperpilot <cmd> ...` | `14.2 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
+| `<tool_id>` | **🤖 MCP** | `tools/call {"name": "...", ...}` | `15.8 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
+| `<tool_id>` | **🌐 REST API** | `POST /api/v1/pdf/... {...}` | `24.1 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
+| `<tool_id>` | **⚡ WASM (Browser)** | `WasmPdfEngine.<op>(...)` | `3.5 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
+| `<tool_id>` | **☁️ Cloudflare Edge** | `POST /api/v1/<op> ...` | `9.2 ms` | <Expected outcome> | <Received outcome with exact metrics> | ✅ PASS |
 ```
+
+> For tools not supported on browser WASM or Edge serverless (e.g. heavy OCR, desktop Office conversions), mark the WASM / Edge rows as `N/A (Desktop/Server only)`.
 
 ---
 
