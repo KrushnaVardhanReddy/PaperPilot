@@ -1,1 +1,2979 @@
-{"openapi":"3.1.0","info":{"title":"PaperPilot Gateway API & MCP Server","description":"Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 44 intelligent PDF tools.","license":{"name":""},"version":"0.1.0"},"paths":{"/api/v1/pdf/compare":{"post":{"tags":["PDF Operations"],"summary":"Compare two PDF documents for visual and textual differences","operationId":"compare","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CompareJsonRequest"}}},"required":true},"responses":{"200":{"description":"Comparison completed","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/compress":{"post":{"tags":["PDF Operations"],"summary":"Compress a PDF document to reduce file size","operationId":"compress","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CompressJsonRequest"}}},"required":true},"responses":{"200":{"description":"Compressed successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/convert":{"post":{"tags":["PDF Operations"],"summary":"Convert a PDF to/from another format (docx, images, html, xlsx, etc.)","operationId":"convert","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ConvertJsonRequest"}}},"required":true},"responses":{"200":{"description":"Converted successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/extract-text":{"post":{"tags":["PDF Operations"],"summary":"Extract clean text from a PDF document","operationId":"extract_text","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ExtractTextJsonRequest"}}},"required":true},"responses":{"200":{"description":"Text extracted successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/info":{"post":{"tags":["PDF Operations"],"summary":"Retrieve metadata and page information for a PDF document","operationId":"info","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/InfoJsonRequest"}}},"required":true},"responses":{"200":{"description":"Info extracted successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/mcp-exec":{"post":{"tags":["MCP"],"summary":"Execute MCP tool directly by tool name with arbitrary JSON arguments","operationId":"mcp_exec","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/McpExecRequest"}}},"required":true},"responses":{"200":{"description":"Tool executed successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}},"400":{"description":"Invalid request arguments"},"500":{"description":"Execution error"}}}},"/api/v1/pdf/merge":{"post":{"tags":["PDF Operations"],"summary":"Merge multiple PDF documents into a single PDF","operationId":"merge","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/MergeJsonRequest"}}},"required":true},"responses":{"200":{"description":"Merged successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/render-page":{"post":{"tags":["PDF Operations"],"summary":"Render a single PDF page directly to a PNG image stream","operationId":"render_page","responses":{"200":{"description":"Rendered PNG image binary","content":{"image/png":{}}},"400":{"description":"Invalid request"},"500":{"description":"Render failure"}}}},"/api/v1/pdf/split":{"post":{"tags":["PDF Operations"],"summary":"Split a PDF document into separate pages or ranges","operationId":"split","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/SplitJsonRequest"}}},"required":true},"responses":{"200":{"description":"Split successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/api/v1/pdf/tools/{tool_name}":{"post":{"tags":["MCP"],"summary":"Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON","operationId":"handle_tool","parameters":[{"name":"tool_name","in":"path","description":"Name of the tool (with or without 'pdf_' prefix)","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Tool executed successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}},"400":{"description":"Invalid multipart or payload"},"500":{"description":"Execution error"}}}},"/api/v1/pdf/watermark":{"post":{"tags":["PDF Operations"],"summary":"Apply text or image watermarks to a PDF document","operationId":"watermark","requestBody":{"description":"JSON configuration or multipart form","content":{"application/json":{"schema":{"$ref":"#/components/schemas/WatermarkJsonRequest"}}},"required":true},"responses":{"200":{"description":"Watermarked successfully","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ApiResponse"}}}}}}},"/health":{"get":{"tags":["Health"],"summary":"Gateway health check","operationId":"health","responses":{"200":{"description":"Service is healthy and ready","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HealthResponse"}}}}}}}},"components":{"schemas":{"ApiResponse":{"type":"object","required":["success"],"properties":{"error":{"type":["string","null"]},"result":{},"success":{"type":"boolean","example":true}}},"CompareJsonRequest":{"type":"object","required":["file1","file2"],"properties":{"file1":{"type":"string","example":"doc_v1.pdf"},"file2":{"type":"string","example":"doc_v2.pdf"}}},"CompressJsonRequest":{"type":"object","required":["input","output"],"properties":{"input":{"type":"string","example":"input.pdf"},"output":{"type":"string","example":"output.pdf"},"quality":{"type":["string","null"],"example":"medium"}}},"ConvertJsonRequest":{"type":"object","required":["input","output"],"properties":{"format":{"type":["string","null"],"example":"docx"},"input":{"type":"string","example":"input.pdf"},"output":{"type":"string","example":"output.docx"}}},"ExtractTextJsonRequest":{"type":"object","required":["input"],"properties":{"input":{"type":"string","example":"input.pdf"},"page":{"type":["integer","null"],"format":"int32","example":"1","minimum":0}}},"HealthResponse":{"type":"object","required":["status","version","tools_count"],"properties":{"status":{"type":"string","example":"ok"},"tools_count":{"type":"integer","example":44,"minimum":0},"version":{"type":"string","example":"0.1.0"}}},"InfoJsonRequest":{"type":"object","required":["input"],"properties":{"input":{"type":"string","example":"input.pdf"}}},"McpExecRequest":{"type":"object","required":["tool"],"properties":{"arguments":{},"tool":{"type":"string","example":"pdf_metadata"}}},"MergeJsonRequest":{"type":"object","required":["inputs","output"],"properties":{"inputs":{"type":"array","items":{"type":"string"},"example":["doc1.pdf","doc2.pdf"]},"output":{"type":"string","example":"merged.pdf"}}},"SplitJsonRequest":{"type":"object","required":["input"],"properties":{"input":{"type":"string","example":"input.pdf"},"output":{"type":["string","null"],"example":"output_dir/"},"pages":{"type":["string","null"],"example":"1-3,5"}}},"WatermarkJsonRequest":{"type":"object","required":["input","output"],"properties":{"input":{"type":"string","example":"input.pdf"},"opacity":{"type":["number","null"],"format":"float","example":0.3},"output":{"type":"string","example":"watermarked.pdf"},"text":{"type":["string","null"],"example":"CONFIDENTIAL"}}}}},"tags":[{"name":"Health","description":"Gateway health check and tool status"},{"name":"MCP","description":"Direct Model Context Protocol execution endpoint for 44+ tools"},{"name":"PDF Operations","description":"High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"}]}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PaperPilot Gateway API & MCP Server",
+    "description": "Unified REST and MCP OpenAPI 3.1 Specification for PaperPilot: High-performance local engine covering all 44 intelligent PDF tools.",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Gateway health check",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy and ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/mcp-exec": {
+      "post": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "Execute MCP tool directly by tool name with arbitrary JSON arguments",
+        "operationId": "mcp_exec",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpExecRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tool executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/merge": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Merge two or more separate PDFs into a single continuous document",
+        "description": "Execute `pdf_merge` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_merge",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "merge_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_merge completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/split": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Split a multi-page PDF into separate files or custom ranges",
+        "description": "Execute `pdf_split` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_split",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "split_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_split completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/extract_pages": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Extract specific page numbers or ranges into a new PDF",
+        "description": "Execute `pdf_extract_pages` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_extract_pages",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "extract_pages_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_extract_pages completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/delete_pages": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Delete specified page indices from a PDF document",
+        "description": "Execute `pdf_delete_pages` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_delete_pages",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "delete_pages_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_delete_pages completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/reorder_pages": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Reorder document pages into a custom page sequence",
+        "description": "Execute `pdf_reorder_pages` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_reorder_pages",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "reorder_pages_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_reorder_pages completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/rotate": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Rotate specified pages by 90, 180, or 270 degrees",
+        "description": "Execute `pdf_rotate` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_rotate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "rotate_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_rotate completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/crop": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Crop pages to a defined rectangular bounding box (x, y, width, height)",
+        "description": "Execute `pdf_crop` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_crop",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "crop_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_crop completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/burst": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Burst a document into individual single-page PDF files",
+        "description": "Execute `pdf_burst` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_burst",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "burst_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_burst completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/remove_blank": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Detect and remove completely blank pages from document",
+        "description": "Execute `pdf_remove_blank` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_remove_blank",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "remove_blank_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_remove_blank completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/images_to_pdf": {
+      "post": {
+        "tags": [
+          "Core Operations"
+        ],
+        "summary": "Combine JPEG, PNG, or WebP image files into a single PDF document",
+        "description": "Execute `pdf_images_to_pdf` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_images_to_pdf",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "images_to_pdf_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_images_to_pdf completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/compress": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Optimize streams and recompress images to significantly reduce file size",
+        "description": "Execute `pdf_compress` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_compress",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "compress_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_compress completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/repair": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Rebuild corrupted cross-reference tables and recover broken PDF structures",
+        "description": "Execute `pdf_repair` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_repair",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "repair_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_repair completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/linearize": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Linearize PDF for Fast Web View byte-range streaming in browsers",
+        "description": "Execute `pdf_linearize` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_linearize",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "linearize_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_linearize completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/encrypt": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Secure document with AES-256 user and owner password encryption",
+        "description": "Execute `pdf_encrypt` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_encrypt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "encrypt_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_encrypt completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/decrypt": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Remove password security from a known authenticated PDF file",
+        "description": "Execute `pdf_decrypt` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_decrypt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "decrypt_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_decrypt completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/watermark": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Stamp diagonal or centered text/image watermarks across pages",
+        "description": "Execute `pdf_watermark` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_watermark",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "watermark_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_watermark completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/redact": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Permanently sanitize, black out, and scrub sensitive text and areas",
+        "description": "Execute `pdf_redact` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_redact",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "redact_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_redact completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/metadata": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Read, modify, or strip Title, Author, Subject, and Creator metadata",
+        "description": "Execute `pdf_metadata` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_metadata",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "metadata_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_metadata completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/sign": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Cryptographically sign PDF with X.509 certificate and PKCS#7 signature",
+        "description": "Execute `pdf_sign` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_sign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "sign_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_sign completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/flatten": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Flatten interactive forms and annotations directly into page content stream",
+        "description": "Execute `pdf_flatten` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_flatten",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "flatten_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_flatten completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/to_a": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Convert document to PDF/A archival standard format compliance",
+        "description": "Execute `pdf_to_pdf_a` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_to_pdf_a",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "to_a_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_to_pdf_a completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/header_footer": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Stamp dynamic running headers and footers with custom margin offsets",
+        "description": "Execute `pdf_header_footer` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_header_footer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "header_footer_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_header_footer completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/bates": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Apply sequential legal Bates numbering across all document pages",
+        "description": "Execute `pdf_bates` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_bates",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "bates_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_bates completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/page_numbers": {
+      "post": {
+        "tags": [
+          "Document Security"
+        ],
+        "summary": "Stamp dynamic page numbering formats (e.g. Page {page} of {total})",
+        "description": "Execute `pdf_page_numbers` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_page_numbers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "page_numbers_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_page_numbers completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/extract_text": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Extract clean UTF-8 plain text from all document pages",
+        "description": "Execute `pdf_extract_text` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_extract_text",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "extract_text_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_extract_text completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/extract_images": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Extract all embedded raster images to standalone image files",
+        "description": "Execute `pdf_extract_images` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_extract_images",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "extract_images_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_extract_images completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/search": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Search for keywords and return matched page bounding box coordinates",
+        "description": "Execute `pdf_search` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_search",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "search_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_search completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/render": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Render PDF pages to high-resolution PNG image streams",
+        "description": "Execute `pdf_render` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_render",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "render_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_render completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/compare": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Compare two documents for visual and textual pixel differences",
+        "description": "Execute `pdf_compare` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_compare",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "compare_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_compare completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/ocr": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Perform pure-Rust OCR to extract text from scanned bitmap pages",
+        "description": "Execute `pdf_ocr` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_ocr",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "ocr_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_ocr completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/bookmarks": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Extract and navigate document table of contents outline hierarchy",
+        "description": "Execute `pdf_bookmarks` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_bookmarks",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "bookmarks_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_bookmarks completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/annotate": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Add highlight, text note, and geometric rectangle annotations",
+        "description": "Execute `pdf_annotate` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_annotate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "annotate_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_annotate completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/classify_type": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Classify document type (scanned vs native text vs hybrid)",
+        "description": "Execute `pdf_classify_type` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_classify_type",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "classify_type_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_classify_type completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/validate": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Validate PDF specification compliance and structural integrity",
+        "description": "Execute `pdf_validate` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_validate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "validate_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_validate completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/hash": {
+      "post": {
+        "tags": [
+          "Content & Inspection"
+        ],
+        "summary": "Calculate cryptographic SHA-256 integrity hash of document structure",
+        "description": "Execute `pdf_hash` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_hash",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "hash_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_hash completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/read_form": {
+      "post": {
+        "tags": [
+          "Forms & Fields"
+        ],
+        "summary": "Extract AcroForm form field names, types, and current values",
+        "description": "Execute `pdf_read_form` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_read_form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "read_form_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_read_form completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/fill_form": {
+      "post": {
+        "tags": [
+          "Forms & Fields"
+        ],
+        "summary": "Fill interactive form field values with JSON payload",
+        "description": "Execute `pdf_fill_form` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_fill_form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "fill_form_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_fill_form completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/create_form_field": {
+      "post": {
+        "tags": [
+          "Forms & Fields"
+        ],
+        "summary": "Create new interactive text input fields or checkbox widgets",
+        "description": "Execute `pdf_create_form_field` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_create_form_field",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "create_form_field_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_create_form_field completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/to_docx": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Convert PDF document to editable Microsoft Word .docx format",
+        "description": "Execute `pdf_to_docx` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_to_docx",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "to_docx_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_to_docx completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/to_xlsx": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Extract tabular structures and export to Microsoft Excel .xlsx",
+        "description": "Execute `pdf_to_xlsx` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_to_xlsx",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "to_xlsx_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_to_xlsx completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/to_pptx": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Convert PDF presentation slides into Microsoft PowerPoint .pptx",
+        "description": "Execute `pdf_to_pptx` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_to_pptx",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "to_pptx_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_to_pptx completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/convert_html": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Convert PDF document into styled HTML web pages",
+        "description": "Execute `pdf_convert_html` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_convert_html",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "convert_html_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_convert_html completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/convert_markdown": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Convert document structure and text into clean Markdown format",
+        "description": "Execute `pdf_convert_markdown` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_convert_markdown",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "convert_markdown_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_convert_markdown completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf/convert_excel": {
+      "post": {
+        "tags": [
+          "Conversions"
+        ],
+        "summary": "Extract tables and export into spreadsheet format",
+        "description": "Execute `pdf_convert_excel` via local REST API. Supports JSON parameters or multipart/form-data upload.",
+        "operationId": "pdf_convert_excel",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "example": "document.pdf"
+                  },
+                  "output": {
+                    "type": "string",
+                    "example": "convert_excel_out.pdf"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to process"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "pdf_convert_excel completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {},
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CompareJsonRequest": {
+        "type": "object",
+        "required": [
+          "file1",
+          "file2"
+        ],
+        "properties": {
+          "file1": {
+            "type": "string",
+            "example": "doc_v1.pdf"
+          },
+          "file2": {
+            "type": "string",
+            "example": "doc_v2.pdf"
+          }
+        }
+      },
+      "CompressJsonRequest": {
+        "type": "object",
+        "required": [
+          "input",
+          "output"
+        ],
+        "properties": {
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          },
+          "output": {
+            "type": "string",
+            "example": "output.pdf"
+          },
+          "quality": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "medium"
+          }
+        }
+      },
+      "ConvertJsonRequest": {
+        "type": "object",
+        "required": [
+          "input",
+          "output"
+        ],
+        "properties": {
+          "format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "docx"
+          },
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          },
+          "output": {
+            "type": "string",
+            "example": "output.docx"
+          }
+        }
+      },
+      "ExtractTextJsonRequest": {
+        "type": "object",
+        "required": [
+          "input"
+        ],
+        "properties": {
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          },
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "example": "1",
+            "minimum": 0
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "tools_count"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "tools_count": {
+            "type": "integer",
+            "example": 44,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string",
+            "example": "0.1.0"
+          }
+        }
+      },
+      "InfoJsonRequest": {
+        "type": "object",
+        "required": [
+          "input"
+        ],
+        "properties": {
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          }
+        }
+      },
+      "McpExecRequest": {
+        "type": "object",
+        "required": [
+          "tool"
+        ],
+        "properties": {
+          "arguments": {},
+          "tool": {
+            "type": "string",
+            "example": "pdf_metadata"
+          }
+        }
+      },
+      "MergeJsonRequest": {
+        "type": "object",
+        "required": [
+          "inputs",
+          "output"
+        ],
+        "properties": {
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "doc1.pdf",
+              "doc2.pdf"
+            ]
+          },
+          "output": {
+            "type": "string",
+            "example": "merged.pdf"
+          }
+        }
+      },
+      "SplitJsonRequest": {
+        "type": "object",
+        "required": [
+          "input"
+        ],
+        "properties": {
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          },
+          "output": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "output_dir/"
+          },
+          "pages": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "1-3,5"
+          }
+        }
+      },
+      "WatermarkJsonRequest": {
+        "type": "object",
+        "required": [
+          "input",
+          "output"
+        ],
+        "properties": {
+          "input": {
+            "type": "string",
+            "example": "input.pdf"
+          },
+          "opacity": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "example": 0.3
+          },
+          "output": {
+            "type": "string",
+            "example": "watermarked.pdf"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "CONFIDENTIAL"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Core Operations",
+      "description": "Essential page manipulations and document assembly (10 tools)"
+    },
+    {
+      "name": "Document Security",
+      "description": "Encryption, digital signatures, permissions, and watermarks (13 tools)"
+    },
+    {
+      "name": "Content & Inspection",
+      "description": "Text/image extraction, visual rendering, OCR, and analysis (11 tools)"
+    },
+    {
+      "name": "Forms & Fields",
+      "description": "AcroForm field inspection, fill, and signature widgets (3 tools)"
+    },
+    {
+      "name": "Conversions",
+      "description": "High-fidelity document format conversions (6 tools)"
+    },
+    {
+      "name": "Health",
+      "description": "Gateway health check and tool status"
+    },
+    {
+      "name": "MCP Protocol",
+      "description": "Direct Model Context Protocol execution endpoint for all 44 tools"
+    }
+  ]
+}
