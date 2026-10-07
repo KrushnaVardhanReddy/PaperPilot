@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e preview-docs build-docs run-docs
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
 
 # Default target
 all: format lint test-all build
@@ -49,15 +49,35 @@ build-release:
 	@echo "\n=== Release Binary Size ==="
 	@ls -lh target/release/desktop
 
-# Build release desktop app and run
-run-release: build-release
-	./target/release/desktop
+# Cross-compilation & Multi-Platform builds
+# Linux (native or target)
+build-linux:
+	cargo build --workspace --release --target x86_64-unknown-linux-gnu
+
+# Windows cross-compilation
+build-windows:
+	cargo build --workspace --release --target x86_64-pc-windows-gnu
+
+# macOS cross-check / notice (macOS binaries require Darwin host/SDK or GitHub Actions runner)
+build-macos:
+	@echo "Notice: Compiling Tauri / macOS binaries locally requires macOS (Darwin) or a cross-toolchain."
+	@echo "Trigger GitHub Actions Rust CI or use: gh workflow run rust.yml for macOS build."
 
 # Package standalone desktop installers (AppImage, deb)
 dist:
 	cd apps/desktop && npm run tauri build
 	@echo "\n=== Built Package Bundles ==="
 	@find target/release/bundle -type f -exec ls -lh {} + 2>/dev/null || true
+
+# Distribution packaging per target platform
+dist-linux:
+	cd apps/desktop && npx tauri build --bundles appimage,deb
+
+dist-windows:
+	cd apps/desktop && npx tauri build --target x86_64-pc-windows-msvc --bundles nsis,msi
+
+dist-macos:
+	@echo "Notice: Packaging macOS DMGs/bundles requires a macOS runner (see .github/workflows/rust.yml)."
 
 
 # Check for Rust compilation errors and Svelte errors
