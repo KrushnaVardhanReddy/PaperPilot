@@ -72,7 +72,7 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
             mcp_args["start_number"] = json!(1);
             mcp_args["padding"] = json!(6);
         } else if tool == "pdf_page_numbers" {
-            cli_extra_args = vec!["--position", "bottom-right", "--start", "1"];
+            cli_extra_args = vec!["--position", "bottom-right"];
             mcp_args["position"] = json!("bottom-right");
             mcp_args["start_number"] = json!(1);
         } else if tool == "pdf_annotate" {
@@ -156,7 +156,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
             } else if t == "create_form_field" {
                 args = vec!["form", "add-field", input_file, "--name", "signature", "--type", "text", "--rect", "50,50,150,30", "--output", out_path.to_str().unwrap(), "--json"];
             } else {
-                args = vec![t.as_str(), "--input", input_file];
+                let cli_cmd = match t.as_str() {
+                    "header_footer" => "header-footer",
+                    "page_numbers" => "page-numbers",
+                    other => other,
+                };
+                args = vec![cli_cmd, "--input", input_file];
                 if needs_output {
                     args.push("--output");
                     args.push(out_path.to_str().unwrap());

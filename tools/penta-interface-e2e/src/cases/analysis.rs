@@ -651,7 +651,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_repair_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/repair", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
             "input": input_a,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -676,7 +676,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/repair", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -701,7 +701,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/repair", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -726,7 +726,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/repair", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
             "input": input_missing,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -1061,7 +1061,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_linearize_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/linearize", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
             "input": input_a,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -1086,7 +1086,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/linearize", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -1111,7 +1111,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/linearize", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -1136,7 +1136,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/linearize", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
             "input": input_missing,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -1264,9 +1264,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 1. CLI Tests
     // ------------------------------------------
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_cli_simple.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_a, "--json"
+            "extract-text", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -1289,9 +1289,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_cli_medium.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_multi, "--json"
+            "extract-text", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -1314,9 +1314,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_cli_complex.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_multi, "--json"
+            "extract-text", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -1339,9 +1339,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_cli_neg.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_missing, "--json"
+            "extract-text", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if !success {
@@ -2291,7 +2291,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/search", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
             "input": input_a,
             "query": "MERGE"
         })).await?;
@@ -2316,7 +2316,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/search", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
             "input": input_multi,
             "query": "MERGE"
         })).await?;
@@ -2341,7 +2341,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/search", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
             "input": input_multi,
             "query": "MERGE"
         })).await?;
@@ -2366,7 +2366,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/search", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
             "input": input_missing,
             "query": "MERGE"
         })).await?;
@@ -2701,7 +2701,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_render_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
             "input": input_a,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -2726,7 +2726,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -2751,7 +2751,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -2776,7 +2776,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
             "input": input_missing,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -3302,9 +3302,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 1. CLI Tests
     // ------------------------------------------
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_metadata_cli_simple.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_a, "--json"
+            "metadata", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -3327,9 +3327,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_metadata_cli_medium.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_multi, "--json"
+            "metadata", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -3352,9 +3352,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_metadata_cli_complex.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_multi, "--json"
+            "metadata", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if success {
@@ -3377,9 +3377,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_metadata_cli_neg.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_missing, "--json"
+            "metadata", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
         ]).await?;
 
         let passed = if !success {
@@ -3505,7 +3505,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/metadata", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
             "input": input_a
         })).await?;
         let actual = resp.to_string();
@@ -3529,7 +3529,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/metadata", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -3553,7 +3553,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/metadata", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -3577,7 +3577,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/metadata", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
             "input": input_missing
         })).await?;
         let actual = resp.to_string();
@@ -3907,7 +3907,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/bookmarks", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
             "input": input_a
         })).await?;
         let actual = resp.to_string();
@@ -3931,7 +3931,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/bookmarks", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -3955,7 +3955,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/bookmarks", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -3979,7 +3979,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/bookmarks", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
             "input": input_missing
         })).await?;
         let actual = resp.to_string();
@@ -4309,7 +4309,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/classify", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
             "input": input_a
         })).await?;
         let actual = resp.to_string();
@@ -4333,7 +4333,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/classify", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -4357,7 +4357,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/classify", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -4381,7 +4381,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/classify", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
             "input": input_missing
         })).await?;
         let actual = resp.to_string();
@@ -4711,7 +4711,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/validate", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
             "input": input_a
         })).await?;
         let actual = resp.to_string();
@@ -4735,7 +4735,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/validate", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -4759,7 +4759,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/validate", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
             "input": input_multi
         })).await?;
         let actual = resp.to_string();
@@ -4783,7 +4783,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/validate", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
             "input": input_missing
         })).await?;
         let actual = resp.to_string();
@@ -5117,7 +5117,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_ocr_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/ocr", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
             "input": input_a,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -5142,7 +5142,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/ocr", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -5167,7 +5167,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/ocr", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
             "input": input_multi,
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -5192,7 +5192,7 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/ocr", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
             "input": input_missing,
             "output": out_path.to_str().unwrap()
         })).await?;
