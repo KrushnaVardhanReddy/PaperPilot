@@ -40,20 +40,23 @@ fn generate_markdown_report(
     ));
 
     md.push_str("## Detailed Test Matrix\n\n");
-    md.push_str("| Tool | Interface | Tier / Case | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |\n");
+    md.push_str("| Tool | Interface | Tier / Case | Command / Invocation | Latency | Assertion / Expected | Actual / Received Result | Verdict |\n");
     md.push_str("|---|---|---|---|---|---|---|---|\n");
 
     for r in results {
         let verdict = if r.passed { "✅ PASS" } else { "❌ FAIL" };
+        let invocation = r.get_invocation().replace('|', "\\|");
+        let assertion = format!("{}: {}", r.assertion_checked, r.expected_result).replace('|', "\\|");
+        let actual = r.actual_result.replace('|', "\\|");
         md.push_str(&format!(
-            "| `{}` | **{}** | {} | {} | {} | {} | {} | {} |\n",
+            "| `{}` | **{}** | {} | `{}` | `{:.2} ms` | {} | {} | {} |\n",
             r.tool_id,
             r.interface.label(),
             r.tier.label(),
-            r.data_sent,
-            r.assertion_checked,
-            r.expected_result,
-            r.actual_result,
+            invocation,
+            r.latency_ms,
+            assertion,
+            actual,
             verdict
         ));
     }
@@ -63,6 +66,7 @@ fn generate_markdown_report(
     println!("Report written to: {}", report_path);
     Ok(())
 }
+
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -111,15 +115,47 @@ async fn main() -> Result<()> {
         }
         _ => {
             println!("Running all suites...");
+            let a = cases::page_ops::run_page_ops_suite().await?;
+            println!("Page ops finished: {} tests", a.len());
+            generate_markdown_report(
+                "Phase 5.9.4A — Rust-Native Penta-Interface Real Semantic Assertions Suite (Page Operations)",
+                &a,
+                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md",
+            )?;
+
+            let b = cases::security_forms::run_security_forms_suite().await?;
+            println!("Security & forms finished: {} tests", b.len());
+            generate_markdown_report(
+                "Phase 5.9.4B — Rust-Native Penta-Interface Real Semantic Assertions Suite (Security & Forms)",
+                &b,
+                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4B.md",
+            )?;
+
+            let c = cases::analysis::run_analysis_suite().await?;
+            println!("Analysis finished: {} tests", c.len());
+            generate_markdown_report(
+                "Phase 5.9.4C — Rust-Native Penta-Interface Real Semantic Assertions Suite (Extraction & Analysis)",
+                &c,
+                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md",
+            )?;
+
+            let d = cases::conversions::run_conversions_suite().await?;
+            println!("Conversions finished: {} tests", d.len());
+            generate_markdown_report(
+                "Phase 5.9.4D — Rust-Native Penta-Interface Real Semantic Assertions Suite (Conversions)",
+                &d,
+                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md",
+            )?;
+
             let mut all = Vec::new();
-            all.extend(cases::page_ops::run_page_ops_suite().await?);
-            all.extend(cases::security_forms::run_security_forms_suite().await?);
-            all.extend(cases::analysis::run_analysis_suite().await?);
-            all.extend(cases::conversions::run_conversions_suite().await?);
+            all.extend(a);
+            all.extend(b);
+            all.extend(c);
+            all.extend(d);
             generate_markdown_report(
                 "Master Phase 5.9.4 — Rust-Native Penta-Interface Real Semantic Assertions Suite (All 44 Tools, 880 Tests)",
                 &all,
-                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md"
+                "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md",
             )?;
         }
     }

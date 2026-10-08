@@ -33,7 +33,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_images_to_pdf_cli_simple.out");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "images-to-pdf", "--images", "tests/e2e_fixtures/real/merge_a.pdf", "--output", out_path.to_str().unwrap()
+            "images-to-pdf", "--images", "tests/e2e_fixtures/real/test.png", "--output", out_path.to_str().unwrap()
         ]).await?;
 
         let mut passed = if "Simple" == "Negative" { !success } else { success };
@@ -62,7 +62,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_images_to_pdf_cli_medium.out");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "images-to-pdf", "--images", "tests/e2e_fixtures/real/merge_a.pdf", "--output", out_path.to_str().unwrap()
+            "images-to-pdf", "--images", "tests/e2e_fixtures/real/test.png", "--output", out_path.to_str().unwrap()
         ]).await?;
 
         let mut passed = if "Medium" == "Negative" { !success } else { success };
@@ -91,7 +91,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_images_to_pdf_cli_complex.out");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "images-to-pdf", "--images", "tests/e2e_fixtures/real/merge_a.pdf", "--output", out_path.to_str().unwrap()
+            "images-to-pdf", "--images", "tests/e2e_fixtures/real/test.png", "--output", out_path.to_str().unwrap()
         ]).await?;
 
         let mut passed = if "Complex" == "Negative" { !success } else { success };
