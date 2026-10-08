@@ -1,7 +1,7 @@
+use anyhow::{anyhow, Result};
 use std::process::Stdio;
-use tokio::process::{Command, Child};
 use std::time::Duration;
-use anyhow::{Result, anyhow};
+use tokio::process::{Child, Command};
 
 pub struct GatewayServer {
     child: Option<Child>,
@@ -37,7 +37,10 @@ impl GatewayServer {
             tokio::time::sleep(Duration::from_millis(300)).await;
         }
 
-        Err(anyhow!("Gateway server failed to respond on :{} within 15s", self.port))
+        Err(anyhow!(
+            "Gateway server failed to respond on :{} within 15s",
+            self.port
+        ))
     }
 
     pub async fn stop(&mut self) {

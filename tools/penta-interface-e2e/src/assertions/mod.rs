@@ -1,6 +1,6 @@
-use std::path::Path;
+use anyhow::{anyhow, Result};
 use lopdf::Document;
-use anyhow::{Result, anyhow};
+use std::path::Path;
 
 pub struct PdfAssertions;
 
@@ -15,7 +15,11 @@ impl PdfAssertions {
         }
     }
 
-    pub fn assert_page_contains_text<P: AsRef<Path>>(path: P, page_num: u32, expected_text: &str) -> Result<()> {
+    pub fn assert_page_contains_text<P: AsRef<Path>>(
+        path: P,
+        page_num: u32,
+        expected_text: &str,
+    ) -> Result<()> {
         let doc = Document::load(path)?;
         let text = doc.extract_text(&[page_num]).unwrap_or_default();
         if text.contains(expected_text) {
@@ -31,11 +35,19 @@ impl PdfAssertions {
                     }
                 }
             }
-            Err(anyhow!("Page {} does not contain expected text '{}'", page_num, expected_text))
+            Err(anyhow!(
+                "Page {} does not contain expected text '{}'",
+                page_num,
+                expected_text
+            ))
         }
     }
 
-    pub fn assert_rotation<P: AsRef<Path>>(path: P, page_num: u32, expected_rotate: i64) -> Result<()> {
+    pub fn assert_rotation<P: AsRef<Path>>(
+        path: P,
+        page_num: u32,
+        expected_rotate: i64,
+    ) -> Result<()> {
         let doc = Document::load(path)?;
         let pages = doc.get_pages();
         if let Some(&page_id) = pages.get(&page_num) {
@@ -49,6 +61,10 @@ impl PdfAssertions {
                 }
             }
         }
-        Err(anyhow!("Page {} does not have expected rotation {}", page_num, expected_rotate))
+        Err(anyhow!(
+            "Page {} does not have expected rotation {}",
+            page_num,
+            expected_rotate
+        ))
     }
 }
