@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
+use anyhow::Result;
 use lopdf::{
     content::{Content, Operation},
     dictionary, Document, Object, Stream,
 };
-use anyhow::Result;
+use std::path::PathBuf;
 
 pub struct FixtureManager {
     pub dir: PathBuf,
@@ -22,7 +22,10 @@ impl FixtureManager {
         self.create_single_page("merge_c.pdf", "MERGE_PAGE_CCC")?;
         self.create_multi_page("multi_page.pdf", 5)?;
         self.create_text_file("test.csv", "ColA,ColB,ColC\n10,20,30\n40,50,60\n")?;
-        self.create_text_file("test.html", "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>")?;
+        self.create_text_file(
+            "test.html",
+            "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>",
+        )?;
         self.create_text_file("test.md", "# MD Test\n\nSample markdown paragraph.")?;
         Ok(())
     }

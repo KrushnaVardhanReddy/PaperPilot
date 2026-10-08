@@ -1,9 +1,9 @@
-use std::process::Stdio;
-use tokio::process::Command;
-use tokio::io::{AsyncWriteExt, AsyncBufReadExt, BufReader};
-use std::time::Instant;
+use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
-use anyhow::{Result, anyhow};
+use std::process::Stdio;
+use std::time::Instant;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
+use tokio::process::Command;
 
 pub struct McpRunner;
 
@@ -52,15 +52,23 @@ impl McpRunner {
         }
 
         if let Some(resp) = response_val {
-            let is_error = resp.get("error").is_some() ||
-                resp.get("result").and_then(|r| r.get("isError")).and_then(|e| e.as_bool()).unwrap_or(false);
+            let is_error = resp.get("error").is_some()
+                || resp
+                    .get("result")
+                    .and_then(|r| r.get("isError"))
+                    .and_then(|e| e.as_bool())
+                    .unwrap_or(false);
             Ok((!is_error, resp, latency_ms))
         } else if !stderr_str.trim().is_empty() {
             // Server exited with stderr
             let err_obj = serde_json::json!({ "error": stderr_str.trim() });
             Ok((false, err_obj, latency_ms))
         } else {
-            Err(anyhow!("No valid JSON-RPC response from MCP server. stdout='{}', stderr='{}'", stdout_str, stderr_str))
+            Err(anyhow!(
+                "No valid JSON-RPC response from MCP server. stdout='{}', stderr='{}'",
+                stdout_str,
+                stderr_str
+            ))
         }
     }
 }

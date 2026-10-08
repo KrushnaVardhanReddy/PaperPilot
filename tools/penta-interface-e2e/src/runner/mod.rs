@@ -1,11 +1,11 @@
-pub mod cli;
-pub mod mcp;
 pub mod api;
+pub mod cli;
 pub mod gateway;
+pub mod mcp;
 
-use std::path::{Path, PathBuf};
-use sha2::{Digest, Sha256};
 use anyhow::Result;
+use sha2::{Digest, Sha256};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InterfaceType {

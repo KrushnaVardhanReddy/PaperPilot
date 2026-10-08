@@ -1,7 +1,7 @@
+use anyhow::Result;
 use reqwest::Client;
 use serde_json::Value;
 use std::time::Instant;
-use anyhow::Result;
 
 pub struct ApiRunner {
     client: Client,
@@ -19,10 +19,7 @@ impl ApiRunner {
     pub async fn post_json(&self, endpoint: &str, payload: Value) -> Result<(bool, Value, f64)> {
         let url = format!("{}{}", self.base_url, endpoint);
         let start = Instant::now();
-        let resp = self.client.post(&url)
-            .json(&payload)
-            .send()
-            .await?;
+        let resp = self.client.post(&url).json(&payload).send().await?;
         let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
         let status_ok = resp.status().is_success();
         let json_body: Value = resp.json().await.unwrap_or(Value::Null);

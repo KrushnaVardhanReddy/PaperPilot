@@ -1,20 +1,28 @@
-mod runner;
-mod fixtures;
 mod assertions;
 mod cases;
+mod fixtures;
+mod runner;
 
-use clap::Parser;
 use anyhow::Result;
+use clap::Parser;
 use runner::TestExecutionResult;
 
 #[derive(Parser, Debug)]
-#[command(name = "penta-interface-e2e", version = "0.1.0", about = "Rust-Native Penta-Interface Real Semantic Assertions Suite")]
+#[command(
+    name = "penta-interface-e2e",
+    version = "0.1.0",
+    about = "Rust-Native Penta-Interface Real Semantic Assertions Suite"
+)]
 struct Args {
     #[arg(long, default_value = "all")]
     group: String,
 }
 
-fn generate_markdown_report(title: &str, results: &[TestExecutionResult], report_path: &str) -> Result<()> {
+fn generate_markdown_report(
+    title: &str,
+    results: &[TestExecutionResult],
+    report_path: &str,
+) -> Result<()> {
     let mut md = String::new();
     let total = results.len();
     let passed = results.iter().filter(|r| r.passed).count();
@@ -22,7 +30,12 @@ fn generate_markdown_report(title: &str, results: &[TestExecutionResult], report
     md.push_str(&format!("# {}\n\n", title));
     md.push_str("## Executive Scorecard\n");
     md.push_str(&format!("- **Total Tests Evaluated:** {}\n", total));
-    md.push_str(&format!("- **Total Passed:** {} / {} ({:.1}%)\n\n", passed, total, (passed as f64 / total as f64) * 100.0));
+    md.push_str(&format!(
+        "- **Total Passed:** {} / {} ({:.1}%)\n\n",
+        passed,
+        total,
+        (passed as f64 / total as f64) * 100.0
+    ));
 
     md.push_str("## Detailed Test Matrix\n\n");
     md.push_str("| Tool | Interface | Tier / Case | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |\n");

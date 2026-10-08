@@ -1,7 +1,7 @@
+use anyhow::Result;
 use std::process::Stdio;
-use tokio::process::Command;
 use std::time::Instant;
-use anyhow::{Result, anyhow};
+use tokio::process::Command;
 
 pub struct CliRunner;
 
@@ -20,7 +20,11 @@ impl CliRunner {
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let out_msg = if success {
-            if stdout.trim().is_empty() { stderr } else { stdout }
+            if stdout.trim().is_empty() {
+                stderr
+            } else {
+                stdout
+            }
         } else {
             format!("Error (exit code {:?}): {}", output.status.code(), stderr)
         };
