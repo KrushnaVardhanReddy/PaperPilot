@@ -47,6 +47,9 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Recent Major Milestones & Merged Changes
+- **5.9.4 & 5.9.5 (Spec 031 / Penta-Interface E2E Suite)**:
+  - **Phase 5.9.4 Master Parity Complete**: 100% green pass rate achieved across all 44 tools, all 5 interfaces (CLI, MCP, REST, WASM, Edge), and all 4 complexity tiers (**880 / 880 tests passed**), fully documented in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` and sub-reports `5_9_4A.md` through `5_9_4D.md`.
+  - **Phase 5.9.5 Active**: Dispatched to Jules (Session `16355790137239811249`) for deep boundary and hostile edge cases across all 44 tools (compression qualities, discontinuous page ranges, full-bleed/micro crops, UTF-8/emoji watermarks & metadata, AcroForm boundaries, Makefile target `test-penta-edge-cases`).
 - **5.9.1 (Spec 028)**: Desktop Release Binary Size Optimization & Pure-Rust `rten` SIMD Inference Migration (`45a1566`). Standalone Desktop release executable dropped from **107 MB down to 35 MB** (~67% reduction) via root workspace release profile (`strip = true`, `lto = "fat"`, `panic = "abort"`). Completely eliminated C++ ONNX Runtime (`ort`) in favor of pure-Rust `rten` with embedded `tinybert.rten.zst` (~9.7 MB). 100% verified across `paperpilot-nlp` test suite, Tri-Interface suite (132 assertions), and Desktop Playwright AI chat pipeline (`reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md`).
 - **Spec 030 / Web & Embed Batch Suite (`dbe3ba1`, `ef77956`, `086231b`, `b60f41e`)**:
   - **Embedded Widget (`apps/embed/`)**: Real `pdf-lib` multi-page merging, multi-file batch execution across `extract`, `delete`, `rotate`, `watermark`, `split`, `reorder`, and `compress`. Added interactive tool configuration panel for custom page numbers, rotation angles, and watermark text stamps.

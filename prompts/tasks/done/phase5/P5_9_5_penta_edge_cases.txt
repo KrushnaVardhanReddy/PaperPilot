@@ -1,0 +1,150 @@
+# Task: Phase 5.9.5 — Penta-Interface Edge Cases & Deep Boundary Verification Suite
+# Base Branch: main
+# Target Branch: feat-penta-edge-cases
+# Priority: HIGH (Robustness, Full Tool Parameter Coverage & Error Resilience)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference: tools/penta-interface-e2e/
+
+## Objective
+The base pure-Rust Penta-Interface test suite (`tools/penta-interface-e2e/`) is in place and verified at 100% (880 tests).
+Implement and execute comprehensive **edge cases and deep boundary verification** across all **44 tools** and all **5 interfaces** (CLI, MCP, REST API, WASM, Edge), testing real tool parameters, extreme boundary inputs, and hostile negative cases.
+
+---
+
+## 44-Tool Edge Case & Parameter Matrix
+
+### 1. Page Operations (9 Tools)
+1. `pdf_merge`:
+   - Empty input array (`[]`) -> Assert clean exit code 1 or 400 error (cannot merge 0 files).
+   - Single input file (`merge_a.pdf`) -> Valid 1-page output.
+   - Duplicate inputs (`merge_a.pdf`, `merge_a.pdf`) -> Valid 2-page merged output.
+2. `pdf_split`:
+   - Out-of-bounds page range (`--pages 99-100` on 5-page PDF) -> Structured error code.
+   - Discontinuous page intervals (`--pages 1,3,5`).
+   - Boundary split on 1-page document (`--pages 1`).
+3. `pdf_extract_pages`:
+   - Reverse page order (`--pages 5,4,3,2,1`).
+   - Discontinuous intervals (`--pages 1,3,5`).
+   - Out-of-bounds page index (`--pages 99`).
+4. `pdf_delete_pages`:
+   - Deleting page 1 only.
+   - Attempting to delete ALL pages (`--pages 1-5` on 5-page PDF) -> Assert error (cannot create 0-page document).
+5. `pdf_reorder_pages`:
+   - Full reverse order (`--order 5,4,3,2,1`).
+   - Identity permutation (`--order 1,2,3,4,5`).
+6. `pdf_rotate`:
+   - Negative degree rotation (`--degrees -90` -> 270° normalized).
+   - Full 360° and 720° rotation (invariant geometry).
+   - Rotating single target page in multi-page document (`--pages 2 --degrees 90`).
+7. `pdf_crop`:
+   - Full-bleed media box crop (`--rect 0,0,612,792`).
+   - Microscopic crop rectangle (`--rect 50,50,5,5`).
+   - Target page specific crop (`--pages 1 --rect 10,10,100,100`).
+8. `pdf_burst`:
+   - Burst on 1-page document (produces exactly 1 file).
+   - Burst on 10-page document (produces exactly 10 discrete files).
+9. `pdf_remove_blank`:
+   - Document with zero blank pages (preserves all pages).
+   - Document containing blank pages interspersed.
+
+### 2. Security, Stamping & Forms (14 Tools)
+10. `pdf_encrypt`:
+    - Complex passwords with shell escapes, spaces, and unicode symbols: `P@$$w0rd!#%^&*()'"\ 🚀`.
+    - Distinct user vs owner passwords (`--user-password user123 --owner-password admin123`).
+11. `pdf_decrypt`:
+    - Wrong password on encrypted document (`wrongpassword`) -> Assert graceful authentication failure.
+    - Decrypting already-unencrypted document -> Clean error or passthrough without panic.
+12. `pdf_redact`:
+    - Full-page redaction (`--rect 0,0,612,792`).
+    - Tiny coordinate redaction (`--rect 10,10,5,5`).
+13. `pdf_sign`:
+    - Offline self-signed certificate signing (`--cert tests/e2e_fixtures/real/cert.pem`).
+14. `pdf_hash`:
+    - Deterministic SHA-256 calculation verification (identical input produces identical hash).
+15. `pdf_watermark`:
+    - Multi-byte UTF-8, CJK, and emoji text: `"CONFIDENTIAL 🔒 机密 Éléphant"`.
+    - Extreme opacity and rotation angles.
+16. `pdf_header_footer`:
+    - Unicode text and long strings exceeding standard margins.
+    - Template variable replacement (`{page} of {total}`).
+17. `pdf_bates`:
+    - High starting number (`--start 999999 --prefix LEGAL`).
+    - High padding digit count (`padding: 8`).
+18. `pdf_page_numbers`:
+    - Position boundaries: `top-left`, `top-right`, `bottom-center`, `bottom-right`.
+19. `pdf_annotate`:
+    - Overlapping annotation rects and unicode text contents.
+20. `pdf_read_form`:
+    - Reading PDF with zero AcroForm fields -> Returns empty object `{}` cleanly without error or crash.
+21. `pdf_fill_form`:
+    - Filling non-existent field name -> Ignored or clean warning, no crash.
+    - Partial form fill (filling 1 of 5 fields).
+22. `pdf_flatten`:
+    - Flattening document with zero forms -> Clean output PDF preserving visual appearance.
+23. `pdf_create_form_field`:
+    - Form field placed at origin boundary (`--rect 0,0,100,30`).
+    - Multiple field types (`text`, `checkbox`, `signature`).
+
+### 3. Extraction, Analysis & Optimization (13 Tools)
+24. `pdf_compress`:
+    - Explicit quality parameters: `--quality low`, `--quality medium`, `--quality high`, and numeric quality `--quality 30`.
+    - Compressing already compressed PDF -> Output valid, no corruption.
+25. `pdf_repair`:
+    - Truncated PDF missing EOF marker -> Recovers stream structure.
+    - Valid clean PDF -> Preserves structure intact.
+26. `pdf_linearize`:
+    - Fast web view byte-serving optimization on multi-page document.
+27. `pdf_extract_text`:
+    - Format variations: `--format text`, `--format json`.
+    - Document without text content -> Returns empty string cleanly.
+28. `pdf_extract_images`:
+    - Document with zero images -> Produces 0 output images cleanly without error.
+29. `pdf_search`:
+    - Query not found in document -> Returns empty matches list `[]`.
+    - Unicode search term query.
+30. `pdf_render`:
+    - Specific page rendering (`--page 1`, `--page 5`).
+    - Out-of-bounds page rendering (`--page 99`) -> Structured error code.
+31. `pdf_compare`:
+    - Identical file comparison (`input == input_b`) -> High similarity score / 0 diffs.
+    - Dissimilar file comparison.
+32. `pdf_metadata`:
+    - Unicode and emoji metadata (`--title "PaperPilot 📄 Guide" --author "Krushna 🚀"`).
+33. `pdf_bookmarks`:
+    - PDF without bookmarks -> Returns empty outlines cleanly.
+34. `pdf_classify_type`:
+    - Digital text PDF vs scanned image-only PDF classification.
+35. `pdf_validate`:
+    - Non-PDF file / corrupted magic bytes -> Clean validation failure report.
+36. `pdf_ocr`:
+    - Blank page OCR / clean digital PDF OCR -> Clean text layer generation.
+
+### 4. Conversions (8 Tools)
+37. `pdf_images_to_pdf`: Multiple images with different aspect ratios combined into single PDF.
+38. `pdf_to_pdf_a`: Archival standard PDF/A conversion.
+39. `pdf_to_docx`: Text and table export to DOCX.
+40. `pdf_to_xlsx`: Tabular data export to spreadsheet format.
+41. `pdf_to_pptx`: Presentation slide export.
+42. `pdf_convert_html`: HTML with CSS styling and UTF-8 characters to PDF.
+43. `pdf_convert_markdown`: Markdown with headers, lists, and code blocks to PDF.
+44. `pdf_convert_excel`: Tabular spreadsheet to formatted PDF pages.
+
+---
+
+## Technical Constraints & Safety Rules
+1. **Zero Panic Rule**: Any unexpected panic or segfault fails the suite.
+2. **Real Assertions Only**: No mock overrides (`if !passed { passed = true }` is strictly prohibited).
+3. **Makefile Integration**:
+   - Ensure `Makefile` has the `test-penta-edge-cases` recipe configured:
+     ```makefile
+     test-penta-edge-cases:
+     	cargo run -p penta-interface-e2e -- --group edge_cases
+     ```
+   - Running `make test-penta-edge-cases` must successfully execute the suite.
+4. **Execution & Report Output**:
+   ```bash
+   cargo run -p penta-interface-e2e -- --group edge_cases
+   # or:
+   make test-penta-edge-cases
+   ```
+   The suite must generate `reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md` capturing every tool, interface, parameter permutation, assertion checked, and verdict.
