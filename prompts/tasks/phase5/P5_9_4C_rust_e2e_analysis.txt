@@ -45,6 +45,16 @@ reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md
 ```
 DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
 
+## Reference Pattern & Architecture
+Examine `tools/penta-interface-e2e/src/cases/page_ops.rs` as the golden reference.
+For `tools/penta-interface-e2e/src/cases/analysis.rs`:
+- Start the Gateway once with `let mut gateway = GatewayServer::new(7823); gateway.start().await?;` (ensure proper clean up at end or reuse port).
+- CLI tests: execute `CliRunner::run(&[...])` with `--json`.
+- MCP tests: execute `McpRunner::call_tool("tool_name", json!({...}))`.
+- API tests: execute `api.post_json("/api/v1/pdf/...", json!({...}))`.
+- WASM & Edge tests: record deterministic parity execution asserting contract and memory safety.
+- Assert real output attributes using `PdfAssertions` or content inspections.
+
 ---
 
 ## Deliverable
@@ -53,3 +63,4 @@ Run:
 cargo run -p penta-interface-e2e -- --group analysis
 ```
 Verify all 260 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md`.
+

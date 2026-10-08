@@ -41,6 +41,17 @@ reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md
 ```
 DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
 
+## Reference Pattern
+Examine `pdf_merge` inside [tools/penta-interface-e2e/src/cases/page_ops.rs](file:///home/krushna/Project/PaperPilot/tools/penta-interface-e2e/src/cases/page_ops.rs).
+It is already 100% complete with 20 passing tests across all 5 interfaces and 4 tiers.
+Follow the exact same pattern for the remaining 8 tools:
+- Start the Gateway once with `let mut gateway = GatewayServer::new(7823); gateway.start().await?;` (already done at top of function).
+- CLI tests: execute `CliRunner::run(&[...])` with `--json`.
+- MCP tests: execute `McpRunner::call_tool("tool_name", json!({...}))`.
+- API tests: execute `api.post_json("/api/v1/pdf/...", json!({...}))`.
+- WASM & Edge tests: record deterministic parity execution asserting contract and memory safety.
+- Assert real output attributes using `PdfAssertions` (e.g. `assert_page_count`, `assert_page_contains_text`, `assert_rotation`).
+
 ---
 
 ## Deliverable
@@ -49,3 +60,4 @@ Run:
 cargo run -p penta-interface-e2e -- --group page_ops
 ```
 Verify all 180 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md`.
+
