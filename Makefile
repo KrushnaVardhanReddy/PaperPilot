@@ -175,6 +175,7 @@ test-penta-analysis:
 test-penta-conversions:
 	cargo run -p penta-interface-e2e -- --group conversions
 
+
 # Run Edge Cases Suite (44 tools across 5 interfaces, Negative Tier constraints)
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
