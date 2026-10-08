@@ -274,8 +274,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_images_to_pdf_api_simple.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/images-to-pdf", json!({
-            "images": ["tests/e2e_fixtures/real/test.png"],
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_images_to_pdf", json!({
+            "inputs": ["tests/e2e_fixtures/real/test.png"],
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -304,8 +304,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_images_to_pdf_api_medium.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/images-to-pdf", json!({
-            "images": ["tests/e2e_fixtures/real/test.png"],
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_images_to_pdf", json!({
+            "inputs": ["tests/e2e_fixtures/real/test.png"],
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -334,8 +334,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_images_to_pdf_api_complex.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/images-to-pdf", json!({
-            "images": ["tests/e2e_fixtures/real/test.png"],
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_images_to_pdf", json!({
+            "inputs": ["tests/e2e_fixtures/real/test.png"],
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -364,8 +364,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_images_to_pdf_api_negative.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/images-to-pdf", json!({
-            "images": ["missing.pdf"],
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_images_to_pdf", json!({
+            "inputs": ["missing.pdf"],
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -737,7 +737,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_to_pdf_a_api_simple.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/pdf-a", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_to_pdf_a", json!({
             "input": "tests/e2e_fixtures/real/merge_a.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -767,7 +767,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_to_pdf_a_api_medium.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/pdf-a", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_to_pdf_a", json!({
             "input": "tests/e2e_fixtures/real/merge_a.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -797,7 +797,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_to_pdf_a_api_complex.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/pdf-a", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_to_pdf_a", json!({
             "input": "tests/e2e_fixtures/real/merge_a.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -827,7 +827,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_to_pdf_a_api_negative.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/pdf-a", json!({
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_to_pdf_a", json!({
             "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
@@ -2467,7 +2467,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_html_mcp_simple.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_html", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2497,7 +2497,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_html_mcp_medium.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_html", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2527,7 +2527,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_html_mcp_complex.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_html", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2557,7 +2557,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_html_mcp_negative.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_html", json!({
-            "format": "pdf", "input": "missing.pdf",
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2589,8 +2589,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_convert_html_api_simple.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_html", json!({
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2619,8 +2619,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_html_api_medium.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_html", json!({
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2649,8 +2649,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_html_api_complex.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.html",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_html", json!({
+            "input": "tests/e2e_fixtures/real/test.html",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2679,8 +2679,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_html_api_negative.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "missing.pdf",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_html", json!({
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2930,7 +2930,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_markdown_mcp_simple.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_markdown", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2960,7 +2960,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_markdown_mcp_medium.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_markdown", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -2990,7 +2990,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_markdown_mcp_complex.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_markdown", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3020,7 +3020,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_markdown_mcp_negative.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_markdown", json!({
-            "format": "pdf", "input": "missing.pdf",
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3052,8 +3052,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_convert_markdown_api_simple.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_markdown", json!({
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3082,8 +3082,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_markdown_api_medium.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_markdown", json!({
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3112,8 +3112,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_markdown_api_complex.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.md",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_markdown", json!({
+            "input": "tests/e2e_fixtures/real/test.md",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3142,8 +3142,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_markdown_api_negative.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "missing.pdf",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_markdown", json!({
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3393,7 +3393,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_excel_mcp_simple.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_excel", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3423,7 +3423,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_excel_mcp_medium.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_excel", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3453,7 +3453,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_excel_mcp_complex.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_excel", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3483,7 +3483,7 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_convert_excel_mcp_negative.out");
         let (success, resp, latency) = McpRunner::call_tool("pdf_convert_excel", json!({
-            "format": "pdf", "input": "missing.pdf",
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3515,8 +3515,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_convert_excel_api_simple.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_excel", json!({
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3545,8 +3545,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_excel_api_medium.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_excel", json!({
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3575,8 +3575,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_excel_api_complex.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "tests/e2e_fixtures/real/test.csv",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_excel", json!({
+            "input": "tests/e2e_fixtures/real/test.csv",
             "output": out_path.to_str().unwrap()
         })).await?;
 
@@ -3605,8 +3605,8 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
     }
     {
         let out_path = out_dir.join("pdf_convert_excel_api_negative.out");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/convert", json!({
-            "format": "pdf", "input": "missing.pdf",
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_convert_excel", json!({
+            "input": "missing.pdf",
             "output": out_path.to_str().unwrap()
         })).await?;
 

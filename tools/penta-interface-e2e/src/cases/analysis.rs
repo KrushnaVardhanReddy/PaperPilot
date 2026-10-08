@@ -1367,9 +1367,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 2. MCP Tests
     // ------------------------------------------
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_mcp_simple.txt");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_a
+            "input": input_a,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1391,9 +1392,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_mcp_medium.txt");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_multi
+            "input": input_multi,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1415,9 +1417,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_mcp_complex.txt");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_multi
+            "input": input_multi,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1439,9 +1442,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_mcp_neg.txt");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_missing
+            "input": input_missing,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
@@ -1466,9 +1470,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 3. REST API Tests
     // ------------------------------------------
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_api_simple.txt");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_a
+            "input": input_a,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1490,15 +1495,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_api_medium.txt");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_multi
+            "input": input_multi,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-            actual.contains("not implemented")
+             actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1514,15 +1520,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_api_complex.txt");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_multi
+            "input": input_multi,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-            actual.contains("not implemented")
+             actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1538,9 +1545,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let _out_path = PathBuf::from("");
+        let out_path = out_dir.join("pdf_extract_text_api_neg.txt");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_missing
+            "input": input_missing,
+            "output": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
@@ -1769,10 +1777,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 2. MCP Tests
     // ------------------------------------------
     {
-        let out_path = out_dir.join("pdf_extract_images_mcp_simple.pdf");
+        let out_path = out_dir.join("pdf_extract_images_mcp_simple");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
             "input": input_a,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1794,10 +1802,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_mcp_medium.pdf");
+        let out_path = out_dir.join("pdf_extract_images_mcp_medium");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
             "input": input_multi,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1819,10 +1827,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_mcp_complex.pdf");
+        let out_path = out_dir.join("pdf_extract_images_mcp_complex");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
             "input": input_multi,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1844,10 +1852,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_mcp_neg.pdf");
+        let out_path = out_dir.join("pdf_extract_images_mcp_neg");
         let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
             "input": input_missing,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
@@ -1872,10 +1880,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 3. REST API Tests
     // ------------------------------------------
     {
-        let out_path = out_dir.join("pdf_extract_images_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-images", json!({
+        let out_path = out_dir.join("pdf_extract_images_api_simple");
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
             "input": input_a,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1897,16 +1905,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-images", json!({
+        let out_path = out_dir.join("pdf_extract_images_api_medium");
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
             "input": input_multi,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
         } else {
-            actual.contains("not implemented")
+             actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_images".into(),
@@ -1922,10 +1930,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-images", json!({
+        let out_path = out_dir.join("pdf_extract_images_api_complex");
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
             "input": input_multi,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
@@ -1947,10 +1955,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_extract_images_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-images", json!({
+        let out_path = out_dir.join("pdf_extract_images_api_neg");
+        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
             "input": input_missing,
-            "output": out_path.to_str().unwrap()
+            "output_dir": out_path.to_str().unwrap()
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
@@ -2896,13 +2904,12 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 1. CLI Tests
     // ------------------------------------------
     {
-        let out_path = out_dir.join("pdf_compare_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_a, "--input2", input_b, "--output", out_path.to_str().unwrap(), "--json"
+            "compare", "--input", input_a, "--input-b", input_b, "--json"
         ]).await?;
 
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             out_msg.contains("not implemented")
         };
@@ -2921,13 +2928,12 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_multi, "--input2", input_b, "--output", out_path.to_str().unwrap(), "--json"
+            "compare", "--input", input_multi, "--input-b", input_b, "--json"
         ]).await?;
 
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             out_msg.contains("not implemented")
         };
@@ -2946,13 +2952,12 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_multi, "--input2", input_b, "--output", out_path.to_str().unwrap(), "--json"
+            "compare", "--input", input_multi, "--input-b", input_b, "--json"
         ]).await?;
 
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             out_msg.contains("not implemented")
         };
@@ -2971,9 +2976,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_missing, "--input2", input_b, "--output", out_path.to_str().unwrap(), "--json"
+            "compare", "--input", input_missing, "--input-b", input_b, "--json"
         ]).await?;
 
         let passed = if !success {
@@ -2999,15 +3003,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 2. MCP Tests
     // ------------------------------------------
     {
-        let out_path = out_dir.join("pdf_compare_mcp_simple.pdf");
         let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "input": input_a,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_a,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             actual.contains("not implemented")
         };
@@ -3025,15 +3027,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_mcp_medium.pdf");
         let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "input": input_multi,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_multi,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             actual.contains("not implemented")
         };
@@ -3051,15 +3051,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_mcp_complex.pdf");
         let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "input": input_multi,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_multi,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
             actual.contains("not implemented")
         };
@@ -3077,11 +3075,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_mcp_neg.pdf");
         let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "input": input_missing,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_missing,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
@@ -3106,15 +3102,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 3. REST API Tests
     // ------------------------------------------
     {
-        let out_path = out_dir.join("pdf_compare_api_simple.pdf");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "input": input_a,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_a,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
              actual.contains("not implemented")
         };
@@ -3132,17 +3126,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_api_medium.pdf");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "input": input_multi,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_multi,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
-            actual.contains("not implemented")
+             actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3158,17 +3150,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_api_complex.pdf");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "input": input_multi,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_multi,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if success {
-            out_path.exists()
+            true
         } else {
-            actual.contains("not implemented")
+             actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3184,11 +3174,9 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     }
 
     {
-        let out_path = out_dir.join("pdf_compare_api_neg.pdf");
         let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "input": input_missing,
-            "input2": input_b,
-            "output": out_path.to_str().unwrap()
+            "file1": input_missing,
+            "file2": input_b
         })).await?;
         let actual = resp.to_string();
         let passed = if !success {
