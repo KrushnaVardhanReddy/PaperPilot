@@ -1,6 +1,11 @@
+pub mod cli;
+pub mod mcp;
+pub mod api;
+pub mod gateway;
+
 use std::path::{Path, PathBuf};
 use sha2::{Digest, Sha256};
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InterfaceType {
@@ -11,12 +16,35 @@ pub enum InterfaceType {
     CloudflareEdge,
 }
 
+impl InterfaceType {
+    pub fn label(&self) -> &'static str {
+        match self {
+            InterfaceType::Cli => "💻 CLI",
+            InterfaceType::Mcp => "🤖 MCP",
+            InterfaceType::Api => "🌐 REST API",
+            InterfaceType::Wasm => "⚡ WASM (Browser)",
+            InterfaceType::CloudflareEdge => "☁️ Cloudflare Edge",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ComplexityTier {
     Simple,
     Medium,
     Complex,
     Negative,
+}
+
+impl ComplexityTier {
+    pub fn label(&self) -> &'static str {
+        match self {
+            ComplexityTier::Simple => "Simple (Tier 1)",
+            ComplexityTier::Medium => "Medium (Tier 2)",
+            ComplexityTier::Complex => "Complex (Tier 3)",
+            ComplexityTier::Negative => "Negative",
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
