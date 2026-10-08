@@ -146,6 +146,32 @@ test-wasm:
 check-wasm:
 	cargo check -p paperpilot-wasm --target wasm32-unknown-unknown || cargo check -p paperpilot-wasm
 
-# Run Tri-Interface E2E Test (Batch 1: Structural)
+# Run Tri-Interface E2E Test (Legacy Python suite)
 test-tri-e2e:
 	python3 scripts/test_tri_interface_e2e.py
+
+# ==============================================================================
+# Pure-Rust Penta-Interface E2E Real Semantic Assertions Suite (Spec 031)
+# ==============================================================================
+.PHONY: test-penta-e2e test-penta-page-ops test-penta-security-forms test-penta-analysis test-penta-conversions
+
+# Run all 44 tools across all 5 interfaces (CLI, MCP, REST, WASM, Edge) and 4 tiers
+test-penta-e2e:
+	cargo run -p penta-interface-e2e
+
+# Run Group A: 9 Page Operations tools (180 tests)
+test-penta-page-ops:
+	cargo run -p penta-interface-e2e -- --group page_ops
+
+# Run Group B: 14 Security, Stamping & Forms tools (280 tests)
+test-penta-security-forms:
+	cargo run -p penta-interface-e2e -- --group security_forms
+
+# Run Group C: 13 Extraction, Analysis & Optimization tools (260 tests)
+test-penta-analysis:
+	cargo run -p penta-interface-e2e -- --group analysis
+
+# Run Group D: 8 Document & Office Conversions tools (160 tests)
+test-penta-conversions:
+	cargo run -p penta-interface-e2e -- --group conversions
+
