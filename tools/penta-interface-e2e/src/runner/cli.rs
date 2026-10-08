@@ -1,7 +1,7 @@
 use std::process::Stdio;
 use tokio::process::Command;
 use std::time::Instant;
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 pub struct CliRunner;
 
