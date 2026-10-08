@@ -380,7 +380,13 @@ It must generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` documenting a
 | `pdf_merge` | **💻 CLI** | Complex (Tier 3) | 3 files: `merge_a.pdf` + `merge_b.pdf` + `merge_c.pdf` | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
 | `pdf_merge` | **💻 CLI** | Negative | `missing.pdf` + `merge_a.pdf` | Non-zero exit code / error reported | Error returned, no crash | Exit code 1: File not found | ✅ PASS |
 | `pdf_merge` | **🤖 MCP** | Simple (Tier 1) | `inputs: ["merge_a.pdf", "merge_b.pdf"]` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
-| `pdf_merge` | **🌐 REST API** | Simple (Tier 1) | `POST /api/v1/pdf/merge` with `inputs` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Medium (Tier 2) | `inputs: ["merge_a.pdf", "multi_page.pdf"]` | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Complex (Tier 3) | `inputs: ["merge_a.pdf", "merge_b.pdf", "merge_c.pdf"]` | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Negative | `inputs: ["missing.pdf", "merge_a.pdf"]` | JSON-RPC error response returned | Error returned, no crash | Error: File not found | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Simple (Tier 1) | `POST /api/v1/pdf/merge` with 2 files | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Medium (Tier 2) | `POST /api/v1/pdf/merge` with 2 files (6p) | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Complex (Tier 3) | `POST /api/v1/pdf/merge` with 3 files | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Negative | `POST /api/v1/pdf/merge` with missing file | HTTP 400/404 error returned | HTTP error status code | 400 Bad Request: File not found | ✅ PASS |
 | `pdf_merge` | **⚡ WASM (Browser)** | Standard | `WasmPdfEngine.merge([file1, file2])` | P1 & P2 valid merge | Valid 2-page PDF (%PDF-) | Valid 2-page PDF | ✅ PASS |
 | `pdf_merge` | **☁️ Cloudflare Edge** | Standard | `POST /api/v1/merge (multipart/form-data)` | P1 & P2 valid merge | Valid 2-page PDF (%PDF-) | Valid 2-page PDF | ✅ PASS |
 ```
