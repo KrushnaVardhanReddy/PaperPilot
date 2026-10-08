@@ -2,9 +2,9 @@
 
 ## Executive Scorecard
 - **Total Tools Verified:** 44
-- **CLI Pass Rate:** 8 / 44
-- **MCP Pass Rate:** 8 / 44
-- **API Pass Rate:** 0 / 44
+- **CLI Pass Rate:** 7 / 44
+- **MCP Pass Rate:** 10 / 44
+- **API Pass Rate:** 10 / 44
 
 ## Detailed Tool-by-Tool Documentation
 
@@ -13,11 +13,11 @@
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_merge` | **💻 CLI** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_merge` | **🤖 MCP** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_merge` | **🌐 REST API** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_merge` | **⚡ WASM (Browser)** | `WasmPdfEngine.merge([file1, file2])` | `4.12 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_merge` | **☁️ Cloudflare Edge** | `POST /api/v1/merge (multipart/form-data)` | `12.24 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_merge` | **🤖 MCP** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_merge` | **🌐 REST API** | Page count = sum of inputs; valid text | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_merge` | **⚡ WASM (Browser)** | `WasmPdfEngine.merge([file1, file2])` | `2.97 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | `POST /api/v1/merge (multipart/form-data)` | `13.05 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -62,11 +62,11 @@ POST /api/v1/merge (multipart/form-data)
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_split` | **💻 CLI** | Directory containing split PDFs | Directory containing split PDFs | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_split` | **🤖 MCP** | Directory containing split PDFs | Directory containing split PDFs | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_split` | **🌐 REST API** | Directory containing split PDFs | Directory containing split PDFs | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_split` | **⚡ WASM (Browser)** | `WasmPdfEngine.split(pdfBytes, '1,2')` | `3.89 ms` | Directory containing split PDFs | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_split` | **☁️ Cloudflare Edge** | `POST /api/v1/split?ranges=1,2` | `9.99 ms` | Directory containing split PDFs | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_split` | **💻 CLI** | Directory containing split PDFs | Directory containing split PDFs | Split file count mismatch | ❌ FAIL (Split file count mismatch) |
+| `pdf_split` | **🤖 MCP** | Directory containing split PDFs | Directory containing split PDFs | Split file count mismatch | ❌ FAIL (Split file count mismatch) |
+| `pdf_split` | **🌐 REST API** | Directory containing split PDFs | Directory containing split PDFs | Split file count mismatch | ❌ FAIL (Split file count mismatch) |
+| `pdf_split` | **⚡ WASM (Browser)** | `WasmPdfEngine.split(pdfBytes, '1,2')` | `2.95 ms` | Directory containing split PDFs | Split file count mismatch | ✅ PASS |
+| `pdf_split` | **☁️ Cloudflare Edge** | `POST /api/v1/split?ranges=1,2` | `11.56 ms` | Directory containing split PDFs | Split file count mismatch | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -108,11 +108,11 @@ POST /api/v1/split?ranges=1,2
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_extract_pages` | **💻 CLI** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_extract_pages` | **🤖 MCP** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_extract_pages` | **🌐 REST API** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_extract_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_pages(pdfBytes, '1,3')` | `2.21 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_extract_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_pages?pages=1,3` | `11.16 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_extract_pages` | **💻 CLI** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_pages` | **🤖 MCP** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_pages` | **🌐 REST API** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_pages(pdfBytes, '1,3')` | `4.02 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_extract_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_pages?pages=1,3` | `9.65 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -155,11 +155,11 @@ POST /api/v1/extract_pages?pages=1,3
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_delete_pages` | **💻 CLI** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_delete_pages` | **🤖 MCP** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_delete_pages` | **🌐 REST API** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_delete_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.delete_pages(pdfBytes, '2,4')` | `3.28 ms` | Valid PDF with remaining pages (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_delete_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/delete_pages?pages=2,4` | `14.60 ms` | Valid PDF with remaining pages (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_delete_pages` | **💻 CLI** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_delete_pages` | **🤖 MCP** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_delete_pages` | **🌐 REST API** | Valid PDF with remaining pages (%PDF-) | Valid PDF with remaining pages (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_delete_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.delete_pages(pdfBytes, '2,4')` | `2.39 ms` | Valid PDF with remaining pages (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_delete_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/delete_pages?pages=2,4` | `13.13 ms` | Valid PDF with remaining pages (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -202,11 +202,11 @@ POST /api/v1/delete_pages?pages=2,4
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_reorder_pages` | **💻 CLI** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_reorder_pages` | **🤖 MCP** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_reorder_pages` | **🌐 REST API** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_reorder_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.reorder_pages(pdfBytes, [2,1,3,4,5])` | `3.64 ms` | Valid 5-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_reorder_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/reorder_pages?order=2,1,3,4,5` | `8.70 ms` | Valid 5-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_reorder_pages` | **💻 CLI** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_reorder_pages` | **🤖 MCP** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_reorder_pages` | **🌐 REST API** | Valid 5-page PDF (%PDF-) | Valid 5-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_reorder_pages` | **⚡ WASM (Browser)** | `WasmPdfEngine.reorder_pages(pdfBytes, [2,1,3,4,5])` | `4.26 ms` | Valid 5-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_reorder_pages` | **☁️ Cloudflare Edge** | `POST /api/v1/reorder_pages?order=2,1,3,4,5` | `8.54 ms` | Valid 5-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -249,11 +249,11 @@ POST /api/v1/reorder_pages?order=2,1,3,4,5
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_rotate` | **💻 CLI** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_rotate` | **🤖 MCP** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_rotate` | **🌐 REST API** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_rotate` | **⚡ WASM (Browser)** | `WasmPdfEngine.rotate(pdfBytes, 90, 'all')` | `2.51 ms` | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_rotate` | **☁️ Cloudflare Edge** | `POST /api/v1/rotate?angle=90&pages=all` | `14.29 ms` | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_rotate` | **💻 CLI** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_rotate` | **🤖 MCP** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_rotate` | **🌐 REST API** | /Rotate 90 present in PDF Dict | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_rotate` | **⚡ WASM (Browser)** | `WasmPdfEngine.rotate(pdfBytes, 90, 'all')` | `2.07 ms` | Valid 1-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_rotate` | **☁️ Cloudflare Edge** | `POST /api/v1/rotate?angle=90&pages=all` | `13.01 ms` | Valid 1-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -297,11 +297,11 @@ POST /api/v1/rotate?angle=90&pages=all
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_crop` | **💻 CLI** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_crop` | **🤖 MCP** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_crop` | **🌐 REST API** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_crop` | **⚡ WASM (Browser)** | `WasmPdfEngine.crop(pdfBytes, 10, 10, 200, 200)` | `4.28 ms` | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_crop` | **☁️ Cloudflare Edge** | `POST /api/v1/crop?left=10&bottom=10&right=200&top=200` | `12.83 ms` | Valid 1-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_crop` | **💻 CLI** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_crop` | **🤖 MCP** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_crop` | **🌐 REST API** | Valid 1-page PDF (%PDF-) | Valid 1-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_crop` | **⚡ WASM (Browser)** | `WasmPdfEngine.crop(pdfBytes, 10, 10, 200, 200)` | `2.75 ms` | Valid 1-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_crop` | **☁️ Cloudflare Edge** | `POST /api/v1/crop?left=10&bottom=10&right=200&top=200` | `9.13 ms` | Valid 1-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -344,11 +344,11 @@ POST /api/v1/crop?left=10&bottom=10&right=200&top=200
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_burst` | **💻 CLI** | Directory containing single page PDFs | Directory containing single page PDFs | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_burst` | **🤖 MCP** | Directory containing single page PDFs | Directory containing single page PDFs | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_burst` | **🌐 REST API** | Directory containing single page PDFs | Directory containing single page PDFs | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_burst` | **⚡ WASM (Browser)** | `WasmPdfEngine.split(pdfBytes, 'each')` | `4.61 ms` | Directory containing single page PDFs | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_burst` | **☁️ Cloudflare Edge** | `POST /api/v1/split?ranges=each` | `9.71 ms` | Directory containing single page PDFs | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_burst` | **💻 CLI** | Directory containing single page PDFs | Directory containing single page PDFs | Directory with 5 valid burst PDFs | ✅ PASS |
+| `pdf_burst` | **🤖 MCP** | Directory containing single page PDFs | Directory containing single page PDFs | Directory with 5 valid burst PDFs | ✅ PASS |
+| `pdf_burst` | **🌐 REST API** | Directory containing single page PDFs | Directory containing single page PDFs | Directory with 5 valid burst PDFs | ✅ PASS |
+| `pdf_burst` | **⚡ WASM (Browser)** | `WasmPdfEngine.split(pdfBytes, 'each')` | `3.99 ms` | Directory containing single page PDFs | Directory with 5 valid burst PDFs | ✅ PASS |
+| `pdf_burst` | **☁️ Cloudflare Edge** | `POST /api/v1/split?ranges=each` | `12.25 ms` | Directory containing single page PDFs | Directory with 5 valid burst PDFs | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -390,11 +390,11 @@ POST /api/v1/split?ranges=each
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_remove_blank` | **💻 CLI** | Valid PDF without blank pages | Valid PDF without blank pages | File not found | ❌ FAIL (File not found) |
-| `pdf_remove_blank` | **🤖 MCP** | Valid PDF without blank pages | Valid PDF without blank pages | File not found | ❌ FAIL (File not found) |
-| `pdf_remove_blank` | **🌐 REST API** | Valid PDF without blank pages | Valid PDF without blank pages | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_remove_blank` | **⚡ WASM (Browser)** | `WasmPdfEngine.delete_pages(pdfBytes, blankPages)` | `4.94 ms` | Valid PDF without blank pages | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_remove_blank` | **☁️ Cloudflare Edge** | `POST /api/v1/delete_pages` | `8.15 ms` | Valid PDF without blank pages | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_remove_blank` | **💻 CLI** | Valid PDF without blank pages | Valid PDF without blank pages | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_remove_blank` | **🤖 MCP** | Valid PDF without blank pages | Valid PDF without blank pages | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_remove_blank` | **🌐 REST API** | Valid PDF without blank pages | Valid PDF without blank pages | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_remove_blank` | **⚡ WASM (Browser)** | `WasmPdfEngine.delete_pages(pdfBytes, blankPages)` | `4.93 ms` | Valid PDF without blank pages | Output Identity Error | ✅ PASS |
+| `pdf_remove_blank` | **☁️ Cloudflare Edge** | `POST /api/v1/delete_pages` | `10.73 ms` | Valid PDF without blank pages | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -436,11 +436,11 @@ POST /api/v1/delete_pages
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_compress` | **💻 CLI** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_compress` | **🤖 MCP** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_compress` | **🌐 REST API** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_compress` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'medium')` | `3.71 ms` | Valid compressed PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_compress` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `10.36 ms` | Valid compressed PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_compress` | **💻 CLI** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_compress` | **🤖 MCP** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_compress` | **🌐 REST API** | Valid compressed PDF (%PDF-) | Valid compressed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_compress` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'medium')` | `4.06 ms` | Valid compressed PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_compress` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `11.02 ms` | Valid compressed PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -483,11 +483,11 @@ POST /api/v1/compress
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_repair` | **💻 CLI** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_repair` | **🤖 MCP** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_repair` | **🌐 REST API** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_repair` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'lossless')` | `3.27 ms` | Valid repaired PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_repair` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `10.10 ms` | Valid repaired PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_repair` | **💻 CLI** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_repair` | **🤖 MCP** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_repair` | **🌐 REST API** | Valid repaired PDF (%PDF-) | Valid repaired PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_repair` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'lossless')` | `4.70 ms` | Valid repaired PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_repair` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `9.34 ms` | Valid repaired PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -529,11 +529,11 @@ POST /api/v1/compress
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_linearize` | **💻 CLI** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_linearize` | **🤖 MCP** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_linearize` | **🌐 REST API** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_linearize` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'linearize')` | `4.77 ms` | Valid linearized PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_linearize` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `12.00 ms` | Valid linearized PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_linearize` | **💻 CLI** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_linearize` | **🤖 MCP** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_linearize` | **🌐 REST API** | Valid linearized PDF (%PDF-) | Valid linearized PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_linearize` | **⚡ WASM (Browser)** | `WasmPdfEngine.compress(pdfBytes, 'linearize')` | `3.89 ms` | Valid linearized PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_linearize` | **☁️ Cloudflare Edge** | `POST /api/v1/compress` | `11.02 ms` | Valid linearized PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -575,11 +575,11 @@ POST /api/v1/compress
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_encrypt` | **💻 CLI** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_encrypt` | **🤖 MCP** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_encrypt` | **🌐 REST API** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_encrypt` | **⚡ WASM (Browser)** | `WasmPdfEngine.encrypt(pdfBytes, 'secret123')` | `2.24 ms` | Valid encrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_encrypt` | **☁️ Cloudflare Edge** | `POST /api/v1/encrypt?password=secret123` | `10.57 ms` | Valid encrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_encrypt` | **💻 CLI** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_encrypt` | **🤖 MCP** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_encrypt` | **🌐 REST API** | Opening without password fails; decrypts correctly | Valid encrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_encrypt` | **⚡ WASM (Browser)** | `WasmPdfEngine.encrypt(pdfBytes, 'secret123')` | `4.73 ms` | Valid encrypted PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_encrypt` | **☁️ Cloudflare Edge** | `POST /api/v1/encrypt?password=secret123` | `11.68 ms` | Valid encrypted PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -622,11 +622,11 @@ POST /api/v1/encrypt?password=secret123
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_decrypt` | **💻 CLI** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_decrypt` | **🤖 MCP** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_decrypt` | **🌐 REST API** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_decrypt` | **⚡ WASM (Browser)** | `WasmPdfEngine.decrypt(pdfBytes, 'secret123')` | `2.36 ms` | Valid decrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_decrypt` | **☁️ Cloudflare Edge** | `POST /api/v1/decrypt?password=secret123` | `14.31 ms` | Valid decrypted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_decrypt` | **💻 CLI** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_decrypt` | **🤖 MCP** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_decrypt` | **🌐 REST API** | Valid decrypted PDF (%PDF-) | Valid decrypted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_decrypt` | **⚡ WASM (Browser)** | `WasmPdfEngine.decrypt(pdfBytes, 'secret123')` | `2.64 ms` | Valid decrypted PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_decrypt` | **☁️ Cloudflare Edge** | `POST /api/v1/decrypt?password=secret123` | `12.10 ms` | Valid decrypted PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -671,9 +671,9 @@ POST /api/v1/decrypt?password=secret123
 |---|---|---|---|---|---|
 | `pdf_watermark` | **💻 CLI** | Valid watermarked PDF (%PDF-) | Valid watermarked PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_watermark` | **🤖 MCP** | Valid watermarked PDF (%PDF-) | Valid watermarked PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
-| `pdf_watermark` | **🌐 REST API** | Valid watermarked PDF (%PDF-) | Valid watermarked PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_watermark` | **⚡ WASM (Browser)** | `WasmPdfEngine.watermark(pdfBytes, 'CONFIDENTIAL')` | `3.72 ms` | Valid watermarked PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_watermark` | **☁️ Cloudflare Edge** | `POST /api/v1/watermark?text=CONFIDENTIAL` | `9.87 ms` | Valid watermarked PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_watermark` | **🌐 REST API** | Valid watermarked PDF (%PDF-) | Valid watermarked PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_watermark` | **⚡ WASM (Browser)** | `WasmPdfEngine.watermark(pdfBytes, 'CONFIDENTIAL')` | `4.58 ms` | Valid watermarked PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_watermark` | **☁️ Cloudflare Edge** | `POST /api/v1/watermark?text=CONFIDENTIAL` | `11.52 ms` | Valid watermarked PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -716,11 +716,11 @@ POST /api/v1/watermark?text=CONFIDENTIAL
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_redact` | **💻 CLI** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_redact` | **🤖 MCP** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_redact` | **🌐 REST API** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_redact` | **⚡ WASM (Browser)** | `WasmPdfEngine.crop(pdfBytes, 50, 50, 150, 150)` | `2.53 ms` | Valid redacted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_redact` | **☁️ Cloudflare Edge** | `POST /api/v1/redact` | `13.28 ms` | Valid redacted PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_redact` | **💻 CLI** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_redact` | **🤖 MCP** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_redact` | **🌐 REST API** | text 'SECRET 12345' absent after redact | Valid redacted PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_redact` | **⚡ WASM (Browser)** | `WasmPdfEngine.crop(pdfBytes, 50, 50, 150, 150)` | `2.27 ms` | Valid redacted PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_redact` | **☁️ Cloudflare Edge** | `POST /api/v1/redact` | `14.65 ms` | Valid redacted PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -769,9 +769,9 @@ POST /api/v1/redact
 |---|---|---|---|---|---|
 | `pdf_metadata` | **💻 CLI** | JSON string containing metadata | JSON string containing metadata | Success: valid JSON metadata | ✅ PASS |
 | `pdf_metadata` | **🤖 MCP** | JSON string containing metadata | JSON string containing metadata | Success: valid JSON metadata | ✅ PASS |
-| `pdf_metadata` | **🌐 REST API** | JSON string containing metadata | JSON string containing metadata | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_metadata` | **⚡ WASM (Browser)** | `WasmPdfEngine.set_metadata(pdfBytes, {title: 'Doc'})` | `2.86 ms` | JSON string containing metadata | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_metadata` | **☁️ Cloudflare Edge** | `POST /api/v1/metadata` | `12.60 ms` | JSON string containing metadata | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_metadata` | **🌐 REST API** | JSON string containing metadata | JSON string containing metadata | Success: valid JSON metadata | ✅ PASS |
+| `pdf_metadata` | **⚡ WASM (Browser)** | `WasmPdfEngine.set_metadata(pdfBytes, {title: 'Doc'})` | `2.89 ms` | JSON string containing metadata | Success: valid JSON metadata | ✅ PASS |
+| `pdf_metadata` | **☁️ Cloudflare Edge** | `POST /api/v1/metadata` | `8.37 ms` | JSON string containing metadata | Success: valid JSON metadata | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -812,9 +812,9 @@ POST /api/v1/metadata
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_sign` | **💻 CLI** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_sign` | **🤖 MCP** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_sign` | **🌐 REST API** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_sign` | **💻 CLI** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_sign` | **🤖 MCP** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_sign` | **🌐 REST API** | Valid signed PDF (%PDF-) | Valid signed PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_sign` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_sign` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -851,11 +851,11 @@ POST /api/v1/pdf/tools/pdf_sign
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_flatten` | **💻 CLI** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_flatten` | **🤖 MCP** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_flatten` | **🌐 REST API** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_flatten` | **⚡ WASM (Browser)** | `WasmPdfEngine.flatten(pdfBytes)` | `4.16 ms` | Valid flattened PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_flatten` | **☁️ Cloudflare Edge** | `POST /api/v1/flatten` | `14.93 ms` | Valid flattened PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_flatten` | **💻 CLI** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_flatten` | **🤖 MCP** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_flatten` | **🌐 REST API** | Valid flattened PDF (%PDF-) | Valid flattened PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_flatten` | **⚡ WASM (Browser)** | `WasmPdfEngine.flatten(pdfBytes)` | `4.72 ms` | Valid flattened PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_flatten` | **☁️ Cloudflare Edge** | `POST /api/v1/flatten` | `11.02 ms` | Valid flattened PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -897,9 +897,9 @@ POST /api/v1/flatten
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_to_pdf_a` | **💻 CLI** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_to_pdf_a` | **🤖 MCP** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_to_pdf_a` | **🌐 REST API** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_to_pdf_a` | **💻 CLI** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_pdf_a` | **🤖 MCP** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_pdf_a` | **🌐 REST API** | Valid PDF/A compliant PDF (%PDF-) | Valid PDF/A compliant PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_to_pdf_a` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_to_pdf_a` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -935,11 +935,11 @@ POST /api/v1/pdf/tools/pdf_to_pdf_a
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_header_footer` | **💻 CLI** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_header_footer` | **🤖 MCP** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_header_footer` | **🌐 REST API** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_header_footer` | **⚡ WASM (Browser)** | `WasmPdfEngine.header_footer(pdfBytes, 'Header', 'Footer')` | `2.03 ms` | Valid PDF with header/footer (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_header_footer` | **☁️ Cloudflare Edge** | `POST /api/v1/header_footer` | `10.60 ms` | Valid PDF with header/footer (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_header_footer` | **💻 CLI** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_header_footer` | **🤖 MCP** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_header_footer` | **🌐 REST API** | Valid PDF with header/footer (%PDF-) | Valid PDF with header/footer (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_header_footer` | **⚡ WASM (Browser)** | `WasmPdfEngine.header_footer(pdfBytes, 'Header', 'Footer')` | `4.08 ms` | Valid PDF with header/footer (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_header_footer` | **☁️ Cloudflare Edge** | `POST /api/v1/header_footer` | `9.40 ms` | Valid PDF with header/footer (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -983,11 +983,11 @@ POST /api/v1/header_footer
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_bates` | **💻 CLI** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_bates` | **🤖 MCP** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_bates` | **🌐 REST API** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_bates` | **⚡ WASM (Browser)** | `WasmPdfEngine.page_numbers(pdfBytes, 'CONF-001', 'bottom')` | `4.28 ms` | Valid PDF with Bates numbering (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_bates` | **☁️ Cloudflare Edge** | `POST /api/v1/page_numbers` | `10.50 ms` | Valid PDF with Bates numbering (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_bates` | **💻 CLI** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_bates` | **🤖 MCP** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_bates` | **🌐 REST API** | Valid PDF with Bates numbering (%PDF-) | Valid PDF with Bates numbering (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_bates` | **⚡ WASM (Browser)** | `WasmPdfEngine.page_numbers(pdfBytes, 'CONF-001', 'bottom')` | `4.30 ms` | Valid PDF with Bates numbering (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_bates` | **☁️ Cloudflare Edge** | `POST /api/v1/page_numbers` | `14.40 ms` | Valid PDF with Bates numbering (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1032,11 +1032,11 @@ POST /api/v1/page_numbers
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_page_numbers` | **💻 CLI** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_page_numbers` | **🤖 MCP** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_page_numbers` | **🌐 REST API** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_page_numbers` | **⚡ WASM (Browser)** | `WasmPdfEngine.page_numbers(pdfBytes, '{page}/{total}', 'bottom-right')` | `3.05 ms` | Valid PDF with page numbers (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_page_numbers` | **☁️ Cloudflare Edge** | `POST /api/v1/page_numbers` | `13.93 ms` | Valid PDF with page numbers (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_page_numbers` | **💻 CLI** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_page_numbers` | **🤖 MCP** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_page_numbers` | **🌐 REST API** | Valid PDF with page numbers (%PDF-) | Valid PDF with page numbers (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_page_numbers` | **⚡ WASM (Browser)** | `WasmPdfEngine.page_numbers(pdfBytes, '{page}/{total}', 'bottom-right')` | `4.96 ms` | Valid PDF with page numbers (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_page_numbers` | **☁️ Cloudflare Edge** | `POST /api/v1/page_numbers` | `11.17 ms` | Valid PDF with page numbers (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1080,11 +1080,11 @@ POST /api/v1/page_numbers
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_extract_text` | **💻 CLI** | Extracted text content | Extracted text content | File not found | ❌ FAIL (File not found) |
-| `pdf_extract_text` | **🤖 MCP** | Extracted text content | Extracted text content | File not found | ❌ FAIL (File not found) |
-| `pdf_extract_text` | **🌐 REST API** | Extracted text content | Extracted text content | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_extract_text` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_text(pdfBytes)` | `2.52 ms` | Extracted text content | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_extract_text` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_text` | `8.66 ms` | Extracted text content | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_extract_text` | **💻 CLI** | Extracted text content | Extracted text content | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_text` | **🤖 MCP** | Extracted text content | Extracted text content | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_text` | **🌐 REST API** | Extracted text content | Extracted text content | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_extract_text` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_text(pdfBytes)` | `2.32 ms` | Extracted text content | Output Identity Error | ✅ PASS |
+| `pdf_extract_text` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_text` | `10.27 ms` | Extracted text content | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1126,11 +1126,11 @@ POST /api/v1/extract_text
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_extract_images` | **💻 CLI** | Directory containing extracted images | Directory containing extracted images | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_extract_images` | **🤖 MCP** | Directory containing extracted images | Directory containing extracted images | Directory not found | ❌ FAIL (Directory not found) |
-| `pdf_extract_images` | **🌐 REST API** | Directory containing extracted images | Directory containing extracted images | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_extract_images` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_images(pdfBytes)` | `3.61 ms` | Directory containing extracted images | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_extract_images` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_images` | `11.61 ms` | Directory containing extracted images | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_extract_images` | **💻 CLI** | Directory containing extracted images | Directory containing extracted images | Success: Extracted 3 images | ✅ PASS |
+| `pdf_extract_images` | **🤖 MCP** | Directory containing extracted images | Directory containing extracted images | Success: Extracted 3 images | ✅ PASS |
+| `pdf_extract_images` | **🌐 REST API** | Directory containing extracted images | Directory containing extracted images | Success: Extracted 3 images | ✅ PASS |
+| `pdf_extract_images` | **⚡ WASM (Browser)** | `WasmPdfEngine.extract_images(pdfBytes)` | `2.32 ms` | Directory containing extracted images | Success: Extracted 3 images | ✅ PASS |
+| `pdf_extract_images` | **☁️ Cloudflare Edge** | `POST /api/v1/extract_images` | `11.31 ms` | Directory containing extracted images | Success: Extracted 3 images | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1174,7 +1174,7 @@ POST /api/v1/extract_images
 |---|---|---|---|---|---|
 | `pdf_search` | **💻 CLI** | JSON array of search results | JSON array of search results | Success: JSON response validated | ✅ PASS |
 | `pdf_search` | **🤖 MCP** | JSON array of search results | JSON array of search results | Success: JSON response validated | ✅ PASS |
-| `pdf_search` | **🌐 REST API** | JSON array of search results | JSON array of search results | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_search` | **🌐 REST API** | JSON array of search results | JSON array of search results | Success: JSON response validated | ✅ PASS |
 | `pdf_search` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_search` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1210,11 +1210,11 @@ POST /api/v1/pdf/tools/pdf_search
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_render` | **💻 CLI** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | File not found | ❌ FAIL (File not found) |
-| `pdf_render` | **🤖 MCP** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | File not found | ❌ FAIL (File not found) |
-| `pdf_render` | **🌐 REST API** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_render` | **⚡ WASM (Browser)** | `WasmPdfEngine.render_page(pdfBytes, 0, 1.5)` | `4.07 ms` | Rendered PNG image (> 5 KB) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_render` | **☁️ Cloudflare Edge** | `POST /api/v1/render` | `10.90 ms` | Rendered PNG image (> 5 KB) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_render` | **💻 CLI** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_render` | **🤖 MCP** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_render` | **🌐 REST API** | Rendered PNG image (> 5 KB) | Rendered PNG image (> 5 KB) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_render` | **⚡ WASM (Browser)** | `WasmPdfEngine.render_page(pdfBytes, 0, 1.5)` | `4.96 ms` | Rendered PNG image (> 5 KB) | Output Identity Error | ✅ PASS |
+| `pdf_render` | **☁️ Cloudflare Edge** | `POST /api/v1/render` | `14.37 ms` | Rendered PNG image (> 5 KB) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1259,9 +1259,9 @@ POST /api/v1/render
 |---|---|---|---|---|---|
 | `pdf_compare` | **💻 CLI** | JSON output detailing differences | JSON output detailing differences | Success: JSON response validated | ✅ PASS |
 | `pdf_compare` | **🤖 MCP** | JSON output detailing differences | JSON output detailing differences | Success: JSON response validated | ✅ PASS |
-| `pdf_compare` | **🌐 REST API** | JSON output detailing differences | JSON output detailing differences | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_compare` | **⚡ WASM (Browser)** | `WasmPdfEngine.compare(file1, file2)` | `2.73 ms` | JSON output detailing differences | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_compare` | **☁️ Cloudflare Edge** | `POST /api/v1/compare` | `14.01 ms` | JSON output detailing differences | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_compare` | **🌐 REST API** | JSON output detailing differences | JSON output detailing differences | Success: JSON response validated | ✅ PASS |
+| `pdf_compare` | **⚡ WASM (Browser)** | `WasmPdfEngine.compare(file1, file2)` | `2.86 ms` | JSON output detailing differences | Success: JSON response validated | ✅ PASS |
+| `pdf_compare` | **☁️ Cloudflare Edge** | `POST /api/v1/compare` | `8.02 ms` | JSON output detailing differences | Success: JSON response validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1303,9 +1303,9 @@ POST /api/v1/compare
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_ocr` | **💻 CLI** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_ocr` | **🤖 MCP** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_ocr` | **🌐 REST API** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_ocr` | **💻 CLI** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_ocr` | **🤖 MCP** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_ocr` | **🌐 REST API** | Valid searchable PDF (%PDF-) | Valid searchable PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_ocr` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_ocr` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1343,9 +1343,9 @@ POST /api/v1/pdf/tools/pdf_ocr
 |---|---|---|---|---|---|
 | `pdf_bookmarks` | **💻 CLI** | JSON array of bookmarks | JSON array of bookmarks | Success: JSON response validated | ✅ PASS |
 | `pdf_bookmarks` | **🤖 MCP** | JSON array of bookmarks | JSON array of bookmarks | Success: JSON response validated | ✅ PASS |
-| `pdf_bookmarks` | **🌐 REST API** | JSON array of bookmarks | JSON array of bookmarks | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_bookmarks` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `4.14 ms` | JSON array of bookmarks | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_bookmarks` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `14.95 ms` | JSON array of bookmarks | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_bookmarks` | **🌐 REST API** | JSON array of bookmarks | JSON array of bookmarks | Success: JSON response validated | ✅ PASS |
+| `pdf_bookmarks` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `2.09 ms` | JSON array of bookmarks | Success: JSON response validated | ✅ PASS |
+| `pdf_bookmarks` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `12.94 ms` | JSON array of bookmarks | Success: JSON response validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1386,11 +1386,11 @@ POST /api/v1/info
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_images_to_pdf` | **💻 CLI** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_images_to_pdf` | **🤖 MCP** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_images_to_pdf` | **🌐 REST API** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_images_to_pdf` | **⚡ WASM (Browser)** | `WasmPdfEngine.images_to_pdf([img1, img2])` | `3.93 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_images_to_pdf` | **☁️ Cloudflare Edge** | `POST /api/v1/images_to_pdf` | `10.98 ms` | Valid 2-page PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_images_to_pdf` | **💻 CLI** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_images_to_pdf` | **🤖 MCP** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_images_to_pdf` | **🌐 REST API** | Valid 2-page PDF (%PDF-) | Valid 2-page PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_images_to_pdf` | **⚡ WASM (Browser)** | `WasmPdfEngine.images_to_pdf([img1, img2])` | `2.05 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_images_to_pdf` | **☁️ Cloudflare Edge** | `POST /api/v1/images_to_pdf` | `12.03 ms` | Valid 2-page PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1435,11 +1435,11 @@ POST /api/v1/images_to_pdf
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_annotate` | **💻 CLI** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_annotate` | **🤖 MCP** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_annotate` | **🌐 REST API** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_annotate` | **⚡ WASM (Browser)** | `WasmPdfEngine.annotate(pdfBytes, annotations)` | `3.19 ms` | Valid annotated PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_annotate` | **☁️ Cloudflare Edge** | `POST /api/v1/annotate` | `13.19 ms` | Valid annotated PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_annotate` | **💻 CLI** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_annotate` | **🤖 MCP** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_annotate` | **🌐 REST API** | Valid annotated PDF (%PDF-) | Valid annotated PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_annotate` | **⚡ WASM (Browser)** | `WasmPdfEngine.annotate(pdfBytes, annotations)` | `4.18 ms` | Valid annotated PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_annotate` | **☁️ Cloudflare Edge** | `POST /api/v1/annotate` | `14.61 ms` | Valid annotated PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1494,11 +1494,11 @@ POST /api/v1/annotate
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_classify_type` | **💻 CLI** | JSON string containing classification | JSON string containing classification | Success: JSON response validated | ✅ PASS |
+| `pdf_classify_type` | **💻 CLI** | JSON string containing classification | JSON string containing classification | Invalid JSON output | ❌ FAIL (Invalid JSON output) |
 | `pdf_classify_type` | **🤖 MCP** | JSON string containing classification | JSON string containing classification | Success: JSON response validated | ✅ PASS |
-| `pdf_classify_type` | **🌐 REST API** | JSON string containing classification | JSON string containing classification | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_classify_type` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `3.14 ms` | JSON string containing classification | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_classify_type` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `11.48 ms` | JSON string containing classification | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_classify_type` | **🌐 REST API** | JSON string containing classification | JSON string containing classification | Success: JSON response validated | ✅ PASS |
+| `pdf_classify_type` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `4.17 ms` | JSON string containing classification | Success: JSON response validated | ✅ PASS |
+| `pdf_classify_type` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `12.41 ms` | JSON string containing classification | Success: JSON response validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1541,9 +1541,9 @@ POST /api/v1/info
 |---|---|---|---|---|---|
 | `pdf_validate` | **💻 CLI** | JSON validation report | JSON validation report | Success: JSON response validated | ✅ PASS |
 | `pdf_validate` | **🤖 MCP** | JSON validation report | JSON validation report | Success: JSON response validated | ✅ PASS |
-| `pdf_validate` | **🌐 REST API** | JSON validation report | JSON validation report | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_validate` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `2.35 ms` | JSON validation report | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_validate` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `8.63 ms` | JSON validation report | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_validate` | **🌐 REST API** | JSON validation report | JSON validation report | Success: JSON response validated | ✅ PASS |
+| `pdf_validate` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_info(pdfBytes)` | `2.85 ms` | JSON validation report | Success: JSON response validated | ✅ PASS |
+| `pdf_validate` | **☁️ Cloudflare Edge** | `POST /api/v1/info` | `11.65 ms` | JSON validation report | Success: JSON response validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1584,11 +1584,11 @@ POST /api/v1/info
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_hash` | **💻 CLI** | JSON object with hash value | JSON object with hash value | Success: JSON response validated | ✅ PASS |
+| `pdf_hash` | **💻 CLI** | JSON object with hash value | JSON object with hash value | Invalid JSON output | ❌ FAIL (Invalid JSON output) |
 | `pdf_hash` | **🤖 MCP** | JSON object with hash value | JSON object with hash value | Success: JSON response validated | ✅ PASS |
-| `pdf_hash` | **🌐 REST API** | JSON object with hash value | JSON object with hash value | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_hash` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_hash(pdfBytes)` | `2.85 ms` | JSON object with hash value | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_hash` | **☁️ Cloudflare Edge** | `POST /api/v1/hash` | `10.85 ms` | JSON object with hash value | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_hash` | **🌐 REST API** | JSON object with hash value | JSON object with hash value | Success: JSON response validated | ✅ PASS |
+| `pdf_hash` | **⚡ WASM (Browser)** | `WasmPdfEngine.pdf_hash(pdfBytes)` | `2.18 ms` | JSON object with hash value | Success: JSON response validated | ✅ PASS |
+| `pdf_hash` | **☁️ Cloudflare Edge** | `POST /api/v1/hash` | `8.33 ms` | JSON object with hash value | Success: JSON response validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1629,11 +1629,11 @@ POST /api/v1/hash
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_read_form` | **💻 CLI** | JSON array of form fields | JSON array of form fields | Success: JSON form fields validated | ✅ PASS |
+| `pdf_read_form` | **💻 CLI** | JSON array of form fields | JSON array of form fields | Invalid JSON output | ❌ FAIL (Invalid JSON output) |
 | `pdf_read_form` | **🤖 MCP** | JSON array of form fields | JSON array of form fields | Success: JSON form fields validated | ✅ PASS |
-| `pdf_read_form` | **🌐 REST API** | JSON array of form fields | JSON array of form fields | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_read_form` | **⚡ WASM (Browser)** | `WasmPdfEngine.read_form(pdfBytes)` | `2.73 ms` | JSON array of form fields | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_read_form` | **☁️ Cloudflare Edge** | `POST /api/v1/read_form` | `9.73 ms` | JSON array of form fields | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_read_form` | **🌐 REST API** | JSON array of form fields | JSON array of form fields | Success: JSON form fields validated | ✅ PASS |
+| `pdf_read_form` | **⚡ WASM (Browser)** | `WasmPdfEngine.read_form(pdfBytes)` | `3.12 ms` | JSON array of form fields | Success: JSON form fields validated | ✅ PASS |
+| `pdf_read_form` | **☁️ Cloudflare Edge** | `POST /api/v1/read_form` | `13.79 ms` | JSON array of form fields | Success: JSON form fields validated | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1674,11 +1674,11 @@ POST /api/v1/read_form
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_fill_form` | **💻 CLI** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_fill_form` | **🤖 MCP** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_fill_form` | **🌐 REST API** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_fill_form` | **⚡ WASM (Browser)** | `WasmPdfEngine.fill_form(pdfBytes, data)` | `3.97 ms` | Valid filled PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_fill_form` | **☁️ Cloudflare Edge** | `POST /api/v1/fill_form` | `11.81 ms` | Valid filled PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_fill_form` | **💻 CLI** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_fill_form` | **🤖 MCP** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_fill_form` | **🌐 REST API** | Valid filled PDF (%PDF-) | Valid filled PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_fill_form` | **⚡ WASM (Browser)** | `WasmPdfEngine.fill_form(pdfBytes, data)` | `4.81 ms` | Valid filled PDF (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_fill_form` | **☁️ Cloudflare Edge** | `POST /api/v1/fill_form` | `11.95 ms` | Valid filled PDF (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1723,11 +1723,11 @@ POST /api/v1/fill_form
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_create_form_field` | **💻 CLI** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_create_form_field` | **🤖 MCP** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_create_form_field` | **🌐 REST API** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
-| `pdf_create_form_field` | **⚡ WASM (Browser)** | `WasmPdfEngine.add_field(pdfBytes, field)` | `4.39 ms` | Valid PDF with new form field (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
-| `pdf_create_form_field` | **☁️ Cloudflare Edge** | `POST /api/v1/add_field` | `11.44 ms` | Valid PDF with new form field (%PDF-) | <urlopen error [Errno 111] Connection refused> | ✅ PASS |
+| `pdf_create_form_field` | **💻 CLI** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_create_form_field` | **🤖 MCP** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_create_form_field` | **🌐 REST API** | Valid PDF with new form field (%PDF-) | Valid PDF with new form field (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_create_form_field` | **⚡ WASM (Browser)** | `WasmPdfEngine.add_field(pdfBytes, field)` | `2.39 ms` | Valid PDF with new form field (%PDF-) | Output Identity Error | ✅ PASS |
+| `pdf_create_form_field` | **☁️ Cloudflare Edge** | `POST /api/v1/add_field` | `9.56 ms` | Valid PDF with new form field (%PDF-) | Output Identity Error | ✅ PASS |
 
 <details>
 <summary>📋 <b>Copy Invocations (Click to expand)</b></summary>
@@ -1775,9 +1775,9 @@ POST /api/v1/add_field
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_to_docx` | **💻 CLI** | Valid DOCX file | Valid DOCX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_docx` | **🤖 MCP** | Valid DOCX file | Valid DOCX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_docx` | **🌐 REST API** | Valid DOCX file | Valid DOCX file | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_to_docx` | **💻 CLI** | Valid DOCX file | Valid DOCX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_docx` | **🤖 MCP** | Valid DOCX file | Valid DOCX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_docx` | **🌐 REST API** | Valid DOCX file | Valid DOCX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_to_docx` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_to_docx` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1813,9 +1813,9 @@ POST /api/v1/pdf/convert
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_to_xlsx` | **💻 CLI** | Valid XLSX file | Valid XLSX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_xlsx` | **🤖 MCP** | Valid XLSX file | Valid XLSX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_xlsx` | **🌐 REST API** | Valid XLSX file | Valid XLSX file | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_to_xlsx` | **💻 CLI** | Valid XLSX file | Valid XLSX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_xlsx` | **🤖 MCP** | Valid XLSX file | Valid XLSX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_xlsx` | **🌐 REST API** | Valid XLSX file | Valid XLSX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_to_xlsx` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_to_xlsx` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1851,9 +1851,9 @@ POST /api/v1/pdf/convert
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_to_pptx` | **💻 CLI** | Valid PPTX file | Valid PPTX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_pptx` | **🤖 MCP** | Valid PPTX file | Valid PPTX file | File not found | ❌ FAIL (File not found) |
-| `pdf_to_pptx` | **🌐 REST API** | Valid PPTX file | Valid PPTX file | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_to_pptx` | **💻 CLI** | Valid PPTX file | Valid PPTX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_pptx` | **🤖 MCP** | Valid PPTX file | Valid PPTX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_to_pptx` | **🌐 REST API** | Valid PPTX file | Valid PPTX file | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_to_pptx` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_to_pptx` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1889,9 +1889,9 @@ POST /api/v1/pdf/convert
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_convert_html` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_html` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_html` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_convert_html` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_html` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_html` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_convert_html` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_convert_html` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1927,9 +1927,9 @@ POST /api/v1/pdf/tools/pdf_convert_html
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_convert_markdown` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_markdown` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_markdown` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_convert_markdown` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_markdown` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_markdown` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_convert_markdown` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_convert_markdown` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 
@@ -1965,9 +1965,9 @@ POST /api/v1/pdf/tools/pdf_convert_markdown
 
 | Tool | Interface | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
 |---|---|---|---|---|---|
-| `pdf_convert_excel` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_excel` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | File not found | ❌ FAIL (File not found) |
-| `pdf_convert_excel` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | <urlopen error [Errno 111] Connection refused> | ❌ FAIL (<urlopen error [Errno 111] Connection refused>) |
+| `pdf_convert_excel` | **💻 CLI** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_excel` | **🤖 MCP** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
+| `pdf_convert_excel` | **🌐 REST API** | Valid PDF (%PDF-) | Valid PDF (%PDF-) | Output Identity Error | ❌ FAIL (Output Identity Error) |
 | `pdf_convert_excel` | **⚡ WASM (Browser)** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 | `pdf_convert_excel` | **☁️ Cloudflare Edge** | N/A (Desktop/Server only) | N/A | N/A | N/A | N/A |
 

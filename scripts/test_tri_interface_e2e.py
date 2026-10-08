@@ -38,7 +38,21 @@ class GatewayServer:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
-        time.sleep(2)
+
+        # Poll for health
+        started = False
+        for i in range(10):
+            try:
+                req = urllib.request.Request("http://127.0.0.1:7823/health", method='GET')
+                with urllib.request.urlopen(req) as res:
+                    if res.status == 200:
+                        started = True
+                        break
+            except Exception:
+                time.sleep(1)
+
+        if not started:
+             print("Warning: Gateway did not return 200 within 10s")
 
     def stop(self):
         if self.process:
@@ -51,6 +65,9 @@ class ValidationEngine:
         pass
 
     def run_assertions(self, tool_id, output_path, stdout_or_json, test_def, input_files, input_hashes_before=None):
+        if output_path:
+             output_path = os.path.abspath(output_path)
+
         # Global Rule: Input File Immutability
         if input_hashes_before:
              for ipath, hash_before in input_hashes_before.items():
