@@ -1,0 +1,239 @@
+# Task: Phase 5.9.4 — Real Independent Semantic Assertions Suite (All 44 Tools, 132 Tests)
+# Base Branch: main
+# Target Branch: feat-real-assertions-suite
+# Priority: HIGH (Launch Readiness & Real Verification Guarantee)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+Upgrade the Tri-Interface End-to-End test suite (`scripts/test_tri_interface_e2e.py`) to execute **independent, 3rd-party semantic assertions** across all 44 tools and all 3 developer interfaces (CLI, MCP stdio, and Gateway REST API port 7823 = 132 tests total) as specified in `RealAssertion.md`.
+
+---
+
+## ⚠️ STRICT SAFETY RULE: TEST-ONLY TASK (NO ENGINE BUG FIXES)
+This is strictly a **TEST & VERIFICATION** task.
+1. **DO NOT MODIFY ANY ENGINE SOURCE CODE**:
+   - You must NOT edit `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `paperpilot-nlp/`, or `apps/`.
+   - If an assertion fails for a tool, do NOT attempt to rewrite the Rust engine. Instead, record the exact failure, expected outcome, and received outcome in the scorecard report.
+2. **STRICT FILE OWNERSHIP**:
+   You may **ONLY** create or touch files in these paths:
+   ```
+   scripts/generate_real_fixtures.py
+   scripts/test_tri_interface_e2e.py
+   tests/e2e_fixtures/real/
+   reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md
+   wiki/25-Real-Assertions-Verification.md
+   ```
+   DO NOT touch `PHASES.md`, `v1_launch_plan.md`, `HANDOFF.md`, or any `.rs` files.
+
+---
+
+## 🚨 CRITICAL RULE: NO SHORTCUTS & NO LAZY "pass" CHECKS
+In previous runs, you extracted text but placed `pass` instead of actually validating the content, or only checked if a file existed!
+**You MUST strictly validate the exact content inside every single page using `pypdf`, `openpyxl`, `docx`, and `python-pptx`.**
+In the report table, every tool's **"Specific Assertion Checked"**, **"Expected Result"**, and **"Actual / Received Result"** must explicitly declare:
+1. **Input Data Sent**: Exactly what input files and parameters were sent (e.g., `Input: merge_a.pdf ("MERGE_PAGE_AAA") + merge_b.pdf ("MERGE_PAGE_BBB")`).
+2. **Compared Data**: Exactly what text strings and attributes were extracted and compared per page (e.g., `Expected: Page 1 has 'MERGE_PAGE_AAA', Page 2 has 'MERGE_PAGE_BBB'` | `Actual: Page 1: 'MERGE_PAGE_AAA', Page 2: 'MERGE_PAGE_BBB' (2 pages)`).
+
+---
+
+## 1. Test Harness Reliability Requirements (Must Fix First!)
+1. **Gateway Server Health Polling (Fixes 0/44 API Connection Refused)**:
+   In `GatewayServer.start()`, do NOT just do `time.sleep(2)`. Instead, poll `http://127.0.0.1:7823/health` in a loop every 0.2s for up to 15 seconds until it returns HTTP 200 before running the API tests.
+2. **Absolute Output Paths (Fixes File Not Found)**:
+   Always ensure `OUT_DIR` is created before running tools (`os.makedirs(OUT_DIR, exist_ok=True)`). Always use absolute paths for `--output`, `mcp_args["output"]`, and `api_payload["output"]`.
+3. **Required Python Libraries**:
+   Ensure `pypdf`, `openpyxl`, `python-docx`, and `python-pptx` are installed and utilized.
+
+---
+
+## 2. Explicit Fixtures with Known Content Markers (`scripts/generate_real_fixtures.py`)
+Generate the test corpus in `tests/e2e_fixtures/real/` with distinct, unmistakable text markers:
+1. `merge_a.pdf`: 1 page with distinct text `"MERGE_PAGE_AAA"`.
+2. `merge_b.pdf`: 1 page with distinct text `"MERGE_PAGE_BBB"`.
+3. `multi_page.pdf`: 5 pages, where each page N explicitly has `"PAGE_TEXT_P{N}"` (e.g. Page 1 = `PAGE_TEXT_P1`, Page 2 = `PAGE_TEXT_P2` ... Page 5 = `PAGE_TEXT_P5`).
+4. `with_blank.pdf`: 5 pages:
+   - Page 1: `"CONTENT_PAGE_1"`
+   - Page 2: Blank (no text)
+   - Page 3: `"CONTENT_PAGE_3"`
+   - Page 4: Near-blank (single whitespace)
+   - Page 5: `"CONTENT_PAGE_5"`
+5. `redact_test.pdf`: Document with text `"HEADER_INFO"`, target secret string `"SECRET 12345"`, and `"FOOTER_INFO"`.
+6. `form.pdf`: AcroForm with text field `"first_name"`, checkbox `"agree"`, dropdown `"country"`.
+7. `encrypted.pdf`: Encrypted PDF with password `"user123"`.
+8. `broken_xref.pdf`: PDF with corrupted xref table.
+9. `invoice_text.pdf`: 3-page document with `"Invoice 4821"`, `"Total $1,250.00"`, and table lines.
+10. `img_sample.png`: 800x600 test image.
+11. `test.csv`: 5 rows with columns `ColA,ColB,ColC` and numbers `10,20,30`.
+
+---
+
+## 3. Explicit Data Sent vs. Data Compared for ALL 44 Tools
+
+### A. Page Operations (9 Tools)
+1. `pdf_merge`:
+   - **Data Sent**: `merge_a.pdf` (P1: `"MERGE_PAGE_AAA"`) + `merge_b.pdf` (P1: `"MERGE_PAGE_BBB"`).
+   - **Data Compared**: Output has exactly 2 pages. Page 1 text contains `"MERGE_PAGE_AAA"`. Page 2 text contains `"MERGE_PAGE_BBB"`. Page 1 does NOT contain `"MERGE_PAGE_BBB"`.
+2. `pdf_split`:
+   - **Data Sent**: `multi_page.pdf` (Pages 1-5 with `"PAGE_TEXT_P1"`..`"PAGE_TEXT_P5"`), range `"1,2"`.
+   - **Data Compared**: Output has 2 pages. Page 1 contains `"PAGE_TEXT_P1"`. Page 2 contains `"PAGE_TEXT_P2"`. Does NOT contain `"PAGE_TEXT_P3"`.
+3. `pdf_extract_pages`:
+   - **Data Sent**: `multi_page.pdf`, pages `"1,3"`.
+   - **Data Compared**: Output has 2 pages. Page 1 contains `"PAGE_TEXT_P1"`, Page 2 contains `"PAGE_TEXT_P3"`. Does NOT contain `"PAGE_TEXT_P2"`.
+4. `pdf_delete_pages`:
+   - **Data Sent**: `multi_page.pdf`, delete pages `"2,4"`.
+   - **Data Compared**: Output has 3 pages. Page 1 contains `"PAGE_TEXT_P1"`, Page 2 contains `"PAGE_TEXT_P3"`, Page 3 contains `"PAGE_TEXT_P5"`. `"PAGE_TEXT_P2"` and `"PAGE_TEXT_P4"` are completely absent.
+5. `pdf_reorder_pages`:
+   - **Data Sent**: `multi_page.pdf`, order `[2, 1, 3, 4, 5]`.
+   - **Data Compared**: Output has 5 pages. Page 1 contains `"PAGE_TEXT_P2"`, Page 2 contains `"PAGE_TEXT_P1"`, Page 3 contains `"PAGE_TEXT_P3"`.
+6. `pdf_rotate`:
+   - **Data Sent**: `multi_page.pdf`, angle `90`, page `1`.
+   - **Data Compared**: Output page 1 has `/Rotate` == 90 in its dictionary. Page 1 text still contains `"PAGE_TEXT_P1"`.
+7. `pdf_crop`:
+   - **Data Sent**: `multi_page.pdf`, crop box rect `[50, 50, 400, 400]`.
+   - **Data Compared**: Output page 1 `CropBox` or `MediaBox` matches rect `[50, 50, 400, 400]`. Text `"PAGE_TEXT_P1"` is retained.
+8. `pdf_burst`:
+   - **Data Sent**: `multi_page.pdf` (5 pages).
+   - **Data Compared**: Output directory contains exactly 5 files. File 1 has 1 page with `"PAGE_TEXT_P1"`, File 5 has 1 page with `"PAGE_TEXT_P5"`.
+9. `pdf_remove_blank`:
+   - **Data Sent**: `with_blank.pdf` (5 pages: content, blank, content, near-blank, content).
+   - **Data Compared**: Output has 3 or 4 pages (blank page removed). Pages 1, 2, 3 contain `"CONTENT_PAGE_1"`, `"CONTENT_PAGE_3"`, `"CONTENT_PAGE_5"` in order.
+
+### B. Optimization & Repair (3 Tools)
+10. `pdf_compress`:
+    - **Data Sent**: `invoice_text.pdf`.
+    - **Data Compared**: Output size <= input size. Page count = 3. Text `"Invoice 4821"` and `"Total $1,250.00"` intact on all pages.
+11. `pdf_repair`:
+    - **Data Sent**: `broken_xref.pdf` (intentionally corrupted EOF/xref).
+    - **Data Compared**: Output successfully parses with `pypdf.PdfReader` without raising syntax error.
+12. `pdf_linearize`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Output bytes contain `/Linearized`. Page count = 5. Text `"PAGE_TEXT_P1"` intact.
+
+### C. Security (5 Tools)
+13. `pdf_encrypt`:
+    - **Data Sent**: `multi_page.pdf`, password `"secret123"`.
+    - **Data Compared**: Opening output with `pypdf` without password raises `FileNotDecryptedError`. Opening with `"secret123"` succeeds and recovers `"PAGE_TEXT_P1"`. `/Encrypt` dictionary present.
+14. `pdf_decrypt`:
+    - **Data Sent**: `encrypted.pdf` (password `"user123"`).
+    - **Data Compared**: Output opens with `pypdf` with NO password. `/Encrypt` absent. Page count and text match original.
+15. `pdf_redact`:
+    - **Data Sent**: `redact_test.pdf` (contains `"HEADER_INFO"`, `"SECRET 12345"`, `"FOOTER_INFO"`).
+    - **Data Compared**: Extracted text and raw byte stream **DO NOT contain `"SECRET 12345"`**. Extracted text STILL contains `"HEADER_INFO"` and `"FOOTER_INFO"`.
+16. `pdf_sign`:
+    - **Data Sent**: `multi_page.pdf`, test certificate.
+    - **Data Compared**: Output contains `/Sig` or `/ByteRange` dictionary.
+17. `pdf_hash`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Returned hash matches Python `hashlib.sha256(open(multi_page.pdf).read()).hexdigest()`.
+
+### D. Stamping & Numbering (5 Tools)
+18. `pdf_watermark`:
+    - **Data Sent**: `multi_page.pdf`, text `"CONFIDENTIAL"`.
+    - **Data Compared**: Every single page extracted text contains `"CONFIDENTIAL"`. Original `"PAGE_TEXT_P1"` still present.
+19. `pdf_header_footer`:
+    - **Data Sent**: `multi_page.pdf`, header `"TOP_HEADER"`, footer `"BOTTOM_FOOTER"`.
+    - **Data Compared**: Extracted text contains `"TOP_HEADER"` and `"BOTTOM_FOOTER"`. Original text intact.
+20. `pdf_bates`:
+    - **Data Sent**: `multi_page.pdf`, prefix `"BATES-"`.
+    - **Data Compared**: Page 1 contains `"BATES-000001"`, Page 5 contains `"BATES-000005"`. Sequential with no gaps.
+21. `pdf_page_numbers`:
+    - **Data Sent**: `multi_page.pdf`, format `"{page}/{total}"`.
+    - **Data Compared**: Page 1 contains `"1/5"`, Page 5 contains `"5/5"`.
+22. `pdf_annotate`:
+    - **Data Sent**: `multi_page.pdf`, comment `"NOTE_SAMPLE"`.
+    - **Data Compared**: Output PDF contains `/Annots` with annotation text containing `"NOTE_SAMPLE"`.
+
+### E. Forms (4 Tools)
+23. `pdf_read_form`:
+    - **Data Sent**: `form.pdf` (has field `"first_name"`).
+    - **Data Compared**: Returned JSON contains field name `"first_name"`.
+24. `pdf_fill_form`:
+    - **Data Sent**: `form.pdf`, field `"first_name"` = `"PaperPilotUser"`.
+    - **Data Compared**: Re-reading output with `pypdf` confirms `reader.get_fields()["first_name"].value == "PaperPilotUser"`.
+25. `pdf_flatten`:
+    - **Data Sent**: filled `form.pdf`.
+    - **Data Compared**: Output `reader.get_fields()` is empty or None. Page count = 1.
+26. `pdf_create_form_field`:
+    - **Data Sent**: `multi_page.pdf`, create text field `"user_email"`.
+    - **Data Compared**: Re-reading with `pypdf` shows field `"user_email"` exists in `reader.get_fields()`.
+
+### F. Extraction & Analysis (10 Tools)
+27. `pdf_extract_text`:
+    - **Data Sent**: `invoice_text.pdf`.
+    - **Data Compared**: Returned text contains `"Invoice 4821"` and `"Total $1,250.00"`.
+28. `pdf_extract_images`:
+    - **Data Sent**: PDF with embedded image.
+    - **Data Compared**: Output directory has extracted images that decode as valid images with PIL.
+29. `pdf_search`:
+    - **Data Sent**: `multi_page.pdf`, query `"PAGE_TEXT_P3"`.
+    - **Data Compared**: Hit returned specifically on page index 2 (page 3).
+30. `pdf_render`:
+    - **Data Sent**: `multi_page.pdf`, page 1.
+    - **Data Compared**: Output PNG decodes with PIL, dimensions > 0, file size > 5KB, not single solid color.
+31. `pdf_compare`:
+    - **Data Sent**: `merge_a.pdf` vs `merge_b.pdf`.
+    - **Data Compared**: Returned diff reports content differences between page texts.
+32. `pdf_metadata`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Returns valid page count = 5.
+33. `pdf_bookmarks`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Returns valid JSON list (bookmarks/outline).
+34. `pdf_classify_type`:
+    - **Data Sent**: `invoice_text.pdf`.
+    - **Data Compared**: Classified as text-based PDF.
+35. `pdf_validate`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Returns valid == true.
+36. `pdf_ocr`:
+    - **Data Sent**: `image_doc.pdf` (image of text).
+    - **Data Compared**: Output PDF has text layer extractable by `pypdf`.
+
+### G. Conversions (8 Tools)
+37. `pdf_images_to_pdf`:
+    - **Data Sent**: `img_sample.png`.
+    - **Data Compared**: Output PDF has 1 page, opens in `pypdf`.
+38. `pdf_to_pdf_a`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Output contains PDF/A identification in XMP metadata; opens in `pypdf`.
+39. `pdf_to_docx`:
+    - **Data Sent**: `invoice_text.pdf`.
+    - **Data Compared**: Output `.docx` opens with `docx.Document` and paragraph text contains `"Invoice 4821"`.
+40. `pdf_to_xlsx`:
+    - **Data Sent**: `invoice_text.pdf`.
+    - **Data Compared**: Output `.xlsx` opens with `openpyxl.load_workbook` and cell values are populated.
+41. `pdf_to_pptx`:
+    - **Data Sent**: `multi_page.pdf`.
+    - **Data Compared**: Output `.pptx` opens with `pptx.Presentation` and slide count == 5.
+42. `pdf_convert_html`:
+    - **Data Sent**: `test.html` (`<h1>HTML Test</h1>`).
+    - **Data Compared**: Output PDF text contains `"HTML Test"`.
+43. `pdf_convert_markdown`:
+    - **Data Sent**: `test.md` (`# MD Test`).
+    - **Data Compared**: Output PDF text contains `"MD Test"`.
+44. `pdf_convert_excel`:
+    - **Data Sent**: `test.csv` (`ColA,ColB,ColC`).
+    - **Data Compared**: Output PDF text contains `"ColA"` and `"ColB"`.
+
+---
+
+## 4. Deliverables & Required Scorecard Format
+
+Generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` with the explicit columns:
+```markdown
+### Tool: `pdf_merge`
+> **Use Case**: Merge two separate single-page PDFs into a single continuous document.
+
+| Tool | Interface | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|
+| `pdf_merge` | **💻 CLI** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+```
+
+Run and verify with:
+```bash
+python3 scripts/test_tri_interface_e2e.py
+```
+Ensure all 132 tests run cleanly across CLI, MCP, and API.
