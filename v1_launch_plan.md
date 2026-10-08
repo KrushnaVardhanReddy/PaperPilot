@@ -8,7 +8,6 @@
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | [Spec 028](file:///home/krushna/Project/PaperPilot/specs/028-desktop-binary-optimization/spec.md) | Drop standalone Desktop executable from **107 MB to < 75 MB** via root workspace release profile (strip, LTO, abort) and migrate `paperpilot-nlp` from heavy C++ `ort` to pure-Rust `rten` SIMD engine. Validated with full 44-tool test round across CLI, REST, MCP, WASM, and Edge. | ⏳ **In Flight** ([Jules Session 11361744507474308005](https://jules.google.com/session/11361744507474308005)) |
 | **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Web & Embed Test Coverage | [Spec 030](file:///home/krushna/Project/PaperPilot/specs/030-web-and-embed-batch-unit-tests/spec.md) | Dedicated Playwright unit test suite for interactive embed configuration panels, page range inputs, and web WASM multi-file batch execution queue. | ⏳ **In Flight** ([Jules Session 236392176878863235](https://jules.google.com/session/236392176878863235)) |
 
 ---
@@ -25,10 +24,11 @@
 ## 🏆 Completed v1.0 Milestones Archive
 
 <details>
-<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (19 Milestones)</b></summary>
+<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (20 Milestones)</b></summary>
 
 | # | Task | Area | Milestone Summary | Resolution |
 |---|---|---|---|---|
+| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | Standalone Desktop executable reduced from **107 MB to 35 MB** (~67% reduction) via root workspace release profile (`strip = true`, `lto = "fat"`, `panic = "abort"`). Migrated `paperpilot-nlp` from C++ `ort` to pure-Rust `rten` SIMD engine with embedded `tinybert.rten.zst`. | ✅ **Completed** (`45a1566`, Spec 028) |
 | **4.8.1** | `paperpilot-wasm` Crate & Web Worker Bridge | Client-Side WASM | Core WASM crate with `wasm-bindgen`, in-memory buffer adapters, and TS Web Worker bridge. | ✅ **Completed** (PR #135) |
 | **4.8.2** | Zero-Install Web App Demo | Web App | Standalone web tool suite running 100% in browser memory with download CTA funneling to Desktop. | ✅ **Completed** (PR #137) |
 | **4.8.4** | Expand Web Suite to 12 Pure-Rust Tools | Web Expansion | Added `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata` to WASM. | ✅ **Completed** (PR #138) |
@@ -53,4 +53,4 @@
 
 ---
 
-*Last updated: 2026-10-07 (PR #153 Deep Assertions Merged, Spec 028 Desktop Binary Optimization Active)*
+*Last updated: 2026-10-07 (Task 5.9.1 Desktop Binary Optimization Merged [35MB, pure-Rust rten], Spec 030 Active)*

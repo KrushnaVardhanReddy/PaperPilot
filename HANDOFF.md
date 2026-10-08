@@ -47,6 +47,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
 ### 2. Recent Major Milestones & Merged Changes
+- **5.9.1 (Spec 028)**: Desktop Release Binary Size Optimization & Pure-Rust `rten` SIMD Inference Migration (`45a1566`). Standalone Desktop release executable dropped from **107 MB down to 35 MB** (~67% reduction) via root workspace release profile (`strip = true`, `lto = "fat"`, `panic = "abort"`). Completely eliminated C++ ONNX Runtime (`ort`) in favor of pure-Rust `rten` with embedded `tinybert.rten.zst` (~9.7 MB). 100% verified across `paperpilot-nlp` test suite, Tri-Interface suite (132 assertions), and Desktop Playwright AI chat pipeline (`reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md`).
 - **Spec 030 / Web & Embed Batch Suite (`dbe3ba1`, `ef77956`, `086231b`, `b60f41e`)**:
   - **Embedded Widget (`apps/embed/`)**: Real `pdf-lib` multi-page merging, multi-file batch execution across `extract`, `delete`, `rotate`, `watermark`, `split`, `reorder`, and `compress`. Added interactive tool configuration panel for custom page numbers, rotation angles, and watermark text stamps.
   - **Live Embed Sandbox (`/embed-test`)**: Showcasing standard and whitelisted/pro embeds live in browser with direct links from Web Portal footer, Embed Generator, and documentation.
@@ -74,9 +75,7 @@ All tasks are partitioned with **strict file ownership** so that they run simult
 
 | Task | Scope (Owned Files) | Session URL | Target Branch | Focus & Current Status |
 |---|---|---|---|---|
-| **5.9.1 (Session 1)** | `Cargo.toml`, `apps/desktop/src-tauri/Cargo.toml`, `paperpilot-nlp/`, `tools/train-nlp/`, `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md` | [Session 11361744507474308005](https://jules.google.com/session/11361744507474308005) | `main` | ⏳ **In Flight (PR #154 open)** — Generated `tinybert.rten.zst`; follow-up prompt supplied for remaining code and profile optimizations. |
-| **5.9.1 (Session 2 - Concurrent)** | `Cargo.toml`, `apps/desktop/src-tauri/Cargo.toml`, `paperpilot-nlp/`, `tools/train-nlp/`, `reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md` | [Session 663128701973501136](https://jules.google.com/session/663128701973501136) | `main` | ⏳ **In Flight** — Full clean run from main with blueprints for release profile, `rten` inference, memory caps (`--jobs 2`, `debuginfo=1`), and verification. |
-| **5.9.3 (Re-triggered with blueprints)** | `apps/embed/tests/widget_batch_and_config.spec.ts`, `apps/web/tests/operations_batch_processing.spec.ts`, `reports/WEB_AND_EMBED_BATCH_UNIT_TESTS_REPORT.md`, `wiki/24-Web-And-Embed-Batch-Testing.md` | [Session 236392176878863235](https://jules.google.com/session/236392176878863235) | `main` | ⏳ **In Flight** — Playwright unit tests for embed widget config panel, page ranges, and web batch processing with complete spec blueprints. |
+| **5.9.3 (In Flight)** | `apps/embed/tests/widget_batch_and_config.spec.ts`, `apps/web/tests/operations_batch_processing.spec.ts`, `reports/WEB_AND_EMBED_BATCH_UNIT_TESTS_REPORT.md`, `wiki/24-Web-And-Embed-Batch-Testing.md` | [Session 236392176878863235](https://jules.google.com/session/236392176878863235) | `main` | ⏳ **Finalizing** — Playwright unit tests for embed widget config panel, page ranges, and web batch processing with isolated specs and zero regressions. |
 
 ---
 
