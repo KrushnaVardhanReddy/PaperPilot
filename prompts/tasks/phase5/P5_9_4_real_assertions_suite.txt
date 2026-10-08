@@ -113,15 +113,18 @@ Use pure Rust crates:
 
 ---
 
-## 3. Explicit 3-Tier Positive + Negative Matrix for ALL 44 Tools (Executed Across CLI, MCP, and REST API)
+## 3. Explicit 3-Tier Positive + Negative Matrix for ALL 44 Tools (Executed Across ALL 5 Interfaces)
 
 **MANDATORY TEST EXECUTION RULE**:
-For every single tool, the test suite must execute all 4 tiers across all 3 developer interfaces:
+For every single tool, the test suite must execute all 4 tiers across **ALL 5 INTERFACES**:
 - **💻 CLI**: Simple, Medium, Complex, Negative (4 tests)
 - **🤖 MCP**: Simple, Medium, Complex, Negative (4 tests)
 - **🌐 REST API**: Simple, Medium, Complex, Negative (4 tests)
-- **⚡ WASM (Browser) & ☁️ Cloudflare Edge**: Verified parity targets documented in report.
-Total evaluations per tool: minimum 12 live tests (3 interfaces × 4 tiers) + WASM/Edge parity.
+- **⚡ WASM (Browser)**: Simple, Medium, Complex, Negative (4 tests)
+- **☁️ Cloudflare Edge**: Simple, Medium, Complex, Negative (4 tests)
+
+Total evaluations per tool: **20 tests** (5 interfaces × 4 tiers).
+Across all 44 tools: **880 verified test executions total**.
 
 ### A. Page Operations (9 Tools)
 1. `pdf_merge`:
@@ -372,9 +375,12 @@ It must generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` documenting a
 
 ## Executive Scorecard
 - **Total Tools Verified:** 44
-- **CLI Pass Rate:** 44 / 44
-- **MCP Pass Rate:** 44 / 44
-- **API Pass Rate:** 44 / 44
+- **CLI Pass Rate:** 44 / 44 (176 tests)
+- **MCP Pass Rate:** 44 / 44 (176 tests)
+- **API Pass Rate:** 44 / 44 (176 tests)
+- **WASM Pass Rate:** 44 / 44 (176 tests)
+- **Cloudflare Edge Pass Rate:** 44 / 44 (176 tests)
+- **Total Suite Tests:** 880 / 880 Passed (100% Parity)
 
 ## Detailed Tool-by-Tool Documentation
 
@@ -395,8 +401,14 @@ It must generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` documenting a
 | `pdf_merge` | **🌐 REST API** | Medium (Tier 2) | `POST /api/v1/pdf/merge` with 2 files (6p) | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
 | `pdf_merge` | **🌐 REST API** | Complex (Tier 3) | `POST /api/v1/pdf/merge` with 3 files | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
 | `pdf_merge` | **🌐 REST API** | Negative | `POST /api/v1/pdf/merge` with missing file | HTTP 400/404 error returned | HTTP error status code | 400 Bad Request: File not found | ✅ PASS |
-| `pdf_merge` | **⚡ WASM (Browser)** | Standard | `WasmPdfEngine.merge([file1, file2])` | P1 & P2 valid merge | Valid 2-page PDF (%PDF-) | Valid 2-page PDF | ✅ PASS |
-| `pdf_merge` | **☁️ Cloudflare Edge** | Standard | `POST /api/v1/merge (multipart/form-data)` | P1 & P2 valid merge | Valid 2-page PDF (%PDF-) | Valid 2-page PDF | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Simple (Tier 1) | `WasmPdfEngine.merge([a, b])` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Medium (Tier 2) | `WasmPdfEngine.merge([a, multi])` | 6 pages sequential | 6 pages verified | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Complex (Tier 3) | `WasmPdfEngine.merge([a, b, c])` | 3 pages with exact text order | 3 pages verified | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Negative | `WasmPdfEngine.merge([])` (empty array) | JS Exception / Error thrown | Rejected Promise / Exception | Error: At least 2 files required | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Simple (Tier 1) | `POST /api/v1/merge` with 2 files | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Medium (Tier 2) | `POST /api/v1/merge` with 2 files (6p) | 6 pages sequential | 6 pages verified | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Complex (Tier 3) | `POST /api/v1/merge` with 3 files | 3 pages with exact text order | 3 pages verified | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Negative | `POST /api/v1/merge` missing body | HTTP 400 Bad Request | 400 Bad Request | 400 Bad Request: No files provided | ✅ PASS |
 ```
 
 Verify everything compiles cleanly and passes with:
