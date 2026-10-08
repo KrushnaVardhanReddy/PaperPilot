@@ -1,0 +1,36 @@
+# Task: Phase 5.9.6 — Penta-Interface High-Throughput & Concurrency Performance Benchmark
+# Base Branch: main
+# Target Branch: feat-penta-performance-benchmark
+# Priority: HIGH (Latency & Concurrency Parity Benchmark)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference: tools/penta-interface-e2e/
+
+## Objective
+Implement high-throughput and concurrency performance benchmark runner inside `tools/penta-interface-e2e/`:
+
+### Benchmark Requirements:
+1. **Concurrency Stress Testing**:
+   - Run 10, 25, and 50 concurrent requests against the PaperPilot Gateway REST API (`:7823`) and MCP stdio server.
+   - Assert zero deadlocks, zero socket exhaustion, and 100% successful response delivery.
+2. **Latency SLA Profile (p50, p95, p99)**:
+   - Profile the latency across all 5 deployment surfaces for the top 10 most common operations (`merge`, `split`, `rotate`, `compress`, `render`, `extract_text`, `watermark`, `encrypt`, `hash`, `html_to_pdf`):
+     - 💻 CLI sub-process startup and execution latency
+     - 🤖 MCP JSON-RPC direct tool call latency
+     - 🌐 REST API HTTP request latency
+     - ⚡ WASM simulated in-memory latency
+     - ☁️ Cloudflare Edge serverless latency
+3. **Memory Footprint & RSS Stability**:
+   - Sample memory usage under sustained load (1,000 operations burst).
+   - Assert no memory leaks (RSS remains stable under 35MB).
+4. **Benchmark Report Generation**:
+   - Generate `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md` featuring:
+     - Formatted latency comparison table across all 5 interfaces.
+     - Throughput (operations per second) per tool.
+     - P50, P95, and P99 latency percentiles.
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e -- --bench
+```
+Verify generated benchmark metrics in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.

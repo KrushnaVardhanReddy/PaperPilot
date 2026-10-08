@@ -1,0 +1,37 @@
+# Task: Phase 5.9.5 — Penta-Interface Edge Cases & Deep Boundary Verification Suite
+# Base Branch: main
+# Target Branch: feat-penta-edge-cases
+# Priority: HIGH (Robustness & Error Resilience Verification)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference: tools/penta-interface-e2e/
+
+## Objective
+The base pure-Rust Penta-Interface test suite (`tools/penta-interface-e2e/`) is in place.
+Implement comprehensive edge cases and boundary conditions across all 44 tools in `tools/penta-interface-e2e/src/cases/`:
+
+### Edge Scenarios to Implement:
+1. **Complex Page Selection & Ranges**:
+   - Discontinuous intervals (`1,3-5,8-10`, `odd`, `even`, reverse order `5,4,3,2,1`).
+   - Boundary page ranges (page 1 on 1-page doc, last page on multi-page doc).
+2. **Extreme Geometric & Dimension Boundaries**:
+   - Zero-area or microscopic crop rectangles (`width: 0.1, height: 0.1`).
+   - Full-bleed crops equal to the media box.
+   - Cumulative rotations (360°, 720°, negative degrees like -90°).
+3. **Encoding, Character Sets & Unicode**:
+   - Watermarks, headers, footers, and Bates stamps with multi-byte UTF-8 (CJK, emoji 📄, accents `éàü`, RTL text).
+   - Passwords with special shell symbols (`$!@#%^&*()'"\`).
+4. **Negative & Malformed Boundaries**:
+   - Out-of-bounds page requests (requesting page 99 on a 3-page doc) -> Assert clean structured error exit without panic.
+   - Truncated or corrupt PDF headers (`%PDF-` missing or truncated at 50 bytes) -> Assert structured error code.
+   - Empty input arrays (e.g. `merge` with 0 inputs) -> Assert 400 Bad Request / error result.
+   - Zero-byte files and non-PDF file extensions.
+5. **Output Assertion Enforcement**:
+   - Verify all tests assert `success == true` (or `false` for negative cases).
+   - Ensure zero mock overrides (`if !passed { passed = true }` are strictly forbidden).
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e
+```
+Verify that all edge cases execute and produce updated reports in `reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md`.
