@@ -112,9 +112,24 @@ Generate the test corpus in `tests/e2e_fixtures/real/` with distinct, unmistakab
 10. `img_sample.png`: 800x600 test image.
 11. `test.csv`: 5 rows with columns `ColA,ColB,ColC` and numbers `10,20,30`.
 
+## 3. Multi-Tier Positive & Negative Test Matrix
+For each tool, you must structure verification to test across complexity tiers to guarantee robustness:
+
+### Three Tiers of Positive Scenarios:
+1. **Tier 1 (Simple)**: Minimal valid input (e.g., standard single/2-page PDF, single operation, default parameters).
+2. **Tier 2 (Medium)**: Multi-page document with structured layout (e.g., 5-page document, custom page ranges like `"1,3"`, rotation angles like `90`, custom output paths).
+3. **Tier 3 (Complex / Hard)**: Real-world complex documents (e.g., multi-column invoice with tables, multi-file batch merges with 3+ files, documents with accented/unicode strings, boundary conditions like processing the last page of a multi-page doc).
+
+### Negative / Error-Handling Scenarios:
+In addition to positive assertions, each tool group must assert graceful error handling:
+- **Missing input file**: Returns structured error with non-zero exit code or JSON error, not a crash/panic.
+- **Out-of-bounds parameters**: (e.g. requesting page 99 from a 5-page document) returns an invalid range error.
+- **Wrong password**: Encrypted document returns authentication error when given wrong password.
+- **Corrupt input**: Returns a clear parse/syntax error rather than an unhandled exception.
+
 ---
 
-## 3. Explicit Data Sent vs. Data Compared for ALL 44 Tools
+## 4. Explicit Data Sent vs. Data Compared for ALL 44 Tools
 
 ### A. Page Operations (9 Tools)
 1. `pdf_merge`:
