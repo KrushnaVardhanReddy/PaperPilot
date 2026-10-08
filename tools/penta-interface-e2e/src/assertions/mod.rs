@@ -28,11 +28,10 @@ impl PdfAssertions {
             // Also check raw streams as fallback
             let pages = doc.get_pages();
             if let Some(&page_id) = pages.get(&page_num) {
-                if let Ok(content) = doc.get_page_content(page_id) {
-                    let content_str = String::from_utf8_lossy(&content);
-                    if content_str.contains(expected_text) {
-                        return Ok(());
-                    }
+                let content = doc.get_page_content(page_id);
+                let content_str = String::from_utf8_lossy(&content);
+                if content_str.contains(expected_text) {
+                    return Ok(());
                 }
             }
             Err(anyhow!(

@@ -54,7 +54,7 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
 
         if tool == "pdf_encrypt" {
             cli_extra_args = vec!["--user-password", "testpass"];
-            mcp_args["user_password"] = json!("testpass");
+            mcp_args["password"] = json!("testpass");
         } else if tool == "pdf_decrypt" {
             cli_extra_args = vec!["--password", "testpass"];
             mcp_args["input"] = json!("tests/e2e_fixtures/real/encrypted.pdf");
@@ -74,8 +74,11 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
             mcp_args["data"] = json!("text");
         } else if tool == "pdf_redact" {
             cli_extra_args = vec!["--pages", "1", "--rect", "0,0,100,100"];
-            mcp_args["pages"] = json!("1");
-            mcp_args["rect"] = json!("0,0,100,100");
+            mcp_args["page"] = json!(1);
+            mcp_args["x"] = json!(0.0);
+            mcp_args["y"] = json!(0.0);
+            mcp_args["width"] = json!(100.0);
+            mcp_args["height"] = json!(100.0);
         } else if tool == "pdf_sign" {
             cli_extra_args = vec!["--cert", "tests/e2e_fixtures/real/cert.pem"];
             mcp_args["cert"] = json!("tests/e2e_fixtures/real/cert.pem");
@@ -227,13 +230,17 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
                 args["output"] = json!(out_path.to_str().unwrap());
             }
 
-            let (success, _resp, latency) = api.post_json("/api/v1/pdf/mcp-exec", json!({
+            let (success, resp, latency) = api.post_json("/api/v1/pdf/mcp-exec", json!({
                 "tool": tool,
                 "arguments": args
             })).await?;
 
             let mut passed = success;
-            let mut actual = "API call processed".into();
+            let mut actual = if success {
+                "API call processed".into()
+            } else {
+                format!("API error: {:?}", resp)
+            };
 
             if tier == ComplexityTier::Negative {
                 passed = !success;

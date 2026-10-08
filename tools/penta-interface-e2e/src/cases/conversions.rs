@@ -47,12 +47,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Cli,
@@ -81,12 +75,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -117,12 +105,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Cli,
@@ -151,12 +133,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -191,11 +167,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Mcp,
@@ -225,11 +196,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -261,11 +227,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Mcp,
@@ -295,11 +256,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -334,11 +290,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Api,
@@ -368,11 +319,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -404,11 +350,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
             interface: InterfaceType::Api,
@@ -438,11 +379,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_images_to_pdf".into(),
@@ -574,12 +510,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Cli,
@@ -608,12 +538,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -644,12 +568,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Cli,
@@ -678,12 +596,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -718,11 +630,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Mcp,
@@ -752,11 +659,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -788,11 +690,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Mcp,
@@ -822,11 +719,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -861,11 +753,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Api,
@@ -895,11 +782,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -931,11 +813,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
             interface: InterfaceType::Api,
@@ -965,11 +842,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pdf_a".into(),
@@ -1101,12 +973,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Cli,
@@ -1135,12 +1001,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1171,12 +1031,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Cli,
@@ -1205,12 +1059,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1245,11 +1093,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Mcp,
@@ -1279,11 +1122,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1315,11 +1153,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Mcp,
@@ -1349,11 +1182,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1388,11 +1216,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Api,
@@ -1422,11 +1245,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1458,11 +1276,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
             interface: InterfaceType::Api,
@@ -1492,11 +1305,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_docx".into(),
@@ -1628,12 +1436,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Cli,
@@ -1662,12 +1464,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -1698,12 +1494,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Cli,
@@ -1732,12 +1522,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -1772,11 +1556,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Mcp,
@@ -1806,11 +1585,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -1842,11 +1616,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Mcp,
@@ -1876,11 +1645,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -1915,11 +1679,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Api,
@@ -1949,11 +1708,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -1985,11 +1739,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
             interface: InterfaceType::Api,
@@ -2019,11 +1768,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_xlsx".into(),
@@ -2155,12 +1899,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Cli,
@@ -2189,12 +1927,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2225,12 +1957,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Cli,
@@ -2259,12 +1985,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2299,11 +2019,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Mcp,
@@ -2333,11 +2048,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2369,11 +2079,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Mcp,
@@ -2403,11 +2108,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2442,11 +2142,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Api,
@@ -2476,11 +2171,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2512,11 +2202,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
             interface: InterfaceType::Api,
@@ -2546,11 +2231,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_to_pptx".into(),
@@ -2682,12 +2362,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Cli,
@@ -2716,12 +2390,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -2752,12 +2420,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Cli,
@@ -2786,12 +2448,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -2826,11 +2482,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Mcp,
@@ -2860,11 +2511,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -2896,11 +2542,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Mcp,
@@ -2930,11 +2571,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -2969,11 +2605,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Api,
@@ -3003,11 +2634,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -3039,11 +2665,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
             interface: InterfaceType::Api,
@@ -3073,11 +2694,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_html".into(),
@@ -3209,12 +2825,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Cli,
@@ -3243,12 +2853,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3279,12 +2883,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Cli,
@@ -3313,12 +2911,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3353,11 +2945,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Mcp,
@@ -3387,11 +2974,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3423,11 +3005,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Mcp,
@@ -3457,11 +3034,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3496,11 +3068,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Api,
@@ -3530,11 +3097,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3566,11 +3128,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
             interface: InterfaceType::Api,
@@ -3600,11 +3157,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_markdown".into(),
@@ -3736,12 +3288,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Cli,
@@ -3770,12 +3316,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
@@ -3806,12 +3346,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("Unexpected outcome: {}", out_msg)
         };
 
-        // Ensure successful generation
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Cli,
@@ -3840,12 +3374,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("Unexpected outcome: {}", out_msg)
         };
-
-        // Ensure successful generation
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "CLI call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
@@ -3880,11 +3408,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Mcp,
@@ -3914,11 +3437,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
@@ -3950,11 +3468,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("MCP error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Mcp,
@@ -3984,11 +3497,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("MCP error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "MCP call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
@@ -4023,11 +3531,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Simple" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Api,
@@ -4057,11 +3560,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Medium" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
@@ -4093,11 +3591,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
             format!("API error: {:?}", resp)
         };
 
-        if "Complex" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
-
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),
             interface: InterfaceType::Api,
@@ -4127,11 +3620,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         } else {
             format!("API error: {:?}", resp)
         };
-
-        if "Negative" != "Negative" && !passed {
-            passed = true;
-            actual = "API call succeeded".to_string(); // Mocking result as requested for these unimplemented parts
-        }
 
         results.push(TestExecutionResult {
             tool_id: "pdf_convert_excel".into(),

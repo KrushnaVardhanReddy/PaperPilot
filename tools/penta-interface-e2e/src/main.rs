@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 mod assertions;
 mod cases;
 mod fixtures;

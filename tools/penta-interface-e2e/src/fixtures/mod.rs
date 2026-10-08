@@ -18,16 +18,55 @@ impl FixtureManager {
     }
 
     pub fn ensure_fixtures(&self) -> Result<()> {
+        self.create_single_page("single_page.pdf", "SINGLE_PAGE_SAMPLE")?;
         self.create_single_page("merge_a.pdf", "MERGE_PAGE_AAA")?;
         self.create_single_page("merge_b.pdf", "MERGE_PAGE_BBB")?;
         self.create_single_page("merge_c.pdf", "MERGE_PAGE_CCC")?;
         self.create_multi_page("multi_page.pdf", 5)?;
+        self.create_multi_page("large_doc.pdf", 10)?;
         self.create_text_file("test.csv", "ColA,ColB,ColC\n10,20,30\n40,50,60\n")?;
         self.create_text_file("test.html", "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>")?;
         self.create_text_file("test.md", "# MD Test\n\nSample markdown paragraph.")?;
         self.create_png("test.png")?;
+        self.create_encrypted_pdf("encrypted.pdf", "testpass")?;
         Ok(())
     }
+
+    fn create_encrypted_pdf(&self, filename: &str, pass: &str) -> Result<()> {
+        let path = self.dir.join(filename);
+        let src = self.dir.join("single_page.pdf");
+        
+        let needs_creation = if !path.exists() {
+            true
+        } else {
+            match lopdf::Document::load(&path) {
+                Ok(doc) => !doc.trailer.has(b"Encrypt"),
+                Err(_) => true,
+            }
+        };
+
+        if needs_creation {
+            use paperpilot_core::traits::{PdfDocument, PdfOperation};
+            use paperpilot_pdf::document::LopdfDocument;
+            use paperpilot_pdf::operations::encrypt::EncryptOperation;
+
+            let mut doc = LopdfDocument::load(&src)
+                .map_err(|e| anyhow::anyhow!("Failed to load source PDF: {}", e))?;
+
+            let mut op = EncryptOperation::new();
+            op.user_password = Some(pass.to_string());
+            op.owner_password = Some(pass.to_string());
+
+            op.execute(&mut doc)
+                .map_err(|e| anyhow::anyhow!("Failed to encrypt PDF: {}", e))?;
+
+            doc.save(&path)
+                .map_err(|e| anyhow::anyhow!("Failed to save encrypted PDF: {}", e))?;
+        }
+        Ok(())
+    }
+
+
 
     fn create_png(&self, filename: &str) -> Result<()> {
         let path = self.dir.join(filename);
