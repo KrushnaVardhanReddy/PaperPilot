@@ -4,6 +4,7 @@ use lopdf::{
     dictionary, Document, Object, Stream,
 };
 use anyhow::Result;
+use image::{ImageBuffer, RgbImage};
 
 pub struct FixtureManager {
     pub dir: PathBuf,
@@ -24,6 +25,21 @@ impl FixtureManager {
         self.create_text_file("test.csv", "ColA,ColB,ColC\n10,20,30\n40,50,60\n")?;
         self.create_text_file("test.html", "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>")?;
         self.create_text_file("test.md", "# MD Test\n\nSample markdown paragraph.")?;
+        self.create_png("test.png")?;
+        Ok(())
+    }
+
+    fn create_png(&self, filename: &str) -> Result<()> {
+        let path = self.dir.join(filename);
+        if !path.exists() {
+            let mut img: RgbImage = ImageBuffer::new(256, 256);
+            for (x, y, pixel) in img.enumerate_pixels_mut() {
+                let r = (0.3 * x as f32) as u8;
+                let b = (0.3 * y as f32) as u8;
+                *pixel = image::Rgb([r, 0, b]);
+            }
+            img.save(path)?;
+        }
         Ok(())
     }
 
