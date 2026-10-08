@@ -1,105 +1,80 @@
-# Spec 031: Real Independent Semantic Assertions & Fixtures Suite (Tri-Interface E2E)
+# Spec 031: Rust-Native Penta-Interface Real Semantic Assertions Suite (`tools/penta-interface-e2e`)
 
 ## Status: APPROVED / READY FOR IMPLEMENTATION
 
 ## 1. Problem Statement
-The current Tri-Interface E2E test script (`scripts/test_tri_interface_e2e.py`) relies primarily on shallow verification:
-- Checks if the process exits with code 0.
-- Checks if the output file is non-zero bytes.
-- Uses naive regex `len(re.findall(rb'/Type\s*/Page\b', data))` to estimate page count.
+The previous test scripts relied on partial interface coverage or shallow verification:
+- Checks only if the process exits with code 0.
+- Lacked complete coverage across the full 5-interface deployment topology.
+- Test harness bugs (output identity collisions, lazy `pass` blocks, path resolution issues).
+- Incomplete coverage across complexity tiers (Simple, Medium, Complex, Negative).
 
-As documented in `RealAssertion.md`, shallow verification does NOT guarantee semantic correctness:
-- A redacted PDF could still leak target text in raw streams.
-- A rotated PDF might not set `/Rotate 90` or may scramble text.
-- An encrypted PDF might remain readable if encryption fails silently.
-- A converted DOCX or XLSX could produce empty/dummy containers.
+## 2. Objective & Architecture
+Build a **100% pure-Rust, zero-Python modular E2E crate** in `tools/penta-interface-e2e/`.
 
-## 2. Objective & Scope (TEST ONLY — NO BUG FIXES)
-Enhance the test framework in `scripts/test_tri_interface_e2e.py` and provide realistic test fixtures to enforce **independent 3rd-party semantic assertions** across all 44 tools and all 3 developer interfaces (CLI, MCP, REST API = 132 tests), strictly following the specifications in `RealAssertion.md`.
+The suite verifies all **44 tools** across all **5 PaperPilot Interfaces**:
+1. **💻 CLI**: Invoking `target/debug/paperpilot-cli` (or release) subprocess.
+2. **🤖 MCP**: Stdio JSON-RPC 2.0 communication with `target/debug/paperpilot-mcp`.
+3. **🌐 REST API**: Spawning `paperpilot serve --port 7823` in background with `/health` polling.
+4. **⚡ WASM (Browser)**: `WasmPdfEngine.<op>` parity schema and semantic assertion.
+5. **☁️ Cloudflare Edge**: `POST /api/v1/<op>` endpoint parity and semantic assertion.
 
-**CRITICAL RULE**: This is a test verification task. **DO NOT MODIFY APPLICATION CODE** (`paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`). If an existing tool produces output that fails an assertion, the test harness must record the exact failure in the report without modifying the underlying engine.
+### 4-Tier Test Matrix per Tool:
+Every tool must be tested across:
+- **Tier 1 (Simple)**: Minimal valid input (1-2 pages, simple ASCII text).
+- **Tier 2 (Medium)**: Multi-page document with structured layout (5 pages, custom ranges, rotations).
+- **Tier 3 (Complex / Hard)**: Stress test documents (tables, 3-way merges, non-contiguous ranges, unicode).
+- **Negative Case**: Intentionally invalid input asserting non-zero exit code or structured JSON error.
 
-## 3. Architecture & Requirements
+**Total Scope**: 44 tools × 5 interfaces × 4 tiers = **880 verified test executions**.
 
-### A. Realistic Fixtures Generation (`tests/e2e_fixtures/real/`)
-Create or generate the realistic test corpus required by `RealAssertion.md`:
-1. `multi_page.pdf`: 5 pages, each with distinct text marker ("P1", "P2", "P3", "P4", "P5").
-2. `invoice_text.pdf`: 3 pages with structured text, tables, and known search strings.
-3. `with_blank.pdf`: Multi-page document containing text pages, blank pages, and near-blank pages.
-4. `redact_test.pdf`: Document containing exact target strings (e.g., "SECRET 12345") at known coordinates.
-5. `form.pdf`: AcroForm with text input, checkbox, radio button, and dropdown.
-6. `encrypted.pdf`: Password-protected document with known user/owner passwords.
-7. `image_sample.png`: 800x600 test image for `pdf_images_to_pdf`.
+---
 
-### B. Independent Python Verification Library
-The test runner must use standard Python parsing libraries to inspect files independently:
-- `pypdf` (or `pypdf`/`pdfplumber` for text extraction, `/Rotate` validation, encryption status, form fields, AcroForm verification).
-- `openpyxl` for Excel conversions (`pdf_to_xlsx`).
-- `python-docx` for Word conversions (`pdf_to_docx`).
-- `python-pptx` for PowerPoint conversions (`pdf_to_pptx`).
-- Python `hashlib` for SHA-256 validation.
+## 3. Four-Phase Sequential Split (Zero Merge Conflicts)
 
-### C. Complete Semantic Assertions Matrix for All 44 Tools
-1. **Page Operations**:
-   - `pdf_merge`: Page count = sum of inputs; page 1 contains first file text, page 2 contains second file text; merging 3+ files works; order preserved.
-   - `pdf_split`: Page count matches requested split range; text matches expected page markers ("P1".."P5"); invalid range returns error.
-   - `pdf_extract_pages`: Output contains exactly extracted pages; original file untouched; out-of-range errors.
-   - `pdf_delete_pages`: Target page text is absent; remaining pages preserved; deleting all pages returns error.
-   - `pdf_reorder_pages`: Pages follow the requested permutation (e.g. P2, P1, P3, P4, P5); duplicate/missing indices error.
-   - `pdf_rotate`: Target page has `/Rotate` = 90; text remains extractable; rotating twice gives 180; invalid angle errors.
-   - `pdf_crop`: MediaBox/CropBox dimensions equal requested crop rect; page count unchanged.
-   - `pdf_burst`: Produces 1-page individual PDFs sorted in page order matching page count.
-   - `pdf_remove_blank`: Blank page is omitted; near-blank handled; text pages retained in order; CLI and MCP give identical results.
+To prevent session timeouts or context truncation in Jules, the implementation is split into 4 sequential subtasks:
 
-2. **Optimization & Repair**:
-   - `pdf_compress`: File size reduced or bounded; text and page count preserved; low < medium < high quality size progression.
-   - `pdf_repair`: Output parses with `pypdf` without syntax error even when input has damaged/truncated xref.
-   - `pdf_linearize`: Output contains `/Linearized` object dictionary; passes linearization check.
+| Subtask | Scope & Tools | Tests Count | Deliverable |
+|---|---|---|---|
+| **5.9.4A** | **Crate Foundation & Page Operations (9 Tools)**: `pdf_merge`, `pdf_split`, `pdf_extract_pages`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_rotate`, `pdf_crop`, `pdf_burst`, `pdf_remove_blank` | 180 tests | Crate foundation (`tools/penta-interface-e2e`), runner architecture, fixtures generator, lopdf assertions, and 9 page operations cases |
+| **5.9.4B** | **Security, Stamping & Forms (14 Tools)**: `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_sign`, `pdf_hash`, `pdf_watermark`, `pdf_header_footer`, `pdf_bates`, `pdf_page_numbers`, `pdf_annotate`, `pdf_read_form`, `pdf_fill_form`, `pdf_flatten`, `pdf_create_form_field` | 280 tests | `src/cases/security_stamping_forms.rs` |
+| **5.9.4C** | **Extraction, Analysis & Optimization (13 Tools)**: `pdf_compress`, `pdf_repair`, `pdf_linearize`, `pdf_extract_text`, `pdf_extract_images`, `pdf_search`, `pdf_render`, `pdf_compare`, `pdf_metadata`, `pdf_bookmarks`, `pdf_classify_type`, `pdf_validate`, `pdf_ocr` | 260 tests | `src/cases/analysis_optimization.rs` |
+| **5.9.4D** | **Conversions & Unified Scorecard Report (8 Tools)**: `pdf_images_to_pdf`, `pdf_to_pdf_a`, `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel` | 160 tests | `src/cases/conversions.rs` + Unified 880-test Markdown scorecard in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` |
 
-3. **Security**:
-   - `pdf_encrypt`: Opening without password fails; opening with wrong password fails; opening with correct password succeeds; `/Encrypt` dictionary present.
-   - `pdf_decrypt`: Decrypted file opens without password; `/Encrypt` absent; page count and text match original; wrong password returns error.
-   - `pdf_redact`: Target string (`SECRET 12345`) is **completely absent** from extracted text and raw content streams; black box present.
-   - `pdf_sign`: Output contains `/Sig` with `/ByteRange`; signer name matches certificate; wrong password errors.
-   - `pdf_hash`: Consistent SHA-256 hash output; changing 1 byte produces different hash; matches `sha256sum`.
+---
 
-4. **Stamping & Numbering**:
-   - `pdf_watermark`: Extracted text on every target page contains watermark string; original text still present.
-   - `pdf_header_footer`: Header text appears at top region, footer at bottom region; page count unchanged.
-   - `pdf_bates`: Sequential Bates numbers present (e.g., `CONF-000001` to `CONF-000005`); output differs from header_footer.
-   - `pdf_page_numbers`: Formatted page numbers appear on each page in requested position; format `{page}/{total}` respected.
-   - `pdf_annotate`: Output contains `/Annots` with `/Highlight` at given coordinates; color and comment text present.
+## 4. Crate Architecture (`tools/penta-interface-e2e`)
 
-5. **Forms**:
-   - `pdf_read_form`: Reads all field names, types, and values correctly; PDF with no form returns empty list.
-   - `pdf_fill_form`: Re-reading with `pypdf` confirms newly filled values; unicode text preserved; CLI and MCP match.
-   - `pdf_flatten`: AcroForm field count becomes 0; text remains visible on page; page count unchanged.
-   - `pdf_create_form_field`: New field appears in `read_form` with correct name, type, and rect; field is fillable.
+```
+tools/penta-interface-e2e/
+├── Cargo.toml
+└── src/
+    ├── main.rs                   # CLI runner & Markdown report generator
+    ├── runner/
+    │   ├── mod.rs                # Runner traits & types (ExecutionResult, InterfaceType)
+    │   ├── cli.rs                # Executes paperpilot-cli binary with args
+    │   ├── mcp.rs                # Spawns paperpilot-mcp stdio, sends JSON-RPC 2.0 tools/call
+    │   ├── api.rs                # Spawns Gateway, polls /health, executes reqwest calls
+    │   └── targets.rs            # WASM & Cloudflare Edge schema & parity metadata
+    ├── fixtures/
+    │   ├── mod.rs                # Programmatic fixture manager & generator
+    │   ├── pdf.rs                # Generates minimal, multi-page, formatted PDFs (lopdf / raw bytes)
+    │   └── office.rs             # Generates test CSV, HTML, Markdown, image fixtures
+    ├── assertions/
+    │   ├── mod.rs                # AssertionEngine trait & dispatcher
+    │   ├── pdf.rs                # Deep PDF assertions: page count, extract text per page, rotation, bates, encrypt
+    │   ├── image.rs              # Image dimensions, format magic bytes
+    │   └── json.rs               # Schema, field existence, hash comparison
+    └── cases/
+        ├── mod.rs                # Registry of all 44 tools (ToolTestCase trait)
+        ├── page_ops.rs           # (Part A) 9 tools
+        ├── security_forms.rs     # (Part B) 14 tools
+        ├── analysis.rs           # (Part C) 13 tools
+        └── conversions.rs        # (Part D) 8 tools
+```
 
-6. **Extraction & Analysis**:
-   - `pdf_extract_text`: Extracted text matches known strings in reading order; table layout not scrambled; unicode preserved.
-   - `pdf_extract_images`: Exactly extracted image count; each decodes as valid PNG/JPEG; dimensions match originals.
-   - `pdf_search`: Returns correct hit counts, coordinates inside page, and page indices for target words.
-   - `pdf_render`: Produces valid non-solid PNG matching scaled dimensions; file size > 5KB for text page.
-   - `pdf_compare`: Same file returns "no differences"; different files list differing pages and text.
-   - `pdf_metadata`: Returns accurate Title, Author, and creation metadata; reads metadata and never writes.
-   - `pdf_bookmarks`: Returns correct outline hierarchy, titles, and target pages; empty doc returns empty list.
-   - `pdf_classify_type`: Correctly classifies "text", "scanned/image", or "form".
-   - `pdf_validate`: Valid file returns valid; corrupt file returns invalid with specific error message.
-   - `pdf_ocr`: Output has a text layer containing scanned strings (e.g., invoice total); visual appearance preserved.
-
-7. **Conversions**:
-   - `pdf_images_to_pdf`: Produces valid PDF with page count matching image count; image aspect ratio preserved.
-   - `pdf_to_pdf_a`: Output contains PDF/A identification in XMP metadata; no `/Encrypt`; text preserved.
-   - `pdf_to_docx`: Output opens with `docx` package and contains target heading and table text.
-   - `pdf_to_xlsx`: Output opens with `openpyxl` and cell values match numbers accurately.
-   - `pdf_to_pptx`: Slide count = page count; each slide contains text/image; opens in `python-pptx`.
-   - `pdf_convert_html`: Output PDF contains HTML headings and text; CSS styling respected.
-   - `pdf_convert_markdown`: Output PDF contains Markdown headings, lists, code, and table text.
-   - `pdf_convert_excel`: Output PDF contains table rows; columns not cut off.
-
-## 4. Deliverables
-1. `scripts/generate_real_fixtures.py` (Script to generate the required realistic fixtures).
-2. `scripts/test_tri_interface_e2e.py` (Enhanced with independent semantic assertions and detailed reporting).
-3. `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` (The comprehensive execution report with assertion-level breakdowns and failure analysis).
-4. `wiki/25-Real-Assertions-Verification.md` (Knowledge wiki documenting the real assertions architecture).
+## 5. Strict Verification Rules
+1. **Test-Only Rule**: Never edit `paperpilot-*` engine crates.
+2. **Input Immutability**: All inputs must retain identical SHA-256 after tool runs.
+3. **Output Non-Identity**: Output SHA-256 must not match input SHA-256 (never hash output path before running).
+4. **No Lazy Bypasses**: Validate exact extracted text and attributes per page; zero `pass` blocks.

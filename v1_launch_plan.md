@@ -9,6 +9,7 @@
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
 | **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Web & Embed Test Coverage | [Spec 030](file:///home/krushna/Project/PaperPilot/specs/030-web-and-embed-batch-unit-tests/spec.md) | Dedicated Playwright unit test suite for interactive embed configuration panels, page range inputs, and web WASM multi-file batch execution queue. | ⏳ **In Flight** ([Jules Session 236392176878863235](https://jules.google.com/session/236392176878863235)) |
+| **5.9.4A** | Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops | Multi-Surface Parity (180 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Create `tools/penta-interface-e2e` crate, runner architecture, programmatic fixtures, lopdf assertions, and execute 4 tiers (Simple, Medium, Complex, Negative) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) for 9 page operations. | 📋 **Pending Dispatch** |
 
 ---
 
