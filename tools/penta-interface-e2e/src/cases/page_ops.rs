@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use serde_json::json;
 use anyhow::Result;
 use crate::runner::{
@@ -152,7 +152,7 @@ pub async fn run_page_ops_suite() -> Result<Vec<TestExecutionResult>> {
     // Negative: missing input file
     {
         let out_path = out_dir.join("merge_cli_neg.pdf");
-        let (success, out_msg, latency) = CliRunner::run(&[
+        let (success, _out_msg, latency) = CliRunner::run(&[
             "merge",
             "--input", "tests/e2e_fixtures/real/missing_file.pdf", "tests/e2e_fixtures/real/merge_a.pdf",
             "--output", out_path.to_str().unwrap(),

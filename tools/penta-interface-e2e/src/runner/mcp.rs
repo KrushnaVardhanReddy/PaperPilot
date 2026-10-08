@@ -1,6 +1,6 @@
 use std::process::Stdio;
 use tokio::process::Command;
-use tokio::io::{AsyncWriteExt, AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncWriteExt, AsyncBufReadExt};
 use std::time::Instant;
 use serde_json::{json, Value};
 use anyhow::{Result, anyhow};

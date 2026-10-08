@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use lopdf::{
     content::{Content, Operation},
     dictionary, Document, Object, Stream,

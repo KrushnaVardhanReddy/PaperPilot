@@ -17,7 +17,7 @@ impl GatewayServer {
         let bin = super::get_cli_bin();
         let port_str = self.port.to_string();
         let child = Command::new(&bin)
-            .args(&["serve", "--port", &port_str])
+            .args(["serve", "--port", &port_str])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()?;
