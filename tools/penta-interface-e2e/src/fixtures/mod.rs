@@ -1,5 +1,8 @@
 use std::path::{Path, PathBuf};
-use lopdf::{Document, Object, Dictionary};
+use lopdf::{
+    content::{Content, Operation},
+    dictionary, Document, Object, Stream,
+};
 use anyhow::Result;
 
 pub struct FixtureManager {
@@ -26,28 +29,51 @@ impl FixtureManager {
 
     fn create_single_page(&self, filename: &str, text: &str) -> Result<()> {
         let path = self.dir.join(filename);
-        if path.exists() { return Ok(()); }
         let mut doc = Document::with_version("1.5");
         let pages_id = doc.new_object_id();
-        let content_id = doc.add_object(Object::Stream(lopdf::Stream::new(
-            Dictionary::new(),
-            format!("BT /F1 24 Tf 100 700 Td ({}) Tj ET", text).into_bytes(),
-        )));
-        let page_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Type", "Page".into()),
-            ("Parent", pages_id.into()),
-            ("Contents", content_id.into()),
-        ]));
-        let pages = Dictionary::from_iter(vec![
-            ("Type", "Pages".into()),
-            ("Count", 1.into()),
-            ("Kids", vec![page_id.into()].into()),
-        ]);
-        doc.objects.insert(pages_id, Object::Dictionary(pages));
-        let catalog_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Type", "Catalog".into()),
-            ("Pages", pages_id.into()),
-        ]));
+        let font_id = doc.add_object(dictionary! {
+            "Type" => "Font",
+            "Subtype" => "Type1",
+            "BaseFont" => "Helvetica",
+        });
+
+        let content = Content {
+            operations: vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["F1".into(), 24.into()]),
+                Operation::new("Td", vec![50.into(), 700.into()]),
+                Operation::new("Tj", vec![Object::string_literal(text)]),
+                Operation::new("ET", vec![]),
+            ],
+        };
+        let content_bytes = content.encode().unwrap();
+        let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
+
+        let page_id = doc.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+            "Contents" => content_id,
+            "Resources" => dictionary! {
+                "Font" => dictionary! {
+                    "F1" => font_id,
+                }
+            }
+        });
+
+        doc.objects.insert(
+            pages_id,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages",
+                "Kids" => vec![page_id.into()],
+                "Count" => 1,
+            }),
+        );
+
+        let catalog_id = doc.add_object(dictionary! {
+            "Type" => "Catalog",
+            "Pages" => pages_id,
+        });
         doc.trailer.set("Root", catalog_id);
         doc.save(path)?;
         Ok(())
@@ -55,34 +81,57 @@ impl FixtureManager {
 
     fn create_multi_page(&self, filename: &str, num_pages: usize) -> Result<()> {
         let path = self.dir.join(filename);
-        if path.exists() { return Ok(()); }
         let mut doc = Document::with_version("1.5");
         let pages_id = doc.new_object_id();
+        let font_id = doc.add_object(dictionary! {
+            "Type" => "Font",
+            "Subtype" => "Type1",
+            "BaseFont" => "Helvetica",
+        });
+
         let mut page_ids = Vec::new();
 
         for i in 1..=num_pages {
-            let content_id = doc.add_object(Object::Stream(lopdf::Stream::new(
-                Dictionary::new(),
-                format!("BT /F1 24 Tf 100 700 Td (PAGE_TEXT_P{}) Tj ET", i).into_bytes(),
-            )));
-            let page_id = doc.add_object(Dictionary::from_iter(vec![
-                ("Type", "Page".into()),
-                ("Parent", pages_id.into()),
-                ("Contents", content_id.into()),
-            ]));
+            let text = format!("PAGE_TEXT_P{}", i);
+            let content = Content {
+                operations: vec![
+                    Operation::new("BT", vec![]),
+                    Operation::new("Tf", vec!["F1".into(), 24.into()]),
+                    Operation::new("Td", vec![50.into(), 700.into()]),
+                    Operation::new("Tj", vec![Object::string_literal(text)]),
+                    Operation::new("ET", vec![]),
+                ],
+            };
+            let content_bytes = content.encode().unwrap();
+            let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
+
+            let page_id = doc.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+                "Contents" => content_id,
+                "Resources" => dictionary! {
+                    "Font" => dictionary! {
+                        "F1" => font_id,
+                    }
+                }
+            });
             page_ids.push(page_id.into());
         }
 
-        let pages = Dictionary::from_iter(vec![
-            ("Type", "Pages".into()),
-            ("Count", (num_pages as i64).into()),
-            ("Kids", page_ids.into()),
-        ]);
-        doc.objects.insert(pages_id, Object::Dictionary(pages));
-        let catalog_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Type", "Catalog".into()),
-            ("Pages", pages_id.into()),
-        ]));
+        doc.objects.insert(
+            pages_id,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages",
+                "Kids" => page_ids,
+                "Count" => num_pages as i64,
+            }),
+        );
+
+        let catalog_id = doc.add_object(dictionary! {
+            "Type" => "Catalog",
+            "Pages" => pages_id,
+        });
         doc.trailer.set("Root", catalog_id);
         doc.save(path)?;
         Ok(())
