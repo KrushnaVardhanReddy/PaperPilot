@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = ["onnx"]
-onnx = ["dep:ort", "dep:tokenizers", "dep:zstd", "dep:ndarray", "ort/ndarray", "dep:serde_json"]
+default = ["rten-inference"]
+rten-inference = ["dep:rten", "dep:rten-tensor", "dep:tokenizers", "dep:zstd", "dep:serde_json"]
+onnx = ["rten-inference"] # Backward-compatible feature alias for existing callers
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -14,14 +15,15 @@ lazy_static = "1.5.0"
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
 regex = "1.13.1"
 thiserror = "2.0.21"
-
-ort = { version = "2.0.0-rc.9", default-features = false, features = ["copy-dylibs", "download-binaries", "tls-rustls"], optional = true }
-tokenizers = { version = "0.21.0", default-features = false, features = ["onig"], optional = true }
-zstd = { version = "0.13.2", optional = true }
-ndarray = { version = "0.17.2", optional = true }
-serde_json = { version = "1.0.151", optional = true }
 itertools = "0.15.0"
 rust-stemmers = "1.2.0"
+
+# Pure-Rust SIMD Tensor Engine
+rten = { version = "0.21", optional = true }
+rten-tensor = { version = "0.21", optional = true }
+tokenizers = { version = "0.21.0", default-features = false, features = ["onig"], optional = true }
+zstd = { version = "0.13.2", optional = true }
+serde_json = { version = "1.0.151", optional = true }
 
 [dev-dependencies]
 paperpilot-mcp = { path = "../paperpilot-mcp" }

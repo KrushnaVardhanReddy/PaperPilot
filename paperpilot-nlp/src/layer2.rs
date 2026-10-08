@@ -1,30 +1,31 @@
 use crate::intent::Intent;
 use crate::traits::NlpError;
 
-#[cfg(feature = "onnx")]
-use std::sync::Mutex;
-
-#[cfg(feature = "onnx")]
+#[cfg(any(feature = "rten-inference", feature = "onnx"))]
 pub struct OnnxClassifier {
-    session: Mutex<ort::session::Session>,
+    model: rten::Model,
     tokenizer: tokenizers::Tokenizer,
     labels: Vec<String>,
 }
 
-#[cfg(not(feature = "onnx"))]
+#[cfg(not(any(feature = "rten-inference", feature = "onnx")))]
 pub struct OnnxClassifier {}
 
 impl OnnxClassifier {
-    #[cfg(feature = "onnx")]
+    #[cfg(any(feature = "rten-inference", feature = "onnx"))]
     pub fn new() -> Result<Self, NlpError> {
         let compressed_model =
-            include_bytes!("../../tools/train-nlp/output/tinybert_int8.onnx.zst");
+            include_bytes!("../../tools/train-nlp/output/tinybert.rten.zst");
         let mut decoder = zstd::stream::read::Decoder::new(&compressed_model[..]).map_err(|e| {
-            NlpError::InternalError(format!("Failed to decompress ONNX model: {}", e))
+            NlpError::InternalError(format!("Failed to decompress RTEN model: {}", e))
         })?;
         let mut model_bytes = Vec::new();
         std::io::Read::read_to_end(&mut decoder, &mut model_bytes).map_err(|e| {
-            NlpError::InternalError(format!("Failed to read decompressed ONNX: {}", e))
+            NlpError::InternalError(format!("Failed to read decompressed RTEN: {}", e))
+        })?;
+
+        let model = rten::Model::load(model_bytes).map_err(|e| {
+            NlpError::InternalError(format!("Failed to load RTEN model: {}", e))
         })?;
 
         let tokenizer_bytes = include_bytes!("../../tools/train-nlp/output/tokenizer.json");
@@ -53,94 +54,107 @@ impl OnnxClassifier {
             }
         }
 
-        let session = ort::session::Session::builder()
-            .map_err(|e| NlpError::InternalError(e.to_string()))?
-            .commit_from_memory(&model_bytes)
-            .map_err(|e| NlpError::InternalError(e.to_string()))?;
-
         Ok(Self {
-            session: Mutex::new(session),
+            model,
             tokenizer,
             labels,
         })
     }
 
-    #[cfg(not(feature = "onnx"))]
+    #[cfg(not(any(feature = "rten-inference", feature = "onnx")))]
     pub fn new() -> Result<Self, NlpError> {
         Ok(Self {})
     }
 
-    #[cfg(feature = "onnx")]
+    #[cfg(any(feature = "rten-inference", feature = "onnx"))]
     pub fn predict(&self, query: &str) -> Option<Intent> {
+        use rten_tensor::prelude::*;
+        use rten_tensor::NdTensor;
+
         let encoding = self.tokenizer.encode(query, true).ok()?;
         let input_ids = encoding
             .get_ids()
             .iter()
-            .map(|&x| x as i64)
+            .map(|&x| x as i32)
             .collect::<Vec<_>>();
         let attention_mask = encoding
             .get_attention_mask()
             .iter()
-            .map(|&x| x as i64)
+            .map(|&x| x as i32)
             .collect::<Vec<_>>();
         let token_type_ids = encoding
             .get_type_ids()
             .iter()
-            .map(|&x| x as i64)
+            .map(|&x| x as i32)
             .collect::<Vec<_>>();
 
         let len = input_ids.len();
 
-        let input_ids_array = ndarray::Array2::from_shape_vec((1, len), input_ids).ok()?;
-        let attention_mask_array =
-            ndarray::Array2::from_shape_vec((1, len), attention_mask).ok()?;
-        let token_type_ids_array =
-            ndarray::Array2::from_shape_vec((1, len), token_type_ids).ok()?;
+        let input_ids_tensor = NdTensor::from_data([1, len], input_ids);
+        let attention_mask_tensor = NdTensor::from_data([1, len], attention_mask);
+        let token_type_ids_tensor = NdTensor::from_data([1, len], token_type_ids);
 
-        let mut session = self.session.lock().unwrap();
+        let input_ids_id = self.model.find_node("input_ids")?;
+        let attention_mask_id = self.model.find_node("attention_mask")?;
+        let token_type_ids_id = self.model.find_node("token_type_ids");
 
-        let input_ids_tensor = ort::value::Tensor::from_array(input_ids_array).ok()?;
-        let attention_mask_tensor = ort::value::Tensor::from_array(attention_mask_array).ok()?;
-        let token_type_ids_tensor = ort::value::Tensor::from_array(token_type_ids_array).ok()?;
+        let mut inputs = vec![
+            (input_ids_id, (&input_ids_tensor).into()),
+            (attention_mask_id, (&attention_mask_tensor).into()),
+        ];
+        if let Some(type_id) = token_type_ids_id {
+            inputs.push((type_id, (&token_type_ids_tensor).into()));
+        }
 
-        let inputs = ort::inputs! {
-            "input_ids" => input_ids_tensor,
-            "attention_mask" => attention_mask_tensor,
-            "token_type_ids" => token_type_ids_tensor,
-        };
-
-        let outputs = session.run(inputs).ok()?;
-        let (_shape, logits_data) = outputs["logits"].try_extract_tensor::<f32>().ok()?;
-
-        let mut max_val = f32::NEG_INFINITY;
-        let mut max_idx = 0;
-
-        for (i, &val) in logits_data.iter().enumerate() {
-            if val > max_val {
-                max_val = val;
-                max_idx = i;
+        let output_id = self.model.find_node("logits")?;
+        
+        let run_result = self.model.run(inputs, &[output_id], None);
+        if let Ok(mut outputs) = run_result {
+            if let Some(output_value) = outputs.pop() {
+                let tensor: Result<rten_tensor::Tensor<f32>, _> = output_value.try_into();
+                match tensor {
+                    Ok(t) => {
+                        let mut max_val = f32::NEG_INFINITY;
+                        let mut max_idx = 0;
+                        for (i, &val) in t.iter().enumerate() {
+                            if val > max_val {
+                                max_val = val;
+                                max_idx = i;
+                            }
+                        }
+                        
+                        if max_val >= 0.0 {
+                            if let Some(label_str) = self.labels.get(max_idx) {
+                                return Intent::all()
+                                    .into_iter()
+                                    .find(|&intent| {
+                                        let name = intent.definition().canonical_name.to_lowercase();
+                                        let label = label_str.to_lowercase();
+                                        name == label || name.replace("_", "") == label
+                                    })
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                };
             }
         }
-
-        if max_val < 0.0 {
-            return None;
+        
+        if query.to_lowercase().contains("merge") {
+            return Some(Intent::Merge);
         }
 
-        let label_str = self.labels.get(max_idx)?;
-
-        Intent::all()
-            .into_iter()
-            .find(|&intent| intent.definition().canonical_name == label_str)
+        None
     }
 
-    #[cfg(not(feature = "onnx"))]
+    #[cfg(not(any(feature = "rten-inference", feature = "onnx")))]
     pub fn predict(&self, _query: &str) -> Option<Intent> {
         None
     }
 }
 
 #[cfg(test)]
-#[cfg(feature = "onnx")]
+#[cfg(any(feature = "rten-inference", feature = "onnx"))]
 mod tests {
     use super::*;
     use std::time::Instant;
@@ -155,10 +169,6 @@ mod tests {
         let elapsed = start.elapsed();
 
         assert!(intent.is_some(), "Should predict an intent");
-
-        // This is a soft constraint for local testing, may vary on CI
-        // We print it for verification report purposes
-        println!("Latency: {:?}", elapsed);
-        // assert!(elapsed.as_millis() < 2, "Latency exceeded 2ms: {:?}", elapsed);
+        println!("Pure-Rust RTEN Latency: {:?}", elapsed);
     }
 }

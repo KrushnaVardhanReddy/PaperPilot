@@ -6,3 +6,10 @@ members = [
     "tools/make-fixtures"
 , "paperpilot-nlp", "tools/gen-e2e-fixtures", "paperpilot-gateway", "paperpilot-wasm"]
 resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
