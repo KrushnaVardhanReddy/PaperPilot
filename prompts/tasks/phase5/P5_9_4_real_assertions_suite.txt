@@ -38,12 +38,58 @@ In the report table, every tool's **"Specific Assertion Checked"**, **"Expected 
 ---
 
 ## 1. Test Harness Reliability Requirements (Must Fix First!)
-1. **Gateway Server Health Polling (Fixes 0/44 API Connection Refused)**:
-   In `GatewayServer.start()`, do NOT just do `time.sleep(2)`. Instead, poll `http://127.0.0.1:7823/health` in a loop every 0.2s for up to 15 seconds until it returns HTTP 200 before running the API tests.
-2. **Absolute Output Paths (Fixes File Not Found)**:
-   Always ensure `OUT_DIR` is created before running tools (`os.makedirs(OUT_DIR, exist_ok=True)`). Always use absolute paths for `--output`, `mcp_args["output"]`, and `api_payload["output"]`.
-3. **Required Python Libraries**:
-   Ensure `pypdf`, `openpyxl`, `python-docx`, and `python-pptx` are installed and utilized.
+
+### A. Gateway Server Health Polling (Fixes 0/44 API Connection Refused)
+Do NOT use a static `time.sleep(2)`. In `GatewayServer.start()`, poll `http://127.0.0.1:7823/health` with a loop until the server is ready:
+```python
+class GatewayServer:
+    def __init__(self):
+        self.process = None
+
+    def start(self):
+        print("Starting paperpilot-gateway...")
+        # Ensure CLI binary exists before spawning
+        if not os.path.exists(CLI_BIN):
+            subprocess.run(["cargo", "build", "-p", "paperpilot-cli"], check=True)
+            
+        self.process = subprocess.Popen(
+            [CLI_BIN, "serve", "--port", "7823"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        
+        # Poll /health endpoint for up to 15 seconds
+        start_wait = time.time()
+        while time.time() - start_wait < 15:
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:7823/health", timeout=1) as resp:
+                    if resp.status == 200:
+                        print("Gateway server is healthy and responding on :7823.")
+                        return
+            except Exception:
+                time.sleep(0.3)
+        raise RuntimeError("Gateway server failed to start on port 7823 within 15 seconds")
+```
+
+### B. Output Paths & Directory Creation (Fixes "File not found")
+1. Ensure the output directory exists before any tool is run:
+   ```python
+   OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tests", "e2e_fixtures", "out", "tri_e2e"))
+   os.makedirs(OUT_DIR, exist_ok=True)
+   ```
+2. When constructing paths, ALWAYS use `os.path.abspath`:
+   ```python
+   out_file_cli = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_cli.pdf"))
+   out_file_mcp = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_mcp.pdf"))
+   out_file_api = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_api.pdf"))
+   ```
+   Do NOT hardcode `/app/` or relative path strings that fail if CWD changes.
+
+### C. Required Python Libraries
+Install and verify 3rd-party validation packages in the environment:
+```bash
+pip install pypdf openpyxl python-docx python-pptx reportlab Pillow
+```
 
 ---
 
