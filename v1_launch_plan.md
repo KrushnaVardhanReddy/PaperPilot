@@ -9,7 +9,10 @@
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
 | **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Web & Embed Test Coverage | [Spec 030](file:///home/krushna/Project/PaperPilot/specs/030-web-and-embed-batch-unit-tests/spec.md) | Dedicated Playwright unit test suite for interactive embed configuration panels, page range inputs, and web WASM multi-file batch execution queue. | ⏳ **In Flight** ([Jules Session 236392176878863235](https://jules.google.com/session/236392176878863235)) |
-| **5.9.4A** | Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops | Multi-Surface Parity (180 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Create `tools/penta-interface-e2e` crate, runner architecture, programmatic fixtures, lopdf assertions, and execute 4 tiers (Simple, Medium, Complex, Negative) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) for 9 page operations. | 📋 **Pending Dispatch** |
+| **5.9.4A** | Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops | Multi-Surface Parity (180 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | `tools/penta-interface-e2e` crate foundation verified (20/20 `pdf_merge`). Executing 4 tiers (Simple, Medium, Complex, Negative) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) for remaining 8 page operations. | ⏳ **In Flight** ([Jules Session 10267474871153892002](https://jules.google.com/session/10267474871153892002)) |
+| **5.9.4B** | Rust-Native Penta-Interface Real Semantic Assertions: Security, Stamping & Forms | Multi-Surface Parity (280 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for encryption, redaction, signatures, hashing, watermarks, Bates, headers/footers, and AcroForms. | ⏳ **In Flight** ([Jules Session 11331400509707880947](https://jules.google.com/session/11331400509707880947)) |
+| **5.9.4C** | Rust-Native Penta-Interface Real Semantic Assertions: Extraction, Analysis & Optimization | Multi-Surface Parity (260 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for compression, repair, linearization, text/image extraction, search, render, metadata, bookmarks, and OCR. | ⏳ **In Flight** ([Jules Session 14159183327554136937](https://jules.google.com/session/14159183327554136937)) |
+| **5.9.4D** | Rust-Native Penta-Interface Real Semantic Assertions: Conversions & Master Scorecard | Multi-Surface Parity (160 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for Office (DOCX, XLSX, PPTX) and markup conversions, compiling final master 880-test scorecard in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md`. | ⏳ **In Flight** ([Jules Session 898803185132269358](https://jules.google.com/session/898803185132269358)) |
 
 ---
 
@@ -54,4 +57,4 @@
 
 ---
 
-*Last updated: 2026-10-07 (Task 5.9.1 Desktop Binary Optimization Merged [35MB, pure-Rust rten], Spec 030 Active)*
+*Last updated: 2026-10-08 (Tasks 5.9.4A–D Penta-Interface 880-Test Real Assertions Suite Dispatched in Parallel, Spec 031)*
