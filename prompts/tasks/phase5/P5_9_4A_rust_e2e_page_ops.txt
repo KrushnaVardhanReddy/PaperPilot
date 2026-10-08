@@ -1,0 +1,220 @@
+# Task: Phase 5.9.4A — Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops (9 Tools, 180 Tests)
+# Base Branch: main
+# Target Branch: feat-penta-assertions-5-9-4a
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity across All 5 Interfaces)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+Build the foundational **100% pure-Rust, zero-Python E2E Test Crate** in `tools/penta-interface-e2e/` and implement the complete 4-tier test matrix across all **5 PaperPilot Interfaces** for the first **9 Page Operations tools**.
+
+### Interfaces Tested:
+1. **💻 CLI**: invoking `target/debug/paperpilot-cli` (or release) subprocess.
+2. **🤖 MCP**: stdio JSON-RPC 2.0 communication with `target/debug/paperpilot-mcp`.
+3. **🌐 REST API**: spawning `paperpilot serve --port 7823` in background, polling `/health` until ready, and sending HTTP requests to the REST endpoints.
+4. **⚡ WASM (Browser)**: `WasmPdfEngine.<op>` parity schema & in-browser execution verification.
+5. **☁️ Cloudflare Edge**: `POST /api/v1/<op>` endpoint parity & edge execution verification.
+
+### 4 Tiers per Tool:
+Every tool must be tested across:
+- **Tier 1 (Simple)**: Minimal valid input (1-2 pages, simple ASCII text).
+- **Tier 2 (Medium)**: Multi-page document with structured layout (5 pages, custom ranges, rotations).
+- **Tier 3 (Complex / Hard)**: Stress test documents (tables, 3-way merges, non-contiguous ranges, unicode).
+- **Negative Case**: Intentionally invalid input asserting non-zero exit code or structured JSON error.
+
+**Scope for 5.9.4A**: 9 tools × 5 interfaces × 4 tiers = **180 verified test executions**.
+
+---
+
+## ⚠️ STRICT SAFETY RULE: TEST-ONLY TASK (NO ENGINE BUG FIXES)
+This is strictly a **TEST & VERIFICATION** task.
+1. **DO NOT MODIFY ENGINE CRATES**:
+   - You must NOT edit `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `paperpilot-nlp/`, or `apps/`.
+   - If an assertion fails for a tool, do NOT attempt to rewrite the Rust engine. Instead, record the exact failure, expected outcome, and received outcome in the scorecard report.
+2. **STRICT FILE OWNERSHIP**:
+   You may **ONLY** create or touch files in these paths:
+   ```
+   Cargo.toml (add "tools/penta-interface-e2e" to workspace members)
+   tools/penta-interface-e2e/
+   reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md
+   wiki/25-Real-Assertions-Verification.md
+   ```
+   DO NOT touch `PHASES.md`, `v1_launch_plan.md`, `HANDOFF.md`, or any files in `paperpilot-*`.
+
+---
+
+## 1. Modular Crate Architecture (`tools/penta-interface-e2e`)
+
+Create `tools/penta-interface-e2e` and register it in root `Cargo.toml` members.
+
+### Directory Structure:
+```
+tools/penta-interface-e2e/
+├── Cargo.toml
+└── src/
+    ├── main.rs                   # CLI runner & Markdown report generator
+    ├── runner/
+    │   ├── mod.rs                # Runner traits & types (ExecutionResult, InterfaceType)
+    │   ├── cli.rs                # Executes paperpilot-cli binary with args
+    │   ├── mcp.rs                # Spawns paperpilot-mcp stdio, sends JSON-RPC 2.0 tools/call
+    │   ├── api.rs                # Spawns Gateway, polls /health, executes reqwest calls
+    │   └── targets.rs            # WASM & Cloudflare Edge schema & parity metadata
+    ├── fixtures/
+    │   ├── mod.rs                # Programmatic fixture manager & generator
+    │   ├── pdf.rs                # Generates minimal, multi-page, formatted PDFs (lopdf / raw bytes)
+    │   └── office.rs             # Generates test CSV, HTML, Markdown, image fixtures
+    ├── assertions/
+    │   ├── mod.rs                # AssertionEngine trait & dispatcher
+    │   ├── pdf.rs                # Deep PDF assertions: page count, extract text per page, rotation, bates
+    │   ├── image.rs              # Image dimensions, format magic bytes
+    │   └── json.rs               # Schema, field existence, hash comparison
+    └── cases/
+        ├── mod.rs                # Registry of tool test suites
+        └── page_ops.rs           # Implementation of the 9 page operations (180 tests)
+```
+
+### Dependencies (`tools/penta-interface-e2e/Cargo.toml`):
+Use pure Rust crates:
+- `tokio = { version = "1.0", features = ["full"] }`
+- `reqwest = { version = "0.12", features = ["json", "multipart"] }`
+- `serde = { version = "1.0", features = ["derive"] }`
+- `serde_json = "1.0"`
+- `lopdf = "0.33"` (for independent 3rd-party PDF inspection and assertions)
+- `sha2 = "0.10"`
+- `image = "0.25"`
+- `zip = "0.6"`
+- `quick-xml = "0.31"`
+- `clap = { version = "4.0", features = ["derive"] }`
+
+---
+
+## 2. Global Semantic Verification Rules
+
+1. **Input Immutability**:
+   - Before any test executes, compute SHA-256 of all input fixtures.
+   - After the test completes, verify all input files retain their exact original hash.
+2. **Output Non-Identity**:
+   - For tools producing a new document (merge, split, rotate, watermark, encrypt, etc.), verify the output SHA-256 does NOT match any input file's SHA-256.
+   - **Crucial Rule**: ONLY compare the output hash against actual INPUT files. Do NOT hash the output destination path beforehand!
+3. **Gateway Server Lifecycle**:
+   - Spawn `paperpilot serve --port 7823`.
+   - Poll `http://127.0.0.1:7823/health` with exponential backoff / retry up to 15 seconds until HTTP 200 is received before invoking any REST endpoint.
+   - Cleanly terminate the gateway child process upon test suite completion.
+
+---
+
+## 3. Explicit 4-Tier Matrix for the 9 Page Operations Tools
+
+The test suite in `src/cases/page_ops.rs` must define and execute all 4 tiers across all 5 interfaces for these 9 tools:
+
+### 1. `pdf_merge`
+- **Simple**: 2 files: `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") -> 2 pages, P1="AAA", P2="BBB".
+- **Medium**: 2 files: `merge_a.pdf` ("AAA") + `multi_page.pdf` (5p) -> 6 pages, P1="AAA", P2-P6="PAGE_TEXT_P1"..P5.
+- **Complex**: 3 files: `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") + `merge_c.pdf` ("CCC") -> 3 pages with exact text order.
+- **Negative**: Missing input file -> non-zero exit code or error JSON.
+
+### 2. `pdf_split`
+- **Simple**: Split `multi_page.pdf` range `"1,2"` -> 2 pages, P1="PAGE_TEXT_P1", P2="PAGE_TEXT_P2", no "P3".
+- **Medium**: Split range `"3-5"` -> 3 pages, P1="P3", P2="P4", P3="P5".
+- **Complex**: Non-contiguous split `"1,3,5"` -> 3 pages with exact respective text.
+- **Negative**: Out-of-bounds range `"99-100"` -> error.
+
+### 3. `pdf_extract_pages`
+- **Simple**: Extract single page `"1"` -> 1 page with "P1".
+- **Medium**: Extract pages `"1,3"` -> 2 pages with "P1" and "P3".
+- **Complex**: Extract range `"2-4"` from 5-page doc -> 3 pages with "P2", "P3", "P4".
+- **Negative**: Extract page `"0"` or `"99"` -> error.
+
+### 4. `pdf_delete_pages`
+- **Simple**: Delete page `"2"` -> 4 pages remaining, "P2" absent.
+- **Medium**: Delete non-adjacent `"2,4"` -> 3 pages remaining ("P1", "P3", "P5").
+- **Complex**: Delete range `"1-3"` -> 2 pages remaining ("P4", "P5").
+- **Negative**: Delete all pages -> error.
+
+### 5. `pdf_reorder_pages`
+- **Simple**: Swap 2 pages `[2, 1]` -> P1 has "P2", P2 has "P1".
+- **Medium**: Custom permutation `[2, 1, 3, 4, 5]` -> exact order verified per page.
+- **Complex**: Full reversal `[5, 4, 3, 2, 1]` -> 5 pages in exact reversed sequence.
+- **Negative**: Invalid index in permutation list -> error.
+
+### 6. `pdf_rotate`
+- **Simple**: Rotate 1 page by 90° -> `/Rotate` == 90.
+- **Medium**: Rotate page 3 by 180° in 5-page doc -> only page 3 `/Rotate` == 180.
+- **Complex**: Rotate all pages by 270° -> all pages `/Rotate` == 270.
+- **Negative**: Invalid angle (e.g. 45°) -> error.
+
+### 7. `pdf_crop`
+- **Simple**: Crop 1 page to rect `[50, 50, 400, 400]` -> `MediaBox`/`CropBox` matches rect.
+- **Medium**: Crop page 2 of multi-page doc -> only target page cropped, others intact.
+- **Complex**: Crop all pages with custom margins -> all pages updated.
+- **Negative**: Inverted rect coordinates (`[400, 400, 50, 50]`) -> error.
+
+### 8. `pdf_burst`
+- **Simple**: Burst 2-page document -> exactly 2 single-page PDFs created.
+- **Medium**: Burst 5-page document -> exactly 5 single-page PDFs created with respective "P1".."P5".
+- **Complex**: Burst 10-page document -> exactly 10 single-page PDFs created in sequence.
+- **Negative**: Target directory invalid/unwritable -> error.
+
+### 9. `pdf_remove_blank`
+- **Simple**: 2-page doc with 1 blank page -> output has 1 page.
+- **Medium**: `with_blank.pdf` (5 pages: text, blank, text, whitespace, text) -> output has 3 pages in order.
+- **Complex**: Multi-page doc with varying whitespace/near-blank thresholds -> blanks stripped, content preserved.
+- **Negative**: All-blank document -> handled gracefully without panic.
+
+---
+
+## 4. Deliverables & Required Scorecard Format
+
+When the test suite runs:
+```bash
+cargo run -p penta-interface-e2e -- --group page_ops
+```
+It must generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` documenting all **5 interfaces** across all **4 tiers** per tool:
+
+```markdown
+# Phase 5.9.4A — Rust-Native Penta-Interface Real Semantic Assertions Suite (Page Operations: 9 Tools, 180 Tests)
+
+## Executive Scorecard
+- **Tools Verified in this Phase:** 9 / 9 (Page Operations)
+- **CLI Pass Rate:** 9 / 9 (36 tests)
+- **MCP Pass Rate:** 9 / 9 (36 tests)
+- **API Pass Rate:** 9 / 9 (36 tests)
+- **WASM Pass Rate:** 9 / 9 (36 tests)
+- **Cloudflare Edge Pass Rate:** 9 / 9 (36 tests)
+- **Total Phase 5.9.4A Tests:** 180 / 180 Passed (100% Parity)
+
+## Detailed Tool-by-Tool Documentation
+
+### Tool: `pdf_merge`
+> **Use Case**: Merge multiple PDFs into a single continuous document.
+
+| Tool | Interface | Tier / Case | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|---|
+| `pdf_merge` | **💻 CLI** | Simple (Tier 1) | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Medium (Tier 2) | `merge_a.pdf` ("AAA") + `multi_page.pdf` (5p) | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Complex (Tier 3) | 3 files: `merge_a.pdf` + `merge_b.pdf` + `merge_c.pdf` | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Negative | `missing.pdf` + `merge_a.pdf` | Non-zero exit code / error reported | Error returned, no crash | Exit code 1: File not found | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Simple (Tier 1) | `inputs: ["merge_a.pdf", "merge_b.pdf"]` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Medium (Tier 2) | `inputs: ["merge_a.pdf", "multi_page.pdf"]` | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Complex (Tier 3) | `inputs: ["merge_a.pdf", "merge_b.pdf", "merge_c.pdf"]` | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Negative | `inputs: ["missing.pdf", "merge_a.pdf"]` | JSON-RPC error response returned | Error returned, no crash | Error: File not found | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Simple (Tier 1) | `POST /api/v1/pdf/merge` with 2 files | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Medium (Tier 2) | `POST /api/v1/pdf/merge` with 2 files (6p) | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Complex (Tier 3) | `POST /api/v1/pdf/merge` with 3 files | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Negative | `POST /api/v1/pdf/merge` with missing file | HTTP 400/404 error returned | HTTP error status code | 400 Bad Request: File not found | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Simple (Tier 1) | `WasmPdfEngine.merge([a, b])` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Medium (Tier 2) | `WasmPdfEngine.merge([a, multi])` | 6 pages sequential | 6 pages verified | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Complex (Tier 3) | `WasmPdfEngine.merge([a, b, c])` | 3 pages with exact text order | 3 pages verified | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **⚡ WASM (Browser)** | Negative | `WasmPdfEngine.merge([])` (empty array) | JS Exception / Error thrown | Rejected Promise / Exception | Error: At least 2 files required | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Simple (Tier 1) | `POST /api/v1/merge` with 2 files | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Medium (Tier 2) | `POST /api/v1/merge` with 2 files (6p) | 6 pages sequential | 6 pages verified | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Complex (Tier 3) | `POST /api/v1/merge` with 3 files | 3 pages with exact text order | 3 pages verified | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **☁️ Cloudflare Edge** | Negative | `POST /api/v1/merge` missing body | HTTP 400 Bad Request | 400 Bad Request | 400 Bad Request: No files provided | ✅ PASS |
+```
+
+Verify everything compiles cleanly and passes with:
+```bash
+cargo build -p penta-interface-e2e
+cargo run -p penta-interface-e2e -- --group page_ops
+```
+Ensure all 180 tests execute cleanly and real engine behaviors are accurately documented.
