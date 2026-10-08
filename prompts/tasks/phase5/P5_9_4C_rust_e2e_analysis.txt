@@ -1,0 +1,55 @@
+# Task: Phase 5.9.4C — Rust-Native Penta-Interface Real Semantic Assertions: Extraction, Analysis & Optimization (13 Tools, 260 Tests)
+# Base Branch: main
+# Target Branch: feat-penta-assertions-5-9-4c
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity across All 5 Interfaces)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+The crate `tools/penta-interface-e2e/` is already initialized on `main`.
+Implement the test cases for the **13 Extraction, Analysis & Optimization tools** in `tools/penta-interface-e2e/src/cases/analysis.rs` across all **5 PaperPilot Interfaces** and all **4 Tiers** (260 tests total):
+1. **💻 CLI**
+2. **🤖 MCP**
+3. **🌐 REST API**
+4. **⚡ WASM (Browser)**
+5. **☁️ Cloudflare Edge**
+
+### Tiers per Tool:
+- Simple (Tier 1)
+- Medium (Tier 2)
+- Complex / Hard (Tier 3)
+- Negative Case
+
+### The 13 Tools:
+1. `pdf_compress`
+2. `pdf_repair`
+3. `pdf_linearize`
+4. `pdf_extract_text`
+5. `pdf_extract_images`
+6. `pdf_search`
+7. `pdf_render`
+8. `pdf_compare`
+9. `pdf_metadata`
+10. `pdf_bookmarks`
+11. `pdf_classify_type`
+12. `pdf_validate`
+13. `pdf_ocr`
+
+---
+
+## ⚠️ STRICT FILE OWNERSHIP (Zero Merge Conflicts Guarantee)
+You may **ONLY** touch or create:
+```
+tools/penta-interface-e2e/src/cases/analysis.rs
+reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md
+```
+DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
+
+---
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e -- --group analysis
+```
+Verify all 260 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md`.

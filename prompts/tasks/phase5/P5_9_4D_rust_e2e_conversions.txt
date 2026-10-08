@@ -1,0 +1,50 @@
+# Task: Phase 5.9.4D — Rust-Native Penta-Interface Real Semantic Assertions: Conversions & Master Unified Report (8 Tools, 160 Tests)
+# Base Branch: main
+# Target Branch: feat-penta-assertions-5-9-4d
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity across All 5 Interfaces)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+The crate `tools/penta-interface-e2e/` is already initialized on `main`.
+Implement the test cases for the **8 Conversions tools** in `tools/penta-interface-e2e/src/cases/conversions.rs` across all **5 PaperPilot Interfaces** and all **4 Tiers** (160 tests total):
+1. **💻 CLI**
+2. **🤖 MCP**
+3. **🌐 REST API**
+4. **⚡ WASM (Browser)**
+5. **☁️ Cloudflare Edge**
+
+### Tiers per Tool:
+- Simple (Tier 1)
+- Medium (Tier 2)
+- Complex / Hard (Tier 3)
+- Negative Case
+
+### The 8 Tools:
+1. `pdf_images_to_pdf`
+2. `pdf_to_pdf_a`
+3. `pdf_to_docx`
+4. `pdf_to_xlsx`
+5. `pdf_to_pptx`
+6. `pdf_convert_html`
+7. `pdf_convert_markdown`
+8. `pdf_convert_excel`
+
+---
+
+## ⚠️ STRICT FILE OWNERSHIP (Zero Merge Conflicts Guarantee)
+You may **ONLY** touch or create:
+```
+tools/penta-interface-e2e/src/cases/conversions.rs
+reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md
+```
+DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
+
+---
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e -- --group conversions
+```
+Verify all 160 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md`.

@@ -1,0 +1,51 @@
+# Task: Phase 5.9.4A — Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops (9 Tools, 180 Tests)
+# Base Branch: main
+# Target Branch: feat-penta-assertions-5-9-4a
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity across All 5 Interfaces)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+The crate `tools/penta-interface-e2e/` is already initialized on `main`.
+Implement the test cases for the **9 Page Operations tools** in `tools/penta-interface-e2e/src/cases/page_ops.rs` across all **5 PaperPilot Interfaces** and all **4 Tiers** (180 tests total):
+1. **💻 CLI**
+2. **🤖 MCP**
+3. **🌐 REST API**
+4. **⚡ WASM (Browser)**
+5. **☁️ Cloudflare Edge**
+
+### Tiers per Tool:
+- Simple (Tier 1)
+- Medium (Tier 2)
+- Complex / Hard (Tier 3)
+- Negative Case
+
+### The 9 Page Operations Tools:
+1. `pdf_merge`
+2. `pdf_split`
+3. `pdf_extract_pages`
+4. `pdf_delete_pages`
+5. `pdf_reorder_pages`
+6. `pdf_rotate`
+7. `pdf_crop`
+8. `pdf_burst`
+9. `pdf_remove_blank`
+
+---
+
+## ⚠️ STRICT FILE OWNERSHIP (Zero Merge Conflicts Guarantee)
+You may **ONLY** touch or create:
+```
+tools/penta-interface-e2e/src/cases/page_ops.rs
+reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md
+```
+DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
+
+---
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e -- --group page_ops
+```
+Verify all 180 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md`.

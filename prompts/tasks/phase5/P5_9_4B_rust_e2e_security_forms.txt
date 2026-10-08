@@ -1,0 +1,56 @@
+# Task: Phase 5.9.4B — Rust-Native Penta-Interface Real Semantic Assertions: Security, Stamping & Forms (14 Tools, 280 Tests)
+# Base Branch: main
+# Target Branch: feat-penta-assertions-5-9-4b
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity across All 5 Interfaces)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+The crate `tools/penta-interface-e2e/` is already initialized on `main`.
+Implement the test cases for the **14 Security, Stamping & Forms tools** in `tools/penta-interface-e2e/src/cases/security_forms.rs` across all **5 PaperPilot Interfaces** and all **4 Tiers** (280 tests total):
+1. **💻 CLI**
+2. **🤖 MCP**
+3. **🌐 REST API**
+4. **⚡ WASM (Browser)**
+5. **☁️ Cloudflare Edge**
+
+### Tiers per Tool:
+- Simple (Tier 1)
+- Medium (Tier 2)
+- Complex / Hard (Tier 3)
+- Negative Case
+
+### The 14 Tools:
+1. `pdf_encrypt`
+2. `pdf_decrypt`
+3. `pdf_redact`
+4. `pdf_sign`
+5. `pdf_hash`
+6. `pdf_watermark`
+7. `pdf_header_footer`
+8. `pdf_bates`
+9. `pdf_page_numbers`
+10. `pdf_annotate`
+11. `pdf_read_form`
+12. `pdf_fill_form`
+13. `pdf_flatten`
+14. `pdf_create_form_field`
+
+---
+
+## ⚠️ STRICT FILE OWNERSHIP (Zero Merge Conflicts Guarantee)
+You may **ONLY** touch or create:
+```
+tools/penta-interface-e2e/src/cases/security_forms.rs
+reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4B.md
+```
+DO NOT touch `Cargo.toml`, other case files, or any engine crates in `paperpilot-*`.
+
+---
+
+## Deliverable
+Run:
+```bash
+cargo run -p penta-interface-e2e -- --group security_forms
+```
+Verify all 280 tests execute cleanly and generate `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4B.md`.
