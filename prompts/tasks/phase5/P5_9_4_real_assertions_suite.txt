@@ -1,300 +1,214 @@
-# Task: Phase 5.9.4 — Real Independent Semantic Assertions Suite (All 44 Tools, 132 Tests)
+# Task: Phase 5.9.4 — Rust-Native Tri-Interface Real Semantic Assertions Suite (`tools/tri-interface-e2e`)
 # Base Branch: main
-# Target Branch: feat-real-assertions-suite
-# Priority: HIGH (Launch Readiness & Real Verification Guarantee)
+# Target Branch: feat-rust-real-assertions-suite
+# Priority: HIGH (Zero-Python Launch Verification & Strict Semantic Parity)
 # Spec: specs/031-real-assertions-suite/spec.md
 # Reference Guide: RealAssertion.md
 
 ## Objective
-Upgrade the Tri-Interface End-to-End test suite (`scripts/test_tri_interface_e2e.py`) to execute **independent, 3rd-party semantic assertions** across all 44 tools and all 3 developer interfaces (CLI, MCP stdio, and Gateway REST API port 7823 = 132 tests total) as specified in `RealAssertion.md`.
+Build and execute a **100% pure-Rust, zero-Python Tri-Interface E2E Test Suite** in `tools/tri-interface-e2e/`.
+
+This crate must execute **independent, rigorous 3rd-party semantic assertions** across all 44 tools and all 3 developer interfaces:
+1. **💻 CLI**: invoking `target/debug/paperpilot-cli` (or release) subprocess.
+2. **🤖 MCP**: stdio JSON-RPC 2.0 communication with `target/debug/paperpilot-mcp`.
+3. **🌐 REST API**: spawning `paperpilot serve --port 7823` in background, polling `/health` until ready, and sending HTTP requests to the REST endpoints.
+
+Every tool must be tested across **3 positive complexity tiers** (Simple, Medium, Complex/Hard) plus a **negative test case**, asserting exact page content, structure, and metadata without any lazy shortcuts.
 
 ---
 
 ## ⚠️ STRICT SAFETY RULE: TEST-ONLY TASK (NO ENGINE BUG FIXES)
 This is strictly a **TEST & VERIFICATION** task.
-1. **DO NOT MODIFY ANY ENGINE SOURCE CODE**:
+1. **DO NOT MODIFY ENGINE CRATES**:
    - You must NOT edit `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `paperpilot-nlp/`, or `apps/`.
    - If an assertion fails for a tool, do NOT attempt to rewrite the Rust engine. Instead, record the exact failure, expected outcome, and received outcome in the scorecard report.
 2. **STRICT FILE OWNERSHIP**:
    You may **ONLY** create or touch files in these paths:
    ```
-   scripts/generate_real_fixtures.py
-   scripts/test_tri_interface_e2e.py
-   tests/e2e_fixtures/real/
+   Cargo.toml (add "tools/tri-interface-e2e" to workspace members)
+   tools/tri-interface-e2e/
    reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md
    wiki/25-Real-Assertions-Verification.md
    ```
-   DO NOT touch `PHASES.md`, `v1_launch_plan.md`, `HANDOFF.md`, or any `.rs` files.
+   DO NOT touch `PHASES.md`, `v1_launch_plan.md`, `HANDOFF.md`, or any files in `paperpilot-*`.
 
 ---
 
-## 🚨 CRITICAL RULE: NO SHORTCUTS & NO LAZY "pass" CHECKS
-In previous runs, you extracted text but placed `pass` instead of actually validating the content, or only checked if a file existed!
-**You MUST strictly validate the exact content inside every single page using `pypdf`, `openpyxl`, `docx`, and `python-pptx`.**
-In the report table, every tool's **"Specific Assertion Checked"**, **"Expected Result"**, and **"Actual / Received Result"** must explicitly declare:
-1. **Input Data Sent**: Exactly what input files and parameters were sent (e.g., `Input: merge_a.pdf ("MERGE_PAGE_AAA") + merge_b.pdf ("MERGE_PAGE_BBB")`).
-2. **Compared Data**: Exactly what text strings and attributes were extracted and compared per page (e.g., `Expected: Page 1 has 'MERGE_PAGE_AAA', Page 2 has 'MERGE_PAGE_BBB'` | `Actual: Page 1: 'MERGE_PAGE_AAA', Page 2: 'MERGE_PAGE_BBB' (2 pages)`).
+## 1. Modular Crate Architecture (`tools/tri-interface-e2e`)
 
----
+Create `tools/tri-interface-e2e` and register it in root `Cargo.toml` members.
 
-## 1. Test Harness Reliability Requirements (Must Fix First!)
-
-### A. Gateway Server Health Polling (Fixes 0/44 API Connection Refused)
-Do NOT use a static `time.sleep(2)`. In `GatewayServer.start()`, poll `http://127.0.0.1:7823/health` with a loop until the server is ready:
-```python
-class GatewayServer:
-    def __init__(self):
-        self.process = None
-
-    def start(self):
-        print("Starting paperpilot-gateway...")
-        # Ensure CLI binary exists before spawning
-        if not os.path.exists(CLI_BIN):
-            subprocess.run(["cargo", "build", "-p", "paperpilot-cli"], check=True)
-            
-        self.process = subprocess.Popen(
-            [CLI_BIN, "serve", "--port", "7823"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        
-        # Poll /health endpoint for up to 15 seconds
-        start_wait = time.time()
-        while time.time() - start_wait < 15:
-            try:
-                with urllib.request.urlopen("http://127.0.0.1:7823/health", timeout=1) as resp:
-                    if resp.status == 200:
-                        print("Gateway server is healthy and responding on :7823.")
-                        return
-            except Exception:
-                time.sleep(0.3)
-        raise RuntimeError("Gateway server failed to start on port 7823 within 15 seconds")
+### Directory Structure:
+```
+tools/tri-interface-e2e/
+├── Cargo.toml
+└── src/
+    ├── main.rs                   # CLI runner & Markdown report generator
+    ├── runner/
+    │   ├── mod.rs                # Runner traits & types (ExecutionResult, InterfaceType)
+    │   ├── cli.rs                # Executes paperpilot-cli binary with args
+    │   ├── mcp.rs                # Spawns paperpilot-mcp stdio, sends JSON-RPC 2.0 tools/call
+    │   └── api.rs                # Spawns Gateway, polls /health, executes reqwest calls
+    ├── fixtures/
+    │   ├── mod.rs                # Programmatic fixture manager & generator
+    │   ├── pdf.rs                # Generates minimal, multi-page, formatted PDFs (lopdf / raw bytes)
+    │   └── office.rs             # Generates test CSV, HTML, Markdown, image fixtures
+    ├── assertions/
+    │   ├── mod.rs                # AssertionEngine trait & dispatcher
+    │   ├── pdf.rs                # Deep PDF assertions: page count, extract text per page, rotation, bates, encrypt
+    │   ├── image.rs              # Image dimensions, format magic bytes
+    │   └── json.rs               # Schema, field existence, hash comparison
+    └── cases/
+        ├── mod.rs                # Registry of all 44 tools (ToolTestCase trait)
+        ├── page_ops.rs           # pdf_merge, pdf_split, extract, delete, reorder, rotate, crop, burst, blank
+        ├── security.rs           # pdf_encrypt, decrypt, redact, sign, hash
+        ├── forms.rs              # read_form, fill_form, flatten, create_form_field
+        ├── analysis.rs           # extract_text, extract_images, search, render, compare, metadata, etc.
+        └── conversions.rs        # to_docx, to_xlsx, to_pptx, convert_html, md, excel, etc.
 ```
 
-### B. Output Paths & Directory Creation (Fixes "File not found")
-1. Ensure the output directory exists before any tool is run:
-   ```python
-   OUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tests", "e2e_fixtures", "out", "tri_e2e"))
-   os.makedirs(OUT_DIR, exist_ok=True)
-   ```
-2. When constructing paths, ALWAYS use `os.path.abspath`:
-   ```python
-   out_file_cli = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_cli.pdf"))
-   out_file_mcp = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_mcp.pdf"))
-   out_file_api = os.path.abspath(os.path.join(OUT_DIR, f"{tool_id}_api.pdf"))
-   ```
-   Do NOT hardcode `/app/` or relative path strings that fail if CWD changes.
-
-### C. Required Python Libraries
-Install and verify 3rd-party validation packages in the environment:
-```bash
-pip install pypdf openpyxl python-docx python-pptx reportlab Pillow
-```
+### Dependencies (`tools/tri-interface-e2e/Cargo.toml`):
+Use pure Rust crates:
+- `tokio = { version = "1.0", features = ["full"] }`
+- `reqwest = { version = "0.12", features = ["json", "multipart"] }`
+- `serde = { version = "1.0", features = ["derive"] }`
+- `serde_json = "1.0"`
+- `lopdf = "0.33"` (for independent 3rd-party PDF inspection and assertions)
+- `sha2 = "0.10"`
+- `image = "0.25"`
+- `zip = "0.6"` (for inspecting .docx / .xlsx / .pptx XML contents directly)
+- `quick-xml = "0.31"`
+- `clap = { version = "4.0", features = ["derive"] }`
 
 ---
 
-## 2. Explicit Fixtures with Known Content Markers (`scripts/generate_real_fixtures.py`)
-Generate the test corpus in `tests/e2e_fixtures/real/` with distinct, unmistakable text markers:
-1. `merge_a.pdf`: 1 page with distinct text `"MERGE_PAGE_AAA"`.
-2. `merge_b.pdf`: 1 page with distinct text `"MERGE_PAGE_BBB"`.
-3. `multi_page.pdf`: 5 pages, where each page N explicitly has `"PAGE_TEXT_P{N}"` (e.g. Page 1 = `PAGE_TEXT_P1`, Page 2 = `PAGE_TEXT_P2` ... Page 5 = `PAGE_TEXT_P5`).
-4. `with_blank.pdf`: 5 pages:
-   - Page 1: `"CONTENT_PAGE_1"`
-   - Page 2: Blank (no text)
-   - Page 3: `"CONTENT_PAGE_3"`
-   - Page 4: Near-blank (single whitespace)
-   - Page 5: `"CONTENT_PAGE_5"`
-5. `redact_test.pdf`: Document with text `"HEADER_INFO"`, target secret string `"SECRET 12345"`, and `"FOOTER_INFO"`.
-6. `form.pdf`: AcroForm with text field `"first_name"`, checkbox `"agree"`, dropdown `"country"`.
-7. `encrypted.pdf`: Encrypted PDF with password `"user123"`.
-8. `broken_xref.pdf`: PDF with corrupted xref table.
-9. `invoice_text.pdf`: 3-page document with `"Invoice 4821"`, `"Total $1,250.00"`, and table lines.
-10. `img_sample.png`: 800x600 test image.
-11. `test.csv`: 5 rows with columns `ColA,ColB,ColC` and numbers `10,20,30`.
+## 2. Global Semantic Verification Rules
 
-## 3. Multi-Tier Positive & Negative Test Matrix
-For each tool, you must structure verification to test across complexity tiers to guarantee robustness:
-
-### Three Tiers of Positive Scenarios:
-1. **Tier 1 (Simple)**: Minimal valid input (e.g., standard single/2-page PDF, single operation, default parameters).
-2. **Tier 2 (Medium)**: Multi-page document with structured layout (e.g., 5-page document, custom page ranges like `"1,3"`, rotation angles like `90`, custom output paths).
-3. **Tier 3 (Complex / Hard)**: Real-world complex documents (e.g., multi-column invoice with tables, multi-file batch merges with 3+ files, documents with accented/unicode strings, boundary conditions like processing the last page of a multi-page doc).
-
-### Negative / Error-Handling Scenarios:
-In addition to positive assertions, each tool group must assert graceful error handling:
-- **Missing input file**: Returns structured error with non-zero exit code or JSON error, not a crash/panic.
-- **Out-of-bounds parameters**: (e.g. requesting page 99 from a 5-page document) returns an invalid range error.
-- **Wrong password**: Encrypted document returns authentication error when given wrong password.
-- **Corrupt input**: Returns a clear parse/syntax error rather than an unhandled exception.
+1. **Input Immutability**:
+   - Before any test executes, compute SHA-256 of all input fixtures.
+   - After the test completes, verify all input files retain their exact original hash.
+2. **Output Non-Identity**:
+   - For tools producing a new document (merge, split, rotate, watermark, encrypt, etc.), verify the output SHA-256 does NOT match any input file's SHA-256.
+   - **Crucial Rule**: ONLY compare the output hash against actual INPUT files. Do NOT hash the output destination path beforehand!
+3. **Gateway Server Lifecycle**:
+   - Spawn `paperpilot serve --port 7823`.
+   - Poll `http://127.0.0.1:7823/health` with exponential backoff / retry up to 15 seconds until HTTP 200 is received before invoking any REST endpoint.
+   - Cleanly terminate the gateway child process upon test suite completion.
 
 ---
 
-## 4. Explicit Data Sent vs. Data Compared for ALL 44 Tools
+## 3. Four-Case Matrix Per Tool (Simple, Medium, Complex, Negative)
+
+Every one of the 44 tools must define and execute 4 cases:
+1. **Tier 1 (Simple)**: Minimal valid input (e.g. 1-2 pages, simple text, basic operation).
+2. **Tier 2 (Medium)**: Multi-page document with structured layout (e.g. 5-page document, custom page ranges like `"1,3"`, rotation `90`, custom output paths).
+3. **Tier 3 (Complex / Hard)**: Real-world complex stress documents (e.g. multi-column invoice with tables, multi-file batch merges with 3+ files, documents with accented/unicode strings, boundary conditions like processing the last page of a multi-page doc).
+4. **Negative Test Case**: Intentionally invalid input (e.g. missing input file, invalid page range `"99"`, wrong password) asserting a non-zero exit code or error JSON response.
+
+---
+
+## 4. Specific Semantic Assertions Per Tool Category
 
 ### A. Page Operations (9 Tools)
 1. `pdf_merge`:
-   - **Data Sent**: `merge_a.pdf` (P1: `"MERGE_PAGE_AAA"`) + `merge_b.pdf` (P1: `"MERGE_PAGE_BBB"`).
-   - **Data Compared**: Output has exactly 2 pages. Page 1 text contains `"MERGE_PAGE_AAA"`. Page 2 text contains `"MERGE_PAGE_BBB"`. Page 1 does NOT contain `"MERGE_PAGE_BBB"`.
+   - **Simple**: Merge `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB"). Assert 2 pages. Page 1 contains "AAA", Page 2 contains "BBB".
+   - **Medium**: Merge `merge_a.pdf` ("AAA") + `multi_page.pdf` (5p). Assert 6 pages, P1="AAA", P2..P6="PAGE_TEXT_P1"..P5.
+   - **Complex**: Merge 3 files: `merge_a.pdf` + `merge_b.pdf` + `merge_c.pdf`. Assert 3 pages, P1="AAA", P2="BBB", P3="CCC".
+   - **Negative**: Missing input file -> non-zero exit code or error JSON.
 2. `pdf_split`:
-   - **Data Sent**: `multi_page.pdf` (Pages 1-5 with `"PAGE_TEXT_P1"`..`"PAGE_TEXT_P5"`), range `"1,2"`.
-   - **Data Compared**: Output has 2 pages. Page 1 contains `"PAGE_TEXT_P1"`. Page 2 contains `"PAGE_TEXT_P2"`. Does NOT contain `"PAGE_TEXT_P3"`.
-3. `pdf_extract_pages`:
-   - **Data Sent**: `multi_page.pdf`, pages `"1,3"`.
-   - **Data Compared**: Output has 2 pages. Page 1 contains `"PAGE_TEXT_P1"`, Page 2 contains `"PAGE_TEXT_P3"`. Does NOT contain `"PAGE_TEXT_P2"`.
-4. `pdf_delete_pages`:
-   - **Data Sent**: `multi_page.pdf`, delete pages `"2,4"`.
-   - **Data Compared**: Output has 3 pages. Page 1 contains `"PAGE_TEXT_P1"`, Page 2 contains `"PAGE_TEXT_P3"`, Page 3 contains `"PAGE_TEXT_P5"`. `"PAGE_TEXT_P2"` and `"PAGE_TEXT_P4"` are completely absent.
-5. `pdf_reorder_pages`:
-   - **Data Sent**: `multi_page.pdf`, order `[2, 1, 3, 4, 5]`.
-   - **Data Compared**: Output has 5 pages. Page 1 contains `"PAGE_TEXT_P2"`, Page 2 contains `"PAGE_TEXT_P1"`, Page 3 contains `"PAGE_TEXT_P3"`.
-6. `pdf_rotate`:
-   - **Data Sent**: `multi_page.pdf`, angle `90`, page `1`.
-   - **Data Compared**: Output page 1 has `/Rotate` == 90 in its dictionary. Page 1 text still contains `"PAGE_TEXT_P1"`.
-7. `pdf_crop`:
-   - **Data Sent**: `multi_page.pdf`, crop box rect `[50, 50, 400, 400]`.
-   - **Data Compared**: Output page 1 `CropBox` or `MediaBox` matches rect `[50, 50, 400, 400]`. Text `"PAGE_TEXT_P1"` is retained.
-8. `pdf_burst`:
-   - **Data Sent**: `multi_page.pdf` (5 pages).
-   - **Data Compared**: Output directory contains exactly 5 files. File 1 has 1 page with `"PAGE_TEXT_P1"`, File 5 has 1 page with `"PAGE_TEXT_P5"`.
-9. `pdf_remove_blank`:
-   - **Data Sent**: `with_blank.pdf` (5 pages: content, blank, content, near-blank, content).
-   - **Data Compared**: Output has 3 or 4 pages (blank page removed). Pages 1, 2, 3 contain `"CONTENT_PAGE_1"`, `"CONTENT_PAGE_3"`, `"CONTENT_PAGE_5"` in order.
+   - Assert exact page text matches the requested range (e.g. `"1,2"` produces 2 pages with `"PAGE_TEXT_P1"` and `"PAGE_TEXT_P2"`; `"PAGE_TEXT_P3"` is NOT present).
+3. `pdf_extract_pages`: Assert page count and text match extracted pages only.
+4. `pdf_delete_pages`: Assert deleted pages are absent from output.
+5. `pdf_reorder_pages`: Assert page sequence matches requested permutation `[2, 1, 3, 4, 5]`.
+6. `pdf_rotate`: Inspect `/Rotate` integer in page dictionary using `lopdf`. Verify it equals the requested angle (e.g. 90, 180).
+7. `pdf_crop`: Inspect `MediaBox` or `CropBox` coordinates in `lopdf`.
+8. `pdf_burst`: Assert output directory contains exactly N single-page files, each containing its respective page text.
+9. `pdf_remove_blank`: Assert blank pages are removed while content pages are preserved in order.
 
 ### B. Optimization & Repair (3 Tools)
-10. `pdf_compress`:
-    - **Data Sent**: `invoice_text.pdf`.
-    - **Data Compared**: Output size <= input size. Page count = 3. Text `"Invoice 4821"` and `"Total $1,250.00"` intact on all pages.
-11. `pdf_repair`:
-    - **Data Sent**: `broken_xref.pdf` (intentionally corrupted EOF/xref).
-    - **Data Compared**: Output successfully parses with `pypdf.PdfReader` without raising syntax error.
-12. `pdf_linearize`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Output bytes contain `/Linearized`. Page count = 5. Text `"PAGE_TEXT_P1"` intact.
+10. `pdf_compress`: Assert output size <= input size; text intact.
+11. `pdf_repair`: Repaired corrupt PDF loads successfully in `lopdf`.
+12. `pdf_linearize`: Output contains `/Linearized` object dictionary.
 
 ### C. Security (5 Tools)
-13. `pdf_encrypt`:
-    - **Data Sent**: `multi_page.pdf`, password `"secret123"`.
-    - **Data Compared**: Opening output with `pypdf` without password raises `FileNotDecryptedError`. Opening with `"secret123"` succeeds and recovers `"PAGE_TEXT_P1"`. `/Encrypt` dictionary present.
-14. `pdf_decrypt`:
-    - **Data Sent**: `encrypted.pdf` (password `"user123"`).
-    - **Data Compared**: Output opens with `pypdf` with NO password. `/Encrypt` absent. Page count and text match original.
-15. `pdf_redact`:
-    - **Data Sent**: `redact_test.pdf` (contains `"HEADER_INFO"`, `"SECRET 12345"`, `"FOOTER_INFO"`).
-    - **Data Compared**: Extracted text and raw byte stream **DO NOT contain `"SECRET 12345"`**. Extracted text STILL contains `"HEADER_INFO"` and `"FOOTER_INFO"`.
-16. `pdf_sign`:
-    - **Data Sent**: `multi_page.pdf`, test certificate.
-    - **Data Compared**: Output contains `/Sig` or `/ByteRange` dictionary.
-17. `pdf_hash`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Returned hash matches Python `hashlib.sha256(open(multi_page.pdf).read()).hexdigest()`.
+13. `pdf_encrypt`: Opening without password fails or contains `/Encrypt`; opening with password succeeds.
+14. `pdf_decrypt`: Decrypted file opens with no password; `/Encrypt` absent.
+15. `pdf_redact`: Target secret text (`"SECRET 12345"`) is completely absent from all content streams; non-redacted text preserved.
+16. `pdf_sign`: Output contains `/Sig` or `/ByteRange`.
+17. `pdf_hash`: Computed hash matches SHA-256 of file bytes.
 
 ### D. Stamping & Numbering (5 Tools)
-18. `pdf_watermark`:
-    - **Data Sent**: `multi_page.pdf`, text `"CONFIDENTIAL"`.
-    - **Data Compared**: Every single page extracted text contains `"CONFIDENTIAL"`. Original `"PAGE_TEXT_P1"` still present.
-19. `pdf_header_footer`:
-    - **Data Sent**: `multi_page.pdf`, header `"TOP_HEADER"`, footer `"BOTTOM_FOOTER"`.
-    - **Data Compared**: Extracted text contains `"TOP_HEADER"` and `"BOTTOM_FOOTER"`. Original text intact.
-20. `pdf_bates`:
-    - **Data Sent**: `multi_page.pdf`, prefix `"BATES-"`.
-    - **Data Compared**: Page 1 contains `"BATES-000001"`, Page 5 contains `"BATES-000005"`. Sequential with no gaps.
-21. `pdf_page_numbers`:
-    - **Data Sent**: `multi_page.pdf`, format `"{page}/{total}"`.
-    - **Data Compared**: Page 1 contains `"1/5"`, Page 5 contains `"5/5"`.
-22. `pdf_annotate`:
-    - **Data Sent**: `multi_page.pdf`, comment `"NOTE_SAMPLE"`.
-    - **Data Compared**: Output PDF contains `/Annots` with annotation text containing `"NOTE_SAMPLE"`.
+18. `pdf_watermark`: Watermark text appears on every page; original text preserved.
+19. `pdf_header_footer`: Header text at top, footer text at bottom verified.
+20. `pdf_bates`: Sequential Bates numbers (e.g. `BATES-000001` through `BATES-000005`) present in order.
+21. `pdf_page_numbers`: Formatted page numbers (e.g. `"1/5"`, `"5/5"`) present.
+22. `pdf_annotate`: Annotation dictionary `/Annots` contains expected comment/annotation.
 
 ### E. Forms (4 Tools)
-23. `pdf_read_form`:
-    - **Data Sent**: `form.pdf` (has field `"first_name"`).
-    - **Data Compared**: Returned JSON contains field name `"first_name"`.
-24. `pdf_fill_form`:
-    - **Data Sent**: `form.pdf`, field `"first_name"` = `"PaperPilotUser"`.
-    - **Data Compared**: Re-reading output with `pypdf` confirms `reader.get_fields()["first_name"].value == "PaperPilotUser"`.
-25. `pdf_flatten`:
-    - **Data Sent**: filled `form.pdf`.
-    - **Data Compared**: Output `reader.get_fields()` is empty or None. Page count = 1.
-26. `pdf_create_form_field`:
-    - **Data Sent**: `multi_page.pdf`, create text field `"user_email"`.
-    - **Data Compared**: Re-reading with `pypdf` shows field `"user_email"` exists in `reader.get_fields()`.
+23. `pdf_read_form`: Returns form field names and values in JSON.
+24. `pdf_fill_form`: Re-reading output confirms updated field value.
+25. `pdf_flatten`: Form fields removed from interactive dictionary, rendered into page stream.
+26. `pdf_create_form_field`: New form field exists in `/AcroForm` `/Fields`.
 
 ### F. Extraction & Analysis (10 Tools)
-27. `pdf_extract_text`:
-    - **Data Sent**: `invoice_text.pdf`.
-    - **Data Compared**: Returned text contains `"Invoice 4821"` and `"Total $1,250.00"`.
-28. `pdf_extract_images`:
-    - **Data Sent**: PDF with embedded image.
-    - **Data Compared**: Output directory has extracted images that decode as valid images with PIL.
-29. `pdf_search`:
-    - **Data Sent**: `multi_page.pdf`, query `"PAGE_TEXT_P3"`.
-    - **Data Compared**: Hit returned specifically on page index 2 (page 3).
-30. `pdf_render`:
-    - **Data Sent**: `multi_page.pdf`, page 1.
-    - **Data Compared**: Output PNG decodes with PIL, dimensions > 0, file size > 5KB, not single solid color.
-31. `pdf_compare`:
-    - **Data Sent**: `merge_a.pdf` vs `merge_b.pdf`.
-    - **Data Compared**: Returned diff reports content differences between page texts.
-32. `pdf_metadata`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Returns valid page count = 5.
-33. `pdf_bookmarks`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Returns valid JSON list (bookmarks/outline).
-34. `pdf_classify_type`:
-    - **Data Sent**: `invoice_text.pdf`.
-    - **Data Compared**: Classified as text-based PDF.
-35. `pdf_validate`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Returns valid == true.
-36. `pdf_ocr`:
-    - **Data Sent**: `image_doc.pdf` (image of text).
-    - **Data Compared**: Output PDF has text layer extractable by `pypdf`.
+27. `pdf_extract_text`: Extracted text contains expected keywords (`"Invoice 4821"`, `"Total $1,250.00"`).
+28. `pdf_extract_images`: Extracted image files load successfully and have valid dimensions.
+29. `pdf_search`: Query matches exact page index.
+30. `pdf_render`: Rendered PNG has valid PNG header, dimensions > 0, size > 5KB.
+31. `pdf_compare`: Identifies text differences between two documents.
+32. `pdf_metadata`: Returns valid page count and metadata fields.
+33. `pdf_bookmarks`: Returns outline/bookmarks hierarchy.
+34. `pdf_classify_type`: Correctly classifies text-based vs image-based PDF.
+35. `pdf_validate`: Returns valid status.
+36. `pdf_ocr`: Output PDF has searchable text layer.
 
 ### G. Conversions (8 Tools)
-37. `pdf_images_to_pdf`:
-    - **Data Sent**: `img_sample.png`.
-    - **Data Compared**: Output PDF has 1 page, opens in `pypdf`.
-38. `pdf_to_pdf_a`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Output contains PDF/A identification in XMP metadata; opens in `pypdf`.
-39. `pdf_to_docx`:
-    - **Data Sent**: `invoice_text.pdf`.
-    - **Data Compared**: Output `.docx` opens with `docx.Document` and paragraph text contains `"Invoice 4821"`.
-40. `pdf_to_xlsx`:
-    - **Data Sent**: `invoice_text.pdf`.
-    - **Data Compared**: Output `.xlsx` opens with `openpyxl.load_workbook` and cell values are populated.
-41. `pdf_to_pptx`:
-    - **Data Sent**: `multi_page.pdf`.
-    - **Data Compared**: Output `.pptx` opens with `pptx.Presentation` and slide count == 5.
-42. `pdf_convert_html`:
-    - **Data Sent**: `test.html` (`<h1>HTML Test</h1>`).
-    - **Data Compared**: Output PDF text contains `"HTML Test"`.
-43. `pdf_convert_markdown`:
-    - **Data Sent**: `test.md` (`# MD Test`).
-    - **Data Compared**: Output PDF text contains `"MD Test"`.
-44. `pdf_convert_excel`:
-    - **Data Sent**: `test.csv` (`ColA,ColB,ColC`).
-    - **Data Compared**: Output PDF text contains `"ColA"` and `"ColB"`.
+37. `pdf_images_to_pdf`: Image converted into valid 1-page PDF.
+38. `pdf_to_pdf_a`: Output conforms to PDF/A metadata.
+39. `pdf_to_docx`: Output `.docx` is a valid zip containing `word/document.xml` with text.
+40. `pdf_to_xlsx`: Output `.xlsx` is a valid zip containing `xl/worksheets/sheet1.xml` with cells.
+41. `pdf_to_pptx`: Output `.pptx` is a valid zip containing `ppt/slides/slide1.xml`.
+42. `pdf_convert_html`: Converted HTML produces PDF containing HTML text.
+43. `pdf_convert_markdown`: Converted Markdown produces PDF containing Markdown text.
+44. `pdf_convert_excel`: Converted CSV/XLSX produces PDF containing tabular data.
 
 ---
 
-## 4. Deliverables & Required Scorecard Format
+## 5. Output Report Generation
 
-Generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` with the explicit columns:
-```markdown
-### Tool: `pdf_merge`
-> **Use Case**: Merge two separate single-page PDFs into a single continuous document.
-
-| Tool | Interface | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
-|---|---|---|---|---|---|---|
-| `pdf_merge` | **💻 CLI** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
-| `pdf_merge` | **🤖 MCP** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
-| `pdf_merge` | **🌐 REST API** | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
-```
-
-Run and verify with:
+When the test suite runs:
 ```bash
-python3 scripts/test_tri_interface_e2e.py
+cargo run -p tri-interface-e2e
 ```
-Ensure all 132 tests run cleanly across CLI, MCP, and API.
+It must generate `reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md` with the exact scorecard format:
+
+```markdown
+# Phase 5.9.4 — Real Independent Semantic Assertions Suite (All 44 Tools, 132 Tests)
+
+## Executive Scorecard
+- **Total Tools Verified:** 44
+- **CLI Pass Rate:** X / 44
+- **MCP Pass Rate:** Y / 44
+- **API Pass Rate:** Z / 44
+
+## Detailed Tool-by-Tool Documentation
+
+### Tool: `pdf_merge`
+> **Use Case**: Merge multiple PDFs into a single continuous document.
+
+| Tool | Interface | Tier / Case | Data Sent | Specific Assertion Checked | Expected Result | Actual / Received Result | Verdict |
+|---|---|---|---|---|---|---|---|
+| `pdf_merge` | **💻 CLI** | Simple (Tier 1) | `merge_a.pdf` ("AAA") + `merge_b.pdf` ("BBB") | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Medium (Tier 2) | `merge_a.pdf` ("AAA") + `multi_page.pdf` (5p) | P1 == "AAA", P2..P6 == "PAGE_TEXT_P1"..P5 | 6 pages with sequential content | 6 pages verified | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Complex (Tier 3) | 3 files: `merge_a.pdf` + `merge_b.pdf` + `merge_c.pdf` | P1: "AAA", P2: "BBB", P3: "CCC" | 3 pages with exact text | 3 pages verified | ✅ PASS |
+| `pdf_merge` | **💻 CLI** | Negative | `missing.pdf` + `merge_a.pdf` | Non-zero exit code / error reported | Error returned, no crash | Exit code 1: File not found | ✅ PASS |
+| `pdf_merge` | **🤖 MCP** | Simple (Tier 1) | `inputs: ["merge_a.pdf", "merge_b.pdf"]` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+| `pdf_merge` | **🌐 REST API** | Simple (Tier 1) | `POST /api/v1/pdf/merge` with `inputs` | P1 text == "AAA", P2 text == "BBB" | 2 pages with 'AAA' on P1, 'BBB' on P2 | 2 pages: P1 contains 'AAA', P2 contains 'BBB' | ✅ PASS |
+```
+
+Verify everything compiles cleanly and passes with:
+```bash
+cargo build -p tri-interface-e2e
+cargo run -p tri-interface-e2e
+```
+Ensure all tests execute cleanly and real engine behaviors are accurately documented.
