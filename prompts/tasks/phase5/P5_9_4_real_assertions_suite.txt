@@ -1,0 +1,131 @@
+# Task: Phase 5.9.4 — Real Independent Semantic Assertions Suite (All 44 Tools, 132 Tests)
+# Base Branch: main
+# Target Branch: feat-real-assertions-suite
+# Priority: HIGH (Launch Readiness & Real Verification Guarantee)
+# Spec: specs/031-real-assertions-suite/spec.md
+# Reference Guide: RealAssertion.md
+
+## Objective
+Upgrade the Tri-Interface End-to-End test suite (`scripts/test_tri_interface_e2e.py`) to execute **independent, 3rd-party semantic assertions** across all 44 tools and all 3 developer interfaces (CLI, MCP stdio, and Gateway REST API port 7823 = 132 tests total) as specified in `RealAssertion.md`.
+
+---
+
+## ⚠️ STRICT SAFETY RULE: TEST-ONLY TASK (NO ENGINE BUG FIXES)
+This is strictly a **TEST & VERIFICATION** task.
+1. **DO NOT MODIFY ANY ENGINE SOURCE CODE**:
+   - You must NOT edit `paperpilot-core/`, `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `paperpilot-nlp/`, or `apps/`.
+   - If an assertion fails for a tool, do NOT attempt to rewrite the Rust engine. Instead, record the exact failure, expected outcome, and received outcome in the scorecard report.
+2. **STRICT FILE OWNERSHIP**:
+   You may **ONLY** create or touch files in these paths:
+   ```
+   scripts/generate_real_fixtures.py
+   scripts/test_tri_interface_e2e.py
+   tests/e2e_fixtures/real/
+   reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md
+   wiki/25-Real-Assertions-Verification.md
+   ```
+   DO NOT touch `PHASES.md`, `v1_launch_plan.md`, `HANDOFF.md`, or any `.rs` files.
+
+---
+
+## 1. Requirements & Implementation Blueprint
+
+### A. Realistic Fixtures Generator (`scripts/generate_real_fixtures.py`)
+Create a Python fixture generation script in `scripts/generate_real_fixtures.py` that generates or copies the following fixtures into `tests/e2e_fixtures/real/` (using Python libraries like `pypdf`, `reportlab`, or `fpdf2`, or copying from existing fixtures):
+1. `multi_page.pdf`: 5 pages, each containing unique text marker ("P1", "P2", "P3", "P4", "P5").
+2. `invoice_text.pdf`: 3-page document with structured layout, headings, and distinct text strings.
+3. `with_blank.pdf`: 5 pages (Page 1 text, Page 2 blank, Page 3 text, Page 4 near-blank, Page 5 text).
+4. `redact_test.pdf`: Document containing target secret string `"SECRET 12345"` at known coordinates.
+5. `form.pdf`: AcroForm with text field (`first_name`), checkbox (`agree`), dropdown (`country`), and radio button.
+6. `encrypted.pdf`: Document encrypted with user password (`user123`) and owner password (`owner123`).
+7. `broken_xref.pdf`: Damaged/corrupted xref table test file for `pdf_repair`.
+8. `img_sample.png`: 800x600 test image for `pdf_images_to_pdf`.
+
+Ensure `scripts/generate_real_fixtures.py` can be run standalone and is automatically invoked by `test_tri_interface_e2e.py` if fixtures are missing.
+
+### B. Independent Semantic Assertions in `scripts/test_tri_interface_e2e.py`
+Replace shallow file-existence and regex checks with independent 3rd-party inspections using `pypdf`, `openpyxl`, `docx`, and `hashlib`:
+
+#### Global Rules to Assert for Every Tool:
+1. **Output Opens Independently**: Verify the output parses cleanly with `pypdf.PdfReader` (or `openpyxl`/`docx` for conversions) without raising syntax errors.
+2. **Output Differs from Input**: Verify `sha256(output) != sha256(input)` (unless tool is an analysis/inspection tool by design: `pdf_hash`, `pdf_validate`, `pdf_search`, `pdf_metadata`, `pdf_read_form`, `pdf_classify_type`).
+3. **Input File Immutability**: Verify `sha256(input_before) == sha256(input_after)`.
+4. **Normalized Content Parity**: For each tool, compare normalized text, page count, and page dimensions across CLI, MCP, and REST API.
+
+#### Complete Semantic Assertions for All 44 Tools:
+
+- **A. Page Operations (9 Tools)**:
+  - `pdf_merge`: Page count = sum of inputs; page 1 contains first file text, page 2 contains second file text; merging 3+ files works; order preserved.
+  - `pdf_split`: Page count matches requested split range; text matches expected page markers ("P1".."P5"); invalid range returns error.
+  - `pdf_extract_pages`: Output contains exactly extracted pages; original file untouched; out-of-range errors.
+  - `pdf_delete_pages`: Target page text is absent; remaining pages preserved; deleting all pages returns error.
+  - `pdf_reorder_pages`: Pages follow the requested permutation (e.g. P2, P1, P3, P4, P5); duplicate/missing indices error.
+  - `pdf_rotate`: Target page has `/Rotate` = 90; text remains extractable; rotating twice gives 180; invalid angle errors.
+  - `pdf_crop`: MediaBox/CropBox dimensions equal requested crop rect; page count unchanged.
+  - `pdf_burst`: Produces 1-page individual PDFs sorted in page order matching page count.
+  - `pdf_remove_blank`: Blank page is omitted; near-blank handled; text pages retained in order; CLI and MCP give identical results.
+
+- **B. Optimization & Repair (3 Tools)**:
+  - `pdf_compress`: File size reduced or bounded; text and page count preserved; low < medium < high quality size progression.
+  - `pdf_repair`: Output parses with `pypdf` without syntax error even when input has damaged/truncated xref.
+  - `pdf_linearize`: Output contains `/Linearized` object dictionary; passes linearization check.
+
+- **C. Security (5 Tools)**:
+  - `pdf_encrypt`: Opening without password fails; opening with wrong password fails; opening with correct password succeeds; `/Encrypt` dictionary present.
+  - `pdf_decrypt`: Decrypted file opens without password; `/Encrypt` absent; page count and text match original; wrong password returns error.
+  - `pdf_redact`: Target string (`SECRET 12345`) is **completely absent** from extracted text and raw content streams; black box present.
+  - `pdf_sign`: Output contains `/Sig` with `/ByteRange`; signer name matches certificate; wrong password errors.
+  - `pdf_hash`: Consistent SHA-256 hash output; changing 1 byte produces different hash; matches `sha256sum`.
+
+- **D. Stamping & Numbering (5 Tools)**:
+  - `pdf_watermark`: Extracted text on every target page contains watermark string; original text still present.
+  - `pdf_header_footer`: Header text appears at top region, footer at bottom region; page count unchanged.
+  - `pdf_bates`: Sequential Bates numbers present (e.g., `CONF-000001` to `CONF-000005`); output differs from header_footer.
+  - `pdf_page_numbers`: Formatted page numbers appear on each page in requested position; format `{page}/{total}` respected.
+  - `pdf_annotate`: Output contains `/Annots` with `/Highlight` at given coordinates; color and comment text present.
+
+- **E. Forms (4 Tools)**:
+  - `pdf_read_form`: Reads all field names, types, and values correctly; PDF with no form returns empty list.
+  - `pdf_fill_form`: Re-reading with `pypdf` confirms newly filled values; unicode text preserved; CLI and MCP match.
+  - `pdf_flatten`: AcroForm field count becomes 0; text remains visible on page; page count unchanged.
+  - `pdf_create_form_field`: New field appears in `read_form` with correct name, type, and rect; field is fillable.
+
+- **F. Extraction & Analysis (10 Tools)**:
+  - `pdf_extract_text`: Extracted text matches known strings in reading order; table layout not scrambled; unicode preserved.
+  - `pdf_extract_images`: Exactly extracted image count; each decodes as valid PNG/JPEG; dimensions match originals.
+  - `pdf_search`: Returns correct hit counts, coordinates inside page, and page indices for target words.
+  - `pdf_render`: Produces valid non-solid PNG matching scaled dimensions; file size > 5KB for text page.
+  - `pdf_compare`: Same file returns "no differences"; different files list differing pages and text.
+  - `pdf_metadata`: Returns accurate Title, Author, and creation metadata; reads metadata and never writes.
+  - `pdf_bookmarks`: Returns correct outline hierarchy, titles, and target pages; empty doc returns empty list.
+  - `pdf_classify_type`: Correctly classifies "text", "scanned/image", or "form".
+  - `pdf_validate`: Valid file returns valid; corrupt file returns invalid with specific error message.
+  - `pdf_ocr`: Output has a text layer containing scanned strings (e.g., invoice total); visual appearance preserved.
+
+- **G. Conversions (8 Tools)**:
+  - `pdf_images_to_pdf`: Produces valid PDF with page count matching image count; image aspect ratio preserved.
+  - `pdf_to_pdf_a`: Output contains PDF/A identification in XMP metadata; no `/Encrypt`; text preserved.
+  - `pdf_to_docx`: Output opens with `docx` package and contains target heading and table text.
+  - `pdf_to_xlsx`: Output opens with `openpyxl` and cell values match numbers accurately.
+  - `pdf_to_pptx`: Slide count = page count; each slide contains text/image; opens in `python-pptx`.
+  - `pdf_convert_html`: Output PDF contains HTML headings and text; CSS styling respected.
+  - `pdf_convert_markdown`: Output PDF contains Markdown headings, lists, code, and table text.
+  - `pdf_convert_excel`: Output PDF contains table rows; columns not cut off.
+
+### C. Output Reports
+1. **`reports/REAL_ASSERTIONS_TRI_INTERFACE_REPORT.md`**:
+   - Executive scorecard: Number of tools verified (44), total assertions checked (132), pass/fail percentage per interface.
+   - Tool-by-tool breakdown table:
+     `Tool | Interface | Specific Assertion Checked | Expected | Actual | Verdict (PASS / FAIL)`
+   - Clear failure analysis section listing every tool that failed an assertion, what was expected, and what was received.
+2. **`wiki/25-Real-Assertions-Verification.md`**:
+   - Documentation explaining the 6 global assertion rules and how independent 3rd-party validation works.
+
+---
+
+## 2. Verification Command
+To verify the work, run:
+```bash
+python3 scripts/test_tri_interface_e2e.py
+```
+Ensure all 3 interfaces (CLI, MCP, REST) run, semantic assertions are evaluated, and the report is generated without any unhandled exceptions or crashes.
