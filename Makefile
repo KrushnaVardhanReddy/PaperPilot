@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
 
 # Default target
 all: format lint test-all build
@@ -133,6 +133,20 @@ lint:
 clean:
 	cargo clean
 	rm -rf apps/desktop/node_modules apps/desktop/.svelte-kit apps/desktop/playwright-report apps/desktop/test-results paperpilot-wasm/pkg
+
+# Clean stale build artifacts older than 30 days and older toolchains via cargo-sweep
+clean-sweep:
+	@which cargo-sweep >/dev/null 2>&1 || cargo install cargo-sweep
+	cargo sweep --installed
+	cargo sweep --time 30
+
+# Clean global ~/.cargo registry and git cache safely via cargo-cache
+clean-cache:
+	@which cargo-cache >/dev/null 2>&1 || cargo install cargo-cache
+	cargo cache --trim-all
+
+# Comprehensive system-wide cleanup: project artifacts + stale builds + global ~/.cargo cache
+clean-all-cache: clean clean-sweep clean-cache
 
 # Build client-side WebAssembly package
 build-wasm:
