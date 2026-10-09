@@ -1,7 +1,6 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineConfig } from 'vite'
 import wasm from "vite-plugin-wasm";
-import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,7 +13,7 @@ export default defineConfig({
     {
       name: 'portal-page-rewriter',
       configureServer(server) {
-        server.middlewares.use((req, res, next) => {
+        server.middlewares.use((req, _res, next) => {
           if (req.url === '/swagger-ui' || req.url === '/swagger-ui/') {
             req.url = '/swagger-ui.html';
           } else if (req.url === '/embed-test' || req.url === '/embed-test/') {
