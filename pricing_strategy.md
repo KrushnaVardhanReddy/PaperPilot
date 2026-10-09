@@ -24,38 +24,45 @@
 
 ---
 
-## Tier 1: Community (Free Forever)
+## Tier 1: Community (100% Free Forever & Open Source — Apache 2.0)
 
-* **Price:** $0 — always, unconditionally.
-* **Target:** Individual users, students, open-source developers, self-hosters, and anyone evaluating PaperPilot.
+* **Price:** $0 — always, unconditionally open source.
+* **Target:** Individual users, students, developers, legal aid clinics, researchers, self-hosters, and anyone running PaperPilot locally.
 * **Features:**
-  - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, etc.)
-  - **Full PDF Viewer** with annotations and form filling
-  - **Offline AI Mode** (100% local, zero API key, zero network — powered by embedded NeuML's `bert-hash-nano-embeddings` <1.1MB ONNX model & Aho-Corasick rule engine for instant command resolution)
-  - **Basic Pipeline Builder** — up to 3 steps, manual trigger only
-  - **MCP Server** (local, single-user, all 40+ tools)
+  - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, Bates Stamping, Conformance verification, etc.)
+  - **Full PDF Viewer** with annotations, canvas markup, and form filling
+  - **Offline AI Mode** (100% local, zero API key — embedded NeuML `bert-hash-nano-embeddings` <1.1MB ONNX model & Aho-Corasick rule engine for instant sub-millisecond command resolution)
+  - **Local AI Agent & LLM Multi-Step Reasoning (100% Open Source):**
+    - **Mozilla `llamafile` 1-Click Offline Runner**: Zero-install standalone local LLM with in-app model downloader
+    - **Universal OpenAI-Compatible Endpoint**: Connect to ANY local or LAN endpoint (Ollama, LM Studio, vLLM, local GPU server)
+    - **Commercial BYOK (Bring Your Own Key)**: Direct client-side connection with user's own OpenAI, Anthropic, Gemini, Groq, or OpenRouter keys (stored safely in local OS Keyring)
+  - **Zero Data Leakage Guarantee:** Raw PDF files NEVER leave your local machine.
+  - **Basic Pipeline Builder** — up to 3 steps, manual trigger
+  - **Full MCP Server** (`paperpilot-mcp` — all 45+ tools for Claude Desktop, Cursor, OpenCode)
   - **Full CLI** (all commands, JSON output, webhooks)
   - **Unlimited Self-Hosted Users** (Zero user caps — no 5-user paywall)
-  - **Standard OIDC / OAuth SSO** (Google, GitHub, Authentik, Keycloak) — free for internal self-hosters with zero "SSO Tax"
+  - **Standard OIDC / OAuth SSO** (Google, GitHub, Authentik, Keycloak) — free with zero "SSO Tax"
   - **Community support** (GitHub Discussions, Discord)
-* **Why this is aggressive:** We give away significantly more than Stirling's free tier. Their self-hosted version imposes a strict 5-user cap, paywalls SSO, and meters automation. PaperPilot provides **unlimited self-hosted users, free standard OIDC/OAuth, and 100% free local processing forever**.
+* **Strategic Open-Source Advantage:** By making local AI execution, Llamafile, and BYOK 100% free and open source, PaperPilot becomes the universal standard "hands" for AI agents and developers worldwide, eliminating adoption friction.
 
 ---
 
-## Tier 2: Pro
+## Tier 2: Pro (Automation & Power Daemons)
 
 * **Price:** $5/month (~$48/year billed annually)
-* **Target:** Freelancers, power users, consultants, solo developers who want advanced automation and AI.
+* **Target:** Power users, solo legal/finance consultants, freelancers, and power automation users.
 * **Features (everything in Community, plus):**
   - **Unlimited pipeline steps** (Community is capped at 3)
-  - **Advanced Pipeline triggers:** Watch Folder daemon mode, Webhook trigger, Cron scheduling
-  - **Pro AI Mode:** Full LLM multi-step reasoning — bring your own key (OpenAI, Ollama, Gemini, local llamafile)
-  - **LLM-Ready Export:** PDF → RAG-optimized Markdown + structured JSON sidecar
-  - **Voice input** for NLP command box
-  - **Plugin Registry access:** Install and use community plugins
-  - **Webhooks & HMAC signing** for pipeline outputs
+  - **Continuous Automation Daemons:**
+    - **Watch Folder Daemon:** Automatically watches designated folders on disk and processes incoming PDFs (OCR, Bates stamp, flatten, convert) in background
+    - **Cron Scheduling:** Recurring scheduled document jobs and archival pipelines
+    - **Inbound Webhook Triggers:** Trigger local pipelines from external system events
+  - **LLM-Ready Multi-Doc Synthesis & Export:** High-density RAG-optimized Markdown + structured JSON sidecars
+  - **Voice input** for desktop NLP command interface
+  - **Plugin Registry access:** 1-click install and use community plugins
+  - **HMAC Signed Webhook Outputs:** Cryptographically signed outbound webhooks
   - **1 year of update entitlement** + priority email support (48h response SLA)
-* **Why $5:** We charge a small, impulse price ($5/mo — less than a coffee per week) for unlimited background daemons, watch folders, and advanced multi-step LLM reasoning.
+* **Why $5:** We do not paywall your AI keys or local compute. Users gladly pay $5/mo for "set-it-and-forget-it" background folder watchers, cron automation, and unlimited pipeline chains.
 
 ---
 
@@ -276,3 +283,60 @@ Hosted MCP endpoint for teams that can't run a local binary. Billed on usage-bas
 - **Shopify App**: Sub-10ms invoice generation & digital asset delivery at checkout via Cloudflare Edge.
 - **Viral Growth Engine**: Free embeds carry a tasteful "⚡ Powered by PaperPilot" badge driving organic adoption to Desktop Pro.
 *(See detailed architecture in [`docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md`](docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md))*
+
+---
+
+## 💡 Open Source Monetization Architecture: How We Make Money While Being Open Source
+
+A common strategic question is: *“If the core engine, CLI, MCP server, and local AI agent (llamafile + BYOK) are 100% Free & Open Source, can we still make money or is having this Pro better?”*
+
+**The Answer:** Keeping the local engine and AI agent open source makes us **far more money** than paywalling basic AI access. 
+
+Companies like **GitLab, Grafana, HashiCorp, and Supabase** proved that paywalling core utility creates friction and invites forks, whereas the **Open-Core & Commercial Enterprise Governance Model** creates massive enterprise ARR:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   COMMUNITY (100% Free & Open Source)                  │
+│  • 50+ PDF Operations • CLI & MCP Server • Local AI (Llamafile/BYOK)   │
+│  • Desktop Viewer • Basic Pipelines • Unlimited Self-Hosted Users      │
+│  ────────────────────────────────────────────────────────────────────  │
+│  GOAL: Maximize adoption, developer love, viral growth, GitHub stars   │
+└────────────────────────────────────┬───────────────────────────────────┘
+                                     │
+           ┌─────────────────────────┴─────────────────────────┐
+           ▼                                                   ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────────────┐
+│       INDIVIDUAL PRO ($5/mo)         │  │     TEAMS & ENTERPRISE B2B           │
+│  • Watch Folder Background Daemons   │  │  • Teams ($12/user/mo):              │
+│  • Recurring Cron Jobs & Webhooks    │  │    - Shared Recipe/Pipeline Library  │
+│  • Multi-doc RAG Sidecar Synthesizer │  │    - Centralized License Seat Portal │
+│  • Voice Input & Plugin Marketplace  │  │    - Team Audit Trail                │
+│  ──────────────────────────────────  │  │  • Enterprise ($22/user/mo):         │
+│  Buyer: Solo legal/tax pros, devs    │  │    - SCIM 2.0 & SAML 2.0 Okta/Azure  │
+│  Value: Set-and-forget automation    │  │    - Air-Gap GPO / Plist Hard Policy │
+│                                      │  │    - SIEM Audit Log Streams (Splunk) │
+│                                      │  │    - MDM/MSI Jamf/Intune Deployments │
+│                                      │  │    - BAA / HIPAA Compliance Guarantees│
+│                                      │  │  • Managed White-Label ($199–$399/mo)│
+│                                      │  │    - Cloudflare Edge custom domain   │
+└──────────────────────────────────────┘  └──────────────────────────────────────┘
+```
+
+### Why Open Source is Our Biggest Revenue Multiplier:
+1. **Zero-Friction Distribution & Trust**: Legal teams, banks, and privacy-conscious users refuse to upload sensitive contracts to closed-source cloud SaaS. Open sourcing the engine and local AI creates unassailable developer trust.
+2. **Developers Bring It to Work**: A developer uses the free CLI or Claude MCP at home, loves it, and recommends PaperPilot to their law firm or bank's IT department.
+3. **Enterprises Never Pay for PDF Features — They Pay for Governance**: Enterprise procurement does not care about paying for PDF split/merge; they pay for **SCIM provisioning, SAML 2.0 integration, air-gap policy enforcement, Splunk audit logging, and HIPAA BAAs**.
+4. **Team Sticky Loops**: Once a 15-person accounting firm saves standard Bates stamping, invoicing, and redaction recipes in their shared Teams library, churn drops to near-zero.
+
+### Revenue Projection Model (Year 1–2 Target):
+
+| Stream | Target Volume | Unit Price | Projected ARR |
+|---|---|---|---|
+| **Individual Pro Subscriptions** | 1,500 subscribers | $48 / yr ($5/mo) | $72,000 |
+| **B2B Teams (Law / Accounting)** | 80 teams (avg 8 seats) | $115 / seat / yr ($12/mo) | $73,600 |
+| **Enterprise Fleet Licenses** | 12 enterprise contracts | $12,500 / yr avg ($22/seat or site) | $150,000 |
+| **Managed White-Label Edge** | 25 custom domains | $2,400 / yr ($199/mo) | $49,750 |
+| **Cloud Web Pro / API Packages** | 500 web users + 40 API orgs | Mixed | $54,000 |
+| **Total Target ARR** | | | **~$399,350** |
+
+By keeping the core local AI agent and operations 100% free and open source, our top-of-funnel CAC (Customer Acquisition Cost) is near zero, while high-margin B2B contracts fund long-term growth and open-source sustainability.

@@ -113,7 +113,24 @@ PaperPilot acts as the deterministic execution engine for AI agents. The demo ha
 
 ---
 
-## 5. Verification Deliverables
+## 5. Open Source Licensing & Commercial Monetization Boundary
+
+To maximize developer adoption and network effects while building high-margin enterprise revenue:
+1. **100% Free & Open Source (Apache 2.0 / MIT)**:
+   - All core PDF execution tools (50+ operations in `paperpilot-pdf`, `paperpilot-wasm`, `paperpilot-cli`, `paperpilot-mcp`).
+   - The Local AI Agent execution loop (`paperpilot-ai` / `paperpilot agent`).
+   - The Mozilla `llamafile` 1-click supervisor and in-app model downloader.
+   - The Universal OpenAI-compatible endpoint client and BYOK OS Keyring manager.
+   - The JSON-RPC MCP server for Claude Desktop, Cursor, and OpenCode.
+2. **Commercial Value Levers (Pro / Teams / Enterprise)**:
+   - **Desktop Pro ($5/mo)**: Background Watch Folder daemons, recurring Cron jobs, inbound webhooks, and unlimited pipeline step chains.
+   - **Teams ($12/user/mo)**: Centralized license portal, shared team recipe/pipeline registry, concurrent execution, team audit trails.
+   - **Enterprise ($22/user/mo or $2.5k–$10k/yr)**: SCIM 2.0 provisioning, SAML 2.0 federation, Air-gap Group Policy enforcement (GPO/MDM), Splunk/SIEM audit log streaming, and HIPAA BAA compliance.
+   - **Managed White-Label Edge ($199–$399/mo)**: Cloudflare Worker custom domain with client branding for SMBs and firms without DevOps staff.
+
+---
+
+## 6. Verification Deliverables
 1. `demo/legal_discovery/README.md` (Updated with llamafile, universal endpoint, and MCP instructions)
 2. `tools/demo-legal-fixtures` (Pure-Rust mock PDF corpus generator)
 3. `scripts/run_ai_legal_demo.sh` (Executable via `chmod +x` with sub-100ms latency scorecard)

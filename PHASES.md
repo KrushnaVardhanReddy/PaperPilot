@@ -717,13 +717,13 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
-### 4.1 — LLM & Advanced Local SLM Infrastructure (Pro & Teams Tier) `[PARALLEL]`
+### 4.1 — Local AI Agent & LLM Multi-Step Planning (100% Free & Open Source — Apache 2.0) `[PARALLEL]`
 
-> Powers the Pro/Teams tier for complex, multi-step conversational agent planning (e.g. "Merge invoice1 and invoice2, strip page 3, rotate page 2 clockwise, and compress under 2MB").
-> **Designated Local SLM:** `SmolLM-135M-Instruct` (Q4 GGUF, ~75MB on disk, ~120MB active RAM, ~15ms latency). Zero server dependencies, private local execution.
-> **Cloud / External Options:** Local Ollama (2–8GB models) or Bring-Your-Own-Key (BYOK) OpenAI / Gemini / Claude API.
+> Enables complex, multi-step conversational agent planning (e.g. "Merge invoice1 and invoice2, strip page 3, rotate page 2 clockwise, and compress under 2MB") running 100% locally on-device.
+> **Designated Local Offline SLM:** Mozilla `llamafile` standalone executable (`SmolLM-135M-Instruct` or `Qwen2.5-Coder-1.5B/7B`) with zero external installation, private local execution, and in-app model downloading.
+> **Universal Endpoint & BYOK:** Connect to ANY local or network-hosted server (Ollama, LM Studio, vLLM GPU cluster) or bring-your-own-key (BYOK) OpenAI / Gemini / Claude / Groq API stored in native OS Keyring.
 > Implements the same `NlpResolver` trait from 4.0.2 — drop-in swap.
-> **Licensing: Apache 2.0 (Community) — key/provider config is user-supplied**
+> **Licensing & Monetization:** **100% Free & Open Source (Apache 2.0)** in Community tier. Advanced background daemons (Watch folders, Cron automation), shared team recipe libraries, and enterprise IT fleet governance (SAML/SCIM/Air-gap GPO) power Pro/Teams/Enterprise tiers.
 
 | # | Task | Notes |
 |---|---|---|
