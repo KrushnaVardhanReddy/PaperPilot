@@ -1450,8 +1450,8 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.4.1 | Python SDK (`paperpilot-py`) ⏳ | In Progress (Jules Session `11696627093046789817`) — PyPI package in `packages/paperpilot-py`: pythonic wrappers, async support (`asyncio`), type hints, Pydantic models |
-| 8.4.2 | JavaScript / Node SDK (`paperpilot-js`) ⏳ | In Progress (Jules Session `11696627093046789817`) — npm package in `packages/paperpilot-js` with TypeScript types |
+| 8.4.1 | Python SDK (`paperpilot-py`) ✅ | Merged (PR #175, Session 11696627093046789817) — PyPI package in `packages/paperpilot-py`: pythonic wrappers, async support (`asyncio`), type hints, Pydantic models (14/14 tests pass) (`reports/SDK_LIBRARIES_REPORT.md`, `wiki/28-Universal-SDKs.md`) |
+| 8.4.2 | JavaScript / Node SDK (`paperpilot-js`) ✅ | Merged (PR #175, Session 11696627093046789817) — npm package in `packages/paperpilot-js`: TypeScript SDK with local CLI and remote REST execution (8/8 Vitest pass) |
 | 8.4.3 | Go SDK (`paperpilot-go`) | Go module, includes `VerifyWebhookSignature()` crypto utility |
 | 8.4.4 | SDK documentation site | Auto-generated API docs for all SDKs |
 
