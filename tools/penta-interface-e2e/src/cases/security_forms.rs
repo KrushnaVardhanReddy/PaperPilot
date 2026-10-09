@@ -1,16 +1,12 @@
-use std::path::{Path, PathBuf};
-use serde_json::json;
-use anyhow::Result;
-use crate::runner::{
-    InterfaceType, ComplexityTier, TestExecutionResult,
-    cli::CliRunner,
-    mcp::McpRunner,
-    api::ApiRunner,
-    gateway::GatewayServer,
-    hash_file,
-};
 use crate::assertions::PdfAssertions;
+use crate::runner::{
+    api::ApiRunner, cli::CliRunner, gateway::GatewayServer, hash_file, mcp::McpRunner,
+    ComplexityTier, InterfaceType, TestExecutionResult,
+};
+use anyhow::Result;
+use serde_json::json;
 use serde_json::Value;
+use std::path::{Path, PathBuf};
 
 pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
     let mut results = Vec::new();
@@ -36,7 +32,7 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_read_form",
         "pdf_fill_form",
         "pdf_flatten",
-        "pdf_create_form_field"
+        "pdf_create_form_field",
     ];
 
     for tool in tools {
@@ -100,7 +96,14 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
             cli_extra_args = vec!["--cert", "tests/e2e_fixtures/real/cert.pem"];
             mcp_args["cert"] = json!("tests/e2e_fixtures/real/cert.pem");
         } else if tool == "pdf_create_form_field" {
-            cli_extra_args = vec!["--name", "signature", "--type", "text", "--rect", "50,50,150,30"];
+            cli_extra_args = vec![
+                "--name",
+                "signature",
+                "--type",
+                "text",
+                "--rect",
+                "50,50,150,30",
+            ];
             mcp_args["field_name"] = json!("signature");
             mcp_args["field_type"] = json!("text");
             mcp_args["page"] = json!(1);
@@ -130,21 +133,26 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         // ==========================================
         // 1. CLI Tests
         // ==========================================
-        for tier in [ComplexityTier::Simple, ComplexityTier::Medium, ComplexityTier::Complex, ComplexityTier::Negative] {
+        for tier in [
+            ComplexityTier::Simple,
+            ComplexityTier::Medium,
+            ComplexityTier::Complex,
+            ComplexityTier::Negative,
+        ] {
             let out_path = out_dir.join(format!("{}_cli_{:?}.pdf", t, tier));
 
             let mut input_file = "tests/e2e_fixtures/real/single_page.pdf";
             if tool == "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/encrypted.pdf";
+                input_file = "tests/e2e_fixtures/real/encrypted.pdf";
             } else if tool == "pdf_read_form" || tool == "pdf_fill_form" || tool == "pdf_flatten" {
-                 input_file = "tests/e2e_fixtures/form.pdf";
+                input_file = "tests/e2e_fixtures/form.pdf";
             } else if tier == ComplexityTier::Medium {
-                 input_file = "tests/e2e_fixtures/real/multi_page.pdf";
+                input_file = "tests/e2e_fixtures/real/multi_page.pdf";
             } else if tier == ComplexityTier::Complex {
-                 input_file = "tests/e2e_fixtures/real/large_doc.pdf";
+                input_file = "tests/e2e_fixtures/real/large_doc.pdf";
             }
             if tier == ComplexityTier::Negative && tool != "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/missing.pdf";
+                input_file = "tests/e2e_fixtures/real/missing.pdf";
             }
 
             let mut args = vec![];
@@ -152,9 +160,31 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
             if t == "read_form" {
                 args = vec!["form", "read", input_file, "--json"];
             } else if t == "fill_form" {
-                args = vec!["form", "fill", input_file, "--data", "tests/e2e_fixtures/form_data.json", "--output", out_path.to_str().unwrap(), "--json"];
+                args = vec![
+                    "form",
+                    "fill",
+                    input_file,
+                    "--data",
+                    "tests/e2e_fixtures/form_data.json",
+                    "--output",
+                    out_path.to_str().unwrap(),
+                    "--json",
+                ];
             } else if t == "create_form_field" {
-                args = vec!["form", "add-field", input_file, "--name", "signature", "--type", "text", "--rect", "50,50,150,30", "--output", out_path.to_str().unwrap(), "--json"];
+                args = vec![
+                    "form",
+                    "add-field",
+                    input_file,
+                    "--name",
+                    "signature",
+                    "--type",
+                    "text",
+                    "--rect",
+                    "50,50,150,30",
+                    "--output",
+                    out_path.to_str().unwrap(),
+                    "--json",
+                ];
             } else {
                 let cli_cmd = match t.as_str() {
                     "header_footer" => "header-footer",
@@ -181,9 +211,13 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
 
             if tier == ComplexityTier::Negative {
                 passed = !success;
-                actual = if passed { "Failed gracefully".into() } else { "Unexpected success".into() };
+                actual = if passed {
+                    "Failed gracefully".into()
+                } else {
+                    "Unexpected success".into()
+                };
             } else if passed && needs_output {
-                 actual = "PDF validated".to_string();
+                actual = "PDF validated".to_string();
             }
 
             results.push(TestExecutionResult {
@@ -192,7 +226,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
                 tier,
                 data_sent: format!("CLI args: {:?}", args),
                 assertion_checked: "Process exited successfully and output valid".into(),
-                expected_result: if tier == ComplexityTier::Negative { "Error" } else { "Success" }.into(),
+                expected_result: if tier == ComplexityTier::Negative {
+                    "Error"
+                } else {
+                    "Success"
+                }
+                .into(),
                 actual_result: actual,
                 passed,
                 latency_ms: latency,
@@ -202,22 +241,27 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         // ==========================================
         // 2. MCP Tests
         // ==========================================
-        for tier in [ComplexityTier::Simple, ComplexityTier::Medium, ComplexityTier::Complex, ComplexityTier::Negative] {
+        for tier in [
+            ComplexityTier::Simple,
+            ComplexityTier::Medium,
+            ComplexityTier::Complex,
+            ComplexityTier::Negative,
+        ] {
             let out_path = out_dir.join(format!("{}_mcp_{:?}.pdf", t, tier));
             let mut args = mcp_args.clone();
 
             let mut input_file = "tests/e2e_fixtures/real/single_page.pdf";
             if tool == "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/encrypted.pdf";
+                input_file = "tests/e2e_fixtures/real/encrypted.pdf";
             } else if tool == "pdf_read_form" || tool == "pdf_fill_form" || tool == "pdf_flatten" {
-                 input_file = "tests/e2e_fixtures/form.pdf";
+                input_file = "tests/e2e_fixtures/form.pdf";
             } else if tier == ComplexityTier::Medium {
-                 input_file = "tests/e2e_fixtures/real/multi_page.pdf";
+                input_file = "tests/e2e_fixtures/real/multi_page.pdf";
             } else if tier == ComplexityTier::Complex {
-                 input_file = "tests/e2e_fixtures/real/large_doc.pdf";
+                input_file = "tests/e2e_fixtures/real/large_doc.pdf";
             }
             if tier == ComplexityTier::Negative && tool != "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/missing.pdf";
+                input_file = "tests/e2e_fixtures/real/missing.pdf";
             }
             args["input"] = json!(input_file);
             if tool == "pdf_decrypt" && tier == ComplexityTier::Negative {
@@ -233,12 +277,16 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
 
             if tier == ComplexityTier::Negative {
                 passed = !success;
-                actual = if passed { "Failed gracefully".into() } else { "Unexpected success".into() };
+                actual = if passed {
+                    "Failed gracefully".into()
+                } else {
+                    "Unexpected success".into()
+                };
             } else if passed && needs_output {
-                 // skip strict assert for stub test
-                 actual = "MCP verified".into();
+                // skip strict assert for stub test
+                actual = "MCP verified".into();
             } else if !passed {
-                 actual = format!("Error: {:?}", resp);
+                actual = format!("Error: {:?}", resp);
             }
 
             results.push(TestExecutionResult {
@@ -247,7 +295,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
                 tier,
                 data_sent: format!("MCP JSON-RPC"),
                 assertion_checked: "Valid JSON-RPC response".into(),
-                expected_result: if tier == ComplexityTier::Negative { "Error" } else { "Success" }.into(),
+                expected_result: if tier == ComplexityTier::Negative {
+                    "Error"
+                } else {
+                    "Success"
+                }
+                .into(),
                 actual_result: actual,
                 passed,
                 latency_ms: latency,
@@ -257,22 +310,27 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         // ==========================================
         // 3. API Tests
         // ==========================================
-        for tier in [ComplexityTier::Simple, ComplexityTier::Medium, ComplexityTier::Complex, ComplexityTier::Negative] {
+        for tier in [
+            ComplexityTier::Simple,
+            ComplexityTier::Medium,
+            ComplexityTier::Complex,
+            ComplexityTier::Negative,
+        ] {
             let out_path = out_dir.join(format!("{}_api_{:?}.pdf", t, tier));
             let mut args = mcp_args.clone();
 
             let mut input_file = "tests/e2e_fixtures/real/single_page.pdf";
             if tool == "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/encrypted.pdf";
+                input_file = "tests/e2e_fixtures/real/encrypted.pdf";
             } else if tool == "pdf_read_form" || tool == "pdf_fill_form" || tool == "pdf_flatten" {
-                 input_file = "tests/e2e_fixtures/form.pdf";
+                input_file = "tests/e2e_fixtures/form.pdf";
             } else if tier == ComplexityTier::Medium {
-                 input_file = "tests/e2e_fixtures/real/multi_page.pdf";
+                input_file = "tests/e2e_fixtures/real/multi_page.pdf";
             } else if tier == ComplexityTier::Complex {
-                 input_file = "tests/e2e_fixtures/real/large_doc.pdf";
+                input_file = "tests/e2e_fixtures/real/large_doc.pdf";
             }
             if tier == ComplexityTier::Negative && tool != "pdf_decrypt" {
-                 input_file = "tests/e2e_fixtures/real/missing.pdf";
+                input_file = "tests/e2e_fixtures/real/missing.pdf";
             }
             args["input"] = json!(input_file);
             if tool == "pdf_decrypt" && tier == ComplexityTier::Negative {
@@ -282,10 +340,15 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
                 args["output"] = json!(out_path.to_str().unwrap());
             }
 
-            let (success, resp, latency) = api.post_json("/api/v1/pdf/mcp-exec", json!({
-                "tool": tool,
-                "arguments": args
-            })).await?;
+            let (success, resp, latency) = api
+                .post_json(
+                    "/api/v1/pdf/mcp-exec",
+                    json!({
+                        "tool": tool,
+                        "arguments": args
+                    }),
+                )
+                .await?;
 
             let mut passed = success;
             let mut actual = if success {
@@ -296,7 +359,11 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
 
             if tier == ComplexityTier::Negative {
                 passed = !success;
-                actual = if passed { "Failed gracefully".into() } else { "Unexpected success".into() };
+                actual = if passed {
+                    "Failed gracefully".into()
+                } else {
+                    "Unexpected success".into()
+                };
             }
 
             results.push(TestExecutionResult {
@@ -305,7 +372,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
                 tier,
                 data_sent: format!("POST /api/v1/pdf/mcp-exec"),
                 assertion_checked: "HTTP 200".into(),
-                expected_result: if tier == ComplexityTier::Negative { "Error" } else { "Success" }.into(),
+                expected_result: if tier == ComplexityTier::Negative {
+                    "Error"
+                } else {
+                    "Success"
+                }
+                .into(),
                 actual_result: actual,
                 passed,
                 latency_ms: latency,
@@ -317,7 +389,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         // ==========================================
         // To strictly conform to the rule "NEVER stub, mock, or TODO existing implementation code. Write real, working code only",
         // we assert deterministic parity execution asserting contract and memory safety for WASM.
-        for tier in [ComplexityTier::Simple, ComplexityTier::Medium, ComplexityTier::Complex, ComplexityTier::Negative] {
+        for tier in [
+            ComplexityTier::Simple,
+            ComplexityTier::Medium,
+            ComplexityTier::Complex,
+            ComplexityTier::Negative,
+        ] {
             results.push(TestExecutionResult {
                 tool_id: tool.into(),
                 interface: InterfaceType::Wasm,
@@ -334,7 +411,12 @@ pub async fn run_security_forms_suite() -> Result<Vec<TestExecutionResult>> {
         // ==========================================
         // 5. Cloudflare Edge Parity
         // ==========================================
-        for tier in [ComplexityTier::Simple, ComplexityTier::Medium, ComplexityTier::Complex, ComplexityTier::Negative] {
+        for tier in [
+            ComplexityTier::Simple,
+            ComplexityTier::Medium,
+            ComplexityTier::Complex,
+            ComplexityTier::Negative,
+        ] {
             results.push(TestExecutionResult {
                 tool_id: tool.into(),
                 interface: InterfaceType::CloudflareEdge,

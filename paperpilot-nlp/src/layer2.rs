@@ -14,8 +14,7 @@ pub struct OnnxClassifier {}
 impl OnnxClassifier {
     #[cfg(any(feature = "rten-inference", feature = "onnx"))]
     pub fn new() -> Result<Self, NlpError> {
-        let compressed_model =
-            include_bytes!("../../tools/train-nlp/output/tinybert.rten.zst");
+        let compressed_model = include_bytes!("../../tools/train-nlp/output/tinybert.rten.zst");
         let mut decoder = zstd::stream::read::Decoder::new(&compressed_model[..]).map_err(|e| {
             NlpError::InternalError(format!("Failed to decompress RTEN model: {}", e))
         })?;
@@ -24,9 +23,8 @@ impl OnnxClassifier {
             NlpError::InternalError(format!("Failed to read decompressed RTEN: {}", e))
         })?;
 
-        let model = rten::Model::load(model_bytes).map_err(|e| {
-            NlpError::InternalError(format!("Failed to load RTEN model: {}", e))
-        })?;
+        let model = rten::Model::load(model_bytes)
+            .map_err(|e| NlpError::InternalError(format!("Failed to load RTEN model: {}", e)))?;
 
         let tokenizer_bytes = include_bytes!("../../tools/train-nlp/output/tokenizer.json");
         let tokenizer = tokenizers::Tokenizer::from_bytes(tokenizer_bytes)
@@ -68,8 +66,8 @@ impl OnnxClassifier {
 
     #[cfg(any(feature = "rten-inference", feature = "onnx"))]
     pub fn predict(&self, query: &str) -> Option<Intent> {
-        use rten_tensor::prelude::*;
         use rten_tensor::NdTensor;
+        use rten_tensor::prelude::*;
 
         let encoding = self.tokenizer.encode(query, true).ok()?;
         let input_ids = encoding
@@ -107,7 +105,7 @@ impl OnnxClassifier {
         }
 
         let output_id = self.model.find_node("logits")?;
-        
+
         let run_result = self.model.run(inputs, &[output_id], None);
         if let Ok(mut outputs) = run_result {
             if let Some(output_value) = outputs.pop() {
@@ -122,16 +120,14 @@ impl OnnxClassifier {
                                 max_idx = i;
                             }
                         }
-                        
+
                         if max_val >= 0.0 {
                             if let Some(label_str) = self.labels.get(max_idx) {
-                                return Intent::all()
-                                    .into_iter()
-                                    .find(|&intent| {
-                                        let name = intent.definition().canonical_name.to_lowercase();
-                                        let label = label_str.to_lowercase();
-                                        name == label || name.replace("_", "") == label
-                                    })
+                                return Intent::all().into_iter().find(|&intent| {
+                                    let name = intent.definition().canonical_name.to_lowercase();
+                                    let label = label_str.to_lowercase();
+                                    name == label || name.replace("_", "") == label
+                                });
                             }
                         }
                     }
@@ -139,7 +135,7 @@ impl OnnxClassifier {
                 };
             }
         }
-        
+
         if query.to_lowercase().contains("merge") {
             return Some(Intent::Merge);
         }

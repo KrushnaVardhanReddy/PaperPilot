@@ -68,7 +68,8 @@ impl TestExecutionResult {
         }
         if sent.starts_with("CLI args: [") {
             let inner = sent.trim_start_matches("CLI args: [").trim_end_matches(']');
-            let parts: Vec<String> = inner.split(", ")
+            let parts: Vec<String> = inner
+                .split(", ")
                 .map(|s| s.trim_matches('"').to_string())
                 .collect();
             return format!("paperpilot {}", parts.join(" "));
@@ -375,24 +376,25 @@ impl TestExecutionResult {
 
         match self.interface {
             InterfaceType::Cli => {
-                if canonical_args.starts_with(cmd) || canonical_args.contains(" ") && !canonical_args.starts_with('-') {
+                if canonical_args.starts_with(cmd)
+                    || canonical_args.contains(" ") && !canonical_args.starts_with('-')
+                {
                     format!("paperpilot {}", canonical_args)
                 } else {
                     format!("paperpilot {} {}", cmd, canonical_args)
                 }
             }
             InterfaceType::Mcp => {
-                format!("tools/call {{\"name\": \"{}\", \"arguments\": {}}}", self.tool_id, mcp_args)
+                format!(
+                    "tools/call {{\"name\": \"{}\", \"arguments\": {}}}",
+                    self.tool_id, mcp_args
+                )
             }
             InterfaceType::Api => {
                 format!("curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/{} -H 'Content-Type: application/json' -d '{}'", endpoint, mcp_args)
             }
-            InterfaceType::Wasm => {
-                wasm_call.to_string()
-            }
-            InterfaceType::CloudflareEdge => {
-                edge_call.to_string()
-            }
+            InterfaceType::Wasm => wasm_call.to_string(),
+            InterfaceType::CloudflareEdge => edge_call.to_string(),
         }
     }
 }

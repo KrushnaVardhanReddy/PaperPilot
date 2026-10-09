@@ -46,7 +46,8 @@ fn generate_markdown_report(
     for r in results {
         let verdict = if r.passed { "✅ PASS" } else { "❌ FAIL" };
         let invocation = r.get_invocation().replace('|', "\\|");
-        let assertion = format!("{}: {}", r.assertion_checked, r.expected_result).replace('|', "\\|");
+        let assertion =
+            format!("{}: {}", r.assertion_checked, r.expected_result).replace('|', "\\|");
         let actual = r.actual_result.replace('|', "\\|");
         md.push_str(&format!(
             "| `{}` | **{}** | {} | `{}` | `{:.2} ms` | {} | {} | {} |\n",
@@ -66,7 +67,6 @@ fn generate_markdown_report(
     println!("Report written to: {}", report_path);
     Ok(())
 }
-
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -120,6 +120,15 @@ async fn main() -> Result<()> {
                 "Phase 5.9.5 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Edge Cases)",
                 &results,
                 "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
+            )?;
+        }
+        "bench" => {
+            let results = cases::bench::run_benchmarks().await?;
+            println!("Bench finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.7 — Multimodal PDF-to-JSON Benchmark",
+                &results,
+                "reports/PDF_TO_JSON_MULTIMODAL_BENCH.md",
             )?;
         }
         _ => {

@@ -1,14 +1,11 @@
-use std::path::PathBuf;
-use serde_json::json;
-use anyhow::Result;
-use crate::runner::{
-    InterfaceType, ComplexityTier, TestExecutionResult,
-    cli::CliRunner,
-    mcp::McpRunner,
-    api::ApiRunner,
-    gateway::GatewayServer,
-};
 use crate::assertions::PdfAssertions;
+use crate::runner::{
+    api::ApiRunner, cli::CliRunner, gateway::GatewayServer, mcp::McpRunner, ComplexityTier,
+    InterfaceType, TestExecutionResult,
+};
+use anyhow::Result;
+use serde_json::json;
+use std::path::PathBuf;
 
 pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     let mut results = Vec::new();
@@ -36,8 +33,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_compress_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compress", "--input", input_a, "--quality", "medium", "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "compress",
+            "--input",
+            input_a,
+            "--quality",
+            "medium",
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -52,7 +57,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -61,8 +70,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_compress_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compress", "--input", input_multi, "--quality", "medium", "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "compress",
+            "--input",
+            input_multi,
+            "--quality",
+            "medium",
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -77,7 +94,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -86,8 +107,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_compress_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compress", "--input", input_multi, "--quality", "medium", "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "compress",
+            "--input",
+            input_multi,
+            "--quality",
+            "medium",
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -102,7 +131,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -111,8 +144,16 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_compress_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compress", "--input", input_missing, "--quality", "medium", "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "compress",
+            "--input",
+            input_missing,
+            "--quality",
+            "medium",
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -127,7 +168,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -138,10 +183,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_compress_mcp_simple.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compress", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compress",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -155,7 +204,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -163,10 +216,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_mcp_medium.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compress", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compress",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -180,7 +237,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -188,10 +249,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_mcp_complex.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compress", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compress",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -205,7 +270,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -213,10 +282,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_mcp_neg.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compress", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compress",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -230,7 +303,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -241,15 +318,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_compress_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compress", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compress",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compress".into(),
@@ -258,7 +340,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -266,10 +352,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compress", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compress",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -283,7 +374,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -291,10 +386,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compress", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compress",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -308,7 +408,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -316,15 +420,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_compress_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compress", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compress",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compress".into(),
@@ -333,7 +442,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -446,8 +559,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_repair_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "repair", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "repair",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -462,7 +581,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -471,8 +594,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_repair_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "repair", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "repair",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -487,7 +616,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -496,8 +629,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_repair_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "repair", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "repair",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -512,7 +651,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -521,8 +664,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_repair_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "repair", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "repair",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -537,7 +686,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -548,10 +701,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_repair_mcp_simple.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_repair", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_repair",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -565,7 +722,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -573,10 +734,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_mcp_medium.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_repair", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_repair",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -590,7 +755,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -598,10 +767,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_mcp_complex.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_repair", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_repair",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -615,7 +788,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -623,10 +800,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_mcp_neg.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_repair", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_repair",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -640,7 +821,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -651,15 +836,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_repair_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_repair",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_repair".into(),
@@ -668,7 +858,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -676,10 +870,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_repair",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -693,7 +892,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -701,10 +904,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_repair",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -718,7 +926,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -726,15 +938,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_repair_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_repair", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_repair",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_repair".into(),
@@ -743,7 +960,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -856,8 +1077,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_linearize_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "linearize", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "linearize",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -872,7 +1099,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -881,8 +1112,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_linearize_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "linearize", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "linearize",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -897,7 +1134,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -906,8 +1147,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_linearize_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "linearize", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "linearize",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -922,7 +1169,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -931,8 +1182,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_linearize_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "linearize", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "linearize",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -947,7 +1204,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -958,10 +1219,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_linearize_mcp_simple.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_linearize", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_linearize",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
@@ -975,7 +1240,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -983,10 +1252,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_mcp_medium.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_linearize", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_linearize",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -1000,7 +1273,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1008,10 +1285,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_mcp_complex.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_linearize", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_linearize",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -1025,7 +1306,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1033,10 +1318,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_mcp_neg.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_linearize", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_linearize",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -1050,7 +1339,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1061,15 +1354,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_linearize_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_linearize",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 1).is_ok()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_linearize".into(),
@@ -1078,7 +1376,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1086,10 +1388,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_linearize",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -1103,7 +1410,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1111,10 +1422,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_linearize",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             PdfAssertions::assert_page_count(&out_path, 5).is_ok()
@@ -1128,7 +1444,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1136,15 +1456,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_linearize_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_linearize", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_linearize",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_linearize".into(),
@@ -1153,7 +1478,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1266,8 +1595,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_text_cli_simple.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-text",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -1282,7 +1617,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1291,8 +1630,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_text_cli_medium.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-text",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -1307,7 +1652,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1316,8 +1665,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_text_cli_complex.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-text",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -1332,7 +1687,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1341,8 +1700,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_text_cli_neg.txt");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-text", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-text",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -1357,7 +1722,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1368,10 +1737,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_extract_text_mcp_simple.txt");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_text",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -1385,7 +1758,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1393,10 +1770,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_mcp_medium.txt");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_text",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -1410,7 +1791,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1418,10 +1803,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_mcp_complex.txt");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_text",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -1435,7 +1824,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1443,10 +1836,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_mcp_neg.txt");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_text", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_text",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -1460,7 +1857,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1471,15 +1872,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_extract_text_api_simple.txt");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/extract-text",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1488,7 +1894,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1496,15 +1906,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_api_medium.txt");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/extract-text",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1513,7 +1928,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1521,15 +1940,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_api_complex.txt");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/extract-text",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1538,7 +1962,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1546,15 +1974,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_text_api_neg.txt");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/extract-text", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/extract-text",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_text".into(),
@@ -1563,7 +1996,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1676,8 +2113,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_images_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-images", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-images",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -1692,7 +2135,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1701,8 +2148,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_images_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-images", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-images",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -1717,7 +2170,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1726,8 +2183,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_images_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-images", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-images",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -1742,7 +2205,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1751,8 +2218,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_extract_images_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "extract-images", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "extract-images",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -1767,7 +2240,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1778,10 +2255,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_extract_images_mcp_simple");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
-            "input": input_a,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_images",
+            json!({
+                "input": input_a,
+                "output_dir": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -1795,7 +2276,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1803,10 +2288,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_mcp_medium");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
-            "input": input_multi,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_images",
+            json!({
+                "input": input_multi,
+                "output_dir": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -1820,7 +2309,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1828,10 +2321,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_mcp_complex");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
-            "input": input_multi,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_images",
+            json!({
+                "input": input_multi,
+                "output_dir": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -1845,7 +2342,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1853,10 +2354,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_mcp_neg");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_extract_images", json!({
-            "input": input_missing,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_extract_images",
+            json!({
+                "input": input_missing,
+                "output_dir": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -1870,7 +2375,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1881,15 +2390,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_extract_images_api_simple");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
-            "input": input_a,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_extract_images",
+                json!({
+                    "input": input_a,
+                    "output_dir": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_images".into(),
@@ -1898,7 +2412,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1906,15 +2424,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_api_medium");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
-            "input": input_multi,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_extract_images",
+                json!({
+                    "input": input_multi,
+                    "output_dir": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_images".into(),
@@ -1923,7 +2446,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1931,10 +2458,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_api_complex");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
-            "input": input_multi,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_extract_images",
+                json!({
+                    "input": input_multi,
+                    "output_dir": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -1948,7 +2480,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -1956,15 +2492,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_extract_images_api_neg");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_extract_images", json!({
-            "input": input_missing,
-            "output_dir": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_extract_images",
+                json!({
+                    "input": input_missing,
+                    "output_dir": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_extract_images".into(),
@@ -1973,7 +2514,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2085,9 +2630,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "search", "--input", input_a, "--query", "MERGE", "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["search", "--input", input_a, "--query", "MERGE", "--json"]).await?;
 
         let passed = if success {
             true
@@ -2102,7 +2646,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2111,8 +2659,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let _out_path = PathBuf::from("");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "search", "--input", input_multi, "--query", "MERGE", "--json"
-        ]).await?;
+            "search",
+            "--input",
+            input_multi,
+            "--query",
+            "MERGE",
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -2127,7 +2681,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2136,8 +2694,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let _out_path = PathBuf::from("");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "search", "--input", input_multi, "--query", "MERGE", "--json"
-        ]).await?;
+            "search",
+            "--input",
+            input_multi,
+            "--query",
+            "MERGE",
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -2152,7 +2716,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2161,8 +2729,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let _out_path = PathBuf::from("");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "search", "--input", input_missing, "--query", "MERGE", "--json"
-        ]).await?;
+            "search",
+            "--input",
+            input_missing,
+            "--query",
+            "MERGE",
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -2177,7 +2751,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2188,10 +2766,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_search", json!({
-            "input": input_a,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_search",
+            json!({
+                "input": input_a,
+                "query": "MERGE"
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -2205,7 +2787,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2213,10 +2799,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_search", json!({
-            "input": input_multi,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_search",
+            json!({
+                "input": input_multi,
+                "query": "MERGE"
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -2230,7 +2820,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2238,10 +2832,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_search", json!({
-            "input": input_multi,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_search",
+            json!({
+                "input": input_multi,
+                "query": "MERGE"
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -2255,7 +2853,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2263,10 +2865,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_search", json!({
-            "input": input_missing,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_search",
+            json!({
+                "input": input_missing,
+                "query": "MERGE"
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -2280,7 +2886,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2291,15 +2901,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
-            "input": input_a,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_search",
+                json!({
+                    "input": input_a,
+                    "query": "MERGE"
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_search".into(),
@@ -2308,7 +2923,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2316,10 +2935,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
-            "input": input_multi,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_search",
+                json!({
+                    "input": input_multi,
+                    "query": "MERGE"
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -2333,7 +2957,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2341,10 +2969,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
-            "input": input_multi,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_search",
+                json!({
+                    "input": input_multi,
+                    "query": "MERGE"
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -2358,7 +2991,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2366,15 +3003,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_search", json!({
-            "input": input_missing,
-            "query": "MERGE"
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_search",
+                json!({
+                    "input": input_missing,
+                    "query": "MERGE"
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_search".into(),
@@ -2383,7 +3025,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2496,8 +3142,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_render_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "render", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "render",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -2512,7 +3164,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2521,8 +3177,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_render_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "render", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "render",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -2537,7 +3199,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2546,8 +3212,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_render_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "render", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "render",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -2562,7 +3234,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2571,8 +3247,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_render_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "render", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "render",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -2587,7 +3269,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2598,10 +3284,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_render_mcp_simple.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_render", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_render",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -2615,7 +3305,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2623,10 +3317,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_mcp_medium.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_render", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_render",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -2640,7 +3338,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2648,10 +3350,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_mcp_complex.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_render", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_render",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -2665,7 +3371,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2673,10 +3383,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_mcp_neg.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_render", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_render",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -2690,7 +3404,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2701,15 +3419,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_render_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/render-page",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_render".into(),
@@ -2718,7 +3441,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2726,10 +3453,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/render-page",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -2743,7 +3475,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2751,10 +3487,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/render-page",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -2768,7 +3509,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2776,15 +3521,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_render_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/render-page", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/render-page",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_render".into(),
@@ -2793,7 +3543,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2905,8 +3659,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_a, "--input-b", input_b, "--json"
-        ]).await?;
+            "compare",
+            "--input",
+            input_a,
+            "--input-b",
+            input_b,
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -2921,7 +3681,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2929,8 +3693,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_multi, "--input-b", input_b, "--json"
-        ]).await?;
+            "compare",
+            "--input",
+            input_multi,
+            "--input-b",
+            input_b,
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -2945,7 +3715,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2953,8 +3727,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_multi, "--input-b", input_b, "--json"
-        ]).await?;
+            "compare",
+            "--input",
+            input_multi,
+            "--input-b",
+            input_b,
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -2969,7 +3749,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -2977,8 +3761,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let (success, out_msg, latency) = CliRunner::run(&[
-            "compare", "--input", input_missing, "--input-b", input_b, "--json"
-        ]).await?;
+            "compare",
+            "--input",
+            input_missing,
+            "--input-b",
+            input_b,
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -2993,7 +3783,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3003,10 +3797,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 2. MCP Tests
     // ------------------------------------------
     {
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "file1": input_a,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compare",
+            json!({
+                "file1": input_a,
+                "file2": input_b
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3020,17 +3818,25 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "file1": input_multi,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compare",
+            json!({
+                "file1": input_multi,
+                "file2": input_b
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3044,17 +3850,25 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "file1": input_multi,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compare",
+            json!({
+                "file1": input_multi,
+                "file2": input_b
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3068,17 +3882,25 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = McpRunner::call_tool("pdf_compare", json!({
-            "file1": input_missing,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_compare",
+            json!({
+                "file1": input_missing,
+                "file2": input_b
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -3092,7 +3914,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3102,15 +3928,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // 3. REST API Tests
     // ------------------------------------------
     {
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "file1": input_a,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compare",
+                json!({
+                    "file1": input_a,
+                    "file2": input_b
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3119,22 +3950,31 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "file1": input_multi,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compare",
+                json!({
+                    "file1": input_multi,
+                    "file2": input_b
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3143,22 +3983,31 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "file1": input_multi,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compare",
+                json!({
+                    "file1": input_multi,
+                    "file2": input_b
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3167,22 +4016,31 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
     }
 
     {
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/compare", json!({
-            "file1": input_missing,
-            "file2": input_b
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/compare",
+                json!({
+                    "file1": input_missing,
+                    "file2": input_b
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_compare".into(),
@@ -3191,7 +4049,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3304,8 +4166,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_metadata_cli_simple.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "metadata",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -3320,7 +4188,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3329,8 +4201,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_metadata_cli_medium.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "metadata",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -3345,7 +4223,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3354,8 +4236,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_metadata_cli_complex.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "metadata",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             true
@@ -3370,7 +4258,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3379,8 +4271,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_metadata_cli_neg.json");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "metadata", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "metadata",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -3395,7 +4293,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3406,9 +4308,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_metadata", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_metadata",
+            json!({
+                "input": input_a
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3422,7 +4328,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3430,9 +4340,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_metadata", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_metadata",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3446,7 +4360,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3454,9 +4372,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_metadata", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_metadata",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3470,7 +4392,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3478,9 +4404,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_metadata", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_metadata",
+            json!({
+                "input": input_missing
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -3494,7 +4424,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3505,14 +4439,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_metadata",
+                json!({
+                    "input": input_a
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_metadata".into(),
@@ -3521,7 +4460,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3529,9 +4472,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_metadata",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3545,7 +4493,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3553,9 +4505,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_metadata",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3569,7 +4526,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3577,14 +4538,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_metadata", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_metadata",
+                json!({
+                    "input": input_missing
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_metadata".into(),
@@ -3593,7 +4559,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3705,9 +4675,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "bookmarks", "--input", input_a, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["bookmarks", "--input", input_a, "--json"]).await?;
 
         let passed = if success {
             true
@@ -3722,7 +4691,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3730,9 +4703,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "bookmarks", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["bookmarks", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -3747,7 +4719,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3755,9 +4731,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "bookmarks", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["bookmarks", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -3772,7 +4747,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3780,9 +4759,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "bookmarks", "--input", input_missing, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["bookmarks", "--input", input_missing, "--json"]).await?;
 
         let passed = if !success {
             true
@@ -3797,7 +4775,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3808,9 +4790,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_bookmarks", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_bookmarks",
+            json!({
+                "input": input_a
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3824,7 +4810,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3832,9 +4822,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_bookmarks", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_bookmarks",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3848,7 +4842,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3856,9 +4854,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_bookmarks", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_bookmarks",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3872,7 +4874,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3880,9 +4886,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_bookmarks", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_bookmarks",
+            json!({
+                "input": input_missing
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -3896,7 +4906,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3907,14 +4921,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_bookmarks",
+                json!({
+                    "input": input_a
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_bookmarks".into(),
@@ -3923,7 +4942,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3931,9 +4954,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_bookmarks",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3947,7 +4975,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3955,9 +4987,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_bookmarks",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -3971,7 +5008,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -3979,14 +5020,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_bookmarks", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_bookmarks",
+                json!({
+                    "input": input_missing
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_bookmarks".into(),
@@ -3995,7 +5041,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4107,9 +5157,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "classify", "--input", input_a, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["classify", "--input", input_a, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4124,7 +5173,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4132,9 +5185,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "classify", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["classify", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4149,7 +5201,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4157,9 +5213,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "classify", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["classify", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4174,7 +5229,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4182,9 +5241,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "classify", "--input", input_missing, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["classify", "--input", input_missing, "--json"]).await?;
 
         let passed = if !success {
             true
@@ -4199,7 +5257,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4210,9 +5272,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_classify_type", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_classify_type",
+            json!({
+                "input": input_a
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4226,7 +5292,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4234,9 +5304,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_classify_type", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_classify_type",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4250,7 +5324,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4258,9 +5336,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_classify_type", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_classify_type",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4274,7 +5356,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4282,9 +5368,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_classify_type", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_classify_type",
+            json!({
+                "input": input_missing
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -4298,7 +5388,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4309,14 +5403,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_classify_type",
+                json!({
+                    "input": input_a
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_classify_type".into(),
@@ -4325,7 +5424,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4333,9 +5436,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_classify_type",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4349,7 +5457,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4357,9 +5469,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_classify_type",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4373,7 +5490,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4381,14 +5502,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_classify_type", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_classify_type",
+                json!({
+                    "input": input_missing
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_classify_type".into(),
@@ -4397,7 +5523,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4509,9 +5639,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "validate", "--input", input_a, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["validate", "--input", input_a, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4526,7 +5655,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4534,9 +5667,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "validate", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["validate", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4551,7 +5683,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4559,9 +5695,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "validate", "--input", input_multi, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["validate", "--input", input_multi, "--json"]).await?;
 
         let passed = if success {
             true
@@ -4576,7 +5711,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4584,9 +5723,8 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, out_msg, latency) = CliRunner::run(&[
-            "validate", "--input", input_missing, "--json"
-        ]).await?;
+        let (success, out_msg, latency) =
+            CliRunner::run(&["validate", "--input", input_missing, "--json"]).await?;
 
         let passed = if !success {
             true
@@ -4601,7 +5739,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4612,9 +5754,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_validate", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_validate",
+            json!({
+                "input": input_a
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4628,7 +5774,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4636,9 +5786,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_validate", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_validate",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4652,7 +5806,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4660,9 +5818,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_validate", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_validate",
+            json!({
+                "input": input_multi
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4676,7 +5838,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4684,9 +5850,13 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_validate", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_validate",
+            json!({
+                "input": input_missing
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -4700,7 +5870,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4711,14 +5885,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
-            "input": input_a
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_validate",
+                json!({
+                    "input": input_a
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_validate".into(),
@@ -4727,7 +5906,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4735,9 +5918,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_validate",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4751,7 +5939,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4759,9 +5951,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
-            "input": input_multi
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_validate",
+                json!({
+                    "input": input_multi
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             true
@@ -4775,7 +5972,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4783,14 +5984,19 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let _out_path = PathBuf::from("");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_validate", json!({
-            "input": input_missing
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_validate",
+                json!({
+                    "input": input_missing
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_validate".into(),
@@ -4799,7 +6005,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4912,8 +6122,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_ocr_cli_simple.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "ocr", "--input", input_a, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "ocr",
+            "--input",
+            input_a,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -4928,7 +6144,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI simple run".into(),
             assertion_checked: "CLI run and output check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4937,8 +6157,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_ocr_cli_medium.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "ocr", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "ocr",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -4953,7 +6179,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI medium run".into(),
             assertion_checked: "CLI medium check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4962,8 +6192,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_ocr_cli_complex.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "ocr", "--input", input_multi, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "ocr",
+            "--input",
+            input_multi,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if success {
             out_path.exists()
@@ -4978,7 +6214,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI complex run".into(),
             assertion_checked: "CLI complex check".into(),
             expected_result: "Success or valid unimplemented error".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -4987,8 +6227,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_ocr_cli_neg.pdf");
         let (success, out_msg, latency) = CliRunner::run(&[
-            "ocr", "--input", input_missing, "--output", out_path.to_str().unwrap(), "--json"
-        ]).await?;
+            "ocr",
+            "--input",
+            input_missing,
+            "--output",
+            out_path.to_str().unwrap(),
+            "--json",
+        ])
+        .await?;
 
         let passed = if !success {
             true
@@ -5003,7 +6249,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "CLI neg run".into(),
             assertion_checked: "CLI negative check".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if out_msg.len() > 100 { format!("{}...", &out_msg[..100]) } else { out_msg.clone() },
+            actual_result: if out_msg.len() > 100 {
+                format!("{}...", &out_msg[..100])
+            } else {
+                out_msg.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5014,10 +6264,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_ocr_mcp_simple.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_ocr", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_ocr",
+            json!({
+                "input": input_a,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -5031,7 +6285,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP simple call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5039,10 +6297,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_mcp_medium.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_ocr", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_ocr",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -5056,7 +6318,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP medium call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5064,10 +6330,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_mcp_complex.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_ocr", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_ocr",
+            json!({
+                "input": input_multi,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -5081,7 +6351,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP complex call".into(),
             assertion_checked: "MCP real run".into(),
             expected_result: "Success or standard error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5089,10 +6363,14 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_mcp_neg.pdf");
-        let (success, resp, latency) = McpRunner::call_tool("pdf_ocr", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = McpRunner::call_tool(
+            "pdf_ocr",
+            json!({
+                "input": input_missing,
+                "output": out_path.to_str().unwrap()
+            }),
+        )
+        .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
@@ -5106,7 +6384,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "MCP neg call".into(),
             assertion_checked: "MCP expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5117,15 +6399,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     // ------------------------------------------
     {
         let out_path = out_dir.join("pdf_ocr_api_simple.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
-            "input": input_a,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_ocr",
+                json!({
+                    "input": input_a,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_ocr".into(),
@@ -5134,7 +6421,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API simple call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5142,10 +6433,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_medium.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_ocr",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -5159,7 +6455,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API medium call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5167,10 +6467,15 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_complex.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
-            "input": input_multi,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_ocr",
+                json!({
+                    "input": input_multi,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if success {
             out_path.exists()
@@ -5184,7 +6489,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API complex call".into(),
             assertion_checked: "API real run".into(),
             expected_result: "Success or error".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5192,15 +6501,20 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
 
     {
         let out_path = out_dir.join("pdf_ocr_api_neg.pdf");
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_ocr", json!({
-            "input": input_missing,
-            "output": out_path.to_str().unwrap()
-        })).await?;
+        let (success, resp, latency) = api
+            .post_json(
+                "/api/v1/pdf/tools/pdf_ocr",
+                json!({
+                    "input": input_missing,
+                    "output": out_path.to_str().unwrap()
+                }),
+            )
+            .await?;
         let actual = resp.to_string();
         let passed = if !success {
             true
         } else {
-             actual.contains("not implemented")
+            actual.contains("not implemented")
         };
         results.push(TestExecutionResult {
             tool_id: "pdf_ocr".into(),
@@ -5209,7 +6523,11 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
             data_sent: "API neg call".into(),
             assertion_checked: "API expected failure".into(),
             expected_result: "Failure due to missing input".into(),
-            actual_result: if actual.len() > 100 { format!("{}...", &actual[..100]) } else { actual.clone() },
+            actual_result: if actual.len() > 100 {
+                format!("{}...", &actual[..100])
+            } else {
+                actual.clone()
+            },
             passed,
             latency_ms: latency,
         });
@@ -5312,7 +6630,10 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
     });
 
     gateway.stop().await;
-    println!("Completed Extraction, Analysis & Optimization tests: {} assertions evaluated", results.len());
+    println!(
+        "Completed Extraction, Analysis & Optimization tests: {} assertions evaluated",
+        results.len()
+    );
 
     Ok(results)
 }
