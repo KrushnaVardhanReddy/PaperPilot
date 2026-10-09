@@ -76,6 +76,11 @@
                 {#if aiConfig.mode === 'llamafile'}
                     <div class="config-section" transition:slide>
                         <ModelDownloader />
+                        <div class="test-row">
+                            <button class="test-btn" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
+                                {aiConfig.testLoading ? 'Verifying...' : '⚡ Test Local Model Connection'}
+                            </button>
+                        </div>
                     </div>
                 {/if}
 

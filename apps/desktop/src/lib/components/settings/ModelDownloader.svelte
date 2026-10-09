@@ -90,6 +90,7 @@
                         {#if model.is_downloaded && !activeDownloads[model.id]}
                             <div class="status-downloaded">
                                 <span class="status-icon">✓</span> Downloaded
+                                <span class="active-badge">● Active on Disk</span>
                                 <span class="local-path" title={model.local_path}>{model.local_path}</span>
                             </div>
                         {/if}
@@ -201,6 +202,17 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .active-badge {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(16, 185, 129, 0.4);
     }
 
     .local-path {
