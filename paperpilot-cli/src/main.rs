@@ -1,7 +1,34 @@
 mod cli;
 mod commands;
 
+
 use clap::Parser;
+use std::path::PathBuf;
+
+#[derive(Parser, Debug)]
+#[command(name = "paperpilot watch")]
+pub struct WatchCli {
+    pub directory: PathBuf,
+
+    #[arg(long)]
+    pub output: Option<PathBuf>,
+
+    #[arg(long)]
+    pub operation: Option<String>,
+
+    #[arg(long)]
+    pub recipe: Option<String>,
+
+    #[arg(long)]
+    pub webhook: Option<String>,
+
+    #[arg(long, default_value_t = 500)]
+    pub settle_delay_ms: u64,
+
+    #[arg(long)]
+    pub move_original: Option<PathBuf>,
+}
+
 use cli::Cli;
 use log::{error, info};
 use reqwest::blocking::Client;
@@ -16,7 +43,31 @@ struct CommandResult {
 }
 
 fn main() {
-    env_logger::init();
+    let _ = env_logger::try_init();
+
+    let mut args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 && args[1] == "watch" {
+        args.remove(1);
+        let watch_cli = WatchCli::parse_from(args);
+
+        let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
+        if let Err(e) = rt.block_on(commands::watch::handle_watch(
+            watch_cli.directory,
+            watch_cli.output,
+            watch_cli.operation,
+            watch_cli.recipe,
+            watch_cli.webhook,
+            watch_cli.settle_delay_ms,
+            watch_cli.move_original,
+        )) {
+            log::error!("Watch loop error: {}", e);
+            std::process::exit(1);
+        }
+        std::process::exit(0);
+    }
+
+
+    let _ = env_logger::try_init();
 
     let cli = Cli::parse();
 
