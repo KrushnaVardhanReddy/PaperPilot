@@ -1,0 +1,79 @@
+# Task: Phase 5.9.9 — Automated PDF Structural & Conformance Verification (qpdf & veraPDF)
+# Base Branch: main
+# Target Branch: feat-pdf-conformance-qpdf-verapdf
+# Priority: MEDIUM (Quality Assurance, ISO Conformance & Defect Prevention)
+# Spec: specs/034-automated-pdf-conformance-verification/spec.md
+
+## Objective
+Implement an automated structural and conformance verification harness using `qpdf` and `veraPDF` to audit PDF outputs generated across PaperPilot's key operations (`repair`, `linearize`, `compress`, `merge`, `split`, `pdf-a`), and integrate the audit into CI and Makefile per [Spec 034](specs/034-automated-pdf-conformance-verification/spec.md).
+
+---
+
+## IMPORTANT WORKSPACE REPO CONTEXT
+1. **Always merge latest `main`**:
+   Before making changes or raising a PR, run:
+   ```bash
+   git fetch origin main
+   git merge origin main
+   ```
+2. **Self-Contained Execution**:
+   - Ensure `tests/fixtures/` or `tests/e2e_fixtures/real/` are created using `FixtureManager` or `make-fixtures` prior to running tests.
+   - The script must run without root privileges and cleanly handle cases where optional tools like `verapdf` are absent from the environment by falling back gracefully.
+
+---
+
+## Requirements
+
+### 1. Conformance Script (`scripts/verify_pdf_conformance.sh`)
+Create an executable script `scripts/verify_pdf_conformance.sh` (with `chmod +x`):
+1. Verify presence of `qpdf`. If missing, print a clear error and instructions to install (`sudo apt-get install -y qpdf` or `brew install qpdf`).
+2. Run PaperPilot CLI commands on test inputs to generate candidate outputs in a temporary directory:
+   - `merge`: Merge multi-page fixtures.
+   - `split`: Split sample documents.
+   - `repair`: Repair malformed fixtures.
+   - `linearize`: Produce web-optimized/linearized PDF.
+   - `compress`: Produce compressed PDF.
+   - `pdf-a`: Produce PDF/A document.
+3. Perform structural verification using `qpdf`:
+   ```bash
+   qpdf --check --warning-exit-0 "$output_pdf"
+   ```
+   Fail the script if any PDF has fatal xref errors or syntax corruption.
+4. Optional veraPDF integration:
+   If `verapdf` binary is detected in `$PATH`, run:
+   ```bash
+   verapdf --flavour 1b --format text "$pdfa_output"
+   ```
+   Log conformance results. If `verapdf` is not installed, output: `[INFO] veraPDF not installed; skipping ISO PDF/A deep profile check`.
+
+### 2. Makefile Integration
+Add to `Makefile`:
+```makefile
+.PHONY: test-conformance
+
+test-conformance:
+	./scripts/verify_pdf_conformance.sh
+```
+Ensure `test-all` incorporates `test-conformance` when dependencies are met or via non-breaking conditional.
+
+### 3. GitHub Actions Integration (`.github/workflows/rust.yml`)
+1. In `build-and-test` job for Linux (`runner.os == 'Linux'`):
+   Update the dependencies installation step:
+   ```bash
+   sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
+   ```
+2. Add a new verification step after `Run Tests`:
+   ```yaml
+   - name: Run Structural Conformance Audits (qpdf)
+     if: runner.os == 'Linux'
+     run: make test-conformance
+   ```
+
+---
+
+## Verification & Deliverables
+Run and verify locally:
+1. `chmod +x scripts/verify_pdf_conformance.sh`
+2. `make test-conformance`
+3. `cargo fmt --all -- --check`
+4. Document the results and validation output in `reports/PDF_CONFORMANCE_VERIFICATION_REPORT.md`.
