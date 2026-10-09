@@ -3,6 +3,7 @@
   import { toastState } from '$lib/state/toast.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { formatUserFriendlyError } from '$lib/utils/errorFormatter';
 
   interface ToolDefinition {
     id: string;
@@ -592,13 +593,14 @@
         toastState.success(msg);
         jobsState.addJob(toolName, 'success', msg);
       } else {
-        toastState.error(resObj?.message || `${activeTool.title} failed`);
-        jobsState.addJob(toolName, 'error', resObj?.message);
+        const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+        toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+        jobsState.addJob(toolName, 'error', formatted.headline);
       }
     } catch (error) {
-      const errMsg = typeof error === 'string' ? error : (error as Error).message || 'Unknown error occurred';
-      toastState.error(errMsg);
-      jobsState.addJob(toolName, 'error', errMsg);
+      const formatted = formatUserFriendlyError(error, activeTool.title);
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+      jobsState.addJob(toolName, 'error', formatted.headline);
     } finally {
       appState.setLoading(false);
     }

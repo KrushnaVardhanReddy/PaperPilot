@@ -33,4 +33,18 @@ describe('ToastContainer', () => {
     const toastDiv = toastMessage.closest('.toast');
     expect(toastDiv).toHaveClass('toast-error');
   });
+
+  it('renders actionHint and technicalDetails for error toast', async () => {
+    render(ToastContainer);
+
+    toastState.error('Complex error', 'Try this fix', 'Code 500', 0);
+
+    const actionHint = await screen.findByText('Try this fix');
+    expect(actionHint).toBeInTheDocument();
+
+    const detailsToggle = await screen.findByText(/Details/);
+    expect(detailsToggle).toBeInTheDocument();
+
+    // Details block is hidden by default, we just assert the toggle is there
+  });
 });

@@ -4,6 +4,8 @@ export interface Toast {
   id: string;
   type: ToastType;
   message: string;
+  actionHint?: string;
+  technicalDetails?: string;
   duration?: number;
 }
 
@@ -12,9 +14,9 @@ export class ToastState {
 
   constructor() {}
 
-  add(type: ToastType, message: string, duration: number = 3000) {
+  add(type: ToastType, message: string, duration: number = 3000, actionHint?: string, technicalDetails?: string) {
     const id = crypto.randomUUID();
-    const toast: Toast = { id, type, message, duration };
+    const toast: Toast = { id, type, message, actionHint, technicalDetails, duration };
     this.toasts.push(toast);
 
     if (duration > 0) {
@@ -40,8 +42,22 @@ export class ToastState {
     this.add('warning', message, duration);
   }
 
-  error(message: string, duration?: number) {
-    this.add('error', message, duration);
+  error(message: string, arg2?: string | number, arg3?: string, arg4?: number) {
+    let duration = 4000;
+    let actionHint: string | undefined;
+    let technicalDetails: string | undefined;
+
+    if (typeof arg2 === 'number') {
+      duration = arg2;
+    } else if (typeof arg2 === 'string') {
+      actionHint = arg2;
+      technicalDetails = arg3;
+      if (typeof arg4 === 'number') {
+        duration = arg4;
+      }
+    }
+
+    this.add('error', message, duration, actionHint, technicalDetails);
   }
 }
 
