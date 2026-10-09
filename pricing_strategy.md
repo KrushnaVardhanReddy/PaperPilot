@@ -264,7 +264,13 @@ Analytics panel: what operations run most often, error rates, average processing
 ### 7. Cloud MCP Gateway (Phase 7)
 Hosted MCP endpoint for teams that can't run a local binary. Billed on usage-based Cloud tier. Enables PaperPilot as a drop-in PDF backend for any AI agent via the internet.
 
-### 8. Website Builder Plugins & Drop-In Embed Widgets (`embed.js`)
+### 8. Zero-Dependency CI/CD PDF Testing Assertions (`@paperpilot/test-utils` / WASM)
+**The Problem:** Modern SaaS, billing, and fintech web apps generate PDFs (invoices, receipts, legal docs) and struggle to test them in CI/CD pipelines (GitHub Actions, GitLab CI), having to install bloated Docker containers, Python (`pdfplumber`), or Java (`PDFBox`), which slows CI runs by 40–90 seconds.  
+**The Solution:** An ultra-lightweight npm package (`@paperpilot/test-utils` / `@paperpilot/wasm`) running in Node.js, Bun, Vitest, or Jest with **zero system dependencies**:
+- Asserts PDF validity, text content, bounding boxes, form fields, and SHA-256 snapshots **in-memory in <5ms**.
+- **Viral Developer Funnel:** Software engineering teams adopt it for lightning-fast test suites; once familiar with PaperPilot's speed, they naturally standardize on PaperPilot for their production PDF manipulation and enterprise workflows.
+
+### 9. Website Builder Plugins & Drop-In Embed Widgets (`embed.js`)
 - **Universal Embed**: 1-line `<script>` tag allowing any Webflow, Framer, Squarespace, or custom site to embed a client-side, zero-server-load PDF portal.
 - **WordPress & WooCommerce Plugin**: Gutenberg block + automatic WooCommerce digital file watermarking & dynamic password encryption.
 - **Shopify App**: Sub-10ms invoice generation & digital asset delivery at checkout via Cloudflare Edge.

@@ -1007,6 +1007,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.7.5 | Ephemeral Kubernetes Sandbox Worker | On-demand K8s Job / KEDA runner (`emptyDir: { medium: "Memory" }`) for heavy OCR, multi-gigabyte documents, and complex pipelines that auto-terminates and wipes RAM upon job completion |
 | 5.7.6 | Smart Hybrid Dispatch Router | Gateway router that routes light operations (merge, split, rotate, stamp) to Cloudflare Workers and routes heavy compute (OCR, large rendering) to Ephemeral K8s Pods |
 | 5.7.7 | Zero-Knowledge Audit & Ephemeral Proof | Cryptographic verification asserting zero files touch persistent storage and in-memory streams are purged upon delivery |
+| 5.7.8 | Zero-Dependency CI/CD PDF Test Assertions Library (`@paperpilot/wasm` / `@paperpilot/test-utils`) | Sub-10ms in-memory PDF testing runner for external projects' CI pipelines (Jest, Vitest, Playwright, Bun, Node.js). Allows developers to assert generated invoices/reports (layout, text, forms, hashes) without Docker, Python, or system C-libraries. |
 
 ---
 
