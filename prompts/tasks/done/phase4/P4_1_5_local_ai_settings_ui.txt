@@ -26,6 +26,7 @@ apps/desktop/src/lib/components/settings/ModelDownloader.svelte # Model download
 apps/desktop/src/lib/state/aiConfig.svelte.ts                  # Svelte 5 rune state for AI
 apps/desktop/src-tauri/src/ai_commands.rs                     # Tauri IPC handlers for AI & downloader
 apps/desktop/src-tauri/src/lib.rs                             # Register ai_commands
+apps/desktop/tests/e2e_ui.spec.ts                             # Only if updating error toast assertion
 reports/LOCAL_AI_SETTINGS_UI_REPORT.md                        # Verification report
 wiki/31-Local-AI-Settings-And-Downloader.md                   # Documentation wiki
 ```
@@ -57,7 +58,12 @@ Expose Tauri IPC commands:
 
 ---
 
-## 3. Verification & Deliverables
+## 3. Important Fix for Existing E2E Test
+If running `tests/e2e_ui.spec.ts`, notice that a recent commit added `errorFormatter.ts`. In test `"shows error toast if operation fails"`, the toast now displays `"Compress PDF could not be completed"` instead of raw `"Mocked error message"`. Update line 229 in `tests/e2e_ui.spec.ts` accordingly to expect `"Compress PDF could not be completed"`.
+
+---
+
+## 4. Verification & Deliverables
 Run and verify:
 1. Run Playwright UI tests in `apps/desktop/`: `pnpm test` or `npx playwright test`.
 2. `cargo fmt --all -- --check`
