@@ -76,7 +76,6 @@ export class AiConfigState {
         this.testLoading = true;
         this.testResult = null;
         try {
-             // ensure we're testing the currently configured values by sending them
              const config: AiSettingsConfig = {
                 mode: this.mode,
                 universal_endpoint: this.universalEndpoint,
@@ -84,10 +83,13 @@ export class AiConfigState {
                 active_model: this.activeModel,
                 api_key: null
             };
+            console.log('[aiConfig] Testing connection with config:', config);
             const result = await invoke<string>('test_ai_endpoint', { config });
+            console.log('[aiConfig] Test result:', result);
             this.testResult = { success: true, message: result };
         } catch (e: any) {
-            this.testResult = { success: false, message: e.toString() };
+            console.error('[aiConfig] Test failed:', e);
+            this.testResult = { success: false, message: e?.message || e?.toString() || 'Unknown error' };
         } finally {
             this.testLoading = false;
         }
