@@ -727,9 +727,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.1.1 | Create `paperpilot-ai` crate ⏳ | In Progress (Jules Session `7564763815279840049`) — Scaffolding standalone crate; depends on `paperpilot-nlp` for shared trait |
-| 4.1.2 | `LlmNlpResolver` struct ⏳ | In Progress (Jules Session `7564763815279840049`) — Implements `NlpResolver` with dynamic runtime switching and automatic fallback to `OfflineNlpResolver` |
-| 4.1.3 | Universal OpenAI-Compatible Client (`endpoint_url` + `api_key` + `model`) ⏳ | In Progress (Jules Session `7564763815279840049`) — Connects to **ANY** local or remote OpenAI-compatible server: local Ollama (`:11434`), LM Studio (`:1234`), vLLM/GPU cluster, Groq, DeepSeek, Together, OpenRouter, Azure OpenAI |
+| 4.1.1 | Create `paperpilot-ai` crate ✅ | Merged (PR #170, commit `6dffd85`, Session 7564763815279840049) — Scaffolding standalone crate in workspace; depends on `paperpilot-nlp` for shared trait (`reports/PAPERPILOT_AI_CRATE_REPORT.md`, `wiki/29-PaperPilot-AI-Engine.md`) |
+| 4.1.2 | `LlmNlpResolver` struct ✅ | Merged (PR #170, commit `6dffd85`, Session 7564763815279840049) — Implements `NlpResolver` with dynamic runtime switching and automatic fallback to `OfflineNlpResolver` |
+| 4.1.3 | Universal OpenAI-Compatible Client (`endpoint_url` + `api_key` + `model`) ✅ | Merged (PR #170, commit `6dffd85`, Session 7564763815279840049) — Connects to **ANY** local or remote OpenAI-compatible server (local Ollama, LM Studio, vLLM/GPU cluster, Groq, DeepSeek, Together, OpenRouter, Azure OpenAI) with wiremock tests |
 | 4.1.4 | Mozilla `llamafile` Process Supervisor & 1-Click Offline Runner | Subprocess manager in Rust: boots, monitors, and terminates `.llamafile` standalone executable binaries (`--server --jinja --port 8080`) for zero-install, zero-Docker, air-gapped execution |
 | 4.1.5 | In-App Curated Model Downloader & Manager ⏳ | In Progress (Jules Session `17474141107561700970`) — In-app UI download manager with progress bars streaming tested GGUF / llamafile models (`Qwen2.5-Coder-1.5B`, `Llama-3.2-3B`) to OS app data folders (`~/.local/share/paperpilot/models/`) |
 | 4.1.6 | BYOK & Endpoint Settings UI with OS Keyring Security ⏳ | In Progress (Jules Session `17474141107561700970`) — Settings drawer with 4-way mode toggle (Offline NLP / Local Llamafile / Universal Endpoint / BYOK Cloud), endpoint latency testing, and secure OS Keychain / Stronghold storage |
