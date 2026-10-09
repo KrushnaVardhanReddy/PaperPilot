@@ -1,3 +1,4 @@
+pub mod watch;
 pub mod annotate;
 pub mod group_a;
 pub mod group_b;
