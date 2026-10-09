@@ -179,6 +179,7 @@ test-penta-conversions:
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
 
-# Run Phase 5.9.6: Penta-Interface High-Throughput & Concurrency Performance Benchmark
+# Run Phase 5.9.6: High-Throughput & Concurrency Performance Benchmark
 bench-penta-e2e:
 	cargo run -p penta-interface-e2e -- --group bench
+
