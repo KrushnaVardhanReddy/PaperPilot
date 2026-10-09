@@ -5,7 +5,7 @@ members = [
     "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri",
     "tools/make-fixtures",
     "tools/penta-interface-e2e"
-, "paperpilot-nlp", "tools/gen-e2e-fixtures", "paperpilot-gateway", "paperpilot-wasm", "tools/jules-submit", "tools/demo-legal-fixtures"]
+, "paperpilot-nlp", "tools/gen-e2e-fixtures", "paperpilot-gateway", "paperpilot-wasm", "tools/jules-submit", "tools/demo-legal-fixtures", "paperpilot-ai"]
 resolver = "2"
 
 [profile.release]
