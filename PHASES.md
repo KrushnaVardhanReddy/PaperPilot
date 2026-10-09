@@ -728,11 +728,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | # | Task | Notes |
 |---|---|---|
 | 4.1.1 | Create `paperpilot-ai` crate | LLM-specific implementations; depends on `paperpilot-nlp` for the shared trait |
-| 4.1.2 | `LlmNlpResolver` struct | Implements `NlpResolver` via LLM API call |
-| 4.1.3 | `OllamaNlpResolver` struct | Implements `NlpResolver` via local Ollama endpoint (offline but heavier, ~2–8 GB) |
-| 4.1.4 | Embedded Local SLM (`SmolLM-135M` / llamafile) | Built-in offline small language model (~75MB Q4 GGUF) for conversational, multi-step pipeline planning without external servers |
-| 4.1.5 | OpenAI-compatible API client | Works with OpenAI, Gemini, Groq, LM Studio, etc. (BYOK - Bring Your Own Key) |
-| 4.1.6 | AI provider config in settings | User picks resolver: Offline / Ollama / OpenAI-compatible; enters endpoint + key |
+| 4.1.2 | `LlmNlpResolver` struct | Implements `NlpResolver` via LLM API call with tool-calling protocol |
+| 4.1.3 | Universal OpenAI-Compatible Client (`endpoint_url` + `api_key` + `model`) | Connects to **ANY** local or remote OpenAI-compatible server: local Ollama (`:11434`), LM Studio (`:1234`), vLLM/GPU cluster, Groq, DeepSeek, Together, OpenRouter, Azure OpenAI |
+| 4.1.4 | Mozilla `llamafile` Process Supervisor & 1-Click Offline Runner | Subprocess manager in Rust: boots, monitors, and terminates `.llamafile` standalone executable binaries (`--server --jinja --port 8080`) for zero-install, zero-Docker, air-gapped execution |
+| 4.1.5 | In-App Curated Model Downloader & Manager | In-app UI download manager with progress bars streaming tested GGUF / llamafile models (`Qwen2.5-Coder-1.5B`, `Llama-3.2-3B`) to OS app data folders (`~/.local/share/paperpilot/models/`) |
+| 4.1.6 | BYOK & Endpoint Settings UI with OS Keyring Security | Settings panel for selecting provider (Local Llamafile / Universal Endpoint / BYOK Cloud), endpoint URL, model name, and securely storing API keys in OS Keychain / secret store (`tauri-plugin-stronghold`) |
 | 4.1.8 | Embedded Documentation RAG (`sqlite-vec`) ✅ | Merged (Session 6788529762952435381, PR #136) — In-memory/embedded SQLite vector store indexing all living documentation (`TRI_INTERFACE_E2E_AND_DOCS.md`, user guides, tool specs). Answers user questions directly in the chat with zero hallucinations, exact copy-pasteable CLI/API snippets, and sub-millisecond retrieval |
 
 ---

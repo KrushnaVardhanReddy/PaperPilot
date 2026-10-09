@@ -118,17 +118,20 @@ All 4 subtasks of the **Rust-Native Penta-Interface Real Semantic Assertions Sui
 
 ---
 
-## 🎯 Next Focus: Phase 4.1 & 4.3 AI Chat & Documentation RAG
+## 🎯 Next Focus: Phase 4.1 & 4.3 AI Agent Loop & Universal Engine
 
-While Jules runs the frontend suites in the background:
-1. **On-Device AI Engine Selection**:
-   - Free Tier: Embedded `TinyBERT-4L-312D` INT8 ONNX (~14MB / ~7MB `zstd`) via `include_bytes!` and `ort`.
-   - Pro Tier: Embedded `SmolLM-135M-Instruct` (~75MB Q4 GGUF) + Bring-Your-Own-Key (BYOK) cloud LLMs (OpenAI, Gemini, Claude).
-2. **Actionable RAG Workspace**:
-   - `PdfChatPanel.svelte`: Side-drawer chat for document Q&A and action proposals.
-   - `sqlite-vec` embedded documentation RAG for instant, factual command suggestions directly from `TRI_INTERFACE_E2E_100_VERIFIED.md`.
+Now that backend penta-interface test parity (880 tests) and conformance checks (`qpdf`) are complete:
+1. **Multi-Tier AI Engine Architecture**:
+   - **Community (100% Offline)**: Embedded `TinyBERT` via `rten` for instant single-intent resolution.
+   - **Pro Tier (Universal Local & Remote Runners)**:
+     - **Mozilla `llamafile` Supervisor**: 1-click in-app download and process management of standalone `.llamafile` cross-platform binaries (`Qwen2.5-Coder-1.5B`, `Llama-3.2-3B`) running locally on port 8080 with zero setup.
+     - **Universal OpenAI-Compatible Endpoint**: Connects to ANY URL (`localhost:11434` Ollama, LM Studio, vLLM/cluster, Groq, OpenRouter).
+     - **BYOK (Bring Your Own Key)**: Direct API integration (OpenAI, Claude, Gemini) with keys stored securely in native OS Keychain (`tauri-plugin-stronghold`).
+2. **Actionable Agent Canvas & Chat**:
+   - `PdfChatPanel.svelte`: Side-drawer chat for document Q&A and autonomous multi-step legal/document operations.
+   - Real-time tool-calling execution stream showing steps and sub-100ms timings.
 3. **Bi-Directional Canvas Jumping**:
-   - Clicking citations in chat jumps directly to the page/bounding box and highlights the passage.
+   - Clicking citations or tool targets in chat jumps directly to the page/bounding box and highlights the passage.
 
 ---
 
