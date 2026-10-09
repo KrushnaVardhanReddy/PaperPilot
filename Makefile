@@ -101,8 +101,18 @@ test-e2e:
 test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
 
+# Run conformance tests (requires qpdf, verapdf optional)
+.PHONY: test-conformance
+test-conformance:
+	./scripts/verify_pdf_conformance.sh
+
 # Run all tests across the stack
 test-all: test-backend test-frontend test-e2e test-edge test-embed test-web test-tri-e2e
+	@if command -v qpdf >/dev/null 2>&1; then \
+		$(MAKE) test-conformance; \
+	else \
+		echo "Skipping test-conformance as qpdf is not installed"; \
+	fi
 
 # Run Edge Microservice tests
 test-edge:
