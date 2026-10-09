@@ -74,7 +74,8 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **5.9.2 (Spec 029 / Pure-Rust Jules Submitter CLI)**:
   - **Active Session**: Dispatched to Jules (Session `8537116514657265561`). Replaces `scripts/jules_submit.py` with 100% pure-Rust standalone CLI in `tools/jules-submit/` (`reqwest`, `clap`, `serde_json`, `zeroize`) for zero-Python developer workflow.
 - **5.9.6 (Spec 031 / Penta-Interface High-Throughput & Concurrency Benchmark)**:
-  - **Active Session**: Dispatched to Jules (Session `10557618272357635464`). Concurrency stress testing (10, 25, 50 workers), p50/p95/p99 latency profiling across all 5 surfaces, memory leak checks (<35MB RSS), Makefile integration (`make bench-penta-e2e`), generating `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
+  - **Merged (PR #165, commit `a8de2ae`, Session 10557618272357635464)**: Concurrency stress testing (10, 25, 50 workers) with 100% request delivery across REST and MCP, p50/p95/p99 latency profiling across top 10 tools, memory leak checks (flat 34.5MB RSS, <35MB ceiling), Makefile integration (`make bench-penta-e2e`), documented in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
+
 - **5.9.7 (Spec 032 / Multimodal PDF-to-JSON with 5-Interface Parity)**:
   - **Active Session**: Dispatched to Jules (Session `7215646411441515522`). Implements multimodal image extraction (`--image-mode <none|files|base64>`) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) with 20 E2E assertions, boundary cases, and bench profile under the Penta-Interface Mandate.
 - **5.9.8 (Spec 033 / Human-Friendly UI Error Normalization)**:
