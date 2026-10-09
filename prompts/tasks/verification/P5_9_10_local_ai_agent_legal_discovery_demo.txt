@@ -1,0 +1,76 @@
+# Task: Phase 5.9.10 — Local AI Agent Legal Due Diligence & Discovery Demo Harness
+# Base Branch: main
+# Target Branch: feat-demo-ai-legal-discovery
+# Priority: HIGH (Flagship AI Demo, Product Marketing & Developer Showcase)
+# Spec: specs/035-local-ai-agent-legal-discovery-demo/spec.md
+
+## Objective
+Build a complete, standalone, 100% offline Local AI Agent Legal Due Diligence & Discovery Demo that showcases PaperPilot's power as the PDF Operating System for AI Agents (chaining `pdf_rotate`, `pdf_redact`, `pdf_bates`, `pdf_merge`, `pdf_watermark`, `pdf_linearize`, and `pdf_hash`) per [Spec 035](specs/035-local-ai-agent-legal-discovery-demo/spec.md).
+
+---
+
+## IMPORTANT WORKSPACE REPO CONTEXT
+1. **Always merge latest `main`**:
+   Before making changes or raising a PR, run:
+   ```bash
+   git fetch origin main
+   git merge origin main
+   ```
+2. **Zero Cloud Dependencies**:
+   The entire demo must execute locally on the host machine using our compiled Rust binary (`target/debug/paperpilot` or `target/release/paperpilot`) without requiring third-party API keys or internet access.
+3. **Self-Contained Fixtures**:
+   If mock legal inputs do not exist in `demo/legal_discovery/input/`, the demo script must programmatically generate them using `lopdf` or pure-Rust scripting.
+
+---
+
+## Requirements
+
+### 1. Realistic Legal Mock Corpus Generator
+Create a fixture generator (in `demo/legal_discovery/` or invoked within the runner):
+- `01_asset_purchase_agreement.pdf`: 4-page agreement with text including `SSN: 987-65-4321` and `Routing: 021000021`.
+- `02_disclosure_schedules_tilted.pdf`: 3-page schedule with page 2 rotated 90 degrees (`/Rotate 90`).
+- `03_unredacted_financial_exhibit.pdf`: 2-page exhibit with confidential financial tables.
+
+### 2. Demo Execution Runner (`scripts/run_ai_legal_demo.sh`)
+Create an executable shell script `scripts/run_ai_legal_demo.sh` (with `chmod +x`):
+1. Locate or build `paperpilot` binary (`cargo build -p paperpilot-cli`).
+2. Generate input fixtures if missing.
+3. Print colorized, professional CLI output simulating an Autonomous AI Agent solving a legal discovery mandate:
+   - 🔄 Step 1: Detect orientation and rotate page 2 of `02_disclosure_schedules_tilted.pdf` (`paperpilot rotate`).
+   - ✂️ Step 2: Redact sensitive SSN & routing numbers from `01_asset_purchase_agreement.pdf` (`paperpilot redact`).
+   - 🏷️ Step 3: Sequentially Bates-stamp all three documents (`DISCOVERY-2026-000001` through `000009`) (`paperpilot bates`).
+   - 📑 Step 4: Merge sanitized exhibits into a single master courtroom bundle (`paperpilot merge`).
+   - 🛡️ Step 5: Apply protective order watermark `CONFIDENTIAL - ATTORNEYS EYES ONLY` (`paperpilot watermark`).
+   - ⚡ Step 6: Web-linearize for fast browser preview (`paperpilot linearize`).
+   - 🔒 Step 7: Generate tamper-evident SHA-256 audit digest (`paperpilot hash`).
+4. Output the final PDF to `demo/legal_discovery/output/final_court_bundle.pdf`.
+5. Display an ASCII benchmark scorecard with per-step latency and total execution time (<500ms).
+
+### 3. Makefile Integration
+Add to `Makefile`:
+```makefile
+.PHONY: demo-legal-discovery
+
+demo-legal-discovery:
+	./scripts/run_ai_legal_demo.sh
+```
+
+### 4. Documentation & Guide
+Create `demo/legal_discovery/README.md` explaining:
+- The problem: Why LLM agents struggle with raw PDFs without PaperPilot.
+- How AI agents trigger these exact tools via PaperPilot MCP (`paperpilot-mcp`) JSON-RPC tools.
+- CLI 1-click reproduction instructions.
+
+---
+
+## Verification & Deliverables
+Run and verify:
+1. `chmod +x scripts/run_ai_legal_demo.sh`
+2. `make demo-legal-discovery`
+3. Inspect `demo/legal_discovery/output/final_court_bundle.pdf` to confirm:
+   - Page 2 is upright.
+   - PII is redacted.
+   - Bates numbers are printed sequentially.
+   - Watermark is applied.
+4. `cargo fmt --all -- --check`
+5. Document results in `reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md`.
