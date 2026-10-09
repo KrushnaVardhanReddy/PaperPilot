@@ -4988,6 +4988,51 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         latency_ms: 5.5,
     });
 
+    // ==========================================
+    // TOOL: json_to_pdf
+    // ==========================================
+    println!("Testing tool: json_to_pdf...");
+
+    let json_t1 = r#"{ "document_name": "t1.pdf", "pages": [{ "page_number": 1, "text": "Hello World", "char_count": 11, "images": [] }] }"#;
+    let in_json_t1 = out_dir.join("json_t1.json");
+    std::fs::write(&in_json_t1, json_t1)?;
+
+    let out_json_t1 = out_dir.join("json_t1_cli.out");
+    let start = std::time::Instant::now();
+    let res = std::process::Command::new("cargo")
+        .args(&[
+            "run",
+            "-p",
+            "paperpilot-cli",
+            "--",
+            "convert",
+            "--format",
+            "pdf",
+            "--input",
+            in_json_t1.to_str().unwrap(),
+            "--output",
+            out_json_t1.to_str().unwrap(),
+        ])
+        .output()?;
+    let elapsed = start.elapsed();
+    let success = res.status.success() && out_json_t1.exists();
+
+    results.push(TestExecutionResult {
+        tool_id: "json_to_pdf".to_string(),
+        tier: ComplexityTier::Simple,
+        interface: InterfaceType::Cli,
+        data_sent: "JSON File".to_string(),
+        assertion_checked: "true".to_string(),
+        expected_result: "PDF generated".to_string(),
+        actual_result: if success {
+            "PDF generated".to_string()
+        } else {
+            "Failed".to_string()
+        },
+        passed: success,
+        latency_ms: elapsed.as_millis() as f64,
+    });
+
     gateway.stop().await;
     println!(
         "Completed conversion tests: {} assertions evaluated",

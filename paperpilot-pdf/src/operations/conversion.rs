@@ -1,5 +1,6 @@
 use crate::document::LopdfDocument;
 use docx_rs::{Docx, Paragraph, Run};
+use lopdf::dictionary;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use rust_xlsxwriter::Workbook;
@@ -574,10 +575,27 @@ impl PdfOperation for PdfToLlmExportOperation {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JsonImage {
+    pub id: String,
+    pub page_number: u32,
+    pub format: String, // "png" or "jpeg"
+    pub width: u32,
+    pub height: u32,
+    pub bbox: Option<[f32; 4]>, // [x0, y0, x1, y1] coordinates on page
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base64_data: Option<String>, // "data:image/png;base64,..." or raw base64
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JsonPage {
     pub page_number: u32,
     pub text: String,
+    #[serde(default)]
     pub char_count: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<JsonImage>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -622,6 +640,7 @@ impl PdfOperation for PdfToJsonOperation {
                         page_number: page_id,
                         text,
                         char_count: chars,
+                        images: vec![], // Add an empty vector as pdf_to_json doesn't extract images yet in this mock or if we're not touching its impl here
                     });
                 }
                 Err(e) => {
@@ -646,6 +665,186 @@ impl PdfOperation for PdfToJsonOperation {
         } else {
             return Err(PdfError::Other("Failed to acquire mutex lock".to_string()));
         }
+
+        Ok(())
+    }
+}
+
+pub struct JsonToPdfOperation {
+    pub json_content: String,
+}
+
+impl JsonToPdfOperation {
+    pub fn new(json_content: String) -> Self {
+        Self { json_content }
+    }
+}
+
+impl PdfOperation for JsonToPdfOperation {
+    fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| {
+                PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
+            })?;
+
+        let doc_struct: JsonDocument = serde_json::from_str(&self.json_content)
+            .map_err(|e| PdfError::Other(format!("Failed to parse JSON: {}", e)))?;
+
+        let mut inner = lopdf::Document::with_version("1.5");
+
+        let font_id = inner.add_object(dictionary! {
+            "Type" => "Font",
+            "Subtype" => "Type1",
+            "BaseFont" => "Helvetica",
+        });
+
+        let pages_id = inner.new_object_id();
+        let mut page_ids = vec![];
+
+        for json_page in doc_struct.pages {
+            let mut ops = vec![
+                lopdf::content::Operation::new("BT", vec![]),
+                lopdf::content::Operation::new("Tf", vec!["F1".into(), 12.into()]),
+                lopdf::content::Operation::new("Td", vec![50.into(), 750.into()]),
+            ];
+
+            for line in json_page.text.lines() {
+                ops.push(lopdf::content::Operation::new(
+                    "Tj",
+                    vec![lopdf::Object::string_literal(line)],
+                ));
+                ops.push(lopdf::content::Operation::new(
+                    "Td",
+                    vec![0.into(), (-15).into()],
+                ));
+            }
+
+            ops.push(lopdf::content::Operation::new("ET", vec![]));
+
+            let mut resources = dictionary! {
+                "Font" => dictionary! {
+                    "F1" => font_id,
+                },
+            };
+
+            let mut xobjects = lopdf::Dictionary::new();
+
+            // Handle images if any
+            for (idx, img) in json_page.images.iter().enumerate() {
+                let img_name = format!("Im{}", idx);
+                let (width, height, image_bytes) = if let Some(b64) = &img.base64_data {
+                    let b64_str = if b64.starts_with("data:image/") {
+                        b64.split(',').nth(1).unwrap_or(b64)
+                    } else {
+                        b64
+                    };
+
+                    use base64::{Engine as _, engine::general_purpose};
+                    let bytes = general_purpose::STANDARD
+                        .decode(b64_str)
+                        .map_err(|e| PdfError::Other(format!("Failed to decode base64: {}", e)))?;
+
+                    let img_reader = image::load_from_memory(&bytes)
+                        .map_err(|e| PdfError::Other(format!("Failed to parse image: {}", e)))?;
+
+                    let img_rgb = img_reader.to_rgb8();
+                    let (w, h) = img_rgb.dimensions();
+                    (w, h, img_rgb.into_raw())
+                } else if let Some(path) = &img.file_path {
+                    let img_reader = image::open(path).map_err(|e| {
+                        PdfError::Other(format!("Failed to load image from path: {}", e))
+                    })?;
+                    let img_rgb = img_reader.to_rgb8();
+                    let (w, h) = img_rgb.dimensions();
+                    (w, h, img_rgb.into_raw())
+                } else {
+                    continue;
+                };
+
+                let mut compressed = Vec::new();
+                {
+                    use flate2::Compression;
+                    use flate2::write::ZlibEncoder;
+                    use std::io::Write;
+                    let mut encoder = ZlibEncoder::new(&mut compressed, Compression::default());
+                    encoder
+                        .write_all(&image_bytes)
+                        .map_err(|e: std::io::Error| PdfError::Other(e.to_string()))?;
+                }
+
+                let image_dict = dictionary! {
+                    "Type" => "XObject",
+                    "Subtype" => "Image",
+                    "Width" => width as i64,
+                    "Height" => height as i64,
+                    "ColorSpace" => "DeviceRGB",
+                    "BitsPerComponent" => 8,
+                    "Filter" => "FlateDecode",
+                };
+
+                let img_stream = lopdf::Stream::new(image_dict, compressed);
+                let img_id = inner.add_object(img_stream);
+
+                xobjects.set(img_name.clone(), img_id);
+
+                if let Some(bbox) = img.bbox {
+                    let (x0, y0, x1, y1) = (bbox[0], bbox[1], bbox[2], bbox[3]);
+                    let w = x1 - x0;
+                    let h = y1 - y0;
+
+                    ops.push(lopdf::content::Operation::new("q", vec![]));
+                    ops.push(lopdf::content::Operation::new(
+                        "cm",
+                        vec![w.into(), 0.into(), 0.into(), h.into(), x0.into(), y0.into()],
+                    ));
+                    ops.push(lopdf::content::Operation::new("Do", vec![img_name.into()]));
+                    ops.push(lopdf::content::Operation::new("Q", vec![]));
+                }
+            }
+
+            if !xobjects.is_empty() {
+                resources.set("XObject", xobjects);
+            }
+
+            let content_stream = lopdf::content::Content { operations: ops };
+            let content_id = inner.add_object(lopdf::Stream::new(
+                dictionary! {},
+                content_stream
+                    .encode()
+                    .map_err(|e| PdfError::Other(e.to_string()))?,
+            ));
+
+            let page_dict = dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+                "Contents" => content_id,
+                "Resources" => resources,
+            };
+
+            let page_id = inner.add_object(page_dict);
+            page_ids.push(page_id);
+        }
+
+        let pages_dict = dictionary! {
+            "Type" => "Pages",
+            "Kids" => page_ids.clone().into_iter().map(lopdf::Object::Reference).collect::<Vec<_>>(),
+            "Count" => page_ids.len() as i32,
+        };
+        inner
+            .objects
+            .insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+
+        let catalog_id = inner.add_object(dictionary! {
+            "Type" => "Catalog",
+            "Pages" => pages_id,
+        });
+
+        inner.trailer.set("Root", catalog_id);
+
+        lopdf_doc.inner = inner;
 
         Ok(())
     }
@@ -1092,6 +1291,9 @@ mod tests {
     #[test]
     fn test_markdown_to_pdf_operation_fulgur() {
         let dir = tempfile::tempdir().unwrap();
+
+        let md = "# Test Markdown\n\nRendering via **fulgur**.".to_string();
+        std::fs::write(dir.path().join("in.md"), md).unwrap();
         let out_path = dir.path().join("out_md_fulgur.pdf");
         let options = HtmlToPdfOptions {
             preset: Some("github".to_string()),
@@ -1099,16 +1301,111 @@ mod tests {
             page_size: None,
             margin_mm: None,
         };
-
-        let md = "# Test Markdown\n\nRendering via **fulgur**.".to_string();
-        let op = MarkdownToPdfOperation::new(md, out_path.clone(), options);
+        let op = MarkdownToPdfOperation::new(
+            dir.path().join("in.md").to_string_lossy().to_string(),
+            out_path.clone(),
+            options,
+        );
         let res = op.render();
-
         assert!(res.is_ok());
         assert!(out_path.exists());
-        assert!(out_path.metadata().unwrap().len() > 0);
 
         let pdf_bytes = std::fs::read(&out_path).unwrap();
         assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_json_to_pdf_operation_text() {
+        use crate::document::LopdfDocument;
+        use paperpilot_core::traits::PdfOperation;
+        let mut doc = LopdfDocument::new();
+        let json = r#"{
+            "document_name": "test.pdf",
+            "pages": [
+                {
+                    "page_number": 1,
+                    "text": "Hello World",
+                    "char_count": 11,
+                    "images": []
+                }
+            ]
+        }"#;
+        let op = super::JsonToPdfOperation::new(json.to_string());
+        assert!(op.execute(&mut doc).is_ok());
+        let mut bytes = Vec::new();
+        doc.inner.save_to(&mut bytes).unwrap();
+        assert!(!bytes.is_empty());
+        assert!(bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_fidelity_round_trip() {
+        use crate::document::LopdfDocument;
+        use paperpilot_core::traits::PdfOperation;
+        let mut doc = LopdfDocument::new();
+
+        let initial_json = r#"{
+            "document_name": "test_rt.pdf",
+            "pages": [
+                {
+                    "page_number": 1,
+                    "text": "Round trip testing",
+                    "char_count": 18,
+                    "images": []
+                }
+            ]
+        }"#;
+
+        let op_synth = super::JsonToPdfOperation::new(initial_json.to_string());
+        assert!(op_synth.execute(&mut doc).is_ok());
+
+        let op_extract = super::PdfToJsonOperation::new("extracted_rt.pdf".to_string());
+        assert!(op_extract.execute(&mut doc).is_ok());
+
+        let extracted_str = op_extract.extracted_json.lock().unwrap().clone().unwrap();
+        let extracted: super::JsonDocument = serde_json::from_str(&extracted_str).unwrap();
+
+        assert_eq!(extracted.pages.len(), 1);
+        assert!(extracted.pages[0].text.contains("Round trip testing"));
+    }
+
+    #[test]
+    fn test_json_to_pdf_operation_image() {
+        use crate::document::LopdfDocument;
+        use paperpilot_core::traits::PdfOperation;
+        let mut doc = LopdfDocument::new();
+
+        let b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        let json = format!(
+            r#"{{
+            "document_name": "test.pdf",
+            "pages": [
+                {{
+                    "page_number": 1,
+                    "text": "Image test",
+                    "char_count": 10,
+                    "images": [
+                        {{
+                            "id": "img1",
+                            "page_number": 1,
+                            "format": "png",
+                            "width": 1,
+                            "height": 1,
+                            "bbox": [10.0, 10.0, 100.0, 100.0],
+                            "base64_data": "data:image/png;base64,{}"
+                        }}
+                    ]
+                }}
+            ]
+        }}"#,
+            b64
+        );
+
+        let op = super::JsonToPdfOperation::new(json);
+        assert!(op.execute(&mut doc).is_ok());
+        let mut bytes = Vec::new();
+        doc.inner.save_to(&mut bytes).unwrap();
+        assert!(!bytes.is_empty());
+        assert!(bytes.starts_with(b"%PDF-"));
     }
 }

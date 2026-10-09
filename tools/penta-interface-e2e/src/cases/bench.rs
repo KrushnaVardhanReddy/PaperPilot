@@ -549,6 +549,62 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
         }
     }
 
+    // ==========================================
+    // TOOL: json_to_pdf
+    // ==========================================
+    println!("Benchmarking tool: json_to_pdf...");
+
+    {
+        let json_content = r#"{
+            "document_name": "test.pdf",
+            "pages": [
+                {
+                    "page_number": 1,
+                    "text": "Benchmarking JSON synthesis",
+                    "char_count": 27,
+                    "images": []
+                }
+            ]
+        }"#;
+        let in_json = std::env::temp_dir().join("bench_json.json");
+        std::fs::write(&in_json, json_content)?;
+
+        let out_path = std::env::temp_dir().join("json_to_pdf_bench.out");
+        let start = std::time::Instant::now();
+        let res = std::process::Command::new("cargo")
+            .args(&[
+                "run",
+                "-p",
+                "paperpilot-cli",
+                "--",
+                "convert",
+                "--format",
+                "pdf",
+                "--input",
+                in_json.to_str().unwrap(),
+                "--output",
+                out_path.to_str().unwrap(),
+            ])
+            .output()?;
+        let elapsed = start.elapsed();
+
+        if elapsed.as_millis() > 250 {
+            println!("Warning: JSON to PDF synthesis took {:?}", elapsed);
+        }
+
+        results.push(TestExecutionResult {
+            tool_id: "json_to_pdf".to_string(),
+            tier: ComplexityTier::Simple,
+            interface: InterfaceType::Cli,
+            passed: res.status.success(),
+            latency_ms: elapsed.as_millis() as f64,
+            data_sent: "JSON File".to_string(),
+            assertion_checked: "true".to_string(),
+            expected_result: "PDF generated".to_string(),
+            actual_result: "PDF generated".to_string(),
+        });
+    }
+
     Ok(results)
 }
 

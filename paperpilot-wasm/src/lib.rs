@@ -250,4 +250,12 @@ impl WasmPdfEngine {
 
         Ok(result)
     }
+
+    /// Convert JSON document into a PDF Uint8Array
+    #[wasm_bindgen]
+    pub fn json_to_pdf(json_str: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result =
+            operations::json_to_pdf(json_str).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
 }

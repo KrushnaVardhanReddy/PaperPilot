@@ -5,10 +5,12 @@ edition = "2024"
 
 [dependencies]
 aho-corasick = "1.1.5"
+base64 = "0.23.1"
 bytemuck = "1.25.2"
 calamine = "0.36.1"
 csv = "1.4.0"
 docx-rs = "0.4.22"
+flate2 = "1.1.10"
 fulgur = "0.40"
 hayro = "0.8.0"
 hayro-syntax = "0.8.0"

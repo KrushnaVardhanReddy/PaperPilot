@@ -39,6 +39,11 @@ export default {
           const result = WasmPdfEngine.watermark(new Uint8Array(body), text);
           return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
+        if (url.pathname === '/api/v1/json_to_pdf') {
+          const body = await request.text();
+          const result = WasmPdfEngine.json_to_pdf(body);
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
         if (url.pathname === '/api/v1/merge') {
           const formData = await request.formData();
           const files: Uint8Array[] = [];
