@@ -1,8 +1,9 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import AiSettingsModal from '$lib/components/settings/AiSettingsModal.svelte';
+  import { aiConfig } from '$lib/state/aiConfig.svelte';
 
-  let aiProvider = $state('openai');
-  let apiKey = $state('');
+  let isAiModalOpen = $state(false);
   let outputDir = $state('');
 
   function handleBrowse() {
@@ -18,28 +19,26 @@
   </div>
 
   <div class="settings-content">
-    <div class="setting-group">
-      <h3>AI Configuration</h3>
-
-      <div class="setting-item">
-        <label for="aiProvider">AI Provider</label>
-        <select id="aiProvider" bind:value={aiProvider} class="form-input">
-          <option value="openai">OpenAI</option>
-          <option value="anthropic">Anthropic</option>
-          <option value="local">Local (Ollama)</option>
-        </select>
+    <div class="setting-group" id="setting-group-ai-engine">
+      <div class="ai-header-row">
+        <div>
+          <h3>AI Engine & Models</h3>
+          <p class="help-text">Configure local/offline models, Llamafile runners, and remote BYOK keys.</p>
+        </div>
+        <button class="btn primary" onclick={() => isAiModalOpen = true}>
+          Manage AI & Models 🚀
+        </button>
       </div>
 
-      <div class="setting-item">
-        <label for="apiKey">API Key</label>
-        <input
-          id="apiKey"
-          type="password"
-          bind:value={apiKey}
-          class="form-input"
-          placeholder="sk-..."
-        />
-        <p class="help-text">Your API key is stored securely locally.</p>
+      <div class="ai-status-summary">
+        <span class="ai-pill">Current Mode: <strong>{aiConfig.mode.toUpperCase()}</strong></span>
+        {#if aiConfig.mode === 'llamafile' || aiConfig.mode === 'offlinenlp'}
+          <span class="ai-badge local">🔒 100% On-Device / Zero Cloud</span>
+        {:else if aiConfig.mode === 'universal'}
+          <span class="ai-badge remote">🌐 Custom Endpoint</span>
+        {:else}
+          <span class="ai-badge cloud">🔑 BYOK Cloud ({aiConfig.byokProvider || 'OpenAI'})</span>
+        {/if}
       </div>
     </div>
 
@@ -94,7 +93,58 @@
   </div>
 </div>
 
+<AiSettingsModal bind:isOpen={isAiModalOpen} />
+
 <style>
+  .ai-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .ai-status-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+  }
+
+  .ai-pill {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .ai-badge {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .ai-badge.local {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .ai-badge.remote {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .ai-badge.cloud {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
   .settings-panel {
     display: flex;
     flex-direction: column;
