@@ -47,7 +47,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
 
       - name: Build Workspace
         run: cargo build --workspace --all-targets
@@ -55,3 +55,30 @@ jobs:
       - name: Run Tests
         run: cargo test --workspace --all-targets
 
+      - name: Run Structural Conformance Audits (qpdf)
+        if: runner.os == 'Linux'
+        run: make test-conformance
+
+      - name: Stage Artifacts (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist-bin
+          cp target/debug/paperpilot dist-bin/ 2>/dev/null || cp target/debug/paperpilot-cli dist-bin/paperpilot 2>/dev/null || true
+          cp target/debug/paperpilot-gateway dist-bin/ 2>/dev/null || true
+          cp target/debug/desktop dist-bin/ 2>/dev/null || true
+
+      - name: Stage Artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist-bin
+          cp target/debug/paperpilot.exe dist-bin/ 2>/dev/null || cp target/debug/paperpilot-cli.exe dist-bin/paperpilot.exe 2>/dev/null || true
+          cp target/debug/paperpilot-gateway.exe dist-bin/ 2>/dev/null || true
+          cp target/debug/desktop.exe dist-bin/ 2>/dev/null || true
+
+      - name: Upload Test Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperpilot-${{ matrix.os }}
+          path: dist-bin/*
+          if-no-files-found: warn

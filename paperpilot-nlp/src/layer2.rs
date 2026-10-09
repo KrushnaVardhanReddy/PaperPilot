@@ -107,32 +107,27 @@ impl OnnxClassifier {
         let output_id = self.model.find_node("logits")?;
 
         let run_result = self.model.run(inputs, &[output_id], None);
-        if let Ok(mut outputs) = run_result {
-            if let Some(output_value) = outputs.pop() {
-                let tensor: Result<rten_tensor::Tensor<f32>, _> = output_value.try_into();
-                match tensor {
-                    Ok(t) => {
-                        let mut max_val = f32::NEG_INFINITY;
-                        let mut max_idx = 0;
-                        for (i, &val) in t.iter().enumerate() {
-                            if val > max_val {
-                                max_val = val;
-                                max_idx = i;
-                            }
-                        }
+        if let Ok(mut outputs) = run_result
+            && let Some(output_value) = outputs.pop()
+            && let Ok(t) = output_value.try_into() as Result<rten_tensor::Tensor<f32>, _>
+        {
+            let mut max_val = f32::NEG_INFINITY;
+            let mut max_idx = 0;
+            for (i, &val) in t.iter().enumerate() {
+                if val > max_val {
+                    max_val = val;
+                    max_idx = i;
+                }
+            }
 
-                        if max_val >= 0.0 {
-                            if let Some(label_str) = self.labels.get(max_idx) {
-                                return Intent::all().into_iter().find(|&intent| {
-                                    let name = intent.definition().canonical_name.to_lowercase();
-                                    let label = label_str.to_lowercase();
-                                    name == label || name.replace("_", "") == label
-                                });
-                            }
-                        }
-                    }
-                    Err(_) => {}
-                };
+            if max_val >= 0.0
+                && let Some(label_str) = self.labels.get(max_idx)
+            {
+                return Intent::all().into_iter().find(|&intent| {
+                    let name = intent.definition().canonical_name.to_lowercase();
+                    let label = label_str.to_lowercase();
+                    name == label || name.replace("_", "") == label
+                });
             }
         }
 

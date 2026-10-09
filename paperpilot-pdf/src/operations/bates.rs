@@ -40,9 +40,7 @@ impl PdfOperation for BatesNumberingOperation {
         let mut sorted_page_numbers: Vec<u32> = pages.keys().copied().collect();
         sorted_page_numbers.sort_unstable();
 
-        for (current_number, page_number) in
-            (self.start_number..).zip(sorted_page_numbers.into_iter())
-        {
+        for (current_number, page_number) in (self.start_number..).zip(sorted_page_numbers) {
             let object_id = *pages.get(&page_number).unwrap();
 
             if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object_mut(object_id) {
