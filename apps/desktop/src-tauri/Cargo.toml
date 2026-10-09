@@ -30,7 +30,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 lazy_static = "1.4.0"
 keyring = "4.2.0"
-reqwest = "0.13.5"
+reqwest = { version = "0.13.5", features = ["stream"] }
 futures-util = "0.3.34"
 tokio-util = "0.7.20"
 dirs = "7.0.0"

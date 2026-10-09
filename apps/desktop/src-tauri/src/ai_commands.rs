@@ -195,7 +195,7 @@ pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
             name: "Qwen 2.5 Coder 1.5B".to_string(),
             description: "Fast & Lightweight".to_string(),
             size_mb: 1100,
-            download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-GGUF/resolve/main/qwen2.5-coder-1.5b-q4_k_m.gguf".to_string(),
+            download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
             local_path: if qwen_path.exists() { Some(qwen_path.to_string_lossy().to_string()) } else { None },
             is_downloaded: qwen_path.exists(),
         },

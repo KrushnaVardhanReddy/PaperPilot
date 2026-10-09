@@ -72,53 +72,60 @@
     <p class="section-desc">Download curated models to run locally. GGUF format.</p>
 
     <div class="models-list">
-        {#each aiConfig.availableModels as model (model.id)}
-            <div class="model-card">
-                <div class="model-info">
-                    <div class="model-header">
-                        <h4>{model.name}</h4>
-                        <span class="model-size">{formatBytes(model.size_mb * 1024 * 1024)}</span>
-                    </div>
-                    <p class="model-desc">{model.description}</p>
-
-                    {#if model.is_downloaded && !activeDownloads[model.id]}
-                        <div class="status-downloaded">
-                            <span class="status-icon">✓</span> Downloaded
-                            <span class="local-path" title={model.local_path}>{model.local_path}</span>
-                        </div>
-                    {/if}
-
-                    {#if downloadErrors[model.id]}
-                         <div class="error-msg">{downloadErrors[model.id]}</div>
-                    {/if}
-                </div>
-
-                <div class="model-actions">
-                    {#if activeDownloads[model.id]}
-                        {@const p = activeDownloads[model.id]}
-                        <div class="progress-container">
-                             <div class="progress-text">
-                                  <span>{p.percent.toFixed(1)}%</span>
-                                  <span>{formatBytes(p.bytes_downloaded)} / {formatBytes(p.total_bytes)}</span>
-                             </div>
-                             <div class="progress-bar">
-                                  <div class="progress-fill" style="width: {p.percent}%"></div>
-                             </div>
-                             <button class="cancel-btn" onclick={() => cancelDownload(model.id)}>Cancel</button>
-                        </div>
-                    {:else if !model.is_downloaded}
-                        <button class="download-btn" onclick={() => startDownload(model.id)}>
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                 <polyline points="7 10 12 15 17 10"></polyline>
-                                 <line x1="12" y1="15" x2="12" y2="3"></line>
-                             </svg>
-                             Download
-                        </button>
-                    {/if}
-                </div>
+        {#if aiConfig.availableModels.length === 0}
+            <div class="models-loading">
+                <span class="spinner"></span>
+                <span>Fetching curated model registry...</span>
             </div>
-        {/each}
+        {:else}
+            {#each aiConfig.availableModels as model (model.id)}
+                <div class="model-card">
+                    <div class="model-info">
+                        <div class="model-header">
+                            <h4>{model.name}</h4>
+                            <span class="model-size">{formatBytes(model.size_mb * 1024 * 1024)}</span>
+                        </div>
+                        <p class="model-desc">{model.description}</p>
+
+                        {#if model.is_downloaded && !activeDownloads[model.id]}
+                            <div class="status-downloaded">
+                                <span class="status-icon">✓</span> Downloaded
+                                <span class="local-path" title={model.local_path}>{model.local_path}</span>
+                            </div>
+                        {/if}
+
+                        {#if downloadErrors[model.id]}
+                             <div class="error-msg">⚠️ {downloadErrors[model.id]}</div>
+                        {/if}
+                    </div>
+
+                    <div class="model-actions">
+                        {#if activeDownloads[model.id]}
+                            {@const p = activeDownloads[model.id]}
+                            <div class="progress-container">
+                                 <div class="progress-text">
+                                      <span>{p.percent.toFixed(1)}%</span>
+                                      <span>{formatBytes(p.bytes_downloaded)} / {formatBytes(p.total_bytes)}</span>
+                                 </div>
+                                 <div class="progress-bar">
+                                      <div class="progress-fill" style="width: {p.percent}%"></div>
+                                 </div>
+                                 <button class="cancel-btn" onclick={() => cancelDownload(model.id)}>Cancel</button>
+                            </div>
+                        {:else if !model.is_downloaded}
+                            <button class="download-btn" onclick={() => startDownload(model.id)}>
+                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                     <polyline points="7 10 12 15 17 10"></polyline>
+                                     <line x1="12" y1="15" x2="12" y2="3"></line>
+                                 </svg>
+                                 Download
+                            </button>
+                        {/if}
+                    </div>
+                </div>
+            {/each}
+        {/if}
     </div>
 </div>
 
@@ -267,6 +274,28 @@
 
     .cancel-btn:hover {
         background: rgba(239, 68, 68, 0.1);
+    }
+
+    .models-loading {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        font-size: 0.85rem;
+        color: #94a3b8;
+    }
+
+    .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 
     .error-msg {

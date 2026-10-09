@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
 pub mod error;
+pub mod ai_commands;
 use crate::error::DesktopError;
 
 lazy_static::lazy_static! {
@@ -218,7 +219,13 @@ pub fn run() {
             get_gateway_status,
             start_gateway,
             stop_gateway,
-            resolve_natural_language
+            resolve_natural_language,
+            ai_commands::get_available_models,
+            ai_commands::download_model,
+            ai_commands::cancel_model_download,
+            ai_commands::save_ai_config,
+            ai_commands::get_ai_config,
+            ai_commands::test_ai_endpoint
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
