@@ -183,21 +183,16 @@ fn get_models_dir() -> std::path::PathBuf {
 #[tauri::command]
 pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
     let models_dir = get_models_dir();
-    let mut qwen_path = models_dir.clone();
-    qwen_path.push("qwen2.5-coder-1.5b.gguf");
 
-    let mut llama_path = models_dir.clone();
-    llama_path.push("llama-3.2-3b-instruct.gguf");
-
-    Ok(vec![
+    let mut models = vec![
         ModelInfo {
             id: "qwen2.5-coder".to_string(),
             name: "Qwen 2.5 Coder 1.5B".to_string(),
             description: "Fast & Lightweight".to_string(),
             size_mb: 1100,
             download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
-            local_path: if qwen_path.exists() { Some(qwen_path.to_string_lossy().to_string()) } else { None },
-            is_downloaded: qwen_path.exists(),
+            local_path: None,
+            is_downloaded: false,
         },
         ModelInfo {
             id: "llama3.2-3b".to_string(),
@@ -205,10 +200,22 @@ pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
             description: "Recommended for Legal Discovery".to_string(),
             size_mb: 2100,
             download_url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
-            local_path: if llama_path.exists() { Some(llama_path.to_string_lossy().to_string()) } else { None },
-            is_downloaded: llama_path.exists(),
+            local_path: None,
+            is_downloaded: false,
         }
-    ])
+    ];
+
+    for m in &mut models {
+        let file_name = m.download_url.split('/').next_back().unwrap_or("model.gguf");
+        let mut path = models_dir.clone();
+        path.push(file_name);
+        if path.exists() {
+            m.local_path = Some(path.to_string_lossy().to_string());
+            m.is_downloaded = true;
+        }
+    }
+
+    Ok(models)
 }
 
 #[derive(Clone, Serialize)]
