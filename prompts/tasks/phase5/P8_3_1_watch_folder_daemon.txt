@@ -1,0 +1,61 @@
+# Task: Phase 8.3 — Watch Folder Daemon CLI Command (paperpilot watch)
+# Base Branch: main
+# Target Branch: feat-watch-folder-daemon
+# Priority: MEDIUM (Pro Tier Continuous Automation Engine)
+# Reference: pricing_strategy.md, PHASES.md (Task 8.3)
+
+## Objective
+Implement `paperpilot watch <DIRECTORY>` daemon mode in `paperpilot-cli`:
+Monitors a local folder on disk using the pure-Rust `notify` crate, automatically triggering a designated recipe, operation, or pipeline whenever a new PDF is saved, moved, or dropped into the directory.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files within:
+```
+paperpilot-cli/src/commands/watch.rs # New watch command implementation
+paperpilot-cli/src/commands/mod.rs   # Register watch command
+paperpilot-cli/src/main.rs           # CLI argument parsing for watch
+paperpilot-cli/tests/test_watch.rs   # Unit / integration tests
+reports/WATCH_FOLDER_DAEMON_REPORT.md # Verification report
+wiki/27-Watch-Folder-Daemon.md       # Documentation wiki
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-wasm/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, or `pricing_strategy.md`.
+
+---
+
+## 1. Requirements & CLI Interface
+1. **Command Syntax**:
+   ```bash
+   paperpilot watch ./incoming --recipe compress --output ./processed
+   paperpilot watch ./scans --operation ocr --output ./searchable --webhook http://localhost:8080/hook
+   ```
+2. **Options**:
+   - `<DIRECTORY>`: Directory path to monitor for incoming files.
+   - `--output <DIR>`: Output directory for processed files.
+   - `--operation <OP>`: Single operation to execute (e.g. `compress`, `ocr`, `bates`, `redact`).
+   - `--recipe <FILE_OR_PRESET>`: Pipeline recipe to execute.
+   - `--webhook <URL>`: Optional webhook to POST upon completion.
+   - `--settle-delay-ms <MS>`: Delay (default 500ms) after file write event before processing to ensure file copy is complete.
+   - `--move-original <DIR>`: Optional directory to archive original input files.
+3. **Robustness & Concurrency**:
+   - Pure-Rust `notify = "6.1"` filesystem event watcher.
+   - Debouncing: Ignore partial / write-in-progress files using `--settle-delay-ms`.
+   - Error tolerance: If a single file fails (e.g. corrupt PDF), log the error cleanly, do not crash the daemon, and continue watching.
+   - Graceful shutdown: Cleanly handle `SIGINT` (Ctrl+C) and `SIGTERM`.
+
+---
+
+## 2. Verification & Deliverables
+Run and verify:
+1. `cargo test -p paperpilot-cli`
+2. `cargo fmt --all -- --check`
+3. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+4. Automated integration test in `paperpilot-cli/tests/test_watch.rs`:
+   - Spawns watch thread on temporary directory.
+   - Copies mock PDF into the watched directory.
+   - Asserts processed output file appears in output directory within 2 seconds.
+5. Generate `reports/WATCH_FOLDER_DAEMON_REPORT.md` documenting performance, event latency, and CLI examples.
+6. Generate `wiki/27-Watch-Folder-Daemon.md`.

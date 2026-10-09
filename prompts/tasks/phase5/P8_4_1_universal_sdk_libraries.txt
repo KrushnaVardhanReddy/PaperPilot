@@ -1,0 +1,62 @@
+# Task: Phase 8.4A — Pure-Rust Universal SDK Client Libraries (Python & TypeScript)
+# Base Branch: main
+# Target Branch: feat-universal-sdk-libraries
+# Priority: MEDIUM (Developer Ecosystem & Pipeline Embeddings)
+# Reference: pricing_strategy.md, PHASES.md (Task 8.4)
+
+## Objective
+Implement lightweight, high-performance, developer-friendly client SDK libraries for embedding PaperPilot into external applications and internal automation scripts:
+1. `packages/paperpilot-js`: Modern TypeScript / JavaScript client for Node.js, Bun, and browser.
+2. `packages/paperpilot-py`: Pythonic client (`asyncio` + synchronous) wrapping both the local CLI/binary subprocess and remote Gateway REST API.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files within:
+```
+packages/paperpilot-js/            # TypeScript SDK package
+packages/paperpilot-py/            # Python SDK package
+reports/SDK_LIBRARIES_REPORT.md    # Verification report
+wiki/28-Universal-SDKs.md          # Documentation wiki
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-wasm/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, or `pricing_strategy.md`.
+
+---
+
+## 1. Requirements
+
+### A. TypeScript / Node.js SDK (`packages/paperpilot-js/`)
+- Pure TypeScript with generated `.d.ts` declarations.
+- Dual execution mode:
+  - Local mode: invokes local `paperpilot` CLI binary or WASM engine directly.
+  - Remote mode: connects to PaperPilot Gateway HTTP REST API (`/api/v1/pdf/*`).
+- Fluent strongly typed API:
+  ```typescript
+  import { PaperPilot } from "@paperpilot/sdk";
+  const client = new PaperPilot(); // auto-discovers local binary or accepts { endpointUrl, apiKey }
+  await client.merge(["doc1.pdf", "doc2.pdf"], { output: "merged.pdf" });
+  await client.compress("huge.pdf", { quality: "medium", output: "compressed.pdf" });
+  ```
+- Comprehensive unit tests with Vitest asserting mock and live binary runs.
+
+### B. Python SDK (`packages/paperpilot-py/`)
+- Type-annotated (`py.typed`, Pydantic models for request/response payloads).
+- Support both `async` and synchronous calls:
+  ```python
+  from paperpilot import PaperPilot
+  client = PaperPilot() # auto-discovers local binary or gateway
+  client.bates_stamp("input.pdf", prefix="DISCOVERY-", start=1, output="bates.pdf")
+  ```
+- Fast execution with zero heavy external C-dependencies.
+- Unit tests with `pytest` asserting operation invocations.
+
+---
+
+## 2. Verification & Deliverables
+Run and verify:
+1. TypeScript package build & test in `packages/paperpilot-js/`: `npm test` or `bun test`.
+2. Python package lint & test in `packages/paperpilot-py/`: `pytest`.
+3. Generate `reports/SDK_LIBRARIES_REPORT.md` documenting usage, SDK code samples, and performance latencies.
+4. Generate `wiki/28-Universal-SDKs.md`.

@@ -1,0 +1,82 @@
+# Task: Phase 5.7.8 — Zero-Dependency CI/CD PDF Test Assertions Library (@paperpilot/test-utils / WASM)
+# Base Branch: main
+# Target Branch: feat-wasm-cicd-test-assertions
+# Priority: HIGH (Viral Developer Adoption & Growth Engine)
+# Reference: pricing_strategy.md, PHASES.md (Task 5.7.8)
+
+## Objective
+Build and package `@paperpilot/test-utils` (and export convenient assertion helpers from `paperpilot-wasm`):
+An ultra-lightweight, zero-system-dependency PDF assertion library runnable inside Jest, Vitest, Bun, and Node.js in CI/CD pipelines (GitHub Actions, GitLab CI, CircleCI).
+Enables software engineering teams to assert PDF layout, page counts, form fields, extracted text, and SHA-256 snapshots in **<5ms in-memory** without installing Docker, Python (`pdfplumber`), or Java (`pdfbox`).
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files within:
+```
+packages/test-utils/           # New directory: npm package scaffold
+paperpilot-wasm/src/assertions.rs # In-memory assertion helpers compiled to WASM
+paperpilot-wasm/src/lib.rs     # Re-export assertions
+reports/WASM_TEST_UTILS_REPORT.md # Final verification report
+wiki/26-Wasm-Test-Utils.md     # Documentation wiki
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/desktop/`, `PHASES.md`, or `pricing_strategy.md`.
+
+---
+
+## 1. Rust WASM Assertion Primitives (`paperpilot-wasm/src/assertions.rs`)
+Expose high-speed in-memory PDF inspection helpers via `wasm-bindgen`:
+```rust
+#[wasm_bindgen]
+pub struct PdfInspector {
+    inner: lopdf::Document,
+}
+
+#[wasm_bindgen]
+impl PdfInspector {
+    #[wasm_bindgen(constructor)]
+    pub fn new(bytes: &[u8]) -> Result<PdfInspector, JsValue>;
+    
+    pub fn page_count(&self) -> usize;
+    pub fn get_text(&self, page: usize) -> Result<String, JsValue>;
+    pub fn contains_text(&self, text: &str) -> bool;
+    pub fn page_dimensions(&self, page: usize) -> Result<JsValue, JsValue>; // [width, height]
+    pub fn is_encrypted(&self) -> bool;
+    pub fn form_fields(&self) -> Result<JsValue, JsValue>; // Array of field names and values
+    pub fn sha256_hex(&self) -> String;
+}
+```
+
+---
+
+## 2. TypeScript / NPM Wrapper (`packages/test-utils/`)
+Create `packages/test-utils/`:
+- `package.json`: `@paperpilot/test-utils`, version `0.1.0`, types pointing to `dist/index.d.ts`.
+- `src/index.ts`: Fluent assertion API compatible with Jest and Vitest matchers:
+  ```typescript
+  import { PdfInspector } from "./wasm";
+
+  export function inspectPdf(buffer: Buffer | Uint8Array): PdfInspector;
+
+  // Custom Vitest / Jest matcher extension helpers
+  export const pdfMatchers = {
+    toHavePageCount(received: Buffer, expected: number),
+    toContainPdfText(received: Buffer, text: string),
+    toHaveFormField(received: Buffer, fieldName: string, expectedValue?: string),
+  };
+  ```
+- Vitest / Jest tests in `packages/test-utils/tests/assertions.spec.ts` testing actual sample PDFs in-memory.
+- Execution speed assertion: Validate that inspecting a 5-page PDF runs in **< 10ms**.
+
+---
+
+## 3. Verification & Deliverables
+Run and verify:
+1. `cargo test -p paperpilot-wasm`
+2. `cargo fmt --all -- --check`
+3. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+4. Run npm tests inside `packages/test-utils/`: `npm test` or `bun test`
+5. Generate `reports/WASM_TEST_UTILS_REPORT.md` documenting sub-10ms latency benchmarks and API examples.
+6. Generate `wiki/26-Wasm-Test-Utils.md`.
