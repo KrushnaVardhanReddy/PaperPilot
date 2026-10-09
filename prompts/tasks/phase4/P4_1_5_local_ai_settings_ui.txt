@@ -1,0 +1,65 @@
+# Task: Phase 4.1.5 & 4.1.6 — Local AI Settings UI, In-App Model Downloader & Keyring Security
+# Base Branch: main
+# Target Branch: feat-local-ai-settings-ui-and-downloader
+# Priority: HIGH (Desktop Svelte 5 AI Settings & Model Manager)
+# Spec: specs/035-local-ai-agent-legal-discovery-demo/spec.md
+# Reference: PHASES.md (Tasks 4.1.5, 4.1.6)
+
+## Objective
+Implement the complete frontend UI and Tauri bridge in `apps/desktop/` for managing Local AI providers, downloading curated open models, and configuring BYOK endpoints with OS Keyring security:
+1. **Model Downloader**: In-app download manager streaming tested GGUF / Llamafile models (`Qwen2.5-Coder-1.5B`, `Llama-3.2-3B`) to the standard OS local data directory (`~/.local/share/paperpilot/models/`) with real-time progress bars and chunk resumption.
+2. **AI Provider Settings Drawer**:
+   - Radio toggle between:
+     - 🚀 **Offline Llamafile** (1-click double-click runner, automatic supervisor).
+     - 🌐 **Universal Endpoint** (Ollama, LM Studio, vLLM, custom URL + model).
+     - 🔑 **Commercial BYOK** (OpenAI, Claude, Gemini, Groq with secure local storage).
+3. **Secure API Key Storage**: Storing keys locally in the OS Keyring / Stronghold rather than plain text localStorage.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files within:
+```
+apps/desktop/src/lib/components/settings/AiSettingsModal.svelte # New AI settings drawer/modal
+apps/desktop/src/lib/components/settings/ModelDownloader.svelte # Model download manager
+apps/desktop/src/lib/state/aiConfig.svelte.ts                  # Svelte 5 rune state for AI
+apps/desktop/src-tauri/src/ai_commands.rs                     # Tauri IPC handlers for AI & downloader
+apps/desktop/src-tauri/src/lib.rs                             # Register ai_commands
+reports/LOCAL_AI_SETTINGS_UI_REPORT.md                        # Verification report
+wiki/31-Local-AI-Settings-And-Downloader.md                   # Documentation wiki
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `paperpilot-wasm/`, `PHASES.md`, or `pricing_strategy.md`.
+
+---
+
+## 1. Tauri Backend Commands (`apps/desktop/src-tauri/src/ai_commands.rs`)
+Expose Tauri IPC commands:
+1. `get_available_models()` -> Returns list of curated models (name, size_mb, download_url, local_path, is_downloaded).
+2. `download_model(model_id: String)` -> Emits Tauri events `model-download-progress { percent, bytes_downloaded, total_bytes }`.
+3. `cancel_model_download(model_id: String)`.
+4. `save_ai_config(config: AiSettingsConfig)`.
+5. `get_ai_config() -> AiSettingsConfig`.
+6. `test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String>` -> Pings endpoint `/v1/models` and returns latency in ms.
+
+---
+
+## 2. Svelte 5 Frontend UI (`apps/desktop/src/lib/components/settings/`)
+1. Modern glassmorphism UI matching PaperPilot aesthetic (Inter font, sleek dark mode palette, smooth micro-animations).
+2. Uses Svelte 5 runes (`$state`, `$derived`, `$effect`).
+3. Model Downloader list card:
+   - Shows "Llama 3.2 3B Instruct (2.1 GB) — Recommended for Legal Discovery".
+   - Shows "Qwen 2.5 Coder 1.5B (1.1 GB) — Fast & Lightweight".
+   - Shows "Download" button -> smoothly transitions to active progress bar with MB/s and estimated time remaining.
+4. "Test Connection" button providing instant visual feedback (🟢 Connected in 12ms / 🔴 Failed to connect).
+
+---
+
+## 3. Verification & Deliverables
+Run and verify:
+1. Run Playwright UI tests in `apps/desktop/`: `pnpm test` or `npx playwright test`.
+2. `cargo fmt --all -- --check`
+3. `cargo clippy -p desktop-lib --all-targets -- -D warnings`
+4. Generate `reports/LOCAL_AI_SETTINGS_UI_REPORT.md` with screenshot/state verification.
+5. Generate `wiki/31-Local-AI-Settings-And-Downloader.md`.

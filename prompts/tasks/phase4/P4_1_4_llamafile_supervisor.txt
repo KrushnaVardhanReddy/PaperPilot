@@ -1,0 +1,94 @@
+# Task: Phase 4.1.4 — Mozilla Llamafile Process Supervisor & Offline Subprocess Runner
+# Base Branch: main
+# Target Branch: feat-llamafile-process-supervisor
+# Priority: HIGH (1-Click Zero-Install Local LLM Runner)
+# Spec: specs/035-local-ai-agent-legal-discovery-demo/spec.md
+# Reference: PHASES.md (Task 4.1.4)
+
+## Objective
+Implement a robust, cross-platform **Mozilla `llamafile` Process Supervisor** in `paperpilot-ai` (or standalone module):
+Enables PaperPilot to manage, healthcheck, and auto-terminate a local `.llamafile` standalone executable binary:
+1. Spawns the executable with flags: `--server --jinja --port 8080 --host 127.0.0.1 -ngl 999`.
+2. Polls `http://127.0.0.1:8080/health` with exponential backoff until the model is loaded in memory.
+3. Provides a clean async API to start, query status, and terminate the subprocess.
+4. Auto-kill guard: Guarantees that when PaperPilot exits or drops the supervisor handle, the background `llamafile` process is cleanly killed (`SIGTERM` / `TerminateProcess`) without leaving orphaned zombie processes.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** create and touch files within:
+```
+paperpilot-ai/src/supervisor.rs       # Llamafile process manager
+paperpilot-ai/src/lib.rs              # Re-export supervisor
+paperpilot-ai/tests/supervisor_tests.rs # Unit / mock tests
+reports/LLAMAFILE_SUPERVISOR_REPORT.md # Verification report
+wiki/30-Llamafile-Supervisor.md       # Documentation wiki
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-pdf/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, or `pricing_strategy.md`.
+
+---
+
+## 1. Supervisor Architecture (`paperpilot-ai/src/supervisor.rs`)
+```rust
+use std::path::PathBuf;
+use std::process::Child;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SupervisorStatus {
+    pub is_running: bool,
+    pub pid: Option<u32>,
+    pub port: u16,
+    pub model_path: PathBuf,
+}
+
+pub struct LlamafileSupervisor {
+    model_path: PathBuf,
+    port: u16,
+    child: Arc<Mutex<Option<Child>>>,
+}
+
+impl LlamafileSupervisor {
+    pub fn new(model_path: PathBuf, port: u16) -> Self;
+
+    /// Spawns the llamafile binary and waits until /health or /v1/models responds
+    pub async fn start(&self, timeout: Duration) -> Result<(), SupervisorError>;
+
+    /// Polls the health endpoint
+    pub async fn is_ready(&self) -> bool;
+
+    /// Cleanly terminates the process
+    pub fn stop(&self) -> Result<(), SupervisorError>;
+
+    /// Inspect current process state
+    pub fn status(&self) -> SupervisorStatus;
+}
+
+/// Implement Drop for LlamafileSupervisor to guarantee child cleanup
+impl Drop for LlamafileSupervisor {
+    fn drop(&mut self) {
+        let _ = self.stop();
+    }
+}
+```
+
+---
+
+## 2. Requirements & Edge Cases
+1. **Executable Permissions (Linux/macOS)**: Ensure the file has execute permissions (`st_mode & 0o111`) before spawning; if not, invoke `std::fs::set_permissions`.
+2. **Port Conflict Detection**: Before spawning, check if `127.0.0.1:port` is already in use. If another llamafile or service is already listening and returns 200 OK on `/v1/models`, bind to it instead of failing.
+3. **Mock Process Testing**:
+   - Write a lightweight mock binary or use test scripts to verify process spawning, health-check polling, and guaranteed termination on drop.
+
+---
+
+## 3. Verification & Deliverables
+Run and verify:
+1. `cargo test -p paperpilot-ai --test supervisor_tests`
+2. `cargo fmt --all -- --check`
+3. `cargo clippy -p paperpilot-ai --all-targets -- -D warnings`
+4. Generate `reports/LLAMAFILE_SUPERVISOR_REPORT.md` documenting process lifecycle, port negotiation, and memory cleanup.
+5. Generate `wiki/30-Llamafile-Supervisor.md`.
