@@ -14,6 +14,17 @@ Create the standalone `paperpilot-ai` crate in the root workspace implementing:
 2. `LlmNlpResolver`: Struct implementing the `NlpResolver` trait from `paperpilot-nlp::traits::NlpResolver`:
    - Converts natural language queries into an `OperationPlan` by invoking the LLM with PaperPilot tool definitions.
    - Parses LLM tool calls into strongly-typed `OperationPlan` structs.
+3. `DynamicRouter`: Factory/router pattern that seamlessly swaps between `paperpilot_nlp::resolver::OfflineNlpResolver` (100% offline embedded model, 0.4ms) and `LlmNlpResolver` (local LLM / BYOK), with automatic fallback to offline NLP if the LLM endpoint is unreachable.
+
+---
+
+## ARCHITECTURAL CONTEXT: SINGLE CODEBASE, DYNAMIC RUNTIME SWITCHING
+PaperPilot uses **ONE single codebase and ONE binary on `main`** — NEVER two Git branches or split binaries:
+- The `paperpilot-nlp` crate provides the embedded `OfflineNlpResolver` (0-config, <1.1MB ONNX model, instant response).
+- The `paperpilot-ai` crate provides the `LlmNlpResolver` (multi-step tool reasoning via Local Llamafile, Ollama, or BYOK).
+- Both implement the exact same trait: `paperpilot_nlp::traits::NlpResolver`.
+- The user can seamlessly toggle between "Offline NLP Mode" and "Local AI Agent / BYOK Mode" in application settings.
+- If Local LLM is selected but the endpoint is offline or unavailable, the system automatically falls back to `OfflineNlpResolver` without crashing.
 
 ---
 
