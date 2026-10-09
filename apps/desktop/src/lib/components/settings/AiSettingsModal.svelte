@@ -102,6 +102,13 @@
                         <button class="test-btn" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
                              {aiConfig.testLoading ? 'Testing...' : 'Test Connection'}
                         </button>
+
+                        {#if aiConfig.testResult}
+                             <div class="test-result" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                                  <span class="result-badge">{aiConfig.testResult.success ? '🟢' : '🔴'}</span>
+                                  <span class="result-text">{aiConfig.testResult.message}</span>
+                             </div>
+                        {/if}
                     </div>
                 {/if}
 
@@ -124,13 +131,14 @@
                         <button class="test-btn" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
                              {aiConfig.testLoading ? 'Testing...' : 'Test Connection'}
                         </button>
-                    </div>
-                {/if}
 
-                {#if aiConfig.testResult}
-                     <div class="test-result" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
-                          {aiConfig.testResult.success ? '🟢' : '🔴'} {aiConfig.testResult.message}
-                     </div>
+                        {#if aiConfig.testResult}
+                             <div class="test-result" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                                  <span class="result-badge">{aiConfig.testResult.success ? '🟢' : '🔴'}</span>
+                                  <span class="result-text">{aiConfig.testResult.message}</span>
+                             </div>
+                        {/if}
+                    </div>
                 {/if}
 
             </div>
