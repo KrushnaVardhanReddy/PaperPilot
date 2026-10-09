@@ -77,10 +77,17 @@
                     <div class="config-section" transition:slide>
                         <ModelDownloader />
                         <div class="test-row">
-                            <button class="test-btn" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
-                                {aiConfig.testLoading ? 'Verifying...' : '⚡ Test Local Model Connection'}
+                            <button class="test-btn primary-test" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
+                                {aiConfig.testLoading ? 'Verifying local model...' : '⚡ Test Local Model Connection'}
                             </button>
                         </div>
+
+                        {#if aiConfig.testResult}
+                             <div class="test-result" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                                  <span class="result-badge">{aiConfig.testResult.success ? '🟢 READY' : '🔴 ERROR'}</span>
+                                  <span class="result-text">{aiConfig.testResult.message}</span>
+                             </div>
+                        {/if}
                     </div>
                 {/if}
 
@@ -293,6 +300,19 @@
         cursor: pointer;
         transition: background 0.2s;
         margin-top: 0.5rem;
+    }
+
+    .test-btn.primary-test {
+        background: #2563eb;
+        color: white;
+        border: 1px solid #3b82f6;
+        font-weight: 600;
+        width: 100%;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .test-btn.primary-test:hover:not(:disabled) {
+        background: #1d4ed8;
     }
 
     .test-btn:hover:not(:disabled) {
