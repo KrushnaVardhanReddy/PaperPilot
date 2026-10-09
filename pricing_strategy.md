@@ -191,29 +191,31 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
 
 ## 💡 Upstream Open-Source Dependency Sustainability Pledge
 
-**Philosophy:** PaperPilot's speed, privacy, and architecture stand on the shoulders of the open-source Rust ecosystem. Stripping value from open-source maintainers without giving back is unsustainable. PaperPilot commits to funding the exact upstream crates that make our engine possible.
+**Philosophy:** PaperPilot's speed, privacy, and architecture stand on the shoulders of the open-source Rust ecosystem. Stripping value from open-source maintainers without giving back is unsustainable. PaperPilot is committed to supporting the exact upstream crates and authors that make our engine possible.
 
-### The Commitment
-- **10% of all paid subscription revenue** (Pro, Teams, Enterprise) is permanently committed to an **Upstream Maintainer Sustainability Fund**, distributed quarterly.
-- **100% Transparent:** The total fund balance, recipient breakdown, and payment receipts via **GitHub Sponsors** and **Open Collective** are published openly on the website.
+### The Commitment: Sustainable Ecosystem Reinvestment
+- **Code & Bug Reports First (Day 1):** We actively contribute upstream bug fixes, performance optimizations, and repro test fixtures back to the repositories we depend on.
+- **Upstream Sponsorship Fund:** As PaperPilot achieves operational sustainability and paid revenue milestones (post cash-flow positive operations), a dedicated allocation of proceeds is directed into an **Upstream Maintainer Fund** to sponsor key library authors via **GitHub Sponsors** and **Open Collective**.
+- **100% Transparent:** The total fund balance, recipient breakdown, and payment receipts will be published openly on our website, in our developer newsletter, and in public documentation.
 
-### How It Works & Allocation Tiers
-Rather than an arbitrary formula, distributions are allocated based on critical supply-chain weighting:
+### Focus Areas for Sponsorship
+When financial disbursements activate, funding is prioritized across critical supply-chain foundations:
 
-| Allocation Tier | Weight | Focus Area | Core Upstream Crates Funded |
-| :--- | :---: | :--- | :--- |
-| **Tier 1: Core PDF Foundations** | **50%** | Low-level PDF object tree, parsing, writing, and vector typesetting | `lopdf`, `pdf-writer`, `typst` ecosystem |
-| **Tier 2: Specialized Engines** | **30%** | Pure-Rust OCR, spreadsheet ingestion, and layout engines | `ocrs`, `rten`, `calamine`, `genpdf`, `fulgur` |
-| **Tier 3: Ecosystem & Runtime** | **20%** | Pure-Rust rendering, client-side WASM, and desktop runtime | `hayro` / `pdfium-render`, `wasm-bindgen`, `tauri` |
+| Priority Focus | Focus Area | Core Upstream Crates Targeted |
+| :--- | :--- | :--- |
+| **1. Core PDF Foundations** | Low-level PDF object tree, parsing, writing, and vector typesetting | `lopdf`, `pdf-writer`, `typst` ecosystem |
+| **2. Pure-Rust Engines & Layout** | Pure-Rust OCR (`ocrs`), neural runtime (`rten`), document synthesis (`fulgur`), spreadsheets (`calamine`, `rust_xlsxwriter`), and formats (`docx-rs`) | `ocrs`, `rten`, `fulgur`, `calamine`, `rust_xlsxwriter`, `docx-rs` |
+| **3. Pure-Rust Graphics & Rasterization** | Pure-Rust vector rasterization, color pipelines, and 2D graphics | `hayro`, `tiny-skia`, `image` |
+| **4. Ecosystem & Cross-Platform Runtime** | Client-side WebAssembly, fast tokenization, and desktop container | `wasm-bindgen`, `tokenizers`, `tauri` |
 
-### Payout Process
+### Payout & Contribution Process
 1. Grants are distributed quarterly directly to official maintainer GitHub Sponsors profiles, Open Collective funds, or crate author foundations.
 2. If an upstream crate does not have an active sponsorship profile, PaperPilot proactively reaches out to establish one, or places the allocation in an escrow rollover for that crate.
-3. Every quarterly disbursement is logged in `docs/` and highlighted in our changelog and developer newsletter.
+3. Every quarterly disbursement is logged in public documentation and highlighted in our changelog and developer newsletter.
 
 ### Strategic Impact & Moat
 1. **Supply-Chain Security & Reliability:** When our core dependencies are well-funded, critical upstream bug fixes, security audits, and performance optimizations happen faster, directly benefiting PaperPilot.
-2. **Developer & Community Goodwill:** In an industry cynical of commercial developer tools, an authentic 10% pledge establishes unmatched trust across Hacker News, Reddit, and the Rust community.
+2. **Developer & Community Goodwill:** In an industry cynical of commercial developer tools, an authentic give-back commitment establishes unmatched trust across Hacker News, Reddit, and the Rust community.
 3. **Enterprise ESG Alignment:** Enterprise buyers increasingly prioritize software vendors that actively support and de-risk their open-source supply chains.
 
 ---
