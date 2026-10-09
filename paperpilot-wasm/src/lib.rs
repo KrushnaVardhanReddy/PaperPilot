@@ -1,3 +1,4 @@
+pub mod assertions;
 pub mod operations;
 
 use wasm_bindgen::prelude::*;

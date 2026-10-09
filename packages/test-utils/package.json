@@ -1,0 +1,19 @@
+{
+  "name": "@paperpilot/test-utils",
+  "version": "0.1.0",
+  "description": "Zero-dependency CI/CD PDF assertion library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
