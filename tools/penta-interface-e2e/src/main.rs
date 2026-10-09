@@ -1,4 +1,5 @@
 #![allow(warnings)]
+#![allow(clippy::all)]
 
 mod assertions;
 mod cases;
@@ -123,11 +124,13 @@ async fn main() -> Result<()> {
             )?;
         }
         "bench" => {
-            let results = cases::bench::run_benchmarks().await?;
-            println!("Bench finished: {} tests", results.len());
+            let results = cases::bench::run_benchmark_suite().await?;
+            println!("Benchmarking suite completed.");
+            let mm_results = cases::bench::run_multimodal_benchmarks().await?;
+            println!("Multimodal bench finished: {} tests", mm_results.len());
             generate_markdown_report(
                 "Phase 5.9.7 — Multimodal PDF-to-JSON Benchmark",
-                &results,
+                &mm_results,
                 "reports/PDF_TO_JSON_MULTIMODAL_BENCH.md",
             )?;
         }

@@ -8,15 +8,7 @@
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Web & Embed Test Coverage | [Spec 030](file:///home/krushna/Project/PaperPilot/specs/030-web-and-embed-batch-unit-tests/spec.md) | Dedicated Playwright unit test suite for interactive embed configuration panels, page range inputs, and web WASM multi-file batch execution queue. | ✅ **Completed** (PR #156, `504b247`) |
-| **5.9.4A** | Rust-Native Penta-Interface Real Semantic Assertions: Foundation & Page Ops | Multi-Surface Parity (180 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Executed 4 tiers across all 5 interfaces for 9 page operations in `tools/penta-interface-e2e/src/cases/page_ops.rs`, documented in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md`. | ✅ **Completed** (PR #161, `472ae69`) |
-| **5.9.4B** | Rust-Native Penta-Interface Real Semantic Assertions: Security, Stamping & Forms | Multi-Surface Parity (280 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for encryption, redaction, signatures, hashing, watermarks, Bates, headers/footers, and AcroForms. | ✅ **Completed** (PR #159, `95eae07`) |
-| **5.9.4C** | Rust-Native Penta-Interface Real Semantic Assertions: Extraction, Analysis & Optimization | Multi-Surface Parity (260 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for compression, repair, linearization, text/image extraction, search, render, metadata, bookmarks, and OCR. | ✅ **Completed** (PR #160, `ba79af0`) |
-| **5.9.4D** | Rust-Native Penta-Interface Real Semantic Assertions: Conversions & Master Scorecard | Multi-Surface Parity (160 Tests) | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Execute 4 tiers across all 5 interfaces for Office (DOCX, XLSX, PPTX) and markup conversions, compiling master scorecard in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md`. | ✅ **Completed** (PR #158, `f0607a3`) |
-| **5.9.5** | Penta-Interface Edge Cases & Deep Boundary Verification Suite | Edge Case Robustness | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Comprehensive 44-tool parameter & boundary matrix testing: compression quality (`low`/`medium`/`high`/numeric), discontinuous & reverse page selections (`1,3,5`, `5-1`), full-bleed & micro-crops, multi-byte UTF-8/emoji watermarks & metadata, complex passwords with shell escapes, AcroForm edge cases, corrupt PDF headers, Makefile integration (`make test-penta-edge-cases`), verified 100% pass (385/385 tests) in `reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md`. | ✅ **Completed** (PR #162, `3a71c36`) |
-| **5.9.6** | Penta-Interface High-Throughput & Concurrency Performance Benchmark | Performance & SLA Parity | [Spec 031](file:///home/krushna/Project/PaperPilot/specs/031-real-assertions-suite/spec.md) | Concurrency stress testing (10, 25, 50 workers), p50/p95/p99 latency profiling across all 5 surfaces, memory leak checks (<35MB RSS), Makefile integration (`make bench-penta-e2e`), generating `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`. | ⏳ **In Progress** (Session `10557618272357635464`) |
-| **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI / Document Vision | [Spec 032](file:///home/krushna/Project/PaperPilot/specs/032-pdf-to-json-multimodal-images/spec.md) | Expand `pdf_to_json` with `--image-mode <none|files|base64>`, extracting image streams, bounding boxes, and data URIs for multimodal LLM vision ingestion. | 📋 **Queued (Backlog)** |
-| **5.9.8** | Human-Friendly UI Error Normalization & Action Hints | Desktop UX & Error Resilience | [Spec 033](file:///home/krushna/Project/PaperPilot/specs/033-human-friendly-ui-errors/spec.md) | Centralized `errorFormatter.ts`, category taxonomy (passwords, corruption, page ranges, locks, missing files), enhanced toasts with headlines, actionable hints, and expandable technical details for power users. | ✅ **Completed** (PR #163, `3886288`) |
+| **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI & 5-Interface Parity | [Spec 032](file:///home/krushna/Project/PaperPilot/specs/032-pdf-to-json-multimodal-images/spec.md) | Expand `pdf_to_json` with `--image-mode <none|files|base64>`, 5-interface mandate (CLI, MCP, REST, WASM, Edge), 20 E2E assertions, edge cases, and bench integration. | ⏳ **In Progress** (Session `7215646411441515522`) |
 
 ---
 
@@ -32,11 +24,21 @@
 ## 🏆 Completed v1.0 Milestones Archive
 
 <details>
-<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (20 Milestones)</b></summary>
+<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (29 Milestones)</b></summary>
 
 | # | Task | Area | Milestone Summary | Resolution |
 |---|---|---|---|---|
-| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat Reduction | Standalone Desktop executable reduced from **107 MB to 35 MB** (~67% reduction) via root workspace release profile (`strip = true`, `lto = "fat"`, `panic = "abort"`). Migrated `paperpilot-nlp` from C++ `ort` to pure-Rust `rten` SIMD engine with embedded `tinybert.rten.zst`. | ✅ **Completed** (`45a1566`, Spec 028) |
+| **5.9.2** | Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`) | Developer Tooling & Automation | Standalone pure-Rust CLI tool in `tools/jules-submit/` (`reqwest`, `clap`, `dotenvy`) replacing Python submitter for 100% zero-Python developer workflow. | ✅ **Completed** (PR #164, `1e673bc`, Spec 029) |
+| **5.9.6** | Penta-Interface High-Throughput & Concurrency Performance Benchmark | Performance & SLA Parity | Concurrency stress testing (10, 25, 50 workers), p50/p95/p99 latency profiling across all 5 surfaces, memory leak checks (<35MB RSS), Makefile integration (`make bench-penta-e2e`). | ✅ **Completed** (PR #165, `a8de2ae`, Spec 031) |
+
+| **5.9.8** | Human-Friendly UI Error Normalization & Action Hints | Desktop UX | Centralized `errorFormatter.ts`, category taxonomy, enhanced toasts with headlines, actionable hints, and expandable technical details. | ✅ **Completed** (PR #163, `3886288`, Spec 033) |
+| **5.9.5** | Penta-Interface Edge Cases & Deep Boundary Verification Suite | Robustness | 44-tool boundary testing: compression quality, discontinuous pages, full-bleed crops, UTF-8 watermarks, shell escape passwords (385/385 tests). | ✅ **Completed** (PR #162, `3a71c36`, Spec 031) |
+| **5.9.4A** | Penta Real Semantic Assertions: Foundation & Page Ops | Multi-Surface | Executed 4 tiers across all 5 interfaces for 9 page operations (180/180 tests). | ✅ **Completed** (PR #161, `472ae69`, Spec 031) |
+| **5.9.4B** | Penta Real Semantic Assertions: Security, Stamping & Forms | Multi-Surface | Executed 4 tiers across all 5 interfaces for 14 security & form tools (280/280 tests). | ✅ **Completed** (PR #159, `95eae07`, Spec 031) |
+| **5.9.4C** | Penta Real Semantic Assertions: Extraction, Analysis & Optimization | Multi-Surface | Executed 4 tiers across all 5 interfaces for 13 analysis & optimization tools (260/260 tests). | ✅ **Completed** (PR #160, `ba79af0`, Spec 031) |
+| **5.9.4D** | Penta Real Semantic Assertions: Conversions & Master Scorecard | Multi-Surface | Executed 4 tiers across all 5 interfaces for 8 conversion tools (160/160 tests, 880 total). | ✅ **Completed** (PR #158, `f0607a3`, Spec 031) |
+| **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Test Coverage | Playwright unit tests for interactive embed widget configuration panels and web WASM batch queues. | ✅ **Completed** (PR #156, `504b247`, Spec 030) |
+| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat | Desktop executable reduced from **107MB to 35MB** (~67% reduction) via root release profile and pure-Rust `rten` SIMD engine. | ✅ **Completed** (`45a1566`, Spec 028) |
 | **4.8.1** | `paperpilot-wasm` Crate & Web Worker Bridge | Client-Side WASM | Core WASM crate with `wasm-bindgen`, in-memory buffer adapters, and TS Web Worker bridge. | ✅ **Completed** (PR #135) |
 | **4.8.2** | Zero-Install Web App Demo | Web App | Standalone web tool suite running 100% in browser memory with download CTA funneling to Desktop. | ✅ **Completed** (PR #137) |
 | **4.8.4** | Expand Web Suite to 12 Pure-Rust Tools | Web Expansion | Added `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata` to WASM. | ✅ **Completed** (PR #138) |
@@ -61,4 +63,5 @@
 
 ---
 
-*Last updated: 2026-10-08 (Tasks 5.9.4A–D Penta-Interface 880-Test Real Assertions Suite Dispatched in Parallel, Spec 031)*
+*Last updated: 2026-10-09 (Only 1 In-Flight Session Remaining Before v1.0 Launch Tagging: 5.9.7)*
+
