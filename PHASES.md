@@ -1007,7 +1007,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.7.5 | Ephemeral Kubernetes Sandbox Worker | On-demand K8s Job / KEDA runner (`emptyDir: { medium: "Memory" }`) for heavy OCR, multi-gigabyte documents, and complex pipelines that auto-terminates and wipes RAM upon job completion |
 | 5.7.6 | Smart Hybrid Dispatch Router | Gateway router that routes light operations (merge, split, rotate, stamp) to Cloudflare Workers and routes heavy compute (OCR, large rendering) to Ephemeral K8s Pods |
 | 5.7.7 | Zero-Knowledge Audit & Ephemeral Proof | Cryptographic verification asserting zero files touch persistent storage and in-memory streams are purged upon delivery |
-| 5.7.8 | Zero-Dependency CI/CD PDF Test Assertions Library (`@paperpilot/wasm` / `@paperpilot/test-utils`) ⏳ | In Progress (Jules Session `2383638745133243635`) — Sub-10ms in-memory PDF testing runner for external projects' CI pipelines (Jest, Vitest, Playwright, Bun, Node.js). Allows developers to assert generated invoices/reports (layout, text, forms, hashes) without Docker, Python, or system C-libraries. |
+| 5.7.8 | Zero-Dependency CI/CD PDF Test Assertions Library (`@paperpilot/wasm` / `@paperpilot/test-utils`) ✅ | Merged (PR #174, Session 2383638745133243635) — Sub-10ms in-memory PDF testing runner for external projects' CI pipelines (Jest, Vitest, Playwright, Bun, Node.js). Allows developers to assert generated invoices/reports (layout, text, forms, hashes) without Docker, Python, or system C-libraries (`reports/WASM_TEST_UTILS_REPORT.md`, `wiki/26-Wasm-Test-Utils.md`). |
 
 ---
 
@@ -1436,7 +1436,7 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.3.1 | `paperpilot watch` command ⏳ | In Progress (Jules Session `10451471310659356299`) — Monitor directory for new files using `notify` crate |
+| 8.3.1 | `paperpilot watch` command ✅ | Merged (PR #173, Session 10451471310659356299) — Monitor directory for new files using pure-Rust `notify` crate, with settling delay, recipe execution, and webhook notifications (`reports/WATCH_FOLDER_DAEMON_REPORT.md`, `wiki/27-Watch-Folder-Daemon.md`) |
 | 8.3.2 | Auto-apply recipe on new files | Trigger a recipe automatically on each new file |
 | 8.3.3 | Daemon mode (`--daemon`) | Run as background service / system daemon |
 | 8.3.4 | systemd / launchd / Windows Service support | Native OS service integration |
