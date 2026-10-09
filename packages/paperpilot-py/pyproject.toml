@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "paperpilot"
+version = "1.0.0"
+description = "Python client SDK for PaperPilot"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pydantic>=2.4.2",
+    "httpx>=0.25.0"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.2",
+    "pytest-asyncio>=0.21.1"
+]
