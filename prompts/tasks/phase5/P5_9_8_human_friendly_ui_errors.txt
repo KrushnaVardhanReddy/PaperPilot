@@ -1,0 +1,122 @@
+# Task: Human-Friendly UI Error Normalization & Action Hints (Spec 033)
+# Base Branch: main
+# Target Branch: feat-human-friendly-ui-errors
+# Priority: HIGH (UX Polish, Clean Error Messaging & Action Hints)
+# Spec: specs/033-human-friendly-ui-errors/spec.md
+# Reference: apps/desktop/
+
+## Objective
+Replace raw Rust/backend technical error messages in the Svelte 5 desktop app (`apps/desktop`) with clean, friendly user headlines and actionable resolution hints (e.g. replacing `lopdf: cross-reference table missing offset 0x4f2` with headline `Unable to Read PDF` and action hint `The document structure appears damaged. Try using the 'Repair' tool first.`).
+
+Power users must still be able to inspect and copy raw technical logs via an expandable "Details" toggle on toasts.
+
+---
+
+## Strict File Ownership
+You may **ONLY** edit or create files within:
+```
+apps/desktop/src/lib/utils/errorFormatter.ts
+apps/desktop/src/lib/utils/__tests__/errorFormatter.test.ts
+apps/desktop/src/lib/state/toast.svelte.ts
+apps/desktop/src/lib/components/layout/ToastContainer.svelte
+apps/desktop/src/lib/components/__tests__/Toast.test.ts
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte
+apps/desktop/src/routes/+page.svelte
+reports/HUMAN_FRIENDLY_UI_ERRORS_REPORT.md
+```
+Do NOT touch engine crates (`paperpilot-*`), root `Cargo.toml`, or backend rust code.
+
+---
+
+## Implementation Details
+
+### 1. Centralized Formatter (`apps/desktop/src/lib/utils/errorFormatter.ts`)
+Create a utility function:
+```typescript
+export interface FormattedError {
+  headline: string;
+  actionHint: string;
+  technicalDetails?: string;
+}
+
+export function formatUserFriendlyError(rawError: unknown, operationTitle?: string): FormattedError;
+```
+
+Map error strings (case-insensitive) against taxonomy categories:
+1. **Password / Encryption**: (`password`, `encrypted`, `decrypt`, `unauthorized`, `owner password`)
+   - Headline: `Protected Document`
+   - Action Hint: `Please provide the correct password to unlock and process this PDF.`
+2. **Corrupted PDF**: (`xref`, `trailer`, `syntax`, `corrupt`, `damaged`, `invalid stream`, `unexpected token`)
+   - Headline: `Unable to Read PDF`
+   - Action Hint: `The document structure appears damaged. Try using the 'Repair' tool first.`
+3. **Invalid Page Range**: (`out of bounds`, `page count`, `range`, `empty range`, `cannot produce 0-page`)
+   - Headline: `Invalid Page Range`
+   - Action Hint: `Please verify that the selected page numbers exist in this document.`
+4. **Missing Input / Not Found**: (`missing`, `not found`, `no such file`, `enoent`)
+   - Headline: `File Not Found`
+   - Action Hint: `The specified file could not be found. Please re-select the document.`
+5. **File In Use / Permissions**: (`permission denied`, `in use`, `busy`, `locked`, `access is denied`)
+   - Headline: `File Is Busy or Inaccessible`
+   - Action Hint: `Please close the document in other applications and try again.`
+6. **Limit / Timeout**: (`too large`, `memory limit`, `timeout`, `size exceeded`)
+   - Headline: `File Limit Reached`
+   - Action Hint: `The document is too large or complex for this operation.`
+7. **Empty Operation**: (`cannot merge 0 files`, `empty array`, `no inputs`, `need at least 2`)
+   - Headline: `No Documents Selected`
+   - Action Hint: `Please add at least one document to proceed.`
+8. **Fallback**:
+   - Headline: `${operationTitle || 'Operation'} could not be completed`
+   - Action Hint: `An unexpected issue occurred. Please check the document and retry.`
+   - `technicalDetails`: raw string representation of `rawError`.
+
+### 2. Update Toast State (`apps/desktop/src/lib/state/toast.svelte.ts`)
+Update `Toast` interface:
+```typescript
+export interface Toast {
+  id: string;
+  type: ToastType;
+  message: string;
+  actionHint?: string;
+  technicalDetails?: string;
+  duration?: number;
+}
+```
+Update `error` method to accept optional `actionHint` and `technicalDetails`:
+```typescript
+error(message: string, actionHint?: string, technicalDetails?: string, duration?: number) {
+  const id = crypto.randomUUID();
+  this.toasts.push({ id, type: 'error', message, actionHint, technicalDetails, duration: duration ?? 4000 });
+  // auto-dismiss handling
+}
+```
+Ensure backwards compatibility with calls passing `error(message, duration)`.
+
+### 3. Update Toast UI (`apps/desktop/src/lib/components/layout/ToastContainer.svelte`)
+- Display `toast.message` with strong font weight.
+- If `toast.actionHint` is present, display it underneath in slightly smaller text (`font-size: 0.8rem; color: var(--text-secondary);`).
+- If `toast.technicalDetails` is present, provide a subtle toggle button (`Details ▾`) that expands an inline pre/code block containing the technical string, along with a small "Copy" button.
+
+### 4. Wire Up Handlers
+In:
+- `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`: In `executeTool()`, catch block and non-success branch:
+  ```typescript
+  const formatted = formatUserFriendlyError(resObj?.message || error, activeTool.title);
+  toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+  jobsState.addJob(toolName, 'error', formatted.headline);
+  ```
+- `apps/desktop/src/routes/+page.svelte`: In `handleRotatePage`, `handleDeletePage`, `handleReorderPage`, `handleDuplicatePage`, `handleExtractPage`, and `handleSaveForm`:
+  Route errors through `formatUserFriendlyError(...)` before notifying `toastState.error(...)`.
+
+### 5. Tests
+1. Author unit tests in `apps/desktop/src/lib/utils/__tests__/errorFormatter.test.ts` covering each taxonomy category and fallback.
+2. Update `apps/desktop/src/lib/components/__tests__/Toast.test.ts` to assert rendering of `actionHint` and `technicalDetails`.
+3. Verify all desktop tests pass:
+   ```bash
+   cd apps/desktop && npm test
+   ```
+
+### 6. Deliverable Report
+Create `reports/HUMAN_FRIENDLY_UI_ERRORS_REPORT.md` documenting:
+- Error taxonomy and mapping table.
+- Before/after examples of error messages.
+- Test coverage output proving all Vitest tests pass.
