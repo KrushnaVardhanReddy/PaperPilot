@@ -7,7 +7,13 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::Path;
 
-fn submit_file(filepath: &Path, label: Option<&str>, branch: &str, dry_run: bool, api_key: Option<&str>) -> Result<()> {
+fn submit_file(
+    filepath: &Path,
+    label: Option<&str>,
+    branch: &str,
+    dry_run: bool,
+    api_key: Option<&str>,
+) -> Result<()> {
     if !filepath.exists() {
         anyhow::bail!("❌ File not found: {}", filepath.display());
     }
@@ -65,24 +71,51 @@ fn main() -> Result<()> {
     };
 
     if let Some(filepath) = args.file {
-        submit_file(Path::new(&filepath), None, &args.branch, args.dry_run, api_key.as_deref())?;
+        submit_file(
+            Path::new(&filepath),
+            None,
+            &args.branch,
+            args.dry_run,
+            api_key.as_deref(),
+        )?;
         return Ok(());
     }
 
     if let Some(task_id) = args.task {
         let filepath = fs::find_task(&task_id)?;
-        submit_file(&filepath, Some(&task_id), &args.branch, args.dry_run, api_key.as_deref())?;
+        submit_file(
+            &filepath,
+            Some(&task_id),
+            &args.branch,
+            args.dry_run,
+            api_key.as_deref(),
+        )?;
         return Ok(());
     }
 
     if let Some(phase_num) = args.phase {
         let files = fs::find_phase_tasks(phase_num)?;
-        let action = if args.dry_run { "Previewing" } else { "Submitting" };
-        println!("📅 {} {} pending task(s) for Phase {}...", action, files.len(), phase_num);
+        let action = if args.dry_run {
+            "Previewing"
+        } else {
+            "Submitting"
+        };
+        println!(
+            "📅 {} {} pending task(s) for Phase {}...",
+            action,
+            files.len(),
+            phase_num
+        );
 
         for filepath in files {
             let label = filepath.file_name().unwrap().to_str().unwrap();
-            submit_file(&filepath, Some(label), &args.branch, args.dry_run, api_key.as_deref())?;
+            submit_file(
+                &filepath,
+                Some(label),
+                &args.branch,
+                args.dry_run,
+                api_key.as_deref(),
+            )?;
         }
         return Ok(());
     }

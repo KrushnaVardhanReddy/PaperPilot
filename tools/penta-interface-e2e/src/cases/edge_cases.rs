@@ -1,16 +1,12 @@
-use std::path::{Path, PathBuf};
-use serde_json::json;
-use anyhow::Result;
-use crate::runner::{
-    InterfaceType, ComplexityTier, TestExecutionResult,
-    cli::CliRunner,
-    mcp::McpRunner,
-    api::ApiRunner,
-    gateway::GatewayServer,
-    hash_file,
-};
 use crate::assertions::PdfAssertions;
+use crate::runner::{
+    api::ApiRunner, cli::CliRunner, gateway::GatewayServer, hash_file, mcp::McpRunner,
+    ComplexityTier, InterfaceType, TestExecutionResult,
+};
+use anyhow::Result;
+use serde_json::json;
 use serde_json::Value;
+use std::path::{Path, PathBuf};
 
 /// The "Zero Mock" macro executes real CLI, MCP, and API calls.
 /// For WASM and Edge (which are tested via their own respective harnesses),
@@ -35,7 +31,11 @@ macro_rules! run_edge_case {
             data_sent: $case_desc.into(),
             assertion_checked: "CLI exit status / output".into(),
             expected_result: $expected.into(),
-            actual_result: format!("Success: {}, Output: {}", cli_success, cli_out.lines().next().unwrap_or("")),
+            actual_result: format!(
+                "Success: {}, Output: {}",
+                cli_success,
+                cli_out.lines().next().unwrap_or("")
+            ),
             passed: true, // We mainly assert it didn't panic and gracefully handled it
             latency_ms: cli_latency,
         });
@@ -49,14 +49,19 @@ macro_rules! run_edge_case {
             data_sent: $case_desc.into(),
             assertion_checked: "MCP structured response / error".into(),
             expected_result: $expected.into(),
-            actual_result: format!("Success: {}, Resp: {:.50}", mcp_success, mcp_resp.to_string()),
+            actual_result: format!(
+                "Success: {}, Resp: {:.50}",
+                mcp_success,
+                mcp_resp.to_string()
+            ),
             passed: true,
             latency_ms: mcp_latency,
         });
 
         // 3. API Execution
         let api_runner = ApiRunner::new(7823);
-        let (api_success, api_resp, api_latency) = api_runner.post_json($api_endpoint, $api_json).await?;
+        let (api_success, api_resp, api_latency) =
+            api_runner.post_json($api_endpoint, $api_json).await?;
         $results.push(TestExecutionResult {
             tool_id: $tool.into(),
             interface: InterfaceType::Api,
@@ -64,7 +69,11 @@ macro_rules! run_edge_case {
             data_sent: $case_desc.into(),
             assertion_checked: "HTTP status / JSON response".into(),
             expected_result: $expected.into(),
-            actual_result: format!("Success: {}, Resp: {:.50}", api_success, api_resp.to_string()),
+            actual_result: format!(
+                "Success: {}, Resp: {:.50}",
+                api_success,
+                api_resp.to_string()
+            ),
             passed: true,
             latency_ms: api_latency,
         });
@@ -118,7 +127,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_merge",
         "Empty input array ([])",
         "Error: cannot merge 0 files",
-        vec!["merge", "--output", out_dir.join("merge_empty.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "merge",
+            "--output",
+            out_dir.join("merge_empty.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "inputs": [], "output": out_dir.join("merge_empty.pdf").to_str().unwrap() }),
         "/api/v1/pdf/merge",
         json!({ "inputs": [], "output": out_dir.join("merge_empty.pdf").to_str().unwrap() })
@@ -128,7 +142,15 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_merge",
         "Duplicate inputs (merge_a.pdf, merge_a.pdf)",
         "Valid 2-page merged output",
-        vec!["merge", "--input", "tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_a.pdf", "--output", out_dir.join("merge_dup.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "merge",
+            "--input",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "--output",
+            out_dir.join("merge_dup.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_a.pdf"], "output": out_dir.join("merge_dup.pdf").to_str().unwrap() }),
         "/api/v1/pdf/merge",
         json!({ "inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_a.pdf"], "output": out_dir.join("merge_dup.pdf").to_str().unwrap() })
@@ -138,7 +160,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_merge",
         "Single input file (merge_a.pdf)",
         "Valid 1-page output",
-        vec!["merge", "--input", "tests/e2e_fixtures/real/merge_a.pdf", "--output", out_dir.join("merge_single.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "merge",
+            "--input",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "--output",
+            out_dir.join("merge_single.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "inputs": ["tests/e2e_fixtures/real/merge_a.pdf"], "output": out_dir.join("merge_single.pdf").to_str().unwrap() }),
         "/api/v1/pdf/merge",
         json!({ "inputs": ["tests/e2e_fixtures/real/merge_a.pdf"], "output": out_dir.join("merge_single.pdf").to_str().unwrap() })
@@ -150,7 +179,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_split",
         "Out-of-bounds page range (--pages 99-100)",
         "Structured error code",
-        vec!["split", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "99,100", "--output-dir", out_dir.to_str().unwrap(), "--json"],
+        vec![
+            "split",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "99,100",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "99,100", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/split",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "99,100", "output_dir": out_dir.to_str().unwrap() })
@@ -160,7 +198,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_split",
         "Discontinuous page intervals (--pages 1,3,5)",
         "Splits specific pages cleanly",
-        vec!["split", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "1,3,5", "--output-dir", out_dir.to_str().unwrap(), "--json"],
+        vec![
+            "split",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "1,3,5",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,3,5", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/split",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,3,5", "output_dir": out_dir.to_str().unwrap() })
@@ -170,7 +217,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_split",
         "Boundary split on 1-page document (--pages 1)",
         "Clean single split",
-        vec!["split", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--pages", "1", "--output-dir", out_dir.to_str().unwrap(), "--json"],
+        vec![
+            "split",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--pages",
+            "1",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "pages": "1", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/split",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "pages": "1", "output_dir": out_dir.to_str().unwrap() })
@@ -182,7 +238,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_pages",
         "Reverse page order (--pages 5,4,3,2,1)",
         "Extracts in reverse",
-        vec!["extract-pages", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "5,4,3,2,1", "--output", out_dir.join("ext_rev.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "extract-pages",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "5,4,3,2,1",
+            "--output",
+            out_dir.join("ext_rev.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "5,4,3,2,1", "output": out_dir.join("ext_rev.pdf").to_str().unwrap() }),
         "/api/v1/pdf/extract-pages",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "5,4,3,2,1", "output": out_dir.join("ext_rev.pdf").to_str().unwrap() })
@@ -192,7 +257,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_pages",
         "Discontinuous intervals (--pages 1,3,5)",
         "Extracts specific pages cleanly",
-        vec!["extract-pages", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "1,3,5", "--output", out_dir.join("ext_disc.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "extract-pages",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "1,3,5",
+            "--output",
+            out_dir.join("ext_disc.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,3,5", "output": out_dir.join("ext_disc.pdf").to_str().unwrap() }),
         "/api/v1/pdf/extract-pages",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,3,5", "output": out_dir.join("ext_disc.pdf").to_str().unwrap() })
@@ -202,7 +276,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_pages",
         "Out-of-bounds page index (--pages 99)",
         "Structured error code",
-        vec!["extract-pages", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "99", "--output", out_dir.join("ext_oob.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "extract-pages",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "99",
+            "--output",
+            out_dir.join("ext_oob.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "99", "output": out_dir.join("ext_oob.pdf").to_str().unwrap() }),
         "/api/v1/pdf/extract-pages",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "99", "output": out_dir.join("ext_oob.pdf").to_str().unwrap() })
@@ -214,7 +297,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_delete_pages",
         "Deleting page 1 only",
         "Deletes successfully",
-        vec!["delete-pages", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "1", "--output", out_dir.join("del_1.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "delete-pages",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "1",
+            "--output",
+            out_dir.join("del_1.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1", "output": out_dir.join("del_1.pdf").to_str().unwrap() }),
         "/api/v1/pdf/delete-pages",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1", "output": out_dir.join("del_1.pdf").to_str().unwrap() })
@@ -224,7 +316,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_delete_pages",
         "Attempting to delete ALL pages (--pages 1-5)",
         "Error: cannot create 0-page document",
-        vec!["delete-pages", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--pages", "1,2,3,4,5", "--output", out_dir.join("del_all.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "delete-pages",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--pages",
+            "1,2,3,4,5",
+            "--output",
+            out_dir.join("del_all.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,2,3,4,5", "output": out_dir.join("del_all.pdf").to_str().unwrap() }),
         "/api/v1/pdf/delete-pages",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "pages": "1,2,3,4,5", "output": out_dir.join("del_all.pdf").to_str().unwrap() })
@@ -236,7 +337,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_reorder_pages",
         "Full reverse order (--order 5,4,3,2,1)",
         "Reordered successfully",
-        vec!["reorder", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--order", "5,4,3,2,1", "--output", out_dir.join("reorder_rev.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "reorder",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--order",
+            "5,4,3,2,1",
+            "--output",
+            out_dir.join("reorder_rev.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "5,4,3,2,1", "output": out_dir.join("reorder_rev.pdf").to_str().unwrap() }),
         "/api/v1/pdf/reorder",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "5,4,3,2,1", "output": out_dir.join("reorder_rev.pdf").to_str().unwrap() })
@@ -246,7 +356,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_reorder_pages",
         "Identity permutation (--order 1,2,3,4,5)",
         "Reordered successfully",
-        vec!["reorder", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--order", "1,2,3,4,5", "--output", out_dir.join("reorder_id.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "reorder",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--order",
+            "1,2,3,4,5",
+            "--output",
+            out_dir.join("reorder_id.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "1,2,3,4,5", "output": out_dir.join("reorder_id.pdf").to_str().unwrap() }),
         "/api/v1/pdf/reorder",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "1,2,3,4,5", "output": out_dir.join("reorder_id.pdf").to_str().unwrap() })
@@ -258,7 +377,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_rotate",
         "Negative degree rotation (--degrees -90)",
         "Normalized to 270 degrees",
-        vec!["rotate", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--degrees", "-90", "--output", out_dir.join("rot_neg.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "rotate",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--degrees",
+            "-90",
+            "--output",
+            out_dir.join("rot_neg.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": -90, "output": out_dir.join("rot_neg.pdf").to_str().unwrap() }),
         "/api/v1/pdf/rotate",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": -90, "output": out_dir.join("rot_neg.pdf").to_str().unwrap() })
@@ -268,7 +396,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_rotate",
         "Full 360 and 720 degree rotation",
         "Invariant geometry",
-        vec!["rotate", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--degrees", "720", "--output", out_dir.join("rot_720.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "rotate",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--degrees",
+            "720",
+            "--output",
+            out_dir.join("rot_720.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": 720, "output": out_dir.join("rot_720.pdf").to_str().unwrap() }),
         "/api/v1/pdf/rotate",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": 720, "output": out_dir.join("rot_720.pdf").to_str().unwrap() })
@@ -278,7 +415,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_rotate",
         "Rotating single target page in multi-page doc",
         "Only target page rotated",
-        vec!["rotate", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--degrees", "90", "--pages", "2", "--output", out_dir.join("rot_single.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "rotate",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--degrees",
+            "90",
+            "--pages",
+            "2",
+            "--output",
+            out_dir.join("rot_single.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": 90, "pages": "2", "output": out_dir.join("rot_single.pdf").to_str().unwrap() }),
         "/api/v1/pdf/rotate",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "angle": 90, "pages": "2", "output": out_dir.join("rot_single.pdf").to_str().unwrap() })
@@ -290,7 +438,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_crop",
         "Full-bleed media box crop (--rect 0,0,612,792)",
         "Cropped successfully",
-        vec!["crop", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--rect", "0,0,612,792", "--output", out_dir.join("crop_full.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "crop",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--rect",
+            "0,0,612,792",
+            "--output",
+            out_dir.join("crop_full.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [0,0,612,792], "output": out_dir.join("crop_full.pdf").to_str().unwrap() }),
         "/api/v1/pdf/crop",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [0,0,612,792], "output": out_dir.join("crop_full.pdf").to_str().unwrap() })
@@ -300,7 +457,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_crop",
         "Microscopic crop rectangle (--rect 50,50,5,5)",
         "Cropped successfully",
-        vec!["crop", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--rect", "50,50,5,5", "--output", out_dir.join("crop_micro.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "crop",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--rect",
+            "50,50,5,5",
+            "--output",
+            out_dir.join("crop_micro.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [50,50,5,5], "output": out_dir.join("crop_micro.pdf").to_str().unwrap() }),
         "/api/v1/pdf/crop",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [50,50,5,5], "output": out_dir.join("crop_micro.pdf").to_str().unwrap() })
@@ -310,7 +476,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_crop",
         "Target page specific crop (--pages 1 --rect 10,10,100,100)",
         "Cropped successfully",
-        vec!["crop", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--rect", "10,10,100,100", "--pages", "1", "--output", out_dir.join("crop_page1.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "crop",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--rect",
+            "10,10,100,100",
+            "--pages",
+            "1",
+            "--output",
+            out_dir.join("crop_page1.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [10,10,100,100], "pages": "1", "output": out_dir.join("crop_page1.pdf").to_str().unwrap() }),
         "/api/v1/pdf/crop",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "box": [10,10,100,100], "pages": "1", "output": out_dir.join("crop_page1.pdf").to_str().unwrap() })
@@ -322,7 +499,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_burst",
         "Burst on 1-page document",
         "Produces exactly 1 file",
-        vec!["burst", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output-dir", out_dir.to_str().unwrap(), "--json"],
+        vec![
+            "burst",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/burst",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": out_dir.to_str().unwrap() })
@@ -332,7 +516,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_burst",
         "Burst on 10-page document",
         "Produces exactly 10 discrete files",
-        vec!["burst", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--output-dir", out_dir.to_str().unwrap(), "--json"], // we use 5 pages doc here as per fixtures
+        vec![
+            "burst",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ], // we use 5 pages doc here as per fixtures
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/burst",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": out_dir.to_str().unwrap() })
@@ -344,7 +535,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_remove_blank",
         "Document with zero blank pages",
         "Preserves all pages",
-        vec!["remove-blank", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--output", out_dir.join("no_blank.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "remove-blank",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--output",
+            out_dir.join("no_blank.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("no_blank.pdf").to_str().unwrap() }),
         "/api/v1/pdf/remove-blank",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("no_blank.pdf").to_str().unwrap() })
@@ -354,7 +552,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_remove_blank",
         "Document containing blank pages interspersed",
         "Removes blank pages",
-        vec!["remove-blank", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--output", out_dir.join("removed_blank.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "remove-blank",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--output",
+            out_dir.join("removed_blank.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("removed_blank.pdf").to_str().unwrap() }),
         "/api/v1/pdf/remove-blank",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("removed_blank.pdf").to_str().unwrap() })
@@ -370,7 +575,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_encrypt",
         "Complex passwords with shell escapes, spaces, unicode (P@$$w0rd!#%^&*()'\"\\ 🚀)",
         "Successfully encrypted with complex password",
-        vec!["encrypt", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--user-password", "P@$$w0rd!#%^&*()'\"\\ 🚀", "--output", out_dir.join("enc_complex.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "encrypt",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--user-password",
+            "P@$$w0rd!#%^&*()'\"\\ 🚀",
+            "--output",
+            out_dir.join("enc_complex.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "user_password": "P@$$w0rd!#%^&*()'\"\\ 🚀", "output": out_dir.join("enc_complex.pdf").to_str().unwrap() }),
         "/api/v1/pdf/encrypt",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "user_password": "P@$$w0rd!#%^&*()'\"\\ 🚀", "output": out_dir.join("enc_complex.pdf").to_str().unwrap() })
@@ -380,7 +594,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_encrypt",
         "Distinct user vs owner passwords",
         "Successfully encrypted with two distinct passwords",
-        vec!["encrypt", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--user-password", "user123", "--owner-password", "admin123", "--output", out_dir.join("enc_dual.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "encrypt",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--user-password",
+            "user123",
+            "--owner-password",
+            "admin123",
+            "--output",
+            out_dir.join("enc_dual.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "user_password": "user123", "owner_password": "admin123", "output": out_dir.join("enc_dual.pdf").to_str().unwrap() }),
         "/api/v1/pdf/encrypt",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "user_password": "user123", "owner_password": "admin123", "output": out_dir.join("enc_dual.pdf").to_str().unwrap() })
@@ -392,7 +617,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_decrypt",
         "Wrong password on encrypted document (wrongpassword)",
         "Graceful authentication failure",
-        vec!["decrypt", "--input", "tests/e2e_fixtures/real/encrypted.pdf", "--password", "wrongpassword", "--output", out_dir.join("dec_fail.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "decrypt",
+            "--input",
+            "tests/e2e_fixtures/real/encrypted.pdf",
+            "--password",
+            "wrongpassword",
+            "--output",
+            out_dir.join("dec_fail.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "wrongpassword", "output": out_dir.join("dec_fail.pdf").to_str().unwrap() }),
         "/api/v1/pdf/decrypt",
         json!({ "input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "wrongpassword", "output": out_dir.join("dec_fail.pdf").to_str().unwrap() })
@@ -402,7 +636,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_decrypt",
         "Decrypting already-unencrypted document",
         "Clean error or passthrough without panic",
-        vec!["decrypt", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--password", "any", "--output", out_dir.join("dec_unenc.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "decrypt",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--password",
+            "any",
+            "--output",
+            out_dir.join("dec_unenc.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "password": "any", "output": out_dir.join("dec_unenc.pdf").to_str().unwrap() }),
         "/api/v1/pdf/decrypt",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "password": "any", "output": out_dir.join("dec_unenc.pdf").to_str().unwrap() })
@@ -414,7 +657,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_redact",
         "Full-page redaction (--rect 0,0,612,792)",
         "Successfully redacted",
-        vec!["redact", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--rect", "0,0,612,792", "--output", out_dir.join("redact_full.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "redact",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--rect",
+            "0,0,612,792",
+            "--output",
+            out_dir.join("redact_full.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rects": [[0,0,612,792]], "output": out_dir.join("redact_full.pdf").to_str().unwrap() }),
         "/api/v1/pdf/redact",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rects": [[0,0,612,792]], "output": out_dir.join("redact_full.pdf").to_str().unwrap() })
@@ -424,7 +676,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_redact",
         "Tiny coordinate redaction (--rect 10,10,5,5)",
         "Successfully redacted",
-        vec!["redact", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--rect", "10,10,5,5", "--output", out_dir.join("redact_tiny.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "redact",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--rect",
+            "10,10,5,5",
+            "--output",
+            out_dir.join("redact_tiny.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rects": [[10,10,5,5]], "output": out_dir.join("redact_tiny.pdf").to_str().unwrap() }),
         "/api/v1/pdf/redact",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rects": [[10,10,5,5]], "output": out_dir.join("redact_tiny.pdf").to_str().unwrap() })
@@ -436,7 +697,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_sign",
         "Offline self-signed certificate signing",
         "Successfully signed",
-        vec!["sign", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--cert", "tests/e2e_fixtures/real/cert.pem", "--output", out_dir.join("signed.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "sign",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--cert",
+            "tests/e2e_fixtures/real/cert.pem",
+            "--output",
+            out_dir.join("signed.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "cert": "tests/e2e_fixtures/real/cert.pem", "output": out_dir.join("signed.pdf").to_str().unwrap() }),
         "/api/v1/pdf/sign",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "cert": "tests/e2e_fixtures/real/cert.pem", "output": out_dir.join("signed.pdf").to_str().unwrap() })
@@ -448,7 +718,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_hash",
         "Deterministic SHA-256 calculation verification",
         "Identical input produces identical hash",
-        vec!["hash", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
+        vec![
+            "hash",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" }),
         "/api/v1/pdf/hash",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" })
@@ -460,7 +735,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_watermark",
         "Multi-byte UTF-8, CJK, and emoji text",
         "Watermark applied successfully",
-        vec!["watermark", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--text", "CONFIDENTIAL 🔒 机密 Éléphant", "--output", out_dir.join("wm_unicode.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "watermark",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--text",
+            "CONFIDENTIAL 🔒 机密 Éléphant",
+            "--output",
+            out_dir.join("wm_unicode.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL 🔒 机密 Éléphant", "output": out_dir.join("wm_unicode.pdf").to_str().unwrap() }),
         "/api/v1/pdf/watermark",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL 🔒 机密 Éléphant", "output": out_dir.join("wm_unicode.pdf").to_str().unwrap() })
@@ -470,7 +754,20 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_watermark",
         "Extreme opacity and rotation angles",
         "Watermark applied successfully",
-        vec!["watermark", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--text", "TEST", "--opacity", "0.01", "--angle", "720", "--output", out_dir.join("wm_extreme.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "watermark",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--text",
+            "TEST",
+            "--opacity",
+            "0.01",
+            "--angle",
+            "720",
+            "--output",
+            out_dir.join("wm_extreme.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "TEST", "opacity": 0.01, "angle": 720, "output": out_dir.join("wm_extreme.pdf").to_str().unwrap() }),
         "/api/v1/pdf/watermark",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "TEST", "opacity": 0.01, "angle": 720, "output": out_dir.join("wm_extreme.pdf").to_str().unwrap() })
@@ -482,7 +779,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_header_footer",
         "Unicode text and long strings exceeding standard margins",
         "Header/Footer applied successfully",
-        vec!["header-footer", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--text", "非常长的字符串测试非常长的字符串测试非常长的字符串测试 🚀", "--position", "top-center", "--output", out_dir.join("hf_long.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "header-footer",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--text",
+            "非常长的字符串测试非常长的字符串测试非常长的字符串测试 🚀",
+            "--position",
+            "top-center",
+            "--output",
+            out_dir.join("hf_long.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "非常长的字符串测试非常长的字符串测试非常长的字符串测试 🚀", "position": "top-center", "output": out_dir.join("hf_long.pdf").to_str().unwrap() }),
         "/api/v1/pdf/header-footer",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "text": "非常长的字符串测试非常长的字符串测试非常长的字符串测试 🚀", "position": "top-center", "output": out_dir.join("hf_long.pdf").to_str().unwrap() })
@@ -492,7 +800,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_header_footer",
         "Template variable replacement ({page} of {total})",
         "Variables replaced successfully",
-        vec!["header-footer", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--text", "Page {page} of {total}", "--position", "bottom-center", "--output", out_dir.join("hf_var.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "header-footer",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--text",
+            "Page {page} of {total}",
+            "--position",
+            "bottom-center",
+            "--output",
+            out_dir.join("hf_var.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "text": "Page {page} of {total}", "position": "bottom-center", "output": out_dir.join("hf_var.pdf").to_str().unwrap() }),
         "/api/v1/pdf/header-footer",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "text": "Page {page} of {total}", "position": "bottom-center", "output": out_dir.join("hf_var.pdf").to_str().unwrap() })
@@ -504,7 +823,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_bates",
         "High starting number (--start 999999 --prefix LEGAL)",
         "Bates stamped successfully",
-        vec!["bates", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--start", "999999", "--prefix", "LEGAL", "--output", out_dir.join("bates_high.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "bates",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--start",
+            "999999",
+            "--prefix",
+            "LEGAL",
+            "--output",
+            out_dir.join("bates_high.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "start": 999999, "prefix": "LEGAL", "output": out_dir.join("bates_high.pdf").to_str().unwrap() }),
         "/api/v1/pdf/bates",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "start": 999999, "prefix": "LEGAL", "output": out_dir.join("bates_high.pdf").to_str().unwrap() })
@@ -514,7 +844,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_bates",
         "High padding digit count (padding: 8)",
         "Bates stamped successfully",
-        vec!["bates", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--padding", "8", "--output", out_dir.join("bates_pad.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "bates",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--padding",
+            "8",
+            "--output",
+            out_dir.join("bates_pad.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "padding": 8, "output": out_dir.join("bates_pad.pdf").to_str().unwrap() }),
         "/api/v1/pdf/bates",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "padding": 8, "output": out_dir.join("bates_pad.pdf").to_str().unwrap() })
@@ -526,7 +865,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_page_numbers",
         "Position boundaries: top-left, top-right, bottom-center, bottom-right",
         "Page numbers stamped successfully",
-        vec!["page-numbers", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--position", "bottom-right", "--output", out_dir.join("pagenum_pos.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "page-numbers",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--position",
+            "bottom-right",
+            "--output",
+            out_dir.join("pagenum_pos.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "position": "bottom-right", "output": out_dir.join("pagenum_pos.pdf").to_str().unwrap() }),
         "/api/v1/pdf/page-numbers",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "position": "bottom-right", "output": out_dir.join("pagenum_pos.pdf").to_str().unwrap() })
@@ -538,7 +886,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_annotate",
         "Overlapping annotation rects and unicode text contents",
         "Annotations added successfully",
-        vec!["annotate", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--rect", "10,10,100,100", "--text", "重叠测试 🚀", "--output", out_dir.join("annot_uni.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "annotate",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--rect",
+            "10,10,100,100",
+            "--text",
+            "重叠测试 🚀",
+            "--output",
+            out_dir.join("annot_uni.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rect": [10,10,100,100], "text": "重叠测试 🚀", "output": out_dir.join("annot_uni.pdf").to_str().unwrap() }),
         "/api/v1/pdf/annotate",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "rect": [10,10,100,100], "text": "重叠测试 🚀", "output": out_dir.join("annot_uni.pdf").to_str().unwrap() })
@@ -550,7 +909,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_read_form",
         "Reading PDF with zero AcroForm fields",
         "Returns empty object {} cleanly",
-        vec!["form", "read", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
+        vec![
+            "form",
+            "read",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" }),
         "/api/v1/pdf/form/read",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" })
@@ -562,7 +926,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_fill_form",
         "Filling non-existent field name",
         "Ignored or clean warning, no crash",
-        vec!["form", "fill", "tests/e2e_fixtures/real/form.pdf", "--data", "{\"missing_field\": \"value\"}", "--output", out_dir.join("fill_miss.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "form",
+            "fill",
+            "tests/e2e_fixtures/real/form.pdf",
+            "--data",
+            "{\"missing_field\": \"value\"}",
+            "--output",
+            out_dir.join("fill_miss.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/form.pdf", "data": {"missing_field": "value"}, "output": out_dir.join("fill_miss.pdf").to_str().unwrap() }),
         "/api/v1/pdf/form/fill",
         json!({ "input": "tests/e2e_fixtures/real/form.pdf", "data": {"missing_field": "value"}, "output": out_dir.join("fill_miss.pdf").to_str().unwrap() })
@@ -572,7 +945,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_fill_form",
         "Partial form fill (filling 1 of 5 fields)",
         "Filled successfully without affecting others",
-        vec!["form", "fill", "tests/e2e_fixtures/real/form.pdf", "--data", "{\"Name\": \"John Doe\"}", "--output", out_dir.join("fill_partial.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "form",
+            "fill",
+            "tests/e2e_fixtures/real/form.pdf",
+            "--data",
+            "{\"Name\": \"John Doe\"}",
+            "--output",
+            out_dir.join("fill_partial.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/form.pdf", "data": {"Name": "John Doe"}, "output": out_dir.join("fill_partial.pdf").to_str().unwrap() }),
         "/api/v1/pdf/form/fill",
         json!({ "input": "tests/e2e_fixtures/real/form.pdf", "data": {"Name": "John Doe"}, "output": out_dir.join("fill_partial.pdf").to_str().unwrap() })
@@ -584,7 +966,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_flatten",
         "Flattening document with zero forms",
         "Clean output PDF preserving visual appearance",
-        vec!["form", "flatten", "tests/e2e_fixtures/real/single_page.pdf", "--output", out_dir.join("flat_none.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "form",
+            "flatten",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output",
+            out_dir.join("flat_none.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("flat_none.pdf").to_str().unwrap() }),
         "/api/v1/pdf/form/flatten",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("flat_none.pdf").to_str().unwrap() })
@@ -596,7 +985,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_create_form_field",
         "Form field placed at origin boundary (--rect 0,0,100,30)",
         "Field created successfully",
-        vec!["form", "add-field", "tests/e2e_fixtures/real/single_page.pdf", "--name", "OriginField", "--rect", "0,0,100,30", "--output", out_dir.join("field_origin.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "form",
+            "add-field",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--name",
+            "OriginField",
+            "--rect",
+            "0,0,100,30",
+            "--output",
+            out_dir.join("field_origin.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "name": "OriginField", "rect": [0,0,100,30], "output": out_dir.join("field_origin.pdf").to_str().unwrap() }),
         "/api/v1/pdf/form/add-field",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "name": "OriginField", "rect": [0,0,100,30], "output": out_dir.join("field_origin.pdf").to_str().unwrap() })
@@ -606,7 +1006,20 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_create_form_field",
         "Multiple field types (text, checkbox, signature)",
         "Fields created successfully",
-        vec!["form", "add-field", "tests/e2e_fixtures/real/single_page.pdf", "--name", "CheckField", "--type", "checkbox", "--rect", "10,10,30,30", "--output", out_dir.join("field_multi.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "form",
+            "add-field",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--name",
+            "CheckField",
+            "--type",
+            "checkbox",
+            "--rect",
+            "10,10,30,30",
+            "--output",
+            out_dir.join("field_multi.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "name": "CheckField", "type": "checkbox", "rect": [10,10,30,30], "output": out_dir.join("field_multi.pdf").to_str().unwrap() }),
         "/api/v1/pdf/form/add-field",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "name": "CheckField", "type": "checkbox", "rect": [10,10,30,30], "output": out_dir.join("field_multi.pdf").to_str().unwrap() })
@@ -622,7 +1035,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compress",
         "Explicit quality parameters (--quality low)",
         "Compressed successfully",
-        vec!["compress", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--quality", "low", "--output", out_dir.join("comp_low.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "compress",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--quality",
+            "low",
+            "--output",
+            out_dir.join("comp_low.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "low", "output": out_dir.join("comp_low.pdf").to_str().unwrap() }),
         "/api/v1/pdf/compress",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "low", "output": out_dir.join("comp_low.pdf").to_str().unwrap() })
@@ -632,7 +1054,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compress",
         "Explicit quality parameters (--quality medium)",
         "Compressed successfully",
-        vec!["compress", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--quality", "medium", "--output", out_dir.join("comp_medium.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "compress",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--quality",
+            "medium",
+            "--output",
+            out_dir.join("comp_medium.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "medium", "output": out_dir.join("comp_medium.pdf").to_str().unwrap() }),
         "/api/v1/pdf/compress",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "medium", "output": out_dir.join("comp_medium.pdf").to_str().unwrap() })
@@ -642,7 +1073,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compress",
         "Explicit quality parameters (--quality high)",
         "Compressed successfully",
-        vec!["compress", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--quality", "high", "--output", out_dir.join("comp_high.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "compress",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--quality",
+            "high",
+            "--output",
+            out_dir.join("comp_high.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "high", "output": out_dir.join("comp_high.pdf").to_str().unwrap() }),
         "/api/v1/pdf/compress",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "high", "output": out_dir.join("comp_high.pdf").to_str().unwrap() })
@@ -652,7 +1092,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compress",
         "Explicit quality parameters (--quality 30)",
         "Compressed successfully",
-        vec!["compress", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--quality", "30", "--output", out_dir.join("comp_30.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "compress",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--quality",
+            "30",
+            "--output",
+            out_dir.join("comp_30.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": 30, "output": out_dir.join("comp_30.pdf").to_str().unwrap() }),
         "/api/v1/pdf/compress",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "quality": 30, "output": out_dir.join("comp_30.pdf").to_str().unwrap() })
@@ -662,7 +1111,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compress",
         "Compressing already compressed PDF",
         "Valid output, no corruption",
-        vec!["compress", "--input", out_dir.join("comp_low.pdf").to_str().unwrap(), "--quality", "high", "--output", out_dir.join("comp_twice.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "compress",
+            "--input",
+            out_dir.join("comp_low.pdf").to_str().unwrap(),
+            "--quality",
+            "high",
+            "--output",
+            out_dir.join("comp_twice.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": out_dir.join("comp_low.pdf").to_str().unwrap(), "quality": "high", "output": out_dir.join("comp_twice.pdf").to_str().unwrap() }),
         "/api/v1/pdf/compress",
         json!({ "input": out_dir.join("comp_low.pdf").to_str().unwrap(), "quality": "high", "output": out_dir.join("comp_twice.pdf").to_str().unwrap() })
@@ -674,7 +1132,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_repair",
         "Truncated PDF missing EOF marker",
         "Recovers stream structure",
-        vec!["repair", "--input", "tests/e2e_fixtures/real/corrupted.pdf", "--output", out_dir.join("rep_trunc.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "repair",
+            "--input",
+            "tests/e2e_fixtures/real/corrupted.pdf",
+            "--output",
+            out_dir.join("rep_trunc.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/corrupted.pdf", "output": out_dir.join("rep_trunc.pdf").to_str().unwrap() }),
         "/api/v1/pdf/repair",
         json!({ "input": "tests/e2e_fixtures/real/corrupted.pdf", "output": out_dir.join("rep_trunc.pdf").to_str().unwrap() })
@@ -684,7 +1149,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_repair",
         "Valid clean PDF",
         "Preserves structure intact",
-        vec!["repair", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output", out_dir.join("rep_clean.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "repair",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output",
+            out_dir.join("rep_clean.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("rep_clean.pdf").to_str().unwrap() }),
         "/api/v1/pdf/repair",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("rep_clean.pdf").to_str().unwrap() })
@@ -696,7 +1168,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_linearize",
         "Fast web view optimization on multi-page doc",
         "Linearized successfully",
-        vec!["linearize", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--output", out_dir.join("lin.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "linearize",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--output",
+            out_dir.join("lin.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("lin.pdf").to_str().unwrap() }),
         "/api/v1/pdf/linearize",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "output": out_dir.join("lin.pdf").to_str().unwrap() })
@@ -708,7 +1187,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_text",
         "Format variations (--format json)",
         "Extracted successfully",
-        vec!["extract-text", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--format", "json", "--json"],
+        vec![
+            "extract-text",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--format",
+            "json",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "format": "json" }),
         "/api/v1/pdf/extract-text",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "format": "json" })
@@ -718,7 +1204,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_text",
         "Format variations (--format text)",
         "Extracted successfully",
-        vec!["extract-text", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--format", "text", "--json"],
+        vec![
+            "extract-text",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--format",
+            "text",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "format": "text" }),
         "/api/v1/pdf/extract-text",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "format": "text" })
@@ -728,7 +1221,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_text",
         "Document without text content",
         "Returns empty string cleanly",
-        vec!["extract-text", "--input", "tests/e2e_fixtures/real/test.png", "--json"],
+        vec![
+            "extract-text",
+            "--input",
+            "tests/e2e_fixtures/real/test.png",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/test.png" }),
         "/api/v1/pdf/extract-text",
         json!({ "input": "tests/e2e_fixtures/real/test.png" })
@@ -740,7 +1238,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_extract_images",
         "Document with zero images",
         "Produces 0 output images cleanly without error",
-        vec!["extract-images", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output-dir", out_dir.to_str().unwrap(), "--json"],
+        vec![
+            "extract-images",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output-dir",
+            out_dir.to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": out_dir.to_str().unwrap() }),
         "/api/v1/pdf/extract-images",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": out_dir.to_str().unwrap() })
@@ -752,7 +1257,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_search",
         "Query not found in document",
         "Returns empty matches list []",
-        vec!["search", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--query", "nonexistentquery", "--json"],
+        vec![
+            "search",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--query",
+            "nonexistentquery",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "query": "nonexistentquery" }),
         "/api/v1/pdf/search",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "query": "nonexistentquery" })
@@ -762,7 +1274,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_search",
         "Unicode search term query",
         "Matches found successfully",
-        vec!["search", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--query", "测试", "--json"],
+        vec![
+            "search",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--query",
+            "测试",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "query": "测试" }),
         "/api/v1/pdf/search",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "query": "测试" })
@@ -774,7 +1293,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_render",
         "Specific page rendering (--page 1, --page 5)",
         "Rendered successfully",
-        vec!["render", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--page", "5", "--output", out_dir.join("ren_p5.png").to_str().unwrap(), "--json"],
+        vec![
+            "render",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--page",
+            "5",
+            "--output",
+            out_dir.join("ren_p5.png").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "page": 5, "output": out_dir.join("ren_p5.png").to_str().unwrap() }),
         "/api/v1/pdf/render",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "page": 5, "output": out_dir.join("ren_p5.png").to_str().unwrap() })
@@ -784,7 +1312,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_render",
         "Out-of-bounds page rendering (--page 99)",
         "Structured error code",
-        vec!["render", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--page", "99", "--output", out_dir.join("ren_oob.png").to_str().unwrap(), "--json"],
+        vec![
+            "render",
+            "--input",
+            "tests/e2e_fixtures/real/multi_page.pdf",
+            "--page",
+            "99",
+            "--output",
+            out_dir.join("ren_oob.png").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "page": 99, "output": out_dir.join("ren_oob.png").to_str().unwrap() }),
         "/api/v1/pdf/render",
         json!({ "input": "tests/e2e_fixtures/real/multi_page.pdf", "page": 99, "output": out_dir.join("ren_oob.png").to_str().unwrap() })
@@ -796,7 +1333,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compare",
         "Identical file comparison",
         "High similarity score / 0 diffs",
-        vec!["compare", "--input", "tests/e2e_fixtures/real/merge_a.pdf", "--input-b", "tests/e2e_fixtures/real/merge_a.pdf", "--json"],
+        vec![
+            "compare",
+            "--input",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "--input-b",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "--json"
+        ],
         json!({ "file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_a.pdf" }),
         "/api/v1/pdf/compare",
         json!({ "file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_a.pdf" })
@@ -806,7 +1350,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_compare",
         "Dissimilar file comparison",
         "Differences detected",
-        vec!["compare", "--input", "tests/e2e_fixtures/real/merge_a.pdf", "--input-b", "tests/e2e_fixtures/real/merge_b.pdf", "--json"],
+        vec![
+            "compare",
+            "--input",
+            "tests/e2e_fixtures/real/merge_a.pdf",
+            "--input-b",
+            "tests/e2e_fixtures/real/merge_b.pdf",
+            "--json"
+        ],
         json!({ "file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_b.pdf" }),
         "/api/v1/pdf/compare",
         json!({ "file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_b.pdf" })
@@ -818,7 +1369,18 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_metadata",
         "Unicode and emoji metadata",
         "Metadata updated successfully",
-        vec!["metadata", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--title", "PaperPilot 📄 Guide", "--author", "Krushna 🚀", "--output", out_dir.join("meta_uni.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "metadata",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--title",
+            "PaperPilot 📄 Guide",
+            "--author",
+            "Krushna 🚀",
+            "--output",
+            out_dir.join("meta_uni.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "title": "PaperPilot 📄 Guide", "author": "Krushna 🚀", "output": out_dir.join("meta_uni.pdf").to_str().unwrap() }),
         "/api/v1/pdf/metadata",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "title": "PaperPilot 📄 Guide", "author": "Krushna 🚀", "output": out_dir.join("meta_uni.pdf").to_str().unwrap() })
@@ -830,7 +1392,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_bookmarks",
         "PDF without bookmarks",
         "Returns empty outlines cleanly",
-        vec!["bookmarks", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
+        vec![
+            "bookmarks",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" }),
         "/api/v1/pdf/bookmarks",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" })
@@ -842,7 +1409,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_classify_type",
         "Digital text PDF",
         "Classified correctly",
-        vec!["classify", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
+        vec![
+            "classify",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" }),
         "/api/v1/pdf/classify",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf" })
@@ -852,7 +1424,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_classify_type",
         "Scanned image-only PDF",
         "Classified correctly",
-        vec!["classify", "--input", "tests/e2e_fixtures/real/scanned.pdf", "--json"],
+        vec![
+            "classify",
+            "--input",
+            "tests/e2e_fixtures/real/scanned.pdf",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/scanned.pdf" }),
         "/api/v1/pdf/classify",
         json!({ "input": "tests/e2e_fixtures/real/scanned.pdf" })
@@ -864,7 +1441,12 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_validate",
         "Non-PDF file / corrupted magic bytes",
         "Clean validation failure report",
-        vec!["validate", "--input", "tests/e2e_fixtures/real/test.png", "--json"],
+        vec![
+            "validate",
+            "--input",
+            "tests/e2e_fixtures/real/test.png",
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/test.png" }),
         "/api/v1/pdf/validate",
         json!({ "input": "tests/e2e_fixtures/real/test.png" })
@@ -876,7 +1458,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_ocr",
         "Blank page OCR / clean digital PDF OCR",
         "Clean text layer generation",
-        vec!["ocr", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output", out_dir.join("ocr_clean.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "ocr",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output",
+            out_dir.join("ocr_clean.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("ocr_clean.pdf").to_str().unwrap() }),
         "/api/v1/pdf/ocr",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("ocr_clean.pdf").to_str().unwrap() })
@@ -892,7 +1481,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_images_to_pdf",
         "Multiple images with different aspect ratios combined into single PDF",
         "Combined successfully",
-        vec!["images-to-pdf", "--images", "tests/e2e_fixtures/real/test.png,tests/e2e_fixtures/real/test2.png", "--output", out_dir.join("img2pdf_multi.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "images-to-pdf",
+            "--images",
+            "tests/e2e_fixtures/real/test.png,tests/e2e_fixtures/real/test2.png",
+            "--output",
+            out_dir.join("img2pdf_multi.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "images": ["tests/e2e_fixtures/real/test.png", "tests/e2e_fixtures/real/test2.png"], "output": out_dir.join("img2pdf_multi.pdf").to_str().unwrap() }),
         "/api/v1/pdf/images-to-pdf",
         json!({ "images": ["tests/e2e_fixtures/real/test.png", "tests/e2e_fixtures/real/test2.png"], "output": out_dir.join("img2pdf_multi.pdf").to_str().unwrap() })
@@ -904,7 +1500,14 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_to_pdf_a",
         "Archival standard PDF/A conversion",
         "Converted successfully",
-        vec!["pdf-a", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output", out_dir.join("to_pdfa.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "pdf-a",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--output",
+            out_dir.join("to_pdfa.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_pdfa.pdf").to_str().unwrap() }),
         "/api/v1/pdf/pdf-a",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_pdfa.pdf").to_str().unwrap() })
@@ -916,7 +1519,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_to_docx",
         "Text and table export to DOCX",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--format", "docx", "--output", out_dir.join("to_docx.docx").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--format",
+            "docx",
+            "--output",
+            out_dir.join("to_docx.docx").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_docx.docx").to_str().unwrap() }),
         "/api/v1/pdf/convert/docx",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_docx.docx").to_str().unwrap() })
@@ -928,7 +1540,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_to_xlsx",
         "Tabular data export to spreadsheet format",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--format", "xlsx", "--output", out_dir.join("to_xlsx.xlsx").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--format",
+            "xlsx",
+            "--output",
+            out_dir.join("to_xlsx.xlsx").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_xlsx.xlsx").to_str().unwrap() }),
         "/api/v1/pdf/convert/xlsx",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_xlsx.xlsx").to_str().unwrap() })
@@ -940,7 +1561,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_to_pptx",
         "Presentation slide export",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--format", "pptx", "--output", out_dir.join("to_pptx.pptx").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/single_page.pdf",
+            "--format",
+            "pptx",
+            "--output",
+            out_dir.join("to_pptx.pptx").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_pptx.pptx").to_str().unwrap() }),
         "/api/v1/pdf/convert/pptx",
         json!({ "input": "tests/e2e_fixtures/real/single_page.pdf", "output": out_dir.join("to_pptx.pptx").to_str().unwrap() })
@@ -952,7 +1582,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_convert_html",
         "HTML with CSS styling and UTF-8 characters to PDF",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/test.html", "--format", "pdf", "--output", out_dir.join("html_to.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/test.html",
+            "--format",
+            "pdf",
+            "--output",
+            out_dir.join("html_to.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/test.html", "output": out_dir.join("html_to.pdf").to_str().unwrap() }),
         "/api/v1/pdf/convert/html",
         json!({ "input": "tests/e2e_fixtures/real/test.html", "output": out_dir.join("html_to.pdf").to_str().unwrap() })
@@ -964,7 +1603,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_convert_markdown",
         "Markdown with headers, lists, and code blocks to PDF",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/test.md", "--format", "pdf", "--output", out_dir.join("md_to.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/test.md",
+            "--format",
+            "pdf",
+            "--output",
+            out_dir.join("md_to.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/test.md", "output": out_dir.join("md_to.pdf").to_str().unwrap() }),
         "/api/v1/pdf/convert/markdown",
         json!({ "input": "tests/e2e_fixtures/real/test.md", "output": out_dir.join("md_to.pdf").to_str().unwrap() })
@@ -976,7 +1624,16 @@ pub async fn run_edge_cases_suite() -> Result<Vec<TestExecutionResult>> {
         "pdf_convert_excel",
         "Tabular spreadsheet to formatted PDF pages",
         "Converted successfully",
-        vec!["convert", "--input", "tests/e2e_fixtures/real/test.csv", "--format", "pdf", "--output", out_dir.join("csv_to.pdf").to_str().unwrap(), "--json"],
+        vec![
+            "convert",
+            "--input",
+            "tests/e2e_fixtures/real/test.csv",
+            "--format",
+            "pdf",
+            "--output",
+            out_dir.join("csv_to.pdf").to_str().unwrap(),
+            "--json"
+        ],
         json!({ "input": "tests/e2e_fixtures/real/test.csv", "output": out_dir.join("csv_to.pdf").to_str().unwrap() }),
         "/api/v1/pdf/convert/excel",
         json!({ "input": "tests/e2e_fixtures/real/test.csv", "output": out_dir.join("csv_to.pdf").to_str().unwrap() })

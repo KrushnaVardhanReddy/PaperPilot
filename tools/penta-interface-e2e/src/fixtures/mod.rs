@@ -1,10 +1,10 @@
-use std::path::PathBuf;
+use anyhow::Result;
+use image::{ImageBuffer, RgbImage};
 use lopdf::{
     content::{Content, Operation},
     dictionary, Document, Object, Stream,
 };
-use anyhow::Result;
-use image::{ImageBuffer, RgbImage};
+use std::path::PathBuf;
 
 pub struct FixtureManager {
     pub dir: PathBuf,
@@ -25,7 +25,10 @@ impl FixtureManager {
         self.create_multi_page("multi_page.pdf", 5)?;
         self.create_multi_page("large_doc.pdf", 10)?;
         self.create_text_file("test.csv", "ColA,ColB,ColC\n10,20,30\n40,50,60\n")?;
-        self.create_text_file("test.html", "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>")?;
+        self.create_text_file(
+            "test.html",
+            "<html><body><h1>HTML Test</h1><p>Sample</p></body></html>",
+        )?;
         self.create_text_file("test.md", "# MD Test\n\nSample markdown paragraph.")?;
         self.create_png("test.png")?;
         self.create_encrypted_pdf("encrypted.pdf", "testpass")?;
@@ -35,7 +38,7 @@ impl FixtureManager {
     fn create_encrypted_pdf(&self, filename: &str, pass: &str) -> Result<()> {
         let path = self.dir.join(filename);
         let src = self.dir.join("single_page.pdf");
-        
+
         let needs_creation = if !path.exists() {
             true
         } else {
@@ -65,8 +68,6 @@ impl FixtureManager {
         }
         Ok(())
     }
-
-
 
     fn create_png(&self, filename: &str) -> Result<()> {
         let path = self.dir.join(filename);

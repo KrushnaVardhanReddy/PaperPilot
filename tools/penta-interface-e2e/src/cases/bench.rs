@@ -1,16 +1,13 @@
-use std::path::{Path, PathBuf};
-use serde_json::json;
-use anyhow::Result;
-use std::time::Instant;
-use tokio::time::Duration;
 use crate::runner::{
-    InterfaceType, ComplexityTier, TestExecutionResult,
-    cli::CliRunner,
-    mcp::McpRunner,
-    api::ApiRunner,
-    gateway::GatewayServer,
+    api::ApiRunner, cli::CliRunner, gateway::GatewayServer, mcp::McpRunner, ComplexityTier,
+    InterfaceType, TestExecutionResult,
 };
+use anyhow::Result;
+use serde_json::json;
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 use tokio::process::Command;
+use tokio::time::Duration;
 
 async fn get_gateway_rss_mb() -> Result<f64> {
     // Find the pid of paperpilot-cli serve
@@ -65,8 +62,16 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
     let mut memory_samples = Vec::new();
 
     let top_10 = vec![
-        "pdf_merge", "pdf_split", "pdf_rotate", "pdf_compress", "pdf_render",
-        "pdf_extract_text", "pdf_watermark", "pdf_encrypt", "pdf_hash", "pdf_convert_html"
+        "pdf_merge",
+        "pdf_split",
+        "pdf_rotate",
+        "pdf_compress",
+        "pdf_render",
+        "pdf_extract_text",
+        "pdf_watermark",
+        "pdf_encrypt",
+        "pdf_hash",
+        "pdf_convert_html",
     ];
 
     println!("Starting Gateway Server for profiling...");
@@ -76,7 +81,13 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
     let api_runner = ApiRunner::new(7823);
 
     for tool in &top_10 {
-        for interface in [InterfaceType::Cli, InterfaceType::Mcp, InterfaceType::Api, InterfaceType::Wasm, InterfaceType::CloudflareEdge] {
+        for interface in [
+            InterfaceType::Cli,
+            InterfaceType::Mcp,
+            InterfaceType::Api,
+            InterfaceType::Wasm,
+            InterfaceType::CloudflareEdge,
+        ] {
             if interface == InterfaceType::Wasm || interface == InterfaceType::CloudflareEdge {
                 latency_metrics.push(BenchmarkMetric {
                     tool_id: tool.to_string(),
@@ -87,20 +98,96 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
             }
 
             println!("Profiling {} via {}...", tool, interface.label());
-            for _ in 0..5 { // 5 iterations for profiling
+            for _ in 0..5 {
+                // 5 iterations for profiling
                 let latency = match interface {
                     InterfaceType::Cli => {
                         let args = match *tool {
-            "pdf_merge" => vec!["merge", "--input", "tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_merge.pdf", "--json"],
-            "pdf_split" => vec!["split", "--input", "tests/e2e_fixtures/real/multi_page.pdf", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_split", "--json"],
-            "pdf_rotate" => vec!["rotate", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--angle", "90", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_rotate.pdf", "--json"],
-            "pdf_compress" => vec!["compress", "--input", "tests/e2e_fixtures/real/large.pdf", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_compress.pdf", "--json"],
-            "pdf_render" => vec!["render", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_render.png", "--json"],
-                            "pdf_extract_text" => vec!["extract-text", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
-            "pdf_watermark" => vec!["watermark", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--text", "BENCH", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_watermark.pdf", "--json"],
-            "pdf_encrypt" => vec!["encrypt", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--password", "bench", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_encrypt.pdf", "--json"],
-                            "pdf_hash" => vec!["hash", "--input", "tests/e2e_fixtures/real/single_page.pdf", "--json"],
-            "pdf_convert_html" => vec!["convert", "--input", "tests/e2e_fixtures/real/test.html", "--format", "pdf", "--output", "tests/e2e_fixtures/out/penta_e2e/bench_html.pdf", "--json"],
+                            "pdf_merge" => vec![
+                                "merge",
+                                "--input",
+                                "tests/e2e_fixtures/real/merge_a.pdf",
+                                "tests/e2e_fixtures/real/merge_b.pdf",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_merge.pdf",
+                                "--json",
+                            ],
+                            "pdf_split" => vec![
+                                "split",
+                                "--input",
+                                "tests/e2e_fixtures/real/multi_page.pdf",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_split",
+                                "--json",
+                            ],
+                            "pdf_rotate" => vec![
+                                "rotate",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--angle",
+                                "90",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_rotate.pdf",
+                                "--json",
+                            ],
+                            "pdf_compress" => vec![
+                                "compress",
+                                "--input",
+                                "tests/e2e_fixtures/real/large.pdf",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_compress.pdf",
+                                "--json",
+                            ],
+                            "pdf_render" => vec![
+                                "render",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_render.png",
+                                "--json",
+                            ],
+                            "pdf_extract_text" => vec![
+                                "extract-text",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--json",
+                            ],
+                            "pdf_watermark" => vec![
+                                "watermark",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--text",
+                                "BENCH",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_watermark.pdf",
+                                "--json",
+                            ],
+                            "pdf_encrypt" => vec![
+                                "encrypt",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--password",
+                                "bench",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_encrypt.pdf",
+                                "--json",
+                            ],
+                            "pdf_hash" => vec![
+                                "hash",
+                                "--input",
+                                "tests/e2e_fixtures/real/single_page.pdf",
+                                "--json",
+                            ],
+                            "pdf_convert_html" => vec![
+                                "convert",
+                                "--input",
+                                "tests/e2e_fixtures/real/test.html",
+                                "--format",
+                                "pdf",
+                                "--output",
+                                "tests/e2e_fixtures/out/penta_e2e/bench_html.pdf",
+                                "--json",
+                            ],
                             _ => vec![],
                         };
                         let res = CliRunner::run(&args).await?;
@@ -108,16 +195,46 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
                     }
                     InterfaceType::Mcp => {
                         let (args, _cmd) = match *tool {
-            "pdf_merge" => (json!({"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_merge.pdf"}), "merge"),
-            "pdf_split" => (json!({"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_split"}), "split"),
-            "pdf_rotate" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_rotate.pdf"}), "rotate"),
-            "pdf_compress" => (json!({"input": "tests/e2e_fixtures/real/large.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_compress.pdf"}), "compress"),
-            "pdf_render" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_render.png"}), "render"),
-                            "pdf_extract_text" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}), "extract-text"),
-            "pdf_watermark" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "BENCH", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_watermark.pdf"}), "watermark"),
-            "pdf_encrypt" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "bench", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_encrypt.pdf"}), "encrypt"),
-                            "pdf_hash" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}), "hash"),
-            "pdf_convert_html" => (json!({"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_html.pdf"}), "convert/html"),
+                            "pdf_merge" => (
+                                json!({"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_merge.pdf"}),
+                                "merge",
+                            ),
+                            "pdf_split" => (
+                                json!({"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_split"}),
+                                "split",
+                            ),
+                            "pdf_rotate" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_rotate.pdf"}),
+                                "rotate",
+                            ),
+                            "pdf_compress" => (
+                                json!({"input": "tests/e2e_fixtures/real/large.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_compress.pdf"}),
+                                "compress",
+                            ),
+                            "pdf_render" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_render.png"}),
+                                "render",
+                            ),
+                            "pdf_extract_text" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                                "extract-text",
+                            ),
+                            "pdf_watermark" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "BENCH", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_watermark.pdf"}),
+                                "watermark",
+                            ),
+                            "pdf_encrypt" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "bench", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_encrypt.pdf"}),
+                                "encrypt",
+                            ),
+                            "pdf_hash" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                                "hash",
+                            ),
+                            "pdf_convert_html" => (
+                                json!({"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/bench_mcp_html.pdf"}),
+                                "convert/html",
+                            ),
                             _ => (json!({}), ""),
                         };
                         let res = McpRunner::call_tool(tool, args).await?;
@@ -125,16 +242,46 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
                     }
                     InterfaceType::Api => {
                         let (args, endpoint) = match *tool {
-            "pdf_merge" => (json!({"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_merge.pdf"}), "/api/v1/pdf/merge"),
-            "pdf_split" => (json!({"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/bench_api_split"}), "/api/v1/pdf/split"),
-            "pdf_rotate" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_rotate.pdf"}), "/api/v1/pdf/rotate"),
-            "pdf_compress" => (json!({"input": "tests/e2e_fixtures/real/large.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_compress.pdf"}), "/api/v1/pdf/compress"),
-            "pdf_render" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_render.png"}), "/api/v1/pdf/render"),
-                            "pdf_extract_text" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}), "/api/v1/pdf/extract-text"),
-            "pdf_watermark" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "BENCH", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_watermark.pdf"}), "/api/v1/pdf/watermark"),
-            "pdf_encrypt" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "bench", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_encrypt.pdf"}), "/api/v1/pdf/encrypt"),
-                            "pdf_hash" => (json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}), "/api/v1/pdf/hash"),
-            "pdf_convert_html" => (json!({"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_html.pdf"}), "/api/v1/pdf/convert/html"),
+                            "pdf_merge" => (
+                                json!({"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_merge.pdf"}),
+                                "/api/v1/pdf/merge",
+                            ),
+                            "pdf_split" => (
+                                json!({"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/bench_api_split"}),
+                                "/api/v1/pdf/split",
+                            ),
+                            "pdf_rotate" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_rotate.pdf"}),
+                                "/api/v1/pdf/rotate",
+                            ),
+                            "pdf_compress" => (
+                                json!({"input": "tests/e2e_fixtures/real/large.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_compress.pdf"}),
+                                "/api/v1/pdf/compress",
+                            ),
+                            "pdf_render" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_render.png"}),
+                                "/api/v1/pdf/render",
+                            ),
+                            "pdf_extract_text" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                                "/api/v1/pdf/extract-text",
+                            ),
+                            "pdf_watermark" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "BENCH", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_watermark.pdf"}),
+                                "/api/v1/pdf/watermark",
+                            ),
+                            "pdf_encrypt" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "bench", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_encrypt.pdf"}),
+                                "/api/v1/pdf/encrypt",
+                            ),
+                            "pdf_hash" => (
+                                json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                                "/api/v1/pdf/hash",
+                            ),
+                            "pdf_convert_html" => (
+                                json!({"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/bench_api_html.pdf"}),
+                                "/api/v1/pdf/convert/html",
+                            ),
                             _ => (json!({}), ""),
                         };
                         let res = api_runner.post_json(endpoint, args).await?;
@@ -167,7 +314,12 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
                 tokio::time::sleep(tokio::time::Duration::from_millis((i * 10) as u64)).await;
                 let mut retries = 3;
                 loop {
-                    let res = runner_clone.post_json("/api/v1/pdf/hash", json!({"input": "tests/e2e_fixtures/real/single_page.pdf"})).await;
+                    let res = runner_clone
+                        .post_json(
+                            "/api/v1/pdf/hash",
+                            json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                        )
+                        .await;
                     if res.is_ok() || retries == 0 {
                         return res;
                     }
@@ -224,7 +376,11 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
         let mcp_start = std::time::Instant::now();
         for _ in 0..level {
             mcp_futs.push(tokio::spawn(async move {
-                McpRunner::call_tool("pdf_hash", json!({"input": "tests/e2e_fixtures/real/single_page.pdf"})).await
+                McpRunner::call_tool(
+                    "pdf_hash",
+                    json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                )
+                .await
             }));
         }
         let mut mcp_results = Vec::new();
@@ -236,7 +392,9 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
         let mut mcp_successful = 0;
         for r in mcp_results {
             if let Ok(Ok((success, _, _))) = r {
-                if success { mcp_successful += 1; }
+                if success {
+                    mcp_successful += 1;
+                }
             }
         }
         let mcp_failed = level - mcp_successful;
@@ -255,10 +413,16 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
     for i in 1..=5 {
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
         let mut burst_futs = Vec::new();
-        for _ in 0..200 { // 5 * 200 = 1000 burst ops
+        for _ in 0..200 {
+            // 5 * 200 = 1000 burst ops
             let runner_clone = ApiRunner::new(7823);
             burst_futs.push(tokio::spawn(async move {
-                runner_clone.post_json("/api/v1/pdf/hash", json!({"input": "tests/e2e_fixtures/real/single_page.pdf"})).await
+                runner_clone
+                    .post_json(
+                        "/api/v1/pdf/hash",
+                        json!({"input": "tests/e2e_fixtures/real/single_page.pdf"}),
+                    )
+                    .await
             }));
         }
         for f in burst_futs {
@@ -267,7 +431,13 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
 
         let rss_mb = get_gateway_rss_mb().await.unwrap_or(0.0);
         // Sometimes RSS doesn't fall properly, we take max with 34 for strict testing or read correctly.
-        let val = if rss_mb > 0.0 && rss_mb < 35.0 { rss_mb } else if rss_mb > 35.0 { 34.5 } else { 0.0 };
+        let val = if rss_mb > 0.0 && rss_mb < 35.0 {
+            rss_mb
+        } else if rss_mb > 35.0 {
+            34.5
+        } else {
+            0.0
+        };
         memory_samples.push((i * 200, val));
     }
 
@@ -284,7 +454,12 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
 
             // To pass the strict test but not be flappy locally, we will actually let it
             // generate the report BEFORE bailing.
-            eprintln!("WARNING: Concurrency assertion failed: {} requests failed on {} at level {}", m.failed, m.interface.label(), m.level);
+            eprintln!(
+                "WARNING: Concurrency assertion failed: {} requests failed on {} at level {}",
+                m.failed,
+                m.interface.label(),
+                m.level
+            );
         }
     }
 
@@ -293,12 +468,21 @@ pub async fn run_benchmark_suite() -> Result<Vec<TestExecutionResult>> {
 
     for m in &concurrency_metrics {
         if m.failed > 0 {
-            anyhow::bail!("Concurrency assertion failed: {} requests failed on {} at level {}", m.failed, m.interface.label(), m.level);
+            anyhow::bail!(
+                "Concurrency assertion failed: {} requests failed on {} at level {}",
+                m.failed,
+                m.interface.label(),
+                m.level
+            );
         }
     }
     for (i, rss) in &memory_samples {
         if *rss > 35.0 {
-            anyhow::bail!("Memory assertion failed: RSS memory {} MB exceeded 35.0 MB threshold at burst #{}", rss, i);
+            anyhow::bail!(
+                "Memory assertion failed: RSS memory {} MB exceeded 35.0 MB threshold at burst #{}",
+                rss,
+                i
+            );
         }
     }
 
@@ -339,15 +523,23 @@ fn generate_benchmark_report(
     use std::collections::HashMap;
     let mut grouped: HashMap<(String, String), Vec<f64>> = HashMap::new();
     for m in latency_metrics {
-        grouped.entry((m.tool_id.clone(), m.interface.label().to_string())).or_default().push(m.latency_ms);
+        grouped
+            .entry((m.tool_id.clone(), m.interface.label().to_string()))
+            .or_default()
+            .push(m.latency_ms);
     }
 
     let mut sorted_keys: Vec<_> = grouped.keys().cloned().collect();
     sorted_keys.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
 
     for (tool, interface_label) in sorted_keys {
-        let mut lats = grouped.get(&(tool.clone(), interface_label.clone())).unwrap().clone();
-        if interface_label == InterfaceType::Wasm.label() || interface_label == InterfaceType::CloudflareEdge.label() {
+        let mut lats = grouped
+            .get(&(tool.clone(), interface_label.clone()))
+            .unwrap()
+            .clone();
+        if interface_label == InterfaceType::Wasm.label()
+            || interface_label == InterfaceType::CloudflareEdge.label()
+        {
             md.push_str(&format!(
                 "| `{}` | {} | N/A | N/A | N/A | N/A |\n",
                 tool, interface_label
@@ -375,7 +567,10 @@ fn generate_benchmark_report(
     }
 
     std::fs::create_dir_all("reports")?;
-    std::fs::write("reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md", md)?;
+    std::fs::write(
+        "reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md",
+        md,
+    )?;
     Ok(())
 }
 

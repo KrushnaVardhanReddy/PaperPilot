@@ -46,13 +46,19 @@ pub fn build_payload(prompt_content: &str, branch: &str) -> serde_json::Value {
 }
 
 /// Submits the prompt to Jules API and returns the session ID.
-pub fn submit_prompt(api_key: &str, prompt_content: &str, task_name: &str, branch: &str) -> Result<String> {
+pub fn submit_prompt(
+    api_key: &str,
+    prompt_content: &str,
+    task_name: &str,
+    branch: &str,
+) -> Result<String> {
     let client = Client::new();
     let payload = build_payload(prompt_content, branch);
 
     println!("🚀 Submitting: {} → branch: {}", task_name, branch);
 
-    let res = client.post(API_URL)
+    let res = client
+        .post(API_URL)
         .header("Content-Type", "application/json")
         .header("x-goog-api-key", api_key)
         .json(&payload)
@@ -67,14 +73,18 @@ pub fn submit_prompt(api_key: &str, prompt_content: &str, task_name: &str, branc
 
     let response_data: serde_json::Value = res.json().context("Failed to parse JSON response")?;
 
-    let name = response_data.get("name")
+    let name = response_data
+        .get("name")
         .and_then(|n| n.as_str())
         .unwrap_or("unknown");
 
-    let session_id = name.split('/').last().unwrap_or(name);
+    let session_id = name.split('/').next_back().unwrap_or(name);
 
     println!("✅ Session created: {}", session_id);
-    println!("   View at: https://jules.google.com/session/{}", session_id);
+    println!(
+        "   View at: https://jules.google.com/session/{}",
+        session_id
+    );
 
     Ok(session_id.to_string())
 }
@@ -91,7 +101,9 @@ mod tests {
         assert!(prompt_str.contains("Test Prompt"));
         assert!(prompt_str.contains("MANDATORY RULES — VIOLATION = REJECTED PR"));
 
-        let branch = payload["sourceContext"]["githubRepoContext"]["startingBranch"].as_str().unwrap();
+        let branch = payload["sourceContext"]["githubRepoContext"]["startingBranch"]
+            .as_str()
+            .unwrap();
         assert_eq!(branch, "feature-branch");
     }
 }

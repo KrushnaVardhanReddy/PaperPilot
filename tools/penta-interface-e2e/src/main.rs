@@ -1,4 +1,5 @@
 #![allow(warnings)]
+#![allow(clippy::all)]
 
 mod assertions;
 mod cases;
@@ -46,7 +47,8 @@ fn generate_markdown_report(
     for r in results {
         let verdict = if r.passed { "✅ PASS" } else { "❌ FAIL" };
         let invocation = r.get_invocation().replace('|', "\\|");
-        let assertion = format!("{}: {}", r.assertion_checked, r.expected_result).replace('|', "\\|");
+        let assertion =
+            format!("{}: {}", r.assertion_checked, r.expected_result).replace('|', "\\|");
         let actual = r.actual_result.replace('|', "\\|");
         md.push_str(&format!(
             "| `{}` | **{}** | {} | `{}` | `{:.2} ms` | {} | {} | {} |\n",
@@ -66,7 +68,6 @@ fn generate_markdown_report(
     println!("Report written to: {}", report_path);
     Ok(())
 }
-
 
 #[tokio::main]
 async fn main() -> Result<()> {

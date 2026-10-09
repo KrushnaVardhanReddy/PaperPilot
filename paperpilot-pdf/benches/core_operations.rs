@@ -17,6 +17,86 @@ fn get_workspace_root() -> PathBuf {
     manifest_dir.parent().unwrap().to_path_buf()
 }
 
+fn create_pdf_with_pages(path: &std::path::Path, num_pages: usize) {
+    if path.exists() {
+        return;
+    }
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    use lopdf::content::{Content, Operation};
+    use lopdf::{Document, Object, Stream, dictionary};
+
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let font_id = doc.add_object(dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+
+    let mut page_ids = Vec::new();
+    for i in 1..=num_pages {
+        let text = format!("Bench Document Page {}", i);
+        let content = Content {
+            operations: vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["F1".into(), 14.into()]),
+                Operation::new("Td", vec![50.into(), 700.into()]),
+                Operation::new("Tj", vec![Object::string_literal(text)]),
+                Operation::new("ET", vec![]),
+            ],
+        };
+        let content_bytes = content.encode().unwrap();
+        let content_id = doc.add_object(Stream::new(dictionary! {}, content_bytes));
+        let page_id = doc.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+            "Contents" => content_id,
+            "Resources" => dictionary! {
+                "Font" => dictionary! {
+                    "F1" => font_id,
+                }
+            }
+        });
+        page_ids.push(page_id.into());
+    }
+
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => page_ids,
+            "Count" => num_pages as i64,
+        }),
+    );
+
+    let catalog_id = doc.add_object(dictionary! {
+        "Type" => "Catalog",
+        "Pages" => pages_id,
+    });
+    doc.trailer.set("Root", catalog_id);
+    let _ = doc.save(path);
+}
+
+fn ensure_bench_fixtures(workspace: &std::path::Path) {
+    let bench_dir = workspace.join("tests").join("bench_fixtures");
+    let batch_dir = bench_dir.join("batch");
+    let _ = std::fs::create_dir_all(&batch_dir);
+
+    create_pdf_with_pages(&bench_dir.join("tiny_1page.pdf"), 1);
+    create_pdf_with_pages(&bench_dir.join("single_1page.pdf"), 1);
+    create_pdf_with_pages(&bench_dir.join("small_10page.pdf"), 10);
+    create_pdf_with_pages(&bench_dir.join("medium_50page.pdf"), 50);
+    create_pdf_with_pages(&bench_dir.join("large_100page.pdf"), 100);
+    create_pdf_with_pages(&bench_dir.join("xlarge_500page.pdf"), 500);
+
+    for i in 1..=20 {
+        create_pdf_with_pages(&batch_dir.join(format!("doc_{:03}.pdf", i)), 1);
+    }
+}
+
 fn measure_peak_rss<F: FnOnce()>(f: F) -> u64 {
     let mut sys = System::new_with_specifics(
         RefreshKind::nothing().with_processes(sysinfo::ProcessRefreshKind::everything()),
@@ -64,6 +144,7 @@ fn get_peak_rss() -> u64 {
 
 fn bench_merge(c: &mut Criterion) {
     let workspace = get_workspace_root();
+    ensure_bench_fixtures(&workspace);
     let batch_dir = workspace.join("tests").join("bench_fixtures").join("batch");
 
     let mut paths = Vec::new();

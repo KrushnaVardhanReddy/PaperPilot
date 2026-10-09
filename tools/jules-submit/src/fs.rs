@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 /// Returns the path to `prompts/tasks/` relative to the repository root.
 pub fn get_tasks_dir() -> Result<PathBuf> {
@@ -50,11 +50,9 @@ pub fn find_task(task_id: &str) -> Result<PathBuf> {
     // Try `normalized_*.txt`
     let pattern1 = format!("{}/**/{}_*.txt", tasks_dir.display(), normalized);
     let mut matches = Vec::new();
-    for entry in glob::glob(&pattern1)? {
-        if let Ok(path) = entry {
-            if !is_done_dir(&path) {
-                matches.push(path);
-            }
+    for path in glob::glob(&pattern1)?.flatten() {
+        if !is_done_dir(&path) {
+            matches.push(path);
         }
     }
 
@@ -64,11 +62,9 @@ pub fn find_task(task_id: &str) -> Result<PathBuf> {
 
     // Try `normalized.txt`
     let pattern2 = format!("{}/**/{}.txt", tasks_dir.display(), normalized);
-    for entry in glob::glob(&pattern2)? {
-        if let Ok(path) = entry {
-            if !is_done_dir(&path) {
-                matches.push(path);
-            }
+    for path in glob::glob(&pattern2)?.flatten() {
+        if !is_done_dir(&path) {
+            matches.push(path);
         }
     }
 
@@ -78,11 +74,9 @@ pub fn find_task(task_id: &str) -> Result<PathBuf> {
 
     // Try `{task_id}.txt` verbatim
     let pattern3 = format!("{}/**/{}.txt", tasks_dir.display(), task_id);
-    for entry in glob::glob(&pattern3)? {
-        if let Ok(path) = entry {
-            if !is_done_dir(&path) {
-                matches.push(path);
-            }
+    for path in glob::glob(&pattern3)?.flatten() {
+        if !is_done_dir(&path) {
+            matches.push(path);
         }
     }
 
@@ -90,7 +84,11 @@ pub fn find_task(task_id: &str) -> Result<PathBuf> {
         return Ok(matches[0].clone());
     }
 
-    anyhow::bail!("No pending prompt file found for task '{}' in {}", task_id, tasks_dir.display());
+    anyhow::bail!(
+        "No pending prompt file found for task '{}' in {}",
+        task_id,
+        tasks_dir.display()
+    );
 }
 
 /// Finds all pending prompts for a specific phase (excluding `done/`).
@@ -100,21 +98,17 @@ pub fn find_phase_tasks(phase: u32) -> Result<Vec<PathBuf>> {
 
     // Look inside `phase_N/`
     let pattern1 = format!("{}/phase_{}/P{}_T*.txt", tasks_dir.display(), phase, phase);
-    for entry in glob::glob(&pattern1)? {
-        if let Ok(path) = entry {
-            if !is_done_dir(&path) {
-                matches.push(path);
-            }
+    for path in glob::glob(&pattern1)?.flatten() {
+        if !is_done_dir(&path) {
+            matches.push(path);
         }
     }
 
     // Look in root tasks_dir
     let pattern2 = format!("{}/P{}_T*.txt", tasks_dir.display(), phase);
-    for entry in glob::glob(&pattern2)? {
-        if let Ok(path) = entry {
-            if !is_done_dir(&path) {
-                matches.push(path);
-            }
+    for path in glob::glob(&pattern2)?.flatten() {
+        if !is_done_dir(&path) {
+            matches.push(path);
         }
     }
 
@@ -134,7 +128,8 @@ pub fn archive_prompt(filepath: &Path) -> Result<()> {
     let abs_tasks_dir = fs::canonicalize(&tasks_dir).unwrap_or_else(|_| tasks_dir.clone());
 
     // Ensure the file is actually inside tasks_dir
-    let rel_path = abs_filepath.strip_prefix(&abs_tasks_dir)
+    let rel_path = abs_filepath
+        .strip_prefix(&abs_tasks_dir)
         .context("File is not inside prompts/tasks directory")?;
 
     let dest = tasks_dir.join("done").join(rel_path);

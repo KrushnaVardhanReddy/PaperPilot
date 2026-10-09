@@ -3693,7 +3693,8 @@ pub async fn run_page_ops_suite() -> Result<Vec<TestExecutionResult>> {
     {
         let out_path = out_dir.join("pdf_crop_negative.pdf");
         let payload = json!({"input": "tests/e2e_fixtures/real/missing.pdf", "pages": "1", "box": "0,0,100,100", "output": out_path.to_str().unwrap()});
-        let (success, _resp, latency) = api.post_json("/api/v1/pdf/tools/pdf_crop", payload).await?;
+        let (success, _resp, latency) =
+            api.post_json("/api/v1/pdf/tools/pdf_crop", payload).await?;
         let mut passed = success;
         let mut actual = "API call succeeded".to_string();
 
