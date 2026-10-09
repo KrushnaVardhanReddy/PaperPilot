@@ -178,3 +178,7 @@ test-penta-conversions:
 # Run Phase 5.9.5: Penta-Interface Edge Cases & Deep Boundary Verification Suite
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
+
+# Run Phase 5.9.6: High-Throughput & Concurrency Performance Benchmark
+bench-penta-e2e:
+	cargo run -p penta-interface-e2e -- --group bench

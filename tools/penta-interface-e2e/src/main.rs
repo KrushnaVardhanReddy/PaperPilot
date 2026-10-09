@@ -122,6 +122,10 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
             )?;
         }
+        "bench" => {
+            let results = cases::bench::run_benchmark_suite().await?;
+            println!("Benchmarking suite completed.");
+        }
         _ => {
             println!("Running all suites...");
             let a = cases::page_ops::run_page_ops_suite().await?;

@@ -1,0 +1,9 @@
+<<<<<<< SEARCH
+        let mut successful = 0;
+        for r in mcp_results {
+            if let Ok(Ok((success, _, _))) = r {
+                if success { mcp_successful += 1; }
+            }
+        }
+=======
+>>>>>>> REPLACE
