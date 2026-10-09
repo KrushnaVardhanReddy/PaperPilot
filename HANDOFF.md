@@ -77,8 +77,10 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **5.9.6 (Spec 031 / Penta-Interface High-Throughput & Concurrency Benchmark)**:
   - **Merged (PR #165, commit `a8de2ae`, Session 10557618272357635464)**: Concurrency stress testing (10, 25, 50 workers) with 100% request delivery across REST and MCP, p50/p95/p99 latency profiling across top 10 tools, memory leak checks (flat 34.5MB RSS, <35MB ceiling), Makefile integration (`make bench-penta-e2e`), documented in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
 
-- **5.9.7 (Spec 032 / Multimodal PDF-to-JSON with 5-Interface Parity)**:
-  - **Active Session**: Dispatched to Jules (Session `16596469045591269922`, superseding `7215646411441515522`). Implements multimodal image extraction (`--image-mode <none|files|base64>`) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) with 20 E2E assertions, boundary cases, and bench profile under the Penta-Interface Mandate.
+- **Phase 4.1.1–4.1.3 (paperpilot-ai Crate & Universal Client)**:
+  - **In Progress (Jules Session `7564763815279840049`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase4/P4_1_1_paperpilot_ai_crate.txt`. Scaffolding standalone `paperpilot-ai` crate with `UniversalLlmClient`, `LlmNlpResolver` implementing `NlpResolver`, and `DynamicRouter` with fallback to `OfflineNlpResolver`.
+- **Phase 4.1.5–4.1.6 (Local AI Settings UI & Model Downloader)**:
+  - **In Progress (Jules Session `17474141107561700970`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase4/P4_1_5_local_ai_settings_ui.txt`. Building Svelte 5 settings drawer with 4-way mode toggle (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Cloud) and in-app model downloader with real-time progress.
 - **5.9.8 (Spec 033 / Human-Friendly UI Error Normalization)**:
   - **Merged (PR #163, commit `3886288`, Session 11507040602700534548)**: Centralized `errorFormatter.ts`, category taxonomy (passwords, corruption, page ranges, locks, missing files), enhanced toasts with headlines, actionable hints, and expandable technical details with clipboard copy for power users. 100% pass across 11 test suites (37/37 tests) in `reports/HUMAN_FRIENDLY_UI_ERRORS_REPORT.md`.
 - **5.9.9 (Spec 034 / Automated PDF Structural & Conformance Verification)**:
