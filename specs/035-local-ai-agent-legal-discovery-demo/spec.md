@@ -82,8 +82,37 @@ Display a terminal scorecard showing:
 
 ---
 
-## 4. Verification Deliverables
-1. `demo/legal_discovery/README.md`
-2. `scripts/run_ai_legal_demo.sh` (executable via `chmod +x`)
-3. `Makefile` with `demo-legal-discovery` target.
-4. Report at `reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md` documenting output validation and latency profile.
+## 4. Multi-Tier AI Agent Execution Models (Zero-Cloud Local LLM & BYOK)
+
+PaperPilot acts as the deterministic execution engine for AI agents. The demo harness supports three operational models for connecting the AI "Brain" to PaperPilot "Hands" with 100% data residency:
+
+### Tier 1: Zero-Install Standalone Mozilla `llamafile` (Recommended 1-Click Offline)
+- **Concept**: Mozilla `llamafile` bundles full model weights (`Llama-3.2-3B-Instruct` or `Qwen2.5-Coder-7B`) and runtime into a single, cross-platform executable file via Cosmopolitan Libc.
+- **Workflow**:
+  1. User downloads `llamafile` executable (zero install, zero dependencies, runs on macOS/Linux/Windows).
+  2. Double-click or run `./model.llamafile --server --jinja` which spins up an OpenAI-compatible local server at `http://127.0.0.1:8080/v1`.
+  3. PaperPilot agent connects to `http://127.0.0.1:8080/v1/chat/completions`, supplies the 45 tool schemas, and executes tool calls locally.
+  4. **Value**: Zero-configuration, double-click local LLM runner for non-technical users and air-gapped enterprise environments.
+
+### Tier 2: Local Developer Runtime (`ollama` / `vLLM` / `LM Studio`)
+- **Concept**: Developers with existing local model managers run models locally.
+- **Workflow**:
+  1. User runs `ollama run llama3.2:3b` or `ollama serve` (defaulting to `http://127.0.0.1:11434/v1`).
+  2. PaperPilot agent connects via standard `/v1/chat/completions` with local tool-calling loop.
+
+### Tier 3: External MCP Agents & BYOK (Claude Desktop, Cursor, OpenAI)
+- **Concept**: Users who want frontier cloud intelligence connect their existing agent tools directly to PaperPilot via MCP (`paperpilot-mcp`) or provide a BYOK key.
+- **Workflow**:
+  1. In Claude Desktop / Cursor: Configure `paperpilot-mcp` in `claude_desktop_config.json`.
+  2. The prompt *"Prepare discovery files in ./input"* is sent to Claude / GPT-4o.
+  3. Claude emits MCP tool calls (`pdf_info`, `pdf_rotate`, `pdf_redact`, `pdf_bates`, `pdf_merge`, `pdf_hash`).
+  4. PaperPilot executes the operations 100% locally on the host machine. **No raw PDF binary leaves the device.**
+
+---
+
+## 5. Verification Deliverables
+1. `demo/legal_discovery/README.md` (Updated with llamafile, Ollama, and MCP instructions)
+2. `tools/demo-legal-fixtures` (Pure-Rust mock PDF corpus generator)
+3. `scripts/run_ai_legal_demo.sh` (Executable via `chmod +x` with sub-100ms latency scorecard)
+4. `Makefile` with `demo-legal-discovery` target.
+5. Report at `reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md` documenting output validation, SHA-256 audit hash, and latency profile.
