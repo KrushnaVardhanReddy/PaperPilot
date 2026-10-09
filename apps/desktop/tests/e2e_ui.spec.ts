@@ -226,7 +226,7 @@ test.describe('Pipeline Execution and Error State', () => {
     // Verify error toast appears
     const errorToast = page.locator('.toast.toast-error');
     await expect(errorToast).toBeVisible();
-    await expect(errorToast).toContainText('Mocked error message');
+    await expect(errorToast).toContainText('Compress PDF could not be completed');
   });
 });
 
