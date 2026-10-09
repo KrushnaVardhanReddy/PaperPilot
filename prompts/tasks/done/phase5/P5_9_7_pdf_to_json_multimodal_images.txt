@@ -10,6 +10,25 @@ Enhance `pdf_to_json` in `paperpilot-pdf` to extract embedded images with option
 
 ---
 
+## IMPORTANT WORKSPACE REPO CONTEXT & FIXTURE PROTOCOL
+1. **Always merge latest `main`**:
+   Before making changes or raising a PR, run:
+   ```bash
+   git fetch origin main
+   git merge origin main
+   ```
+2. **Self-Contained Fixture Invariant**:
+   All test fixtures under `tests/e2e_fixtures/real/` are generated programmatically on demand by `FixtureManager::ensure_fixtures()` in `tools/penta-interface-e2e/src/fixtures/mod.rs`.
+   - **Do NOT assume `multimodal.pdf` already exists on disk**.
+   - In `tools/penta-interface-e2e/src/fixtures/mod.rs`, add programmatic generation for `multimodal.pdf`:
+     ```rust
+     self.create_multimodal_pdf("multimodal.pdf")?;
+     ```
+     Create a minimal PDF containing page text AND an embedded image `XObject` (Subtype `Image`, Width 64, Height 64, ColorSpace `DeviceRGB`, BitsPerComponent 8, with sample RGB stream bytes) drawn with `Do` operator.
+     This ensures all 20 Penta E2E assertions run reliably on clean checkouts and CI environments without `os error 2`.
+
+---
+
 ## Requirements
 
 ### 1. Engine & Schema Expansion (`paperpilot-pdf`)
@@ -53,10 +72,13 @@ Enhance `pdf_to_json` in `paperpilot-pdf` to extract embedded images with option
 5. **☁️ Cloudflare Edge (`apps/edge`)**: Route `/api/v1/to_json?image_mode=base64` returning parsed JSON response.
 
 ### 3. Rust-Native E2E Suite & Edge Case Testing (`tools/penta-interface-e2e`)
-1. Add `pdf_to_json` to `tools/penta-interface-e2e/src/cases/conversions.rs`:
+1. In `tools/penta-interface-e2e/src/fixtures/mod.rs`:
+   - Implement `create_multimodal_pdf(&self, filename: &str) -> Result<()>` and wire it into `ensure_fixtures()`.
+2. Add `pdf_to_json` to `tools/penta-interface-e2e/src/cases/conversions.rs`:
    - 4 Tiers (Simple, Medium, Complex, Negative) across all 5 surfaces (20 tests).
    - Assert `images` array existence and validate base64 decoding on complex tier.
-2. Add edge cases in `tools/penta-interface-e2e/src/cases/edge_cases.rs`:
+3. Add edge cases in `tools/penta-interface-e2e/src/cases/edge_cases.rs`:
+   - Multi-image PDF base64 conversion.
    - PDF with 0 images converting cleanly with empty `images: []`.
    - Invalid `image_mode` parameter handled gracefully without process panics.
 
@@ -69,4 +91,6 @@ Enhance `pdf_to_json` in `paperpilot-pdf` to extract embedded images with option
 Run and verify:
 1. `cargo test -p paperpilot-pdf`
 2. `cargo run -p penta-interface-e2e -- --group conversions`
-3. Document implementation and metrics in `reports/PDF_TO_JSON_MULTIMODAL_REPORT.md`.
+3. `cargo fmt --all -- --check`
+4. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+5. Document implementation and metrics in `reports/PDF_TO_JSON_MULTIMODAL_REPORT.md`.
