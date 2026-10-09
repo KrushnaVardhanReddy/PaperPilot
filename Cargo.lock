@@ -1742,6 +1742,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo-legal-fixtures"
+version = "0.1.0"
+dependencies = [
+ "lopdf 0.45.0",
+ "tempfile",
+]
+
+[[package]]
 name = "deranged"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -197,3 +197,9 @@ test-penta-edge-cases:
 bench-penta-e2e:
 	cargo run -p penta-interface-e2e -- --group bench
 
+
+.PHONY: demo-legal-discovery
+
+# Run Phase 5.9.10: Local AI Agent Legal Discovery Demo
+demo-legal-discovery:
+	./scripts/run_ai_legal_demo.sh
