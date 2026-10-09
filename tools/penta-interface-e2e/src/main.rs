@@ -113,6 +113,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md"
             )?;
         }
+        "edge_cases" => {
+            let results = cases::edge_cases::run_edge_cases_suite().await?;
+            println!("Edge cases finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.5 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Edge Cases)",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
+            )?;
+        }
         _ => {
             println!("Running all suites...");
             let a = cases::page_ops::run_page_ops_suite().await?;
