@@ -63,6 +63,7 @@
 
   import { savePdfForm } from '$lib/api/pdf';
   import { toastState } from '$lib/state/toast.svelte';
+  import { formatUserFriendlyError } from '$lib/utils/errorFormatter';
 
 
   async function handleRotatePage(e: CustomEvent<{ page: number, angle?: number }>) {
@@ -86,7 +87,8 @@
       await refreshCurrentDocument();
       toastState.success(`Page ${e.detail.page} rotated by ${angle}°.`);
     } catch (err) {
-      toastState.error(`Failed to rotate page: ${err}`);
+      const formatted = formatUserFriendlyError(err, 'Rotate Page');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     } finally {
       appState.setLoading(false);
     }
@@ -111,7 +113,8 @@
       await refreshCurrentDocument();
       toastState.success(`Page ${e.detail.page} deleted.`);
     } catch (err) {
-      toastState.error(`Failed to delete page: ${err}`);
+      const formatted = formatUserFriendlyError(err, 'Delete Page');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     } finally {
       appState.setLoading(false);
     }
@@ -151,7 +154,8 @@
       await refreshCurrentDocument();
       toastState.success(`Page moved to position ${targetIndex + 1}.`);
     } catch (err) {
-      toastState.error(`Failed to reorder pages: ${err}`);
+      const formatted = formatUserFriendlyError(err, 'Reorder Pages');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     } finally {
       appState.setLoading(false);
     }
@@ -181,7 +185,8 @@
       await refreshCurrentDocument();
       toastState.success(`Page ${page} duplicated.`);
     } catch (err) {
-      toastState.error(`Failed to duplicate page: ${err}`);
+      const formatted = formatUserFriendlyError(err, 'Duplicate Page');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     } finally {
       appState.setLoading(false);
     }
@@ -224,7 +229,8 @@
       });
       toastState.success(`Page ${e.detail.page} extracted to ${outputPath}`);
     } catch (err) {
-      toastState.error(`Failed to extract page: ${err}`);
+      const formatted = formatUserFriendlyError(err, 'Extract Page');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     } finally {
       appState.setLoading(false);
     }
@@ -251,7 +257,7 @@
     }
   }
 
-  async function saveForm() {
+  async function handleSaveForm() {
     if (appState.selectedDocumentIndex === null) return;
     const file = appState.documents[appState.selectedDocumentIndex];
     if (!file) return;
@@ -265,7 +271,8 @@
       await savePdfForm(path, path, stringValues);
       toastState.success('Form saved successfully');
     } catch (e) {
-      toastState.error(`Failed to save form: ${e}`);
+      const formatted = formatUserFriendlyError(e, 'Save Form');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
     }
   }
 
@@ -382,7 +389,7 @@
                 <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
               </div>
               {#if hasFormFields}
-                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={saveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
+                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
               {/if}
               <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
                 <PdfViewer
