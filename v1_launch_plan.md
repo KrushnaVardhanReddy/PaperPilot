@@ -8,7 +8,6 @@
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.2** | Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`) | Developer Tooling & Automation | [Spec 029](file:///home/krushna/Project/PaperPilot/specs/029-pure-rust-jules-submitter/spec.md) | Replace `scripts/jules_submit.py` with 100% pure-Rust CLI tool in `tools/jules-submit/` for zero-Python automation tooling. | ⏳ **In Progress** (Session `8537116514657265561`) |
 | **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI & 5-Interface Parity | [Spec 032](file:///home/krushna/Project/PaperPilot/specs/032-pdf-to-json-multimodal-images/spec.md) | Expand `pdf_to_json` with `--image-mode <none|files|base64>`, 5-interface mandate (CLI, MCP, REST, WASM, Edge), 20 E2E assertions, edge cases, and bench integration. | ⏳ **In Progress** (Session `7215646411441515522`) |
 
 ---
@@ -25,11 +24,13 @@
 ## 🏆 Completed v1.0 Milestones Archive
 
 <details>
-<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (28 Milestones)</b></summary>
+<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (29 Milestones)</b></summary>
 
 | # | Task | Area | Milestone Summary | Resolution |
 |---|---|---|---|---|
+| **5.9.2** | Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`) | Developer Tooling & Automation | Standalone pure-Rust CLI tool in `tools/jules-submit/` (`reqwest`, `clap`, `dotenvy`) replacing Python submitter for 100% zero-Python developer workflow. | ✅ **Completed** (PR #164, `1e673bc`, Spec 029) |
 | **5.9.6** | Penta-Interface High-Throughput & Concurrency Performance Benchmark | Performance & SLA Parity | Concurrency stress testing (10, 25, 50 workers), p50/p95/p99 latency profiling across all 5 surfaces, memory leak checks (<35MB RSS), Makefile integration (`make bench-penta-e2e`). | ✅ **Completed** (PR #165, `a8de2ae`, Spec 031) |
+
 | **5.9.8** | Human-Friendly UI Error Normalization & Action Hints | Desktop UX | Centralized `errorFormatter.ts`, category taxonomy, enhanced toasts with headlines, actionable hints, and expandable technical details. | ✅ **Completed** (PR #163, `3886288`, Spec 033) |
 | **5.9.5** | Penta-Interface Edge Cases & Deep Boundary Verification Suite | Robustness | 44-tool boundary testing: compression quality, discontinuous pages, full-bleed crops, UTF-8 watermarks, shell escape passwords (385/385 tests). | ✅ **Completed** (PR #162, `3a71c36`, Spec 031) |
 | **5.9.4A** | Penta Real Semantic Assertions: Foundation & Page Ops | Multi-Surface | Executed 4 tiers across all 5 interfaces for 9 page operations (180/180 tests). | ✅ **Completed** (PR #161, `472ae69`, Spec 031) |
@@ -62,5 +63,5 @@
 
 ---
 
-*Last updated: 2026-10-09 (Only 2 In-Flight Sessions Remaining Before v1.0 Launch Tagging: 5.9.2, 5.9.7)*
+*Last updated: 2026-10-09 (Only 1 In-Flight Session Remaining Before v1.0 Launch Tagging: 5.9.7)*
 

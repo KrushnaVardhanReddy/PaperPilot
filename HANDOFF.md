@@ -72,7 +72,8 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **5.9.4 & 5.9.5 (Spec 031 / Penta-Interface E2E Suite)**:
   - **Phase 5.9.4 Master Parity Complete**: 100% green pass rate achieved across all 44 tools, all 5 interfaces (CLI, MCP, REST, WASM, Edge), and all 4 complexity tiers (**880 / 880 tests passed**), fully documented in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` and sub-reports `5_9_4A.md` through `5_9_4D.md`.
 - **5.9.2 (Spec 029 / Pure-Rust Jules Submitter CLI)**:
-  - **Active Session**: Dispatched to Jules (Session `8537116514657265561`). Replaces `scripts/jules_submit.py` with 100% pure-Rust standalone CLI in `tools/jules-submit/` (`reqwest`, `clap`, `serde_json`, `zeroize`) for zero-Python developer workflow.
+  - **Merged (PR #164, commit `1e673bc`, Session 8537116514657265561)**: Replaced `scripts/jules_submit.py` with 100% pure-Rust standalone CLI in `tools/jules-submit/` (`reqwest`, `clap`, `dotenvy`, `serde_json`) and shell forwarder `scripts/jules_submit.sh` for zero-Python developer workflow (`reports/JULES_SUBMIT_RUST_MIGRATION_REPORT.md`, `wiki/23-Pure-Rust-Jules-Submitter.md`).
+
 - **5.9.6 (Spec 031 / Penta-Interface High-Throughput & Concurrency Benchmark)**:
   - **Merged (PR #165, commit `a8de2ae`, Session 10557618272357635464)**: Concurrency stress testing (10, 25, 50 workers) with 100% request delivery across REST and MCP, p50/p95/p99 latency profiling across top 10 tools, memory leak checks (flat 34.5MB RSS, <35MB ceiling), Makefile integration (`make bench-penta-e2e`), documented in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
 
