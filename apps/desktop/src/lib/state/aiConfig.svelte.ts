@@ -6,6 +6,7 @@ export interface AiSettingsConfig {
     mode: AiProviderMode;
     universal_endpoint: string | null;
     byok_provider: string | null;
+    active_model: string | null;
     api_key: string | null;
 }
 
@@ -23,6 +24,7 @@ export class AiConfigState {
     mode = $state<AiProviderMode>('offlinenlp');
     universalEndpoint = $state<string | null>(null);
     byokProvider = $state<string | null>(null);
+    activeModel = $state<string | null>('qwen2.5-coder');
     apiKeyPlaceholder = $state<string | null>(null);
 
     // Non-persistent state for forms
@@ -43,6 +45,9 @@ export class AiConfigState {
             this.mode = config.mode;
             this.universalEndpoint = config.universal_endpoint;
             this.byokProvider = config.byok_provider;
+            if (config.active_model) {
+                this.activeModel = config.active_model;
+            }
             this.apiKeyPlaceholder = config.api_key;
         } catch (e) {
             console.error('Failed to load AI config:', e);
@@ -55,6 +60,7 @@ export class AiConfigState {
                 mode: this.mode,
                 universal_endpoint: this.universalEndpoint,
                 byok_provider: this.byokProvider,
+                active_model: this.activeModel,
                 api_key: this.pendingApiKey ? this.pendingApiKey : null
             };
 
@@ -75,7 +81,8 @@ export class AiConfigState {
                 mode: this.mode,
                 universal_endpoint: this.universalEndpoint,
                 byok_provider: this.byokProvider,
-                api_key: null // doesn't matter for the ping in our mock, but in real life it would
+                active_model: this.activeModel,
+                api_key: null
             };
             const result = await invoke<string>('test_ai_endpoint', { config });
             this.testResult = { success: true, message: result };

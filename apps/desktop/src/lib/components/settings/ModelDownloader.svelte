@@ -79,7 +79,25 @@
             </div>
         {:else}
             {#each aiConfig.availableModels as model (model.id)}
-                <div class="model-card">
+                <div class="model-card" class:active-model={aiConfig.activeModel === model.id}>
+                    <div class="model-select-col">
+                        {#if model.is_downloaded}
+                            <input
+                                type="radio"
+                                name="active-model-select"
+                                value={model.id}
+                                checked={aiConfig.activeModel === model.id}
+                                onchange={() => {
+                                    aiConfig.activeModel = model.id;
+                                    aiConfig.saveConfig();
+                                }}
+                                title="Set as active model"
+                            />
+                        {:else}
+                            <span class="unavail-dot" title="Download model first">○</span>
+                        {/if}
+                    </div>
+
                     <div class="model-info">
                         <div class="model-header">
                             <h4>{model.name}</h4>
@@ -90,7 +108,14 @@
                         {#if model.is_downloaded && !activeDownloads[model.id]}
                             <div class="status-downloaded">
                                 <span class="status-icon">✓</span> Downloaded
-                                <span class="active-badge">● Active on Disk</span>
+                                {#if aiConfig.activeModel === model.id}
+                                    <span class="active-badge">● In Use (Selected)</span>
+                                {:else}
+                                    <button class="select-btn" onclick={() => {
+                                        aiConfig.activeModel = model.id;
+                                        aiConfig.saveConfig();
+                                    }}>Click to Use</button>
+                                {/if}
                                 <span class="local-path" title={model.local_path}>{model.local_path}</span>
                             </div>
                         {/if}
@@ -164,8 +189,53 @@
         border-radius: 8px;
         padding: 1rem;
         display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 0.85rem;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .model-card.active-model {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .model-select-col {
+        padding-top: 0.2rem;
+    }
+
+    .model-select-col input[type="radio"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        accent-color: #3b82f6;
+    }
+
+    .unavail-dot {
+        color: #475569;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+
+    .select-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e2e8f0;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .select-btn:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+
+    .model-info {
+        flex: 1;
     }
 
     .model-header {
