@@ -374,6 +374,18 @@ pub async fn handle_tool(
                     "html" => "pdf_convert_html".to_string(),
                     "markdown" => "pdf_convert_markdown".to_string(),
                     "excel" | "csv" => "pdf_convert_excel".to_string(),
+                    "pdf" => {
+                        let has_json_ext = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".json"));
+                        let has_json_content = args.get("json_content").is_some();
+                        if has_json_ext || has_json_content {
+                            "json_to_pdf".to_string()
+                        } else {
+                            "pdf_convert_html".to_string()
+                        }
+                    }
                     _ => format!("pdf_to_{}", format_str),
                 };
             }

@@ -1035,7 +1035,7 @@ pub fn page_numbers(input_bytes: &[u8], format: &str, position: &str) -> Operati
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
-    let font_id = doc.add_object(lopdf::dictionary!(
+    let font_id = doc.add_object(dictionary!(
         "Type" => "Font",
         "Subtype" => "Type1",
         "BaseFont" => "Helvetica",
@@ -1145,7 +1145,7 @@ pub fn header_footer(input_bytes: &[u8], header: &str, footer: &str) -> Operatio
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
-    let font_id = doc.add_object(lopdf::dictionary!(
+    let font_id = doc.add_object(dictionary!(
         "Type" => "Font",
         "Subtype" => "Type1",
         "BaseFont" => "Helvetica",
@@ -1419,4 +1419,190 @@ pub fn ocr(image_or_pdf_bytes: &[u8]) -> OperationResult<String> {
     }
 
     Ok(words_collected.join("\n"))
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct JsonImage {
+    pub id: String,
+    pub page_number: u32,
+    pub format: String,
+    pub width: u32,
+    pub height: u32,
+    pub bbox: Option<[f32; 4]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base64_data: Option<String>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct JsonPage {
+    pub page_number: u32,
+    pub text: String,
+    #[serde(default)]
+    pub char_count: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<JsonImage>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct JsonDocument {
+    pub document_name: String,
+    pub pages: Vec<JsonPage>,
+}
+
+pub fn json_to_pdf(json_str: &str) -> OperationResult<Vec<u8>> {
+    let doc_struct: JsonDocument = serde_json::from_str(json_str)
+        .map_err(|e| PdfError::Other(format!("Failed to parse JSON: {}", e)))?;
+
+    let mut inner = lopdf::Document::with_version("1.5");
+
+    let font_id = inner.add_object(dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+
+    let pages_id = inner.new_object_id();
+    let mut page_ids = vec![];
+
+    for json_page in doc_struct.pages {
+        let mut ops = vec![
+            lopdf::content::Operation::new("BT", vec![]),
+            lopdf::content::Operation::new("Tf", vec!["F1".into(), 12.into()]),
+            lopdf::content::Operation::new("Td", vec![50.into(), 750.into()]),
+        ];
+
+        for line in json_page.text.lines() {
+            ops.push(lopdf::content::Operation::new(
+                "Tj",
+                vec![lopdf::Object::string_literal(line)],
+            ));
+            ops.push(lopdf::content::Operation::new(
+                "Td",
+                vec![0.into(), (-15).into()],
+            ));
+        }
+
+        ops.push(lopdf::content::Operation::new("ET", vec![]));
+
+        let mut resources = dictionary! {
+            "Font" => dictionary! {
+                "F1" => font_id,
+            },
+        };
+
+        let mut xobjects = lopdf::Dictionary::new();
+
+        for (idx, img) in json_page.images.iter().enumerate() {
+            let img_name = format!("Im{}", idx);
+            let (width, height, image_bytes) = if let Some(b64) = &img.base64_data {
+                let b64_str = if b64.starts_with("data:image/") {
+                    b64.split(',').nth(1).unwrap_or(b64)
+                } else {
+                    b64
+                };
+
+                use base64::{Engine as _, engine::general_purpose};
+                let bytes = general_purpose::STANDARD
+                    .decode(b64_str)
+                    .map_err(|e| PdfError::Other(format!("Failed to decode base64: {}", e)))?;
+
+                let img_reader = image::load_from_memory(&bytes)
+                    .map_err(|e| PdfError::Other(format!("Failed to parse image: {}", e)))?;
+
+                let img_rgb = img_reader.to_rgb8();
+                let (w, h) = img_rgb.dimensions();
+                (w, h, img_rgb.into_raw())
+            } else {
+                continue;
+            };
+
+            let mut compressed = Vec::new();
+            {
+                use flate2::Compression;
+                use flate2::write::ZlibEncoder;
+                use std::io::Write;
+                let mut encoder = ZlibEncoder::new(&mut compressed, Compression::default());
+                encoder
+                    .write_all(&image_bytes)
+                    .map_err(|e: std::io::Error| PdfError::Other(e.to_string()))?;
+            }
+
+            let image_dict = dictionary! {
+                "Type" => "XObject",
+                "Subtype" => "Image",
+                "Width" => width as i64,
+                "Height" => height as i64,
+                "ColorSpace" => "DeviceRGB",
+                "BitsPerComponent" => 8,
+                "Filter" => "FlateDecode",
+            };
+
+            let img_stream = lopdf::Stream::new(image_dict, compressed);
+            let img_id = inner.add_object(img_stream);
+
+            xobjects.set(img_name.clone(), img_id);
+
+            if let Some(bbox) = img.bbox {
+                let (x0, y0, x1, y1) = (bbox[0], bbox[1], bbox[2], bbox[3]);
+                let w = x1 - x0;
+                let h = y1 - y0;
+
+                ops.push(lopdf::content::Operation::new("q", vec![]));
+                ops.push(lopdf::content::Operation::new(
+                    "cm",
+                    vec![w.into(), 0.into(), 0.into(), h.into(), x0.into(), y0.into()],
+                ));
+                ops.push(lopdf::content::Operation::new("Do", vec![img_name.into()]));
+                ops.push(lopdf::content::Operation::new("Q", vec![]));
+            }
+        }
+
+        if !xobjects.is_empty() {
+            resources.set("XObject", xobjects);
+        }
+
+        let content_stream = lopdf::content::Content { operations: ops };
+        let content_id = inner.add_object(lopdf::Stream::new(
+            dictionary! {},
+            content_stream
+                .encode()
+                .map_err(|e| PdfError::Other(e.to_string()))?,
+        ));
+
+        let page_dict = dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+            "Contents" => content_id,
+            "Resources" => resources,
+        };
+
+        let page_id = inner.add_object(page_dict);
+        page_ids.push(page_id);
+    }
+
+    let pages_dict = dictionary! {
+        "Type" => "Pages",
+        "Kids" => page_ids.clone().into_iter().map(lopdf::Object::Reference).collect::<Vec<_>>(),
+        "Count" => page_ids.len() as i32,
+    };
+    inner
+        .objects
+        .insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+
+    let catalog_id = inner.add_object(dictionary! {
+        "Type" => "Catalog",
+        "Pages" => pages_id,
+    });
+
+    inner.trailer.set("Root", catalog_id);
+
+    let mut bytes = Vec::new();
+    inner
+        .save_to(&mut bytes)
+        .map_err(|e| PdfError::Other(e.to_string()))?;
+
+    Ok(bytes)
 }

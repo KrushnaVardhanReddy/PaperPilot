@@ -45,11 +45,14 @@ pub fn handle_convert(
         };
 
     let actual_format = if format == "pdf" {
-        if let Some(ext) = input.extension().and_then(|s| s.to_str()) {
+        if input == Path::new("-") {
+            "json_to_pdf" // Default stdin stream when converting to pdf for this task
+        } else if let Some(ext) = input.extension().and_then(|s| s.to_str()) {
             match ext {
                 "md" => "md_to_pdf",
                 "html" | "htm" => "html_to_pdf",
                 "xlsx" | "csv" => "excel_to_pdf",
+                "json" => "json_to_pdf",
                 _ => {
                     return Err(paperpilot_core::error::PdfError::Other(
                         "Unsupported file extension for format 'pdf'".to_string(),
@@ -66,6 +69,32 @@ pub fn handle_convert(
     };
 
     match actual_format {
+        "json_to_pdf" => {
+            let out_path = output.unwrap_or(Path::new("output.pdf"));
+            let input_str = if input == Path::new("-") {
+                use std::io::Read;
+                let mut buffer = String::new();
+                std::io::stdin().read_to_string(&mut buffer).map_err(|e| {
+                    paperpilot_core::error::PdfError::Other(format!("Failed to read stdin: {}", e))
+                })?;
+                buffer
+            } else {
+                std::fs::read_to_string(input).map_err(|e| {
+                    paperpilot_core::error::PdfError::Other(format!(
+                        "Failed to read input file: {}",
+                        e
+                    ))
+                })?
+            };
+
+            let op = paperpilot_pdf::operations::conversion::JsonToPdfOperation::new(input_str);
+            let mut doc = paperpilot_pdf::document::LopdfDocument::new();
+            op.execute(&mut doc)?;
+            doc.inner.save(out_path).map_err(|e| {
+                paperpilot_core::error::PdfError::Other(format!("Failed to save output PDF: {}", e))
+            })?;
+            return Ok(());
+        }
         "html_to_pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input).map_err(|e| {

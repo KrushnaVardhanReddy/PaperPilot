@@ -77,6 +77,11 @@ impl PaperPilotMcpServer {
         add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
         add_styled_tool(
             &mut tools,
+            "json_to_pdf",
+            "Synthesizes a publication-ready PDF document from structured JSON text and embedded images",
+        );
+        add_styled_tool(
+            &mut tools,
             "pdf_convert_markdown",
             "Convert Markdown to styled PDF",
         );
@@ -4154,7 +4159,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 45);
+        assert_eq!(res.tools.len(), 46);
     }
 
     #[test]
