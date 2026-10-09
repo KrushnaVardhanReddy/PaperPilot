@@ -53,6 +53,7 @@ This document provides exact, copy-pasteable snippets for invoking every tool ac
 - [pdf_convert_html](#tool-pdf-convert-html)
 - [pdf_convert_markdown](#tool-pdf-convert-markdown)
 - [pdf_convert_excel](#tool-pdf-convert-excel)
+- [json_to_pdf](#tool-json-to-pdf)
 
 ---
 
@@ -1424,3 +1425,36 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Con
 ```
 
 ---
+
+## Tool: `json_to_pdf` <a id="tool-json-to-pdf"></a>
+
+Synthesizes publication-grade PDF documents directly from structured `JsonDocument` payloads containing text pages and inline multimodal images.
+
+### CLI
+```bash
+paperpilot convert --input doc.json --format pdf --output synthesized.pdf --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "json_to_pdf",
+    "arguments": {
+      "input": "doc.json",
+      "output": "synthesized.pdf"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/json_to_pdf -H 'Content-Type: application/json' -d '{"input": "doc.json", "output": "synthesized.pdf"}'
+```
+
+---
+

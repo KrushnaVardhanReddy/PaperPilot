@@ -58,6 +58,7 @@
     { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', tags: ['markdown', 'convert', 'pdf', 'generate'] },
     { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', tags: ['html', 'web', 'convert', 'pdf'] },
     { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
+    { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
 
     // Additional 44 Tools Required Additions
     // Organize & Pages
@@ -223,7 +224,7 @@
       return;
     }
 
-    const isCreationTool = ['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id);
+    const isCreationTool = ['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id);
     if (!isCreationTool && appState.documents.length === 0) {
       toastState.error('No documents available. Add or drop a PDF first.');
       return;
@@ -244,6 +245,7 @@
     if (activeTool.id === 'md_to_pdf') toolName = 'pdf_convert_markdown';
     if (activeTool.id === 'html_to_pdf') toolName = 'pdf_convert_html';
     if (activeTool.id === 'img_to_pdf') toolName = 'pdf_images_to_pdf';
+    if (activeTool.id === 'json_to_pdf') toolName = 'json_to_pdf';
 
     // Forms and conversions mapping
     if (['create_form_field', 'fill_form', 'read_form'].includes(activeTool.id)) {
@@ -374,6 +376,30 @@
 
         args = {
           inputs: inputPaths,
+          output: outputPath
+        };
+        break;
+      }
+      case 'json_to_pdf': {
+        const { open, save } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          title: 'Select Structured JSON File',
+          multiple: false,
+          filters: [{ name: 'JSON Document', extensions: ['json'] }]
+        });
+        if (!selected) return;
+        const inputPath = Array.isArray(selected) ? selected[0] : selected;
+
+        const suggested = getOutputPath('synthesized.pdf');
+        const outputPath = await save({
+          title: 'Save Synthesized PDF As...',
+          defaultPath: suggested,
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+        });
+        if (!outputPath) return;
+
+        args = {
+          input: inputPath,
           output: outputPath
         };
         break;
@@ -721,6 +747,12 @@
             <option value="minimalist">Minimalist</option>
           </select>
         </div>
+      {:else if activeTool.id === 'json_to_pdf'}
+        <div class="operation-config">
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Synthesize a publication-grade PDF from structured JSON text pages and inline base64 / file-path images. Click <strong>Run</strong> to select your JSON file.
+          </p>
+        </div>
       {:else if activeTool.id === 'encrypt' || activeTool.id === 'decrypt'}
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
@@ -773,7 +805,7 @@
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf'}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf'}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">Output file:</label>
           <div class="output-path-row">
@@ -793,7 +825,7 @@
         <button
           class="run-btn"
           id="btn-run-operation"
-          disabled={!activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
+          disabled={!activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
           onclick={handleRunOperation}
         >
           Run {activeTool.title}

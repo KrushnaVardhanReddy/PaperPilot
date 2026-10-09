@@ -86,6 +86,9 @@ case 'set_metadata':
             case 'ocr':
                 result = WasmPdfEngine.ocr(payload.file);
                 break;
+            case 'json_to_pdf':
+                result = WasmPdfEngine.json_to_pdf(payload.json_str);
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

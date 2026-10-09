@@ -22,6 +22,7 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     header_footer(file: Uint8Array, header: string, footer: string): Promise<Uint8Array>;
     pdf_info(file: Uint8Array): Promise<string>;
     ocr(file: Uint8Array): Promise<string>;
+    json_to_pdf(json_str: string): Promise<Uint8Array>;
 
 }
 
@@ -142,6 +143,10 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
 
     ocr(file: Uint8Array): Promise<string> {
         return this.sendRequest('ocr', { file });
+    }
+
+    json_to_pdf(json_str: string): Promise<Uint8Array> {
+        return this.sendRequest('json_to_pdf', { json_str });
     }
 
 }
