@@ -1,0 +1,73 @@
+# Task: Phase 5.9.11 — Bidirectional JSON-to-PDF Synthesis with Multimodal Images (json_to_pdf)
+# Base Branch: main
+# Target Branch: feat-json-to-pdf-synthesis
+# Priority: HIGH (Autonomous AI Agent Document Synthesis & 5-Interface Parity)
+# Spec: specs/036-json-to-pdf-bidirectional-synthesis/spec.md
+# Reference: wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md
+
+## Objective
+Implement `json_to_pdf` in PaperPilot to synthesize publication-ready PDFs from structured JSON text and embedded images (the exact reverse of `pdf_to_json`), and enforce the **Penta-Interface Mandate & E2E Protocol** across all 5 surfaces (CLI, MCP, REST, WASM, Edge) with 20 E2E assertions, round-trip fidelity testing, and benchmark profiling per [Spec 036](specs/036-json-to-pdf-bidirectional-synthesis/spec.md).
+
+---
+
+## IMPORTANT WORKSPACE REPO CONTEXT
+1. **Always merge latest `main`**:
+   Before making changes or raising a PR, run:
+   ```bash
+   git fetch origin main
+   git merge origin main
+   ```
+2. **Schema Compatibility**:
+   `json_to_pdf` must directly consume the `JsonDocument` emitted by `pdf_to_json`:
+   ```rust
+   pub struct JsonDocument {
+       pub document_name: String,
+       pub pages: Vec<JsonPage>,
+   }
+   ```
+   Each page contains `page_number`, `text`, and optional `images: Vec<JsonImage>` (with `base64_data` or `file_path` and `bbox: Option<[f32; 4]>`).
+
+---
+
+## Requirements
+
+### 1. Engine Core (`paperpilot-pdf`)
+- In `paperpilot-pdf/src/operations/conversion.rs`:
+  - Implement `JsonToPdfOperation`:
+    - Reads JSON string / path into `JsonDocument`.
+    - Generates multi-page `LopdfDocument` with standard font metrics.
+    - Emits text lines into content streams (`BT`, `Tf`, `Td`, `Tj`, `ET`).
+    - Injects embedded images from `base64_data` or `file_path` at specified `bbox` via `Do` operator.
+    - Saves to disk or exports raw bytes.
+  - Add unit tests verifying:
+    - Text-only JSON to PDF synthesis.
+    - JSON with embedded base64 image to PDF synthesis.
+    - Round-trip fidelity: `PDF ➔ pdf_to_json ➔ json_to_pdf ➔ valid PDF`.
+
+### 2. The 5 Deployment Surfaces (Penta-Interface Mandate)
+1. **💻 CLI (`paperpilot-cli`)**: Add `--format pdf` support when `--input` is a `.json` file or stdin in `Commands::Convert`.
+2. **🤖 MCP (`paperpilot-mcp`)**: Add `json_to_pdf` tool with `{ "input": "...", "output": "..." }` and optional `{ "json_content": "..." }` in `execute_list_tools()` and handler.
+3. **🌐 REST API (`paperpilot-gateway`)**: Support `json_to_pdf` at `/api/v1/pdf/convert` and `/api/v1/pdf/tools/json_to_pdf`.
+4. **⚡ WASM (`paperpilot-wasm`)**: Expose `json_to_pdf(json_str: &str) -> Result<Vec<u8>, JsValue>` in browser memory.
+5. **☁️ Cloudflare Edge (`apps/edge`)**: Expose `POST /api/v1/json_to_pdf` taking JSON body and streaming binary PDF response.
+
+### 3. Rust-Native E2E Suite (`tools/penta-interface-e2e`)
+1. In `tools/penta-interface-e2e/src/cases/conversions.rs`:
+   - Add 20 assertions for `json_to_pdf` across 4 complexity tiers (Simple, Medium, Complex, Negative) and 5 surfaces.
+   - Assert synthesized PDF page count, text presence, and valid magic bytes `%PDF-`.
+2. In `tools/penta-interface-e2e/src/cases/edge_cases.rs`:
+   - Assert empty JSON `{ "document_name": "empty.pdf", "pages": [] }` produces a clean error or valid empty document without panicking.
+   - Assert malformed base64 image string is handled gracefully.
+
+### 4. Performance Benchmark Integration
+- Register `json_to_pdf` in `tools/penta-interface-e2e/src/cases/bench.rs` measuring synthesis latency (<25ms target).
+
+---
+
+## Verification & Deliverables
+Run and verify:
+1. `cargo test -p paperpilot-pdf`
+2. `cargo run -p penta-interface-e2e -- --group conversions`
+3. `cargo fmt --all -- --check`
+4. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+5. Document implementation and round-trip verification in `reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`.
