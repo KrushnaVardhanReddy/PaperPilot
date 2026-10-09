@@ -1,0 +1,72 @@
+# Task: Phase 5.9.7 — Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining
+# Base Branch: main
+# Target Branch: feat-pdf-to-json-multimodal-images
+# Priority: HIGH (Multimodal AI, Document Vision Ingestion & Penta-Interface Parity)
+# Spec: specs/032-pdf-to-json-multimodal-images/spec.md
+# Reference: wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md
+
+## Objective
+Enhance `pdf_to_json` in `paperpilot-pdf` to extract embedded images with optional Base64 inlining for multimodal LLM vision ingestion, and enforce the **Penta-Interface Mandate & E2E Protocol** across all 5 surfaces (CLI, MCP, REST, WASM, Edge) with full E2E test coverage and benchmark profiling per [Spec 032](specs/032-pdf-to-json-multimodal-images/spec.md).
+
+---
+
+## Requirements
+
+### 1. Engine & Schema Expansion (`paperpilot-pdf`)
+- Add `JsonImage` struct in `paperpilot-pdf/src/operations/conversion.rs`:
+  ```rust
+  #[derive(Serialize, Deserialize, Debug, Clone)]
+  pub struct JsonImage {
+      pub id: String,
+      pub page_number: u32,
+      pub format: String,             // "png" or "jpeg"
+      pub width: u32,
+      pub height: u32,
+      pub bbox: Option<[f32; 4]>,     // [x0, y0, x1, y1] if extractable from CTM/Do operator
+      #[serde(skip_serializing_if = "Option::is_none")]
+      pub file_path: Option<String>,
+      #[serde(skip_serializing_if = "Option::is_none")]
+      pub base64_data: Option<String>, // "data:image/png;base64,..."
+  }
+  ```
+- Update `JsonPage`:
+  ```rust
+  #[derive(Serialize, Deserialize, Debug, Clone)]
+  pub struct JsonPage {
+      pub page_number: u32,
+      pub text: String,
+      pub char_count: usize,
+      #[serde(default, skip_serializing_if = "Vec::is_empty")]
+      pub images: Vec<JsonImage>,
+  }
+  ```
+- Support `image_mode`:
+  - `"none"` (default): Text only.
+  - `"files"`: Saves images to disk and populates `file_path`.
+  - `"base64"`: Uses pure-Rust `base64` and `image` crates to embed inline data URIs (`data:image/png;base64,...`).
+
+### 2. The 5 Deployment Surfaces (The Penta-Interface Mandate)
+1. **💻 CLI (`paperpilot-cli`)**: Add `--image-mode <none|files|base64>` to `Commands::Convert` in `src/cli.rs` and handle in `commands/`.
+2. **🤖 MCP (`paperpilot-mcp`)**: Add `image_mode` property to `pdf_to_json` tool schema and handler in `src/server.rs`.
+3. **🌐 REST API (`paperpilot-gateway`)**: Support `image_mode` in `/api/v1/pdf/convert` and `/api/v1/pdf/tools/pdf_to_json`.
+4. **⚡ WASM (`paperpilot-wasm`)**: Expose `pdf_to_json` taking `image_mode` and returning in-memory JSON with inline base64 images.
+5. **☁️ Cloudflare Edge (`apps/edge`)**: Route `/api/v1/to_json?image_mode=base64` returning parsed JSON response.
+
+### 3. Rust-Native E2E Suite & Edge Case Testing (`tools/penta-interface-e2e`)
+1. Add `pdf_to_json` to `tools/penta-interface-e2e/src/cases/conversions.rs`:
+   - 4 Tiers (Simple, Medium, Complex, Negative) across all 5 surfaces (20 tests).
+   - Assert `images` array existence and validate base64 decoding on complex tier.
+2. Add edge cases in `tools/penta-interface-e2e/src/cases/edge_cases.rs`:
+   - PDF with 0 images converting cleanly with empty `images: []`.
+   - Invalid `image_mode` parameter handled gracefully without process panics.
+
+### 4. Performance Benchmark Integration
+- Register `pdf_to_json` in `tools/penta-interface-e2e/src/cases/bench.rs` comparing latency of `image_mode: none` vs `image_mode: base64`.
+
+---
+
+## Verification & Deliverables
+Run and verify:
+1. `cargo test -p paperpilot-pdf`
+2. `cargo run -p penta-interface-e2e -- --group conversions`
+3. Document implementation and metrics in `reports/PDF_TO_JSON_MULTIMODAL_REPORT.md`.
