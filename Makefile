@@ -153,7 +153,7 @@ test-tri-e2e:
 # ==============================================================================
 # Pure-Rust Penta-Interface E2E Real Semantic Assertions Suite (Spec 031)
 # ==============================================================================
-.PHONY: test-penta-e2e test-penta-page-ops test-penta-security-forms test-penta-analysis test-penta-conversions test-penta-edge-cases
+.PHONY: test-penta-e2e test-penta-page-ops test-penta-security-forms test-penta-analysis test-penta-conversions test-penta-edge-cases bench-penta-e2e
 
 # Run all 44 tools across all 5 interfaces (CLI, MCP, REST, WASM, Edge) and 4 tiers
 test-penta-e2e:
@@ -178,3 +178,7 @@ test-penta-conversions:
 # Run Phase 5.9.5: Penta-Interface Edge Cases & Deep Boundary Verification Suite
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
+
+# Run Phase 5.9.6: Penta-Interface High-Throughput & Concurrency Performance Benchmark
+bench-penta-e2e:
+	cargo run -p penta-interface-e2e -- --group bench

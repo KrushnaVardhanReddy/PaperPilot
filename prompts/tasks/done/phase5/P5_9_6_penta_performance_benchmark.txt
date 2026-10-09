@@ -13,11 +13,12 @@ Implement high-throughput and concurrency performance benchmark runner inside `t
    - Run 10, 25, and 50 concurrent requests against the PaperPilot Gateway REST API (`:7823`) and MCP stdio server.
    - Assert zero deadlocks, zero socket exhaustion, and 100% successful response delivery.
 2. **Latency SLA Profile (p50, p95, p99)**:
-   - Profile the latency across all 5 deployment surfaces for the top 10 most common operations (`merge`, `split`, `rotate`, `compress`, `render`, `extract_text`, `watermark`, `encrypt`, `hash`, `html_to_pdf`):
+   - Profile the latency across all 5 deployment surfaces for the top 10 most common operations:
+     `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_compress`, `pdf_render`, `pdf_extract_text`, `pdf_watermark`, `pdf_encrypt`, `pdf_hash`, `pdf_convert_html`.
      - 💻 CLI sub-process startup and execution latency
      - 🤖 MCP JSON-RPC direct tool call latency
      - 🌐 REST API HTTP request latency
-     - ⚡ WASM simulated in-memory latency
+     - ⚡ WASM in-memory execution latency
      - ☁️ Cloudflare Edge serverless latency
 3. **Memory Footprint & RSS Stability**:
    - Sample memory usage under sustained load (1,000 operations burst).
@@ -28,9 +29,22 @@ Implement high-throughput and concurrency performance benchmark runner inside `t
      - Throughput (operations per second) per tool.
      - P50, P95, and P99 latency percentiles.
 
+## Strict File Ownership
+You may **ONLY** edit or create files within:
+```
+tools/penta-interface-e2e/src/cases/bench.rs
+tools/penta-interface-e2e/src/cases/mod.rs
+tools/penta-interface-e2e/src/main.rs
+Makefile
+reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md
+```
+Do NOT touch engine crates (`paperpilot-*`), root `Cargo.toml`, or other case files.
+
 ## Deliverable
 Run:
 ```bash
-cargo run -p penta-interface-e2e -- --bench
+cargo run -p penta-interface-e2e -- --group bench
+# or
+make bench-penta-e2e
 ```
 Verify generated benchmark metrics in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.

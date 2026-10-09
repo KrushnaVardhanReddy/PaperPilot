@@ -132,11 +132,29 @@ Extend the test verification in `tools/penta-interface-e2e` to stress-test deep 
 - `pdf_convert_markdown`: Markdown with deep headers, tables, code blocks, and blockquotes.
 - `pdf_convert_excel`: Multi-row tabular data conversion to PDF.
 
-### 6.3 Test Invariants & Safety Guardrails
-1. **Zero Panic Rule**: No process invocation or API request may exit with panic, `SIGSEGV`, or unhandled Rust unwrap.
-2. **Deterministic Status Codes**:
-   - Out-of-bounds or malformed requests must return structured error exit codes (CLI code `1` or `2`, REST `400 Bad Request` or `422`).
-3. **No Mock Overrides**:
-   - Every edge case must assert the real exit code or JSON error payload.
-4. **Execution & Report Output**:
-   - `cargo run -p penta-interface-e2e -- --group edge_cases` will run the edge verification suite and generate `reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md`.
+---
+
+## 7. Phase 5.9.6 — Penta-Interface High-Throughput & Concurrency Performance Benchmark
+
+### 7.1 Objective
+Measure and verify throughput, concurrency resilience, and latency percentiles (p50, p95, p99) across all 5 deployment surfaces under realistic load.
+
+### 7.2 Requirements & Benchmark Scope
+1. **Concurrency Stress Testing**:
+   - Concurrency pools of 10, 25, and 50 workers.
+   - Target interfaces: REST API (`paperpilot-gateway` on `:7823`) and MCP stdio / JSON-RPC server.
+   - Assertions: 0 deadlocks, 0 dropped connections, 100% success delivery rate.
+2. **Latency SLA Profile (p50, p95, p99)**:
+   - Benchmark top 10 core operations: `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_compress`, `pdf_render`, `pdf_extract_text`, `pdf_watermark`, `pdf_encrypt`, `pdf_hash`, `pdf_convert_html`.
+   - Measure across all 5 surfaces:
+     - 💻 CLI: Process spawning & execution overhead.
+     - 🤖 MCP: JSON-RPC request-response turnaround.
+     - 🌐 REST API: HTTP request latency.
+     - ⚡ WASM: In-memory core execution baseline.
+     - ☁️ Cloudflare Edge: Serverless edge request overhead.
+3. **Memory Footprint & RSS Stability**:
+   - Sample process memory during high-frequency burst execution (1,000 iterations).
+   - Assert Resident Set Size (RSS) stays under 35 MB with 0 unbounded memory growth.
+4. **Makefile & Execution**:
+   - `cargo run -p penta-interface-e2e -- --group bench` or `make bench-penta-e2e`.
+   - Generates `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
