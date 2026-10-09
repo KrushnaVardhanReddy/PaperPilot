@@ -32,15 +32,37 @@ PaperPilot/
 ├── paperpilot-mcp/         # Rust: MCP JSON-RPC server exposing all operations as tools
 ├── paperpilot-gateway/     # Rust: Axum HTTP REST server & MCP SSE gateway (port 7823)
 ├── paperpilot-cli/         # Rust: Terminal CLI (paperpilot merge, split, serve, etc.)
+├── paperpilot-wasm/        # Rust: In-memory WebAssembly engine for browser execution
 ├── apps/desktop/           # Svelte 5 + Tauri 2.0 desktop app
+├── apps/edge/              # Cloudflare Workers serverless microservice
+├── tools/penta-interface-e2e/ # Rust-Native Penta-Interface E2E & benchmark suite
 └── specs/                  # Architecture & verification specifications
 ```
 
 ---
 
-## 📊 Current State: 100% Tri-Interface Backend Parity Complete! 🏆
+## ⚖️ The Penta-Interface Mandate & New Tool Law
 
-### 1. Completed Tri-Interface Test Sweeps & Bug Fixes
+> **MANDATORY FOR ALL FUTURE TOOLS**:
+> Whenever a new operation or tool is created in PaperPilot, it **MUST NOT** be implemented as a CLI-only or single-interface feature. Every tool is a first-class citizen across all **5 deployment surfaces**:
+> 1. **💻 CLI (`paperpilot-cli`)**: Kebab-case subcommand with `--json` support.
+> 2. **🤖 MCP (`paperpilot-mcp`)**: JSON-RPC 2.0 tool declaration and handler.
+> 3. **🌐 REST API (`paperpilot-gateway`)**: POST route `/api/v1/pdf/tools/{tool}` with OpenAPI spec.
+> 4. **⚡ WASM (`paperpilot-wasm`)**: In-memory byte processing without filesystem IO.
+> 5. **☁️ Cloudflare Edge (`apps/edge`)**: Memory-only stream route `/api/v1/{tool}`.
+>
+> ### 🧪 Rust-Native E2E & Performance Requirements:
+> For any new tool:
+> - **20 E2E Assertions (4 Tiers × 5 Surfaces)** must be added to `tools/penta-interface-e2e/src/cases/` (Simple, Medium, Complex, Negative).
+> - **Edge Cases & Boundary Assertions** added to `edge_cases.rs`.
+> - **Performance & Concurrency Profiling** added to `bench.rs` (measuring throughput, p50/p95/p99 latency, and <35MB RSS memory stability).
+> - See detailed guide: [`wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md`](wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md).
+
+---
+
+## 📊 Current State: 100% Penta-Interface Backend & Edge Parity Complete! 🏆
+
+### 1. Completed Tri-Interface & Penta-Interface Test Sweeps
 All 44 operations across all three developer interfaces (CLI, MCP, and REST API) have achieved **100% test parity** with 0 failures, verified and documented at `reports/TRI_INTERFACE_E2E_100_VERIFIED.md`:
 - **CLI (`paperpilot-cli`)**: 44 / 44 (100.0% PASS)
 - **MCP (`paperpilot-mcp` stdio)**: 44 / 44 (100.0% PASS)

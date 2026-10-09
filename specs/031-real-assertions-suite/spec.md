@@ -158,3 +158,22 @@ Measure and verify throughput, concurrency resilience, and latency percentiles (
 4. **Makefile & Execution**:
    - `cargo run -p penta-interface-e2e -- --group bench` or `make bench-penta-e2e`.
    - Generates `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
+
+---
+
+## 8. Permanent Rule: Penta-Interface & E2E Protocol for All New Tools
+
+Whenever a new tool or operation is introduced into the PaperPilot catalog:
+1. **Penta-Surface Coverage (5/5)**: The authoring PR must wire the operation across:
+   - 💻 CLI subcommand (`paperpilot-cli/src/cli.rs`)
+   - 🤖 MCP JSON-RPC tool (`paperpilot-mcp/src/server.rs`)
+   - 🌐 REST API endpoint (`paperpilot-gateway`)
+   - ⚡ WASM memory buffer binding (`paperpilot-wasm`)
+   - ☁️ Cloudflare Edge serverless worker (`apps/edge`)
+2. **Rust-Native E2E Test Parity**:
+   - Add 20 test executions across 4 tiers (Simple, Medium, Complex, Negative) in `tools/penta-interface-e2e/src/cases/`.
+   - Register negative boundary edge cases in `edge_cases.rs`.
+   - Add the tool to high-throughput concurrency benchmark in `bench.rs`.
+3. **Execution Gate**:
+   - `make test-penta-e2e` must pass 100%.
+   - `make test-penta-edge-cases` must pass 100%.
