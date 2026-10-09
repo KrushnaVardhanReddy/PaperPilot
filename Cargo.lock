@@ -1907,6 +1907,7 @@ dependencies = [
  "futures-util",
  "keyring",
  "lazy_static",
+ "paperpilot-ai",
  "paperpilot-gateway",
  "paperpilot-mcp",
  "paperpilot-nlp",
