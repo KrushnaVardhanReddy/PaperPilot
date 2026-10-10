@@ -92,8 +92,14 @@ pub struct WatermarkJsonRequest {
     pub output: String,
     #[schema(example = "CONFIDENTIAL")]
     pub text: Option<String>,
-    #[schema(example = 0.3)]
+    #[schema(example = 45.0)]
+    pub angle: Option<f32>,
+    #[schema(example = 0.2)]
     pub opacity: Option<f32>,
+    #[schema(example = "gray")]
+    pub color: Option<String>,
+    #[schema(example = 54.0)]
+    pub font_size: Option<f32>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]

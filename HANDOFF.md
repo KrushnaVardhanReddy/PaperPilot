@@ -88,7 +88,21 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **5.9.10 (Spec 035 / Local AI Agent Legal Due Diligence & Discovery Demo Harness)**:
   - **Merged (PR #168, commit `8150fff`, Session 3245014174250604924)**: Complete 100% offline local AI agent demonstration chaining `pdf_rotate`, `pdf_redact`, `pdf_bates`, `pdf_merge`, `pdf_watermark`, `pdf_linearize`, and `pdf_hash` via `tools/demo-legal-fixtures`, `scripts/run_ai_legal_demo.sh`, and `make demo-legal-discovery` (`reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md`, `demo/legal_discovery/README.md`).
 - **Phase 5.9.12 (Spec 037 / Diagonal, Semi-Transparent & Configurable Watermarks)**:
-  - **In Progress (Jules Session `11421227794067448625`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_12_diagonal_configurable_watermarks.txt`. Modernizing `pdf_watermark` with 45° diagonal angle by default, 20% alpha transparency via `ExtGState` (`/ca 0.2`), and configurable parameters (`angle`, `opacity`, `font_size`, `color`) across CLI, MCP, REST, WASM, Edge, and Svelte Desktop UI (`specs/037-diagonal-configurable-watermarks/spec.md`).
+  - **Merged (PR #176, commit `9789098`, Session 11421227794067448625)**: Modernized `pdf_watermark` with 45° diagonal angle by default, 20% alpha transparency via `ExtGState` (`/ca 0.2`), MediaBox centering, and configurable parameters (`angle`, `opacity`, `font_size`, `color`, `pages`) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) and Svelte Desktop UI (`reports/DIAGONAL_CONFIGURABLE_WATERMARKS_REPORT.md`).
+- **Phase 5.9.13 (Spec 038 / High-Fidelity Pure-Rust PDF-to-Word Layout Reconstruction)**:
+  - **In Progress (Jules Session `2163210904964205811`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_13_pdf_to_docx_layout_reconstruction.txt`. Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with heading hierarchy inference, bold/italic font styling, RGB text color extraction, center/right alignment calculation, embedded image extraction, and native OpenXML page breaks via `docx-rs` (`specs/038-pdf-to-docx-layout-reconstruction/spec.md`).
+- **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Document Layout Analysis via `pdf-oxide`)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/039-pdf-oxide-layout-analysis/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_14_pdf_oxide_layout_analysis.txt`) to upgrade document layout analysis with pure-Rust XY-Cut reading-order de-weaving (multi-column flow) and native OpenXML table reconstruction (`docx-rs::Table`).
+- **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/040-pdf-oxide-universal-migration/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_15_pdf_oxide_universal_migration.txt`) to migrate `pdf_convert_markdown`, first-class `pdf_to_html` (with Desktop UI card & responsive styling), `pdf_extract_text`, `pdf_search`, and RAG chunking (`pdf_rag_chunks`) to `pdf_oxide` (v0.3.78) for sub-1ms speed, perfect word spacing, and structured Markdown/HTML table extraction.
+- **Phase 5.9.16 (Spec 041 / Pure-Rust Chromium-Free URL-to-PDF Archival Engine via `browser_oxide`)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_16_url_to_pdf_browser_oxide.txt`) to integrate `browser_oxide` for pure-Rust dynamic web archiving and JavaScript-to-PDF rendering without Chrome/Chromium.
+- **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/042-agentic-code-quality-fossil-mcp/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_17_code_quality_fossil_mcp.txt`) to audit and prune dead functions, duplicate clones, and orphan scaffolding across all 8 workspace crates.
+- **Phase 5.9.18 (Spec 043 / High-Speed Office Document Engine via `office_oxide`)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/043-pure-rust-office-engine-office-oxide/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_18_office_oxide_integration.txt`) to integrate `office_oxide` for reading, editing, and Markdown conversion of OOXML (`.docx`, `.xlsx`, `.pptx`) and legacy binary formats (`.doc`, `.xls`, `.ppt`).
+- **Phase 5.9.19 (Spec 044 / Pure-Rust High-Precision OCR Engine via `rusto-rs`)**:
+  - **Planned & Ready for Jules**: Prepared specification (`specs/044-pure-rust-ocr-rusto-rs/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_19_rusto_rs_ocr_migration.txt`) to migrate `paperpilot-pdf/src/operations/ocr.rs` from `ocrs` to `rusto-rs` (PaddleOCR v4 + RTen) for sub-second page inference, DBNet polygon word detection, exact bounding box spatial positioning, and 100% mouse-drag cursor selectable PDF overlays.
 - **5.9.11 (Spec 036 / Bidirectional JSON-to-PDF Synthesis with Multimodal Images)**:
   - **Merged (PR #169, commit `3688ba3`, Session 5118308487879675704)**: Implemented pure-Rust `json_to_pdf` synthesis via `lopdf` + `image` (Approach 1: Native Engine Layout), closing the bidirectional PDF ⇄ JSON synthesis loop for autonomous AI agents across all 5 surfaces (CLI, MCP, REST, WASM, Edge) with 20 E2E assertions, round-trip fidelity tests, and benchmark profiling (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`, `wiki/036-Json-To-Pdf-Synthesis.md`).
 - **PR #166 (5.9.7 / Spec 032)**: Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining across 5 interfaces (`2604a8e`). Expanded `pdf_to_json` with `--image-mode <none|files|base64>`, full JSON schema with page metadata, text blocks, and inline base64 images, 20 Penta-Interface E2E assertions, latency benchmarks, and documentation (`reports/PDF_TO_JSON_MULTIMODAL_REPORT.md`, `wiki/08-Multimodal-PDF-to-JSON.md`).
@@ -209,14 +223,14 @@ codex "Generate mock fixture for PDF form flattening test"
 # Fast workspace type check across all crates & targets
 cargo check --workspace --tests
 
-# Run unit & integration tests with low concurrency (prevents memory spikes / IDE OOM kills)
-cargo test --workspace -- -j 2
+# Run unit & integration tests with bounded concurrency (use -j 6 to prevent machine overload/restarts while allowing parallel tasks)
+cargo test --workspace -- -j 6
 
 # Test specific crates individually
-cargo test -p paperpilot-pdf --lib -j 2
-cargo test -p paperpilot-mcp --lib -j 2
-cargo test -p paperpilot-gateway --lib -j 2
-cargo test -p paperpilot-wasm --test wasm_tests
+cargo test -p paperpilot-pdf --lib -j 6
+cargo test -p paperpilot-mcp --lib -j 6
+cargo test -p paperpilot-gateway --lib -j 6
+cargo test -p paperpilot-wasm --test wasm_tests -j 6
 
 # Build optimized release binaries for CLI, MCP, and Gateway
 cargo build --release -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway

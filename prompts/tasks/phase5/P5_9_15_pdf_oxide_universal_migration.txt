@@ -1,0 +1,40 @@
+Task: Universal pdf_oxide Core Engine Migration & High-Performance Extraction Suite [Spec 040]
+
+Objective:
+Migrate and upgrade PaperPilot's text extraction, document conversion (`pdf_convert_markdown`, `pdf_convert_html`), spatial search (`pdf_search`), and RAG chunking to `pdf_oxide` (v0.3.78) for sub-1ms speed, perfect word spacing, and structured multi-column/table reconstruction.
+
+Context & Reference:
+- Read `specs/040-pdf-oxide-universal-migration/spec.md` for complete architecture and guidelines.
+- Concurrency Constraint: Max 6 cores. All builds and tests must pass `-j 6` (e.g., `cargo test -- -j 6`).
+- WASM & Edge Constraint: 100% in-memory, zero C dependencies, fully compatible with `wasm32-unknown-unknown` and Cloudflare Workers (<35MB RSS).
+
+Implementation Steps:
+1. Engine Core Integration (`paperpilot-pdf`):
+   - Add `pdf_oxide = "0.3"` to `paperpilot-pdf/Cargo.toml` with WASM-compatible features (`default-features = false`, pure-Rust core).
+   - Upgrade `pdf_convert_markdown`:
+     - Generate structured Markdown with headings (`#`), bold/italic (`**`), tables (`| Header |`), and de-weaved column flow.
+   - Implement first-class `pdf_to_html`:
+     - Generate responsive semantic HTML5 (`<article>`, `<p>`, `<table>`, embedded `<img>` tags, mobile viewport metadata, clean CSS preset).
+     - Add dedicated `pdf_to_html` tool card in Desktop UI (`OperationsPanel.svelte`).
+   - Upgrade `pdf_extract_text`:
+     - Leverage perfect word-spacing and layout reading order.
+   - Upgrade `pdf_search`:
+     - Return bounding-box coordinates for term occurrences.
+   - Add `pdf_rag_chunks` tool:
+     - Output structured semantic chunks with page numbers and heading context for LLM/RAG pipelines.
+2. Interfaces & WASM Wiring:
+   - Wire upgraded tools across `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-wasm`, and `apps/edge`.
+3. Verification & Quality Gates:
+   - Add unit tests verifying:
+     - Markdown output contains table pipes `|` when given table PDFs.
+     - Multi-column reading flow does not interleave sentences.
+     - Search results return valid `bbox` objects (`x`, `y`, `width`, `height`).
+   - Run tests bounded with `-j 6`: `cargo test -p paperpilot-pdf -j 6`.
+   - Ensure clean clippy: `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+4. Report & Documentation:
+   - Author `reports/PDF_OXIDE_UNIVERSAL_MIGRATION_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.15 as completed.
+
+Deliverables:
+- Commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.

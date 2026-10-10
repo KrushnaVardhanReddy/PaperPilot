@@ -130,6 +130,11 @@
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
   let watermarkText = $state('');
+
+  let watermarkOpacity = $state(20);
+  let watermarkOrientation = $state('diagonal');
+  let watermarkColor = $state('gray');
+
   let password = $state('');
   let metadataTitle = $state('');
 
@@ -201,8 +206,8 @@
       case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
-      case 'extract_text':
-      case 'ocr':           customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'ocr':           customOutputPath = getOutputPath(`${base}_ocr.pdf`);         break;
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
@@ -250,7 +255,7 @@
     // Forms and conversions mapping
     if (['create_form_field', 'fill_form', 'read_form'].includes(activeTool.id)) {
         toolName = `pdf_${activeTool.id}`;
-    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a'].includes(activeTool.id)) {
+    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_json'].includes(activeTool.id)) {
         toolName = activeTool.id;
     } else if (activeTool.id === 'pdf_convert_excel') {
         toolName = 'pdf_convert_excel';
@@ -423,6 +428,9 @@
         args = {
           input: docPath,
           text: watermarkText || 'CONFIDENTIAL',
+          angle: watermarkOrientation === 'diagonal' ? 45 : 0,
+          opacity: watermarkOpacity / 100,
+          color: watermarkColor,
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
         };
         break;
@@ -565,10 +573,15 @@
         };
         break;
       case 'extract_text':
-      case 'ocr':
         args = {
           input: docPath,
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
+        };
+        break;
+      case 'ocr':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.pdf`)
         };
         break;
       case 'pdf_to_docx':
@@ -718,6 +731,25 @@
         <div class="operation-config">
           <label for="watermarkText" class="section-desc">Watermark Text:</label>
           <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="e.g. CONFIDENTIAL" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkOrientation" class="section-desc">Orientation:</label>
+          <select id="watermarkOrientation" bind:value={watermarkOrientation} class="form-input">
+            <option value="diagonal">Diagonal (45°)</option>
+            <option value="horizontal">Horizontal (0°)</option>
+          </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkOpacity" class="section-desc">Opacity: {watermarkOpacity}%</label>
+          <input id="watermarkOpacity" type="range" min="10" max="100" bind:value={watermarkOpacity} class="range-input" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkColor" class="section-desc">Color:</label>
+          <select id="watermarkColor" bind:value={watermarkColor} class="form-input">
+            <option value="gray">Gray</option>
+            <option value="red">Red Alert</option>
+            <option value="blue">Blue</option>
+          </select>
         </div>
       {:else if activeTool.id === 'remove_blank'}
         <div class="operation-config">

@@ -1,0 +1,74 @@
+=== TASK DEFINITION: Phase 5 - Spec 044: Pure-Rust High-Precision OCR Engine via `rusto-rs` ===
+
+CONTEXT & MOTIVATION:
+Currently, PaperPilot's OCR operation (`paperpilot-pdf/src/operations/ocr.rs`) uses `ocrs` backed by `rten`.
+While this achieves a pure-Rust pipeline without C++ or dynamic ONNX Runtime (`ort`) libraries, real-world testing on scanned documents (e.g. USCIS Form I-140 approval notices) revealed critical gaps:
+1. `ocrs` does not output word-level bounding box coordinates, resulting in coarse text positioning where cursor highlighting and mouse-drag selection fail in PDF viewers (Acrobat, Chrome, Preview).
+2. Processing multi-strip scanned documents can take excessive time in unoptimized builds.
+3. Angled text or multi-column documents suffer without DBNet polygon contour detection.
+
+We are migrating PaperPilot's OCR engine to `rusto-rs` (v0.3), a pure-Rust OCR engine based on RapidOCR with PaddleOCR models backed by RTen. This provides sub-second inference, DBNet polygon word detection, and exact word-level bounding-box positioning in PDF content streams.
+
+SPEC & TASK REFERENCES:
+- Spec: specs/044-pure-rust-ocr-rusto-rs/spec.md
+- Task Breakdown: specs/044-pure-rust-ocr-rusto-rs/task.md
+- Tracker: PHASES.md (Phase 5.9.19)
+
+MANDATORY CONSTRAINTS:
+1. Machine build concurrency: ALWAYS pass `-j 6` to every `cargo` invocation (e.g., `cargo test -p paperpilot-pdf -j 6`).
+2. Zero C++ dependencies: Zero ONNX Runtime (`ort`), zero OpenCV, zero CMake. Must remain 100% pure-Rust via `rten` and `image`.
+3. Zero Python for testing: Test using `cargo test -j 6` or `paperpilot-cli`.
+4. Backward compatibility: All Penta-Interfaces (CLI, MCP `pdf_ocr`, Gateway, Desktop UI, WASM) must remain fully supported.
+
+DETAILED IMPLEMENTATION INSTRUCTIONS:
+
+1. CARGO CONFIGURATION:
+   - In `paperpilot-pdf/Cargo.toml`:
+     - Add `rusto-rs = { version = "0.3", default-features = true }`.
+     - Verify with `cargo tree -p rusto-rs -j 6` that no C++ FFI or system libraries are pulled in.
+   - In root `Cargo.toml`:
+     - Maintain compiler profile optimizations for `rusto-rs`, `rten`, and `rten-tensor` (`opt-level = 3` even in dev profile) to ensure SIMD/AVX acceleration.
+
+2. OCR ENGINE INTEGRATION (`paperpilot-pdf/src/operations/ocr.rs`):
+   - Replace the legacy `ocrs` engine initialization with `rusto::RustO::initialize(...)`.
+   - Implement multi-path model resolution for detection (`det.rten`), recognition (`rec.rten`), and dictionary (`ppocr_keys_v1.txt` / `dict.txt`):
+     1. Environment variable: `PAPERPILOT_OCR_MODELS_DIR`
+     2. User cache directory: `~/.local/share/paperpilot/models/ocr/`
+     3. Workspace directory: `models/ocr/`
+   - Implement graceful fallback: If model files are not present on disk, do not panic; fall back to embedded font text extraction with a user-friendly log warning.
+
+3. SPATIAL GEOMETRY & COORDINATE TRANSFORMATION:
+   - Run DBNet word detection: `ocr.detect_text(&image_source, &run_options)`.
+   - For each detected word with bounding box `[box_x, box_y, box_w, box_h]`:
+     - Calculate normalized position:
+       norm_x = box_x / img_width
+       norm_y = box_y / img_height
+       norm_w = box_w / img_width
+       norm_h = box_h / img_height
+     - Map to PDF MediaBox point coordinates (origin at bottom-left):
+       pdf_x = strip_x0 + (norm_x * strip_w)
+       pdf_y = strip_y0 + (strip_h - ((norm_y + norm_h) * strip_h))
+       font_size = (norm_h * strip_h).max(6.0)
+
+4. TRANSPARENT TEXT OVERLAY INJECTION:
+   - Inject transparent graphics state into page resources:
+     `/ExtGState << /GS_OCR << /Type /ExtGState /ca 0.001 /CA 0.001 >> >>`
+     `/Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >>`
+   - Append PDF stream operations for each word:
+     `q /GS_OCR gs BT /F1 {font_size} Tf 1 0 0 1 {pdf_x} {pdf_y} Tm ({escaped_text}) Tj ET Q`
+   - Using `/ca 0.001` guarantees that PDF reader engines (Acrobat, Chrome, Preview, Evince) recognize physical selectable hit-boxes for mouse cursor dragging and copy-paste.
+
+5. SPATIALLY SORTED PLAINTEXT GENERATION:
+   - When target output is `.txt`, group words into lines by vertical coordinate proximity (Delta y < 0.5 * font_size).
+   - Sort lines top-to-bottom and words left-to-right to reconstruct natural reading flow.
+
+6. DESKTOP UI & CLI COHESION:
+   - Ensure `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` defaults OCR output to `${base}_ocr.pdf` and extract text to `${base}_text.txt`.
+   - Ensure `paperpilot-cli ocr` correctly accepts `--input <file.pdf>` and `--output <file_ocr.pdf>`.
+
+7. VERIFICATION & ACCEPTANCE:
+   - Run `cargo check --workspace -j 6`.
+   - Run `cargo test -p paperpilot-pdf --lib ocr -j 6`.
+   - Run `cargo test -p paperpilot-cli -j 6`.
+   - Generate a searchable/selectable PDF from a test scanned document and verify word-level selectable text.
+   - Author detailed completion report at `reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`.

@@ -205,12 +205,35 @@
       },
       "WatermarkJsonRequest": {
         "properties": {
+          "angle": {
+            "example": 45.0,
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "color": {
+            "example": "gray",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "font_size": {
+            "example": 54.0,
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "input": {
             "example": "input.pdf",
             "type": "string"
           },
           "opacity": {
-            "example": 0.3,
+            "example": 0.2,
             "format": "float",
             "type": [
               "number",

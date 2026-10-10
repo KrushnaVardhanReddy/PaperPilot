@@ -14,3 +14,15 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[profile.dev.package.rten]
+opt-level = 3
+
+[profile.dev.package.rten-tensor]
+opt-level = 3
+
+[profile.dev.package.rten-imageproc]
+opt-level = 3
+
+[profile.dev.package.ocrs]
+opt-level = 3

@@ -76,8 +76,8 @@ impl WasmPdfEngine {
 
     /// Add watermark text across pages
     #[wasm_bindgen]
-    pub fn watermark(input_bytes: &[u8], text: &str) -> Result<js_sys::Uint8Array, JsValue> {
-        let result = operations::watermark(input_bytes, text)
+    pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::watermark(input_bytes, text, angle, opacity)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         Ok(js_sys::Uint8Array::from(&result[..]))
