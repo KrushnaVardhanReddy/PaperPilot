@@ -32,6 +32,22 @@
     <span>Documents</span>
   </button>
 
+  <label
+    class="new-tab-btn"
+    id="new-doc-tab-btn"
+    title="Open new document"
+    aria-label="Open new document"
+  >
+    <span class="plus-icon">+</span>
+    <span class="btn-text">New</span>
+    <input
+      type="file"
+      accept=".pdf"
+      style="display: none;"
+      onchange={handleFileInputChange}
+    />
+  </label>
+
   <div class="tabs-scroll-container">
     {#each appState.openDocIndices as docIndex (docIndex)}
       {@const doc = appState.documents[docIndex]}
@@ -64,21 +80,6 @@
       {/if}
     {/each}
   </div>
-
-  <label
-    class="new-tab-btn"
-    id="new-doc-tab-btn"
-    title="Open new document"
-    aria-label="Open new document"
-  >
-    +
-    <input
-      type="file"
-      accept=".pdf"
-      style="display: none;"
-      onchange={handleFileInputChange}
-    />
-  </label>
 </div>
 
 <style>
@@ -202,20 +203,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
+    gap: 4px;
+    padding: 0 8px;
     height: 26px;
     border-radius: var(--border-radius-sm, 4px);
-    border: none;
+    border: 1px dashed var(--border-color, #2a2a35);
     background: transparent;
-    color: var(--text-muted, #6b7280);
-    font-size: 16px;
+    color: var(--text-muted, #9ca3af);
+    font-size: 12px;
     cursor: pointer;
     transition: all var(--transition-fast, 0.15s ease);
     flex-shrink: 0;
   }
 
+  .new-tab-btn .plus-icon {
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 500;
+  }
+
+  .new-tab-btn .btn-text {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
   .new-tab-btn:hover {
     background-color: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    border-color: var(--primary, #6366f1);
     color: var(--text-primary, #ffffff);
   }
 </style>
