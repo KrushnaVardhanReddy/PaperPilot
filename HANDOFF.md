@@ -211,14 +211,14 @@ codex "Generate mock fixture for PDF form flattening test"
 # Fast workspace type check across all crates & targets
 cargo check --workspace --tests
 
-# Run unit & integration tests with low concurrency (prevents memory spikes / IDE OOM kills)
-cargo test --workspace -- -j 2
+# Run unit & integration tests with bounded concurrency (use -j 6 to prevent machine overload/restarts while allowing parallel tasks)
+cargo test --workspace -- -j 6
 
 # Test specific crates individually
-cargo test -p paperpilot-pdf --lib -j 2
-cargo test -p paperpilot-mcp --lib -j 2
-cargo test -p paperpilot-gateway --lib -j 2
-cargo test -p paperpilot-wasm --test wasm_tests
+cargo test -p paperpilot-pdf --lib -j 6
+cargo test -p paperpilot-mcp --lib -j 6
+cargo test -p paperpilot-gateway --lib -j 6
+cargo test -p paperpilot-wasm --test wasm_tests -j 6
 
 # Build optimized release binaries for CLI, MCP, and Gateway
 cargo build --release -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway

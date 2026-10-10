@@ -57,10 +57,18 @@ pub fn handle_decrypt(
 pub fn handle_watermark(
     input: &std::path::Path,
     text: &str,
+    angle: f32,
+    opacity: f32,
+    color: Option<String>,
+    font_size: Option<f32>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text.to_string());
+    let mut op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text.to_string());
+    op.angle = angle;
+    op.opacity = opacity;
+    op.color = color;
+    op.font_size = font_size;
     op.execute(&mut doc)?;
     doc.save(output)
 }

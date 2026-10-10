@@ -17,6 +17,7 @@
 
     let angle = 90;
     let textInput = '';
+    let watermarkOrientation = 'diagonal';
     let password = '';
     let regions = '';
     let cropBox = '';
@@ -112,7 +113,11 @@
         // Operation specific args
         if (['Rotate'].includes(plan.intent)) args.angle = angle;
         if (['Split', 'Extract'].includes(plan.intent)) args.ranges = customPages || '1-2';
-        if (['Watermark'].includes(plan.intent)) args.text = textInput;
+        if (['Watermark'].includes(plan.intent)) {
+            args.text = textInput;
+            args.angle = watermarkOrientation === 'diagonal' ? 45 : 0;
+            args.opacity = 0.2;
+        }
         if (['HeaderFooter'].includes(plan.intent)) {
             args.header_left = textInput; // Just map it to header_left for simplicity
             args.footer_center = "";
@@ -174,6 +179,15 @@
                 <label>Text / Content:</label>
                 <input type="text" id="text-input" bind:value={textInput} placeholder="Enter text..." />
                 <small class="hint">e.g. 'CONFIDENTIAL', 'DRAFT', or company name</small>
+            </div>
+        {/if}
+        {#if plan.intent === 'Watermark'}
+            <div class="field">
+                <label>Orientation:</label>
+                <div class="segmented">
+                    <button class={watermarkOrientation === 'diagonal' ? 'active' : ''} onclick={() => watermarkOrientation = 'diagonal'}>Diagonal (45°)</button>
+                    <button class={watermarkOrientation === 'horizontal' ? 'active' : ''} onclick={() => watermarkOrientation = 'horizontal'}>Horizontal (0°)</button>
+                </div>
             </div>
         {/if}
 

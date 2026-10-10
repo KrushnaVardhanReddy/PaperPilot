@@ -154,13 +154,21 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    Watermark {
+        Watermark {
         #[arg(long)]
-        input: PathBuf,
+        input: std::path::PathBuf,
         #[arg(long)]
         text: String,
+        #[arg(long, default_value_t = 45.0)]
+        angle: f32,
+        #[arg(long, default_value_t = 0.2)]
+        opacity: f32,
         #[arg(long)]
-        output: PathBuf,
+        color: Option<String>,
+        #[arg(long)]
+        font_size: Option<f32>,
+        #[arg(long)]
+        output: std::path::PathBuf,
     },
     Redact {
         #[arg(long)]

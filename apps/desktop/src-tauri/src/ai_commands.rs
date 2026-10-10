@@ -196,6 +196,7 @@ mod tests {
             universal_endpoint: Some("http://localhost:11434".to_string()),
             byok_provider: None,
             api_key: None,
+            active_model: None,
         };
 
         assert!(save_ai_config(config.clone()).await.is_ok());
