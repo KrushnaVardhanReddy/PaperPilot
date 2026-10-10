@@ -421,7 +421,7 @@ pub fn encrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
     Ok(buffer)
 }
 
-pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
+pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> OperationResult<Vec<u8>> {
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
@@ -431,13 +431,33 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
         (b"BaseFont".to_vec(), Object::Name(b"Helvetica".to_vec())),
     ])));
 
+    let extgstate_id = doc.add_object(Object::Dictionary(lopdf::Dictionary::from_iter(vec![
+        (b"Type".to_vec(), Object::Name(b"ExtGState".to_vec())),
+        (b"ca".to_vec(), Object::Real(opacity.unwrap_or(0.2))),
+        (b"CA".to_vec(), Object::Real(opacity.unwrap_or(0.2))),
+    ])));
+
     let mut pages_to_update = Vec::new();
     for (_page_number, object_id) in doc.get_pages() {
         pages_to_update.push(object_id);
     }
 
     for object_id in pages_to_update {
+        let mut page_width = 612.0;
+        let mut page_height = 792.0;
+
         if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(object_id) {
+            if let Ok(media_box) = page_dict.get(b"MediaBox") {
+                if let Ok(arr) = media_box.as_array() {
+                    if arr.len() == 4 {
+                        if let (Ok(x2), Ok(y2)) = (arr[2].as_f32().or_else(|_| arr[2].as_i64().map(|v| v as f32)), arr[3].as_f32().or_else(|_| arr[3].as_i64().map(|v| v as f32))) {
+                            page_width = x2;
+                            page_height = y2;
+                        }
+                    }
+                }
+            }
+
             let mut new_resources = None;
             if let Ok(res) = page_dict.get_mut(b"Resources") {
                 if let lopdf::Object::Dictionary(res_dict) = res {
@@ -448,12 +468,23 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
                         .unwrap_or_else(|_| lopdf::Dictionary::new());
                     fonts.set("F1", lopdf::Object::Reference(font_id));
                     res_dict.set("Font", lopdf::Object::Dictionary(fonts));
+
+                    let mut ext_gstates = res_dict
+                        .get(b"ExtGState")
+                        .and_then(|e| e.as_dict())
+                        .cloned()
+                        .unwrap_or_else(|_| lopdf::Dictionary::new());
+                    ext_gstates.set("GS1", lopdf::Object::Reference(extgstate_id));
+                    res_dict.set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
                 }
             } else {
                 let mut fonts = lopdf::Dictionary::new();
                 fonts.set("F1", lopdf::Object::Reference(font_id));
+                let mut ext_gstates = lopdf::Dictionary::new();
+                ext_gstates.set("GS1", lopdf::Object::Reference(extgstate_id));
                 let mut res_dict = lopdf::Dictionary::new();
                 res_dict.set("Font", lopdf::Object::Dictionary(fonts));
+                res_dict.set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
                 new_resources = Some(lopdf::Object::Dictionary(res_dict));
             }
             if let Some(res) = new_resources {
@@ -461,9 +492,46 @@ pub fn watermark(input_bytes: &[u8], text: &str) -> OperationResult<Vec<u8>> {
             }
         }
 
-        let escaped_text = text.replace("(", "\\(").replace(")", "\\)");
+        let escaped_text = text.replace("(", "\(").replace(")", "\)");
+
+        let cx = page_width / 2.0;
+        let cy = page_height / 2.0;
+
+        let font_size = 54.0;
+        let approx_text_width = (text.len() as f32) * (font_size * 0.5);
+        let offset_x = -approx_text_width / 2.0;
+        let offset_y = -font_size / 2.0;
+
+        let theta = angle.unwrap_or(45.0) * std::f32::consts::PI / 180.0;
+        let cos_t = theta.cos();
+        let sin_t = theta.sin();
+
+        // Use gray by default
+        let r = 0.5; let g = 0.5; let b = 0.5;
+
         let content = format!(
-            "q\nBT\n/F1 48 Tf\n1 0 0 1 100 100 Tm\n0.5 g\n({text}) Tj\nET\nQ\n",
+            "q
+/GS1 gs
+{r} {g} {b} rg
+BT
+/F1 {font_size} Tf
+{cos_t} {sin_t} {minus_sin_t} {cos_t} {cx} {cy} Tm
+{offset_x} {offset_y} Td
+({text}) Tj
+ET
+Q
+",
+            r = r,
+            g = g,
+            b = b,
+            font_size = font_size,
+            cos_t = cos_t,
+            sin_t = sin_t,
+            minus_sin_t = -sin_t,
+            cx = cx,
+            cy = cy,
+            offset_x = offset_x,
+            offset_y = offset_y,
             text = escaped_text
         );
 

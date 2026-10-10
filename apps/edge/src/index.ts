@@ -36,7 +36,15 @@ export default {
         if (url.pathname === '/api/v1/watermark') {
           const body = await request.arrayBuffer();
           const text = url.searchParams.get('text') || 'CONFIDENTIAL';
-          const result = WasmPdfEngine.watermark(new Uint8Array(body), text);
+          let angle: number | undefined;
+          let opacity: number | undefined;
+          if (url.searchParams.has('angle')) {
+            angle = parseFloat(url.searchParams.get('angle') as string);
+          }
+          if (url.searchParams.has('opacity')) {
+            opacity = parseFloat(url.searchParams.get('opacity') as string);
+          }
+          const result = WasmPdfEngine.watermark(new Uint8Array(body), text, angle, opacity);
           return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
         if (url.pathname === '/api/v1/json_to_pdf') {

@@ -130,6 +130,11 @@
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
   let watermarkText = $state('');
+
+  let watermarkOpacity = $state(20);
+  let watermarkOrientation = $state('diagonal');
+  let watermarkColor = $state('gray');
+
   let password = $state('');
   let metadataTitle = $state('');
 
@@ -423,6 +428,9 @@
         args = {
           input: docPath,
           text: watermarkText || 'CONFIDENTIAL',
+          angle: watermarkOrientation === 'diagonal' ? 45 : 0,
+          opacity: watermarkOpacity / 100,
+          color: watermarkColor,
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
         };
         break;
@@ -718,6 +726,25 @@
         <div class="operation-config">
           <label for="watermarkText" class="section-desc">Watermark Text:</label>
           <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="e.g. CONFIDENTIAL" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkOrientation" class="section-desc">Orientation:</label>
+          <select id="watermarkOrientation" bind:value={watermarkOrientation} class="form-input">
+            <option value="diagonal">Diagonal (45°)</option>
+            <option value="horizontal">Horizontal (0°)</option>
+          </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkOpacity" class="section-desc">Opacity: {watermarkOpacity}%</label>
+          <input id="watermarkOpacity" type="range" min="10" max="100" bind:value={watermarkOpacity} class="range-input" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="watermarkColor" class="section-desc">Color:</label>
+          <select id="watermarkColor" bind:value={watermarkColor} class="form-input">
+            <option value="gray">Gray</option>
+            <option value="red">Red Alert</option>
+            <option value="blue">Blue</option>
+          </select>
         </div>
       {:else if activeTool.id === 'remove_blank'}
         <div class="operation-config">

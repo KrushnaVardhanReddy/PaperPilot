@@ -92,8 +92,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Watermark {
             input,
             text,
+            angle,
+            opacity,
+            color,
+            font_size,
             output,
-        } => group_b::handle_watermark(input, text, output),
+        } => group_b::handle_watermark(input, text, *angle, *opacity, color.clone(), *font_size, output),
         Commands::Redact {
             input,
             pages,
