@@ -1,0 +1,30 @@
+Task: Pure-Rust Chromium-Free URL-to-PDF Archival Engine via browser_oxide [Spec 041]
+
+Objective:
+Implement a 100% pure-Rust, zero-Chromium `url_to_pdf` web archiving operation in `paperpilot-pdf` by integrating `browser_oxide` to evaluate JavaScript and render dynamic web pages directly to PDFs without requiring Chrome/Chromium installed on the system.
+
+Context & Reference:
+- Read `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md` for architecture and parameters.
+- Concurrency Constraint: Max 6 cores. All builds and test commands must use `-j 6`.
+- Memory Constraint: Enforce <35MB baseline memory profile and avoid memory leaks.
+
+Implementation Steps:
+1. Engine Core (`paperpilot-pdf`):
+   - Add `browser_oxide` crate as dependency.
+   - Implement `UrlToPdfOperation` supporting `--url`, `--delay`, and `--page-size`.
+   - Render DOM layout to vector/raster PDF pages without spawning external browser binaries.
+2. Interface Integration:
+   - Expose in `paperpilot-cli`: `paperpilot convert-url --url <URL> --output <OUT>`.
+   - Expose in `paperpilot-mcp`: `pdf_convert_url`.
+   - Expose in `paperpilot-gateway`: `POST /api/v1/pdf/convert/url`.
+3. Verification:
+   - Add tests archiving a local mock HTTP server page with dynamic JS into a valid PDF.
+   - Run tests bounded with `-j 6`.
+   - Zero clippy warnings under `-D warnings`.
+4. Documentation:
+   - Author `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.16 completed.
+
+Deliverables:
+- All commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.

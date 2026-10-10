@@ -1,0 +1,30 @@
+Task: Agentic Code Quality & Dead-Scaffolding Pruning via fossil-mcp [Spec 042]
+
+Objective:
+Integrate `fossil-mcp` into PaperPilot's developer tooling and CI workflows to detect dead code, duplicate clones, and orphan scaffolding across all 8 Rust workspace crates and Svelte apps, pruning codebase bloat.
+
+Context & Reference:
+- Read `specs/042-agentic-code-quality-fossil-mcp/spec.md`.
+- Concurrency Constraint: Max 6 cores (`-j 6`).
+- All 880+ E2E tests across CLI, MCP, REST, WASM, and Edge must maintain 100% pass rate.
+
+Implementation Steps:
+1. Tooling & Analysis:
+   - Configure `fossil-mcp` scan across Rust crates and frontend TypeScript/Svelte code.
+   - Generate inventory of dead functions, unused struct fields, and duplicate clones.
+2. Codebase Pruning:
+   - Carefully remove verified dead functions and orphan scaffolding without affecting public API surfaces.
+   - Refactor duplicate clones into shared crate helpers (e.g. `paperpilot-core`).
+3. Automation & Makefile:
+   - Add `make audit-code-quality` to root `Makefile`.
+   - Wire audit step into `.github/workflows/rust.yml`.
+4. Verification & Testing:
+   - Run `cargo test --workspace -- -j 6` to verify zero regression.
+   - Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+5. Documentation:
+   - Author `reports/FOSSIL_CODE_QUALITY_AUDIT_REPORT.md` documenting lines of dead code removed and binary size impact.
+   - Update `PHASES.md` marking Task 5.9.17 completed.
+
+Deliverables:
+- All commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.

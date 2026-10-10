@@ -1,0 +1,31 @@
+Task: High-Speed Office Document Engine (DOCX, XLSX, PPTX & Legacy Binary) via office_oxide [Spec 043]
+
+Objective:
+Integrate `office_oxide` into PaperPilot (`paperpilot-pdf` and `paperpilot-wasm`) to provide 100% pure-Rust, ultra-fast reading, editing, and Markdown/text conversion for modern OOXML (`.docx`, `.xlsx`, `.pptx`) and legacy binary formats (`.doc`, `.xls`, `.ppt`).
+
+Context & Reference:
+- Read `specs/043-pure-rust-office-engine-office-oxide/spec.md`.
+- Concurrency Constraint: Max 6 cores. All builds and tests must pass `-j 6`.
+- Memory & WASM Constraints: 100% pure Rust, zero native C dependencies, fully compatible with WebAssembly and Cloudflare Edge (<35MB RSS).
+
+Implementation Steps:
+1. Engine Integration (`paperpilot-pdf`):
+   - Add `office_oxide = "0.2"` (or latest compatible) to `paperpilot-pdf/Cargo.toml`.
+   - Implement `office_to_markdown`:
+     - Extract structured tables from `.xlsx` into markdown table pipes `|`.
+     - Extract document outlines, headings, and paragraphs from `.docx` and `.doc`.
+   - Implement `office_modernize`:
+     - Convert legacy `.doc`, `.xls`, `.ppt` into modern `.docx`, `.xlsx`, `.pptx`.
+2. Interface Integration:
+   - Expose tools across CLI (`paperpilot office`), MCP (`office_to_markdown`, `office_modernize`), and Gateway REST endpoints.
+3. Verification:
+   - Add unit tests verifying `.docx` and `.xlsx` conversion to markdown.
+   - Run tests bounded with `-j 6`: `cargo test -p paperpilot-pdf -j 6`.
+   - Ensure clean clippy: `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+4. Documentation:
+   - Author `reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.18 completed.
+
+Deliverables:
+- All commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.
