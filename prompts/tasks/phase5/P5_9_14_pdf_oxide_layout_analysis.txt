@@ -1,0 +1,33 @@
+Task: Advanced Multi-Column & Table Document Layout Analysis via pdf-oxide [Spec 039]
+
+Objective:
+Enhance PaperPilot's PDF-to-Word (`pdf_to_docx`) conversion engine by integrating `pdf_oxide` (or its pure-Rust XY-Cut spatial clustering algorithm) into `paperpilot-pdf` and `paperpilot-wasm` to reconstruct multi-column reading orders and generate native OpenXML tables (`docx-rs::Table`).
+
+Context & Requirements:
+- Read `specs/039-pdf-oxide-layout-analysis/spec.md` for complete architecture and guidelines.
+- Baseline is Spec 038 (`paperpilot-pdf/src/operations/conversion.rs` and `docx-rs`).
+- Concurrency Constraint: Machine limit of 6 cores. All builds and test commands MUST use `-j 6` (e.g. `cargo test -- -j 6`).
+- Memory & WASM Constraints: 100% pure Rust, zero native C dependencies, fully compatible with `wasm32-unknown-unknown` and Cloudflare Workers (<35MB RSS).
+
+Implementation Steps:
+1. Engine Core & Layout Analysis (`paperpilot-pdf`):
+   - Add/evaluate `pdf_oxide` crate or adapt its pure-Rust XY-Cut spatial span clustering and reading-order tree:
+     - Group text bounding boxes by column gutters to avoid horizontal line interleaving.
+     - Detect grid/table alignments and convert them to native `docx-rs::Table` with rows (`TableRow`) and cells (`TableCell`).
+   - Retain graceful fallback to basic linear extraction if spatial clustering returns empty or fails.
+2. WASM & Edge Compatibility (`paperpilot-wasm` & `apps/edge`):
+   - Ensure all layout and table conversion logic compiles cleanly under `wasm-pack build` and in-memory WebAssembly.
+3. Verification & Quality Gates:
+   - Add unit tests verifying:
+     - Multi-column PDF reading order remains un-interleaved.
+     - Tabular PDF fixture produces `<w:tbl>` in `word/document.xml`.
+     - Valid ZIP structure readable by `zip::ZipArchive`.
+   - Run tests with bounded concurrency: `cargo test -p paperpilot-pdf -j 6`.
+   - Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+4. Report & Documentation:
+   - Create `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.14 as completed.
+
+Deliverables:
+- All commits prefixed with `jules: `
+- Clean workspace with zero clippy warnings.
