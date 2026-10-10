@@ -113,23 +113,23 @@ pub async fn handle_watch(
 
     if let Some(ref out_dir) = output {
         if !out_dir.exists() {
-            std::fs::create_dir_all(out_dir).map_err(|e| PdfError::IoError(e))?;
+            std::fs::create_dir_all(out_dir).map_err(PdfError::IoError)?;
         }
     }
 
     if let Some(ref move_dir) = move_original {
         if !move_dir.exists() {
-            std::fs::create_dir_all(move_dir).map_err(|e| PdfError::IoError(e))?;
+            std::fs::create_dir_all(move_dir).map_err(PdfError::IoError)?;
         }
     }
 
     let (tx, rx) = std::sync::mpsc::channel();
 
     let mut watcher = RecommendedWatcher::new(tx, Config::default())
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e)))?;
 
     watcher.watch(&directory, RecursiveMode::NonRecursive)
-        .map_err(|e| PdfError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e)))?;
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();

@@ -259,4 +259,13 @@ impl WasmPdfEngine {
             operations::json_to_pdf(json_str).map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+    #[wasm_bindgen]
+    pub fn pdf_to_docx(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
+        let result_bytes = operations::pdf_to_docx(input_bytes)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let array = js_sys::Uint8Array::new_with_length(result_bytes.len() as u32);
+        array.copy_from(&result_bytes);
+        Ok(array)
+    }
 }

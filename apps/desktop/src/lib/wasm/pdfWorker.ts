@@ -55,6 +55,9 @@ self.onmessage = async (e: MessageEvent) => {
             case 'set_metadata':
                 result = WasmPdfEngine.set_metadata(payload.file, payload.title, payload.author, payload.subject, payload.keywords);
                 break;
+            case 'pdf_to_docx':
+                result = WasmPdfEngine.pdf_to_docx(payload.file);
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

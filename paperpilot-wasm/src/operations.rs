@@ -1606,3 +1606,206 @@ pub fn json_to_pdf(json_str: &str) -> OperationResult<Vec<u8>> {
 
     Ok(bytes)
 }
+
+
+pub fn pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
+    use docx_rs::{Docx, Paragraph, Run, AlignmentType};
+    use lopdf::Document;
+
+    let doc = Document::load_mem(input_bytes).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+
+    let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
+    all_pages.sort_unstable();
+
+    let mut docx = Docx::new();
+
+    for (i, page_id) in all_pages.iter().enumerate() {
+        let page_obj_id = doc.get_pages()[page_id];
+        let page_dict = doc.get_object(page_obj_id).and_then(|obj| obj.as_dict()).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+
+        let media_box_default = vec![];
+        let media_box = page_dict
+            .get(b"MediaBox")
+            .and_then(|obj| obj.as_array())
+            .unwrap_or(&media_box_default);
+
+        let mut width: f32 = 595.0; // Default A4 width
+        if media_box.len() >= 4 {
+            if let (Ok(x0), Ok(x1)) = (media_box[0].as_f32(), media_box[2].as_f32()) {
+                width = (x1 - x0).abs();
+            }
+        }
+        let center_w = width / 2.0;
+
+        let content_data = doc.get_page_content(page_obj_id);
+        let content = lopdf::content::Content::decode(&content_data).unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
+
+        let mut current_font_size: f32 = 12.0;
+        let mut is_bold = false;
+        let mut is_italic = false;
+        let mut current_color = String::new();
+        let mut current_x: f32 = 0.0;
+        let mut current_text = String::new();
+
+        let mut font_names = std::collections::HashMap::new();
+        if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+            if let Ok(fonts) = resources.get(b"Font").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+                for (font_ref, font_obj) in fonts.iter() {
+                    if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict()) {
+                        if let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name()) {
+                            font_names.insert(String::from_utf8_lossy(font_ref).to_string(), String::from_utf8_lossy(base_font).to_string());
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut paragraphs = vec![];
+
+        for op in content.operations {
+            match op.operator.as_str() {
+                "Tf" => {
+                    if op.operands.len() == 2 {
+                        if let Ok(name) = op.operands[0].as_name() {
+                            let font_key = String::from_utf8_lossy(name).to_string();
+                            if let Some(base) = font_names.get(&font_key) {
+                                let lower_base = base.to_lowercase();
+                                is_bold = lower_base.contains("bold") || lower_base.contains("black") || lower_base.contains("heavy");
+                                is_italic = lower_base.contains("italic") || lower_base.contains("oblique");
+                            }
+                        }
+                        if let Ok(size) = op.operands[1].as_f32() {
+                            current_font_size = size;
+                        } else if let Ok(size) = op.operands[1].as_i64() {
+                            current_font_size = size as f32;
+                        }
+                    }
+                }
+                "rg" | "g" | "k" => {
+                    if op.operator == "rg" && op.operands.len() == 3 {
+                        let r = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        let g = (op.operands[1].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        let b = (op.operands[2].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        current_color = format!("{:02X}{:02X}{:02X}", r, g, b);
+                    } else if op.operator == "g" && op.operands.len() == 1 {
+                        let gray = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        current_color = format!("{:02X}{:02X}{:02X}", gray, gray, gray);
+                    }
+                }
+                "Tm" => {
+                    if op.operands.len() == 6 {
+                        current_x = op.operands[4].as_f32().unwrap_or(0.0);
+                    }
+                }
+                "Td" | "TD" => {
+                    if op.operands.len() == 2 {
+                        current_x += op.operands[0].as_f32().unwrap_or(0.0);
+                    }
+                    if !current_text.is_empty() {
+                        paragraphs.push((current_text.clone(), current_font_size, is_bold, is_italic, current_color.clone(), current_x));
+                        current_text.clear();
+                    }
+                }
+                "Tj" => {
+                    if op.operands.len() == 1 {
+                        if let Ok(string_bytes) = op.operands[0].as_str() {
+                            let txt = String::from_utf8_lossy(string_bytes).to_string();
+                            current_text.push_str(&txt);
+                        }
+                    }
+                }
+                "TJ" => {
+                    if op.operands.len() == 1 {
+                        if let Ok(array) = op.operands[0].as_array() {
+                            for item in array {
+                                if let Ok(string_bytes) = item.as_str() {
+                                    let txt = String::from_utf8_lossy(string_bytes).to_string();
+                                    current_text.push_str(&txt);
+                                }
+                            }
+                        }
+                    }
+                }
+                "T*" | "'" | "\"" => {
+                     if !current_text.is_empty() {
+                        paragraphs.push((current_text.clone(), current_font_size, is_bold, is_italic, current_color.clone(), current_x));
+                        current_text.clear();
+                     }
+                }
+                "ET" => {
+                     if !current_text.is_empty() {
+                        paragraphs.push((current_text.clone(), current_font_size, is_bold, is_italic, current_color.clone(), current_x));
+                        current_text.clear();
+                     }
+                }
+                _ => {}
+            }
+        }
+
+        if !current_text.is_empty() {
+            paragraphs.push((current_text.clone(), current_font_size, is_bold, is_italic, current_color.clone(), current_x));
+        }
+
+        for (text, size, bold, italic, color, x) in paragraphs {
+            if text.trim().is_empty() { continue; }
+
+            let mut para = Paragraph::new();
+
+            if (x - center_w).abs() < (width * 0.15) {
+                para = para.align(AlignmentType::Center);
+            } else if x > (width * 0.6) {
+                para = para.align(AlignmentType::Right);
+            }
+
+            if size >= 18.0 {
+                para = para.style("Heading1");
+            } else if (14.0..18.0).contains(&size) {
+                para = para.style("Heading2");
+            }
+
+            let mut run = Run::new().add_text(text.trim().to_string());
+            if size >= 18.0 {
+                run = run.size(36);
+            } else if (14.0..18.0).contains(&size) {
+                run = run.size(28); // 14pt * 2
+            } else {
+                run = run.size((size * 2.0) as usize);
+            }
+
+            if bold { run = run.bold(); }
+            if italic { run = run.italic(); }
+            if !color.is_empty() { run = run.color(color.clone()); }
+
+            para = para.add_run(run);
+            docx = docx.add_paragraph(para);
+        }
+
+        // Add images from Resources
+        if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+            if let Ok(xobjects) = resources.get(b"XObject").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+                for (_xobj_name, xobj_ref) in xobjects.iter() {
+                    if let Ok(xobj_stream) = doc.get_object(xobj_ref.as_reference().unwrap_or((0, 0))).and_then(|obj| obj.as_stream()) {
+                        if let Ok(subtype) = xobj_stream.dict.get(b"Subtype").and_then(|obj| obj.as_name()) {
+                            if subtype == b"Image" {
+                                let image_bytes = &xobj_stream.content;
+                                let pic = docx_rs::Pic::new(image_bytes);
+                                docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if i < all_pages.len() - 1 {
+            docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
+        }
+    }
+
+    // WASM memory buffer packing
+    let mut out_buffer = Vec::new();
+    let mut cursor = std::io::Cursor::new(&mut out_buffer);
+    docx.build().pack(&mut cursor).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+
+    Ok(out_buffer)
+}

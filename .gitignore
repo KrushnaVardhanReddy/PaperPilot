@@ -27,3 +27,12 @@ tests/bench_fixtures/
 jules*.zip
 .wrangler/
 .astro/
+tools/penta-interface-e2e/tests/e2e_fixtures/out/
+fix_*.py
+add_*.py
+insert_*.py
+update_*.py
+*.py
+*.sh
+run_tests.sh
+parse_test.rs

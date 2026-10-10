@@ -24,6 +24,7 @@ vi.mock('paperpilot-wasm', () => {
       crop: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
       flatten: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
       set_metadata: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
+      pdf_to_docx: vi.fn().mockReturnValue(new Uint8Array([80, 75, 3, 4])),
     }
   };
 });
@@ -63,25 +64,35 @@ describe('Cloudflare Edge Worker', () => {
     { path: '/api/v1/crop', method: 'POST' },
     { path: '/api/v1/flatten', method: 'POST' },
     { path: '/api/v1/set_metadata', method: 'POST' },
+    { path: '/api/v1/pdf_to_docx', method: 'POST' },
   ];
 
   for (const { path, method } of endpoints) {
-    it(`should process ${path} and return valid PDF payload`, async () => {
+    it(`should process ${path} and return valid payload`, async () => {
       const body = new Uint8Array([37, 80, 68, 70, 45]).buffer; // dummy %PDF- input
       const request = createRequest(path, method, body);
       const response = await worker.fetch(request, {}, {});
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('application/pdf');
 
-      const resBody = await response.arrayBuffer();
-      const bytes = new Uint8Array(resBody);
+      if (path === '/api/v1/pdf_to_docx') {
+        expect(response.headers.get('Content-Type')).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        const resBody = await response.arrayBuffer();
+        const bytes = new Uint8Array(resBody);
+        expect(bytes[0]).toBe(80);
+        expect(bytes[1]).toBe(75);
+      } else {
+        expect(response.headers.get('Content-Type')).toBe('application/pdf');
 
-      // %PDF-
-      expect(bytes[0]).toBe(37);
-      expect(bytes[1]).toBe(80);
-      expect(bytes[2]).toBe(68);
-      expect(bytes[3]).toBe(70);
-      expect(bytes[4]).toBe(45);
+        const resBody = await response.arrayBuffer();
+        const bytes = new Uint8Array(resBody);
+
+        // %PDF-
+        expect(bytes[0]).toBe(37);
+        expect(bytes[1]).toBe(80);
+        expect(bytes[2]).toBe(68);
+        expect(bytes[3]).toBe(70);
+        expect(bytes[4]).toBe(45);
+      }
     });
   }
 

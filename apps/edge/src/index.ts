@@ -21,6 +21,11 @@ export default {
 
     if (request.method === 'POST') {
       try {
+        if (url.pathname === '/api/v1/pdf_to_docx' || url.pathname === '/api/v1/convert' && url.searchParams.get('format') === 'docx') {
+          const body = await request.arrayBuffer();
+          const result = WasmPdfEngine.pdf_to_docx(new Uint8Array(body));
+          return new Response(result, { headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' } });
+        }
         if (url.pathname === '/api/v1/rotate') {
           const body = await request.arrayBuffer();
           const angle = parseInt(url.searchParams.get('angle') || '90');

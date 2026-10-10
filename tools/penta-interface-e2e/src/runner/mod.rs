@@ -407,19 +407,19 @@ pub fn hash_file<P: AsRef<Path>>(path: P) -> Result<String> {
 }
 
 pub fn get_cli_bin() -> PathBuf {
-    let release = PathBuf::from("target/release/paperpilot-cli");
+    let release = PathBuf::from("/app/target/release/paperpilot");
     if release.exists() {
         release
     } else {
-        PathBuf::from("target/debug/paperpilot-cli")
+        PathBuf::from("/app/target/debug/paperpilot")
     }
 }
 
 pub fn get_mcp_bin() -> PathBuf {
-    let release = PathBuf::from("target/release/paperpilot-mcp");
+    let release = PathBuf::from("/app/target/release/paperpilot-mcp");
     if release.exists() {
         release
     } else {
-        PathBuf::from("target/debug/paperpilot-mcp")
+        PathBuf::from("/app/target/debug/paperpilot-mcp")
     }
 }

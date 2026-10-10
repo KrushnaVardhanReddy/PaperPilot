@@ -11,6 +11,7 @@ export interface WasmPdfClient {
     crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array>;
     flatten(file: Uint8Array): Promise<Uint8Array>;
     set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array>;
+    pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -90,6 +91,10 @@ export class WasmPdfClientImpl implements WasmPdfClient {
 
     set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array> {
         return this.sendRequest('set_metadata', { file, title, author, subject, keywords });
+    }
+
+    pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_docx', { file });
     }
 }
 
