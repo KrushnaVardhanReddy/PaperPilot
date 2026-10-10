@@ -26,11 +26,18 @@ Integrate `browser_oxide` into PaperPilot's conversion toolchain to provide a **
    - `--page-size <A4|Letter>`: Paper format.
    - `--print-background <bool>`: Include CSS backgrounds.
 
-### 2.2 Penta-Interface Support
-- **CLI**: `paperpilot convert-url --url https://example.com --output page.pdf`
-- **MCP**: `pdf_convert_url` tool for AI agents to archive web citations into PDFs.
-- **REST Gateway**: `POST /api/v1/pdf/convert/url`
-- **Desktop UI**: One-click "Capture Web Page to PDF" dialog in `apps/desktop`.
+### 2.2 Product Surfaces & Integration
+1. **CLI (`paperpilot-cli`)**:
+   `paperpilot convert-url --url https://example.com --output page.pdf`
+2. **MCP Tool (`paperpilot-mcp`)**:
+   `pdf_convert_url` tool enabling AI agents to archive web citations and live articles into PDFs.
+3. **REST Gateway (`paperpilot-gateway`)**:
+   `POST /api/v1/pdf/convert/url` for enterprise backend web-to-PDF generation.
+4. **Desktop UI (`apps/desktop`)**:
+   - One-click "Capture Webpage to PDF" tool card in Operations Dock.
+   - Side-drawer AI Agent (`PdfChatPanel.svelte`): When examining PDF papers with web links, the agent uses `browser_oxide` to inspect live web citations in-place and verify sources without being blocked by anti-bot captchas.
+5. **Template & Certificate Studio (`apps/web`)**:
+   - Hydrate dynamic HTML+JS templates (invoices, certificates, charting dashboards) into vector PDFs.
 
 ---
 
