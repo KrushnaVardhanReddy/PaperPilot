@@ -1,0 +1,39 @@
+Task: High-Fidelity Pure-Rust PDF-to-Word (DOCX) Layout & Style Reconstruction [Spec 038]
+
+Objective:
+Upgrade `paperpilot_pdf::operations::conversion::PdfToDocxOperation` in `paperpilot-pdf` to perform layout reconstruction, preserving font sizes, hierarchy (headings), weights (bold/italic), colors, alignment (center/left/right), true page breaks, and embedded images when exporting PDFs to Word (.docx) files using `docx-rs`.
+
+Context & References:
+- Read `specs/038-pdf-to-docx-layout-reconstruction/spec.md` for full technical details.
+- Read `wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md` for test requirements.
+- Current implementation to upgrade: `paperpilot-pdf/src/operations/conversion.rs` (`PdfToDocxOperation`).
+- `docx-rs` is already a dependency in `paperpilot-pdf/Cargo.toml`.
+
+Implementation Steps:
+1. `paperpilot-pdf/src/operations/conversion.rs`:
+   - Upgrade `PdfToDocxOperation::execute`:
+     - Eliminate the literal string `"--- PAGE BREAK ---"` and replace with true OpenXML page breaks (`page_break_before` or `add_page_break`).
+     - Detect line font sizes and map large text (>= 18pt) to Heading 1 (`docx-rs::Paragraph::new().style("Heading1")`) or bold runs with larger sizes (`size(36)`).
+     - Detect bold/italic font descriptors or names (`/Bold`, `/Italic`) and set `.bold()`, `.italic()`.
+     - Detect RGB text color operators (`rg`, `g`) in the PDF stream and convert to hex color (`.color("RRGGBB")`).
+     - Calculate horizontal alignment: if line center is near page width center (MediaBox width / 2), set `.align(AlignmentType::Center)`.
+     - Extract embedded `/XObject` `/Image` payloads and add images into the docx via `docx-rs::Pic::new`.
+2. Surfaces Verification (Penta-Interface):
+   - Verify `paperpilot-cli` (`convert --format docx`).
+   - Verify `paperpilot-mcp` (`pdf_to_docx`).
+   - Verify `paperpilot-gateway` (`/api/v1/pdf/convert` format `docx`).
+   - Verify `paperpilot-wasm` (`pdf_to_docx`).
+3. Testing & Verification:
+   - Add unit tests in `paperpilot-pdf/src/operations/conversion.rs` verifying:
+     - Converted `.docx` is a valid ZIP package containing `word/document.xml`.
+     - Heading, bold text, and proper page break XML elements are generated.
+     - No `"--- PAGE BREAK ---"` string is found in the output.
+   - Run `cargo test -p paperpilot-pdf -- docx` to confirm all tests pass.
+   - Run `cargo clippy --workspace --all-targets --all-features -- -D warnings` to verify zero warnings.
+4. Report & Documentation:
+   - Create `reports/PDF_TO_DOCX_LAYOUT_RECONSTRUCTION_REPORT.md` summarizing the fidelity improvements, XML inspection, and test results.
+   - Update `PHASES.md` marking task 5.9.13 completed.
+
+Deliverables:
+- All commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.
