@@ -117,8 +117,8 @@
             args.footer_center = "";
         }
         if (['Encrypt', 'Decrypt'].includes(plan.intent)) {
-            if (plan.intent === 'Encrypt') args.user_password = password;
-            else args.password = password;
+            args.password = password || 'secure123';
+            args.user_password = password || 'secure123';
         }
         if (plan.intent === 'Redact') args.regions = regions;
         if (plan.intent === 'Crop') args.box = cropBox;
