@@ -492,7 +492,7 @@ pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Op
             }
         }
 
-        let escaped_text = text.replace("(", "\(").replace(")", "\)");
+        let escaped_text = text.replace("(", "\\(").replace(")", "\\)");
 
         let cx = page_width / 2.0;
         let cy = page_height / 2.0;
