@@ -206,8 +206,8 @@
       case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
-      case 'extract_text':
-      case 'ocr':           customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'ocr':           customOutputPath = getOutputPath(`${base}_ocr.pdf`);         break;
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
@@ -573,10 +573,15 @@
         };
         break;
       case 'extract_text':
-      case 'ocr':
         args = {
           input: docPath,
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
+        };
+        break;
+      case 'ocr':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.pdf`)
         };
         break;
       case 'pdf_to_docx':
