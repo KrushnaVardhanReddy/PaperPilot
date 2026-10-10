@@ -898,6 +898,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.9.16 | Pure-Rust Chromium-Free URL-to-PDF Archival Engine via `browser_oxide` `[Spec 041]` ⏳ | Planned — Integrating `browser_oxide` into `paperpilot-pdf` for 100% pure-Rust, zero-Chromium web page archiving and dynamic JavaScript-to-PDF synthesis (`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`). |
 | 5.9.17 | Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp` `[Spec 042]` ⏳ | Planned — Integrating `fossil-mcp` code quality toolchain to audit and prune dead functions, duplicate clones, and orphan scaffolding across all 8 Rust workspace crates and Svelte apps (`specs/042-agentic-code-quality-fossil-mcp/spec.md`). |
 | 5.9.18 | High-Speed Office Document Engine (DOCX, XLSX, PPTX & Legacy Binary) via `office_oxide` `[Spec 043]` ⏳ | Planned — Integrating `office_oxide` into `paperpilot-pdf` and `paperpilot-wasm` for pure-Rust, ultra-fast reading, editing, and Markdown/text conversion of OOXML (`.docx`, `.xlsx`, `.pptx`) and legacy binary formats (`.doc`, `.xls`, `.ppt`) (`specs/043-pure-rust-office-engine-office-oxide/spec.md`). |
+| 5.9.19 | Pure-Rust High-Precision OCR Engine via `rusto-rs` (RapidOCR / PaddleOCR + RTen) `[Spec 044]` ⏳ | Planned — Migrating `paperpilot-pdf/src/operations/ocr.rs` from `ocrs` to `rusto-rs` (PaddleOCR v4 + RTen) for sub-second page inference, DBNet polygon word detection, exact bounding box spatial positioning, and 100% mouse-drag cursor selectable PDF overlays (`specs/044-pure-rust-ocr-rusto-rs/spec.md`). |
 
 
 

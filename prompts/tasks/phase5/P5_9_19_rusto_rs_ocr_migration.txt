@@ -1,0 +1,49 @@
+=== TASK DEFINITION: Phase 5 - Spec 044: Pure-Rust High-Precision OCR Engine via `rusto-rs` ===
+
+CONTEXT & GOAL:
+Migrate PaperPilot's OCR operation (`paperpilot-pdf/src/operations/ocr.rs`) from `ocrs` to `rusto-rs` (RapidOCR / PaddleOCR v4 + RTen).
+This provides sub-second inference speeds, DBNet polygon word detection, and exact word-level bounding box text injection into PDFs, making OCR output 100% mouse-selectable and copyable in all PDF viewers.
+Zero C++ / ONNX Runtime (`ort`) dependencies must be introduced (100% pure-Rust via `rten`).
+
+SPEC REFERENCE:
+specs/044-pure-rust-ocr-rusto-rs/spec.md
+
+REQUIREMENTS & IMPLEMENTATION STEPS:
+
+1. CARGO CONFIGURATION & DEPENDENCIES:
+   - In `paperpilot-pdf/Cargo.toml`:
+     - Add `rusto-rs` dependency with pure-Rust / rten configuration.
+     - Ensure zero C++ FFI bindings (no `ort` or external system libs).
+   - In root `Cargo.toml`:
+     - Keep profile optimizations for `rten`, `rten-tensor`, and `rusto-rs` to ensure full SIMD/AVX acceleration.
+
+2. OCR ENGINE ARCHITECTURE (`paperpilot-pdf/src/operations/ocr.rs`):
+   - Replace `ocrs::OcrEngine` initialization with `rusto_rs` session initialization.
+   - Implement model discovery for RapidOCR / PaddleOCR weights:
+     1. Environment variable `PAPERPILOT_OCR_MODELS_DIR`
+     2. User directory `~/.local/share/paperpilot/models/ocr/`
+     3. Workspace directory `models/ocr/`
+   - Handle graceful fallback: If weights are absent, preserve existing embedded text extraction without panicking.
+
+3. SPATIAL BOUNDING-BOX TEXT INJECTION:
+   - For each detected word polygon/bounding box `(text, x, y, width, height)`:
+     - Map pixel dimensions to PDF page units (`MediaBox` width and height).
+     - Calculate word baseline coordinates `(pdf_x, pdf_y)`.
+     - Inject transparent character overlay using `/ExtGState << /ca 0.001 /CA 0.001 >>` and `/F1` font.
+     - Position each word with `Tm` and emit with `Tj` in the page content stream.
+   - For `.txt` output targets:
+     - Reconstruct logical reading order (left-to-right, top-to-bottom) based on bounding box coordinates and write clean text.
+
+4. PENTA-INTERFACE & BACKWARD COMPATIBILITY:
+   - Ensure `paperpilot-cli ocr`, `paperpilot-mcp` (`pdf_ocr`), and Desktop UI work seamlessly with the new engine.
+   - Default output format for OCR is `${base}_ocr.pdf` (producing a selectable, searchable PDF).
+
+5. BUILD & CONCURRENCY CONSTRAINTS:
+   - CRITICAL: Machine concurrency must not exceed 6 cores (`-j 6`).
+   - Run all cargo commands with `-j 6` (e.g. `cargo test -p paperpilot-pdf --lib ocr -j 6`).
+
+6. VALIDATION & TESTS:
+   - Run `cargo test -p paperpilot-pdf -j 6`.
+   - Run `cargo test -p paperpilot-cli -j 6`.
+   - Verify word-level cursor selection on scanned fixtures.
+   - Create completion report at `reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`.
