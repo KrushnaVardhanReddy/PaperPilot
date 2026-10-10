@@ -120,7 +120,7 @@
                 case "PdfA": toolName = "pdf_to_pdf_a"; break;
                 case "ExtractText": toolName = "pdf_extract_text"; break;
                 case "ExtractImages": toolName = "pdf_extract_images"; break;
-                case "ToMarkdown": toolName = "pdf_convert_markdown"; break;
+                case "ToMarkdown": toolName = "pdf_to_markdown"; break;
                 case "ToHtml": toolName = "pdf_convert_html"; break;
                 case "ImagesToPdf": toolName = "pdf_images_to_pdf"; break;
                 case "Render": toolName = "pdf_render"; break;

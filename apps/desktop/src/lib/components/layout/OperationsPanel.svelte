@@ -250,7 +250,7 @@
     // Forms and conversions mapping
     if (['create_form_field', 'fill_form', 'read_form'].includes(activeTool.id)) {
         toolName = `pdf_${activeTool.id}`;
-    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a'].includes(activeTool.id)) {
+    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_json'].includes(activeTool.id)) {
         toolName = activeTool.id;
     } else if (activeTool.id === 'pdf_convert_excel') {
         toolName = 'pdf_convert_excel';

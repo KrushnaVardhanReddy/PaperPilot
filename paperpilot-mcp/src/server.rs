@@ -1323,6 +1323,31 @@ impl PaperPilotMcpServer {
         );
         tools.push(tool_json);
 
+        let mut tool_md = Tool::default();
+        tool_md.name = "pdf_to_markdown".into();
+        tool_md.description =
+            Some("Converts a PDF document into Markdown formatted text.".into());
+        let mut m_props = serde_json::Map::new();
+        m_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        m_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output Markdown file path." }),
+        );
+        tool_md.input_schema = std::sync::Arc::new(
+            serde_json::json!({
+                "type": "object",
+                "properties": m_props,
+                "required": ["input", "output"]
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+        tools.push(tool_md);
+
         let mut tool_class = Tool::default();
         tool_class.name = "pdf_classify_type".into();
         tool_class.description =
@@ -3655,6 +3680,38 @@ impl PaperPilotMcpServer {
                     success: true,
 
                     message: "Converted to JSON successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_to_markdown" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::conversion::PdfToMarkdownOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let md_data = op
+                    .extracted_markdown
+                    .lock()
+                    .unwrap()
+                    .clone()
+                    .unwrap_or_default();
+
+                std::fs::write(&output, &md_data).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to write output Markdown: {}", e), None)
+                })?;
+
+                Ok(OperationResult {
+                    data: None,
+                    success: true,
+
+                    message: "Converted to Markdown successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })
