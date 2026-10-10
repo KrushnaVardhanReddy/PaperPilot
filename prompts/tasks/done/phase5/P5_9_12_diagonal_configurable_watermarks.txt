@@ -1,0 +1,106 @@
+# Task: Phase 5.9.12 — Diagonal, Semi-Transparent, and Configurable Watermarks
+# Base Branch: main
+# Target Branch: feat-diagonal-configurable-watermarks
+# Priority: HIGH (Document Security, Enterprise Aesthetics & 5-Interface Parity)
+# Spec: specs/037-diagonal-configurable-watermarks/spec.md
+# Reference: wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md
+
+## Objective
+Upgrade `pdf_watermark` in PaperPilot to render a 45° diagonal, semi-transparent watermark by default with configurable angle, opacity, color, font size, and page targeting across all 5 deployment surfaces (CLI, MCP, REST, WASM, Edge) and the Desktop UI per [Spec 037](specs/037-diagonal-configurable-watermarks/spec.md).
+
+---
+
+## IMPORTANT WORKSPACE REPO CONTEXT
+1. **Always merge latest `main`**:
+   Before making changes or raising a PR, run:
+   ```bash
+   git fetch origin main
+   git merge origin main
+   ```
+2. **Current Implementation**:
+   `paperpilot-pdf/src/operations/watermark.rs` currently hardcodes horizontal text at position `(100, 100)` with opaque font:
+   `BT /F1 48 Tf 1 0 0 1 100 100 Tm 0.5 g ({text}) Tj ET`
+3. **Commit Prefix**:
+   Commit message MUST start with `jules: ` prefix.
+
+---
+
+## Requirements
+
+### 1. Engine Core (`paperpilot-pdf/src/operations/watermark.rs`)
+1. Extend `WatermarkOperation`:
+   ```rust
+   pub struct WatermarkOperation {
+       pub text: String,
+       pub angle: f32,                // Default: 45.0 (degrees)
+       pub opacity: f32,              // Default: 0.2 (0.0 to 1.0)
+       pub font_size: Option<f32>,    // Default: None (auto-calculated or 54.0)
+       pub color: Option<String>,     // Default: None (light gray #888888 / [0.5, 0.5, 0.5])
+       pub pages: Option<Vec<u32>>,   // Default: None (all pages)
+   }
+   ```
+2. Dynamic Center & Diagonal Matrix:
+   - Calculate page width $W$ and height $H$ from `MediaBox` (default to 612x792 if missing).
+   - Compute center point $(x_c, y_c) = (W/2, H/2)$.
+   - Rotate by `angle` (default 45°):
+     $$\cos(\theta) = \cos(\text{angle} \times \pi / 180), \quad \sin(\theta) = \sin(\text{angle} \times \pi / 180)$$
+   - Calculate approximate text width offset to center the text on the page.
+3. PDF Transparency (`ExtGState`):
+   - Add `/ExtGState` with `/ca` and `/CA` set to `opacity` (default `0.2`) in `/Resources`.
+   - Apply `/GS1 gs` in the content stream so document text underneath remains readable.
+4. Unit Tests in `watermark.rs`:
+   - Verify default 45° diagonal angle and opacity in stream output.
+   - Verify horizontal (0°) orientation when `angle = 0.0`.
+   - Verify custom color and custom font size.
+
+### 2. The 5 Deployment Surfaces (Penta-Interface Mandate)
+1. **💻 CLI (`paperpilot-cli`)**:
+   - In `Commands::Watermark`:
+     - `--text <TEXT>` (required)
+     - `--angle <FLOAT>` (default `45.0`)
+     - `--opacity <FLOAT>` (default `0.2`)
+     - `--color <STRING>` (optional, e.g. "gray", "red", "blue")
+     - `--font-size <FLOAT>` (optional)
+2. **🤖 MCP (`paperpilot-mcp`)**:
+   - In `execute_list_tools()`: update `pdf_watermark` JSON schema with optional properties:
+     `angle` (number), `opacity` (number), `color` (string), `font_size` (number).
+   - In `execute_call_tool()`: extract optional params and pass to `WatermarkOperation`.
+3. **🌐 REST API (`paperpilot-gateway`)**:
+   - Update `WatermarkRequest` in `paperpilot-gateway/src/handlers.rs` to parse `angle`, `opacity`, `color`, `font_size`.
+   - Update OpenAPI definition.
+4. **⚡ WASM (`paperpilot-wasm`)**:
+   - Support `watermark(pdf_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> Result<Vec<u8>, JsValue>`.
+5. **☁️ Cloudflare Edge (`apps/edge`)**:
+   - Accept `angle` and `opacity` in `POST /api/v1/watermark`.
+
+### 3. Desktop UI Integration (`apps/desktop`)
+1. In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+   - Under the Watermark tool drawer, add:
+     - Orientation selector: `[ Diagonal (45°) | Horizontal (0°) ]`
+     - Opacity slider (`10%` to `100%`, default `20%`)
+     - Color presets (`Gray`, `Red Alert`, `Blue`)
+2. In `apps/desktop/src/lib/components/EditableActionCard.svelte`:
+   - Provide diagonal/horizontal toggle chip when `plan.intent === 'Watermark'`.
+
+### 4. Tests & Quality Gates
+1. Run and verify unit tests:
+   ```bash
+   cargo test -p paperpilot-pdf -- watermark
+   cargo test -p paperpilot-mcp
+   ```
+2. Verify all existing Penta-Interface tests and assertions continue to pass:
+   ```bash
+   cargo test -p penta-interface-e2e
+   ```
+3. Run desktop tests:
+   ```bash
+   pnpm --filter desktop test
+   ```
+4. Verify conformance with `qpdf --check`:
+   ```bash
+   ./scripts/verify_pdf_conformance.sh
+   ```
+
+### 5. Documentation & Report
+1. Create completion report: `reports/DIAGONAL_CONFIGURABLE_WATERMARKS_REPORT.md`.
+2. Update `wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md` and `HANDOFF.md`.
