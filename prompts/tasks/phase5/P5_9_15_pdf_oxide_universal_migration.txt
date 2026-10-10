@@ -13,8 +13,9 @@ Implementation Steps:
    - Add `pdf_oxide = "0.3"` to `paperpilot-pdf/Cargo.toml` with WASM-compatible features (`default-features = false`, pure-Rust core).
    - Upgrade `pdf_convert_markdown`:
      - Generate structured Markdown with headings (`#`), bold/italic (`**`), tables (`| Header |`), and de-weaved column flow.
-   - Upgrade `pdf_convert_html`:
-     - Generate semantic HTML5 (`<article>`, `<p>`, `<table>`, embedded `<img>` tags).
+   - Implement first-class `pdf_to_html`:
+     - Generate responsive semantic HTML5 (`<article>`, `<p>`, `<table>`, embedded `<img>` tags, mobile viewport metadata, clean CSS preset).
+     - Add dedicated `pdf_to_html` tool card in Desktop UI (`OperationsPanel.svelte`).
    - Upgrade `pdf_extract_text`:
      - Leverage perfect word-spacing and layout reading order.
    - Upgrade `pdf_search`:

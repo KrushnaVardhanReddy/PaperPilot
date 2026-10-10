@@ -26,12 +26,19 @@ Integrate `pdf_oxide` across PaperPilot's extraction and document conversion too
     - Markdown tables (`| Header | Header |` / `|---|---|`) for detected grids.
     - Inline formatting (`**bold**`, `*italic*`) based on font descriptors.
 
-### 2.2 `pdf_convert_html` (Semantic HTML5 Document Synthesis)
-- **Current State:** Simple `<pre>` or raw `<div>` wrapping without semantic DOM elements.
+### 2.2 First-Class `pdf_to_html` (Responsive HTML5 Web Document Synthesis)
+- **Current State:**
+  - `pdf_convert_html` in tool catalog is currently unidirectional (HTML $\to$ PDF).
+  - The internal `PdfToHtmlOperation` produces basic unstyled text dumps wrapped in `<p>` tags without images, CSS, or responsive styling, and has no visible tool card in `OperationsPanel.svelte`.
 - **Upgrade:**
+  - Establish **`pdf_to_html`** as a first-class citizen across all 5 interfaces and Desktop UI.
+  - Dedicated tool card in Desktop Operations Dock (`OperationsPanel.svelte`):
+    ```svelte
+    { id: 'pdf_to_html', title: 'PDF to HTML', description: 'Export document as responsive, styled HTML5 web page', icon: '🌐', category: 'convert', tags: ['html', 'web', 'export', 'responsive'] }
+    ```
   - Generate clean semantic HTML5 (`<article>`, `<section>`, `<h1>`-`<h6>`, `<p>`, `<table>`, `<thead>`, `<tbody>`).
-  - Embed extracted images (`<img src="data:image/png;base64,..."/>`) directly in layout flow.
-  - Retain word spacing and font family hints.
+  - Auto-embed extracted images (`<img src="data:image/png;base64,..."/>`) directly in layout flow.
+  - Provide modern clean typography CSS preset and responsive viewport tags (`<meta name="viewport">`) for mobile reading.
 
 ### 2.3 `pdf_extract_text` (High-Accuracy Spatial Text Extraction)
 - **Current State:** Character stream concatenation; occasionally misses whitespace or encounters kerning-induced word collisions.
