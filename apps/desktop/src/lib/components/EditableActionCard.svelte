@@ -71,8 +71,16 @@
             args.inputs = [path];
         }
 
-        // Output file
-        const defaultOutput = args.input ? args.input.replace(/\.pdf$/i, `_${plan.intent.toLowerCase()}.pdf`) : 'output.pdf';
+        // Output file extension mapping based on intent
+        let ext = '.pdf';
+        if (['ExtractText'].includes(plan.intent)) ext = '.txt';
+        else if (['ToMarkdown'].includes(plan.intent)) ext = '.md';
+        else if (['ToHtml'].includes(plan.intent)) ext = '.html';
+        else if (['ToDocx'].includes(plan.intent)) ext = '.docx';
+        else if (['ToXlsx'].includes(plan.intent)) ext = '.xlsx';
+        else if (['ToPptx'].includes(plan.intent)) ext = '.pptx';
+
+        const defaultOutput = args.input ? args.input.replace(/\.pdf$/i, `_${plan.intent.toLowerCase()}${ext}`) : `output${ext}`;
         const defaultDir = args.input ? args.input.replace(/\.pdf$/i, `_${plan.intent.toLowerCase()}`) : 'output_dir';
 
         if (outputPath) {

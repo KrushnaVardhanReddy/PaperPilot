@@ -87,9 +87,18 @@ export class AiConfigState {
             const result = await invoke<string>('test_ai_endpoint', { config });
             console.log('[aiConfig] Test result:', result);
             this.testResult = { success: true, message: result };
+            
+            // Trigger toast notification
+            const { toastState } = await import('$lib/state/toast.svelte');
+            toastState.success(result, 4500);
         } catch (e: any) {
             console.error('[aiConfig] Test failed:', e);
-            this.testResult = { success: false, message: e?.message || e?.toString() || 'Unknown error' };
+            const errStr = e?.message || e?.toString() || 'Unknown connection error';
+            this.testResult = { success: false, message: errStr };
+            
+            // Trigger toast notification for error
+            const { toastState } = await import('$lib/state/toast.svelte');
+            toastState.error(`Test Connection Failed: ${errStr}`, 5000);
         } finally {
             this.testLoading = false;
         }
