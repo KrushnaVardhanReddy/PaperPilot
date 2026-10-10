@@ -25,7 +25,10 @@
           <h3>AI Engine & Models</h3>
           <p class="help-text">Configure local/offline models, Llamafile runners, and remote BYOK keys.</p>
         </div>
-        <button class="btn primary" onclick={() => isAiModalOpen = true}>
+        <button class="btn primary" onclick={() => {
+          aiConfig.testResult = null;
+          isAiModalOpen = true;
+        }}>
           Manage AI & Models 🚀
         </button>
       </div>

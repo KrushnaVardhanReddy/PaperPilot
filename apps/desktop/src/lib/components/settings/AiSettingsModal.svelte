@@ -8,12 +8,14 @@
     const dispatch = createEventDispatcher();
 
     function close() {
+        aiConfig.testResult = null;
         isOpen = false;
         dispatch('close');
     }
 
     function handleModeChange(mode: AiProviderMode) {
         aiConfig.mode = mode;
+        aiConfig.testResult = null;
         aiConfig.saveConfig();
     }
 </script>
