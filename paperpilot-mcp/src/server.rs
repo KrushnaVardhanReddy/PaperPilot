@@ -1298,6 +1298,31 @@ impl PaperPilotMcpServer {
         );
         tools.push(tool_pptx);
 
+        let mut tool_json = Tool::default();
+        tool_json.name = "pdf_to_json".into();
+        tool_json.description =
+            Some("Converts a PDF document into structured JSON with text, page statistics, and metadata.".into());
+        let mut j_props = serde_json::Map::new();
+        j_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        j_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output JSON file path." }),
+        );
+        tool_json.input_schema = std::sync::Arc::new(
+            serde_json::json!({
+                "type": "object",
+                "properties": j_props,
+                "required": ["input", "output"]
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+        tools.push(tool_json);
+
         let mut tool_class = Tool::default();
         tool_class.name = "pdf_classify_type".into();
         tool_class.description =
@@ -3593,6 +3618,43 @@ impl PaperPilotMcpServer {
                     success: true,
 
                     message: "Converted to PPTX successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_to_json" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let doc_name = std::path::Path::new(&input)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                let op = paperpilot_pdf::operations::conversion::PdfToJsonOperation::new(doc_name);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let json_data = op
+                    .extracted_json
+                    .lock()
+                    .unwrap()
+                    .clone()
+                    .unwrap_or_default();
+
+                std::fs::write(&output, &json_data).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to write output JSON: {}", e), None)
+                })?;
+
+                Ok(OperationResult {
+                    data: serde_json::from_str::<serde_json::Value>(&json_data).ok(),
+                    success: true,
+
+                    message: "Converted to JSON successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

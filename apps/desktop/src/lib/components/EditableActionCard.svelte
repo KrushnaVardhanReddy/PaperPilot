@@ -74,6 +74,7 @@
         // Output file extension mapping based on intent
         let ext = '.pdf';
         if (['ExtractText'].includes(plan.intent)) ext = '.txt';
+        else if (['ToJson'].includes(plan.intent)) ext = '.json';
         else if (['ToMarkdown'].includes(plan.intent)) ext = '.md';
         else if (['ToHtml'].includes(plan.intent)) ext = '.html';
         else if (['ToDocx'].includes(plan.intent)) ext = '.docx';

@@ -113,6 +113,7 @@
                 case "Hash": toolName = "pdf_hash"; break;
 
                 // Conversions
+                case "ToJson": toolName = "pdf_to_json"; break;
                 case "ToDocx": toolName = "pdf_to_docx"; break;
                 case "ToXlsx": toolName = "pdf_to_xlsx"; break;
                 case "ToPptx": toolName = "pdf_to_pptx"; break;

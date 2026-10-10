@@ -176,6 +176,8 @@ impl Intent {
                 aliases: &[
                     "to json",
                     "convert to json",
+                    "convert pdf to json",
+                    "convert the pdf to json",
                     "make json",
                     "save as json",
                     "export to json",
@@ -186,12 +188,18 @@ impl Intent {
                 canonical_name: "ToDocx",
                 description: "Convert a document to DOCX format.",
                 aliases: &[
+                    "to word",
                     "to docx",
                     "convert to word",
+                    "convert pdf to word",
+                    "convert the pdf to word",
                     "make docx",
                     "save as word",
                     "export to docx",
+                    "export to word",
                     "convert to docx",
+                    "convert pdf to docx",
+                    "convert the pdf to docx",
                 ],
             },
             Intent::ToPptx => IntentDefinition {
@@ -200,11 +208,16 @@ impl Intent {
                 description: "Convert a document to PPTX format.",
                 aliases: &[
                     "to pptx",
+                    "to powerpoint",
                     "convert to powerpoint",
+                    "convert pdf to powerpoint",
+                    "convert the pdf to powerpoint",
                     "make pptx",
                     "save as pptx",
                     "export to powerpoint",
                     "convert to pptx",
+                    "convert pdf to pptx",
+                    "convert the pdf to pptx",
                 ],
             },
             Intent::ToHtml => IntentDefinition {
@@ -214,10 +227,12 @@ impl Intent {
                 aliases: &[
                     "to html",
                     "convert to web page",
+                    "convert to html",
+                    "convert pdf to html",
+                    "convert the pdf to html",
                     "make html",
                     "save as html",
                     "export to html",
-                    "convert to html",
                 ],
             },
             Intent::Crop => IntentDefinition {
