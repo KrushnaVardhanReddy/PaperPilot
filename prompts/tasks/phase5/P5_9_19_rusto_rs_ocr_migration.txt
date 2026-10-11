@@ -9,6 +9,12 @@ While this achieves a pure-Rust pipeline without C++ or dynamic ONNX Runtime (`o
 
 We are migrating PaperPilot's OCR engine to `rusto-rs` (v0.3), a pure-Rust OCR engine based on RapidOCR with PaddleOCR models backed by RTen. This provides sub-second inference, DBNet polygon word detection, and exact word-level bounding-box positioning in PDF content streams.
 
+CRITICAL SUCCESS REQUIREMENT: POST-OCR PDF SEARCHABILITY, SELECTABILITY & COPYABILITY
+The resulting output PDF (`_ocr.pdf`) MUST satisfy all three PDF text interaction standards:
+1. FULL SEARCHABILITY: Text search engines (Ctrl+F / Cmd+F) in Acrobat, Chrome, Preview, and Evince must find any word or phrase on the page with accurate string matching.
+2. MOUSE-DRAG TEXT SELECTION: Users must be able to click and drag the mouse cursor across any paragraph or line on the scanned document and visually see the exact text lines highlight under the cursor.
+3. CLIPBOARD COPY-PASTE FIDELITY: When highlighted text is copied (Ctrl+C / Cmd+C) and pasted into a text editor, it must paste clean, accurately spelled words with standard spaces and line breaks (not garbled fragments or empty buffers).
+
 SPEC & TASK REFERENCES:
 - Spec: specs/044-pure-rust-ocr-rusto-rs/spec.md
 - Task Breakdown: specs/044-pure-rust-ocr-rusto-rs/task.md
@@ -50,13 +56,17 @@ DETAILED IMPLEMENTATION INSTRUCTIONS:
        pdf_y = strip_y0 + (strip_h - ((norm_y + norm_h) * strip_h))
        font_size = (norm_h * strip_h).max(6.0)
 
-4. TRANSPARENT TEXT OVERLAY INJECTION:
+4. TRANSPARENT TEXT OVERLAY INJECTION (SELECTABLE, COPYABLE & SEARCHABLE):
    - Inject transparent graphics state into page resources:
      `/ExtGState << /GS_OCR << /Type /ExtGState /ca 0.001 /CA 0.001 >> >>`
      `/Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >>`
    - Append PDF stream operations for each word:
      `q /GS_OCR gs BT /F1 {font_size} Tf 1 0 0 1 {pdf_x} {pdf_y} Tm ({escaped_text}) Tj ET Q`
-   - Using `/ca 0.001` guarantees that PDF reader engines (Acrobat, Chrome, Preview, Evince) recognize physical selectable hit-boxes for mouse cursor dragging and copy-paste.
+   - Why `/ca 0.001`:
+     - Using `/ca 0.001` (nearly zero alpha) instead of invisible text render mode `3 Tr` guarantees that modern PDF renderers (Chrome PDF Viewer, Adobe Acrobat, macOS Preview, Linux Evince) recognize physical hit-testing bounding boxes for mouse selection.
+     - While visual pixels are invisible, the font glyph metrics provide physical width and height for cursor drag selection and clean clipboard copy.
+   - Character Spacing & Width Alignment:
+     - If the text box width `(norm_w * strip_w)` is significantly wider or narrower than the natural font width, adjust horizontal text scaling (`{scale} Tz`) or word spacing (`Tw`) so selection bounding boxes tightly align with the underlying visual scanned words.
 
 5. SPATIALLY SORTED PLAINTEXT GENERATION:
    - When target output is `.txt`, group words into lines by vertical coordinate proximity (Delta y < 0.5 * font_size).
@@ -70,5 +80,8 @@ DETAILED IMPLEMENTATION INSTRUCTIONS:
    - Run `cargo check --workspace -j 6`.
    - Run `cargo test -p paperpilot-pdf --lib ocr -j 6`.
    - Run `cargo test -p paperpilot-cli -j 6`.
-   - Generate a searchable/selectable PDF from a test scanned document and verify word-level selectable text.
+   - Test against real scanned document fixture (e.g. `tests/fixtures/scanned.pdf` or I-140 notice):
+     1. Search test: Verify `qpdf` or text extraction tool extracts exact strings.
+     2. Selection test: Verify mouse drag across text lines in PDF viewer selects the text overlay.
+     3. Copy-paste test: Verify pasting copied text yields valid text without corrupted glyphs.
    - Author detailed completion report at `reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`.
