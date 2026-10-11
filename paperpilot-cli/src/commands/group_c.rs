@@ -74,11 +74,11 @@ pub fn handle_ocr(input: &std::path::Path, output: &std::path::Path) -> Operatio
         std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
     }
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::ocr::OcrOperation::new();
+    let mut op = paperpilot_pdf::operations::ocr::OcrOperation::new();
+    op.output_path = Some(output.to_path_buf());
     op.execute(&mut doc)?;
-    // OCR operation extracts embedded text as fallback; save result as a PDF copy
-    // so the output file exists and passes the E2E file-existence assertion.
-    doc.save(output)
+    // Document saves are handled inside `op.execute` directly because it needs to output both txt and pdf interchangeably.
+    Ok(())
 }
 
 pub fn handle_bookmarks(input: &std::path::Path) -> OperationResult<()> {
