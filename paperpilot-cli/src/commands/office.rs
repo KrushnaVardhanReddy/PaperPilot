@@ -1,7 +1,8 @@
 use clap::Subcommand;
 use paperpilot_core::error::OperationResult;
 use paperpilot_pdf::operations::office::{
-    OfficeExtractTextOperation, OfficeModernizeOperation, OfficeToMarkdownOperation,
+    ExcelToCsvOperation, ExcelToJsonOperation, OfficeExtractTextOperation,
+    OfficeModernizeOperation, OfficeToMarkdownOperation,
 };
 use std::path::PathBuf;
 
@@ -28,6 +29,26 @@ pub enum OfficeCommands {
         #[arg(long, required = true)]
         output: PathBuf,
     },
+    /// Ingest Excel spreadsheet and output structured JSON
+    ExcelToJson {
+        #[arg(long, required = true)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        sheet: Option<String>,
+        #[arg(long)]
+        no_headers: bool,
+    },
+    /// Export Excel spreadsheet sheet to CSV
+    ExcelToCsv {
+        #[arg(long, required = true)]
+        input: PathBuf,
+        #[arg(long, required = true)]
+        output: PathBuf,
+        #[arg(long)]
+        sheet: Option<String>,
+    },
 }
 
 pub fn handle_office_command(command: &OfficeCommands) -> OperationResult<()> {
@@ -41,5 +62,27 @@ pub fn handle_office_command(command: &OfficeCommands) -> OperationResult<()> {
         OfficeCommands::Modernize { input, output } => {
             OfficeModernizeOperation::execute(input, output)
         }
+        OfficeCommands::ExcelToJson {
+            input,
+            output,
+            sheet,
+            no_headers,
+        } => {
+            let json_str = ExcelToJsonOperation::execute(
+                input,
+                sheet.as_deref(),
+                !no_headers,
+            )?;
+            match output {
+                Some(path) => std::fs::write(path, json_str).map_err(paperpilot_core::error::PdfError::IoError)?,
+                None => println!("{}", json_str),
+            }
+            Ok(())
+        }
+        OfficeCommands::ExcelToCsv {
+            input,
+            output,
+            sheet,
+        } => ExcelToCsvOperation::execute(input, output, sheet.as_deref()),
     }
 }

@@ -1,7 +1,188 @@
 use office_oxide::Document;
 use paperpilot_core::error::{OperationResult, PdfError};
+use calamine::{Data, Reader, open_workbook_auto};
+use serde_json::{json, Value};
 use std::fs;
 use std::path::Path;
+
+pub struct ExcelToJsonOperation;
+
+impl ExcelToJsonOperation {
+    pub fn execute(
+        input_path: &Path,
+        sheet_name: Option<&str>,
+        has_headers: bool,
+    ) -> OperationResult<String> {
+        let mut workbook = open_workbook_auto(input_path).map_err(|e| {
+            PdfError::IoError(std::io::Error::other(format!("Failed to open workbook: {}", e)))
+        })?;
+
+        let sheet_names = workbook.sheet_names().to_vec();
+        let target_sheets: Vec<String> = match sheet_name {
+            Some(name) => {
+                if !sheet_names.contains(&name.to_string()) {
+                    return Err(PdfError::IoError(std::io::Error::other(format!(
+                        "Sheet not found: {}",
+                        name
+                    ))));
+                }
+                vec![name.to_string()]
+            }
+            None => sheet_names,
+        };
+
+        let mut sheets_data = Vec::new();
+
+        for name in target_sheets {
+            if let Ok(range) = workbook.worksheet_range(&name) {
+                let mut rows_iter = range.rows();
+                let mut columns: Vec<String> = Vec::new();
+                let mut data: Vec<Value> = Vec::new();
+
+                if has_headers {
+                    if let Some(header_row) = rows_iter.next() {
+                        for (i, cell) in header_row.iter().enumerate() {
+                            let header = match cell {
+                                Data::String(s) => s.to_string(),
+                                Data::Float(f) => f.to_string(),
+                                Data::Int(i) => i.to_string(),
+                                Data::Bool(b) => b.to_string(),
+                                Data::DateTime(d) => d.as_f64().to_string(),
+                                Data::Error(e) => format!("Error({})", e),
+                                Data::Empty => format!("Column{}", i),
+                                _ => format!("Column{}", i),
+                            };
+                            columns.push(header);
+                        }
+                    }
+                    for row in rows_iter {
+                        let mut row_obj = serde_json::Map::new();
+                        for (i, cell) in row.iter().enumerate() {
+                            let key = if i < columns.len() {
+                                columns[i].clone()
+                            } else {
+                                format!("Column{}", i)
+                            };
+                            let val = match cell {
+                                Data::String(s) => Value::String(s.to_string()),
+                                Data::Float(f) => Value::Number(
+                                    serde_json::Number::from_f64(*f)
+                                        .unwrap_or_else(|| serde_json::Number::from(0)),
+                                ),
+                                Data::Int(i) => Value::Number(serde_json::Number::from(*i)),
+                                Data::Bool(b) => Value::Bool(*b),
+                                Data::DateTime(d) => Value::Number(
+                                    serde_json::Number::from_f64(d.as_f64())
+                                        .unwrap_or_else(|| serde_json::Number::from(0)),
+                                ),
+                                Data::Error(e) => Value::String(format!("Error({})", e)),
+                                Data::Empty => Value::Null,
+                                _ => Value::Null,
+                            };
+                            row_obj.insert(key, val);
+                        }
+                        data.push(Value::Object(row_obj));
+                    }
+                } else {
+                    for row in rows_iter {
+                        let mut row_arr = Vec::new();
+                        for cell in row.iter() {
+                            let val = match cell {
+                                Data::String(s) => Value::String(s.to_string()),
+                                Data::Float(f) => Value::Number(
+                                    serde_json::Number::from_f64(*f)
+                                        .unwrap_or_else(|| serde_json::Number::from(0)),
+                                ),
+                                Data::Int(i) => Value::Number(serde_json::Number::from(*i)),
+                                Data::Bool(b) => Value::Bool(*b),
+                                Data::DateTime(d) => Value::Number(
+                                    serde_json::Number::from_f64(d.as_f64())
+                                        .unwrap_or_else(|| serde_json::Number::from(0)),
+                                ),
+                                Data::Error(e) => Value::String(format!("Error({})", e)),
+                                Data::Empty => Value::Null,
+                                _ => Value::Null,
+                            };
+                            row_arr.push(val);
+                        }
+                        data.push(Value::Array(row_arr));
+                    }
+                }
+
+                sheets_data.push(json!({
+                    "name": name,
+                    "rows_count": range.get_size().0,
+                    "columns": columns,
+                    "data": data,
+                }));
+            }
+        }
+
+        let result = json!({ "sheets": sheets_data });
+        Ok(result.to_string())
+    }
+}
+
+pub struct ExcelToCsvOperation;
+
+impl ExcelToCsvOperation {
+    pub fn execute(
+        input_path: &Path,
+        output_path: &Path,
+        sheet_name: Option<&str>,
+    ) -> OperationResult<()> {
+        let mut workbook = open_workbook_auto(input_path).map_err(|e| {
+            PdfError::IoError(std::io::Error::other(format!("Failed to open workbook: {}", e)))
+        })?;
+
+        let target_sheet = match sheet_name {
+            Some(name) => name.to_string(),
+            None => {
+                let sheet_names = workbook.sheet_names().to_vec();
+                if sheet_names.is_empty() {
+                    return Err(PdfError::IoError(std::io::Error::other("No sheets found in workbook")));
+                }
+                sheet_names[0].clone()
+            }
+        };
+
+        if let Ok(range) = workbook.worksheet_range(&target_sheet) {
+            let mut wtr = csv::Writer::from_path(output_path).map_err(|e| {
+                PdfError::IoError(std::io::Error::other(format!("Failed to create csv writer: {}", e)))
+            })?;
+
+            for row in range.rows() {
+                let mut record = Vec::new();
+                for cell in row.iter() {
+                    let s = match cell {
+                        Data::String(s) => s.to_string(),
+                        Data::Float(f) => f.to_string(),
+                        Data::Int(i) => i.to_string(),
+                        Data::Bool(b) => b.to_string(),
+                        Data::DateTime(d) => d.as_f64().to_string(),
+                        Data::Error(e) => format!("Error({})", e),
+                        Data::Empty => "".to_string(),
+                        _ => "".to_string(),
+                    };
+                    record.push(s);
+                }
+                wtr.write_record(&record).map_err(|e| {
+                    PdfError::IoError(std::io::Error::other(format!("Failed to write csv record: {}", e)))
+                })?;
+            }
+            wtr.flush().map_err(|e| {
+                PdfError::IoError(std::io::Error::other(format!("Failed to flush csv: {}", e)))
+            })?;
+        } else {
+            return Err(PdfError::IoError(std::io::Error::other(format!(
+                "Failed to read sheet: {}",
+                target_sheet
+            ))));
+        }
+
+        Ok(())
+    }
+}
 
 pub struct OfficeToMarkdownOperation;
 
@@ -41,6 +222,69 @@ impl OfficeModernizeOperation {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    use rust_xlsxwriter::Workbook;
+    use tempfile::NamedTempFile;
+
+    fn create_test_excel() -> NamedTempFile {
+        let mut workbook = Workbook::new();
+        let worksheet = workbook.add_worksheet();
+        worksheet.write_string(0, 0, "Header1").unwrap();
+        worksheet.write_string(0, 1, "Header2").unwrap();
+        worksheet.write_string(1, 0, "Value1").unwrap();
+        worksheet.write_number(1, 1, 42.0).unwrap();
+        let worksheet2 = workbook.add_worksheet().set_name("Sheet2").unwrap();
+        worksheet2.write_string(0, 0, "OnlyOne").unwrap();
+
+        let file = NamedTempFile::new().unwrap();
+        workbook.save(file.path()).unwrap();
+        file
+    }
+
+    #[test]
+    fn test_excel_to_json_success() {
+        let file = create_test_excel();
+        let res = ExcelToJsonOperation::execute(file.path(), None, true);
+        assert!(res.is_ok());
+        let json_str = res.unwrap();
+        let v: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(v["sheets"].as_array().unwrap().len(), 2);
+        assert_eq!(v["sheets"][0]["name"], "Sheet1");
+        assert_eq!(v["sheets"][0]["data"][0]["Header1"], "Value1");
+        assert_eq!(v["sheets"][0]["data"][0]["Header2"], 42.0);
+    }
+
+    #[test]
+    fn test_excel_to_json_invalid_file() {
+        let res = ExcelToJsonOperation::execute(Path::new("does_not_exist.xlsx"), None, true);
+        assert!(res.is_err());
+        match res {
+            Err(PdfError::IoError(_)) => {}
+            _ => panic!("Expected IoError"),
+        }
+    }
+
+    #[test]
+    fn test_excel_to_csv_success() {
+        let file = create_test_excel();
+        let out_file = NamedTempFile::new().unwrap();
+        let res = ExcelToCsvOperation::execute(file.path(), out_file.path(), Some("Sheet1"));
+        assert!(res.is_ok());
+        let content = std::fs::read_to_string(out_file.path()).unwrap();
+        assert!(content.contains("Header1,Header2"));
+        assert!(content.contains("Value1,42"));
+    }
+
+    #[test]
+    fn test_excel_to_csv_invalid_file() {
+        let out_file = NamedTempFile::new().unwrap();
+        let res = ExcelToCsvOperation::execute(Path::new("does_not_exist.xlsx"), out_file.path(), None);
+        assert!(res.is_err());
+        match res {
+            Err(PdfError::IoError(_)) => {}
+            _ => panic!("Expected IoError"),
+        }
+    }
 
     #[test]
     fn test_office_to_markdown_invalid_file() {

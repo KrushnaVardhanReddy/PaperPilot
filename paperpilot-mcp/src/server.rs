@@ -2657,6 +2657,52 @@ impl PaperPilotMcpServer {
         tool_ann.input_schema = std::sync::Arc::new(schema_ann);
         tools.push(tool_ann);
 
+        tools.push(Tool::new(
+            "excel_to_json".to_string(),
+            "Ingest Excel spreadsheet (.xlsx/.xls) into structured JSON with cell type preservation.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": {
+                        "type": "string",
+                        "description": "Path to the input Excel file"
+                    },
+                    "sheet": {
+                        "type": "string",
+                        "description": "Optional specific sheet name to extract"
+                    },
+                    "has_headers": {
+                        "type": "boolean",
+                        "description": "Whether the first row contains headers (defaults to true)"
+                    }
+                },
+                "required": ["input"]
+            }).as_object().unwrap().clone(),
+        ));
+
+        tools.push(Tool::new(
+            "excel_to_csv".to_string(),
+            "Export Excel spreadsheet (.xlsx/.xls) sheet to standard RFC 4180 CSV.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": {
+                        "type": "string",
+                        "description": "Path to the input Excel file"
+                    },
+                    "output": {
+                        "type": "string",
+                        "description": "Path to save the output CSV file"
+                    },
+                    "sheet": {
+                        "type": "string",
+                        "description": "Optional specific sheet name to export"
+                    }
+                },
+                "required": ["input", "output"]
+            }).as_object().unwrap().clone(),
+        ));
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -3551,6 +3597,65 @@ impl PaperPilotMcpServer {
                     output_path: None,
                 })
             }
+            "excel_to_json" => {
+                let input = get_string("input")?;
+                let sheet = args
+                    .get("sheet")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let has_headers = args
+                    .get("has_headers")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+
+                let res = paperpilot_pdf::operations::office::ExcelToJsonOperation::execute(
+                    &PathBuf::from(input),
+                    sheet.as_deref(),
+                    has_headers,
+                );
+                match res {
+                    Ok(json_str) => Ok(OperationResult {
+                        data: Some(serde_json::from_str(&json_str).unwrap_or(serde_json::json!({}))),
+                        success: true,
+                        message: "Excel data extracted to JSON".to_string(),
+                        output_path: None,
+                        diff_detected: None,
+                    }),
+                    Err(e) => Err(ErrorData {
+                        code: rmcp::model::ErrorCode(-32603),
+                        message: e.to_string().into(),
+                        data: None,
+                    }),
+                }
+            }
+            "excel_to_csv" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let sheet = args
+                    .get("sheet")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+
+                let res = paperpilot_pdf::operations::office::ExcelToCsvOperation::execute(
+                    &PathBuf::from(input),
+                    &PathBuf::from(&output),
+                    sheet.as_deref(),
+                );
+                match res {
+                    Ok(_) => Ok(OperationResult {
+                        data: None,
+                        success: true,
+                        message: "Excel sheet exported to CSV".to_string(),
+                        output_path: Some(output),
+                        diff_detected: None,
+                    }),
+                    Err(e) => Err(ErrorData {
+                        code: rmcp::model::ErrorCode(-32603),
+                        message: e.to_string().into(),
+                        data: None,
+                    }),
+                }
+            }
             "pdf_metadata" => {
                 let input = get_string("input")?;
                 let title = get_string("title").ok();
@@ -4299,7 +4404,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 48);
+        assert_eq!(res.tools.len(), 50);
     }
 
     #[test]
