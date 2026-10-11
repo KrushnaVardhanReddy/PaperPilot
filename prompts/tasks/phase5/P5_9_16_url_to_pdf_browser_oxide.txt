@@ -1,30 +1,54 @@
-Task: Pure-Rust Chromium-Free URL-to-PDF Archival Engine via browser_oxide [Spec 041]
+=== TASK DEFINITION: Phase 5 - Spec 041: Pure-Rust Chromium-Free URL-to-PDF Archival Engine via `browser_oxide` ===
 
-Objective:
-Implement a 100% pure-Rust, zero-Chromium `url_to_pdf` web archiving operation in `paperpilot-pdf` by integrating `browser_oxide` to evaluate JavaScript and render dynamic web pages directly to PDFs without requiring Chrome/Chromium installed on the system.
+CONTEXT & MOTIVATION:
+Currently, converting web pages or URLs to PDF typically requires headless Google Chrome or Chromium (using brittle CDP flags, external binaries, and heavy memory usage), or static HTML converters that completely break on modern dynamic client-rendered JavaScript (React, Svelte, Vue).
+We are integrating `browser_oxide` into PaperPilot (`paperpilot-pdf`) to deliver a 100% pure-Rust, zero-Chromium web page archiving and dynamic HTML+JS-to-PDF conversion engine.
 
-Context & Reference:
-- Read `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md` for architecture and parameters.
-- Concurrency Constraint: Max 6 cores. All builds and test commands must use `-j 6`.
-- Memory Constraint: Enforce <35MB baseline memory profile and avoid memory leaks.
+SPEC REFERENCE:
+specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md
 
-Implementation Steps:
-1. Engine Core (`paperpilot-pdf`):
-   - Add `browser_oxide` crate as dependency.
-   - Implement `UrlToPdfOperation` supporting `--url`, `--delay`, and `--page-size`.
-   - Render DOM layout to vector/raster PDF pages without spawning external browser binaries.
-2. Interface Integration:
-   - Expose in `paperpilot-cli`: `paperpilot convert-url --url <URL> --output <OUT>`.
-   - Expose in `paperpilot-mcp`: `pdf_convert_url`.
-   - Expose in `paperpilot-gateway`: `POST /api/v1/pdf/convert/url`.
-3. Verification:
-   - Add tests archiving a local mock HTTP server page with dynamic JS into a valid PDF.
-   - Run tests bounded with `-j 6`.
-   - Zero clippy warnings under `-D warnings`.
-4. Documentation:
-   - Author `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`.
-   - Update `PHASES.md` marking Task 5.9.16 completed.
+MANDATORY CONSTRAINTS:
+1. Concurrency limit: Always enforce `-j 6` on all build, test, and clippy invocations (`cargo test -j 6`).
+2. Zero external browser binaries: Must NOT spawn `chrome`, `chromium`, or rely on Chrome DevTools Protocol (CDP). Must run 100% in Rust.
+3. Memory limit: Enforce a clean baseline memory footprint (<35MB RSS) and zero process or socket leaks.
+4. Testing: Zero Python testing scripts. Validate using `cargo test -j 6` or `paperpilot-cli`.
 
-Deliverables:
-- All commits prefixed with `jules: `
-- Clean workspace passing all clippy and test quality gates.
+DETAILED IMPLEMENTATION INSTRUCTIONS:
+
+1. DEPENDENCY & CARGO SETUP:
+   - In `paperpilot-pdf/Cargo.toml`:
+     - Add `browser_oxide = "0.1"` (or latest compatible pure-Rust release).
+     - Ensure dependencies compile cleanly on Linux x86_64 and WASM.
+
+2. CORE ENGINE OPERATION (`paperpilot-pdf/src/operations/url.rs` or `conversion.rs`):
+   - Implement `UrlToPdfOperation`:
+     ```rust
+     pub struct UrlToPdfOptions {
+         pub url: String,
+         pub delay_ms: Option<u64>,      // Wait time for JS hydration (default: 500ms)
+         pub page_size: Option<String>,  // "A4", "Letter" (default: "A4")
+         pub print_background: bool,    // Render CSS backgrounds (default: true)
+     }
+     ```
+   - Fetch URL, execute client scripts through `browser_oxide`'s embedded engine to settle DOM layout, extract rendered vector/raster elements, and emit a valid PDF via `lopdf`.
+   - Provide graceful error handling for network timeouts or DNS resolution failures without panicking.
+
+3. PENTA-INTERFACE EXPOSURE:
+   - CLI (`paperpilot-cli/src/commands/`):
+     - Expose `paperpilot convert-url --url <URL> --output <OUT> [--delay <MS>] [--page-size <A4|Letter>]`.
+   - MCP Server (`paperpilot-mcp/src/server.rs`):
+     - Register `pdf_convert_url` tool taking `{ "url": string, "output": string, "delay_ms"?: number }`.
+     - Wire into `execute_list_tools` and `execute_call_tool` match dispatchers.
+   - REST Gateway (`paperpilot-gateway/src/handlers.rs`):
+     - Add `POST /api/v1/pdf/convert/url` route with Swagger/OpenAPI docs.
+   - Desktop UI (`apps/desktop/src/lib/components/layout/OperationsPanel.svelte`):
+     - Add "Capture URL to PDF" operation card with URL input and default output `${base}_web.pdf`.
+
+4. VERIFICATION & QUALITY GATES:
+   - Run `cargo check --workspace -j 6`.
+   - Add unit test in `paperpilot-pdf`: Verify converting a mock HTML page with dynamic script injection produces a multi-element PDF document.
+   - Run `cargo test -p paperpilot-pdf -j 6`.
+   - Run `cargo test -p paperpilot-mcp -j 6`.
+   - Ensure clean clippy pass: `cargo clippy --workspace -- -D warnings`.
+   - Author completion report at `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.16 complete.
