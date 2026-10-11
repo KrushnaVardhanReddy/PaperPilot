@@ -36,10 +36,17 @@ fn find_model(file_name: &str) -> Option<PathBuf> {
             return Some(p);
         }
     }
-    // 2. Local workspace models directory
-    let local = PathBuf::from("models").join("ocr").join(file_name);
-    if local.exists() {
-        return Some(local);
+    // 2. Local workspace models directory and subdirectories
+    for candidate in [
+        PathBuf::from("models").join("ocr").join(file_name),
+        PathBuf::from("models").join("ocr").join("ppocrv4").join(file_name),
+        PathBuf::from("models").join("ocr").join("ppocrv6").join(file_name),
+        PathBuf::from("../models").join("ocr").join(file_name),
+        PathBuf::from("../../models").join("ocr").join(file_name),
+    ] {
+        if candidate.exists() {
+            return Some(candidate);
+        }
     }
     // 3. User home / cache directory
     if let Ok(home) = std::env::var("HOME") {
@@ -64,20 +71,26 @@ impl PdfOperation for OcrOperationImpl {
         let mut words_collected: Vec<(f32, f32, f32, String)> = Vec::new(); // (pdf_y, pdf_x, font_size, text)
 
         if let Some(lopdf_doc) = document.as_any_mut().downcast_mut::<LopdfDocument>() {
-            let det_path = find_model("det.rten");
-            let rec_path = find_model("rec.rten");
+            let det_path = find_model("det.rten").or_else(|| find_model("det.onnx"));
+            let rec_path = find_model("rec.rten").or_else(|| find_model("rec.onnx"));
             let dict_path = find_model("ppocr_keys_v1.txt").or_else(|| find_model("dict.txt"));
+
+            eprintln!("[OCR DEBUG] det: {:?}, rec: {:?}, dict: {:?}", det_path, rec_path, dict_path);
 
             let mut ocr_engine = None;
             if let (Some(det), Some(rec), Some(dict)) = (det_path, rec_path, dict_path) {
                 let config = rusto::config::InitializeConfig::ppv4(det, rec, dict);
-                if let Ok(engine) = rusto::RustO::initialize(config) {
-                    ocr_engine = Some(engine);
-                } else {
-                    eprintln!("Warning: Failed to initialize rusto-rs OCR engine.");
+                match rusto::RustO::initialize(config) {
+                    Ok(engine) => {
+                        eprintln!("[OCR DEBUG] Engine initialized successfully!");
+                        ocr_engine = Some(engine);
+                    }
+                    Err(err) => {
+                        eprintln!("[OCR DEBUG] Warning: Failed to initialize rusto-rs OCR engine: {:?}", err);
+                    }
                 }
             } else {
-                eprintln!("Warning: OCR models not found. Falling back to embedded text extraction.");
+                eprintln!("[OCR DEBUG] Warning: OCR models not found. Falling back to embedded text extraction.");
             }
 
             if let Some(mut engine) = ocr_engine {
@@ -155,6 +168,7 @@ impl PdfOperation for OcrOperationImpl {
 
                         if let Ok(dyn_img) = image::load_from_memory(&stream.content) {
                             let (orig_w, orig_h) = (dyn_img.width(), dyn_img.height());
+                            eprintln!("[OCR DEBUG] Image loaded: {}x{}", orig_w, orig_h);
                             if orig_w == 0 || orig_h < 15 {
                                 continue;
                             }
@@ -165,6 +179,7 @@ impl PdfOperation for OcrOperationImpl {
                             let dark_count = pixels.iter().filter(|&&p| p < 200).count();
                             // If fewer than 0.2% of pixels are non-white, there is no text in this strip
                             if dark_count < (pixels.len() / 500) {
+                                eprintln!("[OCR DEBUG] Skipped white strip: dark_count={}", dark_count);
                                 continue;
                             }
 
@@ -180,12 +195,23 @@ impl PdfOperation for OcrOperationImpl {
                                 ..Default::default()
                             };
 
-                            if let Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) = engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(stream.content.clone()), &run_options) {
-                                if !results.is_empty() {
-                                    page_ocr_text.push((resized.width(), resized.height(), results.clone()));
-                                    executed_ocr = true;
+                            match engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(stream.content.clone()), &run_options) {
+                                Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) => {
+                                    eprintln!("[OCR DEBUG] Detected {} words!", results.len());
+                                    if !results.is_empty() {
+                                        page_ocr_text.push((resized.width(), resized.height(), results.clone()));
+                                        executed_ocr = true;
+                                    }
+                                }
+                                Ok(other) => {
+                                    eprintln!("[OCR DEBUG] Non-structured result: {:?}", other);
+                                }
+                                Err(err) => {
+                                    eprintln!("[OCR DEBUG] detect_text error: {:?}", err);
                                 }
                             }
+                        } else {
+                            eprintln!("[OCR DEBUG] Failed to load image from memory (len: {})", stream.content.len());
                         }
                     }
 
@@ -273,10 +299,39 @@ impl PdfOperation for OcrOperationImpl {
                         );
                         let stream_obj_id = inner.add_object(content_stream);
 
+                        // Ensure font & ExtGState reference in Resources
+                        let res_obj_id = inner
+                            .get_object(page_id)
+                            .ok()
+                            .and_then(|obj| obj.as_dict().ok())
+                            .and_then(|page_d| match page_d.get(b"Resources") {
+                                Ok(lopdf::Object::Reference(ref_id)) => Some(*ref_id),
+                                _ => None,
+                            });
+
+                        if let Some(res_id) = res_obj_id {
+                            if let Ok(res_dict) = inner.get_object_mut(res_id).and_then(|obj| obj.as_dict_mut()) {
+                                let mut fonts = res_dict
+                                    .get(b"Font")
+                                    .and_then(|f| f.as_dict())
+                                    .cloned()
+                                    .unwrap_or_else(|_| lopdf::Dictionary::new());
+                                fonts.set("F1", lopdf::Object::Reference(font_id));
+                                res_dict.set("Font", lopdf::Object::Dictionary(fonts));
+
+                                let mut ext_gstates = res_dict
+                                    .get(b"ExtGState")
+                                    .and_then(|e| e.as_dict())
+                                    .cloned()
+                                    .unwrap_or_else(|_| lopdf::Dictionary::new());
+                                ext_gstates.set("GS_OCR", lopdf::Object::Reference(gs_id));
+                                res_dict.set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
+                            }
+                        }
+
                         if let Ok(lopdf::Object::Dictionary(page_d)) = inner.get_object_mut(page_id) {
-                            // Ensure font & ExtGState reference in Resources
-                            if let Ok(res_obj) = page_d.get_mut(b"Resources") {
-                                if let Ok(res_dict) = res_obj.as_dict_mut() {
+                            if res_obj_id.is_none() {
+                                if let Ok(res_dict) = page_d.get_mut(b"Resources").and_then(|res_obj| res_obj.as_dict_mut()) {
                                     let mut fonts = res_dict
                                         .get(b"Font")
                                         .and_then(|f| f.as_dict())

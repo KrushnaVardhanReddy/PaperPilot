@@ -85,7 +85,18 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
 - **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**: ✅ Merged (PR #181, commit `42730fd`, Session 10047595857438929348) — Loading spinner and elapsed timer on Run button, multi-format DropZone with badges, context-aware tool switcher, and dynamic Workspace subtitle (`reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md`).
-- **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
+- **Phase 5.9.19 (Spec 044 / `rusto-rs` & `ocrs` OCR Investigation & Stability)**: ✅ **Verified Working**
+  - **Resolution & Fixes Applied**:
+    1. **Fixed Indirect Resource Mutation**: Updated `paperpilot-pdf/src/operations/ocr.rs` to detect and directly mutate indirect `Resources` dictionaries (`inner.get_object_mut(res_id)`), ensuring `/Font` and `/ExtGState` are persisted to disk.
+    2. **Official PP-OCRv4 ONNX Models**: Fetched official `det.onnx` (4.7MB) and `rec.onnx` (10.8MB) into `models/ocr/ppocrv4/` with `ppocr_keys_v1.txt`.
+    3. **Model Path Resolution**: `find_model` in `ocr.rs` searches `models/ocr/ppocrv4/` and matches `.onnx` and `.rten`.
+    4. **Verified End-to-End**: Output PDF `/home/krushna/Downloads/I-140_approval_notice_ocr.pdf` verified with mouse selection and text copying working in PDF viewer.
+  - **Status**: OCR is functioning as expected with selectable/copyable text.
+- **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
+  - **Jules Response Ready**: Add Cargo patch in root `Cargo.toml`:
+    `[patch.crates-io]`
+    `fontdb = { git = "https://github.com/RazrFalcon/fontdb.git", tag = "0.21.0" }`
+    (Bypasses the `Source::Binary` refutable pattern compile error in `browser_oxide = "0.1.3"`).
 - **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
 - **Phase 5.9.12 (Spec 037 / Diagonal Watermarks)**: ✅ Merged (PR #176) — 45° diagonal angle, alpha transparency, MediaBox centering, and configurable parameters across all 5 surfaces.
 - **Phase 5.9.11 (Spec 036 / JSON-to-PDF Synthesis)**: ✅ Merged (PR #169) — Pure-Rust `json_to_pdf` closing the bidirectional agent loop (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`).
