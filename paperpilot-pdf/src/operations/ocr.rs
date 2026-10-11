@@ -1,11 +1,8 @@
 use crate::document::LopdfDocument;
 use image;
 use lopdf::dictionary;
-use ocrs::{ImageSource, OcrEngine, OcrEngineParams};
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use rten_tensor::NdTensor;
-use rten_tensor::prelude::*;
 use std::path::PathBuf;
 
 pub struct OcrOperationImpl {
@@ -53,46 +50,34 @@ fn find_model(file_name: &str) -> Option<PathBuf> {
         if user_path.exists() {
             return Some(user_path);
         }
-        let cache_path = PathBuf::from(&home)
-            .join(".cache")
-            .join("ocrs")
-            .join(file_name);
-        if cache_path.exists() {
-            return Some(cache_path);
-        }
     }
     None
-}
-
-fn load_ocr_engine() -> Result<OcrEngine, Box<dyn std::error::Error + Send + Sync>> {
-    let det_path = find_model("text-detection.rten");
-    let rec_path = find_model("text-recognition.rten");
-
-    let detection_model = match det_path {
-        Some(p) => rten::Model::load_file(&p).ok(),
-        None => None,
-    };
-    let recognition_model = match rec_path {
-        Some(p) => rten::Model::load_file(&p).ok(),
-        None => None,
-    };
-
-    let params = OcrEngineParams {
-        detection_model,
-        recognition_model,
-        ..Default::default()
-    };
-    OcrEngine::new(params).map_err(|e| e.into())
 }
 
 impl PdfOperation for OcrOperationImpl {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let mut executed_ocr = false;
-        let mut words_collected: Vec<String> = Vec::new();
+        // Collect words with their vertical coordinate for later sorting and line-breaking
+        let mut words_collected: Vec<(f32, f32, f32, String)> = Vec::new(); // (pdf_y, pdf_x, font_size, text)
 
         if let Some(lopdf_doc) = document.as_any_mut().downcast_mut::<LopdfDocument>() {
-            let engine_res = load_ocr_engine();
-            if let Ok(engine) = engine_res {
+            let det_path = find_model("det.rten");
+            let rec_path = find_model("rec.rten");
+            let dict_path = find_model("ppocr_keys_v1.txt").or_else(|| find_model("dict.txt"));
+
+            let mut ocr_engine = None;
+            if let (Some(det), Some(rec), Some(dict)) = (det_path, rec_path, dict_path) {
+                let config = rusto::config::InitializeConfig::ppv4(det, rec, dict);
+                if let Ok(engine) = rusto::RustO::initialize(config) {
+                    ocr_engine = Some(engine);
+                } else {
+                    eprintln!("Warning: Failed to initialize rusto-rs OCR engine.");
+                }
+            } else {
+                eprintln!("Warning: OCR models not found. Falling back to embedded text extraction.");
+            }
+
+            if let Some(mut engine) = ocr_engine {
                 let inner = &mut lopdf_doc.inner;
 
                 // Add Helvetica font for text injection if needed
@@ -187,28 +172,14 @@ impl PdfOperation for OcrOperationImpl {
                                 dyn_img
                             };
 
-                            let rgb = resized.into_rgb8();
-                            let (width, height) = rgb.dimensions();
+                            let run_options = rusto::OcrRunOptions {
+                                output: rusto::rusto_ocr::OutputGranularity::Words,
+                                ..Default::default()
+                            };
 
-                            let mut tensor: NdTensor<f32, 3> =
-                                NdTensor::zeros([3, height as usize, width as usize]);
-                            for y in 0..height {
-                                for x in 0..width {
-                                    let pixel = rgb.get_pixel(x, y);
-                                    tensor[[0, y as usize, x as usize]] = pixel[0] as f32 / 255.0;
-                                    tensor[[1, y as usize, x as usize]] = pixel[1] as f32 / 255.0;
-                                    tensor[[2, y as usize, x as usize]] = pixel[2] as f32 / 255.0;
-                                }
-                            }
-
-                            if let Ok(image_source) =
-                                ImageSource::from_tensor(tensor.view(), ocrs::DimOrder::Chw)
-                                && let Ok(img_input) = engine.prepare_input(image_source)
-                                && let Ok(texts) = engine.get_text(&img_input)
-                            {
-                                if !texts.trim().is_empty() {
-                                    page_ocr_text.push(texts.clone());
-                                    words_collected.push(texts);
+                            if let Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) = engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(stream.content.clone()), &run_options) {
+                                if !results.is_empty() {
+                                    page_ocr_text.push((resized.width(), resized.height(), results.clone()));
                                     executed_ocr = true;
                                 }
                             }
@@ -217,35 +188,78 @@ impl PdfOperation for OcrOperationImpl {
 
                     // If OCR recognized text on this page, inject transparent text layer across page
                     if !page_ocr_text.is_empty() {
-                        // ExtGState with opacity 0 so text is selectable by cursor across page without covering image
+                        // ExtGState with opacity 0.001 so text is selectable by cursor across page without covering image
                         let gs_id = inner.add_object(lopdf::dictionary!(
                             "Type" => "ExtGState",
                             "ca" => 0.001,
                             "CA" => 0.001,
                         ));
 
-                        // Build a formatted multi-line text stream with readable font size (10pt) spanning the page
-                        let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n/F1 10 Tf\n");
-                        let mut current_y: f32 = 750.0;
-                        let line_height: f32 = 13.0;
+                        let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n");
 
-                        for text_block in &page_ocr_text {
-                            for raw_line in text_block.lines() {
-                                let line = raw_line.trim();
+                        // Extract page dimensions to map coordinates
+                        let mut page_w = 595.0; // A4 default
+                        let mut page_h = 842.0;
+
+                        if let Ok(page_dict_ref) = inner.get_object(page_id) {
+                            if let Ok(dict) = page_dict_ref.as_dict() {
+                                if let Ok(media_box) = dict.get(b"MediaBox") {
+                                    if let Ok(arr) = media_box.as_array() {
+                                        if arr.len() == 4 {
+                                            if let (Ok(x0), Ok(y0), Ok(x1), Ok(y1)) = (
+                                                arr[0].as_f32(),
+                                                arr[1].as_f32(),
+                                                arr[2].as_f32(),
+                                                arr[3].as_f32(),
+                                            ) {
+                                                page_w = x1 - x0;
+                                                page_h = y1 - y0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Assuming full page scan (x0=0, y0=0, w=page_w, h=page_h)
+                        let strip_x0 = 0.0;
+                        let strip_y0 = 0.0;
+                        let strip_w = page_w;
+                        let strip_h = page_h;
+
+                        for (img_w, img_h, words) in &page_ocr_text {
+                            let img_w = *img_w as f32;
+                            let img_h = *img_h as f32;
+
+                            for word in words {
+                                let line = word.text.trim();
                                 if line.is_empty() {
-                                    current_y -= 8.0;
                                     continue;
                                 }
-                                if current_y < 30.0 {
-                                    current_y = 750.0;
-                                }
+
+                                let box_x = word.frame.left;
+                                let box_y = word.frame.top;
+                                let box_w = word.frame.width;
+                                let box_h = word.frame.height;
+
+                                let norm_x = box_x / img_w;
+                                let norm_y = box_y / img_h;
+                                let _norm_w = box_w / img_w;
+                                let norm_h = box_h / img_h;
+
+                                let pdf_x = strip_x0 + (norm_x * strip_w);
+                                let pdf_y = strip_y0 + (strip_h - ((norm_y + norm_h) * strip_h));
+                                let font_size = (norm_h * strip_h).max(6.0);
+
+                                words_collected.push((pdf_y, pdf_x, font_size, line.to_string()));
+
                                 let escaped = line
                                     .replace('\\', "\\\\")
                                     .replace('(', "\\(")
                                     .replace(')', "\\)");
 
-                                text_ops.push_str(&format!("1 0 0 1 36.0 {:.1} Tm\n({}) Tj\n", current_y, escaped));
-                                current_y -= line_height;
+                                text_ops.push_str(&format!("/F1 {:.2} Tf\n", font_size));
+                                text_ops.push_str(&format!("1 0 0 1 {:.2} {:.2} Tm\n({}) Tj\n", pdf_x, pdf_y, escaped));
                             }
                         }
                         text_ops.push_str("ET\nQ\n");
@@ -311,7 +325,40 @@ impl PdfOperation for OcrOperationImpl {
 
         if let Some(path) = &self.output_path {
             if path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("txt".to_string()) {
-                let joined = words_collected.join("\n\n");
+                // Sort words from top to bottom (descending y) and left to right (ascending x)
+                words_collected.sort_by(|a, b| {
+                    let y_cmp = b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal);
+                    if y_cmp == std::cmp::Ordering::Equal {
+                        a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
+                    } else {
+                        y_cmp
+                    }
+                });
+
+                let mut lines = Vec::new();
+                let mut current_line = Vec::new();
+                let mut current_y = None;
+
+                for (y, _x, font_size, text) in words_collected {
+                    if let Some(cy) = current_y {
+                        // Delta y < 0.5 * font_size
+                        if (cy as f32 - y as f32).abs() < 0.5 * font_size {
+                            current_line.push(text);
+                        } else {
+                            lines.push(current_line.join(" "));
+                            current_line = vec![text];
+                            current_y = Some(y);
+                        }
+                    } else {
+                        current_line.push(text);
+                        current_y = Some(y);
+                    }
+                }
+                if !current_line.is_empty() {
+                    lines.push(current_line.join(" "));
+                }
+
+                let joined = lines.join("\n\n");
                 std::fs::write(path, joined).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             } else {
                 document.save(path)?;
