@@ -26,7 +26,17 @@ Implementation Steps:
    - Fall back to standard sequential paragraph extraction on single-column or ambiguous pages. Never panic.
 
 ==================================================
-MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
+1. `paperpilot-pdf/src/operations/conversion.rs`
+   - XY-Cut spatial span extraction and column de-weaving logic
+   - Tabular grid detection and `docx_rs::Table` output in `PdfToDocxOperation`
+2. `paperpilot-wasm/src/operations.rs`
+   - Parity in WASM `pdf_to_docx` implementation
+3. `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`
+   - Comprehensive test & implementation report
+
+MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
 You must run these target validations before committing and raising the PR:
 1. Fast workspace type check:
    cargo check -p paperpilot-pdf -p paperpilot-wasm
@@ -41,3 +51,4 @@ Documentation & Completion:
 - Author: reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md
 - Update PHASES.md marking Task 5.9.14 completed.
 - Commit prefix: "jules: "
+- DO NOT reset git or discard changes. Verify mandatory files with `git diff --stat` before opening PR.

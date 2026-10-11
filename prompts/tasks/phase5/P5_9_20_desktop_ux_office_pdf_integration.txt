@@ -94,7 +94,18 @@ STEP 4: Dynamic Workspace Heading
   - 1+ docs: "{n} document{s} loaded"
 
 ==================================================
-MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
+1. `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+   - Run button loading spinner & elapsed timer
+   - Category filter pills ("All", "PDF Tools", "Office Tools", "AI & OCR")
+2. `apps/desktop/src/lib/components/ui/DropZone.svelte`
+   - Multi-format accept patterns (.pdf, .docx, .xlsx, .pptx, etc.)
+   - Format badge icons & updated intake copy
+3. `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+   - Dynamic "Workspace" title and document counter subtitle
+
+MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
 You must run these target validations before committing and raising the PR:
 1. Type check:
    cd apps/desktop && pnpm check
@@ -106,3 +117,4 @@ Documentation & Completion:
 - Author: reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md
 - Update PHASES.md marking Task 5.9.20 completed.
 - Commit prefix: "jules: "
+- DO NOT reset git or discard your changes. Verify the 3 mandatory files with `git diff --stat` before opening the PR.

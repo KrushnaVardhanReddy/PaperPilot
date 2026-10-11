@@ -25,7 +25,22 @@ Implementation Steps:
    - Add unit test in `paperpilot-pdf` verifying HTML/URL to PDF conversion produces valid `%PDF-` bytes.
 
 ==================================================
-MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
+1. `paperpilot-pdf/Cargo.toml`
+   - Added `browser_oxide = "0.1"` dependency
+2. `paperpilot-pdf/src/operations/conversion.rs` (or `url.rs`)
+   - `UrlToPdfOperation` engine implementation
+3. `paperpilot-cli/src/commands/conversion.rs`
+   - CLI `convert-url` command
+4. `paperpilot-mcp/src/server.rs`
+   - `pdf_convert_url` MCP tool registration and execution handler
+5. `paperpilot-gateway/src/handlers.rs`
+   - `POST /api/v1/pdf/convert/url` Axum endpoint handler
+6. `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`
+   - Comprehensive implementation and verification report
+
+MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
 You must run these target validations before committing and raising the PR:
 1. Target check:
    cargo check -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
@@ -40,3 +55,4 @@ Documentation & Completion:
 - Author: reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md
 - Update PHASES.md marking Task 5.9.16 completed.
 - Commit prefix: "jules: "
+- DO NOT reset git or discard changes. Verify mandatory files with `git diff --stat` before opening PR.
