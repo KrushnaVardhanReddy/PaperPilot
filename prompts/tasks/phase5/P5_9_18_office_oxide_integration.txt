@@ -1,0 +1,67 @@
+=== TASK DEFINITION: Phase 5 - Spec 043: High-Speed Office Document Engine (DOCX, XLSX, PPTX & Legacy Binary) via `office_oxide` ===
+
+CONTEXT & MOTIVATION:
+PaperPilot has advanced PDF operations, but enterprise workflows require ingestion and conversion of Microsoft Office documents (.docx, .xlsx, .pptx) and legacy binary formats (.doc, .xls, .ppt from 1997-2003 archives).
+Existing tools either rely on heavy external Office/LibreOffice installations (which break in minimal Docker/cloud runtimes) or basic parsers like `calamine` that lack write/modernize features.
+We are integrating `office_oxide` into PaperPilot (`paperpilot-pdf` and `paperpilot-wasm`) to provide 100% pure-Rust, sub-10ms reading, Markdown table/heading extraction, and legacy binary document modernization.
+
+SPEC REFERENCE:
+specs/043-pure-rust-office-engine-office-oxide/spec.md
+
+MANDATORY ARCHITECTURAL & TYPE CONSTRAINTS:
+1. Concurrency limit: ALWAYS pass `-j 6` to every `cargo` invocation (`cargo test -p paperpilot-pdf -j 6`).
+2. Type system clarity:
+   - In `paperpilot-pdf/src/operations/office.rs`, use `paperpilot_core::error::OperationResult<T>` as the return type alias for `Result<T, PdfError>`.
+   - Do NOT attempt to construct `OperationResult` as a struct in `paperpilot-pdf`. Struct construction `OperationResult { ... }` belongs exclusively to `paperpilot-mcp/src/server.rs`.
+3. Zero external Office dependencies: No LibreOffice, no Microsoft Office, no dynamic C/C++ libraries. 100% pure-Rust and WASM-compatible (<35MB baseline RSS).
+4. Zero Python for testing: Test using `cargo test -j 6` or `paperpilot-cli`.
+
+DETAILED IMPLEMENTATION INSTRUCTIONS:
+
+1. CRATE DEPENDENCY SETUP:
+   - In `paperpilot-pdf/Cargo.toml`:
+     - Add `office_oxide = "0.2"` (or latest compatible release).
+     - In root `Cargo.toml`: maintain release/dev optimizations (`opt-level = 3`) if needed for fast decompression.
+
+2. CORE ENGINE IMPLEMENTATION (`paperpilot-pdf/src/operations/office.rs`):
+   - Expose the module in `paperpilot-pdf/src/operations/mod.rs` as `pub mod office;`.
+   - Implement `OfficeToMarkdownOperation`:
+     - Input: File path or byte buffer of any supported Office file (`.docx`, `.xlsx`, `.pptx`, `.doc`, `.xls`, `.ppt`).
+     - Output: Formatted GFM Markdown string.
+     - Spreadsheet (`.xlsx`, `.xls`): Extract sheet names as `## SheetName`, followed by GFM Markdown pipe tables `| Col1 | Col2 |` with alignment bars `|---|---|`.
+     - Document (`.docx`, `.doc`): Extract heading styles (`Heading 1` -> `#`, `Heading 2` -> `##`), bullet/numbered lists, and body paragraphs.
+     - Presentation (`.pptx`, `.ppt`): Extract slide titles (`## Slide N: Title`), bullet points, and speaker notes.
+   - Implement `OfficeModernizeOperation`:
+     - Convert legacy binary `.doc` to `.docx`.
+     - Convert legacy binary `.xls` to `.xlsx`.
+     - Convert legacy binary `.ppt` to `.pptx`.
+     - Output: Writes upgraded OOXML file to specified output path.
+   - Implement `OfficeExtractTextOperation`:
+     - Fast raw text extraction (< 5ms) across all 6 formats for search and RAG indexing.
+
+3. PENTA-INTERFACE INTEGRATION:
+   - CLI (`paperpilot-cli`):
+     - `paperpilot office to-markdown --input <IN> --output <OUT.md>`
+     - `paperpilot office extract --input <IN> --output <OUT.txt>`
+     - `paperpilot office modernize --input <LEGACY.doc> --output <MODERN.docx>`
+   - MCP Server (`paperpilot-mcp/src/server.rs`):
+     - Register tools: `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`.
+     - Wire into `execute_list_tools` and `execute_call_tool`.
+     - Return standard `Ok(OperationResult { success: true, message: ..., output_path: Some(output), data: None, diff_detected: None })`.
+     - CRITICAL: In `test_execute_list_tools`, increment the assertion count by 3 (from 48 to 51) so tests pass.
+   - REST Gateway (`paperpilot-gateway/src/handlers.rs`):
+     - Register `POST /api/v1/office/convert` endpoint.
+   - Desktop UI (`apps/desktop`):
+     - In `OperationsPanel.svelte`: Add Office conversion and modernize actions in the tool switch.
+
+4. VERIFICATION & QUALITY GATES:
+   - Run `cargo check --workspace -j 6`.
+   - Add unit tests verifying:
+     - `.docx` conversion to Markdown.
+     - `.xlsx` conversion to Markdown tables.
+     - Legacy `.doc` error handling and modernization to `.docx`.
+   - Run `cargo test -p paperpilot-pdf --lib office -j 6`.
+   - Run `cargo test -p paperpilot-mcp -j 6`.
+   - Ensure clean clippy pass: `cargo clippy --workspace -- -D warnings`.
+   - Author completion report at `reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.18 complete.
