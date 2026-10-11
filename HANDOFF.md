@@ -83,6 +83,8 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
   - **Planned & Ready**: Spec `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md` for pure-Rust dynamic web archiving without Chrome/Chromium.
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
+- **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**:
+  - **Planned & Ready for Jules**: Spec `specs/045-desktop-ux-office-and-pdf-integration/spec.md` and task prompt `prompts/tasks/phase5/P5_9_20_desktop_ux_office_pdf_integration.txt`. Adds spinner/elapsed-timer loading state to all Run buttons, expands DropZone to accept PDF + Office files with dynamic icons and multi-format Tauri dialog, adds context-aware tool switcher (PDF Tools / Office Tools / AI Tools), and updates Documents heading to dynamic "Workspace" subtitle.
 
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
