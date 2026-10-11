@@ -351,6 +351,12 @@ pub enum Commands {
         #[arg(long, default_value = "127.0.0.1")]
         bind: String,
     },
+
+    // --- Office Document Conversion ---
+    Office {
+        #[command(subcommand)]
+        command: crate::commands::office::OfficeCommands,
+    },
 }
 
 #[derive(Subcommand, Debug)]

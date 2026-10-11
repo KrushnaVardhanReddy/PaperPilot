@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::redundant_closure)]
 use crate::document::LopdfDocument;
 use image;
 use lopdf::dictionary;

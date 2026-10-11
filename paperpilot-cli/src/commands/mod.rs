@@ -5,6 +5,7 @@ pub mod group_b;
 pub mod group_c;
 pub mod group_d;
 pub mod group_e;
+pub mod office;
 pub mod validate;
 
 use crate::cli::Commands;
@@ -201,6 +202,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(input),
+        Commands::Office { command } => office::handle_office_command(command),
         Commands::Serve { port, bind } => {
             let rt = tokio::runtime::Runtime::new()
                 .map_err(paperpilot_core::error::PdfError::IoError)?;

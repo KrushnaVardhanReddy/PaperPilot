@@ -59,6 +59,7 @@
     { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', tags: ['html', 'web', 'convert', 'pdf'] },
     { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
     { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
+    { id: 'office_modernize_legacy', title: 'Office Convert', description: 'Convert legacy office files to modern format', icon: '📝', category: 'convert', tags: ['office', 'convert', 'doc', 'xls', 'ppt'] },
 
     // Additional 44 Tools Required Additions
     // Organize & Pages
@@ -259,6 +260,8 @@
         toolName = activeTool.id;
     } else if (activeTool.id === 'pdf_convert_excel') {
         toolName = 'pdf_convert_excel';
+    } else if (activeTool.id === 'office_modernize_legacy') {
+        toolName = 'office_modernize_legacy';
     }
 
     let args: Record<string, any> = {};

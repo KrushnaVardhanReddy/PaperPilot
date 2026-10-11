@@ -21,6 +21,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::info,
         handlers::compare,
         handlers::render_page,
+        handlers::office_convert,
         handlers::handle_tool
     ),
     components(
@@ -73,6 +74,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/office/convert", post(handlers::office_convert))
         .layer(cors)
 }
 

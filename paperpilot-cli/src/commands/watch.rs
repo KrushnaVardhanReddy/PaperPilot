@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};

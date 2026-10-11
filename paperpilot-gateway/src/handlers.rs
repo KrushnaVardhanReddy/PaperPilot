@@ -516,6 +516,19 @@ pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
     res
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/office/convert",
+    tag = "Office Operations",
+    responses(
+        (status = 200, description = "Converted successfully", body = ApiResponse)
+    )
+)]
+pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
+    tracing::info!("Received office convert request");
+    handle_tool(Path("office_modernize_legacy".to_string()), req).await.into_response()
+}
+
 /// Apply text or image watermarks to a PDF document
 #[utoipa::path(
     post,
