@@ -24,6 +24,7 @@ pub mod linearize;
 pub mod merge;
 pub mod metadata;
 pub mod ocr;
+pub mod office;
 pub mod page_numbers;
 pub mod pdf_a;
 pub mod redact;
