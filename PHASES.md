@@ -899,7 +899,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.9.17 | Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp` `[Spec 042]` ⏳ | Planned — Integrating `fossil-mcp` code quality toolchain to audit and prune dead functions, duplicate clones, and orphan scaffolding across all 8 Rust workspace crates and Svelte apps (`specs/042-agentic-code-quality-fossil-mcp/spec.md`). |
 | 5.9.18 | High-Speed Office Document Engine (DOCX, XLSX, PPTX & Legacy Binary) via `office_oxide` `[Spec 043]` ✅ | Completed — Integrating `office_oxide` into `paperpilot-pdf` and `paperpilot-wasm` for pure-Rust, ultra-fast reading, editing, and Markdown/text conversion of OOXML (`.docx`, `.xlsx`, `.pptx`) and legacy binary formats (`.doc`, `.xls`, `.ppt`) (`specs/043-pure-rust-office-engine-office-oxide/spec.md`, `reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`). |
 | 5.9.19 | Pure-Rust High-Precision OCR Engine via `rusto-rs` (RapidOCR / PaddleOCR + RTen) `[Spec 044]` ✅ | Completed — Migrated `paperpilot-pdf/src/operations/ocr.rs` from `ocrs` to `rusto-rs` (PaddleOCR v4 + RTen) for sub-second page inference, DBNet polygon word detection, exact bounding box spatial positioning, and 100% mouse-drag cursor selectable PDF overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`). |
-| 5.9.20 | Desktop UX: Office + PDF Unified Intake, Run Button Feedback & Context-Aware Tool Navigation `[Spec 045]` ⏳ | Planned — Add spinner/elapsed-timer loading state to all Run buttons, expand DropZone to accept PDF + Office files (`.docx`, `.xlsx`, `.pptx`, `.doc`, `.xls`, `.ppt`) with dynamic icons and multi-format Tauri dialog, and add a context-aware tool switcher (PDF Tools / Office Tools / AI Tools) to the Operations Panel (`specs/045-desktop-ux-office-and-pdf-integration/spec.md`). |
+| 5.9.20 | Desktop UX: Office + PDF Unified Intake, Run Button Feedback & Context-Aware Tool Navigation `[Spec 045]` ⏳ | In Progress (Jules Session `10047595857438929348`) — Add spinner/elapsed-timer loading state to all Run buttons, expand DropZone to accept PDF + Office files (`.docx`, `.xlsx`, `.pptx`, `.doc`, `.xls`, `.ppt`) with dynamic icons and multi-format Tauri dialog, and add a context-aware tool switcher (PDF Tools / Office Tools / AI Tools) to the Operations Panel (`specs/045-desktop-ux-office-and-pdf-integration/spec.md`). |
+| 5.9.21 | Structured Spreadsheet Ingestion & Tabular JSON/CSV Agent Tooling via `office_oxide` `[Spec 046]` ⏳ | Planned — Native `.xlsx` / `.xls` sheet extraction exposing structured JSON arrays and CSV tables directly to AI agents via `paperpilot-mcp` (`excel_to_json`, `excel_to_csv`), CLI commands, and Gateway REST endpoints with zero external dependencies. |
+| 5.9.22 | Multi-Format Document Workspace Search (`Ctrl+F` Across PDF & Office) ⏳ | Planned — Unified in-memory and disk text extraction across `.pdf`, `.docx`, `.xlsx`, and `.pptx` workspaces, powering rapid search match highlighting, sentence snippets, and cross-document navigation in the desktop app. |
+| 5.9.23 | Enterprise Legacy Office Watchdog & Batch Modernization Pipeline ⏳ | Planned — Headless directory watcher and batch CLI tool (`paperpilot office modernize-dir /input /output`) that automatically migrates legacy binary `.doc`, `.xls`, and `.ppt` archives into standard `.docx`, `.xlsx`, and `.pptx` files with corruption tolerance. |
+| 5.9.24 | Presentation Slide Handout & Executive Brief Synthesis (`pptx-to-pdf`) ⏳ | Planned — Extract slide hierarchies, tables, and speaker notes from PowerPoint decks via `office_oxide` to synthesize compact executive summary handouts and meeting briefs in PDF. |
 
 
 ## Phase 5 — Advanced Intelligence
@@ -930,11 +934,11 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort` (ONNX Runtime) using NeuML's `bert-hash-nano-embeddings` (<1M params, ~1.1MB INT8 ONNX, 128-dim vectors) — 100% offline RAG & semantic search |
+| 5.2.1 | Local Embedded Vector Engine | Microsecond in-memory vector index in Rust via `ort`/`rten` using nano embeddings — 100% offline RAG & semantic search across both PDFs and Office (`.docx`, `.xlsx`, `.pptx` via `office_oxide`) |
 | 5.2.2 | Layout-Aware Markdown & Table Parser | MinerU/Marker-style structured text extraction preserving multi-columns, LaTeX math, and Markdown tables |
 | 5.2.3 | Semantic Search & Highlighting | Search document by intent/meaning rather than exact keywords, jumping directly to target sentences |
-| 5.2.4 | Table Extraction to CSV/JSON/Parquet | Detect table boundaries and export structured data |
-| 5.2.5 | Automatic PII Redaction (SSN, Cards, Names) | Local regex + NER entity classifier to automatically detect and structurally redact sensitive PII |
+| 5.2.4 | Table Extraction to CSV/JSON/Parquet | Detect and extract tables across PDF pages and Office spreadsheets (`.xlsx`/`.xls`) directly to structured data |
+| 5.2.5 | Automatic PII Redaction (SSN, Cards, Names) | Local regex + NER entity classifier to automatically detect and structurally redact sensitive PII across PDF and Office documents |
 | 5.2.6 | Single-Document Contextual Q&A | Grounded Q&A against document content with page source citations |
 | 5.2.7 | Multi-Document Synthesis | Query 2–50 documents simultaneously (e.g. "compare indemnity caps across all 3 vendor agreements") |
 | 5.2.8 | Layout-Preserving Translation | Translate text blocks in-place while keeping columns, tables, and typography intact |
