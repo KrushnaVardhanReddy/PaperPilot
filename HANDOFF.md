@@ -78,7 +78,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Migration & High-Performance Extraction Suite)**:
   - **Planned & Ready**: Spec `specs/040-pdf-oxide-universal-migration/spec.md` to migrate markdown/HTML conversion, text extraction, search, and RAG chunking to `pdf_oxide` (v0.3.78).
 - **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
-  - **In Progress (Jules Session `7709571282449059464`)**: Spec [`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`](specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md) for 100% pure-Rust zero-Chromium web page archiving via `browser_oxide` with targeted crate validation.
+  - **In Progress (Jules Session `9630028142770297150`)**: Spec [`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`](specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md) for 100% pure-Rust zero-Chromium web page archiving via `browser_oxide` with Cargo patch instructions for `fontdb`.
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
 

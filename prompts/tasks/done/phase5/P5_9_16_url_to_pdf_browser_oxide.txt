@@ -4,47 +4,73 @@ Objective:
 Integrate `browser_oxide` into PaperPilot (`paperpilot-pdf`) to deliver a 100% pure-Rust, zero-Chromium
 web page archiving and dynamic HTML+JS-to-PDF conversion engine.
 
+CRITICAL INSTRUCTIONS & BUG WORKAROUND (READ FIRST):
+1. Upstream crate `browser_oxide = "0.1.3"` has a known refutable pattern bug with newer `fontdb`:
+   `let fontdb::Source::Binary(data) = &face.source;` fails on recent fontdb updates.
+2. TO RESOLVE COMPILATION:
+   In the root `Cargo.toml`, add a `[patch.crates-io]` section or pin the dependency using:
+   ```toml
+   [patch.crates-io]
+   # If fontdb can be pinned:
+   fontdb = { version = "=0.21.0" }
+   ```
+   OR alternatively, patch `browser_oxide` via git in root `Cargo.toml`:
+   ```toml
+   [patch.crates-io]
+   browser_oxide = { git = "https://github.com/yfedoseev/browser_oxide.git" }
+   ```
+   Do NOT ask clarifying questions or reset git. Apply this patch in root `Cargo.toml` and proceed autonomously.
+
 Context & Requirements:
 - Read `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`.
 - Concurrency limit: Maximum 6 cores (-j 6).
-- Zero external browser binaries: Must NOT spawn `chrome`, `chromium`, or CDP. Must run 100% in pure Rust via `browser_oxide`.
+- Zero external browser binaries: Must NOT spawn `chrome`, `chromium`, or CDP. Must run 100% in pure Rust.
 - Memory ceiling: <35MB RSS.
 
 Implementation Steps:
-1. Dependency:
-   - Add `browser_oxide = "0.1"` in `paperpilot-pdf/Cargo.toml`.
-2. Core Operation (`paperpilot-pdf/src/operations/conversion.rs` or `url.rs`):
-   - Implement `UrlToPdfOperation` with options:
-     url: String, delay_ms: Option<u64>, page_size: Option<String>, print_background: bool
-   - Load page, execute scripts to allow hydration, extract rendered layout, and emit valid PDF via `lopdf`.
+1. In `paperpilot-pdf/Cargo.toml`:
+   - Add `browser_oxide = "0.1.3"` and `tokio = { version = "1", features = ["rt", "macros", "time"] }`.
+2. Core Operation (`paperpilot-pdf/src/operations/conversion.rs`):
+   - Implement `UrlToPdfOperation`:
+     ```rust
+     pub struct UrlToPdfOptions {
+         pub url: String,
+         pub delay_ms: Option<u64>,
+         pub page_size: Option<String>,
+         pub print_background: bool,
+     }
+     pub struct UrlToPdfOperation {
+         pub options: UrlToPdfOptions,
+         pub output_path: PathBuf,
+     }
+     impl UrlToPdfOperation {
+         pub async fn render(&self) -> OperationResult<()> { ... }
+     }
+     ```
+   - Use `browser_oxide` to fetch the URL, wait for `delay_ms`, extract DOM HTML, and render to PDF using PaperPilot's native `HtmlToPdfOperation`.
 3. Penta-Interface Exposure:
    - CLI (`paperpilot-cli`): `paperpilot convert-url --url <URL> --output <OUT>`
    - MCP Server (`paperpilot-mcp`): `pdf_convert_url` tool taking `{ "url": string, "output": string, "delay_ms"?: number }`
-   - Gateway (`paperpilot-gateway`): `POST /api/v1/pdf/convert/url` endpoint.
+   - Gateway (`paperpilot-gateway`): `POST /api/v1/pdf/convert/url` Axum endpoint.
 4. Unit Tests:
-   - Add unit test in `paperpilot-pdf` verifying HTML/URL to PDF conversion produces valid `%PDF-` bytes.
+   - Add a unit test verifying that `UrlToPdfOperation` produces valid `%PDF-` bytes.
 
 ==================================================
 MANDATORY MODIFIED FILES REQUIRED IN PR:
 Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
-1. `paperpilot-pdf/Cargo.toml`
-   - Added `browser_oxide = "0.1"` dependency
-2. `paperpilot-pdf/src/operations/conversion.rs` (or `url.rs`)
-   - `UrlToPdfOperation` engine implementation
-3. `paperpilot-cli/src/commands/conversion.rs`
-   - CLI `convert-url` command
-4. `paperpilot-mcp/src/server.rs`
-   - `pdf_convert_url` MCP tool registration and execution handler
-5. `paperpilot-gateway/src/handlers.rs`
-   - `POST /api/v1/pdf/convert/url` Axum endpoint handler
-6. `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`
-   - Comprehensive implementation and verification report
+1. `Cargo.toml` (patch section for fontdb/browser_oxide)
+2. `paperpilot-pdf/Cargo.toml`
+3. `paperpilot-pdf/src/operations/conversion.rs`
+4. `paperpilot-cli/src/commands/conversion.rs` (or `group_d.rs` + `cli.rs`)
+5. `paperpilot-mcp/src/server.rs`
+6. `paperpilot-gateway/src/handlers.rs`
+7. `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`
 
 MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
 You must run these target validations before committing and raising the PR:
 1. Target check:
    cargo check -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
-2. Target crate unit tests (bounded concurrency):
+2. Target crate unit tests:
    cargo test -p paperpilot-pdf --lib -j 6
    cargo test -p paperpilot-mcp --lib -j 6
 3. Clippy:
