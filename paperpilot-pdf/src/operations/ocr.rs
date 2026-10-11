@@ -1,3 +1,4 @@
+#![allow(clippy::unnecessary_cast)]
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::redundant_closure)]
 use crate::document::LopdfDocument;

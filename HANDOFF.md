@@ -75,8 +75,6 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
   - **In Progress (Jules Session `17474141107561700970`)**: Svelte 5 settings drawer with 4-way mode toggle (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Cloud) and in-app model downloader with real-time progress.
 - **Phase 5.9.13 (Spec 038 / High-Fidelity PDF-to-Word Layout Reconstruction)**:
   - **In Progress (Jules Session `2163210904964205811`)**: Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with heading hierarchy inference, bold/italic font styling, RGB color extraction, alignment calculation, image extraction, and native OpenXML page breaks via `docx-rs`.
-- **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis via `pdf-oxide`)**:
-  - **In Progress (Jules Session `5395751761807447125`)**: Spec [`specs/039-pdf-oxide-layout-analysis/spec.md`](specs/039-pdf-oxide-layout-analysis/spec.md) with pure-Rust XY-Cut reading-order de-weaving, native OpenXML table reconstruction, and explicit mandatory modified files verification.
 - **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Migration & High-Performance Extraction Suite)**:
   - **Planned & Ready**: Spec `specs/040-pdf-oxide-universal-migration/spec.md` to migrate markdown/HTML conversion, text extraction, search, and RAG chunking to `pdf_oxide` (v0.3.78).
 - **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
@@ -85,6 +83,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
 
 ### 3. Summary of Recently Completed & Merged Milestones
+- **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
 - **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**: ✅ Merged (PR #181, commit `42730fd`, Session 10047595857438929348) — Loading spinner and elapsed timer on Run button, multi-format DropZone with badges, context-aware tool switcher, and dynamic Workspace subtitle (`reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md`).
 - **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
 - **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).

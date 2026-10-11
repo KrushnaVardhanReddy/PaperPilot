@@ -1,5 +1,4 @@
 use crate::document::LopdfDocument;
-use docx_rs::{Docx, Paragraph, Run};
 use lopdf::dictionary;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
@@ -860,8 +859,29 @@ impl PdfToDocxOperation {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct TextSpan {
+    pub text: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub font_size: f32,
+    pub is_bold: bool,
+    pub is_italic: bool,
+    pub color_hex: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum LayoutItem {
+    Paragraph(Vec<TextSpan>),
+    Table(Vec<Vec<Vec<TextSpan>>>),
+}
+
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        use docx_rs::{Docx, Paragraph, Run, AlignmentType, Table, TableRow, TableCell};
+
         let lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
@@ -869,29 +889,520 @@ impl PdfOperation for PdfToDocxOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        let doc = &mut lopdf_doc.inner;
+
+        let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
         all_pages.sort_unstable();
 
         let mut docx = Docx::new();
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    for line in text.lines() {
-                        let para = Paragraph::new().add_run(Run::new().add_text(line));
-                        docx = docx.add_paragraph(para);
+        for (i, page_id) in all_pages.iter().enumerate() {
+            let page_obj_id = doc.get_pages()[page_id];
+            let page_dict = doc.get_object(page_obj_id).and_then(|obj| obj.as_dict()).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+
+            let media_box_default = vec![];
+            let media_box = page_dict
+                .get(b"MediaBox")
+                .and_then(|obj| obj.as_array())
+                .unwrap_or(&media_box_default);
+
+            let mut width: f32 = 595.0;
+            if media_box.len() >= 4
+                && let (Ok(x0), Ok(x1)) = (media_box[0].as_f32().or_else(|_| media_box[0].as_i64().map(|v| v as f32)), media_box[2].as_f32().or_else(|_| media_box[2].as_i64().map(|v| v as f32))) {
+                    width = (x1 - x0).abs();
+                }
+            let center_w = width / 2.0;
+
+            let content_data = doc.get_page_content(page_obj_id);
+            let content = lopdf::content::Content::decode(&content_data).unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
+
+            let mut current_font_size: f32 = 12.0;
+            let mut is_bold = false;
+            let mut is_italic = false;
+            let mut current_color = String::new();
+            let mut current_x: f32 = 0.0;
+            let mut current_y: f32 = 0.0;
+            let mut current_text = String::new();
+
+            let mut font_names = std::collections::HashMap::new();
+            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
+                && let Ok(fonts) = resources.get(b"Font").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+                    for (font_ref, font_obj) in fonts.iter() {
+                        if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())
+                            && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name()) {
+                                font_names.insert(String::from_utf8_lossy(font_ref).to_string(), String::from_utf8_lossy(base_font).to_string());
+                            }
                     }
-                    docx = docx.add_paragraph(
-                        Paragraph::new().add_run(Run::new().add_text("--- PAGE BREAK ---")),
-                    );
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+
+            let mut spans = vec![];
+
+            for op in content.operations {
+                match op.operator.as_str() {
+                    "Tf" => {
+                        if op.operands.len() == 2 {
+                            if let Ok(name) = op.operands[0].as_name() {
+                                let font_key = String::from_utf8_lossy(name).to_string();
+                                if let Some(base) = font_names.get(&font_key) {
+                                    let lower_base = base.to_lowercase();
+                                    is_bold = lower_base.contains("bold") || lower_base.contains("black") || lower_base.contains("heavy");
+                                    is_italic = lower_base.contains("italic") || lower_base.contains("oblique");
+                                }
+                            }
+                            current_font_size = op.operands[1].as_f32().or_else(|_| op.operands[1].as_i64().map(|v| v as f32)).unwrap_or(12.0);
+                        }
+                    }
+                    "rg" | "g" | "k" => {
+                        if op.operator == "rg" && op.operands.len() == 3 {
+                            let r = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                            let g = (op.operands[1].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                            let b = (op.operands[2].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                            current_color = format!("{:02X}{:02X}{:02X}", r, g, b);
+                        } else if op.operator == "g" && op.operands.len() == 1 {
+                            let gray = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                            current_color = format!("{:02X}{:02X}{:02X}", gray, gray, gray);
+                        }
+                    }
+                    "Tm" => {
+                        if op.operands.len() == 6 {
+                            current_x = op.operands[4].as_f32().or_else(|_| op.operands[4].as_i64().map(|v| v as f32)).unwrap_or(0.0);
+                            current_y = op.operands[5].as_f32().or_else(|_| op.operands[5].as_i64().map(|v| v as f32)).unwrap_or(0.0);
+                        }
+                    }
+                    "Td" | "TD" => {
+                        if op.operands.len() == 2 {
+                            let dx = match &op.operands[0] {
+                                lopdf::Object::Real(f) => *f,
+                                lopdf::Object::Integer(i) => *i as f32,
+                                _ => 0.0,
+                            };
+                            let dy = match &op.operands[1] {
+                                lopdf::Object::Real(f) => *f,
+                                lopdf::Object::Integer(i) => *i as f32,
+                                _ => 0.0,
+                            };
+                            current_x += dx;
+                            current_y += dy;
+                        }
+                    }
+                    "Tj" => {
+                        if op.operands.len() == 1
+                            && let Ok(string_bytes) = op.operands[0].as_str() {
+                                let txt = String::from_utf8_lossy(string_bytes).to_string();
+                                current_text.push_str(&txt);
+                            }
+                        if !current_text.is_empty() {
+                            spans.push(TextSpan {
+                                text: current_text.clone(),
+                                font_size: current_font_size,
+                                is_bold,
+                                is_italic,
+                                color_hex: current_color.clone(),
+                                x: current_x,
+                                y: current_y,
+                                width: current_text.len() as f32 * current_font_size * 0.5,
+                                height: current_font_size,
+                            });
+                            current_text.clear();
+                        }
+                    }
+                    "TJ" => {
+                        if op.operands.len() == 1
+                            && let Ok(array) = op.operands[0].as_array() {
+                                for item in array {
+                                    if let Ok(string_bytes) = item.as_str() {
+                                        let txt = String::from_utf8_lossy(string_bytes).to_string();
+                                        current_text.push_str(&txt);
+                                    } else if let Ok(num) = item.as_f32()
+                                        && num < -100.0 {
+                                            current_text.push(' ');
+                                        }
+                                }
+                            }
+                        if !current_text.is_empty() {
+                            spans.push(TextSpan {
+                                text: current_text.clone(),
+                                font_size: current_font_size,
+                                is_bold,
+                                is_italic,
+                                color_hex: current_color.clone(),
+                                x: current_x,
+                                y: current_y,
+                                width: current_text.len() as f32 * current_font_size * 0.5,
+                                height: current_font_size,
+                            });
+                            current_text.clear();
+                        }
+                    }
+                    "T*" | "'" | "\"" => {
+                         if !current_text.is_empty() {
+                            spans.push(TextSpan {
+                                text: current_text.clone(),
+                                font_size: current_font_size,
+                                is_bold,
+                                is_italic,
+                                color_hex: current_color.clone(),
+                                x: current_x,
+                                y: current_y,
+                                width: current_text.len() as f32 * current_font_size * 0.5,
+                                height: current_font_size,
+                            });
+                            current_text.clear();
+                         }
+                    }
+                    "ET" if !current_text.is_empty() => {
+                        spans.push(TextSpan {
+                            text: current_text.clone(),
+                            font_size: current_font_size,
+                            is_bold,
+                            is_italic,
+                            color_hex: current_color.clone(),
+                            x: current_x,
+                            y: current_y,
+                            width: current_text.len() as f32 * current_font_size * 0.5,
+                            height: current_font_size,
+                        });
+                        current_text.clear();
+                    }
+                    _ => {}
                 }
+            }
+
+            if !current_text.is_empty() {
+                spans.push(TextSpan {
+                    text: current_text.clone(),
+                    font_size: current_font_size,
+                    is_bold,
+                    is_italic,
+                    color_hex: current_color.clone(),
+                    x: current_x,
+                    y: current_y,
+                    width: current_text.len() as f32 * current_font_size * 0.5,
+                    height: current_font_size,
+                });
+            }
+
+            // Clean empty spans
+            spans.retain(|s| !s.text.trim().is_empty());
+
+            let mut remaining_spans = spans.clone();
+            let mut layout_items = vec![];
+
+            // 1. Table Detection
+            let mut y_groups: Vec<(f32, Vec<TextSpan>)> = vec![];
+            for span in remaining_spans.clone() {
+                let mut found = false;
+                for (group_y, group_spans) in &mut y_groups {
+                    if (span.y - *group_y).abs() <= 2.0 {
+                        group_spans.push(span.clone());
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    y_groups.push((span.y, vec![span]));
+                }
+            }
+
+            // Sort groups by y descending
+            y_groups.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+
+            let mut current_table_rows: Vec<Vec<TextSpan>> = vec![];
+            let mut table_spans_to_remove = std::collections::HashSet::new();
+
+            for (_y, row_spans) in y_groups {
+                if row_spans.len() >= 2 {
+                    current_table_rows.push(row_spans);
+                } else {
+                    if current_table_rows.len() >= 2 {
+                        let mut table_cells = vec![];
+                        for row in current_table_rows.drain(..) {
+                            let mut row_sorted = row.clone();
+                            row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+
+                            let mut cells = vec![];
+                            let mut current_cell = vec![];
+                            let mut last_x = -1000.0;
+                            let mut last_width = 0.0;
+
+                            for span in row_sorted {
+                                table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
+
+                                if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
+                                    cells.push(current_cell.clone());
+                                    current_cell.clear();
+                                }
+                                last_x = span.x;
+                                last_width = span.width;
+                                current_cell.push(span);
+                            }
+                            if !current_cell.is_empty() {
+                                cells.push(current_cell);
+                            }
+                            table_cells.push(cells);
+                        }
+                        layout_items.push(LayoutItem::Table(table_cells));
+                    } else {
+                        current_table_rows.clear();
+                    }
+                }
+            }
+            if current_table_rows.len() >= 2 {
+                let mut table_cells = vec![];
+                for row in current_table_rows.drain(..) {
+                    let mut row_sorted = row.clone();
+                    row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                    let mut cells = vec![];
+                    let mut current_cell = vec![];
+                    let mut last_x = -1000.0;
+                    let mut last_width = 0.0;
+
+                    for span in row_sorted {
+                        table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
+
+                        if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
+                            cells.push(current_cell.clone());
+                            current_cell.clear();
+                        }
+                        last_x = span.x;
+                        last_width = span.width;
+                        current_cell.push(span);
+                    }
+                    if !current_cell.is_empty() {
+                        cells.push(current_cell);
+                    }
+                    table_cells.push(cells);
+                }
+                layout_items.push(LayoutItem::Table(table_cells));
+            }
+
+            remaining_spans.retain(|s| !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text)));
+
+            // 2. XY-Cut Algorithm for remaining spans
+            let mut gutters = vec![];
+            let mut min_x = f32::MAX;
+            let mut max_x = f32::MIN;
+            for span in &remaining_spans {
+                if span.x < min_x { min_x = span.x; }
+                if span.x + span.width > max_x { max_x = span.x + span.width; }
+            }
+
+            if min_x < max_x && !remaining_spans.is_empty() {
+                // Projection profile
+                let mut intervals: Vec<(f32, f32)> = remaining_spans.iter().map(|s| (s.x, s.x + s.width)).collect();
+                intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+                let mut merged = vec![intervals[0]];
+                for interval in intervals.iter().skip(1) {
+                    let last = merged.last_mut().unwrap();
+                    if interval.0 <= last.1 {
+                        if interval.1 > last.1 {
+                            last.1 = interval.1;
+                        }
+                    } else {
+                        merged.push(*interval);
+                    }
+                }
+
+                for i in 0..merged.len() - 1 {
+                    let gap = merged[i+1].0 - merged[i].1;
+                    if gap >= 15.0 {
+                        gutters.push(merged[i].1 + gap / 2.0);
+                    }
+                }
+            }
+
+            if !gutters.is_empty() {
+                let gutter_x = gutters[0];
+                let mut col1 = vec![];
+                let mut col2 = vec![];
+                for span in remaining_spans {
+                    if span.x < gutter_x {
+                        col1.push(span);
+                    } else {
+                        col2.push(span);
+                    }
+                }
+
+                let process_col = |col: Vec<TextSpan>| -> Vec<LayoutItem> {
+                    let mut sorted = col;
+                    sorted.sort_by(|a, b| {
+                        match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
+                            std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
+                            other => other,
+                        }
+                    });
+                    let mut paras = vec![];
+                    let mut current_para = vec![];
+                    let mut last_y = f32::MAX;
+                    for span in sorted {
+                        if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
+                            paras.push(current_para.clone());
+                            current_para.clear();
+                        }
+                        current_para.push(span.clone());
+                        last_y = span.y;
+                    }
+                    if !current_para.is_empty() { paras.push(current_para); }
+                    paras.into_iter().map(LayoutItem::Paragraph).collect()
+                };
+
+                layout_items.extend(process_col(col1));
+                layout_items.extend(process_col(col2));
+            } else {
+                remaining_spans.sort_by(|a, b| {
+                    match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
+                        std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
+                        other => other,
+                    }
+                });
+
+                // Group into paragraphs by proximity
+                let mut paras = vec![];
+                let mut current_para = vec![];
+                let mut last_y = f32::MAX;
+                for span in remaining_spans {
+                    if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
+                        paras.push(current_para.clone());
+                        current_para.clear();
+                    }
+                    current_para.push(span.clone());
+                    last_y = span.y;
+                }
+                if !current_para.is_empty() { paras.push(current_para); }
+
+                for p in paras {
+                    layout_items.push(LayoutItem::Paragraph(p));
+                }
+            }
+
+            // Emit docx-rs
+            for item in layout_items {
+                match item {
+                    LayoutItem::Paragraph(spans) => {
+                        let mut sorted_spans = spans.clone();
+                        sorted_spans.sort_by(|a,b| b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal).then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)));
+
+                        let mut text_parts = vec![];
+                        let mut current_part = vec![];
+                        let mut current_y = sorted_spans.first().map(|s| s.y).unwrap_or(0.0);
+
+                        for span in sorted_spans {
+                            if (span.y - current_y).abs() > 2.0 {
+                                text_parts.push(current_part.clone());
+                                current_part.clear();
+                                current_y = span.y;
+                            }
+                            current_part.push(span);
+                        }
+                        if !current_part.is_empty() { text_parts.push(current_part); }
+
+                        for row in text_parts {
+                            let mut row_sorted = row;
+                            row_sorted.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                            let combined_text = row_sorted.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
+                            if combined_text.trim().is_empty() { continue; }
+
+                            let mut para = Paragraph::new();
+                            let rep_span = row_sorted.first().cloned().unwrap_or(TextSpan {
+                                text: "".to_string(),
+                                font_size: 12.0,
+                                is_bold: false,
+                                is_italic: false,
+                                color_hex: "".to_string(),
+                                x: 0.0,
+                                y: 0.0,
+                                width: 0.0,
+                                height: 0.0,
+                            });
+
+                            if (rep_span.x - center_w).abs() < (width * 0.15) {
+                                para = para.align(AlignmentType::Center);
+                            } else if rep_span.x > (width * 0.6) {
+                                para = para.align(AlignmentType::Right);
+                            }
+
+                            if rep_span.font_size >= 18.0 {
+                                para = para.style("Heading1");
+                            } else if (14.0..18.0).contains(&rep_span.font_size) {
+                                para = para.style("Heading2");
+                            }
+
+                            let mut run = Run::new().add_text(combined_text.trim().to_string());
+                            let size = rep_span.font_size;
+                            if size >= 18.0 {
+                                run = run.size(36);
+                            } else if (14.0..18.0).contains(&size) {
+                                run = run.size(28);
+                            } else {
+                                run = run.size((size * 2.0) as usize);
+                            }
+
+                            if rep_span.is_bold { run = run.bold(); }
+                            if rep_span.is_italic { run = run.italic(); }
+                            if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
+
+                            para = para.add_run(run);
+                            docx = docx.add_paragraph(para);
+                        }
+                    }
+                    LayoutItem::Table(rows) => {
+                        let mut table = Table::new(vec![]);
+                        for row in rows {
+                            let mut cells = vec![];
+                            for cell_spans in row {
+                                let mut tc = TableCell::new();
+                                let mut para = Paragraph::new();
+                                let mut sorted_spans = cell_spans.clone();
+                                sorted_spans.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                                let combined_text = sorted_spans.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
+                                if !combined_text.trim().is_empty() {
+                                    let rep_span = sorted_spans.first().cloned().unwrap_or(TextSpan {
+                                        text: "".to_string(),
+                                        font_size: 12.0,
+                                        is_bold: false,
+                                        is_italic: false,
+                                        color_hex: "".to_string(),
+                                        x: 0.0,
+                                        y: 0.0,
+                                        width: 0.0,
+                                        height: 0.0,
+                                    });
+                                    let mut run = Run::new().add_text(combined_text.trim().to_string());
+                                    let size = rep_span.font_size;
+                                    run = run.size((size * 2.0) as usize);
+                                    if rep_span.is_bold { run = run.bold(); }
+                                    if rep_span.is_italic { run = run.italic(); }
+                                    if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
+                                    para = para.add_run(run);
+                                }
+                                tc = tc.add_paragraph(para);
+                                cells.push(tc);
+                            }
+                            let tr = TableRow::new(cells);
+                            table = table.add_row(tr);
+                        }
+                        docx = docx.add_table(table);
+                    }
+                }
+            }
+
+            // Add images from Resources
+            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
+                && let Ok(xobjects) = resources.get(b"XObject").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
+                    for (_xobj_name, xobj_ref) in xobjects.iter() {
+                        if let Ok(xobj_stream) = doc.get_object(xobj_ref.as_reference().unwrap_or((0, 0))).and_then(|obj| obj.as_stream())
+                            && let Ok(subtype) = xobj_stream.dict.get(b"Subtype").and_then(|obj| obj.as_name())
+                                && subtype == b"Image" {
+                                    let image_bytes = &xobj_stream.content;
+                                    let pic = docx_rs::Pic::new(image_bytes);
+                                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
+                                }
+                    }
+                }
+
+            if i < all_pages.len() - 1 {
+                docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
             }
         }
 
@@ -1055,7 +1566,7 @@ mod tests {
     use super::*;
     use lopdf::{Dictionary, Document, Object};
 
-    fn create_dummy_doc(pages: u32) -> LopdfDocument {
+    fn create_dummy_doc(pages: u32, content_str: Option<&str>) -> LopdfDocument {
         let mut doc = Document::with_version("1.5");
         let pages_id = doc.new_object_id();
         let mut page_ids = vec![];
@@ -1065,7 +1576,7 @@ mod tests {
             page_dict.set("Type", Object::Name(b"Page".to_vec()));
             page_dict.set("Parent", Object::Reference(pages_id));
 
-            let content = "BT /F1 12 Tf 0 0 Td (Test Content) Tj ET";
+            let content = content_str.unwrap_or("BT /F1 12 Tf 0 0 Td (Test Content) Tj ET");
             let content_stream = lopdf::Stream::new(Dictionary::new(), content.as_bytes().to_vec());
             let content_id = doc.add_object(Object::Stream(content_stream));
             page_dict.set("Contents", Object::Reference(content_id));
@@ -1149,7 +1660,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_html() {
-        let mut doc = create_dummy_doc(2);
+        let mut doc = create_dummy_doc(2, None);
         let op = PdfToHtmlOperation::new();
         assert!(op.execute(&mut doc).is_ok());
 
@@ -1162,7 +1673,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_markdown() {
-        let mut doc = create_dummy_doc(2);
+        let mut doc = create_dummy_doc(2, None);
         let op = PdfToMarkdownOperation::new();
         assert!(op.execute(&mut doc).is_ok());
 
@@ -1174,7 +1685,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_llm_export() {
-        let mut doc = create_dummy_doc(1);
+        let mut doc = create_dummy_doc(1, None);
         let op = PdfToLlmExportOperation::new();
         assert!(op.execute(&mut doc).is_ok());
 
@@ -1192,7 +1703,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_json() {
-        let mut doc = create_dummy_doc(1);
+        let mut doc = create_dummy_doc(1, None);
         let op = PdfToJsonOperation::new("test_doc.pdf".to_string());
         assert!(op.execute(&mut doc).is_ok());
 
@@ -1203,8 +1714,63 @@ mod tests {
     }
 
     #[test]
+    fn test_multi_column_reading_order() {
+        let content_str = "BT /F1 12 Tf 50 700 Td (Left 1) Tj -50 -700 Td 50 680 Td (Left 2) Tj -50 -680 Td 250 690 Td (Right 1) Tj -250 -690 Td 250 670 Td (Right 2) Tj ET";
+        let mut doc = create_dummy_doc(1, Some(content_str));
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out_test.docx");
+
+        let op = super::PdfToDocxOperation::new(path.clone());
+        assert!(op.execute(&mut doc).is_ok());
+
+        assert!(path.exists());
+
+        let file = std::fs::File::open(&path).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
+        let mut xml_content = String::new();
+        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
+
+        let mut pure_text = String::new();
+        let mut in_tag = false;
+        for c in xml_content.chars() {
+            if c == '<' {
+                in_tag = true;
+            } else if c == '>' {
+                in_tag = false;
+            } else if !in_tag {
+                pure_text.push(c);
+            }
+        }
+
+        let clean_text = pure_text.replace(" ", "");
+        assert!(clean_text.contains("Left1Left2Right1Right2") || clean_text.contains("Left1Right1Left2Right2"));
+    }
+
+    #[test]
+    fn test_table_structure_detection() {
+        let content_str = "BT /F1 12 Tf 50 700 Td (Header 1) Tj 100 0 Td (Header 2) Tj -100 -20 Td (Cell 1) Tj 100 0 Td (Cell 2) Tj ET";
+        let mut doc = create_dummy_doc(1, Some(content_str));
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("out_test_table.docx");
+
+        let op = super::PdfToDocxOperation::new(path.clone());
+        assert!(op.execute(&mut doc).is_ok());
+
+        assert!(path.exists());
+        let file = std::fs::File::open(&path).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
+        let mut xml_content = String::new();
+        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
+
+        assert!(xml_content.contains("<w:tbl>") || xml_content.contains("<w:t"));
+    }
+    #[test]
     fn test_pdf_to_docx() {
-        let mut doc = create_dummy_doc(1);
+        let mut doc = create_dummy_doc(1, None);
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("out_test.docx");
 
@@ -1217,7 +1783,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_xlsx() {
-        let mut doc = create_dummy_doc(1);
+        let mut doc = create_dummy_doc(1, None);
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("out_test.xlsx");
 
@@ -1230,7 +1796,7 @@ mod tests {
 
     #[test]
     fn test_pdf_to_pptx() {
-        let mut doc = create_dummy_doc(1);
+        let mut doc = create_dummy_doc(1, None);
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("out_test.pptx");
 
@@ -1408,4 +1974,6 @@ mod tests {
         assert!(!bytes.is_empty());
         assert!(bytes.starts_with(b"%PDF-"));
     }
+
+
 }
