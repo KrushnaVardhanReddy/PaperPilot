@@ -48,11 +48,10 @@ impl PdfInspector {
     pub fn contains_text(&self, text: &str) -> bool {
         let pages = self.inner.get_pages();
         for (page_num, _) in pages {
-            if let Ok(extracted) = self.inner.extract_text(&[page_num]) {
-                if extracted.contains(text) {
+            if let Ok(extracted) = self.inner.extract_text(&[page_num])
+                && extracted.contains(text) {
                     return true;
                 }
-            }
         }
         false
     }
@@ -73,9 +72,9 @@ impl PdfInspector {
         let mut width: f64 = 0.0;
         let mut height: f64 = 0.0;
 
-        if let Ok(dict) = self.inner.get_dictionary(page_id) {
-            if let Ok(lopdf::Object::Array(arr)) = dict.get(b"MediaBox") {
-                if arr.len() == 4 {
+        if let Ok(dict) = self.inner.get_dictionary(page_id)
+            && let Ok(lopdf::Object::Array(arr)) = dict.get(b"MediaBox")
+                && arr.len() == 4 {
                     let mut values = Vec::new();
                     for obj in arr {
                         if let Ok(val) = obj.as_float() {
@@ -89,8 +88,6 @@ impl PdfInspector {
                         height = values[3] - values[1];
                     }
                 }
-            }
-        }
 
         let arr = js_sys::Array::new();
         arr.push(&JsValue::from_f64(width));
@@ -105,12 +102,12 @@ impl PdfInspector {
     pub fn form_fields(&self) -> Result<JsValue, JsValue> {
         let mut fields = Vec::new();
         // Traverse AcroForm dictionary to extract fields
-        if let Ok(catalog) = self.inner.catalog() {
-            if let Ok(lopdf::Object::Dictionary(acro_form)) = catalog.get(b"AcroForm") {
-                if let Ok(lopdf::Object::Array(fields_arr)) = acro_form.get(b"Fields") {
+        if let Ok(catalog) = self.inner.catalog()
+            && let Ok(lopdf::Object::Dictionary(acro_form)) = catalog.get(b"AcroForm")
+                && let Ok(lopdf::Object::Array(fields_arr)) = acro_form.get(b"Fields") {
                     for field_obj in fields_arr {
-                        if let lopdf::Object::Reference(ref_id) = field_obj {
-                            if let Ok(lopdf::Object::Dictionary(field_dict)) =
+                        if let lopdf::Object::Reference(ref_id) = field_obj
+                            && let Ok(lopdf::Object::Dictionary(field_dict)) =
                                 self.inner.get_object(*ref_id)
                             {
                                 let name = if let Ok(lopdf::Object::String(name_bytes, _)) =
@@ -138,11 +135,8 @@ impl PdfInspector {
                                 }
                                 fields.push(arr);
                             }
-                        }
                     }
                 }
-            }
-        }
 
         let js_fields = js_sys::Array::new();
         for field in fields {

@@ -29,6 +29,10 @@ rten-tensor = "0.21.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 docx-rs = "0.4.22"
+zip = "9.0.1"
+
+[dev-dependencies]
+zip = "9.0.1"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
