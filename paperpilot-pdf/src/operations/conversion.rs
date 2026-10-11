@@ -1050,21 +1050,19 @@ impl PdfOperation for PdfToDocxOperation {
                             current_text.clear();
                          }
                     }
-                    "ET" => {
-                         if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                         }
+                    "ET" if !current_text.is_empty() => {
+                        spans.push(TextSpan {
+                            text: current_text.clone(),
+                            font_size: current_font_size,
+                            is_bold,
+                            is_italic,
+                            color_hex: current_color.clone(),
+                            x: current_x,
+                            y: current_y,
+                            width: current_text.len() as f32 * current_font_size * 0.5,
+                            height: current_font_size,
+                        });
+                        current_text.clear();
                     }
                     _ => {}
                 }
