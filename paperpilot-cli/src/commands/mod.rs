@@ -200,6 +200,19 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             css_preset.as_deref(),
             inline_css.as_deref(),
         ),
+        Commands::ConvertUrl {
+            url,
+            output,
+            delay_ms,
+            page_size,
+            print_background,
+        } => group_d::handle_convert_url(
+            url,
+            output,
+            *delay_ms,
+            page_size.clone(),
+            *print_background,
+        ),
         Commands::Classify { input } => group_d::handle_classify(input),
         Commands::Serve { port, bind } => {
             let rt = tokio::runtime::Runtime::new()

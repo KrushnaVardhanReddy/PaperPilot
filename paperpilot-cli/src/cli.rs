@@ -344,6 +344,18 @@ pub enum Commands {
         #[arg(long)]
         inline_css: Option<String>,
     },
+    ConvertUrl {
+        #[arg(long, required = true)]
+        url: String,
+        #[arg(long)]
+        output: std::path::PathBuf,
+        #[arg(long)]
+        delay_ms: Option<u64>,
+        #[arg(long)]
+        page_size: Option<String>,
+        #[arg(long)]
+        print_background: Option<bool>,
+    },
     // --- Headless Server / Automation Gateway ---
     Serve {
         #[arg(long, default_value = "7823")]

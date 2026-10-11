@@ -1050,6 +1050,63 @@ impl PdfOperation for PdfToPptxOperation {
     }
 }
 
+
+pub struct UrlToPdfOptions {
+    pub url: String,
+    pub delay_ms: Option<u64>,
+    pub page_size: Option<String>,
+    pub print_background: bool,
+}
+
+pub struct UrlToPdfOperation {
+    options: UrlToPdfOptions,
+    output_path: PathBuf,
+}
+
+impl UrlToPdfOperation {
+    pub fn new(options: UrlToPdfOptions, output_path: PathBuf) -> Self {
+        Self {
+            options,
+            output_path,
+        }
+    }
+
+    pub async fn render(&self) -> OperationResult<()> {
+        use browser_oxide::Page;
+
+        let profile = browser_oxide::stealth::presets::chrome_148_linux();
+        let mut page = if self.options.url.starts_with("http") {
+            Page::navigate_stealth(&self.options.url, profile)
+                .await
+                .map_err(|e| PdfError::Other(format!("Browser oxide error: {}", e)))?
+        } else {
+            Page::from_html_with_url(&std::fs::read_to_string(self.options.url.replace("file://", "")).unwrap_or_else(|_| self.options.url.clone()), &self.options.url, Some(profile))
+                .await
+                .map_err(|e| PdfError::Other(format!("Browser oxide error: {}", e)))?
+        };
+
+        if let Some(delay) = self.options.delay_ms {
+            tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
+        }
+
+        let html = page.content();
+
+        let html_opts = HtmlToPdfOptions {
+            preset: None,
+            custom_css: None,
+            page_size: self.options.page_size.clone(),
+            margin_mm: None,
+        };
+
+        let html_op = HtmlToPdfOperation::new(
+            html,
+            self.output_path.clone(),
+            html_opts
+        );
+        html_op.render()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1258,6 +1315,35 @@ mod tests {
         let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
         assert!(op.render().is_ok());
 
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+
+    #[tokio::test]
+    async fn test_url_to_pdf_operation() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_url.pdf");
+
+        let html_path = dir.path().join("test.html");
+        std::fs::write(&html_path, "<html><body><h1>Test</h1><script>document.body.appendChild(document.createElement('p')).innerText = 'Hydrated';</script></body></html>").unwrap();
+
+        let url = format!("file://{}", html_path.display());
+
+        let options = super::UrlToPdfOptions {
+            url,
+            delay_ms: Some(100),
+            page_size: None,
+            print_background: true,
+        };
+
+        let op = super::UrlToPdfOperation::new(options, out_path.clone());
+
+        let res = op.render().await;
+
+        assert!(res.is_ok(), "{:?}", res);
         assert!(out_path.exists());
         assert!(out_path.metadata().unwrap().len() > 0);
         let pdf_bytes = std::fs::read(&out_path).unwrap();

@@ -250,3 +250,26 @@ pub fn handle_classify(input: &Path) -> OperationResult<()> {
 
     Ok(())
 }
+
+pub fn handle_convert_url(
+    url: &str,
+    output: &Path,
+    delay_ms: Option<u64>,
+    page_size: Option<String>,
+    print_background: Option<bool>,
+) -> OperationResult<()> {
+    let options = paperpilot_pdf::operations::conversion::UrlToPdfOptions {
+        url: url.to_string(),
+        delay_ms,
+        page_size,
+        print_background: print_background.unwrap_or(true),
+    };
+    let op = paperpilot_pdf::operations::conversion::UrlToPdfOperation::new(options, output.to_path_buf());
+
+    let rt = tokio::runtime::Runtime::new()
+        .map_err(paperpilot_core::error::PdfError::IoError)?;
+
+    rt.block_on(async {
+        op.render().await
+    })
+}
