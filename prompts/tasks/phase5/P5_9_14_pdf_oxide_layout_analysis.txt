@@ -1,33 +1,73 @@
-Task: Advanced Multi-Column & Table Document Layout Analysis via pdf-oxide [Spec 039]
+Task: Advanced Multi-Column & Table Document Layout Analysis via Spatial XY-Cut & docx-rs [Spec 039]
 
 Objective:
-Enhance PaperPilot's PDF-to-Word (`pdf_to_docx`) conversion engine by integrating `pdf_oxide` (or its pure-Rust XY-Cut spatial clustering algorithm) into `paperpilot-pdf` and `paperpilot-wasm` to reconstruct multi-column reading orders and generate native OpenXML tables (`docx-rs::Table`).
+Enhance PaperPilot's PDF-to-Word (`pdf_to_docx`) conversion engine by implementing spatial layout analysis
+(recursive XY-Cut column de-weaving and table boundary recognition) in `paperpilot-pdf` and `paperpilot-wasm`,
+so that multi-column PDFs retain proper reading order and tabular data emits native OpenXML tables (`docx_rs::Table`).
 
-Context & Requirements:
-- Read `specs/039-pdf-oxide-layout-analysis/spec.md` for complete architecture and guidelines.
-- Baseline is Spec 038 (`paperpilot-pdf/src/operations/conversion.rs` and `docx-rs`).
-- Concurrency Constraint: Machine limit of 6 cores. All builds and test commands MUST use `-j 6` (e.g. `cargo test -- -j 6`).
+Context & Architecture:
+- Read `specs/039-pdf-oxide-layout-analysis/spec.md` for full algorithmic specifications.
+- Baseline: Spec 038 (`paperpilot-pdf/src/operations/conversion.rs` and `paperpilot-wasm/src/operations.rs`).
+- Concurrency Constraint: Max 6 cores. All builds and test commands MUST use `-j 6` (e.g., `cargo test -p paperpilot-pdf -j 6`).
 - Memory & WASM Constraints: 100% pure Rust, zero native C dependencies, fully compatible with `wasm32-unknown-unknown` and Cloudflare Workers (<35MB RSS).
 
-Implementation Steps:
-1. Engine Core & Layout Analysis (`paperpilot-pdf`):
-   - Add/evaluate `pdf_oxide` crate or adapt its pure-Rust XY-Cut spatial span clustering and reading-order tree:
-     - Group text bounding boxes by column gutters to avoid horizontal line interleaving.
-     - Detect grid/table alignments and convert them to native `docx-rs::Table` with rows (`TableRow`) and cells (`TableCell`).
-   - Retain graceful fallback to basic linear extraction if spatial clustering returns empty or fails.
-2. WASM & Edge Compatibility (`paperpilot-wasm` & `apps/edge`):
-   - Ensure all layout and table conversion logic compiles cleanly under `wasm-pack build` and in-memory WebAssembly.
-3. Verification & Quality Gates:
+Implementation Details & Steps:
+
+1. Spatial Span Extraction (`paperpilot-pdf` and `paperpilot-wasm`):
+   - Define a helper struct for text layout blocks:
+     ```rust
+     #[derive(Debug, Clone)]
+     pub struct TextSpan {
+         pub text: String,
+         pub x: f32,
+         pub y: f32,
+         pub font_size: f32,
+         pub is_bold: bool,
+         pub is_italic: bool,
+         pub color_hex: String,
+     }
+     ```
+   - In PDF content stream decoding (`lopdf`), track `(x, y)` coordinate updates via `Tm`, `Td`, `TD`, `T*`.
+   - Store decoded spans per page with their exact coordinates and typography.
+
+2. Column De-Weaving (XY-Cut Algorithm):
+   - When sorting spans on a page, detect vertical column gutters:
+     - Check if spans cluster into two or more distinct X-ranges separated by a whitespace gutter (e.g., gutter width >= 15.0 pt).
+   - If multiple columns are detected:
+     - Group spans by column index (e.g., Column 1: x in [x0, x_split], Column 2: x in [x_split, x_max]).
+     - Sort each column top-to-bottom (descending Y coordinate).
+     - Emit Column 1 paragraphs sequentially before Column 2 paragraphs.
+   - If no distinct column gutters exist, sort standard top-to-bottom.
+
+3. Table Detection & OpenXML Emission (`docx_rs::Table`):
+   - Check if a group of spans forms a grid:
+     - Multiple rows (Y coordinates match within ±2.0 pt tolerance).
+     - Multiple columns (distinct X coordinates across the same Y rows, >= 2 columns and >= 2 rows).
+   - When a table is detected:
+     - Construct a `docx_rs::Table` using `TableRow` and `TableCell`.
+     - Populate each cell with a `Paragraph` containing the cell's text run.
+     - Add the table to `docx`: `docx = docx.add_table(table);`.
+   - Non-tabular spans continue to be emitted as regular `Paragraph` items.
+
+4. Graceful Fallback:
+   - If table detection or column de-weaving encounters empty or single-span lines, fall back cleanly to standard paragraph flow.
+   - Never panic or fail on malformed PDF streams.
+
+5. Parity & Re-export in `paperpilot-wasm`:
+   - Keep the standalone `pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>>` function in `paperpilot-wasm/src/operations.rs` in sync so browser and Edge workers also benefit from multi-column de-weaving and table formatting.
+
+6. Verification & Quality Gates:
    - Add unit tests verifying:
-     - Multi-column PDF reading order remains un-interleaved.
-     - Tabular PDF fixture produces `<w:tbl>` in `word/document.xml`.
-     - Valid ZIP structure readable by `zip::ZipArchive`.
-   - Run tests with bounded concurrency: `cargo test -p paperpilot-pdf -j 6`.
-   - Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
-4. Report & Documentation:
-   - Create `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`.
+     - Multi-column reading flow: Left column text precedes Right column text in the emitted document paragraphs.
+     - Table generation: An extracted table produces `<w:tbl>`, `<w:tr>`, and `<w:tc>` in the output DOCX XML.
+     - `cargo test -p paperpilot-pdf -j 6` passes.
+     - `cargo test -p paperpilot-wasm -j 6` passes.
+     - `cargo clippy --workspace --all-targets --all-features -- -D warnings` produces zero warnings.
+
+7. Documentation & Tracking:
+   - Create `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md` detailing the XY-Cut algorithm and test results.
    - Update `PHASES.md` marking Task 5.9.14 as completed.
 
 Deliverables:
-- All commits prefixed with `jules: `
-- Clean workspace with zero clippy warnings.
+- Commit prefix: `jules: `
+- Clean workspace passing all quality checks.

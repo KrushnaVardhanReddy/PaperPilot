@@ -1,58 +1,92 @@
-# Spec 039 — Advanced Multi-Column & Table Document Layout Analysis via `pdf-oxide`
+# Spec 039 — Advanced Multi-Column & Table Document Layout Analysis via Spatial XY-Cut & `docx-rs`
 
 ## 1. Overview & Problem Statement
-Spec 038 introduced style and layout reconstruction for `pdf_to_docx`, mapping font sizes, colors, basic bold/italic weights, and center alignments directly to OpenXML (`docx-rs`).
+In Spec 038, PaperPilot gained foundational typographic reconstruction for `pdf_to_docx`, extracting font sizes for headings, bold/italic weights, RGB font colors, center alignments, and embedded images via `docx-rs`.
 
-However, real-world PDFs often contain:
-1. **Multi-Column Text Flow**: Academic papers, newsletters, brochures, and financial reports with 2-3 column layouts. Naive vertical scanning reads across columns horizontally, scrambling the reading order.
-2. **Tabular Data & Grids**: Invoices, bank statements, and tables with borders or aligned cells without explicit table markup.
-3. **Complex Paragraph & Line Wrap Detection**: Distinguishing true paragraph breaks from soft wrapped lines.
+However, complex documents present two structural challenges:
+1. **Multi-Column Text Flow**: Academic papers, journals, newsletters, and financial statements often use 2 or 3 columns. Naive top-to-bottom or stream-order extraction scans across columns horizontally, interleaving sentences from column 1 into column 2.
+2. **Tabular Grids**: Financial tables, pricing matrices, and invoices contain aligned data cells. When emitted as flat paragraphs, column alignment is completely lost.
 
 **Objective:**
-Integrate `pdf_oxide` (or its XY-Cut spatial clustering algorithm) into PaperPilot's document extraction and conversion engine to perform **advanced layout analysis, column de-weaving, and structured table detection** prior to OpenXML generation in `docx-rs`.
+Implement advanced spatial layout analysis—using recursive **XY-Cut reading-order de-weaving** and **grid/table boundary detection** in pure Rust—into `paperpilot-pdf` and `paperpilot-wasm` so that `pdf_to_docx` automatically emits:
+- Properly sequenced multi-column paragraphs (Column 1 fully read before Column 2).
+- Native OpenXML tables (`docx-rs::Table`, `TableRow`, `TableCell`) for tabular data.
 
 ---
 
 ## 2. Technical Architecture & Design
 
-### 2.1 Spatial Span Clustering & XY-Cut Algorithm
-1. **Reading-Order De-Weaving (Recursive XY-Cut)**:
-   - Slice bounding boxes of text spans across horizontal and vertical projection profiles.
-   - Detect vertical whitespace gutters dividing multi-column regions.
-   - Sort and group text blocks in true reading order (top-to-bottom of Column 1, then Column 2) rather than raw stream order.
+### 2.1 Spatial Span Structure & Bounding Box Extraction
+Define a spatial text span representation extracted during page content parsing:
+```rust
+#[derive(Debug, Clone)]
+pub struct TextSpan {
+    pub text: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub font_size: f32,
+    pub is_bold: bool,
+    pub is_italic: bool,
+    pub color_hex: String,
+}
+```
 
-2. **Table Structure Recognition**:
-   - Detect intersecting horizontal and vertical rules/paths or spatial column grids.
-   - Cluster cell contents into structured rows and columns.
-   - Map discovered tables directly into native OpenXML tables:
+### 2.2 XY-Cut Column De-Weaving Algorithm
+1. **Projection Profile Analysis**:
+   - Project horizontal bounding box extents of text spans onto the X-axis for a given vertical band.
+   - Detect vertical whitespace gutters (valleys in the projection histogram where gutter width exceeds a threshold, e.g., $\ge 15.0\,\text{pt}$).
+2. **Recursive Partitioning**:
+   - When a clear vertical gutter splits the page width, split text spans into distinct vertical columns ($X_{\text{col1}} < X_{\text{gutter}} < X_{\text{col2}}$).
+   - Process spans in Column 1 from top to bottom ($Y$ descending) before processing Column 2.
+3. **Paragraph Coalescing**:
+   - Within each column, merge closely spaced lines ($|\Delta Y| < 1.5 \times \text{font\_size}$) into unified paragraphs to prevent broken sentences.
+
+### 2.3 Table Structure Recognition
+1. **Grid Alignment Detection**:
+   - Detect clusters of text spans where multiple spans share similar $Y$-coordinates (rows within $\pm 2.0\,\text{pt}$) and multiple spans share similar $X$-coordinates (aligned column headers and cells, $\ge 2$ columns and $\ge 2$ rows).
+2. **OpenXML Table Generation**:
+   - When a table grid is identified, map rows into `docx_rs::TableRow`:
      ```rust
-     docx = docx.add_table(Table::new(rows));
+     let mut table = Table::new(vec![]);
+     for row_spans in detected_rows {
+         let mut row = TableRow::new(vec![]);
+         for span in row_spans {
+             let cell = TableCell::new().add_paragraph(
+                 Paragraph::new().add_run(Run::new().add_text(&span.text))
+             );
+             row = row.add_cell(cell);
+         }
+         table = table.add_row(row);
+     }
+     docx = docx.add_table(table);
      ```
 
-3. **Fallback & Memory Guarantees**:
-   - Must operate 100% in-memory with zero filesystem access.
-   - Retain graceful fallback to Spec 038's lightweight heuristic parser if `pdf_oxide` layout analysis encounters non-standard or corrupt streams.
-   - Enforce PaperPilot's $<35\,\text{MB}$ RSS memory ceiling.
+### 2.4 Graceful Fallback & Zero-Crash Guarantees
+- If no clear columns or table grids are detected, or if spatial analysis yields ambiguity, gracefully fall back to the sequential paragraph extraction established in Spec 038.
+- 100% in-memory processing: zero disk temporaries, $<35\,\text{MB}$ RSS memory consumption.
+- Strict pure-Rust implementation ensuring compatibility with `wasm32-unknown-unknown` in `paperpilot-wasm` and Cloudflare Workers in `apps/edge`.
 
 ---
 
-### 2.2 Penta-Interface & WASM Support
-Per PaperPilot's Penta-Interface Mandate:
-- **`paperpilot-pdf`**: Provides enhanced `PdfToDocxOperation` with layout awareness.
-- **`paperpilot-wasm`**: Compiles cleanly with `wasm-bindgen` (ensuring `pdf_oxide` features used do not depend on native C runtimes or non-WASM OS threads).
-- **`paperpilot-cli`**, **`paperpilot-mcp`**, **`paperpilot-gateway`**, **`apps/edge`**: Inherit multi-column and table DOCX export transparently.
+## 3. Penta-Interface Exposure
+- **`paperpilot-pdf`**: Core `PdfToDocxOperation` upgraded with multi-column de-weaving and table generation.
+- **`paperpilot-wasm`**: Exported `pdf_to_docx` in `paperpilot-wasm/src/operations.rs` upgraded in parallel with pure in-memory buffer transformation.
+- **`paperpilot-cli`**, **`paperpilot-mcp`**, **`paperpilot-gateway`**: Automatically inherit high-fidelity layout outputs with zero breaking changes to command line flags or JSON schemas.
 
 ---
 
-## 3. Verification & Acceptance Criteria
-1. **Multi-Column Assertion**:
-   - Convert a two-column PDF fixture to DOCX and assert that text flows sequentially down Column 1 before Column 2 (no interleaved sentences).
-2. **Table Assertion**:
-   - Convert a 3×3 table PDF fixture and assert the presence of `<w:tbl>`, `<w:tr>`, and `<w:tc>` elements in `word/document.xml`.
-3. **Penta-Interface Tests**:
-   - Pass all existing and new E2E tests across CLI, MCP, REST, WASM, and Edge.
-4. **Clippy & Tests**:
-   - Zero clippy warnings under `-D warnings`.
-   - Run tests bounded with `-j 6`.
-5. **Report**:
-   - Generate `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`.
+## 4. Verification & Quality Gates
+1. **Multi-Column Reading Order Test**:
+   - Create a test fixture with 2 distinct columns (Left column: "Left 1\nLeft 2", Right column: "Right 1\nRight 2").
+   - Assert generated DOCX contains Left text preceding Right text without interleaving ("Left 1 Left 2 Right 1 Right 2").
+2. **Table Structure Test**:
+   - Create a 2x2 or 3x3 table test fixture.
+   - Assert generated DOCX archive unpacks valid XML containing `<w:tbl>`, `<w:tr>`, and `<w:tc>`.
+3. **Penta-Interface Regression**:
+   - `cargo test -p paperpilot-pdf -j 6`
+   - `cargo test -p paperpilot-wasm -j 6`
+   - Zero clippy warnings under `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+4. **Documentation**:
+   - Author `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`.
