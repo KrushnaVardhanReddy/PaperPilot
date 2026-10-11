@@ -85,13 +85,17 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
 - **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**: ✅ Merged (PR #181, commit `42730fd`, Session 10047595857438929348) — Loading spinner and elapsed timer on Run button, multi-format DropZone with badges, context-aware tool switcher, and dynamic Workspace subtitle (`reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md`).
-- **Phase 5.9.19 (Spec 044 / `rusto-rs` & `ocrs` OCR Investigation & Stability)**: ✅ **Verified Working**
-  - **Resolution & Fixes Applied**:
-    1. **Fixed Indirect Resource Mutation**: Updated `paperpilot-pdf/src/operations/ocr.rs` to detect and directly mutate indirect `Resources` dictionaries (`inner.get_object_mut(res_id)`), ensuring `/Font` and `/ExtGState` are persisted to disk.
-    2. **Official PP-OCRv4 ONNX Models**: Fetched official `det.onnx` (4.7MB) and `rec.onnx` (10.8MB) into `models/ocr/ppocrv4/` with `ppocr_keys_v1.txt`.
-    3. **Model Path Resolution**: `find_model` in `ocr.rs` searches `models/ocr/ppocrv4/` and matches `.onnx` and `.rten`.
-    4. **Verified End-to-End**: Output PDF `/home/krushna/Downloads/I-140_approval_notice_ocr.pdf` verified with mouse selection and text copying working in PDF viewer.
-  - **Status**: OCR is functioning as expected with selectable/copyable text.
+- **Phase 5.9.19 (Spec 044 / `rusto-rs` & `ocrs` OCR Investigation & Stability)**: ✅ **Verified Working End-to-End**
+  - **Root Cause & Fixes Applied**:
+    1. **Grayscale Luma8 Channel Conversion**: `rusto-rs` PaddleOCR detector requires 1-channel grayscale input. Passing raw 3-channel RGB caused `InvalidInput("expected dim 1 to have size 1 but got 3")` silently yielding 0 detected words. Added conversion to `luma8` and PNG re-encoding before `detect_text()`.
+    2. **Font Encoding (`WinAnsiEncoding`)**: Embedded Helvetica Type1 font dictionary lacked `/Encoding`, causing text extractors (`pdftotext`, `lopdf::extract_text()`, `pypdf`) to fail to decode characters. Injected `"Encoding" => "WinAnsiEncoding"`.
+    3. **Indirect Resource Mutation**: Properly resolved and mutated indirect `Resources` dictionaries (`inner.get_object_mut(res_id)`), ensuring `/Font` and `/ExtGState` are correctly linked.
+    5. **Natural Line Word-Spacing (`OutputGranularity::Lines`)**: Switched from `Words` to `Lines` granularity so `rusto-rs` outputs whole natural text blocks with proper inter-word spaces (`"Receipt Number"`, `"Approval Notice"`) instead of character/token fragments without spaces.
+    6. **Per-Strip Coordinate Band Mapping**: Scanned PDFs split across N horizontal strips (`Image1`..`Image26`) are now positioned within their specific vertical band (`page_h - (i * per_strip_h)`) rather than stretching each strip across the full page height, eliminating overlapping text layers and cursor selection jitter in PDF viewers.
+  - **Verification Results**:
+    - `cargo test -p paperpilot-pdf --lib test_e2e_full_ocr_generation` passed.
+    - `paperpilot extract-text` outputs clean sentences with proper spacing between words.
+    - PDF text layer now contains 38 well-formed, non-overlapping lines positioned directly over the corresponding scan lines.
 - **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
   - **Jules Response Ready**: Add Cargo patch in root `Cargo.toml`:
     `[patch.crates-io]`
