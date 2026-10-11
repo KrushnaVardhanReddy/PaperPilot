@@ -11,9 +11,16 @@ build:
 run: build-release
 	./target/release/desktop
 
+# Install desktop dependencies
+install-desktop:
+	@if [ ! -d "apps/desktop/node_modules" ] || [ ! -f "apps/desktop/node_modules/.bin/tauri" ]; then \
+		echo "Installing desktop dependencies..."; \
+		cd apps/desktop && (pnpm install || npm install); \
+	fi
+
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
-dev:
-	cd apps/desktop && npm run tauri dev
+dev: install-desktop
+	cd apps/desktop && (npx tauri dev || npm run tauri dev)
 
 # Run web portal in live-reload dev mode
 run-web:
