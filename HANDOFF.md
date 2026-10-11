@@ -83,10 +83,9 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
   - **In Progress (Jules Session `7709571282449059464`)**: Spec [`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`](specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md) for 100% pure-Rust zero-Chromium web page archiving via `browser_oxide` with targeted crate validation.
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
-- **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**:
-  - **In Progress (Jules Session `16308885490132845466`)**: Spec [`specs/045-desktop-ux-office-and-pdf-integration/spec.md`](specs/045-desktop-ux-office-and-pdf-integration/spec.md). Adds spinner/elapsed-timer loading state to all Run buttons, expands DropZone to accept PDF + Office files with dynamic icons and multi-format Tauri dialog, adds context-aware tool switcher, and verifies all 3 mandatory Svelte files before PR creation.
 
 ### 3. Summary of Recently Completed & Merged Milestones
+- **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**: ✅ Merged (PR #181, commit `42730fd`, Session 10047595857438929348) — Loading spinner and elapsed timer on Run button, multi-format DropZone with badges, context-aware tool switcher, and dynamic Workspace subtitle (`reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md`).
 - **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
 - **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
 - **Phase 5.9.12 (Spec 037 / Diagonal Watermarks)**: ✅ Merged (PR #176) — 45° diagonal angle, alpha transparency, MediaBox centering, and configurable parameters across all 5 surfaces.
