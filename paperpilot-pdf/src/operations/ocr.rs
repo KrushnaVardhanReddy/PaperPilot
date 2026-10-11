@@ -312,7 +312,7 @@ impl PdfOperation for OcrOperationImpl {
         if let Some(path) = &self.output_path {
             if path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("txt".to_string()) {
                 let joined = words_collected.join("\n\n");
-                std::fs::write(path, joined).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+                std::fs::write(path, joined).map_err(paperpilot_core::error::PdfError::IoError)?;
             } else {
                 document.save(path)?;
             }

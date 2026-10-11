@@ -28,47 +28,36 @@ impl McpRunner {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .spawn()?;
+            .spawn()
+            .map_err(|e| anyhow!("Failed to spawn MCP server: {}", e))?;
 
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(payload_str.as_bytes()).await?;
-            stdin.flush().await?;
-            drop(stdin); // Close stdin so child process completes reading immediately
-        }
+        let mut stdin = child.stdin.take().unwrap();
+        stdin.write_all(payload_str.as_bytes()).await?;
+        stdin.flush().await?;
+        drop(stdin);
 
-        let output = child.wait_with_output().await?;
-        let stdout_str = String::from_utf8_lossy(&output.stdout);
-        let stderr_str = String::from_utf8_lossy(&output.stderr);
-        let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let stdout = child.stdout.take().unwrap();
+        let mut reader = tokio::io::BufReader::new(stdout);
+        let mut response_line = String::new();
+        reader.read_line(&mut response_line).await?;
 
-        let mut response_val: Option<Value> = None;
-        for line in stdout_str.lines() {
-            if let Ok(v) = serde_json::from_str::<Value>(line) {
-                if v.get("id").is_some() || v.get("result").is_some() || v.get("error").is_some() {
-                    response_val = Some(v);
-                    break;
-                }
-            }
-        }
+        let stderr = child.stderr.take().unwrap();
+        let mut err_reader = tokio::io::BufReader::new(stderr);
+        let mut err_str = String::new();
+        err_reader.read_line(&mut err_str).await?;
 
-        if let Some(resp) = response_val {
-            let is_error = resp.get("error").is_some()
-                || resp
-                    .get("result")
-                    .and_then(|r| r.get("isError"))
-                    .and_then(|e| e.as_bool())
-                    .unwrap_or(false);
-            Ok((!is_error, resp, latency_ms))
-        } else if !stderr_str.trim().is_empty() {
-            // Server exited with stderr
-            let err_obj = serde_json::json!({ "error": stderr_str.trim() });
-            Ok((false, err_obj, latency_ms))
+        let duration = start.elapsed().as_secs_f64() * 1000.0;
+
+        let out: Value = serde_json::from_str(&response_line)
+            .unwrap_or_else(|_| json!({"error": {"message": response_line, "stderr": err_str}}));
+
+        if let Some(err) = out.get("error") {
+            Ok((false, err.clone(), duration))
+        } else if let Some(res) = out.get("result") {
+            let is_error = res.get("isError").and_then(|v| v.as_bool()).unwrap_or(false);
+            Ok((!is_error, res.clone(), duration))
         } else {
-            Err(anyhow!(
-                "No valid JSON-RPC response from MCP server. stdout='{}', stderr='{}'",
-                stdout_str,
-                stderr_str
-            ))
+            Ok((false, json!("No valid result or error found"), duration))
         }
     }
 }
