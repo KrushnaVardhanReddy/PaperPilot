@@ -1,0 +1,43 @@
+Task: Advanced Multi-Column & Table Document Layout Analysis via Spatial XY-Cut & docx-rs [Spec 039]
+
+Objective:
+Enhance PaperPilot's PDF-to-Word (`pdf_to_docx`) conversion engine by implementing spatial layout analysis
+(recursive XY-Cut column de-weaving and table boundary recognition) in `paperpilot-pdf` and `paperpilot-wasm`,
+so that multi-column PDFs retain proper reading order and tabular data emits native OpenXML tables (`docx_rs::Table`).
+
+Context & Requirements:
+- Read `specs/039-pdf-oxide-layout-analysis/spec.md`.
+- Baseline: Spec 038 (`paperpilot-pdf/src/operations/conversion.rs` and `paperpilot-wasm/src/operations.rs`).
+- Concurrency limit: Maximum 6 cores (-j 6).
+- 100% pure Rust, zero native C dependencies, fully compatible with wasm32-unknown-unknown (<35MB RSS).
+
+Implementation Steps:
+1. TextSpan Extraction:
+   - Extract `TextSpan` with `(x, y, font_size, is_bold, is_italic, color_hex)` during stream decoding in `paperpilot-pdf`.
+2. XY-Cut Column De-Weaving:
+   - Detect vertical column gutters (gutter width >= 15.0 pt).
+   - Partition text spans into distinct vertical columns. Sort spans in Column 1 top-to-bottom before Column 2.
+3. Table Recognition & docx-rs Table:
+   - Detect clusters sharing consistent row Y values and column X alignments (>= 2 rows, >= 2 columns).
+   - Map into `docx_rs::Table` with `TableRow` and `TableCell`.
+4. WASM Parity:
+   - Update `paperpilot-wasm/src/operations.rs` `pdf_to_docx` with identical pure-Rust XY-Cut sorting and table conversion.
+5. Graceful Fallback:
+   - Fall back to standard sequential paragraph extraction on single-column or ambiguous pages. Never panic.
+
+==================================================
+MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+You must run these target validations before committing and raising the PR:
+1. Fast workspace type check:
+   cargo check -p paperpilot-pdf -p paperpilot-wasm
+2. Target crate unit tests (bounded concurrency):
+   cargo test -p paperpilot-pdf --lib -j 6
+   cargo test -p paperpilot-wasm --test wasm_tests -j 6
+3. Linter:
+   cargo clippy -p paperpilot-pdf -p paperpilot-wasm -- -D warnings
+==================================================
+
+Documentation & Completion:
+- Author: reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md
+- Update PHASES.md marking Task 5.9.14 completed.
+- Commit prefix: "jules: "

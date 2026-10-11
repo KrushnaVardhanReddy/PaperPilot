@@ -1,0 +1,42 @@
+Task: Pure-Rust Chromium-Free URL-to-PDF Archival Engine via browser_oxide [Spec 041]
+
+Objective:
+Integrate `browser_oxide` into PaperPilot (`paperpilot-pdf`) to deliver a 100% pure-Rust, zero-Chromium
+web page archiving and dynamic HTML+JS-to-PDF conversion engine.
+
+Context & Requirements:
+- Read `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`.
+- Concurrency limit: Maximum 6 cores (-j 6).
+- Zero external browser binaries: Must NOT spawn `chrome`, `chromium`, or CDP. Must run 100% in pure Rust via `browser_oxide`.
+- Memory ceiling: <35MB RSS.
+
+Implementation Steps:
+1. Dependency:
+   - Add `browser_oxide = "0.1"` in `paperpilot-pdf/Cargo.toml`.
+2. Core Operation (`paperpilot-pdf/src/operations/conversion.rs` or `url.rs`):
+   - Implement `UrlToPdfOperation` with options:
+     url: String, delay_ms: Option<u64>, page_size: Option<String>, print_background: bool
+   - Load page, execute scripts to allow hydration, extract rendered layout, and emit valid PDF via `lopdf`.
+3. Penta-Interface Exposure:
+   - CLI (`paperpilot-cli`): `paperpilot convert-url --url <URL> --output <OUT>`
+   - MCP Server (`paperpilot-mcp`): `pdf_convert_url` tool taking `{ "url": string, "output": string, "delay_ms"?: number }`
+   - Gateway (`paperpilot-gateway`): `POST /api/v1/pdf/convert/url` endpoint.
+4. Unit Tests:
+   - Add unit test in `paperpilot-pdf` verifying HTML/URL to PDF conversion produces valid `%PDF-` bytes.
+
+==================================================
+MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+You must run these target validations before committing and raising the PR:
+1. Target check:
+   cargo check -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
+2. Target crate unit tests (bounded concurrency):
+   cargo test -p paperpilot-pdf --lib -j 6
+   cargo test -p paperpilot-mcp --lib -j 6
+3. Clippy:
+   cargo clippy -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -- -D warnings
+==================================================
+
+Documentation & Completion:
+- Author: reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md
+- Update PHASES.md marking Task 5.9.16 completed.
+- Commit prefix: "jules: "

@@ -1,0 +1,108 @@
+Task: Desktop UX — Office + PDF Unified Intake, Run Button Feedback & Context-Aware Tool Navigation [Spec 045]
+
+Objective:
+Improve PaperPilot's Svelte 5 + Tauri 2 desktop app UX by: (1) adding loading feedback to the Run button
+so users see a spinner and elapsed timer while operations run, (2) expanding the drop zone to accept Office
+files (.docx, .xlsx, .pptx, .doc, .xls, .ppt) in addition to PDF, and (3) adding a context-aware tool
+switcher in the Operations Panel (PDF Tools / Office Tools / AI Tools) so the growing tool list stays organized.
+
+CRITICAL RULES:
+1. All changes are PURELY FRONTEND (TypeScript/Svelte/CSS). Zero Rust code changes required.
+2. Use Svelte 5 Runes ONLY: $state(), $derived(), $derived.by(), $effect(), $props(). Never use writable(), readable(), or $: reactive statements.
+3. Keep ALL existing functionality intact. Zero regressions in existing Playwright E2E tests.
+4. Preserve all existing jobsState and toastState integrations exactly as-is.
+5. All commits prefixed with "jules: ".
+
+Context & Reference Files:
+- Spec: specs/045-desktop-ux-office-and-pdf-integration/spec.md
+- Drop zone: apps/desktop/src/lib/components/ui/DropZone.svelte
+- Operations panel: apps/desktop/src/lib/components/layout/OperationsPanel.svelte
+- Sidebar: apps/desktop/src/lib/components/layout/Sidebar.svelte
+- App state: apps/desktop/src/lib/state/app.svelte.ts
+
+Implementation Steps:
+
+STEP 1: Run Button Loading State (OperationsPanel.svelte)
+- Add state variables near existing $state() in <script>:
+  let isRunning = $state(false);
+  let elapsedSeconds = $state(0);
+  let elapsedDisplay = $derived(
+    `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`
+  );
+
+- In `handleRunOperation`, wrap the execution in try/finally:
+  async function handleRunOperation() {
+    if (isRunning) return;
+    isRunning = true;
+    elapsedSeconds = 0;
+    const timer = setInterval(() => { elapsedSeconds++; }, 1000);
+    try {
+      // ... existing body unchanged ...
+    } finally {
+      isRunning = false;
+      clearInterval(timer);
+    }
+  }
+
+- In the template, update the run button:
+  <div class="action-area">
+    <button
+      class="run-btn"
+      class:run-btn--loading={isRunning}
+      id="btn-run-operation"
+      disabled={isRunning || !activeTool || (!['md_to_pdf','html_to_pdf','img_to_pdf','json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
+      onclick={handleRunOperation}
+    >
+      {#if isRunning}
+        <span class="spinner" aria-hidden="true"></span>
+        Running...
+      {:else}
+        Run {activeTool.title}
+      {/if}
+    </button>
+    {#if isRunning}
+      <span class="elapsed-time" aria-live="polite">{elapsedDisplay}</span>
+    {/if}
+  </div>
+
+- Add CSS for .spinner, .run-btn--loading, .elapsed-time.
+
+STEP 2: Expand DropZone for Office Files (DropZone.svelte)
+- Update accept pattern to include:
+  .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt
+- Update copy:
+  "Drop PDF or Office files here"
+  "DOCX, XLSX, PPTX, PDF supported"
+- Add helper for file badge icons:
+  .pdf -> 📄 PDF
+  .docx, .doc -> 📝 Word
+  .xlsx, .xls -> 📊 Excel
+  .pptx, .ppt -> 📽️ PowerPoint
+
+STEP 3: Context-Aware Tool Switcher (OperationsPanel.svelte)
+- Add category filter pill toggle above tools:
+  - "All"
+  - "PDF Tools"
+  - "Office Tools"
+  - "AI & OCR"
+- Filter displayed tools based on selected filter pill while keeping existing search query filtering.
+
+STEP 4: Dynamic Workspace Heading
+- In document list / workspace header:
+  Change static "Documents" title to "Workspace", and dynamic subtitle:
+  - 0 docs: "Drop PDF or Office files to get started"
+  - 1+ docs: "{n} document{s} loaded"
+
+==================================================
+MINIMUM FILES TO VALIDATE BEFORE RAISING PR:
+You must run these target validations before committing and raising the PR:
+1. Type check:
+   cd apps/desktop && pnpm check
+2. Target E2E tests (run ONLY the relevant desktop UI suites, NOT whole workspace):
+   cd apps/desktop && pnpm exec playwright test tests/e2e_ui.spec.ts tests/app.spec.ts
+==================================================
+
+Documentation & Completion:
+- Author: reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md
+- Update PHASES.md marking Task 5.9.20 completed.
+- Commit prefix: "jules: "
