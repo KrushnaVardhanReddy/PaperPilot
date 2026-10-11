@@ -151,7 +151,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             output,
         } => group_c::handle_render(input, output),
         Commands::Compare { input, input_b } => group_c::handle_compare(input, input_b),
-        Commands::Ocr { input, output } => group_c::handle_ocr(input, output),
+        Commands::Ocr { input, output, format, clipboard } => group_c::handle_ocr(input, output.as_deref(), format, *clipboard),
         Commands::Bookmarks { input } => group_c::handle_bookmarks(input),
         Commands::ImagesToPdf { images, output } => group_c::handle_images_to_pdf(images, output),
 

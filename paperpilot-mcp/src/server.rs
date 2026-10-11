@@ -4159,15 +4159,19 @@ impl PaperPilotMcpServer {
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::ocr::OcrOperation;
+                let mut op = paperpilot_pdf::operations::ocr::OcrOperation::new();
+                let out_path = std::path::PathBuf::from(&output);
+                op.output_path = Some(out_path.clone());
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-                doc.save(&std::path::PathBuf::from(&output))
-                    .map_err(crate::error::to_mcp_error)?;
+
+                let text = op.extracted_text.lock().unwrap().clone().unwrap_or_default();
 
                 Ok(OperationResult {
-                    data: None,
+                    data: Some(serde_json::json!({
+                        "text": text,
+                        "output_path": output
+                    })),
                     success: true,
-
                     message: "OCR operation completed successfully.".to_string(),
                     output_path: Some(output),
                     diff_detected: None,

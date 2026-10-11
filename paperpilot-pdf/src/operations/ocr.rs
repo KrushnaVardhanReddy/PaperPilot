@@ -7,10 +7,12 @@ use lopdf::dictionary;
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 pub struct OcrOperationImpl {
     pub output_path: Option<PathBuf>,
     pub language: Option<String>,
+    pub extracted_text: Arc<Mutex<Option<String>>>,
 }
 
 impl OcrOperationImpl {
@@ -18,6 +20,7 @@ impl OcrOperationImpl {
         Self {
             output_path: None,
             language: None,
+            extracted_text: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -399,43 +402,47 @@ impl PdfOperation for OcrOperationImpl {
             text_op.execute(document)?;
         }
 
+        // Sort words from top to bottom (descending y) and left to right (ascending x)
+        words_collected.sort_by(|a, b| {
+            let y_cmp = b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal);
+            if y_cmp == std::cmp::Ordering::Equal {
+                a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
+            } else {
+                y_cmp
+            }
+        });
+
+        let mut lines = Vec::new();
+        let mut current_line = Vec::new();
+        let mut current_y = None;
+
+        for (y, _x, font_size, text) in words_collected {
+            if let Some(cy) = current_y {
+                // Delta y < 0.5 * font_size
+                if (cy as f32 - y as f32).abs() < 0.5 * font_size {
+                    current_line.push(text);
+                } else {
+                    lines.push(current_line.join(" "));
+                    current_line = vec![text];
+                    current_y = Some(y);
+                }
+            } else {
+                current_line.push(text);
+                current_y = Some(y);
+            }
+        }
+        if !current_line.is_empty() {
+            lines.push(current_line.join(" "));
+        }
+
+        let full_text = lines.join("\n\n");
+        if let Ok(mut lock) = self.extracted_text.lock() {
+            *lock = Some(full_text.clone());
+        }
+
         if let Some(path) = &self.output_path {
             if path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("txt".to_string()) {
-                // Sort words from top to bottom (descending y) and left to right (ascending x)
-                words_collected.sort_by(|a, b| {
-                    let y_cmp = b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal);
-                    if y_cmp == std::cmp::Ordering::Equal {
-                        a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
-                    } else {
-                        y_cmp
-                    }
-                });
-
-                let mut lines = Vec::new();
-                let mut current_line = Vec::new();
-                let mut current_y = None;
-
-                for (y, _x, font_size, text) in words_collected {
-                    if let Some(cy) = current_y {
-                        // Delta y < 0.5 * font_size
-                        if (cy as f32 - y as f32).abs() < 0.5 * font_size {
-                            current_line.push(text);
-                        } else {
-                            lines.push(current_line.join(" "));
-                            current_line = vec![text];
-                            current_y = Some(y);
-                        }
-                    } else {
-                        current_line.push(text);
-                        current_y = Some(y);
-                    }
-                }
-                if !current_line.is_empty() {
-                    lines.push(current_line.join(" "));
-                }
-
-                let joined = lines.join("\n\n");
-                std::fs::write(path, joined).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+                std::fs::write(path, full_text).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             } else {
                 document.save(path)?;
             }
@@ -446,11 +453,10 @@ impl PdfOperation for OcrOperationImpl {
 }
 
 pub type OcrOperation = OcrOperationImpl;
-#[allow(non_upper_case_globals)]
-pub const OcrOperation: OcrOperationImpl = OcrOperationImpl {
-    output_path: None,
-    language: None,
-};
+
+pub fn default_ocr_op() -> OcrOperationImpl {
+    OcrOperationImpl::new()
+}
 
 #[cfg(test)]
 mod tests {

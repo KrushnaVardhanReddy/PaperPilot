@@ -159,6 +159,7 @@
   let signCertPath = $state('');
   let headerText = $state('');
   let footerText = $state('');
+  let ocrOutputFormat = $state<'pdf' | 'txt' | 'clipboard'>('pdf');
 
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
@@ -240,7 +241,15 @@
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
-      case 'ocr':           customOutputPath = getOutputPath(`${base}_ocr.pdf`);         break;
+      case 'ocr':
+        if (ocrOutputFormat === 'txt') {
+          customOutputPath = getOutputPath(`${base}_ocr.txt`);
+        } else if (ocrOutputFormat === 'clipboard') {
+          customOutputPath = '';
+        } else {
+          customOutputPath = getOutputPath(`${base}_ocr.pdf`);
+        }
+        break;
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
@@ -627,12 +636,17 @@
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
         };
         break;
-      case 'ocr':
+      case 'ocr': {
+        const defaultExt = ocrOutputFormat === 'txt' ? 'txt' : 'pdf';
+        const targetOut = customOutputPath || (ocrOutputFormat === 'clipboard'
+          ? getOutputPath(`temp_ocr_clipboard.txt`)
+          : getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.${defaultExt}`));
         args = {
           input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.pdf`)
+          output: targetOut
         };
         break;
+      }
       case 'pdf_to_docx':
         args = {
           input: docPath,
@@ -676,10 +690,20 @@
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
       const resObj = result as any;
       if (resObj && resObj.success) {
-        const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-        const msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
-        toastState.success(msg);
-        jobsState.addJob(toolName, 'success', msg);
+        if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+          const textToCopy = resObj.data?.text || '';
+          if (navigator.clipboard && textToCopy) {
+            await navigator.clipboard.writeText(textToCopy);
+          }
+          const msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+          toastState.success(msg);
+          jobsState.addJob(toolName, 'success', msg);
+        } else {
+          const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+          const msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+          toastState.success(msg);
+          jobsState.addJob(toolName, 'success', msg);
+        }
       } else {
         const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
         toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
@@ -881,9 +905,23 @@
           <label for="footerText" class="section-desc">Footer Text:</label>
           <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
         </div>
-      {:else if activeTool.id === 'pdf_to_pptx' || activeTool.id === 'pdf_to_pdf_a'}
+      {:else if activeTool.id === 'ocr'}
         <div class="operation-config">
-          <p class="section-desc">Export destination can be modified below.</p>
+          <label for="ocrOutputFormat" class="section-desc">Output Destination:</label>
+          <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input">
+            <option value="pdf">Searchable PDF (.pdf)</option>
+            <option value="txt">Plain Text File (.txt)</option>
+            <option value="clipboard">Copy to Clipboard</option>
+          </select>
+          <p class="section-desc" style="font-size: 0.78rem; color: #a1a1aa; margin-top: 6px;">
+            {#if ocrOutputFormat === 'pdf'}
+              Injects a transparent text layer into the PDF so text can be selected and searched.
+            {:else if ocrOutputFormat === 'txt'}
+              Extracts the recognized text and writes it out as a structured .txt text file.
+            {:else}
+              Copies the recognized text straight to your operating system clipboard!
+            {/if}
+          </p>
         </div>
       {:else}
         <div class="operation-config">
@@ -891,7 +929,7 @@
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf'}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">Output file:</label>
           <div class="output-path-row">
