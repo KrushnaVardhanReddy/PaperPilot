@@ -1,0 +1,109 @@
+=== TASK DEFINITION: Phase 5 - Spec 046: Structured Spreadsheet Ingestion & Tabular JSON/CSV Agent Tooling via office_oxide ===
+
+CONTEXT & OBJECTIVE:
+AI agents (e.g. Claude, Cursor, OpenCode) require structured spreadsheet ingestion (.xlsx, .xls) to directly analyze financial models, inventory tables, and data matrices without external Python scripts (pandas/openpyxl) or LibreOffice.
+PaperPilot already includes `office_oxide = "0.1.13"`, `calamine = "0.36.1"`, and `csv = "1.4.0"` in `paperpilot-pdf`.
+We need to implement `ExcelToJsonOperation` and `ExcelToCsvOperation` across the core engine (`paperpilot-pdf`), CLI (`paperpilot-cli`), and MCP server (`paperpilot-mcp`).
+
+SPEC REFERENCE:
+Read `specs/046-spreadsheet-json-csv-ingestion-office-oxide/spec.md` for full requirements and schemas.
+
+MANDATORY EXECUTION GUARDRAILS (PREVENTS RESETTING & LOOPING):
+1. MACHINE SAFETY CONCURRENCY:
+   - NEVER run unbounded cargo commands.
+   - ALWAYS include `-j 6` in ALL `cargo` invocations:
+     `cargo check -j 6`
+     `cargo test -p paperpilot-pdf -j 6`
+     `cargo test -p paperpilot-mcp --lib -j 6`
+     `cargo clippy --workspace --all-targets --all-features -- -j 6 -- -D warnings`
+2. ZERO QUESTION / NO RESET DIRECTIVE:
+   - DO NOT stop to ask questions about optional design choices. If a decision is ambiguous, follow the standard conventions already established in `paperpilot-pdf/src/operations/office.rs` and `paperpilot-mcp/src/server.rs`.
+   - DO NOT run `git reset --hard` or discard previous work.
+   - Keep your working tree clean and make incremental, verified commits prefixed with `jules: `.
+3. TYPE SAFETY IN `paperpilot-pdf`:
+   - In `paperpilot-pdf/src/operations/office.rs`, the return type `OperationResult<T>` is a type alias for `Result<T, paperpilot_core::error::PdfError>`.
+   - Do NOT construct an `OperationResult` struct in `paperpilot-pdf`. That struct definition exists only in `paperpilot-mcp`.
+4. MCP TOOL COUNT TEST:
+   - In `paperpilot-mcp/src/server.rs`, `test_execute_list_tools` currently asserts `assert_eq!(res.tools.len(), 48);`.
+   - When adding the 2 new tools (`excel_to_json` and `excel_to_csv`), update this assertion to 50 (or the exact new length).
+
+DETAILED STEP-BY-STEP IMPLEMENTATION:
+
+Step 1: Core Engine Implementation (`paperpilot-pdf/src/operations/office.rs`)
+- In `paperpilot-pdf/src/operations/office.rs`, implement:
+  1. `pub struct ExcelToJsonOperation;`
+     - Method: `pub fn execute(input_path: &Path, sheet_name: Option<&str>, has_headers: bool) -> OperationResult<String>`
+     - Implementation:
+       Use `calamine::open_workbook_auto(input_path)` (or `office_oxide`).
+       Iterate through sheets (or filter by `sheet_name` if specified).
+       For each sheet:
+       - Read rows. If empty, return empty sheet data.
+       - If `has_headers` is true, take the first row cells as column header strings. Subsequent rows are serialized as JSON objects `{ "Header": value }`.
+       - If `has_headers` is false, serialize rows as arrays of values.
+       - Preserve cell data types: integers, floats, booleans, strings.
+       - Return serialized JSON string with top-level structure:
+         `{"sheets": [{"name": "Sheet1", "rows_count": N, "columns": [...], "data": [...]}]}`
+  2. `pub struct ExcelToCsvOperation;`
+     - Method: `pub fn execute(input_path: &Path, output_path: &Path, sheet_name: Option<&str>) -> OperationResult<()>`
+     - Implementation:
+       Open workbook, select target sheet (or first sheet if `sheet_name.is_none()`).
+       Use `csv::Writer::from_path(output_path)` to write rows and cells.
+
+Step 2: Core Unit Tests (`paperpilot-pdf/src/operations/office.rs`)
+- Add unit tests verifying:
+  - Error handling when reading non-existent file returns `PdfError::IoError`.
+  - Ingestion of a sample XLSX/CSV yields valid JSON with sheet metadata.
+  - Verify with: `cargo test -p paperpilot-pdf -j 6`.
+
+Step 3: CLI Commands (`paperpilot-cli/src/commands/office.rs`)
+- Add subcommands to `OfficeCommands`:
+  ```rust
+  /// Ingest Excel spreadsheet and output structured JSON
+  ExcelToJson {
+      #[arg(long, required = true)]
+      input: PathBuf,
+      #[arg(long)]
+      output: Option<PathBuf>,
+      #[arg(long)]
+      sheet: Option<String>,
+      #[arg(long)]
+      no_headers: bool,
+  },
+  /// Export Excel spreadsheet sheet to CSV
+  ExcelToCsv {
+      #[arg(long, required = true)]
+      input: PathBuf,
+      #[arg(long, required = true)]
+      output: PathBuf,
+      #[arg(long)]
+      sheet: Option<String>,
+  },
+  ```
+- Wire into `handle_office_command`.
+- If `output` is `None` in `ExcelToJson`, print the JSON to `stdout`.
+
+Step 4: MCP Server Registration (`paperpilot-mcp/src/server.rs`)
+- In `execute_list_tools`, register:
+  - `excel_to_json`: Description: "Ingest Excel spreadsheet (.xlsx/.xls) into structured JSON with cell type preservation."
+    Parameters: `input` (string, required), `sheet` (string, optional), `has_headers` (boolean, optional).
+  - `excel_to_csv`: Description: "Export Excel spreadsheet (.xlsx/.xls) sheet to standard RFC 4180 CSV."
+    Parameters: `input` (string, required), `output` (string, required), `sheet` (string, optional).
+- In `execute_call_tool`:
+  - Handle `"excel_to_json"`: Call `ExcelToJsonOperation::execute`. Return the JSON string in the response data/message.
+  - Handle `"excel_to_csv"`: Call `ExcelToCsvOperation::execute`.
+- In `tests::test_execute_list_tools`: update the tool count assertion.
+- Verify with: `cargo test -p paperpilot-mcp --lib -j 6`.
+
+Step 5: Documentation & Phase Update
+- Create `reports/SPREADSHEET_JSON_CSV_INGESTION_REPORT.md` documenting:
+  - Architecture, tool signatures, JSON schema, and test results.
+- Update `PHASES.md` marking Task 5.9.21 as completed with a reference to the report.
+
+Step 6: Quality Gates & Pre-Submission Check
+- Run:
+  1. `cargo check --workspace -j 6`
+  2. `cargo test -p paperpilot-pdf -j 6`
+  3. `cargo test -p paperpilot-mcp --lib -j 6`
+  4. `cargo clippy --workspace --all-targets --all-features -- -j 6 -- -D warnings`
+- Verify git status: Ensure ONLY relevant files were modified.
+- Make all commits prefixed with `jules: ` (e.g. `jules: feat(office): implement excel_to_json and excel_to_csv operations`).
