@@ -5,69 +5,50 @@ Enhance PaperPilot's PDF-to-Word (`pdf_to_docx`) conversion engine by implementi
 (recursive XY-Cut column de-weaving and table boundary recognition) in `paperpilot-pdf` and `paperpilot-wasm`,
 so that multi-column PDFs retain proper reading order and tabular data emits native OpenXML tables (`docx_rs::Table`).
 
-Context & Architecture:
-- Read `specs/039-pdf-oxide-layout-analysis/spec.md` for full algorithmic specifications.
+Context & Requirements:
+- Read `specs/039-pdf-oxide-layout-analysis/spec.md`.
 - Baseline: Spec 038 (`paperpilot-pdf/src/operations/conversion.rs` and `paperpilot-wasm/src/operations.rs`).
-- Concurrency Constraint: Max 6 cores. All builds and test commands MUST use `-j 6` (e.g., `cargo test -p paperpilot-pdf -j 6`).
-- Memory & WASM Constraints: 100% pure Rust, zero native C dependencies, fully compatible with `wasm32-unknown-unknown` and Cloudflare Workers (<35MB RSS).
+- Concurrency limit: Maximum 6 cores (-j 6).
+- 100% pure Rust, zero native C dependencies, fully compatible with wasm32-unknown-unknown (<35MB RSS).
 
-Implementation Details & Steps:
+Implementation Steps:
+1. TextSpan Extraction:
+   - Extract `TextSpan` with `(x, y, font_size, is_bold, is_italic, color_hex)` during stream decoding in `paperpilot-pdf`.
+2. XY-Cut Column De-Weaving:
+   - Detect vertical column gutters (gutter width >= 15.0 pt).
+   - Partition text spans into distinct vertical columns. Sort spans in Column 1 top-to-bottom before Column 2.
+3. Table Recognition & docx-rs Table:
+   - Detect clusters sharing consistent row Y values and column X alignments (>= 2 rows, >= 2 columns).
+   - Map into `docx_rs::Table` with `TableRow` and `TableCell`.
+4. WASM Parity:
+   - Update `paperpilot-wasm/src/operations.rs` `pdf_to_docx` with identical pure-Rust XY-Cut sorting and table conversion.
+5. Graceful Fallback:
+   - Fall back to standard sequential paragraph extraction on single-column or ambiguous pages. Never panic.
 
-1. Spatial Span Extraction (`paperpilot-pdf` and `paperpilot-wasm`):
-   - Define a helper struct for text layout blocks:
-     ```rust
-     #[derive(Debug, Clone)]
-     pub struct TextSpan {
-         pub text: String,
-         pub x: f32,
-         pub y: f32,
-         pub font_size: f32,
-         pub is_bold: bool,
-         pub is_italic: bool,
-         pub color_hex: String,
-     }
-     ```
-   - In PDF content stream decoding (`lopdf`), track `(x, y)` coordinate updates via `Tm`, `Td`, `TD`, `T*`.
-   - Store decoded spans per page with their exact coordinates and typography.
+==================================================
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
+1. `paperpilot-pdf/src/operations/conversion.rs`
+   - XY-Cut spatial span extraction and column de-weaving logic
+   - Tabular grid detection and `docx_rs::Table` output in `PdfToDocxOperation`
+2. `paperpilot-wasm/src/operations.rs`
+   - Parity in WASM `pdf_to_docx` implementation
+3. `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`
+   - Comprehensive test & implementation report
 
-2. Column De-Weaving (XY-Cut Algorithm):
-   - When sorting spans on a page, detect vertical column gutters:
-     - Check if spans cluster into two or more distinct X-ranges separated by a whitespace gutter (e.g., gutter width >= 15.0 pt).
-   - If multiple columns are detected:
-     - Group spans by column index (e.g., Column 1: x in [x0, x_split], Column 2: x in [x_split, x_max]).
-     - Sort each column top-to-bottom (descending Y coordinate).
-     - Emit Column 1 paragraphs sequentially before Column 2 paragraphs.
-   - If no distinct column gutters exist, sort standard top-to-bottom.
+MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
+You must run these target validations before committing and raising the PR:
+1. Fast workspace type check:
+   cargo check -p paperpilot-pdf -p paperpilot-wasm
+2. Target crate unit tests (bounded concurrency):
+   cargo test -p paperpilot-pdf --lib -j 6
+   cargo test -p paperpilot-wasm --test wasm_tests -j 6
+3. Linter:
+   cargo clippy -p paperpilot-pdf -p paperpilot-wasm -- -D warnings
+==================================================
 
-3. Table Detection & OpenXML Emission (`docx_rs::Table`):
-   - Check if a group of spans forms a grid:
-     - Multiple rows (Y coordinates match within ±2.0 pt tolerance).
-     - Multiple columns (distinct X coordinates across the same Y rows, >= 2 columns and >= 2 rows).
-   - When a table is detected:
-     - Construct a `docx_rs::Table` using `TableRow` and `TableCell`.
-     - Populate each cell with a `Paragraph` containing the cell's text run.
-     - Add the table to `docx`: `docx = docx.add_table(table);`.
-   - Non-tabular spans continue to be emitted as regular `Paragraph` items.
-
-4. Graceful Fallback:
-   - If table detection or column de-weaving encounters empty or single-span lines, fall back cleanly to standard paragraph flow.
-   - Never panic or fail on malformed PDF streams.
-
-5. Parity & Re-export in `paperpilot-wasm`:
-   - Keep the standalone `pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>>` function in `paperpilot-wasm/src/operations.rs` in sync so browser and Edge workers also benefit from multi-column de-weaving and table formatting.
-
-6. Verification & Quality Gates:
-   - Add unit tests verifying:
-     - Multi-column reading flow: Left column text precedes Right column text in the emitted document paragraphs.
-     - Table generation: An extracted table produces `<w:tbl>`, `<w:tr>`, and `<w:tc>` in the output DOCX XML.
-     - `cargo test -p paperpilot-pdf -j 6` passes.
-     - `cargo test -p paperpilot-wasm -j 6` passes.
-     - `cargo clippy --workspace --all-targets --all-features -- -D warnings` produces zero warnings.
-
-7. Documentation & Tracking:
-   - Create `reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md` detailing the XY-Cut algorithm and test results.
-   - Update `PHASES.md` marking Task 5.9.14 as completed.
-
-Deliverables:
-- Commit prefix: `jules: `
-- Clean workspace passing all quality checks.
+Documentation & Completion:
+- Author: reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md
+- Update PHASES.md marking Task 5.9.14 completed.
+- Commit prefix: "jules: "
+- DO NOT reset git or discard changes. Verify mandatory files with `git diff --stat` before opening PR.

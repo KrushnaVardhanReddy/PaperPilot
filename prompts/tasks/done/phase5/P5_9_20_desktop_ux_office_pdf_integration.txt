@@ -12,48 +12,39 @@ CRITICAL RULES:
 3. Keep ALL existing functionality intact. Zero regressions in existing Playwright E2E tests.
 4. Preserve all existing jobsState and toastState integrations exactly as-is.
 5. All commits prefixed with "jules: ".
-6. Run `cd apps/desktop && pnpm exec playwright test` to verify zero regressions before committing.
-7. Update PHASES.md marking Task 5.9.20 as completed.
 
 Context & Reference Files:
-- Full spec: specs/045-desktop-ux-office-and-pdf-integration/spec.md (READ THIS FIRST)
+- Spec: specs/045-desktop-ux-office-and-pdf-integration/spec.md
 - Drop zone: apps/desktop/src/lib/components/ui/DropZone.svelte
 - Operations panel: apps/desktop/src/lib/components/layout/OperationsPanel.svelte
-- Sidebar with job tracking: apps/desktop/src/lib/components/layout/Sidebar.svelte
-- App state: apps/desktop/src/lib/state/app.svelte.ts (or similar)
-- Toast state: apps/desktop/src/lib/state/toast.svelte.ts (or similar)
-- Jobs state: apps/desktop/src/lib/state/jobs.svelte.ts (or similar)
+- Sidebar: apps/desktop/src/lib/components/layout/Sidebar.svelte
+- App state: apps/desktop/src/lib/state/app.svelte.ts
 
-Implementation Steps — FOLLOW IN ORDER:
+Implementation Steps:
 
 STEP 1: Run Button Loading State (OperationsPanel.svelte)
-
-Find the `handleRunOperation` function (around line 221). Add these state variables at the top of the
-<script> block, near the other $state() declarations:
-
+- Add state variables near existing $state() in <script>:
   let isRunning = $state(false);
   let elapsedSeconds = $state(0);
   let elapsedDisplay = $derived(
     `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`
   );
 
-Modify `handleRunOperation` to wrap the entire existing body in try/finally with timer management:
-
+- In `handleRunOperation`, wrap the execution in try/finally:
   async function handleRunOperation() {
     if (isRunning) return;
     isRunning = true;
     elapsedSeconds = 0;
     const timer = setInterval(() => { elapsedSeconds++; }, 1000);
     try {
-      // ... ALL EXISTING IMPLEMENTATION GOES HERE UNCHANGED ...
+      // ... existing body unchanged ...
     } finally {
       isRunning = false;
       clearInterval(timer);
     }
   }
 
-Find the action-area div with the run button (around line 859). Replace the existing button with:
-
+- In the template, update the run button:
   <div class="action-area">
     <button
       class="run-btn"
@@ -70,212 +61,60 @@ Find the action-area div with the run button (around line 859). Replace the exis
       {/if}
     </button>
     {#if isRunning}
-      <div class="elapsed-timer" aria-live="polite">⏱ {elapsedDisplay} elapsed</div>
+      <span class="elapsed-time" aria-live="polite">{elapsedDisplay}</span>
     {/if}
   </div>
 
-Add to the <style> block:
+- Add CSS for .spinner, .run-btn--loading, .elapsed-time.
 
-  .spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-right: 8px;
-    vertical-align: middle;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .run-btn--loading { opacity: 0.72; cursor: not-allowed; }
-  .elapsed-timer {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    text-align: center;
-    margin-top: 6px;
-    font-variant-numeric: tabular-nums;
-  }
-
-STEP 2: Multi-Format Drop Zone (DropZone.svelte)
-
-2a. Update the props to accept fileContext:
-  let { ondrop, fileContext = 'none' }: {
-    ondrop: (files: File[]) => void;
-    fileContext?: 'pdf' | 'office' | 'mixed' | 'none';
-  } = $props();
-
-2b. Add derived icon and title:
-  let dropIcon = $derived(
-    fileContext === 'pdf' ? '📄' :
-    fileContext === 'office' ? '📁' :
-    fileContext === 'mixed' ? '🗂️' : '📂'
-  );
-
-2c. Add getMimeType helper (replaces hardcoded 'application/pdf'):
-  function getMimeType(name: string): string {
-    const ext = name.split('.').pop()?.toLowerCase() ?? '';
-    const map: Record<string, string> = {
-      pdf: 'application/pdf',
-      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      doc: 'application/msword',
-      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      xls: 'application/vnd.ms-excel',
-      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      ppt: 'application/vnd.ms-powerpoint',
-    };
-    return map[ext] ?? 'application/octet-stream';
-  }
-
-2d. In handleBrowseClick, replace the filters with:
-  filters: [
-    { name: 'Documents (PDF & Office)', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt'] },
-    { name: 'PDF Files', extensions: ['pdf'] },
-    { name: 'Word Documents', extensions: ['docx','doc'] },
-    { name: 'Excel Spreadsheets', extensions: ['xlsx','xls'] },
-    { name: 'PowerPoint Presentations', extensions: ['pptx','ppt'] }
-  ]
-
-2e. In handleBrowseClick, replace hardcoded `type: 'application/pdf'` with `getMimeType(meta.name)`.
-
-2f. Update template:
-  Replace:  <div class="icon">📄</div>
-  With:     <div class="icon" aria-hidden="true">{dropIcon}</div>
-
-  Replace:  <h3 class="title">Drop PDF files here</h3>
-  With:     <h3 class="title">Drop files here</h3>
-
-  Replace:  <p class="subtitle">or click to browse</p>
-  With:     <p class="subtitle">PDF, Word, Excel, PowerPoint · or click to browse</p>
-
-  Replace:  accept=".pdf,application/pdf"
-  With:     accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,application/pdf"
+STEP 2: Expand DropZone for Office Files (DropZone.svelte)
+- Update accept pattern to include:
+  .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt
+- Update copy:
+  "Drop PDF or Office files here"
+  "DOCX, XLSX, PPTX, PDF supported"
+- Add helper for file badge icons:
+  .pdf -> 📄 PDF
+  .docx, .doc -> 📝 Word
+  .xlsx, .xls -> 📊 Excel
+  .pptx, .ppt -> 📽️ PowerPoint
 
 STEP 3: Context-Aware Tool Switcher (OperationsPanel.svelte)
+- Add category filter pill toggle above tools:
+  - "All"
+  - "PDF Tools"
+  - "Office Tools"
+  - "AI & OCR"
+- Filter displayed tools based on selected filter pill while keeping existing search query filtering.
 
-3a. Add `context` field to ToolDefinition interface:
-  interface ToolDefinition {
-    id: string; title: string; description: string; icon: string;
-    category: 'quick'|'pages'|'edit'|'optimize'|'security'|'convert'|'ai';
-    context: 'pdf' | 'office' | 'ai';
-    tags: string[];
-  }
+STEP 4: Dynamic Workspace Heading
+- In document list / workspace header:
+  Change static "Documents" title to "Workspace", and dynamic subtitle:
+  - 0 docs: "Drop PDF or Office files to get started"
+  - 1+ docs: "{n} document{s} loaded"
 
-3b. Add `context: 'pdf'` to ALL existing tool objects in allTools array.
+==================================================
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Before committing and creating the PR, verify via `git status` that ALL of the following core files are modified:
+1. `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+   - Run button loading spinner & elapsed timer
+   - Category filter pills ("All", "PDF Tools", "Office Tools", "AI & OCR")
+2. `apps/desktop/src/lib/components/ui/DropZone.svelte`
+   - Multi-format accept patterns (.pdf, .docx, .xlsx, .pptx, etc.)
+   - Format badge icons & updated intake copy
+3. `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+   - Dynamic "Workspace" title and document counter subtitle
 
-3c. Add these 3 Office tools at the end of allTools:
-  { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office','markdown','docx','xlsx','pptx','convert'] },
-  { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office','text','extract','docx','xlsx'] },
-  { id: 'office_modernize_legacy', title: 'Modernize Legacy Office', description: 'Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format', icon: '🔄', category: 'convert', context: 'office', tags: ['legacy','doc','xls','ppt','modernize','upgrade'] },
+MINIMUM VALIDATIONS TO RUN BEFORE RAISING PR:
+You must run these target validations before committing and raising the PR:
+1. Type check:
+   cd apps/desktop && pnpm check
+2. Target E2E tests (run ONLY the relevant desktop UI suites, NOT whole workspace):
+   cd apps/desktop && pnpm exec playwright test tests/e2e_ui.spec.ts tests/app.spec.ts
+==================================================
 
-3d. Add context switcher state (with isRunning and other state vars):
-  let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
-
-3e. Update filteredTools derived to filter by toolContext first:
-  let filteredTools = $derived.by(() => {
-    const q = searchQuery.trim().toLowerCase();
-    let tools = allTools.filter(t => t.context === toolContext);
-    if (q) {
-      tools = tools.filter(t =>
-        t.title.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q) ||
-        t.tags.some(tag => tag.toLowerCase().includes(q))
-      );
-    } else if (selectedCategory !== 'all') {
-      tools = tools.filter(t => t.category === selectedCategory);
-    }
-    return tools;
-  });
-
-3f. Add auto-context-switch effect (place after existing $effects):
-  $effect(() => {
-    const paths = appState.documentPaths;
-    if (!paths || paths.length === 0) return;
-    const officeExts = ['docx','doc','xlsx','xls','pptx','ppt'];
-    const allOffice = paths.every((p: string) => officeExts.some(e => p.toLowerCase().endsWith(e)));
-    const allPdf = paths.every((p: string) => p.toLowerCase().endsWith('.pdf'));
-    if (allOffice && toolContext === 'pdf') toolContext = 'office';
-    if (allPdf && toolContext === 'office') toolContext = 'pdf';
-  });
-
-3g. In the template, inside the {:else} branch (directory mode) that shows the panel-header div,
-    add the context bar AS THE FIRST CHILD (before the search-box div):
-  <div class="context-bar" role="tablist" aria-label="File type context">
-    {#each [
-      { id: 'pdf', label: 'PDF Tools', icon: '📄' },
-      { id: 'office', label: 'Office Tools', icon: '📁' },
-      { id: 'ai', label: 'AI Tools', icon: '🤖' }
-    ] as ctx (ctx.id)}
-      <button
-        class="context-btn"
-        class:active={toolContext === ctx.id}
-        role="tab"
-        aria-selected={toolContext === ctx.id}
-        onclick={() => { toolContext = ctx.id; selectedCategory = 'all'; searchQuery = ''; }}
-        id={`context-btn-${ctx.id}`}
-      >{ctx.icon} {ctx.label}</button>
-    {/each}
-  </div>
-
-3h. Add CSS:
-  .context-bar { display:flex; gap:6px; padding:8px 12px 0; }
-  .context-btn { flex:1; padding:6px 8px; border-radius:var(--border-radius-sm); font-size:0.8rem; font-weight:500; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all var(--transition-fast); white-space:nowrap; }
-  .context-btn.active { background:var(--accent-primary); color:#fff; border-color:var(--accent-primary); }
-  .context-btn:hover:not(.active) { background:var(--bg-surface-hover); color:var(--text-primary); }
-
-STEP 4: Office Tool Handlers (OperationsPanel.svelte)
-
-In handleRunOperation, in the toolName assignment section, add:
-  if (activeTool.id === 'office_to_markdown') toolName = 'office_to_markdown';
-  if (activeTool.id === 'office_extract_text') toolName = 'office_extract_text';
-  // office_modernize_legacy already handled
-
-In the output path $effect switch statement, add before the `default:` case:
-  case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
-  case 'office_extract_text': customOutputPath = getOutputPath(`${base}_text.txt`); break;
-  case 'office_modernize_legacy': {
-    const srcExt = docPath.split('.').pop()?.toLowerCase() ?? 'docx';
-    const modernExt = srcExt === 'doc' ? 'docx' : srcExt === 'xls' ? 'xlsx' : srcExt === 'ppt' ? 'pptx' : srcExt;
-    customOutputPath = getOutputPath(`${base}_modern.${modernExt}`);
-    break;
-  }
-
-For args, add cases in the switch(activeTool.id) block:
-  case 'office_to_markdown':
-  case 'office_extract_text':
-  case 'office_modernize_legacy':
-    args = { input: docPath, output: customOutputPath || getOutputPath(`${base}_output`) };
-    break;
-
-STEP 5: Dynamic Documents Page Heading
-
-Run: grep -r "Add PDF files to process" apps/desktop/src/
-Find the component file and line number. Replace:
-  "Documents" heading → "Workspace"
-  "Add PDF files to process" subtitle → dynamic text:
-    - 0 docs: "Drop PDF or Office files to get started"
-    - 1+ docs: "{n} document{s} loaded"
-
-STEP 6: Verification
-
-Run (with bounded concurrency):
-  cd apps/desktop && pnpm exec playwright test
-
-If Playwright tests pass, run:
-  cargo check --workspace --tests -j 6
-
-STEP 7: Report & Documentation
-
-Author: reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md
-Content:
-- List all files changed with before/after descriptions
-- Screenshot descriptions of: spinner in action, Office context tab, multi-format drop zone
-- Confirm zero Playwright test regressions (pass count before and after)
-
-Update PHASES.md: Mark Task 5.9.20 [Spec 045] as completed with PR number.
-
-Deliverables:
-- All commits prefixed with "jules: "
-- Zero Playwright regressions
-- reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md
-- PHASES.md updated
+Documentation & Completion:
+- Author: reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md
+- Update PHASES.md marking Task 5.9.20 completed.
+- Commit prefix: "jules: "
+- DO NOT reset git or discard your changes. Verify the 3 mandatory files with `git diff --stat` before opening the PR.
