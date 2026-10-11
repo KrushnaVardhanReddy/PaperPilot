@@ -68,71 +68,35 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **MCP (`paperpilot-mcp` stdio)**: 44 / 44 (100.0% PASS)
 - **REST API (`paperpilot-gateway` :7823)**: 44 / 44 (100.0% PASS)
 
-### 2. Recent Major Milestones & Merged Changes
-- **5.9.4 & 5.9.5 (Spec 031 / Penta-Interface E2E Suite)**:
-  - **Phase 5.9.4 Master Parity Complete**: 100% green pass rate achieved across all 44 tools, all 5 interfaces (CLI, MCP, REST, WASM, Edge), and all 4 complexity tiers (**880 / 880 tests passed**), fully documented in `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` and sub-reports `5_9_4A.md` through `5_9_4D.md`.
-- **5.9.2 (Spec 029 / Pure-Rust Jules Submitter CLI)**:
-  - **Merged (PR #164, commit `1e673bc`, Session 8537116514657265561)**: Replaced `scripts/jules_submit.py` with 100% pure-Rust standalone CLI in `tools/jules-submit/` (`reqwest`, `clap`, `dotenvy`, `serde_json`) and shell forwarder `scripts/jules_submit.sh` for zero-Python developer workflow (`reports/JULES_SUBMIT_RUST_MIGRATION_REPORT.md`, `wiki/23-Pure-Rust-Jules-Submitter.md`).
-
-- **5.9.6 (Spec 031 / Penta-Interface High-Throughput & Concurrency Benchmark)**:
-  - **Merged (PR #165, commit `a8de2ae`, Session 10557618272357635464)**: Concurrency stress testing (10, 25, 50 workers) with 100% request delivery across REST and MCP, p50/p95/p99 latency profiling across top 10 tools, memory leak checks (flat 34.5MB RSS, <35MB ceiling), Makefile integration (`make bench-penta-e2e`), documented in `reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`.
-
-- **Phase 4.1.1–4.1.3 (paperpilot-ai Crate & Universal Client)**:
-  - **In Progress (Jules Session `7564763815279840049`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase4/P4_1_1_paperpilot_ai_crate.txt`. Scaffolding standalone `paperpilot-ai` crate with `UniversalLlmClient`, `LlmNlpResolver` implementing `NlpResolver`, and `DynamicRouter` with fallback to `OfflineNlpResolver`.
+### 2. Active Tasks & In-Progress Work
+- **Phase 4.1.1–4.1.3 (`paperpilot-ai` Crate & Universal Client)**:
+  - **In Progress (Jules Session `7564763815279840049`)**: Standalone `paperpilot-ai` crate with `UniversalLlmClient`, `LlmNlpResolver` implementing `NlpResolver`, and `DynamicRouter` with fallback to `OfflineNlpResolver`.
 - **Phase 4.1.5–4.1.6 (Local AI Settings UI & Model Downloader)**:
-  - **In Progress (Jules Session `17474141107561700970`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase4/P4_1_5_local_ai_settings_ui.txt`. Building Svelte 5 settings drawer with 4-way mode toggle (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Cloud) and in-app model downloader with real-time progress.
-- **5.9.8 (Spec 033 / Human-Friendly UI Error Normalization)**:
-  - **Merged (PR #163, commit `3886288`, Session 11507040602700534548)**: Centralized `errorFormatter.ts`, category taxonomy (passwords, corruption, page ranges, locks, missing files), enhanced toasts with headlines, actionable hints, and expandable technical details with clipboard copy for power users. 100% pass across 11 test suites (37/37 tests) in `reports/HUMAN_FRIENDLY_UI_ERRORS_REPORT.md`.
-- **5.9.9 (Spec 034 / Automated PDF Structural & Conformance Verification)**:
-  - **Merged (PR #167, commit `0d61c0f`, Session 12877595132953884388)**: Automated structural and conformance verification harness with `qpdf --check` and `veraPDF` ISO PDF/A-1b audits across all core outputs (`repair`, `linearize`, `compress`, `merge`, `split`, `pdf-a`), integrated into `scripts/verify_pdf_conformance.sh`, `Makefile` (`make test-conformance`), and `.github/workflows/rust.yml` CI runner (`reports/PDF_CONFORMANCE_VERIFICATION_REPORT.md`).
-- **5.9.10 (Spec 035 / Local AI Agent Legal Due Diligence & Discovery Demo Harness)**:
-  - **Merged (PR #168, commit `8150fff`, Session 3245014174250604924)**: Complete 100% offline local AI agent demonstration chaining `pdf_rotate`, `pdf_redact`, `pdf_bates`, `pdf_merge`, `pdf_watermark`, `pdf_linearize`, and `pdf_hash` via `tools/demo-legal-fixtures`, `scripts/run_ai_legal_demo.sh`, and `make demo-legal-discovery` (`reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md`, `demo/legal_discovery/README.md`).
-- **Phase 5.9.12 (Spec 037 / Diagonal, Semi-Transparent & Configurable Watermarks)**:
-  - **Merged (PR #176, commit `9789098`, Session 11421227794067448625)**: Modernized `pdf_watermark` with 45° diagonal angle by default, 20% alpha transparency via `ExtGState` (`/ca 0.2`), MediaBox centering, and configurable parameters (`angle`, `opacity`, `font_size`, `color`, `pages`) across all 5 interfaces (CLI, MCP, REST, WASM, Edge) and Svelte Desktop UI (`reports/DIAGONAL_CONFIGURABLE_WATERMARKS_REPORT.md`).
-- **Phase 5.9.13 (Spec 038 / High-Fidelity Pure-Rust PDF-to-Word Layout Reconstruction)**:
-  - **In Progress (Jules Session `2163210904964205811`)**: Dispatched via `./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_13_pdf_to_docx_layout_reconstruction.txt`. Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with heading hierarchy inference, bold/italic font styling, RGB text color extraction, center/right alignment calculation, embedded image extraction, and native OpenXML page breaks via `docx-rs` (`specs/038-pdf-to-docx-layout-reconstruction/spec.md`).
-- **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Document Layout Analysis via `pdf-oxide`)**:
-  - **Planned & Ready for Jules**: Prepared specification (`specs/039-pdf-oxide-layout-analysis/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_14_pdf_oxide_layout_analysis.txt`) to upgrade document layout analysis with pure-Rust XY-Cut reading-order de-weaving (multi-column flow) and native OpenXML table reconstruction (`docx-rs::Table`).
-- **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite)**:
-  - **Planned & Ready for Jules**: Prepared specification (`specs/040-pdf-oxide-universal-migration/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_15_pdf_oxide_universal_migration.txt`) to migrate `pdf_convert_markdown`, first-class `pdf_to_html` (with Desktop UI card & responsive styling), `pdf_extract_text`, `pdf_search`, and RAG chunking (`pdf_rag_chunks`) to `pdf_oxide` (v0.3.78) for sub-1ms speed, perfect word spacing, and structured Markdown/HTML table extraction.
-- **Phase 5.9.16 (Spec 041 / Pure-Rust Chromium-Free URL-to-PDF Archival Engine via `browser_oxide`)**:
-  - **Planned & Ready for Jules**: Prepared specification (`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_16_url_to_pdf_browser_oxide.txt`) to integrate `browser_oxide` for pure-Rust dynamic web archiving and JavaScript-to-PDF rendering without Chrome/Chromium.
+  - **In Progress (Jules Session `17474141107561700970`)**: Svelte 5 settings drawer with 4-way mode toggle (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Cloud) and in-app model downloader with real-time progress.
+- **Phase 5.9.13 (Spec 038 / High-Fidelity PDF-to-Word Layout Reconstruction)**:
+  - **In Progress (Jules Session `2163210904964205811`)**: Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with heading hierarchy inference, bold/italic font styling, RGB color extraction, alignment calculation, image extraction, and native OpenXML page breaks via `docx-rs`.
+- **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis via `pdf-oxide`)**:
+  - **Planned & Ready**: Spec `specs/039-pdf-oxide-layout-analysis/spec.md` with pure-Rust XY-Cut reading-order de-weaving and native OpenXML table reconstruction.
+- **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Migration & High-Performance Extraction Suite)**:
+  - **Planned & Ready**: Spec `specs/040-pdf-oxide-universal-migration/spec.md` to migrate markdown/HTML conversion, text extraction, search, and RAG chunking to `pdf_oxide` (v0.3.78).
+- **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
+  - **Planned & Ready**: Spec `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md` for pure-Rust dynamic web archiving without Chrome/Chromium.
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
-  - **Planned & Ready for Jules**: Prepared specification (`specs/042-agentic-code-quality-fossil-mcp/spec.md`) and task prompt (`prompts/tasks/phase5/P5_9_17_code_quality_fossil_mcp.txt`) to audit and prune dead functions, duplicate clones, and orphan scaffolding across all 8 workspace crates.
-- **Phase 5.9.18 (Spec 043 / High-Speed Office Document Engine via `office_oxide`)**:
-  - **Merged (PR #179, commit `ff77052`, Session 13533884099009360784)**: Integrated pure-Rust `office_oxide v0.1.13` to natively process Office formats (`.docx`, `.doc`, `.xlsx`, `.xls`, `.pptx`, `.ppt`) without external dependencies. Added `to-markdown`, `extract`, and `modernize` across CLI, MCP, REST Gateway (`POST /api/v1/office/convert`), and Desktop UI (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
-- **Phase 5.9.19 (Spec 044 / Pure-Rust High-Precision OCR Engine via `rusto-rs`)**:
-  - **Merged (PR #178, commit `4f76308`, Session 13256994288864121401)**: Migrated `paperpilot-pdf/src/operations/ocr.rs` from `ocrs` to `rusto-rs` (PaddleOCR v4 + RTen) for sub-second page inference, DBNet polygon word detection, exact bounding box spatial positioning, and 100% mouse-drag cursor selectable PDF overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
-- **5.9.11 (Spec 036 / Bidirectional JSON-to-PDF Synthesis with Multimodal Images)**:
-  - **Merged (PR #169, commit `3688ba3`, Session 5118308487879675704)**: Implemented pure-Rust `json_to_pdf` synthesis via `lopdf` + `image` (Approach 1: Native Engine Layout), closing the bidirectional PDF ⇄ JSON synthesis loop for autonomous AI agents across all 5 surfaces (CLI, MCP, REST, WASM, Edge) with 20 E2E assertions, round-trip fidelity tests, and benchmark profiling (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`, `wiki/036-Json-To-Pdf-Synthesis.md`).
-- **PR #166 (5.9.7 / Spec 032)**: Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining across 5 interfaces (`2604a8e`). Expanded `pdf_to_json` with `--image-mode <none|files|base64>`, full JSON schema with page metadata, text blocks, and inline base64 images, 20 Penta-Interface E2E assertions, latency benchmarks, and documentation (`reports/PDF_TO_JSON_MULTIMODAL_REPORT.md`, `wiki/08-Multimodal-PDF-to-JSON.md`).
-- **5.9.1 (Spec 028)**: Desktop Release Binary Size Optimization & Pure-Rust `rten` SIMD Inference Migration (`45a1566`). Standalone Desktop release executable dropped from **107 MB down to 35 MB** (~67% reduction) via root workspace release profile (`strip = true`, `lto = "fat"`, `panic = "abort"`). Completely eliminated C++ ONNX Runtime (`ort`) in favor of pure-Rust `rten` with embedded `tinybert.rten.zst` (~9.7 MB). 100% verified across `paperpilot-nlp` test suite, Tri-Interface suite (132 assertions), and Desktop Playwright AI chat pipeline (`reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`, `wiki/22-Desktop-Binary-Optimization.md`).
-- **Spec 030 / Web & Embed Batch Suite (`dbe3ba1`, `ef77956`, `086231b`, `b60f41e`)**:
-  - **Embedded Widget (`apps/embed/`)**: Real `pdf-lib` multi-page merging, multi-file batch execution across `extract`, `delete`, `rotate`, `watermark`, `split`, `reorder`, and `compress`. Added interactive tool configuration panel for custom page numbers, rotation angles, and watermark text stamps.
-  - **Live Embed Sandbox (`/embed-test`)**: Showcasing standard and whitelisted/pro embeds live in browser with direct links from Web Portal footer, Embed Generator, and documentation.
-  - **PaperPilot WASM Engine (`apps/web/`)**: Migrated `OperationsView.svelte` to support multi-file batch queues across all WASM operations with staggered downloads and individual file removal controls.
-- **5.6.2 (Spec 026)**: Universal High-Ratio PDF Compression Engine (`image` JPEG recompression and downsampling, `--quality` control across CLI, MCP, REST, UI, and WASM, `reports/COMPRESSION_RATIO_VERIFICATION_REPORT.md`, `wiki/20-High-Ratio-PDF-Compression.md`).
-- **PR #151 (5.7.1)**: 1-Hour Sustained Soak & Endurance Benchmark (353,892 ops, 98.3 ops/s, 100% success rate, flat 25MB RSS, `wiki/19-One-Hour-Endurance-Benchmark.md`, `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`).
-- **PR #150 (5.6.1)**: Pure-Rust High-Speed Office Conversions (`fulgur` engine replacing `headless_chrome`, sub-60ms conversion latency, `wiki/18-Pure-Rust-Office-Conversions.md`, `reports/PURE_RUST_OFFICE_CONVERSIONS_REPORT.md`).
-- **PR #148 (4.9.13)**: Certificate & Template Studio (HTML/SVG templates, bulk CSV generator, `apps/web/`).
-- **PR #147 (4.9.12)**: `docs.usepaperpilot.com` Official Starlight Docs Hub (4-pillar documentation, `apps/docs/`).
-- **PR #146 (4.9.11)**: `usepaperpilot.com` Official Marketing & Embed Playground Portal.
-- **PR #145 (4.9 Core)**: `embed.js` CDN loader and Svelte 5 embed widget with Shadow DOM style isolation (`apps/embed/`).
-- **PR #143 (5.1.1)**: Pure-Rust Image & Hash WASM Expansion to 15 Tools (`paperpilot-wasm`, `apps/web/`).
-- **PR #142 (5.3.1)**: Pure-Rust PDF Rasterization & Rendering (`hayro` + `tiny-skia` replacing PDFium in `paperpilot-pdf`, `reports/RENDERING_PURE_RUST_REPORT.md`).
-- **PR #141 (5.2.1)**: Pure-Rust OCR Migration (`ocrs` via `rten` replacing Tesseract in `paperpilot-pdf`, `reports/OCR_PURE_RUST_REPORT.md`).
-- **PR #140 (4.8.3)**: Cloudflare Workers Edge Microservice (`apps/edge/` standalone worker, 12 core operations, `reports/EDGE_MICROSERVICE_REPORT.md`).
-- **PR #139 (4.8.5)**: WASM 12 Tools Playwright E2E Suite & In-Memory Encryption (`reports/WASM_12_TOOLS_E2E_SCORECARD.md`).
-- **PR #138 (4.8.4)**: Expand WASM Engine and Web Suite to 12 Pure-Rust Tools (`reports/WASM_12_TOOLS_EXPANSION_REPORT.md`).
-- *(Earlier Phase 1–4 foundational PRs #114–#137 archived in `PHASES.md`)*
+  - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
 
----
-
-All 4 subtasks of the **Rust-Native Penta-Interface Real Semantic Assertions Suite (Spec 031 - 880 Tests)** have landed and merged into `main`:
-- **5.9.4A (Page Operations - 180 Tests)**: ✅ Merged (PR #161, `472ae69`)
-- **5.9.4B (Security, Stamping & Forms - 280 Tests)**: ✅ Merged (PR #159, `95eae07`)
-- **5.9.4C (Analysis, Extraction & Optimization - 260 Tests)**: ✅ Merged (PR #160, `ba79af0`)
-- **5.9.4D (Document Conversions - 160 Tests)**: ✅ Merged (PR #158, `f0607a3`)
+### 3. Summary of Recently Completed & Merged Milestones
+- **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
+- **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
+- **Phase 5.9.12 (Spec 037 / Diagonal Watermarks)**: ✅ Merged (PR #176) — 45° diagonal angle, alpha transparency, MediaBox centering, and configurable parameters across all 5 surfaces.
+- **Phase 5.9.11 (Spec 036 / JSON-to-PDF Synthesis)**: ✅ Merged (PR #169) — Pure-Rust `json_to_pdf` closing the bidirectional agent loop (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`).
+- **Phase 5.9.10 (Spec 035 / Local AI Legal Demo)**: ✅ Merged (PR #168) — 100% offline agent discovery workflow (`reports/LOCAL_AI_AGENT_LEGAL_DISCOVERY_DEMO_REPORT.md`).
+- **Phase 5.9.9 (Spec 034 / Conformance Harness)**: ✅ Merged (PR #167) — `qpdf` and `veraPDF` ISO PDF/A-1b automated audits (`reports/PDF_CONFORMANCE_VERIFICATION_REPORT.md`).
+- **Phase 5.9.8 (Spec 033 / Error Normalization)**: ✅ Merged (PR #163) — Human-friendly actionable error formatter and toasts (`reports/HUMAN_FRIENDLY_UI_ERRORS_REPORT.md`).
+- **Phase 5.9.6 (Spec 031 / Concurrency Benchmark)**: ✅ Merged (PR #165) — 50-worker stress testing, p50/p95/p99 profiling, flat 34.5MB RSS (`reports/PENTA_INTERFACE_PERFORMANCE_BENCHMARK_REPORT.md`).
+- **Phase 5.9.4 & 5.9.5 (Spec 031 / Penta-Interface E2E Suite)**: ✅ Merged (PRs #158-#161) — 100% green pass rate across all 44 tools and 5 interfaces (880/880 assertions passed, `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md`).
+- **Phase 5.9.2 (Spec 029 / Jules Submitter CLI)**: ✅ Merged (PR #164) — Pure-Rust standalone CLI in `tools/jules-submit/` (`reports/JULES_SUBMIT_RUST_MIGRATION_REPORT.md`).
+- **Phase 5.9.1 (Spec 028 / Desktop Binary Optimization)**: ✅ Merged — Release binary reduced from 107MB to 35MB via pure-Rust `rten` SIMD inference (`reports/DESKTOP_BINARY_OPTIMIZATION_REPORT.md`).
+- *(Earlier milestones and archived historical PRs are tracked in detail in [`PHASES.md`](PHASES.md))*
 
 ---
 
