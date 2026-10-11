@@ -76,7 +76,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **Phase 5.9.13 (Spec 038 / High-Fidelity PDF-to-Word Layout Reconstruction)**:
   - **In Progress (Jules Session `2163210904964205811`)**: Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with heading hierarchy inference, bold/italic font styling, RGB color extraction, alignment calculation, image extraction, and native OpenXML page breaks via `docx-rs`.
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis via `pdf-oxide`)**:
-  - **Planned & Ready**: Spec `specs/039-pdf-oxide-layout-analysis/spec.md` with pure-Rust XY-Cut reading-order de-weaving and native OpenXML table reconstruction.
+  - **In Progress (Jules Session `7944320664313422740`)**: Spec [`specs/039-pdf-oxide-layout-analysis/spec.md`](specs/039-pdf-oxide-layout-analysis/spec.md) with pure-Rust XY-Cut reading-order de-weaving and native OpenXML table reconstruction.
 - **Phase 5.9.15 (Spec 040 / Universal `pdf_oxide` Core Migration & High-Performance Extraction Suite)**:
   - **Planned & Ready**: Spec `specs/040-pdf-oxide-universal-migration/spec.md` to migrate markdown/HTML conversion, text extraction, search, and RAG chunking to `pdf_oxide` (v0.3.78).
 - **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
