@@ -426,8 +426,14 @@
           <div class="documents-layout">
             <div class="documents-view">
               <header class="view-header">
-                <h2>Documents</h2>
-                <p>Add PDF files to process</p>
+                <h2>Workspace</h2>
+                <p>
+                  {#if appState.documents.length === 0}
+                    Drop PDF or Office files to get started
+                  {:else}
+                    {appState.documents.length} document{appState.documents.length === 1 ? '' : 's'} loaded
+                  {/if}
+                </p>
               </header>
 
               <DropZone ondrop={handleFilesDropped} />

@@ -1,7 +1,37 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
   let isDragging = $state(false);
-  let { ondrop }: { ondrop: (files: File[]) => void } = $props();
+  let { ondrop, fileContext = 'none' }: {
+    ondrop: (files: File[]) => void;
+    fileContext?: 'pdf' | 'office' | 'mixed' | 'none';
+  } = $props();
+
+  let dropIcon = $derived(() => {
+    switch (fileContext) {
+      case 'pdf':    return '📄';
+      case 'office': return '📁';
+      case 'mixed':  return '🗂️';
+      default:       return '📂';
+    }
+  });
+
+  let dropTitle = $derived(() =>
+    fileContext === 'none' ? 'Drop files here' : 'Add more files'
+  );
+
+  function getMimeType(name: string): string {
+    const ext = name.split('.').pop()?.toLowerCase() ?? '';
+    const map: Record<string, string> = {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      doc: 'application/msword',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      xls: 'application/vnd.ms-excel',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      ppt: 'application/vnd.ms-powerpoint',
+    };
+    return map[ext] ?? 'application/octet-stream';
+  }
 
   function handleDragEnter(e: DragEvent) {
     e.preventDefault();
@@ -33,15 +63,22 @@
     const { open } = await import('@tauri-apps/plugin-dialog');
     const selected = await open({
       multiple: true,
-      filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+      filters: [
+        { name: 'Documents (PDF & Office)', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt'] },
+        { name: 'PDF Files', extensions: ['pdf'] },
+        { name: 'Word Documents', extensions: ['docx','doc'] },
+        { name: 'Excel Spreadsheets', extensions: ['xlsx','xls'] },
+        { name: 'PowerPoint Presentations', extensions: ['pptx','ppt'] }
+      ]
     });
     if (!selected) return;
     const paths = Array.isArray(selected) ? selected : [selected];
     const filesArray: File[] = [];
     for (const path of paths) {
       const meta = await invoke<{ name: string; size_bytes: number; path: string }>('get_file_metadata', { path });
-      const blob = new Blob([], { type: 'application/pdf' });
-      const file = new File([blob], meta.name, { type: 'application/pdf' });
+      const mimeType = getMimeType(meta.name);
+      const blob = new Blob([], { type: mimeType });
+      const file = new File([blob], meta.name, { type: mimeType });
       Object.defineProperty(file, 'size', { value: meta.size_bytes, writable: false });
       (file as any)._localPath = meta.path;
       (file as any)._isLoaded = false;
@@ -76,14 +113,14 @@
   tabindex="0"
 >
   <div class="drop-content">
-    <div class="icon">📄</div>
-    <h3 class="title">Drop PDF files here</h3>
-    <p class="subtitle">or click to browse</p>
+    <div class="icon" aria-hidden="true">{dropIcon()}</div>
+    <h3 class="title">{dropTitle()}</h3>
+    <p class="subtitle">PDF, Word, Excel, PowerPoint · or click to browse</p>
 
     <button type="button" class="browse-btn" onclick={handleBrowseClick}>
       Browse Files
       <!-- Hidden file input for Playwright test compatibility -->
-      <input type="file" multiple accept=".pdf,application/pdf" onchange={handleFileInputChange} />
+      <input type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,application/pdf" onchange={handleFileInputChange} />
     </button>
   </div>
 </div>

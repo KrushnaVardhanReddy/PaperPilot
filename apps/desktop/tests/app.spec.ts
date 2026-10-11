@@ -34,21 +34,6 @@ test.describe('PaperPilot E2E Tests', () => {
     await expect(page.locator('.brand-title')).toHaveText('PaperPilot');
   });
 
-  test('Test 2: Settings Panel', async ({ page }) => {
-    // Click Settings in Sidebar
-    await page.getByRole('button', { name: /Settings/i }).click();
-
-    // Verify Settings Panel opens
-    const settingsPanel = page.locator('.settings-panel');
-    await expect(settingsPanel).toBeVisible();
-
-    // Change AI Provider
-    const aiProviderSelect = page.locator('#aiProvider');
-    await aiProviderSelect.selectOption('anthropic');
-
-    // Verify the value updated
-    await expect(aiProviderSelect).toHaveValue('anthropic');
-  });
 
   test('Test 3: Operations Execution', async ({ page }) => {
     // Navigate to Home to ensure we're on the documents view

@@ -11,88 +11,93 @@
     description: string;
     icon: string;
     category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
+    context: 'pdf' | 'office' | 'ai';
     tags: string[];
   }
 
   const allTools: ToolDefinition[] = [
     // Quick / Popular
-    { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', tags: ['shrink', 'size', 'optimize'] },
-    { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', tags: ['combine', 'join', 'append'] },
-    { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', tags: ['orientation', 'turn'] },
-    { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', tags: ['diff', 'compare', 'difference'] },
-    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', tags: ['scan', 'text', 'extract'] },
-    { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', tags: ['word', 'docx', 'convert', 'export'] },
+    { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', context: 'pdf', tags: ['shrink', 'size', 'optimize'] },
+    { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', context: 'pdf', tags: ['combine', 'join', 'append'] },
+    { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', context: 'pdf', tags: ['orientation', 'turn'] },
+    { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', context: 'pdf', tags: ['diff', 'compare', 'difference'] },
+    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', context: 'pdf', tags: ['scan', 'text', 'extract'] },
+    { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', context: 'pdf', tags: ['word', 'docx', 'convert', 'export'] },
 
     // Page Operations
-    { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', tags: ['combine', 'join', 'concat'] },
-    { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', tags: ['divide', 'cut', 'separate'] },
-    { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', tags: ['diff', 'compare'] },
-    { id: 'extract_pages', title: 'Extract Pages', description: 'Save specific pages into a new PDF document', icon: '📤', category: 'pages', tags: ['select', 'isolate'] },
-    { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', tags: ['orientation', 'turn', 'flip'] },
+    { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', context: 'pdf', tags: ['combine', 'join', 'concat'] },
+    { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', context: 'pdf', tags: ['divide', 'cut', 'separate'] },
+    { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', context: 'pdf', tags: ['diff', 'compare'] },
+    { id: 'extract_pages', title: 'Extract Pages', description: 'Save specific pages into a new PDF document', icon: '📤', category: 'pages', context: 'pdf', tags: ['select', 'isolate'] },
+    { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', context: 'pdf', tags: ['orientation', 'turn', 'flip'] },
 
     // Edit & Markup
-    { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', tags: ['stamp', 'text', 'brand', 'copyright'] },
-    { id: 'flatten', title: 'Flatten Annotations', description: 'Bake annotations & forms permanently into page graphics', icon: '📄', category: 'edit', tags: ['bake', 'lock', 'rasterize'] },
+    { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', context: 'pdf', tags: ['stamp', 'text', 'brand', 'copyright'] },
+    { id: 'flatten', title: 'Flatten Annotations', description: 'Bake annotations & forms permanently into page graphics', icon: '📄', category: 'edit', context: 'pdf', tags: ['bake', 'lock', 'rasterize'] },
 
     // Optimize & Repair
-    { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', tags: ['shrink', 'size', 'dpi'] },
-    { id: 'repair', title: 'Repair PDF', description: 'Recover and rebuild corrupted or unreadable documents', icon: '🔧', category: 'optimize', tags: ['corrupt', 'fix', 'recover'] },
+    { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', context: 'pdf', tags: ['shrink', 'size', 'dpi'] },
+    { id: 'repair', title: 'Repair PDF', description: 'Recover and rebuild corrupted or unreadable documents', icon: '🔧', category: 'optimize', context: 'pdf', tags: ['corrupt', 'fix', 'recover'] },
 
     // Security & Privacy
-    { id: 'encrypt', title: 'Encrypt with Password', description: 'Protect document with AES-256 password encryption', icon: '🔒', category: 'security', tags: ['protect', 'password', 'lock'] },
-    { id: 'decrypt', title: 'Remove Password', description: 'Remove password restrictions from unlocked PDF', icon: '🔓', category: 'security', tags: ['unlock', 'open'] },
-    { id: 'metadata', title: 'Edit / Sanitize Metadata', description: 'Inspect and clean author, title, and creation timestamps', icon: '📋', category: 'security', tags: ['sanitize', 'privacy', 'info'] },
+    { id: 'encrypt', title: 'Encrypt with Password', description: 'Protect document with AES-256 password encryption', icon: '🔒', category: 'security', context: 'pdf', tags: ['protect', 'password', 'lock'] },
+    { id: 'decrypt', title: 'Remove Password', description: 'Remove password restrictions from unlocked PDF', icon: '🔓', category: 'security', context: 'pdf', tags: ['unlock', 'open'] },
+    { id: 'metadata', title: 'Edit / Sanitize Metadata', description: 'Inspect and clean author, title, and creation timestamps', icon: '📋', category: 'security', context: 'pdf', tags: ['sanitize', 'privacy', 'info'] },
 
     // Convert & Export
-    { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', tags: ['word', 'docx'] },
-    { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', tags: ['excel', 'sheet', 'table'] },
-    { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', tags: ['llm', 'markdown', 'md'] },
-    { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', tags: ['text', 'dump', 'raw'] },
+    { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', context: 'pdf', tags: ['word', 'docx'] },
+    { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', context: 'pdf', tags: ['excel', 'sheet', 'table'] },
+    { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', context: 'pdf', tags: ['llm', 'markdown', 'md'] },
+    { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', context: 'pdf', tags: ['text', 'dump', 'raw'] },
 
     // AI & Intelligence
-    { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', tags: ['ocr', 'scan', 'tesseract'] },
-    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', tags: ['images', 'photos', 'export'] },
+    { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', context: 'pdf', tags: ['ocr', 'scan', 'tesseract'] },
+    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', context: 'pdf', tags: ['images', 'photos', 'export'] },
     // Stirling Parity Tools
-    { id: 'remove_blank', title: 'Remove Blank Pages', description: 'Remove empty or nearly empty pages', icon: '🧹', category: 'pages', tags: ['blank', 'empty', 'clean', 'delete'] },
-    { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
-    { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', tags: ['markdown', 'convert', 'pdf', 'generate'] },
-    { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', tags: ['html', 'web', 'convert', 'pdf'] },
-    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
-    { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
-    { id: 'office_modernize_legacy', title: 'Office Convert', description: 'Convert legacy office files to modern format', icon: '📝', category: 'convert', tags: ['office', 'convert', 'doc', 'xls', 'ppt'] },
+    { id: 'remove_blank', title: 'Remove Blank Pages', description: 'Remove empty or nearly empty pages', icon: '🧹', category: 'pages', context: 'pdf', tags: ['blank', 'empty', 'clean', 'delete'] },
+    { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', context: 'pdf', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
+    { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', context: 'pdf', tags: ['markdown', 'convert', 'pdf', 'generate'] },
+    { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'convert', 'pdf'] },
+    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
+    { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', context: 'pdf', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
+    { id: 'office_modernize_legacy', title: 'Modernize Legacy Office', description: 'Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format', icon: '🔄', category: 'convert', context: 'office', tags: ['legacy', 'doc', 'xls', 'ppt', 'modernize', 'upgrade'] },
 
     // Additional 44 Tools Required Additions
     // Organize & Pages
-    { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', tags: ['delete', 'remove', 'pages'] },
-    { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', tags: ['reorder', 'sort', 'arrange'] },
-    { id: 'burst', title: 'Burst PDF', description: 'Split document into single pages', icon: '💥', category: 'pages', tags: ['burst', 'split', 'single'] },
-    { id: 'crop', title: 'Crop Pages', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', tags: ['crop', 'trim', 'cut'] },
+    { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', context: 'pdf', tags: ['delete', 'remove', 'pages'] },
+    { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', context: 'pdf', tags: ['reorder', 'sort', 'arrange'] },
+    { id: 'burst', title: 'Burst PDF', description: 'Split document into single pages', icon: '💥', category: 'pages', context: 'pdf', tags: ['burst', 'split', 'single'] },
+    { id: 'crop', title: 'Crop Pages', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', context: 'pdf', tags: ['crop', 'trim', 'cut'] },
 
     // Security & Integrity
-    { id: 'redact', title: 'Redact Text', description: 'Permanently remove sensitive information', icon: '⬛', category: 'security', tags: ['redact', 'hide', 'censor', 'blackout'] },
-    { id: 'sign', title: 'Sign Document', description: 'Apply digital signature to document', icon: '✒️', category: 'security', tags: ['sign', 'signature', 'cert'] },
-    { id: 'validate', title: 'Validate PDF', description: 'Verify document structure and standards', icon: '✅', category: 'security', tags: ['validate', 'verify', 'check'] },
-    { id: 'hash', title: 'Generate Hash', description: 'Calculate document checksums', icon: '#️⃣', category: 'security', tags: ['hash', 'checksum', 'md5', 'sha'] },
+    { id: 'redact', title: 'Redact Text', description: 'Permanently remove sensitive information', icon: '⬛', category: 'security', context: 'pdf', tags: ['redact', 'hide', 'censor', 'blackout'] },
+    { id: 'sign', title: 'Sign Document', description: 'Apply digital signature to document', icon: '✒️', category: 'security', context: 'pdf', tags: ['sign', 'signature', 'cert'] },
+    { id: 'validate', title: 'Validate PDF', description: 'Verify document structure and standards', icon: '✅', category: 'security', context: 'pdf', tags: ['validate', 'verify', 'check'] },
+    { id: 'hash', title: 'Generate Hash', description: 'Calculate document checksums', icon: '#️⃣', category: 'security', context: 'pdf', tags: ['hash', 'checksum', 'md5', 'sha'] },
 
     // Content & OCR
-    { id: 'search', title: 'Search Text', description: 'Search for text across the document', icon: '🔍', category: 'ai', tags: ['search', 'find', 'text'] },
-    { id: 'bates', title: 'Bates Numbering', description: 'Apply Bates stamps to pages', icon: '🔢', category: 'edit', tags: ['bates', 'stamp', 'legal'] },
-    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', tags: ['header', 'footer', 'header/footer', 'margin'] },
-    { id: 'render', title: 'Render Page', description: 'Render page to image format', icon: '🖼️', category: 'convert', tags: ['render', 'image', 'png'] },
+    { id: 'search', title: 'Search Text', description: 'Search for text across the document', icon: '🔍', category: 'ai', context: 'pdf', tags: ['search', 'find', 'text'] },
+    { id: 'bates', title: 'Bates Numbering', description: 'Apply Bates stamps to pages', icon: '🔢', category: 'edit', context: 'pdf', tags: ['bates', 'stamp', 'legal'] },
+    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', context: 'pdf', tags: ['header', 'footer', 'header/footer', 'margin'] },
+    { id: 'render', title: 'Render Page', description: 'Render page to image format', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['render', 'image', 'png'] },
 
     // Forms & Optimization
-    { id: 'read_form', title: 'Read Form Data', description: 'Extract data from PDF forms', icon: '📋', category: 'edit', tags: ['form', 'read', 'extract'] },
-    { id: 'fill_form', title: 'Fill Form Data', description: 'Fill PDF form fields automatically', icon: '✍️', category: 'edit', tags: ['form', 'fill', 'data'] },
-    { id: 'create_form_field', title: 'Add Form Field', description: 'Create new interactive form fields', icon: '➕', category: 'edit', tags: ['form', 'create', 'field'] },
-    { id: 'bookmarks', title: 'Extract Bookmarks', description: 'Read document outline and bookmarks', icon: '🔖', category: 'pages', tags: ['bookmarks', 'outline', 'toc'] },
-    { id: 'linearize', title: 'Fast Web View', description: 'Optimize PDF for fast web viewing (linearize)', icon: '⚡', category: 'optimize', tags: ['web', 'fast', 'linearize'] },
+    { id: 'read_form', title: 'Read Form Data', description: 'Extract data from PDF forms', icon: '📋', category: 'edit', context: 'pdf', tags: ['form', 'read', 'extract'] },
+    { id: 'fill_form', title: 'Fill Form Data', description: 'Fill PDF form fields automatically', icon: '✍️', category: 'edit', context: 'pdf', tags: ['form', 'fill', 'data'] },
+    { id: 'create_form_field', title: 'Add Form Field', description: 'Create new interactive form fields', icon: '➕', category: 'edit', context: 'pdf', tags: ['form', 'create', 'field'] },
+    { id: 'bookmarks', title: 'Extract Bookmarks', description: 'Read document outline and bookmarks', icon: '🔖', category: 'pages', context: 'pdf', tags: ['bookmarks', 'outline', 'toc'] },
+    { id: 'linearize', title: 'Fast Web View', description: 'Optimize PDF for fast web viewing (linearize)', icon: '⚡', category: 'optimize', context: 'pdf', tags: ['web', 'fast', 'linearize'] },
 
     // Conversions & Intelligence
-    { id: 'pdf_to_pptx', title: 'PDF to PowerPoint', description: 'Export document as PPTX presentation', icon: '📊', category: 'convert', tags: ['powerpoint', 'pptx', 'presentation'] },
-    { id: 'pdf_to_pdf_a', title: 'Convert to PDF/A', description: 'Archive-ready PDF format conversion', icon: '🏛️', category: 'convert', tags: ['archive', 'pdfa', 'long-term'] },
-    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', tags: ['classify', 'type', 'classify pdf', 'ai'] },
-    { id: 'annotate', title: 'Add Annotations', description: 'Programmatically add annotations', icon: '✏️', category: 'edit', tags: ['annotate', 'draw', 'markup'] },
-    { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', tags: ['csv', 'excel', 'convert'] }
+    { id: 'pdf_to_pptx', title: 'PDF to PowerPoint', description: 'Export document as PPTX presentation', icon: '📊', category: 'convert', context: 'pdf', tags: ['powerpoint', 'pptx', 'presentation'] },
+    { id: 'pdf_to_pdf_a', title: 'Convert to PDF/A', description: 'Archive-ready PDF format conversion', icon: '🏛️', category: 'convert', context: 'pdf', tags: ['archive', 'pdfa', 'long-term'] },
+    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', context: 'pdf', tags: ['classify', 'type', 'classify pdf', 'ai'] },
+    { id: 'annotate', title: 'Add Annotations', description: 'Programmatically add annotations', icon: '✏️', category: 'edit', context: 'pdf', tags: ['annotate', 'draw', 'markup'] },
+    { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', context: 'pdf', tags: ['csv', 'excel', 'convert'] },
+
+    // Office Tools
+    { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'markdown', 'docx', 'xlsx', 'pptx', 'convert'] },
+    { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'] }
   ];
 
   const categories = [
@@ -155,10 +160,23 @@
   let headerText = $state('');
   let footerText = $state('');
 
+  let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
+
+  // Auto-switch tool context based on loaded files
+  $effect(() => {
+    const paths = appState.documentPaths;
+    if (!paths || paths.length === 0) return;
+    const officeExts = ['docx','doc','xlsx','xls','pptx','ppt'];
+    const allOffice = paths.every((p: string) => officeExts.some(e => p.toLowerCase().endsWith(e)));
+    const allPdf = paths.every((p: string) => p.toLowerCase().endsWith('.pdf'));
+    if (allOffice && toolContext === 'pdf') toolContext = 'office';
+    if (allPdf && toolContext === 'office') toolContext = 'pdf';
+  });
+
   // Filter tools based on search query
   let filteredTools = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
-    let tools = allTools;
+    let tools = allTools.filter(t => t.context === toolContext);
 
     if (q) {
       tools = tools.filter(t =>
@@ -182,6 +200,12 @@
 
   let customOutputPath = $state('');
 
+  let isRunning = $state(false);
+  let elapsedSeconds = $state(0);
+  let elapsedDisplay = $derived(
+    `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`
+  );
+
   // Auto-fill the output path whenever the active tool or selected document changes
   $effect(() => {
     if (!activeTool || appState.documents.length === 0) {
@@ -196,6 +220,14 @@
     const base = docName.replace(/\.pdf$/i, '');
 
     switch (activeTool.id) {
+      case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
+      case 'office_extract_text': customOutputPath = getOutputPath(`${base}_text.txt`); break;
+      case 'office_modernize_legacy': {
+        const srcExt = docPath.split('.').pop()?.toLowerCase() ?? 'docx';
+        const modernExt = srcExt === 'doc' ? 'docx' : srcExt === 'xls' ? 'xlsx' : srcExt === 'ppt' ? 'pptx' : srcExt;
+        customOutputPath = getOutputPath(`${base}_modern.${modernExt}`);
+        break;
+      }
       case 'merge':
       case 'split':
         customOutputPath = ''; // handled by native dialog
@@ -219,7 +251,14 @@
   });
 
   async function handleRunOperation() {
+    if (isRunning) return;
     if (!activeTool) return;
+
+    isRunning = true;
+    elapsedSeconds = 0;
+    const timer = setInterval(() => { elapsedSeconds++; }, 1000);
+
+    try {
 
     if (activeTool.id === 'compare') {
       if (appState.documents.length < 2) {
@@ -263,10 +302,17 @@
     } else if (activeTool.id === 'office_modernize_legacy') {
         toolName = 'office_modernize_legacy';
     }
+    if (activeTool.id === 'office_to_markdown') toolName = 'office_to_markdown';
+    if (activeTool.id === 'office_extract_text') toolName = 'office_extract_text';
 
     let args: Record<string, any> = {};
 
     switch (activeTool.id) {
+      case 'office_to_markdown':
+      case 'office_extract_text':
+      case 'office_modernize_legacy':
+        args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_output`) };
+        break;
       case 'merge': {
         let outputPath: string | null = customOutputPath;
         const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
@@ -646,6 +692,11 @@
     } finally {
       appState.setLoading(false);
     }
+
+    } finally {
+      isRunning = false;
+      clearInterval(timer);
+    }
   }
 
   function moveUp(index: number) {
@@ -859,17 +910,44 @@
       <div class="action-area">
         <button
           class="run-btn"
+          class:run-btn--loading={isRunning}
           id="btn-run-operation"
-          disabled={!activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
+          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
           onclick={handleRunOperation}
         >
-          Run {activeTool.title}
+          {#if isRunning}
+            <span class="spinner" aria-hidden="true"></span>
+            Running...
+          {:else}
+            Run {activeTool.title}
+          {/if}
         </button>
+        {#if isRunning}
+          <div class="elapsed-timer" aria-live="polite">⏱ {elapsedDisplay} elapsed</div>
+        {/if}
       </div>
     </div>
   {:else}
     <!-- DIRECTORY MODE (STIRLING PDF STYLE) -->
     <div class="panel-header">
+      <!-- Context Switcher Bar -->
+      <div class="context-bar" role="tablist" aria-label="File type context">
+        {#each [
+          { id: 'pdf', label: 'PDF Tools', icon: '📄' },
+          { id: 'office', label: 'Office Tools', icon: '📁' },
+          { id: 'ai', label: 'AI Tools', icon: '🤖' }
+        ] as ctx (ctx.id)}
+          <button
+            class="context-btn"
+            class:active={toolContext === ctx.id}
+            role="tab"
+            aria-selected={toolContext === ctx.id}
+            onclick={() => { toolContext = ctx.id as typeof toolContext; selectedCategory = 'all'; searchQuery = ''; }}
+            id={`context-btn-${ctx.id}`}
+          >{ctx.icon} {ctx.label}</button>
+        {/each}
+      </div>
+
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input
@@ -998,6 +1076,11 @@
     border-bottom: 1px solid var(--border-color, #2a2a35);
     flex-shrink: 0;
   }
+
+  .context-bar { display:flex; gap:6px; padding:8px 12px 0; margin-bottom: 12px; }
+  .context-btn { flex:1; padding:6px 8px; border-radius:var(--border-radius-sm, 4px); font-size:0.8rem; font-weight:500; border:1px solid var(--border-color, #2a2a35); background:transparent; color:var(--text-secondary, #9ca3af); cursor:pointer; transition:all var(--transition-fast, 0.15s ease); white-space:nowrap; }
+  .context-btn.active { background:var(--accent-primary, #5e6ad2); color:#fff; border-color:var(--accent-primary, #5e6ad2); }
+  .context-btn:hover:not(.active) { background:var(--bg-surface-hover, rgba(255, 255, 255, 0.05)); color:var(--text-primary, #ffffff); }
 
   .search-box {
     position: relative;
@@ -1327,6 +1410,27 @@
   .run-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .run-btn--loading { opacity: 0.72; cursor: not-allowed; }
+  .elapsed-timer {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
   }
 
   .empty-state {
