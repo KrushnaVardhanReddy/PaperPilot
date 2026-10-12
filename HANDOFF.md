@@ -99,10 +99,9 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
     - `cargo test -p paperpilot-pdf --lib test_e2e_full_ocr_generation` passed.
     - `paperpilot extract-text` outputs clean sentences with proper spacing between words.
     - PDF text layer now contains 38 well-formed, non-overlapping lines positioned directly over the corresponding scan lines.
-- **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
-  - **In Progress (Jules Session [1868272290671603993](https://jules.google.com/session/1868272290671603993))**:
-    - Triggered with hardened vendoring instructions (`crates/browser_oxide/`) and 1-line refutable pattern fix for `fontdb` compatibility.
-    - Full penta-interface wiring requested: CLI (`convert-url`), MCP (`pdf_convert_url`), and Gateway (`/api/v1/pdf/convert/url`).
+- **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**: ❌ **Omitted / Closed (PR #188 closed)**
+  - Evaluated and rejected due to heavy build bloat (+95k LOC, vendored experimental headless browser with `v8` & `skia`).
+  - PaperPilot maintains clean, lightweight HTML-to-PDF synthesis via `pdf_convert_html` (fulgur/krilla). Remote URL branch and PR deleted to protect repo performance.
 - **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
 - **Phase 5.9.12 (Spec 037 / Diagonal Watermarks)**: ✅ Merged (PR #176) — 45° diagonal angle, alpha transparency, MediaBox centering, and configurable parameters across all 5 surfaces.
 - **Phase 5.9.11 (Spec 036 / JSON-to-PDF Synthesis)**: ✅ Merged (PR #169) — Pure-Rust `json_to_pdf` closing the bidirectional agent loop (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`).
