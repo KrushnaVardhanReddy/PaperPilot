@@ -4,11 +4,33 @@
 
 ---
 
+## 🎯 Frozen "Top 12 Core Launch Suite" (v1.0 Priority Scope)
+
+To ensure zero launch defects and maximum end-to-end reliability, the following 12 operations are frozen as the **v1.0 Core Suite**. These tools undergo **unmocked real-disk Playwright execution** and full **Penta-Interface coverage**:
+
+| # | Tool ID | Interface Title | Category | Format Support |
+|---|---|---|---|---|
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` |
+| 10 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | `.pdf` $\to$ `.docx` |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` |
+
+---
+
 ## 🚧 Active In-Flight Verification & Optimization Gates
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI & 5-Interface Parity | [Spec 032](file:///home/krushna/Project/PaperPilot/specs/032-pdf-to-json-multimodal-images/spec.md) | Expand `pdf_to_json` with `--image-mode <none|files|base64>`, 5-interface mandate (CLI, MCP, REST, WASM, Edge), 20 E2E assertions, edge cases, and bench integration. | ⏳ **In Progress** (Session `7215646411441515522`) |
+| **5.9.28** | Penta-Interface E2E Suite Expansion (5 Tools) & Unmocked Playwright Desktop Verification | Comprehensive End-to-End Testing | [Spec 052](file:///home/krushna/Project/PaperPilot/specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md) | 100 new Penta assertions across CLI, MCP, REST, WASM, Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search` + unmocked Desktop Playwright tests for Top 12. | ⏳ **In Progress** (Jules Session [`9530387047429935978`](https://jules.google.com/session/9530387047429935978)) |
+| **5.9.15** | Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite | Core Engine & Markdown/HTML | [Spec 040](file:///home/krushna/Project/PaperPilot/specs/040-pdf-oxide-universal-migration/spec.md) | Migrated Markdown, HTML, Plain Text, Search, and RAG chunking to `pdf_oxide` with Desktop UI integration. | ✅ **Completed** (Commit `70e8424`, `fc66840`) |
 
 ---
 
