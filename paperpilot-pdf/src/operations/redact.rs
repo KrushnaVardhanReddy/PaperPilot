@@ -104,7 +104,7 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        LopdfDocument { inner }
+        LopdfDocument { inner, original_bytes: None  }
     }
 
     #[test]

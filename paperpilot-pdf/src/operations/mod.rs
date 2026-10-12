@@ -37,3 +37,4 @@ pub mod signature;
 pub mod split;
 pub mod validate;
 pub mod watermark;
+pub mod rag_chunks;

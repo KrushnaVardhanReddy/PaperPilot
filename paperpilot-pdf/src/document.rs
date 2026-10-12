@@ -6,6 +6,7 @@ use std::path::Path;
 
 pub struct LopdfDocument {
     pub inner: Document,
+    pub original_bytes: Option<Vec<u8>>,
 }
 
 impl Default for LopdfDocument {
@@ -35,12 +36,20 @@ impl LopdfDocument {
         doc.trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        Self { inner: doc }
+        Self { inner: doc, original_bytes: None }
+    }
+
+    pub fn from_inner(inner: Document) -> Self {
+        Self {
+            inner,
+            original_bytes: None,
+        }
     }
 
     pub fn load(path: &Path) -> OperationResult<Self> {
-        let doc = Document::load(path).map_err(|e| PdfError::ParseError(e.to_string()))?;
-        Ok(Self { inner: doc })
+        let bytes = std::fs::read(path).map_err(PdfError::IoError)?;
+        let doc = Document::load_mem(&bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
+        Ok(Self { inner: doc, original_bytes: Some(bytes) })
     }
 }
 

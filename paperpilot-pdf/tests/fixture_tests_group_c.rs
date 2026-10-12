@@ -89,7 +89,7 @@ fn test_images_to_pdf_fixture() {
         .trailer
         .set("Root", lopdf::Object::Reference(catalog_id));
 
-    let mut doc = LopdfDocument { inner: doc_inner };
+    let mut doc = LopdfDocument { inner: doc_inner, original_bytes: None };
 
     let op = ImagesToPdfOperation::new(vec![img_path]);
     assert!(op.execute(&mut doc).is_ok());

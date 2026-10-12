@@ -381,35 +381,59 @@ impl PdfOperation for PdfToHtmlOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        let mut html = String::new();
 
-        let mut html = String::from(
-            "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
-        );
-
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                    html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
-                    for line in text.lines() {
-                        if !line.trim().is_empty() {
-                            html.push_str(&format!("<p>{}</p>\n", line.trim()));
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref() {
+            if !bytes.is_empty() {
+                if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
+                    if let Ok(page_count) = pdf.page_count() {
+                        html.push_str("<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n");
+                        for i in 0..page_count {
+                            let page_id = i + 1;
+                            html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
+                            html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                            if let Ok(page_html) = pdf.to_html(i) {
+                                html.push_str(&page_html);
+                            }
+                            html.push_str("</div>\n");
                         }
+                        html.push_str("</body>\n</html>");
                     }
-                    html.push_str("</div>\n");
-                }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
                 }
             }
         }
 
-        html.push_str("</body>\n</html>");
+        if html.is_empty() {
+            let inner = &mut lopdf_doc.inner;
+            let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+
+            html = String::from(
+                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            );
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
+                        html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                        for line in text.lines() {
+                            if !line.trim().is_empty() {
+                                html.push_str(&format!("<p>{}</p>\n", line.trim()));
+                            }
+                        }
+                        html.push_str("</div>\n");
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_id, e
+                        )));
+                    }
+                }
+            }
+
+            html.push_str("</body>\n</html>");
+        }
 
         if let Ok(mut lock) = self.extracted_html.lock() {
             *lock = Some(html);
@@ -443,23 +467,42 @@ impl PdfOperation for PdfToMarkdownOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
-
         let mut md = String::new();
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    md.push_str(&format!("# Page {}\n\n", page_id));
-                    md.push_str(text.trim());
-                    md.push_str("\n\n");
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref() {
+            if !bytes.is_empty() {
+                if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
+                    if let Ok(page_count) = pdf.page_count() {
+                        for i in 0..page_count {
+                            let page_id = i + 1;
+                            if let Ok(page_md) = pdf.to_markdown(i) {
+                                md.push_str(&format!("# Page {}\n\n", page_id));
+                                md.push_str(page_md.trim());
+                                md.push_str("\n\n");
+                            }
+                        }
+                    }
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+            }
+        }
+
+        if md.is_empty() {
+            let inner = &mut lopdf_doc.inner;
+            let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        md.push_str(&format!("# Page {}\n\n", page_id));
+                        md.push_str(text.trim());
+                        md.push_str("\n\n");
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_id, e
+                        )));
+                    }
                 }
             }
         }
@@ -1612,7 +1655,7 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument { inner: doc, original_bytes: None  }
     }
 
     #[test]

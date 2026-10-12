@@ -366,7 +366,7 @@ mod tests {
             catalog.set("AcroForm", Object::Reference(acroform_id));
         }
 
-        LopdfDocument { inner: doc }
+        LopdfDocument { inner: doc, original_bytes: None  }
     }
 
     #[test]

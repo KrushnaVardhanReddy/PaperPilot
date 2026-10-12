@@ -39,7 +39,7 @@ mod tests {
     #[test]
     fn test_repair_operation_success() {
         let doc = Document::with_version("1.5");
-        let mut lopdf_doc = LopdfDocument { inner: doc };
+        let mut lopdf_doc = LopdfDocument { inner: doc, original_bytes: None  };
         let op = RepairOperation::new();
 
         let result = op.execute(&mut lopdf_doc);
