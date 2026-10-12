@@ -1,0 +1,59 @@
+Task: Portable App Architecture & Modular Feature Pack Onboarding [Spec 049]
+
+Objective:
+Implement true portable directory resolution (`./data/` detection) and a modular feature pack onboarding system so users can select and download only the tools they need at installation/first-run.
+
+Context & Requirements:
+- Read `specs/049-portable-app-modular-installer-and-feature-packs/spec.md`.
+- Working directories: `apps/desktop/src-tauri` and `apps/desktop/src/lib`.
+- Preserve 100% existing functionality when running in non-portable mode.
+- Maintain Svelte 5 runes ($state, $derived, $effect) and responsive dark/light UI styling.
+
+==================================================
+Detailed Implementation Steps:
+==================================================
+
+1. Backend Storage Resolution (`apps/desktop/src-tauri/src/storage.rs`):
+   - Implement `pub fn get_app_data_root() -> std::path::PathBuf`:
+     - Checks if `./data/` exists next to `std::env::current_exe()`.
+     - Fallbacks to `PAPERPILOT_DATA_DIR` env variable if set.
+     - Fallbacks to `dirs::data_local_dir().join("paperpilot")`.
+   - Implement `pub fn is_portable_mode() -> bool`.
+   - Update `ocr_commands.rs` and other storage consumers to use `get_app_data_root()` instead of hardcoded paths.
+
+2. Feature Pack Manager (`apps/desktop/src-tauri/src/pack_commands.rs`):
+   - Define `FeaturePackInfo` struct:
+     `id`, `name`, `description`, `size_mb`, `is_installed`, `is_enabled`, `tools`.
+   - Expose Tauri commands:
+     - `is_portable_mode() -> Result<bool, String>`
+     - `get_feature_packs() -> Result<Vec<FeaturePackInfo>, String>`
+     - `download_feature_pack(pack_id: String) -> Result<(), String>` (emits `pack-download-progress`)
+     - `set_feature_pack_enabled(pack_id: String, enabled: bool) -> Result<(), String>`
+   - Register commands in `src-tauri/src/lib.rs`.
+
+3. First-Run Modular Onboarding Wizard (`apps/desktop/src/lib/components/onboarding/ModularSetupModal.svelte`):
+   - Opens on first launch if `paperpilot_onboarding_completed` is not set.
+   - Shows "Portable Mode: Active" badge if `is_portable_mode` is true.
+   - Allows selecting:
+     - Core PDF (Always included, 0 MB)
+     - Office & Spreadsheets (~12 MB)
+     - Vision OCR (~35 MB)
+     - Web Archival (~22 MB)
+     - Local AI Discovery (~1.5 GB)
+   - Quick preset buttons: "Minimalist", "Productivity (Recommended)", "Full Suite".
+   - Shows download progress bars when downloading selected packs into `./data/`.
+   - Includes "Skip for Now" option.
+
+4. UI Integration:
+   - Mount `ModularSetupModal.svelte` in `apps/desktop/src/routes/+layout.svelte` or `+page.svelte`.
+   - Add a "Feature Packs" tab in `SettingsPanel.svelte` allowing users to manage, download, or disable packs anytime.
+
+==================================================
+Quality Gates (MANDATORY TO PASS):
+==================================================
+1. Rust compile & test:
+   cargo check -p paperpilot-desktop
+2. Svelte & TypeScript check:
+   pnpm --filter desktop check (0 errors)
+3. Unit tests:
+   pnpm --filter desktop test

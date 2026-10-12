@@ -82,6 +82,8 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
 - **Phase 5.9.23 (Spec 048 / Desktop OperationsPanel Modularization & Refactoring)**: ✅ Merged (PR #186, commit `e82ddbd`, Session 13180940037992674741) — Refactored monolithic 500+ line `handleRunOperation` into dedicated TypeScript services (`toolRegistry.ts`, `operationArgsBuilder.ts`, `operationValidator.ts`) with 19 passing unit tests and clean Svelte 5 component structure.
+- **Phase 5.9.26 (Spec 049 / Portable App Architecture & Modular Feature Pack Onboarding)**:
+  - **Planned & Ready for Jules**: Spec [`specs/049-portable-app-modular-installer-and-feature-packs/spec.md`](specs/049-portable-app-modular-installer-and-feature-packs/spec.md) and task prompt `prompts/tasks/phase5/P5_11_portable_app_modular_feature_packs.txt` to implement `./data/` portable storage discovery and a first-run modular onboarding wizard in Svelte 5.
 
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
