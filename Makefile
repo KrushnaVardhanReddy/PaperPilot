@@ -1,5 +1,14 @@
 .PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
 
+# Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
+ifeq ($(OS),Windows_NT)
+  ifneq ($(wildcard C:/Program\ Files/Git/usr/bin/sh.exe),)
+    export PATH := C:/Program Files/Git/usr/bin;C:/Program Files/Git/bin;$(PATH)
+  else ifneq ($(wildcard $(LOCALAPPDATA)/Programs/Git/bin/sh.exe),)
+    export PATH := $(LOCALAPPDATA)/Programs/Git/usr/bin;$(LOCALAPPDATA)/Programs/Git/bin;$(PATH)
+  endif
+endif
+
 # Default target
 all: format lint test-all build
 
@@ -9,14 +18,15 @@ build:
 
 # Build and run the standalone desktop application
 run: build-release
+ifeq ($(OS),Windows_NT)
+	./target/release/desktop.exe
+else
 	./target/release/desktop
+endif
 
 # Install desktop dependencies
 install-desktop:
-	@if [ ! -d "apps/desktop/node_modules" ] || [ ! -f "apps/desktop/node_modules/.bin/tauri" ]; then \
-		echo "Installing desktop dependencies..."; \
-		cd apps/desktop && (pnpm install || npm install); \
-	fi
+	@node -e "const fs = require('fs'); if (!fs.existsSync('apps/desktop/node_modules') || (!fs.existsSync('apps/desktop/node_modules/.bin/tauri') && !fs.existsSync('apps/desktop/node_modules/.bin/tauri.cmd'))) { console.log('Installing desktop dependencies...'); require('child_process').execSync('pnpm install || npm install', { cwd: 'apps/desktop', stdio: 'inherit' }); }"
 
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
 dev: install-desktop
