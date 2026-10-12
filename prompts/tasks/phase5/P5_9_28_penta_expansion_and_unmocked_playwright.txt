@@ -1,0 +1,40 @@
+Task: Penta-Interface E2E Suite Expansion for New Tools & Unmocked Playwright Desktop Verification [Spec 052]
+
+Objective:
+1. Expand the Rust-native `tools/penta-interface-e2e` suite to cover the newly added tools (`excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search`) across all 5 surfaces (CLI, MCP, REST, WASM, Edge) and 4 tiers (20 assertions each, 100 new tests).
+2. Create an unmocked Playwright Desktop E2E suite (`apps/desktop/tests/e2e_real_desktop_execution.spec.ts`) verifying the Top 12 core launch operations end-to-end through the real UI and Tauri IPC down to disk.
+
+Context & Reference:
+- Read `specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md` for full architecture.
+- `tools/penta-interface-e2e/src/cases/conversions.rs` & `analysis.rs`: Add cases for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search`.
+- `apps/desktop/tests/e2e_44_operations_parity.spec.ts`: Currently mocks `invoke_mcp_tool`. Use this as reference, but write real unmocked assertions in `e2e_real_desktop_execution.spec.ts`.
+- Concurrency Constraint: Max 6 cores (`-j 6`).
+
+Implementation Steps:
+1. Rust Penta-Interface Suite (`tools/penta-interface-e2e`):
+   - Add test cases in `src/cases/conversions.rs`:
+     - `excel_to_json`: 20 assertions across CLI, MCP, REST, WASM, Edge covering JSON structure, headers, multi-sheet, and invalid file error.
+     - `excel_to_csv`: 20 assertions covering RFC 4180 CSV generation and delimiters.
+     - `pdf_rag_chunks`: 20 assertions covering semantic chunk count, headings, and page boundaries.
+     - `pdf_to_html`: 20 assertions verifying semantic HTML5 `<article>`, `<table>`, responsive tags.
+   - Add test cases in `src/cases/analysis.rs`:
+     - `workspace_search`: 20 assertions testing cross-document search across `.pdf` and `.xlsx` fixtures.
+   - Connect groups to `tools/penta-interface-e2e/src/main.rs`.
+
+2. Unmocked Playwright Desktop Suite (`apps/desktop/tests/e2e_real_desktop_execution.spec.ts`):
+   - Create tests for the Top 12 core tools (`pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_compress`, `pdf_watermark`, `pdf_ocr`, `pdf_extract_text`, `pdf_to_docx`, `excel_to_json`, `excel_to_csv`).
+   - Use real files in `tests/e2e_fixtures/real/`.
+   - Do NOT mock `invoke_mcp_tool`. Let Svelte call Tauri IPC, wait for completion, and verify generated file exists on disk.
+
+3. Execution & Verification:
+   - Run penta suite: `cargo run -p penta-interface-e2e -- --group conversions -j 6`.
+   - Run desktop tests: `pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts`.
+   - Generate markdown reports in `reports/`.
+
+4. Documentation:
+   - Author `reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md`.
+   - Update `PHASES.md` marking Task 5.9.28 as completed.
+
+Deliverables:
+- Commits prefixed with `jules: `
+- 100% green test passes across both Rust Penta-Interface and Playwright suites.
