@@ -81,8 +81,7 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
   - **In Progress (Jules Session `9630028142770297150`)**: Spec [`specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`](specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md) for 100% pure-Rust zero-Chromium web page archiving via `browser_oxide` with Cargo patch instructions for `fontdb`.
 - **Phase 5.9.17 (Spec 042 / Agentic Code Quality & Dead-Scaffolding Pruning via `fossil-mcp`)**:
   - **Planned & Ready**: Spec `specs/042-agentic-code-quality-fossil-mcp/spec.md` to audit and prune dead functions, duplicate clones, and orphan scaffolding across workspace crates.
-- **Phase 5.9.23 (Spec 048 / Desktop OperationsPanel Modularization & Refactoring)**:
-  - **Planned & Ready for Jules**: Spec [`specs/048-desktop-operations-panel-refactoring/spec.md`](specs/048-desktop-operations-panel-refactoring/spec.md) and task prompt `prompts/tasks/phase5/P5_10_desktop_operations_panel_refactoring.txt` to break down monolithic `handleRunOperation` (>500 lines) into modular services (`toolRegistry.ts`, `operationArgsBuilder.ts`, `operationValidator.ts`).
+- **Phase 5.9.23 (Spec 048 / Desktop OperationsPanel Modularization & Refactoring)**: ✅ Merged (PR #186, commit `e82ddbd`, Session 13180940037992674741) — Refactored monolithic 500+ line `handleRunOperation` into dedicated TypeScript services (`toolRegistry.ts`, `operationArgsBuilder.ts`, `operationValidator.ts`) with 19 passing unit tests and clean Svelte 5 component structure.
 
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
