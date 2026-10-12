@@ -5,36 +5,43 @@ Migrate and upgrade PaperPilot's text extraction, document conversion (`pdf_conv
 
 Context & Reference:
 - Read `specs/040-pdf-oxide-universal-migration/spec.md` for complete architecture and guidelines.
-- Concurrency Constraint: Max 6 cores. All builds and tests must pass `-j 6` (e.g., `cargo test -- -j 6`).
+- Concurrency Constraint: Max 6 cores. All builds and tests must pass `-j 6` (e.g., `cargo test -p paperpilot-pdf -j 6`).
 - WASM & Edge Constraint: 100% in-memory, zero C dependencies, fully compatible with `wasm32-unknown-unknown` and Cloudflare Workers (<35MB RSS).
+- IMPORTANT DEPENDENCY CONFIG: Update `pdf_oxide = "0.3.78"` in `paperpilot-pdf/Cargo.toml` and `paperpilot-wasm/Cargo.toml` with `default-features = false`. (Note: omit the `"wasm"` feature if compiling against `DocumentIR` defined_names conflicts).
+- IMPORTANT DESKTOP MODULARITY: `OperationsPanel.svelte` was refactored in Spec 048. Tool names must be registered in `apps/desktop/src/lib/services/toolRegistry.ts` (`resolveToolName`) and `apps/desktop/src/lib/services/operationArgsBuilder.ts`.
 
 Implementation Steps:
 1. Engine Core Integration (`paperpilot-pdf`):
-   - Add `pdf_oxide = "0.3"` to `paperpilot-pdf/Cargo.toml` with WASM-compatible features (`default-features = false`, pure-Rust core).
-   - Upgrade `pdf_convert_markdown`:
-     - Generate structured Markdown with headings (`#`), bold/italic (`**`), tables (`| Header |`), and de-weaved column flow.
-   - Implement first-class `pdf_to_html`:
+   - Upgrade `PdfToMarkdownOperation` using `pdf_oxide::api::Pdf`:
+     - Generate structured Markdown with headings (`#`), bold/italic (`**`), tables (`| Header |`), and de-weaved XY-Cut column flow.
+   - Implement first-class `pdf_to_html` (`PdfToHtmlOperation`):
      - Generate responsive semantic HTML5 (`<article>`, `<p>`, `<table>`, embedded `<img>` tags, mobile viewport metadata, clean CSS preset).
-     - Add dedicated `pdf_to_html` tool card in Desktop UI (`OperationsPanel.svelte`).
-   - Upgrade `pdf_extract_text`:
-     - Leverage perfect word-spacing and layout reading order.
-   - Upgrade `pdf_search`:
-     - Return bounding-box coordinates for term occurrences.
-   - Add `pdf_rag_chunks` tool:
+     - Add dedicated `pdf_to_html` tool card in Desktop UI (`OperationsPanel.svelte`) and register in `apps/desktop/src/lib/services/toolRegistry.ts`.
+   - Upgrade `ExtractTextOperation` (`pdf_extract_text`):
+     - Leverage `pdf_oxide`'s word-spacing heuristic and layout reading order.
+   - Upgrade `SearchOperation` (`pdf_search`):
+     - Return bounding-box coordinates (`x`, `y`, `width`, `height`) for term occurrences.
+   - Add `PdfRagChunksOperation` (`pdf_rag_chunks`):
      - Output structured semantic chunks with page numbers and heading context for LLM/RAG pipelines.
-2. Interfaces & WASM Wiring:
-   - Wire upgraded tools across `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-wasm`, and `apps/edge`.
+
+2. Penta-Interface Wiring (All 5 surfaces):
+   - CLI (`paperpilot-cli`): Update `convert --format html`, `convert --format markdown`, `text`, `search`, and add `rag-chunks`.
+   - MCP (`paperpilot-mcp`): Register tool declarations and handlers in `paperpilot-mcp/src/server.rs` (`pdf_to_html`, `pdf_convert_markdown`, `pdf_search`, `pdf_rag_chunks`). Update `test_execute_list_tools` tool count assertion.
+   - Gateway REST (`paperpilot-gateway`): Add OpenAPI routes and handlers in `handlers.rs` and `server.rs`.
+   - WASM & Cloudflare Edge (`paperpilot-wasm`, `apps/edge`): In-memory buffer support via `Pdf::from_bytes` with zero filesystem calls.
+
 3. Verification & Quality Gates:
    - Add unit tests verifying:
      - Markdown output contains table pipes `|` when given table PDFs.
      - Multi-column reading flow does not interleave sentences.
      - Search results return valid `bbox` objects (`x`, `y`, `width`, `height`).
-   - Run tests bounded with `-j 6`: `cargo test -p paperpilot-pdf -j 6`.
-   - Ensure clean clippy: `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+   - Run tests bounded with `-j 6`: `cargo test -p paperpilot-pdf -p paperpilot-mcp -p paperpilot-gateway -j 6`.
+   - Ensure clean clippy: `cargo clippy --workspace --all-targets -- -D warnings`.
+
 4. Report & Documentation:
-   - Author `reports/PDF_OXIDE_UNIVERSAL_MIGRATION_REPORT.md`.
+   - Author `wiki/PDF-Oxide-Migration.md` and `reports/PDF_OXIDE_UNIVERSAL_MIGRATION_REPORT.md`.
    - Update `PHASES.md` marking Task 5.9.15 as completed.
 
 Deliverables:
 - Commits prefixed with `jules: `
-- Clean workspace passing all clippy and test quality gates.
+- Clean PR and workspace passing all clippy and test quality gates.
