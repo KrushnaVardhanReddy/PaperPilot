@@ -6,6 +6,7 @@ use tokio::sync::oneshot;
 
 pub mod error;
 pub mod ai_commands;
+pub mod ocr_commands;
 use crate::error::DesktopError;
 
 lazy_static::lazy_static! {
@@ -225,7 +226,12 @@ pub fn run() {
             ai_commands::cancel_model_download,
             ai_commands::save_ai_config,
             ai_commands::get_ai_config,
-            ai_commands::test_ai_endpoint
+            ai_commands::test_ai_endpoint,
+            ocr_commands::get_available_ocr_models,
+            ocr_commands::download_ocr_model,
+            ocr_commands::cancel_ocr_model_download,
+            ocr_commands::set_active_ocr_model,
+            ocr_commands::get_active_ocr_model
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

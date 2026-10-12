@@ -283,7 +283,13 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
-        output: PathBuf,
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "pdf")]
+        format: String,
+        #[arg(long)]
+        clipboard: bool,
+        #[arg(long)]
+        tier: Option<String>,
     },
     Bookmarks {
         #[arg(long)]

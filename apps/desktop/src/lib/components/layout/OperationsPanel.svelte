@@ -159,6 +159,7 @@
   let signCertPath = $state('');
   let headerText = $state('');
   let footerText = $state('');
+  let ocrOutputFormat = $state<'pdf' | 'txt' | 'clipboard'>('pdf');
 
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
@@ -206,6 +207,17 @@
     `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`
   );
 
+  interface ExecutionResult {
+    success: boolean;
+    durationFormatted: string;
+    toolTitle: string;
+    timestamp: Date;
+    message: string;
+  }
+
+  let lastExecution = $state<ExecutionResult | null>(null);
+  let executionHistory = $state<ExecutionResult[]>([]);
+
   // Auto-fill the output path whenever the active tool or selected document changes
   $effect(() => {
     if (!activeTool || appState.documents.length === 0) {
@@ -229,8 +241,10 @@
         break;
       }
       case 'merge':
-      case 'split':
         customOutputPath = ''; // handled by native dialog
+        break;
+      case 'split':
+        customOutputPath = getOutputPath(`${base}_split`);
         break;
       case 'compress':      customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
       case 'rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
@@ -240,7 +254,15 @@
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
-      case 'ocr':           customOutputPath = getOutputPath(`${base}_ocr.pdf`);         break;
+      case 'ocr':
+        if (ocrOutputFormat === 'txt') {
+          customOutputPath = getOutputPath(`${base}_ocr.txt`);
+        } else if (ocrOutputFormat === 'clipboard') {
+          customOutputPath = '';
+        } else {
+          customOutputPath = getOutputPath(`${base}_ocr.pdf`);
+        }
+        break;
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
@@ -336,26 +358,13 @@
         break;
       }
       case 'split': {
-        let outputPath: string | null = customOutputPath;
-        const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
-        if (!outputPath) {
-          try {
-            const { save } = await import('@tauri-apps/plugin-dialog');
-            outputPath = await save({
-              title: 'Save Split PDFs to Folder (choose base filename)...',
-              defaultPath: suggested,
-              filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-            });
-          } catch(err) {
-            console.warn('Tauri dialog unavailable, falling back:', err);
-          }
-        }
-
-        const finalPath = outputPath || suggested;
-        const outputDir = finalPath.replace(/\.pdf$/i, '');
+        const defaultSplitDir = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
+        const targetDir = customOutputPath || defaultSplitDir;
         args = {
           input: docPath,
-          output_pattern: outputDir + "_p%d.pdf",
+          output_dir: targetDir,
+          output: targetDir,
+          output_pattern: `${targetDir}/p%d.pdf`,
           ranges: splitPoints
         };
         break;
@@ -627,12 +636,17 @@
           output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
         };
         break;
-      case 'ocr':
+      case 'ocr': {
+        const defaultExt = ocrOutputFormat === 'txt' ? 'txt' : 'pdf';
+        const targetOut = customOutputPath || (ocrOutputFormat === 'clipboard'
+          ? getOutputPath(`temp_ocr_clipboard.txt`)
+          : getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.${defaultExt}`));
         args = {
           input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.pdf`)
+          output: targetOut
         };
         break;
+      }
       case 'pdf_to_docx':
         args = {
           input: docPath,
@@ -672,23 +686,65 @@
     }
 
     appState.setLoading(true);
+    const startTime = performance.now();
     try {
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+      const durationMs = Math.round(performance.now() - startTime);
+      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+
       const resObj = result as any;
       if (resObj && resObj.success) {
-        const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-        const msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+        let msg = '';
+        if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+          const textToCopy = resObj.data?.text || '';
+          if (navigator.clipboard && textToCopy) {
+            await navigator.clipboard.writeText(textToCopy);
+          }
+          msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+        } else {
+          const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+          msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+        }
         toastState.success(msg);
         jobsState.addJob(toolName, 'success', msg);
+
+        lastExecution = {
+          success: true,
+          durationFormatted,
+          toolTitle: activeTool.title,
+          timestamp: new Date(),
+          message: msg
+        };
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
       } else {
         const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
         toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
         jobsState.addJob(toolName, 'error', formatted.headline);
+
+        lastExecution = {
+          success: false,
+          durationFormatted,
+          toolTitle: activeTool.title,
+          timestamp: new Date(),
+          message: formatted.headline
+        };
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
       }
     } catch (error) {
+      const durationMs = Math.round(performance.now() - startTime);
+      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
       const formatted = formatUserFriendlyError(error, activeTool.title);
       toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
       jobsState.addJob(toolName, 'error', formatted.headline);
+
+      lastExecution = {
+        success: false,
+        durationFormatted,
+        toolTitle: activeTool.title,
+        timestamp: new Date(),
+        message: formatted.headline
+      };
+      executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
     } finally {
       appState.setLoading(false);
     }
@@ -881,9 +937,23 @@
           <label for="footerText" class="section-desc">Footer Text:</label>
           <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
         </div>
-      {:else if activeTool.id === 'pdf_to_pptx' || activeTool.id === 'pdf_to_pdf_a'}
+      {:else if activeTool.id === 'ocr'}
         <div class="operation-config">
-          <p class="section-desc">Export destination can be modified below.</p>
+          <label for="ocrOutputFormat" class="section-desc">Output Destination:</label>
+          <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input">
+            <option value="pdf">Searchable PDF (.pdf)</option>
+            <option value="txt">Plain Text File (.txt)</option>
+            <option value="clipboard">Copy to Clipboard</option>
+          </select>
+          <p class="section-desc" style="font-size: 0.78rem; color: #a1a1aa; margin-top: 6px;">
+            {#if ocrOutputFormat === 'pdf'}
+              Injects a transparent text layer into the PDF so text can be selected and searched.
+            {:else if ocrOutputFormat === 'txt'}
+              Extracts the recognized text and writes it out as a structured .txt text file.
+            {:else}
+              Copies the recognized text straight to your operating system clipboard!
+            {/if}
+          </p>
         </div>
       {:else}
         <div class="operation-config">
@@ -891,17 +961,19 @@
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf'}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
         <div class="operation-config" id="output-path-config">
-          <label for="output-path-input" class="section-desc">Output file:</label>
+          <label for="output-path-input" class="section-desc">
+            {activeTool.id === 'split' ? 'Output folder:' : 'Output file:'}
+          </label>
           <div class="output-path-row">
             <input
               id="output-path-input"
               type="text"
               class="form-input output-path-input"
               bind:value={customOutputPath}
-              placeholder="Output file path..."
-              title="Edit the output file path"
+              placeholder={activeTool.id === 'split' ? 'Output folder path...' : 'Output file path...'}
+              title="Edit the output path"
             />
           </div>
         </div>
@@ -924,6 +996,13 @@
         </button>
         {#if isRunning}
           <div class="elapsed-timer" aria-live="polite">⏱ {elapsedDisplay} elapsed</div>
+        {:else if lastExecution}
+          <div class="last-execution-badge" class:badge-success={lastExecution.success} class:badge-error={!lastExecution.success} title={lastExecution.message}>
+            <span class="badge-icon">{lastExecution.success ? '✓' : '✗'}</span>
+            <span class="badge-text">
+              {lastExecution.success ? 'Completed' : 'Failed'} in <strong>{lastExecution.durationFormatted}</strong>
+            </span>
+          </div>
         {/if}
       </div>
     </div>
@@ -1431,6 +1510,40 @@
     text-align: center;
     margin-top: 6px;
     font-variant-numeric: tabular-nums;
+  }
+
+  .last-execution-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    transition: all 0.2s ease;
+  }
+
+  .badge-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+  }
+
+  .badge-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+  }
+
+  .last-execution-badge .badge-icon {
+    font-weight: 700;
+  }
+
+  .last-execution-badge strong {
+    color: #ffffff;
   }
 
   .empty-state {

@@ -85,7 +85,21 @@ All 44 operations across all three developer interfaces (CLI, MCP, and REST API)
 ### 3. Summary of Recently Completed & Merged Milestones
 - **Phase 5.9.14 (Spec 039 / Advanced Multi-Column & Table Layout Analysis)**: ✅ Merged (PR #182, commit `a5036b8`, Session 7944320664313422740) — Recursive XY-Cut column de-weaving, tabular grid detection, and native `docx_rs::Table` synthesis across `paperpilot-pdf` and `paperpilot-wasm` (`reports/PDF_OXIDE_LAYOUT_ANALYSIS_REPORT.md`, `wiki/PDF-Oxide-Layout-Analysis.md`).
 - **Phase 5.9.20 (Spec 045 / Desktop UX: Office + PDF Unified Intake & Run Button Feedback)**: ✅ Merged (PR #181, commit `42730fd`, Session 10047595857438929348) — Loading spinner and elapsed timer on Run button, multi-format DropZone with badges, context-aware tool switcher, and dynamic Workspace subtitle (`reports/DESKTOP_UX_OFFICE_PDF_INTEGRATION_REPORT.md`).
-- **Phase 5.9.19 (Spec 044 / `rusto-rs` OCR Engine)**: ✅ Merged (PR #178) — Sub-second PaddleOCR v4 + RTen inference with exact bounding boxes for selectable text overlays (`reports/RUSTO_RS_OCR_MIGRATION_REPORT.md`).
+- **Phase 5.9.19 (Spec 044 / `rusto-rs` & `ocrs` OCR Investigation & Stability)**: ✅ **Verified Working End-to-End**
+  - **Root Cause & Fixes Applied**:
+    1. **Grayscale Luma8 Channel Conversion**: `rusto-rs` PaddleOCR detector requires 1-channel grayscale input. Passing raw 3-channel RGB caused `InvalidInput("expected dim 1 to have size 1 but got 3")` silently yielding 0 detected words. Added conversion to `luma8` and PNG re-encoding before `detect_text()`.
+    2. **Font Encoding (`WinAnsiEncoding`)**: Embedded Helvetica Type1 font dictionary lacked `/Encoding`, causing text extractors (`pdftotext`, `lopdf::extract_text()`, `pypdf`) to fail to decode characters. Injected `"Encoding" => "WinAnsiEncoding"`.
+    3. **Indirect Resource Mutation**: Properly resolved and mutated indirect `Resources` dictionaries (`inner.get_object_mut(res_id)`), ensuring `/Font` and `/ExtGState` are correctly linked.
+    5. **Natural Line Word-Spacing (`OutputGranularity::Lines`)**: Switched from `Words` to `Lines` granularity so `rusto-rs` outputs whole natural text blocks with proper inter-word spaces (`"Receipt Number"`, `"Approval Notice"`) instead of character/token fragments without spaces.
+    6. **Per-Strip Coordinate Band Mapping**: Scanned PDFs split across N horizontal strips (`Image1`..`Image26`) are now positioned within their specific vertical band (`page_h - (i * per_strip_h)`) rather than stretching each strip across the full page height, eliminating overlapping text layers and cursor selection jitter in PDF viewers.
+  - **Verification Results**:
+    - `cargo test -p paperpilot-pdf --lib test_e2e_full_ocr_generation` passed.
+    - `paperpilot extract-text` outputs clean sentences with proper spacing between words.
+    - PDF text layer now contains 38 well-formed, non-overlapping lines positioned directly over the corresponding scan lines.
+- **Phase 5.9.16 (Spec 041 / Pure-Rust URL-to-PDF Archival Engine via `browser_oxide`)**:
+  - **In Progress (Jules Session [1868272290671603993](https://jules.google.com/session/1868272290671603993))**:
+    - Triggered with hardened vendoring instructions (`crates/browser_oxide/`) and 1-line refutable pattern fix for `fontdb` compatibility.
+    - Full penta-interface wiring requested: CLI (`convert-url`), MCP (`pdf_convert_url`), and Gateway (`/api/v1/pdf/convert/url`).
 - **Phase 5.9.18 (Spec 043 / `office_oxide` Document Engine)**: ✅ Merged (PR #179) — Pure-Rust OOXML & legacy Office text extraction, markdown conversion, and modernization (`reports/OFFICE_OXIDE_INTEGRATION_REPORT.md`, `wiki/Office-Engine.md`).
 - **Phase 5.9.12 (Spec 037 / Diagonal Watermarks)**: ✅ Merged (PR #176) — 45° diagonal angle, alpha transparency, MediaBox centering, and configurable parameters across all 5 surfaces.
 - **Phase 5.9.11 (Spec 036 / JSON-to-PDF Synthesis)**: ✅ Merged (PR #169) — Pure-Rust `json_to_pdf` closing the bidirectional agent loop (`reports/JSON_TO_PDF_SYNTHESIS_REPORT.md`).

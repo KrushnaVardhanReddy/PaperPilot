@@ -375,7 +375,7 @@ fn bench_ocr(c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&path).unwrap(),
         };
-        let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation;
+        let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
         let _ = ocr_op.execute(&mut doc);
     });
     println!("SYSTEM_BENCHMARK_MEMORY|OCR_100|{}", peak_mem);
@@ -388,7 +388,7 @@ fn bench_ocr(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
             };
-            let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation;
+            let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
             let _ = ocr_op.execute(&mut doc);
         });
     });
