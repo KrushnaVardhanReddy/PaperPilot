@@ -344,6 +344,7 @@ impl PdfOperation for OcrOperationImpl {
                 for (y, _x, font_size, text) in words_collected {
                     if let Some(cy) = current_y {
                         // Delta y < 0.5 * font_size
+                        #[allow(clippy::unnecessary_cast)]
                         if (cy as f32 - y as f32).abs() < 0.5 * font_size {
                             current_line.push(text);
                         } else {

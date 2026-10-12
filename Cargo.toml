@@ -26,3 +26,6 @@ opt-level = 3
 
 [profile.dev.package.rusto-rs]
 opt-level = 3
+
+[patch.crates-io]
+browser_oxide = { path = "/tmp/browser_oxide_repo/crates/browser_oxide" }

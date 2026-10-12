@@ -17,6 +17,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::compress,
         handlers::extract_text,
         handlers::convert,
+        handlers::url_to_pdf_convert,
         handlers::watermark,
         handlers::info,
         handlers::compare,
@@ -70,6 +71,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/compress", post(handlers::compress))
         .route("/api/v1/pdf/extract-text", post(handlers::extract_text))
         .route("/api/v1/pdf/convert", post(handlers::convert))
+        .route("/api/v1/pdf/convert/url", post(handlers::url_to_pdf_convert))
         .route("/api/v1/pdf/watermark", post(handlers::watermark))
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))

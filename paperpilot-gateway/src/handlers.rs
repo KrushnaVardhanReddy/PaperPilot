@@ -872,3 +872,18 @@ mod tests {
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
+
+/// Convert a URL to PDF using browser_oxide
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/convert/url",
+    tag = "PDF Operations",
+    request_body(content = ConvertJsonRequest, description = "JSON configuration"),
+    responses(
+        (status = 200, description = "Converted successfully", body = ApiResponse)
+    )
+)]
+pub async fn url_to_pdf_convert(req: axum::extract::Request) -> impl IntoResponse {
+    tracing::info!("Received convert url request");
+    handle_tool(Path("pdf_convert_url".to_string()), req).await.into_response()
+}
