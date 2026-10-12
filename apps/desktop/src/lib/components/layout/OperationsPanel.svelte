@@ -117,7 +117,10 @@
     ...categories
   ];
 
-  import { onMount } from 'svelte';
+  import { resolveToolName } from '$lib/services/toolRegistry';
+import { validatePreconditions } from '$lib/services/operationValidator';
+import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
+import { onMount } from 'svelte';
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
@@ -279,477 +282,122 @@
   });
 
   async function handleRunOperation() {
-    if (isRunning) return;
-    if (!activeTool) return;
+    if (isRunning || !activeTool) return;
+
+    const validation = validatePreconditions(activeTool.id, appState.documents.length);
+    if (!validation.valid) {
+      if (validation.error) toastState.error(validation.error);
+      return;
+    }
+
+    if (activeTool.id === 'compare') {
+      appState.toggleDiffView(true);
+      return;
+    }
 
     isRunning = true;
     elapsedSeconds = 0;
     const timer = setInterval(() => { elapsedSeconds++; }, 1000);
 
     try {
+      const docIndex = appState.selectedDocumentIndex ?? 0;
+      const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : '';
+      const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : '';
+      const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+      const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
 
-    if (activeTool.id === 'compare') {
-      if (appState.documents.length < 2) {
-        toastState.error('Need at least 2 documents loaded to compare.');
-        return;
-      }
-      appState.toggleDiffView(true);
-      return;
-    }
+      const context: OperationContext = {
+        docName,
+        docPath,
+        docDir,
+        allDocumentPaths: appState.documentPaths,
+        allDocuments: appState.documents,
+        getOutputPath,
+        customOutputPath,
+        splitPoints,
+        rotateAngle,
+        watermarkText,
+        watermarkOrientation,
+        watermarkOpacity,
+        watermarkColor,
+        watermarkFontSize: 12,
 
-    const isCreationTool = ['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id);
-    if (!isCreationTool && appState.documents.length === 0) {
-      toastState.error('No documents available. Add or drop a PDF first.');
-      return;
-    }
+        password,
+        batesPrefix,
+        batesStart,
+        batesPadding,
+        ocrOutputFormat,
+        ocrLanguage: "eng",
 
-    if (activeTool.id === 'merge' && appState.documents.length < 2) {
-      toastState.error('Need at least 2 documents in tabs to merge.');
-      return;
-    }
+        cropBox,
+        pageNumberPosition: "bottom_right",
+        pageNumberStart: 1,
 
-    const docIndex = appState.selectedDocumentIndex ?? 0;
-    const docName = appState.documents[docIndex]?.name || appState.documents[0].name;
-    const docPath = appState.documentPaths[docIndex] || docName;
-    const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
-    const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+        pageNumberFormat: "1",
 
-    let toolName = `pdf_${activeTool.id}`;
-    if (activeTool.id === 'md_to_pdf') toolName = 'pdf_convert_markdown';
-    if (activeTool.id === 'html_to_pdf') toolName = 'pdf_convert_html';
-    if (activeTool.id === 'img_to_pdf') toolName = 'pdf_images_to_pdf';
-    if (activeTool.id === 'json_to_pdf') toolName = 'json_to_pdf';
+        convertPreset,
+        reorderList,
+        signCertPath,
+        headerText,
+        footerText,
+        metadataTitle,
+        compressQuality
+      };
 
-    // Forms and conversions mapping
-    if (['create_form_field', 'fill_form', 'read_form'].includes(activeTool.id)) {
-        toolName = `pdf_${activeTool.id}`;
-    } else if (['pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_json'].includes(activeTool.id)) {
-        toolName = activeTool.id;
-    } else if (activeTool.id === 'pdf_convert_excel') {
-        toolName = 'pdf_convert_excel';
-    } else if (activeTool.id === 'office_modernize_legacy') {
-        toolName = 'office_modernize_legacy';
-    }
-    if (activeTool.id === 'office_to_markdown') toolName = 'office_to_markdown';
-    if (activeTool.id === 'office_extract_text') toolName = 'office_extract_text';
-    if (activeTool.id === 'excel_to_json') toolName = 'excel_to_json';
-    if (activeTool.id === 'excel_to_csv') toolName = 'excel_to_csv';
+      const args = await buildOperationArgs(activeTool.id, context);
+      if (!args) return; // User cancelled file picker
 
-    let args: Record<string, any> = {};
+      const toolName = resolveToolName(activeTool.id);
 
-    switch (activeTool.id) {
-      case 'office_to_markdown':
-      case 'office_extract_text':
-      case 'office_modernize_legacy':
-        args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_output`) };
-        break;
-      case 'merge': {
-        let outputPath: string | null = customOutputPath;
-        const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
-        if (!outputPath) {
-          try {
-            const { save } = await import('@tauri-apps/plugin-dialog');
-            outputPath = await save({
-              title: 'Save Merged PDF As...',
-              defaultPath: suggested,
-              filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-            });
-          } catch(err) {
-             console.warn('Tauri dialog unavailable, falling back:', err);
+      appState.setLoading(true);
+      const startTime = performance.now();
+      try {
+        const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+        const durationMs = Math.round(performance.now() - startTime);
+        const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+
+        const resObj = result as any;
+        if (resObj && resObj.success) {
+          let msg = '';
+          if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+            const textToCopy = resObj.data?.text || '';
+            if (navigator.clipboard && textToCopy) {
+              await navigator.clipboard.writeText(textToCopy);
+            }
+            msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+          } else {
+            const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+            msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
           }
-        }
-        const finalPath = outputPath || suggested;
-        args = {
-          inputs: appState.documents.map((d, i) => appState.documentPaths[i] || d.name),
-          output: finalPath
-        };
-        break;
-      }
-      case 'split': {
-        const defaultSplitDir = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
-        const targetDir = customOutputPath || defaultSplitDir;
-        args = {
-          input: docPath,
-          output_dir: targetDir,
-          output: targetDir,
-          output_pattern: `${targetDir}/p%d.pdf`,
-          ranges: splitPoints
-        };
-        break;
-      }
-      case 'md_to_pdf': {
-        const { open, save } = await import('@tauri-apps/plugin-dialog');
-        const selected = await open({
-          title: 'Select Markdown File',
-          multiple: false,
-          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
-        });
-        if (!selected) return;
-        const inputPath = Array.isArray(selected) ? selected[0] : selected;
+          toastState.success(msg);
+          jobsState.addJob(toolName, 'success', msg);
 
-        const suggested = getOutputPath('output.pdf');
-        const outputPath = await save({
-          title: 'Save PDF As...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return;
-
-        args = {
-          input: inputPath,
-          output: outputPath,
-          preset: convertPreset
-        };
-        break;
-      }
-      case 'html_to_pdf': {
-        const { open, save } = await import('@tauri-apps/plugin-dialog');
-        const selected = await open({
-          title: 'Select HTML File',
-          multiple: false,
-          filters: [{ name: 'HTML', extensions: ['html', 'htm'] }]
-        });
-        if (!selected) return;
-        const inputPath = Array.isArray(selected) ? selected[0] : selected;
-
-        const suggested = getOutputPath('output.pdf');
-        const outputPath = await save({
-          title: 'Save PDF As...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return;
-
-        args = {
-          input: inputPath,
-          output: outputPath,
-          preset: convertPreset
-        };
-        break;
-      }
-      case 'img_to_pdf': {
-        const { open, save } = await import('@tauri-apps/plugin-dialog');
-        const selected = await open({
-          title: 'Select Images',
-          multiple: true,
-          filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }]
-        });
-        if (!selected || selected.length === 0) return;
-        const inputPaths = Array.isArray(selected) ? selected : [selected];
-
-        const suggested = getOutputPath('output.pdf');
-        const outputPath = await save({
-          title: 'Save PDF As...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return;
-
-        args = {
-          inputs: inputPaths,
-          output: outputPath
-        };
-        break;
-      }
-      case 'json_to_pdf': {
-        const { open, save } = await import('@tauri-apps/plugin-dialog');
-        const selected = await open({
-          title: 'Select Structured JSON File',
-          multiple: false,
-          filters: [{ name: 'JSON Document', extensions: ['json'] }]
-        });
-        if (!selected) return;
-        const inputPath = Array.isArray(selected) ? selected[0] : selected;
-
-        const suggested = getOutputPath('synthesized.pdf');
-        const outputPath = await save({
-          title: 'Save Synthesized PDF As...',
-          defaultPath: suggested,
-          filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-        });
-        if (!outputPath) return;
-
-        args = {
-          input: inputPath,
-          output: outputPath
-        };
-        break;
-      }
-      case 'compress':
-        args = {
-          input: docPath,
-          quality: compressQuality.toString(),
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_compressed.pdf`)
-        };
-        break;
-      case 'rotate':
-        args = {
-          input: docPath,
-          pages: 'all',
-          angle: parseInt(rotateAngle, 10),
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
-        };
-        break;
-      case 'watermark':
-        args = {
-          input: docPath,
-          text: watermarkText || 'CONFIDENTIAL',
-          angle: watermarkOrientation === 'diagonal' ? 45 : 0,
-          opacity: watermarkOpacity / 100,
-          color: watermarkColor,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_watermarked.pdf`)
-        };
-        break;
-      case 'delete_pages':
-        args = {
-          input: docPath,
-          pages: '1',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_deleted.pdf`)
-        };
-        break;
-      case 'reorder_pages':
-        args = {
-          input: docPath,
-          order: reorderList || '1',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_reordered.pdf`)
-        };
-        break;
-      case 'burst':
-        args = {
-          input: docPath,
-          output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_burst`)
-        };
-        break;
-      case 'crop':
-        args = {
-          input: docPath,
-          box: cropBox || '0,0,100,100',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_cropped.pdf`)
-        };
-        break;
-      case 'redact':
-        args = {
-          input: docPath,
-          regions: '0,0,100,100', // Provide a default/simple region or add an input if needed
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
-        };
-        break;
-      case 'sign':
-        args = {
-          input: docPath,
-          cert: signCertPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_signed.pdf`)
-        };
-        break;
-      case 'validate':
-      case 'hash':
-      case 'search':
-      case 'read_form':
-      case 'bookmarks':
-      case 'classify_type':
-        args = {
-          input: docPath
-        };
-        if (activeTool.id === 'search') {
-          args.query = 'text'; // Replace with a bound value if needed later
-        }
-        break;
-      case 'bates':
-        args = {
-          input: docPath,
-          prefix: batesPrefix,
-          start_number: batesStart,
-          padding: batesPadding,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_bates.pdf`)
-        };
-        break;
-      case 'header_footer':
-        args = {
-          input: docPath,
-          header_left: headerText,
-          footer_center: footerText,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_header.pdf`)
-        };
-        break;
-      case 'render':
-        args = {
-          input: docPath,
-          page: 1,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rendered.png`)
-        };
-        break;
-      case 'fill_form':
-        args = {
-          input: docPath,
-          values: {}, // You'd likely want to pass actual values here or add UI for it
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_filled.pdf`)
-        };
-        break;
-      case 'create_form_field':
-        args = {
-          input: docPath,
-          field_name: 'new_field', // Add to UI if needed
-          field_type: 'text',
-          x: 50.0,
-          y: 50.0,
-          width: 100.0,
-          height: 30.0,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_field.pdf`)
-        };
-        break;
-      case 'linearize':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_linearized.pdf`)
-        };
-        break;
-      case 'annotate':
-        args = {
-          input: docPath,
-          annotations: [], // Placeholder for annotations
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_annotated.pdf`)
-        };
-        break;
-      case 'encrypt':
-        args = {
-          input: docPath,
-          password: password || 'paperpilot',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_encrypted.pdf`)
-        };
-        break;
-      case 'decrypt':
-        args = {
-          input: docPath,
-          password: password || '',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_decrypted.pdf`)
-        };
-        break;
-      case 'metadata':
-        args = {
-          input: docPath,
-          title: metadataTitle || docName,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
-        };
-        break;
-      case 'extract_pages':
-        args = {
-          input: docPath,
-          pages: '1',
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
-        };
-        break;
-      case 'extract_text':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
-        };
-        break;
-      case 'ocr': {
-        const defaultExt = ocrOutputFormat === 'txt' ? 'txt' : 'pdf';
-        const targetOut = customOutputPath || (ocrOutputFormat === 'clipboard'
-          ? getOutputPath(`temp_ocr_clipboard.txt`)
-          : getOutputPath(`${docName.replace(/\.pdf$/i, '')}_ocr.${defaultExt}`));
-        args = {
-          input: docPath,
-          output: targetOut
-        };
-        break;
-      }
-      case 'pdf_to_docx':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.docx`)
-        };
-        break;
-      case 'pdf_to_xlsx':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.xlsx`)
-        };
-        break;
-      case 'pdf_to_markdown':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.md`)
-        };
-        break;
-      case 'pdf_to_pptx':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.pptx`)
-        };
-        break;
-      case 'extract_images':
-        args = {
-          input: docPath,
-          output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_images`)
-        };
-        break;
-      case 'office_to_markdown':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.md`)
-        };
-        break;
-      case 'office_extract_text':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.txt`)
-        };
-        break;
-      case 'excel_to_json':
-        args = {
-          input: docPath,
-          has_headers: true
-        };
-        break;
-      case 'excel_to_csv':
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.csv`)
-        };
-        break;
-      default:
-        args = {
-          input: docPath,
-          output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_output.pdf`)
-        };
-        break;
-    }
-
-    appState.setLoading(true);
-    const startTime = performance.now();
-    try {
-      const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
-      const durationMs = Math.round(performance.now() - startTime);
-      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
-
-      const resObj = result as any;
-      if (resObj && resObj.success) {
-        let msg = '';
-        if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
-          const textToCopy = resObj.data?.text || '';
-          if (navigator.clipboard && textToCopy) {
-            await navigator.clipboard.writeText(textToCopy);
-          }
-          msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+          lastExecution = {
+            success: true,
+            durationFormatted,
+            toolTitle: activeTool.title,
+            timestamp: new Date(),
+            message: msg
+          };
+          executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
         } else {
-          const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-          msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
-        }
-        toastState.success(msg);
-        jobsState.addJob(toolName, 'success', msg);
+          const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+          toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+          jobsState.addJob(toolName, 'error', formatted.headline);
 
-        lastExecution = {
-          success: true,
-          durationFormatted,
-          toolTitle: activeTool.title,
-          timestamp: new Date(),
-          message: msg
-        };
-        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
-      } else {
-        const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+          lastExecution = {
+            success: false,
+            durationFormatted,
+            toolTitle: activeTool.title,
+            timestamp: new Date(),
+            message: formatted.headline
+          };
+          executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+        }
+      } catch (error) {
+        const durationMs = Math.round(performance.now() - startTime);
+        const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+        const formatted = formatUserFriendlyError(error, activeTool.title);
         toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
         jobsState.addJob(toolName, 'error', formatted.headline);
 
@@ -761,26 +409,9 @@
           message: formatted.headline
         };
         executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+      } finally {
+        appState.setLoading(false);
       }
-    } catch (error) {
-      const durationMs = Math.round(performance.now() - startTime);
-      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
-      const formatted = formatUserFriendlyError(error, activeTool.title);
-      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
-      jobsState.addJob(toolName, 'error', formatted.headline);
-
-      lastExecution = {
-        success: false,
-        durationFormatted,
-        toolTitle: activeTool.title,
-        timestamp: new Date(),
-        message: formatted.headline
-      };
-      executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
-    } finally {
-      appState.setLoading(false);
-    }
-
     } finally {
       isRunning = false;
       clearInterval(timer);
