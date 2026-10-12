@@ -1,0 +1,42 @@
+Task: Multi-Format Document Workspace Search (Ctrl+F Across PDF & Office) [Phase 5.9.22 / Spec 050]
+
+Objective:
+Implement a unified in-memory multi-format workspace search engine and UI component in the Desktop app, allowing users to search across all open PDF and Office (.docx, .xlsx, .pptx) documents with match highlighting, sentence snippets, and one-click tab navigation.
+
+Context & Requirements:
+- Read `specs/050-multi-format-workspace-search/spec.md`.
+- Working Directory: `apps/desktop`
+- Zero regression to existing single-PDF search in `PdfSearchBar.svelte`.
+- Svelte 5 runes ($state, $derived, $effect) and responsive styling.
+
+==================================================
+Detailed Implementation Steps:
+==================================================
+
+1. Create `apps/desktop/src/lib/services/workspaceSearch.ts`:
+   - Define interfaces: `SearchSnippetMatch`, `WorkspaceSearchResult`.
+   - Implement `searchDocumentText(docIndex: number, docName: string, text: string, query: string, options: { caseSensitive?: boolean, wholeWord?: boolean }): SearchSnippetMatch[]`.
+   - Implement snippet generation around matched query (e.g. 40 characters before and after with `<mark>` tags or matched index ranges).
+   - Add unit tests in `apps/desktop/src/lib/services/workspaceSearch.test.ts`.
+
+2. Create Workspace Search UI Component:
+   `apps/desktop/src/lib/components/workspace/WorkspaceSearchModal.svelte`:
+   - Activates on `Ctrl+Shift+F` / `Cmd+Shift+F` or via a search icon button in the header/toolbar.
+   - Debounced search input (150ms).
+   - Filter chips: `All Files`, `PDFs`, `Word`, `Excel`.
+   - Results list grouped by open document tab showing document name, match count, location ("Page 2", "Sheet 1"), and sentence snippets.
+   - Clicking a snippet calls `appState.selectDocument(docIndex)` and navigates to the target page/view.
+
+3. Mount in Layout:
+   - Mount `WorkspaceSearchModal.svelte` in `apps/desktop/src/routes/+layout.svelte` alongside other modals.
+   - Register global keydown listener for `Ctrl+Shift+F` / `Cmd+Shift+F`.
+
+==================================================
+Quality Gates (MANDATORY TO PASS):
+==================================================
+1. Svelte & TypeScript check:
+   pnpm --filter desktop check (0 errors)
+2. Unit tests:
+   pnpm --filter desktop test (all tests pass)
+3. Author report:
+   `reports/MULTI_FORMAT_WORKSPACE_SEARCH_REPORT.md`
