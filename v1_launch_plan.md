@@ -21,7 +21,7 @@ To ensure zero launch defects and maximum end-to-end reliability, the following 
 | 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction |
 | 10 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | `.pdf` $\to$ `.docx` | High-fidelity editable Word reconstruction |
 | 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
-| 12 | `pdf_to_html` | PDF to HTML | Convert | `.pdf` $\to$ `.html` | Responsive, styled HTML5 web document synthesis |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
 
 ---
 
