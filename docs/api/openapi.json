@@ -85,6 +85,56 @@
         ],
         "type": "object"
       },
+      "ExcelToCsvRequest": {
+        "properties": {
+          "input": {
+            "example": "data.xlsx",
+            "type": "string"
+          },
+          "output": {
+            "example": "data.csv",
+            "type": "string"
+          },
+          "sheet": {
+            "example": "Sheet1",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "ExcelToJsonRequest": {
+        "properties": {
+          "has_headers": {
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {
+            "example": "data.xlsx",
+            "type": "string"
+          },
+          "sheet": {
+            "example": "Sheet1",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
       "ExtractTextJsonRequest": {
         "properties": {
           "input": {
@@ -261,7 +311,7 @@
     }
   },
   "info": {
-    "description": "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 44 intelligent PDF tools.",
+    "description": "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 50 intelligent document and spreadsheet tools.",
     "license": {
       "name": ""
     },
@@ -270,6 +320,102 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/office/convert": {
+      "post": {
+        "operationId": "office_convert",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Converted successfully"
+          }
+        },
+        "tags": [
+          "Office Operations"
+        ]
+      }
+    },
+    "/api/v1/office/excel-to-csv": {
+      "post": {
+        "operationId": "excel_to_csv",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExcelToCsvRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Converted Excel to CSV successfully"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Convert an Excel sheet into CSV format",
+        "tags": [
+          "Office Operations"
+        ]
+      }
+    },
+    "/api/v1/office/excel-to-json": {
+      "post": {
+        "operationId": "excel_to_json",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExcelToJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Converted Excel to JSON successfully"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Convert an Excel sheet into structured JSON format",
+        "tags": [
+          "Office Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/compare": {
       "post": {
         "operationId": "compare",
@@ -652,12 +798,16 @@
       "name": "Health"
     },
     {
-      "description": "Direct Model Context Protocol execution endpoint for 44+ tools",
+      "description": "Direct Model Context Protocol execution endpoint for 50+ tools",
       "name": "MCP"
     },
     {
       "description": "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data",
       "name": "PDF Operations"
+    },
+    {
+      "description": "Office document and spreadsheet ingestion and modernizing endpoints",
+      "name": "Office Operations"
     }
   ]
 }

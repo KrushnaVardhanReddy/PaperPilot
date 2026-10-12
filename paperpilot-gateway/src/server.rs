@@ -22,6 +22,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::compare,
         handlers::render_page,
         handlers::office_convert,
+        handlers::excel_to_json,
+        handlers::excel_to_csv,
         handlers::handle_tool
     ),
     components(
@@ -36,18 +38,21 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::ConvertJsonRequest,
             handlers::WatermarkJsonRequest,
             handlers::InfoJsonRequest,
-            handlers::CompareJsonRequest
+            handlers::CompareJsonRequest,
+            handlers::ExcelToJsonRequest,
+            handlers::ExcelToCsvRequest
         )
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
-        (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 44+ tools"),
-        (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data")
+        (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
+        (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
+        (name = "Office Operations", description = "Office document and spreadsheet ingestion and modernizing endpoints")
     ),
     info(
         title = "PaperPilot Gateway API & MCP Server",
         version = "0.1.0",
-        description = "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 44 intelligent PDF tools."
+        description = "Unified REST and MCP API for PaperPilot: High performance local PDF processing engine and 50 intelligent document and spreadsheet tools."
     )
 )]
 pub struct ApiDoc;
@@ -75,6 +80,8 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
         .route("/api/v1/office/convert", post(handlers::office_convert))
+        .route("/api/v1/office/excel-to-json", post(handlers::excel_to_json))
+        .route("/api/v1/office/excel-to-csv", post(handlers::excel_to_csv))
         .layer(cors)
 }
 

@@ -116,6 +116,26 @@ pub struct CompareJsonRequest {
     pub file2: String,
 }
 
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct ExcelToJsonRequest {
+    #[schema(example = "data.xlsx")]
+    pub input: String,
+    #[schema(example = "Sheet1")]
+    pub sheet: Option<String>,
+    #[schema(example = true)]
+    pub has_headers: Option<bool>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct ExcelToCsvRequest {
+    #[schema(example = "data.xlsx")]
+    pub input: String,
+    #[schema(example = "data.csv")]
+    pub output: String,
+    #[schema(example = "Sheet1")]
+    pub sheet: Option<String>,
+}
+
 /// Gateway health check
 #[utoipa::path(
     get,
@@ -527,6 +547,40 @@ pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received office convert request");
     handle_tool(Path("office_modernize_legacy".to_string()), req).await.into_response()
+}
+
+/// Convert an Excel sheet into structured JSON format
+#[utoipa::path(
+    post,
+    path = "/api/v1/office/excel-to-json",
+    tag = "Office Operations",
+    request_body(content = ExcelToJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Converted Excel to JSON successfully", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
+    tracing::info!("Received excel_to_json request");
+    handle_tool(Path("excel_to_json".to_string()), req).await.into_response()
+}
+
+/// Convert an Excel sheet into CSV format
+#[utoipa::path(
+    post,
+    path = "/api/v1/office/excel-to-csv",
+    tag = "Office Operations",
+    request_body(content = ExcelToCsvRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Converted Excel to CSV successfully", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn excel_to_csv(req: axum::extract::Request) -> impl IntoResponse {
+    tracing::info!("Received excel_to_csv request");
+    handle_tool(Path("excel_to_csv".to_string()), req).await.into_response()
 }
 
 /// Apply text or image watermarks to a PDF document

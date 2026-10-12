@@ -97,7 +97,9 @@
 
     // Office Tools
     { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'markdown', 'docx', 'xlsx', 'pptx', 'convert'] },
-    { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'] }
+    { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'] },
+    { id: 'excel_to_json', title: 'Excel to JSON', description: 'Convert spreadsheet sheets into structured JSON data', icon: '📊', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'json', 'convert'] },
+    { id: 'excel_to_csv', title: 'Excel to CSV', description: 'Export spreadsheet sheet to standard RFC 4180 CSV', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'csv', 'export'] }
   ];
 
   const categories = [
@@ -268,6 +270,10 @@
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
       case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
+      case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;
+      case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);          break;
+      case 'excel_to_json':   customOutputPath = getOutputPath(`${base}.json`);            break;
+      case 'excel_to_csv':    customOutputPath = getOutputPath(`${base}.csv`);             break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
@@ -326,6 +332,8 @@
     }
     if (activeTool.id === 'office_to_markdown') toolName = 'office_to_markdown';
     if (activeTool.id === 'office_extract_text') toolName = 'office_extract_text';
+    if (activeTool.id === 'excel_to_json') toolName = 'excel_to_json';
+    if (activeTool.id === 'excel_to_csv') toolName = 'excel_to_csv';
 
     let args: Record<string, any> = {};
 
@@ -675,6 +683,30 @@
         args = {
           input: docPath,
           output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_images`)
+        };
+        break;
+      case 'office_to_markdown':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.md`)
+        };
+        break;
+      case 'office_extract_text':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.txt`)
+        };
+        break;
+      case 'excel_to_json':
+        args = {
+          input: docPath,
+          has_headers: true
+        };
+        break;
+      case 'excel_to_csv':
+        args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.csv`)
         };
         break;
       default:
