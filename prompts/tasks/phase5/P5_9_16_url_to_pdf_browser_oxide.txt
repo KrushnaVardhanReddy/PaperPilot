@@ -1,0 +1,117 @@
+Task: Pure-Rust Chromium-Free URL-to-PDF Archival Engine via browser_oxide [Spec 041]
+
+Objective:
+Integrate `browser_oxide` into PaperPilot (`paperpilot-pdf`) to deliver a 100% pure-Rust, zero-Chromium
+web page archiving and dynamic HTML+JS-to-PDF conversion engine.
+
+==================================================
+CRITICAL COMPILATION WORKAROUND (DO NOT USE /tmp PATHS):
+==================================================
+Upstream `browser_oxide = "0.1.3"` on crates.io has a known refutable pattern bug when compiling
+against newer `fontdb` dependencies (`let fontdb::Source::Binary(data) = &face.source;` in font_database.rs).
+
+DO NOT use temporary paths outside the git repository (e.g. NEVER use path = "/tmp/...").
+DO NOT attempt impossible cargo version downgrades.
+
+INSTEAD, VENDOR AND PATCH DIRECTLY IN THE WORKSPACE:
+1. Vendor `browser_oxide`:
+   Clone or copy the `browser_oxide` crate into `crates/browser_oxide` in this repository so it is version-controlled.
+   Example:
+   git clone https://github.com/yfedoseev/browser_oxide.git /tmp/bo_tmp && cp -r /tmp/bo_tmp/crates/browser_oxide crates/browser_oxide && rm -rf /tmp/bo_tmp
+2. Fix the 1-line refutable pattern in `crates/browser_oxide/src/canvas/text/font_database.rs` line ~176:
+   Replace:
+       let fontdb::Source::Binary(data) = &face.source;
+   With:
+       let fontdb::Source::Binary(data) = &face.source else { return None; };
+3. In root `Cargo.toml`, patch crates.io to use the workspace copy:
+   [patch.crates-io]
+   browser_oxide = { path = "crates/browser_oxide" }
+
+==================================================
+Context & Requirements:
+- Read `specs/041-pure-rust-url-to-pdf-browser-oxide/spec.md`.
+- Concurrency limit: Maximum 6 cores (-j 6).
+- Zero external browser binaries: Must NOT spawn `chrome`, `chromium`, or CDP. Must run 100% in pure Rust.
+- Memory ceiling: <35MB RSS.
+
+==================================================
+Detailed Implementation Steps:
+
+1. `paperpilot-pdf/Cargo.toml`:
+   - Add `browser_oxide = "0.1"` and `tokio = { version = "1", features = ["rt", "rt-multi-thread", "time"] }`.
+
+2. Core Operation (`paperpilot-pdf/src/operations/conversion.rs`):
+   - Implement `UrlToPdfOperation`:
+     ```rust
+     pub struct UrlToPdfOperation {
+         pub url: String,
+         pub output: std::path::PathBuf,
+         pub delay_ms: Option<u64>,
+         pub page_size: Option<String>,
+         pub print_background: bool,
+     }
+     ```
+   - In `UrlToPdfOperation::render()`:
+     - When running in unit tests (`cfg!(test)`), bypass remote network fetching and delegate a sample HTML string to `HtmlToPdfOperation` so tests don't require internet access.
+     - When running live:
+       - Construct a `browser_oxide::stealth::StealthProfile`.
+       - Initialize `browser_oxide::net::HttpClient`.
+       - Call `browser_oxide::Page::navigate_simple(&self.url, &http, profile).await`.
+       - If `delay_ms` is set, await `tokio::time::sleep`.
+       - Extract rendered page HTML via `page.content()`.
+       - Delegate HTML content to `HtmlToPdfOperation` with `HtmlToPdfOptions` and save to `output`.
+   - Implement `paperpilot_core::traits::PdfOperation` for `UrlToPdfOperation`.
+   - Add unit test `test_url_to_pdf_basic` verifying that valid `%PDF-` bytes are produced.
+
+3. Complete Penta-Interface Exposure (ALL 3 MUST BE WIRED):
+   A. CLI (`paperpilot-cli`):
+      - In `paperpilot-cli/src/cli.rs`, add `ConvertUrl` variant to `Commands` enum:
+        ```rust
+        ConvertUrl {
+            #[arg(long)]
+            url: String,
+            #[arg(long)]
+            output: PathBuf,
+            #[arg(long)]
+            delay_ms: Option<u64>,
+        },
+        ```
+      - In `paperpilot-cli/src/commands/conversion.rs` (or `group_d.rs`), implement `handle_convert_url(&url, &output, delay_ms)` calling `UrlToPdfOperation`.
+      - Wire `Commands::ConvertUrl` in `paperpilot-cli/src/commands/mod.rs` inside `execute_command`.
+
+   B. MCP Server (`paperpilot-mcp`):
+      - In `paperpilot-mcp/src/server.rs`:
+        1. In `execute_list_tools()`, register tool `"pdf_convert_url"` with properties `url` (string, required), `output` (string, required), and `delay_ms` (integer, optional).
+        2. In `execute_call_tool()`, handle `"pdf_convert_url"`: extract `url`, `output`, and `delay_ms`, run `UrlToPdfOperation`, and return `CallToolResult`.
+
+   C. Gateway API (`paperpilot-gateway`):
+      - In `paperpilot-gateway/src/handlers.rs`:
+        Expose `pub async fn url_to_pdf_convert(req: axum::extract::Request) -> impl IntoResponse` which delegates to `handle_tool(Path("pdf_convert_url".to_string()), req).await`.
+      - In `paperpilot-gateway/src/server.rs`:
+        Add `.route("/api/v1/pdf/convert/url", post(handlers::url_to_pdf_convert))` and register `handlers::url_to_pdf_convert` in the utoipa OpenAPI struct.
+
+4. Validation & Quality Gates (MANDATORY TO PASS):
+   1. Target build check:
+      cargo check -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway
+   2. Unit test:
+      cargo test -p paperpilot-pdf --lib test_url_to_pdf -j 6
+   3. Zero clippy warnings:
+      cargo clippy -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -- -D warnings
+
+5. Report:
+   Document the implementation and test results in `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`.
+
+==================================================
+MANDATORY MODIFIED FILES REQUIRED IN PR:
+Verify via `git status` that ALL of the following core files are included in the commit:
+1. `Cargo.toml` (contains [patch.crates-io] browser_oxide = { path = "crates/browser_oxide" })
+2. `crates/browser_oxide/` (vendored and patched crate)
+3. `paperpilot-pdf/Cargo.toml`
+4. `paperpilot-pdf/src/operations/conversion.rs`
+5. `paperpilot-cli/src/cli.rs`
+6. `paperpilot-cli/src/commands/mod.rs`
+7. `paperpilot-cli/src/commands/conversion.rs` (or handler file)
+8. `paperpilot-mcp/src/server.rs` (registers and handles "pdf_convert_url")
+9. `paperpilot-gateway/src/handlers.rs`
+10. `paperpilot-gateway/src/server.rs`
+11. `reports/URL_TO_PDF_BROWSER_OXIDE_REPORT.md`
