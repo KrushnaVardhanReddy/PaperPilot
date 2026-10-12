@@ -241,8 +241,10 @@
         break;
       }
       case 'merge':
-      case 'split':
         customOutputPath = ''; // handled by native dialog
+        break;
+      case 'split':
+        customOutputPath = getOutputPath(`${base}_split`);
         break;
       case 'compress':      customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
       case 'rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
@@ -356,26 +358,13 @@
         break;
       }
       case 'split': {
-        let outputPath: string | null = customOutputPath;
-        const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
-        if (!outputPath) {
-          try {
-            const { save } = await import('@tauri-apps/plugin-dialog');
-            outputPath = await save({
-              title: 'Save Split PDFs to Folder (choose base filename)...',
-              defaultPath: suggested,
-              filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-            });
-          } catch(err) {
-            console.warn('Tauri dialog unavailable, falling back:', err);
-          }
-        }
-
-        const finalPath = outputPath || suggested;
-        const outputDir = finalPath.replace(/\.pdf$/i, '');
+        const defaultSplitDir = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
+        const targetDir = customOutputPath || defaultSplitDir;
         args = {
           input: docPath,
-          output_pattern: outputDir + "_p%d.pdf",
+          output_dir: targetDir,
+          output: targetDir,
+          output_pattern: `${targetDir}/p%d.pdf`,
           ranges: splitPoints
         };
         break;
@@ -972,17 +961,19 @@
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'split' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
         <div class="operation-config" id="output-path-config">
-          <label for="output-path-input" class="section-desc">Output file:</label>
+          <label for="output-path-input" class="section-desc">
+            {activeTool.id === 'split' ? 'Output folder:' : 'Output file:'}
+          </label>
           <div class="output-path-row">
             <input
               id="output-path-input"
               type="text"
               class="form-input output-path-input"
               bind:value={customOutputPath}
-              placeholder="Output file path..."
-              title="Edit the output file path"
+              placeholder={activeTool.id === 'split' ? 'Output folder path...' : 'Output file path...'}
+              title="Edit the output path"
             />
           </div>
         </div>
