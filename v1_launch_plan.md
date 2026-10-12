@@ -1,6 +1,6 @@
-# PaperPilot v1.0 Launch Plan — Active Gates & Free/Community Tier Status
+# PaperPilot v1.0 Launch Plan — Community Tier & Core Launch Scope
 
-> **Focus:** Remaining tasks and active verification gates required to finalize the **100% Free / Community Tier** ($0 Forever, 100% Local Processing, Zero Cloud Dependency, Zero-Chrome pure Rust runtime).
+> **Focus:** The **100% Free / Community Tier** ($0 Forever, 100% Local Processing, Zero Cloud Dependency, Zero-Chrome pure Rust runtime).
 
 ---
 
@@ -8,82 +8,43 @@
 
 To ensure zero launch defects and maximum end-to-end reliability, the following 12 operations are frozen as the **v1.0 Core Suite**. These tools undergo **unmocked real-disk Playwright execution** and full **Penta-Interface coverage**:
 
-| # | Tool ID | Interface Title | Category | Format Support |
-|---|---|---|---|---|
-| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` |
-| 2 | `pdf_split` | Split PDF | Organize | `.pdf` |
-| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` |
-| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` |
-| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` |
-| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` |
-| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` |
-| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images |
-| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` |
-| 10 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | `.pdf` $\to$ `.docx` |
-| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` |
-| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` |
+| # | Tool ID | Interface Title | Category | Format Support | Primary Use Case |
+|---|---|---|---|---|---|
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | Combine multi-part documents & invoices |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | Separate chapters & single-page extractions |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | Fix orientation for scanned documents (90°/180°/270°) |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | Remove unwanted or blank pages |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | Rearrange page sequences |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | Reduce file size via high-ratio image recompression |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | Semi-transparent diagonal watermarks |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | Pure-Rust PaddleOCR v4 / RTen OCR overlays |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction |
+| 10 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | `.pdf` $\to$ `.docx` | High-fidelity editable Word reconstruction |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
 
 ---
 
-## 🚧 Active In-Flight Verification & Optimization Gates
+## 🚧 Active In-Flight Verification & Release Gates
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.28** | Penta-Interface E2E Suite Expansion (5 Tools) & Unmocked Playwright Desktop Verification | Comprehensive End-to-End Testing | [Spec 052](file:///home/krushna/Project/PaperPilot/specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md) | 100 new Penta assertions across CLI, MCP, REST, WASM, Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search` + unmocked Desktop Playwright tests for Top 12. | ⏳ **In Progress** (Jules Session [`9530387047429935978`](https://jules.google.com/session/9530387047429935978)) |
-| **5.9.15** | Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite | Core Engine & Markdown/HTML | [Spec 040](file:///home/krushna/Project/PaperPilot/specs/040-pdf-oxide-universal-migration/spec.md) | Migrated Markdown, HTML, Plain Text, Search, and RAG chunking to `pdf_oxide` with Desktop UI integration. | ✅ **Completed** (Commit `70e8424`, `fc66840`) |
+| **5.9.28** | Penta-Interface E2E Suite Expansion (5 Tools) & Unmocked Playwright Desktop Verification | Comprehensive End-to-End Testing | [Spec 052](specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md) | 100 new Penta assertions across CLI, MCP, REST, WASM, Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search` + unmocked Desktop Playwright tests for Top 12. | ⏳ **In Progress** (Jules Session [`9530387047429935978`](https://jules.google.com/session/9530387047429935978)) |
 
 ---
 
-## 📋 Post-Launch / Platform Backlog
+## 🏆 Recently Completed Pre-Launch Milestones
 
-| # | Task | Area | Description / Notes | Status |
-|---|---|---|---|---|
-| **3.1.7** | iOS / iPadOS Target Build & Packaging | Mobile Port | Compile and test desktop frontend for iOS / iPadOS via Tauri 2.0 mobile bindings. | 📋 **Pending** (Deferred to macOS / Xcode build machine) |
-| **4.6.6** | CLI Document Generator (`paperpilot create`) | Templating CLI | Expose certificate and document templates to CLI (`paperpilot create --template report -o doc.pdf`). | 📋 **Backlog** |
-
----
-
-## 🏆 Completed v1.0 Milestones Archive
-
-<details>
-<summary><b>Click to expand completed v1.0 Free / Community Tier tasks (29 Milestones)</b></summary>
-
-| # | Task | Area | Milestone Summary | Resolution |
-|---|---|---|---|---|
-| **5.9.2** | Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`) | Developer Tooling & Automation | Standalone pure-Rust CLI tool in `tools/jules-submit/` (`reqwest`, `clap`, `dotenvy`) replacing Python submitter for 100% zero-Python developer workflow. | ✅ **Completed** (PR #164, `1e673bc`, Spec 029) |
-| **5.9.6** | Penta-Interface High-Throughput & Concurrency Performance Benchmark | Performance & SLA Parity | Concurrency stress testing (10, 25, 50 workers), p50/p95/p99 latency profiling across all 5 surfaces, memory leak checks (<35MB RSS), Makefile integration (`make bench-penta-e2e`). | ✅ **Completed** (PR #165, `a8de2ae`, Spec 031) |
-
-| **5.9.8** | Human-Friendly UI Error Normalization & Action Hints | Desktop UX | Centralized `errorFormatter.ts`, category taxonomy, enhanced toasts with headlines, actionable hints, and expandable technical details. | ✅ **Completed** (PR #163, `3886288`, Spec 033) |
-| **5.9.5** | Penta-Interface Edge Cases & Deep Boundary Verification Suite | Robustness | 44-tool boundary testing: compression quality, discontinuous pages, full-bleed crops, UTF-8 watermarks, shell escape passwords (385/385 tests). | ✅ **Completed** (PR #162, `3a71c36`, Spec 031) |
-| **5.9.4A** | Penta Real Semantic Assertions: Foundation & Page Ops | Multi-Surface | Executed 4 tiers across all 5 interfaces for 9 page operations (180/180 tests). | ✅ **Completed** (PR #161, `472ae69`, Spec 031) |
-| **5.9.4B** | Penta Real Semantic Assertions: Security, Stamping & Forms | Multi-Surface | Executed 4 tiers across all 5 interfaces for 14 security & form tools (280/280 tests). | ✅ **Completed** (PR #159, `95eae07`, Spec 031) |
-| **5.9.4C** | Penta Real Semantic Assertions: Extraction, Analysis & Optimization | Multi-Surface | Executed 4 tiers across all 5 interfaces for 13 analysis & optimization tools (260/260 tests). | ✅ **Completed** (PR #160, `ba79af0`, Spec 031) |
-| **5.9.4D** | Penta Real Semantic Assertions: Conversions & Master Scorecard | Multi-Surface | Executed 4 tiers across all 5 interfaces for 8 conversion tools (160/160 tests, 880 total). | ✅ **Completed** (PR #158, `f0607a3`, Spec 031) |
-| **5.9.3** | Embed Widget Config & Web WASM Batch Playwright Unit Tests | Test Coverage | Playwright unit tests for interactive embed widget configuration panels and web WASM batch queues. | ✅ **Completed** (PR #156, `504b247`, Spec 030) |
-| **5.9.1** | Desktop Release Binary Size Optimization & Pure-Rust Inference | Binary Bloat | Desktop executable reduced from **107MB to 35MB** (~67% reduction) via root release profile and pure-Rust `rten` SIMD engine. | ✅ **Completed** (`45a1566`, Spec 028) |
-| **4.8.1** | `paperpilot-wasm` Crate & Web Worker Bridge | Client-Side WASM | Core WASM crate with `wasm-bindgen`, in-memory buffer adapters, and TS Web Worker bridge. | ✅ **Completed** (PR #135) |
-| **4.8.2** | Zero-Install Web App Demo | Web App | Standalone web tool suite running 100% in browser memory with download CTA funneling to Desktop. | ✅ **Completed** (PR #137) |
-| **4.8.4** | Expand Web Suite to 12 Pure-Rust Tools | Web Expansion | Added `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`, `set_metadata` to WASM. | ✅ **Completed** (PR #138) |
-| **4.8.5** | WASM 12 Tools Playwright E2E Suite | In-Browser Parity | Data-driven Playwright test suite for all 12 WASM tools with scorecard verification. | ✅ **Completed** (PR #139) |
-| **4.8.3** | Cloudflare Workers Edge Microservice | Edge Serverless | Sub-10ms memory-only edge processing on Cloudflare Workers (0ms cold start, 0 disk). | ✅ **Completed** (PR #140) |
-| **5.2.1** | Pure-Rust OCR Engine Migration (`ocrs`) | Zero-C++ OCR | Replaced external C++ Tesseract/Leptonica with pure-Rust `ocrs` and `rten` SIMD engine. | ✅ **Completed** (PR #141) |
-| **5.3.1** | Pure-Rust PDF Rasterization & Rendering | Zero-C++ Rendering | Replaced Google PDFium with pure-Rust `hayro` vector interpreter and `tiny-skia` 2D rasterizer. | ✅ **Completed** (PR #142) |
-| **5.1.1** | Pure-Rust Image & Hash WASM Expansion (15 Tools) | Client-Side WASM | In-memory `images_to_pdf`, `extract_images`, and `pdf_hash` via `image` and `sha2`. | ✅ **Completed** (PR #143) |
-| **5.5.1** | Re-Export WASM Engine Post-Migration (22 Tools) | WASM & Edge Expansion | Re-exported pure-Rust operations (OCR, Render, Hash, Images, Text, Decrypt) into `paperpilot-wasm` (22 tools). | ✅ **Completed** (Session 8898129496130614008) |
-| **4.9.1** | `embed.js` Universal Drop-In CDN Script | Embedded Web | Lightweight JS loader (<5KB gzip) for embedding PaperPilot into any website via 2 lines of HTML. | ✅ **Completed** (PR #145) |
-| **4.9.2** | Brandable Svelte 5 Embed Widget (`apps/embed/`) | Embedded Web | Configurable, iframe-safe Svelte 5 embed UI with Shadow DOM isolation. | ✅ **Completed** (PR #145) |
-| **4.9.9** | Embed E2E Playwright Suite | Embedded Web | Playwright tests asserting `embed.js` mounting and end-to-end PDF processing in HTML fixtures. | ✅ **Completed** (PR #145) |
-| **4.9.11** | `usepaperpilot.com` Official Web Portal | Web Portal | Official portal on Cloudflare Pages with live Hero Embed Playground and Swagger explorer. | ✅ **Completed** (PR #146) |
-| **4.9.12** | `docs.usepaperpilot.com` Official Docs Hub | Docs Hub | 4-pillar documentation portal (Getting Started, 44-tool Tri-Interface, `embed.js` guide). | ✅ **Completed** (PR #147) |
-| **4.9.13** | Certificate & Template Studio | Bulk Generation | HTML/SVG template engine, live browser customizer, and client-side CSV bulk generator. | ✅ **Completed** (PR #148) |
-| **5.6.1** | Pure-Rust Office & Document Conversions (Zero-Chrome) | Conversions | Pure-Rust `fulgur` engine for HTML, Markdown, and Excel to PDF; eliminated `headless_chrome` (sub-60ms). | ✅ **Completed** (PR #150, `9c3f5cc`) |
-| **5.6.2** | Universal High-Ratio PDF Compression Engine | Optimization | True image recompression (JPEG encoder), downsampling, and quality control across all surfaces. | ✅ **Completed** (`16f8ede`) |
-| **5.7.1** | 1-Hour Sustained Soak & Endurance Benchmark | Reliability | 60-minute stress test across all 44 tools (353,892 ops, 98.3 ops/s, 100% pass, flat 25MB RSS memory). | ✅ **Completed** (PR #151, `987cc0d`) |
-| **4.E2E.R4** | Tri-Interface Deep Behavioral Assertions & Unified Matrix | Multi-Surface Parity | Validated Expected vs Actual outcomes (pages, bytes, magic headers) across CLI, MCP, REST, WASM, and Edge in unified tables (Spec 027). | ✅ **Completed** (PR #153, `843ea9e`) |
-
-</details>
+| # | Task | Area | Spec | Highlights | Status |
+|---|---|---|---|---|---|
+| **5.9.15** | Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite | Core Engine & Markdown/HTML | [Spec 040](specs/040-pdf-oxide-universal-migration/spec.md) | Migrated Markdown, HTML, Plain Text, Search, and RAG chunking to `pdf_oxide` with Desktop UI integration. | ✅ **Completed** (Commits `70e8424`, `fc66840`) |
+| **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI & 5-Interface Parity | [Spec 032](specs/032-pdf-to-json-multimodal-images/spec.md) | `pdf_to_json` with `--image-mode <none|files|base64>`, 5-interface mandate (CLI, MCP, REST, WASM, Edge). | ✅ **Completed** (PR #166, `2604a8e`) |
 
 ---
 
-*Last updated: 2026-10-09 (Only 1 In-Flight Session Remaining Before v1.0 Launch Tagging: 5.9.7)*
+## 📋 Post-Launch v1.1+ Roadmap (Deferred)
 
+The following items are deliberately deferred to post-v1.0 release cycles to maintain laser focus on quality:
+- Bi-weekly release rhythm: Test, fix, and promote 2–3 additional tools from the 44-tool catalog every two weeks.
+- Mobile compilation target (iOS / iPadOS via Tauri 2.0 mobile bindings).
+- Templating CLI generator (`paperpilot create --template report`).
