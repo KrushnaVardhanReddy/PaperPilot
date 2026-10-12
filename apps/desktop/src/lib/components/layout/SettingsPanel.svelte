@@ -46,6 +46,40 @@
       </div>
     </div>
 
+    <div class="setting-group" id="setting-group-feature-packs">
+      <div class="ai-header-row" style="margin-bottom: 8px;">
+        <div>
+          <h3>Feature Packs</h3>
+          <p class="help-text">Manage optional PaperPilot modules and extensions.</p>
+        </div>
+      </div>
+
+      <div class="feature-packs-list">
+        {#each appState.featurePacks as pack}
+          {#if pack.id !== 'core'}
+            <div class="setting-item toggle-item pack-toggle">
+              <div class="setting-info">
+                <label for="pack-toggle-{pack.id}">{pack.name}</label>
+                <p class="help-text">{pack.description}</p>
+                {#if !pack.is_installed}
+                  <span class="badge install-badge">Requires Download (~{pack.size_mb} MB)</span>
+                {/if}
+              </div>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  id="pack-toggle-{pack.id}"
+                  checked={pack.is_enabled}
+                  onchange={async (e) => await appState.toggleFeaturePack(pack.id, e.currentTarget.checked)}
+                />
+                <span class="slider round"></span>
+              </label>
+            </div>
+          {/if}
+        {/each}
+      </div>
+    </div>
+
     <div class="setting-group">
       <OcrModelDownloader />
     </div>
@@ -387,5 +421,24 @@
 
   .swagger-link:hover {
     text-decoration: underline;
+  }
+
+  .pack-toggle {
+    padding: 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 12px;
+  }
+
+  .install-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
   }
 </style>
