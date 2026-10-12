@@ -30,7 +30,7 @@ Every operation has been audited across all 6 deployment interfaces:
 
 | # | Tool ID | Interface Title | Category | Desktop UI | CLI | MCP Server | Gateway REST | Browser WASM | Cloudflare Edge | Test Coverage Status |
 |---|---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1** | `pdf_merge` | Merge Documents | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **1** | `pdf_merge` | Merge Documents | Organize | ✅ Passed | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | 🔄 In Testing |
 | **2** | `pdf_split` | Split PDF | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
 | **3** | `pdf_rotate` | Rotate Pages | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
 | **4** | `pdf_delete_pages` | Delete Pages | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
