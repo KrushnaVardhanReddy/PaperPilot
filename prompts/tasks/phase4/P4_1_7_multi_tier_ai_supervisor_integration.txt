@@ -1,0 +1,41 @@
+Task: Multi-Tier AI Agent Supervisor & Dynamic LLM Router Integration [Spec 051]
+
+Objective:
+Wire the configured AI mode (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Cloud) from `AiSettingsModal` into the desktop natural language resolution pipeline (`resolve_natural_language`), connecting `paperpilot-ai`'s `DynamicRouter`, `LlamafileSupervisor`, and `LlmNlpResolver` with seamless fallback and UI status indicators.
+
+Context & Reference:
+- Read `specs/051-multi-tier-ai-agent-supervisor/spec.md` for complete technical details.
+- `apps/desktop/src-tauri/src/ai_commands.rs`: Holds global state (`GLOBAL_AI_MODE`, `GLOBAL_UNIVERSAL_ENDPOINT`, OS Keyring).
+- `apps/desktop/src-tauri/src/lib.rs`: Currently hardcodes `OfflineNlpResolver::new()` in `resolve_natural_language`.
+- `paperpilot-ai/src/router.rs` & `paperpilot-ai/src/supervisor.rs`: Contains `DynamicRouter`, `LlmNlpResolver`, and `LlamafileSupervisor`.
+- `apps/desktop/src/lib/components/PdfChatPanel.svelte`: Natural language chat panel where user submits prompts.
+
+Implementation Steps:
+1. Desktop Backend Wiring (`apps/desktop/src-tauri/src/lib.rs` & `ai_commands.rs`):
+   - Update `resolve_natural_language` IPC command:
+     - Check `GLOBAL_AI_MODE`. If `OfflineNlp`, invoke `OfflineNlpResolver`.
+     - If `Llamafile`, `Universal`, or `Byok`:
+       - Construct `LlmConfig` with active endpoint URL, model, and API key from keyring.
+       - Initialize `UniversalLlmClient` and `LlmNlpResolver`.
+       - Execute via `DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))` so that if the LLM fails or is offline, it cleanly falls back to `OfflineNlpResolver`.
+     - Expose metadata in response indicating which resolver resolved the query (`resolved_by: "llm" | "offline"`).
+   - Ensure `LlamafileSupervisor` cleanup is hooked into Tauri's window/app exit events.
+
+2. Frontend Chat Integration (`apps/desktop/src/lib/components/PdfChatPanel.svelte`):
+   - Add active AI mode pill in the chat header:
+     - Shows current mode: `🔒 Offline`, `⚡ Llamafile`, `🌐 Universal`, `🔑 Cloud`.
+     - Clicking the pill opens `AiSettingsModal.svelte`.
+   - If response was resolved via fallback, show a subtle hint badge: *"Resolved via Offline Engine"*.
+
+3. Unit & Integration Tests:
+   - Add unit tests in `apps/desktop/src-tauri/src/lib.rs` verifying that `resolve_natural_language` executes correctly in both offline mode and when mock LLM endpoint is provided.
+   - Run tests: `cargo test -p paperpilot-ai -p desktop -j 6`.
+   - Ensure clean clippy: `cargo clippy --workspace --all-targets -- -D warnings`.
+
+4. Report & Documentation:
+   - Author `reports/MULTI_TIER_AI_AGENT_SUPERVISOR_REPORT.md`.
+   - Update `PHASES.md` marking Task 4.1.7 / 5.9.27 as completed.
+
+Deliverables:
+- Commits prefixed with `jules: `
+- Clean workspace passing all clippy and test quality gates.
