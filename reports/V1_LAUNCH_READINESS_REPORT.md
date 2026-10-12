@@ -22,20 +22,26 @@ Every operation has been audited across all 6 deployment interfaces:
 
 ## Top 12 Core Launch Tools — Master Interface Verification Matrix
 
+> **Manual Testing Status Legend:**
+> - ⏳ `Not Started` — Awaiting manual verification & sign-off
+> - 🔄 `In Testing` — Currently being validated
+> - ❌ `Failed` — Issue / regression identified
+> - ✅ `Passed` — Manually verified across surface
+
 | # | Tool ID | Interface Title | Category | Desktop UI | CLI | MCP Server | Gateway REST | Browser WASM | Cloudflare Edge | Test Coverage Status |
 |---|---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1** | `pdf_merge` | Merge Documents | Organize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **2** | `pdf_split` | Split PDF | Organize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **3** | `pdf_rotate` | Rotate Pages | Organize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **4** | `pdf_delete_pages` | Delete Pages | Organize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **5** | `pdf_reorder_pages` | Reorder Pages | Organize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **6** | `pdf_compress` | Compress PDF | Optimize | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **7** | `pdf_watermark` | Add Watermark | Security | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **8** | `pdf_ocr` | OCR Text Recognition | AI / OCR | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | Pure-Rust PaddleOCR v4 / RTen |
-| **9** | `pdf_extract_text` | Extract Plain Text | Extract | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | `pdf_oxide` Sub-1ms Engine |
-| **10** | `pdf_to_docx` | PDF to Word (DOCX) | Convert | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 20/20 Penta Assertions Passed |
-| **11** | `excel_to_json` | Excel to JSON | Office Data | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | Under Expansion (Task 5.9.28) |
-| **12** | `excel_to_csv` | Excel to CSV | Office Data | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | Under Expansion (Task 5.9.28) |
+| **1** | `pdf_merge` | Merge Documents | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **2** | `pdf_split` | Split PDF | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **3** | `pdf_rotate` | Rotate Pages | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **4** | `pdf_delete_pages` | Delete Pages | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **5** | `pdf_reorder_pages` | Reorder Pages | Organize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **6** | `pdf_compress` | Compress PDF | Optimize | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **7** | `pdf_watermark` | Add Watermark | Security | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **8** | `pdf_ocr` | OCR Text Recognition | AI / OCR | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **9** | `pdf_extract_text` | Extract Plain Text | Extract | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **10** | `pdf_to_docx` | PDF to Word (DOCX) | Convert | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **11** | `excel_to_json` | Excel to JSON | Office Data | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
+| **12** | `excel_to_csv` | Excel to CSV | Office Data | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started |
 
 ---
 
