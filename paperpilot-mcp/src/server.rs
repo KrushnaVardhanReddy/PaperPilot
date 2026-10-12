@@ -1363,6 +1363,31 @@ impl PaperPilotMcpServer {
         );
         tools.push(tool_md);
 
+        let mut tool_html = Tool::default();
+        tool_html.name = "pdf_to_html".into();
+        tool_html.description =
+            Some("Converts a PDF document into responsive, styled HTML5 web page.".into());
+        let mut h_props = serde_json::Map::new();
+        h_props.insert(
+            "input".into(),
+            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
+        );
+        h_props.insert(
+            "output".into(),
+            serde_json::json!({ "type": "string", "description": "The output HTML file path." }),
+        );
+        tool_html.input_schema = std::sync::Arc::new(
+            serde_json::json!({
+                "type": "object",
+                "properties": h_props,
+                "required": ["input", "output"]
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+        tools.push(tool_html);
+
         let mut tool_class = Tool::default();
         tool_class.name = "pdf_classify_type".into();
         tool_class.description =
@@ -3842,6 +3867,38 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_to_html" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+
+                ensure_parent_dir(&output)?;
+
+                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let html_data = op
+                    .extracted_html
+                    .lock()
+                    .unwrap()
+                    .clone()
+                    .unwrap_or_default();
+
+                std::fs::write(&output, &html_data).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to write output HTML: {}", e), None)
+                })?;
+
+                Ok(OperationResult {
+                    data: None,
+                    success: true,
+
+                    message: "Converted to HTML successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_classify_type" => {
                 let input = get_string("input")?;
 
@@ -4408,7 +4465,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 50);
+        assert_eq!(res.tools.len(), 51);
     }
 
     #[test]

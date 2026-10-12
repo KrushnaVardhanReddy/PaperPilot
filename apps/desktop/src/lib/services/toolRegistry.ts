@@ -10,7 +10,7 @@ export function resolveToolName(toolId: string): string {
     }
 
     if ([
-        'pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_json',
+        'pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_html', 'pdf_to_json',
         'pdf_convert_excel', 'office_modernize_legacy', 'office_to_markdown', 'office_extract_text',
         'excel_to_json', 'excel_to_csv'
     ].includes(toolId)) {

@@ -48,6 +48,7 @@
     { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', context: 'pdf', tags: ['word', 'docx'] },
     { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', context: 'pdf', tags: ['excel', 'sheet', 'table'] },
     { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', context: 'pdf', tags: ['llm', 'markdown', 'md'] },
+    { id: 'pdf_to_html', title: 'PDF to HTML', description: 'Export document as responsive, styled HTML5 web page', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'export', 'responsive'] },
     { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', context: 'pdf', tags: ['text', 'dump', 'raw'] },
 
     // AI & Intelligence
@@ -271,6 +272,7 @@ import { onMount } from 'svelte';
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
+      case 'pdf_to_html':     customOutputPath = getOutputPath(`${base}.html`);           break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
       case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
       case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;

@@ -393,6 +393,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.md`)
             };
             break;
+        case 'pdf_to_html':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.html`)
+            };
+            break;
         case 'pdf_to_pptx':
             args = {
                 input: docPath,
