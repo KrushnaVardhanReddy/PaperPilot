@@ -288,6 +288,8 @@ pub enum Commands {
         format: String,
         #[arg(long)]
         clipboard: bool,
+        #[arg(long)]
+        tier: Option<String>,
     },
     Bookmarks {
         #[arg(long)]

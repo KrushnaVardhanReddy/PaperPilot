@@ -74,9 +74,14 @@ pub fn handle_ocr(
     output: Option<&std::path::Path>,
     format: &str,
     clipboard: bool,
+    tier: Option<&str>,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let mut op = paperpilot_pdf::operations::ocr::OcrOperation::new();
+
+    if let Some(t) = tier {
+        log::info!("OCR Tier selected: {}", t);
+    }
 
     // Determine target output path if specified or if format dictates a file
     let resolved_output = if let Some(out) = output {
