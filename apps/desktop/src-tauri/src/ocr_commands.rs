@@ -47,8 +47,7 @@ fn get_ocr_models_dir(tier_id: &str) -> std::path::PathBuf {
          return workspace_path;
     }
 
-    let mut path = dirs::data_local_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
-    path.push("paperpilot");
+    let mut path = crate::storage::get_app_data_root();
     path.push("models");
     path.push("ocr");
     path.push(tier_id);

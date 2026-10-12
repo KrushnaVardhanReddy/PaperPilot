@@ -5,6 +5,7 @@
   import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
   import Titlebar from '$lib/components/layout/Titlebar.svelte';
   import CommandPalette from '$lib/components/layout/CommandPalette.svelte';
+  import ModularSetupModal from '$lib/components/onboarding/ModularSetupModal.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
@@ -122,3 +123,7 @@
 <CommandPalette />
 <BottomNav />
 <ToastContainer />
+
+{#if !appState.onboardingCompleted}
+  <ModularSetupModal />
+{/if}

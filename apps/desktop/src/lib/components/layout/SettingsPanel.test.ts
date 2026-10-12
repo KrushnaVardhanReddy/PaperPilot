@@ -9,6 +9,7 @@ vi.mock('$lib/state/app.svelte', () => ({
     developerMode: false,
     gatewayRunning: false,
     gatewayPort: 7823,
+    featurePacks: [],
     toggleDeveloperMode: vi.fn(async function(this: any, enabled?: boolean) {
       this.developerMode = enabled !== undefined ? enabled : !this.developerMode;
     }),
@@ -17,6 +18,23 @@ vi.mock('$lib/state/app.svelte', () => ({
 
 vi.mock('$lib/utils/tauri', () => ({
   safeInvoke: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn().mockResolvedValue(() => {}),
+}));
+
+vi.mock('$lib/state/aiConfig.svelte', () => ({
+  aiConfig: {
+    mode: 'offlinenlp',
+    byokProvider: null,
+    testResult: null,
+    models: []
+  }
 }));
 
 describe('SettingsPanel', () => {

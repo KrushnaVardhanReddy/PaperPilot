@@ -20,6 +20,11 @@ export class AppState {
   gatewayRunning = $state(false);
   gatewayPort = $state(7823);
 
+  // Onboarding & Portable Mode
+  onboardingCompleted = $state(false);
+  isPortableMode = $state(false);
+  featurePacks = $state<any[]>([]);
+
   constructor() {
     if (typeof window !== 'undefined') {
       const storedDev = localStorage.getItem('paperpilot:developer-mode');
@@ -29,6 +34,50 @@ export class AppState {
         // or actually, we can start it if we are in Tauri
         this.toggleDeveloperMode(true);
       }
+
+      const storedOnboarding = localStorage.getItem('paperpilot_onboarding_completed');
+      if (storedOnboarding === 'true') {
+        this.onboardingCompleted = true;
+      } else {
+        this.onboardingCompleted = false;
+      }
+    }
+
+    this.initPortableState();
+  }
+
+  async initPortableState() {
+    try {
+      const portable = await safeInvoke('is_portable_mode_cmd');
+      this.isPortableMode = !!portable;
+      await this.fetchFeaturePacks();
+    } catch (err) {
+      console.warn('Failed to fetch portable mode state:', err);
+    }
+  }
+
+  async fetchFeaturePacks() {
+    try {
+      const packs: any[] = await safeInvoke('get_feature_packs') || [];
+      this.featurePacks = packs;
+    } catch (err) {
+      console.warn('Failed to fetch feature packs:', err);
+    }
+  }
+
+  async toggleFeaturePack(packId: string, enabled: boolean) {
+    try {
+      await safeInvoke('set_feature_pack_enabled', { packId, enabled });
+      await this.fetchFeaturePacks();
+    } catch (err) {
+      console.error('Failed to toggle feature pack:', err);
+    }
+  }
+
+  completeOnboarding() {
+    this.onboardingCompleted = true;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot_onboarding_completed', 'true');
     }
   }
 

@@ -5,6 +5,8 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
 pub mod error;
+pub mod storage;
+pub mod pack_commands;
 pub mod ai_commands;
 pub mod ocr_commands;
 use crate::error::DesktopError;
@@ -231,7 +233,11 @@ pub fn run() {
             ocr_commands::download_ocr_model,
             ocr_commands::cancel_ocr_model_download,
             ocr_commands::set_active_ocr_model,
-            ocr_commands::get_active_ocr_model
+            ocr_commands::get_active_ocr_model,
+            pack_commands::is_portable_mode_cmd,
+            pack_commands::get_feature_packs,
+            pack_commands::download_feature_pack,
+            pack_commands::set_feature_pack_enabled
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
