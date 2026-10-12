@@ -872,3 +872,17 @@ mod tests {
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
+
+
+/// Convert a URL or web page to a PDF document
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/convert/url",
+    request_body(content = Value, description = "JSON configuration containing url, output path and optional delay"),
+    responses(
+        (status = 200, description = "URL converted to PDF successfully", body = ApiResponse)
+    )
+)]
+pub async fn url_to_pdf_convert(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_convert_url".to_string()), req).await
+}

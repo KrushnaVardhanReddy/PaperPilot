@@ -22,6 +22,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::compare,
         handlers::render_page,
         handlers::office_convert,
+        handlers::url_to_pdf_convert,
         handlers::handle_tool
     ),
     components(

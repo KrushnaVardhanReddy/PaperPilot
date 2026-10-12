@@ -328,6 +328,17 @@ pub enum Commands {
         expected_hash: String,
     },
 
+
+    // --- Convert URL ---
+    ConvertUrl {
+        #[arg(long)]
+        url: String,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        delay_ms: Option<u64>,
+    },
+
     // --- Group E: Forms ---
     Form {
         #[command(subcommand)]

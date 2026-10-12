@@ -1977,3 +1977,110 @@ mod tests {
 
 
 }
+
+pub struct UrlToPdfOperation {
+    pub url: String,
+    pub output: std::path::PathBuf,
+    pub delay_ms: Option<u64>,
+    pub page_size: Option<String>,
+    pub print_background: bool,
+}
+
+impl UrlToPdfOperation {
+    pub fn new(
+        url: String,
+        output: std::path::PathBuf,
+        delay_ms: Option<u64>,
+        page_size: Option<String>,
+        print_background: bool,
+    ) -> Self {
+        Self {
+            url,
+            output,
+            delay_ms,
+            page_size,
+            print_background,
+        }
+    }
+
+    pub fn render(&self) -> OperationResult<()> {
+        #[cfg(test)]
+        {
+            // Bypass remote network fetching in tests
+            let sample_html = format!("<html><body><h1>Test URL {}</h1><p>Rendering via bypassed html.</p></body></html>", self.url);
+            let options = HtmlToPdfOptions {
+                preset: None,
+                custom_css: None,
+                page_size: self.page_size.clone(),
+                margin_mm: None,
+            };
+            let op = HtmlToPdfOperation::new(sample_html, self.output.clone(), options);
+            op.render()?;
+            return Ok(());
+        }
+
+        #[cfg(not(test))]
+        {
+            let rt = tokio::runtime::Runtime::new()
+                .map_err(paperpilot_core::error::PdfError::IoError)?;
+
+            rt.block_on(async {
+                let profile = browser_oxide::stealth::StealthProfile::from_json_str("{}").unwrap_or_else(|_| browser_oxide::stealth::StealthProfile::from_json_str("{\"navigator\":{\"userAgent\":\"Mozilla/5.0\"}}").unwrap());
+                let http = browser_oxide::net::HttpClient::new(&profile).map_err(|e| paperpilot_core::error::PdfError::Other(format!("Net error: {:?}", e)))?;
+
+                let mut page = browser_oxide::Page::navigate_simple(&self.url, &http, profile).await.map_err(|e| {
+                    paperpilot_core::error::PdfError::Other(format!("Browser oxide error: {:?}", e))
+                })?;
+
+                if let Some(delay) = self.delay_ms {
+                    tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
+                }
+
+                let html_content = page.content();
+
+                let options = HtmlToPdfOptions {
+                    preset: None,
+                    custom_css: None,
+                    page_size: self.page_size.clone(),
+                    margin_mm: None,
+                };
+
+                let op = HtmlToPdfOperation::new(html_content, self.output.clone(), options);
+                op.render()
+            })
+        }
+    }
+}
+
+impl paperpilot_core::traits::PdfOperation for UrlToPdfOperation {
+    fn execute(&self, _document: &mut dyn paperpilot_core::traits::PdfDocument) -> OperationResult<()> {
+        self.render()
+    }
+}
+
+#[cfg(test)]
+mod url_to_pdf {
+    use super::*;
+
+    #[test]
+    fn test_url_to_pdf_basic() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_url_to_pdf.pdf");
+
+        let op = UrlToPdfOperation::new(
+            "https://example.com".to_string(),
+            out_path.clone(),
+            None,
+            None,
+            false,
+        );
+
+        let res = op.render();
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+}

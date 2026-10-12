@@ -168,6 +168,10 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             expected_hash,
         } => validate::handle_verify(input, expected_hash),
         // Group D
+        Commands::ConvertUrl { url, output, delay_ms } => {
+            group_d::handle_convert_url(url, output, delay_ms)
+        }
+
 
         // Group E
         Commands::Form { command: form_cmd } => match form_cmd {

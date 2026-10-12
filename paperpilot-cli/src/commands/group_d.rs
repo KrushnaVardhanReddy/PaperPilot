@@ -250,3 +250,15 @@ pub fn handle_classify(input: &Path) -> OperationResult<()> {
 
     Ok(())
 }
+
+
+pub fn handle_convert_url(url: &str, output: &Path, delay_ms: &Option<u64>) -> OperationResult<()> {
+    let op = paperpilot_pdf::operations::conversion::UrlToPdfOperation::new(
+        url.to_string(),
+        output.to_path_buf(),
+        *delay_ms,
+        Some("A4".to_string()),
+        true,
+    );
+    op.render()
+}

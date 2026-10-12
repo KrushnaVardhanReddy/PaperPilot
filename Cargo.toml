@@ -39,3 +39,6 @@ opt-level = 3
 [profile.dev.package.paperpilot-pdf]
 opt-level = 3
 
+
+[patch.crates-io]
+browser_oxide = { path = "crates/browser_oxide" }

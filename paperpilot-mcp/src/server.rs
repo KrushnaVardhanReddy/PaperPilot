@@ -4085,6 +4085,34 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+
+            "pdf_convert_url" => {
+                let url = get_string("url")?;
+                let output = get_string("output")?;
+                let delay_ms: Option<u64> = get_string("delay_ms")
+                    .ok()
+                    .and_then(|d| d.parse().ok());
+                let op = paperpilot_pdf::operations::conversion::UrlToPdfOperation::new(
+                    url,
+                    PathBuf::from(output),
+                    delay_ms,
+                    Some("A4".to_string()),
+                    true,
+                );
+                op.render().map_err(|e| ErrorData {
+                    code: rmcp::model::ErrorCode(-32603),
+                    message: std::borrow::Cow::Owned(format!("UrlToPdf operation failed: {}", e)),
+data: None,
+                })?;
+                Ok(OperationResult {
+                    data: Some(serde_json::Value::String("URL successfully converted to PDF".to_string())),
+                    success: true,
+                    message: "Success".to_string(),
+                    output_path: None,
+                    diff_detected: None,
+                })
+            }
+
             "pdf_compare" => {
                 let input_a = get_string("input_a")
                     .or_else(|_| get_string("file_a"))
@@ -4303,7 +4331,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 48);
+        assert_eq!(res.tools.len(), 49);
     }
 
     #[test]

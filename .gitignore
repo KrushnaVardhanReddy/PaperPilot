@@ -36,3 +36,4 @@ update_*.py
 *.sh
 run_tests.sh
 parse_test.rs
+crates/browser_oxide/target/
