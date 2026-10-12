@@ -302,12 +302,6 @@
     gap: 12px;
   }
 
-  .progress-text {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    min-width: 48px;
-  }
-
   .actions {
     display: flex;
     justify-content: flex-end;
