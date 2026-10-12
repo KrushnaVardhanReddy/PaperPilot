@@ -1,6 +1,7 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
   import AiSettingsModal from '$lib/components/settings/AiSettingsModal.svelte';
+  import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
   let isAiModalOpen = $state(false);
@@ -43,6 +44,10 @@
           <span class="ai-badge cloud">🔑 BYOK Cloud ({aiConfig.byokProvider || 'OpenAI'})</span>
         {/if}
       </div>
+    </div>
+
+    <div class="setting-group">
+      <OcrModelDownloader />
     </div>
 
     <div class="setting-group">
