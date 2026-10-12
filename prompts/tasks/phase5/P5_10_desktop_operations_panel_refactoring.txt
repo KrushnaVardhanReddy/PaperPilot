@@ -1,0 +1,65 @@
+Task: Modularization and Refactoring of OperationsPanel `handleRunOperation` [Spec 048]
+
+Objective:
+Refactor the monolithic 500+ line `handleRunOperation` function in
+`apps/desktop/src/lib/components/layout/OperationsPanel.svelte` into clean, testable TypeScript helper modules in `apps/desktop/src/lib/services/`.
+
+Context & References:
+- Read `specs/048-desktop-operations-panel-refactoring/spec.md`.
+- Working Directory: `apps/desktop`
+- Target Component: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+- Do NOT alter any external UI layouts, CSS classes, reactive Svelte 5 runes ($state, $derived, $effect), or existing IDs needed for tests.
+- Maintain 100% parameter compatibility with the backend MCP tools.
+
+==================================================
+Detailed Implementation Steps:
+==================================================
+
+1. Create `apps/desktop/src/lib/services/toolRegistry.ts`:
+   - Export function `resolveToolName(toolId: string): string`.
+   - Properly map all tools:
+     - `md_to_pdf` -> `pdf_convert_markdown`
+     - `html_to_pdf` -> `pdf_convert_html`
+     - `img_to_pdf` -> `pdf_images_to_pdf`
+     - `json_to_pdf` -> `json_to_pdf`
+     - `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_pdf_a`, `pdf_to_markdown`, `pdf_to_json`
+     - `office_modernize_legacy`, `office_to_markdown`, `office_extract_text`
+     - `excel_to_json`, `excel_to_csv`
+     - `create_form_field`, `fill_form`, `read_form` -> `pdf_${toolId}`
+     - Default: `pdf_${toolId}`
+   - Add unit tests in `apps/desktop/src/lib/services/toolRegistry.test.ts`.
+
+2. Create `apps/desktop/src/lib/services/operationArgsBuilder.ts`:
+   - Define and export `OperationContext` interface:
+     - Document metadata (`docName`, `docPath`, `docDir`, `allDocumentPaths`, `allDocuments`).
+     - Path resolver `getOutputPath(filename: string)`.
+     - Output path override `customOutputPath`.
+     - Tool-specific parameters (`splitPoints`, `rotateAngle`, `watermarkText`, `watermarkAngle`, `watermarkOpacity`, `watermarkColor`, `watermarkFontSize`, `protectPassword`, `batesPrefix`, `batesStartNumber`, `batesDigits`, `ocrOutputFormat`, `ocrLanguage`, `cropBox`, `pageNumberPosition`, `pageNumberFormat`, `pageNumberStart`, `convertPreset`, etc.).
+   - Export `async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null>`.
+   - Move all 40+ switch cases and interactive `@tauri-apps/plugin-dialog` calls (`open`, `save`) into `buildOperationArgs`.
+   - Return `null` when a user cancels a native file dialog so caller can cancel operation cleanly.
+   - Add unit tests in `apps/desktop/src/lib/services/operationArgsBuilder.test.ts`.
+
+3. Create `apps/desktop/src/lib/services/operationValidator.ts`:
+   - Export `function validatePreconditions(toolId: string, documentsCount: number): { valid: boolean; error?: string }`.
+   - Checks:
+     - `compare`: needs at least 2 documents.
+     - `merge`: needs at least 2 documents.
+     - Creation tools (`md_to_pdf`, `html_to_pdf`, `img_to_pdf`, `json_to_pdf`): allow 0 documents.
+     - All other tools: require at least 1 document.
+   - Add unit tests in `apps/desktop/src/lib/services/operationValidator.test.ts`.
+
+4. Refactor `OperationsPanel.svelte`:
+   - Import `resolveToolName`, `buildOperationArgs`, and `validatePreconditions`.
+   - Replace lines ~281 to ~788 with a concise, clean `handleRunOperation()` lifecycle function (~30-40 lines).
+   - Ensure all post-execution logic (clipboard copy for OCR, toast formatting, job tracking, execution history updates) continues to function seamlessly.
+
+==================================================
+Quality Gates (MANDATORY TO PASS):
+==================================================
+1. Svelte & TypeScript check:
+   pnpm --filter desktop check
+   (Must pass with 0 errors)
+2. Unit tests:
+   pnpm --filter desktop test
+   (Must pass all tests)
