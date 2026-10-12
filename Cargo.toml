@@ -18,6 +18,12 @@ strip = true
 [profile.dev.package.rten]
 opt-level = 3
 
+[profile.dev.package.rten-gemm]
+opt-level = 3
+
+[profile.dev.package.rten-simd]
+opt-level = 3
+
 [profile.dev.package.rten-tensor]
 opt-level = 3
 
@@ -26,3 +32,10 @@ opt-level = 3
 
 [profile.dev.package.rusto-rs]
 opt-level = 3
+
+[profile.dev.package.image]
+opt-level = 3
+
+[profile.dev.package.paperpilot-pdf]
+opt-level = 3
+

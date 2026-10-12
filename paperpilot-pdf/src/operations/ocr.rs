@@ -170,97 +170,93 @@ impl PdfOperation for OcrOperationImpl {
                     }
 
                     // Extract all image stream data into owned buffers so we can release borrows on inner
-                    let mut raw_images: Vec<Vec<u8>> = Vec::new();
+                    let mut loaded_strips: Vec<image::DynamicImage> = Vec::new();
                     for (_, obj) in &sorted_xobjects {
                         if let Ok(stream_id) = obj.as_reference() {
                             if let Ok(stream) = inner.get_object(stream_id).and_then(|o| o.as_stream()) {
                                 if let Ok(name) = stream.dict.get(b"Subtype").and_then(|n| n.as_name()) {
                                     if name == b"Image" {
-                                        raw_images.push(stream.content.clone());
+                                        if let Ok(img) = image::load_from_memory(&stream.content) {
+                                            if img.width() > 0 && img.height() > 0 {
+                                                loaded_strips.push(img);
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    let total_strips = raw_images.len().max(1) as f32;
-                    let per_strip_h = page_h / total_strips;
-                    let mut page_ocr_text = Vec::new();
+                    // Check if we have image(s) to process
+                    if !loaded_strips.is_empty() {
+                        // Stitch all vertical strips into one full-page canvas
+                        let max_w = loaded_strips.iter().map(|img| img.width()).max().unwrap_or(1);
+                        let total_h: u32 = loaded_strips.iter().map(|img| img.height()).sum();
 
-                    for (strip_idx, content) in raw_images.into_iter().enumerate() {
-                        if let Ok(dyn_img) = image::load_from_memory(&content) {
-                            let (orig_w, orig_h) = (dyn_img.width(), dyn_img.height());
-                            if orig_w == 0 || orig_h < 15 {
-                                continue;
-                            }
-
-                            // Quick luminance check to skip pure white/blank margin strips
-                            let luma_img = dyn_img.to_luma8();
-                            let pixels = luma_img.as_raw();
-                            let dark_count = pixels.iter().filter(|&&p| p < 200).count();
-                            // If fewer than 0.2% of pixels are non-white, skip this strip
-                            if dark_count < (pixels.len() / 500) {
-                                continue;
-                            }
-
-                            // Resize if too wide for efficient neural inference
-                            let resized_img = if orig_w > 1200 {
-                                let new_h = (orig_h as f32 * 1200.0 / orig_w as f32).round() as u32;
-                                dyn_img.resize_exact(1200, new_h.max(1), image::imageops::FilterType::Triangle)
-                            } else {
-                                dyn_img
-                            };
-
-                            let (out_w, out_h) = (resized_img.width(), resized_img.height());
-
-                            let gray_img = resized_img.to_luma8();
-                            let mut gray_png: Vec<u8> = Vec::new();
-                            let _ = image::DynamicImage::ImageLuma8(gray_img)
-                                .write_to(
-                                    &mut std::io::Cursor::new(&mut gray_png),
-                                    image::ImageFormat::Png,
-                                );
-
-                            let run_options = rusto::OcrRunOptions {
-                                output: rusto::rusto_ocr::OutputGranularity::Lines,
-                                ..Default::default()
-                            };
-
-                            match engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(gray_png), &run_options) {
-                                Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) => {
-                                    if !results.is_empty() {
-                                        page_ocr_text.push((strip_idx, out_w, out_h, results));
-                                        executed_ocr = true;
-                                    }
-                                }
-                                Ok(_) => {}
-                                Err(err) => {
-                                    eprintln!("Warning: detect_text error on strip: {:?}", err);
-                                }
-                            }
+                        let mut stitched_canvas = image::RgbImage::new(max_w, total_h);
+                        let mut curr_y = 0;
+                        for strip in loaded_strips {
+                            let (_sw, sh) = (strip.width(), strip.height());
+                            let rgb_strip = strip.to_rgb8();
+                            image::imageops::overlay(&mut stitched_canvas, &rgb_strip, 0, curr_y as i64);
+                            curr_y += sh;
                         }
-                    }
 
-                    // If OCR recognized text on this page, inject transparent text layer across page
-                    if !page_ocr_text.is_empty() {
-                        // ExtGState with opacity 0.001 so text is selectable by cursor across page without covering image
-                        let gs_id = inner.add_object(lopdf::dictionary!(
-                            "Type" => "ExtGState",
-                            "ca" => 0.001,
-                            "CA" => 0.001,
-                        ));
+                        let stitched_dyn = image::DynamicImage::ImageRgb8(stitched_canvas);
+                        let (orig_w, orig_h) = (stitched_dyn.width(), stitched_dyn.height());
 
-                        let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n");
+                        // Scale down if image is higher than recommended resolution (RustO! recommendation: maxSideLen <= 1600)
+                        let target_w = if orig_w > 1600 {
+                            1600
+                        } else {
+                            orig_w
+                        };
+                        let target_h = (orig_h as f32 * target_w as f32 / orig_w as f32).round() as u32;
+                        let resized_img = if orig_w != target_w {
+                            stitched_dyn.resize_exact(target_w, target_h.max(1), image::imageops::FilterType::Triangle)
+                        } else {
+                            stitched_dyn
+                        };
 
-                        for (strip_idx, img_w, img_h, words) in &page_ocr_text {
-                            let img_w = *img_w as f32;
-                            let img_h = *img_h as f32;
+                        let (proc_w, proc_h) = (resized_img.width(), resized_img.height());
+                        let gray_img = resized_img.to_luma8();
+                        let mut gray_png: Vec<u8> = Vec::new();
+                        let _ = image::DynamicImage::ImageLuma8(gray_img)
+                            .write_to(
+                                &mut std::io::Cursor::new(&mut gray_png),
+                                image::ImageFormat::Png,
+                            );
 
-                            // Calculate this strip's vertical bounds on the page (top to bottom)
-                            let strip_top_y = page_h - (*strip_idx as f32 * per_strip_h);
-                            let strip_bottom_y = strip_top_y - per_strip_h;
+                        let run_options = rusto::OcrRunOptions {
+                            output: rusto::rusto_ocr::OutputGranularity::Lines,
+                            ..Default::default()
+                        };
 
-                            for word in words {
+                        let ocr_results = match engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(gray_png), &run_options) {
+                            Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) => results,
+                            Ok(_) => Vec::new(),
+                            Err(err) => {
+                                eprintln!("Warning: detect_text error on page: {:?}", err);
+                                Vec::new()
+                            }
+                        };
+
+                        // If OCR recognized text on this page, inject transparent text layer across page
+                        if !ocr_results.is_empty() {
+                            executed_ocr = true;
+                            // ExtGState with opacity 0.001 so text is selectable by cursor across page without covering image
+                            let gs_id = inner.add_object(lopdf::dictionary!(
+                                "Type" => "ExtGState",
+                                "ca" => 0.001,
+                                "CA" => 0.001,
+                            ));
+
+                            let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n");
+
+                            let proc_wf = proc_w as f32;
+                            let proc_hf = proc_h as f32;
+
+                            for word in ocr_results {
                                 let line = word.text.trim();
                                 if line.is_empty() {
                                     continue;
@@ -268,16 +264,15 @@ impl PdfOperation for OcrOperationImpl {
 
                                 let box_x = word.frame.left;
                                 let box_y = word.frame.top;
-                                let _box_w = word.frame.width;
                                 let box_h = word.frame.height;
 
-                                let norm_x = box_x / img_w;
-                                let norm_y = box_y / img_h;
-                                let norm_h = box_h / img_h;
+                                let norm_x = box_x / proc_wf;
+                                let norm_y = box_y / proc_hf;
+                                let norm_h = box_h / proc_hf;
 
                                 let pdf_x = norm_x * page_w;
-                                let pdf_y = strip_bottom_y + (per_strip_h - ((norm_y + norm_h) * per_strip_h));
-                                let font_size = (norm_h * per_strip_h).max(6.0);
+                                let pdf_y = page_h - ((norm_y + norm_h) * page_h);
+                                let font_size = (norm_h * page_h).max(6.0);
 
                                 words_collected.push((pdf_y, pdf_x, font_size, line.to_string()));
 
@@ -289,7 +284,6 @@ impl PdfOperation for OcrOperationImpl {
                                 text_ops.push_str(&format!("/F1 {:.2} Tf\n", font_size));
                                 text_ops.push_str(&format!("1 0 0 1 {:.2} {:.2} Tm\n({}) Tj\n", pdf_x, pdf_y, escaped));
                             }
-                        }
                         text_ops.push_str("ET\nQ\n");
 
                         let content_stream = lopdf::Stream::new(
@@ -396,6 +390,7 @@ impl PdfOperation for OcrOperationImpl {
                 }
             }
         }
+    }
 
         if !executed_ocr {
             let text_op = crate::operations::extract_text::ExtractTextOperation::new(None);
