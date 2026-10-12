@@ -30,6 +30,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 docx-rs = "0.4.22"
 zip = "9.0.1"
+pdf_oxide = { version = "0.3.78", default-features = false, features = ["wasm"] }
 
 [dev-dependencies]
 zip = "9.0.1"
