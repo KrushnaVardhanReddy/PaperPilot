@@ -6,6 +6,7 @@
   import Titlebar from '$lib/components/layout/Titlebar.svelte';
   import CommandPalette from '$lib/components/layout/CommandPalette.svelte';
   import ModularSetupModal from '$lib/components/onboarding/ModularSetupModal.svelte';
+  import WorkspaceSearchModal from '$lib/components/workspace/WorkspaceSearchModal.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
@@ -121,6 +122,7 @@
 </div>
 
 <CommandPalette />
+<WorkspaceSearchModal />
 <BottomNav />
 <ToastContainer />
 
