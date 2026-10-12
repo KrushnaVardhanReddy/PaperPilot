@@ -1,0 +1,54 @@
+Task: Modular OCR Model Downloader and Operations Runtime History Badge [Spec 047]
+
+Objective:
+Implement a modular multi-tier OCR model manager (matching the existing LLM ModelDownloader architecture) so users can download and switch between OCR tiers (PP-OCRv6 Tiny, Small, Medium, and PP-OCRv4 Mobile), and add a execution latency & last-task history badge directly below the action button in the Desktop UI.
+
+Context & Reference:
+- Read `specs/047-modular-ocr-model-downloader-and-history-badge/spec.md` and `task.md` for architecture details.
+- Mirror the implementation in `apps/desktop/src-tauri/src/ai_commands.rs` and `apps/desktop/src/lib/components/settings/ModelDownloader.svelte`.
+- Concurrency Constraint: Max 6 cores (`cargo test -j 6`).
+
+Implementation Details:
+
+1. Backend Tauri OCR Model Manager (`apps/desktop/src-tauri/src/ocr_commands.rs`):
+   - Define `OcrModelInfo` { id, name, description, tier, size_mb, download_urls: Vec<String>, local_path: Option<String>, is_downloaded: bool }.
+   - Model Tiers:
+     - `ppocrv6-tiny` (~6.0 MB, default, fastest, multi-lingual)
+     - `ppocrv6-small` (~30 MB, balanced, recommended for legal documents)
+     - `ppocrv6-medium` (~134 MB, server-grade high precision)
+     - `ppocrv4-mobile` (~15.5 MB, legacy RapidOCR)
+   - Implement Tauri commands:
+     - `get_available_ocr_models() -> Result<Vec<OcrModelInfo>, String>`: Checks if tier folder exists in `~/.local/share/paperpilot/models/ocr/<tier_id>/` or `models/ocr/<tier_id>/`.
+     - `download_ocr_model(app: AppHandle, model_id: String) -> Result<(), String>`: Streams files with progress events (`ocr-download-progress`).
+     - `cancel_ocr_model_download(model_id: String) -> Result<(), String>`
+     - `set_active_ocr_model(model_id: String) -> Result<(), String>`
+     - `get_active_ocr_model() -> Result<String, String>`
+   - Register in `apps/desktop/src-tauri/src/lib.rs`.
+
+2. Desktop UI OCR Downloader (`apps/desktop/src/lib/components/settings/OcrModelDownloader.svelte`):
+   - Create UI matching `ModelDownloader.svelte`:
+     - Radio button to pick active OCR tier.
+     - Download button with streaming percentage & size indicator.
+     - Badge indicating `✓ Downloaded` and local path.
+   - Embed into `apps/desktop/src/lib/components/layout/SettingsPanel.svelte` under a dedicated OCR Models section.
+
+3. Execution Latency & Last Task Status Badge (`OperationsPanel.svelte`):
+   - In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+     - Track start time with `performance.now()` before calling `invoke_mcp_tool`.
+     - Compute duration upon completion: display in milliseconds if < 1s (e.g. `340ms`) or seconds if >= 1s (e.g. `1.8s`).
+     - Directly below the Run button, render a status badge:
+       - Success state: `✓ Completed in {duration}` (clean pill badge with subtle green accent).
+       - Error state: `✗ Failed after {duration}` (subtle red accent).
+     - Keep a history drawer/tooltip showing the last executed operations and their runtimes.
+
+4. CLI Integration (`paperpilot-cli`):
+   - Add optional `--tier <tier>` argument to `paperpilot ocr` command so CLI users can choose the model tier.
+
+5. Verification:
+   - Run `pnpm check` in `apps/desktop`.
+   - Run `cargo check -p desktop` and `cargo test -p paperpilot-pdf -j 6`.
+   - Author report at `reports/MODULAR_OCR_DOWNLOADER_AND_HISTORY_REPORT.md`.
+
+Deliverables:
+- Clean commits prefixed with `jules: `
+- All quality gates passing.

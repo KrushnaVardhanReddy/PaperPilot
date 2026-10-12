@@ -207,6 +207,17 @@
     `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`
   );
 
+  interface ExecutionResult {
+    success: boolean;
+    durationFormatted: string;
+    toolTitle: string;
+    timestamp: Date;
+    message: string;
+  }
+
+  let lastExecution = $state<ExecutionResult | null>(null);
+  let executionHistory = $state<ExecutionResult[]>([]);
+
   // Auto-fill the output path whenever the active tool or selected document changes
   $effect(() => {
     if (!activeTool || appState.documents.length === 0) {
@@ -686,33 +697,65 @@
     }
 
     appState.setLoading(true);
+    const startTime = performance.now();
     try {
       const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+      const durationMs = Math.round(performance.now() - startTime);
+      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+
       const resObj = result as any;
       if (resObj && resObj.success) {
+        let msg = '';
         if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
           const textToCopy = resObj.data?.text || '';
           if (navigator.clipboard && textToCopy) {
             await navigator.clipboard.writeText(textToCopy);
           }
-          const msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
-          toastState.success(msg);
-          jobsState.addJob(toolName, 'success', msg);
+          msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
         } else {
           const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-          const msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
-          toastState.success(msg);
-          jobsState.addJob(toolName, 'success', msg);
+          msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
         }
+        toastState.success(msg);
+        jobsState.addJob(toolName, 'success', msg);
+
+        lastExecution = {
+          success: true,
+          durationFormatted,
+          toolTitle: activeTool.title,
+          timestamp: new Date(),
+          message: msg
+        };
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
       } else {
         const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
         toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
         jobsState.addJob(toolName, 'error', formatted.headline);
+
+        lastExecution = {
+          success: false,
+          durationFormatted,
+          toolTitle: activeTool.title,
+          timestamp: new Date(),
+          message: formatted.headline
+        };
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
       }
     } catch (error) {
+      const durationMs = Math.round(performance.now() - startTime);
+      const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
       const formatted = formatUserFriendlyError(error, activeTool.title);
       toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
       jobsState.addJob(toolName, 'error', formatted.headline);
+
+      lastExecution = {
+        success: false,
+        durationFormatted,
+        toolTitle: activeTool.title,
+        timestamp: new Date(),
+        message: formatted.headline
+      };
+      executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
     } finally {
       appState.setLoading(false);
     }
@@ -962,6 +1005,13 @@
         </button>
         {#if isRunning}
           <div class="elapsed-timer" aria-live="polite">⏱ {elapsedDisplay} elapsed</div>
+        {:else if lastExecution}
+          <div class="last-execution-badge" class:badge-success={lastExecution.success} class:badge-error={!lastExecution.success} title={lastExecution.message}>
+            <span class="badge-icon">{lastExecution.success ? '✓' : '✗'}</span>
+            <span class="badge-text">
+              {lastExecution.success ? 'Completed' : 'Failed'} in <strong>{lastExecution.durationFormatted}</strong>
+            </span>
+          </div>
         {/if}
       </div>
     </div>
@@ -1469,6 +1519,40 @@
     text-align: center;
     margin-top: 6px;
     font-variant-numeric: tabular-nums;
+  }
+
+  .last-execution-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    transition: all 0.2s ease;
+  }
+
+  .badge-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+  }
+
+  .badge-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+  }
+
+  .last-execution-badge .badge-icon {
+    font-weight: 700;
+  }
+
+  .last-execution-badge strong {
+    color: #ffffff;
   }
 
   .empty-state {
