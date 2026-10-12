@@ -170,11 +170,10 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
         dest_path.push(file_name);
 
         let mut request = client.get(url);
-        let mut downloaded_for_file: u64 = 0;
 
         if dest_path.exists() {
             if let Ok(metadata) = std::fs::metadata(&dest_path) {
-                downloaded_for_file = metadata.len();
+                let downloaded_for_file = metadata.len();
                 request = request.header("Range", format!("bytes={}-", downloaded_for_file));
                 total_downloaded += downloaded_for_file;
             }
