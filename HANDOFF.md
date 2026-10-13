@@ -21,13 +21,16 @@
    - Unified Home into the **Studio Hub** layout with live system status pills, compact drag-and-drop intake, and categorized full-width operations cards matrix.
    - Merged Jules PR #192 (`5f67cb2`) and streamlined to Studio Hub (`80f4152`).
 
-3. **Active In-Flight Jules Task: Task 5.9.30 ([Spec 054](specs/054-context-aware-dynamic-tool-dispatcher/spec.md))**
-   - **Session ID:** `784752770737873068` ([View in Jules](https://jules.google.com/session/784752770737873068))
-   - **Focus:** Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering.
-   - **Key Features:**
-     - Dynamic ranking: Dropping `.xlsx` spotlights Excel tools; dropping >= 2 PDFs spotlights both Multi-File tools (`merge`, `compare`) AND high-utility Batch Operations (`compress`, `ocr`, `pdf_to_docx`, `rotate`).
-     - Feature Pack intelligence: 1-click in-place enablement for missing optional Feature Packs.
-     - Context filter chip bar (`[ ⚡ Recommended ]`, `[ All Tools ]`, `[ PDF ]`, `[ Office ]`, `[ AI & OCR ]`).
+3. **Spec 054 (Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering) — 100% COMPLETE & MERGED**
+   - Merged Jules PR #193 (`9c51606`, Session 784752770737873068).
+   - Implemented dynamic tool ranking and capability rules in `toolRegistry.ts` (`rankToolsByContext`).
+   - Dynamic context-aware spotlighting:
+     * Dropping `.xlsx` / `.xls` spotlights `excel_to_json` and `excel_to_csv`.
+     * Dropping $\ge 2$ PDFs spotlights both **Multi-File Operations** (`merge`, `compare`) AND high-utility **Batch Operations** (`compress`, `ocr`, `pdf_to_docx`, `rotate`) with dedicated badge tags.
+     * Dropping a single PDF spotlights `compress`, `split`, `rotate`, `ocr`, and `pdf_to_docx`.
+   - Feature Pack intelligence: 1-click in-place enablement for optional Feature Packs (`office`, `ocr`).
+   - Contextual filter chips: `[ ⚡ Recommended ]`, `[ All Tools ]`, `[ PDF ]`, `[ Office ]`, `[ AI & OCR ]`.
+   - All 67/67 Vitest tests and 12/12 real Playwright launch tool tests pass green.
 
 ---
 
