@@ -1,13 +1,12 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
-  import AiSettingsModal from '$lib/components/settings/AiSettingsModal.svelte';
   import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
+  import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
   type SettingsCategory = 'ai' | 'packs' | 'ocr' | 'general' | 'developer';
   let activeCategory = $state<SettingsCategory>('ai');
 
-  let isAiModalOpen = $state(false);
   let outputDir = $state('');
 
   function handleBrowse() {
@@ -70,48 +69,181 @@
             <h3>AI Engine & Models</h3>
             <p class="section-subtitle">Configure local/offline models, Llamafile runners, and remote BYOK keys.</p>
           </div>
-          <button class="btn primary launch-ai-btn" onclick={() => {
-            aiConfig.testResult = null;
-            isAiModalOpen = true;
-          }}>
-            Manage AI & Models 🚀
-          </button>
         </div>
 
-        <div class="setting-group" id="setting-group-ai-engine">
-          <div class="group-header">
-            <h4>Runtime Status</h4>
-            <span class="ai-pill">Current Mode: <strong>{aiConfig.mode.toUpperCase()}</strong></span>
-          </div>
+        <!-- Direct In-Canvas AI Mode Selector Grid -->
+        <div class="setting-group" id="setting-group-ai-modes">
+          <h4>Inference Provider & Execution Mode</h4>
+          <p class="help-text">Select how PaperPilot runs summarization, classification, and OCR-assisted vision operations.</p>
 
-          <div class="ai-status-summary">
-            {#if aiConfig.mode === 'llamafile' || aiConfig.mode === 'offlinenlp'}
-              <div class="status-banner local">
-                <span class="status-icon">🔒</span>
-                <div>
-                  <strong>100% On-Device & Offline</strong>
-                  <p>Inference stays completely private on CPU/GPU with zero network calls.</p>
-                </div>
+          <div class="ai-modes-grid">
+            <label class="ai-mode-card" class:active={aiConfig.mode === 'offlinenlp'}>
+              <div class="mode-card-header">
+                <input
+                  type="radio"
+                  name="canvas-ai-mode"
+                  value="offlinenlp"
+                  checked={aiConfig.mode === 'offlinenlp'}
+                  onchange={() => {
+                    aiConfig.mode = 'offlinenlp';
+                    aiConfig.testResult = null;
+                    aiConfig.saveConfig();
+                  }}
+                />
+                <span class="mode-title-tag">⚡ Offline NLP</span>
               </div>
-            {:else if aiConfig.mode === 'universal'}
-              <div class="status-banner remote">
-                <span class="status-icon">🌐</span>
-                <div>
-                  <strong>Custom OpenAI-Compatible Endpoint</strong>
-                  <p>Routed through your self-hosted vLLM, Ollama, or LiteLLM gateway.</p>
-                </div>
+              <p class="mode-desc">Embedded ONNX model (&lt;1.1 MB). 100% on-device CPU, zero setup, airplane-safe.</p>
+              <div class="mode-badge-wrap">
+                <span class="badge installed-badge">Default • Zero Network</span>
               </div>
-            {:else}
-              <div class="status-banner cloud">
-                <span class="status-icon">🔑</span>
-                <div>
-                  <strong>BYOK Cloud Provider ({aiConfig.byokProvider || 'OpenAI'})</strong>
-                  <p>Authenticated using your custom API credentials.</p>
-                </div>
+            </label>
+
+            <label class="ai-mode-card" class:active={aiConfig.mode === 'llamafile'}>
+              <div class="mode-card-header">
+                <input
+                  type="radio"
+                  name="canvas-ai-mode"
+                  value="llamafile"
+                  checked={aiConfig.mode === 'llamafile'}
+                  onchange={() => {
+                    aiConfig.mode = 'llamafile';
+                    aiConfig.testResult = null;
+                    aiConfig.saveConfig();
+                  }}
+                />
+                <span class="mode-title-tag">🚀 Offline Llamafile</span>
+              </div>
+              <p class="mode-desc">Runs standalone local LLM GGUF weights via OS background runner process.</p>
+              <div class="mode-badge-wrap">
+                <span class="badge local-badge">Local GPU/CPU Runner</span>
+              </div>
+            </label>
+
+            <label class="ai-mode-card" class:active={aiConfig.mode === 'universal'}>
+              <div class="mode-card-header">
+                <input
+                  type="radio"
+                  name="canvas-ai-mode"
+                  value="universal"
+                  checked={aiConfig.mode === 'universal'}
+                  onchange={() => {
+                    aiConfig.mode = 'universal';
+                    aiConfig.testResult = null;
+                    aiConfig.saveConfig();
+                  }}
+                />
+                <span class="mode-title-tag">🌐 Universal OpenAI / Ollama</span>
+              </div>
+              <p class="mode-desc">Connect to local/LAN Ollama, vLLM, LM Studio, or custom inference server.</p>
+              <div class="mode-badge-wrap">
+                <span class="badge custom-badge">Custom HTTP Endpoint</span>
+              </div>
+            </label>
+
+            <label class="ai-mode-card" class:active={aiConfig.mode === 'byok'}>
+              <div class="mode-card-header">
+                <input
+                  type="radio"
+                  name="canvas-ai-mode"
+                  value="byok"
+                  checked={aiConfig.mode === 'byok'}
+                  onchange={() => {
+                    aiConfig.mode = 'byok';
+                    aiConfig.testResult = null;
+                    aiConfig.saveConfig();
+                  }}
+                />
+                <span class="mode-title-tag">🔑 BYOK Cloud API</span>
+              </div>
+              <p class="mode-desc">Direct provider API keys (OpenAI GPT-4o, Claude 3.5, Gemini 1.5) in OS Keyring.</p>
+              <div class="mode-badge-wrap">
+                <span class="badge byok-badge">Secure OS Keyring</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mode-Specific In-Canvas Configuration -->
+        {#if aiConfig.mode === 'llamafile'}
+          <div class="setting-group" id="setting-group-llamafile-config">
+            <div class="group-header">
+              <h4>Local GGUF Models & Llamafile Engine</h4>
+              <button class="btn secondary" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
+                {aiConfig.testLoading ? 'Verifying...' : '⚡ Test Local Runner Connection'}
+              </button>
+            </div>
+            <ModelDownloader />
+            {#if aiConfig.testResult}
+              <div class="test-result-bar" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                <span class="result-badge">{aiConfig.testResult.success ? '🟢 READY' : '🔴 ERROR'}</span>
+                <span>{aiConfig.testResult.message}</span>
               </div>
             {/if}
           </div>
-        </div>
+        {:else if aiConfig.mode === 'universal'}
+          <div class="setting-group" id="setting-group-universal-config">
+            <h4>Universal Endpoint Configuration</h4>
+            <div class="setting-item">
+              <label for="canvas-universal-endpoint">Endpoint URL (OpenAI Compatible / Ollama)</label>
+              <div class="input-with-button">
+                <input
+                  id="canvas-universal-endpoint"
+                  type="text"
+                  class="form-input"
+                  placeholder="http://localhost:11434"
+                  bind:value={aiConfig.universalEndpoint}
+                  onblur={() => aiConfig.saveConfig()}
+                />
+                <button class="btn primary" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
+                  {aiConfig.testLoading ? 'Testing...' : 'Test Connection ⚡'}
+                </button>
+              </div>
+              <p class="help-text">Compatible with Ollama (<code>http://127.0.0.1:11434/v1</code>), LM Studio, vLLM, and LocalAI.</p>
+            </div>
+            {#if aiConfig.testResult}
+              <div class="test-result-bar" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                <span class="result-badge">{aiConfig.testResult.success ? '🟢 READY' : '🔴 ERROR'}</span>
+                <span>{aiConfig.testResult.message}</span>
+              </div>
+            {/if}
+          </div>
+        {:else if aiConfig.mode === 'byok'}
+          <div class="setting-group" id="setting-group-byok-config">
+            <h4>Bring Your Own Key (BYOK) Credentials</h4>
+            <div class="byok-grid">
+              <div class="setting-item">
+                <label for="canvas-byok-provider">Cloud AI Provider</label>
+                <select id="canvas-byok-provider" class="form-input" bind:value={aiConfig.byokProvider} onchange={() => aiConfig.saveConfig()}>
+                  <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
+                  <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
+                  <option value="gemini">Google (Gemini 1.5 Pro/Flash)</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <label for="canvas-byok-key">API Key (Stored in Secure OS Keyring)</label>
+                <div class="input-with-button">
+                  <input
+                    id="canvas-byok-key"
+                    type="password"
+                    class="form-input"
+                    placeholder={aiConfig.apiKeyPlaceholder || "sk-..."}
+                    bind:value={aiConfig.pendingApiKey}
+                    onblur={() => aiConfig.saveConfig()}
+                  />
+                  <button class="btn primary" onclick={() => aiConfig.testConnection()} disabled={aiConfig.testLoading}>
+                    {aiConfig.testLoading ? 'Testing...' : 'Verify Key 🔑'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {#if aiConfig.testResult}
+              <div class="test-result-bar" class:success={aiConfig.testResult.success} class:error={!aiConfig.testResult.success}>
+                <span class="result-badge">{aiConfig.testResult.success ? '🟢 READY' : '🔴 ERROR'}</span>
+                <span>{aiConfig.testResult.message}</span>
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
 
     {:else if activeCategory === 'packs'}
@@ -244,8 +376,6 @@
     {/if}
   </main>
 </div>
-
-<AiSettingsModal bind:isOpen={isAiModalOpen} />
 
 <style>
   .settings-layout {
@@ -426,10 +556,6 @@
     margin: 2px 0 0 0;
   }
 
-  .launch-ai-btn {
-    margin-left: auto;
-  }
-
   .setting-group {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
@@ -451,65 +577,112 @@
     margin: 0 0 12px 0;
   }
 
-  .ai-status-summary {
+  /* In-Canvas AI Mode Selector */
+  .ai-modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .ai-mode-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  .status-banner {
+  .ai-mode-card:hover {
+    border-color: rgba(var(--accent-rgb, 59, 130, 246), 0.5);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .ai-mode-card.active {
+    border-color: var(--accent-primary, #3b82f6);
+    background: rgba(59, 130, 246, 0.08);
+    box-shadow: 0 0 0 1px var(--accent-primary, #3b82f6);
+  }
+
+  .mode-card-header {
     display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 8px;
+    align-items: center;
+    gap: 10px;
   }
 
-  .status-banner .status-icon {
-    font-size: 1.4rem;
-    line-height: 1;
+  .mode-card-header input[type="radio"] {
+    accent-color: var(--accent-primary, #3b82f6);
+    cursor: pointer;
   }
 
-  .status-banner strong {
-    font-size: 0.95rem;
-    display: block;
-    margin-bottom: 2px;
+  .mode-title-tag {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
-  .status-banner p {
-    font-size: 0.85rem;
-    margin: 0;
-    opacity: 0.85;
-  }
-
-  .status-banner.local {
-    background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-  }
-
-  .status-banner.remote {
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.25);
-  }
-
-  .status-banner.cloud {
-    background: rgba(168, 85, 247, 0.1);
-    color: #c084fc;
-    border: 1px solid rgba(168, 85, 247, 0.25);
-  }
-
-  .ai-pill {
-    font-size: 0.85rem;
+  .mode-desc {
+    font-size: 0.82rem;
     color: var(--text-secondary);
-    background: var(--bg-primary);
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
+    line-height: 1.4;
+    margin: 0;
   }
 
-  /* Feature Packs Grid */
+  .mode-badge-wrap {
+    margin-top: auto;
+    padding-top: 6px;
+  }
+
+  .custom-badge {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .byok-badge {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
+  .test-result-bar {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .test-result-bar.success {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+  }
+
+  .test-result-bar.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+  }
+
+  .byok-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 16px;
+    margin-top: 10px;
+  }
   .feature-packs-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
