@@ -1,4 +1,20 @@
 import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('paperpilot_onboarding_completed', 'true');
+  });
+  await page.goto('/');
+
+  // Dismiss any overlays if they exist
+  try {
+    const overlay = page.locator('.modal-overlay');
+    if (await overlay.isVisible({timeout: 1000})) {
+        await page.mouse.click(10, 10);
+    }
+  } catch (e) {}
+});
+
 import * as path from 'path';
 
 test.beforeEach(async ({ page }) => {

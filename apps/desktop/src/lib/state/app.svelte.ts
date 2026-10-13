@@ -3,6 +3,8 @@ import { safeInvoke } from '$lib/utils/tauri';
 
 const MAX_OPEN_TABS = 8;
 
+export type WorkspaceLayoutMode = 'studio' | 'split' | 'hero';
+
 export class AppState {
   activeTab = $state('home');
   isLoading = $state(false);
@@ -10,6 +12,7 @@ export class AppState {
   documents = $state<File[]>([]);
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
+  workspaceLayout = $state<WorkspaceLayoutMode>('studio');
 
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
@@ -27,6 +30,11 @@ export class AppState {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      const storedLayout = localStorage.getItem('paperpilot_workspace_layout') as WorkspaceLayoutMode;
+      if (storedLayout === 'studio' || storedLayout === 'split' || storedLayout === 'hero') {
+        this.workspaceLayout = storedLayout;
+      }
+
       const storedDev = localStorage.getItem('paperpilot:developer-mode');
       if (storedDev === 'true') {
         this.developerMode = true;
@@ -44,6 +52,13 @@ export class AppState {
     }
 
     this.initPortableState();
+  }
+
+  setWorkspaceLayout(mode: WorkspaceLayoutMode) {
+    this.workspaceLayout = mode;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot_workspace_layout', mode);
+    }
   }
 
   async initPortableState() {
