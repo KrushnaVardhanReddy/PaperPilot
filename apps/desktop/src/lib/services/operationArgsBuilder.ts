@@ -9,6 +9,8 @@ export interface OperationContext {
 
     // UI control values
     splitPoints: string;
+    deletePages?: string;
+    extractPages?: string;
     rotateAngle: string;
     watermarkText: string;
     watermarkOrientation: string;
@@ -38,7 +40,7 @@ export interface OperationContext {
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
     const {
         docName, docPath, getOutputPath, customOutputPath,
-        splitPoints, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
+        splitPoints, deletePages, extractPages, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
         password, batesPrefix, batesStart, batesPadding, ocrOutputFormat, cropBox,
         convertPreset, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality
     } = context;
@@ -223,7 +225,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'delete_pages':
             args = {
                 input: docPath,
-                pages: '1',
+                pages: deletePages || '1',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_deleted.pdf`)
             };
             break;
@@ -354,7 +356,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'extract_pages':
             args = {
                 input: docPath,
-                pages: '1',
+                pages: extractPages || '1',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
             };
             break;

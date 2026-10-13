@@ -139,6 +139,8 @@ import { onMount } from 'svelte';
 
   // Tool parameter states
   let splitPoints = $state('');
+  let deletePages = $state('');
+  let extractPages = $state('');
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
   let watermarkText = $state('');
@@ -259,6 +261,7 @@ import { onMount } from 'svelte';
       case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
+      case 'delete_pages':  customOutputPath = getOutputPath(`${base}_deleted.pdf`);    break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
         if (ocrOutputFormat === 'txt') {
@@ -317,6 +320,8 @@ import { onMount } from 'svelte';
         getOutputPath,
         customOutputPath,
         splitPoints,
+        deletePages,
+        extractPages,
         rotateAngle,
         watermarkText,
         watermarkOrientation,
@@ -483,6 +488,16 @@ import { onMount } from 'svelte';
         <div class="operation-config">
           <label for="splitPoints" class="section-desc">Split Page Ranges (comma separated):</label>
           <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 1-3, 4-8" />
+        </div>
+      {:else if activeTool.id === 'delete_pages'}
+        <div class="operation-config">
+          <label for="deletePages" class="section-desc">Pages to Delete (comma separated or ranges):</label>
+          <input id="deletePages" type="text" class="form-input" bind:value={deletePages} placeholder="e.g. 1, 3, 5-7" />
+        </div>
+      {:else if activeTool.id === 'extract_pages'}
+        <div class="operation-config">
+          <label for="extractPages" class="section-desc">Pages to Extract (comma separated or ranges):</label>
+          <input id="extractPages" type="text" class="form-input" bind:value={extractPages} placeholder="e.g. 1-3, 5" />
         </div>
       {:else if activeTool.id === 'compress'}
         <div class="operation-config">
