@@ -69,6 +69,14 @@ test.describe('Real Desktop Unmocked Executions', () => {
     }
 
     await page.goto('http://127.0.0.1:1420/');
+    // Dismiss any overlays if they exist
+    try {
+      const overlay = page.locator('.modal-overlay');
+      if (await overlay.isVisible({timeout: 1000})) {
+          await page.mouse.click(10, 10);
+      }
+    } catch (e) {}
+
 
     for (const op of coreOperations) {
       let hasError = false;
@@ -196,6 +204,14 @@ test.describe('Real Desktop Unmocked Executions', () => {
 
         try {
           await page.goto('http://127.0.0.1:1420/');
+    // Dismiss any overlays if they exist
+    try {
+      const overlay = page.locator('.modal-overlay');
+      if (await overlay.isVisible({timeout: 1000})) {
+          await page.mouse.click(10, 10);
+      }
+    } catch (e) {}
+
           await page.click('#tab-btn-home');
         } catch (e) {}
       } finally {
