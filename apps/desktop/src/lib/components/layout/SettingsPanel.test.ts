@@ -46,6 +46,10 @@ describe('SettingsPanel', () => {
   it('renders developer mode toggle and toggles state', async () => {
     render(SettingsPanel);
 
+    // Switch to Developer tab
+    const devTab = screen.getByRole('button', { name: /Developer & Gateway/i });
+    await fireEvent.click(devTab);
+
     const toggle = screen.getByLabelText(/Enable Local REST API & Swagger/i) as HTMLInputElement;
     expect(toggle).not.toBeNull();
     expect(toggle.checked).toBe(false);
@@ -58,6 +62,10 @@ describe('SettingsPanel', () => {
   it('displays API endpoint status when developer mode is active', async () => {
     appState.developerMode = true;
     render(SettingsPanel);
+
+    // Switch to Developer tab
+    const devTab = screen.getByRole('button', { name: /Developer & Gateway/i });
+    await fireEvent.click(devTab);
 
     const status = screen.getByText(/● Running/i);
     expect(status).not.toBeNull();
