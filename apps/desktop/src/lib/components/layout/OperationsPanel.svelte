@@ -150,8 +150,11 @@ import { onMount } from 'svelte';
        } else if (contextFilter === 'office') {
          tools = allTools.filter(t => t.context === 'office');
        } else if (contextFilter === 'ai') {
-         tools = allTools.filter(t => t.context === 'ai');
+         tools = allTools.filter(t => t.context === 'ai' || t.category === 'ai' || t.tags.includes('ocr') || t.tags.includes('ai'));
        }
+    }
+    if (selectedCategory !== 'all') {
+      tools = tools.filter(t => t.category === selectedCategory);
     }
     return tools;
   });
@@ -799,7 +802,7 @@ import { onMount } from 'svelte';
             class:active={contextFilter === ctx.id}
             role="tab"
             aria-selected={contextFilter === ctx.id}
-            onclick={() => { contextFilter = ctx.id; searchQuery = ''; }}
+            onclick={() => { contextFilter = ctx.id; selectedCategory = 'all'; searchQuery = ''; }}
             id={`context-btn-${ctx.id}`}
           >{ctx.label}</button>
         {/each}
@@ -819,7 +822,7 @@ import { onMount } from 'svelte';
         {/if}
       </div>
 
-      {#if contextFilter === 'all' || contextFilter === 'pdf' || contextFilter === 'office' || contextFilter === 'ai'}
+      {#if contextFilter === 'all' || contextFilter === 'pdf'}
         <!-- Category Filter Pills -->
         <div class="category-pills">
           {#each allCategories as cat}
