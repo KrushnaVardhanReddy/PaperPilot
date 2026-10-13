@@ -13,7 +13,7 @@ export const allTools: ToolDefinition[] = [
   { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', context: 'pdf', tags: ['combine', 'join', 'concat'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
   { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', context: 'pdf', tags: ['divide', 'cut', 'separate'], rule: { supportedExtensions: ['pdf'], maxDocuments: 1 } },
   { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', context: 'pdf', tags: ['diff', 'compare'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
-  { id: 'extract_pages', title: 'Extract Pages', description: 'Pull specific pages into a new document', icon: '📤', category: 'pages', context: 'pdf', tags: ['extract', 'select', 'isolate'] },
+  { id: 'extract_pages', title: 'Extract Pages', description: 'Pull specific pages into a new document', icon: '📤', category: 'pages', context: 'pdf', tags: ['extract', 'select', 'isolate'], rule: { supportedExtensions: ['pdf'], maxDocuments: 1 } },
   { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', context: 'pdf', tags: ['orientation', 'turn', 'flip'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
 
   // Edit & Optimize

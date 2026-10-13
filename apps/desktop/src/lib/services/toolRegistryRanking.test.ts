@@ -11,6 +11,25 @@ describe('Tool Registry Ranking Engine', () => {
         expect(recommendedIds).toContain('excel_to_json');
         expect(recommendedIds).toContain('excel_to_csv');
         // Does not recommend merge (minDocuments: 2) or basic PDF tools if not PDF
+    });
+
+    it('prioritizes page management and core conversions for single PDF', () => {
+        const f1 = { name: 'document.pdf', size: 1024 } as unknown as File;
+        const result = rankToolsByContext(allTools, [f1], ['core', 'office', 'ocr']);
+
+        const recommendedIds = result.recommended.map(t => t.id);
+        expect(recommendedIds).toContain('delete_pages');
+        expect(recommendedIds).toContain('extract_pages');
+        expect(recommendedIds).toContain('reorder_pages');
+        expect(recommendedIds).toContain('split');
+        expect(recommendedIds).toContain('rotate');
+        expect(recommendedIds).toContain('compress');
+        expect(recommendedIds).toContain('watermark');
+        expect(recommendedIds).toContain('ocr');
+        expect(recommendedIds).toContain('pdf_to_docx');
+        expect(recommendedIds).toContain('extract_text');
+
+        // Merge should NOT be recommended for single PDF
         expect(recommendedIds).not.toContain('merge');
     });
 

@@ -65,7 +65,18 @@ export function rankToolsByContext(
           contextMatches = true;
         }
       } else if (documents.length === 1) {
-        if (['compress', 'split', 'rotate', 'ocr', 'pdf_to_docx'].includes(tool.id)) {
+        if ([
+          'compress',
+          'split',
+          'rotate',
+          'delete_pages',
+          'extract_pages',
+          'reorder_pages',
+          'ocr',
+          'pdf_to_docx',
+          'watermark',
+          'extract_text'
+        ].includes(tool.id)) {
           isRecommended = true;
           contextMatches = true;
         }
