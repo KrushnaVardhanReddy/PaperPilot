@@ -9,42 +9,25 @@
 
 ## 🧭 Executive Context & Current State
 
-1. **Spec 040 (`pdf_oxide` Universal Migration & High-Performance Extraction Suite) — 100% COMPLETE & MERGED**
-   - Cleanly migrated `pdf_to_markdown`, `pdf_to_html`, and `pdf_extract_text` to pure-Rust `pdf_oxide` (v0.3.78) for sub-1ms speed.
-   - Pinned `office_oxide = "=0.1.9"` to ensure zero upstream build breaks.
-   - Preserved `LopdfDocument::from_inner` and added `pub original_bytes: Option<Vec<u8>>`.
-   - Added zero-Python vector chunking operation `PdfRagChunksOperation` (`rag_chunks.rs`).
-   - Surfaced first-class `pdf_to_html` tool card in Desktop UI (`OperationsPanel.svelte`), `toolRegistry.ts`, `operationArgsBuilder.ts`, and `paperpilot-mcp`.
-   - **All 98/98 `paperpilot-pdf` unit tests and 19/19 `paperpilot-mcp` tests passing.**
+1. **Spec 052 (Penta-Interface E2E Expansion & Unmocked Playwright Verification) — 100% COMPLETE & MERGED**
+   - Merged Jules PR #191 (`2d71840`).
+   - Added 100 new Penta-Interface assertions across CLI, MCP, REST, WASM, and Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, and `workspace_search`.
+   - Fixed REST API dispatch in `paperpilot-gateway/src/handlers.rs` for non-prefixed tools.
+   - Verified Top 12 Launch Tools in `apps/desktop/tests/e2e_real_desktop_execution.spec.ts` with **12/12 PASS** against the real engine and filesystem!
 
-2. **v1.0 Launch Strategy: "Frozen Top 12 Core Suite" + Progressive Weekly Rollout Waves**
-   - Formally documented in [`v1_launch_plan.md`](v1_launch_plan.md) and [`reports/V1_LAUNCH_READINESS_REPORT.md`](reports/V1_LAUNCH_READINESS_REPORT.md).
-   - **Wave 1 (v1.0 Priority Scope — 12 Tools):**
-     1. `pdf_merge` *(Desktop UI manually verified & marked ✅ Passed)*
-     2. `pdf_split`
-     3. `pdf_rotate`
-     4. `pdf_delete_pages`
-     5. `pdf_reorder_pages`
-     6. `pdf_compress`
-     7. `pdf_watermark`
-     8. `pdf_ocr`
-     9. `pdf_extract_text`
-     10. `pdf_to_docx`
-     11. `excel_to_json`
-     12. `excel_to_csv`
-   - **Waves 2–7 (Weekly Progressive Rollout of remaining 32 tools):**
-     - Wave 2 (Week 2): Web & AI Synthesis (`pdf_to_html`, `pdf_to_markdown`, `html_to_pdf`, `md_to_pdf`, `search`)
-     - Wave 3 (Week 3): Office Modernization (`pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
-     - Wave 4 (Week 4): Security & Compliance (`sign`, `redact`, `encrypt`, `decrypt`, `pdf_to_pdf_a`)
-     - Wave 5 (Week 5): Page Geometry & Forms (`remove_blank`, `page_numbers`, `crop`, `burst`, `fill_form`)
-     - Wave 6 (Week 6): Advanced Forms & Archival (`read_form`, `create_form_field`, `flatten`, `metadata`, `repair`)
-     - Wave 7 (Week 7): Visual Media & Stamping (`img_to_pdf`, `extract_images`, `render`, `bates`, `header_footer`, `linearize`, `validate`)
+2. **Spec 053 (Studio Hub Workspace & Settings Modernization) — 100% COMPLETE & MERGED**
+   - Modernized Settings Panel into an enterprise multi-column layout with sidebar navigation categories (`AI`, `Feature Packs`, `OCR`, `General`, `Developer`) and a wide full-width canvas (>1200px).
+   - Inlined all AI mode selections (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Keyring) directly into the Settings canvas.
+   - Unified Home into the **Studio Hub** layout with live system status pills, compact drag-and-drop intake, and categorized full-width operations cards matrix.
+   - Merged Jules PR #192 (`5f67cb2`) and streamlined to Studio Hub (`80f4152`).
 
-3. **Active In-Flight Jules Task: Task 5.9.28 ([Spec 052](specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md))**
-   - **Session ID:** `9530387047429935978` ([View in Jules](https://jules.google.com/session/9530387047429935978))
-   - **Status:** Jules successfully implemented the 100 new Penta-Interface assertions in `tools/penta-interface-e2e` for the 5 new tools (`excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search`).
-   - **Current Blocker / Next Action for Jules:** Jules reported Playwright hanging when executing the 12 tools sequentially through UI. We instructed Jules to run with `--workers=1 --timeout=45000` and use targeted status selectors.
-   - When Jules finishes, review and test the PR branch before merging.
+3. **Active In-Flight Jules Task: Task 5.9.30 ([Spec 054](specs/054-context-aware-dynamic-tool-dispatcher/spec.md))**
+   - **Session ID:** `784752770737873068` ([View in Jules](https://jules.google.com/session/784752770737873068))
+   - **Focus:** Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering.
+   - **Key Features:**
+     - Dynamic ranking: Dropping `.xlsx` spotlights Excel tools; dropping >= 2 PDFs spotlights both Multi-File tools (`merge`, `compare`) AND high-utility Batch Operations (`compress`, `ocr`, `pdf_to_docx`, `rotate`).
+     - Feature Pack intelligence: 1-click in-place enablement for missing optional Feature Packs.
+     - Context filter chip bar (`[ ⚡ Recommended ]`, `[ All Tools ]`, `[ PDF ]`, `[ Office ]`, `[ AI & OCR ]`).
 
 ---
 

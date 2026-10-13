@@ -97,7 +97,7 @@ Completes the full 44+ tool catalog:
 
 | # | Task | Area | Spec | Target Outcome / Deliverables | Status |
 |---|---|---|---|---|---|
-| **5.9.28** | Penta-Interface E2E Suite Expansion (5 Tools) & Unmocked Playwright Desktop Verification | Comprehensive End-to-End Testing | [Spec 052](specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md) | 100 new Penta assertions across CLI, MCP, REST, WASM, Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, `workspace_search` + unmocked Desktop Playwright tests for Top 12. | ⏳ **In Progress** (Jules Session [`9530387047429935978`](https://jules.google.com/session/9530387047429935978)) |
+| **5.9.30** | Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering | Desktop Ergonomics & Tool Discovery | [Spec 054](specs/054-context-aware-dynamic-tool-dispatcher/spec.md) | Intelligent tool ranking based on uploaded file types (Excel spotlight, multi-file & batch PDF recommendations) and 1-click Feature Pack enabling. | ⏳ **In Progress** (Jules Session [`784752770737873068`](https://jules.google.com/session/784752770737873068)) |
 
 ---
 
@@ -105,5 +105,7 @@ Completes the full 44+ tool catalog:
 
 | # | Task | Area | Spec | Highlights | Status |
 |---|---|---|---|---|---|
+| **5.9.29** | Adaptive Multi-Layout Workspace & Studio Hub Unification | Desktop UX & Layout | [Spec 053](specs/053-adaptive-multi-layout-workspace/spec.md) | Upgraded Home view into a widescreen Studio Hub with system status pills, document shelf, and responsive operations cards matrix. | ✅ **Completed** (PR #192, `5f67cb2`) |
+| **5.9.28** | Penta-Interface E2E Suite Expansion & Unmocked Playwright Verification | End-to-End Test Automation | [Spec 052](specs/052-penta-interface-expansion-and-unmocked-playwright/spec.md) | 100 new Penta-Interface assertions across 5 surfaces + 12/12 real unmocked Desktop Playwright tests passed with zero mocks. | ✅ **Completed** (PR #191, `2d71840`) |
 | **5.9.15** | Universal `pdf_oxide` Core Engine Migration & High-Performance Extraction Suite | Core Engine & Markdown/HTML | [Spec 040](specs/040-pdf-oxide-universal-migration/spec.md) | Migrated Markdown, HTML, Plain Text, Search, and RAG chunking to `pdf_oxide` with Desktop UI integration. | ✅ **Completed** (Commits `70e8424`, `fc66840`) |
 | **5.9.7** | Multimodal PDF-to-JSON with Image Extraction & Base64 Inlining | Multimodal AI & 5-Interface Parity | [Spec 032](specs/032-pdf-to-json-multimodal-images/spec.md) | `pdf_to_json` with `--image-mode <none|files|base64>`, 5-interface mandate (CLI, MCP, REST, WASM, Edge). | ✅ **Completed** (PR #166, `2604a8e`) |
