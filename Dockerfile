@@ -8,7 +8,7 @@
 # ==============================================================================
 
 # --- Stage 1: Build Rust Binaries ---
-FROM rust:1.85-bookworm AS rust-builder
+FROM docker.io/library/rust:latest AS rust-builder
 WORKDIR /app
 
 # Install system dependencies needed for compiling font / vector crates
@@ -39,6 +39,7 @@ COPY paperpilot-mcp ./paperpilot-mcp
 COPY paperpilot-gateway ./paperpilot-gateway
 COPY paperpilot-cli ./paperpilot-cli
 COPY paperpilot-wasm ./paperpilot-wasm
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 
 # Build optimized release binaries for the server, CLI, and MCP
 RUN cargo build --release \
@@ -48,7 +49,7 @@ RUN cargo build --release \
     -j 6
 
 # --- Stage 2: Final Minimal Runtime Image ---
-FROM debian:bookworm-slim AS runtime
+FROM docker.io/library/debian:bookworm-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
