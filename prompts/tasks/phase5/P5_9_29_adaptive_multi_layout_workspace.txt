@@ -1,0 +1,83 @@
+Task: Adaptive Multi-Layout Workspace & Home Experience [Spec 053]
+
+Objective:
+Implement a 3-way user-selectable workspace layout on the PaperPilot Home screen (`selectedDocumentIndex === null`) allowing users to toggle between:
+1. "Studio Hub" (`studio`): Enterprise workstation with wide visual operations cards matrix and compact drop banner.
+2. "Split Studio" (`split`): Two-column split layout with left document queue / batch workspace and right operations matrix.
+3. "Hero Actions" (`hero`): Minimalist centered hero drop card, 1-click action pills, command bar, and recent jobs history.
+
+Context & Architecture:
+- Read `specs/053-adaptive-multi-layout-workspace/spec.md` for architectural design and constraints.
+- Framework: Svelte 5 with runes (`$state`, `$derived`, `$props`).
+- State Management: `apps/desktop/src/lib/state/app.svelte.ts`.
+- Workspace View: `apps/desktop/src/routes/+page.svelte`.
+- Settings Preference: `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`.
+- Concurrency Constraint: Max 6 cores. All cargo commands must use `-j 6`.
+- Playwright & Vitest must pass 100% without regressions.
+
+================================================================================
+PART 1: APP STATE & LOCALSTORAGE PERSISTENCE
+================================================================================
+Files to modify:
+- `apps/desktop/src/lib/state/app.svelte.ts`:
+  1. Define type:
+     ```ts
+     export type WorkspaceLayoutMode = 'studio' | 'split' | 'hero';
+     ```
+  2. Add reactive state:
+     ```ts
+     workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+     ```
+  3. Initialize from `localStorage.getItem('paperpilot_workspace_layout')` in constructor (defaulting to `'studio'`).
+  4. Add method:
+     ```ts
+     setWorkspaceLayout(mode: WorkspaceLayoutMode) {
+       this.workspaceLayout = mode;
+       if (typeof window !== 'undefined') {
+         localStorage.setItem('paperpilot_workspace_layout', mode);
+       }
+     }
+     ```
+
+================================================================================
+PART 2: WORKSPACE HEADER LAYOUT SWITCHER
+================================================================================
+Files to modify:
+- `apps/desktop/src/routes/+page.svelte`:
+  1. In `.view-header`, add layout switcher toggle buttons:
+     - Button 1: id `layout-btn-studio`, label "🎛️ Studio Hub", active if `appState.workspaceLayout === 'studio'`
+     - Button 2: id `layout-btn-split`, label "📑 Split Studio", active if `appState.workspaceLayout === 'split'`
+     - Button 3: id `layout-btn-hero`, label "⚡ Hero Actions", active if `appState.workspaceLayout === 'hero'`
+  2. Implement the 3 layout rendering branches when `appState.selectedDocumentIndex === null`:
+     - If `appState.workspaceLayout === 'studio'`:
+       * Render full-width Studio Hub canvas.
+       * Top status pills bar (`🔒 100% On-Device`, `Port 7823 REST API`, `Engine: Offline NLP`).
+       * Compact drop zone banner (`DropZone`).
+       * Document list shelf if files loaded.
+       * Grid of categorized operation cards (Quick Actions, Conversions, Security). Clicking a card dispatches tool selection into `OperationsPanel`.
+     - If `appState.workspaceLayout === 'split'`:
+       * Render two-column grid:
+         - Left column (380px): Document queue list (`DocumentList`), compact drop zone, batch clear button.
+         - Right column: Full-width operations matrix with search and category tabs.
+     - If `appState.workspaceLayout === 'hero'`:
+       * Render centered hero drop card, popular 1-click action pills (`[🗜️ Compress]`, `[📑 Merge]`, `[👁️ OCR]`, `[📝 Word]`), and `GlobalCommandBar`.
+  3. Keep `<OperationsPanel />` mounted in DOM with class `operations-panel` so existing tests and workflows remain unbroken.
+
+================================================================================
+PART 3: SETTINGS PANEL CONFIGURATION
+================================================================================
+Files to modify:
+- `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`:
+  1. In the `general` category section, add a "Default Workspace Layout" setting item:
+     - Radio group or segmented selector for `Studio Hub`, `Split Studio`, and `Hero Actions`.
+     - Changing value calls `appState.setWorkspaceLayout(val)`.
+
+================================================================================
+PART 4: TESTS & VERIFICATION
+================================================================================
+1. Unit Tests:
+   - Run `pnpm --dir apps/desktop test`
+   - Add test case verifying layout mode switching in `apps/desktop/src/lib/components/layout/SettingsPanel.test.ts` or a new test.
+2. Playwright E2E:
+   - Run `pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts` (must pass 12/12).
+   - Run `pnpm --dir apps/desktop exec playwright test tests/e2e_ui.spec.ts` (must pass).
