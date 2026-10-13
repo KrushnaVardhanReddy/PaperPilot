@@ -437,98 +437,49 @@
                     {appState.documents.length} document{appState.documents.length === 1 ? '' : 's'} loaded
                   {/if}
                 </p>
-                <div class="layout-switcher">
-                  <button
-                    id="layout-btn-studio"
-                    class="layout-btn {appState.workspaceLayout === 'studio' ? 'active' : ''}"
-                    onclick={() => appState.setWorkspaceLayout('studio')}
-                  >
-                    🎛️ Studio Hub
-                  </button>
-                  <button
-                    id="layout-btn-split"
-                    class="layout-btn {appState.workspaceLayout === 'split' ? 'active' : ''}"
-                    onclick={() => appState.setWorkspaceLayout('split')}
-                  >
-                    📑 Split Studio
-                  </button>
-                  <button
-                    id="layout-btn-hero"
-                    class="layout-btn {appState.workspaceLayout === 'hero' ? 'active' : ''}"
-                    onclick={() => appState.setWorkspaceLayout('hero')}
-                  >
-                    ⚡ Hero Actions
-                  </button>
-                </div>
               </header>
 
-              {#if appState.workspaceLayout === 'studio'}
-                <div class="studio-hub-layout">
-                  <div class="status-pills">
-                    <span class="status-pill">🔒 100% On-Device & Private</span>
-                    <span class="status-pill">Port 7823 REST Gateway</span>
-                    <span class="status-pill">Runtime: Offline NLP / Local Llamafile</span>
-                  </div>
-                  <DropZone ondrop={handleFilesDropped} />
-
-                  {#if appState.documents.length > 0}
-                    <DocumentList />
-                  {/if}
-
-                  <!-- Studio Hub Operations Grid -->
-                  <div class="studio-operations-grid">
-                     {#each allCategories.filter(c => c.id !== 'all') as cat}
-                       <div class="studio-category">
-                          <h3>{cat.icon} {cat.title}</h3>
-                          <div class="studio-cards">
-                             {#each allTools.filter(t => t.category === cat.id) as tool}
-                               <button class="studio-card" onclick={() => {
-                                  const btn = document.getElementById(`tool-btn-${tool.id}`);
-                                  if (btn) {
-                                     btn.click();
-                                     const panel = document.querySelector('.operations-panel-wrapper');
-                                     if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                                  }
-                               }}>
-                                  <div class="studio-card-icon">{tool.icon}</div>
-                                  <div class="studio-card-content">
-                                     <h4>{tool.title}</h4>
-                                     <p>{tool.description}</p>
-                                  </div>
-                               </button>
-                             {/each}
-                          </div>
-                       </div>
-                     {/each}
-                  </div>
+              <div class="studio-hub-layout">
+                <div class="status-pills">
+                  <span class="status-pill">🔒 100% On-Device & Private</span>
+                  <span class="status-pill">Port 7823 REST Gateway</span>
+                  <span class="status-pill">Runtime: Offline NLP / Local Llamafile</span>
                 </div>
+                <DropZone ondrop={handleFilesDropped} />
 
-              {:else if appState.workspaceLayout === 'split'}<div class="split-studio-layout">
-                  <div class="split-left">
-                    <DropZone ondrop={handleFilesDropped} />
-                    <DocumentList />
-                    {#if appState.documents.length > 0}
-                      <div class="batch-summary">
-                        <span>{appState.documents.length} files in queue</span>
-                        <button class="clear-btn" onclick={() => appState.documents = []}>Clear All</button>
-                      </div>
-                    {/if}
-                  </div>
+                {#if appState.documents.length > 0}
+                  <DocumentList />
+                {/if}
+
+                <!-- Studio Hub Operations Grid -->
+                <div class="studio-operations-grid">
+                   {#each allCategories.filter(c => c.id !== 'all') as cat}
+                     <div class="studio-category">
+                        <h3>{cat.icon} {cat.title}</h3>
+                        <div class="studio-cards">
+                           {#each allTools.filter(t => t.category === cat.id) as tool}
+                             <button class="studio-card" onclick={() => {
+                                const btn = document.getElementById(`tool-btn-${tool.id}`);
+                                if (btn) {
+                                   btn.click();
+                                   const panel = document.querySelector('.operations-panel-wrapper');
+                                   if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+                                }
+                             }}>
+                                <div class="studio-card-icon">{tool.icon}</div>
+                                <div class="studio-card-content">
+                                   <h4>{tool.title}</h4>
+                                   <p>{tool.description}</p>
+                                </div>
+                             </button>
+                           {/each}
+                        </div>
+                     </div>
+                   {/each}
                 </div>
-              {:else if appState.workspaceLayout === 'hero'}
-                <div class="hero-actions-layout">
-                  <DropZone ondrop={handleFilesDropped} />
-                  <div class="hero-quick-actions">
-                    <button class="hero-pill">[🗜️ Compress]</button>
-                    <button class="hero-pill">[📑 Merge]</button>
-                    <button class="hero-pill">[👁️ OCR]</button>
-                    <button class="hero-pill">[📝 Word]</button>
-                  </div>
-                  <GlobalCommandBar />
-                </div>
-              {/if}
+              </div>
             </div>
-            <div class="operations-panel-wrapper layout-{appState.workspaceLayout}">
+            <div class="operations-panel-wrapper layout-studio">
               <OperationsPanel />
             </div>
           </div>
@@ -645,35 +596,11 @@
     flex-direction: column;
   }
 
-  .layout-switcher {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .layout-btn {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    padding: 6px 12px;
-    border-radius: 6px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-  }
-  .layout-btn:hover {
-    background: var(--bg-primary);
-  }
-  .layout-btn.active {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    border-color: #3b82f6;
-  }
-
   .status-pills {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
-    justify-content: center;
+    justify-content: flex-start;
   }
   .status-pill {
     background: var(--bg-surface);
@@ -691,74 +618,12 @@
     width: 100%;
   }
 
-  .split-studio-layout {
-    display: flex;
-    flex-direction: row;
-    gap: 24px;
-    width: 100%;
-  }
-  .split-left {
-    width: 380px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    flex-shrink: 0;
-  }
-
-  .hero-actions-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .hero-quick-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .hero-pill {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    padding: 10px 20px;
-    border-radius: 20px;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  .hero-pill:hover {
-    border-color: var(--accent-primary, #3b82f6);
-    color: var(--accent-primary, #3b82f6);
-    transform: translateY(-2px);
-  }
-
-  /* Handle dynamic operations panel visibility */
-  .documents-layout:has(.layout-studio) .documents-view {
+  .documents-layout .documents-view {
     max-width: 100%;
   }
   .operations-panel-wrapper {
     display: flex;
     flex-shrink: 0;
-  }
-  /* In split mode, the operations panel acts as the right column. We make documents-view take flex 1, but we already have split-left fixed width, so we should make operations panel expand. Actually operations panel has fixed 320px width in its own style. We can leave it as is or expand it */
-
-  .documents-layout:has(.layout-split) .documents-view {
-    padding: 24px;
-    max-width: none;
-    flex: none;
-    width: 380px;
-  }
-  .documents-layout:has(.layout-split) .operations-panel-wrapper {
-    flex: 1;
-  }
-  /* Force operations-panel to fill wrapper in split mode */
-  :global(.layout-split .operations-panel) {
-    width: 100% !important;
-    max-width: none !important;
   }
 
   .studio-operations-grid {

@@ -331,23 +331,6 @@
             <p class="help-text">Leave blank to default to each document's source folder.</p>
           </div>
         </div>
-
-        <div class="setting-group">
-          <h4>Workspace Layout</h4>
-          <div class="setting-item">
-            <label for="workspaceLayout">Default Workspace Layout</label>
-            <select
-              id="workspaceLayout"
-              class="form-input"
-              value={appState.workspaceLayout}
-              onchange={(e) => appState.setWorkspaceLayout(e.currentTarget.value as any)}
-            >
-              <option value="studio">🎛️ Studio Hub (Enterprise Workstation)</option>
-              <option value="split">📑 Split Studio (Queue & Matrix)</option>
-              <option value="hero">⚡ Hero Actions (Minimalist)</option>
-            </select>
-          </div>
-        </div>
       </div>
 
     {:else if activeCategory === 'developer'}

@@ -47,22 +47,6 @@ describe('SettingsPanel', () => {
     appState.developerMode = false;
   });
 
-  it('changes workspace layout when dropdown is used', async () => {
-    render(SettingsPanel);
-
-    // Switch to General & Storage tab explicitly just in case
-    const genTab = screen.getByRole('button', { name: /General & Storage/i });
-    await fireEvent.click(genTab);
-
-    const layoutSelect = screen.getByLabelText(/Default Workspace Layout/i) as HTMLSelectElement;
-    expect(layoutSelect).not.toBeNull();
-
-    // Change to 'hero'
-    await fireEvent.change(layoutSelect, { target: { value: 'hero' } });
-
-    expect(appState.setWorkspaceLayout).toHaveBeenCalledWith('hero');
-  });
-
 
   it('renders developer mode toggle and toggles state', async () => {
     render(SettingsPanel);
