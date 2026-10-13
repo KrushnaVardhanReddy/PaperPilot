@@ -17,15 +17,55 @@ import { onMount } from 'svelte';
   let selectedCategory = $state('all');
   let activeTool = $state<ToolDefinition | null>(null);
   let isCollapsed = $state(false);
+  let panelWidth = $state(320);
+  let isDragging = $state(false);
 
   onMount(() => {
     const stored = localStorage.getItem('operations-panel-collapsed');
     if (stored === 'true') isCollapsed = true;
+
+    const storedWidth = localStorage.getItem('operations-panel-width');
+    if (storedWidth) {
+      const parsed = parseInt(storedWidth, 10);
+      if (!isNaN(parsed) && parsed >= 260 && parsed <= 700) {
+        panelWidth = parsed;
+      }
+    }
   });
 
   $effect(() => {
     localStorage.setItem('operations-panel-collapsed', String(isCollapsed));
   });
+
+  $effect(() => {
+    localStorage.setItem('operations-panel-width', String(panelWidth));
+  });
+
+  function startResize(e: MouseEvent) {
+    if (isCollapsed) return;
+    isDragging = true;
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const delta = startX - moveEvent.clientX;
+      const newWidth = Math.min(Math.max(startWidth + delta, 260), 700);
+      panelWidth = newWidth;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  function handleResizeDblClick() {
+    panelWidth = panelWidth > 380 ? 320 : 480;
+  }
 
   // Tool parameter states
   let splitPoints = $state('');
@@ -456,7 +496,24 @@ import { onMount } from 'svelte';
   }
 </script>
 
-<div class="operations-panel" class:collapsed={isCollapsed} id="operations-panel">
+<div
+  class="operations-panel"
+  class:collapsed={isCollapsed}
+  class:dragging={isDragging}
+  id="operations-panel"
+  style={!isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+>
+  {#if !isCollapsed}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="resize-handle"
+      id="operations-panel-resize-handle"
+      title="Drag to resize panel, double-click to toggle width"
+      onmousedown={startResize}
+      ondblclick={handleResizeDblClick}
+    ></div>
+  {/if}
+
   <button
     class="collapse-toggle"
     id="operations-panel-toggle"
@@ -882,6 +939,28 @@ import { onMount } from 'svelte';
     min-width: 32px !important;
   }
 
+  .operations-panel.dragging {
+    transition: none; /* smooth real-time drag without transition lag */
+    user-select: none;
+  }
+
+  .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 20;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .resize-handle:hover,
+  .operations-panel.dragging .resize-handle {
+    background: var(--accent-primary, #5e6ad2);
+  }
+
   .collapse-toggle {
     position: absolute;
     left: 6px;
@@ -915,10 +994,40 @@ import { onMount } from 'svelte';
     flex-shrink: 0;
   }
 
-  .context-bar { display:flex; gap:6px; padding:8px 12px 0; margin-bottom: 12px; }
-  .context-btn { flex:1; padding:6px 8px; border-radius:var(--border-radius-sm, 4px); font-size:0.8rem; font-weight:500; border:1px solid var(--border-color, #2a2a35); background:transparent; color:var(--text-secondary, #9ca3af); cursor:pointer; transition:all var(--transition-fast, 0.15s ease); white-space:nowrap; }
-  .context-btn.active { background:var(--accent-primary, #5e6ad2); color:#fff; border-color:var(--accent-primary, #5e6ad2); }
-  .context-btn:hover:not(.active) { background:var(--bg-surface-hover, rgba(255, 255, 255, 0.05)); color:var(--text-primary, #ffffff); }
+  .context-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 4px 0 0;
+    margin-bottom: 12px;
+    scrollbar-width: none; /* Firefox */
+  }
+  .context-bar::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+
+  .context-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color, #2a2a35);
+    background: transparent;
+    color: var(--text-secondary, #9ca3af);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    white-space: nowrap;
+  }
+  .context-btn.active {
+    background: var(--accent-primary, #5e6ad2);
+    color: #fff;
+    border-color: var(--accent-primary, #5e6ad2);
+  }
+  .context-btn:hover:not(.active) {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
+  }
 
   .search-box {
     position: relative;
