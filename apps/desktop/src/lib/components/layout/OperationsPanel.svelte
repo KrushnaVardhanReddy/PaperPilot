@@ -203,6 +203,8 @@ import { onMount } from 'svelte';
     }
   });
 
+  let applyToAllFiles = $state(true);
+
   async function handleRunOperation() {
     if (isRunning || !activeTool) return;
 
@@ -217,85 +219,92 @@ import { onMount } from 'svelte';
       return;
     }
 
+    const isBatchExecution = applyToAllFiles && (activeTool.rule?.isBatchable ?? false) && appState.documents.length > 1;
+
     isRunning = true;
     elapsedSeconds = 0;
     const timer = setInterval(() => { elapsedSeconds++; }, 1000);
 
     try {
-      const docIndex = appState.selectedDocumentIndex ?? 0;
-      const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : '';
-      const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : '';
-      const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
-      const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
-
-      const context: OperationContext = {
-        docName,
-        docPath,
-        docDir,
-        allDocumentPaths: appState.documentPaths,
-        allDocuments: appState.documents,
-        getOutputPath,
-        customOutputPath,
-        splitPoints,
-        deletePages,
-        extractPages,
-        rotateAngle,
-        watermarkText,
-        watermarkOrientation,
-        watermarkOpacity,
-        watermarkColor,
-        watermarkFontSize: 12,
-
-        password,
-        batesPrefix,
-        batesStart,
-        batesPadding,
-        ocrOutputFormat,
-        ocrLanguage: "eng",
-
-        cropBox,
-        pageNumberPosition: "bottom_right",
-        pageNumberStart: 1,
-
-        pageNumberFormat: "1",
-
-        convertPreset,
-        reorderList,
-        signCertPath,
-        headerText,
-        footerText,
-        metadataTitle,
-        compressQuality
-      };
-
-      const args = await buildOperationArgs(activeTool.id, context);
-      if (!args) return; // User cancelled file picker
-
       const toolName = resolveToolName(activeTool.id);
-
       appState.setLoading(true);
       const startTime = performance.now();
-      try {
-        const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+
+      if (isBatchExecution) {
+        // Run batch operation across all documents
+        const totalDocs = appState.documents.length;
+        let successCount = 0;
+        let failCount = 0;
+        const errors: string[] = [];
+
+        for (let i = 0; i < totalDocs; i++) {
+          const doc = appState.documents[i];
+          const docName = doc?.name || `document_${i + 1}.pdf`;
+          const docPath = appState.documentPaths[i] || docName;
+          const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+          const getDocOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
+          const context: OperationContext = {
+            docName,
+            docPath,
+            docDir,
+            allDocumentPaths: appState.documentPaths,
+            allDocuments: appState.documents,
+            getOutputPath: getDocOutputPath,
+            customOutputPath: '', // Auto per-doc naming in batch mode
+            splitPoints,
+            deletePages,
+            extractPages,
+            rotateAngle,
+            watermarkText,
+            watermarkOrientation,
+            watermarkOpacity,
+            watermarkColor,
+            watermarkFontSize: 12,
+            password,
+            batesPrefix,
+            batesStart,
+            batesPadding,
+            ocrOutputFormat,
+            ocrLanguage: "eng",
+            cropBox,
+            pageNumberPosition: "bottom_right",
+            pageNumberStart: 1,
+            pageNumberFormat: "1",
+            convertPreset,
+            reorderList,
+            signCertPath,
+            headerText,
+            footerText,
+            metadataTitle,
+            compressQuality
+          };
+
+          const args = await buildOperationArgs(activeTool.id, context);
+          if (!args) continue;
+
+          try {
+            const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+            const resObj = result as any;
+            if (resObj && resObj.success) {
+              successCount++;
+            } else {
+              failCount++;
+              errors.push(`${docName}: ${resObj?.message || 'Failed'}`);
+            }
+          } catch (err: any) {
+            failCount++;
+            errors.push(`${docName}: ${err?.message || String(err)}`);
+          }
+        }
+
         const durationMs = Math.round(performance.now() - startTime);
         const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
 
-        const resObj = result as any;
-        if (resObj && resObj.success) {
-          let msg = '';
-          if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
-            const textToCopy = resObj.data?.text || '';
-            if (navigator.clipboard && textToCopy) {
-              await navigator.clipboard.writeText(textToCopy);
-            }
-            msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
-          } else {
-            const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-            msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
-          }
+        if (failCount === 0) {
+          const msg = `✅ Batch ${activeTool.title} completed for all ${successCount} files!`;
           toastState.success(msg);
           jobsState.addJob(toolName, 'success', msg);
-
           lastExecution = {
             success: true,
             durationFormatted,
@@ -303,9 +312,117 @@ import { onMount } from 'svelte';
             timestamp: new Date(),
             message: msg
           };
-          executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
         } else {
-          const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+          const msg = `Batch finished: ${successCount} succeeded, ${failCount} failed.`;
+          toastState.error(msg, errors.slice(0, 2).join('; '));
+          jobsState.addJob(toolName, 'error', msg);
+          lastExecution = {
+            success: successCount > 0,
+            durationFormatted,
+            toolTitle: activeTool.title,
+            timestamp: new Date(),
+            message: msg
+          };
+        }
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+      } else {
+        // Single document execution
+        const docIndex = appState.selectedDocumentIndex ?? 0;
+        const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : '';
+        const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : '';
+        const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+        const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
+        const context: OperationContext = {
+          docName,
+          docPath,
+          docDir,
+          allDocumentPaths: appState.documentPaths,
+          allDocuments: appState.documents,
+          getOutputPath,
+          customOutputPath,
+          splitPoints,
+          deletePages,
+          extractPages,
+          rotateAngle,
+          watermarkText,
+          watermarkOrientation,
+          watermarkOpacity,
+          watermarkColor,
+          watermarkFontSize: 12,
+
+          password,
+          batesPrefix,
+          batesStart,
+          batesPadding,
+          ocrOutputFormat,
+          ocrLanguage: "eng",
+
+          cropBox,
+          pageNumberPosition: "bottom_right",
+          pageNumberStart: 1,
+
+          pageNumberFormat: "1",
+
+          convertPreset,
+          reorderList,
+          signCertPath,
+          headerText,
+          footerText,
+          metadataTitle,
+          compressQuality
+        };
+
+        const args = await buildOperationArgs(activeTool.id, context);
+        if (!args) return; // User cancelled file picker
+
+        try {
+          const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+          const durationMs = Math.round(performance.now() - startTime);
+          const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+
+          const resObj = result as any;
+          if (resObj && resObj.success) {
+            let msg = '';
+            if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+              const textToCopy = resObj.data?.text || '';
+              if (navigator.clipboard && textToCopy) {
+                await navigator.clipboard.writeText(textToCopy);
+              }
+              msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+            } else {
+              const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+              msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+            }
+            toastState.success(msg);
+            jobsState.addJob(toolName, 'success', msg);
+
+            lastExecution = {
+              success: true,
+              durationFormatted,
+              toolTitle: activeTool.title,
+              timestamp: new Date(),
+              message: msg
+            };
+            executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+          } else {
+            const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+            toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+            jobsState.addJob(toolName, 'error', formatted.headline);
+
+            lastExecution = {
+              success: false,
+              durationFormatted,
+              toolTitle: activeTool.title,
+              timestamp: new Date(),
+              message: formatted.headline
+            };
+            executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+          }
+        } catch (error) {
+          const durationMs = Math.round(performance.now() - startTime);
+          const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+          const formatted = formatUserFriendlyError(error, activeTool.title);
           toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
           jobsState.addJob(toolName, 'error', formatted.headline);
 
@@ -318,25 +435,9 @@ import { onMount } from 'svelte';
           };
           executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
         }
-      } catch (error) {
-        const durationMs = Math.round(performance.now() - startTime);
-        const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
-        const formatted = formatUserFriendlyError(error, activeTool.title);
-        toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
-        jobsState.addJob(toolName, 'error', formatted.headline);
-
-        lastExecution = {
-          success: false,
-          durationFormatted,
-          toolTitle: activeTool.title,
-          timestamp: new Date(),
-          message: formatted.headline
-        };
-        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
-      } finally {
-        appState.setLoading(false);
       }
     } finally {
+      appState.setLoading(false);
       isRunning = false;
       clearInterval(timer);
     }
@@ -558,7 +659,26 @@ import { onMount } from 'svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
+      {#if appState.documents.length > 1 && activeTool.rule?.isBatchable}
+        <div class="batch-scope-banner">
+          <div class="batch-scope-header">
+            <span class="batch-scope-icon">⚡</span>
+            <span class="batch-scope-title">Execution Mode</span>
+          </div>
+          <div class="batch-scope-options">
+            <label class="scope-option">
+              <input type="radio" name="batchScope" checked={applyToAllFiles} onchange={() => applyToAllFiles = true} />
+              <span>Apply to all <strong>{appState.documents.length} files</strong> in queue</span>
+            </label>
+            <label class="scope-option">
+              <input type="radio" name="batchScope" checked={!applyToAllFiles} onchange={() => applyToAllFiles = false} />
+              <span>Current file only ({appState.documents[appState.selectedDocumentIndex ?? 0]?.name || 'active'})</span>
+            </label>
+          </div>
+        </div>
+      {/if}
+
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' ? 'Output folder:' : 'Output file:'}
@@ -587,6 +707,8 @@ import { onMount } from 'svelte';
           {#if isRunning}
             <span class="spinner" aria-hidden="true"></span>
             Running...
+          {:else if applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1}
+            Run Batch {activeTool.title} ({appState.documents.length} files)
           {:else}
             Run {activeTool.title}
           {/if}
@@ -1248,5 +1370,54 @@ import { onMount } from 'svelte';
 
   .enable-pack-btn:hover {
     background: var(--accent-hover, #6e79d6);
+  }
+
+  /* Batch Scope Banner */
+  .batch-scope-banner {
+    background: rgba(94, 106, 210, 0.08);
+    border: 1px solid rgba(94, 106, 210, 0.25);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .batch-scope-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .batch-scope-icon {
+    font-size: 13px;
+  }
+
+  .batch-scope-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-primary, #818cf8);
+  }
+
+  .batch-scope-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .scope-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, #cbd5e1);
+    cursor: pointer;
+  }
+
+  .scope-option input[type="radio"] {
+    accent-color: var(--accent-primary, #5e6ad2);
+    cursor: pointer;
   }
 </style>
