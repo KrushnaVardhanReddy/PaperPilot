@@ -9,15 +9,15 @@
 
 | Tool Name | Status | UI Execution Latency (ms) | Error Notes |
 |-----------|--------|---------------------------|-------------|
-| `pdf_merge` | ✅ PASS | 1807.83 |  |
-| `pdf_split` | ✅ PASS | 874.65 |  |
-| `pdf_rotate` | ✅ PASS | 845.17 |  |
-| `pdf_delete_pages` | ✅ PASS | 705.71 |  |
-| `pdf_reorder_pages` | ✅ PASS | 728.30 |  |
-| `pdf_compress` | ✅ PASS | 771.98 |  |
-| `pdf_watermark` | ✅ PASS | 792.61 |  |
-| `pdf_ocr` | ✅ PASS | 646.43 |  |
-| `pdf_extract_text` | ✅ PASS | 776.44 |  |
-| `pdf_to_docx` | ✅ PASS | 701.14 |  |
-| `excel_to_json` | ✅ PASS | 779.87 |  |
-| `excel_to_csv` | ✅ PASS | 764.41 |  |
+| `pdf_merge` | ✅ PASS | 1734.37 |  |
+| `pdf_split` | ✅ PASS | 724.67 |  |
+| `pdf_rotate` | ✅ PASS | 683.60 |  |
+| `pdf_delete_pages` | ✅ PASS | 649.52 |  |
+| `pdf_reorder_pages` | ✅ PASS | 720.00 |  |
+| `pdf_compress` | ✅ PASS | 648.61 |  |
+| `pdf_watermark` | ✅ PASS | 682.19 |  |
+| `pdf_ocr` | ✅ PASS | 698.76 |  |
+| `pdf_extract_text` | ✅ PASS | 679.62 |  |
+| `pdf_to_docx` | ✅ PASS | 758.16 |  |
+| `excel_to_json` | ✅ PASS | 649.49 |  |
+| `excel_to_csv` | ✅ PASS | 736.25 |  |

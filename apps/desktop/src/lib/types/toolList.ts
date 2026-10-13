@@ -2,25 +2,25 @@ import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
   // Quick / Popular
-  { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', context: 'pdf', tags: ['shrink', 'size', 'optimize'] },
-  { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', context: 'pdf', tags: ['combine', 'join', 'append'] },
-  { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', context: 'pdf', tags: ['orientation', 'turn'] },
-  { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', context: 'pdf', tags: ['diff', 'compare', 'difference'] },
-  { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', context: 'pdf', tags: ['scan', 'text', 'extract'] },
-  { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', context: 'pdf', tags: ['word', 'docx', 'convert', 'export'] },
+  { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', context: 'pdf', tags: ['shrink', 'size', 'optimize'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
+  { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', context: 'pdf', tags: ['combine', 'join', 'append'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
+  { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', context: 'pdf', tags: ['orientation', 'turn'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
+  { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', context: 'pdf', tags: ['diff', 'compare', 'difference'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
+  { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', context: 'pdf', tags: ['scan', 'text', 'extract'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
+  { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', context: 'pdf', tags: ['word', 'docx', 'convert', 'export'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
 
   // Page Operations
-  { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', context: 'pdf', tags: ['combine', 'join', 'concat'] },
-  { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', context: 'pdf', tags: ['divide', 'cut', 'separate'] },
-  { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', context: 'pdf', tags: ['diff', 'compare'] },
+  { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', context: 'pdf', tags: ['combine', 'join', 'concat'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
+  { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', context: 'pdf', tags: ['divide', 'cut', 'separate'], rule: { supportedExtensions: ['pdf'], maxDocuments: 1 } },
+  { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', context: 'pdf', tags: ['diff', 'compare'], rule: { supportedExtensions: ['pdf'], minDocuments: 2 } },
   { id: 'extract_pages', title: 'Extract Pages', description: 'Pull specific pages into a new document', icon: '📤', category: 'pages', context: 'pdf', tags: ['extract', 'select', 'isolate'] },
-  { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', context: 'pdf', tags: ['orientation', 'turn', 'flip'] },
+  { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', context: 'pdf', tags: ['orientation', 'turn', 'flip'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
 
   // Edit & Optimize
-  { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', context: 'pdf', tags: ['stamp', 'text', 'brand', 'copyright'] },
+  { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', context: 'pdf', tags: ['stamp', 'text', 'brand', 'copyright'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
   { id: 'flatten', title: 'Flatten Annotations', description: 'Bake annotations & forms permanently into page graphics', icon: '📄', category: 'edit', context: 'pdf', tags: ['bake', 'lock', 'rasterize'] },
 
-  { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', context: 'pdf', tags: ['shrink', 'size', 'dpi'] },
+  { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', context: 'pdf', tags: ['shrink', 'size', 'dpi'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
   { id: 'repair', title: 'Repair PDF', description: 'Recover and rebuild corrupted or unreadable documents', icon: '🔧', category: 'optimize', context: 'pdf', tags: ['corrupt', 'fix', 'recover'] },
 
   // Security
@@ -29,29 +29,29 @@ export const allTools: ToolDefinition[] = [
   { id: 'metadata', title: 'Edit / Sanitize Metadata', description: 'Inspect and clean author, title, and creation timestamps', icon: '📋', category: 'security', context: 'pdf', tags: ['sanitize', 'privacy', 'info'] },
 
   // Convert & Export
-  { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', context: 'pdf', tags: ['word', 'docx'] },
+  { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', context: 'pdf', tags: ['word', 'docx'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
   { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', context: 'pdf', tags: ['excel', 'sheet', 'table'] },
   { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', context: 'pdf', tags: ['llm', 'markdown', 'md'] },
   { id: 'pdf_to_html', title: 'PDF to HTML', description: 'Export document as responsive, styled HTML5 web page', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'export', 'responsive'] },
   { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', context: 'pdf', tags: ['text', 'dump', 'raw'] },
 
   // AI & Intelligence
-  { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', context: 'pdf', tags: ['ocr', 'scan', 'tesseract'] },
+  { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', context: 'pdf', tags: ['ocr', 'scan', 'tesseract'], rule: { supportedExtensions: ['pdf'], isBatchable: true } },
   { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', context: 'pdf', tags: ['images', 'photos', 'export'] },
 
   // Stirling Parity Tools
   { id: 'remove_blank', title: 'Remove Blank Pages', description: 'Remove empty or nearly empty pages', icon: '🧹', category: 'pages', context: 'pdf', tags: ['blank', 'empty', 'clean', 'delete'] },
   { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', context: 'pdf', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
-  { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', context: 'pdf', tags: ['markdown', 'convert', 'pdf', 'generate'] },
+  { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', context: 'pdf', tags: ['markdown', 'convert', 'pdf', 'generate'], rule: { supportedExtensions: ['*'], minDocuments: 0 } },
   { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'convert', 'pdf'] },
-  { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
-  { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', context: 'pdf', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
-  { id: 'office_modernize_legacy', title: 'Modernize Legacy Office', description: 'Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format', icon: '🔄', category: 'convert', context: 'office', tags: ['legacy', 'doc', 'xls', 'ppt', 'modernize', 'upgrade'] },
+  { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['image', 'jpg', 'png', 'combine', 'photo'], rule: { supportedExtensions: ['*'], minDocuments: 0 } },
+  { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', context: 'pdf', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'], rule: { supportedExtensions: ['*'], minDocuments: 0 } },
+  { id: 'office_modernize_legacy', title: 'Modernize Legacy Office', description: 'Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format', icon: '🔄', category: 'convert', context: 'office', tags: ['legacy', 'doc', 'xls', 'ppt', 'modernize', 'upgrade'], rule: { supportedExtensions: ['doc', 'xls', 'ppt'], requiredPack: 'office', isBatchable: true } },
 
   // Additional 44 Tools Required Additions
   // Organize & Pages
-  { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', context: 'pdf', tags: ['delete', 'remove', 'pages'] },
-  { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', context: 'pdf', tags: ['reorder', 'sort', 'arrange'] },
+  { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', context: 'pdf', tags: ['delete', 'remove', 'pages'], rule: { supportedExtensions: ['pdf'], maxDocuments: 1 } },
+  { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', context: 'pdf', tags: ['reorder', 'sort', 'arrange'], rule: { supportedExtensions: ['pdf'], maxDocuments: 1 } },
   { id: 'burst', title: 'Burst PDF', description: 'Split document into single pages', icon: '💥', category: 'pages', context: 'pdf', tags: ['burst', 'split', 'single'] },
   { id: 'crop', title: 'Crop Pages', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', context: 'pdf', tags: ['crop', 'trim', 'cut'] },
 
@@ -82,10 +82,10 @@ export const allTools: ToolDefinition[] = [
   { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', context: 'pdf', tags: ['csv', 'excel', 'convert'] },
 
   // Office Tools
-  { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'markdown', 'docx', 'xlsx', 'pptx', 'convert'] },
-  { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'] },
-  { id: 'excel_to_json', title: 'Excel to JSON', description: 'Convert spreadsheet sheets into structured JSON data', icon: '📊', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'json', 'convert'] },
-  { id: 'excel_to_csv', title: 'Excel to CSV', description: 'Export spreadsheet sheet to standard RFC 4180 CSV', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'csv', 'export'] }
+  { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'markdown', 'docx', 'xlsx', 'pptx', 'convert'], rule: { supportedExtensions: ['docx', 'xlsx', 'pptx'], requiredPack: 'office', isBatchable: true } },
+  { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'], rule: { supportedExtensions: ['docx', 'xlsx', 'pptx'], requiredPack: 'office', isBatchable: true } },
+  { id: 'excel_to_json', title: 'Excel to JSON', description: 'Convert spreadsheet sheets into structured JSON data', icon: '📊', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'json', 'convert'], rule: { supportedExtensions: ['xlsx', 'xls', 'csv'], requiredPack: 'office', isBatchable: true } },
+  { id: 'excel_to_csv', title: 'Excel to CSV', description: 'Export spreadsheet sheet to standard RFC 4180 CSV', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'csv', 'export'], rule: { supportedExtensions: ['xlsx', 'xls', 'csv'], requiredPack: 'office', isBatchable: true } }
 ];
 
 export const categories = [

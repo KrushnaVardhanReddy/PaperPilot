@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ToolDefinition } from '$lib/types/tools';
   import { allTools, allCategories } from '$lib/types/toolList';
+  import { rankToolsByContext } from '$lib/services/toolRegistry';
 
 
   async function safeInvoke(cmd: string, args?: any): Promise<any> {
@@ -298,6 +299,13 @@
   let activeTool = $state('none');
   let annotations = $state<Annotation[]>([]);
 
+  let activePackIds = $derived(
+    appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
+  );
+  let ranked = $derived(
+    rankToolsByContext(allTools, appState.documents, activePackIds)
+  );
+
   $effect(() => {
     let objectUrl = '';
     let isAborted = false;
@@ -453,6 +461,39 @@
 
                 <!-- Studio Hub Operations Grid -->
                 <div class="studio-operations-grid">
+                   {#if appState.documents.length > 0 && ranked.recommended.length > 0}
+                     <div class="studio-category">
+                        <h3>⚡ Recommended</h3>
+                        <div class="studio-cards">
+                           {#each ranked.recommended as tool}
+                             <button class="studio-card" onclick={() => {
+                                const btn = document.getElementById(`tool-btn-${tool.id}`);
+                                if (btn) {
+                                   btn.click();
+                                   const panel = document.querySelector('.operations-panel-wrapper');
+                                   if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+                                }
+                             }}>
+                                <div class="studio-card-icon">{tool.icon}</div>
+                                <div class="studio-card-content">
+                                   <h4>
+                                      {tool.title}
+                                      {#if appState.documents.length >= 2}
+                                        {#if tool.rule?.minDocuments === 2}
+                                          <span class="smart-badge-studio">Multi-File Action</span>
+                                        {:else if tool.rule?.isBatchable}
+                                          <span class="smart-badge-studio">Batch Action</span>
+                                        {/if}
+                                      {/if}
+                                   </h4>
+                                   <p>{tool.description}</p>
+                                </div>
+                             </button>
+                           {/each}
+                        </div>
+                     </div>
+                   {/if}
+
                    {#each allCategories.filter(c => c.id !== 'all') as cat}
                      <div class="studio-category">
                         <h3>{cat.icon} {cat.title}</h3>
@@ -696,5 +737,17 @@
   .clear-btn:hover {
     background: rgba(239, 68, 68, 0.2);
   }
-
+  .smart-badge-studio {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    vertical-align: middle;
+  }
 </style>
