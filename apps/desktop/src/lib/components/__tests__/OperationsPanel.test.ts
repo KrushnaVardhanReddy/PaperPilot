@@ -15,13 +15,24 @@ describe('OperationsPanel', () => {
     // Check if the search input is present
     expect(screen.getByPlaceholderText('Search tools...')).toBeInTheDocument();
 
-    // Check if category headers are visible
-    expect(screen.getAllByText('Quick Actions').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Page Management').length).toBeGreaterThan(0);
+    // With context Filter set to 'recommended' initially and no files, it should show creation tools in search-results-list
+    // Click "All" context chip to test categories
+    const allChip = screen.getByText(/All Tools/);
+    fireEvent.click(allChip);
+
+    // Check if category headers are visible after clicking All Tools
+    waitFor(() => {
+       expect(screen.getAllByText('Quick Actions').length).toBeGreaterThan(0);
+       expect(screen.getAllByText('Page Management').length).toBeGreaterThan(0);
+    });
   });
 
   it('shows correct parameters when switching to an operation', async () => {
     render(OperationsPanel);
+
+    // Switch to All Tools to find split/rotate easily
+    const allChip = screen.getByText(/All Tools/);
+    await fireEvent.click(allChip);
 
     // Click on the split tool card
     const splitButton = screen.getAllByText('Split PDF')[0].closest('button');

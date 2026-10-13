@@ -8,7 +8,7 @@
   import type { ToolDefinition } from "$lib/types/tools";
   import { allTools, categories, allCategories } from "$lib/types/toolList";
 
-  import { resolveToolName } from '$lib/services/toolRegistry';
+  import { resolveToolName, rankToolsByContext } from '$lib/services/toolRegistry';
 import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
 import { onMount } from 'svelte';
@@ -73,18 +73,45 @@ import { onMount } from 'svelte';
   });
 
   // Filter tools based on search query
+  let activePackIds = $derived(
+    appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
+  );
+
+  let ranked = $derived(
+    rankToolsByContext(allTools, appState.documents, activePackIds)
+  );
+
+  let contextFilter = $state('recommended'); // 'recommended', 'all', 'pdf', 'office', 'ai'
+
+  $effect(() => {
+    if (appState.documents.length === 0 && contextFilter === 'recommended') {
+      // Keep it as recommended, which now shows creation tools
+    }
+  });
+
+  // Filter tools based on search query
   let filteredTools = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
-    let tools = allTools.filter(t => t.context === toolContext);
+    let tools: ToolDefinition[] = [];
 
     if (q) {
-      tools = tools.filter(t =>
+      tools = allTools.filter(t =>
         t.title.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
         t.tags.some(tag => tag.toLowerCase().includes(q))
       );
-    } else if (selectedCategory !== 'all') {
-      tools = tools.filter(t => t.category === selectedCategory);
+    } else {
+       if (contextFilter === 'recommended') {
+         tools = ranked.recommended;
+       } else if (contextFilter === 'all') {
+         tools = allTools;
+       } else if (contextFilter === 'pdf') {
+         tools = allTools.filter(t => t.context === 'pdf');
+       } else if (contextFilter === 'office') {
+         tools = allTools.filter(t => t.context === 'office');
+       } else if (contextFilter === 'ai') {
+         tools = allTools.filter(t => t.context === 'ai');
+       }
     }
     return tools;
   });
@@ -579,21 +606,23 @@ import { onMount } from 'svelte';
   {:else}
     <!-- DIRECTORY MODE (STIRLING PDF STYLE) -->
     <div class="panel-header">
-      <!-- Context Switcher Bar -->
-      <div class="context-bar" role="tablist" aria-label="File type context">
+      <!-- Context Filter Chip Bar -->
+      <div class="context-bar" role="tablist" aria-label="Filter context">
         {#each [
-          { id: 'pdf', label: 'PDF Tools', icon: '📄' },
-          { id: 'office', label: 'Office Tools', icon: '📁' },
-          { id: 'ai', label: 'AI Tools', icon: '🤖' }
+          { id: 'recommended', label: `⚡ Recommended (${ranked.recommended.length})` },
+          { id: 'all', label: `All Tools (${allTools.length})` },
+          { id: 'pdf', label: 'PDF' },
+          { id: 'office', label: 'Office' },
+          { id: 'ai', label: 'AI & OCR' }
         ] as ctx (ctx.id)}
           <button
             class="context-btn"
-            class:active={toolContext === ctx.id}
+            class:active={contextFilter === ctx.id}
             role="tab"
-            aria-selected={toolContext === ctx.id}
-            onclick={() => { toolContext = ctx.id as typeof toolContext; selectedCategory = 'all'; searchQuery = ''; }}
+            aria-selected={contextFilter === ctx.id}
+            onclick={() => { contextFilter = ctx.id; searchQuery = ''; }}
             id={`context-btn-${ctx.id}`}
-          >{ctx.icon} {ctx.label}</button>
+          >{ctx.label}</button>
         {/each}
       </div>
 
@@ -611,24 +640,53 @@ import { onMount } from 'svelte';
         {/if}
       </div>
 
-      <!-- Category Filter Pills -->
-      <div class="category-pills">
-        {#each allCategories as cat}
-          <button
-            class="pill-btn {selectedCategory === cat.id ? 'active' : ''}"
-            onclick={() => selectedCategory = cat.id}
-          >
-            {cat.icon} {cat.title}
-          </button>
-        {/each}
-      </div>
+      {#if contextFilter === 'all' || contextFilter === 'pdf' || contextFilter === 'office' || contextFilter === 'ai'}
+        <!-- Category Filter Pills -->
+        <div class="category-pills">
+          {#each allCategories as cat}
+            <button
+              class="pill-btn {selectedCategory === cat.id ? 'active' : ''}"
+              onclick={() => selectedCategory = cat.id}
+            >
+              {cat.icon} {cat.title}
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <div class="panel-content">
-      {#if searchQuery.trim() || selectedCategory !== 'all'}
+      <!-- Missing Pack Warning -->
+      {#if ranked.packLocked.length > 0 && contextFilter === 'recommended'}
+        {#each ranked.packLocked as lockedTool}
+          <div class="pack-locked-card">
+            <span class="tool-card-icon">{lockedTool.tool.icon}</span>
+            <div class="tool-card-info">
+              <span class="tool-card-title" style="opacity: 0.6;">{lockedTool.tool.title}</span>
+              <span class="tool-card-desc">📦 Requires {lockedTool.missingPack} Pack</span>
+            </div>
+            <button class="enable-pack-btn" onclick={(e) => {
+               e.stopPropagation();
+               appState.toggleFeaturePack(lockedTool.missingPack, true);
+            }}>
+               Enable Pack
+            </button>
+          </div>
+        {/each}
+      {/if}
+
+      {#if searchQuery.trim() || selectedCategory !== 'all' || contextFilter === 'recommended'}
         <!-- Search Results View -->
         <div class="search-results-list">
-          <span class="category-header">{searchQuery.trim() ? 'Search Results' : allCategories.find(c => c.id === selectedCategory)?.title} ({filteredTools.length})</span>
+          <span class="category-header">
+             {#if searchQuery.trim()}
+                Search Results ({filteredTools.length})
+             {:else if contextFilter === 'recommended'}
+                Recommended for Selection ({filteredTools.length})
+             {:else}
+                {allCategories.find(c => c.id === selectedCategory)?.title} ({filteredTools.length})
+             {/if}
+          </span>
           {#if filteredTools.length === 0}
             <div class="empty-state">No matching tools found</div>
           {:else}
@@ -636,7 +694,16 @@ import { onMount } from 'svelte';
               <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                 <span class="tool-card-icon">{tool.icon}</span>
                 <div class="tool-card-info">
-                  <span class="tool-card-title">{tool.title}</span>
+                  <span class="tool-card-title">
+                    {tool.title}
+                    {#if appState.documents.length >= 2}
+                      {#if tool.rule?.minDocuments === 2}
+                        <span class="smart-badge">Multi-File Action</span>
+                      {:else if tool.rule?.isBatchable}
+                        <span class="smart-badge">Batch Action ({appState.documents.length} files)</span>
+                      {/if}
+                    {/if}
+                  </span>
                   <span class="tool-card-desc">{tool.description}</span>
                 </div>
               </button>
@@ -1141,5 +1208,45 @@ import { onMount } from 'svelte';
 
   .output-path-input:focus {
     color: var(--text-primary, #ffffff);
+  }
+
+  .smart-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    vertical-align: middle;
+  }
+
+  .pack-locked-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--border-radius-sm, 4px);
+    width: 100%;
+  }
+
+  .enable-pack-btn {
+    margin-left: auto;
+    padding: 4px 8px;
+    font-size: 11px;
+    background: var(--accent-primary, #5e6ad2);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .enable-pack-btn:hover {
+    background: var(--accent-hover, #6e79d6);
   }
 </style>
