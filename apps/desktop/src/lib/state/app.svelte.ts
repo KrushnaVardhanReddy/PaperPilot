@@ -6,7 +6,7 @@ const MAX_OPEN_TABS = 8;
 export type WorkspaceLayoutMode = 'studio' | 'split' | 'hero';
 
 export class AppState {
-  activeTab = $state('home');
+  activeTab = $state('documents');
   isLoading = $state(false);
   theme = $state('dark');
   documents = $state<File[]>([]);
