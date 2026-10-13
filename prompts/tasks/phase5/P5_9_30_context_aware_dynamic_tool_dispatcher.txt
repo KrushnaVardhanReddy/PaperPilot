@@ -1,0 +1,86 @@
+Task: Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering [Spec 054]
+
+Objective:
+Implement an intelligent, context-aware tool recommendation and filtering system across the PaperPilot Desktop interface:
+1. Dynamically adapt available/spotlighted tools based on uploaded document types (e.g. spotlight Excel tools when `.xlsx` is dropped, spotlight Merge/Compare when >= 2 PDFs are dropped).
+2. Filter tools according to installed Feature Packs (e.g., Office Conversion Pack, OCR Models), displaying smart in-place 1-click install/enable prompts rather than obscure failures.
+3. Add a contextual filter chip bar (`[ ⚡ Recommended ]`, `[ All Tools ]`, `[ PDF ]`, `[ Office ]`, `[ AI & OCR ]`) above the tool grid.
+
+Context & Architecture:
+- Read `specs/054-context-aware-dynamic-tool-dispatcher/spec.md` for architectural design and constraints.
+- Framework: Svelte 5 with runes (`$state`, `$derived`, `$props`).
+- Services: `apps/desktop/src/lib/services/toolRegistry.ts`.
+- Components: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` and Home workspace views.
+- Concurrency Constraint: Max 6 cores. All cargo commands must use `-j 6`.
+- Backward Compatibility: Must maintain existing DOM IDs and classes so Playwright tests pass 100%.
+
+================================================================================
+PART 1: TOOL REGISTRY CAPABILITY RULES & RANKING ENGINE
+================================================================================
+Files to modify / create:
+- `apps/desktop/src/lib/services/toolRegistry.ts`:
+  1. Add `ToolConditionRule` to `ToolDefinition`:
+     ```ts
+     export interface ToolConditionRule {
+       supportedExtensions: string[]; // ['pdf'], ['xlsx', 'xls', 'csv'], ['docx'], or ['*']
+       minDocuments?: number;         // e.g. merge requires >= 2
+       maxDocuments?: number;
+       requiredPack?: 'core' | 'office' | 'ocr' | 'dev';
+     }
+     ```
+  2. Populate `rule` metadata for all tools in `allTools` list:
+     - `compress`, `split`, `rotate`, `watermark`, `ocr`: `supportedExtensions: ['pdf']`
+     - `merge`, `compare`: `supportedExtensions: ['pdf']`, `minDocuments: 2`
+     - `excel_to_json`, `excel_to_csv`: `supportedExtensions: ['xlsx', 'xls', 'csv']`, `requiredPack: 'office'`
+     - `office_to_markdown`, `office_extract_text`: `supportedExtensions: ['docx', 'xlsx', 'pptx']`, `requiredPack: 'office'`
+     - `json_to_pdf`, `img_to_pdf`, `md_to_pdf`: `minDocuments: 0`, `supportedExtensions: ['*']`
+  3. Implement ranking function:
+     ```ts
+     export interface RankedToolsResult {
+       recommended: ToolDefinition[];
+       available: ToolDefinition[];
+       packLocked: { tool: ToolDefinition; missingPack: string }[];
+     }
+
+     export function rankToolsByContext(
+       tools: ToolDefinition[],
+       documents: File[],
+       activePacks: string[]
+     ): RankedToolsResult
+     ```
+     - Rules:
+       * If `.xlsx`/`.xls` present: `excel_to_json` & `excel_to_csv` get top score.
+       * If >= 2 PDFs present: `merge` and `compare` get top score.
+       * If 1 PDF present: `compress`, `split`, `rotate`, `ocr`, `pdf_to_docx` get top score.
+       * If no files: creation tools get recommended.
+
+================================================================================
+PART 2: OPERATIONS PANEL & WORKSPACE UI INTEGRATION
+================================================================================
+Files to modify:
+- `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+  1. Integrate `rankToolsByContext` reactively using Svelte 5 runes:
+     ```ts
+     let ranked = $derived(rankToolsByContext(allTools, appState.documents, appState.featurePacks.filter(p => p.is_enabled).map(p => p.id)));
+     ```
+  2. Add Context Filter Chip Bar:
+     - Chips: `⚡ Recommended (${ranked.recommended.length})`, `All (${allTools.length})`, `PDF`, `Office`, `AI`.
+     - When `recommended` filter is active (default when files are loaded), display the recommended tools with a subtle green badge `Recommended for your file`.
+  3. Feature Pack Locked Tool Cards:
+     - If a tool is in `ranked.packLocked` (e.g. Office tool when Office Pack is disabled):
+     - Display a clean banner:
+       `📦 Requires ${packName} Pack • [Enable Pack in 1-Click]`
+     - Clicking calls `appState.toggleFeaturePack(missingPack, true)` to seamlessly enable it.
+
+================================================================================
+PART 3: TESTS & VERIFICATION
+================================================================================
+1. Unit Tests:
+   - Add unit test suite `apps/desktop/src/lib/services/toolRegistryRanking.test.ts` verifying:
+     * Ranking for Excel documents.
+     * Ranking for multi-PDF documents (>= 2).
+     * Missing feature pack detection and locked status.
+   - Run `pnpm --dir apps/desktop test` (all tests must pass).
+2. Playwright E2E:
+   - Run `pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts` (12/12 pass).
+   - Run `pnpm --dir apps/desktop exec playwright test tests/e2e_ui.spec.ts` (pass).
