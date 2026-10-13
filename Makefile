@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell
 
 # Default target
 all: format lint test-all build
@@ -220,3 +220,32 @@ bench-penta-e2e:
 # Run Phase 5.9.10: Local AI Agent Legal Discovery Demo
 demo-legal-discovery:
 	./scripts/run_ai_legal_demo.sh
+
+# ==============================================================================
+# Docker Container Targets (Multi-Interface Testing for Any Machine)
+# ==============================================================================
+
+# Build the all-interface Docker image
+docker-build:
+	@mkdir -p data
+	docker compose build
+
+# Start the PaperPilot container in background (Gateway + Swagger on :7823)
+docker-up:
+	@mkdir -p data
+	docker compose up -d
+	@echo "\nPaperPilot is running!"
+	@echo "👉 Open Swagger UI: http://localhost:7823/swagger-ui"
+	@echo "👉 Drop files to test into: ./data/"
+
+# Stop the PaperPilot container
+docker-down:
+	docker compose down
+
+# Stream container runtime logs
+docker-logs:
+	docker compose logs -f
+
+# Open interactive shell inside the container to test CLI & MCP
+docker-shell:
+	docker compose exec paperpilot bash || docker exec -it paperpilot bash
