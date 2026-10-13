@@ -407,19 +407,33 @@ pub fn hash_file<P: AsRef<Path>>(path: P) -> Result<String> {
 }
 
 pub fn get_cli_bin() -> PathBuf {
-    let release = PathBuf::from("/app/target/release/paperpilot");
-    if release.exists() {
-        release
-    } else {
-        PathBuf::from("/app/target/debug/paperpilot")
+    let candidates = [
+        PathBuf::from("/app/target/release/paperpilot"),
+        PathBuf::from("/app/target/debug/paperpilot"),
+        PathBuf::from("target/release/paperpilot"),
+        PathBuf::from("target/debug/paperpilot"),
+        PathBuf::from("target/release/paperpilot-cli"),
+        PathBuf::from("target/debug/paperpilot-cli"),
+    ];
+    for p in &candidates {
+        if p.exists() {
+            return p.clone();
+        }
     }
+    PathBuf::from("target/debug/paperpilot")
 }
 
 pub fn get_mcp_bin() -> PathBuf {
-    let release = PathBuf::from("/app/target/release/paperpilot-mcp");
-    if release.exists() {
-        release
-    } else {
-        PathBuf::from("/app/target/debug/paperpilot-mcp")
+    let candidates = [
+        PathBuf::from("/app/target/release/paperpilot-mcp"),
+        PathBuf::from("/app/target/debug/paperpilot-mcp"),
+        PathBuf::from("target/release/paperpilot-mcp"),
+        PathBuf::from("target/debug/paperpilot-mcp"),
+    ];
+    for p in &candidates {
+        if p.exists() {
+            return p.clone();
+        }
     }
+    PathBuf::from("target/debug/paperpilot-mcp")
 }
