@@ -301,7 +301,13 @@ pub async fn handle_tool(
 
     let mut request = CallToolRequestParams::default();
 
-    let mut resolved_name = if tool_name.starts_with("pdf_") {
+    let mut resolved_name = if tool_name.starts_with("pdf_")
+        || tool_name == "excel_to_json"
+        || tool_name == "excel_to_csv"
+        || tool_name == "json_to_pdf"
+        || tool_name == "workspace_search"
+        || tool_name.starts_with("office_")
+    {
         tool_name.clone()
     } else {
         format!("pdf_{}", tool_name)

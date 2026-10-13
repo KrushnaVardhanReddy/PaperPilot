@@ -366,6 +366,36 @@ impl TestExecutionResult {
                 "WasmPdfEngine.convert_csv(csvBytes)",
                 "POST /api/v1/convert/excel"
             ),
+            "excel_to_json" => (
+                "office excel-to-json --input tests/e2e_fixtures/real/test.xlsx",
+                r#"{"input": "tests/e2e_fixtures/real/test.xlsx"}"#,
+                "OfficeEngine.excel_to_json(bytes)",
+                "/api/v1/office/excel-to-json"
+            ),
+            "excel_to_csv" => (
+                "office excel-to-csv --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/table.csv",
+                r#"{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/table.csv"}"#,
+                "OfficeEngine.excel_to_csv(bytes)",
+                "/api/v1/office/excel-to-csv"
+            ),
+            "pdf_rag_chunks" => (
+                "rag-chunks --input tests/e2e_fixtures/real/single_page.pdf",
+                r#"{"input": "tests/e2e_fixtures/real/single_page.pdf"}"#,
+                "WasmPdfEngine.rag_chunks(pdfBytes)",
+                "/api/v1/pdf/tools/pdf_rag_chunks"
+            ),
+            "pdf_to_html" => (
+                "convert --input tests/e2e_fixtures/real/single_page.pdf --format html --output tests/e2e_fixtures/out/penta_e2e/doc.html",
+                r#"{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"}"#,
+                "WasmPdfEngine.convert(pdfBytes, 'html')",
+                "/api/v1/convert/html"
+            ),
+            "workspace_search" => (
+                "search --query 'test' --dir tests/e2e_fixtures/real",
+                r#"{"query": "test", "dir": "tests/e2e_fixtures/real"}"#,
+                "WorkspaceSearch.search('test')",
+                "/api/v1/search/workspace_search"
+            ),
             _ => (
                 "process --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/out.pdf --json",
                 r#"{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.pdf"}"#,
@@ -391,7 +421,11 @@ impl TestExecutionResult {
                 )
             }
             InterfaceType::Api => {
-                format!("curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/{} -H 'Content-Type: application/json' -d '{}'", endpoint, mcp_args)
+                if endpoint.starts_with('/') {
+                    format!("curl -s -X POST http://127.0.0.1:7823{} -H 'Content-Type: application/json' -d '{}'", endpoint, mcp_args)
+                } else {
+                    format!("curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/{} -H 'Content-Type: application/json' -d '{}'", endpoint, mcp_args)
+                }
             }
             InterfaceType::Wasm => wasm_call.to_string(),
             InterfaceType::CloudflareEdge => edge_call.to_string(),

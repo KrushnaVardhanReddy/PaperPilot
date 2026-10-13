@@ -5033,7 +5033,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         latency_ms: elapsed.as_millis() as f64,
     });
 
-    gateway.stop().await;
     println!(
         "Completed conversion tests: {} assertions evaluated",
         results.len()
@@ -5467,5 +5466,6 @@ pub async fn run_conversions_suite() -> Result<Vec<TestExecutionResult>> {
         });
     }
 
+    gateway.stop().await;
     Ok(results)
 }
