@@ -189,16 +189,22 @@ impl PdfOperation for OcrOperationImpl {
 
                     // Check if we have image(s) to process
                     if !loaded_strips.is_empty() {
-                        // Stitch all vertical strips into one full-page canvas
+                        // Stitch all vertical strips into one full-page canvas.
+                        // Each strip is placed at x=0 and the running y-offset so that the
+                        // canvas pixel coordinate system is consistent with the bounding-box
+                        // coordinates that rusto-rs returns later.
                         let max_w = loaded_strips.iter().map(|img| img.width()).max().unwrap_or(1);
                         let total_h: u32 = loaded_strips.iter().map(|img| img.height()).sum();
 
                         let mut stitched_canvas = image::RgbImage::new(max_w, total_h);
-                        let mut curr_y = 0;
+                        let mut curr_y: u32 = 0;
                         for strip in loaded_strips {
-                            let (_sw, sh) = (strip.width(), strip.height());
+                            let (sw, sh) = (strip.width(), strip.height());
                             let rgb_strip = strip.to_rgb8();
-                            image::imageops::overlay(&mut stitched_canvas, &rgb_strip, 0, curr_y as i64);
+                            // Centre narrower strips horizontally so OCR pixel coords are
+                            // consistent with the full-canvas width used for normalisation.
+                            let x_offset = ((max_w.saturating_sub(sw)) / 2) as i64;
+                            image::imageops::overlay(&mut stitched_canvas, &rgb_strip, x_offset, curr_y as i64);
                             curr_y += sh;
                         }
 
@@ -229,7 +235,9 @@ impl PdfOperation for OcrOperationImpl {
                             );
 
                         let run_options = rusto::OcrRunOptions {
-                            output: rusto::rusto_ocr::OutputGranularity::Lines,
+                            output: rusto::rusto_ocr::OutputGranularity::Words,
+                            word_x_threshold: Some(0.3),
+                            line_y_threshold: Some(0.4),
                             max_side_len: Some(1600.0),
                             min_side_len: Some(64.0),
                             detection: Some(rusto::rusto_ocr::DetectionRunOptions {
@@ -264,10 +272,23 @@ impl PdfOperation for OcrOperationImpl {
                                 "CA" => 0.001,
                             ));
 
-                            let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n");
+                            // Render text with Fill mode (0 Tr) under GS_OCR ExtGState (alpha 0.001).
+                            // This keeps the text transparent over the scan during normal viewing,
+                            // while allowing PDF viewers (like Evince / Poppler) to render the selected
+                            // characters in white / inverted text inside the selection highlight box!
+                            let mut text_ops = String::from("q\n/GS_OCR gs\n0 Tr\n0 0 0 rg\nBT\n");
 
                             let proc_wf = proc_w as f32;
                             let proc_hf = proc_h as f32;
+
+                            // Derive independent scale factors for each axis so the OCR pixel
+                            // bounding boxes map correctly to PDF points regardless of whether
+                            // the stitched image aspect ratio matches the PDF page aspect ratio.
+                            // Previously both axes used page_w/page_h uniformly which caused
+                            // horizontal mis-placement when scanned images are stored at a
+                            // different aspect ratio than the page (e.g. multi-column strips).
+                            let scale_x = page_w / proc_wf;
+                            let scale_y = page_h / proc_hf;
 
                             for word in ocr_results {
                                 let line = word.text.trim();
@@ -277,15 +298,19 @@ impl PdfOperation for OcrOperationImpl {
 
                                 let box_x = word.frame.left;
                                 let box_y = word.frame.top;
+                                let _box_w = word.frame.width;
                                 let box_h = word.frame.height;
 
-                                let norm_x = box_x / proc_wf;
-                                let norm_y = box_y / proc_hf;
-                                let norm_h = box_h / proc_hf;
+                                // The DBNet detection unclip_ratio (1.6) expands the raw bounding box
+                                // to ensure characters aren't clipped, making box_h ~1.33x taller than
+                                // the font's actual cap-height. Scaling by 0.75 restores the font size
+                                // to match the visual text in the scan.
+                                let font_size = ((box_h * scale_y) * 0.75).clamp(4.0, 72.0);
 
-                                let pdf_x = norm_x * page_w;
-                                let pdf_y = page_h - ((norm_y + norm_h) * page_h);
-                                let font_size = (norm_h * page_h).max(6.0);
+                                // In PDF, 'Tm' places text at the font baseline (not the box bottom).
+                                // Standard font descenders extend ~20% below the baseline.
+                                let pdf_x = box_x * scale_x;
+                                let pdf_y = page_h - (box_y * scale_y) - (font_size * 0.85);
 
                                 words_collected.push((pdf_y, pdf_x, font_size, line.to_string()));
 
