@@ -1,16 +1,34 @@
 Task: Full Catalog Penta-Interface & Unmocked Desktop UI Parity Suite (Deep Semantic Validation) [Spec 055]
 
+CRITICAL ARCHITECTURE GUIDELINES FOR PLAYWRIGHT EXECUTION:
+1. Environment Architecture:
+   - Playwright runs against Vite dev server at `http://localhost:1420`.
+   - In browser environment, Tauri native IPC is not available. The desktop app calls `safeInvoke('invoke_mcp_tool', ...)`.
+   - In `apps/desktop/tests/e2e_real_desktop_execution.spec.ts`, the previous author handled this in `beforeEach` via `__TAURI_INTERNALS__.invoke`:
+     ```ts
+     (window as any).__TAURI_INTERNALS__ = {
+       invoke: async (cmd: string, args: any) => {
+         if (cmd === 'plugin:dialog|save') { ... }
+         if (cmd === 'plugin:dialog|open') { ... }
+         if (cmd === 'invoke_mcp_tool') { ... }
+       }
+     };
+     ```
+   - For REAL execution in Playwright (without Tauri Webdriver), `invoke_mcp_tool` can be wired either to:
+     A) Direct HTTP calls to the local Gateway sidecar (`http://localhost:7823/api/v1/pdf/tools/{toolName}`), OR
+     B) Real Node filesystem execution of the output writing or `paperpilot` CLI in Node / Playwright test process.
+   - Do NOT try to launch a native Tauri Webdriver window. Execute through the Playwright browser context against `http://localhost:1420`.
+
 CRITICAL PRINCIPLE: ZERO GENERIC CHECKS & BRAIN-DRIVEN VALIDATION
-Do NOT just blindly automate or check if an output file exists or starts with `%PDF-`. You MUST validate that what was created is SEMANTICALLY ACCURATE to the operation:
-- If `rotate 90` is run: Inspect the output PDF dictionary to verify `/Rotate 90` is set.
-- If `merge` is run on two 1-page files: Validate the output has EXACTLY 2 pages.
-- If `split` extracts page 1: Validate the output has EXACTLY 1 page.
-- If `watermark` adds "CONFIDENTIAL_TEST": Validate that "CONFIDENTIAL_TEST" exists in the PDF text stream.
-- If `encrypt` sets password "Secret123": Validate the file cannot be opened without the password, and unlocks with "Secret123".
+Do NOT just check if an output file exists or starts with `%PDF-`. You MUST validate that what was created is SEMANTICALLY ACCURATE:
+- If `rotate 90` is run: Inspect output PDF dictionary to verify `/Rotate 90` is set.
+- If `merge` is run on two 1-page files: Validate output has EXACTLY 2 pages.
+- If `split` extracts page 1: Validate output has EXACTLY 1 page.
+- If `watermark` adds "CONFIDENTIAL_TEST": Validate that text exists in the PDF content stream.
+- If `encrypt` sets password "Secret123": Validate file cannot open without password, and unlocks with "Secret123".
 - If `excel_to_json` runs: Validate that output JSON is a parsed array of objects matching the exact spreadsheet columns and values.
-- If `excel_to_csv` runs: Validate the CSV header row and comma delimiters.
+- If `excel_to_csv` runs: Validate CSV header row and comma delimiters.
 - If `pdf_to_json` runs: Validate JSON schema has `pages`, `page_number`, `text`, and non-empty content.
-- If `fill_form` runs: Validate the AcroForm field value actually equals the supplied string.
 
 ================================================================================
 PART 1: RUST PENTA-INTERFACE SUITE EXPANSION (`tools/penta-interface-e2e`)
@@ -27,11 +45,11 @@ Concurrency rule: Max 6 cores (`cargo test -p penta-interface-e2e -j 6`).
 ================================================================================
 PART 2: UNMOCKED DESKTOP PLAYWRIGHT SUITE (`apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`)
 ================================================================================
-Implement `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`:
-- Do NOT mock `invoke_mcp_tool` with dummy `{ success: true }`. Let the real engine execute.
-- Only stub OS file dialogs (`plugin:dialog|open`, `plugin:dialog|save`) to supply paths in `tests/e2e_fixtures/out/desktop/`.
-- Provide the exact semantic inputs per tool (passwords, angles, split points, query, etc.).
-- After execution, inspect the output file deeply (using `pdf-lib`, `fs.readFileSync`, or `JSON.parse`) to assert semantic correctness:
+Implement `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts` modeling the pattern in `e2e_real_desktop_execution.spec.ts`:
+- Ensure file paths returned by dialogs use absolute paths (`path.resolve(...)`).
+- Execute operations through the UI (drag-and-drop / file upload, tool search, parameter inputs, and clicking Run).
+- Assert the completion toast appears.
+- Inspect the output file deeply (using `pdf-lib`, `fs.readFileSync`, or `JSON.parse`) to assert semantic correctness:
   - Verify page counts
   - Verify text contents
   - Verify JSON objects and schemas
@@ -51,4 +69,4 @@ PART 3: REPORTING & QUALITY GATES
 
 Deliverables:
 - Commit prefix: `jules: `
-- 100% pass rate with zero generic superficial checks.
+- 100% pass rate with deep semantic assertions.

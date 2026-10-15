@@ -28,7 +28,7 @@
    - All 67/67 Vitest tests and 12/12 real Playwright launch tool tests pass green.
 
 4. **Task 5.9.31 / Spec 055 (Full Catalog Parity Suite & Deep Semantic Validation) — IN FLIGHT (Jules)**
-   - Jules Session: `12242990113169294559`.
+   - Jules Session: [`2996870268221322258`](https://jules.google.com/session/2996870268221322258).
    - Expanding deep semantic assertions across all 52 tools and unmocked desktop Playwright tests.
    - Tri-platform CI (Linux, Windows, macOS) verified clean and reproducible.
    - Added automated manual-trigger GitHub Release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) targeting **`v0.5.0`** release binaries and SHA-256 checksums.
