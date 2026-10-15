@@ -30,66 +30,74 @@ These 12 operations are frozen as the **v1.0 Core Suite**. They undergo **unmock
 Following v1.0 release, each subsequent batch of 4–5 tools will undergo dedicated unmocked E2E testing, bug hardening, and official rollout every 1–2 weeks:
 
 ### 🌊 Wave 2: Web & AI Synthesis Suite (Week 2)
-Focuses on advanced modern conversions and search:
+Focuses on advanced modern conversions, AI ingestion, and spatial search:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
 | 13 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis |
 | 14 | `pdf_to_markdown` | PDF to Markdown | Convert | LLM-ready clean layout markdown for AI RAG |
 | 15 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) |
 | 16 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator |
-| 17 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
+| 17 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images |
+| 18 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON |
+| 19 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
 
 ### 🌊 Wave 3: Office Modernization & Spreadsheets (Week 3)
 Focuses on full Microsoft Office suite interoperability:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 18 | `pdf_to_xlsx` | PDF to Excel (XLSX) | Convert | Tabular extraction into structured Excel workbooks |
-| 19 | `pdf_to_pptx` | PDF to PowerPoint (PPTX) | Convert | Slide deck presentation reconstruction |
-| 20 | `office_to_markdown` | Office to Markdown | Convert | One-click Word, Excel, PPT conversion to Markdown |
-| 21 | `office_extract_text` | Office Plain Text | Extract | Fast raw text dump from `.docx`, `.xlsx`, `.pptx` |
-| 22 | `office_modernize_legacy` | Modernize Legacy Office | Convert | Upgrade legacy binary `.doc`/`.xls`/`.ppt` to modern OpenXML |
+| 20 | `pdf_to_xlsx` | PDF to Excel (XLSX) | Convert | Tabular extraction into structured Excel workbooks |
+| 21 | `pdf_to_pptx` | PDF to PowerPoint (PPTX) | Convert | Slide deck presentation reconstruction |
+| 22 | `office_to_markdown` | Office to Markdown | Convert | One-click Word, Excel, PPT conversion to Markdown |
+| 23 | `office_extract_text` | Office Plain Text | Extract | Fast raw text dump from `.docx`, `.xlsx`, `.pptx` |
+| 24 | `office_modernize_legacy` | Modernize Legacy Office | Convert | Upgrade legacy binary `.doc`/`.xls`/`.ppt` to modern OpenXML |
 
 ### 🌊 Wave 4: Security, Signing & Compliance (Week 4)
 Focuses on enterprise compliance and legal document workflows:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 23 | `sign` | Sign Document | Security | Offline cryptographic digital signatures & certs |
-| 24 | `redact` | Redact Text & Areas | Security | Permanent PII / sensitive data blackouts |
-| 25 | `encrypt` | Encrypt with Password | Security | AES-256 standard permission protection |
-| 26 | `decrypt` | Remove Password | Security | Strip restrictions from unlocked documents |
-| 27 | `pdf_to_pdf_a` | Convert to PDF/A | Compliance | ISO 19005 archival standards validation |
+| 25 | `sign` | Sign Document | Security | Offline cryptographic digital signatures & certs |
+| 26 | `redact` | Redact Text & Areas | Security | Permanent PII / sensitive data blackouts |
+| 27 | `encrypt` | Encrypt with Password | Security | AES-256 standard permission protection |
+| 28 | `decrypt` | Remove Password | Security | Strip restrictions from unlocked documents |
+| 29 | `pdf_to_pdf_a` | Convert to PDF/A | Compliance | ISO 19005 archival standards validation |
+| 30 | `hash` | Generate Hash | Security | Document integrity checksum calculation (MD5, SHA-256) |
 
 ### 🌊 Wave 5: Page Geometry, Cleaning & Forms (Week 5)
-Focuses on document cleanup and interactive forms:
+Focuses on document cleanup, page manipulation, and interactive forms:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 28 | `remove_blank` | Remove Blank Pages | Organize | Scan and strip accidental blank pages |
-| 29 | `page_numbers` | Add Page Numbers | Edit | Dynamic header/footer pagination |
-| 30 | `crop` | Crop Pages | Organize | Precision rectangular margin trimming |
-| 31 | `burst` | Burst PDF | Organize | Explode document into individual 1-page files |
-| 32 | `fill_form` | Fill Form Data | Forms | Interactive AcroForm automated field population |
+| 31 | `extract_pages` | Extract Pages | Organize | Pull specific pages into a new document |
+| 32 | `remove_blank` | Remove Blank Pages | Organize | Scan and strip accidental blank pages |
+| 33 | `page_numbers` | Add Page Numbers | Edit | Dynamic header/footer pagination |
+| 34 | `crop` | Crop Pages | Organize | Precision rectangular margin trimming |
+| 35 | `burst` | Burst PDF | Organize | Explode document into individual 1-page files |
+| 36 | `fill_form` | Fill Form Data | Forms | Interactive AcroForm automated field population |
 
-### 🌊 Wave 6: Advanced Layout, Forms & Archival (Week 6)
-Focuses on metadata, deep optimization, and forensic tools:
+### 🌊 Wave 6: Advanced Layout, Forms, Outlines & Archival (Week 6)
+Focuses on metadata, outlines, annotations, and forensic repair:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 33 | `read_form` | Read Form Fields | Forms | JSON dump of all form names, values, and flags |
-| 34 | `create_form_field` | Add Form Field | Forms | Programmatically append new interactive form inputs |
-| 35 | `flatten` | Flatten Annotations | Security | Bake forms & marks into uneditable vector streams |
-| 36 | `metadata` | Sanitize Metadata | Privacy | Inspect & clean author, GPS, and timestamp tags |
-| 37 | `repair` | Repair Corrupted PDF | Maintenance | Rebuild broken xref tables and unreadable catalogs |
+| 37 | `read_form` | Read Form Fields | Forms | JSON dump of all form names, values, and flags |
+| 38 | `create_form_field` | Add Form Field | Forms | Programmatically append new interactive form inputs |
+| 39 | `bookmarks` | Bookmarks & Outline | Navigation | Extract document outline and Table of Contents bookmarks |
+| 40 | `annotate` | Add Annotations | Edit | Programmatic highlight, underline, and stamp annotations |
+| 41 | `flatten` | Flatten Annotations | Security | Bake forms & marks into uneditable vector streams |
+| 42 | `metadata` | Sanitize Metadata | Privacy | Inspect & clean author, GPS, and timestamp tags |
+| 43 | `repair` | Repair Corrupted PDF | Maintenance | Rebuild broken xref tables and unreadable catalogs |
 
-### 🌊 Wave 7: Visual Media, Stamping & Enterprise Utilities (Week 7)
-Completes the full 44+ tool catalog:
+### 🌊 Wave 7: Visual Media, Stamping, Comparison & Diagnostic Utilities (Week 7)
+Completes the full 50+ tool catalog:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 38 | `img_to_pdf` | Images to PDF | Convert | Stitch JPG/PNG/WebP photo albums into PDF |
-| 39 | `extract_images` | Extract Embedded Images | Extract | Dump all embedded graphics to directory |
-| 40 | `render` | Render Page to Image | Convert | High-res PNG/JPEG page rasterization (`hayro`) |
-| 41 | `bates` | Bates Numbering | Legal | Consecutive legal litigation numbering |
-| 42 | `header_footer` | Header & Footer | Edit | Custom margins, timestamps, and page branding |
-| 43 | `linearize` | Fast Web View | Optimize | Byte-serving linearization for instant web load |
-| 44 | `validate` | Structural Validator | Diagnostic | Diagnostic check of PDF cross-references |
+| 44 | `img_to_pdf` | Images to PDF | Convert | Stitch JPG/PNG/WebP photo albums into PDF |
+| 45 | `extract_images` | Extract Embedded Images | Extract | Dump all embedded graphics to directory |
+| 46 | `render` | Render Page to Image | Convert | High-res PNG/JPEG page rasterization (`hayro`) |
+| 47 | `compare` | Compare PDFs | Quality / Diff | Side-by-side visual and structural difference detection |
+| 48 | `classify_type` | Classify Document | AI / Taxo | Automated document taxonomy & type classification |
+| 49 | `bates` | Bates Numbering | Legal | Consecutive legal litigation numbering |
+| 50 | `header_footer` | Header & Footer | Edit | Custom margins, timestamps, and page branding |
+| 51 | `linearize` | Fast Web View | Optimize | Byte-serving linearization for instant web load |
+| 52 | `validate` | Structural Validator | Diagnostic | Diagnostic check of PDF cross-references |
 
 ---
 
