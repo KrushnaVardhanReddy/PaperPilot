@@ -259,8 +259,10 @@ mod tests {
 
     #[test]
     fn test_set_feature_pack_enabled_isolated() {
+        let _guard = crate::storage::tests::ENV_LOCK.lock().unwrap();
         // Using a safe isolated environment variable for tests
-        let safe_data_dir = std::env::temp_dir().join("safe_test_data");
+        let safe_data_dir =
+            std::env::temp_dir().join(format!("safe_test_data_{}", std::process::id()));
         std::fs::create_dir_all(&safe_data_dir).unwrap();
         std::env::set_var("PAPERPILOT_DATA_DIR", safe_data_dir.to_str().unwrap());
 

@@ -35,13 +35,13 @@ pub fn is_portable_mode() -> bool {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use std::sync::Mutex;
 
     // Mutex to ensure environment variables are not tested concurrently
     lazy_static::lazy_static! {
-        static ref ENV_LOCK: Mutex<()> = Mutex::new(());
+        pub(crate) static ref ENV_LOCK: Mutex<()> = Mutex::new(());
     }
 
     #[test]
