@@ -209,7 +209,7 @@ mod tests {
         let doc = generate_doc2();
         let mut rotated_page_found = false;
 
-        for (_, object) in doc.objects.iter() {
+        for object in doc.objects.values() {
             if let Object::Dictionary(dict) = object {
                 let is_page =
                     matches!(dict.get(b"Type"), Ok(Object::Name(name)) if name == b"Page");
