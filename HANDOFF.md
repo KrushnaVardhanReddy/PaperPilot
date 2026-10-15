@@ -2,8 +2,8 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.
 > Start any new agent or human session by reading this document.
-> **Date of Last Update:** October 12, 2026 (Evening EDT)
-> **Active Target:** v1.0 Community Edition Launch Hardening & Top 12 Core Suite Verification
+> **Date of Last Update:** October 15, 2026 (Morning EDT)
+> **Active Target:** v0.5.0 Public Preview Release (Wave 1: Top 12 Core Suite) & Spec 055 Parity Hardening
 
 ---
 
@@ -24,13 +24,14 @@
 3. **Spec 054 (Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering) — 100% COMPLETE & MERGED**
    - Merged Jules PR #193 (`9c51606`, Session 784752770737873068).
    - Implemented dynamic tool ranking and capability rules in `toolRegistry.ts` (`rankToolsByContext`).
-   - Dynamic context-aware spotlighting:
-     * Dropping `.xlsx` / `.xls` spotlights `excel_to_json` and `excel_to_csv`.
-     * Dropping $\ge 2$ PDFs spotlights both **Multi-File Operations** (`merge`, `compare`) AND high-utility **Batch Operations** (`compress`, `ocr`, `pdf_to_docx`, `rotate`) with dedicated badge tags.
-     * Dropping a single PDF spotlights `compress`, `split`, `rotate`, `ocr`, and `pdf_to_docx`.
    - Feature Pack intelligence: 1-click in-place enablement for optional Feature Packs (`office`, `ocr`).
-   - Contextual filter chips: `[ ⚡ Recommended ]`, `[ All Tools ]`, `[ PDF ]`, `[ Office ]`, `[ AI & OCR ]`.
    - All 67/67 Vitest tests and 12/12 real Playwright launch tool tests pass green.
+
+4. **Task 5.9.31 / Spec 055 (Full Catalog Parity Suite & Deep Semantic Validation) — IN FLIGHT (Jules)**
+   - Jules Session: `12242990113169294559`.
+   - Expanding deep semantic assertions across all 52 tools and unmocked desktop Playwright tests.
+   - Tri-platform CI (Linux, Windows, macOS) verified clean and reproducible.
+   - Added automated manual-trigger GitHub Release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) targeting **`v0.5.0`** release binaries and SHA-256 checksums.
 
 ---
 
@@ -112,11 +113,12 @@ When starting the next session, follow this 3-step checklist:
   - Tool 12 (`excel_to_csv`): Test `.xlsx` to CSV export.
 - Update the table rows in [`reports/V1_LAUNCH_READINESS_REPORT.md`](reports/V1_LAUNCH_READINESS_REPORT.md) from `⏳ Not Started` to `✅ Passed`.
 
-### Step 3: Tag v1.0 Community Edition Release
-- Once Top 12 manual + automated assertions are all green:
-  - Generate final scorecard summary in `reports/`.
-  - Tag git release `v1.0.0`.
-  - Announce v1.0 Community Edition with the 7-week progressive rollout plan.
+### Step 3: Publish v0.5.0 Public Preview Release
+- Once Top 12 automated assertions pass and Jules Spec 055 progress is verified:
+  - Trigger the **Release Build & Publish** workflow on GitHub Actions (`.github/workflows/release.yml`).
+  - Set version tag to `v0.5.0` (with `prerelease: true`).
+  - This automatically compiles `--release` binaries for Linux, macOS, and Windows, computes SHA-256 checksums, and attaches them to the new GitHub Release page.
+
 
 ---
 

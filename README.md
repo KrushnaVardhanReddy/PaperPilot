@@ -57,10 +57,17 @@ PaperPilot follows a strict multi-crate workspace separation of concerns, keepin
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### ⚡ Quick Download (Pre-built Binaries)
+Pre-compiled standalone binaries for **Linux**, **macOS**, and **Windows** are available on our [GitHub Releases](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) page:
+- **`paperpilot`**: Standalone CLI with all 50+ document tools.
+- **`paperpilot-gateway`**: REST API microservice (`localhost:7823`).
+- **`paperpilot-mcp`**: JSON-RPC server for Claude Desktop, Cursor, and OpenCode.
+
+### Prerequisites (For Building from Source)
 - [Rust](https://rustup.rs/) (1.75+ stable)
 - [Node.js](https://nodejs.org/) & [pnpm](https://pnpm.io/)
 - Python 3.10+ (for E2E verification suites)
+
 
 ### Installation & Build
 
