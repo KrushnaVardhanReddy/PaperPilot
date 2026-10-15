@@ -167,6 +167,9 @@ Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md)
 - **Active v1.0 Launch Verification Gates:**
   - **5.9.28**: Penta-Interface E2E Suite Expansion & Top 12 Unmocked Desktop Playwright Tests: ✅ Completed (PR #191)
   - **5.9.31**: Full Catalog Penta-Interface & Unmocked Desktop UI Parity Suite (Deep Semantic Validation): ⏳ In Progress ([Spec 055](specs/055-all-tools-real-playwright-desktop-e2e/spec.md))
+- **Post-Launch Roadmap (v1.1+):**
+  - **Office Ecosystem (`paperpilot-office`)**: Deep OpenXML `.docx`, `.xlsx`, and `.pptx` manipulation.
+  - **Embedded Turso / libSQL Persistence**: Zero-cloud local database (`./data/paperpilot.db`) with native vector search (`libsql_vector`) for persistent document indexing and optional multi-device edge sync.
 
 ## 📄 License & Open Core Model
 

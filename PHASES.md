@@ -1839,5 +1839,6 @@ permissions = { print = true, edit = false }
 | 9.5 | Office MCP & CLI Parity | Register all Office operations in `paperpilot-mcp` for Claude Desktop, Cursor, and OpenCode |
 | 9.6 | Universal Office-to-PDF Synthesis | Direct in-memory conversion from OpenXML DOM to PDF/A via PaperPilot layout engine |
 | 9.7 | Enterprise Governance & DLP | Background Watch Folder daemon auditing/sanitizing outbound spreadsheets & shared template registry |
+| 9.8 | Future Storage: Embedded Turso / libSQL Persistence Engine | Evaluate & integrate Turso (`libsql`) in local embedded mode (`./data/paperpilot.db`) with native vector search (`libsql_vector`) for persistent multi-document indexing, audit trails, and optional edge replication. |
 
 
