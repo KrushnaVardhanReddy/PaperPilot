@@ -46,7 +46,7 @@ async fn test_supervisor_start_and_stop() {
 sleep 10
 "#,
         r#"@echo off
-timeout /t 10 /nobreak >nul
+ping 127.0.0.1 -n 11 >nul
 "#,
     );
 
@@ -149,7 +149,7 @@ async fn test_supervisor_timeout() {
 sleep 5
 "#,
         r#"@echo off
-timeout /t 5 /nobreak >nul
+ping 127.0.0.1 -n 6 >nul
 "#,
     );
 
@@ -172,7 +172,7 @@ async fn test_supervisor_drop_stops_process() {
 sleep 10
 "#,
         r#"@echo off
-timeout /t 10 /nobreak >nul
+ping 127.0.0.1 -n 11 >nul
 "#,
     );
 
