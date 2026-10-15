@@ -1,0 +1,132 @@
+name: Release Build & Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g., v1.0.0-beta.1 or v1.0.0)'
+        required: true
+        default: 'v1.0.0-beta.1'
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: true
+        type: boolean
+        default: true
+      draft:
+        description: 'Create as draft release'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-release-binaries:
+    name: Build Release Binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: paperpilot-linux-x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: paperpilot-windows-x86_64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: paperpilot-macos-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux GUI Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Build Optimized Release Binaries
+        run: |
+          cargo build --release -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+
+      - name: Package Release Assets (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p staging
+          cp target/release/paperpilot staging/ 2>/dev/null || cp target/release/paperpilot-cli staging/paperpilot 2>/dev/null || true
+          cp target/release/paperpilot-gateway staging/ 2>/dev/null || true
+          cp target/release/paperpilot-mcp staging/ 2>/dev/null || true
+          cd staging
+          tar -czvf "../${{ matrix.artifact_name }}.tar.gz" *
+          cd ..
+          shasum -a 256 "${{ matrix.artifact_name }}.tar.gz" > "${{ matrix.artifact_name }}.tar.gz.sha256"
+
+      - name: Package Release Assets (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p staging
+          cp target/release/paperpilot.exe staging/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging/paperpilot.exe 2>/dev/null || true
+          cp target/release/paperpilot-gateway.exe staging/ 2>/dev/null || true
+          cp target/release/paperpilot-mcp.exe staging/ 2>/dev/null || true
+          cd staging
+          7z a "../${{ matrix.artifact_name }}.zip" *
+          cd ..
+          sha256sum "${{ matrix.artifact_name }}.zip" > "${{ matrix.artifact_name }}.zip.sha256"
+
+      - name: Upload Platform Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_name }}.*
+          if-no-files-found: error
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: build-release-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Assets
+        run: |
+          ls -la release-assets
+
+      - name: Create / Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: "PaperPilot ${{ inputs.version }}"
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          files: release-assets/*
+          generate_release_notes: true
+          body: |
+            ## PaperPilot Release ${{ inputs.version }}
+
+            ### Included Release Binaries
+            - `paperpilot` (CLI Engine with 50+ PDF & document tools)
+            - `paperpilot-gateway` (HTTP/REST Microservice API)
+            - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
+
+            ### Checksums
+            SHA-256 checksums are attached alongside each `.tar.gz` and `.zip` archive.
