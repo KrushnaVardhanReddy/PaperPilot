@@ -10,10 +10,10 @@ PaperPilot is a blazing-fast, local-first document automation platform. It allow
 
 ## ✨ Features
 
-- **🚀 Native Performance & Zero-Chrome:** Powered entirely by pure-Rust (`lopdf`, `fulgur`, `hayro`, `ocrs`, `rten`) for sub-millisecond document manipulation and sub-60ms office conversions. Zero external Chromium or C++ runtime dependencies.
-- **🏆 100% Multi-Surface Parity:** All 44 PDF operations unified across CLI, MCP, and REST API, with 22 pure-Rust operations running directly client-side in the browser via WASM and serverless on Cloudflare Edge ([Verification Report](reports/TRI_INTERFACE_E2E_100_VERIFIED.md)).
+- **🚀 Native Performance & Zero-Chrome:** Powered entirely by pure-Rust (`lopdf`, `fulgur`, `hayro`, `rusto-rs` PaddleOCR v4, `rten`) for sub-millisecond document manipulation and sub-60ms office conversions. Zero external Chromium or C++ runtime dependencies.
+- **🏆 100% Penta-Interface Parity:** Over 50+ PDF and Office tools unified across 5 surfaces (CLI, MCP, REST, WASM, Cloudflare Edge) and orchestratable through the modern Desktop GUI ([Penta-Interface Report](reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md)).
 - **🧠 100% Offline AI & NLP:** Built-in hybrid engine featuring keyword/regex rule routing and embedded on-device intent classification (`TinyBERT-4L-312D` via pure-Rust SIMD tensor engine, <2ms latency). Zero server calls or external downloads required for command execution.
-- **💻 Desktop GUI (Svelte 5 + Tauri 2):** Fast, reactive desktop experience with a multi-tab canvas viewer, interactive sticky notes & drawing markups, visual side-by-side diff slider, and collapsible multi-turn AI chat side-drawer.
+- **💻 Desktop GUI (Svelte 5 + Tauri 2):** Fast, reactive desktop experience with dynamic context-aware tool ranking, multi-tab canvas viewer, interactive sticky notes & drawing markups, visual side-by-side diff slider, and collapsible multi-turn AI chat side-drawer.
 - **🌐 Client-Side Browser WASM & Edge Microservice:** Zero-install web suite (`apps/web`) executing 100% in browser memory with zero server upload, plus a Cloudflare Workers edge microservice (`apps/edge`) delivering sub-10ms serverless PDF processing.
 - **📦 Drop-In Embeddable Widget (`embed.js`):** Embed a full-featured, branded PDF processing portal into any website with just two lines of HTML.
 - **🤖 Model Context Protocol (MCP):** Connect PaperPilot directly to Claude Desktop, Cursor, OpenCode, or custom autonomous agents via stdio JSON-RPC.
@@ -147,7 +147,7 @@ Embed client-side PDF processing into any web page without uploading files to a 
 
 Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md), and [`HANDOFF.md`](./HANDOFF.md) for detailed progress tracking.
 
-- **Phase 1: Core Engine & CLI** — ✅ 100% Completed (All 44 PDF operations)
+- **Phase 1: Core Engine & CLI** — ✅ 100% Completed (All 44+ PDF operations)
 - **Phase 2: MCP & Gateway** — ✅ 100% Completed (Stdio JSON-RPC + Axum REST)
 - **Phase 3: Desktop App Foundation** — ✅ 100% Completed (Viewer, Canvas, Tools Dock)
 - **Phase 4: AI Layer, Multi-Interface Parity & Web** — ✅ 100% Completed
@@ -156,17 +156,19 @@ Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md)
   - Client-Side WASM Web App (`apps/web`): ✅ Completed (PR #137)
   - Cloudflare Edge Microservice (`apps/edge`): ✅ Completed (PR #140)
   - Universal Embed Widget (`embed.js`): ✅ Completed (PR #145)
-- **Phase 5: Zero-Chrome Pure-Rust Migrations** — ✅ 100% Completed
-  - Pure-Rust OCR Engine (`ocrs` via `rten` SIMD): ✅ Completed (PR #141)
-  - Pure-Rust PDF Rasterizer (`hayro` + `tiny-skia`): ✅ Completed (PR #142)
-  - Pure-Rust Sub-60ms Office Conversions (`fulgur`): ✅ Completed (PR #150)
-  - Universal High-Ratio Image Compression: ✅ Completed (`16f8ede`)
+- **Phase 5: Zero-Chrome Pure-Rust Migrations & Advanced Intelligence** — ✅ 100% Core Completed
+  - Pure-Rust High-Precision OCR (`rusto-rs` PaddleOCR v4 via `rten` SIMD): ✅ Completed (Spec 044)
+  - High-Speed Pure-Rust Office Engine (`office_oxide` DOCX, XLSX, PPTX): ✅ Completed (Spec 043, 046)
+  - Universal `pdf_oxide` Core Migration (Markdown, HTML, Plain Text, Search): ✅ Completed (Spec 040)
+  - Multimodal PDF-to-JSON & Bidirectional JSON-to-PDF Synthesis: ✅ Completed (Spec 032, 036)
+  - Desktop Binary Size Optimization (35MB release binary, ~67% reduction): ✅ Completed (PR #154)
+  - Adaptive Multi-Layout Workspace & Context-Aware Tool Dispatcher: ✅ Completed (PR #192, PR #193)
   - 1-Hour Sustained Soak & Endurance Benchmark (350K+ ops, 0 leaks): ✅ Completed (PR #151)
 - **Active v1.0 Launch Verification Gates:**
-  - `4.E2E.R4`: Tri-Interface Deep Behavioral Assertions Matrix ⏳ In Flight
-  - `5.9.1`: Desktop Release Binary Size Optimization (<75MB) & `rten` Inference Migration ⏳ In Flight
+  - **5.9.28**: Penta-Interface E2E Suite Expansion & Top 12 Unmocked Desktop Playwright Tests: ✅ Completed (PR #191)
+  - **5.9.31**: Full Catalog Penta-Interface & Unmocked Desktop UI Parity Suite (Deep Semantic Validation): ⏳ In Progress ([Spec 055](specs/055-all-tools-real-playwright-desktop-e2e/spec.md))
 
 ## 📄 License & Open Core Model
 
-- **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 44 PDF operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, client-side WASM engine, and the open-source Desktop App.
+- **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 50+ PDF and Office operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, client-side WASM engine, and the open-source Desktop App.
 - **Enterprise Edition (Commercial):** Hosted in a separate private repository for enterprise compliance: SAML 2.0/OIDC SSO, SCIM 2.0 provisioning, multi-tenant RBAC, cryptographic audit logs, DLP policy enforcement, and dedicated SLA support. See [LICENSE](LICENSE) for details.
