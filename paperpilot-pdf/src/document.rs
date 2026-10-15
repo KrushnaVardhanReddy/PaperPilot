@@ -36,7 +36,10 @@ impl LopdfDocument {
         doc.trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        Self { inner: doc, original_bytes: None }
+        Self {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     pub fn from_inner(inner: Document) -> Self {
@@ -49,7 +52,10 @@ impl LopdfDocument {
     pub fn load(path: &Path) -> OperationResult<Self> {
         let bytes = std::fs::read(path).map_err(PdfError::IoError)?;
         let doc = Document::load_mem(&bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
-        Ok(Self { inner: doc, original_bytes: Some(bytes) })
+        Ok(Self {
+            inner: doc,
+            original_bytes: Some(bytes),
+        })
     }
 }
 

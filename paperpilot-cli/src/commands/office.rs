@@ -68,13 +68,10 @@ pub fn handle_office_command(command: &OfficeCommands) -> OperationResult<()> {
             sheet,
             no_headers,
         } => {
-            let json_str = ExcelToJsonOperation::execute(
-                input,
-                sheet.as_deref(),
-                !no_headers,
-            )?;
+            let json_str = ExcelToJsonOperation::execute(input, sheet.as_deref(), !no_headers)?;
             match output {
-                Some(path) => std::fs::write(path, json_str).map_err(paperpilot_core::error::PdfError::IoError)?,
+                Some(path) => std::fs::write(path, json_str)
+                    .map_err(paperpilot_core::error::PdfError::IoError)?,
                 None => println!("{}", json_str),
             }
             Ok(())

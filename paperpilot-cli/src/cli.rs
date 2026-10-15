@@ -154,7 +154,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-        Watermark {
+    Watermark {
         #[arg(long)]
         input: std::path::PathBuf,
         #[arg(long)]

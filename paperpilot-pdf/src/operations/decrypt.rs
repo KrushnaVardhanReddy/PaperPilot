@@ -69,7 +69,10 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        let mut doc = LopdfDocument { inner, original_bytes: None  };
+        let mut doc = LopdfDocument {
+            inner,
+            original_bytes: None,
+        };
 
         // Encrypt the test document first
         let mut encrypt_op = crate::operations::encrypt::EncryptOperation::new();

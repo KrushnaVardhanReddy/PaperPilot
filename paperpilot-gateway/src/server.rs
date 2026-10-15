@@ -80,7 +80,10 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
         .route("/api/v1/office/convert", post(handlers::office_convert))
-        .route("/api/v1/office/excel-to-json", post(handlers::excel_to_json))
+        .route(
+            "/api/v1/office/excel-to-json",
+            post(handlers::excel_to_json),
+        )
         .route("/api/v1/office/excel-to-csv", post(handlers::excel_to_csv))
         .layer(cors)
 }

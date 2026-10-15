@@ -40,7 +40,10 @@ mod tests {
     #[test]
     fn test_linearize_operation() {
         let doc = Document::with_version("1.5");
-        let mut lopdf_doc = LopdfDocument { inner: doc, original_bytes: None  };
+        let mut lopdf_doc = LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        };
         let op = LinearizeOperation::new();
 
         let result = op.execute(&mut lopdf_doc);

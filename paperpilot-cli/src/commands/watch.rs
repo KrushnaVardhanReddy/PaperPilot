@@ -1,16 +1,16 @@
 #![allow(clippy::collapsible_if)]
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
+use clap::Parser;
 use log::{error, info, warn};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use reqwest::blocking::Client;
-use clap::Parser;
-use serde::Serialize;
 use paperpilot_core::error::{OperationResult, PdfError};
+use reqwest::blocking::Client;
+use serde::Serialize;
 
 #[derive(Serialize)]
 struct WebhookPayload {
@@ -63,15 +63,19 @@ fn execute_operation(
             args.push("--quality".to_string());
             args.push("medium".to_string()); // Defaulting to medium if not provided
         }
-
     } else {
-        return Err(PdfError::InvalidInput("No operation or recipe specified for watch".to_string()));
+        return Err(PdfError::InvalidInput(
+            "No operation or recipe specified for watch".to_string(),
+        ));
     }
 
     let cli = match crate::cli::Cli::try_parse_from(args) {
         Ok(c) => c,
         Err(e) => {
-            return Err(PdfError::InvalidInput(format!("Failed to parse constructed arguments: {}", e)));
+            return Err(PdfError::InvalidInput(format!(
+                "Failed to parse constructed arguments: {}",
+                e
+            )));
         }
     };
 
@@ -107,7 +111,10 @@ pub async fn handle_watch(
     move_original: Option<PathBuf>,
 ) -> OperationResult<()> {
     if !directory.exists() {
-        return Err(PdfError::InvalidInput(format!("Directory does not exist: {:?}", directory)));
+        return Err(PdfError::InvalidInput(format!(
+            "Directory does not exist: {:?}",
+            directory
+        )));
     }
 
     info!("Starting watch daemon on {:?}...", directory);
@@ -129,7 +136,8 @@ pub async fn handle_watch(
     let mut watcher = RecommendedWatcher::new(tx, Config::default())
         .map_err(|e| PdfError::IoError(std::io::Error::other(e)))?;
 
-    watcher.watch(&directory, RecursiveMode::NonRecursive)
+    watcher
+        .watch(&directory, RecursiveMode::NonRecursive)
         .map_err(|e| PdfError::IoError(std::io::Error::other(e)))?;
 
     let running = Arc::new(AtomicBool::new(true));
@@ -197,14 +205,21 @@ pub async fn handle_watch(
                     if let Some(file_name) = path.file_name() {
                         let target_path = move_dir.join(file_name);
                         if let Err(e) = std::fs::rename(&path, &target_path) {
-                            error!("Failed to move original file {:?} to {:?}: {}", path, target_path, e);
+                            error!(
+                                "Failed to move original file {:?} to {:?}: {}",
+                                path, target_path, e
+                            );
                         } else {
                             info!("Moved original file to {:?}", target_path);
                         }
                     }
                 }
             } else {
-                error!("Failed to process {:?}: {}", path, err_msg.as_deref().unwrap_or("Unknown error"));
+                error!(
+                    "Failed to process {:?}: {}",
+                    path,
+                    err_msg.as_deref().unwrap_or("Unknown error")
+                );
             }
 
             if let Some(ref w) = webhook {

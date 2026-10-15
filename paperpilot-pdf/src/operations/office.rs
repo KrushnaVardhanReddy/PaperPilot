@@ -1,7 +1,7 @@
+use calamine::{Data, Reader, open_workbook_auto};
 use office_oxide::Document;
 use paperpilot_core::error::{OperationResult, PdfError};
-use calamine::{Data, Reader, open_workbook_auto};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fs;
 use std::path::Path;
 
@@ -14,7 +14,10 @@ impl ExcelToJsonOperation {
         has_headers: bool,
     ) -> OperationResult<String> {
         let mut workbook = open_workbook_auto(input_path).map_err(|e| {
-            PdfError::IoError(std::io::Error::other(format!("Failed to open workbook: {}", e)))
+            PdfError::IoError(std::io::Error::other(format!(
+                "Failed to open workbook: {}",
+                e
+            )))
         })?;
 
         let sheet_names = workbook.sheet_names().to_vec();
@@ -132,7 +135,10 @@ impl ExcelToCsvOperation {
         sheet_name: Option<&str>,
     ) -> OperationResult<()> {
         let mut workbook = open_workbook_auto(input_path).map_err(|e| {
-            PdfError::IoError(std::io::Error::other(format!("Failed to open workbook: {}", e)))
+            PdfError::IoError(std::io::Error::other(format!(
+                "Failed to open workbook: {}",
+                e
+            )))
         })?;
 
         let target_sheet = match sheet_name {
@@ -140,7 +146,9 @@ impl ExcelToCsvOperation {
             None => {
                 let sheet_names = workbook.sheet_names().to_vec();
                 if sheet_names.is_empty() {
-                    return Err(PdfError::IoError(std::io::Error::other("No sheets found in workbook")));
+                    return Err(PdfError::IoError(std::io::Error::other(
+                        "No sheets found in workbook",
+                    )));
                 }
                 sheet_names[0].clone()
             }
@@ -148,7 +156,10 @@ impl ExcelToCsvOperation {
 
         if let Ok(range) = workbook.worksheet_range(&target_sheet) {
             let mut wtr = csv::Writer::from_path(output_path).map_err(|e| {
-                PdfError::IoError(std::io::Error::other(format!("Failed to create csv writer: {}", e)))
+                PdfError::IoError(std::io::Error::other(format!(
+                    "Failed to create csv writer: {}",
+                    e
+                )))
             })?;
 
             for row in range.rows() {
@@ -167,7 +178,10 @@ impl ExcelToCsvOperation {
                     record.push(s);
                 }
                 wtr.write_record(&record).map_err(|e| {
-                    PdfError::IoError(std::io::Error::other(format!("Failed to write csv record: {}", e)))
+                    PdfError::IoError(std::io::Error::other(format!(
+                        "Failed to write csv record: {}",
+                        e
+                    )))
                 })?;
             }
             wtr.flush().map_err(|e| {
@@ -278,7 +292,8 @@ mod tests {
     #[test]
     fn test_excel_to_csv_invalid_file() {
         let out_file = NamedTempFile::new().unwrap();
-        let res = ExcelToCsvOperation::execute(Path::new("does_not_exist.xlsx"), out_file.path(), None);
+        let res =
+            ExcelToCsvOperation::execute(Path::new("does_not_exist.xlsx"), out_file.path(), None);
         assert!(res.is_err());
         match res {
             Err(PdfError::IoError(_)) => {}

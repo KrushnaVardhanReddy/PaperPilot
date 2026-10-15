@@ -59,7 +59,10 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        let mut doc = LopdfDocument { inner, original_bytes: None  };
+        let mut doc = LopdfDocument {
+            inner,
+            original_bytes: None,
+        };
 
         let op = BookmarksOperation::new();
         let result = op.execute(&mut doc);

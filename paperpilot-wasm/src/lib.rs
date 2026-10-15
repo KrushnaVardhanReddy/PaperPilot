@@ -76,7 +76,12 @@ impl WasmPdfEngine {
 
     /// Add watermark text across pages
     #[wasm_bindgen]
-    pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn watermark(
+        input_bytes: &[u8],
+        text: &str,
+        angle: Option<f32>,
+        opacity: Option<f32>,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::watermark(input_bytes, text, angle, opacity)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -262,8 +267,8 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn pdf_to_docx(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
-        let result_bytes = operations::pdf_to_docx(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result_bytes =
+            operations::pdf_to_docx(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
         let array = js_sys::Uint8Array::new_with_length(result_bytes.len() as u32);
         array.copy_from(&result_bytes);
         Ok(array)

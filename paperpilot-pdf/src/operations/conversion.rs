@@ -383,24 +383,24 @@ impl PdfOperation for PdfToHtmlOperation {
 
         let mut html = String::new();
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref() {
-            if !bytes.is_empty() {
-                if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
-                    if let Ok(page_count) = pdf.page_count() {
-                        html.push_str("<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n");
-                        for i in 0..page_count {
-                            let page_id = i + 1;
-                            html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                            html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
-                            if let Ok(page_html) = pdf.to_html(i) {
-                                html.push_str(&page_html);
-                            }
-                            html.push_str("</div>\n");
-                        }
-                        html.push_str("</body>\n</html>");
-                    }
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+            && let Ok(page_count) = pdf.page_count()
+        {
+            html.push_str(
+                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            );
+            for i in 0..page_count {
+                let page_id = i + 1;
+                html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
+                html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                if let Ok(page_html) = pdf.to_html(i) {
+                    html.push_str(&page_html);
                 }
+                html.push_str("</div>\n");
             }
+            html.push_str("</body>\n</html>");
         }
 
         if html.is_empty() {
@@ -469,19 +469,17 @@ impl PdfOperation for PdfToMarkdownOperation {
 
         let mut md = String::new();
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref() {
-            if !bytes.is_empty() {
-                if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
-                    if let Ok(page_count) = pdf.page_count() {
-                        for i in 0..page_count {
-                            let page_id = i + 1;
-                            if let Ok(page_md) = pdf.to_markdown(i) {
-                                md.push_str(&format!("# Page {}\n\n", page_id));
-                                md.push_str(page_md.trim());
-                                md.push_str("\n\n");
-                            }
-                        }
-                    }
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+            && let Ok(page_count) = pdf.page_count()
+        {
+            for i in 0..page_count {
+                let page_id = i + 1;
+                if let Ok(page_md) = pdf.to_markdown(i) {
+                    md.push_str(&format!("# Page {}\n\n", page_id));
+                    md.push_str(page_md.trim());
+                    md.push_str("\n\n");
                 }
             }
         }
@@ -923,7 +921,7 @@ pub enum LayoutItem {
 
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        use docx_rs::{Docx, Paragraph, Run, AlignmentType, Table, TableRow, TableCell};
+        use docx_rs::{AlignmentType, Docx, Paragraph, Run, Table, TableCell, TableRow};
 
         let lopdf_doc = document
             .as_any_mut()
@@ -941,7 +939,10 @@ impl PdfOperation for PdfToDocxOperation {
 
         for (i, page_id) in all_pages.iter().enumerate() {
             let page_obj_id = doc.get_pages()[page_id];
-            let page_dict = doc.get_object(page_obj_id).and_then(|obj| obj.as_dict()).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+            let page_dict = doc
+                .get_object(page_obj_id)
+                .and_then(|obj| obj.as_dict())
+                .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
 
             let media_box_default = vec![];
             let media_box = page_dict
@@ -951,13 +952,22 @@ impl PdfOperation for PdfToDocxOperation {
 
             let mut width: f32 = 595.0;
             if media_box.len() >= 4
-                && let (Ok(x0), Ok(x1)) = (media_box[0].as_f32().or_else(|_| media_box[0].as_i64().map(|v| v as f32)), media_box[2].as_f32().or_else(|_| media_box[2].as_i64().map(|v| v as f32))) {
-                    width = (x1 - x0).abs();
-                }
+                && let (Ok(x0), Ok(x1)) = (
+                    media_box[0]
+                        .as_f32()
+                        .or_else(|_| media_box[0].as_i64().map(|v| v as f32)),
+                    media_box[2]
+                        .as_f32()
+                        .or_else(|_| media_box[2].as_i64().map(|v| v as f32)),
+                )
+            {
+                width = (x1 - x0).abs();
+            }
             let center_w = width / 2.0;
 
             let content_data = doc.get_page_content(page_obj_id);
-            let content = lopdf::content::Content::decode(&content_data).unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
+            let content = lopdf::content::Content::decode(&content_data)
+                .unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
 
             let mut current_font_size: f32 = 12.0;
             let mut is_bold = false;
@@ -968,15 +978,28 @@ impl PdfOperation for PdfToDocxOperation {
             let mut current_text = String::new();
 
             let mut font_names = std::collections::HashMap::new();
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(fonts) = resources.get(b"Font").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (font_ref, font_obj) in fonts.iter() {
-                        if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())
-                            && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name()) {
-                                font_names.insert(String::from_utf8_lossy(font_ref).to_string(), String::from_utf8_lossy(base_font).to_string());
-                            }
+            if let Ok(resources) = page_dict
+                .get(b"Resources")
+                .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                .and_then(|obj| obj.as_dict())
+                && let Ok(fonts) = resources
+                    .get(b"Font")
+                    .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                    .and_then(|obj| obj.as_dict())
+            {
+                for (font_ref, font_obj) in fonts.iter() {
+                    if let Ok(font_dict) = doc
+                        .get_object(font_obj.as_reference().unwrap_or((0, 0)))
+                        .and_then(|o| o.as_dict())
+                        && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name())
+                    {
+                        font_names.insert(
+                            String::from_utf8_lossy(font_ref).to_string(),
+                            String::from_utf8_lossy(base_font).to_string(),
+                        );
                     }
                 }
+            }
 
             let mut spans = vec![];
 
@@ -988,11 +1011,17 @@ impl PdfOperation for PdfToDocxOperation {
                                 let font_key = String::from_utf8_lossy(name).to_string();
                                 if let Some(base) = font_names.get(&font_key) {
                                     let lower_base = base.to_lowercase();
-                                    is_bold = lower_base.contains("bold") || lower_base.contains("black") || lower_base.contains("heavy");
-                                    is_italic = lower_base.contains("italic") || lower_base.contains("oblique");
+                                    is_bold = lower_base.contains("bold")
+                                        || lower_base.contains("black")
+                                        || lower_base.contains("heavy");
+                                    is_italic = lower_base.contains("italic")
+                                        || lower_base.contains("oblique");
                                 }
                             }
-                            current_font_size = op.operands[1].as_f32().or_else(|_| op.operands[1].as_i64().map(|v| v as f32)).unwrap_or(12.0);
+                            current_font_size = op.operands[1]
+                                .as_f32()
+                                .or_else(|_| op.operands[1].as_i64().map(|v| v as f32))
+                                .unwrap_or(12.0);
                         }
                     }
                     "rg" | "g" | "k" => {
@@ -1008,8 +1037,14 @@ impl PdfOperation for PdfToDocxOperation {
                     }
                     "Tm" => {
                         if op.operands.len() == 6 {
-                            current_x = op.operands[4].as_f32().or_else(|_| op.operands[4].as_i64().map(|v| v as f32)).unwrap_or(0.0);
-                            current_y = op.operands[5].as_f32().or_else(|_| op.operands[5].as_i64().map(|v| v as f32)).unwrap_or(0.0);
+                            current_x = op.operands[4]
+                                .as_f32()
+                                .or_else(|_| op.operands[4].as_i64().map(|v| v as f32))
+                                .unwrap_or(0.0);
+                            current_y = op.operands[5]
+                                .as_f32()
+                                .or_else(|_| op.operands[5].as_i64().map(|v| v as f32))
+                                .unwrap_or(0.0);
                         }
                     }
                     "Td" | "TD" => {
@@ -1030,10 +1065,11 @@ impl PdfOperation for PdfToDocxOperation {
                     }
                     "Tj" => {
                         if op.operands.len() == 1
-                            && let Ok(string_bytes) = op.operands[0].as_str() {
-                                let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                current_text.push_str(&txt);
-                            }
+                            && let Ok(string_bytes) = op.operands[0].as_str()
+                        {
+                            let txt = String::from_utf8_lossy(string_bytes).to_string();
+                            current_text.push_str(&txt);
+                        }
                         if !current_text.is_empty() {
                             spans.push(TextSpan {
                                 text: current_text.clone(),
@@ -1051,17 +1087,19 @@ impl PdfOperation for PdfToDocxOperation {
                     }
                     "TJ" => {
                         if op.operands.len() == 1
-                            && let Ok(array) = op.operands[0].as_array() {
-                                for item in array {
-                                    if let Ok(string_bytes) = item.as_str() {
-                                        let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                        current_text.push_str(&txt);
-                                    } else if let Ok(num) = item.as_f32()
-                                        && num < -100.0 {
-                                            current_text.push(' ');
-                                        }
+                            && let Ok(array) = op.operands[0].as_array()
+                        {
+                            for item in array {
+                                if let Ok(string_bytes) = item.as_str() {
+                                    let txt = String::from_utf8_lossy(string_bytes).to_string();
+                                    current_text.push_str(&txt);
+                                } else if let Ok(num) = item.as_f32()
+                                    && num < -100.0
+                                {
+                                    current_text.push(' ');
                                 }
                             }
+                        }
                         if !current_text.is_empty() {
                             spans.push(TextSpan {
                                 text: current_text.clone(),
@@ -1078,7 +1116,7 @@ impl PdfOperation for PdfToDocxOperation {
                         }
                     }
                     "T*" | "'" | "\"" => {
-                         if !current_text.is_empty() {
+                        if !current_text.is_empty() {
                             spans.push(TextSpan {
                                 text: current_text.clone(),
                                 font_size: current_font_size,
@@ -1091,7 +1129,7 @@ impl PdfOperation for PdfToDocxOperation {
                                 height: current_font_size,
                             });
                             current_text.clear();
-                         }
+                        }
                     }
                     "ET" if !current_text.is_empty() => {
                         spans.push(TextSpan {
@@ -1161,7 +1199,9 @@ impl PdfOperation for PdfToDocxOperation {
                         let mut table_cells = vec![];
                         for row in current_table_rows.drain(..) {
                             let mut row_sorted = row.clone();
-                            row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                            row_sorted.sort_by(|a, b| {
+                                a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                            });
 
                             let mut cells = vec![];
                             let mut current_cell = vec![];
@@ -1169,9 +1209,12 @@ impl PdfOperation for PdfToDocxOperation {
                             let mut last_width = 0.0;
 
                             for span in row_sorted {
-                                table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
+                                table_spans_to_remove
+                                    .insert(format!("{}_{}_{}", span.x, span.y, span.text));
 
-                                if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
+                                if (span.x - (last_x + last_width)).abs() > 15.0
+                                    && !current_cell.is_empty()
+                                {
                                     cells.push(current_cell.clone());
                                     current_cell.clear();
                                 }
@@ -1194,16 +1237,19 @@ impl PdfOperation for PdfToDocxOperation {
                 let mut table_cells = vec![];
                 for row in current_table_rows.drain(..) {
                     let mut row_sorted = row.clone();
-                    row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                    row_sorted
+                        .sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
                     let mut cells = vec![];
                     let mut current_cell = vec![];
                     let mut last_x = -1000.0;
                     let mut last_width = 0.0;
 
                     for span in row_sorted {
-                        table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
+                        table_spans_to_remove
+                            .insert(format!("{}_{}_{}", span.x, span.y, span.text));
 
-                        if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
+                        if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty()
+                        {
                             cells.push(current_cell.clone());
                             current_cell.clear();
                         }
@@ -1219,21 +1265,31 @@ impl PdfOperation for PdfToDocxOperation {
                 layout_items.push(LayoutItem::Table(table_cells));
             }
 
-            remaining_spans.retain(|s| !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text)));
+            remaining_spans.retain(|s| {
+                !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text))
+            });
 
             // 2. XY-Cut Algorithm for remaining spans
             let mut gutters = vec![];
             let mut min_x = f32::MAX;
             let mut max_x = f32::MIN;
             for span in &remaining_spans {
-                if span.x < min_x { min_x = span.x; }
-                if span.x + span.width > max_x { max_x = span.x + span.width; }
+                if span.x < min_x {
+                    min_x = span.x;
+                }
+                if span.x + span.width > max_x {
+                    max_x = span.x + span.width;
+                }
             }
 
             if min_x < max_x && !remaining_spans.is_empty() {
                 // Projection profile
-                let mut intervals: Vec<(f32, f32)> = remaining_spans.iter().map(|s| (s.x, s.x + s.width)).collect();
-                intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+                let mut intervals: Vec<(f32, f32)> = remaining_spans
+                    .iter()
+                    .map(|s| (s.x, s.x + s.width))
+                    .collect();
+                intervals
+                    .sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
 
                 let mut merged = vec![intervals[0]];
                 for interval in intervals.iter().skip(1) {
@@ -1248,7 +1304,7 @@ impl PdfOperation for PdfToDocxOperation {
                 }
 
                 for i in 0..merged.len() - 1 {
-                    let gap = merged[i+1].0 - merged[i].1;
+                    let gap = merged[i + 1].0 - merged[i].1;
                     if gap >= 15.0 {
                         gutters.push(merged[i].1 + gap / 2.0);
                     }
@@ -1271,7 +1327,9 @@ impl PdfOperation for PdfToDocxOperation {
                     let mut sorted = col;
                     sorted.sort_by(|a, b| {
                         match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                            std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
+                            std::cmp::Ordering::Equal => {
+                                a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                            }
                             other => other,
                         }
                     });
@@ -1279,14 +1337,18 @@ impl PdfOperation for PdfToDocxOperation {
                     let mut current_para = vec![];
                     let mut last_y = f32::MAX;
                     for span in sorted {
-                        if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
+                        if (last_y - span.y).abs() > span.font_size * 1.5
+                            && !current_para.is_empty()
+                        {
                             paras.push(current_para.clone());
                             current_para.clear();
                         }
                         current_para.push(span.clone());
                         last_y = span.y;
                     }
-                    if !current_para.is_empty() { paras.push(current_para); }
+                    if !current_para.is_empty() {
+                        paras.push(current_para);
+                    }
                     paras.into_iter().map(LayoutItem::Paragraph).collect()
                 };
 
@@ -1295,7 +1357,9 @@ impl PdfOperation for PdfToDocxOperation {
             } else {
                 remaining_spans.sort_by(|a, b| {
                     match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                        std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
+                        std::cmp::Ordering::Equal => {
+                            a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                        }
                         other => other,
                     }
                 });
@@ -1312,7 +1376,9 @@ impl PdfOperation for PdfToDocxOperation {
                     current_para.push(span.clone());
                     last_y = span.y;
                 }
-                if !current_para.is_empty() { paras.push(current_para); }
+                if !current_para.is_empty() {
+                    paras.push(current_para);
+                }
 
                 for p in paras {
                     layout_items.push(LayoutItem::Paragraph(p));
@@ -1324,7 +1390,11 @@ impl PdfOperation for PdfToDocxOperation {
                 match item {
                     LayoutItem::Paragraph(spans) => {
                         let mut sorted_spans = spans.clone();
-                        sorted_spans.sort_by(|a,b| b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal).then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)));
+                        sorted_spans.sort_by(|a, b| {
+                            b.y.partial_cmp(&a.y)
+                                .unwrap_or(std::cmp::Ordering::Equal)
+                                .then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal))
+                        });
 
                         let mut text_parts = vec![];
                         let mut current_part = vec![];
@@ -1338,13 +1408,23 @@ impl PdfOperation for PdfToDocxOperation {
                             }
                             current_part.push(span);
                         }
-                        if !current_part.is_empty() { text_parts.push(current_part); }
+                        if !current_part.is_empty() {
+                            text_parts.push(current_part);
+                        }
 
                         for row in text_parts {
                             let mut row_sorted = row;
-                            row_sorted.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                            let combined_text = row_sorted.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
-                            if combined_text.trim().is_empty() { continue; }
+                            row_sorted.sort_by(|a, b| {
+                                a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                            });
+                            let combined_text = row_sorted
+                                .iter()
+                                .map(|s| s.text.clone())
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            if combined_text.trim().is_empty() {
+                                continue;
+                            }
 
                             let mut para = Paragraph::new();
                             let rep_span = row_sorted.first().cloned().unwrap_or(TextSpan {
@@ -1381,9 +1461,15 @@ impl PdfOperation for PdfToDocxOperation {
                                 run = run.size((size * 2.0) as usize);
                             }
 
-                            if rep_span.is_bold { run = run.bold(); }
-                            if rep_span.is_italic { run = run.italic(); }
-                            if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
+                            if rep_span.is_bold {
+                                run = run.bold();
+                            }
+                            if rep_span.is_italic {
+                                run = run.italic();
+                            }
+                            if !rep_span.color_hex.is_empty() {
+                                run = run.color(rep_span.color_hex.clone());
+                            }
 
                             para = para.add_run(run);
                             docx = docx.add_paragraph(para);
@@ -1397,26 +1483,40 @@ impl PdfOperation for PdfToDocxOperation {
                                 let mut tc = TableCell::new();
                                 let mut para = Paragraph::new();
                                 let mut sorted_spans = cell_spans.clone();
-                                sorted_spans.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                                let combined_text = sorted_spans.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
+                                sorted_spans.sort_by(|a, b| {
+                                    a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                                });
+                                let combined_text = sorted_spans
+                                    .iter()
+                                    .map(|s| s.text.clone())
+                                    .collect::<Vec<_>>()
+                                    .join(" ");
                                 if !combined_text.trim().is_empty() {
-                                    let rep_span = sorted_spans.first().cloned().unwrap_or(TextSpan {
-                                        text: "".to_string(),
-                                        font_size: 12.0,
-                                        is_bold: false,
-                                        is_italic: false,
-                                        color_hex: "".to_string(),
-                                        x: 0.0,
-                                        y: 0.0,
-                                        width: 0.0,
-                                        height: 0.0,
-                                    });
-                                    let mut run = Run::new().add_text(combined_text.trim().to_string());
+                                    let rep_span =
+                                        sorted_spans.first().cloned().unwrap_or(TextSpan {
+                                            text: "".to_string(),
+                                            font_size: 12.0,
+                                            is_bold: false,
+                                            is_italic: false,
+                                            color_hex: "".to_string(),
+                                            x: 0.0,
+                                            y: 0.0,
+                                            width: 0.0,
+                                            height: 0.0,
+                                        });
+                                    let mut run =
+                                        Run::new().add_text(combined_text.trim().to_string());
                                     let size = rep_span.font_size;
                                     run = run.size((size * 2.0) as usize);
-                                    if rep_span.is_bold { run = run.bold(); }
-                                    if rep_span.is_italic { run = run.italic(); }
-                                    if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
+                                    if rep_span.is_bold {
+                                        run = run.bold();
+                                    }
+                                    if rep_span.is_italic {
+                                        run = run.italic();
+                                    }
+                                    if !rep_span.color_hex.is_empty() {
+                                        run = run.color(rep_span.color_hex.clone());
+                                    }
                                     para = para.add_run(run);
                                 }
                                 tc = tc.add_paragraph(para);
@@ -1431,18 +1531,32 @@ impl PdfOperation for PdfToDocxOperation {
             }
 
             // Add images from Resources
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(xobjects) = resources.get(b"XObject").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (_xobj_name, xobj_ref) in xobjects.iter() {
-                        if let Ok(xobj_stream) = doc.get_object(xobj_ref.as_reference().unwrap_or((0, 0))).and_then(|obj| obj.as_stream())
-                            && let Ok(subtype) = xobj_stream.dict.get(b"Subtype").and_then(|obj| obj.as_name())
-                                && subtype == b"Image" {
-                                    let image_bytes = &xobj_stream.content;
-                                    let pic = docx_rs::Pic::new(image_bytes);
-                                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
-                                }
+            if let Ok(resources) = page_dict
+                .get(b"Resources")
+                .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                .and_then(|obj| obj.as_dict())
+                && let Ok(xobjects) = resources
+                    .get(b"XObject")
+                    .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                    .and_then(|obj| obj.as_dict())
+            {
+                for (_xobj_name, xobj_ref) in xobjects.iter() {
+                    if let Ok(xobj_stream) = doc
+                        .get_object(xobj_ref.as_reference().unwrap_or((0, 0)))
+                        .and_then(|obj| obj.as_stream())
+                        && let Ok(subtype) = xobj_stream
+                            .dict
+                            .get(b"Subtype")
+                            .and_then(|obj| obj.as_name())
+                        && subtype == b"Image"
+                    {
+                        let image_bytes = &xobj_stream.content;
+                        let pic = docx_rs::Pic::new(image_bytes);
+                        docx =
+                            docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
                     }
                 }
+            }
 
             if i < all_pages.len() - 1 {
                 docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
@@ -1655,7 +1769,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc, original_bytes: None  }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]
@@ -1788,7 +1905,10 @@ mod tests {
         }
 
         let clean_text = pure_text.replace(" ", "");
-        assert!(clean_text.contains("Left1Left2Right1Right2") || clean_text.contains("Left1Right1Left2Right2"));
+        assert!(
+            clean_text.contains("Left1Left2Right1Right2")
+                || clean_text.contains("Left1Right1Left2Right2")
+        );
     }
 
     #[test]
@@ -2017,6 +2137,4 @@ mod tests {
         assert!(!bytes.is_empty());
         assert!(bytes.starts_with(b"%PDF-"));
     }
-
-
 }

@@ -1,8 +1,8 @@
 use crate::document::LopdfDocument;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct RagChunk {
@@ -75,7 +75,7 @@ impl PdfOperation for PdfRagChunksOperation {
                         current_content.push('\n');
                     }
                 }
-                
+
                 if !current_content.trim().is_empty() {
                     all_chunks.push(RagChunk {
                         page: (i + 1) as u32,

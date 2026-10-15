@@ -1,14 +1,14 @@
+use futures_util::StreamExt;
 use keyring::Entry;
 use lazy_static::lazy_static;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
-use tokio::sync::Mutex;
-use reqwest::Client;
-use futures_util::StreamExt;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -121,7 +121,8 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
             models.iter().find(|m| m.id == *aid && m.is_downloaded)
         } else {
             None
-        }.or_else(|| models.iter().find(|m| m.is_downloaded));
+        }
+        .or_else(|| models.iter().find(|m| m.is_downloaded));
 
         let model_name = match active_or_downloaded {
             Some(m) => m.name.clone(),
@@ -139,7 +140,10 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
         if let Ok(res) = client.get("http://127.0.0.1:8080/v1/models").send().await {
             if res.status().is_success() {
                 let duration = start.elapsed().as_millis();
-                return Ok(format!("Connected to Local LLM (port 8080) in {}ms — Model loaded in RAM: {}", duration, model_name));
+                return Ok(format!(
+                    "Connected to Local LLM (port 8080) in {}ms — Model loaded in RAM: {}",
+                    duration, model_name
+                ));
             }
         }
 
@@ -158,9 +162,12 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
     }
 
     if config.mode == AiProviderMode::Byok {
-         let start = std::time::Instant::now();
-         tokio::time::sleep(std::time::Duration::from_millis(15)).await;
-         return Ok(format!("Connected to cloud in {}ms", start.elapsed().as_millis()));
+        let start = std::time::Instant::now();
+        tokio::time::sleep(std::time::Duration::from_millis(15)).await;
+        return Ok(format!(
+            "Connected to cloud in {}ms",
+            start.elapsed().as_millis()
+        ));
     }
 
     let client = Client::builder()
@@ -259,7 +266,11 @@ pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
     ];
 
     for m in &mut models {
-        let file_name = m.download_url.split('/').next_back().unwrap_or("model.gguf");
+        let file_name = m
+            .download_url
+            .split('/')
+            .next_back()
+            .unwrap_or("model.gguf");
         let mut path = models_dir.clone();
         path.push(file_name);
         if path.exists() {
@@ -290,7 +301,11 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
     let models_dir = get_models_dir();
     std::fs::create_dir_all(&models_dir).map_err(|e| e.to_string())?;
 
-    let file_name = model.download_url.split('/').next_back().unwrap_or("model.gguf");
+    let file_name = model
+        .download_url
+        .split('/')
+        .next_back()
+        .unwrap_or("model.gguf");
     let mut dest_path = models_dir.clone();
     dest_path.push(file_name);
 
@@ -312,8 +327,12 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
 
     let response = request.send().await.map_err(|e| e.to_string())?;
 
-    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-        return Err(format!("Download failed with status: {}", response.status()));
+    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+    {
+        return Err(format!(
+            "Download failed with status: {}",
+            response.status()
+        ));
     }
 
     let total_bytes = response
@@ -322,7 +341,7 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
         .saturating_add(downloaded);
 
     if total_bytes > 0 && downloaded >= total_bytes {
-         let _ = app.emit(
+        let _ = app.emit(
             "model-download-progress",
             DownloadProgress {
                 model_id: model_id.clone(),
@@ -330,8 +349,8 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
                 bytes_downloaded: downloaded,
                 total_bytes,
             },
-         );
-         return Ok(());
+        );
+        return Ok(());
     }
 
     let mut file = OpenOptions::new()
@@ -357,7 +376,11 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
 
         file.write_all(&chunk).await.map_err(|e| e.to_string())?;
         downloaded += chunk.len() as u64;
-        let percent = if total_bytes > 0 { (downloaded as f64 / total_bytes as f64) * 100.0 } else { 0.0 };
+        let percent = if total_bytes > 0 {
+            (downloaded as f64 / total_bytes as f64) * 100.0
+        } else {
+            0.0
+        };
 
         let _ = app.emit(
             "model-download-progress",

@@ -28,20 +28,19 @@ impl PdfOperation for ExtractTextOperation {
 
         let mut pages_text = Vec::new();
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref() {
-            if !bytes.is_empty() {
-                if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
-                    let total_pages = pdf.page_count().unwrap_or(0);
-                    let target_pages: Vec<u32> = match &self.pages {
-                        Some(pages) => pages.clone(),
-                        None => (1..=total_pages as u32).collect(),
-                    };
-                    for page_id in target_pages {
-                        if page_id >= 1 && (page_id as usize) <= total_pages {
-                            let text = pdf.to_markdown((page_id - 1) as usize).unwrap_or_default();
-                            pages_text.push(text);
-                        }
-                    }
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+        {
+            let total_pages = pdf.page_count().unwrap_or(0);
+            let target_pages: Vec<u32> = match &self.pages {
+                Some(pages) => pages.clone(),
+                None => (1..=total_pages as u32).collect(),
+            };
+            for page_id in target_pages {
+                if page_id >= 1 && (page_id as usize) <= total_pages {
+                    let text = pdf.to_markdown((page_id - 1) as usize).unwrap_or_default();
+                    pages_text.push(text);
                 }
             }
         }
@@ -134,7 +133,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc, original_bytes: None  }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]

@@ -1,13 +1,13 @@
+use futures_util::StreamExt;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use tauri::{AppHandle, Emitter};
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
-use tauri::{AppHandle, Emitter};
-use futures_util::StreamExt;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OcrModelInfo {
@@ -44,7 +44,7 @@ fn get_ocr_models_dir(tier_id: &str) -> std::path::PathBuf {
     // Try workspace fallback if we are in development
     let workspace_path = std::path::PathBuf::from(format!("models/ocr/{}", tier_id));
     if workspace_path.exists() {
-         return workspace_path;
+        return workspace_path;
     }
 
     let mut path = crate::storage::get_app_data_root();
@@ -163,7 +163,7 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
     let estimated_total_bytes = (model.size_mb * 1024.0 * 1024.0) as u64;
     let mut total_downloaded: u64 = 0;
 
-    for (_i, url) in model.download_urls.iter().enumerate() {
+    for url in &model.download_urls {
         let file_name = url.split('/').next_back().unwrap_or("file");
         let mut dest_path = models_dir.clone();
         dest_path.push(file_name);
@@ -180,12 +180,14 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
 
         let response = request.send().await.map_err(|e| e.to_string())?;
 
-        if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-             // In mock mode / missing URL, just create an empty file or mock content for tests
-             std::fs::write(&dest_path, b"mock").map_err(|e| e.to_string())?;
-             total_downloaded += estimated_total_bytes / (num_files as u64);
-             let percent = (total_downloaded as f64 / estimated_total_bytes as f64) * 100.0;
-             let _ = app.emit(
+        if !response.status().is_success()
+            && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+        {
+            // In mock mode / missing URL, just create an empty file or mock content for tests
+            std::fs::write(&dest_path, b"mock").map_err(|e| e.to_string())?;
+            total_downloaded += estimated_total_bytes / (num_files as u64);
+            let percent = (total_downloaded as f64 / estimated_total_bytes as f64) * 100.0;
+            let _ = app.emit(
                 "ocr-download-progress",
                 OcrDownloadProgress {
                     model_id: model_id.clone(),
@@ -193,8 +195,8 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
                     bytes_downloaded: total_downloaded,
                     total_bytes: estimated_total_bytes,
                 },
-             );
-             continue;
+            );
+            continue;
         }
 
         let mut file = OpenOptions::new()
@@ -221,7 +223,11 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
             file.write_all(&chunk).await.map_err(|e| e.to_string())?;
             total_downloaded += chunk.len() as u64;
 
-            let percent = if estimated_total_bytes > 0 { (total_downloaded as f64 / estimated_total_bytes as f64) * 100.0 } else { 0.0 };
+            let percent = if estimated_total_bytes > 0 {
+                (total_downloaded as f64 / estimated_total_bytes as f64) * 100.0
+            } else {
+                0.0
+            };
 
             let _ = app.emit(
                 "ocr-download-progress",
@@ -258,7 +264,8 @@ pub async fn cancel_ocr_model_download(model_id: String) -> Result<(), String> {
 
 // Global active model setting
 lazy_static! {
-    static ref ACTIVE_OCR_MODEL: Arc<std::sync::Mutex<String>> = Arc::new(std::sync::Mutex::new("ppocrv6-tiny".to_string()));
+    static ref ACTIVE_OCR_MODEL: Arc<std::sync::Mutex<String>> =
+        Arc::new(std::sync::Mutex::new("ppocrv6-tiny".to_string()));
 }
 
 #[tauri::command]

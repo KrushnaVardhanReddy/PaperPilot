@@ -168,7 +168,10 @@ mod tests {
     #[test]
     fn test_compress_operation_success() {
         let doc = Document::with_version("1.5");
-        let mut lopdf_doc = LopdfDocument { inner: doc, original_bytes: None  };
+        let mut lopdf_doc = LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        };
         let op = CompressOperation::new(None);
 
         let result = op.execute(&mut lopdf_doc);
@@ -200,7 +203,10 @@ mod tests {
         let image_stream = Stream::new(image_stream_dict, raw_bytes);
         doc.objects.insert(image_id, Object::Stream(image_stream));
 
-        let mut lopdf_doc = LopdfDocument { inner: doc, original_bytes: None  };
+        let mut lopdf_doc = LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        };
         let op = CompressOperation::new(Some("low".to_string()));
 
         let result = op.execute(&mut lopdf_doc);

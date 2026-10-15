@@ -96,7 +96,10 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        LopdfDocument { inner, original_bytes: None  }
+        LopdfDocument {
+            inner,
+            original_bytes: None,
+        }
     }
 
     #[test]
@@ -149,7 +152,10 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        let mut doc = LopdfDocument { inner, original_bytes: None  };
+        let mut doc = LopdfDocument {
+            inner,
+            original_bytes: None,
+        };
 
         // Rotate only page 2
         let op = RotatePagesOperation::new(180, Some(vec![2]));

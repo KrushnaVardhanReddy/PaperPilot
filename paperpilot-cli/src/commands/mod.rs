@@ -1,4 +1,3 @@
-pub mod watch;
 pub mod annotate;
 pub mod group_a;
 pub mod group_b;
@@ -7,6 +6,7 @@ pub mod group_d;
 pub mod group_e;
 pub mod office;
 pub mod validate;
+pub mod watch;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -98,7 +98,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             color,
             font_size,
             output,
-        } => group_b::handle_watermark(input, text, *angle, *opacity, color.clone(), *font_size, output),
+        } => group_b::handle_watermark(
+            input,
+            text,
+            *angle,
+            *opacity,
+            color.clone(),
+            *font_size,
+            output,
+        ),
         Commands::Redact {
             input,
             pages,
@@ -151,7 +159,19 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             output,
         } => group_c::handle_render(input, output),
         Commands::Compare { input, input_b } => group_c::handle_compare(input, input_b),
-        Commands::Ocr { input, output, format, clipboard, tier } => group_c::handle_ocr(input, output.as_deref(), format, *clipboard, tier.as_deref()),
+        Commands::Ocr {
+            input,
+            output,
+            format,
+            clipboard,
+            tier,
+        } => group_c::handle_ocr(
+            input,
+            output.as_deref(),
+            format,
+            *clipboard,
+            tier.as_deref(),
+        ),
         Commands::Bookmarks { input } => group_c::handle_bookmarks(input),
         Commands::ImagesToPdf { images, output } => group_c::handle_images_to_pdf(images, output),
 

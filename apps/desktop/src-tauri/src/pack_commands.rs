@@ -1,10 +1,10 @@
+use crate::error::DesktopError;
+use futures_util::StreamExt;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use reqwest::Client;
-use futures_util::StreamExt;
 use tauri::Emitter;
-use crate::error::DesktopError;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FeaturePackInfo {
@@ -130,16 +130,24 @@ pub fn get_feature_packs() -> Result<Vec<FeaturePackInfo>, DesktopError> {
 }
 
 #[tauri::command]
-pub async fn download_feature_pack(app: tauri::AppHandle, pack_id: String) -> Result<(), DesktopError> {
+pub async fn download_feature_pack(
+    app: tauri::AppHandle,
+    pack_id: String,
+) -> Result<(), DesktopError> {
     if pack_id == "core" {
         return Ok(());
     }
 
     let mut dest_path = crate::storage::get_app_data_root();
-    tokio::fs::create_dir_all(&dest_path).await.map_err(|e| DesktopError::IoError(e.to_string()))?;
+    tokio::fs::create_dir_all(&dest_path)
+        .await
+        .map_err(|e| DesktopError::IoError(e.to_string()))?;
     dest_path.push(format!("{}.pack", pack_id));
 
-    let url = format!("https://huggingface.co/paperpilot/packs/resolve/main/{}.pack", pack_id);
+    let url = format!(
+        "https://huggingface.co/paperpilot/packs/resolve/main/{}.pack",
+        pack_id
+    );
     let client = Client::new();
     let mut request = client.get(&url);
 
@@ -152,10 +160,17 @@ pub async fn download_feature_pack(app: tauri::AppHandle, pack_id: String) -> Re
         }
     }
 
-    let response = request.send().await.map_err(|e| DesktopError::NetworkError(e.to_string()))?;
-    
-    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-        return Err(DesktopError::NetworkError(format!("Failed to download feature pack: HTTP {}", response.status())));
+    let response = request
+        .send()
+        .await
+        .map_err(|e| DesktopError::NetworkError(e.to_string()))?;
+
+    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+    {
+        return Err(DesktopError::NetworkError(format!(
+            "Failed to download feature pack: HTTP {}",
+            response.status()
+        )));
     }
 
     let total_size = response.content_length().unwrap_or(0) + total_downloaded;
@@ -172,24 +187,36 @@ pub async fn download_feature_pack(app: tauri::AppHandle, pack_id: String) -> Re
 
     while let Some(chunk_result) = stream.next().await {
         let chunk = chunk_result.map_err(|e| DesktopError::NetworkError(e.to_string()))?;
-        file.write_all(&chunk).await.map_err(|e| DesktopError::IoError(e.to_string()))?;
+        file.write_all(&chunk)
+            .await
+            .map_err(|e| DesktopError::IoError(e.to_string()))?;
         total_downloaded += chunk.len() as u64;
 
-        let percent = if total_size > 0 { (total_downloaded as f64 / total_size as f64) * 100.0 } else { 0.0 };
-        let _ = app.emit("pack-download-progress", PackDownloadProgress {
-            pack_id: pack_id.clone(),
-            percent: percent.min(100.0),
-            bytes_downloaded: total_downloaded,
-            total_bytes: total_size,
-        });
+        let percent = if total_size > 0 {
+            (total_downloaded as f64 / total_size as f64) * 100.0
+        } else {
+            0.0
+        };
+        let _ = app.emit(
+            "pack-download-progress",
+            PackDownloadProgress {
+                pack_id: pack_id.clone(),
+                percent: percent.min(100.0),
+                bytes_downloaded: total_downloaded,
+                total_bytes: total_size,
+            },
+        );
     }
 
-    let _ = app.emit("pack-download-progress", PackDownloadProgress {
-        pack_id: pack_id.clone(),
-        percent: 100.0,
-        bytes_downloaded: total_downloaded,
-        total_bytes: total_downloaded.max(total_size),
-    });
+    let _ = app.emit(
+        "pack-download-progress",
+        PackDownloadProgress {
+            pack_id: pack_id.clone(),
+            percent: 100.0,
+            bytes_downloaded: total_downloaded,
+            total_bytes: total_downloaded.max(total_size),
+        },
+    );
 
     set_feature_pack_enabled(pack_id, true)?;
 
@@ -200,7 +227,7 @@ pub async fn download_feature_pack(app: tauri::AppHandle, pack_id: String) -> Re
 pub fn set_feature_pack_enabled(pack_id: String, enabled: bool) -> Result<(), DesktopError> {
     let mut state = load_packs_state();
     state.insert(pack_id, enabled);
-    
+
     // Core is always true
     state.insert("core".to_string(), true);
 

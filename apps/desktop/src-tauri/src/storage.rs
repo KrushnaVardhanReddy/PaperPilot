@@ -55,14 +55,14 @@ mod tests {
     fn test_get_app_data_root_env_override() {
         let _guard = ENV_LOCK.lock().unwrap();
         std::env::set_var("PAPERPILOT_DATA_DIR", "/tmp/paperpilot_test_data");
-        
+
         let path = get_app_data_root();
-        
+
         // Only assert if it's not overridden by portable mode (which takes precedence)
         if !is_portable_mode() {
             assert_eq!(path, PathBuf::from("/tmp/paperpilot_test_data"));
         }
-        
+
         std::env::remove_var("PAPERPILOT_DATA_DIR");
     }
 }

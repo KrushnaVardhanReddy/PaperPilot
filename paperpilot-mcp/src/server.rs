@@ -942,7 +942,7 @@ impl PaperPilotMcpServer {
         tool_search.name = "pdf_search".into();
         tool_search.description = Some("Searches for a text query inside a PDF.".into());
         tool_search.input_schema = std::sync::Arc::new(schema_search);
-        tools.push(tool_search);        // Tool: pdf_watermark
+        tools.push(tool_search); // Tool: pdf_watermark
         let mut schema_wm = serde_json::Map::new();
         schema_wm.insert(
             "type".to_string(),
@@ -973,24 +973,56 @@ impl PaperPilotMcpServer {
         prop_wm.insert("text".to_string(), serde_json::Value::Object(prop_text_w));
 
         let mut prop_angle_w = serde_json::Map::new();
-        prop_angle_w.insert("type".to_string(), serde_json::Value::String("number".to_string()));
-        prop_angle_w.insert("description".to_string(), serde_json::Value::String("Angle of the watermark (default 45).".to_string()));
+        prop_angle_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        prop_angle_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("Angle of the watermark (default 45).".to_string()),
+        );
         prop_wm.insert("angle".to_string(), serde_json::Value::Object(prop_angle_w));
 
         let mut prop_opacity_w = serde_json::Map::new();
-        prop_opacity_w.insert("type".to_string(), serde_json::Value::String("number".to_string()));
-        prop_opacity_w.insert("description".to_string(), serde_json::Value::String("Opacity of the watermark (0 to 1, default 0.2).".to_string()));
-        prop_wm.insert("opacity".to_string(), serde_json::Value::Object(prop_opacity_w));
+        prop_opacity_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        prop_opacity_w.insert(
+            "description".to_string(),
+            serde_json::Value::String(
+                "Opacity of the watermark (0 to 1, default 0.2).".to_string(),
+            ),
+        );
+        prop_wm.insert(
+            "opacity".to_string(),
+            serde_json::Value::Object(prop_opacity_w),
+        );
 
         let mut prop_color_w = serde_json::Map::new();
-        prop_color_w.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_color_w.insert("description".to_string(), serde_json::Value::String("Color of the watermark (e.g. 'gray', 'red').".to_string()));
+        prop_color_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_color_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("Color of the watermark (e.g. 'gray', 'red').".to_string()),
+        );
         prop_wm.insert("color".to_string(), serde_json::Value::Object(prop_color_w));
 
         let mut prop_fontsize_w = serde_json::Map::new();
-        prop_fontsize_w.insert("type".to_string(), serde_json::Value::String("number".to_string()));
-        prop_fontsize_w.insert("description".to_string(), serde_json::Value::String("Font size.".to_string()));
-        prop_wm.insert("font_size".to_string(), serde_json::Value::Object(prop_fontsize_w));
+        prop_fontsize_w.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        prop_fontsize_w.insert(
+            "description".to_string(),
+            serde_json::Value::String("Font size.".to_string()),
+        );
+        prop_wm.insert(
+            "font_size".to_string(),
+            serde_json::Value::Object(prop_fontsize_w),
+        );
 
         let mut prop_output_w = serde_json::Map::new();
         prop_output_w.insert(
@@ -1001,7 +1033,10 @@ impl PaperPilotMcpServer {
             "description".to_string(),
             serde_json::Value::String("The output PDF file path.".to_string()),
         );
-        prop_wm.insert("output".to_string(), serde_json::Value::Object(prop_output_w));
+        prop_wm.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_w),
+        );
 
         schema_wm.insert("properties".to_string(), serde_json::Value::Object(prop_wm));
         let req_wm = vec![
@@ -1340,8 +1375,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_md = Tool::default();
         tool_md.name = "pdf_to_markdown".into();
-        tool_md.description =
-            Some("Converts a PDF document into Markdown formatted text.".into());
+        tool_md.description = Some("Converts a PDF document into Markdown formatted text.".into());
         let mut m_props = serde_json::Map::new();
         m_props.insert(
             "input".into(),
@@ -2725,7 +2759,10 @@ impl PaperPilotMcpServer {
                     }
                 },
                 "required": ["input", "output"]
-            }).as_object().unwrap().clone(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
         ));
 
         Ok(ListToolsResult {
@@ -3419,14 +3456,29 @@ impl PaperPilotMcpServer {
                     output_path: Some(output),
                     diff_detected: None,
                 })
-            }            "pdf_watermark" => {
+            }
+            "pdf_watermark" => {
                 let input = get_string("input")?;
                 let text = get_string("text")?;
                 let output = get_string("output")?;
-                let angle = args.get("angle").and_then(|v| v.as_f64()).map(|v| v as f32).unwrap_or(45.0);
-                let opacity = args.get("opacity").and_then(|v| v.as_f64()).map(|v| v as f32).unwrap_or(0.2);
-                let color = args.get("color").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let font_size = args.get("font_size").and_then(|v| v.as_f64()).map(|v| v as f32);
+                let angle = args
+                    .get("angle")
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32)
+                    .unwrap_or(45.0);
+                let opacity = args
+                    .get("opacity")
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32)
+                    .unwrap_or(0.2);
+                let color = args
+                    .get("color")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let font_size = args
+                    .get("font_size")
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32);
 
                 ensure_parent_dir(&output)?;
 
@@ -3640,7 +3692,9 @@ impl PaperPilotMcpServer {
                 );
                 match res {
                     Ok(json_str) => Ok(OperationResult {
-                        data: Some(serde_json::from_str(&json_str).unwrap_or(serde_json::json!({}))),
+                        data: Some(
+                            serde_json::from_str(&json_str).unwrap_or(serde_json::json!({})),
+                        ),
                         success: true,
                         message: "Excel data extracted to JSON".to_string(),
                         output_path: None,
@@ -3855,7 +3909,10 @@ impl PaperPilotMcpServer {
                     .unwrap_or_default();
 
                 std::fs::write(&output, &md_data).map_err(|e| {
-                    ErrorData::invalid_params(format!("Failed to write output Markdown: {}", e), None)
+                    ErrorData::invalid_params(
+                        format!("Failed to write output Markdown: {}", e),
+                        None,
+                    )
                 })?;
 
                 Ok(OperationResult {
@@ -4326,7 +4383,12 @@ impl PaperPilotMcpServer {
                 op.output_path = Some(out_path.clone());
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
-                let text = op.extracted_text.lock().unwrap().clone().unwrap_or_default();
+                let text = op
+                    .extracted_text
+                    .lock()
+                    .unwrap()
+                    .clone()
+                    .unwrap_or_default();
 
                 Ok(OperationResult {
                     data: Some(serde_json::json!({

@@ -188,7 +188,10 @@ fn bench_split(c: &mut Criterion) {
     for (filename, pages) in fixtures {
         let path = bench_dir.join(filename);
         let peak_mem = measure_peak_rss(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let out_dir = tempfile::tempdir().unwrap();
             let split_op = SplitOperation::new(out_dir.path().to_path_buf(), vec![]);
             split_op.execute(&mut doc).unwrap();
@@ -198,7 +201,10 @@ fn bench_split(c: &mut Criterion) {
         group.throughput(Throughput::Elements(pages as u64));
         group.bench_with_input(BenchmarkId::from_parameter(pages), &path, |b, path| {
             b.iter(|| {
-                let mut doc = LopdfDocument { inner:  Document::load(path).unwrap(), original_bytes: None };
+                let mut doc = LopdfDocument {
+                    inner: Document::load(path).unwrap(),
+                    original_bytes: None,
+                };
                 let out_dir = tempfile::tempdir().unwrap();
                 let split_op = SplitOperation::new(out_dir.path().to_path_buf(), vec![]);
                 split_op.execute(&mut doc).unwrap();
@@ -224,7 +230,10 @@ fn bench_extract_text(c: &mut Criterion) {
     for (filename, pages) in fixtures {
         let path = bench_dir.join(filename);
         let peak_mem = measure_peak_rss(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
         });
@@ -233,7 +242,10 @@ fn bench_extract_text(c: &mut Criterion) {
         group.throughput(Throughput::Elements(pages as u64));
         group.bench_with_input(BenchmarkId::from_parameter(pages), &path, |b, path| {
             b.iter(|| {
-                let mut doc = LopdfDocument { inner:  Document::load(path).unwrap(), original_bytes: None };
+                let mut doc = LopdfDocument {
+                    inner: Document::load(path).unwrap(),
+                    original_bytes: None,
+                };
                 let extract_op = ExtractTextOperation::new(None);
                 extract_op.execute(&mut doc).unwrap();
             });
@@ -258,7 +270,10 @@ fn bench_compress(c: &mut Criterion) {
     for (filename, pages) in fixtures {
         let path = bench_dir.join(filename);
         let peak_mem = measure_peak_rss(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let compress_op = CompressOperation::default();
             compress_op.execute(&mut doc).unwrap();
         });
@@ -267,7 +282,10 @@ fn bench_compress(c: &mut Criterion) {
         group.throughput(Throughput::Elements(pages as u64));
         group.bench_with_input(BenchmarkId::from_parameter(pages), &path, |b, path| {
             b.iter(|| {
-                let mut doc = LopdfDocument { inner:  Document::load(path).unwrap(), original_bytes: None };
+                let mut doc = LopdfDocument {
+                    inner: Document::load(path).unwrap(),
+                    original_bytes: None,
+                };
                 let compress_op = CompressOperation::default();
                 compress_op.execute(&mut doc).unwrap();
             });
@@ -292,7 +310,10 @@ fn bench_watermark(c: &mut Criterion) {
     for (filename, pages) in fixtures {
         let path = bench_dir.join(filename);
         let peak_mem = measure_peak_rss(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
             watermark_op.execute(&mut doc).unwrap();
         });
@@ -301,7 +322,10 @@ fn bench_watermark(c: &mut Criterion) {
         group.throughput(Throughput::Elements(pages as u64));
         group.bench_with_input(BenchmarkId::from_parameter(pages), &path, |b, path| {
             b.iter(|| {
-                let mut doc = LopdfDocument { inner:  Document::load(path).unwrap(), original_bytes: None };
+                let mut doc = LopdfDocument {
+                    inner: Document::load(path).unwrap(),
+                    original_bytes: None,
+                };
                 let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
                 watermark_op.execute(&mut doc).unwrap();
             });
@@ -326,7 +350,10 @@ fn bench_encrypt(c: &mut Criterion) {
     for (filename, pages) in fixtures {
         let path = bench_dir.join(filename);
         let peak_mem = measure_peak_rss(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let encrypt_op = EncryptOperation::new();
             let _ = encrypt_op.execute(&mut doc);
         });
@@ -335,7 +362,10 @@ fn bench_encrypt(c: &mut Criterion) {
         group.throughput(Throughput::Elements(pages as u64));
         group.bench_with_input(BenchmarkId::from_parameter(pages), &path, |b, path| {
             b.iter(|| {
-                let mut doc = LopdfDocument { inner:  Document::load(path).unwrap(), original_bytes: None };
+                let mut doc = LopdfDocument {
+                    inner: Document::load(path).unwrap(),
+                    original_bytes: None,
+                };
                 let encrypt_op = EncryptOperation::new();
                 let _ = encrypt_op.execute(&mut doc);
             });
@@ -352,7 +382,10 @@ fn bench_ocr(c: &mut Criterion) {
         .join("large_100page.pdf");
 
     let peak_mem = measure_peak_rss(|| {
-        let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&path).unwrap(),
+            original_bytes: None,
+        };
         let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
         let _ = ocr_op.execute(&mut doc);
     });
@@ -363,7 +396,10 @@ fn bench_ocr(c: &mut Criterion) {
     group.throughput(Throughput::Elements(100));
     group.bench_function("ocr_large_100page", |b| {
         b.iter(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
             let _ = ocr_op.execute(&mut doc);
         });
@@ -379,7 +415,10 @@ fn bench_pdf_to_image(c: &mut Criterion) {
         .join("medium_50page.pdf");
 
     let peak_mem = measure_peak_rss(|| {
-        let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&path).unwrap(),
+            original_bytes: None,
+        };
         let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
         let _ = render_op.execute(&mut doc);
     });
@@ -390,7 +429,10 @@ fn bench_pdf_to_image(c: &mut Criterion) {
     group.throughput(Throughput::Elements(50));
     group.bench_function("render_medium_50page", |b| {
         b.iter(|| {
-            let mut doc = LopdfDocument { inner:  Document::load(&path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&path).unwrap(),
+                original_bytes: None,
+            };
             let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
             let _ = render_op.execute(&mut doc);
         });
@@ -415,14 +457,20 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
     let warm_extract: u128;
     {
         let start = std::time::Instant::now();
-        let mut doc = LopdfDocument { inner:  Document::load(&large_pdf_path).unwrap(), original_bytes: None };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&large_pdf_path).unwrap(),
+            original_bytes: None,
+        };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();
         cold_extract = start.elapsed().as_micros();
 
         let start = std::time::Instant::now();
         for _ in 0..10 {
-            let mut doc = LopdfDocument { inner:  Document::load(&large_pdf_path).unwrap(), original_bytes: None };
+            let mut doc = LopdfDocument {
+                inner: Document::load(&large_pdf_path).unwrap(),
+                original_bytes: None,
+            };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
         }
@@ -469,7 +517,10 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
     }
 
     for i in 1..=1000 {
-        let mut doc = LopdfDocument { inner:  Document::load(&small_batch_paths[0]).unwrap(), original_bytes: None };
+        let mut doc = LopdfDocument {
+            inner: Document::load(&small_batch_paths[0]).unwrap(),
+            original_bytes: None,
+        };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();
 

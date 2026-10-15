@@ -552,7 +552,9 @@ pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received office convert request");
-    handle_tool(Path("office_modernize_legacy".to_string()), req).await.into_response()
+    handle_tool(Path("office_modernize_legacy".to_string()), req)
+        .await
+        .into_response()
 }
 
 /// Convert an Excel sheet into structured JSON format
@@ -569,7 +571,9 @@ pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received excel_to_json request");
-    handle_tool(Path("excel_to_json".to_string()), req).await.into_response()
+    handle_tool(Path("excel_to_json".to_string()), req)
+        .await
+        .into_response()
 }
 
 /// Convert an Excel sheet into CSV format
@@ -586,7 +590,9 @@ pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn excel_to_csv(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received excel_to_csv request");
-    handle_tool(Path("excel_to_csv".to_string()), req).await.into_response()
+    handle_tool(Path("excel_to_csv".to_string()), req)
+        .await
+        .into_response()
 }
 
 /// Apply text or image watermarks to a PDF document

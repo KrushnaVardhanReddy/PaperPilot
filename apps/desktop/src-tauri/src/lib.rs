@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
-pub mod error;
-pub mod storage;
-pub mod pack_commands;
 pub mod ai_commands;
+pub mod error;
 pub mod ocr_commands;
+pub mod pack_commands;
+pub mod storage;
 use crate::error::DesktopError;
 
 lazy_static::lazy_static! {
