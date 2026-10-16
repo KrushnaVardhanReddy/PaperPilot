@@ -11,14 +11,23 @@ CRITICAL CONSTRAINTS:
 3. CONCURRENCY: Maintain bounded concurrency (`-j 4`).
 
 ================================================================================
-PART 1: SANDBOXED TEST RUN ISOLATION
+PART 1: SANDBOXED TEST RUN ISOLATION & DUAL-CHECK FILE VERIFICATION
 ================================================================================
 In `tools/penta-interface-e2e/src/main.rs`:
-1. Before running test suites, ensure the test output directory (`tests/e2e_fixtures/out/penta_e2e`) is cleanly reset:
-   - Clear existing `.pdf`, `.docx`, `.xlsx`, `.md`, `.txt`, and `.json` artifacts from previous test runs so tests can never pass due to stale disk cache.
-   - Re-create the empty directory structure before dispatching runners.
-2. In `tools/penta-interface-e2e/src/cases/conversions_office_tools.rs`:
-   - Verify that output existence checks assert the file was modified within the test execution window and has a file size > 0 bytes.
+1. Clean Run Guarantee:
+   - Before running test suites, completely reset and wipe the temporary output directories (`tests/e2e_fixtures/out/penta_e2e*`):
+   - Wipe all stale `.pdf`, `.docx`, `.xlsx`, `.md`, `.txt`, and `.json` artifacts from previous runs so tests can NEVER pass against old files.
+   - Re-create a clean, empty output directory prior to running each suite.
+
+2. Mandatory Dual-Check File Verification on Disk:
+   Every test generating a file must perform a two-step validation:
+   - Step 1 (Creation Check): Assert output file exists, is non-empty (> 0 bytes), and has a modification timestamp within the active test execution window.
+   - Step 2 (Deep Semantic Inspection):
+     - For PDFs (`merge`, `split`, `rotate`, `watermark`, `crop`): Use `PdfAssertions` to verify exact page counts, text strings on specific pages, rotation dictionary tags (`/Rotate 90`), and encryption locks.
+     - For Office to Markdown (`office_to_markdown`): Verify file contains table syntax (`|` and `---`) and expected table headers.
+     - For Office Text Extraction (`office_extract_text`): Verify plain text output contains expected text lines without XML tags.
+     - For Office Modernization (`office_modernize_legacy`): Inspect the output file header and verify it opens as a valid OpenXML ZIP archive (`[Content_Types].xml`).
+     - For Spreadsheets to JSON/CSV (`excel_to_json`, `excel_to_csv`): Parse JSON to verify expected column keys and array length; parse CSV to verify delimiter formatting.
 
 ================================================================================
 PART 2: TRUE IN-MEMORY ENGINE PARITY FOR WASM & EDGE

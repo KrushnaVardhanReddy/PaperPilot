@@ -16,12 +16,19 @@ This specification defines **Spec 057** to harden test integrity, sandboxing, an
 
 ## 2. Technical Requirements
 
-### A. Sandboxed Test Run Isolation
+### A. Sandboxed Test Run Isolation & Dual-Check File Verification
 1. **Clean Run Guarantee**:
    - In `tools/penta-interface-e2e/src/main.rs`, before executing test suites, cleanly reset or wipe temporary test output directories (`tests/e2e_fixtures/out/penta_e2e_*`).
    - Alternatively, isolate each test execution run using a unique run identifier/subfolder so that tests can NEVER pass against residual files from previous runs.
-2. **Artifact Verification Integrity**:
-   - Every file-based assertion must verify file creation timestamps and non-zero byte length after the operation completes.
+2. **Mandatory Dual-Check File Verification on Disk**:
+   Every test generating a file must perform a two-step validation:
+   - **Step 1 (Creation & Timestamp Check)**: Verify the file exists on disk, was created/modified during the current test execution window, and has a size $> 0$ bytes.
+   - **Step 2 (Deep Content & Semantic Inspection)**:
+     - For PDFs (`merge`, `split`, `rotate`, `watermark`, `crop`): Use `PdfAssertions` to verify exact page counts, text strings on specific pages, rotation dictionary tags (`/Rotate 90`), and encryption locks.
+     - For Office to Markdown (`office_to_markdown`): Verify file contains table syntax (`|` and `---`) and expected table headers.
+     - For Office Text Extraction (`office_extract_text`): Verify plain text output contains expected text lines without XML tags.
+     - For Office Modernization (`office_modernize_legacy`): Inspect the output file header and verify it opens as a valid OpenXML ZIP archive (`[Content_Types].xml`).
+     - For Spreadsheets to JSON/CSV (`excel_to_json`, `excel_to_csv`): Parse JSON to verify expected column keys and array length; parse CSV to verify delimiter formatting.
 
 ### B. True In-Memory WASM Parity Execution
 1. **Direct In-Memory Buffer Calls**:
