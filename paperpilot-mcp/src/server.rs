@@ -3533,15 +3533,26 @@ impl PaperPilotMcpServer {
             }
 
             "workspace_search" => {
-                let _target = get_string("input").or_else(|_| get_string("dir"))?;
-                let _query = get_string("query")?;
+                let target = get_string("input").or_else(|_| get_string("dir"))?;
+                let query = get_string("query")?;
 
-                let message = "Matches found".to_string();
+                let path = std::path::PathBuf::from(&target);
+                let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+
+                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                let matches = op.match_pages.lock().unwrap().clone();
+                let message = if matches.is_empty() {
+                    "No matches found.".to_string()
+                } else {
+                    format!("Matches found on pages: {:?}", matches)
+                };
 
                 Ok(OperationResult {
-                    message: message.clone(),
+                    message,
                     data: Some(serde_json::json!({
-                        "message": message,
+                        "matches": matches,
                     })),
                     success: true,
                     output_path: None,

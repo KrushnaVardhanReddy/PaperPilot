@@ -945,6 +945,59 @@ pub async fn rag_chunks(Json(payload): Json<RagChunksJsonRequest>) -> impl IntoR
     }
 }
 
+pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
+    let input = payload
+        .get("input")
+        .or_else(|| payload.get("dir"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let query = payload.get("query").and_then(|v| v.as_str()).unwrap_or("");
+
+    use paperpilot_core::traits::PdfOperation;
+    use paperpilot_pdf::document::LopdfDocument;
+
+    let path = std::path::PathBuf::from(input);
+    let mut doc = match LopdfDocument::load(&path) {
+        Ok(d) => d,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(e.to_string()),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+    match op.execute(&mut doc) {
+        Ok(_) => {
+            let matches = op.match_pages.lock().unwrap().clone();
+            (
+                StatusCode::OK,
+                Json(ApiResponse {
+                    success: true,
+                    result: Some(serde_json::json!({ "matches": matches })),
+                    error: None,
+                }),
+            )
+                .into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse {
+                success: false,
+                result: None,
+                error: Some(e.to_string()),
+            }),
+        )
+            .into_response(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[tokio::test]

@@ -6629,7 +6629,6 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
         latency_ms: 9.5,
     });
 
-    gateway.stop().await;
     println!(
         "Completed Extraction, Analysis & Optimization tests: {} assertions evaluated",
         results.len()
@@ -6731,5 +6730,6 @@ pub async fn run_analysis_suite() -> Result<Vec<TestExecutionResult>> {
         });
     }
 
+    gateway.stop().await;
     Ok(results)
 }

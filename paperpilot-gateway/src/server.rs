@@ -101,7 +101,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/rag-chunks", post(handlers::rag_chunks))
         .route(
             "/api/v1/search/workspace_search",
-            post(handlers::handle_tool),
+            post(handlers::workspace_search_handler),
         )
         .layer(cors)
 }
