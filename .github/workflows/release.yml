@@ -64,34 +64,88 @@ jobs:
       - name: Package Release Assets (Linux / macOS)
         if: runner.os != 'Windows'
         run: |
-          mkdir -p staging
-          cp target/release/paperpilot staging/ 2>/dev/null || cp target/release/paperpilot-cli staging/paperpilot 2>/dev/null || true
-          cp target/release/paperpilot-gateway staging/ 2>/dev/null || true
-          cp target/release/paperpilot-mcp staging/ 2>/dev/null || true
-          cd staging
-          tar -czvf "../${{ matrix.artifact_name }}.tar.gz" *
+          mkdir -p release_pkgs
+
+          # CLI standalone
+          mkdir -p staging_cli
+          cp target/release/paperpilot staging_cli/ 2>/dev/null || cp target/release/paperpilot-cli staging_cli/paperpilot 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          tar -czvf "release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_cli .
+
+          # MCP standalone
+          mkdir -p staging_mcp
+          cp target/release/paperpilot-mcp staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          tar -czvf "release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_mcp .
+
+          # Gateway standalone
+          mkdir -p staging_gateway
+          cp target/release/paperpilot-gateway staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          tar -czvf "release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_gateway .
+
+          # All-in-one
+          mkdir -p staging_all
+          cp target/release/paperpilot staging_all/ 2>/dev/null || cp target/release/paperpilot-cli staging_all/paperpilot 2>/dev/null || true
+          cp target/release/paperpilot-gateway staging_all/ 2>/dev/null || true
+          cp target/release/paperpilot-mcp staging_all/ 2>/dev/null || true
+          cp README.md staging_all/ || true
+          tar -czvf "release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_all .
+
+          cd release_pkgs
+          for file in *.tar.gz; do
+            shasum -a 256 "$file" > "${file}.sha256"
+          done
           cd ..
-          shasum -a 256 "${{ matrix.artifact_name }}.tar.gz" > "${{ matrix.artifact_name }}.tar.gz.sha256"
+
+          cp release_pkgs/* .
 
       - name: Package Release Assets (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir -p staging
-          cp target/release/paperpilot.exe staging/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging/paperpilot.exe 2>/dev/null || true
-          cp target/release/paperpilot-gateway.exe staging/ 2>/dev/null || true
-          cp target/release/paperpilot-mcp.exe staging/ 2>/dev/null || true
-          cd staging
-          7z a "../${{ matrix.artifact_name }}.zip" *
+          mkdir -p release_pkgs
+
+          # CLI standalone
+          mkdir -p staging_cli
+          cp target/release/paperpilot.exe staging_cli/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging_cli/paperpilot.exe 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          (cd staging_cli && 7z a "../release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # MCP standalone
+          mkdir -p staging_mcp
+          cp target/release/paperpilot-mcp.exe staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          (cd staging_mcp && 7z a "../release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # Gateway standalone
+          mkdir -p staging_gateway
+          cp target/release/paperpilot-gateway.exe staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          (cd staging_gateway && 7z a "../release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # All-in-one
+          mkdir -p staging_all
+          cp target/release/paperpilot.exe staging_all/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging_all/paperpilot.exe 2>/dev/null || true
+          cp target/release/paperpilot-gateway.exe staging_all/ 2>/dev/null || true
+          cp target/release/paperpilot-mcp.exe staging_all/ 2>/dev/null || true
+          cp README.md staging_all/ || true
+          (cd staging_all && 7z a "../release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          cd release_pkgs
+          for file in *.zip; do
+            sha256sum "$file" > "${file}.sha256"
+          done
           cd ..
-          sha256sum "${{ matrix.artifact_name }}.zip" > "${{ matrix.artifact_name }}.zip.sha256"
+
+          cp release_pkgs/* .
 
       - name: Upload Platform Package Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
+          name: release-assets-${{ matrix.os }}
           path: |
-            ${{ matrix.artifact_name }}.*
+            release_pkgs/*
           if-no-files-found: error
 
   publish-github-release:

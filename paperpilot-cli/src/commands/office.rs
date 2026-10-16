@@ -1,3 +1,4 @@
+#![cfg(feature = "pdf")]
 use clap::Subcommand;
 use paperpilot_core::error::OperationResult;
 use paperpilot_pdf::operations::office::{

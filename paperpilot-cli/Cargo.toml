@@ -22,16 +22,26 @@ log = "0.4"
 env_logger = "0.11"
 
 paperpilot-core = { path = "../paperpilot-core" }
-paperpilot-pdf = { path = "../paperpilot-pdf" }
+paperpilot-pdf = { path = "../paperpilot-pdf", optional = true }
 hmac = "0.13.0"
 sha2 = "0.11.0"
 hex = "0.4.3"
-paperpilot-gateway = { version = "0.1.0", path = "../paperpilot-gateway" }
-tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros"] }
+paperpilot-gateway = { version = "0.1.0", path = "../paperpilot-gateway", optional = true }
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "signal"] }
 notify = "6.1"
+clap_complete = "4.6.11"
 
 [dev-dependencies]
 assert_cmd = "2.2.2"
 lopdf = "0.45.0"
 predicates = "3.1.4"
 tempfile = "3.10"
+
+[features]
+default = ["all"]
+all = ["pdf", "office", "ocr", "search", "daemon"]
+pdf = ["paperpilot-pdf"]
+office = ["paperpilot-pdf/office"]
+ocr = ["paperpilot-pdf/ocr"]
+search = ["paperpilot-pdf"]
+daemon = ["paperpilot-gateway"]

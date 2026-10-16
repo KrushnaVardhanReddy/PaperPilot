@@ -4,6 +4,8 @@ pub mod group_b;
 pub mod group_c;
 pub mod group_d;
 pub mod group_e;
+#[cfg(feature = "office")]
+#[cfg(feature = "office")]
 pub mod office;
 pub mod validate;
 pub mod watch;
@@ -13,6 +15,13 @@ use paperpilot_core::error::OperationResult;
 
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
+        Commands::Completions { shell } => {
+            use clap::CommandFactory;
+            let mut app = crate::cli::Cli::command();
+            let bin_name = app.get_name().to_string();
+            clap_complete::generate(*shell, &mut app, bin_name, &mut std::io::stdout());
+            Ok(())
+        }
         // Group A
         Commands::Merge { input, output } => group_a::handle_merge(input, output),
         Commands::Split {
@@ -222,7 +231,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(input),
+        #[cfg(feature = "office")]
+        #[cfg(feature = "office")]
         Commands::Office { command } => office::handle_office_command(command),
+
+
+        #[cfg(feature = "daemon")]
+        #[cfg(feature = "daemon")]
         Commands::Serve { port, bind } => {
             let rt = tokio::runtime::Runtime::new()
                 .map_err(paperpilot_core::error::PdfError::IoError)?;
@@ -232,5 +247,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             .map_err(paperpilot_core::error::PdfError::IoError)?;
             Ok(())
         }
+
+
     }
 }

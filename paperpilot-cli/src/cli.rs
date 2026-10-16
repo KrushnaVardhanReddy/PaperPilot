@@ -34,6 +34,11 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Generate shell completions
+    Completions {
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
     // --- Group A: Page Manipulation ---
     Merge {
         #[arg(long, required = true, num_args = 1..)]
@@ -351,6 +356,7 @@ pub enum Commands {
         inline_css: Option<String>,
     },
     // --- Headless Server / Automation Gateway ---
+    #[cfg(feature = "daemon")]
     Serve {
         #[arg(long, default_value = "7823")]
         port: u16,
@@ -359,6 +365,7 @@ pub enum Commands {
     },
 
     // --- Office Document Conversion ---
+    #[cfg(feature = "office")]
     Office {
         #[command(subcommand)]
         command: crate::commands::office::OfficeCommands,
