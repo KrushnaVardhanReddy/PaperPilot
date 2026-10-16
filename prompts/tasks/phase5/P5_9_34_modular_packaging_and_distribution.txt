@@ -1,0 +1,35 @@
+# Task P5_9_34: Independent Multi-Interface Packaging & Modular Distribution (CLI, MCP, Gateway, All-in-One)
+# Associated Spec: specs/058-modular-packaging-and-distribution/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Configure and verify independent, modular package distribution across PaperPilot interfaces so that users and developers can download or install exactly what they need (CLI only, MCP only, Gateway/REST only, or All-in-One).
+
+### Detailed Scope & Context
+Read `specs/058-modular-packaging-and-distribution/spec.md` for full background.
+
+1. **Cargo Modular Features in `paperpilot-cli`**:
+   - Update `paperpilot-cli/Cargo.toml` to support modular feature flags:
+     - `default = ["all"]`
+     - `all = ["pdf", "office", "ocr", "search", "daemon"]`
+   - Allow compiling lean, minimal CLI binaries for constrained environments (e.g., `cargo build -p paperpilot-cli --no-default-features --features pdf`).
+   - Add `clap_complete` to generate shell completions for bash, zsh, fish, and powershell via `paperpilot completions <SHELL>`.
+
+2. **Automated Multi-Asset Release Packaging (`.github/workflows/release.yml`)**:
+   - Refactor the staging and release packaging step in `.github/workflows/release.yml` so that instead of just one monolithic archive, it generates:
+     - `paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.tar.gz` (contains `paperpilot`, completions, README)
+     - `paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.tar.gz` (contains `paperpilot-mcp`, README)
+     - `paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.tar.gz` (contains `paperpilot-gateway`, OpenAPI specs, README)
+     - `paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz` (contains all binaries in one package)
+   - Do the equivalent `.zip` packaging for Windows runners.
+   - Generate SHA-256 checksums (`.sha256`) for every individual package.
+
+3. **Packaging Validation Script**:
+   - Provide a verification script (or integration test) that validates building each standalone binary independently (`cargo build --release -p paperpilot-cli`, `cargo build --release -p paperpilot-mcp`, `cargo build --release -p paperpilot-gateway`), checks binary execution (`--version`), and verifies archive creation.
+
+### Constraints & Rules
+- Bounded concurrency: `-j 4` for all cargo builds.
+- Windows 8 MB stack rule must remain active.
+- Do NOT delete or break existing CLI commands or MCP schemas.
+- Do NOT run `git reset`, `git checkout -- .`, `git restore`, or `git clean -fd`.
