@@ -1,0 +1,99 @@
+Task: Penta-Interface Conversions Parity & Gateway Route Completion [Spec 056]
+
+Context:
+In Phase 5.9.4D (`tools/penta-interface-e2e`), 280 / 301 tests (93.0%) pass with deep semantic validations. Exactly 21 tests fail due to:
+1. Missing Gateway REST route handlers for `office_to_markdown`, `office_extract_text`, and `pdf_rag_chunks`.
+2. CLI subcommand name mismatch in the test runner (`extract-text` vs `extract`).
+3. Missing binary fixture `tests/e2e_fixtures/real/test.xls` for `office_modernize_legacy`.
+
+CRITICAL CONSTRAINTS:
+1. ZERO MOCKING: No `let mut passed = true;`, no fake `echo` commands, no bypasses.
+2. WORKSPACE SAFETY: NEVER run `git reset`, `git checkout -- .`, `git clean -fd`, or `git restore`.
+3. CONCURRENCY: Maintain bounded concurrency (`-j 4` or `-j 6`).
+
+================================================================================
+PART 1: GATEWAY REST ROUTE COMPLETION (`paperpilot-gateway`)
+================================================================================
+In `paperpilot-gateway/src/handlers.rs`:
+1. Define request DTOs:
+   ```rust
+   #[derive(Deserialize, Serialize, ToSchema)]
+   pub struct OfficeConvertJsonRequest {
+       #[schema(example = "tests/e2e_fixtures/real/test.xlsx")]
+       pub input: String,
+       #[schema(example = "tests/e2e_fixtures/out/penta_e2e/doc.md")]
+       pub output: String,
+   }
+
+   #[derive(Deserialize, Serialize, ToSchema)]
+   pub struct RagChunksJsonRequest {
+       #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+       pub input: String,
+       pub max_chunk_size: Option<usize>,
+       pub overlap: Option<usize>,
+   }
+   ```
+2. Implement route handlers:
+   - `pub async fn office_to_markdown(Json(payload): Json<OfficeConvertJsonRequest>) -> impl IntoResponse`
+     - Call `paperpilot_pdf::operations::office::convert_office_to_markdown(&payload.input, &payload.output)`
+     - Return `StatusCode::OK` with `ApiResponse { success: true, result: Some(json!({"output": payload.output})), error: None }`
+     - On error, return `StatusCode::BAD_REQUEST` with error message.
+   - `pub async fn office_extract_text(Json(payload): Json<OfficeConvertJsonRequest>) -> impl IntoResponse`
+     - Call `paperpilot_pdf::operations::office::extract_office_text(&payload.input, &payload.output)`
+     - Return `StatusCode::OK` with `ApiResponse { success: true, result: Some(json!({"output": payload.output})), error: None }`
+     - On error, return `StatusCode::BAD_REQUEST`.
+   - `pub async fn rag_chunks(Json(payload): Json<RagChunksJsonRequest>) -> impl IntoResponse`
+     - Call `paperpilot_pdf::operations::rag_chunks::generate_rag_chunks(&payload.input, payload.max_chunk_size, payload.overlap)`
+     - Return `StatusCode::OK` with `ApiResponse { success: true, result: Some(json!({"chunks": chunks, "count": chunks.len()})), error: None }`
+     - On error, return `StatusCode::BAD_REQUEST`.
+3. In `paperpilot-gateway/src/server.rs`:
+   - Register routes on the router:
+     ```rust
+     .route("/api/v1/pdf/office-to-markdown", post(handlers::office_to_markdown))
+     .route("/api/v1/pdf/office-extract-text", post(handlers::office_extract_text))
+     .route("/api/v1/pdf/rag-chunks", post(handlers::rag_chunks))
+     ```
+   - Register schemas and endpoints in `utoipa` `ApiDoc`.
+
+================================================================================
+PART 2: CLI SUBCOMMAND SYNCHRONIZATION
+================================================================================
+1. In `paperpilot-cli/src/commands/office.rs` (or `paperpilot-cli/src/main.rs`):
+   - In the `OfficeCommands` enum:
+     Ensure `Extract` supports alias `#[command(alias = "extract-text")]` so both `paperpilot office extract` and `paperpilot office extract-text` work.
+2. In `tools/penta-interface-e2e/src/cases/conversions_office_tools.rs`:
+   - Review line 208-216 and line 22-26 to ensure the CLI invocation matches the defined subcommands.
+
+================================================================================
+PART 3: FIXTURE GENERATION FOR LEGACY OFFICE (`test.xls`)
+================================================================================
+In `tools/penta-interface-e2e/src/fixtures/mod.rs`:
+1. In `FixtureManager::ensure_fixtures()`:
+   - Add call: `self.create_legacy_xls_file("test.xls")?;`
+2. Implement `create_legacy_xls_file(&self, filename: &str) -> Result<()>`:
+   - If `tests/e2e_fixtures/real/test.xls` exists, return early.
+   - Synthesize or write a minimal valid BIFF8 / Compound File Binary (CFB) stream representing an Excel 97-2003 `.xls` spreadsheet with at least one sheet containing simple text and numbers.
+3. In `tools/penta-interface-e2e/src/cases/conversions_office_tools.rs`:
+   - Verify `office_modernize_legacy` tests use `tests/e2e_fixtures/real/test.xls`.
+   - Assert output file is generated and is a valid ZIP/OpenXML package (starts with `PK\x03\x04` and contains `[Content_Types].xml`).
+
+================================================================================
+PART 4: COMPREHENSIVE RE-RUN & 100% AUDIT
+================================================================================
+After applying all changes:
+1. Rebuild and check formatting/lints:
+   - `cargo fmt --all -- --check`
+   - `cargo clippy -p paperpilot-gateway -p paperpilot-cli -p penta-interface-e2e -j 4 -- -D warnings`
+2. Run the Conversions test suite:
+   - `cargo run -p penta-interface-e2e -- --group conversions -j 4`
+   - Check `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md`:
+     - **Total Tests Evaluated:** 301
+     - **Total Passed:** 301 / 301 (100.0%)
+     - **0 FAILURES ALLOWED.**
+3. Run the FULL Penta Suite across ALL categories to guarantee zero regressions:
+   - `cargo run -p penta-interface-e2e -- --group all -j 4`
+   - Verify page_ops, security_forms, analysis, conversions, and edge_cases all pass cleanly.
+
+Deliverables:
+- Commit prefix: `feat(penta): `
+- 100% authentic pass rate (no mocks, no fakes).
