@@ -2,36 +2,31 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.
 > Start any new agent or human session by reading this document.
-> **Date of Last Update:** October 15, 2026 (Morning EDT)
-> **Active Target:** v0.5.0 Public Preview Release (Wave 1: Top 12 Core Suite) & Spec 055 Parity Hardening
+> **Date of Last Update:** October 15, 2026 (Evening EDT)
+> **Active Target:** v0.5.0 Public Preview Release & Spec 055/056 Parity Hardening
 
 ---
 
-## 🧭 Executive Context & Current State
+## 🧭 Executive Context & Active Sessions
 
-1. **Spec 052 (Penta-Interface E2E Expansion & Unmocked Playwright Verification) — 100% COMPLETE & MERGED**
-   - Merged Jules PR #191 (`2d71840`).
-   - Added 100 new Penta-Interface assertions across CLI, MCP, REST, WASM, and Edge for `excel_to_json`, `excel_to_csv`, `pdf_rag_chunks`, `pdf_to_html`, and `workspace_search`.
-   - Fixed REST API dispatch in `paperpilot-gateway/src/handlers.rs` for non-prefixed tools.
-   - Verified Top 12 Launch Tools in `apps/desktop/tests/e2e_real_desktop_execution.spec.ts` with **12/12 PASS** against the real engine and filesystem!
+1. **Active Jules Session 623008379935493326 — Spec 056 (Penta Conversions Parity & Gateway Routes) — IN FLIGHT**
+   - **Dashboard**: [Jules Session 623008379935493326](https://jules.google.com/session/623008379935493326)
+   - **Spec**: [`specs/056-penta-conversions-gateway-completion/spec.md`](specs/056-penta-conversions-gateway-completion/spec.md)
+   - **Objective**: Fix the remaining 21 failures out of 301 in the Conversions E2E suite (`reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md`):
+     - Complete REST endpoints in `paperpilot-gateway` (`POST /api/v1/pdf/office-to-markdown`, `/office-extract-text`, `/rag-chunks`).
+     - Support `extract-text` alias for `paperpilot office extract`.
+     - Synthesize `test.xls` legacy fixture in `FixtureManager::ensure_fixtures()`.
+     - Target: 301 / 301 (100%) tests passing on `conversions` suite, followed by full 5-group run.
 
-2. **Spec 053 (Studio Hub Workspace & Settings Modernization) — 100% COMPLETE & MERGED**
-   - Modernized Settings Panel into an enterprise multi-column layout with sidebar navigation categories (`AI`, `Feature Packs`, `OCR`, `General`, `Developer`) and a wide full-width canvas (>1200px).
-   - Inlined all AI mode selections (Offline NLP, Local Llamafile, Universal Endpoint, BYOK Keyring) directly into the Settings canvas.
-   - Unified Home into the **Studio Hub** layout with live system status pills, compact drag-and-drop intake, and categorized full-width operations cards matrix.
-   - Merged Jules PR #192 (`5f67cb2`) and streamlined to Studio Hub (`80f4152`).
+2. **Active Jules Session 2996870268221322258 — Spec 055 (All 50+ Tools Playwright E2E) — IN FLIGHT**
+   - **Dashboard**: [Jules Session 2996870268221322258](https://jules.google.com/session/2996870268221322258)
+   - **Spec**: [`specs/055-all-tools-real-playwright-desktop-e2e/spec.md`](specs/055-all-tools-real-playwright-desktop-e2e/spec.md)
+   - **Status**: Backup was cleanly merged into `main` (`9c6f2f2`) with schema fixes (`paperpilot-mcp` passes all schema checks). Jules is continuing unmocked execution for all 50+ tools in `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`.
 
-3. **Spec 054 (Context-Aware Dynamic Tool Dispatcher & Feature Pack Filtering) — 100% COMPLETE & MERGED**
-   - Merged Jules PR #193 (`9c51606`, Session 784752770737873068).
-   - Implemented dynamic tool ranking and capability rules in `toolRegistry.ts` (`rankToolsByContext`).
-   - Feature Pack intelligence: 1-click in-place enablement for optional Feature Packs (`office`, `ocr`).
-   - All 67/67 Vitest tests and 12/12 real Playwright launch tool tests pass green.
-
-4. **Task 5.9.31 / Spec 055 (Full Catalog Parity Suite & Deep Semantic Validation) — IN FLIGHT (Jules)**
-   - Jules Session: [`2996870268221322258`](https://jules.google.com/session/2996870268221322258).
-   - Expanding deep semantic assertions across all 52 tools and unmocked desktop Playwright tests.
-   - Tri-platform CI (Linux, Windows, macOS) verified clean and reproducible.
-   - Added automated manual-trigger GitHub Release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) targeting **`v0.5.0`** release binaries and SHA-256 checksums.
+3. **Current Verified Baseline (`main` branch)**:
+   - Commit `f88a840` / `9c6f2f2`: Working tree clean, all Rust crates compile, formatting clean (`cargo fmt --check`).
+   - Penta-Interface Conversions Suite: **280 / 301 passed (93.0%)**.
+   - Zero-mocking enforcement: All tests execute real engine binaries against disk fixtures.
 
 ---
 
@@ -57,68 +52,58 @@ PaperPilot/
 
 ---
 
-## ⚖️ The Penta-Interface Mandate & Concurrency Rules
+## ⚖️ Rules of Engagement
 
-1. **Every tool must be supported across 5 surfaces:**
+1. **The Penta-Interface Mandate:**
    - 💻 **CLI (`paperpilot-cli`)**: Kebab-case subcommand with `--json` support.
-   - 🤖 **MCP (`paperpilot-mcp`)**: JSON-RPC 2.0 tool declaration and handler.
-   - 🌐 **REST API (`paperpilot-gateway`)**: POST route `/api/v1/pdf/tools/{tool}` with OpenAPI spec.
+   - 🤖 **MCP (`paperpilot-mcp`)**: JSON-RPC 2.0 tool declaration with required input schema and execution match arm.
+   - 🌐 **REST API (`paperpilot-gateway`)**: POST route `/api/v1/pdf/tools/{tool}` and specialized endpoints.
    - ⚡ **WASM (`paperpilot-wasm`)**: In-memory byte processing without filesystem IO.
    - ☁️ **Cloudflare Edge (`apps/edge`)**: Memory-only stream route `/api/v1/{tool}`.
 
-2. **CRITICAL Concurrency Limit (`-j 6`):**
+2. **CRITICAL Concurrency Limit (`-j 4` or `-j 6`):**
    - **NEVER** run unbounded `cargo test` or `cargo build`.
-   - **ALWAYS** pass `-j 6` (e.g. `cargo test -p paperpilot-pdf --lib -j 6`). Unbounded compilation can overwhelm system resources and freeze the machine.
+   - Always pass `-j 4` or `-j 6` to avoid system resource starvation.
 
-3. **No Mocks for Critical Desktop Testing:**
-   - Avoid mocking IPC responses with `{ success: true }`. Real desktop Playwright tests must load real fixtures, click Run, and assert non-empty files on disk with valid magic bytes (`%PDF-`).
+3. **Workspace Safety Rules:**
+   - **NEVER** execute `git reset`, `git checkout -- .`, `git clean -fd`, or `git restore` under any circumstance.
+   - Preserve all uncommitted work; do not wipe working changes on test failures.
+
+4. **Zero-Mock Policy:**
+   - No `let mut passed = true;` or dummy echo scripts in test suites.
 
 ---
 
-## 📋 Starting Point for Tomorrow's Session
+## 📋 Resuming Checklist for Next Agent / Developer
 
-When starting the next session, follow this 3-step checklist:
-
-### Step 1: Check In on Jules Session 5.9.28
-- Check [Jules Session 9530387047429935978](https://jules.google.com/session/9530387047429935978).
-- If Jules submitted a PR or push:
+### Step 1: Check In on Active Jules Sessions
+- Inspect status of:
+  - [Session 623008379935493326](https://jules.google.com/session/623008379935493326) (Task 5.9.32: Spec 056).
+  - [Session 2996870268221322258](https://jules.google.com/session/2996870268221322258) (Task 5.9.31: Spec 055).
+- If a PR or branch is pushed by Jules:
   ```bash
   git fetch origin
-  git status
+  git log -n 5 --oneline origin/main
   ```
-- Validate the new assertions:
+
+### Step 2: Validate the Conversions Suite
+- Once Task 5.9.32 changes land:
   ```bash
-  cargo test -p penta-interface-e2e -j 6
-  pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts --workers=1
+  cargo test -p paperpilot-gateway -j 4
+  cargo run -p penta-interface-e2e -- --group conversions -j 4
   ```
-- Merge once passing!
+- Confirm `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md` shows **301 / 301 (100%) PASS**.
 
-### Step 2: Continue Manual UI Testing & Matrix Updates
-- Open the desktop app in dev mode:
+### Step 3: Run Full Penta Suite
+- Run all groups to confirm no regressions:
   ```bash
-  make dev
+  cargo run -p penta-interface-e2e -- --group all -j 4
   ```
-- Open [`reports/V1_LAUNCH_READINESS_REPORT.md`](reports/V1_LAUNCH_READINESS_REPORT.md) and continue testing the Top 12 tools manually:
-  - Tool 1 (`pdf_merge`): ✅ Passed
-  - Tool 2 (`pdf_split`): Test splitting a multi-page PDF (e.g. pages 1-2).
-  - Tool 3 (`pdf_rotate`): Test rotating 90°.
-  - Tool 4 (`pdf_delete_pages`): Test deleting page 2.
-  - Tool 5 (`pdf_reorder_pages`): Test reordering pages.
-  - Tool 6 (`pdf_compress`): Test compression quality slider.
-  - Tool 7 (`pdf_watermark`): Test diagonal text watermark.
-  - Tool 8 (`pdf_ocr`): Test OCR on a scanned image/PDF.
-  - Tool 9 (`pdf_extract_text`): Test plain text dump.
-  - Tool 10 (`pdf_to_docx`): Test Word DOCX conversion.
-  - Tool 11 (`excel_to_json`): Test `.xlsx` to JSON export.
-  - Tool 12 (`excel_to_csv`): Test `.xlsx` to CSV export.
-- Update the table rows in [`reports/V1_LAUNCH_READINESS_REPORT.md`](reports/V1_LAUNCH_READINESS_REPORT.md) from `⏳ Not Started` to `✅ Passed`.
 
-### Step 3: Publish v0.5.0 Public Preview Release
-- Once Top 12 automated assertions pass and Jules Spec 055 progress is verified:
-  - Trigger the **Release Build & Publish** workflow on GitHub Actions (`.github/workflows/release.yml`).
-  - Set version tag to `v0.5.0` (with `prerelease: true`).
-  - This automatically compiles `--release` binaries for Linux, macOS, and Windows, computes SHA-256 checksums, and attaches them to the new GitHub Release page.
-
+### Step 4: Publish v0.5.0 Public Preview Release
+- When both Spec 055 and Spec 056 are merged and verified:
+  - Trigger `.github/workflows/release.yml` on GitHub Actions with tag `v0.5.0` (`prerelease: true`).
+  - Confirm artifacts compile for Linux, macOS, and Windows.
 
 ---
 
@@ -128,20 +113,19 @@ When starting the next session, follow this 3-step checklist:
 # 1. Dev Server (Desktop Tauri + Svelte 5)
 make dev
 
-# 2. Rust Unit Tests (Always use -j 6!)
-cargo test -p paperpilot-pdf --lib -j 6
-cargo test -p paperpilot-mcp --lib -j 6
-cargo test -p paperpilot-gateway --lib -j 6
+# 2. Rust Unit Tests
+cargo test -p paperpilot-pdf --lib -j 4
+cargo test -p paperpilot-mcp --lib -j 4
+cargo test -p paperpilot-gateway --lib -j 4
 
-# 3. Desktop Vitest Component Tests
-pnpm --dir apps/desktop test
+# 3. Penta-Interface E2E Suite
+cargo run -p penta-interface-e2e -- --group conversions -j 4
+cargo run -p penta-interface-e2e -- --group all -j 4
 
-# 4. Penta-Interface E2E Suite
-cargo run -p penta-interface-e2e -- --group conversions -j 6
-
-# 5. Playwright Desktop E2E (Single Worker)
+# 4. Playwright Desktop E2E
 pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts --workers=1
+pnpm --dir apps/desktop exec playwright test tests/e2e_all_tools_real_execution.spec.ts --workers=1
 
-# 6. Jules Submission Tool
+# 5. Jules Submission CLI
 cargo run -p jules-submit -- --list
 ```
