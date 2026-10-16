@@ -1,5 +1,5 @@
 # PaperPilot — 1-Hour Sustained Soak & Endurance Benchmark Report
-Generated: 2026-10-06 22:18:11
+Generated: 2026-10-16 19:43:43
 Test Type: 1-Hour Continuous Multi-Cycle Stress & Memory Stability Test
 
 ---
@@ -8,139 +8,144 @@ Test Type: 1-Hour Continuous Multi-Cycle Stress & Memory Stability Test
 
 | Metric | Measured Value | Analysis / Verdict |
 |---|---|---|
-| **Test Duration** | **3600.0 seconds** (~60.0 minutes) | Continuous sustained stress across 44 tools |
-| **Total Cycles Completed** | **8,043 cycles** | Continuous multi-operation loop |
-| **Total Operations Executed** | **353,892 operations** | Verified across 44 operation types |
-| **Success Rate** | **100.00%** (353,892/353,892) | **100% Stability — Zero Crashes / Panics** |
-| **Sustained Throughput** | **98.3 ops / second** | High throughput without throttling |
-| **Overall Mean Latency** | **11.31 ms** | Core operation performance |
-| **P50 Latency (Median)** | **9.64 ms** | Typical responsive latency |
-| **P90 Latency** | **11.18 ms** | 90% of requests finish in under 11.2 ms |
-| **P95 Latency** | **32.66 ms** | 95% of requests finish in under 32.7 ms |
-| **P99 Latency** | **38.55 ms** | Predictable tail execution |
-| **P99.9 Latency** | **39.90 ms** | Deep tail execution |
-| **Min / Max Latency** | **7.00 ms / 49.92 ms** | Bounded execution time |
+| **Test Duration** | **3600.3 seconds** (~60.0 minutes) | Continuous sustained stress across 50 tools |
+| **Total Cycles Completed** | **2,641 cycles** | Continuous multi-operation loop |
+| **Total Operations Executed** | **132,050 operations** | Verified across 50 operation types |
+| **Success Rate** | **100.00%** (132,050/132,050) | **100% Stability — Zero Crashes / Panics** |
+| **Sustained Throughput** | **36.7 ops / second** | High throughput without throttling |
+| **Overall Mean Latency** | **27.26 ms** | Core operation performance |
+| **P50 Latency (Median)** | **19.66 ms** | Typical responsive latency |
+| **P90 Latency** | **49.84 ms** | 90% of requests finish in under 49.8 ms |
+| **P95 Latency** | **74.64 ms** | 95% of requests finish in under 74.6 ms |
+| **P99 Latency** | **81.00 ms** | Predictable tail execution |
+| **P99.9 Latency** | **85.79 ms** | Deep tail execution |
+| **Min / Max Latency** | **14.28 ms / 153.92 ms** | Bounded execution time |
 
 ---
 
-## 2. Per-Operation Latency Breakdown (353,892 Total Executions)
+## 2. Per-Operation Latency Breakdown (132,050 Total Executions)
 
 | Operation | Invocations | Mean | P50 (Median) | P90 | P95 | P99 | P99.9 | Min | Max |
 |---|---|---|---|---|---|---|---|---|---|
-| `pdf_merge` | 8,098 | 9.50 ms | 9.42 ms | 10.23 ms | 10.33 ms | 10.40 ms | 27.81 ms | 8.41 ms | 45.97 ms |
-| `pdf_split` | 8,098 | 8.10 ms | 8.02 ms | 8.82 ms | 8.92 ms | 9.00 ms | 27.02 ms | 7.00 ms | 43.95 ms |
-| `pdf_extract_pages` | 8,098 | 9.08 ms | 8.99 ms | 9.80 ms | 9.91 ms | 9.99 ms | 27.72 ms | 8.00 ms | 43.73 ms |
-| `pdf_delete_pages` | 8,098 | 9.58 ms | 9.49 ms | 10.27 ms | 10.38 ms | 10.46 ms | 28.80 ms | 8.47 ms | 48.55 ms |
-| `pdf_reorder_pages` | 8,098 | 9.87 ms | 9.78 ms | 10.60 ms | 10.69 ms | 10.77 ms | 27.37 ms | 8.77 ms | 48.16 ms |
-| `pdf_rotate` | 8,098 | 8.95 ms | 8.86 ms | 9.66 ms | 9.76 ms | 9.85 ms | 26.17 ms | 7.85 ms | 42.33 ms |
-| `pdf_crop` | 8,098 | 10.16 ms | 10.07 ms | 10.87 ms | 10.97 ms | 11.05 ms | 28.69 ms | 9.05 ms | 49.92 ms |
-| `pdf_burst` | 8,098 | 10.57 ms | 10.48 ms | 11.27 ms | 11.37 ms | 11.45 ms | 29.46 ms | 9.46 ms | 49.13 ms |
-| `pdf_remove_blank` | 8,098 | 10.62 ms | 10.53 ms | 11.33 ms | 11.44 ms | 11.51 ms | 29.10 ms | 9.52 ms | 40.97 ms |
-| `pdf_compress` | 8,098 | 9.15 ms | 9.05 ms | 9.85 ms | 9.96 ms | 10.05 ms | 28.26 ms | 8.05 ms | 46.36 ms |
-| `pdf_repair` | 8,098 | 10.10 ms | 10.01 ms | 10.82 ms | 10.92 ms | 11.01 ms | 28.79 ms | 9.02 ms | 48.86 ms |
-| `pdf_linearize` | 8,098 | 10.36 ms | 10.28 ms | 11.06 ms | 11.17 ms | 11.25 ms | 29.62 ms | 9.26 ms | 49.17 ms |
-| `pdf_encrypt` | 8,098 | 10.42 ms | 10.33 ms | 11.14 ms | 11.24 ms | 11.32 ms | 29.37 ms | 9.33 ms | 46.75 ms |
-| `pdf_decrypt` | 8,098 | 9.37 ms | 9.28 ms | 10.10 ms | 10.19 ms | 10.27 ms | 26.84 ms | 8.28 ms | 45.47 ms |
-| `pdf_watermark` | 8,098 | 8.26 ms | 8.17 ms | 8.98 ms | 9.08 ms | 9.16 ms | 27.43 ms | 7.16 ms | 46.97 ms |
-| `pdf_redact` | 8,098 | 8.47 ms | 8.37 ms | 9.18 ms | 9.28 ms | 9.36 ms | 27.47 ms | 7.37 ms | 47.38 ms |
-| `pdf_metadata` | 8,098 | 10.11 ms | 10.02 ms | 10.84 ms | 10.94 ms | 11.02 ms | 27.40 ms | 9.02 ms | 43.96 ms |
-| `pdf_sign` | 8,098 | 9.66 ms | 9.57 ms | 10.37 ms | 10.47 ms | 10.55 ms | 28.84 ms | 8.56 ms | 49.40 ms |
-| `pdf_flatten` | 8,098 | 8.23 ms | 8.13 ms | 8.94 ms | 9.04 ms | 9.13 ms | 27.46 ms | 7.13 ms | 42.72 ms |
-| `pdf_to_pdf_a` | 8,098 | 11.03 ms | 10.92 ms | 11.74 ms | 11.84 ms | 11.92 ms | 30.40 ms | 9.93 ms | 49.44 ms |
-| `pdf_header_footer` | 8,098 | 8.99 ms | 8.89 ms | 9.71 ms | 9.81 ms | 9.89 ms | 27.55 ms | 7.90 ms | 41.29 ms |
-| `pdf_bates` | 8,098 | 8.10 ms | 8.01 ms | 8.83 ms | 8.93 ms | 9.02 ms | 26.48 ms | 7.02 ms | 44.59 ms |
-| `pdf_page_numbers` | 8,098 | 10.24 ms | 10.14 ms | 10.94 ms | 11.05 ms | 11.13 ms | 29.07 ms | 9.13 ms | 46.50 ms |
-| `pdf_extract_text` | 8,098 | 10.19 ms | 10.11 ms | 10.90 ms | 11.00 ms | 11.08 ms | 29.21 ms | 9.09 ms | 44.67 ms |
-| `pdf_extract_images` | 8,098 | 10.03 ms | 9.94 ms | 10.74 ms | 10.85 ms | 10.92 ms | 27.59 ms | 8.93 ms | 49.33 ms |
-| `pdf_search` | 8,098 | 10.79 ms | 10.70 ms | 11.52 ms | 11.63 ms | 11.71 ms | 29.04 ms | 9.72 ms | 38.90 ms |
-| `pdf_render` | 8,098 | 8.75 ms | 8.65 ms | 9.47 ms | 9.58 ms | 9.65 ms | 27.78 ms | 7.66 ms | 44.18 ms |
-| `pdf_compare` | 8,098 | 9.51 ms | 9.43 ms | 10.23 ms | 10.33 ms | 10.41 ms | 28.06 ms | 8.41 ms | 46.04 ms |
-| `pdf_ocr` | 8,098 | 10.31 ms | 10.21 ms | 11.03 ms | 11.13 ms | 11.20 ms | 29.15 ms | 9.21 ms | 45.93 ms |
-| `pdf_bookmarks` | 8,098 | 10.17 ms | 10.08 ms | 10.88 ms | 10.98 ms | 11.06 ms | 29.05 ms | 9.07 ms | 49.50 ms |
-| `pdf_images_to_pdf` | 8,098 | 9.04 ms | 8.95 ms | 9.75 ms | 9.85 ms | 9.93 ms | 28.22 ms | 7.94 ms | 46.81 ms |
-| `pdf_annotate` | 8,098 | 9.49 ms | 9.41 ms | 10.21 ms | 10.30 ms | 10.39 ms | 28.61 ms | 8.40 ms | 43.19 ms |
-| `pdf_classify_type` | 8,098 | 10.28 ms | 10.19 ms | 11.00 ms | 11.10 ms | 11.19 ms | 29.43 ms | 9.19 ms | 47.40 ms |
-| `pdf_validate` | 8,098 | 9.55 ms | 9.46 ms | 10.26 ms | 10.36 ms | 10.45 ms | 28.26 ms | 8.45 ms | 41.37 ms |
-| `pdf_hash` | 8,098 | 9.47 ms | 9.38 ms | 10.18 ms | 10.28 ms | 10.36 ms | 28.38 ms | 8.37 ms | 48.38 ms |
-| `pdf_read_form` | 8,098 | 8.50 ms | 8.42 ms | 9.22 ms | 9.32 ms | 9.40 ms | 27.09 ms | 7.41 ms | 44.93 ms |
-| `pdf_fill_form` | 8,098 | 10.25 ms | 10.15 ms | 10.96 ms | 11.06 ms | 11.15 ms | 29.40 ms | 9.16 ms | 35.87 ms |
-| `pdf_create_form_field` | 8,098 | 8.55 ms | 8.45 ms | 9.26 ms | 9.36 ms | 9.44 ms | 27.57 ms | 7.45 ms | 47.53 ms |
-| `pdf_to_docx` | 8,098 | 10.25 ms | 10.16 ms | 10.96 ms | 11.06 ms | 11.13 ms | 28.46 ms | 9.14 ms | 48.98 ms |
-| `pdf_to_xlsx` | 8,098 | 8.54 ms | 8.46 ms | 9.26 ms | 9.36 ms | 9.45 ms | 27.24 ms | 7.45 ms | 47.72 ms |
-| `pdf_to_pptx` | 8,098 | 10.44 ms | 10.35 ms | 11.16 ms | 11.27 ms | 11.35 ms | 28.43 ms | 9.36 ms | 44.37 ms |
-| `pdf_convert_html` | 8,043 | 35.00 ms | 35.03 ms | 39.05 ms | 39.53 ms | 39.91 ms | 39.99 ms | 30.00 ms | 40.00 ms |
-| `pdf_convert_markdown` | 8,043 | 34.95 ms | 34.97 ms | 38.95 ms | 39.49 ms | 39.90 ms | 40.00 ms | 30.00 ms | 40.00 ms |
-| `pdf_convert_excel` | 8,043 | 35.02 ms | 35.02 ms | 39.02 ms | 39.51 ms | 39.90 ms | 39.99 ms | 30.00 ms | 40.00 ms |
+| `pdf_merge` | 2,641 | 20.66 ms | 20.52 ms | 21.56 ms | 21.91 ms | 23.20 ms | 28.82 ms | 18.49 ms | 41.36 ms |
+| `pdf_split` | 2,641 | 20.16 ms | 20.05 ms | 21.18 ms | 21.56 ms | 22.85 ms | 30.23 ms | 18.18 ms | 43.74 ms |
+| `pdf_extract_pages` | 2,641 | 19.35 ms | 19.23 ms | 20.32 ms | 20.73 ms | 21.84 ms | 28.19 ms | 16.78 ms | 50.03 ms |
+| `pdf_delete_pages` | 2,641 | 19.36 ms | 19.22 ms | 20.37 ms | 20.78 ms | 21.93 ms | 26.51 ms | 17.27 ms | 127.73 ms |
+| `pdf_reorder_pages` | 2,641 | 19.37 ms | 19.28 ms | 20.36 ms | 20.75 ms | 21.85 ms | 26.47 ms | 16.93 ms | 36.04 ms |
+| `pdf_rotate` | 2,641 | 18.70 ms | 18.58 ms | 19.69 ms | 20.06 ms | 21.06 ms | 25.81 ms | 16.51 ms | 43.49 ms |
+| `pdf_crop` | 2,641 | 18.77 ms | 18.68 ms | 19.79 ms | 20.18 ms | 21.28 ms | 24.46 ms | 16.71 ms | 25.99 ms |
+| `pdf_burst` | 2,641 | 20.60 ms | 20.50 ms | 21.75 ms | 22.21 ms | 23.72 ms | 27.35 ms | 17.98 ms | 37.93 ms |
+| `pdf_remove_blank` | 2,641 | 19.24 ms | 19.12 ms | 20.27 ms | 20.75 ms | 22.25 ms | 27.33 ms | 17.06 ms | 30.27 ms |
+| `pdf_compress` | 2,641 | 19.90 ms | 19.80 ms | 20.89 ms | 21.30 ms | 22.40 ms | 26.93 ms | 17.88 ms | 28.64 ms |
+| `pdf_repair` | 2,641 | 18.55 ms | 18.43 ms | 19.51 ms | 19.92 ms | 21.17 ms | 25.61 ms | 16.55 ms | 49.62 ms |
+| `pdf_linearize` | 2,641 | 19.81 ms | 19.72 ms | 20.83 ms | 21.24 ms | 22.42 ms | 26.75 ms | 17.82 ms | 27.56 ms |
+| `pdf_encrypt` | 2,641 | 20.73 ms | 20.61 ms | 21.74 ms | 22.20 ms | 23.35 ms | 28.41 ms | 18.83 ms | 30.72 ms |
+| `pdf_decrypt` | 2,641 | 22.63 ms | 22.50 ms | 23.53 ms | 23.87 ms | 25.18 ms | 34.04 ms | 20.79 ms | 60.34 ms |
+| `pdf_watermark` | 2,641 | 18.93 ms | 18.82 ms | 19.86 ms | 20.23 ms | 21.44 ms | 26.56 ms | 16.77 ms | 28.68 ms |
+| `pdf_redact` | 2,641 | 18.74 ms | 18.66 ms | 19.75 ms | 20.14 ms | 20.96 ms | 25.79 ms | 16.89 ms | 26.80 ms |
+| `pdf_metadata` | 2,641 | 18.64 ms | 18.53 ms | 19.63 ms | 20.03 ms | 21.05 ms | 25.00 ms | 16.05 ms | 31.90 ms |
+| `pdf_sign` | 2,641 | 18.59 ms | 18.49 ms | 19.59 ms | 19.97 ms | 21.30 ms | 24.66 ms | 16.67 ms | 26.33 ms |
+| `pdf_flatten` | 2,641 | 18.83 ms | 18.71 ms | 19.84 ms | 20.22 ms | 21.59 ms | 27.19 ms | 16.77 ms | 40.15 ms |
+| `pdf_to_pdf_a` | 2,641 | 18.58 ms | 18.48 ms | 19.55 ms | 19.95 ms | 21.09 ms | 23.81 ms | 16.39 ms | 29.61 ms |
+| `pdf_header_footer` | 2,641 | 19.34 ms | 19.20 ms | 20.40 ms | 20.79 ms | 22.56 ms | 27.53 ms | 16.96 ms | 62.77 ms |
+| `pdf_bates` | 2,641 | 19.36 ms | 19.25 ms | 20.37 ms | 20.82 ms | 21.98 ms | 27.10 ms | 17.47 ms | 38.80 ms |
+| `pdf_page_numbers` | 2,641 | 19.31 ms | 19.22 ms | 20.31 ms | 20.72 ms | 21.98 ms | 25.26 ms | 17.26 ms | 29.69 ms |
+| `pdf_extract_text` | 2,641 | 47.15 ms | 46.83 ms | 48.56 ms | 49.21 ms | 52.33 ms | 75.53 ms | 44.24 ms | 101.11 ms |
+| `pdf_extract_images` | 2,641 | 19.29 ms | 19.17 ms | 20.09 ms | 20.44 ms | 21.74 ms | 26.73 ms | 17.47 ms | 61.60 ms |
+| `pdf_search` | 2,641 | 18.88 ms | 18.77 ms | 19.76 ms | 20.12 ms | 21.37 ms | 26.37 ms | 16.67 ms | 60.11 ms |
+| `pdf_render` | 2,641 | 47.16 ms | 46.82 ms | 48.56 ms | 49.29 ms | 53.06 ms | 71.62 ms | 44.53 ms | 76.32 ms |
+| `pdf_compare` | 2,641 | 51.13 ms | 50.83 ms | 52.77 ms | 53.35 ms | 56.34 ms | 68.50 ms | 47.58 ms | 80.01 ms |
+| `pdf_ocr` | 2,641 | 81.13 ms | 80.65 ms | 83.27 ms | 84.34 ms | 89.82 ms | 117.99 ms | 76.55 ms | 153.92 ms |
+| `pdf_bookmarks` | 2,641 | 20.74 ms | 20.56 ms | 21.70 ms | 22.21 ms | 23.81 ms | 31.04 ms | 19.23 ms | 49.17 ms |
+| `pdf_images_to_pdf` | 2,641 | 19.20 ms | 19.09 ms | 19.97 ms | 20.33 ms | 21.37 ms | 25.90 ms | 17.42 ms | 31.95 ms |
+| `pdf_annotate` | 2,641 | 19.06 ms | 18.91 ms | 20.02 ms | 20.43 ms | 21.59 ms | 26.78 ms | 17.39 ms | 28.08 ms |
+| `pdf_classify_type` | 2,641 | 22.21 ms | 22.07 ms | 23.23 ms | 23.64 ms | 25.02 ms | 30.17 ms | 20.18 ms | 35.76 ms |
+| `pdf_validate` | 2,641 | 18.15 ms | 18.05 ms | 19.08 ms | 19.47 ms | 20.49 ms | 23.49 ms | 16.24 ms | 44.87 ms |
+| `pdf_hash` | 2,641 | 15.88 ms | 15.81 ms | 16.61 ms | 16.94 ms | 17.59 ms | 21.77 ms | 14.28 ms | 36.72 ms |
+| `pdf_read_form` | 2,641 | 18.74 ms | 18.62 ms | 19.68 ms | 20.12 ms | 21.15 ms | 23.67 ms | 16.95 ms | 28.37 ms |
+| `pdf_fill_form` | 2,641 | 19.19 ms | 19.10 ms | 20.20 ms | 20.59 ms | 21.73 ms | 25.22 ms | 16.88 ms | 26.32 ms |
+| `pdf_create_form_field` | 2,641 | 18.97 ms | 18.86 ms | 19.98 ms | 20.37 ms | 21.50 ms | 24.89 ms | 16.89 ms | 27.39 ms |
+| `pdf_to_docx` | 2,641 | 21.11 ms | 20.97 ms | 22.19 ms | 22.56 ms | 24.25 ms | 27.33 ms | 18.87 ms | 34.07 ms |
+| `pdf_to_xlsx` | 2,641 | 36.52 ms | 36.29 ms | 37.84 ms | 38.42 ms | 41.02 ms | 51.69 ms | 33.89 ms | 55.37 ms |
+| `pdf_to_pptx` | 2,641 | 20.86 ms | 20.76 ms | 21.77 ms | 22.20 ms | 23.08 ms | 27.39 ms | 18.86 ms | 53.34 ms |
+| `pdf_convert_html` | 2,641 | 73.78 ms | 73.28 ms | 76.08 ms | 77.56 ms | 80.67 ms | 99.30 ms | 69.97 ms | 108.48 ms |
+| `pdf_convert_markdown` | 2,641 | 74.40 ms | 73.83 ms | 76.95 ms | 78.29 ms | 83.18 ms | 93.88 ms | 70.50 ms | 103.86 ms |
+| `pdf_convert_excel` | 2,641 | 77.61 ms | 77.01 ms | 79.90 ms | 81.61 ms | 85.83 ms | 110.03 ms | 74.03 ms | 116.03 ms |
+| `pdf_to_html` | 2,641 | 24.36 ms | 24.21 ms | 25.31 ms | 25.71 ms | 27.16 ms | 34.00 ms | 22.46 ms | 41.78 ms |
+| `pdf_to_markdown` | 2,641 | 47.28 ms | 47.03 ms | 48.69 ms | 49.36 ms | 51.70 ms | 66.29 ms | 44.32 ms | 117.41 ms |
+| `pdf_to_json` | 2,641 | 19.22 ms | 19.08 ms | 19.99 ms | 20.34 ms | 21.56 ms | 25.69 ms | 17.56 ms | 65.15 ms |
+| `json_to_pdf` | 2,641 | 16.95 ms | 16.85 ms | 17.71 ms | 18.02 ms | 19.26 ms | 25.00 ms | 15.31 ms | 65.69 ms |
+| `pdf_info` | 2,641 | 18.77 ms | 18.63 ms | 19.68 ms | 20.11 ms | 21.60 ms | 25.79 ms | 16.98 ms | 52.53 ms |
+| `pdf_rag_chunks` | 2,641 | 47.12 ms | 46.80 ms | 48.54 ms | 49.22 ms | 53.17 ms | 73.62 ms | 44.28 ms | 100.06 ms |
 
 ---
 
 ## 3. Resource Stability & Zero-Leak Verification
 
 - **Memory Leak Analysis**: Measured Peak RSS using child process telemetry. Verified 0 memory leaks or continuous bloat over 60 minutes.
-- **CPU & Thermal Stability**: Sustained **~98.3 ops/sec** consistently across the entire 1 hour with no degradation.
+- **CPU & Thermal Stability**: Sustained **~36.7 ops/sec** consistently across the entire 1 hour with no degradation.
 
 ### Memory Stability Over Time
 
 | Timestamp | Peak RSS (MB) |
 |---|---|
-| Minute 0 | 25.40 MB |
-| Minute 1 | 25.00 MB |
-| Minute 2 | 25.61 MB |
-| Minute 3 | 25.50 MB |
-| Minute 4 | 25.55 MB |
-| Minute 5 | 25.62 MB |
-| Minute 6 | 25.93 MB |
-| Minute 7 | 25.12 MB |
-| Minute 8 | 25.58 MB |
-| Minute 9 | 25.22 MB |
-| Minute 10 | 25.32 MB |
-| Minute 11 | 25.36 MB |
-| Minute 12 | 25.99 MB |
-| Minute 13 | 25.45 MB |
-| Minute 14 | 25.12 MB |
-| Minute 15 | 25.01 MB |
-| Minute 16 | 25.85 MB |
-| Minute 17 | 25.02 MB |
-| Minute 18 | 25.87 MB |
-| Minute 19 | 25.48 MB |
-| Minute 20 | 25.08 MB |
-| Minute 21 | 25.60 MB |
-| Minute 22 | 25.16 MB |
-| Minute 23 | 25.14 MB |
-| Minute 24 | 25.29 MB |
-| Minute 25 | 25.81 MB |
-| Minute 26 | 25.89 MB |
-| Minute 27 | 25.94 MB |
-| Minute 28 | 25.29 MB |
-| Minute 29 | 25.66 MB |
-| Minute 30 | 25.46 MB |
-| Minute 31 | 25.10 MB |
-| Minute 32 | 25.98 MB |
-| Minute 33 | 25.30 MB |
-| Minute 34 | 25.88 MB |
-| Minute 35 | 25.26 MB |
-| Minute 36 | 25.58 MB |
-| Minute 37 | 25.44 MB |
-| Minute 38 | 25.91 MB |
-| Minute 39 | 25.01 MB |
-| Minute 40 | 25.39 MB |
-| Minute 41 | 25.46 MB |
-| Minute 42 | 25.11 MB |
-| Minute 43 | 25.72 MB |
-| Minute 44 | 25.13 MB |
-| Minute 45 | 25.93 MB |
-| Minute 46 | 25.22 MB |
-| Minute 47 | 25.81 MB |
-| Minute 48 | 25.48 MB |
-| Minute 49 | 25.54 MB |
-| Minute 50 | 25.20 MB |
-| Minute 51 | 25.11 MB |
-| Minute 52 | 25.26 MB |
-| Minute 53 | 25.45 MB |
-| Minute 54 | 25.49 MB |
-| Minute 55 | 25.89 MB |
-| Minute 56 | 25.05 MB |
-| Minute 57 | 25.57 MB |
-| Minute 58 | 25.07 MB |
-| Minute 59 | 25.81 MB |
-| Minute 60 | 25.78 MB |
+| Minute 1 | 61.16 MB |
+| Minute 2 | 61.16 MB |
+| Minute 3 | 61.16 MB |
+| Minute 4 | 61.16 MB |
+| Minute 5 | 61.17 MB |
+| Minute 6 | 61.17 MB |
+| Minute 7 | 61.26 MB |
+| Minute 8 | 61.26 MB |
+| Minute 9 | 61.26 MB |
+| Minute 10 | 61.26 MB |
+| Minute 11 | 61.26 MB |
+| Minute 12 | 61.26 MB |
+| Minute 13 | 61.26 MB |
+| Minute 14 | 61.26 MB |
+| Minute 15 | 61.26 MB |
+| Minute 16 | 61.26 MB |
+| Minute 17 | 61.26 MB |
+| Minute 18 | 61.26 MB |
+| Minute 19 | 61.26 MB |
+| Minute 20 | 61.26 MB |
+| Minute 21 | 61.26 MB |
+| Minute 22 | 61.26 MB |
+| Minute 23 | 61.26 MB |
+| Minute 24 | 61.26 MB |
+| Minute 25 | 61.26 MB |
+| Minute 26 | 61.26 MB |
+| Minute 27 | 61.26 MB |
+| Minute 28 | 61.26 MB |
+| Minute 29 | 61.26 MB |
+| Minute 30 | 61.26 MB |
+| Minute 31 | 61.26 MB |
+| Minute 32 | 61.26 MB |
+| Minute 33 | 61.26 MB |
+| Minute 34 | 61.26 MB |
+| Minute 35 | 61.26 MB |
+| Minute 36 | 61.27 MB |
+| Minute 37 | 61.27 MB |
+| Minute 38 | 61.27 MB |
+| Minute 39 | 61.27 MB |
+| Minute 40 | 61.27 MB |
+| Minute 41 | 61.27 MB |
+| Minute 42 | 61.27 MB |
+| Minute 43 | 61.27 MB |
+| Minute 44 | 61.27 MB |
+| Minute 45 | 61.27 MB |
+| Minute 46 | 61.27 MB |
+| Minute 47 | 61.27 MB |
+| Minute 48 | 61.27 MB |
+| Minute 49 | 61.27 MB |
+| Minute 50 | 61.27 MB |
+| Minute 51 | 61.27 MB |
+| Minute 52 | 61.27 MB |
+| Minute 53 | 61.27 MB |
+| Minute 54 | 61.27 MB |
+| Minute 55 | 61.27 MB |
+| Minute 56 | 61.27 MB |
+| Minute 57 | 61.27 MB |
+| Minute 58 | 61.27 MB |
+| Minute 59 | 61.27 MB |
+| Minute 60 | 61.27 MB |

@@ -243,13 +243,7 @@ class TestRunner:
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-def main():
-    gateway = GatewayServer()
-    gateway.start()
-
-    runner = TestRunner()
-
-    tools_definitions = [   {   'api_endpoint': '/api/v1/pdf/merge',
+tools_definitions = [   {   'api_endpoint': '/api/v1/pdf/merge',
         'api_payload': {   'inputs': ['tests/e2e_fixtures/page_1.pdf', 'tests/e2e_fixtures/page_2.pdf'],
                            'output': '{out_dir}/merged.pdf'},
         'cli_args': [   'merge',
@@ -484,12 +478,12 @@ def main():
         'use_case': 'Encrypt PDF with a password.',
         'wasm_supported': True},
     {   'api_endpoint': '/api/v1/pdf/tools/pdf_decrypt',
-        'api_payload': {   'input': '{out_dir}/encrypted_api.pdf',
+        'api_payload': {   'input': '{out_dir}/encrypted.pdf',
                            'output': '{out_dir}/decrypted.pdf',
                            'password': 'secret123'},
         'cli_args': [   'decrypt',
                         '--input',
-                        '{out_dir}/encrypted_cli.pdf',
+                        '{out_dir}/encrypted.pdf',
                         '--password',
                         'secret123',
                         '--output',
@@ -498,7 +492,7 @@ def main():
         'expected_output': 'decrypted.pdf',
         'expected_pages': 1,
         'expected_type': 'pdf',
-        'mcp_args': {   'input': '{out_dir}/encrypted_mcp.pdf',
+        'mcp_args': {   'input': '{out_dir}/encrypted.pdf',
                         'output': '{out_dir}/decrypted.pdf',
                         'password': 'secret123'},
         'tool_id': 'pdf_decrypt',
@@ -1019,8 +1013,75 @@ def main():
         'mcp_args': {'input': 'tests/e2e_fixtures/test.csv', 'output': '{out_dir}/out_csv.pdf'},
         'tool_id': 'pdf_convert_excel',
         'use_case': 'Convert Excel/CSV to PDF.',
-        'wasm_supported': False}]
+        'wasm_supported': False},
+    {   'api_endpoint': '/api/v1/pdf/convert',
+        'api_payload': {'input': 'tests/e2e_fixtures/single_page.pdf', 'format': 'html', 'output': '{out_dir}/out_page.html'},
+        'cli_args': ['convert', '--input', 'tests/e2e_fixtures/single_page.pdf', '--format', 'html', '--output', '{out_dir}/out_page.html'],
+        'expected_desc': 'Valid HTML file',
+        'expected_output': 'out_page.html',
+        'expected_type': 'text',
+        'mcp_args': {'input': 'tests/e2e_fixtures/single_page.pdf', 'output': '{out_dir}/out_page.html'},
+        'tool_id': 'pdf_to_html',
+        'use_case': 'Export PDF page to responsive HTML.',
+        'wasm_supported': True},
+    {   'api_endpoint': '/api/v1/pdf/convert',
+        'api_payload': {'input': 'tests/e2e_fixtures/single_page.pdf', 'format': 'md', 'output': '{out_dir}/out_page.md'},
+        'cli_args': ['convert', '--input', 'tests/e2e_fixtures/single_page.pdf', '--format', 'md', '--output', '{out_dir}/out_page.md'],
+        'expected_desc': 'Valid Markdown file',
+        'expected_output': 'out_page.md',
+        'expected_type': 'text',
+        'mcp_args': {'input': 'tests/e2e_fixtures/single_page.pdf', 'output': '{out_dir}/out_page.md'},
+        'tool_id': 'pdf_to_markdown',
+        'use_case': 'Convert PDF to clean LLM-ready Markdown text.',
+        'wasm_supported': True},
+    {   'api_endpoint': '/api/v1/pdf/convert',
+        'api_payload': {'input': 'tests/e2e_fixtures/single_page.pdf', 'format': 'json', 'output': '{out_dir}/out_page.json'},
+        'cli_args': ['convert', '--input', 'tests/e2e_fixtures/single_page.pdf', '--format', 'json', '--output', '{out_dir}/out_page.json'],
+        'expected_desc': 'JSON structure containing extracted text & layout',
+        'expected_output': 'out_page.json',
+        'expected_type': 'json',
+        'mcp_args': {'input': 'tests/e2e_fixtures/single_page.pdf', 'output': '{out_dir}/out_page.json'},
+        'tool_id': 'pdf_to_json',
+        'use_case': 'Convert PDF structure to JSON.',
+        'wasm_supported': True},
+    {   'api_endpoint': '/api/v1/pdf/tools/json_to_pdf',
+        'api_payload': {'input': 'tests/e2e_fixtures/json_doc.json', 'output': '{out_dir}/from_json.pdf'},
+        'cli_args': ['convert', '--input', 'tests/e2e_fixtures/json_doc.json', '--format', 'pdf', '--output', '{out_dir}/from_json.pdf'],
+        'expected_desc': 'Valid 1-page PDF synthesized from JSON (%PDF-)',
+        'expected_output': 'from_json.pdf',
+        'expected_pages': 1,
+        'expected_type': 'pdf',
+        'mcp_args': {'input': 'tests/e2e_fixtures/json_doc.json', 'output': '{out_dir}/from_json.pdf'},
+        'tool_id': 'json_to_pdf',
+        'use_case': 'Synthesize PDF document from structured JSON text.',
+        'wasm_supported': True},
+    {   'api_endpoint': '/api/v1/pdf/info',
+        'api_payload': {'input': 'tests/e2e_fixtures/single_page.pdf'},
+        'cli_args': ['metadata', '--input', 'tests/e2e_fixtures/single_page.pdf', '--output', '{out_dir}/info.json'],
+        'expected_desc': 'JSON document details and page count',
+        'expected_output': 'info.json',
+        'expected_type': 'json',
+        'mcp_args': {'input': 'tests/e2e_fixtures/single_page.pdf'},
+        'tool_id': 'pdf_info',
+        'use_case': 'Inspect structural details and properties of PDF.',
+        'wasm_supported': True},
+    {   'api_endpoint': '/api/v1/pdf/tools/pdf_rag_chunks',
+        'api_payload': {'input': 'tests/e2e_fixtures/single_page.pdf', 'output': '{out_dir}/rag_chunks.json'},
+        'cli_args': ['extract-text', '--input', 'tests/e2e_fixtures/single_page.pdf', '--format', 'json', '--output', '{out_dir}/rag_chunks.json'],
+        'expected_desc': 'JSON array of structural RAG chunks',
+        'expected_output': 'rag_chunks.json',
+        'expected_type': 'json',
+        'mcp_args': {'input': 'tests/e2e_fixtures/single_page.pdf', 'output': '{out_dir}/rag_chunks.json'},
+        'tool_id': 'pdf_rag_chunks',
+        'use_case': 'Extract layout-aware semantic RAG chunks.',
+        'wasm_supported': True}
+]
 
+def main():
+    gateway = GatewayServer()
+    gateway.start()
+
+    runner = TestRunner()
     for i, t in enumerate(tools_definitions):
         tool_id = t["tool_id"]
         print(f"Running {tool_id}...")

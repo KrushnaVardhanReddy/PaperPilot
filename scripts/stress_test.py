@@ -143,7 +143,7 @@ Test Type: 1-Hour Continuous Multi-Cycle Stress & Memory Stability Test
 
 | Metric | Measured Value | Analysis / Verdict |
 |---|---|---|
-| **Test Duration** | **{actual_duration:.1f} seconds** (~{actual_duration / 60:.1f} minutes) | Continuous sustained stress across 44 tools |
+| **Test Duration** | **{actual_duration:.1f} seconds** (~{actual_duration / 60:.1f} minutes) | Continuous sustained stress across 50 tools |
 | **Total Cycles Completed** | **{iteration_count:,} cycles** | Continuous multi-operation loop |
 | **Total Operations Executed** | **{total_ops:,} operations** | Verified across {len(COMMANDS)} operation types |
 | **Success Rate** | **{100.0 * total_ops / max(1, total_ops + failures):.2f}%** ({total_ops:,}/{total_ops + failures:,}) | **100% Stability — Zero Crashes / Panics** |
@@ -208,7 +208,7 @@ During every cycle, it executes {len(COMMANDS)} distinct operations representing
 - **Crash Rate**: 0 panics or unexpected exits.
 
 ## Telemetry
-The script captured latencies (Mean, P50, P90, P95, P99, P99.9, Min, and Max) across all 44 tools natively. Memory (Peak RSS) was sampled every 60 seconds.
+The script captured latencies (Mean, P50, P90, P95, P99, P99.9, Min, and Max) across all 50 tools natively. Memory (Peak RSS) was sampled every 60 seconds.
 For full tabular breakdown of latencies, refer to `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`.
 """
 
