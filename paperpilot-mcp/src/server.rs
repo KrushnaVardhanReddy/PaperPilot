@@ -843,6 +843,100 @@ impl PaperPilotMcpServer {
         tool_ext_txt.input_schema = std::sync::Arc::new(schema_ext_txt);
         tools.push(tool_ext_txt);
 
+        let mut tool_rag = Tool::default();
+        tool_rag.name = "pdf_rag_chunks".into();
+        tool_rag.description = Some("Extract semantic RAG chunks from PDF.".into());
+        let mut schema_rag = serde_json::Map::new();
+        schema_rag.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_rag = serde_json::Map::new();
+        prop_rag.insert("input".to_string(), serde_json::json!({ "type": "string" }));
+        prop_rag.insert(
+            "output".to_string(),
+            serde_json::json!({ "type": "string" }),
+        );
+        schema_rag.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_rag),
+        );
+        schema_rag.insert("required".to_string(), serde_json::json!(["input"]));
+        tool_rag.input_schema = std::sync::Arc::new(schema_rag);
+        tools.push(tool_rag);
+
+        let mut tool_o2m = Tool::default();
+        tool_o2m.name = "office_to_markdown".into();
+        tool_o2m.description = Some("Convert Office document to Markdown.".into());
+        let mut schema_o2m = serde_json::Map::new();
+        schema_o2m.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_o2m = serde_json::Map::new();
+        prop_o2m.insert("input".to_string(), serde_json::json!({ "type": "string" }));
+        prop_o2m.insert(
+            "output".to_string(),
+            serde_json::json!({ "type": "string" }),
+        );
+        schema_o2m.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_o2m),
+        );
+        schema_o2m.insert(
+            "required".to_string(),
+            serde_json::json!(["input", "output"]),
+        );
+        tool_o2m.input_schema = std::sync::Arc::new(schema_o2m);
+        tools.push(tool_o2m);
+
+        let mut tool_oet = Tool::default();
+        tool_oet.name = "office_extract_text".into();
+        tool_oet.description = Some("Extract text from Office document.".into());
+        let mut schema_oet = serde_json::Map::new();
+        schema_oet.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_oet = serde_json::Map::new();
+        prop_oet.insert("input".to_string(), serde_json::json!({ "type": "string" }));
+        prop_oet.insert(
+            "output".to_string(),
+            serde_json::json!({ "type": "string" }),
+        );
+        schema_oet.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_oet),
+        );
+        schema_oet.insert("required".to_string(), serde_json::json!(["input"]));
+        tool_oet.input_schema = std::sync::Arc::new(schema_oet);
+        tools.push(tool_oet);
+
+        let mut tool_oml = Tool::default();
+        tool_oml.name = "office_modernize_legacy".into();
+        tool_oml.description = Some("Modernize legacy Office document.".into());
+        let mut schema_oml = serde_json::Map::new();
+        schema_oml.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_oml = serde_json::Map::new();
+        prop_oml.insert("input".to_string(), serde_json::json!({ "type": "string" }));
+        prop_oml.insert(
+            "output".to_string(),
+            serde_json::json!({ "type": "string" }),
+        );
+        schema_oml.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_oml),
+        );
+        schema_oml.insert(
+            "required".to_string(),
+            serde_json::json!(["input", "output"]),
+        );
+        tool_oml.input_schema = std::sync::Arc::new(schema_oml);
+        tools.push(tool_oml);
+
         // Tool: pdf_extract_images
         let mut schema_ext_img = serde_json::Map::new();
         schema_ext_img.insert(
@@ -2396,7 +2490,13 @@ impl PaperPilotMcpServer {
             "properties".to_string(),
             serde_json::Value::Object(props_compare),
         );
-        schema_compare.insert("required".to_string(), serde_json::Value::Array(vec![]));
+        schema_compare.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("input_b".to_string()),
+            ]),
+        );
 
         let mut tool_compare = Tool::default();
         tool_compare.name = "pdf_compare".into();
@@ -3674,6 +3774,89 @@ impl PaperPilotMcpServer {
                     output_path: None,
                 })
             }
+            "pdf_rag_chunks" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let mut doc = paperpilot_pdf::document::LopdfDocument::load(
+                    &std::path::PathBuf::from(&input),
+                )
+                .map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to load PDF: {}", e), None)
+                })?;
+
+                let op = paperpilot_pdf::operations::rag_chunks::PdfRagChunksOperation::new();
+                use paperpilot_core::traits::PdfOperation;
+                op.execute(&mut doc).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to execute RAG chunks: {}", e), None)
+                })?;
+
+                let chunks = op.chunks.lock().unwrap().clone();
+                let json_data = serde_json::to_string_pretty(&chunks).unwrap_or_default();
+                std::fs::write(&output, json_data).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to write chunks JSON: {}", e), None)
+                })?;
+
+                Ok(OperationResult {
+                    success: true,
+                    data: None,
+                    message: "RAG chunks extracted successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "office_to_markdown" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+                paperpilot_pdf::operations::office::OfficeToMarkdownOperation::execute(
+                    &std::path::PathBuf::from(&input),
+                    &std::path::PathBuf::from(&output),
+                )
+                .map_err(crate::error::to_mcp_error)?;
+                Ok(OperationResult {
+                    success: true,
+                    data: None,
+                    message: "Office converted to markdown successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "office_extract_text" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+                paperpilot_pdf::operations::office::OfficeExtractTextOperation::execute(
+                    &std::path::PathBuf::from(&input),
+                    &std::path::PathBuf::from(&output),
+                )
+                .map_err(crate::error::to_mcp_error)?;
+                Ok(OperationResult {
+                    success: true,
+                    data: None,
+                    message: "Office text extracted successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "office_modernize_legacy" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+                paperpilot_pdf::operations::office::OfficeModernizeOperation::execute(
+                    &std::path::PathBuf::from(&input),
+                    &std::path::PathBuf::from(&output),
+                )
+                .map_err(crate::error::to_mcp_error)?;
+                Ok(OperationResult {
+                    success: true,
+                    data: None,
+                    message: "Office legacy document modernized successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "excel_to_json" => {
                 let input = get_string("input")?;
                 let sheet = args
@@ -4527,7 +4710,8 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 51);
+        // Base counts 52 pushes, one is a helper pushing 4 tools = 55 tools
+        assert_eq!(res.tools.len(), 55);
     }
 
     #[test]

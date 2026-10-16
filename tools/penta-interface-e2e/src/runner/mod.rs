@@ -378,6 +378,36 @@ impl TestExecutionResult {
                 "OfficeEngine.excel_to_csv(bytes)",
                 "/api/v1/office/excel-to-csv"
             ),
+            "office_to_markdown" => (
+                "office to-markdown --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/doc.md",
+                r#"{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/doc.md"}"#,
+                "OfficeEngine.to_markdown(bytes)",
+                "/api/v1/pdf/tools/office_to_markdown"
+            ),
+            "office_extract_text" => (
+                "office extract-text --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/out.txt",
+                r#"{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/out.txt"}"#,
+                "OfficeEngine.extract_text(bytes)",
+                "/api/v1/pdf/tools/office_extract_text"
+            ),
+            "office_modernize_legacy" => (
+                "office modernize --input tests/e2e_fixtures/real/test.xls --output tests/e2e_fixtures/out/penta_e2e/out.xlsx",
+                r#"{"input": "tests/e2e_fixtures/real/test.xls", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}"#,
+                "OfficeEngine.modernize_legacy(bytes)",
+                "/api/v1/pdf/tools/office_modernize_legacy"
+            ),
+            "pdf_to_json" => (
+                "extract-text --input tests/e2e_fixtures/real/single_page.pdf --format json --output tests/e2e_fixtures/out/penta_e2e/out.json",
+                r#"{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.json"}"#,
+                "WasmPdfEngine.pdf_to_json(pdfBytes)",
+                "/api/v1/pdf/tools/pdf_to_json"
+            ),
+            "pdf_to_markdown" => (
+                "extract-text --input tests/e2e_fixtures/real/single_page.pdf --format markdown --output tests/e2e_fixtures/out/penta_e2e/out.md",
+                r#"{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.md"}"#,
+                "WasmPdfEngine.convert(pdfBytes, 'markdown')",
+                "/api/v1/pdf/tools/pdf_to_markdown"
+            ),
             "pdf_rag_chunks" => (
                 "rag-chunks --input tests/e2e_fixtures/real/single_page.pdf",
                 r#"{"input": "tests/e2e_fixtures/real/single_page.pdf"}"#,

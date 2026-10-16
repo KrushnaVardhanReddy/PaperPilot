@@ -26,7 +26,8 @@ fn test_schema_validation() {
         );
         assert!(
             schema.get("required").is_some(),
-            "Schema must have 'required'"
+            "Schema must have 'required' for tool '{}'",
+            tool.name
         );
     }
 }

@@ -1,6 +1,8 @@
 pub mod analysis;
 pub mod bench;
 pub mod conversions;
+pub mod conversions_office_tools;
+pub mod conversions_pdf_tools;
 pub mod edge_cases;
 pub mod page_ops;
 pub mod security_forms;
