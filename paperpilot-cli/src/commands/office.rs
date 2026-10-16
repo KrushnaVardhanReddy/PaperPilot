@@ -16,6 +16,7 @@ pub enum OfficeCommands {
         output: PathBuf,
     },
     /// Extract text from an Office document
+    #[command(alias = "extract-text")]
     Extract {
         #[arg(long, required = true)]
         input: PathBuf,

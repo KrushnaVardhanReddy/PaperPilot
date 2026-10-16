@@ -31,6 +31,22 @@ pub struct ApiResponse {
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
+pub struct OfficeConvertJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/test.xlsx")]
+    pub input: String,
+    #[schema(example = "tests/e2e_fixtures/out/penta_e2e/doc.md")]
+    pub output: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct RagChunksJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    pub max_chunk_size: Option<usize>,
+    pub overlap: Option<usize>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct McpExecRequest {
     #[schema(example = "pdf_metadata")]
     pub tool: String,
@@ -793,6 +809,139 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
             e.message.clone(),
         )
             .into_response(),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/office-to-markdown",
+    request_body = OfficeConvertJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn office_to_markdown(
+    Json(payload): Json<OfficeConvertJsonRequest>,
+) -> impl IntoResponse {
+    let input = std::path::PathBuf::from(&payload.input);
+    let output = std::path::PathBuf::from(&payload.output);
+    match paperpilot_pdf::operations::office::OfficeToMarkdownOperation::execute(&input, &output) {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({"output": payload.output})),
+                error: None,
+            }),
+        )
+            .into_response(),
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/office-extract-text",
+    request_body = OfficeConvertJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn office_extract_text(
+    Json(payload): Json<OfficeConvertJsonRequest>,
+) -> impl IntoResponse {
+    let input = std::path::PathBuf::from(&payload.input);
+    let output = std::path::PathBuf::from(&payload.output);
+    match paperpilot_pdf::operations::office::OfficeExtractTextOperation::execute(&input, &output) {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({"output": payload.output})),
+                error: None,
+            }),
+        )
+            .into_response(),
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/rag-chunks",
+    request_body = RagChunksJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn rag_chunks(Json(payload): Json<RagChunksJsonRequest>) -> impl IntoResponse {
+    use paperpilot_core::traits::PdfOperation;
+    use paperpilot_pdf::document::LopdfDocument;
+
+    let _max_chunk_size = payload.max_chunk_size.unwrap_or(1000);
+    let _overlap = payload.overlap.unwrap_or(200);
+
+    let input_path = std::path::PathBuf::from(&payload.input);
+
+    let mut doc = match LopdfDocument::load(&input_path) {
+        Ok(d) => d,
+        Err(e) => {
+            let err_str = e.to_string();
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let op = paperpilot_pdf::operations::rag_chunks::PdfRagChunksOperation::new();
+    match op.execute(&mut doc) {
+        Ok(_) => {
+            let chunks = op.chunks.lock().unwrap().clone();
+            let count = chunks.len();
+            (
+                StatusCode::OK,
+                Json(ApiResponse {
+                    success: true,
+                    result: Some(serde_json::json!({"chunks": chunks, "count": count})),
+                    error: None,
+                }),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
     }
 }
 

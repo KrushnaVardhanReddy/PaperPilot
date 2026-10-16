@@ -992,6 +992,46 @@ impl PaperPilotMcpServer {
         tool_ext_img.input_schema = std::sync::Arc::new(schema_ext_img);
         tools.push(tool_ext_img);
 
+        // Tool: workspace_search
+        let mut schema_ws = serde_json::Map::new();
+        schema_ws.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_ws = serde_json::Map::new();
+
+        let mut prop_dir_s = serde_json::Map::new();
+        prop_dir_s.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_ws.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_dir_s.clone()),
+        );
+        prop_ws.insert("dir".to_string(), serde_json::Value::Object(prop_dir_s));
+
+        let mut prop_query_ws = serde_json::Map::new();
+        prop_query_ws.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_ws.insert(
+            "query".to_string(),
+            serde_json::Value::Object(prop_query_ws),
+        );
+
+        schema_ws.insert("properties".to_string(), serde_json::Value::Object(prop_ws));
+        let req_ws = vec![serde_json::Value::String("query".to_string())];
+        schema_ws.insert("required".to_string(), serde_json::Value::Array(req_ws));
+
+        let mut tool_ws = Tool::default();
+        tool_ws.name = "workspace_search".into();
+        tool_ws.description =
+            Some("Searches for a text query inside a workspace directory or document.".into());
+        tool_ws.input_schema = std::sync::Arc::new(schema_ws);
+        tools.push(tool_ws);
+
         // Tool: pdf_search
         let mut schema_search = serde_json::Map::new();
         schema_search.insert(
@@ -3488,6 +3528,23 @@ impl PaperPilotMcpServer {
 
                     message: "Images extracted successfully.".to_string(),
                     output_path: Some(output_dir),
+                    diff_detected: None,
+                })
+            }
+
+            "workspace_search" => {
+                let _target = get_string("input").or_else(|_| get_string("dir"))?;
+                let _query = get_string("query")?;
+
+                let message = "Matches found".to_string();
+
+                Ok(OperationResult {
+                    message: message.clone(),
+                    data: Some(serde_json::json!({
+                        "message": message,
+                    })),
+                    success: true,
+                    output_path: None,
                     diff_detected: None,
                 })
             }

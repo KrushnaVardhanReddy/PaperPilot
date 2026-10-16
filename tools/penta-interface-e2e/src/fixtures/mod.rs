@@ -33,6 +33,7 @@ impl FixtureManager {
         self.create_png("test.png")?;
         self.create_encrypted_pdf("encrypted.pdf", "testpass")?;
         self.create_excel_file("test.xlsx")?;
+        self.create_legacy_xls_file("test.xls")?;
         self.create_multimodal_pdf("multimodal.pdf")?;
         self.create_multimodal_pdf("minimal.pdf")?;
         Ok(())
@@ -269,6 +270,21 @@ impl FixtureManager {
         let path = self.dir.join(filename);
         if !path.exists() {
             std::fs::write(path, content)?;
+        }
+        Ok(())
+    }
+
+    fn create_legacy_xls_file(&self, filename: &str) -> Result<()> {
+        let path = self.dir.join(filename);
+        if !path.exists() {
+            let b64 = include_str!("test_xls_data.rs")
+                .trim()
+                .strip_prefix("pub const TEST_XLS_B64: &str = \"")
+                .and_then(|s| s.strip_suffix("\";"))
+                .unwrap();
+            use base64::{engine::general_purpose, Engine as _};
+            let bytes = general_purpose::STANDARD.decode(b64).unwrap();
+            std::fs::write(path, bytes)?;
         }
         Ok(())
     }

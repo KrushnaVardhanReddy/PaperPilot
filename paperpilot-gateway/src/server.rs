@@ -24,6 +24,9 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::office_convert,
         handlers::excel_to_json,
         handlers::excel_to_csv,
+        handlers::office_to_markdown,
+        handlers::office_extract_text,
+        handlers::rag_chunks,
         handlers::handle_tool
     ),
     components(
@@ -40,7 +43,9 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::InfoJsonRequest,
             handlers::CompareJsonRequest,
             handlers::ExcelToJsonRequest,
-            handlers::ExcelToCsvRequest
+            handlers::ExcelToCsvRequest,
+            handlers::OfficeConvertJsonRequest,
+            handlers::RagChunksJsonRequest
         )
     ),
     tags(
@@ -85,6 +90,19 @@ pub async fn build_app() -> Router {
             post(handlers::excel_to_json),
         )
         .route("/api/v1/office/excel-to-csv", post(handlers::excel_to_csv))
+        .route(
+            "/api/v1/pdf/office-to-markdown",
+            post(handlers::office_to_markdown),
+        )
+        .route(
+            "/api/v1/pdf/office-extract-text",
+            post(handlers::office_extract_text),
+        )
+        .route("/api/v1/pdf/rag-chunks", post(handlers::rag_chunks))
+        .route(
+            "/api/v1/search/workspace_search",
+            post(handlers::handle_tool),
+        )
         .layer(cors)
 }
 
