@@ -233,18 +233,22 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            use tauri::Manager;
-            let icon_bytes = include_bytes!("../icons/icon.png");
-            if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.set_icon(icon.clone());
-                }
+            #[cfg(desktop)]
+            {
+                use tauri::Manager;
+                let icon_bytes = include_bytes!("../icons/icon.png");
+                if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.set_icon(icon.clone());
+                    }
 
-                let _ = tauri::tray::TrayIconBuilder::new()
-                    .icon(icon)
-                    .tooltip("PaperPilot")
-                    .build(app);
+                    let _ = tauri::tray::TrayIconBuilder::new()
+                        .icon(icon)
+                        .tooltip("PaperPilot")
+                        .build(app);
+                }
             }
+            let _ = app;
             Ok(())
         })
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())

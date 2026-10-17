@@ -1,4 +1,4 @@
-package com.krushna.desktop
+package com.paperpilot.app
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

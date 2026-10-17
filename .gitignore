@@ -36,3 +36,9 @@ update_*.py
 *.sh
 run_tests.sh
 parse_test.rs
+apps/desktop/src-tauri/gen/android/.gradle/
+apps/desktop/src-tauri/gen/android/build/
+apps/desktop/src-tauri/gen/android/app/build/
+apps/desktop/src-tauri/gen/android/buildSrc/build/
+apps/desktop/src-tauri/gen/android/buildSrc/.gradle/
+apps/desktop/src-tauri/gen/android/buildSrc/.kotlin/

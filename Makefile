@@ -80,6 +80,18 @@ build-macos:
 	@echo "Notice: Compiling Tauri / macOS binaries locally requires macOS (Darwin) or a cross-toolchain."
 	@echo "Trigger GitHub Actions Rust CI or use: gh workflow run rust.yml for macOS build."
 
+# Android builds & installation
+build-android:
+	cd apps/desktop && npx tauri android build --debug --target aarch64 --apk
+
+run-android:
+	cd apps/desktop && npx tauri android dev
+
+install-android: build-android
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk 2>/dev/null || \
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/arm64-v8a/debug/app-arm64-v8a-debug.apk 2>/dev/null || \
+	find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec adb install -r {} +
+
 # Package standalone desktop installers (AppImage, deb)
 dist:
 	cd apps/desktop && npm run tauri build

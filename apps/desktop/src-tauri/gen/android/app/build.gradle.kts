@@ -16,11 +16,11 @@ val tauriProperties = Properties().apply {
 
 android {
     compileSdk = 37
-    namespace = "com.krushna.desktop"
+    namespace = "com.paperpilot.app"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.krushna.desktop"
-        minSdk = 24
+        applicationId = "com.paperpilot.app"
+        minSdk = 26
         targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
