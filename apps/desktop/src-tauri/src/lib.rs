@@ -1,3 +1,4 @@
+#[cfg(feature = "desktop-features")]
 use rmcp::model::CallToolRequestParams;
 
 use std::collections::HashMap;
@@ -6,6 +7,7 @@ use tokio::sync::oneshot;
 
 pub mod ai_commands;
 pub mod error;
+pub mod mobile_bridge;
 pub mod ocr_commands;
 pub mod pack_commands;
 pub mod storage;
@@ -35,6 +37,7 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
+#[cfg(feature = "desktop-features")]
 async fn invoke_mcp_tool(
     tool_name: String,
     arguments: serde_json::Value,
@@ -116,6 +119,7 @@ struct GatewayStatus {
 }
 
 #[tauri::command]
+#[cfg(feature = "desktop-features")]
 fn get_gateway_status() -> GatewayStatus {
     let is_running = *GATEWAY_RUNNING.lock().unwrap();
     GatewayStatus {
@@ -126,6 +130,7 @@ fn get_gateway_status() -> GatewayStatus {
 }
 
 #[tauri::command]
+#[cfg(feature = "desktop-features")]
 async fn start_gateway() -> Result<(), String> {
     let mut is_running = GATEWAY_RUNNING.lock().unwrap();
     if *is_running {
@@ -154,6 +159,7 @@ async fn start_gateway() -> Result<(), String> {
 }
 
 #[tauri::command]
+#[cfg(feature = "desktop-features")]
 async fn stop_gateway() -> Result<(), String> {
     let mut tx_lock = GATEWAY_SHUTDOWN_TX.lock().unwrap();
     if let Some(tx) = tx_lock.take() {
@@ -162,6 +168,37 @@ async fn stop_gateway() -> Result<(), String> {
 
     // The tokio task will clean up the GATEWAY_RUNNING flag
     Ok(())
+}
+
+#[tauri::command]
+#[cfg(not(feature = "desktop-features"))]
+async fn invoke_mcp_tool(
+    _tool_name: String,
+    _arguments: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    Err(String::from("MCP tools are not supported on mobile"))
+}
+
+#[tauri::command]
+#[cfg(not(feature = "desktop-features"))]
+fn get_gateway_status() -> GatewayStatus {
+    GatewayStatus {
+        is_running: false,
+        port: 7823,
+        swagger_url: String::from("http://127.0.0.1:7823/swagger-ui"),
+    }
+}
+
+#[tauri::command]
+#[cfg(not(feature = "desktop-features"))]
+async fn start_gateway() -> Result<(), String> {
+    Err(String::from("Gateway is not supported on mobile"))
+}
+
+#[tauri::command]
+#[cfg(not(feature = "desktop-features"))]
+async fn stop_gateway() -> Result<(), String> {
+    Err(String::from("Gateway is not supported on mobile"))
 }
 
 #[tauri::command]
@@ -213,6 +250,7 @@ pub fn run() {
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
         .invoke_handler(tauri::generate_handler![
             greet,
+            mobile_bridge::process_mobile_buffer,
             invoke_mcp_tool,
             cancel_job,
             query_documentation_rag,
@@ -245,14 +283,20 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
+    use crate::{cancel_job, get_file_metadata, CANCEL_FLAGS};
+    #[cfg(feature = "desktop-features")]
+    #[cfg(feature = "desktop-features")]
     use crate::{
-        cancel_job, get_file_metadata, get_gateway_status, invoke_mcp_tool, start_gateway,
-        stop_gateway, CANCEL_FLAGS, GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX,
+        get_gateway_status, invoke_mcp_tool, start_gateway, stop_gateway, GATEWAY_RUNNING,
+        GATEWAY_SHUTDOWN_TX,
     };
+    #[cfg(feature = "desktop-features")]
     use serde_json::json;
     use std::io::Write;
 
     #[tokio::test]
+    #[cfg(feature = "desktop-features")]
+    #[cfg(feature = "desktop-features")]
     async fn test_invoke_mcp_tool_validation_error() {
         // Test with a tool that expects an input file that doesn't exist
         let tool_name = "pdf_metadata".to_string();
@@ -270,6 +314,8 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "desktop-features")]
+    #[cfg(feature = "desktop-features")]
     async fn test_invoke_mcp_tool_invalid_tool() {
         let tool_name = "invalid_tool_name".to_string();
         let args = json!({});
@@ -317,6 +363,8 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "desktop-features")]
+    #[cfg(feature = "desktop-features")]
     async fn test_gateway_lifecycle() {
         // Reset state
         *GATEWAY_RUNNING.lock().unwrap() = false;
