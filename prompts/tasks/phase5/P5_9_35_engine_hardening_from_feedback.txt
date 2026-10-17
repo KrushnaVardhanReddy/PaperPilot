@@ -1,0 +1,33 @@
+# Task P5_9_35: Deep Engine Hardening (Image Downsampling, Watermark Fitting, OCR Model Guidance, DOCX Image Embedding)
+# Associated Spec: specs/059-user-feedback-polish-and-hardening/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Harden core engine features based on user feedback: implement image downsampling in `compress`, auto-fit watermark text within page margins, provide clear error handling/prompts when OCR models are missing, and embed images into DOCX conversions.
+
+### Detailed Scope & Context
+Read `specs/059-user-feedback-polish-and-hardening/spec.md` for background.
+
+1. **Lossy Image Downsampling in PDF Compression (`paperpilot-pdf/src/operations/compress.rs`)**:
+   - Currently, compression only strips metadata and re-flates streams, yielding <2% size drop on image-heavy PDFs.
+   - Implement raster image re-compression: inspect `/Subtype /Image` XObjects. If the stream contains raw RGB or high-res JPEG, re-encode it at target JPEG quality based on `quality` level (e.g., 80% for high, 60% for medium, 40% for low) and replace the stream if the new size is smaller.
+
+2. **Watermark Text Auto-Fitting (`paperpilot-pdf/src/operations/watermark.rs`)**:
+   - For horizontal watermarks, calculate estimated text width.
+   - If the text exceeds 85% of the page width (`MediaBox`), proportionally reduce the font size or wrap into multiple lines so watermark text never clips outside the visible page boundary.
+
+3. **OCR Engine Missing Models Fallback (`paperpilot-pdf/src/operations/ocr.rs`)**:
+   - If model files in `~/.paperpilot/models/` are absent or unreadable, return a distinct error with actionable guidance: `PdfError::OperationFailed("OCR models not found. Run 'paperpilot ocr setup' or download the model pack from settings.")` instead of failing silently or emitting empty text.
+
+4. **PDF to DOCX Image Extraction & Embedding (`paperpilot-pdf/src/operations/docx.rs` / `convert.rs`)**:
+   - When converting PDF to DOCX, extract embedded images (`/Subtype /Image`) alongside text paragraphs and add them to the document structure using `docx-rs` image elements.
+
+5. **Penta-Interface Parity & LLM/NLP Semantic Integrity**:
+   - Every interface (CLI, MCP, Gateway/REST, Desktop, WASM/Edge) must expose matching schemas.
+   - Outputs for text extraction, RAG chunks, and markdown (`pdf_rag_chunks`, `pdf_to_markdown`, `office_to_markdown`) must remain clean and pristine for LLM context windows without injected formatting noise or corruption.
+
+### Constraints & Rules
+- Keep concurrency strictly bounded (`-j 4`) during test runs.
+- Do NOT break existing tests or CLI/MCP schemas.
+- Do NOT run `git reset`, `git checkout -- .`, `git restore`, or `git clean -fd`.
