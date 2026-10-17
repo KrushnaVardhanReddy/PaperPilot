@@ -9,6 +9,30 @@ mod runner;
 use anyhow::Result;
 use clap::Parser;
 use runner::TestExecutionResult;
+use std::path::Path;
+
+pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
+    if !path.exists() || std::fs::metadata(path)?.len() == 0 {
+        return Ok(false);
+    }
+    let content = std::fs::read(path)?;
+    if content.is_empty() { return Ok(false); }
+    match expected_ext {
+        "pdf" => Ok(content.starts_with(b"%PDF")),
+        "xlsx" | "docx" => Ok(content.starts_with(b"PK")),
+        "md" => {
+            let s = String::from_utf8_lossy(&content);
+            Ok(s.contains('|') || s.contains('#'))
+        }
+        "json" => Ok(serde_json::from_slice::<serde_json::Value>(&content).is_ok()),
+        "csv" => {
+            let s = String::from_utf8_lossy(&content);
+            Ok(s.lines().count() > 1 && (s.contains(',') || s.contains(';')))
+        }
+        _ => Ok(true),
+    }
+}
+
 
 #[derive(Parser, Debug)]
 #[command(
@@ -74,6 +98,14 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     println!("=== PaperPilot Penta-Interface E2E Suite ===");
     println!("Initializing fixtures...");
+
+    let workspace_root = std::env::current_dir().unwrap();
+    let out_dir = workspace_root.join("tests/e2e_fixtures/out/penta_e2e");
+    if out_dir.exists() {
+        let _ = std::fs::remove_dir_all(&out_dir);
+    }
+    std::fs::create_dir_all(&out_dir).expect("Failed to create clean penta_e2e out directory");
+
     let fixture_mgr = fixtures::FixtureManager::new();
     fixture_mgr.ensure_fixtures()?;
 
