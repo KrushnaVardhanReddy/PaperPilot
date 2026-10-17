@@ -19,8 +19,7 @@
    - Spec 062 (PR #203, commit `07c4a56`): Tauri 2 native mobile scaffolding (`desktop-features` flag, `mobile.json` capability, and in-memory `process_mobile_buffer` bridge).
    - Spec 064 (Session 13530573138717224797): All 50 Tools clean-room isolated sandbox audit (`make test-cleanroom-all50`, 50/50 100% PASS).
 
-3. **Active Jules Sessions in Flight**:
-   - **Task 5.9.40 / Spec 060 (1-Hour Sustained Soak Benchmark)**: [Session 1504835173939937428](https://jules.google.com/session/1504835173939937428) — `cargo run --release -p soak-bench -- --duration 3600`.
+   - Spec 060 (PR #205, commit `a2b7c9d`): 1-Hour sustained soak benchmark harness (`soak-bench`), executed 8,180,016 ops across 340,834 cycles at 2,272.2 ops/sec with 100.00% success rate and zero memory leaks (142.45 MB RSS stable).
 
 4. **Next Task Ready for Dispatch**:
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI & Adaptive Layout)**: [`prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt`](prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt) — Svelte 5 bottom nav, bottom sheet, touch gestures.
