@@ -37,7 +37,7 @@ impl PdfOperation for EncryptOperation {
         }
 
         let user_pwd = self.user_password.as_deref().unwrap_or("");
-        let owner_pwd = self.owner_password.as_deref().unwrap_or("");
+        let owner_pwd = self.owner_password.as_deref().unwrap_or(user_pwd);
 
         let version = EncryptionVersion::V2 {
             document: &lopdf_doc.inner,

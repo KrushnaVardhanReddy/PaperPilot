@@ -25,8 +25,16 @@ where
     let t0 = Instant::now();
     let res = op();
     let elapsed = t0.elapsed().as_secs_f64() * 1000.0;
-    if res.is_ok() {
-        latencies.entry(name.to_string()).or_default().push(elapsed);
+    match &res {
+        Ok(_) => {
+            latencies.entry(name.to_string()).or_default().push(elapsed);
+        }
+        Err(e) => {
+            static LOGGED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+            if !LOGGED.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                eprintln!("❌ SOAK ERROR in {}: {:?}", name, e);
+            }
+        }
     }
     res
 }
@@ -263,8 +271,10 @@ fn run_group_b_individual(
 
     // 13. pdf_encrypt
     if time_op("pdf_encrypt", lats, || {
+        let mut enc_op = paperpilot_pdf::operations::encrypt::EncryptOperation::new();
+        enc_op.user_password = Some("user123".to_string());
         execute_and_save(
-            paperpilot_pdf::operations::encrypt::EncryptOperation::new(),
+            enc_op,
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("encrypted.pdf")),
         )
@@ -274,7 +284,7 @@ fn run_group_b_individual(
     if time_op("pdf_decrypt", lats, || {
         execute_and_save(
             paperpilot_pdf::operations::decrypt::DecryptOperation::new(Some("user123".to_string())),
-            std::path::Path::new("tests/e2e_fixtures/encrypted.pdf"),
+            &out_dir.join("encrypted.pdf"),
             Some(&out_dir.join("decrypted.pdf")),
         )
     }).is_ok() { *total_ops += 1; } else { *failures += 1; }
