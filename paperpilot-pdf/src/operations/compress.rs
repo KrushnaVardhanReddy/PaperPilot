@@ -31,11 +31,11 @@ impl PdfOperation for CompressOperation {
             })?;
 
         let (max_dim, jpeg_quality) = match self.quality.as_deref() {
-            Some("low") => (1024, 45),
-            Some("medium") => (1600, 70),
-            Some("high") => (2400, 85),
+            Some("low") => (1024, 40),
+            Some("medium") => (1600, 60),
+            Some("high") => (2400, 80),
             Some(s) if s.parse::<u8>().is_ok() => (1600, s.parse::<u8>().unwrap()),
-            _ => (1600, 70), // default to medium
+            _ => (1600, 60), // default to medium
         };
 
         // We collect the object IDs first to avoid mutable borrow issues

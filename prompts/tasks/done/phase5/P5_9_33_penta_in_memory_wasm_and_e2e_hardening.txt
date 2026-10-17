@@ -1,69 +1,103 @@
-Task: Penta-Interface In-Memory WASM Parity & Sandboxed E2E Hardening [Spec 057]
+Task: Penta-Interface In-Memory WASM Parity & Sandboxed E2E Hardening [Spec 057] (Hardened & Explicit Step-by-Step)
+Target Branch: main
 
 Context:
-The 5-Interface E2E suite (`tools/penta-interface-e2e`) has reached a 100% pass baseline across 1,041 tests. However, several WASM and Cloudflare Edge columns currently use simulated marker assertions (`[Simulated] WasmEngine call`). In addition, repeated test runs write to a shared output directory (`tests/e2e_fixtures/out/`), introducing the potential for stale-cache passes.
+The previous attempt failed because it only renamed log strings (from "[Simulated] WasmEngine call" to "In-memory &[u8] buffer") while leaving `let passed = if is_neg { true } else { true };` with dummy mock passes and zero execution of `office_oxide` or memory buffers. Furthermore, output cleanup in `main.rs` and Playwright tests in `apps/desktop` were omitted.
 
-This task hardens the E2E suite by establishing true in-memory buffer execution for WASM/Edge, wiping test output sandboxes before runs, and expanding semantic validations in the Playwright suite.
+This task requires CONCRETE, UNMOCKED CODE IMPLEMENTATION across all 3 parts. Follow these explicit implementation blueprints:
 
-CRITICAL CONSTRAINTS:
-1. ZERO HARDCODED MOCKS: No dummy `passed: true` without asserting actual returned data/bytes.
-2. WORKSPACE SAFETY: NEVER execute `git reset`, `git checkout -- .`, `git clean -fd`, or `git restore`.
-3. CONCURRENCY: Maintain bounded concurrency (`-j 4`).
+CRITICAL RULES:
+1. ZERO HARDCODED MOCKS: Any `let passed = if is_neg { true } else { true };` without actual engine execution is STRICTLY FORBIDDEN and will be rejected.
+2. ZERO SIMULATION STRINGS: Remove every instance of `[Simulated]` across `tools/penta-interface-e2e/src/cases/`.
+3. WORKSPACE SAFETY: NEVER execute `git reset`, `git checkout -- .`, `git clean -fd`, or `git restore`.
+4. CONCURRENCY: Maintain bounded concurrency (`-j 4`).
 
 ================================================================================
-PART 1: SANDBOXED TEST RUN ISOLATION & DUAL-CHECK FILE VERIFICATION
+PART 1: SANDBOXED OUTPUT ISOLATION & DUAL-CHECK IN `tools/penta-interface-e2e/src/main.rs`
 ================================================================================
 In `tools/penta-interface-e2e/src/main.rs`:
-1. Clean Run Guarantee:
-   - Before running test suites, completely reset and wipe the temporary output directories (`tests/e2e_fixtures/out/penta_e2e*`):
-   - Wipe all stale `.pdf`, `.docx`, `.xlsx`, `.md`, `.txt`, and `.json` artifacts from previous runs so tests can NEVER pass against old files.
-   - Re-create a clean, empty output directory prior to running each suite.
-
-2. Mandatory Dual-Check File Verification on Disk:
-   Every test generating a file must perform a two-step validation:
-   - Step 1 (Creation Check): Assert output file exists, is non-empty (> 0 bytes), and has a modification timestamp within the active test execution window.
-   - Step 2 (Deep Semantic Inspection):
-     - For PDFs (`merge`, `split`, `rotate`, `watermark`, `crop`): Use `PdfAssertions` to verify exact page counts, text strings on specific pages, rotation dictionary tags (`/Rotate 90`), and encryption locks.
-     - For Office to Markdown (`office_to_markdown`): Verify file contains table syntax (`|` and `---`) and expected table headers.
-     - For Office Text Extraction (`office_extract_text`): Verify plain text output contains expected text lines without XML tags.
-     - For Office Modernization (`office_modernize_legacy`): Inspect the output file header and verify it opens as a valid OpenXML ZIP archive (`[Content_Types].xml`).
-     - For Spreadsheets to JSON/CSV (`excel_to_json`, `excel_to_csv`): Parse JSON to verify expected column keys and array length; parse CSV to verify delimiter formatting.
-
-================================================================================
-PART 2: TRUE IN-MEMORY ENGINE PARITY FOR WASM & EDGE
-================================================================================
-In `tools/penta-interface-e2e/src/cases/conversions_office_tools.rs`, `conversions_pdf_tools.rs`, and `analysis.rs`:
-1. Replace simulated string assertions with genuine in-memory buffer execution:
-   - For `office_to_markdown`:
-     Load `test.xlsx` into memory as `&[u8]`, call `office_oxide` in-memory text/markdown conversion, and assert that the returned `String` contains valid Markdown table headers (`|` and `---`).
-   - For `office_extract_text`:
-     Pass raw file bytes in memory, invoke text extraction, and assert returned text contains non-empty text without XML tags.
-   - For `office_modernize_legacy`:
-     Read `test.xls` bytes in memory, execute legacy modernization, and assert the returned byte buffer starts with the ZIP magic header `PK\x03\x04`.
-   - For `pdf_rag_chunks`:
-     Load `single_page.pdf` bytes, run chunking in memory, and assert that chunks array has non-empty elements with page numbers and text.
-2. Ensure both `InterfaceType::Wasm` and `InterfaceType::CloudflareEdge` test arms invoke memory-based byte processing and perform genuine semantic checks on the output buffer.
+1. Clean Sandbox Before Every Run:
+   - At the beginning of `main()`, before running any test cases or generating fixtures, wipe and recreate the output directory:
+     ```rust
+     let out_dir = workspace_root.join("tests/e2e_fixtures/out/penta_e2e");
+     if out_dir.exists() {
+         let _ = std::fs::remove_dir_all(&out_dir);
+     }
+     std::fs::create_dir_all(&out_dir).expect("Failed to create clean penta_e2e out directory");
+     ```
+2. Implement Dual-Check File Verification Helper:
+   - Add a helper function `verify_output_file(path: &Path, expected_ext: &str) -> Result<bool>`:
+     - Check 1 (Existence & Size): `path.exists() && std::fs::metadata(path)?.len() > 0`.
+     - Check 2 (Deep Semantic Inspection):
+       - If `.pdf`: First 4 bytes must be `b"%PDF"`.
+       - If `.xlsx` / `.docx`: First 4 bytes must be `b"PK\x03\x04"` (valid ZIP archive).
+       - If `.md`: String must contain table separator `|` or heading `#`.
+       - If `.json`: `serde_json::from_str(&content).is_ok()`.
+       - If `.csv`: File has multiple lines with comma/semicolon separators.
+   - Use this helper across test cases in `cases/` when validating file outputs.
 
 ================================================================================
-PART 3: DESKTOP PLAYWRIGHT SEMANTIC EXPANSION
+PART 2: GENUINE IN-MEMORY EXECUTION (REPLACING ALL SIMULATED WASM/EDGE ARMS)
+================================================================================
+In `tools/penta-interface-e2e/src/cases/conversions_office_tools.rs`, `conversions_pdf_tools.rs`, `conversions.rs`, `page_ops.rs`, and `analysis.rs`:
+
+Replace ALL dummy mock blocks:
+```rust
+// WRONG (DO NOT DO THIS):
+let passed = if is_neg { true } else { true };
+results.push(TestExecutionResult {
+    ...
+    data_sent: "[Simulated] WasmEngine call".into(),
+});
+```
+
+With REAL IN-MEMORY EXECUTION:
+1. For `office_to_markdown`:
+   - Load fixture path `test.xlsx`.
+   - Call `office_oxide::to_markdown(&fixture_path)`.
+   - For positive tests (`!is_neg`): Assert `res.is_ok()` and the markdown text contains `|` or `#`.
+   - For negative tests (`is_neg`): Call on an invalid path or invalid buffer and assert `res.is_err()`.
+2. For `office_extract_text`:
+   - Call `office_oxide::extract_text(&fixture_path)`.
+   - Assert `res.is_ok()` and returned text is non-empty with expected content.
+3. For `office_modernize_legacy`:
+   - Pass authentic legacy BIFF8 file (`test.xls`).
+   - Run `paperpilot_pdf::operations::office::OfficeModernizeLegacyOperation::execute(&xls_path, &out_xlsx)`.
+   - Assert output `.xlsx` exists and starts with `b"PK\x03\x04"`.
+4. For PDF operations in WASM/Edge (`pdf_merge`, `pdf_split`, `pdf_rag_chunks`):
+   - Read fixture PDF into `Vec<u8>`.
+   - Pass memory buffer to `paperpilot_pdf` in-memory operations or LopdfDocument loaded from memory: `LopdfDocument::load_mem(&bytes)`.
+   - Assert the returned buffer or document has valid page counts and non-empty byte streams.
+5. In the `TestExecutionResult`:
+   - Set `data_sent: format!("{} bytes buffer", input_bytes.len())`.
+   - Set `actual_result: format!("Produced {} bytes output", output_bytes.len())`.
+   - Set `passed: actual_validation_boolean` (computed from the real check, NOT hardcoded `true`).
+
+================================================================================
+PART 3: DESKTOP PLAYWRIGHT HARNESS IN `apps/desktop/`
 ================================================================================
 In `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`:
-1. Register all remaining tools from `toolList.ts` (bring catalog coverage to 50+ tools).
-2. Deepen semantic assertions on generated outputs:
-   - For PDF operations: Parse output using `pdf-lib` to assert exact page counts, dimensions, or rotation angles.
-   - For Spreadsheet conversions: Parse output JSON or CSV to verify expected column headers and row counts.
+1. Use `test.beforeAll` to ensure fixtures exist:
+   ```ts
+   test.beforeAll(async () => {
+     const repoRoot = path.resolve(__dirname, '../../..');
+     const realFixturesDir = path.join(repoRoot, 'tests', 'e2e_fixtures', 'real');
+     if (!fs.existsSync(realFixturesDir) || !fs.existsSync(path.join(realFixturesDir, 'single_page.pdf'))) {
+       execSync('cargo run -p gen-e2e-fixtures', { cwd: repoRoot, stdio: 'inherit' });
+     }
+   });
+   ```
+2. Expand `coreOperations` array with all tools from `apps/desktop/src/lib/types/toolList.ts`.
+3. Ensure all tests run with valid dynamic paths without hardcoding `/app`.
 
 ================================================================================
-PART 4: VALIDATION & REPORT GENERATION
+PART 4: VERIFICATION
 ================================================================================
-1. Run formatting and lint checks:
-   - `cargo fmt --all -- --check`
-   - `cargo clippy -p penta-interface-e2e -p paperpilot-wasm -p paperpilot-gateway -j 4 -- -D warnings`
-2. Run the Full Penta E2E suite:
-   - `cargo run -p penta-interface-e2e -- --group all -j 4`
-   - Ensure 100% authentic pass rate across all 1,041 tests with genuine in-memory WASM execution.
-   - Generates updated `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md`.
-
-Deliverables:
-- Commit prefix: `test(penta): `
-- 100% genuine in-memory and disk assertions (zero simulated markers).
+1. Verify no residual simulations:
+   `git grep -i "\[simulated\]" tools/penta-interface-e2e/src/cases/` must return ZERO matches.
+2. Run the test suite:
+   `cargo test -p penta-interface-e2e -j 4`
+   `cargo run -p penta-interface-e2e -j 4 -- --group all`
+   Must pass 100% with real unmocked assertions.
+3. Check TypeScript:
+   `pnpm --filter desktop check`

@@ -28,7 +28,11 @@ pub fn handle_split(
     let mut doc = LopdfDocument::load(input)?;
     let op = if let Some(n) = every {
         let total_pages = doc.page_count()?;
-        paperpilot_pdf::operations::split::SplitOperation::from_every(output.to_path_buf(), n, total_pages)
+        paperpilot_pdf::operations::split::SplitOperation::from_every(
+            output.to_path_buf(),
+            n,
+            total_pages,
+        )
     } else {
         paperpilot_pdf::operations::split::SplitOperation {
             split_points: pages.split(',').filter_map(|s| s.parse().ok()).collect(),

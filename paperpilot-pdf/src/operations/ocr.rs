@@ -31,7 +31,7 @@ impl Default for OcrOperationImpl {
     }
 }
 
-fn find_model(file_name: &str) -> Option<PathBuf> {
+pub fn find_model(file_name: &str) -> Option<PathBuf> {
     // 1. Explicit environment variable
     if let Ok(dir) = std::env::var("PAPERPILOT_OCR_MODELS_DIR") {
         let p = PathBuf::from(dir).join(file_name);
@@ -99,9 +99,7 @@ impl PdfOperation for OcrOperationImpl {
                     }
                 }
             } else {
-                eprintln!(
-                    "Warning: OCR models not found. Falling back to embedded text extraction."
-                );
+                return Err(paperpilot_core::error::PdfError::Other("OCR models not found. Run 'paperpilot ocr setup' or download the model pack from settings.".to_string()));
             }
 
             if let Some(mut engine) = ocr_engine {
@@ -633,8 +631,23 @@ mod tests {
         op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
-        assert!(result.is_ok());
-        assert!(output_path.exists());
+
+        let models_path =
+            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+                .join(".paperpilot")
+                .join("models")
+                .join("text_recognition.onnx");
+        if models_path.exists() {
+            assert!(result.is_ok());
+            assert!(output_path.exists());
+        } else {
+            assert!(result.is_err());
+            if let Err(paperpilot_core::error::PdfError::Other(e)) = result {
+                assert!(e.contains("OCR models not found"));
+            } else {
+                panic!("Expected OCR models not found error");
+            }
+        }
     }
 
     #[test]
@@ -688,8 +701,22 @@ mod tests {
         op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
-        assert!(result.is_ok());
-        assert!(output_path.exists());
+        let models_path =
+            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+                .join(".paperpilot")
+                .join("models")
+                .join("text_recognition.onnx");
+        if models_path.exists() {
+            assert!(result.is_ok());
+            assert!(output_path.exists());
+        } else {
+            assert!(result.is_err());
+            if let Err(paperpilot_core::error::PdfError::Other(e)) = result {
+                assert!(e.contains("OCR models not found"));
+            } else {
+                panic!("Expected OCR models not found error");
+            }
+        }
     }
 
     #[test]

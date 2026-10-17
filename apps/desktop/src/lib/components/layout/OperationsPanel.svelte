@@ -197,7 +197,7 @@ import { onMount } from 'svelte';
     const docPath = appState.documentPaths[docIndex] || docName;
     const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
     const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
-    const base = docName.replace(/\.pdf$/i, '');
+    const base = docName.replace(/\.[^.]+$/i, '');
 
     switch (activeTool.id) {
       case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;

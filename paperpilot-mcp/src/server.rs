@@ -3947,7 +3947,10 @@ impl PaperPilotMcpServer {
                 );
                 match res {
                     Ok(json_str) => {
-                        let out_path = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                        let out_path = args
+                            .get("output")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
                         if let Some(ref dest) = out_path {
                             let _ = std::fs::write(dest, &json_str);
                         }
