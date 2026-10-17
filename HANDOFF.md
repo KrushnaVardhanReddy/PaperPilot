@@ -13,13 +13,13 @@
    - Merged in commit `1e6df92` (PR #199, Jules Session 3241956896051261198).
    - Real byte assertion verifications and clean-room sandboxing.
 
-2. **Spec 058 & 059 (Modular Packaging & User Feedback Hardening) — 100% COMPLETE & MERGED**
+2. **Spec 058, 059 & 062 (Packaging, Hardening & Tauri 2 Native Mobile Backend) — 100% COMPLETE & MERGED**
    - Spec 058 (PR #196, commit `5f574ed`): Shell completions, feature flags, standalone multi-platform assets.
    - Spec 059 (PR #200, commit `537550c`): Fixed `excel_to_json` disk output, `excel_to_csv` extension, `split --every`, raster downsampling, and watermark font scaling.
+   - Spec 062 (PR #203, commit `07c4a56`): Tauri 2 native mobile scaffolding (`desktop-features` flag, `mobile.json` capability, and in-memory `process_mobile_buffer` bridge).
 
 3. **Active Jules Sessions in Flight**:
    - **Task 5.9.40 / Spec 060 (1-Hour Sustained Soak Benchmark)**: [Session 8183595096687977728](https://jules.google.com/session/8183595096687977728) — `cargo run --release -p soak-bench -- --duration 3600`.
-   - **Task 5.9.38 / Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: [Session 15776658825085896715](https://jules.google.com/session/15776658825085896715) — Feature-gated desktop crates, in-memory mobile bridge.
    - **Task 5.9.41 / Spec 064 (All 50 Tools Clean-Room Verification & Audit)**: [Session 13530573138717224797](https://jules.google.com/session/13530573138717224797) — `paperpilot-cli/tests/all50_cleanroom_audit.rs` & Makefile audit targets.
 
 4. **Next Task Ready for Dispatch**:
