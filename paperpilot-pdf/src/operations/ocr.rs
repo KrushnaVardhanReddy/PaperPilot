@@ -31,7 +31,7 @@ impl Default for OcrOperationImpl {
     }
 }
 
-fn find_model(file_name: &str) -> Option<PathBuf> {
+pub fn find_model(file_name: &str) -> Option<PathBuf> {
     // 1. Explicit environment variable
     if let Ok(dir) = std::env::var("PAPERPILOT_OCR_MODELS_DIR") {
         let p = PathBuf::from(dir).join(file_name);

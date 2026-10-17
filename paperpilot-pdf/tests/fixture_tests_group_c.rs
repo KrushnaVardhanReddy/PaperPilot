@@ -156,12 +156,13 @@ fn test_ocr_stub() {
     let mut doc = LopdfDocument::new();
     let op = OcrOperation::new();
     let result = op.execute(&mut doc);
-    let models_path =
-        std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
-            .join(".paperpilot")
-            .join("models")
-            .join("text_recognition.onnx");
-    if models_path.exists() {
+    let has_models = paperpilot_pdf::operations::ocr::find_model("det.rten")
+        .or_else(|| paperpilot_pdf::operations::ocr::find_model("det.onnx"))
+        .is_some()
+        && paperpilot_pdf::operations::ocr::find_model("rec.rten")
+            .or_else(|| paperpilot_pdf::operations::ocr::find_model("rec.onnx"))
+            .is_some();
+    if has_models {
         assert!(result.is_ok());
     } else {
         assert!(result.is_err());
