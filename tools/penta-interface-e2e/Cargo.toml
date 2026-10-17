@@ -18,4 +18,5 @@ anyhow = "1.0"
 paperpilot-pdf = { path = "../../paperpilot-pdf" }
 paperpilot-core = { path = "../../paperpilot-core" }
 calamine = "0.36.1"
-base64 = "0.23.1"
+office_oxide = "0.1"
+base64 = "0.21"

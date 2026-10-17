@@ -6191,11 +6191,12 @@ name = "penta-interface-e2e"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.23.1",
+ "base64 0.21.7",
  "calamine",
  "clap",
  "image",
  "lopdf 0.45.0",
+ "office_oxide",
  "paperpilot-core",
  "paperpilot-pdf",
  "quick-xml 0.31.0",
