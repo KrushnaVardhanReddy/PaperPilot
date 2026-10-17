@@ -20,7 +20,7 @@
    - Spec 064 (Session 13530573138717224797): All 50 Tools clean-room isolated sandbox audit (`make test-cleanroom-all50`, 50/50 100% PASS).
 
 3. **Active Jules Sessions in Flight**:
-   - **Task 5.9.40 / Spec 060 (1-Hour Sustained Soak Benchmark)**: [Session 8183595096687977728](https://jules.google.com/session/8183595096687977728) — `cargo run --release -p soak-bench -- --duration 3600`.
+   - **Task 5.9.40 / Spec 060 (1-Hour Sustained Soak Benchmark)**: [Session 1504835173939937428](https://jules.google.com/session/1504835173939937428) — `cargo run --release -p soak-bench -- --duration 3600`.
 
 4. **Next Task Ready for Dispatch**:
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI & Adaptive Layout)**: [`prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt`](prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt) — Svelte 5 bottom nav, bottom sheet, touch gestures.
