@@ -28,13 +28,21 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "appimage", "dmg", "nsis", "msi"],
+    "targets": [
+      "deb",
+      "appimage",
+      "dmg",
+      "nsis",
+      "msi"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -44,7 +52,7 @@
     ],
     "resources": [],
     "externalBin": [],
-    "copyright": "© 2025 PaperPilot Contributors",
+    "copyright": "\u00a9 2025 PaperPilot Contributors",
     "category": "Utility",
     "shortDescription": "Local-first PDF manipulation toolkit",
     "longDescription": "PaperPilot is a privacy-first, local PDF manipulation tool with MCP server support. No cloud uploads. No subscriptions required.",
@@ -73,11 +81,19 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["English"]
+        "languages": [
+          "English"
+        ]
       },
       "webviewInstallMode": {
         "type": "embedBootstrapper"
       }
+    },
+    "android": {
+      "minSdkVersion": 26
+    },
+    "iOS": {
+      "minimumSystemVersion": "15.0"
     }
   }
 }
