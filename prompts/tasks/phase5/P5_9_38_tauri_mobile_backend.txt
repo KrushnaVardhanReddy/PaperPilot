@@ -1,0 +1,121 @@
+# Task P5.9.38: Spec 062 - Tauri 2 Native Mobile Backend Scaffolding & Native Engine Integration
+
+## Objective
+Set up the official Tauri 2 native mobile scaffolding for Android and iOS in `apps/desktop`, configure mobile permissions/capabilities, and establish an in-memory byte buffer bridge in Rust so mobile sandboxes can execute native operations with zero file path restrictions.
+
+CRITICAL ARCHITECTURAL DECISION:
+Strip out `paperpilot-gateway` (Axum HTTP REST server) and `paperpilot-mcp` (Model Context Protocol JSON-RPC server) from the mobile build via Cargo feature gating (`desktop-features`). Mobile devices do not run local developer IDEs or localhost automation web servers. Removing them saves 10MB–20MB binary size, prevents background battery drain, and avoids mobile OS network restrictions.
+
+---
+
+## Technical Context & File Locations
+- **Desktop Crate Path**: `apps/desktop/src-tauri/`
+- **Cargo Config**: `apps/desktop/src-tauri/Cargo.toml`
+- **Tauri Config**: `apps/desktop/src-tauri/tauri.conf.json`
+- **Capabilities Directory**: `apps/desktop/src-tauri/capabilities/`
+- **Rust Commands Root**: `apps/desktop/src-tauri/src/lib.rs`
+- **Core Engine Crate**: `paperpilot-pdf` (`paperpilot-pdf/src/operations/`)
+- **Documentation Target**: `docs/MOBILE_SETUP.md`
+- **Output Report**: `reports/TAURI_MOBILE_BACKEND_SCAFFOLDING_REPORT.md`
+
+---
+
+## Detailed Implementation Instructions
+
+### Step 1: Feature Gating in `apps/desktop/src-tauri/Cargo.toml`
+1. Update `apps/desktop/src-tauri/Cargo.toml`:
+   ```toml
+   [features]
+   default = ["desktop-features"]
+   desktop-features = ["dep:paperpilot-gateway", "dep:paperpilot-mcp"]
+
+   [dependencies]
+   paperpilot-core = { path = "../../../paperpilot-core" }
+   paperpilot-pdf = { path = "../../../paperpilot-pdf" }
+   paperpilot-nlp = { path = "../../../paperpilot-nlp" }
+   paperpilot-ai = { path = "../../../paperpilot-ai" }
+
+   # Desktop-only services (excluded on mobile)
+   paperpilot-gateway = { path = "../../../paperpilot-gateway", optional = true }
+   paperpilot-mcp = { path = "../../../paperpilot-mcp", optional = true }
+   ```
+2. In `apps/desktop/src-tauri/src/lib.rs`:
+   - Wrap gateway and MCP command handlers and imports with `#[cfg(feature = "desktop-features")]`.
+   - On mobile (`--no-default-features`), the binary compiles lean with only `paperpilot-pdf`, `paperpilot-core`, and UI windowing.
+
+### Step 2: Tauri 2 Mobile Configuration in `tauri.conf.json`
+Update `apps/desktop/src-tauri/tauri.conf.json`:
+1. Ensure the package identifier is set to: `"identifier": "com.paperpilot.app"`.
+2. Under `"bundle"` -> add mobile targets and configurations:
+   ```json
+   "bundle": {
+     "active": true,
+     "targets": ["deb", "appimage", "dmg", "nsis", "msi"],
+     "android": {
+       "minSdkVersion": 26,
+       "targetSdkVersion": 34
+     },
+     "iOS": {
+       "minimumSystemVersion": "15.0"
+     }
+   }
+   ```
+3. Create `apps/desktop/src-tauri/capabilities/mobile.json`:
+   ```json
+   {
+     "$schema": "../gen/schemas/desktop-schema.json",
+     "identifier": "mobile-capability",
+     "description": "Permissions required for Android and iOS runs",
+     "windows": ["main"],
+     "platforms": ["android", "iOS"],
+     "permissions": [
+       "core:default",
+       "dialog:default",
+       "dialog:allow-open",
+       "dialog:allow-save",
+       "fs:default",
+       "fs:allow-read-file",
+       "fs:allow-write-file",
+       "opener:default"
+     ]
+   }
+   ```
+
+### Step 3: In-Memory Mobile Buffer Execution Bridge (`mobile_bridge.rs`)
+In Android and iOS, files are accessed via Content URIs (Android SAF) or UIDocumentPicker, which do not provide direct absolute paths.
+1. Create `apps/desktop/src-tauri/src/mobile_bridge.rs`:
+   - Implement the Tauri command:
+     ```rust
+     #[tauri::command]
+     pub async fn process_mobile_buffer(
+         file_name: String,
+         input_bytes: Vec<u8>,
+         operation: String,
+         params: serde_json::Value,
+     ) -> Result<serde_json::Value, String>
+     ```
+   - Logic:
+     - Directly dispatches into `paperpilot-pdf` traits/operations in-memory (with zero reliance on MCP JSON-RPC or Axum server).
+     - Writes `input_bytes` into a temporary sandbox file inside `std::env::temp_dir().join(format!("paperpilot_mobile_{}", uuid::Uuid::new_v4()))`.
+     - Executes operation, reads result bytes into Base64 (or byte array), and drops temporary files.
+     - Returns `{ "success": true, "fileName": output_file_name, "dataBase64": base64_str, "sizeBytes": len }`.
+2. Register `mobile_bridge::process_mobile_buffer` inside `apps/desktop/src-tauri/src/lib.rs` in `generate_handler![]`.
+
+### Step 4: Cross-Compilation Validation & Mobile Setup Guide
+1. Verify compilation:
+   - Run `cargo check -p desktop --no-default-features -j 2` to verify mobile configuration compiles lean without MCP/Gateway.
+   - Run `cargo check -p desktop -j 2` to ensure desktop build remains 100% operational.
+2. Author `docs/MOBILE_SETUP.md`:
+   - Detail the prerequisites:
+     - Android: Android Studio, Android SDK 34, NDK (version 26+), `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android`.
+     - iOS: macOS, Xcode 15+, CocoaPods, `rustup target add aarch64-apple-ios aarch64-apple-ios-sim`.
+   - Document how to test and run on emulator:
+     - `cd apps/desktop && pnpm tauri android init`
+     - `pnpm tauri android dev`
+3. Generate `reports/TAURI_MOBILE_BACKEND_SCAFFOLDING_REPORT.md` summarizing the capabilities, feature flags, command signature, and build check.
+
+---
+
+## Strict Constraints
+- Do NOT revert any existing engine fixes (`split --every`, `excel_to_json` output path, `excel_to_csv` extension, compression raster downsampling, watermark bounds scaling, or OCR guidance).
+- Keep CPU usage throttled (`-j 2`).

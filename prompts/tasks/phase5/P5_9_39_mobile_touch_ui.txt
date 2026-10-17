@@ -1,0 +1,87 @@
+# Task P5.9.39: Spec 063 - Mobile Touch UI & Adaptive Layout for Desktop/Mobile (apps/desktop)
+
+## Objective
+Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) that dynamically adapts when running on mobile devices or narrow screen viewports (<768px). Deliver a sleek bottom navigation bar, touch-friendly operations bottom-sheet dialogs, canvas pinch/swipe gestures, and safe-area inset protection.
+
+---
+
+## Technical Context & File Locations
+- **Frontend Root**: `apps/desktop/src/`
+- **Root Layout**: `apps/desktop/src/routes/+layout.svelte`
+- **Bottom Nav**: `apps/desktop/src/lib/components/layout/BottomNav.svelte`
+- **Sidebar**: `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+- **Operations Dock / Panel**: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+- **Canvas Viewer**: `apps/desktop/src/lib/components/viewer/PdfViewer.svelte` or `CanvasViewer.svelte`
+- **Global CSS / Tokens**: `apps/desktop/src/app.css`
+- **Output Report**: `reports/MOBILE_TOUCH_UI_ADAPTATION_REPORT.md`
+
+---
+
+## Detailed Implementation Instructions
+
+### Step 1: Dynamic Responsive State & Viewport Detection
+1. In `apps/desktop/src/lib/state/app.svelte.ts`:
+   - Add reactive mobile state tracking:
+     ```typescript
+     let isMobileViewport = $state(false);
+     let isTauriMobile = $state(false);
+     ```
+   - On initialization, detect whether running inside mobile environment (check `@tauri-apps/api/core` or window width < 768px) and expose `isMobile = $derived(isMobileViewport || isTauriMobile)`.
+2. In `apps/desktop/src/app.css`:
+   - Add mobile safe-area CSS variables:
+     ```css
+     :root {
+       --safe-area-top: env(safe-area-inset-top, 0px);
+       --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+       --safe-area-left: env(safe-area-inset-left, 0px);
+       --safe-area-right: env(safe-area-inset-right, 0px);
+     }
+     ```
+
+### Step 2: Touch-First Navigation & Bottom Sheet
+1. Update `apps/desktop/src/lib/components/layout/BottomNav.svelte`:
+   - Change breakpoint from `<600px` to `<768px` or `appState.isMobile`.
+   - Ensure nav items cover the primary workflow:
+     - `📄 Documents` (Viewer & Active Docs)
+     - `⚡ Tools` (Full 50+ operations categorized grid)
+     - `🔗 Pipeline` (Batch actions / Pipeline)
+     - `⚙️ Settings` (Settings & AI models)
+   - Ensure tap targets are minimum `48px x 48px` with clear active states and haptic-ready button clicks.
+   - Apply `padding-bottom: var(--safe-area-bottom)` so the bar floats comfortably above iPhone home indicators and Android navigation bars.
+2. In `apps/desktop/src/lib/components/layout/Sidebar.svelte`:
+   - Hide sidebar cleanly when `isMobile` is active:
+     ```svelte
+     {#if !appState.isMobile}
+       <!-- Existing Desktop Sidebar -->
+     {/if}
+     ```
+3. Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+   - When on mobile (`isMobile === true`):
+     - Render as a modern modal **Bottom Sheet** with a drag-handle indicator at the top (`border-radius: 20px 20px 0 0;`).
+     - Max height `85vh` with smooth vertical scroll.
+     - Inputs, selects, and action buttons styled with `min-height: 48px; font-size: 16px;` (preventing iOS auto-zoom on input focus).
+
+### Step 3: Touch Gestures in PDF Viewer
+1. In `apps/desktop/src/lib/components/viewer/` (the main document viewing canvas):
+   - Add pointer event listeners (`pointerdown`, `pointermove`, `pointerup`):
+     - Multi-touch (2 pointers): Calculate Euclidean distance between points to drive smooth pinch-to-zoom (`scale = initialScale * (currentDist / startDist)`).
+     - Horizontal swipe gesture (1 pointer threshold > 80px): Trigger `nextPage()` or `prevPage()` when document is zoomed to fit.
+   - Floating Action Button (FAB):
+     - On mobile screens, provide a floating `+` button in the bottom right corner to quickly open the file dialog / document picker.
+
+### Step 4: Verification & Automated Tests
+1. Add a responsive layout test in `apps/desktop`:
+   - Add a test or Playwright spec (`tests/responsive_mobile.spec.ts`) emulating mobile viewports:
+     - `375 x 667` (iPhone SE)
+     - `390 x 844` (iPhone 14/15)
+     - `412 x 915` (Pixel 7)
+   - Verify:
+     - Sidebar is hidden, BottomNav is visible.
+     - OperationsPanel renders within viewport without horizontal scroll (`scrollWidth === clientWidth`).
+2. Generate `reports/MOBILE_TOUCH_UI_ADAPTATION_REPORT.md` documenting the touch targets, bottom-sheet styling, gesture handlers, and responsive verification screenshots/data.
+
+---
+
+## Strict Constraints
+- Preserve all existing desktop workflows, keyboard shortcuts, and canvas annotation features when on desktop viewports.
+- Do NOT revert any engine fixes or core operations.
