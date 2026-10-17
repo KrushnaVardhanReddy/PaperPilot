@@ -148,9 +148,46 @@ jobs:
             release_pkgs/*
           if-no-files-found: error
 
+  build-wasm-package:
+    name: Build WASM Package (Web & Edge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust & WASM Target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM Package
+        run: |
+          wasm-pack build --target web --release paperpilot-wasm
+
+      - name: Package WASM Release Bundle
+        run: |
+          mkdir -p release_pkgs staging_wasm
+          cp -r paperpilot-wasm/pkg/* staging_wasm/
+          cp README.md staging_wasm/ || true
+          tar -czvf "release_pkgs/paperpilot-wasm-universal.tar.gz" -C staging_wasm .
+          cd release_pkgs
+          shasum -a 256 "paperpilot-wasm-universal.tar.gz" > "paperpilot-wasm-universal.tar.gz.sha256"
+          cd ..
+
+      - name: Upload WASM Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-wasm
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
   publish-github-release:
     name: Publish GitHub Release
-    needs: build-release-binaries
+    needs: [build-release-binaries, build-wasm-package]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -177,10 +214,13 @@ jobs:
           body: |
             ## PaperPilot Release ${{ inputs.version }}
 
-            ### Included Release Binaries
+            ### Included Release Binaries & Packages
             - `paperpilot` (CLI Engine with 50+ PDF & document tools)
             - `paperpilot-gateway` (HTTP/REST Microservice API)
             - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
+            - `paperpilot-all` (All-in-one suite)
+            - `paperpilot-wasm-universal` (Client-side WebAssembly package for browser & edge runtimes)
 
             ### Checksums
             SHA-256 checksums are attached alongside each `.tar.gz` and `.zip` archive.
+
