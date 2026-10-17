@@ -156,5 +156,14 @@ fn test_ocr_stub() {
     let mut doc = LopdfDocument::new();
     let op = OcrOperation::new();
     let result = op.execute(&mut doc);
-    assert!(result.is_ok());
+    let models_path =
+        std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+            .join(".paperpilot")
+            .join("models")
+            .join("text_recognition.onnx");
+    if models_path.exists() {
+        assert!(result.is_ok());
+    } else {
+        assert!(result.is_err());
+    }
 }

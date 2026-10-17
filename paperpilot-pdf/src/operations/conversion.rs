@@ -1551,9 +1551,41 @@ impl PdfOperation for PdfToDocxOperation {
                         && subtype == b"Image"
                     {
                         let image_bytes = &xobj_stream.content;
-                        let pic = docx_rs::Pic::new(image_bytes);
-                        docx =
-                            docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
+                        let decompressed = xobj_stream
+                            .decompressed_content()
+                            .unwrap_or_else(|_| image_bytes.clone());
+                        let width = xobj_stream
+                            .dict
+                            .get(b"Width")
+                            .and_then(|w| w.as_i64())
+                            .unwrap_or(100) as u32;
+                        let height = xobj_stream
+                            .dict
+                            .get(b"Height")
+                            .and_then(|h| h.as_i64())
+                            .unwrap_or(100) as u32;
+
+                        if let Some(dyn_img) =
+                            image::load_from_memory(&decompressed).ok().or_else(|| {
+                                image::ImageBuffer::<image::Rgb<u8>, _>::from_raw(
+                                    width,
+                                    height,
+                                    decompressed.clone(),
+                                )
+                                .map(image::DynamicImage::ImageRgb8)
+                            })
+                        {
+                            let mut png_bytes = std::io::Cursor::new(Vec::new());
+                            if dyn_img
+                                .write_to(&mut png_bytes, image::ImageFormat::Png)
+                                .is_ok()
+                            {
+                                let pic = docx_rs::Pic::new(&png_bytes.into_inner());
+                                docx = docx.add_paragraph(
+                                    Paragraph::new().add_run(Run::new().add_image(pic)),
+                                );
+                            }
+                        }
                     }
                 }
             }
