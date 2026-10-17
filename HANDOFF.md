@@ -18,9 +18,9 @@
    - Spec 059 (PR #200, commit `537550c`): Fixed `excel_to_json` disk output, `excel_to_csv` extension, `split --every`, raster downsampling, and watermark font scaling.
 
 3. **Active Jules Sessions in Flight**:
-   - **Task 5.9.36 / Spec 060 (Pure-Rust 1-Hour Sustained Soak Harness)**: [Session 12710374439615900870](https://jules.google.com/session/12710374439615900870) — `tools/soak-bench`.
-   - **Task 5.9.37 / Spec 061 (Top 12 Core Launch Tools Clean-Room Audit)**: [Session 2246403833456447715](https://jules.google.com/session/2246403833456447715) — `reports/TOP_12_CORE_TOOLS_AUDIT_REPORT.md`.
-   - **Task 5.9.38 / Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: [Session 15776658825085896715](https://jules.google.com/session/15776658825085896715) — Stripping MCP & Gateway, in-memory mobile bridge.
+   - **Task 5.9.40 / Spec 060 (1-Hour Sustained Soak Benchmark)**: [Session 8183595096687977728](https://jules.google.com/session/8183595096687977728) — `cargo run --release -p soak-bench -- --duration 3600`.
+   - **Task 5.9.38 / Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: [Session 15776658825085896715](https://jules.google.com/session/15776658825085896715) — Feature-gated desktop crates, in-memory mobile bridge.
+   - **Task 5.9.41 / Spec 064 (All 50 Tools Clean-Room Verification & Audit)**: [Session 13530573138717224797](https://jules.google.com/session/13530573138717224797) — `paperpilot-cli/tests/all50_cleanroom_audit.rs` & Makefile audit targets.
 
 4. **Next Task Ready for Dispatch**:
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI & Adaptive Layout)**: [`prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt`](prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt) — Svelte 5 bottom nav, bottom sheet, touch gestures.
