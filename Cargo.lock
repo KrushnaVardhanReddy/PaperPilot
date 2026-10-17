@@ -8677,6 +8677,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "soak-bench"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "libc",
+ "paperpilot-core",
+ "paperpilot-pdf",
+ "serde",
+ "serde_json",
+ "winapi",
+]
+
+[[package]]
 name = "socket2"
 version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
