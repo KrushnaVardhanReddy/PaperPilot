@@ -1,0 +1,36 @@
+# Task P5_9_36: Pure-Rust 1-Hour Sustained Soak & Endurance Benchmark Harness (`soak-bench`)
+# Associated Spec: specs/060-pure-rust-soak-benchmark-harness/spec.md
+# Priority: Medium
+# Target Branch: main
+
+### Objective
+Migrate the 1-hour sustained soak, stress, and endurance benchmark harness from Python (`scripts/stress_test.py`) to a dedicated, high-performance pure-Rust binary (`tools/soak-bench`), eliminating Python runtime dependencies and enabling sub-microsecond latency measurement and cross-platform RSS memory telemetry.
+
+### Detailed Scope & Context
+Read `specs/060-pure-rust-soak-benchmark-harness/spec.md` for background.
+
+1. **New Crate `tools/soak-bench` in Cargo Workspace**:
+   - Create `tools/soak-bench/Cargo.toml` and add `"tools/soak-bench"` to root `Cargo.toml` workspace members.
+   - Dependencies: `clap = { version = "4.5", features = ["derive"] }`, `serde`, `serde_json`, `paperpilot-core`, `paperpilot-pdf`.
+
+2. **Benchmark Execution Loop Across All 50 Tools**:
+   - Define execution definitions for all 50 operations matching those in `scripts/test_tri_interface_e2e.py` and `tools/penta-interface-e2e`.
+   - Support CLI arguments:
+     - `--duration <SECONDS>` (default: 3600)
+     - `--output <PATH>` (default: `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md`)
+     - `--wiki <PATH>` (default: `wiki/19-One-Hour-Endurance-Benchmark.md`)
+   - Loop continuously until duration expires. For each iteration, run every operation, record `std::time::Instant` elapsed duration, and verify success (exit code 0 / Result::Ok).
+
+3. **High-Precision Statistics & Telemetry**:
+   - Calculate exact percentiles: Min, Mean, Median (P50), P90, P95, P99, P99.9, Max.
+   - Sample Peak RSS memory periodically using platform-specific APIs or `/proc/self/statm` on Linux.
+   - Count total operations and compute sustained ops/sec throughput.
+
+4. **Markdown Report Generation**:
+   - Format and output `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md` and `wiki/19-One-Hour-Endurance-Benchmark.md`.
+   - Deprecate `scripts/stress_test.py` with a redirect note to use `cargo run --release -p soak-bench`.
+
+### Constraints & Rules
+- Keep concurrency strictly bounded (`-j 4`) during test runs.
+- Do NOT break existing tests or CLI/MCP schemas.
+- Do NOT run `git reset`, `git checkout -- .`, `git restore`, or `git clean -fd`.
