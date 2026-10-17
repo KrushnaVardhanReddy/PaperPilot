@@ -9,26 +9,21 @@
 
 ## 🧭 Executive Context & Active Sessions
 
-1. **Spec 056 (Penta Conversions Parity & Gateway Routes) — 100% COMPLETE & MERGED**
-   - Merged in commit `2fca4f5` (Jules Session 623008379935493326).
-   - Added REST routes in `paperpilot-gateway` (`office-to-markdown`, `office-extract-text`, `rag-chunks`, `workspace_search`).
-   - Synced CLI `office extract` alias (`extract-text`).
-   - Synthesized authentic BIFF8 `.xls` binary fixture in `tools/penta-interface-e2e/src/fixtures/`.
-   - **Scorecard**: **301 / 301 (100.0%) conversions passed**, and **1,041 / 1,041 (100.0%) master suite passed** with 0 failures!
+1. **Spec 057 (Penta-Interface In-Memory WASM Parity & Sandboxed E2E Hardening) — 100% COMPLETE & MERGED**
+   - Merged in commit `1e6df92` (PR #199, Jules Session 3241956896051261198).
+   - Real byte assertion verifications and clean-room sandboxing.
 
-2. **Spec 057 (Penta-Interface In-Memory WASM Parity & Sandboxed E2E Hardening) — READY FOR DISPATCH**
-   - **Spec**: [`specs/057-penta-wasm-parity-and-e2e-hardening/spec.md`](specs/057-penta-wasm-parity-and-e2e-hardening/spec.md)
-   - **Task Prompt**: [`prompts/tasks/phase5/P5_9_33_penta_in_memory_wasm_and_e2e_hardening.txt`](prompts/tasks/phase5/P5_9_33_penta_in_memory_wasm_and_e2e_hardening.txt)
-   - **Objective**: Wipe stale output sandboxes before runs, replace simulated WASM/Edge markers with authentic in-memory engine byte processing, and deepen Playwright semantic assertions across all 50+ tools.
+2. **Spec 058 & 059 (Modular Packaging & User Feedback Hardening) — 100% COMPLETE & MERGED**
+   - Spec 058 (PR #196, commit `5f574ed`): Shell completions, feature flags, standalone multi-platform assets.
+   - Spec 059 (PR #200, commit `537550c`): Fixed `excel_to_json` disk output, `excel_to_csv` extension, `split --every`, raster downsampling, and watermark font scaling.
 
-3. **Active Jules Session 2996870268221322258 — Spec 055 (All 50+ Tools Playwright E2E) — IN FLIGHT**
-   - **Dashboard**: [Jules Session 2996870268221322258](https://jules.google.com/session/2996870268221322258)
-   - **Spec**: [`specs/055-all-tools-real-playwright-desktop-e2e/spec.md`](specs/055-all-tools-real-playwright-desktop-e2e/spec.md)
-   - Continuing unmocked execution for all 50+ tools in `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`.
+3. **Active Jules Sessions in Flight**:
+   - **Task 5.9.36 / Spec 060 (Pure-Rust 1-Hour Sustained Soak Harness)**: [Session 12710374439615900870](https://jules.google.com/session/12710374439615900870) — `tools/soak-bench`.
+   - **Task 5.9.37 / Spec 061 (Top 12 Core Launch Tools Clean-Room Audit)**: [Session 2246403833456447715](https://jules.google.com/session/2246403833456447715) — `reports/TOP_12_CORE_TOOLS_AUDIT_REPORT.md`.
+   - **Task 5.9.38 / Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: [Session 15776658825085896715](https://jules.google.com/session/15776658825085896715) — Stripping MCP & Gateway, in-memory mobile bridge.
 
-4. **Current Verified Baseline (`main` branch)**:
-   - Full Master Penta Suite: **1,041 / 1,041 passed (100.0%)** across Page Ops (180), Security & Forms (280), Analysis (280), and Conversions (301).
-   - Rust workspace compiles cleanly (`cargo check --bins`), 0 clippy warnings, clean formatting (`cargo fmt --check`).
+4. **Next Task Ready for Dispatch**:
+   - **Task 5.9.39 / Spec 063 (Mobile Touch UI & Adaptive Layout)**: [`prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt`](prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt) — Svelte 5 bottom nav, bottom sheet, touch gestures.
 
 ---
 
