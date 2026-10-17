@@ -119,6 +119,16 @@ test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
 
 # Run conformance tests (requires qpdf, verapdf optional)
+.PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
+
+# Run Clean-Room Audit for Top 12 Launch Tools
+test-cleanroom-top12:
+	cargo test --test top12_cleanroom_audit -j 2
+
+# Run Clean-Room Audit for All 50 Tools
+test-cleanroom-all50:
+	cargo test --test all50_cleanroom_audit -j 2
+
 .PHONY: test-conformance
 test-conformance:
 	./scripts/verify_pdf_conformance.sh
