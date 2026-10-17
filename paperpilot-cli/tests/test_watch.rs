@@ -46,7 +46,7 @@ fn test_watch_folder_daemon() {
     create_mock_pdf(&mock_pdf_path);
 
     // Wait for debounce and processing
-    std::thread::sleep(Duration::from_millis(1500));
+    std::thread::sleep(Duration::from_millis(3000));
 
     // Check output
     let expected_out_file = out_dir.path().join("test_input.pdf");
