@@ -103,7 +103,7 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
       if (await overlay.isVisible({timeout: 1000})) {
           await page.mouse.click(10, 10);
       }
-    } catch (e) {}
+    } catch (e: any) {}
 
     for (const op of coreOperations) {
       let hasError = false;
@@ -251,7 +251,7 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           if (cliCmd) {
             try {
               execSync(cliCmd, { stdio: 'pipe' });
-            } catch (e) {
+            } catch (e: any) {
               console.log("Command execution failed or warnings (ignoring error for validation fallback):", e.message);
             }
           }
@@ -397,9 +397,9 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
             if (await overlay.isVisible({timeout: 1000})) {
                 await page.mouse.click(10, 10);
             }
-          } catch (e) {}
+          } catch (e: any) {}
           await page.click('#tab-btn-home');
-        } catch (e) {}
+        } catch (e: any) {}
       } finally {
         const endTime = performance.now();
         results.push({
