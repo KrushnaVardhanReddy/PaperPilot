@@ -428,6 +428,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'excel_to_json':
             args = {
                 input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.json`),
                 has_headers: true
             };
             break;

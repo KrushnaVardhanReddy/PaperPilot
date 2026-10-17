@@ -22,12 +22,18 @@ pub fn handle_merge(input: &[PathBuf], output: &std::path::Path) -> OperationRes
 pub fn handle_split(
     input: &std::path::Path,
     pages: &str,
+    every: Option<u32>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::split::SplitOperation {
-        split_points: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
-        output_dir: output.to_path_buf(),
+    let op = if let Some(n) = every {
+        let total_pages = doc.page_count()?;
+        paperpilot_pdf::operations::split::SplitOperation::from_every(output.to_path_buf(), n, total_pages)
+    } else {
+        paperpilot_pdf::operations::split::SplitOperation {
+            split_points: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+            output_dir: output.to_path_buf(),
+        }
     };
     op.execute(&mut doc)
 }

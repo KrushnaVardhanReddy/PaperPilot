@@ -27,8 +27,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Split {
             input,
             pages,
+            every,
             output,
-        } => group_a::handle_split(input, pages, output),
+        } => group_a::handle_split(input, pages, *every, output),
         Commands::Extract {
             input,
             pages,

@@ -49,8 +49,10 @@ pub enum Commands {
     Split {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "")]
         pages: String,
+        #[arg(long)]
+        every: Option<u32>,
         #[arg(long)]
         output: PathBuf,
     },

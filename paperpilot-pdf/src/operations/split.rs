@@ -15,6 +15,21 @@ impl SplitOperation {
             split_points,
         }
     }
+
+    pub fn from_every(output_dir: PathBuf, every: u32, total_pages: u32) -> Self {
+        let mut split_points = Vec::new();
+        if every > 0 {
+            let mut pt = every;
+            while pt < total_pages {
+                split_points.push(pt);
+                pt += every;
+            }
+        }
+        Self {
+            output_dir,
+            split_points,
+        }
+    }
 }
 
 impl PdfOperation for SplitOperation {

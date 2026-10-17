@@ -2866,6 +2866,10 @@ impl PaperPilotMcpServer {
                         "type": "string",
                         "description": "Path to the input Excel file"
                     },
+                    "output": {
+                        "type": "string",
+                        "description": "Optional destination path to save extracted JSON to disk"
+                    },
                     "sheet": {
                         "type": "string",
                         "description": "Optional specific sheet name to extract"
@@ -3942,15 +3946,21 @@ impl PaperPilotMcpServer {
                     has_headers,
                 );
                 match res {
-                    Ok(json_str) => Ok(OperationResult {
-                        data: Some(
-                            serde_json::from_str(&json_str).unwrap_or(serde_json::json!({})),
-                        ),
-                        success: true,
-                        message: "Excel data extracted to JSON".to_string(),
-                        output_path: None,
-                        diff_detected: None,
-                    }),
+                    Ok(json_str) => {
+                        let out_path = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                        if let Some(ref dest) = out_path {
+                            let _ = std::fs::write(dest, &json_str);
+                        }
+                        Ok(OperationResult {
+                            data: Some(
+                                serde_json::from_str(&json_str).unwrap_or(serde_json::json!({})),
+                            ),
+                            success: true,
+                            message: "Excel data extracted to JSON".to_string(),
+                            output_path: out_path,
+                            diff_detected: None,
+                        })
+                    }
                     Err(e) => Err(ErrorData {
                         code: rmcp::model::ErrorCode(-32603),
                         message: e.to_string().into(),
