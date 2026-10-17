@@ -133,8 +133,15 @@ impl PdfOperation for WatermarkOperation {
             let cx = page_width / 2.0;
             let cy = page_height / 2.0;
 
-            let font_size = self.font_size.unwrap_or(54.0);
-            let approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+            let mut font_size = self.font_size.unwrap_or(54.0);
+            let mut approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+
+            if approx_text_width > page_width * 0.85 {
+                let scale = (page_width * 0.85) / approx_text_width;
+                font_size *= scale;
+                approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+            }
+
             let offset_x = -approx_text_width / 2.0;
             let offset_y = -font_size / 2.0;
 

@@ -236,7 +236,6 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         #[cfg(feature = "office")]
         Commands::Office { command } => office::handle_office_command(command),
 
-
         #[cfg(feature = "daemon")]
         #[cfg(feature = "daemon")]
         Commands::Serve { port, bind } => {
@@ -248,7 +247,5 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             .map_err(paperpilot_core::error::PdfError::IoError)?;
             Ok(())
         }
-
-
     }
 }
