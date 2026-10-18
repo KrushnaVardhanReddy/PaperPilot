@@ -1,3 +1,5 @@
+import { appState } from '$lib/state/app.svelte';
+
 export interface OperationContext {
     docName: string;
     docPath: string;
@@ -56,7 +58,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'merge': {
             let outputPath: string | null = customOutputPath;
             const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
-            if (!outputPath) {
+            if (!outputPath && !appState.isMobile) {
                 try {
                     const { save } = await import('@tauri-apps/plugin-dialog');
                     outputPath = await save({

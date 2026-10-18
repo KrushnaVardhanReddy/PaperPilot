@@ -15,7 +15,7 @@ import { onMount } from 'svelte';
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
-  let activeTool = $state<ToolDefinition | null>(null);
+  let activeTool = $derived(appState.activeTool);
   let isCollapsed = $state(false);
   let panelWidth = $state(320);
   let isDragging = $state(false);
@@ -160,11 +160,12 @@ import { onMount } from 'svelte';
   });
 
   function selectTool(tool: ToolDefinition) {
-    activeTool = tool;
+    isCollapsed = false;
+    appState.openTool(tool);
   }
 
   function backToDirectory() {
-    activeTool = null;
+    appState.closeTool();
   }
 
   let customOutputPath = $state('');
@@ -466,6 +467,24 @@ import { onMount } from 'svelte';
                    inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
                }
 
+               if ((activeTool.id === 'merge' || activeTool.id === 'pdf_merge') && appState.documents.length > 1) {
+                   const docsPayload = [];
+                   for (let idx = 0; idx < appState.documents.length; idx++) {
+                       const d = appState.documents[idx];
+                       const buf = await d.arrayBuffer();
+                       const bytes = new Uint8Array(buf);
+                       let binary = '';
+                       for (let b = 0; b < bytes.length; b++) {
+                           binary += String.fromCharCode(bytes[b]);
+                       }
+                       docsPayload.push({
+                           name: d.name || `doc_${idx + 1}.pdf`,
+                           dataBase64: btoa(binary)
+                       });
+                   }
+                   mobileParams.documents = docsPayload;
+               }
+
                result = await invoke('process_mobile_buffer', {
                    fileName: docName,
                    inputBytes: inputBytes,
@@ -491,6 +510,23 @@ import { onMount } from 'svelte';
             } else {
               const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
               msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+
+              if (appState.isMobile && resObj.dataBase64) {
+                try {
+                  const byteCharacters = atob(resObj.dataBase64);
+                  const byteArray = new Uint8Array(byteCharacters.length);
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteArray[i] = byteCharacters.charCodeAt(i);
+                  }
+                  const resultBlob = new Blob([byteArray], { type: 'application/pdf' });
+                  const resultFile = new File([resultBlob], resObj.fileName || 'output.pdf', { type: 'application/pdf' });
+                  (resultFile as any)._isLoaded = true;
+                  appState.addDocuments([resultFile]);
+                  appState.selectDocument(appState.documents.length - 1);
+                } catch (loadErr) {
+                  console.warn('Failed to auto-load output document on mobile:', loadErr);
+                }
+              }
             }
             toastState.success(msg);
             jobsState.addJob(toolName, 'success', msg);
@@ -583,7 +619,7 @@ import { onMount } from 'svelte';
     {isCollapsed ? '‹' : '›'}
   </button>
 
-  {#if !isCollapsed}
+  {#if !isCollapsed || appState.isMobile}
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -594,6 +630,14 @@ import { onMount } from 'svelte';
         <span class="tool-icon">{activeTool.icon}</span>
         <h3 class="inspector-title">{activeTool.title}</h3>
       </div>
+      {#if appState.isMobile}
+        <button class="back-btn close-btn" onclick={() => {
+          appState.closeTool();
+          if (appState.activeTab === 'tools') appState.setActiveTab('documents');
+        }} title="Close">
+          ✕
+        </button>
+      {/if}
     </div>
 
     <div class="inspector-content">
@@ -844,6 +888,14 @@ import { onMount } from 'svelte';
   {:else}
     <!-- DIRECTORY MODE (STIRLING PDF STYLE) -->
     <div class="panel-header">
+      {#if appState.isMobile}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">⚡ All Tools</h3>
+          <button class="back-btn close-btn" onclick={() => {
+            if (appState.activeTab === 'tools') appState.setActiveTab('documents');
+          }} title="Close">✕</button>
+        </div>
+      {/if}
       <!-- Context Filter Chip Bar -->
       <div class="context-bar" role="tablist" aria-label="Filter context">
         {#each [

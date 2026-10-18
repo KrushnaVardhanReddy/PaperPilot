@@ -15,6 +15,8 @@
   function handleNavClick(id: string) {
     if (id === 'scan') {
       showScanner = true;
+    } else if (id === 'tools') {
+      appState.setActiveTab('tools');
     } else {
       appState.setActiveTab(id);
     }

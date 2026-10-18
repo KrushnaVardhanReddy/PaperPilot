@@ -467,12 +467,9 @@
                         <div class="studio-cards">
                            {#each ranked.recommended as tool}
                              <button class="studio-card" onclick={() => {
-                                const btn = document.getElementById(`tool-btn-${tool.id}`);
-                                if (btn) {
-                                   btn.click();
-                                   const panel = document.querySelector('.operations-panel-wrapper');
-                                   if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                                }
+                                appState.openTool(tool);
+                                const panel = document.querySelector('.operations-panel-wrapper');
+                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
                              }}>
                                 <div class="studio-card-icon">{tool.icon}</div>
                                 <div class="studio-card-content">
@@ -500,12 +497,9 @@
                         <div class="studio-cards">
                            {#each allTools.filter(t => t.category === cat.id) as tool}
                              <button class="studio-card" onclick={() => {
-                                const btn = document.getElementById(`tool-btn-${tool.id}`);
-                                if (btn) {
-                                   btn.click();
-                                   const panel = document.querySelector('.operations-panel-wrapper');
-                                   if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                                }
+                                appState.openTool(tool);
+                                const panel = document.querySelector('.operations-panel-wrapper');
+                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
                              }}>
                                 <div class="studio-card-icon">{tool.icon}</div>
                                 <div class="studio-card-content">
@@ -520,9 +514,11 @@
                 </div>
               </div>
             </div>
-            <div class="operations-panel-wrapper layout-studio">
-              <OperationsPanel />
-            </div>
+            {#if !appState.isMobile}
+              <div class="operations-panel-wrapper layout-studio">
+                <OperationsPanel />
+              </div>
+            {/if}
           </div>
         {/if}
       </div>
@@ -541,6 +537,10 @@
     </div>
   {/if}
 </div>
+
+{#if appState.isMobile && (appState.activeTool || appState.activeTab === 'tools')}
+  <OperationsPanel />
+{/if}
 
 <style>
   .page-container {

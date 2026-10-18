@@ -18,6 +18,8 @@ export class AppState {
   isTauriMobile = $state(false);
   isMobile = $derived(this.isMobileViewport || this.isTauriMobile);
 
+  // Active Tool selection (used across middle hub, operations panel, toolbar)
+  activeTool = $state<any | null>(null);
 
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
@@ -133,6 +135,14 @@ export class AppState {
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  openTool(tool: any) {
+    this.activeTool = tool;
+  }
+
+  closeTool() {
+    this.activeTool = null;
   }
 
   toggleDiffView(show?: boolean) {

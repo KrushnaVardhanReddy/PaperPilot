@@ -37,6 +37,53 @@ pub async fn process_mobile_buffer(
 
     // Dispatch operation
     match operation.as_str() {
+        "merge" | "pdf_merge" => {
+            // Check if multiple documents were passed in params.documents
+            let mut merge_paths = Vec::new();
+            if let Some(docs) = params.get("documents").and_then(|v| v.as_array()) {
+                for (idx, item) in docs.iter().enumerate() {
+                    let doc_name = item.get("name").and_then(|v| v.as_str()).unwrap_or("doc.pdf");
+                    let safe_name = format!("{}_{}", idx, doc_name);
+                    let doc_path = sandbox_dir.join(safe_name);
+                    if let Some(b64) = item.get("dataBase64").and_then(|v| v.as_str()) {
+                        let decoded = STANDARD
+                            .decode(b64)
+                            .map_err(|e| format!("Failed to decode document base64: {}", e))?;
+                        fs::write(&doc_path, &decoded)
+                            .map_err(|e| format!("Failed to write merge doc: {}", e))?;
+                        merge_paths.push(doc_path);
+                    }
+                }
+            } else if let Some(inputs) = params.get("inputs").and_then(|v| v.as_array()) {
+                for item in inputs {
+                    if let Some(p) = item.as_str() {
+                        let pb = std::path::PathBuf::from(p);
+                        if pb.exists() {
+                            merge_paths.push(pb);
+                        }
+                    }
+                }
+            }
+
+            if merge_paths.is_empty() {
+                return Err("No documents provided for merge operation".to_string());
+            }
+
+            // LopdfDocument::load the first document, and merge the rest into it
+            let first_path = merge_paths.remove(0);
+            let mut merged_doc = LopdfDocument::load(&first_path)
+                .map_err(|e| format!("Failed to load base PDF for merge: {:?}", e))?;
+
+            if !merge_paths.is_empty() {
+                let op = paperpilot_pdf::operations::merge::MergeOperation::new(merge_paths);
+                op.execute(&mut merged_doc)
+                    .map_err(|e| format!("Merge failed: {:?}", e))?;
+            }
+
+            merged_doc
+                .save(&output_path)
+                .map_err(|e| format!("Failed to save merged PDF: {:?}", e))?;
+        }
         "compress" => {
             let quality = params
                 .get("quality")
