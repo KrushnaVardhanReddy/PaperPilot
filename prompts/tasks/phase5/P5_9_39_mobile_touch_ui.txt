@@ -33,7 +33,7 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
      - If OCR model files are not yet downloaded, safely falls back to visual PDF synthesis and displays a non-blocking toast prompt to download the offline OCR feature pack.
      - Emits the completed PDF blob and adds it directly to `appState.addDocuments([pdfFile])` for instant viewing in the canvas viewer.
 
-### Step 2: Dynamic Responsive State & Viewport Detection
+### Step 2: Dynamic Responsive State & Viewport Detection (Tailwind v4 Unified UI)
 1. In `apps/desktop/src/lib/state/app.svelte.ts`:
    - Add reactive mobile state tracking:
      ```typescript
@@ -41,16 +41,15 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
      let isTauriMobile = $state(false);
      ```
    - On initialization, detect whether running inside mobile environment (check `@tauri-apps/api/core` or window width < 768px) and expose `isMobile = $derived(isMobileViewport || isTauriMobile)`.
-2. In `apps/desktop/src/app.css`:
-   - Add mobile safe-area CSS variables:
-     ```css
-     :root {
-       --safe-area-top: env(safe-area-inset-top, 0px);
-       --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-       --safe-area-left: env(safe-area-inset-left, 0px);
-       --safe-area-right: env(safe-area-inset-right, 0px);
-     }
-     ```
+2. Architecture & Design Mandate (Docly-inspired Single UI, No Code Duplication):
+   - Leverage **Tailwind CSS v4** (`@import "tailwindcss";` already configured in `app.css` and `vite.config.js`).
+   - Use standard responsive utility classes (`md:`, `lg:`) so the **same components** adapt seamlessly between desktop and mobile. Do NOT maintain two separate parallel apps.
+   - On desktop (`md:`): Left Sidebar + Center Document Canvas + Docked Right Operations Panel.
+   - On mobile: Sleek Top Header + Center Document Canvas + Floating Action Camera Scanner + Bottom Navigation Bar.
+3. In-Memory Android Document Intake:
+   - In `apps/desktop/src/lib/components/ui/DropZone.svelte`:
+     - On mobile / touch screens, ensure clicking the intake triggers `<input type="file">` and reads the file into memory via `file.arrayBuffer()` / `Uint8Array` directly into `appState`.
+     - Do NOT rely on POSIX filesystem paths on Android because Android uses content URIs (`content://...`).
 
 ### Step 3: Touch-First Navigation & Bottom Sheet
 1. Update `apps/desktop/src/lib/components/layout/BottomNav.svelte`:
@@ -77,7 +76,12 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
 1. For completed document jobs:
    - Provide an "Export & Share" button that invokes Tauri opener / share plugins to pass output files directly to native apps (WhatsApp, Email, Files, Google Drive).
 
-### Step 6: Verification & Automated Tests
+### Step 6: Lean APK Size Optimization
+1. In `apps/desktop/src-tauri/gen/android/app/build.gradle.kts`:
+   - Remove `jniLibs.keepDebugSymbols` in `buildTypes { getByName("debug") }` so that DWARF debug symbols are stripped.
+2. Verify release builds strip native binary symbols (`opt-level = 3`, `strip = true`, `lto = "fat"`) and compile without desktop-only `paperpilot-gateway` / `paperpilot-mcp` crates, reducing APK from 1.4GB down to ~25-35MB.
+
+### Step 7: Verification & Automated Tests
 1. Add responsive layout & camera scan test:
    - Emulate mobile viewports (iPhone SE 375px, iPhone 14/15 390px, Pixel 7 412px).
    - Test multi-image capture piping into `images_to_pdf` and OCR overlay generation.
