@@ -14,6 +14,11 @@ export class AppState {
   selectedDocumentIndex = $state<number | null>(null);
   workspaceLayout = $state<WorkspaceLayoutMode>('studio');
 
+  isMobileViewport = $state(false);
+  isTauriMobile = $state(false);
+  isMobile = $derived(this.isMobileViewport || this.isTauriMobile);
+
+
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
@@ -30,6 +35,16 @@ export class AppState {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      this.isMobileViewport = window.innerWidth < 768;
+      window.addEventListener('resize', () => {
+        this.isMobileViewport = window.innerWidth < 768;
+      });
+      // Try to detect Tauri mobile via userAgent as a fallback if the API isn't ready
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('android') || ua.includes('iphone') || ua.includes('ipad')) {
+          this.isTauriMobile = true;
+      }
+
       const storedLayout = localStorage.getItem('paperpilot_workspace_layout') as WorkspaceLayoutMode;
       if (storedLayout === 'studio' || storedLayout === 'split' || storedLayout === 'hero') {
         this.workspaceLayout = storedLayout;
