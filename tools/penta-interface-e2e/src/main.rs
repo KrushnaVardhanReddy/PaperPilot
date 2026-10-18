@@ -16,7 +16,9 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
         return Ok(false);
     }
     let content = std::fs::read(path)?;
-    if content.is_empty() { return Ok(false); }
+    if content.is_empty() {
+        return Ok(false);
+    }
     match expected_ext {
         "pdf" => Ok(content.starts_with(b"%PDF")),
         "xlsx" | "docx" => Ok(content.starts_with(b"PK")),
@@ -32,7 +34,6 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
         _ => Ok(true),
     }
 }
-
 
 #[derive(Parser, Debug)]
 #[command(

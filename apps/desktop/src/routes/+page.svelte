@@ -483,6 +483,13 @@
                                         {/if}
                                       {/if}
                                    </h4>
+                                   {#if tool.inputFormat && tool.outputFormat}
+                                     <span class="format-pill">
+                                       <span class="fmt-in">{tool.inputFormat}</span>
+                                       <span class="fmt-arrow">➔</span>
+                                       <span class="fmt-out">{tool.outputFormat}</span>
+                                     </span>
+                                   {/if}
                                    <p>{tool.description}</p>
                                 </div>
                              </button>
@@ -504,6 +511,13 @@
                                 <div class="studio-card-icon">{tool.icon}</div>
                                 <div class="studio-card-content">
                                    <h4>{tool.title}</h4>
+                                   {#if tool.inputFormat && tool.outputFormat}
+                                     <span class="format-pill">
+                                       <span class="fmt-in">{tool.inputFormat}</span>
+                                       <span class="fmt-arrow">➔</span>
+                                       <span class="fmt-out">{tool.outputFormat}</span>
+                                     </span>
+                                   {/if}
                                    <p>{tool.description}</p>
                                 </div>
                              </button>
@@ -750,4 +764,30 @@
     border: 1px solid rgba(34, 197, 94, 0.3);
     vertical-align: middle;
   }
+
+  .format-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .fmt-in {
+    color: var(--text-secondary, #9ca3af);
+  }
+  .fmt-arrow {
+    color: var(--accent-primary, #5e6ad2);
+    font-size: 8px;
+  }
+  .fmt-out {
+    color: var(--text-primary, #ffffff);
+  }
+
 </style>

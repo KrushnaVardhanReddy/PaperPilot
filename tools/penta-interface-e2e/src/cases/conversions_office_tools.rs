@@ -524,10 +524,17 @@ pub async fn run_office_modernize_legacy_tests(
 
         // Wasm & Edge
         let passed = if is_neg {
-            paperpilot_pdf::operations::office::OfficeModernizeOperation::execute(std::path::Path::new(file_to_use), &out_dir.join("temp.xlsx")).is_err()
+            paperpilot_pdf::operations::office::OfficeModernizeOperation::execute(
+                std::path::Path::new(file_to_use),
+                &out_dir.join("temp.xlsx"),
+            )
+            .is_err()
         } else {
             let out_tmp = out_dir.join(format!("modernize_test_{:?}.xlsx", tier));
-            let res = paperpilot_pdf::operations::office::OfficeModernizeOperation::execute(std::path::Path::new(file_to_use), &out_tmp);
+            let res = paperpilot_pdf::operations::office::OfficeModernizeOperation::execute(
+                std::path::Path::new(file_to_use),
+                &out_tmp,
+            );
             res.is_ok() && crate::verify_output_file(&out_tmp, "xlsx").unwrap_or(false)
         };
         results.push(TestExecutionResult {

@@ -132,7 +132,8 @@ impl PaperPilotMcpServer {
         );
         let mut tool_rb = Tool::default();
         tool_rb.name = "pdf_remove_blank".into();
-        tool_rb.description = Some("Removes blank pages from a PDF.".into());
+        tool_rb.description =
+            Some("Removes blank pages from a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_rb.input_schema = std::sync::Arc::new(schema_rb);
         tools.push(tool_rb);
 
@@ -180,7 +181,8 @@ impl PaperPilotMcpServer {
         );
         let mut tool_pn = Tool::default();
         tool_pn.name = "pdf_page_numbers".into();
-        tool_pn.description = Some("Adds page numbers to a PDF.".into());
+        tool_pn.description =
+            Some("Adds page numbers to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_pn.input_schema = std::sync::Arc::new(schema_pn);
         tools.push(tool_pn);
 
@@ -246,7 +248,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_0 = Tool::default();
         tool_0.name = "pdf_merge".into();
-        tool_0.description = Some("Merges multiple PDFs into one.".into());
+        tool_0.description =
+            Some("Merges multiple PDFs into one. [Input: 2+ PDFs | Output: PDF (.pdf)]".into());
         tool_0.input_schema = Arc::new(schema_0);
         tools.push(tool_0);
 
@@ -299,7 +302,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_1 = Tool::default();
         tool_1.name = "pdf_split".into();
-        tool_1.description = Some("Splits a PDF into multiple single-page PDFs.".into());
+        tool_1.description = Some("Splits a PDF into multiple single-page PDFs. [Input: PDF (.pdf) | Output: Multiple .PDFs]".into());
         tool_1.input_schema = Arc::new(schema_1);
         tools.push(tool_1);
 
@@ -365,7 +368,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_2 = Tool::default();
         tool_2.name = "pdf_extract_pages".into();
-        tool_2.description = Some("Extracts specific pages into a new PDF.".into());
+        tool_2.description = Some(
+            "Extracts specific pages into a new PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
+                .into(),
+        );
         tool_2.input_schema = Arc::new(schema_2);
         tools.push(tool_2);
 
@@ -431,7 +437,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_3 = Tool::default();
         tool_3.name = "pdf_delete_pages".into();
-        tool_3.description = Some("Deletes specific pages.".into());
+        tool_3.description =
+            Some("Deletes specific pages. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_3.input_schema = Arc::new(schema_3);
         tools.push(tool_3);
 
@@ -497,7 +504,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_4 = Tool::default();
         tool_4.name = "pdf_reorder_pages".into();
-        tool_4.description = Some("Reorders pages.".into());
+        tool_4.description =
+            Some("Reorders pages. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_4.input_schema = Arc::new(schema_4);
         tools.push(tool_4);
 
@@ -580,7 +588,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_5 = Tool::default();
         tool_5.name = "pdf_rotate".into();
-        tool_5.description = Some("Rotates pages in a PDF.".into());
+        tool_5.description =
+            Some("Rotates pages in a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_5.input_schema = Arc::new(schema_5);
         tools.push(tool_5);
 
@@ -648,7 +657,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_6 = Tool::default();
         tool_6.name = "pdf_crop".into();
-        tool_6.description = Some("Crops pages to specific dimensions.".into());
+        tool_6.description = Some(
+            "Crops pages to specific dimensions. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_6.input_schema = Arc::new(schema_6);
         tools.push(tool_6);
 
@@ -769,7 +780,9 @@ impl PaperPilotMcpServer {
         );
         let mut tool_compress = Tool::default();
         tool_compress.name = "pdf_compress".into();
-        tool_compress.description = Some("Compresses a PDF to reduce file size.".into());
+        tool_compress.description = Some(
+            "Compresses a PDF to reduce file size. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_compress.input_schema = std::sync::Arc::new(schema_compress);
         tools.push(tool_compress);
 
@@ -839,13 +852,17 @@ impl PaperPilotMcpServer {
 
         let mut tool_ext_txt = Tool::default();
         tool_ext_txt.name = "pdf_extract_text".into();
-        tool_ext_txt.description = Some("Extracts raw text from a PDF.".into());
+        tool_ext_txt.description = Some(
+            "Extracts raw text from a PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]".into(),
+        );
         tool_ext_txt.input_schema = std::sync::Arc::new(schema_ext_txt);
         tools.push(tool_ext_txt);
 
         let mut tool_rag = Tool::default();
         tool_rag.name = "pdf_rag_chunks".into();
-        tool_rag.description = Some("Extract semantic RAG chunks from PDF.".into());
+        tool_rag.description = Some(
+            "Extract semantic RAG chunks from PDF. [Input: PDF (.pdf) | Output: JSON array]".into(),
+        );
         let mut schema_rag = serde_json::Map::new();
         schema_rag.insert(
             "type".to_string(),
@@ -867,7 +884,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_o2m = Tool::default();
         tool_o2m.name = "office_to_markdown".into();
-        tool_o2m.description = Some("Convert Office document to Markdown.".into());
+        tool_o2m.description = Some("Convert Office document to Markdown. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]".into());
         let mut schema_o2m = serde_json::Map::new();
         schema_o2m.insert(
             "type".to_string(),
@@ -892,7 +909,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_oet = Tool::default();
         tool_oet.name = "office_extract_text".into();
-        tool_oet.description = Some("Extract text from Office document.".into());
+        tool_oet.description = Some("Extract text content from Microsoft Office documents. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]".into());
         let mut schema_oet = serde_json::Map::new();
         schema_oet.insert(
             "type".to_string(),
@@ -914,7 +931,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_oml = Tool::default();
         tool_oml.name = "office_modernize_legacy".into();
-        tool_oml.description = Some("Modernize legacy Office document.".into());
+        tool_oml.description = Some("Modernize legacy Office document. [Input: Legacy Office (.doc, .xls, .ppt) | Output: Modern Office (.docx, .xlsx, .pptx)]".into());
         let mut schema_oml = serde_json::Map::new();
         schema_oml.insert(
             "type".to_string(),
@@ -988,7 +1005,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_ext_img = Tool::default();
         tool_ext_img.name = "pdf_extract_images".into();
-        tool_ext_img.description = Some("Extracts all embedded images from a PDF.".into());
+        tool_ext_img.description = Some(
+            "Extract raster images from a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG images]"
+                .into(),
+        );
         tool_ext_img.input_schema = std::sync::Arc::new(schema_ext_img);
         tools.push(tool_ext_img);
 
@@ -1074,7 +1094,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_search = Tool::default();
         tool_search.name = "pdf_search".into();
-        tool_search.description = Some("Searches for a text query inside a PDF.".into());
+        tool_search.description = Some(
+            "Searches for a text query inside a PDF. [Input: PDF (.pdf) | Output: JSON array]"
+                .into(),
+        );
         tool_search.input_schema = std::sync::Arc::new(schema_search);
         tools.push(tool_search); // Tool: pdf_watermark
         let mut schema_wm = serde_json::Map::new();
@@ -1182,7 +1205,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_wm = Tool::default();
         tool_wm.name = "pdf_watermark".into();
-        tool_wm.description = Some("Applies a text watermark to a PDF.".into());
+        tool_wm.description = Some(
+            "Applies a text watermark to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_wm.input_schema = std::sync::Arc::new(schema_wm);
         tools.push(tool_wm);
 
@@ -1246,7 +1271,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_enc = Tool::default();
         tool_enc.name = "pdf_encrypt".into();
-        tool_enc.description = Some("Encrypts a PDF with a user password.".into());
+        tool_enc.description = Some(
+            "Encrypts a PDF with a user password. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_enc.input_schema = std::sync::Arc::new(schema_enc);
         tools.push(tool_enc);
 
@@ -1310,7 +1337,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_dec = Tool::default();
         tool_dec.name = "pdf_decrypt".into();
-        tool_dec.description = Some("Decrypts a PDF using the provided password.".into());
+        tool_dec.description = Some(
+            "Decrypts a PDF using the provided password. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
+                .into(),
+        );
         tool_dec.input_schema = std::sync::Arc::new(schema_dec);
         tools.push(tool_dec);
 
@@ -1332,7 +1362,10 @@ impl PaperPilotMcpServer {
         schema_info.insert("required".to_string(), serde_json::json!(["input"]));
         let mut tool_info = Tool::default();
         tool_info.name = "pdf_info".into();
-        tool_info.description = Some("Get basic PDF information like page_count.".into());
+        tool_info.description = Some(
+            "Get basic PDF information like page_count. [Input: PDF (.pdf) | Output: JSON object]"
+                .into(),
+        );
         tool_info.input_schema = std::sync::Arc::new(schema_info);
         tools.push(tool_info);
 
@@ -1403,7 +1436,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_meta = Tool::default();
         tool_meta.name = "pdf_metadata".into();
-        tool_meta.description = Some("Reads (or writes) metadata to a PDF.".into());
+        tool_meta.description = Some(
+            "Reads (or writes) metadata to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_meta.input_schema = std::sync::Arc::new(schema_meta);
         tools.push(tool_meta);
         let mut tool_docx = Tool::default();
@@ -1509,7 +1544,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_md = Tool::default();
         tool_md.name = "pdf_to_markdown".into();
-        tool_md.description = Some("Converts a PDF document into Markdown formatted text.".into());
+        tool_md.description = Some("Converts a PDF document into Markdown formatted text. [Input: PDF (.pdf) | Output: Markdown (.md)]".into());
         let mut m_props = serde_json::Map::new();
         m_props.insert(
             "input".into(),
@@ -1580,7 +1615,7 @@ impl PaperPilotMcpServer {
         // Tool: pdf_read_form
         let mut tool_read_form = rmcp::model::Tool::default();
         tool_read_form.name = "pdf_read_form".into();
-        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF.".into());
+        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF. [Input: PDF (.pdf) | Output: JSON object]".into());
         let mut schema_rf = serde_json::Map::new();
         schema_rf.insert(
             "type".to_string(),
@@ -1611,7 +1646,8 @@ impl PaperPilotMcpServer {
         // Tool: pdf_fill_form
         let mut tool_fill_form = rmcp::model::Tool::default();
         tool_fill_form.name = "pdf_fill_form".into();
-        tool_fill_form.description = Some("Fill AcroForm fields in a PDF.".into());
+        tool_fill_form.description =
+            Some("Fill AcroForm fields in a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         let mut schema_ff = serde_json::Map::new();
         schema_ff.insert(
             "type".to_string(),
@@ -1899,7 +1935,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_linearize = Tool::default();
         tool_linearize.name = "pdf_linearize".into();
-        tool_linearize.description = Some("Linearizes a PDF for fast web view.".into());
+        tool_linearize.description = Some(
+            "Linearizes a PDF for fast web view. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_linearize.input_schema = Arc::new(schema_linearize);
         tools.push(tool_linearize);
 
@@ -2010,7 +2048,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_to_pdf_a = Tool::default();
         tool_to_pdf_a.name = "pdf_to_pdf_a".into();
-        tool_to_pdf_a.description = Some("Converts a PDF to PDF/A format.".into());
+        tool_to_pdf_a.description =
+            Some("Converts a PDF to PDF/A format. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_to_pdf_a.input_schema = Arc::new(schema_to_pdf_a);
         tools.push(tool_to_pdf_a);
 
@@ -2134,7 +2173,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_redact = Tool::default();
         tool_redact.name = "pdf_redact".into();
-        tool_redact.description = Some("Redacts a specified area of a PDF page.".into());
+        tool_redact.description = Some(
+            "Redacts a specified area of a PDF page. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
+                .into(),
+        );
         tool_redact.input_schema = Arc::new(schema_redact);
         tools.push(tool_redact);
 
@@ -2216,7 +2258,9 @@ impl PaperPilotMcpServer {
 
         let mut tool_hf = Tool::default();
         tool_hf.name = "pdf_header_footer".into();
-        tool_hf.description = Some("Adds a header or footer to a PDF.".into());
+        tool_hf.description = Some(
+            "Adds a header or footer to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
         tool_hf.input_schema = Arc::new(schema_hf);
         tools.push(tool_hf);
 
@@ -2313,7 +2357,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_bates = Tool::default();
         tool_bates.name = "pdf_bates".into();
-        tool_bates.description = Some("Adds Bates numbering to a PDF.".into());
+        tool_bates.description =
+            Some("Adds Bates numbering to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_bates.input_schema = Arc::new(schema_bates);
         tools.push(tool_bates);
 
@@ -2368,7 +2413,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_render = Tool::default();
         tool_render.name = "pdf_render".into();
-        tool_render.description = Some("Renders a PDF.".into());
+        tool_render.description =
+            Some("Renders a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG images]".into());
         tool_render.input_schema = Arc::new(schema_render);
         tools.push(tool_render);
 
@@ -2433,7 +2479,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_itp = Tool::default();
         tool_itp.name = "pdf_images_to_pdf".into();
-        tool_itp.description = Some("Converts a list of images to a PDF.".into());
+        tool_itp.description = Some(
+            "Converts a list of images to a PDF. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
+                .into(),
+        );
         tool_itp.input_schema = Arc::new(schema_itp);
         tools.push(tool_itp);
 
@@ -2540,7 +2589,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_compare = Tool::default();
         tool_compare.name = "pdf_compare".into();
-        tool_compare.description = Some("Compares two PDFs.".into());
+        tool_compare.description =
+            Some("Compares two PDFs. [Input: 2 PDFs | Output: PDF (.pdf)]".into());
         tool_compare.input_schema = Arc::new(schema_compare);
         tools.push(tool_compare);
 
@@ -2595,7 +2645,8 @@ impl PaperPilotMcpServer {
 
         let mut tool_bookmarks = Tool::default();
         tool_bookmarks.name = "pdf_bookmarks".into();
-        tool_bookmarks.description = Some("Handles bookmarks in a PDF.".into());
+        tool_bookmarks.description =
+            Some("Handles bookmarks in a PDF. [Input: PDF (.pdf) | Output: JSON array]".into());
         tool_bookmarks.input_schema = Arc::new(schema_bookmarks);
         tools.push(tool_bookmarks);
 
@@ -2650,7 +2701,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_ocr = Tool::default();
         tool_ocr.name = "pdf_ocr".into();
-        tool_ocr.description = Some("Performs OCR on a PDF.".into());
+        tool_ocr.description = Some(
+            "Performs OCR on a PDF. [Input: Scanned PDF / Image | Output: Plain Text (.txt) / PDF]"
+                .into(),
+        );
         tool_ocr.input_schema = Arc::new(schema_ocr);
         tools.push(tool_ocr);
 
@@ -2716,7 +2770,7 @@ impl PaperPilotMcpServer {
 
         let mut tool_sign = Tool::default();
         tool_sign.name = "pdf_sign".into();
-        tool_sign.description = Some("Digitally signs a PDF document (Currently a stub).".into());
+        tool_sign.description = Some("Digitally signs a PDF document (Currently a stub). [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
         tool_sign.input_schema = Arc::new(schema_sign);
         tools.push(tool_sign);
 
@@ -2750,7 +2804,10 @@ impl PaperPilotMcpServer {
         );
         let mut tool_hash = Tool::default();
         tool_hash.name = "pdf_hash".into();
-        tool_hash.description = Some("Calculates integrity hash for a PDF.".into());
+        tool_hash.description = Some(
+            "Calculates integrity hash for a PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]"
+                .into(),
+        );
         tool_hash.input_schema = std::sync::Arc::new(schema_hash);
         tools.push(tool_hash);
 
@@ -2784,7 +2841,9 @@ impl PaperPilotMcpServer {
         );
         let mut tool_val = Tool::default();
         tool_val.name = "pdf_validate".into();
-        tool_val.description = Some("Validates a PDF document.".into());
+        tool_val.description = Some(
+            "Validates a PDF document. [Input: PDF (.pdf) | Output: Plain Text (.txt)]".into(),
+        );
         tool_val.input_schema = std::sync::Arc::new(schema_val);
         tools.push(tool_val);
 
@@ -2852,7 +2911,10 @@ impl PaperPilotMcpServer {
 
         let mut tool_ann = Tool::default();
         tool_ann.name = "pdf_annotate".into();
-        tool_ann.description = Some("Applies annotations to a PDF document.".into());
+        tool_ann.description = Some(
+            "Applies annotations to a PDF document. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
+                .into(),
+        );
         tool_ann.input_schema = std::sync::Arc::new(schema_ann);
         tools.push(tool_ann);
 

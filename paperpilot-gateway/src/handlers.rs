@@ -175,7 +175,7 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
-/// Execute MCP tool directly by tool name with arbitrary JSON arguments
+/// Execute MCP tool directly by tool name with arbitrary JSON arguments [Input: JSON | Output: JSON]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/mcp-exec",
@@ -215,7 +215,7 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
     }
 }
 
-/// Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON
+/// Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON [Input: Multipart/JSON | Output: File/JSON]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/tools/{tool_name}",
@@ -481,7 +481,7 @@ pub async fn handle_tool(
     }
 }
 
-/// Merge multiple PDF documents into a single PDF
+/// Merge multiple PDF documents into a single PDF [Input: 2+ .pdfs | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/merge",
@@ -497,7 +497,7 @@ pub async fn merge(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("merge".to_string()), req).await
 }
 
-/// Split a PDF document into separate pages or ranges
+/// Split a PDF document into separate pages or ranges [Input: .pdf | Output: multiple .pdfs]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/split",
@@ -511,7 +511,7 @@ pub async fn split(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("split".to_string()), req).await
 }
 
-/// Compress a PDF document to reduce file size
+/// Compress a PDF document to reduce file size [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/compress",
@@ -525,7 +525,7 @@ pub async fn compress(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compress".to_string()), req).await
 }
 
-/// Extract clean text from a PDF document
+/// Extract clean text from a PDF document [Input: .pdf | Output: .txt]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/extract-text",
@@ -539,7 +539,7 @@ pub async fn extract_text(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("extract_text".to_string()), req).await
 }
 
-/// Convert a PDF to/from another format (docx, images, html, xlsx, etc.)
+/// Convert a PDF to/from another format (docx, images, html, xlsx, etc.) [Input: .pdf | Output: .docx/.png/.html/.xlsx]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/convert",
@@ -576,7 +576,7 @@ pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
         .into_response()
 }
 
-/// Convert an Excel sheet into structured JSON format
+/// Convert an Excel sheet into structured JSON format [Input: .xlsx, .xls, .csv | Output: .json]
 #[utoipa::path(
     post,
     path = "/api/v1/office/excel-to-json",
@@ -595,7 +595,7 @@ pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
         .into_response()
 }
 
-/// Convert an Excel sheet into CSV format
+/// Convert an Excel sheet into CSV format [Input: .xlsx, .xls | Output: .csv]
 #[utoipa::path(
     post,
     path = "/api/v1/office/excel-to-csv",
@@ -614,7 +614,7 @@ pub async fn excel_to_csv(req: axum::extract::Request) -> impl IntoResponse {
         .into_response()
 }
 
-/// Apply text or image watermarks to a PDF document
+/// Apply text or image watermarks to a PDF document [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/watermark",
@@ -628,7 +628,7 @@ pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("watermark".to_string()), req).await
 }
 
-/// Retrieve metadata and page information for a PDF document
+/// Retrieve metadata and page information for a PDF document [Input: .pdf | Output: .json]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/info",
@@ -642,7 +642,7 @@ pub async fn info(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("metadata".to_string()), req).await
 }
 
-/// Compare two PDF documents for visual and textual differences
+/// Compare two PDF documents for visual and textual differences [Input: 2 .pdfs | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/compare",
@@ -656,7 +656,7 @@ pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compare".to_string()), req).await
 }
 
-/// Render a single PDF page directly to a PNG image stream
+/// Render a single PDF page directly to a PNG image stream [Input: .pdf | Output: .png]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/render-page",
