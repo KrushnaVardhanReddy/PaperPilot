@@ -6,6 +6,7 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
 ---
 
 ## Technical Context & File Locations
+- **Mobile Engine Architecture**: Mobile does NOT use the REST API gateway (Axum), MCP JSON-RPC server, or external LLMs. All mobile document operations run directly in-memory against `paperpilot-pdf` traits via `process_mobile_buffer` (`mobile_bridge.rs`) or in-memory WASM buffer calls.
 - **Frontend Root**: `apps/desktop/src/`
 - **Root Layout**: `apps/desktop/src/routes/+layout.svelte`
 - **Bottom Nav**: `apps/desktop/src/lib/components/layout/BottomNav.svelte`
