@@ -3,6 +3,7 @@
   import { toastState } from '$lib/state/toast.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import ImageCropModal from './ImageCropModal.svelte';
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -13,6 +14,10 @@
   let capturedImages = $state<string[]>([]); // Data URLs
   let isOcrEnabled = $state(true);
   let isConverting = $state(false);
+
+  // Crop modal state
+  let croppingImageIndex = $state<number | null>(null);
+  let croppingImageSrc = $state<string | null>(null);
 
   async function startCamera() {
     try {
@@ -54,8 +59,33 @@
     canvasElement.height = videoElement.videoHeight;
     context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
 
-    const dataUrl = canvasElement.toDataURL('image/jpeg', 0.8);
-    capturedImages = [...capturedImages, dataUrl];
+    const dataUrl = canvasElement.toDataURL('image/jpeg', 0.9);
+    // Immediately open the crop tool for this newly taken photo (Kaagaz workflow)
+    croppingImageIndex = capturedImages.length;
+    croppingImageSrc = dataUrl;
+  }
+
+  function handleCropConfirm(croppedDataUrl: string) {
+    if (croppingImageIndex !== null) {
+      if (croppingImageIndex >= capturedImages.length) {
+        capturedImages = [...capturedImages, croppedDataUrl];
+      } else {
+        capturedImages[croppingImageIndex] = croppedDataUrl;
+      }
+    }
+    croppingImageIndex = null;
+    croppingImageSrc = null;
+  }
+
+  function handleCropCancel() {
+    // If cancelling a new photo that wasn't saved yet, just discard or keep raw
+    croppingImageIndex = null;
+    croppingImageSrc = null;
+  }
+
+  function editPhoto(index: number) {
+    croppingImageIndex = index;
+    croppingImageSrc = capturedImages[index];
   }
 
   function deletePhoto(index: number) {
@@ -141,10 +171,13 @@
       <div class="carousel">
         {#each capturedImages as img, i}
           <div class="carousel-item">
-            <img src={img} alt="Scanned page {i+1}" />
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <img src={img} alt="Scanned page {i+1}" onclick={() => editPhoto(i)} title="Tap to crop/adjust" />
             <div class="carousel-actions">
-              <span>Page {i+1}</span>
-              <button onclick={() => deletePhoto(i)}>🗑</button>
+              <button class="crop-action-btn" onclick={() => editPhoto(i)} title="Crop">✂️</button>
+              <span>p.{i+1}</span>
+              <button onclick={() => deletePhoto(i)} title="Delete">🗑</button>
             </div>
           </div>
         {/each}
@@ -160,6 +193,14 @@
       {/if}
     </div>
   </div>
+
+  {#if croppingImageSrc}
+    <ImageCropModal
+      imageSrc={croppingImageSrc}
+      onConfirm={handleCropConfirm}
+      onCancel={handleCropCancel}
+    />
+  {/if}
 </div>
 
 <style>
