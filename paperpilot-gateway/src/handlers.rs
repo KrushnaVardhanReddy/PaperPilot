@@ -22,24 +22,12 @@ pub struct HealthResponse {
     pub tools_count: usize,
 }
 
+/// Standard API response envelope (Responses section shows expected schema contract).
 #[derive(Serialize, Deserialize, ToSchema)]
-#[schema(
-    description = "Standard API response envelope. When executed, 'Server response' shows the actual output below, while 'Responses' documents the expected schema contract.",
-    example = json!({
-        "success": true,
-        "result": {
-            "message": "Operation completed successfully.",
-            "output_path": "/path/to/output.pdf"
-        },
-        "error": null
-    })
-)]
 pub struct ApiResponse {
-    #[schema(description = "Indicates whether the operation succeeded", example = true)]
+    #[schema(example = true)]
     pub success: bool,
-    #[schema(description = "Execution result payload or output path if successful")]
     pub result: Option<Value>,
-    #[schema(description = "Error description if the operation failed", example = null)]
     pub error: Option<String>,
 }
 
