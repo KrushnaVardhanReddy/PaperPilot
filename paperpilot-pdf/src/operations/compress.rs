@@ -279,29 +279,66 @@ mod tests {
 
     #[test]
     fn test_compress_sample_photo_document_reduction() {
-        let path = std::path::Path::new("tests/e2e_fixtures/real/sample_photo_doc.pdf");
-        let path2 = std::path::Path::new("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
-        let path3 = std::path::Path::new("/app/tests/e2e_fixtures/real/sample_photo_doc.pdf");
+        let mut doc = Document::with_version("1.5");
+        let pages_id = doc.new_object_id();
+        let page_id = doc.new_object_id();
+        let image_id = doc.new_object_id();
 
-        let path_to_use = if path.exists() {
-            path
-        } else if path2.exists() {
-            path2
-        } else if path3.exists() {
-            path3
-        } else {
-            return;
-        };
+        let width = 500;
+        let height = 400;
+        let mut raw_bytes = Vec::with_capacity(width * height * 3);
+        for y in 0..height {
+            for x in 0..width {
+                raw_bytes.push((x % 256) as u8);
+                raw_bytes.push((y % 256) as u8);
+                raw_bytes.push(((x + y) % 256) as u8);
+            }
+        }
 
-        let mut original_doc = Document::load(path_to_use).unwrap();
+        let mut img_dict = Dictionary::new();
+        img_dict.set("Type", Object::Name(b"XObject".to_vec()));
+        img_dict.set("Subtype", Object::Name(b"Image".to_vec()));
+        img_dict.set("Width", Object::Integer(width as i64));
+        img_dict.set("Height", Object::Integer(height as i64));
+        img_dict.set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
+        img_dict.set("BitsPerComponent", Object::Integer(8));
+        img_dict.set("Length", Object::Integer(raw_bytes.len() as i64));
+
+        let stream = Stream::new(img_dict, raw_bytes);
+        doc.objects.insert(image_id, Object::Stream(stream));
+
+        let mut resources = Dictionary::new();
+        let mut xobjects = Dictionary::new();
+        xobjects.set("Im1", Object::Reference(image_id));
+        resources.set("XObject", Object::Dictionary(xobjects));
+
+        let mut page_dict = Dictionary::new();
+        page_dict.set("Type", Object::Name(b"Page".to_vec()));
+        page_dict.set("Parent", Object::Reference(pages_id));
+        page_dict.set("Resources", Object::Dictionary(resources));
+        page_dict.set("MediaBox", vec![0.into(), 0.into(), (width as i64).into(), (height as i64).into()]);
+        doc.objects.insert(page_id, Object::Dictionary(page_dict));
+
+        let mut pages_dict = Dictionary::new();
+        pages_dict.set("Type", Object::Name(b"Pages".to_vec()));
+        pages_dict.set("Count", Object::Integer(1));
+        pages_dict.set("Kids", vec![Object::Reference(page_id)]);
+        doc.objects.insert(pages_id, Object::Dictionary(pages_dict));
+
+        let mut catalog_dict = Dictionary::new();
+        catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("Pages", Object::Reference(pages_id));
+        let catalog_id = doc.add_object(catalog_dict);
+        doc.trailer.set("Root", Object::Reference(catalog_id));
+
         let original_size = {
             let mut buf = Vec::new();
-            original_doc.save_to(&mut buf).unwrap();
+            doc.save_to(&mut buf).unwrap();
             buf.len()
         };
 
         let mut lopdf_doc = LopdfDocument {
-            inner: original_doc,
+            inner: doc,
             original_bytes: None,
         };
         let op = CompressOperation::new(Some("low".to_string()));

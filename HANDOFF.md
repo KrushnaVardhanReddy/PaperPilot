@@ -10,11 +10,11 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
-   - **Task 5.9.44 / Spec 067 (Production-Grade PDF Compression Optimization)**: [Session 6600304163605773570](https://jules.google.com/session/6600304163605773570) — Upgrading `CompressOperation` in `paperpilot-pdf` with preset-driven image downsampling, JPEG quality levels (low/medium/high), non-image stream Flate encoding (`flate2`), dead/orphan object pruning (`prune_objects`), and file size non-expansion guards tested against `tests/e2e_fixtures/real/sample_photo_doc.pdf` (`specs/067-production-pdf-compression/spec.md`).
    - **Task 5.9.42 / Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: [Session 11237800863675110882](https://jules.google.com/session/11237800863675110882) — Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with font subset prefix sanitization (preventing `□□□□` tofu glyphs in LibreOffice/Word), borderless 2-column OpenXML tables (`docx-rs`) for side-by-side icon/text pairing, inline PNG image embedding, and compact page margin geometry keeping single-page documents to strictly 1 page.
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
+   - **Spec 067 (Production-Grade PDF Compression Optimization)**: Merged (PR #208, Jules Session 6600304163605773570) — Preset-driven JPEG downsampling, Flate content stream compression, orphan pruning, and 100% unit & E2E assertions pass.
    - **Penta-Interface E2E & Cleanroom Audits Passed (Oct 18, 2026)**:
      - `page_ops` (Phase 5.9.4A): 180 / 180 tests PASS
      - `security_forms` (Phase 5.9.4B): 280 / 280 tests PASS
