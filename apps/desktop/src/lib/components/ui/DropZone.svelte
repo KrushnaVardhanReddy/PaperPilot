@@ -87,15 +87,33 @@
     if (filesArray.length > 0) ondrop(filesArray);
   }
 
-  function handleFileInputChange(e: Event) {
+  import { appState } from '$lib/state/app.svelte';
+
+  async function handleFileInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      const filesArray = Array.from(target.files).map(f => {
-        (f as any)._localPath = (f as any).path || f.name;
-        // In browser / test contexts without native backend, File object already holds the bytes
-        (f as any)._isLoaded = f.size > 0;
-        return f;
-      });
+      let filesArray = Array.from(target.files);
+
+      // On mobile, Android uses content:// URIs and we can't rely on POSIX paths.
+      // So we force reading the file bytes into memory if it's mobile.
+      if (appState.isMobile) {
+        for (let i = 0; i < filesArray.length; i++) {
+           const f = filesArray[i];
+           const buf = await f.arrayBuffer();
+           const newBlob = new Blob([new Uint8Array(buf)], { type: f.type });
+           const newFile = new File([newBlob], f.name, { type: f.type });
+           (newFile as any)._localPath = f.name; // Can't use path
+           (newFile as any)._isLoaded = true;
+           filesArray[i] = newFile;
+        }
+      } else {
+        filesArray = filesArray.map(f => {
+          (f as any)._localPath = (f as any).path || f.name;
+          (f as any)._isLoaded = f.size > 0;
+          return f;
+        });
+      }
+
       ondrop(filesArray);
     }
     target.value = '';

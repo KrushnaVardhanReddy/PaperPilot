@@ -327,7 +327,34 @@ import { onMount } from 'svelte';
           if (!args) continue;
 
           try {
-            const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+
+            let result: any;
+            if (appState.isMobile) {
+               // Extract params for mobile
+               let mobileParams = { ...args };
+               // Find original bytes if any (this is tricky since we only have docPath and args)
+               // The mobile bridge expects: fileName, inputBytes, operation, params
+               // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
+               // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
+
+               let inputBytes: number[] = [];
+               if (doc && (doc as any)._isLoaded) {
+                   const arrayBuf = await doc.arrayBuffer();
+                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+               } else if (docPath) {
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+               }
+
+               result = await invoke('process_mobile_buffer', {
+                   fileName: docName,
+                   inputBytes: inputBytes,
+                   operation: activeTool.id,
+                   params: mobileParams
+               });
+            } else {
+                result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+            }
+
             const resObj = result as any;
             if (resObj && resObj.success) {
               successCount++;
@@ -420,7 +447,35 @@ import { onMount } from 'svelte';
         if (!args) return; // User cancelled file picker
 
         try {
-          const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+
+            let result: any;
+            if (appState.isMobile) {
+               // Extract params for mobile
+               let mobileParams = { ...args };
+               // Find original bytes if any (this is tricky since we only have docPath and args)
+               // The mobile bridge expects: fileName, inputBytes, operation, params
+               // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
+               // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
+
+               let inputBytes: number[] = [];
+               const currentDoc = appState.documents[docIndex];
+               if (currentDoc && (currentDoc as any)._isLoaded) {
+                   const arrayBuf = await currentDoc.arrayBuffer();
+                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+               } else if (docPath) {
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+               }
+
+               result = await invoke('process_mobile_buffer', {
+                   fileName: docName,
+                   inputBytes: inputBytes,
+                   operation: activeTool.id,
+                   params: mobileParams
+               });
+            } else {
+                result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+            }
+
           const durationMs = Math.round(performance.now() - startTime);
           const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
 
@@ -501,10 +556,11 @@ import { onMount } from 'svelte';
 
 <div
   class="operations-panel"
-  class:collapsed={isCollapsed}
-  class:dragging={isDragging}
+  class:collapsed={isCollapsed && !appState.isMobile}
+  class:dragging={isDragging && !appState.isMobile}
+  class:mobile-bottom-sheet={appState.isMobile}
   id="operations-panel"
-  style={!isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+  style={!appState.isMobile && !isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
 >
   {#if !isCollapsed}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -1531,5 +1587,55 @@ import { onMount } from 'svelte';
   .scope-option input[type="radio"] {
     accent-color: var(--accent-primary, #5e6ad2);
     cursor: pointer;
+  }
+
+  /* Mobile Bottom Sheet Overrides */
+  .operations-panel.mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    border-top: 1px solid var(--border-color, #2a2a35);
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+  }
+
+  .operations-panel.mobile-bottom-sheet .collapse-toggle,
+  .operations-panel.mobile-bottom-sheet .resize-handle {
+    display: none;
+  }
+
+  .operations-panel.mobile-bottom-sheet .form-input,
+  .operations-panel.mobile-bottom-sheet .run-btn,
+  .operations-panel.mobile-bottom-sheet select {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* Drag handle indicator */
+  .operations-panel.mobile-bottom-sheet::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-color, #2a2a35);
+    border-radius: 2px;
+  }
+
+  .operations-panel.mobile-bottom-sheet .panel-header {
+      padding-top: 20px;
+  }
+  .operations-panel.mobile-bottom-sheet .inspector-header {
+      padding-top: 20px;
   }
 </style>

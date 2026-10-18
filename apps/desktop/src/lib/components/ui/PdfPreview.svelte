@@ -1,5 +1,93 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import { toastState } from '$lib/state/toast.svelte';
+
+  // Touch gesture state
+  let initialPinchDistance = $state<number | null>(null);
+  let currentScale = $state(1);
+  let touchStartX = $state<number | null>(null);
+
+  async function handleShare() {
+     const doc = appState.documents[appState.selectedDocumentIndex!];
+     if (!doc) return;
+
+     if (navigator.share && appState.isMobile) {
+        try {
+           await navigator.share({
+              title: doc.name,
+              files: [doc]
+           });
+        } catch (e) {
+           toastState.error("Share failed", String(e));
+        }
+     } else {
+        toastState.error("Native share not supported here");
+     }
+  }
+
+  // Pointer Handlers
+
+  let activePointers = $state(new Map<number, PointerEvent>());
+
+  function getDistance(p1: PointerEvent, p2: PointerEvent) {
+    return Math.sqrt(Math.pow(p2.clientX - p1.clientX, 2) + Math.pow(p2.clientY - p1.clientY, 2));
+  }
+
+  function onPointerDown(e: PointerEvent) {
+    if (!appState.isMobile) return;
+    activePointers.set(e.pointerId, e);
+
+    if (activePointers.size === 1) {
+      touchStartX = e.clientX;
+    } else if (activePointers.size === 2) {
+      const pointers = Array.from(activePointers.values());
+      initialPinchDistance = getDistance(pointers[0], pointers[1]);
+    }
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    if (!appState.isMobile) return;
+
+    if (activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, e);
+    }
+
+    if (activePointers.size === 2 && initialPinchDistance) {
+      const pointers = Array.from(activePointers.values());
+      const currentDist = getDistance(pointers[0], pointers[1]);
+      currentScale = Math.max(0.5, Math.min(3, currentScale * (currentDist / initialPinchDistance)));
+      initialPinchDistance = currentDist; // Reset for smooth continuous zooming
+    }
+  }
+
+  function onPointerUp(e: PointerEvent) {
+    if (!appState.isMobile) return;
+
+    activePointers.delete(e.pointerId);
+
+    if (activePointers.size < 2) {
+      initialPinchDistance = null;
+    }
+
+    if (touchStartX !== null && activePointers.size === 0) {
+      const diffX = e.clientX - touchStartX;
+      if (Math.abs(diffX) > 80 && currentScale <= 1.1) {
+        if (diffX > 0) {
+           toastState.success("Swiped Right"); // Trigger prevPage() logic if multi-page viewer
+        } else {
+           toastState.success("Swiped Left"); // Trigger nextPage() logic
+        }
+      }
+      touchStartX = null;
+    }
+  }
+
+  function onPointerCancel(e: PointerEvent) {
+     activePointers.delete(e.pointerId);
+     initialPinchDistance = null;
+     touchStartX = null;
+  }
+
 
   let pages = $state(Array.from({ length: 12 }, (_, i) => ({ id: i + 1, num: i + 1, rotation: 0 })));
   let selectedPages = $state(new Set<number>());
@@ -72,7 +160,12 @@
   }
 </script>
 
-<div class="pdf-preview-container">
+<div class="pdf-preview-container"
+  onpointerdown={onPointerDown}
+  onpointermove={onPointerMove}
+  onpointerup={onPointerUp}
+  style="transform: scale({currentScale}); transform-origin: top left; transition: transform 0.1s ease;"
+>
   <div class="preview-header">
     <div class="header-left">
       <button class="back-btn" onclick={handleBack} title="Back to List">
@@ -88,6 +181,9 @@
     </div>
 
     <div class="header-actions">
+      {#if appState.isMobile}
+         <button class="action-btn" onclick={handleShare}>📤 Export & Share</button>
+      {/if}
       <button class="action-btn" onclick={selectAll}>Select All</button>
       <button class="action-btn" onclick={clearSelection} disabled={selectedPages.size === 0}>Clear Selection</button>
     </div>
