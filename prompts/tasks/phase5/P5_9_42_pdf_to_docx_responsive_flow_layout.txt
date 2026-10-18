@@ -1,0 +1,46 @@
+# Task P5_9_42: High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX
+# Associated Spec: specs/065-pdf-to-docx-flow-layout-images/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Upgrade `paperpilot_pdf::operations::conversion::PdfToDocxOperation` to produce clean, high-fidelity, responsive Microsoft Word (.docx) documents with correct font mapping (no tofu glyphs `□□□□`), aligned inline images, and multi-column grid pairing that preserves 1-to-1 page counts without page explosion.
+
+### Detailed Scope & Context
+Read `specs/065-pdf-to-docx-flow-layout-images/spec.md` for full background and technical details.
+Input fixture for validation: `fixtures/Get_Started_With_Smallpdf.pdf`.
+
+1. **Font Name Sanitization & Standard Cross-Platform Fallbacks (`conversion.rs`)**:
+   - In PDF text streams, fonts often carry subset prefixes (e.g. `JFGNNE+SourceSansPro-Bold`). When exported directly into Word XML (`w:rFonts`), office suites like LibreOffice fail to resolve the font and render square tofu boxes (`□□□□`).
+   - Strip the 6-character random subset prefix and plus sign (`^[A-Z]{6}\+`).
+   - Map font families to universal cross-platform defaults:
+     - Sans-serif: `"Source Sans Pro", Arial, Calibri, sans-serif`
+     - Serif: `"Times New Roman", Georgia, serif`
+     - Monospace: `"Courier New", monospace`
+   - Preserve font size, bold, italic, and hex text colors.
+
+2. **2-Column / Grid Responsive Pairing via Borderless Tables**:
+   - Documents with side-by-side icons and descriptive text (such as `fixtures/Get_Started_With_Smallpdf.pdf`) currently suffer in Word/LibreOffice when rendered as absolute frames (text spills across multiple pages) or flat paragraphs (images are omitted and columns are flattened).
+   - Reconstruct side-by-side elements into borderless 2-column OpenXML tables (`docx_rs::Table` with `BorderType::None`):
+     - Left Column: Embedded Image / Icon (`docx_rs::Pic`).
+     - Right Column: Heading (`Heading2` / bold) + descriptive body paragraph.
+   - For single-column sections (e.g. the main title "Welcome to Smallpdf"), emit standard centered paragraphs.
+
+3. **Inline Image Extraction & Embedding**:
+   - Extract page images using `pdf_oxide` or `lopdf` stream extraction.
+   - Convert decoded images to PNG bytes via the `image` crate.
+   - Add image elements to the DOCX document using `docx_rs::Pic::new(&png_bytes)` so images appear inside their appropriate grid cells or paragraphs.
+
+4. **Page Count Integrity Verification**:
+   - Test conversion with `fixtures/Get_Started_With_Smallpdf.pdf`:
+     - Must produce a valid `.docx` archive containing `word/document.xml` and embedded media `word/media/image*.png`.
+     - Output must fit naturally on **1 page** without spilling onto subsequent pages.
+     - Headings must render legible text ("Welcome to Smallpdf") with zero tofu characters (`□`).
+
+### Verification & Deliverables
+- Verify compilation: `cargo check -p paperpilot-pdf`.
+- Verify tests: `cargo test -p paperpilot-pdf -- docx`.
+- Run CLI conversion on fixture:
+  `cargo run -p paperpilot-cli -- convert --input "fixtures/Get_Started_With_Smallpdf.pdf" --format docx --output "fixtures/test_smallpdf_output.docx"`
+- Inspect output: Verify page count is 1, images exist in the package, and fonts are cleanly readable.
+- All commits prefixed with `jules: `
