@@ -46,7 +46,7 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
    - Leverage **Tailwind CSS v4** (`@import "tailwindcss";` already configured in `app.css` and `vite.config.js`).
    - Use standard responsive utility classes (`md:`, `lg:`) so the **same components** adapt seamlessly between desktop and mobile. Do NOT maintain two separate parallel apps.
    - On desktop (`md:`): Left Sidebar + Center Document Canvas + Docked Right Operations Panel.
-   - On mobile: Sleek Top Header + Center Document Canvas + Floating Action Camera Scanner + Bottom Navigation Bar.
+   - On mobile: Sleek Top Header (featuring our PaperPilot logo `/logo.png`, document title, and quick-share action) + Center Document Canvas + Floating Action Camera Scanner + Bottom Navigation Bar.
 3. In-Memory Android Document Intake:
    - In `apps/desktop/src/lib/components/ui/DropZone.svelte`:
      - On mobile / touch screens, ensure clicking the intake triggers `<input type="file">` and reads the file into memory via `file.arrayBuffer()` / `Uint8Array` directly into `appState`.
@@ -66,6 +66,8 @@ Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-d
      - Render as a modern modal **Bottom Sheet** with a drag-handle indicator at the top (`border-radius: 20px 20px 0 0;`).
      - Max height `85vh` with smooth vertical scroll.
      - Inputs, selects, and action buttons styled with `min-height: 48px; font-size: 16px;` (preventing iOS auto-zoom on input focus).
+3. Mobile Execution Dispatch (In-Memory Engine, No REST/MCP/LLM):
+   - On mobile, invoke_mcp_tool, REST API routes, and external LLM queries are not needed. Route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params) so operations run directly against paperpilot-pdf traits in-memory with zero server overhead.
 
 ### Step 4: Touch Gestures in PDF Viewer
 1. In `apps/desktop/src/lib/components/viewer/`:
