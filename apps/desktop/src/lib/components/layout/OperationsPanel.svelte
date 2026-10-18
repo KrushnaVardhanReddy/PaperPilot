@@ -952,7 +952,16 @@ import { onMount } from 'svelte';
           <div class="pack-locked-card">
             <span class="tool-card-icon">{lockedTool.tool.icon}</span>
             <div class="tool-card-info">
-              <span class="tool-card-title" style="opacity: 0.6;">{lockedTool.tool.title}</span>
+              <div class="tool-card-title-row">
+                <span class="tool-card-title" style="opacity: 0.6;">{lockedTool.tool.title}</span>
+                {#if lockedTool.tool.inputFormat && lockedTool.tool.outputFormat}
+                  <span class="format-pill">
+                    <span class="fmt-in">{lockedTool.tool.inputFormat}</span>
+                    <span class="fmt-arrow">➔</span>
+                    <span class="fmt-out">{lockedTool.tool.outputFormat}</span>
+                  </span>
+                {/if}
+              </div>
               <span class="tool-card-desc">📦 Requires {lockedTool.missingPack} Pack</span>
             </div>
             <button class="enable-pack-btn" onclick={(e) => {
@@ -1015,7 +1024,16 @@ import { onMount } from 'svelte';
                   <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                     <span class="tool-card-icon">{tool.icon}</span>
                     <div class="tool-card-info">
-                      <span class="tool-card-title">{tool.title}</span>
+                      <div class="tool-card-title-row">
+                        <span class="tool-card-title">{tool.title}</span>
+                        {#if tool.inputFormat && tool.outputFormat}
+                          <span class="format-pill">
+                            <span class="fmt-in">{tool.inputFormat}</span>
+                            <span class="fmt-arrow">➔</span>
+                            <span class="fmt-out">{tool.outputFormat}</span>
+                          </span>
+                        {/if}
+                      </div>
                       <span class="tool-card-desc">{tool.description}</span>
                     </div>
                   </button>
@@ -1690,4 +1708,35 @@ import { onMount } from 'svelte';
   .operations-panel.mobile-bottom-sheet .inspector-header {
       padding-top: 20px;
   }
+
+  .tool-card-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .format-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .fmt-in {
+    color: var(--text-secondary, #9ca3af);
+  }
+  .fmt-arrow {
+    color: var(--accent-primary, #5e6ad2);
+    font-size: 8px;
+  }
+  .fmt-out {
+    color: var(--text-primary, #ffffff);
+  }
+
 </style>

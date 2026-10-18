@@ -14,5 +14,7 @@ export interface ToolDefinition {
   category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
   context: 'pdf' | 'office' | 'ai';
   tags: string[];
+  inputFormat: string;
+  outputFormat: string;
   rule?: ToolConditionRule;
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/svelte';
+import { render, fireEvent, screen, waitFor } from '@testing-library/svelte';
 import CameraScannerModal from './CameraScannerModal.svelte';
 import { appState } from '$lib/state/app.svelte';
 import * as tauriCore from '@tauri-apps/api/core';
@@ -19,7 +19,15 @@ Object.defineProperty(global.navigator, 'mediaDevices', {
 
 // Mock Canvas implementation enough for testing
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
-  drawImage: vi.fn()
+  drawImage: vi.fn(),
+  translate: vi.fn(),
+  rotate: vi.fn(),
+  clearRect: vi.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
+  putImageData: vi.fn(),
+  getImageData: vi.fn().mockReturnValue({ data: [] }),
+  createImageData: vi.fn().mockReturnValue({ data: [] })
 }) as any;
 HTMLCanvasElement.prototype.toDataURL = vi.fn().mockReturnValue('data:image/jpeg;base64,dummy123');
 
@@ -39,10 +47,17 @@ describe('CameraScannerModal (Mobile Spec)', () => {
     // simulate taking 2 photos
     const shutter = getByRole('button', { name: /take photo/i });
     await fireEvent.click(shutter);
+
+    // Accept crop modal for first photo
+    let acceptCrop = await screen.findByText('✓ Straighten & Use');
+    await fireEvent.click(acceptCrop);
+
     await fireEvent.click(shutter);
+    acceptCrop = await screen.findByText('✓ Straighten & Use');
+    await fireEvent.click(acceptCrop);
 
     // we should see the convert button with count 2
-    const convertBtn = getByText('Convert to PDF (2)');
+    const convertBtn = await screen.findByText('Convert to PDF (2)');
     expect(convertBtn).toBeTruthy();
 
     // OCR toggle is on by default

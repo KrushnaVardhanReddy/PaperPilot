@@ -18,7 +18,11 @@ struct Args {
     concurrency: usize,
 }
 
-fn time_op<F>(name: &str, latencies: &mut BTreeMap<String, Vec<f64>>, mut op: F) -> anyhow::Result<()>
+fn time_op<F>(
+    name: &str,
+    latencies: &mut BTreeMap<String, Vec<f64>>,
+    mut op: F,
+) -> anyhow::Result<()>
 where
     F: FnMut() -> anyhow::Result<()>,
 {
@@ -30,7 +34,8 @@ where
             latencies.entry(name.to_string()).or_default().push(elapsed);
         }
         Err(e) => {
-            static LOGGED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+            static LOGGED: std::sync::atomic::AtomicBool =
+                std::sync::atomic::AtomicBool::new(false);
             if !LOGGED.swap(true, std::sync::atomic::Ordering::SeqCst) {
                 eprintln!("❌ SOAK ERROR in {}: {:?}", name, e);
             }
@@ -43,7 +48,11 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("{}", "=".repeat(65));
     println!("🚀 PaperPilot Sustained Soak & Stress Performance Test (Pure-Rust)");
-    println!("⏱️  Duration: {}s (~{:.1} minutes)", args.duration, args.duration as f64 / 60.0);
+    println!(
+        "⏱️  Duration: {}s (~{:.1} minutes)",
+        args.duration,
+        args.duration as f64 / 60.0
+    );
     println!("{}", "=".repeat(65));
     println!();
 
@@ -65,13 +74,28 @@ fn main() -> anyhow::Result<()> {
         iteration_count += 1;
 
         // Group A: Page Manipulation
-        run_group_a_individual(&out_dir, &mut latencies_by_op, &mut total_ops, &mut failures);
+        run_group_a_individual(
+            &out_dir,
+            &mut latencies_by_op,
+            &mut total_ops,
+            &mut failures,
+        );
 
         // Group B: Security & Optimization
-        run_group_b_individual(&out_dir, &mut latencies_by_op, &mut total_ops, &mut failures);
+        run_group_b_individual(
+            &out_dir,
+            &mut latencies_by_op,
+            &mut total_ops,
+            &mut failures,
+        );
 
         // Group C/D/E: Extraction, Forms & Analysis
-        run_group_cde_individual(&out_dir, &mut latencies_by_op, &mut total_ops, &mut failures);
+        run_group_cde_individual(
+            &out_dir,
+            &mut latencies_by_op,
+            &mut total_ops,
+            &mut failures,
+        );
 
         let now = Instant::now();
         if now.duration_since(last_print).as_secs_f64() >= 60.0 {
@@ -101,8 +125,14 @@ fn main() -> anyhow::Result<()> {
     } else {
         0.0
     };
-    println!("Total Failures: {} (Success Rate: {:.2}%)", failures, success_rate);
-    println!("Sustained Throughput: {:.2} ops/sec", total_ops as f64 / actual_duration);
+    println!(
+        "Total Failures: {} (Success Rate: {:.2}%)",
+        failures, success_rate
+    );
+    println!(
+        "Sustained Throughput: {:.2} ops/sec",
+        total_ops as f64 / actual_duration
+    );
     println!("{line}\n", line = "=".repeat(65));
 
     generate_report(
@@ -126,7 +156,8 @@ fn execute_and_save<T: paperpilot_core::traits::PdfOperation>(
     output: Option<&std::path::Path>,
 ) -> anyhow::Result<()> {
     use paperpilot_core::traits::PdfDocument;
-    let mut doc = paperpilot_pdf::document::LopdfDocument::load(input).map_err(|e| anyhow::anyhow!(e))?;
+    let mut doc =
+        paperpilot_pdf::document::LopdfDocument::load(input).map_err(|e| anyhow::anyhow!(e))?;
     op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
     if let Some(out) = output {
         doc.save(out).map_err(|e| anyhow::anyhow!(e))?;
@@ -143,53 +174,96 @@ fn run_group_a_individual(
     // 1. pdf_merge
     if time_op("pdf_merge", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/page_1.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/page_1.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op = paperpilot_pdf::operations::merge::MergeOperation {
             paths: vec![std::path::PathBuf::from("tests/e2e_fixtures/page_2.pdf")],
         };
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
-        doc.save(&out_dir.join("merged.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        doc.save(&out_dir.join("merged.pdf"))
+            .map_err(|e| anyhow::anyhow!(e))?;
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 2. pdf_split
     if time_op("pdf_split", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/multi_page.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/multi_page.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op = paperpilot_pdf::operations::split::SplitOperation {
             split_points: vec![1, 2],
             output_dir: out_dir.join("split"),
         };
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 3. pdf_extract_pages
     if time_op("pdf_extract_pages", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::extract::ExtractPagesOperation { page_indices: vec![1, 3] },
+            paperpilot_pdf::operations::extract::ExtractPagesOperation {
+                page_indices: vec![1, 3],
+            },
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("extracted.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 4. pdf_delete_pages
     if time_op("pdf_delete_pages", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::delete::DeletePagesOperation { page_indices: vec![2, 4] },
+            paperpilot_pdf::operations::delete::DeletePagesOperation {
+                page_indices: vec![2, 4],
+            },
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("deleted.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 5. pdf_reorder_pages
     if time_op("pdf_reorder_pages", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::reorder::ReorderPagesOperation { new_order: vec![2, 1, 3, 4, 5] },
+            paperpilot_pdf::operations::reorder::ReorderPagesOperation {
+                new_order: vec![2, 1, 3, 4, 5],
+            },
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("reordered.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 6. pdf_rotate
     if time_op("pdf_rotate", lats, || {
@@ -198,33 +272,56 @@ fn run_group_a_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("rotated.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 7. pdf_crop
     if time_op("pdf_crop", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::crop::CropPagesOperation::new(paperpilot_pdf::operations::crop::CropBox {
-                left: 10.0,
-                bottom: 10.0,
-                right: 200.0,
-                top: 200.0,
-            }),
+            paperpilot_pdf::operations::crop::CropPagesOperation::new(
+                paperpilot_pdf::operations::crop::CropBox {
+                    left: 10.0,
+                    bottom: 10.0,
+                    right: 200.0,
+                    top: 200.0,
+                },
+            ),
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("cropped.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 8. pdf_burst
     if time_op("pdf_burst", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/multi_page.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/multi_page.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op = paperpilot_pdf::operations::burst::BurstOperation {
             output_dir: out_dir.join("burst"),
         };
         let _ = std::fs::create_dir_all(&out_dir.join("burst"));
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 9. pdf_remove_blank
     if time_op("pdf_remove_blank", lats, || {
@@ -233,7 +330,13 @@ fn run_group_a_individual(
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("no_blanks.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 }
 
 fn run_group_b_individual(
@@ -245,11 +348,19 @@ fn run_group_b_individual(
     // 10. pdf_compress
     if time_op("pdf_compress", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::compress::CompressOperation::new(Some("medium".to_string())),
+            paperpilot_pdf::operations::compress::CompressOperation::new(Some(
+                "medium".to_string(),
+            )),
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("compressed.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 11. pdf_repair
     if time_op("pdf_repair", lats, || {
@@ -258,7 +369,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("repaired.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 12. pdf_linearize
     if time_op("pdf_linearize", lats, || {
@@ -267,7 +384,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("linearized.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 13. pdf_encrypt
     if time_op("pdf_encrypt", lats, || {
@@ -278,7 +401,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("encrypted.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 14. pdf_decrypt
     if time_op("pdf_decrypt", lats, || {
@@ -287,16 +416,30 @@ fn run_group_b_individual(
             &out_dir.join("encrypted.pdf"),
             Some(&out_dir.join("decrypted.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 15. pdf_watermark
     if time_op("pdf_watermark", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::watermark::WatermarkOperation::new("CONFIDENTIAL".to_string()),
+            paperpilot_pdf::operations::watermark::WatermarkOperation::new(
+                "CONFIDENTIAL".to_string(),
+            ),
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("watermarked.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 16. pdf_redact
     if time_op("pdf_redact", lats, || {
@@ -313,7 +456,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("redacted.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 17. pdf_metadata
     if time_op("pdf_metadata", lats, || {
@@ -325,7 +474,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("metadata.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 18. pdf_flatten
     if time_op("pdf_flatten", lats, || {
@@ -334,7 +489,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("flattened.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 19. pdf_header_footer
     if time_op("pdf_header_footer", lats, || {
@@ -346,16 +507,32 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/single_page.pdf"),
             Some(&out_dir.join("header_footer.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 20. pdf_bates
     if time_op("pdf_bates", lats, || {
         execute_and_save(
-            paperpilot_pdf::operations::bates::BatesNumberingOperation::new(1, "CONF-".to_string(), 6),
+            paperpilot_pdf::operations::bates::BatesNumberingOperation::new(
+                1,
+                "CONF-".to_string(),
+                6,
+            ),
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("bates.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 21. pdf_page_numbers
     if time_op("pdf_page_numbers", lats, || {
@@ -367,7 +544,13 @@ fn run_group_b_individual(
             std::path::Path::new("tests/e2e_fixtures/multi_page.pdf"),
             Some(&out_dir.join("page_numbers.pdf")),
         )
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 }
 
 fn run_group_cde_individual(
@@ -379,7 +562,10 @@ fn run_group_cde_individual(
     // 22. pdf_extract_text
     if time_op("pdf_extract_text", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/single_page.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/single_page.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         let text_lock = op.extracted_text.lock().unwrap();
@@ -387,25 +573,51 @@ fn run_group_cde_individual(
             std::fs::write(&out_dir.join("extracted.txt"), text_pages.join("\n"))?;
         }
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 23. pdf_read_form
     if time_op("pdf_read_form", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/single_page.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/single_page.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op = paperpilot_pdf::operations::form::ReadFormOperation::new();
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 
     // 24. pdf_validate
     if time_op("pdf_validate", lats, || {
         use paperpilot_core::traits::{PdfDocument, PdfOperation};
-        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new("tests/e2e_fixtures/single_page.pdf")).map_err(|e| anyhow::anyhow!(e))?;
+        let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
+            "tests/e2e_fixtures/single_page.pdf",
+        ))
+        .map_err(|e| anyhow::anyhow!(e))?;
         let op_info = paperpilot_pdf::operations::info::InfoOperation::new();
-        op_info.execute(&mut doc).map_err(|e: paperpilot_core::error::PdfError| anyhow::anyhow!(e))?;
+        op_info
+            .execute(&mut doc)
+            .map_err(|e: paperpilot_core::error::PdfError| anyhow::anyhow!(e))?;
         Ok(())
-    }).is_ok() { *total_ops += 1; } else { *failures += 1; }
+    })
+    .is_ok()
+    {
+        *total_ops += 1;
+    } else {
+        *failures += 1;
+    }
 }
 
 #[cfg(unix)]
@@ -507,23 +719,57 @@ fn generate_report(
     );
     report_content.push_str("## 1. Executive Summary\n\n| Metric | Measured Value | Analysis / Verdict |\n|---|---|---|\n");
     report_content.push_str(&format!("| **Test Duration** | **{:.1} seconds** (~{:.1} minutes) | Continuous sustained stress across tools |\n", actual_duration, actual_duration / 60.0));
-    report_content.push_str(&format!("| **Total Cycles Completed** | **{} cycles** | Continuous multi-operation loop |\n", iteration_count));
-    report_content.push_str(&format!("| **Total Operations Executed** | **{} operations** | Verified across operation types |\n", total_ops));
-    report_content.push_str(&format!("| **Success Rate** | **{:.2}%** ({}/{}) | **100% Stability — Zero Crashes / Panics** |\n", success_rate, total_ops, total_ops + failures));
+    report_content.push_str(&format!(
+        "| **Total Cycles Completed** | **{} cycles** | Continuous multi-operation loop |\n",
+        iteration_count
+    ));
+    report_content.push_str(&format!(
+        "| **Total Operations Executed** | **{} operations** | Verified across operation types |\n",
+        total_ops
+    ));
+    report_content.push_str(&format!(
+        "| **Success Rate** | **{:.2}%** ({}/{}) | **100% Stability — Zero Crashes / Panics** |\n",
+        success_rate,
+        total_ops,
+        total_ops + failures
+    ));
     report_content.push_str(&format!("| **Sustained Throughput** | **{:.1} ops / second** | High throughput without throttling |\n", total_ops as f64 / actual_duration));
-    report_content.push_str(&format!("| **Overall Mean Latency** | **{:.2} ms** | Core operation performance |\n", overall_stats.mean));
-    report_content.push_str(&format!("| **P50 Latency (Median)** | **{:.2} ms** | Typical responsive latency |\n", overall_stats.p50));
-    report_content.push_str(&format!("| **P90 Latency** | **{:.2} ms** | 90% of requests finish in under {:.1} ms |\n", overall_stats.p90, overall_stats.p90));
-    report_content.push_str(&format!("| **P95 Latency** | **{:.2} ms** | 95% of requests finish in under {:.1} ms |\n", overall_stats.p95, overall_stats.p95));
-    report_content.push_str(&format!("| **P99 Latency** | **{:.2} ms** | Predictable tail execution |\n", overall_stats.p99));
-    report_content.push_str(&format!("| **P99.9 Latency** | **{:.2} ms** | Deep tail execution |\n", overall_stats.p99_9));
-    report_content.push_str(&format!("| **Min / Max Latency** | **{:.2} ms / {:.2} ms** | Bounded execution time |\n\n", overall_stats.min, overall_stats.max));
+    report_content.push_str(&format!(
+        "| **Overall Mean Latency** | **{:.2} ms** | Core operation performance |\n",
+        overall_stats.mean
+    ));
+    report_content.push_str(&format!(
+        "| **P50 Latency (Median)** | **{:.2} ms** | Typical responsive latency |\n",
+        overall_stats.p50
+    ));
+    report_content.push_str(&format!(
+        "| **P90 Latency** | **{:.2} ms** | 90% of requests finish in under {:.1} ms |\n",
+        overall_stats.p90, overall_stats.p90
+    ));
+    report_content.push_str(&format!(
+        "| **P95 Latency** | **{:.2} ms** | 95% of requests finish in under {:.1} ms |\n",
+        overall_stats.p95, overall_stats.p95
+    ));
+    report_content.push_str(&format!(
+        "| **P99 Latency** | **{:.2} ms** | Predictable tail execution |\n",
+        overall_stats.p99
+    ));
+    report_content.push_str(&format!(
+        "| **P99.9 Latency** | **{:.2} ms** | Deep tail execution |\n",
+        overall_stats.p99_9
+    ));
+    report_content.push_str(&format!(
+        "| **Min / Max Latency** | **{:.2} ms / {:.2} ms** | Bounded execution time |\n\n",
+        overall_stats.min, overall_stats.max
+    ));
 
     report_content.push_str(&format!(
         "## 2. Per-Operation Latency Breakdown ({} Total Executions)\n\n",
         total_ops
     ));
-    report_content.push_str("| Operation | Invocations | Mean | P50 (Median) | P90 | P95 | P99 | P99.9 | Min | Max |\n");
+    report_content.push_str(
+        "| Operation | Invocations | Mean | P50 (Median) | P90 | P95 | P99 | P99.9 | Min | Max |\n",
+    );
     report_content.push_str("|---|---|---|---|---|---|---|---|---|---|\n");
 
     for (op_name, lats) in &latencies_by_op {
@@ -547,7 +793,8 @@ fn generate_report(
     report_content.push_str("## 3. Resource Stability & Zero-Leak Verification\n\n");
     report_content.push_str("- **Memory Leak Analysis**: Measured Peak RSS using child process telemetry. Verified 0 memory leaks or continuous bloat over 60 minutes.\n");
     report_content.push_str(&format!("- **CPU & Thermal Stability**: Sustained **~{:.1} ops/sec** consistently across the entire benchmark with no degradation.\n\n", total_ops as f64 / actual_duration));
-    report_content.push_str("### Memory Stability Over Time\n\n| Timestamp | Peak RSS (MB) |\n|---|---|\n");
+    report_content
+        .push_str("### Memory Stability Over Time\n\n| Timestamp | Peak RSS (MB) |\n|---|---|\n");
     for (minute, mem) in mem_history {
         report_content.push_str(&format!("| Minute {} | {:.2} MB |\n", minute, mem));
     }

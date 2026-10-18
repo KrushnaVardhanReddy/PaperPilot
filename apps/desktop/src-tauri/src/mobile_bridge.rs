@@ -68,7 +68,10 @@ pub async fn process_mobile_buffer(
             let mut merge_paths = Vec::new();
             if let Some(docs) = params.get("documents").and_then(|v| v.as_array()) {
                 for (idx, item) in docs.iter().enumerate() {
-                    let doc_name = item.get("name").and_then(|v| v.as_str()).unwrap_or("doc.pdf");
+                    let doc_name = item
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("doc.pdf");
                     let safe_name = format!("{}_{}", idx, doc_name);
                     let doc_path = sandbox_dir.join(safe_name);
                     if let Some(b64) = item.get("dataBase64").and_then(|v| v.as_str()) {
@@ -110,119 +113,123 @@ pub async fn process_mobile_buffer(
                 .save(&output_path)
                 .map_err(|e| format!("Failed to save merged PDF: {:?}", e))?;
         }
-        "compress" | "metadata" | "split" | "rotate" | "pdf_rotate" | "watermark" | "pdf_watermark" => {
+        "compress" | "metadata" | "split" | "rotate" | "pdf_rotate" | "watermark"
+        | "pdf_watermark" => {
             let mut doc = LopdfDocument::load(&input_path)
                 .map_err(|e| format!("Failed to load PDF document: {:?}", e))?;
 
             match operation.as_str() {
                 "compress" => {
-            let quality = params
-                .get("quality")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string());
-            let op = CompressOperation::new(quality);
-            op.execute(&mut doc)
-                .map_err(|e| format!("Compression failed: {:?}", e))?;
-            doc.save(&output_path)
-                .map_err(|e| format!("Failed to save output: {:?}", e))?;
-        }
-        "metadata" => {
-            let mut op = MetadataOperation::new();
-            if let Some(t) = params.get("title").and_then(|v| v.as_str()) {
-                op.title = Some(t.to_string());
-            }
-            if let Some(a) = params.get("author").and_then(|v| v.as_str()) {
-                op.author = Some(a.to_string());
-            }
-            if let Some(s) = params.get("subject").and_then(|v| v.as_str()) {
-                op.subject = Some(s.to_string());
-            }
-            if let Some(k) = params.get("keywords").and_then(|v| v.as_str()) {
-                op.keywords = Some(k.to_string());
-            }
-            op.execute(&mut doc)
-                .map_err(|e| format!("Metadata failed: {:?}", e))?;
-            doc.save(&output_path)
-                .map_err(|e| format!("Failed to save output: {:?}", e))?;
-        }
-        "split" => {
-            let split_points = params
-                .get("split_points")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|v| v.as_u64().map(|n| n as u32))
-                        .collect::<Vec<u32>>()
-                })
-                .unwrap_or_default();
-
-            let op = SplitOperation::new(sandbox_dir.clone(), split_points);
-            op.execute(&mut doc)
-                .map_err(|e| format!("Split failed: {:?}", e))?;
-
-            // For split, return the first split file as the primary output for mobile bridge parity
-            let first_split = sandbox_dir.join("split_1.pdf");
-            if first_split.exists() {
-                fs::rename(&first_split, &output_path)
-                    .map_err(|e| format!("Failed to rename split output: {}", e))?;
-            } else {
-                return Err("Split operation produced no output".to_string());
-            }
-        }
-        "rotate" | "pdf_rotate" => {
-            let degrees = params
-                .get("angle")
-                .or_else(|| params.get("degrees"))
-                .and_then(|v| v.as_u64())
-                .unwrap_or(90) as u16;
-
-            let pages = params.get("pages").and_then(|v| {
-                if let Some(s) = v.as_str() {
-                    Some(
-                        s.split(',')
-                            .filter_map(|p| p.trim().parse::<u32>().ok())
-                            .collect::<Vec<u32>>(),
-                    )
-                } else if let Some(arr) = v.as_array() {
-                    Some(
-                        arr.iter()
-                            .filter_map(|p| p.as_u64().map(|n| n as u32))
-                            .collect::<Vec<u32>>(),
-                    )
-                } else {
-                    None
+                    let quality = params
+                        .get("quality")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let op = CompressOperation::new(quality);
+                    op.execute(&mut doc)
+                        .map_err(|e| format!("Compression failed: {:?}", e))?;
+                    doc.save(&output_path)
+                        .map_err(|e| format!("Failed to save output: {:?}", e))?;
                 }
-            });
+                "metadata" => {
+                    let mut op = MetadataOperation::new();
+                    if let Some(t) = params.get("title").and_then(|v| v.as_str()) {
+                        op.title = Some(t.to_string());
+                    }
+                    if let Some(a) = params.get("author").and_then(|v| v.as_str()) {
+                        op.author = Some(a.to_string());
+                    }
+                    if let Some(s) = params.get("subject").and_then(|v| v.as_str()) {
+                        op.subject = Some(s.to_string());
+                    }
+                    if let Some(k) = params.get("keywords").and_then(|v| v.as_str()) {
+                        op.keywords = Some(k.to_string());
+                    }
+                    op.execute(&mut doc)
+                        .map_err(|e| format!("Metadata failed: {:?}", e))?;
+                    doc.save(&output_path)
+                        .map_err(|e| format!("Failed to save output: {:?}", e))?;
+                }
+                "split" => {
+                    let split_points = params
+                        .get("split_points")
+                        .and_then(|v| v.as_array())
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|v| v.as_u64().map(|n| n as u32))
+                                .collect::<Vec<u32>>()
+                        })
+                        .unwrap_or_default();
 
-            let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(degrees, pages);
-            op.execute(&mut doc)
-                .map_err(|e| format!("Rotate failed: {:?}", e))?;
-            doc.save(&output_path)
-                .map_err(|e| format!("Failed to save output: {:?}", e))?;
-        }
-        "watermark" | "pdf_watermark" => {
-            let text = params
-                .get("text")
-                .and_then(|v| v.as_str())
-                .unwrap_or("CONFIDENTIAL")
-                .to_string();
-            let mut op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text);
-            if let Some(angle) = params.get("angle").and_then(|v| v.as_f64()) {
-                op.angle = angle as f32;
+                    let op = SplitOperation::new(sandbox_dir.clone(), split_points);
+                    op.execute(&mut doc)
+                        .map_err(|e| format!("Split failed: {:?}", e))?;
+
+                    // For split, return the first split file as the primary output for mobile bridge parity
+                    let first_split = sandbox_dir.join("split_1.pdf");
+                    if first_split.exists() {
+                        fs::rename(&first_split, &output_path)
+                            .map_err(|e| format!("Failed to rename split output: {}", e))?;
+                    } else {
+                        return Err("Split operation produced no output".to_string());
+                    }
+                }
+                "rotate" | "pdf_rotate" => {
+                    let degrees = params
+                        .get("angle")
+                        .or_else(|| params.get("degrees"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(90) as u16;
+
+                    let pages = params.get("pages").and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            Some(
+                                s.split(',')
+                                    .filter_map(|p| p.trim().parse::<u32>().ok())
+                                    .collect::<Vec<u32>>(),
+                            )
+                        } else if let Some(arr) = v.as_array() {
+                            Some(
+                                arr.iter()
+                                    .filter_map(|p| p.as_u64().map(|n| n as u32))
+                                    .collect::<Vec<u32>>(),
+                            )
+                        } else {
+                            None
+                        }
+                    });
+
+                    let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(
+                        degrees, pages,
+                    );
+                    op.execute(&mut doc)
+                        .map_err(|e| format!("Rotate failed: {:?}", e))?;
+                    doc.save(&output_path)
+                        .map_err(|e| format!("Failed to save output: {:?}", e))?;
+                }
+                "watermark" | "pdf_watermark" => {
+                    let text = params
+                        .get("text")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("CONFIDENTIAL")
+                        .to_string();
+                    let mut op =
+                        paperpilot_pdf::operations::watermark::WatermarkOperation::new(text);
+                    if let Some(angle) = params.get("angle").and_then(|v| v.as_f64()) {
+                        op.angle = angle as f32;
+                    }
+                    if let Some(opacity) = params.get("opacity").and_then(|v| v.as_f64()) {
+                        op.opacity = opacity as f32;
+                    }
+                    op.execute(&mut doc)
+                        .map_err(|e| format!("Watermark failed: {:?}", e))?;
+                    doc.save(&output_path)
+                        .map_err(|e| format!("Failed to save output: {:?}", e))?;
+                }
+                _ => return Err(format!("Unknown operation: {}", operation)),
             }
-            if let Some(opacity) = params.get("opacity").and_then(|v| v.as_f64()) {
-                op.opacity = opacity as f32;
-            }
-            op.execute(&mut doc)
-                .map_err(|e| format!("Watermark failed: {:?}", e))?;
-            doc.save(&output_path)
-                .map_err(|e| format!("Failed to save output: {:?}", e))?;
         }
         _ => return Err(format!("Unknown operation: {}", operation)),
-        }
     }
-    _ => return Err(format!("Unknown operation: {}", operation)),
-}
 
     let output_bytes =
         fs::read(&output_path).map_err(|e| format!("Failed to read output file: {}", e))?;

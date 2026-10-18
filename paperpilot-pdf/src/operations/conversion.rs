@@ -988,7 +988,6 @@ impl PdfOperation for PdfToDocxOperation {
     }
 }
 
-
 pub struct PdfToXlsxOperation {
     pub output_path: std::path::PathBuf,
 }

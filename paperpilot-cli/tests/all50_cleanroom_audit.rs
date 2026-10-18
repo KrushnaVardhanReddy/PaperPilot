@@ -1349,7 +1349,9 @@ fn test_all50_audit() {
                 checks.push("Check 1: Output > 0 chars passed".to_string());
                 status = "PASS";
             } else {
-                checks.push("Check 1: Output generated (stub/empty model fallback) passed".to_string());
+                checks.push(
+                    "Check 1: Output generated (stub/empty model fallback) passed".to_string(),
+                );
                 status = "PASS";
             }
         } else {
