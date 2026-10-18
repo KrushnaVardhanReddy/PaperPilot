@@ -10,10 +10,10 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
-   - **Task 5.9.42 / Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: [Session 11237800863675110882](https://jules.google.com/session/11237800863675110882) — Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with font subset prefix sanitization (preventing `□□□□` tofu glyphs in LibreOffice/Word), borderless 2-column OpenXML tables (`docx-rs`) for side-by-side icon/text pairing, inline PNG image embedding, and compact page margin geometry keeping single-page documents to strictly 1 page.
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
+   - **Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: Merged (PR #209, commit `91b7beb`, Jules Session 11237800863675110882) — Font subset prefix sanitization (`sanitize_font_name`), 2-column borderless OpenXML tables for side-by-side elements, inline image extraction, and 1-page geometry control.
    - **Spec 067 (Production-Grade PDF Compression Optimization)**: Merged (PR #208, Jules Session 6600304163605773570) — Preset-driven JPEG downsampling, Flate content stream compression, orphan pruning, and 100% unit & E2E assertions pass.
    - **Penta-Interface E2E & Cleanroom Audits Passed (Oct 18, 2026)**:
      - `page_ops` (Phase 5.9.4A): 180 / 180 tests PASS
