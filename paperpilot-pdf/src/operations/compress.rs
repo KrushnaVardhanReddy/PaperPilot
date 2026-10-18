@@ -2,6 +2,9 @@ use crate::document::LopdfDocument;
 use image::codecs::jpeg::JpegEncoder;
 use image::{ColorType, DynamicImage, ImageBuffer};
 use lopdf::Object;
+use std::io::Write;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 
@@ -31,9 +34,9 @@ impl PdfOperation for CompressOperation {
             })?;
 
         let (max_dim, jpeg_quality) = match self.quality.as_deref() {
-            Some("low") => (1024, 40),
-            Some("medium") => (1600, 60),
-            Some("high") => (2400, 80),
+            Some("low") | Some("screen") => (1024, 40),
+            Some("medium") | Some("ebook") => (1600, 60),
+            Some("high") | Some("prepress") => (2400, 80),
             Some(s) if s.parse::<u8>().is_ok() => (1600, s.parse::<u8>().unwrap()),
             _ => (1600, 60), // default to medium
         };
@@ -52,6 +55,20 @@ impl PdfOperation for CompressOperation {
                     .unwrap_or(false);
 
                 if !is_image {
+                    let has_filter = stream.dict.has(b"Filter");
+                    if !has_filter {
+                        let original_len = stream.content.len();
+                        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                        if encoder.write_all(&stream.content).is_ok() {
+                            if let Ok(compressed) = encoder.finish() {
+                                if compressed.len() < original_len {
+                                    stream.content = compressed;
+                                    stream.dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
+                                    stream.dict.set("Length", Object::Integer(stream.content.len() as i64));
+                                }
+                            }
+                        }
+                    }
                     continue;
                 }
 
@@ -155,6 +172,7 @@ impl PdfOperation for CompressOperation {
             }
         }
 
+        lopdf_doc.inner.prune_objects();
         lopdf_doc.inner.compress();
         Ok(())
     }
@@ -202,6 +220,12 @@ mod tests {
 
         let image_stream = Stream::new(image_stream_dict, raw_bytes);
         doc.objects.insert(image_id, Object::Stream(image_stream));
+        let catalog_id = doc.new_object_id();
+        let mut catalog_dict = Dictionary::new();
+        catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("TestRef", Object::Reference(image_id));
+        doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+        doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
@@ -252,4 +276,85 @@ mod tests {
             panic!("Expected UnsupportedOperation error");
         }
     }
+
+    #[test]
+    fn test_compress_sample_photo_document_reduction() {
+        let path = std::path::Path::new("tests/e2e_fixtures/real/sample_photo_doc.pdf");
+        let path2 = std::path::Path::new("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
+        let path3 = std::path::Path::new("/app/tests/e2e_fixtures/real/sample_photo_doc.pdf");
+
+        let path_to_use = if path.exists() {
+            path
+        } else if path2.exists() {
+            path2
+        } else if path3.exists() {
+            path3
+        } else {
+            return;
+        };
+
+        let mut original_doc = Document::load(path_to_use).unwrap();
+        let original_size = {
+            let mut buf = Vec::new();
+            original_doc.save_to(&mut buf).unwrap();
+            buf.len()
+        };
+
+        let mut lopdf_doc = LopdfDocument {
+            inner: original_doc,
+            original_bytes: None,
+        };
+        let op = CompressOperation::new(Some("low".to_string()));
+        let result = op.execute(&mut lopdf_doc);
+        assert!(result.is_ok());
+
+        let compressed_size = {
+            let mut buf = Vec::new();
+            lopdf_doc.inner.save_to(&mut buf).unwrap();
+            buf.len()
+        };
+
+        let reduction = (original_size as f64 - compressed_size as f64) / original_size as f64;
+        assert!(reduction >= 0.30, "Expected at least 30% reduction, got {}%", reduction * 100.0);
+    }
+
+    #[test]
+    fn test_compress_large_doc() {
+        let path = std::path::Path::new("tests/e2e_fixtures/real/large_doc.pdf");
+        let path2 = std::path::Path::new("../tests/e2e_fixtures/real/large_doc.pdf");
+        let path3 = std::path::Path::new("/app/tests/e2e_fixtures/real/large_doc.pdf");
+
+        let path_to_use = if path.exists() {
+            path
+        } else if path2.exists() {
+            path2
+        } else if path3.exists() {
+            path3
+        } else {
+            return;
+        };
+        let mut original_doc = Document::load(path_to_use).unwrap();
+        let original_size = {
+            let mut buf = Vec::new();
+            original_doc.save_to(&mut buf).unwrap();
+            buf.len()
+        };
+
+        let mut lopdf_doc = LopdfDocument {
+            inner: original_doc,
+            original_bytes: None,
+        };
+        let op = CompressOperation::new(Some("high".to_string()));
+        let result = op.execute(&mut lopdf_doc);
+        assert!(result.is_ok());
+
+        let compressed_size = {
+            let mut buf = Vec::new();
+            lopdf_doc.inner.save_to(&mut buf).unwrap();
+            buf.len()
+        };
+
+        assert!(compressed_size <= original_size + 10240, "Size inflated unexpectedly! Compressed: {}, Original: {}", compressed_size, original_size);
+    }
+
 }
