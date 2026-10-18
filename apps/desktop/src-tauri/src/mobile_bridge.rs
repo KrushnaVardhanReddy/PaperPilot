@@ -32,11 +32,37 @@ pub async fn process_mobile_buffer(
     let output_file_name = format!("out_{}", safe_file_name);
     let output_path = sandbox_dir.join(&output_file_name);
 
-    let mut doc = LopdfDocument::load(&input_path)
-        .map_err(|e| format!("Failed to load PDF document: {:?}", e))?;
-
     // Dispatch operation
     match operation.as_str() {
+        "images_to_pdf" => {
+            let images_b64 = params
+                .get("images")
+                .and_then(|v| v.as_array())
+                .ok_or_else(|| "images_to_pdf requires 'images' array".to_string())?;
+
+            let mut image_paths = Vec::new();
+            for (idx, img_val) in images_b64.iter().enumerate() {
+                let b64_str = img_val
+                    .as_str()
+                    .ok_or_else(|| "Image item must be a base64 string".to_string())?;
+                let img_bytes = STANDARD
+                    .decode(b64_str)
+                    .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
+                let img_path = sandbox_dir.join(format!("page_{}.jpg", idx));
+                fs::write(&img_path, &img_bytes)
+                    .map_err(|e| format!("Failed to write page image: {}", e))?;
+                image_paths.push(img_path);
+            }
+
+            let mut new_doc = LopdfDocument::new();
+            let op =
+                paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(image_paths);
+            op.execute(&mut new_doc)
+                .map_err(|e| format!("ImagesToPdf failed: {:?}", e))?;
+            new_doc
+                .save(&output_path)
+                .map_err(|e| format!("Failed to save generated PDF: {:?}", e))?;
+        }
         "merge" | "pdf_merge" => {
             // Check if multiple documents were passed in params.documents
             let mut merge_paths = Vec::new();
@@ -84,7 +110,12 @@ pub async fn process_mobile_buffer(
                 .save(&output_path)
                 .map_err(|e| format!("Failed to save merged PDF: {:?}", e))?;
         }
-        "compress" => {
+        "compress" | "metadata" | "split" | "rotate" | "pdf_rotate" | "watermark" | "pdf_watermark" => {
+            let mut doc = LopdfDocument::load(&input_path)
+                .map_err(|e| format!("Failed to load PDF document: {:?}", e))?;
+
+            match operation.as_str() {
+                "compress" => {
             let quality = params
                 .get("quality")
                 .and_then(|v| v.as_str())
@@ -187,40 +218,11 @@ pub async fn process_mobile_buffer(
             doc.save(&output_path)
                 .map_err(|e| format!("Failed to save output: {:?}", e))?;
         }
-        "images_to_pdf" => {
-            // Drop loaded doc since we create a fresh PDF from the images
-            drop(doc);
-
-            let images_b64 = params
-                .get("images")
-                .and_then(|v| v.as_array())
-                .ok_or_else(|| "images_to_pdf requires 'images' array".to_string())?;
-
-            let mut image_paths = Vec::new();
-            for (idx, img_val) in images_b64.iter().enumerate() {
-                let b64_str = img_val
-                    .as_str()
-                    .ok_or_else(|| "Image item must be a base64 string".to_string())?;
-                let img_bytes = STANDARD
-                    .decode(b64_str)
-                    .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
-                let img_path = sandbox_dir.join(format!("page_{}.jpg", idx));
-                fs::write(&img_path, &img_bytes)
-                    .map_err(|e| format!("Failed to write page image: {}", e))?;
-                image_paths.push(img_path);
-            }
-
-            let mut new_doc = LopdfDocument::new();
-            let op =
-                paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(image_paths);
-            op.execute(&mut new_doc)
-                .map_err(|e| format!("ImagesToPdf failed: {:?}", e))?;
-            new_doc
-                .save(&output_path)
-                .map_err(|e| format!("Failed to save generated PDF: {:?}", e))?;
-        }
         _ => return Err(format!("Unknown operation: {}", operation)),
+        }
     }
+    _ => return Err(format!("Unknown operation: {}", operation)),
+}
 
     let output_bytes =
         fs::read(&output_path).map_err(|e| format!("Failed to read output file: {}", e))?;
