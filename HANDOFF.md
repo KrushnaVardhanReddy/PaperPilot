@@ -22,10 +22,8 @@
    - Spec 060 (PR #205, commit `a2b7c9d`): 1-Hour sustained soak benchmark harness (`soak-bench`), executed 8,180,016 ops across 340,834 cycles at 2,272.2 ops/sec with 100.00% success rate and zero memory leaks (142.45 MB RSS stable).
 
 3. **Active Jules Sessions in Flight**:
+   - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
    - **Task 5.9.41 / Spec 064 (All 50 Tools Clean-Room Isolated Sandbox Audit)**: [Session 6315381594318405205](https://jules.google.com/session/6315381594318405205) — `make test-cleanroom-all50`.
-
-4. **Next Task Ready for Dispatch**:
-   - **Task 5.9.39 / Spec 063 (Mobile Touch UI & Adaptive Layout)**: [`prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt`](prompts/tasks/phase5/P5_9_39_mobile_touch_ui.txt) — Svelte 5 bottom nav, bottom sheet, touch gestures.
 
 ---
 
