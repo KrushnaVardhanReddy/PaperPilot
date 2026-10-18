@@ -14,6 +14,7 @@ export interface OperationContext {
     deletePages?: string;
     extractPages?: string;
     rotateAngle: string;
+    rotatePages?: string;
     watermarkText: string;
     watermarkOrientation: string;
     watermarkOpacity: number;
@@ -209,7 +210,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'rotate':
             args = {
                 input: docPath,
-                pages: 'all',
+                pages: context.rotatePages && context.rotatePages.trim() !== '' ? context.rotatePages.trim() : 'all',
                 angle: parseInt(rotateAngle, 10),
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
             };

@@ -73,6 +73,7 @@ import { onMount } from 'svelte';
   let extractPages = $state('');
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
+  let rotatePages = $state('');
   let watermarkText = $state('');
 
   let watermarkOpacity = $state(20);
@@ -300,6 +301,7 @@ import { onMount } from 'svelte';
             deletePages,
             extractPages,
             rotateAngle,
+            rotatePages,
             watermarkText,
             watermarkOrientation,
             watermarkOpacity,
@@ -416,6 +418,7 @@ import { onMount } from 'svelte';
           deletePages,
           extractPages,
           rotateAngle,
+          rotatePages,
           watermarkText,
           watermarkOrientation,
           watermarkOpacity,
@@ -694,6 +697,19 @@ import { onMount } from 'svelte';
             <option value="180">180° Flip</option>
             <option value="270">270° Counter-Clockwise</option>
           </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="rotatePages" class="section-desc">Pages to Rotate (Optional):</label>
+          <input
+            id="rotatePages"
+            type="text"
+            class="form-input"
+            bind:value={rotatePages}
+            placeholder="e.g. 1, 3, 5-10 (leave empty for all)"
+          />
+          <div class="range-labels" style="margin-top: 4px;">
+            <span style="font-size: 0.72rem; color: #94a3b8;">Empty = All pages</span>
+          </div>
         </div>
       {:else if activeTool.id === 'watermark'}
         <div class="operation-config">
