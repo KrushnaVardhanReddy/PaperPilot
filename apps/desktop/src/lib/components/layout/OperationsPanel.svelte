@@ -337,12 +337,12 @@ import { onMount } from 'svelte';
                // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
                // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
 
-               let inputBytes = [];
+               let inputBytes: number[] = [];
                if (doc && (doc as any)._isLoaded) {
                    const arrayBuf = await doc.arrayBuffer();
                    inputBytes = Array.from(new Uint8Array(arrayBuf));
                } else if (docPath) {
-                   inputBytes = await invoke('read_file_bytes', { path: docPath }).catch(() => []);
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
                }
 
                result = await invoke('process_mobile_buffer', {
@@ -457,12 +457,13 @@ import { onMount } from 'svelte';
                // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
                // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
 
-               let inputBytes = [];
-               if (doc && (doc as any)._isLoaded) {
-                   const arrayBuf = await doc.arrayBuffer();
+               let inputBytes: number[] = [];
+               const currentDoc = appState.documents[docIndex];
+               if (currentDoc && (currentDoc as any)._isLoaded) {
+                   const arrayBuf = await currentDoc.arrayBuffer();
                    inputBytes = Array.from(new Uint8Array(arrayBuf));
                } else if (docPath) {
-                   inputBytes = await invoke('read_file_bytes', { path: docPath }).catch(() => []);
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
                }
 
                result = await invoke('process_mobile_buffer', {
