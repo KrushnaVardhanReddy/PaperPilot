@@ -1,92 +1,131 @@
-# Spec 066 — Explicit Input/Output Format Badges & Disambiguated Tool Typography
+# Spec 066 — Universal Penta-Interface Tool Disambiguation & Explicit Input/Output Format Badges
 
 ## 1. Overview & Problem Statement
-Currently, tools in the Desktop Operations Panel and Studio Hub display generic, overlapping names:
-- Searching `"extr"` yields 5+ similarly named cards: *"Extract Plain Text"*, *"Extract Text"*, *"Extract Pages"*, *"Extract Embedded Images"*, and *"OCR Text Recognition"*.
-- Users cannot tell at a glance what file types can be supplied as input (e.g. PDF vs Word/Excel), nor what kind of file will be generated as output (e.g. a single `.txt` file, a new `.pdf`, a ZIP of `.png` images, or an editable `.docx`).
-- This leads to cognitive friction, misapplied operations, and confusion.
+Currently across PaperPilot (Desktop UI, MCP Server, CLI, and REST Gateway), several core tools carry ambiguous, overlapping names:
+- Searching `"extr"` in the desktop UI or listing MCP tools displays 5+ similar tools: *"Extract Plain Text"*, *"Extract Text"*, *"Extract Pages"*, *"Extract Embedded Images"*, and *"OCR Text Recognition"*.
+- Neither human users in the desktop UI nor LLM agents connected via MCP have explicit guarantees of:
+  1. What file extensions are supported as input (e.g. `.pdf` vs `.docx`, `.xlsx`, `.pptx`).
+  2. What kind of output artifact will be written or returned (e.g. `.txt`, `.docx`, a single `.pdf`, a folder of `.png`s, or `.json`).
 
 **Objective:**
-Upgrade `ToolDefinition` and the Desktop UI components (`OperationsPanel.svelte`, `+page.svelte`, and `toolList.ts`) to:
-1. Disambiguate all tool titles (e.g., *"PDF to Plain Text"* vs *"Office to Plain Text"* vs *"Extract PDF Pages"*).
-2. Add explicit `inputFormat` and `outputFormat` metadata across all 50+ tool definitions.
-3. Render sleek, high-contrast, compact `INPUT ➔ OUTPUT` flow pills on every tool card in both the Operations Panel and Studio Hub.
+Upgrade PaperPilot across all interfaces according to the **Penta-Interface Mandate**:
+1. **Desktop Studio UI**: Disambiguate all tool titles and render sleek `INPUT ➔ OUTPUT` flow badges on cards in `OperationsPanel.svelte` and `+page.svelte`.
+2. **MCP Server (`paperpilot-mcp`)**: Enrich all 51 tool descriptions with explicit `[Input: ... | Output: ...]` constraints so LLMs choose the exact tool without hallucination.
+3. **CLI (`paperpilot-cli`)**: Add clear doc comments with `[Input: ... | Output: ...]` to all clap subcommands and arguments.
+4. **REST Gateway (`paperpilot-gateway`)**: Document endpoints in Swagger/OpenAPI with clear format contracts.
 
 ---
 
-## 2. Technical Architecture & Interface Schema
+## 2. Technical Architecture & Precise Implementations
 
-### 2.1 ToolDefinition Schema Extension (`apps/desktop/src/lib/types/tools.ts`)
-```typescript
-export interface ToolDefinition {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
-  context: 'pdf' | 'office' | 'ai';
-  tags: string[];
-  inputFormat: string;   // e.g. "PDF", "Office (DOCX/XLSX/PPTX)", "Scanned PDF / Images", "Images"
-  outputFormat: string;  // e.g. ".TXT", ".DOCX", ".PDF", "PNGs", "JSON"
-  rule?: ToolConditionRule;
-}
-```
+### 2.1 Interface 1: Desktop Studio (`apps/desktop`)
+1. **`apps/desktop/src/lib/types/tools.ts`**:
+   Extend `ToolDefinition`:
+   ```typescript
+   export interface ToolDefinition {
+     id: string;
+     title: string;
+     description: string;
+     icon: string;
+     category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
+     context: 'pdf' | 'office' | 'ai';
+     tags: string[];
+     inputFormat: string;   // e.g. "PDF (.pdf)", "Office (.docx, .xlsx)", "Images"
+     outputFormat: string;  // e.g. ".TXT", ".DOCX", ".PDF", "PNG Images", ".JSON"
+     rule?: ToolConditionRule;
+   }
+   ```
 
-### 2.2 Title & Format Disambiguation Catalog (`toolList.ts`)
-Update existing ambiguous titles and equip all tools with explicit flow badges:
+2. **`apps/desktop/src/lib/types/toolList.ts`**:
+   Disambiguate titles and add `inputFormat`/`outputFormat` across all tools:
+   - `extract_text` $\to$ **PDF to Plain Text** (`PDF` ➔ `.TXT`)
+   - `office_extract_text` $\to$ **Office to Plain Text** (`DOCX, XLSX, PPTX` ➔ `.TXT`)
+   - `ocr` $\to$ **OCR Text Recognition** (`Scanned PDF / Image` ➔ `.TXT / PDF`)
+   - `extract_pages` $\to$ **Extract PDF Pages** (`PDF` ➔ `.PDF`)
+   - `extract_images` $\to$ **Extract Embedded Images** (`PDF` ➔ `PNG Images`)
+   - `pdf_to_docx` $\to$ **PDF to Word (DOCX)** (`PDF` ➔ `.DOCX`)
+   - `pdf_to_xlsx` $\to$ **PDF to Excel (XLSX)** (`PDF` ➔ `.XLSX`)
+   - `pdf_to_markdown` $\to$ **PDF to Markdown** (`PDF` ➔ `.MD`)
+   - `pdf_to_html` $\to$ **PDF to HTML** (`PDF` ➔ `.HTML`)
+   - `excel_to_json` $\to$ **Excel to JSON** (`XLSX, XLS, CSV` ➔ `.JSON`)
+   - `excel_to_csv` $\to$ **Excel to CSV** (`XLSX, XLS` ➔ `.CSV`)
+   - `img_to_pdf` $\to$ **Images to PDF** (`JPG, PNG, WebP` ➔ `.PDF`)
+   - `md_to_pdf` $\to$ **Markdown to PDF** (`Markdown (.md)` ➔ `.PDF`)
+   - `compress` $\to$ **Compress PDF** (`PDF` ➔ `.PDF`)
+   - `merge` $\to$ **Merge PDFs** (`2+ PDFs` ➔ `.PDF`)
+   - `split` $\to$ **Split PDF** (`PDF` ➔ `Multiple .PDFs`)
 
-| Tool ID | Cleaned Disambiguated Title | `inputFormat` | `outputFormat` | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `extract_text` | **PDF to Plain Text** | `PDF` | `.TXT` | Extract all raw textual content from PDF into a text file |
-| `ocr` | **OCR Text Recognition** | `Scanned PDF / Image` | `.TXT / PDF` | Extract text from scanned pages using local on-device neural OCR |
-| `office_extract_text` | **Office to Plain Text** | `DOCX, XLSX, PPTX` | `.TXT` | Extract textual content from Microsoft Office documents |
-| `extract_images` | **Extract Embedded Images** | `PDF` | `PNG Images` | Extract all photos, illustrations, and raster media saved in the PDF |
-| `extract_pages` | **Extract PDF Pages** | `PDF` | `.PDF` | Cut out selected page ranges into a separate PDF |
-| `pdf_to_docx` | **PDF to Word (DOCX)** | `PDF` | `.DOCX` | Export document as editable Microsoft Word file |
-| `pdf_to_xlsx` | **PDF to Excel (XLSX)** | `PDF` | `.XLSX` | Extract tabular data into editable Excel spreadsheet |
-| `pdf_to_markdown` | **PDF to Markdown** | `PDF` | `.MD` | Convert layout into LLM-ready markdown text |
-| `pdf_to_html` | **PDF to HTML** | `PDF` | `.HTML` | Export document as responsive, styled HTML5 web page |
-| `excel_to_json` | **Excel to JSON** | `XLSX, XLS, CSV` | `.JSON` | Convert spreadsheet sheets into structured tabular JSON |
-| `excel_to_csv` | **Excel to CSV** | `XLSX, XLS` | `.CSV` | Export spreadsheet sheets into standard RFC 4180 CSV |
-| `img_to_pdf` | **Images to PDF** | `JPG, PNG, WebP` | `.PDF` | Combine multiple images into a multi-page PDF |
-| `md_to_pdf` | **Markdown to PDF** | `Markdown (.md)` | `.PDF` | Render formatted markdown text into styled PDF |
-| `compress` | **Compress PDF** | `PDF` | `.PDF` | Lossy & lossless file size reduction with downsampling |
-| `merge` | **Merge PDFs** | `2+ PDFs` | `.PDF` | Combine multiple PDF files into one continuous document |
-| `split` | **Split PDF** | `PDF` | `Multiple .PDFs` | Divide document into separate pages or ranges |
-
-*(And complete matching pairs for all remaining tools in `toolList.ts`)*.
-
-### 2.3 UI Card Rendering (`OperationsPanel.svelte` & `+page.svelte`)
-In the tool card template:
-```svelte
-<div class="tool-card-info">
-  <div class="tool-card-title-row">
-    <span class="tool-card-title">{tool.title}</span>
-    {#if tool.inputFormat && tool.outputFormat}
-      <span class="format-pill">
-        <span class="fmt-in">{tool.inputFormat}</span>
-        <span class="fmt-arrow">➔</span>
-        <span class="fmt-out">{tool.outputFormat}</span>
-      </span>
-    {/if}
-  </div>
-  <span class="tool-card-desc">{tool.description}</span>
-</div>
-```
-
-**Styling**:
-- `.format-pill`: Compact pill badge with subtle glass background (`rgba(255, 255, 255, 0.08)` or accent tint), 10px font size, uppercase tracking, rounded radius.
-- `.fmt-arrow`: Slight accent color (e.g. vibrant blue/violet `text-indigo-400`).
-- Responsive: Wraps cleanly on smaller screens or mobile sheets without cutting off tool titles.
+3. **`OperationsPanel.svelte` & `+page.svelte`**:
+   Render the `.format-pill`:
+   ```svelte
+   <div class="tool-card-title-row">
+     <span class="tool-card-title">{tool.title}</span>
+     {#if tool.inputFormat && tool.outputFormat}
+       <span class="format-pill">
+         <span class="fmt-in">{tool.inputFormat}</span>
+         <span class="fmt-arrow">➔</span>
+         <span class="fmt-out">{tool.outputFormat}</span>
+       </span>
+     {/if}
+   </div>
+   ```
 
 ---
 
-## 3. Verification Criteria
-1. **TypeScript Compilation**: `npm run check` in `apps/desktop` passes with zero type errors.
-2. **Search Verification**: Typing `"extr"` in the Operations Panel search bar displays distinct, instantly identifiable tools:
-   - `PDF to Plain Text` (`PDF ➔ .TXT`)
-   - `Office to Plain Text` (`DOCX, XLSX, PPTX ➔ .TXT`)
-   - `Extract PDF Pages` (`PDF ➔ .PDF`)
-   - `Extract Embedded Images` (`PDF ➔ PNG Images`)
-   - `OCR Text Recognition` (`Scanned PDF / Image ➔ .TXT / PDF`)
-3. **No Layout Regressions**: Operations panel cards and Studio Hub grid cards remain aligned and visually polished in dark and light themes.
+### 2.2 Interface 2: MCP Server (`paperpilot-mcp/src/server.rs`)
+In `list_tools()`:
+Update tool descriptions to explicitly declare expected input and output formats:
+- `pdf_extract_text`:
+  `"Extract raw text content from PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]"`
+- `office_extract_text`:
+  `"Extract text content from Microsoft Office documents. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]"`
+- `extract_pages`:
+  `"Extract selected page numbers into a new PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]"`
+- `extract_images`:
+  `"Extract raster images from a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG images]"`
+- `pdf_to_docx`:
+  `"Convert PDF into editable Microsoft Word format. [Input: PDF (.pdf) | Output: Word (.docx)]"`
+- `excel_to_json`:
+  `"Extract spreadsheet tabular data as JSON. [Input: Excel (.xlsx, .xls) | Output: JSON array]"`
+*(And all remaining tools with matching standardized `[Input: ... | Output: ...]` tags)*.
+
+---
+
+### 2.3 Interface 3: CLI (`paperpilot-cli/src/cli.rs`)
+Update clap doc comments for subcommands:
+```rust
+/// PDF to Plain Text: Extract all raw textual content from a PDF [Input: .pdf | Output: .txt]
+ExtractText {
+    #[arg(long, help = "Path to input PDF file (.pdf)")]
+    input: PathBuf,
+    #[arg(long, help = "Path to output text file (.txt)")]
+    output: PathBuf,
+    ...
+},
+
+/// Office to Plain Text: Extract all text from Office documents [Input: .docx, .xlsx, .pptx | Output: .txt]
+OfficeExtractText {
+    #[arg(long, help = "Path to input Office file (.docx, .xlsx, .pptx)")]
+    input: PathBuf,
+    #[arg(long, help = "Path to output text file (.txt)")]
+    output: PathBuf,
+},
+```
+
+---
+
+### 2.4 Interface 4: REST Gateway (`paperpilot-gateway/src/handlers.rs`)
+Update endpoint route docstrings and Swagger summary descriptions to include `[Input: ... -> Output: ...]`.
+
+---
+
+## 3. Verification Protocol
+1. **Desktop Verification**:
+   - Run `npm run check` in `apps/desktop` (0 errors).
+   - Search `"extr"` in Operations Panel and confirm all cards render with unambiguous titles and high-contrast `INPUT ➔ OUTPUT` pills.
+2. **MCP Verification**:
+   - Run `cargo test -p paperpilot-mcp`.
+   - Verify tool list JSON includes `[Input: ... | Output: ...]` in tool descriptions.
+3. **CLI Verification**:
+   - Run `cargo run -p paperpilot-cli -- --help` and verify updated descriptions.
+   - Run `cargo test -p paperpilot-cli`.
