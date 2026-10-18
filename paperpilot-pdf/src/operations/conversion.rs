@@ -913,7 +913,48 @@ pub struct TextSpan {
     pub color_hex: String,
 }
 
-fn sanitize_xml_text(s: &str) -> String {
+pub fn sanitize_font_name(raw_name: &str) -> String {
+    // 1. Strip 6-character random uppercase subset tag and '+' (e.g. "JFGNNE+SourceSansPro-Bold" -> "SourceSansPro-Bold")
+    let cleaned = if let Some((prefix, rest)) = raw_name.split_once('+') {
+        if prefix.len() == 6 && prefix.chars().all(|c| c.is_ascii_uppercase()) {
+            rest
+        } else {
+            raw_name
+        }
+    } else {
+        raw_name
+    };
+
+    // 2. Separate font family from weight suffix
+    let family = cleaned
+        .trim_end_matches("-Bold")
+        .trim_end_matches("-Regular")
+        .trim_end_matches("-Italic")
+        .trim_end_matches("-BoldItalic")
+        .trim_end_matches(",Bold")
+        .trim_end_matches(",Italic");
+
+    // 3. Insert spaces between CamelCase words if needed (e.g., "SourceSansPro" -> "Source Sans Pro")
+    let mut normalized = String::new();
+    for (i, ch) in family.chars().enumerate() {
+        if i > 0
+            && ch.is_ascii_uppercase()
+            && let Some(prev) = family.chars().nth(i - 1)
+            && prev.is_ascii_lowercase()
+        {
+            normalized.push(' ');
+        }
+        normalized.push(ch);
+    }
+
+    if normalized.is_empty() || (normalized.starts_with('F') || normalized.starts_with('G')) && normalized.len() <= 3 {
+        "Arial".to_string()
+    } else {
+        normalized
+    }
+}
+
+pub fn sanitize_xml_text(s: &str) -> String {
     s.chars()
         .filter(|&c| {
             c == '\t'
@@ -1358,6 +1399,17 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_sanitize_font_name() {
+        assert_eq!(super::sanitize_font_name("JFGNNE+SourceSansPro-Bold"), "Source Sans Pro");
+        assert_eq!(super::sanitize_font_name("ABCDEF+Arial-Italic"), "Arial");
+        assert_eq!(super::sanitize_font_name("ABCDEF+Helvetica-BoldItalic"), "Helvetica");
+        assert_eq!(super::sanitize_font_name("ABCDEF+TimesNewRoman-Regular"), "Times New Roman");
+        assert_eq!(super::sanitize_font_name("F1"), "Arial");
+        assert_eq!(super::sanitize_font_name("G1"), "Arial");
+        assert_eq!(super::sanitize_font_name("XYZABC+OpenSans,Bold"), "Open Sans");
     }
 
     #[test]
