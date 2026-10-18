@@ -10,11 +10,11 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
-   - **Task 5.9.43 / Spec 066 (Tool Disambiguation & Explicit Input/Output Format Badges)**: Prompt `prompts/tasks/phase5/P5_9_43_tool_format_badges_and_disambiguation.txt` — Disambiguating overlapping tool titles (e.g. "PDF to Plain Text" vs "Office to Plain Text" vs "Extract PDF Pages") and adding explicit `INPUT ➔ OUTPUT` flow pills on all 50+ tool cards in the Desktop UI.
    - **Task 5.9.42 / Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: [Session 3442134502545175938](https://jules.google.com/session/3442134502545175938) — Upgrading `PdfToDocxOperation` in `paperpilot-pdf` with font subset prefix sanitization (preventing `□□□□` tofu glyphs in LibreOffice/Word), borderless 2-column OpenXML tables (`docx-rs`) for side-by-side icon/text pairing, inline PNG image embedding, and compact page margin geometry keeping single-page documents to strictly 1 page.
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
+   - **Spec 066 (Tool Disambiguation & Explicit Input/Output Format Badges)**: Merged (PR #207, commit `42b6f29`, Jules Session 14117039404412235313).
    - **Spec 064 (All 50 Tools Clean-Room Isolated Sandbox Audit)**: Completed (Session 13530573138717224797) — `make test-cleanroom-all50`, 50/50 100% PASS.
    - **Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: Merged (PR #203, commit `07c4a56`).
    - **Spec 060 (1-Hour Sustained Soak Benchmark)**: Merged (PR #205, commit `a2b7c9d`) — 8,180,016 ops, 2,272.2 ops/sec, zero leaks.
