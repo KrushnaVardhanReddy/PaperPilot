@@ -23,10 +23,23 @@ pub struct HealthResponse {
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
+#[schema(
+    description = "Standard API response envelope. When executed, 'Server response' shows the actual output below, while 'Responses' documents the expected schema contract.",
+    example = json!({
+        "success": true,
+        "result": {
+            "message": "Operation completed successfully.",
+            "output_path": "/path/to/output.pdf"
+        },
+        "error": null
+    })
+)]
 pub struct ApiResponse {
-    #[schema(example = true)]
+    #[schema(description = "Indicates whether the operation succeeded", example = true)]
     pub success: bool,
+    #[schema(description = "Execution result payload or output path if successful")]
     pub result: Option<Value>,
+    #[schema(description = "Error description if the operation failed", example = null)]
     pub error: Option<String>,
 }
 
@@ -487,7 +500,9 @@ pub async fn handle_tool(
     tag = "PDF Operations",
     request_body(content = MergeJsonRequest, description = "JSON configuration or multipart form"),
     responses(
-        (status = 200, description = "Merged successfully", body = ApiResponse)
+        (status = 200, description = "Expected schema contract for successful merge", body = ApiResponse),
+        (status = 400, description = "Expected schema contract for invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Expected schema contract for engine execution errors", body = ApiResponse)
     )
 )]
 pub async fn merge(req: axum::extract::Request) -> impl IntoResponse {
