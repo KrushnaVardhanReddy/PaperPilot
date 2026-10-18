@@ -185,9 +185,77 @@ jobs:
             release_pkgs/*
           if-no-files-found: error
 
+  build-android-apk:
+    name: Build Android APK (Mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK & NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: |
+          sdkmanager --install "ndk;28.2.13676358"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Set up Node.js & pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Desktop Dependencies
+        run: |
+          cd apps/desktop
+          pnpm install --frozen-lockfile || pnpm install
+
+      - name: Build Android Release APK
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          CARGO_BUILD_JOBS: 4
+        run: |
+          cd apps/desktop
+          pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+
+      - name: Package Android Release APK
+        run: |
+          mkdir -p release_pkgs
+          # Copy universal release apk or arm64 apk
+          APK_PATH=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            cp "$APK_PATH" "release_pkgs/paperpilot-android-aarch64-${{ inputs.version }}.apk"
+            cd release_pkgs
+            shasum -a 256 "paperpilot-android-aarch64-${{ inputs.version }}.apk" > "paperpilot-android-aarch64-${{ inputs.version }}.apk.sha256"
+            cd ..
+          fi
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-android
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
   publish-github-release:
     name: Publish GitHub Release
-    needs: [build-release-binaries, build-wasm-package]
+    needs: [build-release-binaries, build-wasm-package, build-android-apk]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -218,9 +286,10 @@ jobs:
             - `paperpilot` (CLI Engine with 50+ PDF & document tools)
             - `paperpilot-gateway` (HTTP/REST Microservice API)
             - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
-            - `paperpilot-all` (All-in-one suite)
+            - `paperpilot-all` (All-in-one desktop suite)
+            - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
             - `paperpilot-wasm-universal` (Client-side WebAssembly package for browser & edge runtimes)
 
             ### Checksums
-            SHA-256 checksums are attached alongside each `.tar.gz` and `.zip` archive.
+            SHA-256 checksums are attached alongside each `.tar.gz`, `.zip`, and `.apk` artifact.
 

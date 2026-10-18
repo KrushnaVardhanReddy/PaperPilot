@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -81,16 +81,28 @@ build-macos:
 	@echo "Trigger GitHub Actions Rust CI or use: gh workflow run rust.yml for macOS build."
 
 # Android builds & installation
+# Note: uses CARGO_BUILD_JOBS=4 and --no-default-features for lean, responsive mobile compilation
 build-android:
-	cd apps/desktop && npx tauri android build --debug --target aarch64 --apk
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --debug --target aarch64 --apk -- --no-default-features
+
+build-android-release:
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
 
 run-android:
-	cd apps/desktop && npx tauri android dev
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android dev
 
 install-android: build-android
 	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk 2>/dev/null || \
 	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/arm64-v8a/debug/app-arm64-v8a-debug.apk 2>/dev/null || \
 	find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec adb install -r {} +
+
+install-android-release: build-android-release
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk 2>/dev/null || \
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk 2>/dev/null || \
+	find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*release*.apk" -exec adb install -r {} +
+
+log-android:
+	adb logcat -v color | grep -iE "paperpilot|tauri|chromium"
 
 # Package standalone desktop installers (AppImage, deb)
 dist:
