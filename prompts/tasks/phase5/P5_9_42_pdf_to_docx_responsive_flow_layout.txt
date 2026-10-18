@@ -4,43 +4,41 @@
 # Target Branch: main
 
 ### Objective
-Upgrade `paperpilot_pdf::operations::conversion::PdfToDocxOperation` to produce clean, high-fidelity, responsive Microsoft Word (.docx) documents with correct font mapping (no tofu glyphs `□□□□`), aligned inline images, and multi-column grid pairing that preserves 1-to-1 page counts without page explosion.
+Upgrade `paperpilot_pdf::operations::conversion::PdfToDocxOperation` in `paperpilot-pdf` to convert PDFs into responsive, clean Microsoft Word (.docx) documents. The engine must preserve 1-page document limits (no spillover into 2+ pages), sanitize font names to eliminate square tofu boxes (`□□□□`), embed extracted PNG images inline, and pair side-by-side elements into borderless 2-column tables.
 
 ### Detailed Scope & Context
-Read `specs/065-pdf-to-docx-flow-layout-images/spec.md` for full background and technical details.
-Input fixture for validation: `fixtures/Get_Started_With_Smallpdf.pdf`.
+Read `specs/065-pdf-to-docx-flow-layout-images/spec.md` for complete architectural details and code snippets.
+Input validation fixture: `fixtures/Get_Started_With_Smallpdf.pdf`.
 
-1. **Font Name Sanitization & Standard Cross-Platform Fallbacks (`conversion.rs`)**:
-   - In PDF text streams, fonts often carry subset prefixes (e.g. `JFGNNE+SourceSansPro-Bold`). When exported directly into Word XML (`w:rFonts`), office suites like LibreOffice fail to resolve the font and render square tofu boxes (`□□□□`).
-   - Strip the 6-character random subset prefix and plus sign (`^[A-Z]{6}\+`).
-   - Map font families to universal cross-platform defaults:
-     - Sans-serif: `"Source Sans Pro", Arial, Calibri, sans-serif`
-     - Serif: `"Times New Roman", Georgia, serif`
-     - Monospace: `"Courier New", monospace`
-   - Preserve font size, bold, italic, and hex text colors.
+#### 1. Font Name Sanitization & Typography (`conversion.rs`)
+- In `PdfToDocxOperation`, clean extracted font names before writing to `RunFonts`:
+  - Strip 6-letter uppercase subset prefix followed by `+` (`^[A-Z]{6}\+`).
+  - Strip `-Bold`, `-Regular`, `-Italic` suffixes to get the clean family name (e.g. `JFGNNE+SourceSansPro-Bold` -> `Source Sans Pro`).
+  - Fallback to universal fonts (`Arial`, `Calibri`, `Times New Roman`) if font is missing or synthetic (`F1`, `G1`).
+  - Apply `.bold()`, `.italic()`, `.size()`, and `.color()` based on extracted font attributes.
 
-2. **2-Column / Grid Responsive Pairing via Borderless Tables**:
-   - Documents with side-by-side icons and descriptive text (such as `fixtures/Get_Started_With_Smallpdf.pdf`) currently suffer in Word/LibreOffice when rendered as absolute frames (text spills across multiple pages) or flat paragraphs (images are omitted and columns are flattened).
-   - Reconstruct side-by-side elements into borderless 2-column OpenXML tables (`docx_rs::Table` with `BorderType::None`):
-     - Left Column: Embedded Image / Icon (`docx_rs::Pic`).
-     - Right Column: Heading (`Heading2` / bold) + descriptive body paragraph.
-   - For single-column sections (e.g. the main title "Welcome to Smallpdf"), emit standard centered paragraphs.
+#### 2. Layout Analysis: Block Clustering & 2-Column Pairing
+- Extract text spans and bounding boxes via `pdf_oxide` / `lopdf`.
+- Extract page images via `doc.extract_images(page_idx)` and convert to PNG bytes via the `image` crate.
+- Detect side-by-side layout (such as Smallpdf's 4 feature rows):
+  - If an image bounding box horizontally precedes or follows a text block with vertical overlap, pair them into a 2-column borderless OpenXML table (`docx_rs::Table`).
+  - Left column: Image (`docx_rs::Pic::new(&png_bytes)`).
+  - Right column: Feature Title (bold) + Description paragraph.
+  - Set table borders to none so it looks seamless in LibreOffice and Word.
+- For full-width/centered blocks (like page headers/titles), render standard centered paragraphs (`AlignmentType::Center`).
 
-3. **Inline Image Extraction & Embedding**:
-   - Extract page images using `pdf_oxide` or `lopdf` stream extraction.
-   - Convert decoded images to PNG bytes via the `image` crate.
-   - Add image elements to the DOCX document using `docx_rs::Pic::new(&png_bytes)` so images appear inside their appropriate grid cells or paragraphs.
+#### 3. Single-Page Geometry & Overflow Prevention
+- Set section margins to 720 dxa (0.5 in).
+- Keep paragraph spacing compact (`before: 0, after: 60 dxa`) so content naturally fits within the exact page height without creating spurious extra pages.
 
-4. **Page Count Integrity Verification**:
-   - Test conversion with `fixtures/Get_Started_With_Smallpdf.pdf`:
-     - Must produce a valid `.docx` archive containing `word/document.xml` and embedded media `word/media/image*.png`.
-     - Output must fit naturally on **1 page** without spilling onto subsequent pages.
-     - Headings must render legible text ("Welcome to Smallpdf") with zero tofu characters (`□`).
-
-### Verification & Deliverables
-- Verify compilation: `cargo check -p paperpilot-pdf`.
-- Verify tests: `cargo test -p paperpilot-pdf -- docx`.
-- Run CLI conversion on fixture:
-  `cargo run -p paperpilot-cli -- convert --input "fixtures/Get_Started_With_Smallpdf.pdf" --format docx --output "fixtures/test_smallpdf_output.docx"`
-- Inspect output: Verify page count is 1, images exist in the package, and fonts are cleanly readable.
-- All commits prefixed with `jules: `
+#### 4. Testing & Verification Checklist
+1. Run conversion on the test fixture:
+   `cargo run -p paperpilot-cli -- convert --input "fixtures/Get_Started_With_Smallpdf.pdf" --format docx --output "fixtures/test_smallpdf_output.docx"`
+2. Unzip and verify DOCX internal structure:
+   - `unzip -l fixtures/test_smallpdf_output.docx` must show `word/media/image*.png`.
+   - `word/document.xml` must contain clean font tags and no square tofu boxes.
+3. Verify page count: Converted `fixtures/test_smallpdf_output.docx` must open as **1 single page** in LibreOffice.
+4. Pass quality gates:
+   - `cargo test -p paperpilot-pdf -- docx` passes.
+   - `cargo clippy --workspace --all-targets --all-features -- -D warnings` has 0 warnings.
+5. All commits must be prefixed with `jules: `.

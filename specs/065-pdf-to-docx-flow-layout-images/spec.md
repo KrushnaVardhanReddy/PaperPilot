@@ -15,43 +15,149 @@ Implement a high-fidelity, responsive flow layout engine for PDF $\to$ DOCX conv
 
 ---
 
-## 2. Technical Architecture
+## 2. Technical Architecture & Precise Implementation Details
 
 ### 2.1 Font Name Sanitization & Typography
-- When extracting spans via `pdf_oxide` / `lopdf`, strip any 6-character subset prefix followed by `+` (e.g. `ABCDEF+Arial-Bold` $\to$ `Arial`).
-- Map standard generic fallbacks:
-  - Sans-serif: `Arial`, `Calibri`, `Segoe UI`
-  - Serif: `Times New Roman`, `Georgia`
-  - Monospace: `Courier New`, `Consolas`
-- Heading inference:
-  - Font size $\ge 20\text{pt}$ or $\ge 1.7\times$ median size $\to$ Heading 1 / title (`Heading1`, bold).
-  - Font size $\ge 14\text{pt}$ $\to$ Heading 2 (`Heading2`, bold).
-  - Body text $\to$ regular paragraphs.
+PDF font names frequently carry subset tags (e.g., `JFGNNE+SourceSansPro-Bold`, `F1`, `G1`). When emitted verbatim into OpenXML `w:rFonts`, Word/LibreOffice fails to match installed system fonts, showing "tofu" glyph boxes (`□□□□□`).
 
-### 2.2 Layout Analysis & 2-Column Pairing
-- For each page:
-  - Group text spans into semantic blocks using XY-cut or vertical overlap detection.
-  - Detect horizontal adjacency: if an image or icon's bounding box is horizontally adjacent to a text block (e.g., $X_{\text{image}} < X_{\text{text}}$ with overlapping $Y$ intervals), group them into a 2-column row of a borderless `docx-rs::Table`.
-  - Column 1: Image (`Pic::new(&png_bytes)`).
-  - Column 2: Heading + body paragraph.
-- Borderless table styling: set top, bottom, left, right, and inside borders to `BorderType::None` so that the layout looks clean and responsive in LibreOffice and Microsoft Word.
+**Sanitization Algorithm**:
+```rust
+pub fn sanitize_font_name(raw_name: &str) -> String {
+    // 1. Strip 6-character random uppercase subset tag and '+' (e.g. "JFGNNE+SourceSansPro-Bold" -> "SourceSansPro-Bold")
+    let cleaned = if let Some((prefix, rest)) = raw_name.split_once('+') {
+        if prefix.len() == 6 && prefix.chars().all(|c| c.is_ascii_uppercase()) {
+            rest
+        } else {
+            raw_name
+        }
+    } else {
+        raw_name
+    };
 
-### 2.3 Image Extraction & Normalization
-- Extract images using `doc.extract_images(page_idx)`.
-- Convert decoded bitmap buffers into PNG format bytes using `image` crate.
-- Scale image width/height in EMUs proportionally so they do not exceed cell or page dimensions.
+    // 2. Separate font family from weight suffix
+    let family = cleaned
+        .trim_end_matches("-Bold")
+        .trim_end_matches("-Regular")
+        .trim_end_matches("-Italic")
+        .trim_end_matches("-BoldItalic")
+        .trim_end_matches(",Bold")
+        .trim_end_matches(",Italic");
+
+    // 3. Insert spaces between CamelCase words if needed (e.g., "SourceSansPro" -> "Source Sans Pro")
+    let mut normalized = String::new();
+    for (i, ch) in family.chars().enumerate() {
+        if i > 0 && ch.is_ascii_uppercase() {
+            if let Some(prev) = family.chars().nth(i - 1) {
+                if prev.is_ascii_lowercase() {
+                    normalized.push(' ');
+                }
+            }
+        }
+        normalized.push(ch);
+    }
+
+    if normalized.is_empty() || normalized.starts_with('F') && normalized.len() <= 3 {
+        "Arial".to_string()
+    } else {
+        normalized
+    }
+}
+```
+
+### 2.2 Layout Extraction & Pairing (2-Column Grid Detection)
+A PDF page has dimensions `(page_w, page_h)`.
+Using `pdf_oxide::PdfDocument::extract_spans(page_idx)` and `extract_images(page_idx)`:
+
+1. **Extract Images**:
+   - For each image, retrieve its bounding box `Rect { x, y, width, height }` (PDF origin at bottom-left; top $Y = page_h - y - height$).
+   - Convert decompressed image bytes to PNG via the `image` crate.
+   - Discard 1x1 tracking pixels or tiny decorative artifacts ($width < 10$ or $height < 10$).
+
+2. **Cluster Spans into Text Blocks**:
+   - Sort spans top-to-bottom ($Y_{top}$ descending).
+   - Merge spans with horizontal proximity and matching $Y$ lines into `TextLine`.
+   - Cluster consecutive lines into `TextBlock` based on line-spacing threshold (gap $< 1.5 \times font\_size$).
+   - Determine block horizontal bounds: `x_min`, `x_max`, `y_top`, `y_bottom`.
+
+3. **Horizontal Pairing (Left Image / Right Text or Vice-Versa)**:
+   - For each image, search for a `TextBlock` whose vertical span significantly overlaps ($|Y_{center,img} - Y_{center,block}| < 0.6 \times \max(H_{img}, H_{block})$).
+   - If found:
+     - If $X_{img} < X_{block}$, classify as **Left Image, Right Text**.
+     - If $X_{img} > X_{block}$, classify as **Left Text, Right Image**.
+     - Emit as a **2-column borderless OpenXML Table** row.
+   - If an image or text block does not pair horizontally:
+     - Check horizontal alignment:
+       - If $|X_{center} - (page\_w / 2)| < 0.15 \times page\_w$, set center alignment (`AlignmentType::Center`).
+       - Otherwise left align (`AlignmentType::Left`).
+     - Emit as a standard `Paragraph` (or `Pic` paragraph for standalone images).
+
+### 2.3 Borderless OpenXML Table Construction with `docx-rs`
+To prevent page overflows and ensure natural responsive wrapping:
+```rust
+use docx_rs::*;
+
+let mut table = Table::new(vec![])
+    .set_borders(TableBorders::new().clear_all()); // zero border
+
+let cell_img = TableCell::new()
+    .width(2800, WidthType::Dxa) // ~2 inches
+    .add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
+
+let mut cell_text = TableCell::new()
+    .width(5600, WidthType::Dxa); // ~4 inches
+
+// Add heading
+cell_text = cell_text.add_paragraph(
+    Paragraph::new()
+        .add_run(
+            Run::new()
+                .add_text(heading_text)
+                .bold()
+                .size(24) // 12pt
+                .fonts(RunFonts::new().ascii(&font_family))
+        )
+);
+
+// Add body paragraph
+cell_text = cell_text.add_paragraph(
+    Paragraph::new()
+        .add_run(
+            Run::new()
+                .add_text(body_text)
+                .size(20) // 10pt
+                .fonts(RunFonts::new().ascii(&font_family))
+        )
+);
+
+let row = TableRow::new(vec![cell_img, cell_text]);
+table = table.add_row(row);
+docx = docx.add_table(table);
+```
+
+### 2.4 Single-Page Geometry & Margins
+- Set section page margins to standard compact margins:
+  - Top: 720 dxa (0.5 in)
+  - Bottom: 720 dxa (0.5 in)
+  - Left: 720 dxa (0.5 in)
+  - Right: 720 dxa (0.5 in)
+- Keep line spacing tight (line 240, after 60 dxa) to prevent unintended page overflow.
 
 ---
 
-## 3. Test Fixtures & Verification Criteria
+## 3. Test Fixture & Verification Protocol
 
 ### 3.1 Fixture
-- Input PDF: `fixtures/Get_Started_With_Smallpdf.pdf`
-- Test Output: `fixtures/test_smallpdf_output.docx`
+- `fixtures/Get_Started_With_Smallpdf.pdf` (69 KB, 1 page)
 
-### 3.2 Acceptance Criteria
-1. **Compilation**: `cargo check -p paperpilot-pdf` and `cargo clippy -p paperpilot-pdf` pass without errors or warnings.
-2. **Page Count Integrity**: The converted `fixtures/Get_Started_With_Smallpdf.pdf` must render as **1 page** in LibreOffice / standard DOCX viewers, matching the input document page count.
-3. **No Tofu Glyphs**: Converted text must not contain `□□□□` or unmapped character entities in headings.
-4. **Image Embedding**: All 4 feature icons/diagrams must be extracted and embedded in the DOCX package (`word/media/image*.png`).
-5. **Structural Integrity**: The output file must be a valid ZIP archive containing `word/document.xml`, `word/_rels/document.xml.rels`, and `[Content_Types].xml`.
+### 3.2 Verification Command
+```bash
+cargo run -p paperpilot-cli -- convert --input "fixtures/Get_Started_With_Smallpdf.pdf" --format docx --output "fixtures/test_smallpdf_output.docx"
+```
+
+### 3.3 Acceptance Checklist
+- [ ] Output DOCX is a valid zip package containing `word/document.xml` and `word/media/image*.png`.
+- [ ] Heading "Welcome to Smallpdf" is properly decoded with **zero tofu boxes** (`□□□□`).
+- [ ] Sub-heading "Ready to take document management to the next level?" is centered.
+- [ ] All 4 feature cards are rendered side-by-side with their corresponding icons.
+- [ ] Output is strictly **1 page** when opened in LibreOffice / Microsoft Word.
+- [ ] `cargo clippy --workspace --all-targets --all-features -- -D warnings` passes with 0 warnings.
