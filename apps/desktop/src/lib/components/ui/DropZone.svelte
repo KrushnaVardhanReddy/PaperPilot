@@ -57,8 +57,16 @@
     }
   }
 
+  let fileInputRef = $state<HTMLInputElement | null>(null);
+
   async function handleBrowseClick(e: MouseEvent) {
-    // Intercept click; use Tauri native dialog so we get full absolute paths
+    if (appState.isMobile) {
+      // On mobile / Android, trigger the standard file picker which supports Content URIs
+      fileInputRef?.click();
+      return;
+    }
+
+    // On desktop: use Tauri native dialog so we get full absolute paths
     e.preventDefault();
     const { open } = await import('@tauri-apps/plugin-dialog');
     const selected = await open({
@@ -137,9 +145,16 @@
 
     <button type="button" class="browse-btn" onclick={handleBrowseClick}>
       Browse Files
-      <!-- Hidden file input for Playwright test compatibility -->
-      <input type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,application/pdf" onchange={handleFileInputChange} />
     </button>
+    <!-- Hidden file input for mobile / Playwright test compatibility -->
+    <input
+      bind:this={fileInputRef}
+      type="file"
+      multiple
+      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,application/pdf"
+      onchange={handleFileInputChange}
+      style="display: none;"
+    />
   </div>
 </div>
 

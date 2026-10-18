@@ -91,6 +91,87 @@ pub async fn process_mobile_buffer(
                 return Err("Split operation produced no output".to_string());
             }
         }
+        "rotate" | "pdf_rotate" => {
+            let degrees = params
+                .get("angle")
+                .or_else(|| params.get("degrees"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(90) as u16;
+
+            let pages = params.get("pages").and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    Some(
+                        s.split(',')
+                            .filter_map(|p| p.trim().parse::<u32>().ok())
+                            .collect::<Vec<u32>>(),
+                    )
+                } else if let Some(arr) = v.as_array() {
+                    Some(
+                        arr.iter()
+                            .filter_map(|p| p.as_u64().map(|n| n as u32))
+                            .collect::<Vec<u32>>(),
+                    )
+                } else {
+                    None
+                }
+            });
+
+            let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(degrees, pages);
+            op.execute(&mut doc)
+                .map_err(|e| format!("Rotate failed: {:?}", e))?;
+            doc.save(&output_path)
+                .map_err(|e| format!("Failed to save output: {:?}", e))?;
+        }
+        "watermark" | "pdf_watermark" => {
+            let text = params
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or("CONFIDENTIAL")
+                .to_string();
+            let mut op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text);
+            if let Some(angle) = params.get("angle").and_then(|v| v.as_f64()) {
+                op.angle = angle as f32;
+            }
+            if let Some(opacity) = params.get("opacity").and_then(|v| v.as_f64()) {
+                op.opacity = opacity as f32;
+            }
+            op.execute(&mut doc)
+                .map_err(|e| format!("Watermark failed: {:?}", e))?;
+            doc.save(&output_path)
+                .map_err(|e| format!("Failed to save output: {:?}", e))?;
+        }
+        "images_to_pdf" => {
+            // Drop loaded doc since we create a fresh PDF from the images
+            drop(doc);
+
+            let images_b64 = params
+                .get("images")
+                .and_then(|v| v.as_array())
+                .ok_or_else(|| "images_to_pdf requires 'images' array".to_string())?;
+
+            let mut image_paths = Vec::new();
+            for (idx, img_val) in images_b64.iter().enumerate() {
+                let b64_str = img_val
+                    .as_str()
+                    .ok_or_else(|| "Image item must be a base64 string".to_string())?;
+                let img_bytes = STANDARD
+                    .decode(b64_str)
+                    .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
+                let img_path = sandbox_dir.join(format!("page_{}.jpg", idx));
+                fs::write(&img_path, &img_bytes)
+                    .map_err(|e| format!("Failed to write page image: {}", e))?;
+                image_paths.push(img_path);
+            }
+
+            let mut new_doc = LopdfDocument::new();
+            let op =
+                paperpilot_pdf::operations::images_to_pdf::ImagesToPdfOperation::new(image_paths);
+            op.execute(&mut new_doc)
+                .map_err(|e| format!("ImagesToPdf failed: {:?}", e))?;
+            new_doc
+                .save(&output_path)
+                .map_err(|e| format!("Failed to save generated PDF: {:?}", e))?;
+        }
         _ => return Err(format!("Unknown operation: {}", operation)),
     }
 
