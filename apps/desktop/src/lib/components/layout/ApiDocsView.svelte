@@ -921,6 +921,15 @@
   .response-copy {
     font-size: 0.78rem;
     padding: 2px 8px;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .response-copy:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border-color: #ffffff;
   }
 
   .response-box.error .response-header {
