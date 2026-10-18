@@ -1,198 +1,77 @@
-# Task P5_9_43: Tool Disambiguation & Explicit Input/Output Format Badges Across Desktop Studio
+# Task P5_9_43: Universal Penta-Interface Tool Disambiguation & Explicit Input/Output Format Badges
 # Associated Spec: specs/066-tool-format-badges-and-disambiguation/spec.md
 # Priority: High
 # Target Branch: main
 
 ### Objective
-Disambiguate tool titles across PaperPilot's desktop application (resolving confusing overlapping names like "Extract Plain Text", "Extract Text", "Extract Pages") and introduce high-contrast, explicit `INPUT ➔ OUTPUT` format badges on all 50+ tool cards so users immediately know which file formats are supported and what output file will be generated.
+Disambiguate tool titles and declare explicit `[Input: ... | Output: ...]` format boundaries across ALL of PaperPilot's interfaces (Desktop Studio UI, MCP Server, CLI, and REST Gateway) according to the Penta-Interface Mandate.
 
 ### Detailed Scope & Context
-Read `specs/066-tool-format-badges-and-disambiguation/spec.md` for full background and specifications.
+Read `specs/066-tool-format-badges-and-disambiguation/spec.md` for complete schema and component details.
 
 ---
 
-### Concrete Implementation Steps
+### Implementation Across All 4 Surfaces
 
-#### 1. TypeScript Interface Update (`apps/desktop/src/lib/types/tools.ts`)
-Add `inputFormat` and `outputFormat` to the `ToolDefinition` interface:
-```typescript
-export interface ToolDefinition {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
-  context: 'pdf' | 'office' | 'ai';
-  tags: string[];
-  inputFormat: string;   // e.g. "PDF", "Office (DOCX/XLSX/PPTX)", "Scanned PDF / Images"
-  outputFormat: string;  // e.g. ".TXT", ".DOCX", ".PDF", "PNG Images", ".JSON"
-  rule?: ToolConditionRule;
-}
-```
+#### Surface 1: Desktop Studio UI (`apps/desktop`)
+1. **Interface (`apps/desktop/src/lib/types/tools.ts`)**:
+   - Add `inputFormat: string;` and `outputFormat: string;` to `ToolDefinition`.
 
----
+2. **Catalog Disambiguation (`apps/desktop/src/lib/types/toolList.ts`)**:
+   - Update `allTools` with unambiguous titles and format tags:
+     - `extract_text` $\to$ `"PDF to Plain Text"`, `inputFormat: "PDF"`, `outputFormat: ".TXT"`
+     - `office_extract_text` $\to$ `"Office to Plain Text"`, `inputFormat: "DOCX, XLSX, PPTX"`, `outputFormat: ".TXT"`
+     - `extract_pages` $\to$ `"Extract PDF Pages"`, `inputFormat: "PDF"`, `outputFormat: ".PDF"`
+     - `extract_images` $\to$ `"Extract Embedded Images"`, `inputFormat: "PDF"`, `outputFormat: "PNG Images"`
+     - `ocr` $\to$ `"OCR Text Recognition"`, `inputFormat: "Scanned PDF / Image"`, `outputFormat: ".TXT / PDF"`
+     - Add matching `inputFormat` & `outputFormat` to all other conversion, page, security, and optimization tools.
 
-#### 2. Disambiguate Titles & Enrich All Tools (`apps/desktop/src/lib/types/toolList.ts`)
-Enrich every tool definition in `allTools` with accurate `inputFormat` and `outputFormat`, and disambiguate overlapping tool titles:
-
-1. **Text Extraction & Conversion Disambiguation**:
-   - `extract_text`:
-     - `title`: `"PDF to Plain Text"` (was generic "Extract Plain Text")
-     - `inputFormat`: `"PDF"`
-     - `outputFormat`: `".TXT"`
-     - `description`: `"Extract all raw textual content from PDF into a text file"`
-   - `office_extract_text`:
-     - `title`: `"Office to Plain Text"` (was generic "Extract Text")
-     - `inputFormat`: `"DOCX, XLSX, PPTX"`
-     - `outputFormat`: `".TXT"`
-     - `description`: `"Extract textual content from Microsoft Office documents"`
-   - `ocr`:
-     - `title`: `"OCR Text Recognition"`
-     - `inputFormat`: `"Scanned PDF / Image"`
-     - `outputFormat`: `".TXT / PDF"`
-     - `description`: `"Extract text from scanned pages using local on-device neural OCR"`
-   - `extract_pages`:
-     - `title`: `"Extract PDF Pages"` (was generic "Extract Pages")
-     - `inputFormat`: `"PDF"`
-     - `outputFormat`: `".PDF"`
-     - `description`: `"Cut out selected page numbers and save as a new PDF"`
-   - `extract_images`:
-     - `title`: `"Extract Embedded Images"`
-     - `inputFormat`: `"PDF"`
-     - `outputFormat`: `"PNG Images"`
-     - `description`: `"Extract all photos, illustrations, and raster media saved in the PDF"`
-
-2. **Conversion Tools**:
-   - `pdf_to_docx`: `title: "PDF to Word (DOCX)"`, `inputFormat: "PDF"`, `outputFormat: ".DOCX"`
-   - `pdf_to_xlsx`: `title: "PDF to Excel (XLSX)"`, `inputFormat: "PDF"`, `outputFormat: ".XLSX"`
-   - `pdf_to_markdown`: `title: "PDF to Markdown"`, `inputFormat: "PDF"`, `outputFormat: ".MD"`
-   - `pdf_to_html`: `title: "PDF to HTML"`, `inputFormat: "PDF"`, `outputFormat: ".HTML"`
-   - `pdf_to_pptx`: `title: "PDF to PowerPoint"`, `inputFormat: "PDF"`, `outputFormat: ".PPTX"`
-   - `pdf_to_pdf_a`: `title: "Convert to PDF/A"`, `inputFormat: "PDF"`, `outputFormat: ".PDF (PDF/A)"`
-   - `md_to_pdf`: `title: "Markdown to PDF"`, `inputFormat: "Markdown (.md)"`, `outputFormat: ".PDF"`
-   - `html_to_pdf`: `title: "HTML to PDF"`, `inputFormat: "HTML (.html)"`, `outputFormat: ".PDF"`
-   - `img_to_pdf`: `title: "Images to PDF"`, `inputFormat: "JPG, PNG, WebP"`, `outputFormat: ".PDF"`
-   - `json_to_pdf`: `title: "JSON to PDF"`, `inputFormat: "JSON (.json)"`, `outputFormat: ".PDF"`
-   - `office_to_markdown`: `title: "Office to Markdown"`, `inputFormat: "DOCX, XLSX, PPTX"`, `outputFormat: ".MD"`
-   - `excel_to_json`: `title: "Excel to JSON"`, `inputFormat: "XLSX, XLS, CSV"`, `outputFormat: ".JSON"`
-   - `excel_to_csv`: `title: "Excel to CSV"`, `inputFormat: "XLSX, XLS"`, `outputFormat: ".CSV"`
-   - `pdf_convert_excel`: `title: "CSV to PDF"`, `inputFormat: "CSV (.csv)"`, `outputFormat: ".PDF"`
-   - `office_modernize_legacy`: `title: "Modernize Legacy Office"`, `inputFormat: "DOC, XLS, PPT"`, `outputFormat: "DOCX, XLSX, PPTX"`
-
-3. **Page, Security & Optimization Tools**:
-   - `compress`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `merge`: `inputFormat: "2+ PDFs"`, `outputFormat: ".PDF"`
-   - `split`: `inputFormat: "PDF"`, `outputFormat: "Multiple .PDFs"`
-   - `rotate`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `crop`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `delete_pages`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `reorder_pages`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `remove_blank`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `page_numbers`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `burst`: `inputFormat: "PDF"`, `outputFormat: "1-Page .PDFs"`
-   - `watermark`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `flatten`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `repair`: `inputFormat: "Corrupt PDF"`, `outputFormat: ".PDF"`
-   - `encrypt`: `inputFormat: "PDF"`, `outputFormat: "Encrypted .PDF"`
-   - `decrypt`: `inputFormat: "Locked PDF"`, `outputFormat: "Unlocked .PDF"`
-   - `metadata`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `redact`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `sign`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
-   - `linearize`: `inputFormat: "PDF"`, `outputFormat: "Fast Web .PDF"`
-   - `compare`: `inputFormat: "2 PDFs"`, `outputFormat: "Side-by-Side View"`
-   - `classify_type`: `inputFormat: "PDF"`, `outputFormat: "Classification Tag"`
-   - `read_forms`: `inputFormat: "PDF"`, `outputFormat: "Form Key-Values"`
-   - `read_bookmarks`: `inputFormat: "PDF"`, `outputFormat: "Document Outline"`
-   - `annotate`: `inputFormat: "PDF"`, `outputFormat: ".PDF"`
+3. **UI Rendering (`OperationsPanel.svelte` & `+page.svelte`)**:
+   - In both search results and category grids, render the format badge:
+     ```svelte
+     <div class="tool-card-title-row">
+       <span class="tool-card-title">{tool.title}</span>
+       {#if tool.inputFormat && tool.outputFormat}
+         <span class="format-pill">
+           <span class="fmt-in">{tool.inputFormat}</span>
+           <span class="fmt-arrow">➔</span>
+           <span class="fmt-out">{tool.outputFormat}</span>
+         </span>
+       {/if}
+     </div>
+     ```
+   - Add CSS for `.tool-card-title-row`, `.format-pill`, `.fmt-in`, `.fmt-arrow`, and `.fmt-out`.
 
 ---
 
-#### 3. Operations Panel Badge Rendering (`OperationsPanel.svelte`)
-In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`, update both the search results list (around line 985) and the category grid (around line 1018):
-
-```svelte
-<div class="tool-card-info">
-  <div class="tool-card-title-row">
-    <span class="tool-card-title">{tool.title}</span>
-    {#if tool.inputFormat && tool.outputFormat}
-      <span class="format-pill">
-        <span class="fmt-in">{tool.inputFormat}</span>
-        <span class="fmt-arrow">➔</span>
-        <span class="fmt-out">{tool.outputFormat}</span>
-      </span>
-    {/if}
-  </div>
-  <span class="tool-card-desc">{tool.description}</span>
-</div>
-```
-
-Add CSS for `.format-pill`:
-```css
-.tool-card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.format-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.fmt-in {
-  color: #cbd5e1;
-}
-
-.fmt-arrow {
-  color: #818cf8; /* Vibrant Indigo Accent */
-  font-size: 0.6rem;
-}
-
-.fmt-out {
-  color: #38bdf8; /* Vibrant Sky Accent */
-  font-weight: 700;
-}
-```
+#### Surface 2: MCP Server (`paperpilot-mcp/src/server.rs`)
+In `list_tools()`:
+- Update all tool descriptions to include standardized format tags:
+  - `pdf_extract_text`: `"Extract raw text content from PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]"`
+  - `office_extract_text`: `"Extract text from Office documents. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]"`
+  - `extract_pages`: `"Extract selected page numbers into a new PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]"`
+  - `extract_images`: `"Extract raster images from a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG images]"`
+  - `pdf_to_docx`: `"Convert PDF into editable Microsoft Word format. [Input: PDF (.pdf) | Output: Word (.docx)]"`
+  - `excel_to_json`: `"Extract spreadsheet tabular data as JSON. [Input: Excel (.xlsx, .xls) | Output: JSON array]"`
+  - Add explicit `[Input: ... | Output: ...]` to all 51 tools.
 
 ---
 
-#### 4. Studio Hub Badge Rendering (`+page.svelte`)
-In `apps/desktop/src/routes/+page.svelte`, update both the spotlight cards and category cards (around lines 485 & 506):
+#### Surface 3: CLI (`paperpilot-cli/src/cli.rs`)
+- Update doc comments for clap commands:
+  - `ExtractText`: `"PDF to Plain Text: Extract all raw textual content from a PDF [Input: .pdf | Output: .txt]"`
+  - `OfficeExtractText`: `"Office to Plain Text: Extract text from Office documents [Input: .docx, .xlsx, .pptx | Output: .txt]"`
+  - Update all other command docstrings with explicit input/output tags.
 
-```svelte
-<div class="studio-card-content">
-  <div class="studio-card-title-row">
-    <h4>{tool.title}</h4>
-    {#if tool.inputFormat && tool.outputFormat}
-      <span class="format-pill">
-        <span class="fmt-in">{tool.inputFormat}</span>
-        <span class="fmt-arrow">➔</span>
-        <span class="fmt-out">{tool.outputFormat}</span>
-      </span>
-    {/if}
-  </div>
-  <p>{tool.description}</p>
-</div>
-```
+---
 
-Add matching CSS for `.studio-card-title-row` and `.format-pill` in `+page.svelte`.
+#### Surface 4: REST Gateway (`paperpilot-gateway/src/handlers.rs`)
+- Update route docstrings to specify input and output content types.
 
 ---
 
 ### Verification Protocol
-1. Run `npm run check` in `apps/desktop` and ensure 0 TypeScript or Svelte compiler errors.
-2. Verify visual appearance:
-   - Search `"extr"` in the Operations Panel.
-   - Assert all 5 tools show distinct, non-overlapping titles with their exact `INPUT ➔ OUTPUT` flow pills.
-3. Keep all commits prefixed with `jules: `.
+1. Desktop: `npm run check` in `apps/desktop` passes with 0 errors.
+2. Rust Crates: `cargo check --workspace` passes with 0 errors.
+3. Tests: `cargo test -p paperpilot-mcp` and `cargo test -p paperpilot-cli` pass.
+4. All commits must be prefixed with `jules: `.
