@@ -1,0 +1,80 @@
+# Task: Phase 5.9.45 — PDF-to-DOCX High-Fidelity Semantic Layout & Side-by-Side Table Reconstruction (Spec 068)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-semantic-layout
+# Priority: HIGH (Core Conversion Visual Parity)
+# Spec: specs/068-pdf-to-docx-semantic-layout/spec.md
+
+## Objective
+Upgrade `PdfToDocxOperation` in `paperpilot-pdf/src/operations/conversion.rs` to produce high-fidelity Word DOCX documents matching the layout of real-world multi-column marketing sheets and brochures.
+
+You are provided with:
+1. **Input PDF**: `fixtures/Get_Started_With_Smallpdf.pdf`
+2. **Current Deficient DOCX**: `fixtures/Get_Started_With_Smallpdf.docx` (all text dumped into a single squashed paragraph block).
+3. **Reference Expected DOCX**: `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx` (centered title & subtitle, 4 alternating 2-column borderless tables for feature cards, 1-page fit).
+
+Your implementation must transform the current output so that it matches the visual structure of `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/src/operations/conversion.rs
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Concrete Implementation Guidance
+
+### A. Extract Structured Blocks (Avoid Flat `lopdf::extract_text()`)
+When extracting text from the PDF, use structured extraction or line parsing that respects headings and paragraphs (e.g. from `pdf_oxide::api::Pdf::to_markdown` or markdown block parsing):
+1. **Title**: `"Welcome to Smallpdf"` $\to$ Centered heading, bold, size 44 (22pt), color `1F242E`.
+2. **Subtitle**: `"Ready to take document management to the next level?"` $\to$ Centered paragraph, size 22 (11pt), color `757E8A`.
+3. **4 Feature Cards**: Group the 4 distinct feature cards:
+   - "Digital Documents—All In One Place" + Body
+   - "Enhance Documents in One Click" + Body
+   - "Access Files Anytime, Anywhere" + Body
+   - "Collaborate With Others" + Body
+
+### B. Construct 2-Column Tables with `docx_rs`
+For each of the 4 feature cards, create a 2-column borderless table (`docx_rs::Table` with `TableBorders::new().clear_all()`):
+- Alternating left/right arrangement:
+  - Card 1: Left column graphic cell (width 2600 dxa), Right column text cell (width 5000 dxa).
+  - Card 2: Left column text cell (width 5000 dxa), Right column graphic cell (width 2600 dxa).
+  - Card 3: Left column graphic cell (width 2600 dxa), Right column text cell (width 5000 dxa).
+  - Card 4: Left column text cell (width 5000 dxa), Right column graphic cell (width 2600 dxa).
+- Inside the text cell:
+  - Paragraph 1: Card Title (bold, size 24 = 12pt).
+  - Paragraph 2: Card Description (size 19 = 9.5pt, space after 120 dxa).
+- Inside the graphic cell:
+  - If a raster image is extracted, embed `Pic::new(&png_bytes)`. If vector / Form XObject, embed a styled graphic placeholder / illustration badge run.
+
+### C. Margins & Spacing
+- Page Margins: `720 dxa` (0.5 in) top, bottom, left, right.
+- Ensure the document opens as **1 single page** in LibreOffice and Word without spilling onto a second page.
+
+---
+
+## 2. Verification Protocol
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4
+```
+
+Convert the Smallpdf fixture and inspect:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output fixtures/Get_Started_With_Smallpdf.docx
+python3 -c "
+import zipfile
+with zipfile.ZipFile('fixtures/Get_Started_With_Smallpdf.docx') as z:
+    with z.open('word/document.xml') as f:
+        xml = f.read().decode('utf-8')
+assert '<w:tbl>' in xml, 'Must contain tables for 2-column feature cards'
+assert 'Welcome to Smallpdf' in xml
+print('Verification passed!')
+"
+```

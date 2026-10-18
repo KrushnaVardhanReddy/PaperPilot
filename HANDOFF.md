@@ -10,6 +10,7 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
+   - **Task 5.9.45 / Spec 068 (PDF-to-DOCX High-Fidelity Semantic Layout & Side-by-Side Table Reconstruction)**: [Session 5068738657494782356](https://jules.google.com/session/5068738657494782356) — Upgrading `PdfToDocxOperation` in `paperpilot-pdf` to match `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`, establishing centered titles, 2-column borderless OpenXML tables (`docx-rs::Table`) for feature cards, compact 0.5-inch margins, and strictly 1-page geometry in LibreOffice/Word (`specs/068-pdf-to-docx-semantic-layout/spec.md`).
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
