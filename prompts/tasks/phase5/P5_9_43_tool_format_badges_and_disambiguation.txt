@@ -1,0 +1,46 @@
+# Task P5_9_43: Tool Disambiguation & Explicit Input/Output Format Badges Across Desktop Studio
+# Associated Spec: specs/066-tool-format-badges-and-disambiguation/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Disambiguate tool titles across PaperPilot's desktop application (resolving confusing overlapping names like "Extract Plain Text", "Extract Text", "Extract Pages") and introduce high-contrast, explicit `INPUT ➔ OUTPUT` format badges on all 50+ tool cards so users immediately know which file formats are supported and what output file will be generated.
+
+### Detailed Scope & Context
+Read `specs/066-tool-format-badges-and-disambiguation/spec.md` for complete schema and component details.
+
+1. **Schema Extension (`apps/desktop/src/lib/types/tools.ts`)**:
+   - Add `inputFormat: string;` and `outputFormat: string;` fields to `ToolDefinition`.
+
+2. **Catalog Disambiguation & Format Enrichment (`apps/desktop/src/lib/types/toolList.ts`)**:
+   - Enrich all tools in `allTools` with precise `inputFormat` and `outputFormat` properties.
+   - Disambiguate overlapping titles:
+     - Rename `extract_text` title from `"Extract Plain Text"` to `"PDF to Plain Text"` (`PDF ➔ .TXT`).
+     - Rename `office_extract_text` title from `"Extract Text"` to `"Office to Plain Text"` (`DOCX, XLSX, PPTX ➔ .TXT`).
+     - Rename `extract_pages` title from `"Extract Pages"` to `"Extract PDF Pages"` (`PDF ➔ .PDF`).
+     - Rename `extract_images` title to `"Extract Embedded Images"` (`PDF ➔ PNG Images`).
+     - Label OCR explicitly as `Scanned PDF / Image ➔ .TXT / PDF`.
+     - Label `pdf_to_docx` as `PDF ➔ .DOCX`.
+     - Label `excel_to_json` as `XLSX, XLS, CSV ➔ .JSON`.
+     - Label `excel_to_csv` as `XLSX, XLS ➔ .CSV`.
+     - Label `merge` as `2+ PDFs ➔ .PDF`.
+     - Ensure all other tools have clear, accurate `inputFormat` and `outputFormat` badges.
+
+3. **UI Integration & Badge Styling (`OperationsPanel.svelte` & `+page.svelte`)**:
+   - In `OperationsPanel.svelte` (both the search results list and the categorized grid), render a sleek pill badge:
+     ```svelte
+     {#if tool.inputFormat && tool.outputFormat}
+       <span class="format-pill">
+         <span class="fmt-in">{tool.inputFormat}</span>
+         <span class="fmt-arrow">➔</span>
+         <span class="fmt-out">{tool.outputFormat}</span>
+       </span>
+     {/if}
+     ```
+   - Style `.format-pill` with clean CSS: subtle background tint, border, compact font (10-11px), uppercase letter-spacing, and high contrast.
+   - Mirror the same badge rendering in `+page.svelte` (Studio Hub tool cards) so the experience is unified.
+
+4. **Testing & Quality Gates**:
+   - Run `npm run check` in `apps/desktop` to ensure TypeScript compiles with 0 errors.
+   - Verify that searching `"extr"` in the desktop app yields clearly distinct, self-describing cards without ambiguity.
+   - All commits prefixed with `jules: `
