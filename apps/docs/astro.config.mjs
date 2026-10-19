@@ -25,7 +25,13 @@ export default defineConfig({
         },
         {
           label: 'Master 50+ Tools Reference',
-          autogenerate: { directory: 'reference' },
+          items: [
+            { label: '50 Tools Handbook (All-in-One)', slug: 'reference/50-tools-handbook' },
+            {
+              label: 'All 50 Tools Index',
+              autogenerate: { directory: 'reference/tools' },
+            },
+          ],
         },
         {
           label: 'Developer Gateway & AI Agents',
