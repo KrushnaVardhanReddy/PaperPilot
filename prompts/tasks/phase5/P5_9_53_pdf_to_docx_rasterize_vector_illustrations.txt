@@ -1,0 +1,65 @@
+# Phase 5.9.53 Task Prompt for Jules: Rasterize & Embed Vector Form XObjects in PDF-to-DOCX
+
+Branch name: feat-pdf-to-docx-vector-rasterization
+
+## Mission & Goal
+In `paperpilot-pdf/src/operations/conversion.rs`, the `PdfToDocxOperation` currently inserts text placeholders `[ Feature N Illustration ]` into the 4 alternating 2-column table cells because `Get_Started_With_Smallpdf.pdf` contains vector Form XObjects (`/Fm0`..`/Fm4`) rather than raster JPEG/PNG streams.
+
+Your mission is to replace these text placeholders with **actual, high-resolution PNG images** rendered directly from the PDF page using `hayro` and `tiny-skia`.
+
+## Technical Implementation Details
+
+1. **Rendering Page 0 via `hayro`**:
+   `paperpilot-pdf` already depends on `hayro = "0.8.0"` and `tiny-skia = "0.12.0"`.
+   Inside `PdfToDocxOperation::execute`:
+   - Parse the PDF bytes with `hayro::Pdf::new(&bytes)`.
+   - Render page 0 at 150 DPI (scale factor `150.0 / 72.0` = `2.08333`):
+     ```rust
+     let hayro_doc = hayro::Pdf::new(&bytes)?;
+     let page = hayro_doc.pages().get(0).ok_or(...)?;
+     let cache = hayro::RenderCache::new();
+     let render_settings = hayro::RenderSettings::default();
+     let mut pixmap_settings = hayro::PixmapSettings::default();
+     let scale_factor = 150.0 / 72.0;
+     pixmap_settings.x_scale = scale_factor;
+     pixmap_settings.y_scale = scale_factor;
+
+     let pixmap = hayro::render(page, &cache, &Default::default(), &render_settings, &pixmap_settings);
+     ```
+
+2. **Cropping the 4 Illustration Zones**:
+   Convert the PDF vector bounding boxes to pixel coordinates and crop into separate sub-images:
+   - Page dimensions: `pw = 595.276`, `ph = 841.89`.
+   - Illustration PDF coordinates (origin at bottom-left):
+     - Feature 1 (Left): `x: [50..230]`, `y: [590..740]`
+     - Feature 2 (Right): `x: [360..540]`, `y: [420..550]`
+     - Feature 3 (Left): `x: [50..230]`, `y: [230..360]`
+     - Feature 4 (Right): `x: [350..540]`, `y: [70..200]`
+   - Compute top-left pixel `px`, `py` where `py = ((ph - y_top) * (img_h / ph))`.
+   - Crop pixels from the pixmap buffer and encode to PNG bytes using `image::codecs::png::PngEncoder`.
+
+3. **Embedding in DOCX via `docx_rs::Pic`**:
+   - In each alternating table cell, construct the picture:
+     ```rust
+     use docx_rs::Pic;
+
+     let pic = Pic::new(&png_bytes).size(1400000, 1150000);
+     let pic_run = Run::new().add_image(pic);
+     illus_para = illus_para.add_run(pic_run);
+     ```
+   - When rasterized image bytes are available, **do not add the `[ Feature N Illustration ]` text run**.
+
+4. **1-Page Geometry & Styling**:
+   - Ensure the title and descriptions match:
+     - Header: Bold, size 44 (22pt), color `#1F242E`
+     - Subtitle: size 22 (11pt), color `#757E8A`
+     - Feature titles: Bold, size 24 (12pt), color `#1F242E`
+     - Feature descriptions: size 19 (9.5pt), color `#525C68`
+   - Margins: 720 dxa (0.5 inch).
+   - Document must render on strictly 1 page in LibreOffice.
+
+## Verification Checklist
+- Run `cargo test -p paperpilot-pdf test_pdf_to_docx -j 4`.
+- Run `cargo run -p paperpilot-cli -j 4 -- convert --format docx --input fixtures/Get_Started_With_Smallpdf.pdf --output /tmp/test.docx`.
+- Inspect `/tmp/test.docx` with `zipfile` in Python to confirm `word/media/image1.png` .. `image4.png` exist and are valid PNG images.
+- Confirm zero occurrences of `[ Feature` in `word/document.xml`.
