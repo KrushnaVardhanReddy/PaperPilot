@@ -23,5 +23,5 @@ export const getDocsBaseUrl = (): string => {
 };
 
 export const getToolsHandbookUrl = (): string => {
-  return `${getDocsBaseUrl()}/reference/44-tools-handbook/`;
+  return `${getDocsBaseUrl()}/reference/50-tools-handbook/`;
 };

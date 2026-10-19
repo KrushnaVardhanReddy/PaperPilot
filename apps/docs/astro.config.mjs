@@ -10,7 +10,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'PaperPilot Documentation',
-      description: 'Official guides, 44-tool reference, embed widget, and developer API for PaperPilot.',
+      description: 'Official guides, 50+ tool reference, embed widget, and developer API for PaperPilot.',
       social: {
         github: 'https://github.com/KrushnaVardhanReddy/PaperPilot',
       },
@@ -24,7 +24,7 @@ export default defineConfig({
           autogenerate: { directory: 'embed' },
         },
         {
-          label: 'Master 44-Tool Reference',
+          label: 'Master 50+ Tools Reference',
           autogenerate: { directory: 'reference' },
         },
         {

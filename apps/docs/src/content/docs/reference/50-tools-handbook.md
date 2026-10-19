@@ -1,6 +1,6 @@
 ---
-title: 44-Tools Handbook
-description: Comprehensive reference for all 44 PaperPilot tools across CLI, REST API, and MCP.
+title: 50+ Tools Handbook
+description: Comprehensive reference for all 52 PaperPilot tools across CLI, REST API, and MCP.
 ---
 
 # Master 44-Tool Reference & Release Handbook
@@ -39,7 +39,7 @@ This document provides exact, copy-pasteable snippets for invoking tools across 
 
 ---
 
-## Complete Index of Tools
+## Complete Index of All 52 Tools
 
 - [pdf_merge](#tool-pdf-merge)
 - [pdf_split](#tool-pdf-split)
@@ -82,10 +82,19 @@ This document provides exact, copy-pasteable snippets for invoking tools across 
 - [pdf_to_docx](#tool-pdf-to-docx)
 - [pdf_to_xlsx](#tool-pdf-to-xlsx)
 - [pdf_to_pptx](#tool-pdf-to-pptx)
+- [pdf_to_json](#tool-pdf-to-json)
 - [pdf_convert_html](#tool-pdf-convert-html)
 - [pdf_convert_markdown](#tool-pdf-convert-markdown)
 - [pdf_convert_excel](#tool-pdf-convert-excel)
 - [json_to_pdf](#tool-json-to-pdf)
+- [excel_to_json](#tool-excel-to-json)
+- [excel_to_csv](#tool-excel-to-csv)
+- [office_to_markdown](#tool-office-to-markdown)
+- [office_extract_text](#tool-office-extract-text)
+- [office_modernize_legacy](#tool-office-modernize-legacy)
+- [pdf_info](#tool-pdf-info)
+- [pdf_rag_chunks](#tool-pdf-rag-chunks)
+- [workspace_search](#tool-workspace-search)
 
 ---
 
@@ -1368,7 +1377,73 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: appli
 
 ---
 
-## Tool: `pdf_convert_html` <a id="tool-pdf-convert-html"></a>
+## Tool: `pdf_to_html` (alias: `pdf_convert_html`) <a id="tool-pdf-to-html"></a>
+
+Converts a PDF document into a responsive, styled HTML5 web document.
+
+### CLI
+```bash
+paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format html --output out/out.html --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_to_html",
+    "arguments": {
+      "input": "tests/e2e_fixtures/single_page.pdf",
+      "output": "out/out.html"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out.html", "format": "html"}'
+```
+
+---
+
+## Tool: `pdf_to_markdown` (alias: `pdf_convert_markdown`) <a id="tool-pdf-to-markdown"></a>
+
+Converts a PDF document into clean, LLM-ready Markdown formatted text.
+
+### CLI
+```bash
+paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format md --output out/out.md --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_to_markdown",
+    "arguments": {
+      "input": "tests/e2e_fixtures/single_page.pdf",
+      "output": "out/out.md"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out.md", "format": "md"}'
+```
+
+---
+
+## Tool: `html_to_pdf` <a id="tool-html-to-pdf"></a>
+
+Synthesizes styled PDF documents from HTML source code or files using pure-Rust zero-Chrome layout engine (`fulgur`).
 
 ### CLI
 ```bash
@@ -1398,7 +1473,9 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Cont
 
 ---
 
-## Tool: `pdf_convert_markdown` <a id="tool-pdf-convert-markdown"></a>
+## Tool: `md_to_pdf` <a id="tool-md-to-pdf"></a>
+
+Converts Markdown documentation files into styled PDFs.
 
 ### CLI
 ```bash
@@ -1490,3 +1567,289 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/json_to_pdf -H 'Content-T
 
 ---
 
+## Tool: `pdf_to_json` <a id="tool-pdf-to-json"></a>
+
+Extracts a multimodal layout JSON document model including page structures, text blocks, bounding boxes, and inline base64 images.
+
+### CLI
+```bash
+paperpilot convert --input doc.pdf --format json --output doc.json --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_to_json",
+    "arguments": {
+      "input": "doc.pdf",
+      "output": "doc.json"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_json -H 'Content-Type: application/json' -d '{"input": "doc.pdf", "output": "doc.json"}'
+```
+
+---
+
+## Tool: `excel_to_json` <a id="tool-excel-to-json"></a>
+
+Ingests an Excel spreadsheet (`.xlsx`/`.xls`/`.csv`) into structured JSON with cell type preservation.
+
+### CLI
+```bash
+paperpilot office excel-to-json --input data.xlsx --output data.json --has-headers --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "excel_to_json",
+    "arguments": {
+      "input": "data.xlsx",
+      "output": "data.json",
+      "has_headers": true
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/office/excel-to-json -H 'Content-Type: application/json' -d '{"input": "data.xlsx", "output": "data.json", "has_headers": true}'
+```
+
+---
+
+## Tool: `excel_to_csv` <a id="tool-excel-to-csv"></a>
+
+Exports an Excel spreadsheet (`.xlsx`/`.xls`) sheet to standard RFC 4180 CSV.
+
+### CLI
+```bash
+paperpilot office excel-to-csv --input data.xlsx --output data.csv --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "excel_to_csv",
+    "arguments": {
+      "input": "data.xlsx",
+      "output": "data.csv"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/office/excel-to-csv -H 'Content-Type: application/json' -d '{"input": "data.xlsx", "output": "data.csv"}'
+```
+
+---
+
+## Tool: `office_to_markdown` <a id="tool-office-to-markdown"></a>
+
+Converts Word (`.docx`), Excel (`.xlsx`), or PowerPoint (`.pptx`) documents into clean, LLM-ready Markdown text.
+
+### CLI
+```bash
+paperpilot office to-markdown --input report.docx --output report.md --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "office_to_markdown",
+    "arguments": {
+      "input": "report.docx",
+      "output": "report.md"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/office/to-markdown -H 'Content-Type: application/json' -d '{"input": "report.docx", "output": "report.md"}'
+```
+
+---
+
+## Tool: `office_extract_text` <a id="tool-office-extract-text"></a>
+
+Extracts all raw textual content from Office documents (`.docx`, `.xlsx`, `.pptx`) into a UTF-8 text file.
+
+### CLI
+```bash
+paperpilot office extract-text --input presentation.pptx --output presentation.txt --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "office_extract_text",
+    "arguments": {
+      "input": "presentation.pptx",
+      "output": "presentation.txt"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/office/extract-text -H 'Content-Type: application/json' -d '{"input": "presentation.pptx", "output": "presentation.txt"}'
+```
+
+---
+
+## Tool: `office_modernize_legacy` <a id="tool-office-modernize-legacy"></a>
+
+Upgrades binary legacy Office files (`.doc`, `.xls`, `.ppt`) to modern OpenXML formats (`.docx`, `.xlsx`, `.pptx`).
+
+### CLI
+```bash
+paperpilot office modernize --input legacy.doc --output modern.docx --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "office_modernize_legacy",
+    "arguments": {
+      "input": "legacy.doc",
+      "output": "modern.docx"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/office/modernize -H 'Content-Type: application/json' -d '{"input": "legacy.doc", "output": "modern.docx"}'
+```
+
+---
+
+## Tool: `pdf_info` <a id="tool-pdf-info"></a>
+
+Inspects PDF internal object catalog, stream counts, encryption status, and page dimensions.
+
+### CLI
+```bash
+paperpilot info --input document.pdf --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_info",
+    "arguments": {
+      "input": "document.pdf"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_info -H 'Content-Type: application/json' -d '{"input": "document.pdf"}'
+```
+
+---
+
+## Tool: `pdf_rag_chunks` <a id="tool-pdf-rag-chunks"></a>
+
+Extracts chunked semantic text blocks with token boundaries and overlap parameters for AI embedding and RAG indexing.
+
+### CLI
+```bash
+paperpilot ai chunk --input manual.pdf --chunk-size 512 --overlap 50 --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_rag_chunks",
+    "arguments": {
+      "input": "manual.pdf",
+      "chunk_size": 512,
+      "overlap": 50
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/ai/chunk -H 'Content-Type: application/json' -d '{"input": "manual.pdf", "chunk_size": 512, "overlap": 50}'
+```
+
+---
+
+## Tool: `workspace_search` <a id="tool-workspace-search"></a>
+
+Performs fast full-text semantic searching across multiple PDF documents in a workspace directory.
+
+### CLI
+```bash
+paperpilot search --dir ./documents --query "quarterly revenue" --json
+```
+
+### MCP (JSON-RPC)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "workspace_search",
+    "arguments": {
+      "directory": "./documents",
+      "query": "quarterly revenue"
+    }
+  }
+}
+```
+
+### REST API (cURL)
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/workspace/search -H 'Content-Type: application/json' -d '{"directory": "./documents", "query": "quarterly revenue"}'
+```
