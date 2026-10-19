@@ -1,16 +1,17 @@
-# Task Plan: Spec 075 — Rasterize & Embed Vector Form XObjects in PDF-to-DOCX
+# Task Plan: Spec 075 — Generic Dynamic Layout & Image Extraction for PDF-to-DOCX
 
-- [ ] Task 1: Integrate `hayro` page rasterization inside `PdfToDocxOperation`
-  - When Form XObjects are detected on a page, render page 0 at 150 DPI via `hayro::render`.
-  - Extract the raw BGRA/RGBA pixels into a `tiny_skia::Pixmap`.
-- [ ] Task 2: Crop vector bounding boxes into PNG buffers
-  - Calculate pixel coordinates for the 4 illustration zones.
-  - Crop sub-rectangles from the pixmap using `tiny_skia::Pixmap::clone_rect` or sub-slice copy.
-  - Encode each sub-pixmap as PNG bytes using `image::codecs::png::PngEncoder`.
-- [ ] Task 3: Embed PNG images in DOCX alternating table cells
-  - Use `docx_rs::Pic::new(&png_bytes).size(1400000, 1150000)` to embed into the illustration cell.
-  - Remove fallback text placeholder `[ Feature N Illustration ]` when rasterized bytes are present.
-- [ ] Task 4: Verification
-  - Run CLI conversion on `fixtures/Get_Started_With_Smallpdf.pdf`.
-  - Verify `word/media/` exists inside the `.docx` zip with 4 valid PNG files.
-  - Verify layout maintains strictly 1-page geometry in LibreOffice.
+- [ ] Task 1: Refactor `pulldown-cmark` parser loop in `PdfToDocxOperation`
+  - Implement full dynamic Markdown table handling (`Event::Start(Tag::Table)`, `TableHead`, `TableRow`, `TableCell`).
+  - Calculate column widths dynamically based on `10080 / column_count` dxa.
+  - Remove the hardcoded `current_heading_level == 3` -> 2-column table coupling.
+- [ ] Task 2: Implement Real Graphic Extraction & Vector Rasterization
+  - For raster images: extract bytes directly from `/Subtype /Image`.
+  - For vector Form XObjects: render page via `hayro` at 150 DPI and crop bounding boxes to PNG.
+  - Eliminate all occurrences of `[ Feature N Illustration ]` text placeholders.
+- [ ] Task 3: Support Standard Text Flow
+  - Normal headings (`H1`..`H6`), blockquotes, lists, and paragraphs must render as standard Word document blocks.
+  - Ensure centered titles, paragraph spacing, and font sizes scale cleanly across arbitrary PDF layouts.
+- [ ] Task 4: Multi-PDF Validation Suite
+  - Validate with `fixtures/Get_Started_With_Smallpdf.pdf` (brochure with vector graphics).
+  - Validate with standard text and tabular PDF fixtures.
+  - Ensure `test_pdf_to_docx` and `all50_cleanroom_audit` both pass 100%.
