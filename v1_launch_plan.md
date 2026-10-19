@@ -19,13 +19,9 @@ These 12 operations are frozen as the **v1.0 Core Suite**. They undergo **unmock
 | 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | Semi-transparent diagonal watermarks |
 | 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | Pure-Rust PaddleOCR v4 / RTen OCR overlays |
 | 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction |
-| 10 | `pdf_to_markdown` | PDF to Markdown | Convert | `.pdf` $\to$ `.md` | LLM-ready clean layout markdown for AI RAG |
+| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | Pull specific page ranges into a new document |
 | 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
 | 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
-
-> **Architectural Note on Images & Form XObjects in Markdown:**
-> - **Raster Images (`/Subtype /Image`)**: Standard raster images are exported as companion PNG files or embedded as inline base64 data URIs: `![alt text](data:image/png;base64,...)` or `![alt text](./images/img_1.png)`.
-> - **Vector Form XObjects (`/Fm0`–`/Fm4`)**: Form XObjects contain PDF vector bezier drawing operators (`m`, `l`, `c`, `f`) rather than image files. In pure Markdown, they are either omitted for clean LLM token efficiency, represented by their extracted text labels/alt captions, or rendered to high-resolution PNG thumbnails via spatial bounding-box rasterization (`tiny-skia`/`hayro`) and linked as standard markdown image tags.
 
 ---
 
@@ -37,40 +33,40 @@ Following v1.0 release, each subsequent batch of 4–5 tools will undergo dedica
 Focuses on advanced modern conversions, AI ingestion, and spatial search:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 13 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis |
-| 14 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) |
-| 15 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator |
-| 16 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images |
-| 17 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON |
-| 18 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
+| 13 | `pdf_to_markdown` | PDF to Markdown | Convert | LLM-ready clean layout markdown for AI RAG |
+| 14 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis |
+| 15 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) |
+| 16 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator |
+| 17 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images |
+| 18 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON |
+| 19 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
 
 ### 🌊 Wave 3: Office Modernization & Spreadsheets (Week 3)
 Focuses on full Microsoft Office suite interoperability and deep vector layout reconstruction:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 19 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | High-fidelity editable Word reconstruction with vector shape/icon rasterization |
-| 20 | `pdf_to_xlsx` | PDF to Excel (XLSX) | Convert | Tabular extraction into structured Excel workbooks |
-| 21 | `pdf_to_pptx` | PDF to PowerPoint (PPTX) | Convert | Slide deck presentation reconstruction |
-| 22 | `office_to_markdown` | Office to Markdown | Convert | One-click Word, Excel, PPT conversion to Markdown |
-| 23 | `office_extract_text` | Office Plain Text | Extract | Fast raw text dump from `.docx`, `.xlsx`, `.pptx` |
-| 24 | `office_modernize_legacy` | Modernize Legacy Office | Convert | Upgrade legacy binary `.doc`/`.xls`/`.ppt` to modern OpenXML |
+| 20 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | High-fidelity editable Word reconstruction with vector shape/icon rasterization |
+| 21 | `pdf_to_xlsx` | PDF to Excel (XLSX) | Convert | Tabular extraction into structured Excel workbooks |
+| 22 | `pdf_to_pptx` | PDF to PowerPoint (PPTX) | Convert | Slide deck presentation reconstruction |
+| 23 | `office_to_markdown` | Office to Markdown | Convert | One-click Word, Excel, PPT conversion to Markdown |
+| 24 | `office_extract_text` | Office Plain Text | Extract | Fast raw text dump from `.docx`, `.xlsx`, `.pptx` |
+| 25 | `office_modernize_legacy` | Modernize Legacy Office | Convert | Upgrade legacy binary `.doc`/`.xls`/`.ppt` to modern OpenXML |
 
 ### 🌊 Wave 4: Security, Signing & Compliance (Week 4)
 Focuses on enterprise compliance and legal document workflows:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 25 | `sign` | Sign Document | Security | Offline cryptographic digital signatures & certs |
-| 26 | `redact` | Redact Text & Areas | Security | Permanent PII / sensitive data blackouts |
-| 27 | `encrypt` | Encrypt with Password | Security | AES-256 standard permission protection |
-| 28 | `decrypt` | Remove Password | Security | Strip restrictions from unlocked documents |
-| 29 | `pdf_to_pdf_a` | Convert to PDF/A | Compliance | ISO 19005 archival standards validation |
-| 30 | `hash` | Generate Hash | Security | Document integrity checksum calculation (MD5, SHA-256) |
+| 26 | `sign` | Sign Document | Security | Offline cryptographic digital signatures & certs |
+| 27 | `redact` | Redact Text & Areas | Security | Permanent PII / sensitive data blackouts |
+| 28 | `encrypt` | Encrypt with Password | Security | AES-256 standard permission protection |
+| 29 | `decrypt` | Remove Password | Security | Strip restrictions from unlocked documents |
+| 30 | `pdf_to_pdf_a` | Convert to PDF/A | Compliance | ISO 19005 archival standards validation |
+| 31 | `hash` | Generate Hash | Security | Document integrity checksum calculation (MD5, SHA-256) |
 
 ### 🌊 Wave 5: Page Geometry, Cleaning & Forms (Week 5)
 Focuses on document cleanup, page manipulation, and interactive forms:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
-| 31 | `extract_pages` | Extract Pages | Organize | Pull specific pages into a new document |
 | 32 | `remove_blank` | Remove Blank Pages | Organize | Scan and strip accidental blank pages |
 | 33 | `page_numbers` | Add Page Numbers | Edit | Dynamic header/footer pagination |
 | 34 | `crop` | Crop Pages | Organize | Precision rectangular margin trimming |
