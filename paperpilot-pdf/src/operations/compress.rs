@@ -59,14 +59,13 @@ impl PdfOperation for CompressOperation {
                     if !has_filter {
                         let original_len = stream.content.len();
                         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-                        if encoder.write_all(&stream.content).is_ok() {
-                            if let Ok(compressed) = encoder.finish() {
-                                if compressed.len() < original_len {
-                                    stream.content = compressed;
-                                    stream.dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
-                                    stream.dict.set("Length", Object::Integer(stream.content.len() as i64));
-                                }
-                            }
+                        if encoder.write_all(&stream.content).is_ok()
+                            && let Ok(compressed) = encoder.finish()
+                            && compressed.len() < original_len
+                        {
+                            stream.content = compressed;
+                            stream.dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
+                            stream.dict.set("Length", Object::Integer(stream.content.len() as i64));
                         }
                     }
                     continue;

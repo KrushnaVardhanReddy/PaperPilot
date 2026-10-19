@@ -1,0 +1,9 @@
+   Compiling rusto-rs v0.3.1
+   Compiling paperpilot-pdf v0.1.0 (/app/paperpilot-pdf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 14s
+     Running unittests src/lib.rs (target/debug/deps/paperpilot_pdf-970816b39f12a9a9)
+
+running 1 test
+test operations::conversion::tests::test_pdf_to_docx ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 100 filtered out; finished in 0.01s
