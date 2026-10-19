@@ -25,7 +25,7 @@
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
-            <td class="highlight-col text-success">~45–75ms</td>
+            <td class="highlight-col text-success">~30–95ms</td>
             <td class="text-warning">Network/Queue Dependent</td>
           </tr>
           <tr>
