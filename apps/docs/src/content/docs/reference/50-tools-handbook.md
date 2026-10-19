@@ -28,14 +28,14 @@ This document provides exact, copy-pasteable snippets for invoking tools across 
 | 11 | [`excel_to_json`](#tool-excel-to-json) | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ✅ **v0.5 Core** (Production Ready) |
 | 12 | [`excel_to_csv`](#tool-excel-to-csv) | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ✅ **v0.5 Core** (Production Ready) |
 
-## 📅 Progressive Release Waves (Waves 2–7 - `Preview`)
+## 📅 Progressive Release Waves & SemVer Roadmap (Waves 2–7)
 
-- **Wave 2: Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
-- **Wave 3: Web & AI Synthesis** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
-- **Wave 4: Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
-- **Wave 5: Security & Cryptographic Integrity** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
-- **Wave 6: Forms & Legal Stamping** (`read_form`, `fill_form`, `create_form_field`, `bates`, `header_footer`, `annotate`)
-- **Wave 7: Advanced Engineering & Forensics** (`repair`, `linearize`, `compare`, `crop`, `flatten`, `render`, `classify_type`, `pdf_to_pdf_a`, `bookmarks`)
+- **Wave 2 (`v0.6.0` - Week 2): Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
+- **Wave 3 (`v0.7.0` - Week 3): Web & AI Synthesis Suite** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
+- **Wave 4 (`v0.8.0` - Week 4): Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
+- **Wave 5 (`v0.9.0` - Week 5): Security, Signing & Compliance** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
+- **Wave 6 (`v0.9.5` - Week 6): Page Geometry & Interactive Forms** (`read_form`, `fill_form`, `create_form_field`, `crop`, `bookmarks`, `annotate`)
+- **Wave 7 (`v1.0.0 GA` - Week 7): General Availability & Forensics** (`render`, `flatten`, `repair`, `compare`, `classify_type`, `pdf_to_pdf_a`, `bates`, `header_footer`, `linearize`)
 
 ---
 
