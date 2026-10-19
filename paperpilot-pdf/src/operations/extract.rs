@@ -37,6 +37,8 @@ impl PdfOperation for ExtractPagesOperation {
             .collect();
 
         inner.delete_pages(&pages_to_delete);
+        inner.prune_objects();
+        inner.renumber_objects();
 
         Ok(())
     }

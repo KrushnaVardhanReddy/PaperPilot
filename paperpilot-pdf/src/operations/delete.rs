@@ -33,6 +33,8 @@ impl PdfOperation for DeletePagesOperation {
         }
 
         inner.delete_pages(&self.page_indices);
+        inner.prune_objects();
+        inner.renumber_objects();
 
         Ok(())
     }
