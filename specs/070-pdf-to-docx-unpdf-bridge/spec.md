@@ -38,7 +38,7 @@ The pure-Rust crate **`unpdf`** (MIT license) specializes in:
 ```
 
 ## 3. Deliverables & Acceptance Criteria
-1. Add optional/direct `unpdf` support in `paperpilot-pdf/Cargo.toml` (`unpdf = { version = "0.1", default-features = false }`).
+1. Add optional/direct `unpdf` support in `paperpilot-pdf/Cargo.toml` (`unpdf = { version = "0.46.0", default-features = false }`).
 2. Integrate `unpdf` layout parser into `PdfToDocxOperation` in `paperpilot-pdf/src/operations/conversion.rs`.
 3. Multi-column cards in `fixtures/Get_Started_With_Smallpdf.pdf` render cleanly as borderless tables without text squashing.
 4. Pass `cargo check -p paperpilot-pdf -j 4` and `cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4`.

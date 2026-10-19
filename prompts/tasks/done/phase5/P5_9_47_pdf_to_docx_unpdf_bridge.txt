@@ -30,7 +30,7 @@ DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpi
 ---
 
 ## 1. Concrete Implementation Guidance
-1. In `paperpilot-pdf/Cargo.toml`, add `unpdf = "0.1"`.
+1. In `paperpilot-pdf/Cargo.toml`, add `unpdf = { version = "0.46.0", default-features = false }`.
 2. In `paperpilot-pdf/src/operations/conversion.rs`:
    - Parse input PDF via `unpdf::Unpdf::new().parse(...)` or `unpdf::to_markdown(...)`.
    - Feed the resulting structured markdown through `pulldown-cmark` into `docx-rs`.
