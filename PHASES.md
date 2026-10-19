@@ -980,14 +980,19 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | # | Task | Notes |
 |---|---|---|
 | 5.3.1 | Booklet Imposition | Reorder and layout pages for 2-sided booklet printing |
-| 5.3.2 | Multi-Page Layout (N-Up) | Layout 2, 4, 9 pages per physical sheet |
-| 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) |
+| 5.3.2 | Multi-Page Layout (N-Up) | Layout 2, 4, 9, or 16 pages per physical sheet |
+| 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) with margin offsets |
 | 5.3.4 | Image / Logo Watermark Stamp | Place transparent PNG/JPEG stamps at exact coordinates on pages |
 | 5.3.5 | Validate Digital Signatures | Verify cryptographic signature validity, certificate chain, and tamper hashes |
 | 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
 | 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
 | 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
 | 5.3.9 | Visual Pixel PDF Comparison Slider | Side-by-side & overlay dual-canvas pixel-diff tool in Rust (`image` crate) with grayscale identical background and red/green visual shift highlights |
+| 5.3.10 | Auto-Rotate (Orientation Heuristics & OCR) | Detect sideways/inverted pages (0°/90°/180°/270°) using font baseline metrics and lightweight OCR orientation detection to auto-upright all pages |
+| 5.3.11 | PDF to Single Large Page (Continuous Canvas) | Stitch all pages vertically or horizontally into a single continuous-scroll canvas (ideal for receipts, invoices, and blueprints) |
+| 5.3.12 | Manage Attachments & PDF Portfolios | Embed, inspect, extract, or delete arbitrary files attached in the PDF `/EmbeddedFiles` name tree (PDF Portfolios) |
+| 5.3.13 | Remove Digital / Certificate Signatures | Strip `/ByteRange` cryptographic signature dictionaries and incremental revisions to restore documents to an editable, unsigned state |
+| 5.3.14 | Timestamp PDF (RFC 3161 TSA) | Query an RFC 3161-compliant Time-Stamp Authority (TSA) and embed cryptographic timestamp tokens alongside digital signatures |
 
 ---
 
@@ -1004,6 +1009,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.4.7 | Scanner Image Split (Dual-Page Book Split) | Automatically detect center spine and split scanned two-page book spreads into individual portrait pages |
 | 5.4.8 | Comic Book Archive Conversion (PDF ↔ CBR/CBZ) | Convert PDFs to/from comic archive formats (`.cbz` zip and `.cbr` rar) preserving page sequence and metadata |
 | 5.4.9 | Selective Color Replacement / Background Removal | Replace specific document CMYK/RGB colors (e.g. replace colored header bars or tinted paper backgrounds with pure white) |
+| 5.4.10 | Detect & Split Scanned Photos | Computer-vision flatbed segmentation detecting multiple physical photos placed on a single scanner bed and saving each as an individual image |
 
 ---
 
