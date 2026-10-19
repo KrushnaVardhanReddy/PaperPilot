@@ -1011,6 +1011,11 @@ import { onMount } from 'svelte';
                 <div class="tool-card-info">
                   <span class="tool-card-title">
                     {tool.title}
+                    {#if tool.releaseStatus === 'v1-core'}
+                      <span class="status-badge-v1">v1.0 Core</span>
+                    {:else}
+                      <span class="status-badge-preview">Preview</span>
+                    {/if}
                     {#if appState.documents.length >= 2}
                       {#if tool.rule?.minDocuments === 2}
                         <span class="smart-badge">Multi-File Action</span>
@@ -1041,7 +1046,14 @@ import { onMount } from 'svelte';
                     <span class="tool-card-icon">{tool.icon}</span>
                     <div class="tool-card-info">
                       <div class="tool-card-title-row">
-                        <span class="tool-card-title">{tool.title}</span>
+                        <div class="tool-title-with-badge">
+                          <span class="tool-card-title">{tool.title}</span>
+                          {#if tool.releaseStatus === 'v1-core'}
+                            <span class="status-badge-v1">v1.0 Core</span>
+                          {:else}
+                            <span class="status-badge-preview">Preview</span>
+                          {/if}
+                        </div>
                         {#if tool.inputFormat && tool.outputFormat}
                           <span class="format-pill">
                             <span class="fmt-in">{tool.inputFormat}</span>
@@ -1751,8 +1763,36 @@ import { onMount } from 'svelte';
     color: var(--accent-primary, #5e6ad2);
     font-size: 8px;
   }
-  .fmt-out {
-    color: var(--text-primary, #ffffff);
+  .tool-title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
   }
-
+  .status-badge-v1 {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    vertical-align: middle;
+  }
+  .status-badge-preview {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(147, 51, 234, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(147, 51, 234, 0.28);
+    vertical-align: middle;
+  }
 </style>

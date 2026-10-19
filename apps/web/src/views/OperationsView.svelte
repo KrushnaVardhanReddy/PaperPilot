@@ -7,18 +7,18 @@
 
   // Tools configuration
   const tools = [
-    { id: 'merge', title: 'Merge PDFs', icon: '📑' },
-    { id: 'split', title: 'Split PDF', icon: '✂️' },
-    { id: 'rotate', title: 'Rotate Pages', icon: '🔄' },
-    { id: 'compress', title: 'Compress PDF', icon: '🗜️' },
-    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒' },
-    { id: 'watermark', title: 'Watermark', icon: '©️' },
-    { id: 'delete', title: 'Delete Pages', icon: '🗑️' },
-    { id: 'extract', title: 'Extract Pages', icon: '📤' },
-    { id: 'reorder', title: 'Reorder Pages', icon: '🔀' },
-    { id: 'crop', title: 'Crop PDF', icon: '📐' },
-    { id: 'flatten', title: 'Flatten Forms', icon: '📄' },
-    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️' }
+    { id: 'merge', title: 'Merge PDFs', icon: '📑', releaseStatus: 'v1-core' },
+    { id: 'split', title: 'Split PDF', icon: '✂️', releaseStatus: 'v1-core' },
+    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', releaseStatus: 'v1-core' },
+    { id: 'compress', title: 'Compress PDF', icon: '🗜️', releaseStatus: 'v1-core' },
+    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒', releaseStatus: 'preview' },
+    { id: 'watermark', title: 'Watermark', icon: '©️', releaseStatus: 'v1-core' },
+    { id: 'delete', title: 'Delete Pages', icon: '🗑️', releaseStatus: 'v1-core' },
+    { id: 'extract', title: 'Extract Pages', icon: '📤', releaseStatus: 'v1-core' },
+    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', releaseStatus: 'v1-core' },
+    { id: 'crop', title: 'Crop PDF', icon: '📐', releaseStatus: 'preview' },
+    { id: 'flatten', title: 'Flatten Forms', icon: '📄', releaseStatus: 'preview' },
+    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️', releaseStatus: 'preview' }
   ];
 
   // Tool specific states (batch array support)
@@ -491,7 +491,12 @@ let metadataFile: File | null = $state(null);
           onclick={() => activeTool = tool.id}
         >
           <span class="tool-icon">{tool.icon}</span>
-          {tool.title}
+          <span class="tool-title-text">{tool.title}</span>
+          {#if tool.releaseStatus === 'v1-core'}
+            <span class="web-badge-v1">v1.0 Core</span>
+          {:else}
+            <span class="web-badge-preview">Preview</span>
+          {/if}
         </button>
       {/each}
     </div>
@@ -1141,8 +1146,8 @@ let metadataFile: File | null = $state(null);
   .tool-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 10px 12px;
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--border-radius-md);
@@ -1151,6 +1156,40 @@ let metadataFile: File | null = $state(null);
     transition: all var(--transition-fast);
     text-align: left;
     font-size: 0.95rem;
+    position: relative;
+  }
+
+  .tool-title-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .web-badge-v1 {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+  }
+
+  .web-badge-preview {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 9999px;
+    font-size: 7.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(147, 51, 234, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(147, 51, 234, 0.28);
   }
 
   .tool-btn:hover {

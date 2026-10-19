@@ -17,4 +17,6 @@ export interface ToolDefinition {
   inputFormat: string;
   outputFormat: string;
   rule?: ToolConditionRule;
+  releaseStatus?: 'v1-core' | 'preview';
 }
+

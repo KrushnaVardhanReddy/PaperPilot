@@ -3,11 +3,43 @@ title: 44-Tools Handbook
 description: Comprehensive reference for all 44 PaperPilot tools across CLI, REST API, and MCP.
 ---
 
-# Master 44-Tool Reference
+# Master 44-Tool Reference & Release Handbook
 
-This document provides exact, copy-pasteable snippets for invoking every tool across our three primary interfaces.
+This document provides exact, copy-pasteable snippets for invoking tools across our primary interfaces.
 
-## Index of Tools
+> **Release Status Notice:**
+> - **Wave 1 Core Launch Suite (12 Tools - `v1.0 Core`):** Undergoes unmocked real-disk Playwright execution, 100% Penta-Interface parity, and sub-75ms SLA (~45–75ms end-to-end latency).
+> - **Preview Suite (Waves 2–7 - `Preview`):** Engine development complete; actively staged for dedicated test hardening and weekly progressive release rollouts.
+
+## 🚀 Wave 1: The Top 12 Core Launch Suite (`v1.0 Core`)
+
+| # | Tool ID | Interface Title | Category | Format Support | Release Status |
+|---|---|---|---|---|---|
+| 1 | [`pdf_merge`](#tool-pdf-merge) | Merge Documents | Organize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 2 | [`pdf_split`](#tool-pdf-split) | Split PDF | Organize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 3 | [`pdf_rotate`](#tool-pdf-rotate) | Rotate Pages | Organize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 4 | [`pdf_delete_pages`](#tool-pdf-delete-pages) | Delete Pages | Organize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 5 | [`pdf_reorder_pages`](#tool-pdf-reorder-pages) | Reorder Pages | Organize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 6 | [`pdf_compress`](#tool-pdf-compress) | Compress PDF | Optimize | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 7 | [`pdf_watermark`](#tool-pdf-watermark) | Add Watermark | Security | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 8 | [`pdf_ocr`](#tool-pdf-ocr) | OCR Text Recognition | AI / OCR | `.pdf`, Images | ✅ **v1.0 Core** (Production Ready) |
+| 9 | [`pdf_extract_text`](#tool-pdf-extract-text) | Extract Plain Text | Extract | `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 10 | [`pdf_extract_pages`](#tool-pdf-extract-pages) | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ✅ **v1.0 Core** (Production Ready) |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ✅ **v1.0 Core** (Production Ready) |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ✅ **v1.0 Core** (Production Ready) |
+
+## 📅 Progressive Release Waves (Waves 2–7 - `Preview`)
+
+- **Wave 2: Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
+- **Wave 3: Web & AI Synthesis** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
+- **Wave 4: Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
+- **Wave 5: Security & Cryptographic Integrity** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
+- **Wave 6: Forms & Legal Stamping** (`read_form`, `fill_form`, `create_form_field`, `bates`, `header_footer`, `annotate`)
+- **Wave 7: Advanced Engineering & Forensics** (`repair`, `linearize`, `compare`, `crop`, `flatten`, `render`, `classify_type`, `pdf_to_pdf_a`, `bookmarks`)
+
+---
+
+## Complete Index of Tools
 
 - [pdf_merge](#tool-pdf-merge)
 - [pdf_split](#tool-pdf-split)
