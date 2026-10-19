@@ -1,11 +1,11 @@
-# Task: Phase 5.9.50 — Full 50-Tool Penta-Interface Verification, Documentation Parity & Website Showcase
+# Task: Phase 5.9.50 — Full 50-Tool Penta-Interface Verification & Documentation Parity
 # Base Branch: main
-# Target Branch: feat-50-tools-penta-audit-docs-website-sync
+# Target Branch: feat-50-tools-penta-audit-docs-sync
 # Priority: HIGH
 # Spec: specs/031-penta-interface-e2e-real-semantic-assertions/spec.md & specs/064-all-50-tools-cleanroom-audit/spec.md
 
 ## Objective
-Execute a comprehensive end-to-end verification across ALL 5 INTERFACES (CLI, MCP, REST Gateway, WebAssembly/In-Memory, and Edge Worker) for all 50 PaperPilot tools. Extract real execution examples from the test suite and synchronize the Documentation Portal (`apps/docs/src/content/docs/reference/50-tools-handbook.md`) so every single tool has verified, copy-pasteable snippets across CLI, REST, and MCP. Finally, update the Web Portal (`apps/web`) to showcase verified latencies (~20ms) and multi-interface capabilities.
+Execute a comprehensive end-to-end verification across ALL 5 INTERFACES (CLI, MCP, REST Gateway, WebAssembly/In-Memory, and Edge Worker) for all 50 PaperPilot tools. Extract real, verified execution commands and payloads directly from the tests and update the Documentation Portal (`apps/docs/src/content/docs/reference/50-tools-handbook.md`) so every single tool has verified, working, copy-pasteable snippets across CLI, REST API (`curl`), and MCP JSON-RPC. (Web UI updates are out of scope for this task).
 
 ---
 
@@ -17,13 +17,11 @@ reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md
 reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md
 apps/docs/src/content/docs/reference/50-tools-handbook.md
 apps/docs/src/content/docs/reference/
-apps/web/src/components/BenchmarkMatrix.svelte
-apps/web/src/components/HeroPlayground.svelte
-apps/web/src/views/OperationsView.svelte
 Makefile
 ```
 
 ### Prohibited Actions:
+- DO NOT touch or modify frontend web/desktop UI code (`apps/web`, `apps/desktop`, `apps/embed`).
 - DO NOT run destructive git commands: `git reset --hard`, `git checkout -- .`, `git restore .`, or `git clean -fd`.
 - DO NOT modify core crate business logic (`paperpilot-core`, `paperpilot-pdf`, `paperpilot-mcp`) unless fixing an audit assertion blocker.
 - All commits MUST follow the convention: `jules: <commit description>`.
@@ -55,6 +53,9 @@ Run and verify all 5 distinct execution surfaces across the 50 tools:
    - Verify Cloudflare worker handler bridging to WASM / API gateway.
    - Run `cargo run -p penta-interface-e2e` to confirm all 4 groups (Page Ops, Security & Forms, Analysis, and Conversions) pass with 100% semantic assertions.
 
+6. **Audit Report Generation**:
+   - Update `reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md` with the 50/50 PASS verdict and latest latency numbers.
+
 ---
 
 ## 2. Documentation Portal Synchronization (`apps/docs`)
@@ -75,22 +76,8 @@ Using the verified tests from Section 1, update `apps/docs/src/content/docs/refe
 
 ---
 
-## 3. Web Portal Synchronization (`apps/web`)
-1. Update `apps/web/src/components/BenchmarkMatrix.svelte` and `HeroPlayground.svelte`:
-   - Feature Matrix: Display all 5 Interfaces (Desktop, Web, REST Gateway, CLI, MCP).
-   - Execution Speed: Update latency benchmarks to reflect real measurements (~20ms–45ms for native operations).
-   - Multi-Format Ingestion: Highlight client-side PDF + native Excel (`.xlsx`, `.xls`, `.csv`) grid inspection with zero heavy JVM/LibreOffice requirements.
-   - Competitive Advantage: Highlight differences against Stirling PDF and Adobe Acrobat (privacy, lightweight memory footprint, instant startup, and MCP AI agent readiness).
-2. Validate that the web portal builds and type-checks cleanly:
-   ```bash
-   cd apps/web && npm run check && npm run build
-   ```
-
----
-
-## 4. Verification & Quality Gate
+## 3. Verification & Quality Gate
 Before submitting:
 1. `cargo test -p paperpilot-cli --test all50_cleanroom_audit` passes 100% (50/50 PASS).
 2. `cargo run -p penta-interface-e2e` passes across all groups.
 3. `cd apps/docs && npm run build` completes with exit code 0.
-4. `cd apps/web && npm run check && npm run build` completes with exit code 0.
