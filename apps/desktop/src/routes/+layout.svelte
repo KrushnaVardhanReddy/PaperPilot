@@ -33,16 +33,24 @@
             const { open } = await import('@tauri-apps/plugin-dialog');
             const selected = await open({
               multiple: false,
-              filters: [{ name: 'PDF Documents', extensions: ['pdf'] }]
+              filters: [
+                { name: 'All Supported Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'csv'] },
+                { name: 'PDF Documents', extensions: ['pdf'] },
+                { name: 'Excel Spreadsheets', extensions: ['xlsx', 'xls', 'csv'] },
+                { name: 'Word Documents', extensions: ['docx', 'doc'] },
+                { name: 'PowerPoint Presentations', extensions: ['pptx', 'ppt'] }
+              ]
             });
             if (selected && typeof selected === 'string') {
               const fileName =
                 selected.split('/').pop() ||
                 selected.split('\\').pop() ||
                 'document.pdf';
+              const { getMimeType } = await import('$lib/utils/fileType');
+              const mime = getMimeType(fileName);
               const bytes: number[] = await invoke('read_file_bytes', { path: selected });
-              const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-              const file = new File([blob], fileName, { type: 'application/pdf' });
+              const blob = new Blob([new Uint8Array(bytes)], { type: mime });
+              const file = new File([blob], fileName, { type: mime });
               (file as any)._localPath = selected;
               appState.addDocuments([file]);
               appState.selectDocument(appState.documents.length - 1);

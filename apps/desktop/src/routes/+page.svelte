@@ -34,6 +34,8 @@
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
+  import NonPdfViewer from '$lib/components/workspace/NonPdfViewer.svelte';
+  import { isPdfFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
   import { onMount } from 'svelte';
@@ -323,8 +325,9 @@
                 const bytes: number[] = await safeInvoke('read_file_bytes', { path });
                 if (isAborted) return; // Prevent overwriting state if user switched tabs
 
-                const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-                const newFile = new File([blob], file.name, { type: 'application/pdf' });
+                const inferredMime = file.type || getMimeType(file.name);
+                const blob = new Blob([new Uint8Array(bytes)], { type: inferredMime });
+                const newFile = new File([blob], file.name, { type: inferredMime });
                 Object.defineProperty(newFile, 'size', { value: file.size, writable: false });
                 (newFile as any)._localPath = path;
                 (newFile as any)._isLoaded = true;
@@ -391,48 +394,56 @@
         {#if appState.showDiffView}
           <PdfVisualDiff onClose={() => appState.showDiffView = false} />
         {:else if appState.selectedDocumentIndex !== null}
-          <div class="viewer-wrapper">
-            <div class="viewer-content">
-            <PdfThumbnails {pdfDoc} bind:pageNum />
+          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+          {#if selectedDoc && !isPdfFile(selectedDoc.name)}
+            <NonPdfViewer
+              file={selectedDoc}
+              docIndex={appState.selectedDocumentIndex}
+            />
+          {:else}
+            <div class="viewer-wrapper">
+              <div class="viewer-content">
+              <PdfThumbnails {pdfDoc} bind:pageNum />
 
-            <div class="viewer-main">
-              <div class="toolbars-container">
-                <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
+              <div class="viewer-main">
+                <div class="toolbars-container">
+                  <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
+                </div>
+                {#if hasFormFields}
+                  <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
+                {/if}
+                <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
+                  <PdfViewer
+                    fileUrl={currentFileUrl}
+                    bind:pdfDoc
+                    bind:pageNum
+                    bind:scale
+                    activeTool={activeTool}
+                    bind:annotations
+                  />
+                  <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
+                </div>
               </div>
-              {#if hasFormFields}
-                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
-              {/if}
-              <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
-                <PdfViewer
-                  fileUrl={currentFileUrl}
-                  bind:pdfDoc
-                  bind:pageNum
-                  bind:scale
-                  activeTool={activeTool}
-                  bind:annotations
-                />
-                <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
-              </div>
+
+              <ViewerRightPanel
+                bind:annotations
+                {pdfDoc}
+                onJumpToPage={(p: number) => pageNum = p}
+              />
             </div>
-
-            <ViewerRightPanel
-              bind:annotations
-              {pdfDoc}
-              onJumpToPage={(p: number) => pageNum = p}
-            />
-          </div>
-            <StatusBar
-              {pageNum}
-              {numPages}
-              {scale}
-              fileName={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
-                : ''}
-              fileSize={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
-                : 0}
-            />
-          </div>
+              <StatusBar
+                {pageNum}
+                {numPages}
+                {scale}
+                fileName={appState.selectedDocumentIndex !== null
+                  ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+                  : ''}
+                fileSize={appState.selectedDocumentIndex !== null
+                  ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+                  : 0}
+              />
+            </div>
+          {/if}
         {:else}
           <div class="documents-layout">
             <div class="documents-view">

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import { getFileTypeInfo } from '$lib/utils/fileType';
 
   function formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
@@ -18,18 +19,19 @@
   {:else}
     <div class="list-container">
       {#each appState.documents as doc, index}
+        {@const fileInfo = getFileTypeInfo(doc.name)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="document-item {appState.selectedDocumentIndex === index ? 'selected' : ''}"
           onclick={() => appState.selectDocument(index)}
         >
-          <div class="doc-icon">📄</div>
+          <div class="doc-icon">{fileInfo.icon}</div>
           <div class="doc-info">
             <span class="doc-name">{doc.name}</span>
             <div class="doc-meta">
               <span class="doc-size">{formatFileSize(doc.size)}</span>
-              <span class="doc-pages">{(doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF'}</span>
+              <span class="doc-pages">{fileInfo.isPdf ? ((doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF') : fileInfo.label.split(' ')[0]}</span>
             </div>
           </div>
           <button
