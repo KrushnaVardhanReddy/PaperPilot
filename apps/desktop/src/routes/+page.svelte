@@ -34,7 +34,6 @@
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
-  import NonPdfViewer from '$lib/components/workspace/NonPdfViewer.svelte';
   import { isPdfFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
@@ -286,7 +285,12 @@
     if (files.length === 0) return;
     const startIndex = appState.documents.length;
     appState.addDocuments(files);
-    appState.selectDocument(startIndex);
+    // Only switch to viewer view if the document is a PDF
+    if (isPdfFile(files[0]?.name ?? '')) {
+      appState.selectDocument(startIndex);
+    } else {
+      appState.selectDocument(null);
+    }
   }
 
   let currentFileUrl = $state('');
@@ -393,57 +397,49 @@
       <div class="workspace-body">
         {#if appState.showDiffView}
           <PdfVisualDiff onClose={() => appState.showDiffView = false} />
-        {:else if appState.selectedDocumentIndex !== null}
-          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
-          {#if selectedDoc && !isPdfFile(selectedDoc.name)}
-            <NonPdfViewer
-              file={selectedDoc}
-              docIndex={appState.selectedDocumentIndex}
-            />
-          {:else}
-            <div class="viewer-wrapper">
-              <div class="viewer-content">
-              <PdfThumbnails {pdfDoc} bind:pageNum />
+        {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+          <div class="viewer-wrapper">
+            <div class="viewer-content">
+            <PdfThumbnails {pdfDoc} bind:pageNum />
 
-              <div class="viewer-main">
-                <div class="toolbars-container">
-                  <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
-                </div>
-                {#if hasFormFields}
-                  <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
-                {/if}
-                <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
-                  <PdfViewer
-                    fileUrl={currentFileUrl}
-                    bind:pdfDoc
-                    bind:pageNum
-                    bind:scale
-                    activeTool={activeTool}
-                    bind:annotations
-                  />
-                  <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
-                </div>
+            <div class="viewer-main">
+              <div class="toolbars-container">
+                <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
               </div>
+              {#if hasFormFields}
+                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
+              {/if}
+              <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
+                <PdfViewer
+                  fileUrl={currentFileUrl}
+                  bind:pdfDoc
+                  bind:pageNum
+                  bind:scale
+                  activeTool={activeTool}
+                  bind:annotations
+                />
+                <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
+              </div>
+            </div>
 
-              <ViewerRightPanel
-                bind:annotations
-                {pdfDoc}
-                onJumpToPage={(p: number) => pageNum = p}
-              />
-            </div>
-              <StatusBar
-                {pageNum}
-                {numPages}
-                {scale}
-                fileName={appState.selectedDocumentIndex !== null
-                  ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
-                  : ''}
-                fileSize={appState.selectedDocumentIndex !== null
-                  ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
-                  : 0}
-              />
-            </div>
-          {/if}
+            <ViewerRightPanel
+              bind:annotations
+              {pdfDoc}
+              onJumpToPage={(p: number) => pageNum = p}
+            />
+          </div>
+            <StatusBar
+              {pageNum}
+              {numPages}
+              {scale}
+              fileName={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+                : ''}
+              fileSize={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+                : 0}
+            />
+          </div>
         {:else}
           <div class="documents-layout">
             <div class="documents-view">

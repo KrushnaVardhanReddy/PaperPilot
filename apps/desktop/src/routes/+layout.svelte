@@ -46,14 +46,18 @@
                 selected.split('/').pop() ||
                 selected.split('\\').pop() ||
                 'document.pdf';
-              const { getMimeType } = await import('$lib/utils/fileType');
+              const { getMimeType, isPdfFile } = await import('$lib/utils/fileType');
               const mime = getMimeType(fileName);
               const bytes: number[] = await invoke('read_file_bytes', { path: selected });
               const blob = new Blob([new Uint8Array(bytes)], { type: mime });
               const file = new File([blob], fileName, { type: mime });
               (file as any)._localPath = selected;
               appState.addDocuments([file]);
-              appState.selectDocument(appState.documents.length - 1);
+              if (isPdfFile(fileName)) {
+                appState.selectDocument(appState.documents.length - 1);
+              } else {
+                appState.selectDocument(null);
+              }
             }
           } catch (err) {
             console.error('Failed to open file dialog:', err);
