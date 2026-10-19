@@ -10,12 +10,13 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
-   - **Task 5.9.45 / Spec 068 (PDF-to-DOCX High-Fidelity Semantic Layout & Side-by-Side Table Reconstruction)**: [Session 5068738657494782356](https://jules.google.com/session/5068738657494782356) — Upgrading `PdfToDocxOperation` in `paperpilot-pdf` to match `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`, establishing centered titles, 2-column borderless OpenXML tables (`docx-rs::Table`) for feature cards, compact 0.5-inch margins, and strictly 1-page geometry in LibreOffice/Word (`specs/068-pdf-to-docx-semantic-layout/spec.md`).
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
-   - **Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: Merged (PR #209, commit `91b7beb`, Jules Session 11237800863675110882) — Font subset prefix sanitization (`sanitize_font_name`), 2-column borderless OpenXML tables for side-by-side elements, inline image extraction, and 1-page geometry control.
+   - **Spec 070 (PDF-to-DOCX Conversion via `unpdf` Recursive XY-Cut Layout Analysis)**: Merged (PR #212, commit `f51a830`, Jules Session 7824070929951783545) — Integrated `unpdf v0.46.0` recursive XY-Cut layout analysis into `PdfToDocxOperation`, reconstructing 4 side-by-side borderless OpenXML tables (`<w:tbl>`), centered headers, and compact 0.5-inch margins for strictly 1-page geometry in LibreOffice/Word (`specs/070-pdf-to-docx-unpdf-bridge/spec.md`).
+   - **v1.0 Core Suite Adjustments (`v1_launch_plan.md`)**: Promoted 100% verified `pdf_to_markdown` into the Top 12 Launch Suite (Tool #10); scheduled deep vector graphic rendering for `pdf_to_docx` in Wave 3 (Office Modernization).
    - **Spec 067 (Production-Grade PDF Compression Optimization)**: Merged (PR #208, Jules Session 6600304163605773570) — Preset-driven JPEG downsampling, Flate content stream compression, orphan pruning, and 100% unit & E2E assertions pass.
+   - **Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: Merged (PR #209, commit `91b7beb`, Jules Session 11237800863675110882).
    - **Penta-Interface E2E & Cleanroom Audits Passed (Oct 18, 2026)**:
      - `page_ops` (Phase 5.9.4A): 180 / 180 tests PASS
      - `security_forms` (Phase 5.9.4B): 280 / 280 tests PASS

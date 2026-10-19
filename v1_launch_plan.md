@@ -19,7 +19,7 @@ These 12 operations are frozen as the **v1.0 Core Suite**. They undergo **unmock
 | 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | Semi-transparent diagonal watermarks |
 | 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | Pure-Rust PaddleOCR v4 / RTen OCR overlays |
 | 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction |
-| 10 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | `.pdf` $\to$ `.docx` | High-fidelity editable Word reconstruction |
+| 10 | `pdf_to_markdown` | PDF to Markdown | Convert | `.pdf` $\to$ `.md` | LLM-ready clean layout markdown for AI RAG |
 | 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
 | 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
 
@@ -34,17 +34,17 @@ Focuses on advanced modern conversions, AI ingestion, and spatial search:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
 | 13 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis |
-| 14 | `pdf_to_markdown` | PDF to Markdown | Convert | LLM-ready clean layout markdown for AI RAG |
-| 15 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) |
-| 16 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator |
-| 17 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images |
-| 18 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON |
-| 19 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
+| 14 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) |
+| 15 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator |
+| 16 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images |
+| 17 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON |
+| 18 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights |
 
 ### 🌊 Wave 3: Office Modernization & Spreadsheets (Week 3)
-Focuses on full Microsoft Office suite interoperability:
+Focuses on full Microsoft Office suite interoperability and deep vector layout reconstruction:
 | # | Tool ID | Interface Title | Category | Target Value |
 |---|---|---|---|---|
+| 19 | `pdf_to_docx` | PDF to Word (DOCX) | Convert | High-fidelity editable Word reconstruction with vector shape/icon rasterization |
 | 20 | `pdf_to_xlsx` | PDF to Excel (XLSX) | Convert | Tabular extraction into structured Excel workbooks |
 | 21 | `pdf_to_pptx` | PDF to PowerPoint (PPTX) | Convert | Slide deck presentation reconstruction |
 | 22 | `office_to_markdown` | Office to Markdown | Convert | One-click Word, Excel, PPT conversion to Markdown |
