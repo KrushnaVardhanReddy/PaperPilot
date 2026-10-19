@@ -30,6 +30,7 @@ install-desktop:
 
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
 dev: install-desktop
+	@fuser -k 1420/tcp 2>/dev/null || true
 	cd apps/desktop && (npx tauri dev || npm run tauri dev)
 
 # Run web portal in live-reload dev mode

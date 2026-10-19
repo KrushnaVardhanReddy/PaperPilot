@@ -417,6 +417,19 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
 
     let response = request.send().await.map_err(|e| e.to_string())?;
 
+    if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+        let _ = app.emit(
+            "model-download-progress",
+            DownloadProgress {
+                model_id: model_id.clone(),
+                percent: 100.0,
+                bytes_downloaded: downloaded,
+                total_bytes: downloaded,
+            },
+        );
+        return Ok(());
+    }
+
     if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
     {
         return Err(format!(

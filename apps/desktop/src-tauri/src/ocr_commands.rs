@@ -289,6 +289,11 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
 
         let response = request.send().await.map_err(|e| e.to_string())?;
 
+        // HTTP 416 means Range Not Satisfiable: the file on disk is already 100% complete!
+        if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+            continue;
+        }
+
         if !response.status().is_success()
             && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
         {
