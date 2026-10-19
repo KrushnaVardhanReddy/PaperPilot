@@ -465,6 +465,8 @@
                   <DocumentList />
                 {/if}
 
+                <GlobalCommandBar />
+
                 <!-- Studio Hub Operations Grid -->
                 <div class="studio-operations-grid">
                    {#if appState.documents.length > 0 && ranked.recommended.length > 0}
