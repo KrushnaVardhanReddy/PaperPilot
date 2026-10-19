@@ -913,6 +913,7 @@ pub struct TextSpan {
     pub color_hex: String,
 }
 
+#[allow(dead_code)]
 fn sanitize_xml_text(s: &str) -> String {
     s.chars()
         .filter(|&c| {
@@ -979,9 +980,10 @@ impl PdfOperation for PdfToDocxOperation {
             })?;
 
         use docx_rs::{
-            Docx, Paragraph, Pic, Run, RunFonts, Table, TableBorders, TableCell, TableRow,
+            AlignmentType, Docx, Paragraph, Run, Table, TableBorders, TableCell, TableRow,
             WidthType,
         };
+        use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 
         let mut docx = Docx::new().page_margin(
             docx_rs::PageMargin::new()
@@ -991,165 +993,103 @@ impl PdfOperation for PdfToDocxOperation {
                 .right(720),
         );
 
-        let doc = &mut lopdf_doc.inner;
-        let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
-        all_pages.sort_unstable();
+        let mut bytes = Vec::new();
+        if let Some(orig_bytes) = lopdf_doc.original_bytes.as_deref() {
+            bytes = orig_bytes.to_vec();
+        } else {
+            lopdf_doc.inner.save_to(&mut bytes).map_err(|e| {
+                PdfError::Other(format!("Failed to save lopdf inner document: {}", e))
+            })?;
+        }
 
-        for (i, page_id) in all_pages.iter().enumerate() {
-            let mut images_on_page = Vec::new();
+        use std::io::Write;
+        let mut temp_file = tempfile::NamedTempFile::new()
+            .map_err(|e| PdfError::Other(format!("Failed to create temp file: {}", e)))?;
+        temp_file
+            .write_all(&bytes)
+            .map_err(|e| PdfError::Other(format!("Failed to write to temp file: {}", e)))?;
 
-            if let Ok(page_dict) = doc.get_dictionary((*page_id, 0))
-                && let Ok(resources) = page_dict.get(b"Resources")
-                && let Ok(resources_dict) = doc
-                    .get_object(resources.as_reference().unwrap_or((0, 0)))
-                    .and_then(|o| o.as_dict())
-                    .or_else(|_| resources.as_dict())
-                && let Ok(xobjects) = resources_dict.get(b"XObject")
-                && let Ok(xobjects_dict) = doc
-                    .get_object(xobjects.as_reference().unwrap_or((0, 0)))
-                    .and_then(|o| o.as_dict())
-                    .or_else(|_| xobjects.as_dict())
-            {
-                for (_, obj) in xobjects_dict.iter() {
-                    if let Ok(obj_ref) = obj.as_reference()
-                        && let Ok(xobject) = doc.get_object(obj_ref)
-                        && let Ok(stream) = xobject.as_stream()
-                        && let Ok(subtype) = stream.dict.get(b"Subtype").and_then(|s| s.as_name())
-                        && subtype == b"Image"
-                        && let Ok(content) = stream.decompressed_content() {
-                            let mut filter = "";
-                            if let Ok(f) = stream.dict.get(b"Filter")
-                                && let Ok(n) = f.as_name()
-                            {
-                                filter = std::str::from_utf8(n).unwrap_or("");
-                            }
-                            images_on_page.push((filter.to_string(), stream.dict.clone(), content));
-                        }
+        let markdown = unpdf::to_markdown(temp_file.path()).map_err(|e| {
+            PdfError::UnsupportedOperation(format!("unpdf layout analysis failed: {}", e))
+        })?;
+
+        let parser = Parser::new(&markdown);
+
+        let mut current_heading_level = 0;
+
+        let mut current_paragraph = Paragraph::new();
+        let mut has_run = false;
+
+        let mut current_card_title: Option<Paragraph> = None;
+
+        for event in parser {
+            match event {
+                Event::Start(Tag::Heading { level, .. }) => {
+                    let level_num = match level {
+                        pulldown_cmark::HeadingLevel::H1 => 1,
+                        pulldown_cmark::HeadingLevel::H2 => 2,
+                        pulldown_cmark::HeadingLevel::H3 => 3,
+                        pulldown_cmark::HeadingLevel::H4 => 4,
+                        pulldown_cmark::HeadingLevel::H5 => 5,
+                        pulldown_cmark::HeadingLevel::H6 => 6,
+                    };
+                    current_heading_level = level_num;
+                    current_paragraph = Paragraph::new();
+                    if current_heading_level == 1 || current_heading_level == 3 {
+                        current_paragraph = current_paragraph.align(AlignmentType::Center);
+                    }
+                    has_run = false;
                 }
-            }
-
-            // Extract fonts cleanly
-            let mut fonts_on_page = std::collections::HashMap::new();
-            if let Ok(page_dict) = doc.get_dictionary((*page_id, 0))
-                && let Ok(resources) = page_dict.get(b"Resources")
-                    && let Ok(res_dict) = doc.get_object(resources.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict()).or_else(|_| resources.as_dict())
-                        && let Ok(fonts) = res_dict.get(b"Font").and_then(|o| doc.get_object(o.as_reference().unwrap_or((0,0))).and_then(|o| o.as_dict()).or_else(|_| o.as_dict())) {
-                            for (font_name, font_obj) in fonts.iter() {
-                                if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0,0))).and_then(|o| o.as_dict()).or_else(|_| font_obj.as_dict())
-                                    && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|n| n.as_name()) {
-                                        let name = std::str::from_utf8(base_font).unwrap_or("Arial");
-                                        fonts_on_page.insert(font_name.to_vec(), sanitize_font_name(name));
-                                    }
-                            }
-                        }
-
-            let page_text = doc.extract_text(&[*page_id]).unwrap_or_default();
-            let mut text_blocks = Vec::new();
-            for line in page_text.lines() {
-                let trimmed = sanitize_xml_text(line.trim());
-                if !trimmed.is_empty() {
-                    text_blocks.push(trimmed);
-                }
-            }
-
-            // Default font
-            let default_font = if !fonts_on_page.is_empty() {
-                fonts_on_page.values().next().unwrap().clone()
-            } else {
-                "Arial".to_string()
-            };
-
-            // Heuristic for 2-column layout
-            if !images_on_page.is_empty() && !text_blocks.is_empty() {
-                let mut right_cell = TableCell::new().width(5000, WidthType::Dxa);
-
-                let heading = &text_blocks[0];
-                let heading_run = Run::new()
-                    .add_text(heading)
-                    .bold()
-                    .size(24)
-                    .fonts(RunFonts::new().ascii(default_font.clone()).cs(default_font.clone()).hi_ansi(default_font.clone()));
-                right_cell = right_cell.add_paragraph(Paragraph::new().add_run(heading_run));
-
-                for block in text_blocks.into_iter().skip(1) {
-                    let run = Run::new()
-                        .add_text(block)
-                        .size(20)
-                        .fonts(RunFonts::new().ascii(default_font.clone()).cs(default_font.clone()).hi_ansi(default_font.clone()));
-                    right_cell = right_cell.add_paragraph(Paragraph::new().add_run(run));
-                }
-
-                let (filter, dict, img_bytes) = images_on_page[0].clone();
-                let mut final_png_bytes = Vec::new();
-
-                if filter == "DCTDecode" {
-                    final_png_bytes = img_bytes.clone(); // docx_rs accepts JPEG directly
-                    if let Ok(dynamic_image) = image::load_from_memory(&final_png_bytes) {
-                        let mut png_data = Vec::new();
-                        let mut cursor = std::io::Cursor::new(&mut png_data);
-                        if dynamic_image.write_to(&mut cursor, image::ImageFormat::Png).is_ok() {
-                            final_png_bytes = png_data;
+                Event::End(TagEnd::Heading(_)) => {
+                    if has_run {
+                        if current_heading_level == 3 {
+                            current_card_title = Some(current_paragraph.clone());
+                        } else {
+                            docx = docx.add_paragraph(current_paragraph.clone());
                         }
                     }
-                } else if filter == "FlateDecode" || filter.is_empty() {
-                    // Raw decompressed pixels! Need to reconstruct using Width, Height, ColorSpace
-                    if let (Ok(width), Ok(height)) = (dict.get(b"Width").and_then(|w| w.as_i64()), dict.get(b"Height").and_then(|h| h.as_i64())) {
-                        let width = width as u32;
-                        let height = height as u32;
-                        let mut is_rgb = false;
-                        if let Ok(cs) = dict.get(b"ColorSpace").and_then(|c| c.as_name())
-                            && cs == b"DeviceRGB" {
-                                is_rgb = true;
-                            }
-
-                        let color_type = if is_rgb { image::ColorType::Rgb8 } else { image::ColorType::L8 };
-                        let mut png_data = Vec::new();
-                        let mut cursor = std::io::Cursor::new(&mut png_data);
-                        let encoder = image::codecs::png::PngEncoder::new(&mut cursor);
-                        if image::ImageEncoder::write_image(encoder, &img_bytes, width, height, color_type.into()).is_ok() {
-                            final_png_bytes = png_data;
+                    current_heading_level = 0;
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                Event::Start(Tag::Paragraph) => {
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                Event::End(TagEnd::Paragraph) => {
+                    if has_run {
+                        if let Some(title_para) = current_card_title.take() {
+                            let table = Table::new(vec![TableRow::new(vec![
+                                TableCell::new()
+                                    .add_paragraph(title_para)
+                                    .width(5000, WidthType::Dxa),
+                                TableCell::new()
+                                    .add_paragraph(current_paragraph.clone())
+                                    .width(5000, WidthType::Dxa),
+                            ])])
+                            .set_borders(TableBorders::new().clear_all())
+                            .layout(docx_rs::TableLayoutType::Fixed);
+                            docx = docx.add_table(table);
+                        } else {
+                            docx = docx.add_paragraph(current_paragraph.clone());
                         }
                     }
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
                 }
+                Event::Text(text) => {
+                    let mut run = Run::new().add_text(text.into_string());
 
-                if final_png_bytes.is_empty() && !img_bytes.is_empty() {
-                    // Fallback
-                    if let Ok(dynamic_image) = image::load_from_memory(&img_bytes) {
-                        let mut png_data = Vec::new();
-                        let mut cursor = std::io::Cursor::new(&mut png_data);
-                        if dynamic_image.write_to(&mut cursor, image::ImageFormat::Png).is_ok() {
-                            final_png_bytes = png_data;
-                        }
+                    if current_heading_level == 1 {
+                        run = run.bold().size(44).color("1F242E");
+                    } else if current_heading_level == 3 {
+                        run = run.size(22).color("757E8A");
                     }
+
+                    current_paragraph = current_paragraph.add_run(run);
+                    has_run = true;
                 }
-
-                if final_png_bytes.is_empty() {
-                    final_png_bytes = img_bytes; // Use raw as last resort (docx might corrupt)
-                }
-
-                let table = Table::new(vec![TableRow::new(vec![
-                    TableCell::new()
-                        .add_paragraph(
-                            Paragraph::new().add_run(Run::new().add_image(Pic::new(&final_png_bytes))),
-                        )
-                        .width(5000, WidthType::Dxa),
-                    right_cell,
-                ])])
-                .margins(docx_rs::TableCellMargins::new())
-                .set_borders(TableBorders::new().clear_all());
-
-                docx = docx.add_table(table);
-            } else {
-                for block in text_blocks {
-                    let run = Run::new()
-                        .add_text(block)
-                        .fonts(RunFonts::new().ascii(default_font.clone()).cs(default_font.clone()).hi_ansi(default_font.clone()));
-                    docx = docx.add_paragraph(Paragraph::new().add_run(run));
-                }
-            }
-
-            if i < all_pages.len() - 1 {
-                docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
+                _ => {}
             }
         }
 
@@ -1359,9 +1299,11 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
+        let mut bytes = Vec::new();
+        doc.save_to(&mut bytes).unwrap();
         LopdfDocument {
             inner: doc,
-            original_bytes: None,
+            original_bytes: Some(bytes),
         }
     }
 
@@ -1536,9 +1478,15 @@ mod tests {
 
     #[test]
     fn test_sanitize_font_name() {
-        assert_eq!(super::sanitize_font_name("JFGNNE+SourceSansPro-Bold"), "Source Sans Pro");
+        assert_eq!(
+            super::sanitize_font_name("JFGNNE+SourceSansPro-Bold"),
+            "Source Sans Pro"
+        );
         assert_eq!(super::sanitize_font_name("Arial-Italic"), "Arial");
-        assert_eq!(super::sanitize_font_name("TimesNewRoman,Bold"), "Times New Roman");
+        assert_eq!(
+            super::sanitize_font_name("TimesNewRoman,Bold"),
+            "Times New Roman"
+        );
         assert_eq!(super::sanitize_font_name("F1"), "Arial");
         assert_eq!(super::sanitize_font_name("OpenSans"), "Open Sans");
     }
