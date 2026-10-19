@@ -1,0 +1,70 @@
+# Task: Phase 5.9.46 — Universal HTML/Markdown AST Bridge for High-Fidelity PDF-to-DOCX (Spec 069)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-ast-bridge
+# Priority: HIGH (Core Conversion Visual Parity Backup)
+# Spec: specs/069-pdf-to-docx-ast-bridge/spec.md
+
+## Objective
+Upgrade `PdfToDocxOperation` in `paperpilot-pdf/src/operations/conversion.rs` to use an intermediate Semantic HTML / Markdown AST pipeline (`pdf_oxide` -> `pulldown-cmark`/`scraper` -> `docx-rs`).
+
+Currently, raw text dump (`lopdf::extract_text`) strips all heading levels, margins, and side-by-side structures.
+By bridging through the semantic AST that `pdf_oxide` already produces:
+- Top-level headings (`<h1>`, `<h2>`, `<h3>`) map to centered, properly weighted Word headings.
+- Repeated section heading + description blocks (e.g. `<h4>` followed by `<p>`) map into alternating 2-column borderless Word tables (`<w:tbl>`).
+- Embedded hyperlinks (`<a>` tags) map directly to Word hyperlinks.
+- Page margins are set to 720 dxa (0.5 in) so single-page documents remain strictly 1 page in Word/LibreOffice.
+
+You are provided with:
+1. **Input PDF**: `fixtures/Get_Started_With_Smallpdf.pdf`
+2. **Generated HTML Reference**: `fixtures/Get_Started_With_Smallpdf.html`
+3. **Reference Expected DOCX**: `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/src/operations/conversion.rs
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Concrete Implementation Guidance
+In `paperpilot-pdf/src/operations/conversion.rs`:
+1. Use `pdf_oxide`'s semantic extraction (`Pdf::to_markdown` or `Pdf::to_html`), both of which are already available in the crate dependencies.
+2. Parse the AST:
+   - For markdown: parse events with `pulldown-cmark::Parser::new(...)`.
+   - For HTML: parse elements with `scraper::Html::parse_fragment(...)`.
+3. Build the `Docx` structure with `docx_rs`:
+   - Set page margins to `720 dxa`.
+   - Title / Heading 1: Centered, Bold 44 (22pt), color `1F242E`.
+   - Subtitle / Heading 3: Centered, 22 (11pt), color `757E8A`.
+   - Heading 4 + Paragraph pairings: Construct a 2-column borderless table (`Table::new(...)`, `TableBorders::new().clear_all()`), placing an icon placeholder or extracted asset in one cell and the heading + text in the adjacent cell.
+4. **Generalization Rule**:
+   - The AST converter MUST be universal. DO NOT hardcode specific strings like "Smallpdf" or "Digital Documents". If a PDF has 1 heading and 3 paragraphs, render them faithfully. If it has paired section headings, render them cleanly.
+
+---
+
+## 2. Verification Protocol
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4
+```
+
+Verify conversion on the fixture:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output fixtures/Get_Started_With_Smallpdf.docx
+python3 -c "
+import zipfile
+with zipfile.ZipFile('fixtures/Get_Started_With_Smallpdf.docx') as z:
+    with z.open('word/document.xml') as f:
+        xml = f.read().decode('utf-8')
+assert '<w:tbl>' in xml, 'Must contain tables for structured cards'
+assert 'Welcome to Smallpdf' in xml
+print('Verification passed!')
+"
+```
