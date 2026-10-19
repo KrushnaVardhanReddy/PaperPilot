@@ -1,3 +1,4 @@
+#[cfg(unix)]
 use std::fs;
 use std::path::PathBuf;
 use std::process::{Child, Command};
@@ -57,11 +58,11 @@ impl LlamafileSupervisor {
         }
 
         // 2. Ensure executable permissions (Linux/macOS)
-        let metadata = fs::metadata(&self.model_path)?;
-        let mut perms = metadata.permissions();
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
+            let metadata = fs::metadata(&self.model_path)?;
+            let mut perms = metadata.permissions();
             if perms.mode() & 0o111 == 0 {
                 perms.set_mode(perms.mode() | 0o111);
                 fs::set_permissions(&self.model_path, perms)?;

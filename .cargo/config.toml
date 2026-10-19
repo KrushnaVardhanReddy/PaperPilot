@@ -1,0 +1,9 @@
+[build]
+rustflags = ["-Csymbol-mangling-version=v0"]
+
+[target.'cfg(windows)']
+rustflags = [
+    "-Csymbol-mangling-version=v0",
+    "-C", "link-arg=/STACK:8388608",
+    "-C", "link-arg=/PDBPAGESIZE:8192",
+]
