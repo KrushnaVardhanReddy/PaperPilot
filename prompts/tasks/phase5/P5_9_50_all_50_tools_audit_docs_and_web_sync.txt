@@ -1,0 +1,76 @@
+# Task: Phase 5.9.50 — Full 50-Tool Suite Clean-Room Verification, Documentation Sync & Website Showcase
+# Base Branch: main
+# Target Branch: feat-50-tools-audit-docs-website-sync
+# Priority: HIGH
+# Spec: specs/064-all-50-tools-cleanroom-audit/spec.md
+
+## Objective
+Execute a complete, rigorous end-to-end audit for all 50+ PaperPilot tools in an isolated clean-room environment. Validate and synchronize the 50-tool documentation portal (`apps/docs`), verify all CLI/REST/MCP examples, and update the web portal (`apps/web`) to reflect the latest benchmark latency (~20ms), supported formats (PDF, Excel, Word, PPTX), and tool matrix.
+
+---
+
+## STRICT File Ownership & Scope Guardrails
+You may **ONLY** create and touch files in these paths:
+```
+paperpilot-cli/tests/all50_cleanroom_audit.rs
+reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md
+apps/docs/src/content/docs/reference/50-tools-handbook.md
+apps/docs/src/content/docs/reference/
+apps/web/src/components/BenchmarkMatrix.svelte
+apps/web/src/components/HeroPlayground.svelte
+apps/web/src/views/OperationsView.svelte
+Makefile
+```
+
+### Prohibited Actions:
+- DO NOT run destructive git commands: `git reset --hard`, `git checkout -- .`, `git restore .`, or `git clean -fd`.
+- DO NOT modify core crate business logic (`paperpilot-core`, `paperpilot-pdf`, `paperpilot-mcp`) unless fixing an audit assertion blocker.
+- All commits MUST follow the convention: `jules: <commit description>`.
+
+---
+
+## 1. Clean-Room Audit & Benchmark Verification
+1. Run the clean-room automated audit test across all 50 tools:
+   ```bash
+   cargo test -p paperpilot-cli --test all50_cleanroom_audit -- --nocapture
+   ```
+2. Validate that each of the 50 tools executes in a clean, timestamped sandbox directory without touching or relying on stale artifacts.
+3. Verify that real input files produce real, valid output files on disk with dual validation:
+   - File exists and file size > 0.
+   - Semantic verification (e.g. valid PDF headers `%PDF`, valid OpenXML ZIP `PK\x03\x04` for DOCX/XLSX/PPTX, valid JSON arrays for `excel_to_json`, and valid RFC 4180 CSV for `excel_to_csv`).
+4. Update `reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md` with:
+   - Full 50/50 PASS verdict.
+   - Latest execution duration and benchmark latencies (sub-25ms average).
+   - Input/output sizes and semantic validation checklist.
+
+---
+
+## 2. Documentation Portal Synchronization (`apps/docs`)
+1. Review `apps/docs/src/content/docs/reference/50-tools-handbook.md`:
+   - Ensure all 50+ tools have accurate CLI, REST API (`POST /api/v1/...`), and MCP invocation snippets.
+   - Update descriptions and format input/output indicators (e.g. `.xlsx`, `.xls`, `.csv` $\to$ `.json`, `.csv`, `.pdf`).
+   - Reflect the latest production release status for Wave 1 Core and upcoming waves.
+2. Verify that the docs portal builds cleanly with zero Astro/Starlight errors:
+   ```bash
+   cd apps/docs && npm run build
+   ```
+
+---
+
+## 3. Web Portal Synchronization (`apps/web`)
+1. Review `apps/web/src/components/BenchmarkMatrix.svelte` and `HeroPlayground.svelte`:
+   - Update execution speed benchmarks to reflect real measurements (~20ms–45ms for native operations).
+   - Ensure the feature matrix highlights multi-format capabilities: native PDF manipulation + Excel (`.xlsx`, `.xls`, `.csv`) and Office document ingestion without heavy external runtimes (LibreOffice/JVM).
+   - Highlight the competitive advantages over Stirling PDF and Adobe Acrobat (ultra-lightweight memory footprint, zero C++ vulnerabilities, client-side privacy, and MCP AI agent readiness).
+2. Validate that the web portal builds and type-checks cleanly:
+   ```bash
+   cd apps/web && npm run check && npm run build
+   ```
+
+---
+
+## 4. Verification & Quality Gate
+Before submitting:
+1. `cargo test -p paperpilot-cli --test all50_cleanroom_audit` must pass 100%.
+2. `cd apps/docs && npm run build` must complete with exit code 0.
+3. `cd apps/web && npm run check && npm run build` must complete with exit code 0.
