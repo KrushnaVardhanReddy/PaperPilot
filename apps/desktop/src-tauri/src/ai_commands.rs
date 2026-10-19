@@ -240,30 +240,117 @@ fn get_models_dir() -> std::path::PathBuf {
     path
 }
 
+#[derive(Debug, Deserialize)]
+struct RegistryJson {
+    #[serde(default)]
+    llm_models: Vec<RegistryLlmModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RegistryLlmModel {
+    id: String,
+    name: String,
+    description: String,
+    size_mb: u32,
+    download_url: String,
+}
+
 #[tauri::command]
 pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
     let models_dir = get_models_dir();
 
-    let mut models = vec![
-        ModelInfo {
-            id: "qwen2.5-coder".to_string(),
-            name: "Qwen 2.5 Coder 1.5B".to_string(),
-            description: "Fast & Lightweight".to_string(),
-            size_mb: 1100,
-            download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
-            local_path: None,
-            is_downloaded: false,
-        },
-        ModelInfo {
-            id: "llama3.2-3b".to_string(),
-            name: "Llama 3.2 3B Instruct".to_string(),
-            description: "Recommended for Legal Discovery".to_string(),
-            size_mb: 2100,
-            download_url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
-            local_path: None,
-            is_downloaded: false,
+    // 1. Try fetching latest model registry dynamically from our PaperPilot GitHub repository
+    let registry_url = "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/registry.json";
+    let client = Client::builder()
+        .user_agent("PaperPilot-Desktop/1.0")
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .unwrap_or_else(|_| Client::new());
+
+    let mut loaded_models = None;
+
+    if let Ok(resp) = client.get(registry_url).send().await {
+        if resp.status().is_success() {
+            if let Ok(text) = resp.text().await {
+                if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&text) {
+                    if !parsed.llm_models.is_empty() {
+                        loaded_models = Some(
+                            parsed
+                                .llm_models
+                                .into_iter()
+                                .map(|m| ModelInfo {
+                                    id: m.id,
+                                    name: m.name,
+                                    description: m.description,
+                                    size_mb: m.size_mb,
+                                    download_url: m.download_url,
+                                    local_path: None,
+                                    is_downloaded: false,
+                                })
+                                .collect(),
+                        );
+                    }
+                }
+            }
         }
-    ];
+    }
+
+    // 2. Fallback to local models/registry.json file if offline or repo unreachable
+    if loaded_models.is_none() {
+        for candidate in [
+            std::path::PathBuf::from("models/registry.json"),
+            std::path::PathBuf::from("../../models/registry.json"),
+        ] {
+            if candidate.exists() {
+                if let Ok(content) = std::fs::read_to_string(&candidate) {
+                    if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&content) {
+                        if !parsed.llm_models.is_empty() {
+                            loaded_models = Some(
+                                parsed
+                                    .llm_models
+                                    .into_iter()
+                                    .map(|m| ModelInfo {
+                                        id: m.id,
+                                        name: m.name,
+                                        description: m.description,
+                                        size_mb: m.size_mb,
+                                        download_url: m.download_url,
+                                        local_path: None,
+                                        is_downloaded: false,
+                                    })
+                                    .collect(),
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Fallback to hardcoded defaults
+    let mut models = loaded_models.unwrap_or_else(|| {
+        vec![
+            ModelInfo {
+                id: "qwen2.5-coder".to_string(),
+                name: "Qwen 2.5 Coder 1.5B".to_string(),
+                description: "Fast & Lightweight".to_string(),
+                size_mb: 1100,
+                download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
+                local_path: None,
+                is_downloaded: false,
+            },
+            ModelInfo {
+                id: "llama3.2-3b".to_string(),
+                name: "Llama 3.2 3B Instruct".to_string(),
+                description: "Recommended for Legal Discovery".to_string(),
+                size_mb: 2100,
+                download_url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
+                local_path: None,
+                is_downloaded: false,
+            },
+        ]
+    });
 
     for m in &mut models {
         let file_name = m
@@ -274,8 +361,11 @@ pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
         let mut path = models_dir.clone();
         path.push(file_name);
         if path.exists() {
-            m.local_path = Some(path.to_string_lossy().to_string());
-            m.is_downloaded = true;
+            let file_size = std::fs::metadata(&path).map(|meta| meta.len()).unwrap_or(0);
+            if file_size > 1024 * 1024 {
+                m.local_path = Some(path.to_string_lossy().to_string());
+                m.is_downloaded = true;
+            }
         }
     }
 

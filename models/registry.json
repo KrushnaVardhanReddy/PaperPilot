@@ -1,0 +1,70 @@
+{
+  "$schema": "https://paperpilot.dev/schemas/model-registry.json",
+  "version": "1.0.0",
+  "ocr_models": [
+    {
+      "id": "ppocrv6-tiny",
+      "name": "PP-OCRv6 Tiny (Default)",
+      "description": "Fast web/desktop execution, lightweight footprint, 50+ languages unified dict",
+      "tier": "tiny",
+      "size_mb": 15.5,
+      "download_urls": [
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/rec.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt"
+      ]
+    },
+    {
+      "id": "ppocrv6-small",
+      "name": "PP-OCRv6 Small",
+      "description": "Higher precision detector & recognizer. Recommended for legal contracts, fine print, complex layouts",
+      "tier": "small",
+      "size_mb": 25.0,
+      "download_urls": [
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx",
+        "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_server_infer.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt"
+      ]
+    },
+    {
+      "id": "ppocrv6-medium",
+      "name": "PP-OCRv6 Medium",
+      "description": "Server-grade accuracy. Extreme precision, low-contrast scans",
+      "tier": "medium",
+      "size_mb": 134.0,
+      "download_urls": [
+        "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_det_server_infer.onnx",
+        "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_server_infer.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt"
+      ]
+    },
+    {
+      "id": "ppocrv4-mobile",
+      "name": "PP-OCRv4 Mobile",
+      "description": "Legacy RapidOCR baseline. Compatibility with older single-language pipelines",
+      "tier": "mobile",
+      "size_mb": 15.5,
+      "download_urls": [
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/rec.onnx",
+        "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt"
+      ]
+    }
+  ],
+  "llm_models": [
+    {
+      "id": "qwen2.5-coder",
+      "name": "Qwen 2.5 Coder 1.5B",
+      "description": "Fast & Lightweight local agent reasoning",
+      "size_mb": 1100,
+      "download_url": "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
+    },
+    {
+      "id": "llama3.2-3b",
+      "name": "Llama 3.2 3B Instruct",
+      "description": "Recommended for multi-step planning and legal discovery",
+      "size_mb": 2100,
+      "download_url": "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf"
+    }
+  ]
+}

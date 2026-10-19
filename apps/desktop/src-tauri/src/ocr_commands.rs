@@ -62,72 +62,169 @@ fn check_is_downloaded(tier_id: &str) -> Option<String> {
         let dict_path = dir.join("dict.txt");
 
         if det_path.exists() && rec_path.exists() && dict_path.exists() {
-            return Some(dir.to_string_lossy().to_string());
+            // Verify files are real models (> 1 KB), not dummy mock stubs
+            let det_size = std::fs::metadata(&det_path).map(|m| m.len()).unwrap_or(0);
+            let rec_size = std::fs::metadata(&rec_path).map(|m| m.len()).unwrap_or(0);
+            let dict_size = std::fs::metadata(&dict_path).map(|m| m.len()).unwrap_or(0);
+
+            if det_size > 1024 && rec_size > 1024 && dict_size > 100 {
+                return Some(dir.to_string_lossy().to_string());
+            }
         }
     }
     None
 }
 
+#[derive(Debug, Deserialize)]
+struct RegistryJson {
+    #[serde(default)]
+    ocr_models: Vec<RegistryOcrModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RegistryOcrModel {
+    id: String,
+    name: String,
+    description: String,
+    tier: String,
+    size_mb: f64,
+    download_urls: Vec<String>,
+}
+
 #[tauri::command]
 pub async fn get_available_ocr_models() -> Result<Vec<OcrModelInfo>, String> {
-    let mut models = vec![
-        OcrModelInfo {
-            id: "ppocrv6-tiny".to_string(),
-            name: "PP-OCRv6 Tiny (Default)".to_string(),
-            description: "Fast web/desktop execution, lightweight footprint, 50+ languages unified dict".to_string(),
-            tier: "tiny".to_string(),
-            size_mb: 6.0,
-            download_urls: vec![
-                "https://huggingface.co/paperpilot/ppocrv6-tiny/resolve/main/det.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-tiny/resolve/main/rec.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-tiny/resolve/main/dict.txt".to_string(),
-            ],
-            local_path: None,
-            is_downloaded: false,
-        },
-        OcrModelInfo {
-            id: "ppocrv6-small".to_string(),
-            name: "PP-OCRv6 Small".to_string(),
-            description: "Higher precision detector & recognizer. Recommended for legal contracts, fine print, complex layouts".to_string(),
-            tier: "small".to_string(),
-            size_mb: 30.0,
-            download_urls: vec![
-                "https://huggingface.co/paperpilot/ppocrv6-small/resolve/main/det.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-small/resolve/main/rec.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-small/resolve/main/dict.txt".to_string(),
-            ],
-            local_path: None,
-            is_downloaded: false,
-        },
-        OcrModelInfo {
-            id: "ppocrv6-medium".to_string(),
-            name: "PP-OCRv6 Medium".to_string(),
-            description: "Server-grade accuracy. Extreme precision, low-contrast scans".to_string(),
-            tier: "medium".to_string(),
-            size_mb: 134.0,
-            download_urls: vec![
-                "https://huggingface.co/paperpilot/ppocrv6-medium/resolve/main/det.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-medium/resolve/main/rec.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv6-medium/resolve/main/dict.txt".to_string(),
-            ],
-            local_path: None,
-            is_downloaded: false,
-        },
-        OcrModelInfo {
-            id: "ppocrv4-mobile".to_string(),
-            name: "PP-OCRv4 Mobile".to_string(),
-            description: "Legacy RapidOCR baseline. Compatibility with older single-language pipelines".to_string(),
-            tier: "mobile".to_string(),
-            size_mb: 15.5,
-            download_urls: vec![
-                "https://huggingface.co/paperpilot/ppocrv4-mobile/resolve/main/det.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv4-mobile/resolve/main/rec.onnx".to_string(),
-                "https://huggingface.co/paperpilot/ppocrv4-mobile/resolve/main/dict.txt".to_string(),
-            ],
-            local_path: None,
-            is_downloaded: false,
-        },
-    ];
+    // 1. Try fetching latest OCR model registry from GitHub repository
+    let registry_url = "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/registry.json";
+    let client = Client::builder()
+        .user_agent("PaperPilot-Desktop/1.0")
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .unwrap_or_else(|_| Client::new());
+
+    let mut loaded_models = None;
+
+    if let Ok(resp) = client.get(registry_url).send().await {
+        if resp.status().is_success() {
+            if let Ok(text) = resp.text().await {
+                if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&text) {
+                    if !parsed.ocr_models.is_empty() {
+                        loaded_models = Some(
+                            parsed
+                                .ocr_models
+                                .into_iter()
+                                .map(|m| OcrModelInfo {
+                                    id: m.id,
+                                    name: m.name,
+                                    description: m.description,
+                                    tier: m.tier,
+                                    size_mb: m.size_mb,
+                                    download_urls: m.download_urls,
+                                    local_path: None,
+                                    is_downloaded: false,
+                                })
+                                .collect(),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Fallback to local models/registry.json
+    if loaded_models.is_none() {
+        for candidate in [
+            std::path::PathBuf::from("models/registry.json"),
+            std::path::PathBuf::from("../../models/registry.json"),
+        ] {
+            if candidate.exists() {
+                if let Ok(content) = std::fs::read_to_string(&candidate) {
+                    if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&content) {
+                        if !parsed.ocr_models.is_empty() {
+                            loaded_models = Some(
+                                parsed
+                                    .ocr_models
+                                    .into_iter()
+                                    .map(|m| OcrModelInfo {
+                                        id: m.id,
+                                        name: m.name,
+                                        description: m.description,
+                                        tier: m.tier,
+                                        size_mb: m.size_mb,
+                                        download_urls: m.download_urls,
+                                        local_path: None,
+                                        is_downloaded: false,
+                                    })
+                                    .collect(),
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Fallback to hardcoded defaults
+    let mut models = loaded_models.unwrap_or_else(|| {
+        vec![
+            OcrModelInfo {
+                id: "ppocrv6-tiny".to_string(),
+                name: "PP-OCRv6 Tiny (Default)".to_string(),
+                description: "Fast web/desktop execution, lightweight footprint, 50+ languages unified dict".to_string(),
+                tier: "tiny".to_string(),
+                size_mb: 15.5,
+                download_urls: vec![
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/rec.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt".to_string(),
+                ],
+                local_path: None,
+                is_downloaded: false,
+            },
+            OcrModelInfo {
+                id: "ppocrv6-small".to_string(),
+                name: "PP-OCRv6 Small".to_string(),
+                description: "Higher precision detector & recognizer. Recommended for legal contracts, fine print, complex layouts".to_string(),
+                tier: "small".to_string(),
+                size_mb: 25.0,
+                download_urls: vec![
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx".to_string(),
+                    "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_server_infer.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt".to_string(),
+                ],
+                local_path: None,
+                is_downloaded: false,
+            },
+            OcrModelInfo {
+                id: "ppocrv6-medium".to_string(),
+                name: "PP-OCRv6 Medium".to_string(),
+                description: "Server-grade accuracy. Extreme precision, low-contrast scans".to_string(),
+                tier: "medium".to_string(),
+                size_mb: 134.0,
+                download_urls: vec![
+                    "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_det_server_infer.onnx".to_string(),
+                    "https://huggingface.co/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_server_infer.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt".to_string(),
+                ],
+                local_path: None,
+                is_downloaded: false,
+            },
+            OcrModelInfo {
+                id: "ppocrv4-mobile".to_string(),
+                name: "PP-OCRv4 Mobile".to_string(),
+                description: "Legacy RapidOCR baseline. Compatibility with older single-language pipelines".to_string(),
+                tier: "mobile".to_string(),
+                size_mb: 15.5,
+                download_urls: vec![
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/det.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocrv4/rec.onnx".to_string(),
+                    "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/ocr/ppocr_keys_v1.txt".to_string(),
+                ],
+                local_path: None,
+                is_downloaded: false,
+            },
+        ]
+    });
 
     for m in &mut models {
         if let Some(path) = check_is_downloaded(&m.id) {
@@ -155,16 +252,26 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
         flags.insert(model_id.clone(), false);
     }
 
-    let client = Client::new();
-    let num_files = model.download_urls.len();
+    let client = Client::builder()
+        .user_agent("PaperPilot-Desktop/1.0")
+        .build()
+        .map_err(|e| e.to_string())?;
+    let _num_files = model.download_urls.len();
 
-    // Naive way to distribute total bytes, as we don't know them yet.
-    // For a real implementation, we could do HEAD requests first.
     let estimated_total_bytes = (model.size_mb * 1024.0 * 1024.0) as u64;
     let mut total_downloaded: u64 = 0;
 
     for url in &model.download_urls {
-        let file_name = url.split('/').next_back().unwrap_or("file");
+        // Map target file name explicitly so det, rec, and dict have canonical names
+        let file_name = if url.ends_with(".txt") {
+            "dict.txt"
+        } else if url.contains("det") {
+            "det.onnx"
+        } else if url.contains("rec") {
+            "rec.onnx"
+        } else {
+            url.split('/').next_back().unwrap_or("file")
+        };
         let mut dest_path = models_dir.clone();
         dest_path.push(file_name);
 
@@ -173,8 +280,10 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
         if dest_path.exists() {
             if let Ok(metadata) = std::fs::metadata(&dest_path) {
                 let downloaded_for_file = metadata.len();
-                request = request.header("Range", format!("bytes={}-", downloaded_for_file));
-                total_downloaded += downloaded_for_file;
+                if downloaded_for_file > 1024 {
+                    request = request.header("Range", format!("bytes={}-", downloaded_for_file));
+                    total_downloaded += downloaded_for_file;
+                }
             }
         }
 
@@ -183,20 +292,11 @@ pub async fn download_ocr_model(app: AppHandle, model_id: String) -> Result<(), 
         if !response.status().is_success()
             && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
         {
-            // In mock mode / missing URL, just create an empty file or mock content for tests
-            std::fs::write(&dest_path, b"mock").map_err(|e| e.to_string())?;
-            total_downloaded += estimated_total_bytes / (num_files as u64);
-            let percent = (total_downloaded as f64 / estimated_total_bytes as f64) * 100.0;
-            let _ = app.emit(
-                "ocr-download-progress",
-                OcrDownloadProgress {
-                    model_id: model_id.clone(),
-                    percent: percent.min(100.0),
-                    bytes_downloaded: total_downloaded,
-                    total_bytes: estimated_total_bytes,
-                },
-            );
-            continue;
+            return Err(format!(
+                "Failed to download model file from {}: HTTP {}",
+                url,
+                response.status()
+            ));
         }
 
         let mut file = OpenOptions::new()
