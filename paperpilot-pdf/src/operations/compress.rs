@@ -59,6 +59,7 @@ impl PdfOperation for CompressOperation {
                     if !has_filter {
                         let original_len = stream.content.len();
                         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                        #[allow(clippy::collapsible_if)]
                         if encoder.write_all(&stream.content).is_ok() {
                             if let Ok(compressed) = encoder.finish() {
                                 if compressed.len() < original_len {
