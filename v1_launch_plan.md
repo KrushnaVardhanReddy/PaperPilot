@@ -1,27 +1,28 @@
-# PaperPilot v1.0 Launch Plan — Community Tier & Release Waves
+# PaperPilot v0.5.0 Launch Plan — Community Tier & Release Waves
 
 > **Focus:** The **100% Free / Community Tier** ($0 Forever, 100% Local Processing, Zero Cloud Dependency, Zero-Chrome pure Rust runtime).
+> **Active Target:** `v0.5.0` Public Preview Release (`prerelease: true`).
 
 ---
 
-## 🎯 Release Wave 1: The "Top 12 Core Launch Suite" (v1.0 Priority Scope)
+## 🎯 Release Wave 1: The "Top 12 Core Launch Suite" (v0.5 Core Priority Scope)
 
-These 12 operations are frozen as the **v1.0 Core Suite**. They undergo **unmocked real-disk Playwright execution** and full **Penta-Interface automated testing** before public launch:
+These 12 operations are frozen as the **v0.5 Core Suite**. They undergo **unmocked real-disk Playwright execution** and full **Penta-Interface automated testing** before public launch:
 
-| # | Tool ID | Interface Title | Category | Format Support | Primary Use Case |
-|---|---|---|---|---|---|
-| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | Combine multi-part documents & invoices |
-| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | Separate chapters & single-page extractions |
-| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | Fix orientation for scanned documents (90°/180°/270°) |
-| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | Remove unwanted or blank pages |
-| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | Rearrange page sequences |
-| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | Reduce file size via high-ratio image recompression |
-| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | Semi-transparent diagonal watermarks |
-| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | Pure-Rust PaddleOCR v4 / RTen OCR overlays |
-| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction |
-| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | Pull specific page ranges into a new document |
-| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
-| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
+| # | Tool ID | Interface Title | Category | Format Support | Primary Use Case | Release Status |
+|---|---|---|---|---|---|---|
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | Combine multi-part documents & invoices | ✅ **v0.5 Core** |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | Separate chapters & single-page extractions | ✅ **v0.5 Core** |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | Fix orientation for scanned documents (90°/180°/270°) | ✅ **v0.5 Core** |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | Remove unwanted or blank pages | ✅ **v0.5 Core** |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | Rearrange page sequences | ✅ **v0.5 Core** |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | Reduce file size via high-ratio image recompression | ✅ **v0.5 Core** |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | Semi-transparent diagonal watermarks | ✅ **v0.5 Core** |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | Pure-Rust PaddleOCR v4 / RTen OCR overlays | ✅ **v0.5 Core** |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | High-accuracy layout-aware text extraction | ✅ **v0.5 Core** |
+| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | Pull specific page ranges into a new document | ✅ **v0.5 Core** |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents | ✅ **v0.5 Core** |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export | ✅ **v0.5 Core** |
 
 ---
 

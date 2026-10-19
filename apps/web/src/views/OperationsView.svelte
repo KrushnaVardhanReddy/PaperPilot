@@ -7,15 +7,15 @@
 
   // Tools configuration
   const tools = [
-    { id: 'merge', title: 'Merge PDFs', icon: '📑', releaseStatus: 'v1-core' },
-    { id: 'split', title: 'Split PDF', icon: '✂️', releaseStatus: 'v1-core' },
-    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', releaseStatus: 'v1-core' },
-    { id: 'compress', title: 'Compress PDF', icon: '🗜️', releaseStatus: 'v1-core' },
+    { id: 'merge', title: 'Merge PDFs', icon: '📑', releaseStatus: 'v0.5-core' },
+    { id: 'split', title: 'Split PDF', icon: '✂️', releaseStatus: 'v0.5-core' },
+    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', releaseStatus: 'v0.5-core' },
+    { id: 'compress', title: 'Compress PDF', icon: '🗜️', releaseStatus: 'v0.5-core' },
     { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒', releaseStatus: 'preview' },
-    { id: 'watermark', title: 'Watermark', icon: '©️', releaseStatus: 'v1-core' },
-    { id: 'delete', title: 'Delete Pages', icon: '🗑️', releaseStatus: 'v1-core' },
-    { id: 'extract', title: 'Extract Pages', icon: '📤', releaseStatus: 'v1-core' },
-    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', releaseStatus: 'v1-core' },
+    { id: 'watermark', title: 'Watermark', icon: '©️', releaseStatus: 'v0.5-core' },
+    { id: 'delete', title: 'Delete Pages', icon: '🗑️', releaseStatus: 'v0.5-core' },
+    { id: 'extract', title: 'Extract Pages', icon: '📤', releaseStatus: 'v0.5-core' },
+    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', releaseStatus: 'v0.5-core' },
     { id: 'crop', title: 'Crop PDF', icon: '📐', releaseStatus: 'preview' },
     { id: 'flatten', title: 'Flatten Forms', icon: '📄', releaseStatus: 'preview' },
     { id: 'metadata', title: 'Edit Metadata', icon: '🏷️', releaseStatus: 'preview' }
@@ -492,8 +492,8 @@ let metadataFile: File | null = $state(null);
         >
           <span class="tool-icon">{tool.icon}</span>
           <span class="tool-title-text">{tool.title}</span>
-          {#if tool.releaseStatus === 'v1-core'}
-            <span class="web-badge-v1">v1.0 Core</span>
+          {#if tool.releaseStatus === 'v0.5-core'}
+            <span class="web-badge-v1">v0.5 Core</span>
           {:else}
             <span class="web-badge-preview">Preview</span>
           {/if}

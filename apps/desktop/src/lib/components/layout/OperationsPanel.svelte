@@ -1011,8 +1011,8 @@ import { onMount } from 'svelte';
                 <div class="tool-card-info">
                   <span class="tool-card-title">
                     {tool.title}
-                    {#if tool.releaseStatus === 'v1-core'}
-                      <span class="status-badge-v1">v1.0 Core</span>
+                    {#if tool.releaseStatus === 'v0.5-core'}
+                      <span class="status-badge-v1">v0.5 Core</span>
                     {:else}
                       <span class="status-badge-preview">Preview</span>
                     {/if}
@@ -1048,8 +1048,8 @@ import { onMount } from 'svelte';
                       <div class="tool-card-title-row">
                         <div class="tool-title-with-badge">
                           <span class="tool-card-title">{tool.title}</span>
-                          {#if tool.releaseStatus === 'v1-core'}
-                            <span class="status-badge-v1">v1.0 Core</span>
+                          {#if tool.releaseStatus === 'v0.5-core'}
+                            <span class="status-badge-v1">v0.5 Core</span>
                           {:else}
                             <span class="status-badge-preview">Preview</span>
                           {/if}

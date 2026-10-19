@@ -108,27 +108,27 @@ Pre-compiled standalone binaries for **Linux**, **macOS**, and **Windows** are a
 
 ---
 
-## 🎯 v1.0 Launch Scope & Release Waves
+## 🎯 v0.5.0 Launch Scope & Release Waves
 
-PaperPilot is engineered with an **Open Core Model** and a **Progressive Release Strategy**. All 50+ tool core engines have been developed in pure Rust, and are released through systematic stability gates:
+PaperPilot is engineered with an **Open Core Model** and a **Progressive Release Strategy**. All 52 tool core engines have been developed in pure Rust, and are released through systematic stability gates:
 
-### 🌟 Wave 1: Top 12 Core Launch Suite (`v1.0 Core`)
-Frozen as our primary launch suite. Each tool is backed by unmocked real-disk Playwright tests, 100% Penta-Interface parity, and benchmarked at realistic **~45–75ms** end-to-end execution latency (+30–50ms buffer over raw engine runtime):
+### 🌟 Wave 1: Top 12 Core Launch Suite (`v0.5 Core` - Public Preview)
+Frozen as our primary launch suite for the `v0.5.0` Public Preview. Each tool is backed by unmocked real-disk Playwright tests, 100% Penta-Interface parity, and benchmarked at realistic **~45–75ms** end-to-end execution latency (+30–50ms buffer over raw engine runtime):
 
 | # | Tool ID | Interface Title | Category | Format Support | Latency SLA | Release Status |
 |---|---|---|---|---|---|---|
-| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | ~45–65ms | ✅ **v1.0 Core** (Production Ready) |
-| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | ~45–60ms | ✅ **v1.0 Core** (Production Ready) |
-| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | ~40–55ms | ✅ **v1.0 Core** (Production Ready) |
-| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | ~45–60ms | ✅ **v1.0 Core** (Production Ready) |
-| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | ~45–60ms | ✅ **v1.0 Core** (Production Ready) |
-| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | ~55–85ms | ✅ **v1.0 Core** (Production Ready) |
-| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | ~45–65ms | ✅ **v1.0 Core** (Production Ready) |
-| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | ~65–95ms | ✅ **v1.0 Core** (Production Ready) |
-| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | ~40–60ms | ✅ **v1.0 Core** (Production Ready) |
-| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ~40–55ms | ✅ **v1.0 Core** (Production Ready) |
-| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ~45–70ms | ✅ **v1.0 Core** (Production Ready) |
-| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ~40–60ms | ✅ **v1.0 Core** (Production Ready) |
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | ~55–85ms | ✅ **v0.5 Core** (Production Ready) |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | ~65–95ms | ✅ **v0.5 Core** (Production Ready) |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ~45–70ms | ✅ **v0.5 Core** (Production Ready) |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
 
 ### 📅 Progressive Release Schedule (Waves 2–7 - `Preview`)
 *Engine development is complete; scheduled for progressive weekly rollout with unmocked validation:*
