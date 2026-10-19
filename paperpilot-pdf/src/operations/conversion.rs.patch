@@ -1,0 +1,25 @@
+--- paperpilot-pdf/src/operations/conversion.rs
++++ paperpilot-pdf/src/operations/conversion.rs
+@@ -1771,18 +1771,16 @@
+
+ #[cfg(test)]
+ mod additional_docx_tests {
+-    use super::*;
+     use crate::document::LopdfDocument;
+-    use paperpilot_core::traits::PdfOperation;
+
+     #[test]
+     fn test_pdf_to_docx_with_h2() {
+-        let mut doc = LopdfDocument::new();
++        let _doc = LopdfDocument::new();
+         // Since we are creating a dummy document, we need a way to mock original_bytes to simulate H2
+-        let markdown =
++        let _markdown =
+             "# Heading 1\n\n## Heading 2\n\n### Heading 3\n\n#### Heading 4\n\nParagraph\n";
+
+         let dir = tempfile::tempdir().unwrap();
+-        let path = dir.path().join("out_test_h2.docx");
++        let _path = dir.path().join("out_test_h2.docx");
+
+         // The PdfToDocxOperation uses original_bytes to extract via pdf_oxide.
+         // It's a bit hard to inject markdown directly into the test without having a real PDF with H2,
