@@ -62,14 +62,15 @@ COPY --from=rust-builder /app/target/release/paperpilot-gateway /usr/local/bin/p
 COPY --from=rust-builder /app/target/release/paperpilot-cli /usr/local/bin/paperpilot
 COPY --from=rust-builder /app/target/release/paperpilot-mcp /usr/local/bin/paperpilot-mcp
 
-# Create shared data folder for mounting local host PDFs
-RUN mkdir -p /data
+# Create shared data folder for mounting local host PDFs and models
+RUN mkdir -p /data /models
 WORKDIR /data
 
 # Default environment configuration
 ENV PORT=7823
 ENV BIND=0.0.0.0
 ENV RUST_LOG=info
+ENV PAPERPILOT_OCR_MODELS_DIR=/models
 
 # Expose Gateway REST API & MCP Server port
 EXPOSE 7823

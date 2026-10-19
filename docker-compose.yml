@@ -12,9 +12,12 @@ services:
       - PORT=7823
       - BIND=0.0.0.0
       - RUST_LOG=info
+      - PAPERPILOT_OCR_MODELS_DIR=/models
     volumes:
       # Mount a local directory to test and process files on the host
       - ./data:/data
+      # Mount models directory to persist downloaded OCR & AI models across restarts
+      - ./models:/models
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7823/health"]
       interval: 10s
