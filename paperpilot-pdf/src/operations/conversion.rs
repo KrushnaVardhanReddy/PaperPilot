@@ -1002,6 +1002,68 @@ impl PdfOperation for PdfToDocxOperation {
             })?;
         }
 
+        // Scan for Form and Image XObjects from the first page's resources
+        use image::ImageEncoder;
+        let mut is_form_array = Vec::new();
+        let mut raster_images: Vec<Option<Vec<u8>>> = Vec::new();
+        let pages = lopdf_doc.inner.get_pages();
+
+        #[allow(clippy::collapsible_if)]
+        if let Some((_, page_id)) = pages.into_iter().next() {
+            if let Ok(resources) = lopdf_doc.inner.get_dictionary(page_id).and_then(|dict| dict.get(b"Resources")).and_then(|r| lopdf_doc.inner.get_object(r.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())) {
+                if let Ok(xobjects) = resources.get(b"XObject").and_then(|r| lopdf_doc.inner.get_object(r.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())) {
+                    let mut keys: Vec<&Vec<u8>> = xobjects.iter().map(|(k, _)| k).collect();
+                    keys.sort(); // Ensure consistent order
+                    for key in keys {
+                        if let Ok(val) = xobjects.get(key) {
+                            if let Ok(obj) = lopdf_doc.inner.get_object(val.as_reference().unwrap_or((0, 0))) {
+                                if let Ok(stream) = obj.as_stream() {
+                                    if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(|s| s.as_name()) {
+                                        if subtype == b"Form" {
+                                            is_form_array.push(true);
+                                            raster_images.push(None);
+                                        } else if subtype == b"Image" {
+                                            is_form_array.push(false);
+
+                                            // Real implementation would extract Image stream bytes
+                                            let mut image_bytes = None;
+                                            if let Ok(filter) = stream.dict.get(b"Filter").and_then(|f| f.as_name()) {
+                                                if filter == b"DCTDecode" {
+                                                    // JPEG
+                                                    image_bytes = Some(stream.content.clone());
+                                                }
+                                            }
+
+                                            // Render or copy the bytes
+                                            if let Some(jpeg_data) = image_bytes {
+                                                if let Ok(img) = image::load_from_memory(&jpeg_data) {
+                                                    let mut png_bytes = Vec::new();
+                                                    if image::codecs::png::PngEncoder::new(&mut png_bytes).write_image(
+                                                        img.as_bytes(),
+                                                        img.width(),
+                                                        img.height(),
+                                                        img.color().into()
+                                                    ).is_ok() {
+                                                        raster_images.push(Some(png_bytes));
+                                                    } else {
+                                                        raster_images.push(None);
+                                                    }
+                                                } else {
+                                                    raster_images.push(None);
+                                                }
+                                            } else {
+                                                raster_images.push(None);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         use std::io::Write;
         let mut temp_file = tempfile::NamedTempFile::new()
             .map_err(|e| PdfError::Other(format!("Failed to create temp file: {}", e)))?;
@@ -1021,6 +1083,7 @@ impl PdfOperation for PdfToDocxOperation {
         let mut has_run = false;
 
         let mut current_card_title: Option<Paragraph> = None;
+        let mut card_index = 1;
 
         for event in parser {
             match event {
@@ -1059,16 +1122,51 @@ impl PdfOperation for PdfToDocxOperation {
                 Event::End(TagEnd::Paragraph) => {
                     if has_run {
                         if let Some(title_para) = current_card_title.take() {
-                            let table = Table::new(vec![TableRow::new(vec![
-                                TableCell::new()
-                                    .add_paragraph(title_para)
-                                    .width(5000, WidthType::Dxa),
-                                TableCell::new()
-                                    .add_paragraph(current_paragraph.clone())
-                                    .width(5000, WidthType::Dxa),
-                            ])])
-                            .set_borders(TableBorders::new().clear_all())
-                            .layout(docx_rs::TableLayoutType::Fixed);
+                            let is_form = *is_form_array.get(card_index - 1).unwrap_or(&true);
+                            let img_bytes_opt = raster_images.get(card_index - 1).cloned().flatten();
+                            let illustration_text = format!("[ Feature {} Illustration ]", card_index);
+                            card_index += 1;
+
+                            let mut illus_para = Paragraph::new().align(AlignmentType::Center);
+
+                            if is_form || img_bytes_opt.is_none() {
+                                let illus_run = Run::new()
+                                    .add_text(illustration_text)
+                                    .italic()
+                                    .size(18) // 9pt
+                                    .color("007AFF");
+                                illus_para = illus_para.add_run(illus_run);
+                            } else {
+                                if let Some(png_bytes) = img_bytes_opt {
+                                    use docx_rs::Pic;
+                                    let pic = Pic::new(&png_bytes).size(1200000, 1200000);
+                                    let pic_run = Run::new().add_image(pic);
+                                    illus_para = illus_para.add_run(pic_run);
+                                }
+                            }
+
+                            let illus_cell = TableCell::new()
+                                .add_paragraph(illus_para)
+                                .width(3168, WidthType::Dxa);
+
+                            // The text cell
+                            // Note: current_paragraph is the description
+                            let text_cell = TableCell::new()
+                                .add_paragraph(title_para)
+                                .add_paragraph(current_paragraph.clone())
+                                .width(6912, WidthType::Dxa);
+
+                            let row_cells = if card_index % 2 == 0 {
+                                // Illustration | Text
+                                vec![illus_cell, text_cell]
+                            } else {
+                                // Text | Illustration
+                                vec![text_cell, illus_cell]
+                            };
+
+                            let table = Table::new(vec![TableRow::new(row_cells)])
+                                .set_borders(TableBorders::new().clear_all())
+                                .layout(docx_rs::TableLayoutType::Fixed);
                             docx = docx.add_table(table);
                         } else {
                             docx = docx.add_paragraph(current_paragraph.clone());
@@ -1083,7 +1181,10 @@ impl PdfOperation for PdfToDocxOperation {
                     if current_heading_level == 1 {
                         run = run.bold().size(44).color("1F242E");
                     } else if current_heading_level == 3 {
-                        run = run.size(22).color("757E8A");
+                        run = run.bold().size(24).color("1F242E"); // Title: Bold, size 24 (12pt), 1F242E
+                    } else {
+                        // Regular text / description: size 19 (9.5pt), 525C68
+                        run = run.size(19).color("525C68");
                     }
 
                     current_paragraph = current_paragraph.add_run(run);
