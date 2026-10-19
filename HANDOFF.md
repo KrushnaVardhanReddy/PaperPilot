@@ -15,6 +15,9 @@
 2. **Recently Completed & Merged Milestones**:
    - **Spec 070 (PDF-to-DOCX Conversion via `unpdf` Recursive XY-Cut Layout Analysis)**: Merged (PR #212, commit `f51a830`, Jules Session 7824070929951783545) — Integrated `unpdf v0.46.0` recursive XY-Cut layout analysis into `PdfToDocxOperation`, reconstructing 4 side-by-side borderless OpenXML tables (`<w:tbl>`), centered headers, and compact 0.5-inch margins for strictly 1-page geometry in LibreOffice/Word (`specs/070-pdf-to-docx-unpdf-bridge/spec.md`).
    - **v1.0 Core Suite Adjustments (`v1_launch_plan.md`)**: Promoted 100% verified `pdf_to_markdown` into the Top 12 Launch Suite (Tool #10); scheduled deep vector graphic rendering for `pdf_to_docx` in Wave 3 (Office Modernization).
+   - **Spec 068 & Spec 069 Superseded / Post-Launch Roadmap**:
+     - *What was missing*: In brochures like `Smallpdf.pdf`, illustrations are PDF Form XObjects (`/Fm0`–`/Fm4`) containing raw vector bezier paths (`m`, `l`, `c`, `f`), NOT raster `/Subtype /Image` streams. Text/AST extractors (`unpdf`, `pdf_oxide`) parse typography but ignore vector drawing commands.
+     - *How to achieve full fidelity (Wave 3)*: Rasterize the rectangular bounding box of vector Form XObjects into high-res PNG bytes via `hayro`/`tiny-skia` or `pdfium-render`, then embed them into the complementary column cell of the table using `docx_rs::Pic::new(&png_bytes)`.
    - **Spec 067 (Production-Grade PDF Compression Optimization)**: Merged (PR #208, Jules Session 6600304163605773570) — Preset-driven JPEG downsampling, Flate content stream compression, orphan pruning, and 100% unit & E2E assertions pass.
    - **Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: Merged (PR #209, commit `91b7beb`, Jules Session 11237800863675110882).
    - **Penta-Interface E2E & Cleanroom Audits Passed (Oct 18, 2026)**:
