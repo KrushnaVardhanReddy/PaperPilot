@@ -10,6 +10,7 @@
 ## 🧭 Executive Context & Active Sessions
 
 1. **Active Jules Sessions in Flight / Pending**:
+   - **Task 5.9.54 / Spec 076 (High-Fidelity PDF-to-Markdown & PDF-to-HTML with Embedded Media)**: [Session 17593917935231121201](https://jules.google.com/session/17593917935231121201) — Stage 1 of the decoupled conversion pipeline: Upgrades `PdfToMarkdownOperation` and `PdfToHtmlOperation` to extract both raster photos (`/Subtype /Image`) and vector Form XObjects (`/Subtype /Form` via `hayro` 150 DPI rasterization), embedding visual assets cleanly into Markdown and responsive HTML.
    - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
 
 2. **Recently Completed & Merged Milestones**:
