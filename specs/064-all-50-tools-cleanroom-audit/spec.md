@@ -88,8 +88,15 @@ Every test run must execute inside an **isolated, newly generated output sandbox
 ---
 
 ## 4. Success Criteria
-- [ ] `cargo test --test all50_cleanroom_audit -j 2` completes with 50/50 tests passing (100%).
-- [ ] `Makefile` targets `test-cleanroom-top12` and `test-cleanroom-all50` are added and succeed.
-- [ ] Every tool writes to an isolated clean-room timestamped directory.
-- [ ] Zero overrides or regressions on engine fixes (`split --every`, `excel_to_json` output paths, `excel_to_csv` extension, etc.).
-- [ ] Scorecard written to `reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md`.
+- [x] `cargo test --test all50_cleanroom_audit -j 2` completes with 50/50 tests passing (100%).
+- [x] `Makefile` targets `test-cleanroom-top12` and `test-cleanroom-all50` are added and succeed.
+- [x] Every tool writes to an isolated clean-room timestamped directory.
+- [x] Zero overrides or regressions on engine fixes (`split --every`, `excel_to_json` output paths, `excel_to_csv` extension, etc.).
+- [x] Scorecard written to `reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md`.
+
+---
+
+## 5. Penta-Interface Testing & Documentation Parity (Task P5_9_50)
+- [ ] Test across all 5 interfaces: Native CLI (`paperpilot`), Agent MCP Server (`paperpilot-mcp`), REST Gateway (`:7823`), In-Memory WebAssembly (`paperpilot-wasm`), and Cloudflare Edge Worker (`apps/edge`).
+- [ ] Update `apps/docs/src/content/docs/reference/50-tools-handbook.md` with verified, copy-pasteable CLI, REST (`curl`), and MCP JSON-RPC snippets for every single tool.
+- [ ] Ensure `apps/docs` builds cleanly with zero Astro/Starlight errors (`cd apps/docs && npm run build`).

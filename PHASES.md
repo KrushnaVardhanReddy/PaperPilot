@@ -930,6 +930,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.9.48 | Recursive XY-Cut Multi-Column Text Extraction via `unpdf` `[Spec 071]` 📋 | Planned (Wave 2/3) — Upgrade `PdfExtractTextOperation` in `paperpilot-pdf` to use `unpdf::to_text` and recursive XY-Cut column boundary detection, eliminating column-scrambling bugs on scientific papers and brochures. |
 | 5.9.49 | High-Fidelity PDF-to-JSON Document Model via `unpdf` Layout Tree `[Spec 072]` 📋 | Planned (Wave 3) — Enhance `PdfToJsonOperation` using `unpdf::to_json` and `unpdf::model` to provide structural bounding boxes, reading order, and semantic blocks for AI RAG ingestion. |
 | 5.9.50 | Layout-Aware Borderless Table Detection for PDF-to-Excel via `unpdf` `[Spec 073]` 📋 | Planned (Wave 4) — Integrate `unpdf::detect` gridline and table boundary detection into `PdfToXlsxOperation` to accurately map complex borderless tables into multi-cell Excel workbooks. |
+| 5.9.51 | Full 50-Tool Penta-Interface Verification & Documentation Parity `[Spec 064]` 🔄 | Dispatched (Jules Task `P5_9_51`) — Comprehensive end-to-end verification across all 5 interfaces (CLI, MCP, REST Gateway, WASM, Edge), updating `50-tools-handbook.md` with verified, copy-pasteable snippets across CLI, REST, and MCP for all 50 tools (`prompts/tasks/phase5/P5_9_51_all_50_tools_penta_audit_and_docs_sync.txt`). |
 
 
 ## Phase 5 — Advanced Intelligence
