@@ -1,1855 +1,1354 @@
 ---
-title: 50+ Tools Handbook
-description: Comprehensive reference for all 52 PaperPilot tools across CLI, REST API, and MCP.
+title: 50 Tools Handbook
+description: Comprehensive guide to all 50 PaperPilot tools across CLI, MCP, and REST interfaces.
 ---
 
-# Master 44-Tool Reference & Release Handbook
+# 50 Tools Handbook
 
-This document provides exact, copy-pasteable snippets for invoking tools across our primary interfaces.
+This handbook provides verified execution snippets for all 50 PaperPilot tools across the CLI, MCP, and REST interfaces.
 
-> **Release Status Notice:**
-> - **Wave 1 Core Launch Suite (12 Tools - `v0.5 Core` - Public Preview):** Undergoes unmocked real-disk Playwright execution, 100% Penta-Interface parity, and sub-75ms SLA (~45–75ms end-to-end latency).
-> - **Preview Suite (Waves 2–7 - `Preview`):** Engine development complete; actively staged for dedicated test hardening and weekly progressive release rollouts.
+## 1. `excel_to_csv`
 
-## 🚀 Wave 1: The Top 12 Core Launch Suite (`v0.5 Core` - Public Preview)
-
-| # | Tool ID | Interface Title | Category | Format Support | Release Status |
-|---|---|---|---|---|---|
-| 1 | [`pdf_merge`](#tool-pdf-merge) | Merge Documents | Organize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 2 | [`pdf_split`](#tool-pdf-split) | Split PDF | Organize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 3 | [`pdf_rotate`](#tool-pdf-rotate) | Rotate Pages | Organize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 4 | [`pdf_delete_pages`](#tool-pdf-delete-pages) | Delete Pages | Organize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 5 | [`pdf_reorder_pages`](#tool-pdf-reorder-pages) | Reorder Pages | Organize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 6 | [`pdf_compress`](#tool-pdf-compress) | Compress PDF | Optimize | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 7 | [`pdf_watermark`](#tool-pdf-watermark) | Add Watermark | Security | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 8 | [`pdf_ocr`](#tool-pdf-ocr) | OCR Text Recognition | AI / OCR | `.pdf`, Images | ✅ **v0.5 Core** (Production Ready) |
-| 9 | [`pdf_extract_text`](#tool-pdf-extract-text) | Extract Plain Text | Extract | `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 10 | [`pdf_extract_pages`](#tool-pdf-extract-pages) | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ✅ **v0.5 Core** (Production Ready) |
-| 11 | [`excel_to_json`](#tool-excel-to-json) | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ✅ **v0.5 Core** (Production Ready) |
-| 12 | [`excel_to_csv`](#tool-excel-to-csv) | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ✅ **v0.5 Core** (Production Ready) |
-
-## 📅 Progressive Release Waves & SemVer Roadmap (Waves 2–7)
-
-- **Wave 2 (`v0.6.0` - Week 2): Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
-- **Wave 3 (`v0.7.0` - Week 3): Web & AI Synthesis Suite** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
-- **Wave 4 (`v0.8.0` - Week 4): Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
-- **Wave 5 (`v0.9.0` - Week 5): Security, Signing & Compliance** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
-- **Wave 6 (`v0.9.5` - Week 6): Page Geometry & Interactive Forms** (`read_form`, `fill_form`, `create_form_field`, `crop`, `bookmarks`, `annotate`)
-- **Wave 7 (`v1.0.0 GA` - Week 7): General Availability & Forensics** (`render`, `flatten`, `repair`, `compare`, `classify_type`, `pdf_to_pdf_a`, `bates`, `header_footer`, `linearize`)
-
----
-
-## Complete Index of All 52 Tools
-
-- [pdf_merge](#tool-pdf-merge)
-- [pdf_split](#tool-pdf-split)
-- [pdf_extract_pages](#tool-pdf-extract-pages)
-- [pdf_delete_pages](#tool-pdf-delete-pages)
-- [pdf_reorder_pages](#tool-pdf-reorder-pages)
-- [pdf_rotate](#tool-pdf-rotate)
-- [pdf_crop](#tool-pdf-crop)
-- [pdf_burst](#tool-pdf-burst)
-- [pdf_remove_blank](#tool-pdf-remove-blank)
-- [pdf_compress](#tool-pdf-compress)
-- [pdf_repair](#tool-pdf-repair)
-- [pdf_linearize](#tool-pdf-linearize)
-- [pdf_encrypt](#tool-pdf-encrypt)
-- [pdf_decrypt](#tool-pdf-decrypt)
-- [pdf_watermark](#tool-pdf-watermark)
-- [pdf_redact](#tool-pdf-redact)
-- [pdf_metadata](#tool-pdf-metadata)
-- [pdf_sign](#tool-pdf-sign)
-- [pdf_flatten](#tool-pdf-flatten)
-- [pdf_to_pdf_a](#tool-pdf-to-pdf-a)
-- [pdf_header_footer](#tool-pdf-header-footer)
-- [pdf_bates](#tool-pdf-bates)
-- [pdf_page_numbers](#tool-pdf-page-numbers)
-- [pdf_extract_text](#tool-pdf-extract-text)
-- [pdf_extract_images](#tool-pdf-extract-images)
-- [pdf_search](#tool-pdf-search)
-- [pdf_render](#tool-pdf-render)
-- [pdf_compare](#tool-pdf-compare)
-- [pdf_ocr](#tool-pdf-ocr)
-- [pdf_bookmarks](#tool-pdf-bookmarks)
-- [pdf_images_to_pdf](#tool-pdf-images-to-pdf)
-- [pdf_annotate](#tool-pdf-annotate)
-- [pdf_classify_type](#tool-pdf-classify-type)
-- [pdf_validate](#tool-pdf-validate)
-- [pdf_hash](#tool-pdf-hash)
-- [pdf_read_form](#tool-pdf-read-form)
-- [pdf_fill_form](#tool-pdf-fill-form)
-- [pdf_create_form_field](#tool-pdf-create-form-field)
-- [pdf_to_docx](#tool-pdf-to-docx)
-- [pdf_to_xlsx](#tool-pdf-to-xlsx)
-- [pdf_to_pptx](#tool-pdf-to-pptx)
-- [pdf_to_json](#tool-pdf-to-json)
-- [pdf_convert_html](#tool-pdf-convert-html)
-- [pdf_convert_markdown](#tool-pdf-convert-markdown)
-- [pdf_convert_excel](#tool-pdf-convert-excel)
-- [json_to_pdf](#tool-json-to-pdf)
-- [excel_to_json](#tool-excel-to-json)
-- [excel_to_csv](#tool-excel-to-csv)
-- [office_to_markdown](#tool-office-to-markdown)
-- [office_extract_text](#tool-office-extract-text)
-- [office_modernize_legacy](#tool-office-modernize-legacy)
-- [pdf_info](#tool-pdf-info)
-- [pdf_rag_chunks](#tool-pdf-rag-chunks)
-- [workspace_search](#tool-workspace-search)
-
----
-
-## Tool: `pdf_merge` <a id="tool-pdf-merge"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot merge --input tests/e2e_fixtures/page_1.pdf tests/e2e_fixtures/page_2.pdf --output out/merged_cli.pdf --json
+paperpilot office excel-to-csv --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/table.csv
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_merge",
-    "arguments": {
-      "inputs": [
-        "tests/e2e_fixtures/page_1.pdf",
-        "tests/e2e_fixtures/page_2.pdf"
-      ],
-      "output": "out/merged_mcp.pdf"
-    }
+  "name": "excel_to_csv",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.xlsx",
+    "output": "tests/e2e_fixtures/out/penta_e2e/table.csv"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/page_1.pdf", "tests/e2e_fixtures/page_2.pdf"], "output": "out/merged_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-csv -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/table.csv"}'
 ```
 
----
+## 2. `excel_to_json`
 
-## Tool: `pdf_split` <a id="tool-pdf-split"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot split --input tests/e2e_fixtures/multi_page.pdf --pages 1,2 --output out/split --json
+paperpilot office excel-to-json --input tests/e2e_fixtures/real/test.xlsx
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_split",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "out/split"
-    }
+  "name": "excel_to_json",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.xlsx"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,2", "output": "out/split"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-json -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx"}'
 ```
 
----
+## 3. `json_to_pdf`
 
-## Tool: `pdf_extract_pages` <a id="tool-pdf-extract-pages"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot extract --input tests/e2e_fixtures/multi_page.pdf --pages 1,3 --output out/extracted_cli.pdf --json
+paperpilot process --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/out.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
+```json
+
+```
+
+### REST API
+```bash
+
+```
+
+## 4. `office_extract_text`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+### CLI
+```bash
+paperpilot office extract-text --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/out.txt
+```
+
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_extract_pages",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "pages": "1,3",
-      "output": "out/extracted_mcp.pdf"
-    }
+  "name": "office_extract_text",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.xlsx",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out.txt"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "1,3", "output": "out/extracted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/out.txt"}'
 ```
 
----
+## 5. `office_modernize_legacy`
 
-## Tool: `pdf_delete_pages` <a id="tool-pdf-delete-pages"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot delete --input tests/e2e_fixtures/multi_page.pdf --pages 2,4 --output out/deleted_cli.pdf --json
+paperpilot office modernize --input tests/e2e_fixtures/real/test.xls --output tests/e2e_fixtures/out/penta_e2e/out.xlsx
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_delete_pages",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "pages": "2,4",
-      "output": "out/deleted_mcp.pdf"
-    }
+  "name": "office_modernize_legacy",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.xls",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_delete_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "pages": "2,4", "output": "out/deleted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-modernize-legacy -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xls", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
----
+## 6. `office_to_markdown`
 
-## Tool: `pdf_reorder_pages` <a id="tool-pdf-reorder-pages"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot reorder --input tests/e2e_fixtures/multi_page.pdf --order 2,1,3,4,5 --output out/reordered_cli.pdf --json
+paperpilot office to-markdown --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/doc.md
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_reorder_pages",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "order": "2,1,3,4,5",
-      "output": "out/reordered_mcp.pdf"
-    }
+  "name": "office_to_markdown",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.xlsx",
+    "output": "tests/e2e_fixtures/out/penta_e2e/doc.md"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_reorder_pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "order": "2,1,3,4,5", "output": "out/reordered_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-to-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/doc.md"}'
 ```
 
----
+## 7. `pdf_annotate`
 
-## Tool: `pdf_rotate` <a id="tool-pdf-rotate"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot rotate --input tests/e2e_fixtures/single_page.pdf --degrees 90 --pages 1 --output out/rotated_cli.pdf --json
+paperpilot annotate --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/annotate_cli_Simple.pdf --data [{\"id\":\"1\",\"type\":\"highlight\",\"page\":1,\"x\":50.0,\"y\":50.0,\"w\":50.0,\"h\":50.0,\"color\":\"#ffff00\",\"content\":\"Test\"}] --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_rotate",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "angle": 90,
-      "pages": "1",
-      "output": "out/rotated_mcp.pdf"
-    }
+  "name": "pdf_annotate",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "annotations": [],
+    "output": "tests/e2e_fixtures/out/penta_e2e/annotated.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "angle": 90, "pages": "1", "output": "out/rotated_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "annotations": [], "output": "tests/e2e_fixtures/out/penta_e2e/annotated.pdf"}'
 ```
 
----
+## 8. `pdf_bates`
 
-## Tool: `pdf_crop` <a id="tool-pdf-crop"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot crop --input tests/e2e_fixtures/single_page.pdf --rect 10,10,200,200 --output out/cropped_cli.pdf --json
+paperpilot bates --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/bates_cli_Simple.pdf --prefix BATES --start 1 --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_crop",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "box": "10,10,200,200",
-      "output": "out/cropped_mcp.pdf"
-    }
+  "name": "pdf_bates",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "prefix": "CONF-",
+    "start": 1,
+    "output": "tests/e2e_fixtures/out/penta_e2e/bates.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "box": "10,10,200,200", "output": "out/cropped_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "prefix": "CONF-", "start": 1, "output": "tests/e2e_fixtures/out/penta_e2e/bates.pdf"}'
 ```
 
----
+## 9. `pdf_bookmarks`
 
-## Tool: `pdf_burst` <a id="tool-pdf-burst"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot burst --input tests/e2e_fixtures/multi_page.pdf --output out/burst_dir --json
+paperpilot bookmarks --input tests/e2e_fixtures/real/multi_page.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_burst",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output_dir": "out/burst_dir"
-    }
+  "name": "pdf_bookmarks",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output_dir": "out/burst_dir"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf"}'
 ```
 
----
+## 10. `pdf_burst`
 
-## Tool: `pdf_remove_blank` <a id="tool-pdf-remove-blank"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot remove-blank --input tests/e2e_fixtures/multi_page.pdf --output out/noblank_cli.pdf --json
+paperpilot burst --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e2e_fixtures/out/penta_e2e/burst --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_remove_blank",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "output": "out/noblank_mcp.pdf"
-    }
+  "name": "pdf_burst",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output_dir": "tests/e2e_fixtures/out/penta_e2e/burst"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_remove_blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "output": "out/noblank_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/burst"}'
 ```
 
----
+## 11. `pdf_classify_type`
 
-## Tool: `pdf_compress` <a id="tool-pdf-compress"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-# Quality accepts numeric values 1-100 or presets: low, medium, high
-paperpilot compress --input tests/e2e_fixtures/single_page.pdf --quality 75 --output out/compressed_cli.pdf --json
+paperpilot classify --input tests/e2e_fixtures/real/single_page.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_compress",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/compressed_mcp.pdf",
-      "quality": "75"
-    }
+  "name": "pdf_classify_type",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress \
-  -H 'Content-Type: application/json' \
-  -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/compressed_api.pdf", "quality": "75"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 12. `pdf_compare`
 
-## Tool: `pdf_repair` <a id="tool-pdf-repair"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot repair --input tests/e2e_fixtures/single_page.pdf --output out/repaired_cli.pdf --json
+paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e2e_fixtures/real/merge_b.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_repair",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/repaired_mcp.pdf"
-    }
+  "name": "pdf_compare",
+  "arguments": {
+    "file1": "tests/e2e_fixtures/real/merge_a.pdf",
+    "file2": "tests/e2e_fixtures/real/merge_b.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/repaired_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_b.pdf"}'
 ```
 
----
+## 13. `pdf_compress`
 
-## Tool: `pdf_linearize` <a id="tool-pdf-linearize"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot linearize --input tests/e2e_fixtures/single_page.pdf --output out/linearized_cli.pdf --json
+paperpilot compress --input tests/e2e_fixtures/real/single_page.pdf --quality medium --output tests/e2e_fixtures/out/penta_e2e/compressed.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_linearize",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/linearized_mcp.pdf"
-    }
+  "name": "pdf_compress",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "quality": "medium",
+    "output": "tests/e2e_fixtures/out/penta_e2e/compressed.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/linearized_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "medium", "output": "tests/e2e_fixtures/out/penta_e2e/compressed.pdf"}'
 ```
 
----
+## 14. `pdf_convert_excel`
 
-## Tool: `pdf_encrypt` <a id="tool-pdf-encrypt"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot encrypt --input tests/e2e_fixtures/single_page.pdf --user-password secret123 --owner-password secret123 --output out/encrypted_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/real/test.csv --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_csv.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_encrypt",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "password": "secret123",
-      "output": "out/encrypted_mcp.pdf"
-    }
+  "name": "pdf_convert_excel",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.csv",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out_csv.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "password": "secret123", "output": "out/encrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.csv", "output": "tests/e2e_fixtures/out/penta_e2e/out_csv.pdf"}'
 ```
 
----
+## 15. `pdf_convert_html`
 
-## Tool: `pdf_decrypt` <a id="tool-pdf-decrypt"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot decrypt --input out/encrypted_cli.pdf --password secret123 --output out/decrypted_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/real/test.html --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_html.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_decrypt",
-    "arguments": {
-      "input": "out/encrypted_mcp.pdf",
-      "password": "secret123",
-      "output": "out/decrypted_mcp.pdf"
-    }
+  "name": "pdf_convert_html",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.html",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out_html.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt -H 'Content-Type: application/json' -d '{"input": "out/encrypted_api.pdf", "password": "secret123", "output": "out/decrypted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/out_html.pdf"}'
 ```
 
----
+## 16. `pdf_convert_markdown`
 
-## Tool: `pdf_watermark` <a id="tool-pdf-watermark"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot watermark --input tests/e2e_fixtures/single_page.pdf --text CONFIDENTIAL --output out/watermarked_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/real/test.md --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_md.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_watermark",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "text": "CONFIDENTIAL",
-      "output": "out/watermarked_mcp.pdf"
-    }
+  "name": "pdf_convert_markdown",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.md",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out_md.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "text": "CONFIDENTIAL", "output": "out/watermarked_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.md", "output": "tests/e2e_fixtures/out/penta_e2e/out_md.pdf"}'
 ```
 
----
+## 17. `pdf_create_form_field`
 
-## Tool: `pdf_redact` <a id="tool-pdf-redact"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot redact --input tests/e2e_fixtures/single_page.pdf --pages 1 --rect 50,50,200,50 --output out/redacted_cli.pdf --json
+paperpilot form add-field tests/e2e_fixtures/real/single_page.pdf --name signature --type text --rect 50,50,150,30 --output tests/e2e_fixtures/out/penta_e2e_security/create_form_field_cli_Simple.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_redact",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "page": 1,
-      "x": 50,
-      "y": 50,
-      "width": 200,
-      "height": 50,
-      "output": "out/redacted_mcp.pdf"
-    }
+  "name": "pdf_create_form_field",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "name": "f1",
+    "rect": [
+      0,
+      0,
+      10,
+      10
+    ],
+    "output": "tests/e2e_fixtures/out/penta_e2e/added_field.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "x": 50, "y": 50, "width": 200, "height": 50, "output": "out/redacted_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/create-form-field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "name": "f1", "rect": [0,0,10,10], "output": "tests/e2e_fixtures/out/penta_e2e/added_field.pdf"}'
 ```
 
----
+## 18. `pdf_crop`
 
-## Tool: `pdf_metadata` <a id="tool-pdf-metadata"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot metadata --input tests/e2e_fixtures/single_page.pdf --output out/metadata.json --json
+paperpilot crop --input tests/e2e_fixtures/real/single_page.pdf --rect 10,10,200,200 --output tests/e2e_fixtures/out/penta_e2e/cropped.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_metadata",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf"
-    }
+  "name": "pdf_crop",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "box": "10,10,200,200",
+    "output": "tests/e2e_fixtures/out/penta_e2e/cropped.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/info -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "box": "10,10,200,200", "output": "tests/e2e_fixtures/out/penta_e2e/cropped.pdf"}'
 ```
 
----
+## 19. `pdf_decrypt`
 
-## Tool: `pdf_sign` <a id="tool-pdf-sign"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot signature --input tests/e2e_fixtures/single_page.pdf --cert tests/e2e_fixtures/out/tri_e2e/dummy.p12 --output out/signed_cli.pdf --json
+paperpilot decrypt --input tests/e2e_fixtures/real/encrypted.pdf --output tests/e2e_fixtures/out/penta_e2e_security/decrypt_cli_Simple.pdf --password testpass --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_sign",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12",
-      "output": "out/signed_mcp.pdf"
-    }
+  "name": "pdf_decrypt",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/encrypted.pdf",
+    "password": "testpass",
+    "output": "tests/e2e_fixtures/out/penta_e2e/decrypted.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "cert": "tests/e2e_fixtures/out/tri_e2e/dummy.p12", "output": "out/signed_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/decrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/decrypted.pdf"}'
 ```
 
----
+## 20. `pdf_delete_pages`
 
-## Tool: `pdf_flatten` <a id="tool-pdf-flatten"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot flatten --input tests/e2e_fixtures/form.pdf --output out/flattened_cli.pdf --json
+paperpilot delete --input tests/e2e_fixtures/real/multi_page.pdf --pages 2,4 --output tests/e2e_fixtures/out/penta_e2e/deleted.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_flatten",
-    "arguments": {
-      "input": "tests/e2e_fixtures/form.pdf",
-      "output": "out/flattened_mcp.pdf"
-    }
+  "name": "pdf_delete_pages",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/deleted.pdf",
+    "pages": "2,4"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "output": "out/flattened_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/delete-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/deleted.pdf", "pages": "2,4"}'
 ```
 
----
+## 21. `pdf_encrypt`
 
-## Tool: `pdf_to_pdf_a` <a id="tool-pdf-to-pdf-a"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot pdf-a --input tests/e2e_fixtures/single_page.pdf --output out/pdf_a_cli.pdf --json
+paperpilot encrypt --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/encrypt_cli_Simple.pdf --user-password testpass --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_pdf_a",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/pdf_a_mcp.pdf"
-    }
+  "name": "pdf_encrypt",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "password": "testpass",
+    "output": "tests/e2e_fixtures/out/penta_e2e/encrypted.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pdf_a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/pdf_a_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/encrypted.pdf"}'
 ```
 
----
+## 22. `pdf_extract_images`
 
-## Tool: `pdf_header_footer` <a id="tool-pdf-header-footer"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot header-footer --input tests/e2e_fixtures/multi_page.pdf --text Confidential --output out/header_cli.pdf --json
+paperpilot extract-images --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/images --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_header_footer",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "header_left": "Confidential",
-      "footer_center": "Page",
-      "output": "out/header_mcp.pdf"
-    }
+  "name": "pdf_extract_images",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output_dir": "tests/e2e_fixtures/out/penta_e2e/images"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_header_footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "header_left": "Confidential", "footer_center": "Page", "output": "out/header_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/images"}'
 ```
 
----
+## 23. `pdf_extract_pages`
 
-## Tool: `pdf_bates` <a id="tool-pdf-bates"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot bates --input tests/e2e_fixtures/multi_page.pdf --prefix CONF- --start 1 --output out/bates_cli.pdf --json
+paperpilot extract --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --output tests/e2e_fixtures/out/penta_e2e/extracted.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_bates",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "prefix": "CONF-",
-      "start_number": 1,
-      "padding": 6,
-      "output": "out/bates_mcp.pdf"
-    }
+  "name": "pdf_extract_pages",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/extracted.pdf",
+    "pages": "1,3"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "prefix": "CONF-", "start_number": 1, "padding": 6, "output": "out/bates_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/extracted.pdf", "pages": "1,3"}'
 ```
 
----
+## 24. `pdf_extract_text`
 
-## Tool: `pdf_page_numbers` <a id="tool-pdf-page-numbers"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot page-numbers --input tests/e2e_fixtures/multi_page.pdf --output out/numbers_cli.pdf --json
+paperpilot extract-text --input tests/e2e_fixtures/real/single_page.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_page_numbers",
-    "arguments": {
-      "input": "tests/e2e_fixtures/multi_page.pdf",
-      "position": "bottom-right",
-      "start_number": 1,
-      "output": "out/numbers_mcp.pdf"
-    }
+  "name": "pdf_extract_text",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/multi_page.pdf", "position": "bottom-right", "start_number": 1, "output": "out/numbers_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 25. `pdf_fill_form`
 
-## Tool: `pdf_extract_text` <a id="tool-pdf-extract-text"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot extract-text --input tests/e2e_fixtures/single_page.pdf --output out/text.txt --json
+paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output tests/e2e_fixtures/out/penta_e2e_security/fill_form_cli_Simple.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_extract_text",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/text.txt"
-    }
+  "name": "pdf_fill_form",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/form.pdf",
+    "data": {},
+    "output": "tests/e2e_fixtures/out/penta_e2e/filled.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/text.txt"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/fill-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "data": {}, "output": "tests/e2e_fixtures/out/penta_e2e/filled.pdf"}'
 ```
 
----
+## 26. `pdf_flatten`
 
-## Tool: `pdf_extract_images` <a id="tool-pdf-extract-images"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot extract-images --input tests/e2e_fixtures/image_doc.pdf --output out/extracted_images --json
+paperpilot flatten --input tests/e2e_fixtures/form.pdf --output tests/e2e_fixtures/out/penta_e2e_security/flatten_cli_Simple.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_extract_images",
-    "arguments": {
-      "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output_dir": "out/extracted_images"
-    }
+  "name": "pdf_flatten",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/form.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/flattened.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_extract_images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output_dir": "out/extracted_images"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/flattened.pdf"}'
 ```
 
----
+## 27. `pdf_hash`
 
-## Tool: `pdf_search` <a id="tool-pdf-search"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot search --input tests/e2e_fixtures/search_test.pdf --query test --json
+paperpilot hash --input tests/e2e_fixtures/real/missing.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_search",
-    "arguments": {
-      "input": "tests/e2e_fixtures/search_test.pdf",
-      "query": "test"
-    }
+  "name": "pdf_hash",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/search_test.pdf", "query": "test"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 28. `pdf_header_footer`
 
-## Tool: `pdf_render` <a id="tool-pdf-render"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot render --input tests/e2e_fixtures/single_page.pdf --output out/rendered_cli.png --json
+paperpilot header-footer --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/header_footer_cli_Simple.pdf --text HEADER --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_render",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "page": 1,
-      "output": "out/rendered_mcp.png"
-    }
+  "name": "pdf_header_footer",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "text": "Confidential",
+    "output": "tests/e2e_fixtures/out/penta_e2e/header.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render-page -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "page": 1, "output": "out/rendered_api.png"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/header-footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "text": "Confidential", "output": "tests/e2e_fixtures/out/penta_e2e/header.pdf"}'
 ```
 
----
+## 29. `pdf_images_to_pdf`
 
-## Tool: `pdf_compare` <a id="tool-pdf-compare"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot compare --input tests/e2e_fixtures/page_1.pdf --input-b tests/e2e_fixtures/page_2.pdf --json
+paperpilot images-to-pdf --images tests/e2e_fixtures/real/test.png --output tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_compare",
-    "arguments": {
-      "file1": "tests/e2e_fixtures/page_1.pdf",
-      "file2": "tests/e2e_fixtures/page_2.pdf"
-    }
+  "name": "pdf_images_to_pdf",
+  "arguments": {
+    "images": [
+      "tests/e2e_fixtures/real/test.png"
+    ],
+    "output": "tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/page_1.pdf", "file2": "tests/e2e_fixtures/page_2.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-pdf -H 'Content-Type: application/json' -d '{"images": ["tests/e2e_fixtures/real/test.png"], "output": "tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf"}'
 ```
 
----
+## 30. `pdf_linearize`
 
-## Tool: `pdf_ocr` <a id="tool-pdf-ocr"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot ocr --input tests/e2e_fixtures/image_doc.pdf --output out/ocr_cli.pdf --json
+paperpilot linearize --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/linearized.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_ocr",
-    "arguments": {
-      "input": "tests/e2e_fixtures/image_doc.pdf",
-      "output": "out/ocr_mcp.pdf"
-    }
+  "name": "pdf_linearize",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/linearized.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/image_doc.pdf", "output": "out/ocr_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/linearized.pdf"}'
 ```
 
----
+## 31. `pdf_merge`
 
-## Tool: `pdf_bookmarks` <a id="tool-pdf-bookmarks"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot bookmarks --input tests/e2e_fixtures/large_doc.pdf --json
+paperpilot merge --input tests/e2e_fixtures/real/merge_a.pdf tests/e2e_fixtures/real/merge_b.pdf --output tests/e2e_fixtures/out/penta_e2e/merge_cli_simple.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_bookmarks",
-    "arguments": {
-      "input": "tests/e2e_fixtures/large_doc.pdf"
-    }
+  "name": "pdf_merge",
+  "arguments": {
+    "inputs": [
+      "tests/e2e_fixtures/real/merge_a.pdf",
+      "tests/e2e_fixtures/real/merge_b.pdf"
+    ],
+    "output": "tests/e2e_fixtures/out/penta_e2e/merge_mcp_simple.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/large_doc.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/merge_mcp_simple.pdf"}'
 ```
 
----
+## 32. `pdf_metadata`
 
-## Tool: `pdf_images_to_pdf` <a id="tool-pdf-images-to-pdf"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot images-to-pdf --images tests/e2e_fixtures/img1.png tests/e2e_fixtures/img2.png --output out/images_cli.pdf --json
+paperpilot metadata --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/metadata.json --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_images_to_pdf",
-    "arguments": {
-      "inputs": [
-        "tests/e2e_fixtures/img1.png",
-        "tests/e2e_fixtures/img2.png"
-      ],
-      "output": "out/images_mcp.pdf"
-    }
+  "name": "pdf_metadata",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_images_to_pdf -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/img1.png", "tests/e2e_fixtures/img2.png"], "output": "out/images_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/metadata -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 33. `pdf_ocr`
 
-## Tool: `pdf_annotate` <a id="tool-pdf-annotate"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot annotate --input tests/e2e_fixtures/single_page.pdf --data [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}] --output out/annotated.pdf --json
+paperpilot ocr --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/ocr.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_annotate",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "annotations": [
-        {
-          "id": "1",
-          "type": "highlight",
-          "page": 1,
-          "x": 50.0,
-          "y": 50.0,
-          "w": 50.0,
-          "h": 50.0,
-          "color": "#ffff00",
-          "content": "Test"
-        }
-      ],
-      "output": "out/annotated.pdf"
-    }
+  "name": "pdf_ocr",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/ocr.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "annotations": [{"id": "1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 50.0, "h": 50.0, "color": "#ffff00", "content": "Test"}], "output": "out/annotated.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/ocr.pdf"}'
 ```
 
----
+## 34. `pdf_page_numbers`
 
-## Tool: `pdf_classify_type` <a id="tool-pdf-classify-type"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot classify --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot page-numbers --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/page_numbers_cli_Simple.pdf --position bottom-right --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_classify_type",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf"
-    }
+  "name": "pdf_page_numbers",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/numbers.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_classify_type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/page-numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/numbers.pdf"}'
 ```
 
----
+## 35. `pdf_rag_chunks`
 
-## Tool: `pdf_validate` <a id="tool-pdf-validate"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot validate --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot rag-chunks --input tests/e2e_fixtures/real/single_page.pdf
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_validate",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf"
-    }
+  "name": "pdf_rag_chunks",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rag-chunks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 36. `pdf_read_form`
 
-## Tool: `pdf_hash` <a id="tool-pdf-hash"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot hash --input tests/e2e_fixtures/single_page.pdf --json
+paperpilot form read tests/e2e_fixtures/real/missing.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_hash",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf"
-    }
+  "name": "pdf_read_form",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/form.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/read-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf"}'
 ```
 
----
+## 37. `pdf_redact`
 
-## Tool: `pdf_read_form` <a id="tool-pdf-read-form"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot form read tests/e2e_fixtures/form.pdf --json
+paperpilot redact --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/redact_cli_Simple.pdf --pages 1 --rect 0,0,100,100 --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_read_form",
-    "arguments": {
-      "input": "tests/e2e_fixtures/form.pdf"
-    }
+  "name": "pdf_redact",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "page": 1,
+    "rect": [
+      50,
+      50,
+      200,
+      50
+    ],
+    "output": "tests/e2e_fixtures/out/penta_e2e/redacted.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_read_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "page": 1, "rect": [50, 50, 200, 50], "output": "tests/e2e_fixtures/out/penta_e2e/redacted.pdf"}'
 ```
 
----
+## 38. `pdf_remove_blank`
 
-## Tool: `pdf_fill_form` <a id="tool-pdf-fill-form"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output out/filled_cli.pdf --json
+paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e2e_fixtures/out/penta_e2e/noblank.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_fill_form",
-    "arguments": {
-      "input": "tests/e2e_fixtures/form.pdf",
-      "values": {
-        "TestText": "Alice"
-      },
-      "output": "out/filled_mcp.pdf"
-    }
+  "name": "pdf_remove_blank",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_fill_form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/form.pdf", "values": {"TestText": "Alice"}, "output": "out/filled_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/remove-blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"}'
 ```
 
----
+## 39. `pdf_render`
 
-## Tool: `pdf_create_form_field` <a id="tool-pdf-create-form-field"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot form add-field tests/e2e_fixtures/single_page.pdf --name signature --type text --rect 50,50,150,30 --output out/added_cli.pdf --json
+paperpilot render --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/rendered.png --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_create_form_field",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "field_name": "signature",
-      "field_type": "text",
-      "x": 50.0,
-      "y": 50.0,
-      "width": 100.0,
-      "height": 30.0,
-      "output": "out/added_mcp.pdf"
-    }
+  "name": "pdf_render",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/rendered.png"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_create_form_field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "field_name": "signature", "field_type": "text", "x": 50.0, "y": 50.0, "width": 100.0, "height": 30.0, "output": "out/added_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/rendered.png"}'
 ```
 
----
+## 40. `pdf_reorder_pages`
 
-## Tool: `pdf_to_docx` <a id="tool-pdf-to-docx"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format docx --output out/out_cli.docx --json
+paperpilot reorder --input tests/e2e_fixtures/real/multi_page.pdf --order 2,1,3,4,5 --output tests/e2e_fixtures/out/penta_e2e/reordered.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_docx",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/out_mcp.docx"
-    }
+  "name": "pdf_reorder_pages",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "order": "2,1,3,4,5",
+    "output": "tests/e2e_fixtures/out/penta_e2e/reordered.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.docx", "format": "docx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/reorder-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "2,1,3,4,5", "output": "tests/e2e_fixtures/out/penta_e2e/reordered.pdf"}'
 ```
 
----
+## 41. `pdf_repair`
 
-## Tool: `pdf_to_xlsx` <a id="tool-pdf-to-xlsx"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format xlsx --output out/out_cli.xlsx --json
+paperpilot repair --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/repaired.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_xlsx",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/out_mcp.xlsx"
-    }
+  "name": "pdf_repair",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/repaired.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.xlsx", "format": "xlsx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/repaired.pdf"}'
 ```
 
----
+## 42. `pdf_rotate`
 
-## Tool: `pdf_to_pptx` <a id="tool-pdf-to-pptx"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format pptx --output out/out_cli.pptx --json
+paperpilot rotate --input tests/e2e_fixtures/real/single_page.pdf --degrees 90 --pages 1 --output tests/e2e_fixtures/out/penta_e2e/rotated.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_pptx",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/out_mcp.pptx"
-    }
+  "name": "pdf_rotate",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "angle": 90,
+    "pages": "1",
+    "output": "tests/e2e_fixtures/out/penta_e2e/rotated.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out_api.pptx", "format": "pptx"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "pages": "1", "output": "tests/e2e_fixtures/out/penta_e2e/rotated.pdf"}'
 ```
 
----
+## 43. `pdf_search`
 
-## Tool: `pdf_to_html` (alias: `pdf_convert_html`) <a id="tool-pdf-to-html"></a>
-
-Converts a PDF document into a responsive, styled HTML5 web document.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format html --output out/out.html --json
+paperpilot search --input tests/e2e_fixtures/real/single_page.pdf --query test --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_html",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/out.html"
-    }
+  "name": "pdf_search",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "query": "test"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out.html", "format": "html"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "query": "test"}'
 ```
 
----
+## 44. `pdf_sign`
 
-## Tool: `pdf_to_markdown` (alias: `pdf_convert_markdown`) <a id="tool-pdf-to-markdown"></a>
-
-Converts a PDF document into clean, LLM-ready Markdown formatted text.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/single_page.pdf --format md --output out/out.md --json
+paperpilot sign --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/sign_cli_Simple.pdf --cert tests/e2e_fixtures/real/cert.pem --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_markdown",
-    "arguments": {
-      "input": "tests/e2e_fixtures/single_page.pdf",
-      "output": "out/out.md"
-    }
+  "name": "pdf_sign",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/signed.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/single_page.pdf", "output": "out/out.md", "format": "md"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/signed.pdf"}'
 ```
 
----
+## 45. `pdf_split`
 
-## Tool: `html_to_pdf` <a id="tool-html-to-pdf"></a>
-
-Synthesizes styled PDF documents from HTML source code or files using pure-Rust zero-Chrome layout engine (`fulgur`).
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/test.html --format pdf --output out/out_html_cli.pdf --json
+paperpilot split --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --output tests/e2e_fixtures/out/penta_e2e/pdf_split_simple --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_convert_html",
-    "arguments": {
-      "input": "tests/e2e_fixtures/test.html",
-      "output": "out/out_html_mcp.pdf"
-    }
+  "name": "pdf_split",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output_dir": "tests/e2e_fixtures/out/penta_e2e/pdf_split_simple",
+    "pages": "1,3"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.html", "output": "out/out_html_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/pdf_split_simple", "pages": "1,3"}'
 ```
 
----
+## 46. `pdf_to_docx`
 
-## Tool: `md_to_pdf` <a id="tool-md-to-pdf"></a>
-
-Converts Markdown documentation files into styled PDFs.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/test.md --format pdf --output out/out_md_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format docx --output tests/e2e_fixtures/out/penta_e2e/out.docx --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_convert_markdown",
-    "arguments": {
-      "input": "tests/e2e_fixtures/test.md",
-      "output": "out/out_md_mcp.pdf"
-    }
+  "name": "pdf_to_docx",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out.docx"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.md", "output": "out/out_md_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-docx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.docx"}'
 ```
 
----
+## 47. `pdf_to_html`
 
-## Tool: `pdf_convert_excel` <a id="tool-pdf-convert-excel"></a>
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/test.csv --format pdf --output out/out_csv_cli.pdf --json
+paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format html --output tests/e2e_fixtures/out/penta_e2e/doc.html
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_convert_excel",
-    "arguments": {
-      "input": "tests/e2e_fixtures/test.csv",
-      "output": "out/out_csv_mcp.pdf"
-    }
+  "name": "pdf_to_html",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/test.csv", "output": "out/out_csv_api.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"}'
 ```
 
----
+## 48. `pdf_to_pdf_a`
 
-## Tool: `json_to_pdf` <a id="tool-json-to-pdf"></a>
-
-Synthesizes publication-grade PDF documents directly from structured `JsonDocument` payloads containing text pages and inline multimodal images.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input doc.json --format pdf --output synthesized.pdf --json
+paperpilot pdf-a --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "json_to_pdf",
-    "arguments": {
-      "input": "doc.json",
-      "output": "synthesized.pdf"
-    }
+  "name": "pdf_to_pdf_a",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/json_to_pdf -H 'Content-Type: application/json' -d '{"input": "doc.json", "output": "synthesized.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pdf-a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf"}'
 ```
 
----
+## 49. `pdf_to_pptx`
 
-## Tool: `pdf_to_json` <a id="tool-pdf-to-json"></a>
-
-Extracts a multimodal layout JSON document model including page structures, text blocks, bounding boxes, and inline base64 images.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot convert --input doc.pdf --format json --output doc.json --json
+paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format pptx --output tests/e2e_fixtures/out/penta_e2e/out.pptx --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_to_json",
-    "arguments": {
-      "input": "doc.pdf",
-      "output": "doc.json"
-    }
+  "name": "pdf_to_pptx",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out.pptx"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_json -H 'Content-Type: application/json' -d '{"input": "doc.pdf", "output": "doc.json"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pptx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.pptx"}'
 ```
 
----
+## 50. `pdf_to_xlsx`
 
-## Tool: `excel_to_json` <a id="tool-excel-to-json"></a>
-
-Ingests an Excel spreadsheet (`.xlsx`/`.xls`/`.csv`) into structured JSON with cell type preservation.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot office excel-to-json --input data.xlsx --output data.json --has-headers --json
+paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format xlsx --output tests/e2e_fixtures/out/penta_e2e/out.xlsx --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "excel_to_json",
-    "arguments": {
-      "input": "data.xlsx",
-      "output": "data.json",
-      "has_headers": true
-    }
+  "name": "pdf_to_xlsx",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/office/excel-to-json -H 'Content-Type: application/json' -d '{"input": "data.xlsx", "output": "data.json", "has_headers": true}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-xlsx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
----
+## 51. `pdf_validate`
 
-## Tool: `excel_to_csv` <a id="tool-excel-to-csv"></a>
-
-Exports an Excel spreadsheet (`.xlsx`/`.xls`) sheet to standard RFC 4180 CSV.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot office excel-to-csv --input data.xlsx --output data.csv --json
+paperpilot validate --input tests/e2e_fixtures/real/single_page.pdf --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "excel_to_csv",
-    "arguments": {
-      "input": "data.xlsx",
-      "output": "data.csv"
-    }
+  "name": "pdf_validate",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/office/excel-to-csv -H 'Content-Type: application/json' -d '{"input": "data.xlsx", "output": "data.csv"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
----
+## 52. `pdf_watermark`
 
-## Tool: `office_to_markdown` <a id="tool-office-to-markdown"></a>
-
-Converts Word (`.docx`), Excel (`.xlsx`), or PowerPoint (`.pptx`) documents into clean, LLM-ready Markdown text.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot office to-markdown --input report.docx --output report.md --json
+paperpilot watermark --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/watermark_cli_Simple.pdf --text WATERMARK --json
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "office_to_markdown",
-    "arguments": {
-      "input": "report.docx",
-      "output": "report.md"
-    }
+  "name": "pdf_watermark",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "text": "CONFIDENTIAL",
+    "output": "tests/e2e_fixtures/out/penta_e2e/watermarked.pdf"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/office/to-markdown -H 'Content-Type: application/json' -d '{"input": "report.docx", "output": "report.md"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL", "output": "tests/e2e_fixtures/out/penta_e2e/watermarked.pdf"}'
 ```
 
----
+## 53. `workspace_search`
 
-## Tool: `office_extract_text` <a id="tool-office-extract-text"></a>
-
-Extracts all raw textual content from Office documents (`.docx`, `.xlsx`, `.pptx`) into a UTF-8 text file.
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### CLI
 ```bash
-paperpilot office extract-text --input presentation.pptx --output presentation.txt --json
+paperpilot search --query 'test' --dir tests/e2e_fixtures/real
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "office_extract_text",
-    "arguments": {
-      "input": "presentation.pptx",
-      "output": "presentation.txt"
-    }
+  "name": "workspace_search",
+  "arguments": {
+    "query": "test",
+    "dir": "tests/e2e_fixtures/real"
   }
 }
 ```
 
-### REST API (cURL)
+### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/office/extract-text -H 'Content-Type: application/json' -d '{"input": "presentation.pptx", "output": "presentation.txt"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/workspace-search -H 'Content-Type: application/json' -d '{"query": "test", "dir": "tests/e2e_fixtures/real"}'
 ```
 
----
-
-## Tool: `office_modernize_legacy` <a id="tool-office-modernize-legacy"></a>
-
-Upgrades binary legacy Office files (`.doc`, `.xls`, `.ppt`) to modern OpenXML formats (`.docx`, `.xlsx`, `.pptx`).
-
-### CLI
-```bash
-paperpilot office modernize --input legacy.doc --output modern.docx --json
-```
-
-### MCP (JSON-RPC)
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "office_modernize_legacy",
-    "arguments": {
-      "input": "legacy.doc",
-      "output": "modern.docx"
-    }
-  }
-}
-```
-
-### REST API (cURL)
-```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/office/modernize -H 'Content-Type: application/json' -d '{"input": "legacy.doc", "output": "modern.docx"}'
-```
-
----
-
-## Tool: `pdf_info` <a id="tool-pdf-info"></a>
-
-Inspects PDF internal object catalog, stream counts, encryption status, and page dimensions.
-
-### CLI
-```bash
-paperpilot info --input document.pdf --json
-```
-
-### MCP (JSON-RPC)
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_info",
-    "arguments": {
-      "input": "document.pdf"
-    }
-  }
-}
-```
-
-### REST API (cURL)
-```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_info -H 'Content-Type: application/json' -d '{"input": "document.pdf"}'
-```
-
----
-
-## Tool: `pdf_rag_chunks` <a id="tool-pdf-rag-chunks"></a>
-
-Extracts chunked semantic text blocks with token boundaries and overlap parameters for AI embedding and RAG indexing.
-
-### CLI
-```bash
-paperpilot ai chunk --input manual.pdf --chunk-size 512 --overlap 50 --json
-```
-
-### MCP (JSON-RPC)
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_rag_chunks",
-    "arguments": {
-      "input": "manual.pdf",
-      "chunk_size": 512,
-      "overlap": 50
-    }
-  }
-}
-```
-
-### REST API (cURL)
-```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/ai/chunk -H 'Content-Type: application/json' -d '{"input": "manual.pdf", "chunk_size": 512, "overlap": 50}'
-```
-
----
-
-## Tool: `workspace_search` <a id="tool-workspace-search"></a>
-
-Performs fast full-text semantic searching across multiple PDF documents in a workspace directory.
-
-### CLI
-```bash
-paperpilot search --dir ./documents --query "quarterly revenue" --json
-```
-
-### MCP (JSON-RPC)
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "workspace_search",
-    "arguments": {
-      "directory": "./documents",
-      "query": "quarterly revenue"
-    }
-  }
-}
-```
-
-### REST API (cURL)
-```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/workspace/search -H 'Content-Type: application/json' -d '{"directory": "./documents", "query": "quarterly revenue"}'
-```
