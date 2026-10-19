@@ -122,7 +122,11 @@ import { onMount } from 'svelte';
     rankToolsByContext(allTools, appState.documents, activePackIds)
   );
 
-  let contextFilter = $state('recommended'); // 'recommended', 'all', 'pdf', 'office', 'ai'
+  let readyToolsCount = $derived(
+    allTools.filter(t => t.releaseStatus !== 'preview').length
+  );
+
+  let contextFilter = $state('recommended'); // 'recommended', 'ready', 'all', 'pdf', 'office', 'ai'
 
   $effect(() => {
     if (appState.documents.length === 0 && contextFilter === 'recommended') {
@@ -144,6 +148,9 @@ import { onMount } from 'svelte';
     } else {
        if (contextFilter === 'recommended') {
          tools = ranked.recommended;
+       } else if (contextFilter === 'ready') {
+         // Shows all production-ready tools (v0.5-core, and future wave-core releases)
+         tools = allTools.filter(t => t.releaseStatus !== 'preview');
        } else if (contextFilter === 'all') {
          tools = allTools;
        } else if (contextFilter === 'pdf') {
@@ -916,13 +923,14 @@ import { onMount } from 'svelte';
       <div class="context-bar" role="tablist" aria-label="Filter context">
         {#each [
           { id: 'recommended', label: `⚡ Recommended (${ranked.recommended.length})` },
+          { id: 'ready', label: `✅ Ready (${readyToolsCount})` },
           { id: 'all', label: `All Tools (${allTools.length})` },
           { id: 'pdf', label: 'PDF' },
           { id: 'office', label: 'Office' },
           { id: 'ai', label: 'AI & OCR' }
         ] as ctx (ctx.id)}
           <button
-            class="context-btn"
+            class="context-btn {ctx.id === 'ready' ? 'context-btn-ready' : ''}"
             class:active={contextFilter === ctx.id}
             role="tab"
             aria-selected={contextFilter === ctx.id}
@@ -1180,6 +1188,15 @@ import { onMount } from 'svelte';
     background: var(--accent-primary, #5e6ad2);
     color: #fff;
     border-color: var(--accent-primary, #5e6ad2);
+  }
+  .context-btn-ready {
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+  }
+  .context-btn-ready.active {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #ffffff;
   }
   .context-btn:hover:not(.active) {
     background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));

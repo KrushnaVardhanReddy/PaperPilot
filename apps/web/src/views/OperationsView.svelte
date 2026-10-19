@@ -478,13 +478,32 @@ let metadataFile: File | null = $state(null);
           mergeFiles[index + 1] = temp;
       }
   }
+
+  let filterMode = $state<'all' | 'ready'>('all');
+  let displayedTools = $derived(
+    filterMode === 'ready' ? tools.filter(t => t.releaseStatus !== 'preview') : tools
+  );
 </script>
 
 <div class="operations-view">
   <div class="tools-sidebar">
-    <h3>Tools</h3>
+    <div class="sidebar-header-row">
+      <h3>Tools</h3>
+      <div class="filter-toggle">
+        <button
+          class="toggle-btn"
+          class:active={filterMode === 'all'}
+          onclick={() => filterMode = 'all'}
+        >All</button>
+        <button
+          class="toggle-btn toggle-ready"
+          class:active={filterMode === 'ready'}
+          onclick={() => filterMode = 'ready'}
+        >✅ Ready</button>
+      </div>
+    </div>
     <div class="tools-list">
-      {#each tools as tool}
+      {#each displayedTools as tool}
         <button
           class="tool-btn"
           class:active={activeTool === tool.id}
@@ -1128,13 +1147,50 @@ let metadataFile: File | null = $state(null);
     overflow-y: auto;
   }
 
-  .tools-sidebar h3 {
-    margin-top: 0;
+  .sidebar-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 16px;
+  }
+
+  .tools-sidebar h3 {
+    margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .filter-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px;
+    border-radius: var(--border-radius-sm, 6px);
+    border: 1px solid var(--border-color, #2a2a35);
+  }
+
+  .toggle-btn {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .toggle-btn.active {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary);
+  }
+
+  .toggle-btn.toggle-ready.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
   }
 
   .tools-list {
