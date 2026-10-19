@@ -23,6 +23,10 @@ These 12 operations are frozen as the **v1.0 Core Suite**. They undergo **unmock
 | 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | Structured spreadsheet ingestion for AI agents |
 | 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | High-speed tabular CSV data export |
 
+> **Architectural Note on Images & Form XObjects in Markdown:**
+> - **Raster Images (`/Subtype /Image`)**: Standard raster images are exported as companion PNG files or embedded as inline base64 data URIs: `![alt text](data:image/png;base64,...)` or `![alt text](./images/img_1.png)`.
+> - **Vector Form XObjects (`/Fm0`–`/Fm4`)**: Form XObjects contain PDF vector bezier drawing operators (`m`, `l`, `c`, `f`) rather than image files. In pure Markdown, they are either omitted for clean LLM token efficiency, represented by their extracted text labels/alt captions, or rendered to high-resolution PNG thumbnails via spatial bounding-box rasterization (`tiny-skia`/`hayro`) and linked as standard markdown image tags.
+
 ---
 
 ## 📅 Post-Launch Progressive Release Schedule (Weekly / Bi-Weekly Waves)
