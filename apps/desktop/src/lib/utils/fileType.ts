@@ -92,6 +92,10 @@ export function isPdfFile(fileName: string): boolean {
   return getFileTypeInfo(fileName).isPdf;
 }
 
+export function isSpreadsheetFile(fileName: string): boolean {
+  return getFileTypeInfo(fileName).category === 'spreadsheet';
+}
+
 export function getFileIcon(fileName: string): string {
   return getFileTypeInfo(fileName).icon;
 }

@@ -1,16 +1,12 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
-  import { getFileIcon, isPdfFile } from '$lib/utils/fileType';
+  import { getFileIcon } from '$lib/utils/fileType';
 
   function openFileObjects(files: File[]) {
     if (files.length === 0) return;
     const targetIndex = appState.documents.length;
     appState.addDocuments(files);
-    if (isPdfFile(files[0]?.name ?? '')) {
-      appState.selectDocument(targetIndex);
-    } else {
-      appState.selectDocument(null);
-    }
+    appState.selectDocument(targetIndex);
   }
 
   function handleFileInputChange(e: Event) {

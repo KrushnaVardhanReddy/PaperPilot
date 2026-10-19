@@ -21,7 +21,8 @@
     "@tauri-apps/plugin-dialog": "^2.8.1",
     "@tauri-apps/plugin-opener": "^2.7.0",
     "pdfjs-dist": "^6.3.289",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

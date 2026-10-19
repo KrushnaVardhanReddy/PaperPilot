@@ -34,7 +34,8 @@
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
-  import { isPdfFile, getMimeType } from '$lib/utils/fileType';
+  import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
+  import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
   import { onMount } from 'svelte';
@@ -285,12 +286,7 @@
     if (files.length === 0) return;
     const startIndex = appState.documents.length;
     appState.addDocuments(files);
-    // Only switch to viewer view if the document is a PDF
-    if (isPdfFile(files[0]?.name ?? '')) {
-      appState.selectDocument(startIndex);
-    } else {
-      appState.selectDocument(null);
-    }
+    appState.selectDocument(startIndex);
   }
 
   let currentFileUrl = $state('');
@@ -397,6 +393,9 @@
       <div class="workspace-body">
         {#if appState.showDiffView}
           <PdfVisualDiff onClose={() => appState.showDiffView = false} />
+        {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+          <SpreadsheetViewer file={selectedDoc} />
         {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
           <div class="viewer-wrapper">
             <div class="viewer-content">

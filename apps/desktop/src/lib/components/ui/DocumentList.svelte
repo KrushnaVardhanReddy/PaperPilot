@@ -24,11 +24,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="document-item {appState.selectedDocumentIndex === index ? 'selected' : ''}"
-          onclick={() => {
-            if (fileInfo.isPdf) {
-              appState.selectDocument(index);
-            }
-          }}
+          onclick={() => appState.selectDocument(index)}
         >
           <div class="doc-icon">{fileInfo.icon}</div>
           <div class="doc-info">
@@ -38,22 +34,20 @@
               <span class="doc-pages">{fileInfo.isPdf ? ((doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF') : fileInfo.label.split(' ')[0]}</span>
             </div>
           </div>
-          {#if fileInfo.isPdf}
-            <button
-              class="view-btn"
-              id="view-doc-{index}"
-              title="View document"
-              aria-label="View {doc.name}"
-              onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-          {/if}
+          <button
+            class="view-btn"
+            id="view-doc-{index}"
+            title="View document"
+            aria-label="View {doc.name}"
+            onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
           <button class="remove-btn" onclick={(e) => { e.stopPropagation(); appState.removeDocument(index); }} title="Remove Document">
             ❌
           </button>
