@@ -1,0 +1,63 @@
+# Task: Phase 5.9.47 — PDF-to-DOCX Conversion via unpdf Recursive XY-Cut Layout Analysis (Spec 070)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-unpdf-bridge
+# Priority: HIGH (3rd Conversion Visual Parity Backup)
+# Spec: specs/070-pdf-to-docx-unpdf-bridge/spec.md
+
+## Objective
+Upgrade `PdfToDocxOperation` in `paperpilot-pdf` to use the pure-Rust `unpdf` crate for recursive XY-Cut layout segmentation, converting multi-column PDFs into structured Markdown and emitting clean OpenXML DOCX (`docx-rs`).
+
+Currently, raw extraction flattens columns into a single unformatted text blob.
+`unpdf` uses recursive XY-Cut algorithms to segment multi-column layouts into ordered structural blocks (titles, subtitles, cards, tables).
+
+You are provided with:
+1. **Input PDF**: `fixtures/Get_Started_With_Smallpdf.pdf`
+2. **Current Deficient DOCX**: `fixtures/Get_Started_With_Smallpdf.docx`
+3. **Reference Expected DOCX**: `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/Cargo.toml
+paperpilot-pdf/src/operations/conversion.rs
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Concrete Implementation Guidance
+1. In `paperpilot-pdf/Cargo.toml`, add `unpdf = "0.1"`.
+2. In `paperpilot-pdf/src/operations/conversion.rs`:
+   - Parse input PDF via `unpdf::Unpdf::new().parse(...)` or `unpdf::to_markdown(...)`.
+   - Feed the resulting structured markdown through `pulldown-cmark` into `docx-rs`.
+   - Title / Heading 1: Centered, Bold 44 dxa (22pt), color `1F242E`.
+   - Subtitle / Heading 3: Centered, 22 dxa (11pt), color `757E8A`.
+   - Section heading + description pairs: Generate 2-column borderless `Table` elements (`TableBorders::new().clear_all()`), maintaining side-by-side card flow.
+   - Page margins: `720 dxa` (0.5 in) ensuring 1 single page fit in Word/LibreOffice.
+
+---
+
+## 2. Verification Protocol
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4
+```
+
+Verify conversion on the fixture:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output fixtures/Get_Started_With_Smallpdf.docx
+python3 -c "
+import zipfile
+with zipfile.ZipFile('fixtures/Get_Started_With_Smallpdf.docx') as z:
+    with z.open('word/document.xml') as f:
+        xml = f.read().decode('utf-8')
+assert '<w:tbl>' in xml, 'Must contain tables for structured cards'
+assert 'Welcome to Smallpdf' in xml
+print('Verification passed!')
+"
+```
