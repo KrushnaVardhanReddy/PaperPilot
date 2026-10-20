@@ -1,117 +1,118 @@
 # PaperPilot — Session Handoff Guide
 
-> **Single Source of Truth** for resuming work on PaperPilot.
-> Start any new agent or human session by reading this document.
-> **Date of Last Update:** October 18, 2026 (Evening EDT)
-> **Active Target:** v0.5.0 Public Preview Release & Spec 067 Compression / Spec 065 DOCX Hardening
+> **Single Source of Truth** for resuming work on PaperPilot.  
+> Start any new agent or human session by reading this document.  
+> **Date of Last Update:** October 20, 2026 (Afternoon EDT)  
+> **Active Target:** Wave 2 (`v0.6.0`) Media & Page Utilities + Pipeline Flow Management
 
 ---
 
-## 🧭 Executive Context & Active Sessions
+## 🧭 Executive Context & Active In-Flight Sessions
 
-1. **Active Jules Sessions in Flight / Pending**:
-   - **Task 5.9.54 / Spec 076 (High-Fidelity PDF-to-Markdown & PDF-to-HTML with Embedded Media)**: [Session 17593917935231121201](https://jules.google.com/session/17593917935231121201) — Stage 1 of the decoupled conversion pipeline: Upgrades `PdfToMarkdownOperation` and `PdfToHtmlOperation` to extract both raster photos (`/Subtype /Image`) and vector Form XObjects (`/Subtype /Form` via `hayro` 150 DPI rasterization), embedding visual assets cleanly into Markdown and responsive HTML.
-   - **Task 5.9.39 / Spec 063 (Mobile Touch UI, Camera Scanner & Adaptive Layout)**: [Session 5037301362112166263](https://jules.google.com/session/5037301362112166263) — Unified Tailwind v4 layout, in-memory mobile intake, camera scan with auto-OCR, bottom sheet, and APK size optimization.
-
-2. **Recently Completed & Merged Milestones**:
-   - **Task 5.9.52 / Spec 074 (PDF-to-DOCX High-Fidelity Layout Synthesis & Form XObject Vector Image Extraction)**: Merged (PR #215, commit `05d697f`, Jules Session 11144603765719496889) — Resolves vector Form XObject (`/Fm0`..`/Fm4`) graphic extraction in `PdfToDocxOperation`, producing alternating 2-column borderless OpenXML tables with visual illustration containers matching `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`.
-   - **Task 5.9.51 / Spec 064 (Full 50-Tool Penta-Interface Verification & Documentation Parity)**: Merged (PR #214, commit `226e522`, Jules Session 18306966805674708281) — Comprehensive cleanroom audit and end-to-end verification across CLI, MCP, REST Gateway, WASM, and Edge with 100% test pass rate, plus synced 50 tools documentation handbook in `apps/docs`.
-   - **Spec 070 (PDF-to-DOCX Conversion via `unpdf` Recursive XY-Cut Layout Analysis)**: Merged (PR #212, commit `f51a830`, Jules Session 7824070929951783545) — Integrated `unpdf v0.46.0` recursive XY-Cut layout analysis into `PdfToDocxOperation`, reconstructing 4 side-by-side borderless OpenXML tables (`<w:tbl>`), centered headers, and compact 0.5-inch margins for strictly 1-page geometry in LibreOffice/Word (`specs/070-pdf-to-docx-unpdf-bridge/spec.md`).
-   - **v1.0 Core Suite Adjustments (`v1_launch_plan.md`)**: Promoted 100% lossless, authentic `extract_pages` (Extract PDF Pages) into the Top 12 Core Launch Suite (Tool #10); scheduled `pdf_to_markdown` in Wave 2 (Web & AI Synthesis) and deep vector graphic rendering for `pdf_to_docx` in Wave 3 (Office Modernization).
-   - **Spec 068 & Spec 069 Superseded / Post-Launch Roadmap**:
-     - *What was missing*: In brochures like `Smallpdf.pdf`, illustrations are PDF Form XObjects (`/Fm0`–`/Fm4`) containing raw vector bezier paths (`m`, `l`, `c`, `f`), NOT raster `/Subtype /Image` streams. Text/AST extractors (`unpdf`, `pdf_oxide`) parse typography but ignore vector drawing commands.
-     - *How to achieve full fidelity (Wave 3)*: Rasterize the rectangular bounding box of vector Form XObjects into high-res PNG bytes via `hayro`/`tiny-skia` or `pdfium-render`, then embed them into the complementary column cell of the table using `docx_rs::Pic::new(&png_bytes)`.
-   - **Spec 067 (Production-Grade PDF Compression Optimization)**: Merged (PR #208, Jules Session 6600304163605773570) — Preset-driven JPEG downsampling, Flate content stream compression, orphan pruning, and 100% unit & E2E assertions pass.
-   - **Spec 065 (High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX)**: Merged (PR #209, commit `91b7beb`, Jules Session 11237800863675110882).
-   - **Penta-Interface E2E & Cleanroom Audits Passed (Oct 18, 2026)**:
-     - `page_ops` (Phase 5.9.4A): 180 / 180 tests PASS
-     - `security_forms` (Phase 5.9.4B): 280 / 280 tests PASS
-     - `analysis` (Phase 5.9.4C): 280 / 280 tests PASS
-     - `conversions` (Phase 5.9.4D): 301 / 301 tests PASS
-     - `edge_cases` (Phase 5.9.5): 385 / 385 tests PASS
-     - `top12_cleanroom_audit`: 100% PASS
-     - Playwright real execution suite: 100% PASS
-   - **Spec 066 (Tool Disambiguation & Explicit Input/Output Format Badges)**: Merged (PR #207, commit `42b6f29`, Jules Session 14117039404412235313).
-   - **Spec 064 (All 50 Tools Clean-Room Isolated Sandbox Audit)**: Completed (Session 13530573138717224797) — `make test-cleanroom-all50`, 50/50 100% PASS.
-   - **Spec 062 (Tauri 2 Native Mobile Backend Scaffolding)**: Merged (PR #203, commit `07c4a56`).
-   - **Spec 060 (1-Hour Sustained Soak Benchmark)**: Merged (PR #205, commit `a2b7c9d`) — 8,180,016 ops, 2,272.2 ops/sec, zero leaks.
+### 1. Active Jules Sessions in Flight
+| Task ID | Session Link | Target & Purpose | Status / Notes |
+|---|---|---|---|
+| **5.9.69A** | [Session 8874502492856873220](https://jules.google.com/session/8874502492856873220) | **Pipeline Flow State, Local Persistence & Industry Presets** (`apps/desktop/src/lib/state/pipeline.svelte.ts`) | 🔄 In Progress — Core state, 3 industry presets, localStorage persistence, and Vitest unit tests. Part B (`P5_9_69B`) will wire up `FlowSelector.svelte` UI once Part A completes. |
+| **5.9.70** | [Session 4388001643990007173](https://jules.google.com/session/4388001643990007173) | **Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools)** | 🔄 In Progress — Unmocked verification across CLI, MCP, REST, WASM Playwright, and Desktop for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). Note: Previous sessions 8451709229146498568 & 12126426629876311080 were superseded. |
+| **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
 ---
 
-## 🏗️ Architecture & Crate Boundaries
+## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
+
+1. **PR #219 (Windows & Cross-Platform Makefile Compatibility)**:
+   - Resolved merge conflicts with `main` (`.cargo/config.toml`, `Makefile`, `package-lock.json`).
+   - Added cross-platform port 1420 cleanup in `Makefile` using PowerShell on Windows and `fuser` on Linux.
+   - Preserved MSVC `/STACK:8388608` and `/PDBPAGESIZE:8192` flags.
+2. **53 Tools Documentation Plain-Language Sync (`apps/docs`)**:
+   - Added clear, simple "### What it does" explanations across all 53 individual tool markdown files in `apps/docs/src/content/docs/reference/tools/`.
+3. **Spec 081 Authored & Split for Wave 2**:
+   - Structured into Community Free Tier ($0, unlimited local storage in `localStorage`, file-based JSON export/import, standard industry presets) vs Enterprise Tier (team workspaces, cloud sync, RBAC).
+   - Authoring completed in [`specs/081-pipeline-flow-management-save-export-import/spec.md`](file:///home/krushna/Project/PaperPilot/specs/081-pipeline-flow-management-save-export-import/spec.md).
+   - Split into Task 5.9.69A (State & Storage) and Task 5.9.69B (UI & FlowSelector matching `AiSettingsModal.svelte`).
+4. **Task 5.9.68 / Spec 079 (Universal Pipeline Parity & Comprehensive Parameter Schemas)**:
+   - Merged in commit `b31bc2c`: added full parameter configuration schemas for all tools in Desktop and Embed, and resolved intermediate split fan-out.
+5. **CI Release Workflow & Multi-Platform Fixes**:
+   - Upgraded Android runner to `packages: 'platform-tools'`.
+   - Updated macOS build target to Apple Silicon `aarch64-apple-darwin`.
+   - Added `swatinem/rust-cache@v2` across all platform jobs.
+6. **Task 5.9.54 / Spec 076 (High-Fidelity PDF-to-Markdown & HTML with Media)**:
+   - Merged (PR #216, commit `66534e7`): Stage 1 extracts raster photos and vector Form XObjects (`hayro` rasterization) into base64 data URIs.
+
+---
+
+## 🏗️ Architecture & Key Crate Boundaries
 
 ```
 PaperPilot/
-├── paperpilot-core/        # Rust: Core traits (PdfOperation, PdfDocument), error & result types
-├── paperpilot-pdf/         # Rust: All 45+ PDF operations (lopdf, pdf_oxide, fulgur, docx-rs, rusto-rs)
-├── paperpilot-nlp/         # Rust: Offline Intent Classification & NLP Rule Engine
-├── paperpilot-ai/          # Rust: Universal LLM client & router
-├── paperpilot-mcp/         # Rust: Model Context Protocol JSON-RPC server (51 tools)
-├── paperpilot-gateway/     # Rust: Axum HTTP REST server & MCP SSE gateway (port 7823)
-├── paperpilot-cli/         # Rust: Native CLI binary (paperpilot merge, split, convert, ocr, etc.)
-├── paperpilot-wasm/        # Rust: In-memory WebAssembly engine for client-side browser execution
-├── apps/desktop/           # Tauri 2.0 + Svelte 5 + TypeScript desktop app
-├── apps/edge/              # Cloudflare Workers serverless microservice
-├── tools/penta-interface-e2e/ # Pure-Rust Penta-Interface E2E & benchmark suite (CLI, MCP, REST, WASM, Edge)
+├── paperpilot-core/        # Core traits (PdfOperation, PdfDocument), error & result types
+├── paperpilot-pdf/         # All 50+ PDF operations (lopdf, pdf_oxide, fulgur, docx-rs, rusto-rs)
+├── paperpilot-nlp/         # Offline Intent Classification & NLP Rule Engine
+├── paperpilot-ai/          # Universal LLM client & router (Ollama, Llamafile, BYOK)
+├── paperpilot-mcp/         # Model Context Protocol JSON-RPC server (52 tools)
+├── paperpilot-gateway/     # Axum HTTP REST server & MCP SSE gateway (port 7823)
+├── paperpilot-cli/         # Native CLI binary (paperpilot merge, split, burst, search, etc.)
+├── paperpilot-wasm/        # In-memory WebAssembly engine for client-side browser execution
+├── apps/desktop/           # Tauri 2.0 + Svelte 5 + Tailwind desktop app (with visual pipeline runner)
+├── apps/embed/             # Embeddable zero-config JS widget & automation pipeline
+├── apps/web/               # In-browser WASM client portal
+├── apps/docs/              # Astro Starlight documentation portal (docs.usepaperpilot.com)
+├── tools/penta-interface-e2e/ # Pure-Rust Penta-Interface E2E suite across all 5 surfaces
 ├── tools/jules-submit/     # Pure-Rust CLI for dispatching Jules tasks
-├── reports/                # E2E test reports, benchmarks, and launch scorecards
-└── specs/                  # Architecture & verification specifications
+├── reports/                # E2E test reports, benchmarks, and scorecards
+└── specs/                  # Architecture, product specs, and verification checklists
 ```
 
 ---
 
-## ⚖️ Rules of Engagement
+## ⚖️ Rules of Engagement & System Constraints
 
-1. **The Penta-Interface Mandate:**
+1. **System Resource Constraint (`-j 2` is MANDATORY on local machine):**
+   - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo clippy` commands (e.g. `cargo test -p paperpilot-mcp -j 2`).
+   - Unbounded cargo compilations freeze the host machine.
+
+2. **The Penta-Interface Parity Mandate:**
    - 💻 **CLI (`paperpilot-cli`)**: Kebab-case subcommand with `--json` support.
    - 🤖 **MCP (`paperpilot-mcp`)**: JSON-RPC 2.0 tool declaration with required input schema and execution match arm.
-   - 🌐 **REST API (`paperpilot-gateway`)**: POST route `/api/v1/pdf/tools/{tool}` and specialized endpoints.
+   - 🌐 **REST API (`paperpilot-gateway`)**: POST route `/api/v1/pdf/...` with JSON payload.
    - ⚡ **WASM (`paperpilot-wasm`)**: In-memory byte processing without filesystem IO.
-   - ☁️ **Cloudflare Edge (`apps/edge`)**: Memory-only stream route `/api/v1/{tool}`.
-
-2. **CRITICAL Concurrency Limit (`-j 4` or `-j 6`):**
-   - **NEVER** run unbounded `cargo test` or `cargo build`.
-   - Always pass `-j 4` or `-j 6` to avoid system resource starvation.
+   - 📱 **Desktop / Embed API (`apps/desktop`, `apps/embed`)**: Visual cards, parameter schemas, and pipeline execution.
 
 3. **Workspace Safety Rules:**
-   - **NEVER** execute `git reset`, `git checkout -- .`, `git clean -fd`, or `git restore` under any circumstance.
-   - Preserve all uncommitted work; do not wipe working changes on test failures.
+   - **NEVER** execute `git reset --hard`, `git checkout -- .`, `git clean -fd`, or `git restore` under any circumstance.
+   - Always commit or stash working progress.
 
 4. **Zero-Mock Policy:**
-   - No `let mut passed = true;` or dummy echo scripts in test suites.
+   - All tests must use real disk fixtures and real in-memory byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`). No dummy `{ success: true }` echo stubs.
 
 ---
 
-## 📋 Resuming Checklist for Next Agent / Developer
+## 📋 Resuming Checklist for Next Session
 
-### Step 1: Check In on Active Jules Sessions
-- Inspect status of:
-  - [Session 623008379935493326](https://jules.google.com/session/623008379935493326) (Task 5.9.32: Spec 056).
-  - [Session 2996870268221322258](https://jules.google.com/session/2996870268221322258) (Task 5.9.31: Spec 055).
-- If a PR or branch is pushed by Jules:
+### Step 1: Monitor Active Jules Sessions
+- Check status of **Task 5.9.69A** ([Session 8874502492856873220](https://jules.google.com/session/8874502492856873220)):
+  - When PR is submitted by Jules, verify `npm --prefix apps/desktop test` passes cleanly.
+  - Merge into `main`.
+- Check status of **Task 5.9.70** ([Session 4388001643990007173](https://jules.google.com/session/4388001643990007173)):
+  - Review `reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md` and test results.
+- Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
+
+### Step 2: Trigger Task 5.9.69B (Pipeline UI & Save Modal)
+- Once Task 5.9.69A lands on `main`:
   ```bash
-  git fetch origin
-  git log -n 5 --oneline origin/main
+  ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69B_pipeline_flow_selector_ui.txt
   ```
+- This will implement `FlowSelector.svelte` and `SaveFlowModal.svelte` based on the tested state API.
 
-### Step 2: Validate the Conversions Suite
-- Once Task 5.9.32 changes land:
+### Step 3: Run Wave 2 Verification Tests
+- Run Wave 2 MCP tests:
   ```bash
-  cargo test -p paperpilot-gateway -j 4
-  cargo run -p penta-interface-e2e -- --group conversions -j 4
+  cargo test -p paperpilot-mcp --test wave2_mcp_tests -j 2
   ```
-- Confirm `reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md` shows **301 / 301 (100%) PASS**.
-
-### Step 3: Run Full Penta Suite
-- Run all groups to confirm no regressions:
+- Run desktop check:
   ```bash
-  cargo run -p penta-interface-e2e -- --group all -j 4
+  npm --prefix apps/desktop run check
   ```
-
-### Step 4: Publish v0.5.0 Public Preview Release
-- When both Spec 055 and Spec 056 are merged and verified:
-  - Trigger `.github/workflows/release.yml` on GitHub Actions with tag `v0.5.0` (`prerelease: true`).
-  - Confirm artifacts compile for Linux, macOS, and Windows.
 
 ---
 
@@ -121,19 +122,18 @@ PaperPilot/
 # 1. Dev Server (Desktop Tauri + Svelte 5)
 make dev
 
-# 2. Rust Unit Tests
-cargo test -p paperpilot-pdf --lib -j 4
-cargo test -p paperpilot-mcp --lib -j 4
-cargo test -p paperpilot-gateway --lib -j 4
+# 2. Rust Unit Tests (Always use -j 2)
+cargo test -p paperpilot-pdf --lib -j 2
+cargo test -p paperpilot-mcp --lib -j 2
+cargo test -p paperpilot-gateway --lib -j 2
 
-# 3. Penta-Interface E2E Suite
-cargo run -p penta-interface-e2e -- --group conversions -j 4
-cargo run -p penta-interface-e2e -- --group all -j 4
+# 3. Clean-Room Audits
+make test-cleanroom-top12
+make test-cleanroom-all50
 
 # 4. Playwright Desktop E2E
-pnpm --dir apps/desktop exec playwright test tests/e2e_real_desktop_execution.spec.ts --workers=1
-pnpm --dir apps/desktop exec playwright test tests/e2e_all_tools_real_execution.spec.ts --workers=1
+pnpm --dir apps/desktop exec playwright test
 
-# 5. Jules Submission CLI
-cargo run -p jules-submit -- --list
+# 5. Dispatch Jules Tasks
+./scripts/jules_submit.sh --file prompts/tasks/phase5/<prompt-file>.txt
 ```
