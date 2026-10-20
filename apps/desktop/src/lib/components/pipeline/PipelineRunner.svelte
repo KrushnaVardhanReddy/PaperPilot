@@ -20,22 +20,27 @@
 
     const originalName = appState.documents[0].name.replace(/\.pdf$/i, '');
     let workingPath = appState.documentPaths[0] || appState.documents[0].name;
+    const docDir = workingPath.includes('/') ? workingPath.substring(0, workingPath.lastIndexOf('/')) : '';
     console.log('[PipelineRunner] documentPaths:', appState.documentPaths);
     console.log('[PipelineRunner] workingPath:', workingPath);
+    console.log('[PipelineRunner] docDir:', docDir);
 
     try {
       for (let i = 0; i < pipelineState.steps.length; i++) {
         const step = pipelineState.steps[i];
         pipelineState.setCurrentStepIndex(i);
 
-        const outputPath = `${originalName}_step${i + 1}_${step.operationId}.pdf`;
+        const fileName = `${originalName}_step${i + 1}_${step.operationId}.pdf`;
+        const dirName = `${originalName}_step${i + 1}_${step.operationId}_dir`;
+        const outputPath = docDir ? `${docDir}/${fileName}` : fileName;
+        const outputDir = docDir ? `${docDir}/${dirName}` : dirName;
 
         // Build args: replace __input__ and __output__ tokens
         const args: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(step.params)) {
           if (v === '__input__') args[k] = workingPath;
           else if (v === '__output__') args[k] = outputPath;
-          else if (v === '__output_dir__') args[k] = `${originalName}_step${i + 1}_${step.operationId}_dir`;
+          else if (v === '__output_dir__') args[k] = outputDir;
           else if (v === '__all_inputs__') args[k] = appState.documents.map((d, i) => appState.documentPaths[i] || d.name);
           else args[k] = v;
         }
