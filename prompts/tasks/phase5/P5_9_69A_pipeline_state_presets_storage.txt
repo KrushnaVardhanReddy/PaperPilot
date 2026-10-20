@@ -1,0 +1,108 @@
+# Task: Phase 5.9.69A — Pipeline Flow State, Local Persistence & Industry Presets
+# Base Branch: main
+# Related Spec: specs/081-pipeline-flow-management-save-export-import/spec.md
+# Checklist: specs/081-pipeline-flow-management-save-export-import/task.md
+
+## Objective
+Implement client-side pipeline flow persistence, serialization, and built-in industry presets in `apps/desktop/src/lib/state/pipeline.svelte.ts`, along with comprehensive automated unit tests.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/desktop/src/lib/state/pipeline.svelte.ts
+apps/desktop/src/lib/state/pipeline.test.ts
+```
+Do NOT modify UI components or Rust engine code in this task (Part B will integrate the UI).
+
+---
+
+## 1. Data Model & Interface Definitions (`pipeline.svelte.ts`)
+
+Define and export the `SavedPipeline` interface:
+```typescript
+export interface SavedPipeline {
+  id: string;               // e.g. "preset-legal-bates" or crypto.randomUUID()
+  name: string;             // User-visible flow title
+  description?: string;     // Purpose / notes
+  steps: PipelineStep[];    // Array of configured steps with tool operationId & params
+  updatedAt: string;        // ISO 8601 timestamp
+  isPreset?: boolean;       // System default vs user-created
+  teamId?: string;          // Optional workspace/team ID
+}
+```
+
+---
+
+## 2. Default Out-of-the-Box Industry Presets
+
+Define `DEFAULT_PRESETS: SavedPipeline[]` containing 3 realistic, production-ready workflows:
+
+1. **`preset-legal-discovery`** ("Legal Discovery & Bates Stamping"):
+   - Step 1: `pdf_bates` with params `{ prefix: 'CASE-2026-', start: 1 }`
+   - Step 2: `pdf_watermark` with params `{ text: 'CONFIDENTIAL', opacity: 0.3, font_size: 48 }`
+   - Step 3: `pdf_linearize` with default params
+   - Description: "Consecutive litigation numbering, confidential stamp, and fast-web view optimization."
+
+2. **`preset-clean-scan`** ("Scan Cleanup & Pagination"):
+   - Step 1: `pdf_remove_blank` with params `{ sensitivity: 95 }`
+   - Step 2: `pdf_page_numbers` with params `{ format: 'Page {n} of {total}', position: 'bottom-center' }`
+   - Step 3: `pdf_compress` with params `{ mode: 'medium' }`
+   - Description: "Strip accidental empty pages, add dynamic pagination, and optimize file size."
+
+3. **`preset-redact-protect`** ("Redaction & Encryption"):
+   - Step 1: `pdf_redact` with params `{ words: 'SSN, confidential, invoice' }`
+   - Step 2: `pdf_flatten` with default params
+   - Step 3: `pdf_encrypt` with params `{ user_password: 'changeme' }`
+   - Description: "Permanently scrub sensitive keywords, flatten annotations, and AES-256 encrypt."
+
+---
+
+## 3. `PipelineState` Enhancements
+
+In `PipelineState` class in `apps/desktop/src/lib/state/pipeline.svelte.ts`:
+1. **State Fields**:
+   - `savedFlows = $state<SavedPipeline[]>([]);`
+   - `activeFlowId = $state<string | null>(null);`
+2. **Initialization (`initStorage()`)**:
+   - Load `localStorage.getItem('paperpilot_saved_flows')`.
+   - If empty, initialize `savedFlows` with `[...DEFAULT_PRESETS]`.
+   - If present, parse JSON and merge user flows with `DEFAULT_PRESETS` (ensuring presets are always present).
+   - Guard against SSR / non-browser environments (`typeof window !== 'undefined' && typeof localStorage !== 'undefined'`).
+3. **Flow Management Methods**:
+   - `loadFlow(flowId: string): boolean`: Finds flow by ID in `savedFlows`. If found, replaces `this.steps` with deep clone of `flow.steps`, sets `this.activeFlowId = flowId`, and clears `this.selectedStepId`.
+   - `saveCurrentFlow(name: string, description?: string): SavedPipeline`:
+     - Creates new `SavedPipeline` with `crypto.randomUUID()`, current `steps`, current ISO timestamp.
+     - Prepends/appends to `this.savedFlows`.
+     - Syncs to `localStorage.setItem('paperpilot_saved_flows', JSON.stringify(userFlows))`.
+     - Sets `this.activeFlowId = newFlow.id`.
+     - Returns the created flow.
+   - `deleteFlow(flowId: string): boolean`:
+     - Cannot delete presets (`isPreset: true`).
+     - Removes from `this.savedFlows` and syncs to `localStorage`.
+     - If `this.activeFlowId === flowId`, resets `activeFlowId = null`.
+   - `exportFlowJson(flowId?: string): string`:
+     - Serializes the active flow (or specified flow) to formatted JSON (`JSON.stringify(flow, null, 2)`).
+   - `importFlowFromJson(jsonString: string): SavedPipeline`:
+     - Validates JSON format and ensures required fields (`name`, `steps`).
+     - Generates a new unique `id` (to avoid collision with existing flows), sets `updatedAt = new Date().toISOString()`, and sets `isPreset = false`.
+     - Adds to `savedFlows`, saves to `localStorage`, and calls `loadFlow(newFlow.id)`.
+     - Returns the imported flow.
+
+---
+
+## 4. Automated Unit Tests (`apps/desktop/src/lib/state/pipeline.test.ts`)
+
+Create Vitest unit tests verifying:
+1. `DEFAULT_PRESETS` contains the 3 industry workflows with valid steps.
+2. `loadFlow` successfully populates `pipelineState.steps` from a preset.
+3. `saveCurrentFlow` adds a new custom flow and stores it in `localStorage`.
+4. `deleteFlow` prevents deleting presets, but successfully deletes user flows.
+5. `exportFlowJson` and `importFlowFromJson` roundtrip cleanly, generating a new ID on import.
+
+---
+
+## 5. Acceptance Criteria
+1. `npm --prefix apps/desktop test` passes 100% of tests.
+2. `npm --prefix apps/desktop run check` passes with 0 TypeScript errors.

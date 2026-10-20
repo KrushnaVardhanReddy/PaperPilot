@@ -1,0 +1,112 @@
+# Task: Phase 5.9.69B — Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs
+# Base Branch: main
+# Related Spec: specs/081-pipeline-flow-management-save-export-import/spec.md
+# Checklist: specs/081-pipeline-flow-management-save-export-import/task.md
+# UI Inspiration Reference: apps/desktop/src/lib/components/settings/AiSettingsModal.svelte
+
+## Objective
+Implement the visual `FlowSelector.svelte` toolbar, Save/Export/Import dialog modal, and seamless integration into `PipelineView.svelte`, matching PaperPilot's established settings drawer/modal design language.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/desktop/src/lib/components/pipeline/FlowSelector.svelte
+apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte
+apps/desktop/src/lib/components/pipeline/PipelineView.svelte
+apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
+```
+Do NOT modify Rust backend files or `pipeline.svelte.ts` (Part A already provides the state API).
+
+---
+
+## 1. UI Design Language & Styling Reference (`AiSettingsModal.svelte`)
+
+Follow the exact UI pattern from `apps/desktop/src/lib/components/settings/AiSettingsModal.svelte`:
+- **Backdrop**: `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 1000;`
+- **Container / Drawer**: Modern dark slate `#0f172a`, border `1px solid rgba(255, 255, 255, 0.1)`, box-shadow `0 8px 32px rgba(0, 0, 0, 0.5)`.
+- **Transitions**: `transition:fade={{duration: 200}}` for backdrop, `transition:slide={{duration: 300}}` for drawers/modals.
+- **Form Inputs**: `background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; padding: 0.75rem;` with blue focus ring (`border-color: #3b82f6`).
+- **Primary Buttons**: Background `#2563eb`, hover `#1d4ed8`, border `1px solid #3b82f6`, shadow `0 2px 8px rgba(37, 99, 235, 0.3)`.
+- **Secondary / Action Buttons**: Background `rgba(255, 255, 255, 0.05)`, hover `rgba(255, 255, 255, 0.1)`, border `1px solid rgba(255, 255, 255, 0.1)`.
+
+---
+
+## 2. `FlowSelector.svelte` Implementation
+Create `apps/desktop/src/lib/components/pipeline/FlowSelector.svelte` positioned directly below the header in `PipelineView.svelte`:
+
+1. **Toolbar Layout**:
+   - Clean, glassmorphic top bar: `background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;`
+
+2. **Flow Dropdown Selector**:
+   - `<select class="input-field flow-select">` with grouped options:
+     ```svelte
+     <optgroup label="Standard Presets">
+       {#each pipelineState.savedFlows.filter(f => f.isPreset) as flow}
+         <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
+       {/each}
+     </optgroup>
+     <optgroup label="My Saved Flows">
+       {#each pipelineState.savedFlows.filter(f => !f.isPreset) as flow}
+         <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
+       {/each}
+     </optgroup>
+     ```
+   - Changing selection calls `pipelineState.loadFlow(selectedId)`.
+   - If user adds/edits steps, display `"— Custom / Unsaved Pipeline —"`.
+
+3. **Action Toolbar Buttons**:
+   - **`💾 Save Flow`**:
+     - Disabled if `pipelineState.steps.length === 0`.
+     - Opens `SaveFlowModal.svelte`.
+   - **`⬇️ Export JSON`**:
+     - Disabled if `pipelineState.steps.length === 0`.
+     - Uses `pipelineState.exportFlowJson()`, creates a `Blob([json], { type: 'application/json' })`, and triggers browser download of `<flow-name>.json`.
+   - **`⬆️ Import JSON`**:
+     - Hidden `<input type="file" accept=".json" bind:this={fileInput} onchange={handleFileImport} style="display: none;" />`.
+     - Reads the file text with `FileReader`, calls `pipelineState.importFlowFromJson(text)`, and triggers a toast notification.
+   - **`🗑️ Delete Flow`** (visible only when an active custom flow is selected, hidden for presets):
+     - Calls `pipelineState.deleteFlow(flowId)`.
+   - **`✨ New`**:
+     - Clears the canvas (`pipelineState.clearPipeline()`).
+
+---
+
+## 3. `SaveFlowModal.svelte` Implementation
+Create `apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte` matching the modal backdrop and styling of `AiSettingsModal.svelte`:
+
+- Centered modal dialog or slide-out drawer:
+  - Header: `<h2>Save Pipeline Flow</h2>` and close button `✕`.
+  - Body:
+    - Input: **Flow Name** (required, e.g. "Monthly Expense Audit").
+    - Textarea/Input: **Description** (optional, e.g. "Scrub PII, flatten, and encrypt with corporate password").
+    - **Step Sequence Preview**: Display miniature badges of current steps (e.g. `[1] 🗜️ Compress ➔ [2] 💧 Watermark ➔ [3] 🔒 Encrypt`).
+  - Footer:
+    - "Cancel" button (`test-btn`).
+    - "Save Pipeline" button (`test-btn primary-test`).
+- On submit: Calls `pipelineState.saveCurrentFlow(name, description)`, closes modal, and shows toast notification.
+
+---
+
+## 4. Integration in `PipelineView.svelte`
+- Mount `<FlowSelector />` right under the `<header class="pipeline-header">`.
+- Ensure the canvas reactive layout smoothly accommodates the selector toolbar.
+
+---
+
+## 5. Playwright E2E Test (`apps/desktop/tests/e2e_pipeline_flow_management.spec.ts`)
+Create automated Playwright test:
+1. Navigates to the pipeline builder tab.
+2. Selects "Legal Discovery & Bates Stamping" from the presets dropdown and asserts 3 step cards appear on canvas.
+3. Adds a step, clicks "Save Flow", enters name "Quarterly Discovery", and saves.
+4. Verifies "Quarterly Discovery" appears under "My Saved Flows" in the dropdown and persists in `localStorage`.
+5. Clicks "Export JSON" and verifies downloaded JSON payload contains valid steps.
+6. Clicks "New", imports the JSON file, and verifies the canvas steps restore accurately.
+
+---
+
+## 6. Acceptance Criteria
+1. `npm --prefix apps/desktop run check` passes with 0 TypeScript/Svelte errors.
+2. `npm --prefix apps/desktop test` passes all tests.
+3. UI visual design seamlessly adheres to `AiSettingsModal.svelte` design tokens.
