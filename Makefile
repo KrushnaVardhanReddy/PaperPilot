@@ -30,7 +30,11 @@ install-desktop:
 
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
 dev: install-desktop
+ifeq ($(OS),Windows_NT)
+	@powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 1420 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $$_.OwningProcess -Force -ErrorAction SilentlyContinue }" 2>/dev/null || true
+else
 	@fuser -k 1420/tcp 2>/dev/null || true
+endif
 	cd apps/desktop && (npx tauri dev || npm run tauri dev)
 
 # Run web portal in live-reload dev mode
