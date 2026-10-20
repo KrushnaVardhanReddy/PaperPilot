@@ -22,6 +22,74 @@ Do NOT modify Rust backend files or `pipeline.svelte.ts` (Part A already provide
 
 ---
 
+## ⚠️ CRITICAL IMPLEMENTATION DETAILS (Do Not Miss)
+
+### 1. Storage & Preset Initialization in Components:
+In `pipeline.svelte.ts`, `pipelineState.savedFlows` starts as empty `[]`. Presets are ONLY populated when `pipelineState.initStorage()` is called.
+Therefore, in **`FlowSelector.svelte`** (or `PipelineView.svelte`), you MUST call `pipelineState.initStorage()` inside `onMount()`:
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { pipelineState } from '$lib/state/pipeline.svelte';
+
+  onMount(() => {
+    pipelineState.initStorage();
+  });
+</script>
+```
+If this is omitted, `savedFlows` has length 0, the select dropdown is empty, and `loadFlow('preset-legal-discovery')` returns false!
+
+### 2. Svelte 5 Select Element Binding & Change Handler:
+Ensure the dropdown selector triggers `pipelineState.loadFlow` on change:
+```svelte
+<select
+  class="input-field flow-select"
+  id="flow-selector-dropdown"
+  value={pipelineState.activeFlowId || ''}
+  onchange={(e) => {
+    const val = (e.currentTarget as HTMLSelectElement).value;
+    if (val) pipelineState.loadFlow(val);
+  }}
+>
+  <option value="" disabled selected={!pipelineState.activeFlowId}>
+    {pipelineState.steps.length > 0 ? "— Custom / Unsaved Pipeline —" : "Select a workflow preset..."}
+  </option>
+  <optgroup label="Standard Presets">
+    {#each pipelineState.savedFlows.filter(f => f.isPreset) as flow (flow.id)}
+      <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
+    {/each}
+  </optgroup>
+  {#if pipelineState.savedFlows.some(f => !f.isPreset)}
+    <optgroup label="My Saved Flows">
+      {#each pipelineState.savedFlows.filter(f => !f.isPreset) as flow (flow.id)}
+        <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
+      {/each}
+    </optgroup>
+  {/if}
+</select>
+```
+
+### 3. Playwright Navigation to Pipeline Tab:
+In `apps/desktop/tests/e2e_pipeline_flow_management.spec.ts`, the app defaults to the `documents` tab on initial load.
+Before selecting any flow, the test MUST first navigate to the Pipeline tab by clicking the sidebar link:
+```typescript
+test('pipeline flow management: select preset, save custom flow, export and import', async ({ page }) => {
+  await page.goto('/');
+  // Switch to Pipeline tab
+  await page.click('#nav-pipeline');
+  await expect(page.locator('#pipeline-view')).toBeVisible();
+
+  // Select the preset
+  await page.selectOption('#flow-selector-dropdown', 'preset-legal-discovery');
+
+  // Verify the 3 step cards render on the canvas
+  await expect(page.locator('.step-card')).toHaveCount(3);
+  ...
+});
+```
+
+---
+
 ## 1. UI Design Language & Styling Reference (`AiSettingsModal.svelte`)
 
 Follow the exact UI pattern from `apps/desktop/src/lib/components/settings/AiSettingsModal.svelte`:
@@ -34,80 +102,26 @@ Follow the exact UI pattern from `apps/desktop/src/lib/components/settings/AiSet
 
 ---
 
-## 2. `FlowSelector.svelte` Implementation
-Create `apps/desktop/src/lib/components/pipeline/FlowSelector.svelte` positioned directly below the header in `PipelineView.svelte`:
-
-1. **Toolbar Layout**:
-   - Clean, glassmorphic top bar: `background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;`
-
-2. **Flow Dropdown Selector**:
-   - `<select class="input-field flow-select">` with grouped options:
-     ```svelte
-     <optgroup label="Standard Presets">
-       {#each pipelineState.savedFlows.filter(f => f.isPreset) as flow}
-         <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
-       {/each}
-     </optgroup>
-     <optgroup label="My Saved Flows">
-       {#each pipelineState.savedFlows.filter(f => !f.isPreset) as flow}
-         <option value={flow.id}>{flow.name} ({flow.steps.length} steps)</option>
-       {/each}
-     </optgroup>
-     ```
-   - Changing selection calls `pipelineState.loadFlow(selectedId)`.
-   - If user adds/edits steps, display `"— Custom / Unsaved Pipeline —"`.
-
-3. **Action Toolbar Buttons**:
-   - **`💾 Save Flow`**:
-     - Disabled if `pipelineState.steps.length === 0`.
-     - Opens `SaveFlowModal.svelte`.
-   - **`⬇️ Export JSON`**:
-     - Disabled if `pipelineState.steps.length === 0`.
-     - Uses `pipelineState.exportFlowJson()`, creates a `Blob([json], { type: 'application/json' })`, and triggers browser download of `<flow-name>.json`.
-   - **`⬆️ Import JSON`**:
-     - Hidden `<input type="file" accept=".json" bind:this={fileInput} onchange={handleFileImport} style="display: none;" />`.
-     - Reads the file text with `FileReader`, calls `pipelineState.importFlowFromJson(text)`, and triggers a toast notification.
-   - **`🗑️ Delete Flow`** (visible only when an active custom flow is selected, hidden for presets):
-     - Calls `pipelineState.deleteFlow(flowId)`.
-   - **`✨ New`**:
-     - Clears the canvas (`pipelineState.clearPipeline()`).
+## 2. `FlowSelector.svelte` Toolbar Buttons
+- **`💾 Save Flow`** (id `#save-flow-btn`): Disabled if `pipelineState.steps.length === 0`. Opens `SaveFlowModal.svelte`.
+- **`⬇️ Export JSON`** (id `#export-flow-btn`): Disabled if `pipelineState.steps.length === 0`. Exports JSON using `pipelineState.exportFlowJson()`, triggers download.
+- **`⬆️ Import JSON`** (id `#import-flow-btn`): Hidden `<input type="file" accept=".json" bind:this={fileInput} onchange={handleFileImport} style="display: none;" />`. Reads JSON file, calls `pipelineState.importFlowFromJson(text)`.
+- **`🗑️ Delete Flow`** (id `#delete-flow-btn`): Visible only when active selected flow is non-preset (`!currentFlow?.isPreset`).
+- **`✨ New`** (id `#new-flow-btn`): Clears canvas (`pipelineState.clearPipeline()`).
 
 ---
 
 ## 3. `SaveFlowModal.svelte` Implementation
-Create `apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte` matching the modal backdrop and styling of `AiSettingsModal.svelte`:
-
-- Centered modal dialog or slide-out drawer:
-  - Header: `<h2>Save Pipeline Flow</h2>` and close button `✕`.
-  - Body:
-    - Input: **Flow Name** (required, e.g. "Monthly Expense Audit").
-    - Textarea/Input: **Description** (optional, e.g. "Scrub PII, flatten, and encrypt with corporate password").
-    - **Step Sequence Preview**: Display miniature badges of current steps (e.g. `[1] 🗜️ Compress ➔ [2] 💧 Watermark ➔ [3] 🔒 Encrypt`).
-  - Footer:
-    - "Cancel" button (`test-btn`).
-    - "Save Pipeline" button (`test-btn primary-test`).
-- On submit: Calls `pipelineState.saveCurrentFlow(name, description)`, closes modal, and shows toast notification.
+Create `apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte`:
+- Title: `Save Pipeline Flow`
+- Flow name input (`#flow-name-input`)
+- Description textarea (`#flow-description-input`)
+- Step sequence preview: badges showing `1. Bates -> 2. Watermark -> 3. Linearize`
+- Cancel & Save buttons. On submit: calls `pipelineState.saveCurrentFlow(name, description)`.
 
 ---
 
-## 4. Integration in `PipelineView.svelte` & `apps/embed`
-- Mount `<FlowSelector />` right under the `<header class="pipeline-header">` in `PipelineView.svelte`.
-- In `apps/embed/src/Widget.svelte`, allow `pipeline` prop to receive preset names (e.g. `"preset-legal-discovery"`) resolving to the preset step definitions, enabling seamless cross-surface workflow invocation.
-
----
-
-## 5. Playwright E2E Test (`apps/desktop/tests/e2e_pipeline_flow_management.spec.ts`)
-Create automated Playwright test:
-1. Navigates to the pipeline builder tab.
-2. Selects "Legal Discovery & Bates Stamping" from the presets dropdown and asserts 3 step cards appear on canvas.
-3. Adds a step, clicks "Save Flow", enters name "Quarterly Discovery", and saves.
-4. Verifies "Quarterly Discovery" appears under "My Saved Flows" in the dropdown and persists in `localStorage`.
-5. Clicks "Export JSON" and verifies downloaded JSON payload contains valid steps.
-6. Clicks "New", imports the JSON file, and verifies the canvas steps restore accurately.
-
----
-
-## 6. Acceptance Criteria
-1. `npm --prefix apps/desktop run check` passes with 0 TypeScript/Svelte errors.
-2. `npm --prefix apps/desktop test` passes all tests.
-3. UI visual design seamlessly adheres to `AiSettingsModal.svelte` design tokens.
+## 4. Acceptance Criteria
+1. `npm --prefix apps/desktop run check` passes with 0 errors.
+2. `npm --prefix apps/desktop test` passes 100%.
+3. `pnpm --prefix apps/desktop exec playwright test tests/e2e_pipeline_flow_management.spec.ts` passes cleanly.

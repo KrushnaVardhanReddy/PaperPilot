@@ -12,7 +12,7 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **5.9.69B** | [Session 16322387546350290979](https://jules.google.com/session/16322387546350290979) | **Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs** (`[Spec 081]`) | 🔄 In Flight — `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, JSON export/import buttons, and Playwright E2E verification. |
+| **5.9.69B** | [Session 11757279139714605661](https://jules.google.com/session/11757279139714605661) | **Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs** (`[Spec 081]`) | 🔄 In Flight — `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, JSON export/import buttons, and Playwright E2E verification. (Resubmitted with explicit onMount initStorage & Playwright nav instructions). |
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
 ---
@@ -106,7 +106,7 @@ PaperPilot/
 - Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
 
 ### Step 2: Monitor Task 5.9.69B (Pipeline UI & Save Modal)
-- Dispatched to Jules ([Session 16322387546350290979](https://jules.google.com/session/16322387546350290979)):
+- Dispatched to Jules ([Session 11757279139714605661](https://jules.google.com/session/11757279139714605661)):
   - Implements `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, and Playwright E2E verification.
   - When PR is submitted by Jules, verify `npm --prefix apps/desktop test` passes and merge into `main`.
 
