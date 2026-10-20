@@ -1,0 +1,23 @@
+Implement Stage 2 of the decoupled PDF-to-DOCX conversion pipeline in `paperpilot-pdf/src/operations/conversion.rs` according to Spec 077 (`specs/077-markdown-html-to-docx-compiler/spec.md`).
+
+Background:
+In Spec 076 (Stage 1, PR #216), we completed the extraction engine: decompiling PDF into rich Markdown and HTML with all embedded raster images and rasterized vector Form XObjects preserved as inline data URIs (`data:image/png;base64,...`).
+
+Detailed Implementation Instructions for `PdfToDocxOperation::execute`:
+1. Run `PdfToMarkdownOperation` on `document` to get the rich Markdown string with inline base64 images.
+2. Initialize `pulldown_cmark::Parser::new_ext(&markdown, Options::all())`.
+3. Handle Markdown AST events:
+   - `Tag::Image { dest_url, .. }`:
+     - If `dest_url` is a data URI (`data:image/png;base64,...` or `data:image/jpeg;base64,...`), extract the base64 part, decode using `base64::engine::general_purpose::STANDARD.decode()`.
+     - Inspect dimensions using `image::load_from_memory(&bytes)` and scale into DrawingML EMUs ($1\text{ in} = 914,400\text{ EMUs}$, maximum width $4,500,000\text{ EMUs}$).
+     - Instantiate `docx_rs::Pic::new(&image_bytes).size(width_emu, height_emu)`.
+     - Completely eliminate placeholder text `[ Feature {} Illustration ]`.
+   - Card / 2-column layout pairing:
+     - When an image is followed by a heading and text paragraph, construct a borderless 2-column `docx_rs::Table` containing the illustration on one side and the title/paragraph on the other.
+   - Headings (`H1` to `H4`):
+     - Map font sizes and bold weights (e.g. H1 size 44, H3/H4 size 24).
+   - Paragraphs & Text:
+     - Accumulate runs with appropriate font size (body size 19, color #525C68).
+4. Validation & Quality Gates:
+   - Convert `fixtures/Get_Started_With_Smallpdf.pdf` to DOCX and check that `word/media/image*.png` exists inside the `.docx` archive.
+   - Run `cargo test -p paperpilot-pdf -j 4 --lib operations::conversion::tests` and ensure all tests pass.
