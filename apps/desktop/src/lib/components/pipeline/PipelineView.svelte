@@ -2,6 +2,7 @@
   import PipelineCanvas from './PipelineCanvas.svelte';
   import PipelineRunner from './PipelineRunner.svelte';
   import StepConfigPanel from './StepConfigPanel.svelte';
+  import FlowSelector from './FlowSelector.svelte';
   import { appState } from '$lib/state/app.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';
 
@@ -15,6 +16,8 @@
     <h2>Visual Pipeline Builder</h2>
     <p>Chain multiple PDF operations together. They execute in order, one output feeding the next.</p>
   </header>
+
+  <FlowSelector />
 
   {#if appState.documents.length === 0}
     <div class="pipeline-dropzone">

@@ -234,7 +234,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Classify { input } => group_d::handle_classify(input),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
-            println!("{:<4} {:<24} {:<12} {}", "#", "TOOL ID", "STATUS", "DESCRIPTION");
+            println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
             println!("{}", "-".repeat(80));
 
             let tools = [

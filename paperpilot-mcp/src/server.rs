@@ -3325,11 +3325,13 @@ impl PaperPilotMcpServer {
                                 let part = part.trim();
                                 if let Some((_start, end)) = part.split_once('-') {
                                     if let Ok(end_num) = end.trim().parse::<u32>() {
+                                        #[allow(clippy::collapsible_if)]
                                         if end_num < total_pages && !pts.contains(&end_num) {
                                             pts.push(end_num);
                                         }
                                     }
                                 } else if let Ok(pt) = part.parse::<u32>() {
+                                    #[allow(clippy::collapsible_if)]
                                     if pt < total_pages && !pts.contains(&pt) {
                                         pts.push(pt);
                                     }
