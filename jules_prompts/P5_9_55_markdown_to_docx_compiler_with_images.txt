@@ -1,0 +1,14 @@
+Implement Stage 2 of the decoupled PDF-to-DOCX conversion pipeline in `paperpilot-pdf/src/operations/conversion.rs` according to Spec 077 (`specs/077-markdown-html-to-docx-compiler/spec.md`).
+
+Key requirements:
+1. In `PdfToDocxOperation::execute`:
+   - Consume the rich Markdown output produced by `PdfToMarkdownOperation` (which now contains inline base64 images `![alt](data:image/png;base64,...)` for both raster images and vector Form XObjects).
+   - Parse the markdown events using `pulldown_cmark`.
+   - When encountering `Tag::Image { dest_url, .. }`:
+     - If `dest_url` is a data URI (`data:image/png;base64,...` or `data:image/jpeg;base64,...`), decode the base64 payload into raw image bytes.
+     - Calculate width and height in DrawingML EMUs (e.g. 1,500,000 to 2,500,000 EMUs, or proportionally from image dimensions).
+     - Add the picture to the DOCX document using `docx_rs::Pic::new(&image_bytes).size(width_emu, height_emu)`.
+     - Completely eliminate placeholder text `[ Feature {} Illustration ]`.
+2. Format headings, paragraphs, and cards cleanly so that images appear in-line or paired in 2-column tables alongside their corresponding descriptions.
+3. Verify that converting `fixtures/Get_Started_With_Smallpdf.pdf` to DOCX produces a document containing real images in `word/media/` inside the docx zip archive.
+4. Ensure all conversion tests pass with `cargo test -p paperpilot-pdf -j 4 --lib operations::conversion::tests`.
