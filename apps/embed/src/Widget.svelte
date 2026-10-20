@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { runPipeline, type PipelineStep } from './api';
   interface Props {
+    pipeline?: string | PipelineStep[];
     tools?: string;
     hideBadge?: boolean;
     brandColor?: string;
@@ -7,7 +9,10 @@
     logoUrl?: string;
   }
 
-  let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl }: Props = $props();
+  let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null }: Props = $props();
+  let parsedPipeline = $derived(typeof pipeline === 'string' ? JSON.parse(pipeline) : (pipeline || null));
+
+  let brandColorVar = $derived(brandColor);
 
   const allTools = [
     { id: 'merge', name: 'Merge PDFs', description: 'Combine multiple PDFs into one' },
@@ -19,6 +24,16 @@
     { id: 'reorder', name: 'Reverse Order', description: 'Reverse page sequence' },
     { id: 'compress', name: 'Optimize/Save', description: 'Compress and optimize PDF streams' }
   ];
+
+
+
+  // @ts-ignore
+  let pipelineProgress = $state<number>(0);
+  // @ts-ignore
+  let pipelineActiveStep = $state<number>(-1);
+  // @ts-ignore
+  let pipelineStatus = $state<'idle' | 'running' | 'done' | 'error'>('idle');
+  let pipelineResults = $state<Array<{ name: string; url: string; size: number }>>([]);
 
   let availableTools = $derived(
     tools === 'all'
@@ -88,6 +103,9 @@
       droppedFiles = [...droppedFiles, ...toAdd];
       processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
+      if (parsedPipeline) {
+        runVisualPipeline();
+      }
     }
   }
 
@@ -98,6 +116,9 @@
       droppedFiles = [...droppedFiles, ...incoming];
       processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
+      if (parsedPipeline) {
+        runVisualPipeline();
+      }
     }
   }
 
@@ -108,8 +129,56 @@
   function clearFiles(e: Event) {
     e.stopPropagation();
     droppedFiles = [];
-    processedFile = null;
+    processedFiles = [];
     if (fileInputRef) fileInputRef.value = '';
+  }
+
+  async function runVisualPipeline() {
+    if (droppedFiles.length === 0 || !parsedPipeline) {
+      triggerFileDialog();
+      return;
+    }
+
+    pipelineStatus = 'running';
+    pipelineProgress = 0;
+    pipelineActiveStep = 0;
+    dispatchEvent('pipeline-start', { files: droppedFiles.map(f => f.name), steps: parsedPipeline.length });
+
+    try {
+      pipelineResults = [];
+      for (const file of droppedFiles) {
+        const result = await runPipeline({
+          file,
+          steps: parsedPipeline,
+          onProgress: (stepIndex, _step, progressPercent) => {
+             pipelineActiveStep = stepIndex;
+             pipelineProgress = progressPercent;
+          }
+        });
+
+        const blob = new Blob([result.data.buffer as ArrayBuffer], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        pipelineResults.push({ name: result.filename, url, size: blob.size });
+      }
+      pipelineStatus = 'done';
+      pipelineActiveStep = parsedPipeline.length;
+      pipelineProgress = 100;
+
+      // Emit the final event with arrayBuffer
+      if (pipelineResults.length > 0) {
+          const finalResult = pipelineResults[0];
+          const response = await fetch(finalResult.url);
+          const buffer = await response.arrayBuffer();
+          dispatchEvent('pipeline-complete', {
+              data: new Uint8Array(buffer),
+              filename: finalResult.name,
+              durationMs: 0 // rough approximate since we process multiple files possibly
+          });
+      }
+    } catch (e) {
+      console.error(e);
+      pipelineStatus = 'error';
+    }
   }
 
   async function handleProcessStart(toolId: string) {
@@ -160,7 +229,7 @@
         }
 
         const finalBytes = await mergedDoc.save();
-        const finalBlob = new Blob([finalBytes], { type: 'application/pdf' });
+        const finalBlob = new Blob([finalBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
         outputs.push({
           name: 'merged_document.pdf',
           url: URL.createObjectURL(finalBlob),
@@ -251,7 +320,7 @@
             outName = `optimized_${file.name}`;
           }
 
-          const blob = new Blob([finalBytes], { type: 'application/pdf' });
+          const blob = new Blob([finalBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
           outputs.push({
             name: outName,
             url: URL.createObjectURL(blob),
@@ -288,6 +357,84 @@
 </script>
 
 <div class="pp-widget" data-theme={theme}>
+    {#if pipeline}
+      <div class="pp-pipeline-view">
+        <div class="pp-header">
+          {#if logoUrl}
+            <img src={logoUrl} alt="Logo" class="pp-logo" />
+          {/if}
+          <div class="pp-title">
+            <h2>Document Automation Pipeline</h2>
+            <p>Processing steps defined by configuration.</p>
+          </div>
+        </div>
+
+        <div
+          class="pp-dropzone {isDragging ? 'dragging' : ''}"
+          ondragover={handleDragOver}
+          ondragleave={handleDragLeave}
+          ondrop={handleDrop}
+          onclick={triggerFileDialog}
+          onkeydown={(e) => { if(e.key === 'Enter') triggerFileDialog(); }}
+          role="button"
+          tabindex="0"
+        >
+          <div class="pp-icon-upload">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          </div>
+          <p><strong>Click to upload</strong> or drag and drop a PDF</p>
+        </div>
+        <input type="file" bind:this={fileInputRef} accept=".pdf" multiple onchange={handleFileInput} style="display: none;" />
+
+        <div class="pp-pipeline-stepper">
+          {#each parsedPipeline as step, index}
+            <div class="pp-pipeline-step" class:active={pipelineActiveStep === index} class:done={pipelineActiveStep > index}>
+              <div class="pp-step-indicator">
+                {#if pipelineActiveStep > index}
+                  ✅
+                {:else if pipelineActiveStep === index}
+                  🔄
+                {:else}
+                  ⚪
+                {/if}
+              </div>
+              <div class="pp-step-details">
+                <div class="pp-step-title">{index + 1}. {step.tool.charAt(0).toUpperCase() + step.tool.slice(1)}</div>
+              </div>
+            </div>
+            {#if index < parsedPipeline.length - 1}
+              <div class="pp-step-connector">➔</div>
+            {/if}
+          {/each}
+        </div>
+
+        {#if pipelineStatus === 'running'}
+           <div class="pp-progress">
+             <div class="pp-progress-bar" style="width: {pipelineProgress}%"></div>
+           </div>
+        {/if}
+
+        {#if pipelineStatus === 'error'}
+           <div class="pp-error">Pipeline failed to process.</div>
+        {/if}
+
+        {#if pipelineResults.length > 0}
+          <div class="pp-results">
+            <h3>Pipeline Output</h3>
+            {#each pipelineResults as result}
+              <div class="pp-result-card">
+                <div class="pp-result-info">
+                  <span class="pp-result-name">{result.name}</span>
+                  <span class="pp-result-size">{(result.size / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
+                <a href={result.url} download={result.name} class="pp-btn pp-btn-primary">Download</a>
+              </div>
+            {/each}
+            <button class="pp-btn pp-btn-secondary" onclick={clearFiles}>Start Over</button>
+          </div>
+        {/if}
+      </div>
+    {:else}
   {#if logoUrl}
     <div class="pp-header">
       <img src={logoUrl} alt="Logo" class="pp-logo" />
@@ -463,6 +610,7 @@
         ⚡ Powered by PaperPilot
       </a>
     </div>
+  {/if}
   {/if}
 </div>
 
@@ -798,4 +946,61 @@
     color: var(--pp-text);
     border-color: var(--pp-text-muted);
   }
+
+  :global(.pp-pipeline-view) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  :global(.pp-pipeline-stepper) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--pp-bg-secondary);
+    border-radius: 8px;
+  }
+  :global(.pp-pipeline-step) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+  :global(.pp-pipeline-step.active), :global(.pp-pipeline-step.done) {
+    opacity: 1;
+  }
+  :global(.pp-step-indicator) {
+    font-size: 1.2rem;
+  }
+  :global(.pp-step-title) {
+    font-weight: 500;
+    color: var(--pp-text-primary);
+  }
+  :global(.pp-step-connector) {
+    color: var(--pp-text-secondary);
+    font-size: 1.2rem;
+  }
+  :global(.pp-progress) {
+    width: 100%;
+    height: 8px;
+    background: var(--pp-bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  :global(.pp-progress-bar) {
+    height: 100%;
+    background: var(--pp-brand-color);
+    transition: width 0.3s ease;
+  }
+  :global(.pp-error) {
+    color: #ef4444;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+    text-align: center;
+  }
+
 </style>
