@@ -105,9 +105,16 @@ PaperPilot/
   ```bash
   ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69B_pipeline_flow_selector_ui.txt
   ```
-- This will implement `FlowSelector.svelte` and `SaveFlowModal.svelte` based on the tested state API.
+- This will implement `FlowSelector.svelte` and `SaveFlowModal.svelte` based on the tested state API, plus embed preset resolution.
 
-### Step 3: Run Wave 2 Verification Tests
+### Step 3: Trigger Task 5.9.69C (Penta-Interface Declarative Workflow Engine)
+- Follow-up task bringing full Penta-Interface parity for pipeline workflows:
+  ```bash
+  ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69C_workflow_engine_penta_interface.txt
+  ```
+- Implements in-memory sequential execution in `paperpilot-pdf`, CLI `paperpilot workflow`, MCP tool `document_workflow`, REST Gateway endpoints, and 20 E2E assertions in `tools/penta-interface-e2e`.
+
+### Step 4: Run Wave 2 Verification Tests
 - Run Wave 2 MCP tests:
   ```bash
   cargo test -p paperpilot-mcp --test wave2_mcp_tests -j 2

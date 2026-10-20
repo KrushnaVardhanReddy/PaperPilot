@@ -5,7 +5,7 @@
 # UI Inspiration Reference: apps/desktop/src/lib/components/settings/AiSettingsModal.svelte
 
 ## Objective
-Implement the visual `FlowSelector.svelte` toolbar, Save/Export/Import dialog modal, and seamless integration into `PipelineView.svelte`, matching PaperPilot's established settings drawer/modal design language.
+Implement the visual `FlowSelector.svelte` toolbar, Save/Export/Import dialog modal, and seamless integration into `PipelineView.svelte`, matching PaperPilot's established settings drawer/modal design language. Additionally ensure `apps/embed` can resolve preset workflow IDs in its `pipeline` prop.
 
 ---
 
@@ -16,6 +16,7 @@ apps/desktop/src/lib/components/pipeline/FlowSelector.svelte
 apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte
 apps/desktop/src/lib/components/pipeline/PipelineView.svelte
 apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
+apps/embed/src/Widget.svelte
 ```
 Do NOT modify Rust backend files or `pipeline.svelte.ts` (Part A already provides the state API).
 
@@ -89,9 +90,9 @@ Create `apps/desktop/src/lib/components/pipeline/SaveFlowModal.svelte` matching 
 
 ---
 
-## 4. Integration in `PipelineView.svelte`
-- Mount `<FlowSelector />` right under the `<header class="pipeline-header">`.
-- Ensure the canvas reactive layout smoothly accommodates the selector toolbar.
+## 4. Integration in `PipelineView.svelte` & `apps/embed`
+- Mount `<FlowSelector />` right under the `<header class="pipeline-header">` in `PipelineView.svelte`.
+- In `apps/embed/src/Widget.svelte`, allow `pipeline` prop to receive preset names (e.g. `"preset-legal-discovery"`) resolving to the preset step definitions, enabling seamless cross-surface workflow invocation.
 
 ---
 
