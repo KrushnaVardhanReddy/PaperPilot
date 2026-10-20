@@ -42,3 +42,4 @@ apps/desktop/src-tauri/gen/android/app/build/
 apps/desktop/src-tauri/gen/android/buildSrc/build/
 apps/desktop/src-tauri/gen/android/buildSrc/.gradle/
 apps/desktop/src-tauri/gen/android/buildSrc/.kotlin/
+LAUNCH_POSTS.md
