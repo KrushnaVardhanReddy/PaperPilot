@@ -1,0 +1,63 @@
+# Task: Phase 5.9.69D — Visual Pipeline "Export as Code / API / MCP Prompt" Modal
+# Base Branch: main
+# Related Spec: specs/081-pipeline-flow-management-save-export-import/spec.md
+# Priority: MEDIUM (Developer & AI Agent Ergonomics in Desktop UI)
+
+## Objective
+Implement an "Export as Code / API" modal in the Desktop Pipeline UI (`apps/desktop`). When a user configures a multi-step pipeline in the visual builder, they should be able to click a new `</> Code / API` button in `FlowSelector.svelte` to view copyable, ready-to-run snippets for:
+1. **cURL / REST Gateway**: `curl -X POST http://localhost:8080/api/v1/workflow/run ...`
+2. **Native CLI Command**: `paperpilot workflow --recipe flow.json --input doc.pdf --output out.pdf`
+3. **AI Agent MCP Prompt**: A ready-to-paste prompt for Claude/ChatGPT/Gemini telling the agent to invoke the `document_workflow` tool with the active recipe.
+4. **JavaScript / TypeScript (Embed API)**: `window.PaperPilot.runPipeline({ ... })`
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/desktop/src/lib/components/pipeline/ExportCodeModal.svelte
+apps/desktop/src/lib/components/pipeline/FlowSelector.svelte
+apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
+```
+
+---
+
+## 1. ExportCodeModal Component (`ExportCodeModal.svelte`)
+Create `apps/desktop/src/lib/components/pipeline/ExportCodeModal.svelte`:
+- Accepts props:
+  - `isOpen: boolean`
+  - `onClose: () => void`
+  - `recipe: SavedPipeline` (or reads directly from `pipelineState`)
+- Features:
+  - Tabbed interface or dropdown switcher:
+    - **cURL (REST API)**: Shows multi-line `curl` command with multipart or JSON payload.
+    - **CLI**: Shows `paperpilot workflow run` command.
+    - **MCP Agent Prompt**: Formatted Markdown prompt with tool parameters.
+    - **Embed JS**: JavaScript code block with `runPipeline`.
+  - Copy-to-clipboard button with visual confirmation ("Copied!").
+  - Clean modal layout with backdrop blur and escape key / click-outside dismissal matching `SaveFlowModal.svelte` and `AiSettingsModal.svelte`.
+
+---
+
+## 2. Integration into Flow Selector Toolbar (`FlowSelector.svelte`)
+- Add a new action button in `FlowSelector.svelte`:
+  - Label: `</> Code / API` (id `flow-export-code-btn`)
+  - Disabled if `pipelineState.steps.length === 0`.
+  - Opens `ExportCodeModal.svelte` when clicked.
+
+---
+
+## 3. E2E Verification (`apps/desktop/tests/e2e_pipeline_flow_management.spec.ts`)
+- Add a test verifying:
+  1. User selects a preset or adds steps.
+  2. Clicks `</> Code / API`.
+  3. Modal opens with `#export-code-modal`.
+  4. Tab switching displays the corresponding code snippet (e.g. contains `curl`, `paperpilot workflow`, `document_workflow`).
+  5. Close button closes modal.
+
+---
+
+## 4. Acceptance Criteria
+1. `npm run check` in `apps/desktop` passes with 0 errors.
+2. `npx vitest run` in `apps/desktop` passes 100%.
+3. `npx playwright test tests/e2e_pipeline_flow_management.spec.ts` passes 100%.
