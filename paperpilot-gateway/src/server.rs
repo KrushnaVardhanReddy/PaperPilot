@@ -27,7 +27,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::office_to_markdown,
         handlers::office_extract_text,
         handlers::rag_chunks,
-        handlers::handle_tool
+        handlers::handle_tool,
+        handlers::list_tools
     ),
     components(
         schemas(
@@ -50,6 +51,7 @@ use utoipa_swagger_ui::SwaggerUi;
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
+        (name = "Tools", description = "Discovery and capability listing across all 52 tools"),
         (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
         (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
         (name = "Office Operations", description = "Office document and spreadsheet ingestion and modernizing endpoints")
@@ -71,6 +73,7 @@ pub async fn build_app() -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/tools", get(handlers::list_tools))
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))
         .route("/api/v1/pdf/tools/{tool_name}", post(handlers::handle_tool))

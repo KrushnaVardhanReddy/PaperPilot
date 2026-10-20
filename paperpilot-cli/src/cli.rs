@@ -396,6 +396,9 @@ pub enum Commands {
         bind: String,
     },
 
+    /// List all available tools, capabilities, and launch status
+    ListTools,
+
     // --- Office Document Conversion ---
     #[cfg(feature = "office")]
     Office {

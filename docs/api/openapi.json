@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "ApiResponse": {
+        "description": "Standard API response envelope (Responses section shows expected schema contract).",
         "properties": {
           "error": {
             "type": [
@@ -227,6 +228,49 @@
         ],
         "type": "object"
       },
+      "OfficeConvertJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "tests/e2e_fixtures/real/test.xlsx",
+            "type": "string"
+          },
+          "output": {
+            "example": "tests/e2e_fixtures/out/penta_e2e/doc.md",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "RagChunksJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "tests/e2e_fixtures/real/single_page.pdf",
+            "type": "string"
+          },
+          "max_chunk_size": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "overlap": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
       "SplitJsonRequest": {
         "properties": {
           "input": {
@@ -372,7 +416,7 @@
             "description": "Execution error"
           }
         },
-        "summary": "Convert an Excel sheet into CSV format",
+        "summary": "Convert an Excel sheet into CSV format [Input: .xlsx, .xls | Output: .csv]",
         "tags": [
           "Office Operations"
         ]
@@ -410,7 +454,7 @@
             "description": "Execution error"
           }
         },
-        "summary": "Convert an Excel sheet into structured JSON format",
+        "summary": "Convert an Excel sheet into structured JSON format [Input: .xlsx, .xls, .csv | Output: .json]",
         "tags": [
           "Office Operations"
         ]
@@ -442,7 +486,7 @@
             "description": "Comparison completed"
           }
         },
-        "summary": "Compare two PDF documents for visual and textual differences",
+        "summary": "Compare two PDF documents for visual and textual differences [Input: 2 .pdfs | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -474,7 +518,7 @@
             "description": "Compressed successfully"
           }
         },
-        "summary": "Compress a PDF document to reduce file size",
+        "summary": "Compress a PDF document to reduce file size [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -506,7 +550,7 @@
             "description": "Converted successfully"
           }
         },
-        "summary": "Convert a PDF to/from another format (docx, images, html, xlsx, etc.)",
+        "summary": "Convert a PDF to/from another format (docx, images, html, xlsx, etc.) [Input: .pdf | Output: .docx/.png/.html/.xlsx]",
         "tags": [
           "PDF Operations"
         ]
@@ -538,7 +582,7 @@
             "description": "Text extracted successfully"
           }
         },
-        "summary": "Extract clean text from a PDF document",
+        "summary": "Extract clean text from a PDF document [Input: .pdf | Output: .txt]",
         "tags": [
           "PDF Operations"
         ]
@@ -570,7 +614,7 @@
             "description": "Info extracted successfully"
           }
         },
-        "summary": "Retrieve metadata and page information for a PDF document",
+        "summary": "Retrieve metadata and page information for a PDF document [Input: .pdf | Output: .json]",
         "tags": [
           "PDF Operations"
         ]
@@ -607,7 +651,7 @@
             "description": "Execution error"
           }
         },
-        "summary": "Execute MCP tool directly by tool name with arbitrary JSON arguments",
+        "summary": "Execute MCP tool directly by tool name with arbitrary JSON arguments [Input: JSON | Output: JSON]",
         "tags": [
           "MCP"
         ]
@@ -636,12 +680,119 @@
                 }
               }
             },
-            "description": "Merged successfully"
+            "description": "Expected schema contract for successful merge"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Expected schema contract for invalid input arguments"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Expected schema contract for engine execution errors"
           }
         },
-        "summary": "Merge multiple PDF documents into a single PDF",
+        "summary": "Merge multiple PDF documents into a single PDF [Input: 2+ .pdfs | Output: .pdf]",
         "tags": [
           "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/office-extract-text": {
+      "post": {
+        "operationId": "office_extract_text",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfficeConvertJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "handlers"
+        ]
+      }
+    },
+    "/api/v1/pdf/office-to-markdown": {
+      "post": {
+        "operationId": "office_to_markdown",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfficeConvertJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "handlers"
+        ]
+      }
+    },
+    "/api/v1/pdf/rag-chunks": {
+      "post": {
+        "operationId": "rag_chunks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RagChunksJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "handlers"
         ]
       }
     },
@@ -662,7 +813,7 @@
             "description": "Render failure"
           }
         },
-        "summary": "Render a single PDF page directly to a PNG image stream",
+        "summary": "Render a single PDF page directly to a PNG image stream [Input: .pdf | Output: .png]",
         "tags": [
           "PDF Operations"
         ]
@@ -694,7 +845,7 @@
             "description": "Split successfully"
           }
         },
-        "summary": "Split a PDF document into separate pages or ranges",
+        "summary": "Split a PDF document into separate pages or ranges [Input: .pdf | Output: multiple .pdfs]",
         "tags": [
           "PDF Operations"
         ]
@@ -732,7 +883,7 @@
             "description": "Execution error"
           }
         },
-        "summary": "Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON",
+        "summary": "Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON [Input: Multipart/JSON | Output: File/JSON]",
         "tags": [
           "MCP"
         ]
@@ -764,9 +915,23 @@
             "description": "Watermarked successfully"
           }
         },
-        "summary": "Apply text or image watermarks to a PDF document",
+        "summary": "Apply text or image watermarks to a PDF document [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/tools": {
+      "get": {
+        "operationId": "list_tools",
+        "responses": {
+          "200": {
+            "description": "List of all registered tools and their schema definitions"
+          }
+        },
+        "summary": "List all available tools and operations across PaperPilot",
+        "tags": [
+          "Tools"
         ]
       }
     },
@@ -796,6 +961,10 @@
     {
       "description": "Gateway health check and tool status",
       "name": "Health"
+    },
+    {
+      "description": "Discovery and capability listing across all 52 tools",
+      "name": "Tools"
     },
     {
       "description": "Direct Model Context Protocol execution endpoint for 50+ tools",

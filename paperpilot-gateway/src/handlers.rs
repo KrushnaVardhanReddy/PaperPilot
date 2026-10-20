@@ -175,6 +175,29 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
+/// List all available tools and operations across PaperPilot
+#[utoipa::path(
+    get,
+    path = "/api/v1/tools",
+    tag = "Tools",
+    responses(
+        (status = 200, description = "List of all registered tools and their schema definitions")
+    )
+)]
+pub async fn list_tools() -> impl IntoResponse {
+    match PaperPilotMcpServer::execute_list_tools() {
+        Ok(res) => (StatusCode::OK, Json(serde_json::json!({
+            "success": true,
+            "total": res.tools.len(),
+            "tools": res.tools
+        }))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
+            "success": false,
+            "error": e.message
+        }))),
+    }
+}
+
 /// Execute MCP tool directly by tool name with arbitrary JSON arguments [Input: JSON | Output: JSON]
 #[utoipa::path(
     post,
