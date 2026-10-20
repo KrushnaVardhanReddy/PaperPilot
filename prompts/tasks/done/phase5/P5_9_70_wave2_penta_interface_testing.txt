@@ -31,7 +31,7 @@ apps/web/tests/e2e_wave2_wasm.spec.ts
 reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md
 wiki/09-Wave-2-Penta-Testing.md
 ```
-Do NOT modify production core code unless a bug is discovered in Wave 2 handlers. If modifying code, preserve documentation integrity and keep system resource constraints in mind (`cargo test -j 2`).
+Do NOT modify production core code unless a bug is discovered in Wave 2 handlers. All pre-existing clippy warnings in `paperpilot-mcp` have already been resolved on `main`. Keep system resource constraints in mind (`cargo test -j 2`).
 
 ---
 
@@ -51,7 +51,7 @@ Do NOT modify production core code unless a bug is discovered in Wave 2 handlers
 ## 2. Test Execution Details
 
 ### A. Rust Integration Tests (`tests/e2e/test_wave2_penta_interface.rs` or `paperpilot-mcp/tests/`)
-1. **MCP Server**: Invoke `PaperPilotMcpServer::execute_call_tool(params)` for all 6 tools with real disk fixtures. Verify JSON response `success: true` and validate output files on disk.
+1. **MCP Server**: Invoke `PaperPilotMcpServer::execute_call_tool(params)` for all 6 tools with real disk fixtures. Verify JSON response `success: true` and validate output files on disk. (Reference: see `paperpilot-mcp/tests/wave2_mcp_tests.rs`).
 2. **CLI**: Execute the compiled binary (`target/debug/paperpilot` or `paperpilot-cli`) using `std::process::Command` passing CLI arguments (e.g. `paperpilot burst`, `paperpilot search`, `paperpilot page-numbers`).
 3. **REST Gateway**: Use `axum::test` or `reqwest` against `paperpilot-gateway` endpoints (e.g. `/api/v1/pdf/search`, `/api/v1/pdf/burst`).
 

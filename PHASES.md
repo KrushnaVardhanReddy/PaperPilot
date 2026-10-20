@@ -948,7 +948,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.9.66 | Convenience Multi-Page Image Exporter (`pdf_to_images`) 📋 | Planned (Phase 2 Priority) — One-call convenience exporter rendering all pages of a document to a directory as PNG, JPEG, or WebP. |
 | 5.9.68 | Universal Pipeline Parity & Comprehensive Parameter Configuration `[Spec 079]` ✅ | Completed (PR #221, commit `b31bc2c`) — Universal tool parity, full parameter configuration schemas across Desktop and Embed, and intermediate split fan-out resolution. |
 | 5.9.69 | Pipeline Flow Management: Community Free vs Enterprise Workspaces `[Spec 081]` 📋 | Authored — Visual pipeline saving, localStorage persistence, standard flow presets, and file-based JSON export/import for Free Community tier (`specs/081-pipeline-flow-management-save-export-import/spec.md`). |
-| 5.9.70 | Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools) 🔄 | Dispatched (Jules Task `P5_9_70`, Session 8451709229146498568) — Unmocked E2E testing across all 5 interfaces (CLI, MCP, REST Gateway, WASM Browser Playwright, Desktop/Embed) for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). |
+| 5.9.70 | Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools) 🔄 | Dispatched (Jules Task `P5_9_70`, Session 12126426629876311080) — Unmocked E2E testing across all 5 interfaces (CLI, MCP, REST Gateway, WASM Browser Playwright, Desktop/Embed) for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). |
 
 
 ## Phase 5 — Advanced Intelligence
