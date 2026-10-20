@@ -1,12 +1,12 @@
 use crate::document::LopdfDocument;
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
 use image::codecs::jpeg::JpegEncoder;
 use image::{ColorType, DynamicImage, ImageBuffer};
 use lopdf::Object;
-use std::io::Write;
-use flate2::write::ZlibEncoder;
-use flate2::Compression;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use std::io::Write;
 
 pub struct CompressOperation {
     pub quality: Option<String>,
@@ -64,8 +64,13 @@ impl PdfOperation for CompressOperation {
                             if let Ok(compressed) = encoder.finish() {
                                 if compressed.len() < original_len {
                                     stream.content = compressed;
-                                    stream.dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
-                                    stream.dict.set("Length", Object::Integer(stream.content.len() as i64));
+                                    stream
+                                        .dict
+                                        .set("Filter", Object::Name(b"FlateDecode".to_vec()));
+                                    stream.dict.set(
+                                        "Length",
+                                        Object::Integer(stream.content.len() as i64),
+                                    );
                                 }
                             }
                         }
@@ -225,7 +230,8 @@ mod tests {
         let mut catalog_dict = Dictionary::new();
         catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
         catalog_dict.set("TestRef", Object::Reference(image_id));
-        doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+        doc.objects
+            .insert(catalog_id, Object::Dictionary(catalog_dict));
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let mut lopdf_doc = LopdfDocument {
@@ -317,7 +323,15 @@ mod tests {
         page_dict.set("Type", Object::Name(b"Page".to_vec()));
         page_dict.set("Parent", Object::Reference(pages_id));
         page_dict.set("Resources", Object::Dictionary(resources));
-        page_dict.set("MediaBox", vec![0.into(), 0.into(), (width as i64).into(), (height as i64).into()]);
+        page_dict.set(
+            "MediaBox",
+            vec![
+                0.into(),
+                0.into(),
+                (width as i64).into(),
+                (height as i64).into(),
+            ],
+        );
         doc.objects.insert(page_id, Object::Dictionary(page_dict));
 
         let mut pages_dict = Dictionary::new();
@@ -353,7 +367,11 @@ mod tests {
         };
 
         let reduction = (original_size as f64 - compressed_size as f64) / original_size as f64;
-        assert!(reduction >= 0.30, "Expected at least 30% reduction, got {}%", reduction * 100.0);
+        assert!(
+            reduction >= 0.30,
+            "Expected at least 30% reduction, got {}%",
+            reduction * 100.0
+        );
     }
 
     #[test]
@@ -392,7 +410,11 @@ mod tests {
             buf.len()
         };
 
-        assert!(compressed_size <= original_size + 10240, "Size inflated unexpectedly! Compressed: {}, Original: {}", compressed_size, original_size);
+        assert!(
+            compressed_size <= original_size + 10240,
+            "Size inflated unexpectedly! Compressed: {}, Original: {}",
+            compressed_size,
+            original_size
+        );
     }
-
 }

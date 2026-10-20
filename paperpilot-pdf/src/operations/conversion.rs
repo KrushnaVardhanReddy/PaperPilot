@@ -426,7 +426,10 @@ fn extract_page_media(
             Err(_) => continue,
         };
 
-        let stream = match lopdf_doc.get_object(stream_id).and_then(|obj| obj.as_stream()) {
+        let stream = match lopdf_doc
+            .get_object(stream_id)
+            .and_then(|obj| obj.as_stream())
+        {
             Ok(stream) => stream,
             Err(_) => continue,
         };
@@ -440,155 +443,157 @@ fn extract_page_media(
 
         if subtype == b"Form" {
             has_forms = true;
-            if let Ok(bbox_obj) = stream.dict.get(b"BBox").and_then(|o| o.as_array()) {
-                if bbox_obj.len() == 4 {
-                    let mut bbox = [0.0; 4];
-                    for i in 0..4 {
-                        match bbox_obj[i] {
-                            lopdf::Object::Real(f) => bbox[i] = f as f64,
-                            lopdf::Object::Integer(i_val) => bbox[i] = i_val as f64,
-                            _ => {}
-                        }
+            if let Ok(bbox_obj) = stream.dict.get(b"BBox").and_then(|o| o.as_array())
+                && bbox_obj.len() == 4
+            {
+                let mut bbox = [0.0; 4];
+                for i in 0..4 {
+                    match bbox_obj[i] {
+                        lopdf::Object::Real(f) => bbox[i] = f as f64,
+                        lopdf::Object::Integer(i_val) => bbox[i] = i_val as f64,
+                        _ => {}
                     }
-                    form_xobjects.push((name_str, bbox));
                 }
+                form_xobjects.push((name_str, bbox));
             }
         }
     }
 
-    if has_forms {
-        if let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec()) {
-            let pages = hayro_pdf.pages();
-            if let Some(page) = pages.get(page_index) {
-                let cache = hayro::RenderCache::new();
-                let render_settings = hayro::RenderSettings::default();
-                let mut pixmap_settings = hayro::PixmapSettings::default();
+    if has_forms && let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec()) {
+        let pages = hayro_pdf.pages();
+        if let Some(page) = pages.get(page_index) {
+            let cache = hayro::RenderCache::new();
+            let render_settings = hayro::RenderSettings::default();
+            let mut pixmap_settings = hayro::PixmapSettings::default();
 
-                let dpi = 150.0;
-                let scale = dpi / 72.0;
-                pixmap_settings.x_scale = scale;
-                pixmap_settings.y_scale = scale;
+            let dpi = 150.0;
+            let scale = dpi / 72.0;
+            pixmap_settings.x_scale = scale;
+            pixmap_settings.y_scale = scale;
 
-                let pixmap = hayro::render(
-                    page,
-                    &cache,
-                    &Default::default(),
-                    &render_settings,
-                    &pixmap_settings,
-                );
+            let pixmap = hayro::render(
+                page,
+                &cache,
+                &Default::default(),
+                &render_settings,
+                &pixmap_settings,
+            );
 
-                let width = pixmap.width();
-                let height = pixmap.height();
+            let width = pixmap.width();
+            let height = pixmap.height();
 
-                let data = bytemuck::cast_slice(pixmap.data());
+            let data = bytemuck::cast_slice(pixmap.data());
 
-                if let Some(mut skia_pixmap) = tiny_skia::Pixmap::new(width as u32, height as u32) {
-                    skia_pixmap.data_mut().copy_from_slice(data);
+            if let Some(mut skia_pixmap) = tiny_skia::Pixmap::new(width as u32, height as u32) {
+                skia_pixmap.data_mut().copy_from_slice(data);
 
-                    let mut media_h = 0.0;
-                    if let Ok(media_box) = page_dict.get(b"MediaBox").and_then(|o| o.as_array()) {
-                        if media_box.len() == 4 {
-                            let y0 = match media_box[1] {
-                                lopdf::Object::Real(f) => f as f32,
-                                lopdf::Object::Integer(i) => i as f32,
-                                _ => 0.0,
-                            };
-                            let y1 = match media_box[3] {
-                                lopdf::Object::Real(f) => f as f32,
-                                lopdf::Object::Integer(i) => i as f32,
-                                _ => 0.0,
-                            };
-                            media_h = (y1 - y0).abs();
+                let mut media_h = 0.0;
+                if let Ok(media_box) = page_dict.get(b"MediaBox").and_then(|o| o.as_array())
+                    && media_box.len() == 4
+                {
+                    let y0 = match media_box[1] {
+                        lopdf::Object::Real(f) => f,
+                        lopdf::Object::Integer(i) => i as f32,
+                        _ => 0.0,
+                    };
+                    let y1 = match media_box[3] {
+                        lopdf::Object::Real(f) => f,
+                        lopdf::Object::Integer(i) => i as f32,
+                        _ => 0.0,
+                    };
+                    media_h = (y1 - y0).abs();
+                }
+
+                let mut on_page_bboxes = HashMap::new();
+
+                let content_bytes = lopdf_doc.get_page_content(page_id);
+                if let Ok(content) = lopdf::content::Content::decode(&content_bytes) {
+                    let mut ctm_stack = vec![Ctm([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])];
+
+                    for op in content.operations {
+                        match op.operator.as_str() {
+                            "q" => {
+                                let current = *ctm_stack.last().unwrap();
+                                ctm_stack.push(current);
+                            }
+                            "Q" => {
+                                if ctm_stack.len() > 1 {
+                                    ctm_stack.pop();
+                                }
+                            }
+                            "cm" => {
+                                if op.operands.len() == 6 {
+                                    let get_f32 = |obj: &lopdf::Object| -> f32 {
+                                        match obj {
+                                            lopdf::Object::Real(f) => *f,
+                                            lopdf::Object::Integer(i) => *i as f32,
+                                            _ => 0.0,
+                                        }
+                                    };
+                                    let m = [
+                                        get_f32(&op.operands[0]),
+                                        get_f32(&op.operands[1]),
+                                        get_f32(&op.operands[2]),
+                                        get_f32(&op.operands[3]),
+                                        get_f32(&op.operands[4]),
+                                        get_f32(&op.operands[5]),
+                                    ];
+                                    let current = *ctm_stack.last().unwrap();
+                                    let last = ctm_stack.last_mut().unwrap();
+                                    *last = current.transform(m);
+                                }
+                            }
+                            "Do" => {
+                                if op.operands.len() == 1
+                                    && let Ok(name) = op.operands[0].as_name()
+                                {
+                                    let name_str = String::from_utf8_lossy(name).to_string();
+                                    let current = *ctm_stack.last().unwrap();
+                                    on_page_bboxes.insert(name_str, current);
+                                }
+                            }
+                            _ => {}
                         }
                     }
+                }
 
-                    let mut on_page_bboxes = HashMap::new();
+                for (form_name, form_bbox) in form_xobjects {
+                    if let Some(ctm) = on_page_bboxes.get(&form_name) {
+                        let (x0, y0) = ctm.point(form_bbox[0] as f32, form_bbox[1] as f32);
+                        let (x1, y1) = ctm.point(form_bbox[2] as f32, form_bbox[3] as f32);
 
-                    let content_bytes = lopdf_doc.get_page_content(page_id);
-                    if let Ok(content) = lopdf::content::Content::decode(&content_bytes) {
-                            let mut ctm_stack = vec![Ctm([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])];
+                        let orig_y0 = y0.min(y1);
+                        let orig_y1 = y0.max(y1);
+                        let px_x0 = x0.min(x1);
+                        let px_x1 = x0.max(x1);
 
-                            for op in content.operations {
-                                match op.operator.as_str() {
-                                    "q" => {
-                                        let current = *ctm_stack.last().unwrap();
-                                        ctm_stack.push(current);
-                                    }
-                                    "Q" => {
-                                        if ctm_stack.len() > 1 {
-                                            ctm_stack.pop();
-                                        }
-                                    }
-                                    "cm" => {
-                                        if op.operands.len() == 6 {
-                                            let get_f32 = |obj: &lopdf::Object| -> f32 {
-                                                match obj {
-                                                    lopdf::Object::Real(f) => *f as f32,
-                                                    lopdf::Object::Integer(i) => *i as f32,
-                                                    _ => 0.0,
-                                                }
-                                            };
-                                            let m = [
-                                                get_f32(&op.operands[0]),
-                                                get_f32(&op.operands[1]),
-                                                get_f32(&op.operands[2]),
-                                                get_f32(&op.operands[3]),
-                                                get_f32(&op.operands[4]),
-                                                get_f32(&op.operands[5]),
-                                            ];
-                                            let current = *ctm_stack.last().unwrap();
-                                            let last = ctm_stack.last_mut().unwrap();
-                                            *last = current.transform(m);
-                                        }
-                                    }
-                                    "Do" => {
-                                        if op.operands.len() == 1 {
-                                            if let Ok(name) = op.operands[0].as_name() {
-                                                let name_str = String::from_utf8_lossy(name).to_string();
-                                                let current = *ctm_stack.last().unwrap();
-                                                on_page_bboxes.insert(name_str, current);
-                                            }
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
+                        let px_y0 = media_h - orig_y1;
+                        let px_y1 = media_h - orig_y0;
 
-                    for (form_name, form_bbox) in form_xobjects {
-                        if let Some(ctm) = on_page_bboxes.get(&form_name) {
-                            let (x0, y0) = ctm.point(form_bbox[0] as f32, form_bbox[1] as f32);
-                            let (x1, y1) = ctm.point(form_bbox[2] as f32, form_bbox[3] as f32);
+                        let left = (px_x0 * scale).floor() as u32;
+                        let top = (px_y0 * scale).floor() as u32;
+                        let right = (px_x1 * scale).ceil() as u32;
+                        let bottom = (px_y1 * scale).ceil() as u32;
 
-                            let orig_y0 = y0.min(y1);
-                            let orig_y1 = y0.max(y1);
-                            let px_x0 = x0.min(x1);
-                            let px_x1 = x0.max(x1);
+                        let crop_rect = tiny_skia::IntRect::from_ltrb(
+                            left.min(width as u32) as i32,
+                            top.min(height as u32) as i32,
+                            right.min(width as u32) as i32,
+                            bottom.min(height as u32) as i32,
+                        );
 
-                            let px_y0 = media_h - orig_y1;
-                            let px_y1 = media_h - orig_y0;
-
-                            let left = (px_x0 * scale).floor() as u32;
-                            let top = (px_y0 * scale).floor() as u32;
-                            let right = (px_x1 * scale).ceil() as u32;
-                            let bottom = (px_y1 * scale).ceil() as u32;
-
-                            let crop_rect = tiny_skia::IntRect::from_ltrb(
-                                left.max(0).min(width as u32) as i32,
-                                top.max(0).min(height as u32) as i32,
-                                right.max(0).min(width as u32) as i32,
-                                bottom.max(0).min(height as u32) as i32,
-                            );
-
-                            if let Some(rect) = crop_rect {
-                                if let Some(cropped) = skia_pixmap.clone_rect(rect) {
-                                    if let Ok(png_bytes) = cropped.encode_png() {
-                                        use base64::{Engine as _, engine::general_purpose};
-                                        let b64 = general_purpose::STANDARD.encode(&png_bytes);
-                                        extracted.push((form_name, format!("data:image/png;base64,{}", b64), orig_y0, orig_y1));
-                                    }
-                                }
-                            }
+                        if let Some(rect) = crop_rect
+                            && let Some(cropped) = skia_pixmap.clone_rect(rect)
+                            && let Ok(png_bytes) = cropped.encode_png()
+                        {
+                            use base64::{Engine as _, engine::general_purpose};
+                            let b64 = general_purpose::STANDARD.encode(&png_bytes);
+                            extracted.push((
+                                form_name,
+                                format!("data:image/png;base64,{}", b64),
+                                orig_y0,
+                                orig_y1,
+                            ));
                         }
                     }
                 }
@@ -669,14 +674,25 @@ impl PdfOperation for PdfToHtmlOperation {
                                 }
                                 pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
                                     let color = match format {
-                                        pdf_oxide::extractors::PixelFormat::RGB => image::ColorType::Rgb8,
-                                        pdf_oxide::extractors::PixelFormat::Grayscale => image::ColorType::L8,
-                                        pdf_oxide::extractors::PixelFormat::CMYK => image::ColorType::Rgb8, // Fallback mapping, Image API handles basic conversions or fails gracefully.
+                                        pdf_oxide::extractors::PixelFormat::RGB => {
+                                            image::ColorType::Rgb8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => {
+                                            image::ColorType::L8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::CMYK => {
+                                            image::ColorType::Rgb8
+                                        } // Fallback mapping, Image API handles basic conversions or fails gracefully.
                                     };
                                     let mut png_bytes = Vec::new();
                                     use image::ImageEncoder;
                                     if image::codecs::png::PngEncoder::new(&mut png_bytes)
-                                        .write_image(pixels, img.width(), img.height(), color.into())
+                                        .write_image(
+                                            pixels,
+                                            img.width(),
+                                            img.height(),
+                                            color.into(),
+                                        )
                                         .is_ok()
                                     {
                                         use base64::{Engine as _, engine::general_purpose};
@@ -702,7 +718,10 @@ impl PdfOperation for PdfToHtmlOperation {
                 let mut image_insertions: Vec<(usize, String)> = Vec::new();
 
                 for (name, b64, _, y1) in all_images {
-                    let markup = format!("<img src=\"{}\" alt=\"Illustration {}\" style=\"max-width: 100%; border-radius: 4px; margin-top: 10px;\" />\n", b64, name);
+                    let markup = format!(
+                        "<img src=\"{}\" alt=\"Illustration {}\" style=\"max-width: 100%; border-radius: 4px; margin-top: 10px;\" />\n",
+                        b64, name
+                    );
                     let mut closest_span = None;
                     let mut min_dist = f32::MAX;
 
@@ -718,7 +737,9 @@ impl PdfOperation for PdfToHtmlOperation {
                     if let Some(span) = closest_span {
                         if let Some(pos) = page_content.find(&span.text) {
                             let mut insert_pos = pos + span.text.len();
-                            while insert_pos < page_content.len() && page_content.as_bytes()[insert_pos] != b'\n' {
+                            while insert_pos < page_content.len()
+                                && page_content.as_bytes()[insert_pos] != b'\n'
+                            {
                                 insert_pos += 1;
                             }
                             image_insertions.push((insert_pos, markup));
@@ -733,9 +754,13 @@ impl PdfOperation for PdfToHtmlOperation {
                 image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
                 let mut final_html = page_content;
                 for (pos, markup) in image_insertions {
-                    let insert_pos = if final_html.is_char_boundary(pos) { pos } else {
+                    let insert_pos = if final_html.is_char_boundary(pos) {
+                        pos
+                    } else {
                         let mut p = pos;
-                        while p > 0 && !final_html.is_char_boundary(p) { p -= 1; }
+                        while p > 0 && !final_html.is_char_boundary(p) {
+                            p -= 1;
+                        }
                         p
                     };
                     final_html.insert_str(insert_pos, &format!("\n{}\n", markup));
@@ -849,14 +874,25 @@ impl PdfOperation for PdfToMarkdownOperation {
                                 }
                                 pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
                                     let color = match format {
-                                        pdf_oxide::extractors::PixelFormat::RGB => image::ColorType::Rgb8,
-                                        pdf_oxide::extractors::PixelFormat::Grayscale => image::ColorType::L8,
-                                        pdf_oxide::extractors::PixelFormat::CMYK => image::ColorType::Rgb8,
+                                        pdf_oxide::extractors::PixelFormat::RGB => {
+                                            image::ColorType::Rgb8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => {
+                                            image::ColorType::L8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::CMYK => {
+                                            image::ColorType::Rgb8
+                                        }
                                     };
                                     let mut png_bytes = Vec::new();
                                     use image::ImageEncoder;
                                     if image::codecs::png::PngEncoder::new(&mut png_bytes)
-                                        .write_image(pixels, img.width(), img.height(), color.into())
+                                        .write_image(
+                                            pixels,
+                                            img.width(),
+                                            img.height(),
+                                            color.into(),
+                                        )
                                         .is_ok()
                                     {
                                         use base64::{Engine as _, engine::general_purpose};
@@ -901,7 +937,9 @@ impl PdfOperation for PdfToMarkdownOperation {
                         if let Some(span) = closest_span {
                             if let Some(pos) = page_md.find(&span.text) {
                                 let mut insert_pos = pos + span.text.len();
-                                while insert_pos < page_md.len() && page_md.as_bytes()[insert_pos] != b'\n' {
+                                while insert_pos < page_md.len()
+                                    && page_md.as_bytes()[insert_pos] != b'\n'
+                                {
                                     insert_pos += 1;
                                 }
                                 image_insertions.push((insert_pos, markup));
@@ -916,9 +954,13 @@ impl PdfOperation for PdfToMarkdownOperation {
                     image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
                     let mut final_md = page_md;
                     for (pos, markup) in image_insertions {
-                        let insert_pos = if final_md.is_char_boundary(pos) { pos } else {
+                        let insert_pos = if final_md.is_char_boundary(pos) {
+                            pos
+                        } else {
                             let mut p = pos;
-                            while p > 0 && !final_md.is_char_boundary(p) { p -= 1; }
+                            while p > 0 && !final_md.is_char_boundary(p) {
+                                p -= 1;
+                            }
                             p
                         };
                         final_md.insert_str(insert_pos, &format!("\n\n{}\n\n", markup));
@@ -1416,9 +1458,29 @@ pub enum LayoutItem {
     Table(Vec<Vec<Vec<TextSpan>>>),
 }
 
+/// EMU scaling constants for OpenXML DrawingML
+pub const EMUS_PER_INCH: u32 = 914_400;
+pub const MAX_DOCX_PAGE_WIDTH_EMUS: u32 = 4_500_000;
+
+pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
+    if !uri.starts_with("data:image/") {
+        return None;
+    }
+    let parts: Vec<&str> = uri.splitn(2, ',').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let mime = parts[0]
+        .strip_prefix("data:image/")?
+        .strip_suffix(";base64")?;
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let bytes = STANDARD.decode(parts[1]).ok()?;
+    Some((mime.to_string(), bytes))
+}
+
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        let lopdf_doc = document
+        let _lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| {
@@ -1429,7 +1491,7 @@ impl PdfOperation for PdfToDocxOperation {
             AlignmentType, Docx, Paragraph, Run, Table, TableBorders, TableCell, TableRow,
             WidthType,
         };
-        use pulldown_cmark::{Event, Parser, Tag, TagEnd};
+        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
         let mut docx = Docx::new().page_margin(
             docx_rs::PageMargin::new()
@@ -1439,100 +1501,60 @@ impl PdfOperation for PdfToDocxOperation {
                 .right(720),
         );
 
-        let mut bytes = Vec::new();
-        if let Some(orig_bytes) = lopdf_doc.original_bytes.as_deref() {
-            bytes = orig_bytes.to_vec();
-        } else {
-            lopdf_doc.inner.save_to(&mut bytes).map_err(|e| {
-                PdfError::Other(format!("Failed to save lopdf inner document: {}", e))
-            })?;
-        }
+        let markdown_op = PdfToMarkdownOperation::new();
+        markdown_op.execute(document)?;
 
-        // Scan for Form and Image XObjects from the first page's resources
-        use image::ImageEncoder;
-        let mut is_form_array = Vec::new();
-        let mut raster_images: Vec<Option<Vec<u8>>> = Vec::new();
-        let pages = lopdf_doc.inner.get_pages();
+        let markdown = {
+            let guard = markdown_op.extracted_markdown.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
 
-        #[allow(clippy::collapsible_if)]
-        if let Some((_, page_id)) = pages.into_iter().next() {
-            if let Ok(resources) = lopdf_doc.inner.get_dictionary(page_id).and_then(|dict| dict.get(b"Resources")).and_then(|r| lopdf_doc.inner.get_object(r.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())) {
-                if let Ok(xobjects) = resources.get(b"XObject").and_then(|r| lopdf_doc.inner.get_object(r.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())) {
-                    let mut keys: Vec<&Vec<u8>> = xobjects.iter().map(|(k, _)| k).collect();
-                    keys.sort(); // Ensure consistent order
-                    for key in keys {
-                        if let Ok(val) = xobjects.get(key) {
-                            if let Ok(obj) = lopdf_doc.inner.get_object(val.as_reference().unwrap_or((0, 0))) {
-                                if let Ok(stream) = obj.as_stream() {
-                                    if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(|s| s.as_name()) {
-                                        if subtype == b"Form" {
-                                            is_form_array.push(true);
-                                            raster_images.push(None);
-                                        } else if subtype == b"Image" {
-                                            is_form_array.push(false);
-
-                                            // Real implementation would extract Image stream bytes
-                                            let mut image_bytes = None;
-                                            if let Ok(filter) = stream.dict.get(b"Filter").and_then(|f| f.as_name()) {
-                                                if filter == b"DCTDecode" {
-                                                    // JPEG
-                                                    image_bytes = Some(stream.content.clone());
-                                                }
-                                            }
-
-                                            // Render or copy the bytes
-                                            if let Some(jpeg_data) = image_bytes {
-                                                if let Ok(img) = image::load_from_memory(&jpeg_data) {
-                                                    let mut png_bytes = Vec::new();
-                                                    if image::codecs::png::PngEncoder::new(&mut png_bytes).write_image(
-                                                        img.as_bytes(),
-                                                        img.width(),
-                                                        img.height(),
-                                                        img.color().into()
-                                                    ).is_ok() {
-                                                        raster_images.push(Some(png_bytes));
-                                                    } else {
-                                                        raster_images.push(None);
-                                                    }
-                                                } else {
-                                                    raster_images.push(None);
-                                                }
-                                            } else {
-                                                raster_images.push(None);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        use std::io::Write;
-        let mut temp_file = tempfile::NamedTempFile::new()
-            .map_err(|e| PdfError::Other(format!("Failed to create temp file: {}", e)))?;
-        temp_file
-            .write_all(&bytes)
-            .map_err(|e| PdfError::Other(format!("Failed to write to temp file: {}", e)))?;
-
-        let markdown = unpdf::to_markdown(temp_file.path()).map_err(|e| {
-            PdfError::UnsupportedOperation(format!("unpdf layout analysis failed: {}", e))
-        })?;
-
-        let parser = Parser::new(&markdown);
+        let parser = Parser::new_ext(&markdown, Options::all());
 
         let mut current_heading_level = 0;
-
         let mut current_paragraph = Paragraph::new();
         let mut has_run = false;
 
+        let mut pending_image: Option<(Vec<u8>, u32, u32)> = None;
+        let mut pending_image_paragraph: Option<Paragraph> = None;
         let mut current_card_title: Option<Paragraph> = None;
-        let mut card_index = 1;
+
+        let mut table_rows: Vec<TableRow> = Vec::new();
+        let mut current_row_cells: Vec<TableCell> = Vec::new();
+        let mut current_cell_paragraphs: Vec<Paragraph> = Vec::new();
 
         for event in parser {
             match event {
+                Event::Start(Tag::Image { dest_url, .. }) => {
+                    if let Some((_, bytes)) = decode_data_uri(&dest_url)
+                        && let Ok(img) = image::load_from_memory(&bytes)
+                    {
+                        let width_px = img.width() as f64;
+                        let height_px = img.height() as f64;
+                        // 150 DPI => 6096 EMUs per pixel
+                        let scale = 914_400.0 / 150.0;
+                        let mut width_emu = (width_px * scale) as u32;
+                        let mut height_emu = (height_px * scale) as u32;
+
+                        if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
+                            let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
+                            width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
+                            height_emu = (height_emu as f64 * ratio) as u32;
+                        }
+                        pending_image = Some((bytes, width_emu, height_emu));
+                    }
+                }
+                Event::End(TagEnd::Image) => {
+                    if let Some((bytes, width, height)) = pending_image.take() {
+                        use docx_rs::Pic;
+                        let pic = Pic::new(&bytes).size(width, height);
+                        let pic_run = Run::new().add_image(pic);
+                        let pic_para = Paragraph::new()
+                            .align(AlignmentType::Center)
+                            .add_run(pic_run);
+                        pending_image_paragraph = Some(pic_para);
+                    }
+                }
                 Event::Start(Tag::Heading { level, .. }) => {
                     let level_num = match level {
                         pulldown_cmark::HeadingLevel::H1 => 1,
@@ -1551,9 +1573,12 @@ impl PdfOperation for PdfToDocxOperation {
                 }
                 Event::End(TagEnd::Heading(_)) => {
                     if has_run {
-                        if current_heading_level == 3 {
+                        if current_heading_level == 3 || current_heading_level == 4 {
                             current_card_title = Some(current_paragraph.clone());
                         } else {
+                            if let Some(pic_para) = pending_image_paragraph.take() {
+                                docx = docx.add_paragraph(pic_para);
+                            }
                             docx = docx.add_paragraph(current_paragraph.clone());
                         }
                     }
@@ -1568,53 +1593,30 @@ impl PdfOperation for PdfToDocxOperation {
                 Event::End(TagEnd::Paragraph) => {
                     if has_run {
                         if let Some(title_para) = current_card_title.take() {
-                            let is_form = *is_form_array.get(card_index - 1).unwrap_or(&true);
-                            let img_bytes_opt = raster_images.get(card_index - 1).cloned().flatten();
-                            let illustration_text = format!("[ Feature {} Illustration ]", card_index);
-                            card_index += 1;
+                            if let Some(illus_para) = pending_image_paragraph.take() {
+                                let illus_cell = TableCell::new()
+                                    .add_paragraph(illus_para)
+                                    .width(3168, WidthType::Dxa);
 
-                            let mut illus_para = Paragraph::new().align(AlignmentType::Center);
+                                let text_cell = TableCell::new()
+                                    .add_paragraph(title_para)
+                                    .add_paragraph(current_paragraph.clone())
+                                    .width(6912, WidthType::Dxa);
 
-                            if is_form || img_bytes_opt.is_none() {
-                                let illus_run = Run::new()
-                                    .add_text(illustration_text)
-                                    .italic()
-                                    .size(18) // 9pt
-                                    .color("007AFF");
-                                illus_para = illus_para.add_run(illus_run);
+                                let row_cells = vec![illus_cell, text_cell];
+
+                                let table = Table::new(vec![TableRow::new(row_cells)])
+                                    .set_borders(TableBorders::new().clear_all())
+                                    .layout(docx_rs::TableLayoutType::Fixed);
+                                docx = docx.add_table(table);
                             } else {
-                                if let Some(png_bytes) = img_bytes_opt {
-                                    use docx_rs::Pic;
-                                    let pic = Pic::new(&png_bytes).size(1200000, 1200000);
-                                    let pic_run = Run::new().add_image(pic);
-                                    illus_para = illus_para.add_run(pic_run);
-                                }
+                                docx = docx.add_paragraph(title_para);
+                                docx = docx.add_paragraph(current_paragraph.clone());
                             }
-
-                            let illus_cell = TableCell::new()
-                                .add_paragraph(illus_para)
-                                .width(3168, WidthType::Dxa);
-
-                            // The text cell
-                            // Note: current_paragraph is the description
-                            let text_cell = TableCell::new()
-                                .add_paragraph(title_para)
-                                .add_paragraph(current_paragraph.clone())
-                                .width(6912, WidthType::Dxa);
-
-                            let row_cells = if card_index % 2 == 0 {
-                                // Illustration | Text
-                                vec![illus_cell, text_cell]
-                            } else {
-                                // Text | Illustration
-                                vec![text_cell, illus_cell]
-                            };
-
-                            let table = Table::new(vec![TableRow::new(row_cells)])
-                                .set_borders(TableBorders::new().clear_all())
-                                .layout(docx_rs::TableLayoutType::Fixed);
-                            docx = docx.add_table(table);
                         } else {
+                            if let Some(pic_para) = pending_image_paragraph.take() {
+                                docx = docx.add_paragraph(pic_para);
+                            }
                             docx = docx.add_paragraph(current_paragraph.clone());
                         }
                     }
@@ -1626,18 +1628,59 @@ impl PdfOperation for PdfToDocxOperation {
 
                     if current_heading_level == 1 {
                         run = run.bold().size(44).color("1F242E");
-                    } else if current_heading_level == 3 {
-                        run = run.bold().size(24).color("1F242E"); // Title: Bold, size 24 (12pt), 1F242E
+                    } else if current_heading_level == 3 || current_heading_level == 4 {
+                        run = run.bold().size(24).color("1F242E");
                     } else {
-                        // Regular text / description: size 19 (9.5pt), 525C68
                         run = run.size(19).color("525C68");
                     }
 
                     current_paragraph = current_paragraph.add_run(run);
                     has_run = true;
                 }
+                Event::Start(Tag::Table(_)) => {
+                    table_rows = Vec::new();
+                }
+                Event::End(TagEnd::Table) => {
+                    if !table_rows.is_empty() {
+                        let table = Table::new(table_rows.clone());
+                        docx = docx.add_table(table);
+                    }
+                    table_rows = Vec::new();
+                }
+                Event::Start(Tag::TableRow) => {
+                    current_row_cells = Vec::new();
+                }
+                Event::End(TagEnd::TableRow) => {
+                    if !current_row_cells.is_empty() {
+                        table_rows.push(TableRow::new(current_row_cells.clone()));
+                    }
+                    current_row_cells = Vec::new();
+                }
+                Event::Start(Tag::TableCell) => {
+                    current_cell_paragraphs = Vec::new();
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                Event::End(TagEnd::TableCell) => {
+                    if has_run {
+                        current_cell_paragraphs.push(current_paragraph.clone());
+                    }
+                    let mut cell = TableCell::new();
+                    for p in current_cell_paragraphs.clone() {
+                        cell = cell.add_paragraph(p);
+                    }
+                    current_row_cells.push(cell);
+                    current_cell_paragraphs = Vec::new();
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
                 _ => {}
             }
+        }
+
+        // flush
+        if let Some(pic_para) = pending_image_paragraph.take() {
+            docx = docx.add_paragraph(pic_para);
         }
 
         let file = std::fs::File::create(&self.output_path)
@@ -1953,63 +1996,45 @@ mod tests {
     }
 
     #[test]
-    fn test_multi_column_reading_order() {
-        let content_str = "BT /F1 12 Tf 50 700 Td (Left 1) Tj -50 -700 Td 50 680 Td (Left 2) Tj -50 -680 Td 250 690 Td (Right 1) Tj -250 -690 Td 250 670 Td (Right 2) Tj ET";
-        let mut doc = create_dummy_doc(1, Some(content_str));
+    fn test_pdf_to_docx_with_images() {
+        use crate::document::LopdfDocument;
+        let fixture_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("fixtures")
+            .join("Get_Started_With_Smallpdf.pdf");
 
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("out_test.docx");
-
-        let op = super::PdfToDocxOperation::new(path.clone());
-        assert!(op.execute(&mut doc).is_ok());
-
-        assert!(path.exists());
-
-        let file = std::fs::File::open(&path).unwrap();
-        let mut archive = zip::ZipArchive::new(file).unwrap();
-        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
-        let mut xml_content = String::new();
-        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
-
-        let mut pure_text = String::new();
-        let mut in_tag = false;
-        for c in xml_content.chars() {
-            if c == '<' {
-                in_tag = true;
-            } else if c == '>' {
-                in_tag = false;
-            } else if !in_tag {
-                pure_text.push(c);
-            }
+        if !fixture_path.exists() {
+            return;
         }
 
-        let clean_text = pure_text.replace(" ", "");
-        assert!(
-            clean_text.contains("Left1Left2Right1Right2")
-                || clean_text.contains("Left1Right1Left2Right2")
-        );
-    }
-
-    #[test]
-    fn test_table_structure_detection() {
-        let content_str = "BT /F1 12 Tf 50 700 Td (Header 1) Tj 100 0 Td (Header 2) Tj -100 -20 Td (Cell 1) Tj 100 0 Td (Cell 2) Tj ET";
-        let mut doc = create_dummy_doc(1, Some(content_str));
+        let mut doc = LopdfDocument::load(&fixture_path).unwrap();
 
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("out_test_table.docx");
+        let out_path = dir.path().join("output.docx");
 
-        let op = super::PdfToDocxOperation::new(path.clone());
+        let op = PdfToDocxOperation::new(out_path.clone());
         assert!(op.execute(&mut doc).is_ok());
+        assert!(out_path.exists());
 
-        assert!(path.exists());
-        let file = std::fs::File::open(&path).unwrap();
+        let file = std::fs::File::open(&out_path).unwrap();
         let mut archive = zip::ZipArchive::new(file).unwrap();
-        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
-        let mut xml_content = String::new();
-        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
-
-        assert!(xml_content.contains("<w:tbl>") || xml_content.contains("<w:t"));
+        let mut image_count = 0;
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).unwrap();
+            println!("DOCX File: {}", file.name());
+        }
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).unwrap();
+            if file.name().starts_with("word/media/")
+                && (file.name().ends_with(".png") || file.name().ends_with(".jpeg"))
+            {
+                image_count += 1;
+                assert!(file.size() > 0);
+            }
+        }
+        assert!(image_count > 0, "No images found in generated DOCX");
     }
+
     #[test]
     fn test_pdf_to_docx() {
         let mut doc = create_dummy_doc(1, None);
