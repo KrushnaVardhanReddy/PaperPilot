@@ -13,14 +13,18 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **5.9.69B** | [Session 16322387546350290979](https://jules.google.com/session/16322387546350290979) | **Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs** (`[Spec 081]`) | 🔄 In Flight — `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, JSON export/import buttons, and Playwright E2E verification. |
-| **5.9.70** | [Session 4388001643990007173](https://jules.google.com/session/4388001643990007173) | **Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools)** | 🔄 In Progress — Unmocked verification across CLI, MCP, REST, WASM Playwright, and Desktop for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). Note: Previous sessions 8451709229146498568 & 12126426629876311080 were superseded. |
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
 ---
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
 
-1. **Task 5.9.69A / Spec 081 (Pipeline Flow State, Local Persistence & Industry Presets)**:
+1. **Task 5.9.70 (Wave 2 Penta-Interface E2E Testing & Playwright Verification)**:
+   - Merged (PR #221, commit `b7ff7c3`, Jules Session 4388001643990007173).
+   - Validated unmocked real assertions across all 5 interfaces (CLI, MCP, REST Gateway, WASM Playwright, Desktop) for 6 Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`).
+   - Verified 100% test pass rate in `paperpilot-mcp/tests/wave2_mcp_tests.rs`, CLI audit suite, and Gateway tests.
+   - Published testing architecture in `wiki/09-Wave-2-Penta-Testing.md`.
+2. **Task 5.9.69A / Spec 081 (Pipeline Flow State, Local Persistence & Industry Presets)**:
    - Merged (PR #220, commit `460ec1d`, Jules Session 8874502492856873220).
    - Implemented `SavedPipeline` data model, `PipelineState` methods (`initStorage`, `loadFlow`, `saveCurrentFlow`, `deleteFlow`, `exportFlowJson`, `importFlowFromJson`).
    - Integrated 3 default industry presets (`preset-legal-discovery`, `preset-clean-scan`, `preset-redact-protect`).
@@ -97,8 +101,8 @@ PaperPilot/
 ### Step 1: Monitor Active Jules Sessions
 - **Task 5.9.69A** ([Session 8874502492856873220](https://jules.google.com/session/8874502492856873220)):
   - ✅ Verified `npm test` passing (79/79) and merged into `main` (PR #220, commit `460ec1d`).
-- Check status of **Task 5.9.70** ([Session 4388001643990007173](https://jules.google.com/session/4388001643990007173)):
-  - Review `reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md` and test results.
+- **Task 5.9.70** ([Session 4388001643990007173](https://jules.google.com/session/4388001643990007173)):
+  - ✅ Verified Wave 2 Penta-Interface tests across MCP, CLI, and Gateway, and merged into `main` (PR #221, commit `b7ff7c3`).
 - Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
 
 ### Step 2: Monitor Task 5.9.69B (Pipeline UI & Save Modal)
