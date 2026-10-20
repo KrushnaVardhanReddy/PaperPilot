@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos
+.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -30,6 +30,7 @@ install-desktop:
 
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
 dev: install-desktop
+	@fuser -k 1420/tcp 2>/dev/null || true
 	cd apps/desktop && (npx tauri dev || npm run tauri dev)
 
 # Run web portal in live-reload dev mode
@@ -80,6 +81,30 @@ build-macos:
 	@echo "Notice: Compiling Tauri / macOS binaries locally requires macOS (Darwin) or a cross-toolchain."
 	@echo "Trigger GitHub Actions Rust CI or use: gh workflow run rust.yml for macOS build."
 
+# Android builds & installation
+# Note: uses CARGO_BUILD_JOBS=4 and --no-default-features for lean, responsive mobile compilation
+build-android:
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --debug --target aarch64 --apk -- --no-default-features
+
+build-android-release:
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+
+run-android:
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android dev
+
+install-android: build-android
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk 2>/dev/null || \
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/arm64-v8a/debug/app-arm64-v8a-debug.apk 2>/dev/null || \
+	find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec adb install -r {} +
+
+install-android-release: build-android-release
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk 2>/dev/null || \
+	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk 2>/dev/null || \
+	find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*release*.apk" -exec adb install -r {} +
+
+log-android:
+	adb logcat -v color | grep -iE "paperpilot|tauri|chromium"
+
 # Package standalone desktop installers (AppImage, deb)
 dist:
 	cd apps/desktop && npm run tauri build
@@ -119,6 +144,16 @@ test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
 
 # Run conformance tests (requires qpdf, verapdf optional)
+.PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
+
+# Run Clean-Room Audit for Top 12 Launch Tools
+test-cleanroom-top12:
+	cargo test --test top12_cleanroom_audit -j 2
+
+# Run Clean-Room Audit for All 50 Tools
+test-cleanroom-all50:
+	cargo test --test all50_cleanroom_audit -j 2
+
 .PHONY: test-conformance
 test-conformance:
 	./scripts/verify_pdf_conformance.sh
@@ -230,3 +265,32 @@ bench-penta-e2e:
 # Run Phase 5.9.10: Local AI Agent Legal Discovery Demo
 demo-legal-discovery:
 	./scripts/run_ai_legal_demo.sh
+
+# ==============================================================================
+# Docker Container Targets (Multi-Interface Testing for Any Machine)
+# ==============================================================================
+
+# Build the all-interface Docker image
+docker-build:
+	@mkdir -p data
+	docker compose build
+
+# Start the PaperPilot container in background (Gateway + Swagger on :7823)
+docker-up:
+	@mkdir -p data
+	docker compose up -d
+	@echo "\nPaperPilot is running!"
+	@echo "👉 Open Swagger UI: http://localhost:7823/swagger-ui"
+	@echo "👉 Drop files to test into: ./data/"
+
+# Stop the PaperPilot container
+docker-down:
+	docker compose down
+
+# Stream container runtime logs
+docker-logs:
+	docker compose logs -f
+
+# Open interactive shell inside the container to test CLI & MCP
+docker-shell:
+	docker compose exec paperpilot bash || docker exec -it paperpilot bash

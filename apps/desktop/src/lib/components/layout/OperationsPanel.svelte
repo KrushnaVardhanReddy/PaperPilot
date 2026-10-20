@@ -5,141 +5,75 @@
   import { invoke } from '@tauri-apps/api/core';
   import { formatUserFriendlyError } from '$lib/utils/errorFormatter';
 
-  interface ToolDefinition {
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    category: 'quick' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert' | 'ai';
-    context: 'pdf' | 'office' | 'ai';
-    tags: string[];
-  }
+  import type { ToolDefinition } from "$lib/types/tools";
+  import { allTools, categories, allCategories } from "$lib/types/toolList";
 
-  const allTools: ToolDefinition[] = [
-    // Quick / Popular
-    { id: 'compress', title: 'Compress PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', context: 'pdf', tags: ['shrink', 'size', 'optimize'] },
-    { id: 'merge', title: 'Merge PDFs', description: 'Combine multiple PDF files into one continuous document', icon: '📑', category: 'quick', context: 'pdf', tags: ['combine', 'join', 'append'] },
-    { id: 'rotate', title: 'Rotate Pages', description: 'Rotate pages by 90, 180, or 270 degrees', icon: '🔄', category: 'quick', context: 'pdf', tags: ['orientation', 'turn'] },
-    { id: 'compare', title: 'Compare PDFs', description: 'Diff two documents and highlight changes', icon: '🔍', category: 'quick', context: 'pdf', tags: ['diff', 'compare', 'difference'] },
-    { id: 'ocr', title: 'OCR Text Recognition', description: 'Extract text from scanned pages using local OCR', icon: '👁️', category: 'quick', context: 'pdf', tags: ['scan', 'text', 'extract'] },
-    { id: 'pdf_to_docx', title: 'PDF → Word', description: 'Convert document into editable DOCX format', icon: '📝', category: 'quick', context: 'pdf', tags: ['word', 'docx', 'convert', 'export'] },
-
-    // Page Operations
-    { id: 'merge', title: 'Merge Documents', description: 'Combine open tabs into a single PDF', icon: '📑', category: 'pages', context: 'pdf', tags: ['combine', 'join', 'concat'] },
-    { id: 'split', title: 'Split PDF', description: 'Divide document into separate pages or ranges', icon: '✂️', category: 'pages', context: 'pdf', tags: ['divide', 'cut', 'separate'] },
-    { id: 'compare', title: 'Compare Documents', description: 'Side-by-side comparison between two open tabs', icon: '🔍', category: 'pages', context: 'pdf', tags: ['diff', 'compare'] },
-    { id: 'extract_pages', title: 'Extract Pages', description: 'Save specific pages into a new PDF document', icon: '📤', category: 'pages', context: 'pdf', tags: ['select', 'isolate'] },
-    { id: 'rotate', title: 'Rotate Document', description: 'Orient landscape or portrait pages', icon: '🔄', category: 'pages', context: 'pdf', tags: ['orientation', 'turn', 'flip'] },
-
-    // Edit & Markup
-    { id: 'watermark', title: 'Add Watermark', description: 'Stamp text or branding across all pages', icon: '💧', category: 'edit', context: 'pdf', tags: ['stamp', 'text', 'brand', 'copyright'] },
-    { id: 'flatten', title: 'Flatten Annotations', description: 'Bake annotations & forms permanently into page graphics', icon: '📄', category: 'edit', context: 'pdf', tags: ['bake', 'lock', 'rasterize'] },
-
-    // Optimize & Repair
-    { id: 'compress', title: 'Compress PDF', description: 'Lossy & lossless file size reduction', icon: '🗜️', category: 'optimize', context: 'pdf', tags: ['shrink', 'size', 'dpi'] },
-    { id: 'repair', title: 'Repair PDF', description: 'Recover and rebuild corrupted or unreadable documents', icon: '🔧', category: 'optimize', context: 'pdf', tags: ['corrupt', 'fix', 'recover'] },
-
-    // Security & Privacy
-    { id: 'encrypt', title: 'Encrypt with Password', description: 'Protect document with AES-256 password encryption', icon: '🔒', category: 'security', context: 'pdf', tags: ['protect', 'password', 'lock'] },
-    { id: 'decrypt', title: 'Remove Password', description: 'Remove password restrictions from unlocked PDF', icon: '🔓', category: 'security', context: 'pdf', tags: ['unlock', 'open'] },
-    { id: 'metadata', title: 'Edit / Sanitize Metadata', description: 'Inspect and clean author, title, and creation timestamps', icon: '📋', category: 'security', context: 'pdf', tags: ['sanitize', 'privacy', 'info'] },
-
-    // Convert & Export
-    { id: 'pdf_to_docx', title: 'PDF to Word (DOCX)', description: 'Export document as editable Microsoft Word file', icon: '📝', category: 'convert', context: 'pdf', tags: ['word', 'docx'] },
-    { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', context: 'pdf', tags: ['excel', 'sheet', 'table'] },
-    { id: 'pdf_to_markdown', title: 'PDF to Markdown', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', context: 'pdf', tags: ['llm', 'markdown', 'md'] },
-    { id: 'extract_text', title: 'Extract Plain Text', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', context: 'pdf', tags: ['text', 'dump', 'raw'] },
-
-    // AI & Intelligence
-    { id: 'ocr', title: 'OCR Recognition', description: 'Run optical character recognition on scanned pages', icon: '👁️', category: 'ai', context: 'pdf', tags: ['ocr', 'scan', 'tesseract'] },
-    { id: 'extract_images', title: 'Extract Embedded Images', description: 'Save all images found inside the document', icon: '🖼️', category: 'ai', context: 'pdf', tags: ['images', 'photos', 'export'] },
-    // Stirling Parity Tools
-    { id: 'remove_blank', title: 'Remove Blank Pages', description: 'Remove empty or nearly empty pages', icon: '🧹', category: 'pages', context: 'pdf', tags: ['blank', 'empty', 'clean', 'delete'] },
-    { id: 'page_numbers', title: 'Add Page Numbers', description: 'Add dynamic page numbering', icon: '🔢', category: 'pages', context: 'pdf', tags: ['numbering', 'bates', 'header', 'footer', 'page'] },
-    { id: 'md_to_pdf', title: 'Markdown to PDF', description: 'Convert markdown text to PDF', icon: '📝', category: 'convert', context: 'pdf', tags: ['markdown', 'convert', 'pdf', 'generate'] },
-    { id: 'html_to_pdf', title: 'HTML to PDF', description: 'Convert HTML string to styled PDF', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'convert', 'pdf'] },
-    { id: 'img_to_pdf', title: 'Images to PDF', description: 'Combine multiple images into a PDF', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['image', 'jpg', 'png', 'combine', 'photo'] },
-    { id: 'json_to_pdf', title: 'JSON to PDF', description: 'Synthesize PDF from structured JSON text and embedded images', icon: '⚡', category: 'convert', context: 'pdf', tags: ['json', 'synthesis', 'generate', 'pdf', 'ai'] },
-    { id: 'office_modernize_legacy', title: 'Modernize Legacy Office', description: 'Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format', icon: '🔄', category: 'convert', context: 'office', tags: ['legacy', 'doc', 'xls', 'ppt', 'modernize', 'upgrade'] },
-
-    // Additional 44 Tools Required Additions
-    // Organize & Pages
-    { id: 'delete_pages', title: 'Delete Pages', description: 'Remove specific pages from the document', icon: '🗑️', category: 'pages', context: 'pdf', tags: ['delete', 'remove', 'pages'] },
-    { id: 'reorder_pages', title: 'Reorder Pages', description: 'Change the order of pages in the document', icon: '🔁', category: 'pages', context: 'pdf', tags: ['reorder', 'sort', 'arrange'] },
-    { id: 'burst', title: 'Burst PDF', description: 'Split document into single pages', icon: '💥', category: 'pages', context: 'pdf', tags: ['burst', 'split', 'single'] },
-    { id: 'crop', title: 'Crop Pages', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', context: 'pdf', tags: ['crop', 'trim', 'cut'] },
-
-    // Security & Integrity
-    { id: 'redact', title: 'Redact Text', description: 'Permanently remove sensitive information', icon: '⬛', category: 'security', context: 'pdf', tags: ['redact', 'hide', 'censor', 'blackout'] },
-    { id: 'sign', title: 'Sign Document', description: 'Apply digital signature to document', icon: '✒️', category: 'security', context: 'pdf', tags: ['sign', 'signature', 'cert'] },
-    { id: 'validate', title: 'Validate PDF', description: 'Verify document structure and standards', icon: '✅', category: 'security', context: 'pdf', tags: ['validate', 'verify', 'check'] },
-    { id: 'hash', title: 'Generate Hash', description: 'Calculate document checksums', icon: '#️⃣', category: 'security', context: 'pdf', tags: ['hash', 'checksum', 'md5', 'sha'] },
-
-    // Content & OCR
-    { id: 'search', title: 'Search Text', description: 'Search for text across the document', icon: '🔍', category: 'ai', context: 'pdf', tags: ['search', 'find', 'text'] },
-    { id: 'bates', title: 'Bates Numbering', description: 'Apply Bates stamps to pages', icon: '🔢', category: 'edit', context: 'pdf', tags: ['bates', 'stamp', 'legal'] },
-    { id: 'header_footer', title: 'Header & Footer', description: 'Add headers and footers to pages', icon: '📏', category: 'edit', context: 'pdf', tags: ['header', 'footer', 'header/footer', 'margin'] },
-    { id: 'render', title: 'Render Page', description: 'Render page to image format', icon: '🖼️', category: 'convert', context: 'pdf', tags: ['render', 'image', 'png'] },
-
-    // Forms & Optimization
-    { id: 'read_form', title: 'Read Form Data', description: 'Extract data from PDF forms', icon: '📋', category: 'edit', context: 'pdf', tags: ['form', 'read', 'extract'] },
-    { id: 'fill_form', title: 'Fill Form Data', description: 'Fill PDF form fields automatically', icon: '✍️', category: 'edit', context: 'pdf', tags: ['form', 'fill', 'data'] },
-    { id: 'create_form_field', title: 'Add Form Field', description: 'Create new interactive form fields', icon: '➕', category: 'edit', context: 'pdf', tags: ['form', 'create', 'field'] },
-    { id: 'bookmarks', title: 'Extract Bookmarks', description: 'Read document outline and bookmarks', icon: '🔖', category: 'pages', context: 'pdf', tags: ['bookmarks', 'outline', 'toc'] },
-    { id: 'linearize', title: 'Fast Web View', description: 'Optimize PDF for fast web viewing (linearize)', icon: '⚡', category: 'optimize', context: 'pdf', tags: ['web', 'fast', 'linearize'] },
-
-    // Conversions & Intelligence
-    { id: 'pdf_to_pptx', title: 'PDF to PowerPoint', description: 'Export document as PPTX presentation', icon: '📊', category: 'convert', context: 'pdf', tags: ['powerpoint', 'pptx', 'presentation'] },
-    { id: 'pdf_to_pdf_a', title: 'Convert to PDF/A', description: 'Archive-ready PDF format conversion', icon: '🏛️', category: 'convert', context: 'pdf', tags: ['archive', 'pdfa', 'long-term'] },
-    { id: 'classify_type', title: 'Classify Document', description: 'AI classification of document type', icon: '🏷️', category: 'ai', context: 'pdf', tags: ['classify', 'type', 'classify pdf', 'ai'] },
-    { id: 'annotate', title: 'Add Annotations', description: 'Programmatically add annotations', icon: '✏️', category: 'edit', context: 'pdf', tags: ['annotate', 'draw', 'markup'] },
-    { id: 'pdf_convert_excel', title: 'CSV to PDF', description: 'Convert tabular data to PDF', icon: '📄', category: 'convert', context: 'pdf', tags: ['csv', 'excel', 'convert'] },
-
-    // Office Tools
-    { id: 'office_to_markdown', title: 'Convert to Markdown', description: 'Convert Word, Excel, or PowerPoint to clean Markdown text', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'markdown', 'docx', 'xlsx', 'pptx', 'convert'] },
-    { id: 'office_extract_text', title: 'Extract Text', description: 'Extract all raw text from Office documents into plain text', icon: '📄', category: 'convert', context: 'office', tags: ['office', 'text', 'extract', 'docx', 'xlsx'] },
-    { id: 'excel_to_json', title: 'Excel to JSON', description: 'Convert spreadsheet sheets into structured JSON data', icon: '📊', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'json', 'convert'] },
-    { id: 'excel_to_csv', title: 'Excel to CSV', description: 'Export spreadsheet sheet to standard RFC 4180 CSV', icon: '📑', category: 'convert', context: 'office', tags: ['office', 'excel', 'xlsx', 'xls', 'csv', 'export'] }
-  ];
-
-  const categories = [
-    { id: 'quick', title: 'Quick Actions', icon: '⚡' },
-    { id: 'pages', title: 'Page Management', icon: '📑' },
-    { id: 'edit', title: 'Edit & Markup', icon: '✍️' },
-    { id: 'optimize', title: 'Optimize & Repair', icon: '🗜️' },
-    { id: 'security', title: 'Security & Privacy', icon: '🔒' },
-    { id: 'convert', title: 'Convert & Export', icon: '🔄' },
-    { id: 'ai', title: 'AI & Intelligence', icon: '🧠' }
-  ];
-
-  const allCategories = [
-    { id: 'all', title: 'All', icon: '✨' },
-    ...categories
-  ];
-
-  import { resolveToolName } from '$lib/services/toolRegistry';
+  import { resolveToolName, rankToolsByContext } from '$lib/services/toolRegistry';
 import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
 import { onMount } from 'svelte';
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
-  let activeTool = $state<ToolDefinition | null>(null);
+  let activeTool = $derived(appState.activeTool);
   let isCollapsed = $state(false);
+  let panelWidth = $state(320);
+  let isDragging = $state(false);
 
   onMount(() => {
     const stored = localStorage.getItem('operations-panel-collapsed');
     if (stored === 'true') isCollapsed = true;
+
+    const storedWidth = localStorage.getItem('operations-panel-width');
+    if (storedWidth) {
+      const parsed = parseInt(storedWidth, 10);
+      if (!isNaN(parsed) && parsed >= 260 && parsed <= 700) {
+        panelWidth = parsed;
+      }
+    }
   });
 
   $effect(() => {
     localStorage.setItem('operations-panel-collapsed', String(isCollapsed));
   });
 
+  $effect(() => {
+    localStorage.setItem('operations-panel-width', String(panelWidth));
+  });
+
+  function startResize(e: MouseEvent) {
+    if (isCollapsed) return;
+    isDragging = true;
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const delta = startX - moveEvent.clientX;
+      const newWidth = Math.min(Math.max(startWidth + delta, 260), 700);
+      panelWidth = newWidth;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  function handleResizeDblClick() {
+    panelWidth = panelWidth > 380 ? 320 : 480;
+  }
+
   // Tool parameter states
   let splitPoints = $state('');
+  let deletePages = $state('');
+  let extractPages = $state('');
   let compressQuality = $state(80);
   let rotateAngle = $state('90');
+  let rotatePages = $state('');
   let watermarkText = $state('');
 
   let watermarkOpacity = $state(20);
@@ -180,28 +114,66 @@ import { onMount } from 'svelte';
   });
 
   // Filter tools based on search query
+  let activePackIds = $derived(
+    appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
+  );
+
+  let ranked = $derived(
+    rankToolsByContext(allTools, appState.documents, activePackIds)
+  );
+
+  let readyToolsCount = $derived(
+    allTools.filter(t => t.releaseStatus !== 'preview').length
+  );
+
+  let contextFilter = $state('recommended'); // 'recommended', 'ready', 'all', 'pdf', 'office', 'ai'
+
+  $effect(() => {
+    if (appState.documents.length === 0 && contextFilter === 'recommended') {
+      // Keep it as recommended, which now shows creation tools
+    }
+  });
+
+  // Filter tools based on search query
   let filteredTools = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
-    let tools = allTools.filter(t => t.context === toolContext);
+    let tools: ToolDefinition[] = [];
 
     if (q) {
-      tools = tools.filter(t =>
+      tools = allTools.filter(t =>
         t.title.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
         t.tags.some(tag => tag.toLowerCase().includes(q))
       );
-    } else if (selectedCategory !== 'all') {
+    } else {
+       if (contextFilter === 'recommended') {
+         tools = ranked.recommended;
+       } else if (contextFilter === 'ready') {
+         // Shows all production-ready tools (v0.5-core, and future wave-core releases)
+         tools = allTools.filter(t => t.releaseStatus !== 'preview');
+       } else if (contextFilter === 'all') {
+         tools = allTools;
+       } else if (contextFilter === 'pdf') {
+         tools = allTools.filter(t => t.context === 'pdf');
+       } else if (contextFilter === 'office') {
+         tools = allTools.filter(t => t.context === 'office');
+       } else if (contextFilter === 'ai') {
+         tools = allTools.filter(t => t.context === 'ai' || t.category === 'ai' || t.tags.includes('ocr') || t.tags.includes('ai'));
+       }
+    }
+    if (selectedCategory !== 'all') {
       tools = tools.filter(t => t.category === selectedCategory);
     }
     return tools;
   });
 
   function selectTool(tool: ToolDefinition) {
-    activeTool = tool;
+    isCollapsed = false;
+    appState.openTool(tool);
   }
 
   function backToDirectory() {
-    activeTool = null;
+    appState.closeTool();
   }
 
   let customOutputPath = $state('');
@@ -234,7 +206,7 @@ import { onMount } from 'svelte';
     const docPath = appState.documentPaths[docIndex] || docName;
     const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
     const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
-    const base = docName.replace(/\.pdf$/i, '');
+    const base = docName.replace(/\.[^.]+$/i, '');
 
     switch (activeTool.id) {
       case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
@@ -258,6 +230,7 @@ import { onMount } from 'svelte';
       case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
       case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
       case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
+      case 'delete_pages':  customOutputPath = getOutputPath(`${base}_deleted.pdf`);    break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
         if (ocrOutputFormat === 'txt') {
@@ -271,6 +244,7 @@ import { onMount } from 'svelte';
       case 'pdf_to_docx':     customOutputPath = getOutputPath(`${base}.docx`);           break;
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
+      case 'pdf_to_html':     customOutputPath = getOutputPath(`${base}.html`);           break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
       case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
       case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;
@@ -280,6 +254,8 @@ import { onMount } from 'svelte';
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
+
+  let applyToAllFiles = $state(true);
 
   async function handleRunOperation() {
     if (isRunning || !activeTool) return;
@@ -295,83 +271,120 @@ import { onMount } from 'svelte';
       return;
     }
 
+    const isBatchExecution = applyToAllFiles && (activeTool.rule?.isBatchable ?? false) && appState.documents.length > 1;
+
     isRunning = true;
     elapsedSeconds = 0;
     const timer = setInterval(() => { elapsedSeconds++; }, 1000);
 
     try {
-      const docIndex = appState.selectedDocumentIndex ?? 0;
-      const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : '';
-      const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : '';
-      const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
-      const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
-
-      const context: OperationContext = {
-        docName,
-        docPath,
-        docDir,
-        allDocumentPaths: appState.documentPaths,
-        allDocuments: appState.documents,
-        getOutputPath,
-        customOutputPath,
-        splitPoints,
-        rotateAngle,
-        watermarkText,
-        watermarkOrientation,
-        watermarkOpacity,
-        watermarkColor,
-        watermarkFontSize: 12,
-
-        password,
-        batesPrefix,
-        batesStart,
-        batesPadding,
-        ocrOutputFormat,
-        ocrLanguage: "eng",
-
-        cropBox,
-        pageNumberPosition: "bottom_right",
-        pageNumberStart: 1,
-
-        pageNumberFormat: "1",
-
-        convertPreset,
-        reorderList,
-        signCertPath,
-        headerText,
-        footerText,
-        metadataTitle,
-        compressQuality
-      };
-
-      const args = await buildOperationArgs(activeTool.id, context);
-      if (!args) return; // User cancelled file picker
-
       const toolName = resolveToolName(activeTool.id);
-
       appState.setLoading(true);
       const startTime = performance.now();
-      try {
-        const result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+
+      if (isBatchExecution) {
+        // Run batch operation across all documents
+        const totalDocs = appState.documents.length;
+        let successCount = 0;
+        let failCount = 0;
+        const errors: string[] = [];
+
+        for (let i = 0; i < totalDocs; i++) {
+          const doc = appState.documents[i];
+          const docName = doc?.name || `document_${i + 1}.pdf`;
+          const docPath = appState.documentPaths[i] || docName;
+          const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+          const getDocOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
+          const context: OperationContext = {
+            docName,
+            docPath,
+            docDir,
+            allDocumentPaths: appState.documentPaths,
+            allDocuments: appState.documents,
+            getOutputPath: getDocOutputPath,
+            customOutputPath: '', // Auto per-doc naming in batch mode
+            splitPoints,
+            deletePages,
+            extractPages,
+            rotateAngle,
+            rotatePages,
+            watermarkText,
+            watermarkOrientation,
+            watermarkOpacity,
+            watermarkColor,
+            watermarkFontSize: 12,
+            password,
+            batesPrefix,
+            batesStart,
+            batesPadding,
+            ocrOutputFormat,
+            ocrLanguage: "eng",
+            cropBox,
+            pageNumberPosition: "bottom_right",
+            pageNumberStart: 1,
+            pageNumberFormat: "1",
+            convertPreset,
+            reorderList,
+            signCertPath,
+            headerText,
+            footerText,
+            metadataTitle,
+            compressQuality
+          };
+
+          const args = await buildOperationArgs(activeTool.id, context);
+          if (!args) continue;
+
+          try {
+
+            let result: any;
+            if (appState.isMobile) {
+               // Extract params for mobile
+               let mobileParams = { ...args };
+               // Find original bytes if any (this is tricky since we only have docPath and args)
+               // The mobile bridge expects: fileName, inputBytes, operation, params
+               // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
+               // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
+
+               let inputBytes: number[] = [];
+               if (doc && (doc as any)._isLoaded) {
+                   const arrayBuf = await doc.arrayBuffer();
+                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+               } else if (docPath) {
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+               }
+
+               result = await invoke('process_mobile_buffer', {
+                   fileName: docName,
+                   inputBytes: inputBytes,
+                   operation: activeTool.id,
+                   params: mobileParams
+               });
+            } else {
+                result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+            }
+
+            const resObj = result as any;
+            if (resObj && resObj.success) {
+              successCount++;
+            } else {
+              failCount++;
+              errors.push(`${docName}: ${resObj?.message || 'Failed'}`);
+            }
+          } catch (err: any) {
+            failCount++;
+            errors.push(`${docName}: ${err?.message || String(err)}`);
+          }
+        }
+
         const durationMs = Math.round(performance.now() - startTime);
         const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
 
-        const resObj = result as any;
-        if (resObj && resObj.success) {
-          let msg = '';
-          if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
-            const textToCopy = resObj.data?.text || '';
-            if (navigator.clipboard && textToCopy) {
-              await navigator.clipboard.writeText(textToCopy);
-            }
-            msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
-          } else {
-            const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
-            msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
-          }
+        if (failCount === 0) {
+          const msg = `✅ Batch ${activeTool.title} completed for all ${successCount} files!`;
           toastState.success(msg);
           jobsState.addJob(toolName, 'success', msg);
-
           lastExecution = {
             success: true,
             durationFormatted,
@@ -379,9 +392,181 @@ import { onMount } from 'svelte';
             timestamp: new Date(),
             message: msg
           };
-          executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
         } else {
-          const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+          const msg = `Batch finished: ${successCount} succeeded, ${failCount} failed.`;
+          toastState.error(msg, errors.slice(0, 2).join('; '));
+          jobsState.addJob(toolName, 'error', msg);
+          lastExecution = {
+            success: successCount > 0,
+            durationFormatted,
+            toolTitle: activeTool.title,
+            timestamp: new Date(),
+            message: msg
+          };
+        }
+        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+      } else {
+        // Single document execution
+        const docIndex = appState.selectedDocumentIndex ?? 0;
+        const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : '';
+        const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : '';
+        const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+        const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
+        const context: OperationContext = {
+          docName,
+          docPath,
+          docDir,
+          allDocumentPaths: appState.documentPaths,
+          allDocuments: appState.documents,
+          getOutputPath,
+          customOutputPath,
+          splitPoints,
+          deletePages,
+          extractPages,
+          rotateAngle,
+          rotatePages,
+          watermarkText,
+          watermarkOrientation,
+          watermarkOpacity,
+          watermarkColor,
+          watermarkFontSize: 12,
+
+          password,
+          batesPrefix,
+          batesStart,
+          batesPadding,
+          ocrOutputFormat,
+          ocrLanguage: "eng",
+
+          cropBox,
+          pageNumberPosition: "bottom_right",
+          pageNumberStart: 1,
+
+          pageNumberFormat: "1",
+
+          convertPreset,
+          reorderList,
+          signCertPath,
+          headerText,
+          footerText,
+          metadataTitle,
+          compressQuality
+        };
+
+        const args = await buildOperationArgs(activeTool.id, context);
+        if (!args) return; // User cancelled file picker
+
+        try {
+
+            let result: any;
+            if (appState.isMobile) {
+               // Extract params for mobile
+               let mobileParams = { ...args };
+               // Find original bytes if any (this is tricky since we only have docPath and args)
+               // The mobile bridge expects: fileName, inputBytes, operation, params
+               // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
+               // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
+
+               let inputBytes: number[] = [];
+               const currentDoc = appState.documents[docIndex];
+               if (currentDoc && (currentDoc as any)._isLoaded) {
+                   const arrayBuf = await currentDoc.arrayBuffer();
+                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+               } else if (docPath) {
+                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+               }
+
+               if ((activeTool.id === 'merge' || activeTool.id === 'pdf_merge') && appState.documents.length > 1) {
+                   const docsPayload = [];
+                   for (let idx = 0; idx < appState.documents.length; idx++) {
+                       const d = appState.documents[idx];
+                       const buf = await d.arrayBuffer();
+                       const bytes = new Uint8Array(buf);
+                       let binary = '';
+                       for (let b = 0; b < bytes.length; b++) {
+                           binary += String.fromCharCode(bytes[b]);
+                       }
+                       docsPayload.push({
+                           name: d.name || `doc_${idx + 1}.pdf`,
+                           dataBase64: btoa(binary)
+                       });
+                   }
+                   mobileParams.documents = docsPayload;
+               }
+
+               result = await invoke('process_mobile_buffer', {
+                   fileName: docName,
+                   inputBytes: inputBytes,
+                   operation: activeTool.id,
+                   params: mobileParams
+               });
+            } else {
+                result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
+            }
+
+          const durationMs = Math.round(performance.now() - startTime);
+          const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+
+          const resObj = result as any;
+          if (resObj && resObj.success) {
+            let msg = '';
+            if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+              const textToCopy = resObj.data?.text || '';
+              if (navigator.clipboard && textToCopy) {
+                await navigator.clipboard.writeText(textToCopy);
+              }
+              msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+            } else {
+              const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
+              msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
+
+              if (appState.isMobile && resObj.dataBase64) {
+                try {
+                  const byteCharacters = atob(resObj.dataBase64);
+                  const byteArray = new Uint8Array(byteCharacters.length);
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteArray[i] = byteCharacters.charCodeAt(i);
+                  }
+                  const resultBlob = new Blob([byteArray], { type: 'application/pdf' });
+                  const resultFile = new File([resultBlob], resObj.fileName || 'output.pdf', { type: 'application/pdf' });
+                  (resultFile as any)._isLoaded = true;
+                  appState.addDocuments([resultFile]);
+                  appState.selectDocument(appState.documents.length - 1);
+                } catch (loadErr) {
+                  console.warn('Failed to auto-load output document on mobile:', loadErr);
+                }
+              }
+            }
+            toastState.success(msg);
+            jobsState.addJob(toolName, 'success', msg);
+
+            lastExecution = {
+              success: true,
+              durationFormatted,
+              toolTitle: activeTool.title,
+              timestamp: new Date(),
+              message: msg
+            };
+            executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+          } else {
+            const formatted = formatUserFriendlyError(resObj?.message || 'Operation failed', activeTool.title);
+            toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+            jobsState.addJob(toolName, 'error', formatted.headline);
+
+            lastExecution = {
+              success: false,
+              durationFormatted,
+              toolTitle: activeTool.title,
+              timestamp: new Date(),
+              message: formatted.headline
+            };
+            executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
+          }
+        } catch (error) {
+          const durationMs = Math.round(performance.now() - startTime);
+          const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+          const formatted = formatUserFriendlyError(error, activeTool.title);
           toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
           jobsState.addJob(toolName, 'error', formatted.headline);
 
@@ -394,25 +579,9 @@ import { onMount } from 'svelte';
           };
           executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
         }
-      } catch (error) {
-        const durationMs = Math.round(performance.now() - startTime);
-        const durationFormatted = durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`;
-        const formatted = formatUserFriendlyError(error, activeTool.title);
-        toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
-        jobsState.addJob(toolName, 'error', formatted.headline);
-
-        lastExecution = {
-          success: false,
-          durationFormatted,
-          toolTitle: activeTool.title,
-          timestamp: new Date(),
-          message: formatted.headline
-        };
-        executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
-      } finally {
-        appState.setLoading(false);
       }
     } finally {
+      appState.setLoading(false);
       isRunning = false;
       clearInterval(timer);
     }
@@ -431,7 +600,25 @@ import { onMount } from 'svelte';
   }
 </script>
 
-<div class="operations-panel" class:collapsed={isCollapsed} id="operations-panel">
+<div
+  class="operations-panel"
+  class:collapsed={isCollapsed && !appState.isMobile}
+  class:dragging={isDragging && !appState.isMobile}
+  class:mobile-bottom-sheet={appState.isMobile}
+  id="operations-panel"
+  style={!appState.isMobile && !isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+>
+  {#if !isCollapsed}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="resize-handle"
+      id="operations-panel-resize-handle"
+      title="Drag to resize panel, double-click to toggle width"
+      onmousedown={startResize}
+      ondblclick={handleResizeDblClick}
+    ></div>
+  {/if}
+
   <button
     class="collapse-toggle"
     id="operations-panel-toggle"
@@ -442,7 +629,7 @@ import { onMount } from 'svelte';
     {isCollapsed ? '‹' : '›'}
   </button>
 
-  {#if !isCollapsed}
+  {#if !isCollapsed || appState.isMobile}
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -453,6 +640,14 @@ import { onMount } from 'svelte';
         <span class="tool-icon">{activeTool.icon}</span>
         <h3 class="inspector-title">{activeTool.title}</h3>
       </div>
+      {#if appState.isMobile}
+        <button class="back-btn close-btn" onclick={() => {
+          appState.closeTool();
+          if (appState.activeTab === 'tools') appState.setActiveTab('documents');
+        }} title="Close">
+          ✕
+        </button>
+      {/if}
     </div>
 
     <div class="inspector-content">
@@ -482,6 +677,16 @@ import { onMount } from 'svelte';
           <label for="splitPoints" class="section-desc">Split Page Ranges (comma separated):</label>
           <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 1-3, 4-8" />
         </div>
+      {:else if activeTool.id === 'delete_pages'}
+        <div class="operation-config">
+          <label for="deletePages" class="section-desc">Pages to Delete (comma separated or ranges):</label>
+          <input id="deletePages" type="text" class="form-input" bind:value={deletePages} placeholder="e.g. 1, 3, 5-7" />
+        </div>
+      {:else if activeTool.id === 'extract_pages'}
+        <div class="operation-config">
+          <label for="extractPages" class="section-desc">Pages to Extract (comma separated or ranges):</label>
+          <input id="extractPages" type="text" class="form-input" bind:value={extractPages} placeholder="e.g. 1-3, 5" />
+        </div>
       {:else if activeTool.id === 'compress'}
         <div class="operation-config">
           <label for="compressQuality" class="section-desc">Image Quality: {compressQuality}%</label>
@@ -499,6 +704,19 @@ import { onMount } from 'svelte';
             <option value="180">180° Flip</option>
             <option value="270">270° Counter-Clockwise</option>
           </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="rotatePages" class="section-desc">Pages to Rotate (Optional):</label>
+          <input
+            id="rotatePages"
+            type="text"
+            class="form-input"
+            bind:value={rotatePages}
+            placeholder="e.g. 1, 3, 5-10 (leave empty for all)"
+          />
+          <div class="range-labels" style="margin-top: 4px;">
+            <span style="font-size: 0.72rem; color: #94a3b8;">Empty = All pages</span>
+          </div>
         </div>
       {:else if activeTool.id === 'watermark'}
         <div class="operation-config">
@@ -624,7 +842,26 @@ import { onMount } from 'svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard')}
+      {#if appState.documents.length > 1 && activeTool.rule?.isBatchable}
+        <div class="batch-scope-banner">
+          <div class="batch-scope-header">
+            <span class="batch-scope-icon">⚡</span>
+            <span class="batch-scope-title">Execution Mode</span>
+          </div>
+          <div class="batch-scope-options">
+            <label class="scope-option">
+              <input type="radio" name="batchScope" checked={applyToAllFiles} onchange={() => applyToAllFiles = true} />
+              <span>Apply to all <strong>{appState.documents.length} files</strong> in queue</span>
+            </label>
+            <label class="scope-option">
+              <input type="radio" name="batchScope" checked={!applyToAllFiles} onchange={() => applyToAllFiles = false} />
+              <span>Current file only ({appState.documents[appState.selectedDocumentIndex ?? 0]?.name || 'active'})</span>
+            </label>
+          </div>
+        </div>
+      {/if}
+
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' ? 'Output folder:' : 'Output file:'}
@@ -653,6 +890,8 @@ import { onMount } from 'svelte';
           {#if isRunning}
             <span class="spinner" aria-hidden="true"></span>
             Running...
+          {:else if applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1}
+            Run Batch {activeTool.title} ({appState.documents.length} files)
           {:else}
             Run {activeTool.title}
           {/if}
@@ -672,21 +911,32 @@ import { onMount } from 'svelte';
   {:else}
     <!-- DIRECTORY MODE (STIRLING PDF STYLE) -->
     <div class="panel-header">
-      <!-- Context Switcher Bar -->
-      <div class="context-bar" role="tablist" aria-label="File type context">
+      {#if appState.isMobile}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">⚡ All Tools</h3>
+          <button class="back-btn close-btn" onclick={() => {
+            if (appState.activeTab === 'tools') appState.setActiveTab('documents');
+          }} title="Close">✕</button>
+        </div>
+      {/if}
+      <!-- Context Filter Chip Bar -->
+      <div class="context-bar" role="tablist" aria-label="Filter context">
         {#each [
-          { id: 'pdf', label: 'PDF Tools', icon: '📄' },
-          { id: 'office', label: 'Office Tools', icon: '📁' },
-          { id: 'ai', label: 'AI Tools', icon: '🤖' }
+          { id: 'recommended', label: `⚡ Recommended (${ranked.recommended.length})` },
+          { id: 'ready', label: `✅ Ready (${readyToolsCount})` },
+          { id: 'all', label: `All Tools (${allTools.length})` },
+          { id: 'pdf', label: 'PDF' },
+          { id: 'office', label: 'Office' },
+          { id: 'ai', label: 'AI & OCR' }
         ] as ctx (ctx.id)}
           <button
-            class="context-btn"
-            class:active={toolContext === ctx.id}
+            class="context-btn {ctx.id === 'ready' ? 'context-btn-ready' : ''}"
+            class:active={contextFilter === ctx.id}
             role="tab"
-            aria-selected={toolContext === ctx.id}
-            onclick={() => { toolContext = ctx.id as typeof toolContext; selectedCategory = 'all'; searchQuery = ''; }}
+            aria-selected={contextFilter === ctx.id}
+            onclick={() => { contextFilter = ctx.id; selectedCategory = 'all'; searchQuery = ''; }}
             id={`context-btn-${ctx.id}`}
-          >{ctx.icon} {ctx.label}</button>
+          >{ctx.label}</button>
         {/each}
       </div>
 
@@ -704,24 +954,62 @@ import { onMount } from 'svelte';
         {/if}
       </div>
 
-      <!-- Category Filter Pills -->
-      <div class="category-pills">
-        {#each allCategories as cat}
-          <button
-            class="pill-btn {selectedCategory === cat.id ? 'active' : ''}"
-            onclick={() => selectedCategory = cat.id}
-          >
-            {cat.icon} {cat.title}
-          </button>
-        {/each}
-      </div>
+      {#if contextFilter === 'all' || contextFilter === 'pdf'}
+        <!-- Category Filter Pills -->
+        <div class="category-pills">
+          {#each allCategories as cat}
+            <button
+              class="pill-btn {selectedCategory === cat.id ? 'active' : ''}"
+              onclick={() => selectedCategory = cat.id}
+            >
+              {cat.icon} {cat.title}
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <div class="panel-content">
-      {#if searchQuery.trim() || selectedCategory !== 'all'}
+      <!-- Missing Pack Warning -->
+      {#if ranked.packLocked.length > 0 && contextFilter === 'recommended'}
+        {#each ranked.packLocked as lockedTool}
+          <div class="pack-locked-card">
+            <span class="tool-card-icon">{lockedTool.tool.icon}</span>
+            <div class="tool-card-info">
+              <div class="tool-card-title-row">
+                <span class="tool-card-title" style="opacity: 0.6;">{lockedTool.tool.title}</span>
+                {#if lockedTool.tool.inputFormat && lockedTool.tool.outputFormat}
+                  <span class="format-pill">
+                    <span class="fmt-in">{lockedTool.tool.inputFormat}</span>
+                    <span class="fmt-arrow">➔</span>
+                    <span class="fmt-out">{lockedTool.tool.outputFormat}</span>
+                  </span>
+                {/if}
+              </div>
+              <span class="tool-card-desc">📦 Requires {lockedTool.missingPack} Pack</span>
+            </div>
+            <button class="enable-pack-btn" onclick={(e) => {
+               e.stopPropagation();
+               appState.toggleFeaturePack(lockedTool.missingPack, true);
+            }}>
+               Enable Pack
+            </button>
+          </div>
+        {/each}
+      {/if}
+
+      {#if searchQuery.trim() || selectedCategory !== 'all' || contextFilter === 'recommended'}
         <!-- Search Results View -->
         <div class="search-results-list">
-          <span class="category-header">{searchQuery.trim() ? 'Search Results' : allCategories.find(c => c.id === selectedCategory)?.title} ({filteredTools.length})</span>
+          <span class="category-header">
+             {#if searchQuery.trim()}
+                Search Results ({filteredTools.length})
+             {:else if contextFilter === 'recommended'}
+                Recommended for Selection ({filteredTools.length})
+             {:else}
+                {allCategories.find(c => c.id === selectedCategory)?.title} ({filteredTools.length})
+             {/if}
+          </span>
           {#if filteredTools.length === 0}
             <div class="empty-state">No matching tools found</div>
           {:else}
@@ -729,7 +1017,21 @@ import { onMount } from 'svelte';
               <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                 <span class="tool-card-icon">{tool.icon}</span>
                 <div class="tool-card-info">
-                  <span class="tool-card-title">{tool.title}</span>
+                  <span class="tool-card-title">
+                    {tool.title}
+                    {#if tool.releaseStatus === 'v0.5-core'}
+                      <span class="status-badge-v1">v0.5 Core</span>
+                    {:else}
+                      <span class="status-badge-preview">Preview</span>
+                    {/if}
+                    {#if appState.documents.length >= 2}
+                      {#if tool.rule?.minDocuments === 2}
+                        <span class="smart-badge">Multi-File Action</span>
+                      {:else if tool.rule?.isBatchable}
+                        <span class="smart-badge">Batch Action ({appState.documents.length} files)</span>
+                      {/if}
+                    {/if}
+                  </span>
                   <span class="tool-card-desc">{tool.description}</span>
                 </div>
               </button>
@@ -751,7 +1053,23 @@ import { onMount } from 'svelte';
                   <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                     <span class="tool-card-icon">{tool.icon}</span>
                     <div class="tool-card-info">
-                      <span class="tool-card-title">{tool.title}</span>
+                      <div class="tool-card-title-row">
+                        <div class="tool-title-with-badge">
+                          <span class="tool-card-title">{tool.title}</span>
+                          {#if tool.releaseStatus === 'v0.5-core'}
+                            <span class="status-badge-v1">v0.5 Core</span>
+                          {:else}
+                            <span class="status-badge-preview">Preview</span>
+                          {/if}
+                        </div>
+                        {#if tool.inputFormat && tool.outputFormat}
+                          <span class="format-pill">
+                            <span class="fmt-in">{tool.inputFormat}</span>
+                            <span class="fmt-arrow">➔</span>
+                            <span class="fmt-out">{tool.outputFormat}</span>
+                          </span>
+                        {/if}
+                      </div>
                       <span class="tool-card-desc">{tool.description}</span>
                     </div>
                   </button>
@@ -784,6 +1102,28 @@ import { onMount } from 'svelte';
   .operations-panel.collapsed {
     width: 32px !important;
     min-width: 32px !important;
+  }
+
+  .operations-panel.dragging {
+    transition: none; /* smooth real-time drag without transition lag */
+    user-select: none;
+  }
+
+  .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 20;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .resize-handle:hover,
+  .operations-panel.dragging .resize-handle {
+    background: var(--accent-primary, #5e6ad2);
   }
 
   .collapse-toggle {
@@ -819,10 +1159,49 @@ import { onMount } from 'svelte';
     flex-shrink: 0;
   }
 
-  .context-bar { display:flex; gap:6px; padding:8px 12px 0; margin-bottom: 12px; }
-  .context-btn { flex:1; padding:6px 8px; border-radius:var(--border-radius-sm, 4px); font-size:0.8rem; font-weight:500; border:1px solid var(--border-color, #2a2a35); background:transparent; color:var(--text-secondary, #9ca3af); cursor:pointer; transition:all var(--transition-fast, 0.15s ease); white-space:nowrap; }
-  .context-btn.active { background:var(--accent-primary, #5e6ad2); color:#fff; border-color:var(--accent-primary, #5e6ad2); }
-  .context-btn:hover:not(.active) { background:var(--bg-surface-hover, rgba(255, 255, 255, 0.05)); color:var(--text-primary, #ffffff); }
+  .context-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 4px 0 0;
+    margin-bottom: 12px;
+    scrollbar-width: none; /* Firefox */
+  }
+  .context-bar::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+
+  .context-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color, #2a2a35);
+    background: transparent;
+    color: var(--text-secondary, #9ca3af);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+    white-space: nowrap;
+  }
+  .context-btn.active {
+    background: var(--accent-primary, #5e6ad2);
+    color: #fff;
+    border-color: var(--accent-primary, #5e6ad2);
+  }
+  .context-btn-ready {
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+  }
+  .context-btn-ready.active {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #ffffff;
+  }
+  .context-btn:hover:not(.active) {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
+  }
 
   .search-box {
     position: relative;
@@ -1234,5 +1613,203 @@ import { onMount } from 'svelte';
 
   .output-path-input:focus {
     color: var(--text-primary, #ffffff);
+  }
+
+  .smart-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    vertical-align: middle;
+  }
+
+  .pack-locked-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--border-radius-sm, 4px);
+    width: 100%;
+  }
+
+  .enable-pack-btn {
+    margin-left: auto;
+    padding: 4px 8px;
+    font-size: 11px;
+    background: var(--accent-primary, #5e6ad2);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .enable-pack-btn:hover {
+    background: var(--accent-hover, #6e79d6);
+  }
+
+  /* Batch Scope Banner */
+  .batch-scope-banner {
+    background: rgba(94, 106, 210, 0.08);
+    border: 1px solid rgba(94, 106, 210, 0.25);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .batch-scope-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .batch-scope-icon {
+    font-size: 13px;
+  }
+
+  .batch-scope-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-primary, #818cf8);
+  }
+
+  .batch-scope-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .scope-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, #cbd5e1);
+    cursor: pointer;
+  }
+
+  .scope-option input[type="radio"] {
+    accent-color: var(--accent-primary, #5e6ad2);
+    cursor: pointer;
+  }
+
+  /* Mobile Bottom Sheet Overrides */
+  .operations-panel.mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    border-top: 1px solid var(--border-color, #2a2a35);
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+  }
+
+  .operations-panel.mobile-bottom-sheet .collapse-toggle,
+  .operations-panel.mobile-bottom-sheet .resize-handle {
+    display: none;
+  }
+
+  .operations-panel.mobile-bottom-sheet .form-input,
+  .operations-panel.mobile-bottom-sheet .run-btn,
+  .operations-panel.mobile-bottom-sheet select {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* Drag handle indicator */
+  .operations-panel.mobile-bottom-sheet::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-color, #2a2a35);
+    border-radius: 2px;
+  }
+
+  .operations-panel.mobile-bottom-sheet .panel-header {
+      padding-top: 20px;
+  }
+  .operations-panel.mobile-bottom-sheet .inspector-header {
+      padding-top: 20px;
+  }
+
+  .tool-card-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .format-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .fmt-in {
+    color: var(--text-secondary, #9ca3af);
+  }
+  .fmt-arrow {
+    color: var(--accent-primary, #5e6ad2);
+    font-size: 8px;
+  }
+  .tool-title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .status-badge-v1 {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    vertical-align: middle;
+  }
+  .status-badge-preview {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(147, 51, 234, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(147, 51, 234, 0.28);
+    vertical-align: middle;
   }
 </style>

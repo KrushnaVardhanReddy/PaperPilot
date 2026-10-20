@@ -33,6 +33,8 @@ impl PdfOperation for DeletePagesOperation {
         }
 
         inner.delete_pages(&self.page_indices);
+        inner.prune_objects();
+        inner.renumber_objects();
 
         Ok(())
     }
@@ -71,7 +73,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]

@@ -26,28 +26,47 @@ impl PdfOperation for ExtractTextOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-
-        let target_pages = match &self.pages {
-            Some(pages) => pages.clone(),
-            None => {
-                let all_pages = inner.get_pages();
-                all_pages.keys().copied().collect()
-            }
-        };
-
         let mut pages_text = Vec::new();
 
-        for page_id in target_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+        {
+            let total_pages = pdf.page_count().unwrap_or(0);
+            let target_pages: Vec<u32> = match &self.pages {
+                Some(pages) => pages.clone(),
+                None => (1..=total_pages as u32).collect(),
+            };
+            for page_id in target_pages {
+                if page_id >= 1 && (page_id as usize) <= total_pages {
+                    let text = pdf.to_markdown((page_id - 1) as usize).unwrap_or_default();
                     pages_text.push(text);
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+            }
+        }
+
+        if pages_text.is_empty() {
+            let inner = &mut lopdf_doc.inner;
+
+            let target_pages = match &self.pages {
+                Some(pages) => pages.clone(),
+                None => {
+                    let all_pages = inner.get_pages();
+                    all_pages.keys().copied().collect()
+                }
+            };
+
+            for page_id in target_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        pages_text.push(text);
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_id, e
+                        )));
+                    }
                 }
             }
         }
@@ -114,7 +133,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]

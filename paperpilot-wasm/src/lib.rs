@@ -76,7 +76,12 @@ impl WasmPdfEngine {
 
     /// Add watermark text across pages
     #[wasm_bindgen]
-    pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn watermark(
+        input_bytes: &[u8],
+        text: &str,
+        angle: Option<f32>,
+        opacity: Option<f32>,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::watermark(input_bytes, text, angle, opacity)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -262,10 +267,41 @@ impl WasmPdfEngine {
 
     #[wasm_bindgen]
     pub fn pdf_to_docx(input_bytes: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
-        let result_bytes = operations::pdf_to_docx(input_bytes)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let result_bytes =
+            operations::pdf_to_docx(input_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
         let array = js_sys::Uint8Array::new_with_length(result_bytes.len() as u32);
         array.copy_from(&result_bytes);
         Ok(array)
+    }
+
+    /// List all registered tools and their availability in the WASM engine
+    #[wasm_bindgen]
+    pub fn list_tools() -> String {
+        serde_json::json!([
+            {"id": "merge", "name": "Merge PDFs", "status": "stable"},
+            {"id": "split", "name": "Split PDF", "status": "stable"},
+            {"id": "rotate", "name": "Rotate Pages", "status": "stable"},
+            {"id": "compress", "name": "Compress PDF", "status": "stable"},
+            {"id": "encrypt", "name": "Encrypt PDF", "status": "stable"},
+            {"id": "decrypt", "name": "Decrypt PDF", "status": "stable"},
+            {"id": "watermark", "name": "Watermark", "status": "stable"},
+            {"id": "delete_pages", "name": "Delete Pages", "status": "stable"},
+            {"id": "extract_pages", "name": "Extract Pages", "status": "stable"},
+            {"id": "reorder_pages", "name": "Reorder Pages", "status": "stable"},
+            {"id": "crop", "name": "Crop Pages", "status": "stable"},
+            {"id": "flatten", "name": "Flatten PDF", "status": "stable"},
+            {"id": "set_metadata", "name": "Edit Metadata", "status": "stable"},
+            {"id": "images_to_pdf", "name": "Images to PDF", "status": "stable"},
+            {"id": "extract_images", "name": "Extract Images", "status": "stable"},
+            {"id": "pdf_hash", "name": "PDF Hash", "status": "stable"},
+            {"id": "render_page", "name": "Render Page", "status": "stable"},
+            {"id": "extract_text", "name": "Extract Text", "status": "stable"},
+            {"id": "page_numbers", "name": "Page Numbers", "status": "stable"},
+            {"id": "header_footer", "name": "Header & Footer", "status": "stable"},
+            {"id": "pdf_info", "name": "PDF Info", "status": "stable"},
+            {"id": "ocr", "name": "Neural OCR", "status": "preview"},
+            {"id": "json_to_pdf", "name": "JSON to PDF", "status": "preview"},
+            {"id": "pdf_to_docx", "name": "PDF to DOCX", "status": "preview"}
+        ]).to_string()
     }
 }

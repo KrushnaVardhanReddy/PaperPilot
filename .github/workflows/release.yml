@@ -1,0 +1,316 @@
+name: Release Build & Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g., v0.5.0 or v1.0.0)'
+        required: true
+        default: 'v0.5.0'
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: true
+        type: boolean
+        default: true
+      draft:
+        description: 'Create as draft release'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-release-binaries:
+    name: Build Release Binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: paperpilot-linux-x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: paperpilot-windows-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: paperpilot-macos-aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install Linux GUI Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Build Optimized Release Binaries
+        run: |
+          cargo build --release --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+
+      - name: Package Release Assets (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p release_pkgs
+
+          TARGET_DIR="target/${{ matrix.target }}/release"
+
+          # CLI standalone
+          mkdir -p staging_cli
+          cp "${TARGET_DIR}/paperpilot" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_cli/paperpilot 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          tar -czvf "release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_cli .
+
+          # MCP standalone
+          mkdir -p staging_mcp
+          cp "${TARGET_DIR}/paperpilot-mcp" staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          tar -czvf "release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_mcp .
+
+          # Gateway standalone
+          mkdir -p staging_gateway
+          cp "${TARGET_DIR}/paperpilot-gateway" staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          tar -czvf "release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_gateway .
+
+          # All-in-one
+          mkdir -p staging_all
+          cp "${TARGET_DIR}/paperpilot" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_all/paperpilot 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-gateway" staging_all/ 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-mcp" staging_all/ 2>/dev/null || true
+          cp README.md staging_all/ || true
+          tar -czvf "release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_all .
+
+          cd release_pkgs
+          for file in *.tar.gz; do
+            shasum -a 256 "$file" > "${file}.sha256"
+          done
+          cd ..
+
+          cp release_pkgs/* .
+
+      - name: Package Release Assets (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release_pkgs
+
+          # CLI standalone
+          mkdir -p staging_cli
+          cp target/release/paperpilot.exe staging_cli/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging_cli/paperpilot.exe 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          (cd staging_cli && 7z a "../release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # MCP standalone
+          mkdir -p staging_mcp
+          cp target/release/paperpilot-mcp.exe staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          (cd staging_mcp && 7z a "../release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # Gateway standalone
+          mkdir -p staging_gateway
+          cp target/release/paperpilot-gateway.exe staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          (cd staging_gateway && 7z a "../release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # All-in-one
+          mkdir -p staging_all
+          cp target/release/paperpilot.exe staging_all/ 2>/dev/null || cp target/release/paperpilot-cli.exe staging_all/paperpilot.exe 2>/dev/null || true
+          cp target/release/paperpilot-gateway.exe staging_all/ 2>/dev/null || true
+          cp target/release/paperpilot-mcp.exe staging_all/ 2>/dev/null || true
+          cp README.md staging_all/ || true
+          (cd staging_all && 7z a "../release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          cd release_pkgs
+          for file in *.zip; do
+            sha256sum "$file" > "${file}.sha256"
+          done
+          cd ..
+
+          cp release_pkgs/* .
+
+      - name: Upload Platform Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.os }}
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
+  build-wasm-package:
+    name: Build WASM Package (Web & Edge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust & WASM Target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM Package
+        run: |
+          wasm-pack build --target web --release paperpilot-wasm
+
+      - name: Package WASM Release Bundle
+        run: |
+          mkdir -p release_pkgs staging_wasm
+          cp -r paperpilot-wasm/pkg/* staging_wasm/
+          cp README.md staging_wasm/ || true
+          tar -czvf "release_pkgs/paperpilot-wasm-universal.tar.gz" -C staging_wasm .
+          cd release_pkgs
+          shasum -a 256 "paperpilot-wasm-universal.tar.gz" > "paperpilot-wasm-universal.tar.gz.sha256"
+          cd ..
+
+      - name: Upload WASM Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-wasm
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
+  build-android-apk:
+    name: Build Android APK (Mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK & NDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install NDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "ndk;28.2.13676358"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: aarch64-linux-android
+
+      - name: Set up Node.js & pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: 'apps/desktop/pnpm-lock.yaml'
+
+      - name: Install Desktop Dependencies
+        run: |
+          cd apps/desktop
+          pnpm install --no-frozen-lockfile || npm install
+
+      - name: Build Android Release APK
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          CARGO_BUILD_JOBS: 4
+        run: |
+          cd apps/desktop
+          pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+
+      - name: Package Android Release APK
+        run: |
+          mkdir -p release_pkgs
+          # Copy universal release apk or arm64 apk
+          APK_PATH=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            cp "$APK_PATH" "release_pkgs/paperpilot-android-aarch64-${{ inputs.version }}.apk"
+            cd release_pkgs
+            shasum -a 256 "paperpilot-android-aarch64-${{ inputs.version }}.apk" > "paperpilot-android-aarch64-${{ inputs.version }}.apk.sha256"
+            cd ..
+          fi
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-android
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [build-release-binaries, build-wasm-package, build-android-apk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Assets
+        run: |
+          ls -la release-assets
+
+      - name: Create / Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: "PaperPilot ${{ inputs.version }}"
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          files: release-assets/*
+          generate_release_notes: true
+          body: |
+            ## PaperPilot Release ${{ inputs.version }}
+
+            ### Included Release Binaries & Packages
+            - `paperpilot` (CLI Engine with 50+ PDF & document tools)
+            - `paperpilot-gateway` (HTTP/REST Microservice API)
+            - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
+            - `paperpilot-all` (All-in-one desktop suite)
+            - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
+            - `paperpilot-wasm-universal` (Client-side WebAssembly package for browser & edge runtimes)
+
+            ### Checksums
+            SHA-256 checksums are attached alongside each `.tar.gz`, `.zip`, and `.apk` artifact.
+

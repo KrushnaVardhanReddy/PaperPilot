@@ -421,7 +421,12 @@ pub fn encrypt(input_bytes: &[u8], password: &str) -> OperationResult<Vec<u8>> {
     Ok(buffer)
 }
 
-pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Option<f32>) -> OperationResult<Vec<u8>> {
+pub fn watermark(
+    input_bytes: &[u8],
+    text: &str,
+    angle: Option<f32>,
+    opacity: Option<f32>,
+) -> OperationResult<Vec<u8>> {
     let mut doc = Document::load_mem(input_bytes)
         .map_err(|e| PdfError::ParseError(format!("Failed to parse document: {e}")))?;
 
@@ -449,11 +454,19 @@ pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Op
         if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(object_id) {
             if let Ok(media_box) = page_dict.get(b"MediaBox")
                 && let Ok(arr) = media_box.as_array()
-                    && arr.len() == 4
-                        && let (Ok(x2), Ok(y2)) = (arr[2].as_f32().or_else(|_| arr[2].as_i64().map(|v| v as f32)), arr[3].as_f32().or_else(|_| arr[3].as_i64().map(|v| v as f32))) {
-                            page_width = x2;
-                            page_height = y2;
-                        }
+                && arr.len() == 4
+                && let (Ok(x2), Ok(y2)) = (
+                    arr[2]
+                        .as_f32()
+                        .or_else(|_| arr[2].as_i64().map(|v| v as f32)),
+                    arr[3]
+                        .as_f32()
+                        .or_else(|_| arr[3].as_i64().map(|v| v as f32)),
+                )
+            {
+                page_width = x2;
+                page_height = y2;
+            }
 
             let mut new_resources = None;
             if let Ok(res) = page_dict.get_mut(b"Resources") {
@@ -504,7 +517,9 @@ pub fn watermark(input_bytes: &[u8], text: &str, angle: Option<f32>, opacity: Op
         let sin_t = theta.sin();
 
         // Use gray by default
-        let r = 0.5; let g = 0.5; let b = 0.5;
+        let r = 0.5;
+        let g = 0.5;
+        let b = 0.5;
 
         let content = format!(
             "q
@@ -1672,7 +1687,6 @@ pub fn json_to_pdf(json_str: &str) -> OperationResult<Vec<u8>> {
     Ok(bytes)
 }
 
-
 #[derive(Debug, Clone)]
 pub struct TextSpan {
     pub text: String,
@@ -1692,172 +1706,151 @@ pub enum LayoutItem {
     Table(Vec<Vec<Vec<TextSpan>>>),
 }
 
+pub fn pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
+    use docx_rs::{AlignmentType, Docx, Paragraph, Run, Table, TableCell, TableRow};
 
-    pub fn pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
-        use docx_rs::{Docx, Paragraph, Run, AlignmentType, Table, TableRow, TableCell};
+    let doc = Document::load_mem(input_bytes)
+        .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
 
-        let doc = Document::load_mem(input_bytes).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+    let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
+    all_pages.sort_unstable();
 
-        let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
-        all_pages.sort_unstable();
+    let mut docx = Docx::new();
 
-        let mut docx = Docx::new();
+    for (i, page_id) in all_pages.iter().enumerate() {
+        let page_obj_id = doc.get_pages()[page_id];
+        let page_dict = doc
+            .get_object(page_obj_id)
+            .and_then(|obj| obj.as_dict())
+            .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
 
-        for (i, page_id) in all_pages.iter().enumerate() {
-            let page_obj_id = doc.get_pages()[page_id];
-            let page_dict = doc.get_object(page_obj_id).and_then(|obj| obj.as_dict()).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+        let media_box_default = vec![];
+        let media_box = page_dict
+            .get(b"MediaBox")
+            .and_then(|obj| obj.as_array())
+            .unwrap_or(&media_box_default);
 
-            let media_box_default = vec![];
-            let media_box = page_dict
-                .get(b"MediaBox")
-                .and_then(|obj| obj.as_array())
-                .unwrap_or(&media_box_default);
+        let mut width: f32 = 595.0;
+        if media_box.len() >= 4
+            && let (Ok(x0), Ok(x1)) = (
+                media_box[0]
+                    .as_f32()
+                    .or_else(|_| media_box[0].as_i64().map(|v| v as f32)),
+                media_box[2]
+                    .as_f32()
+                    .or_else(|_| media_box[2].as_i64().map(|v| v as f32)),
+            )
+        {
+            width = (x1 - x0).abs();
+        }
+        let center_w = width / 2.0;
 
-            let mut width: f32 = 595.0;
-            if media_box.len() >= 4
-                && let (Ok(x0), Ok(x1)) = (media_box[0].as_f32().or_else(|_| media_box[0].as_i64().map(|v| v as f32)), media_box[2].as_f32().or_else(|_| media_box[2].as_i64().map(|v| v as f32))) {
-                    width = (x1 - x0).abs();
+        let content_data = doc.get_page_content(page_obj_id);
+        let content = lopdf::content::Content::decode(&content_data)
+            .unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
+
+        let mut current_font_size: f32 = 12.0;
+        let mut is_bold = false;
+        let mut is_italic = false;
+        let mut current_color = String::new();
+        let mut current_x: f32 = 0.0;
+        let mut current_y: f32 = 0.0;
+        let mut current_text = String::new();
+
+        let mut font_names = std::collections::HashMap::new();
+        if let Ok(resources) = page_dict
+            .get(b"Resources")
+            .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+            .and_then(|obj| obj.as_dict())
+            && let Ok(fonts) = resources
+                .get(b"Font")
+                .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                .and_then(|obj| obj.as_dict())
+        {
+            for (font_ref, font_obj) in fonts.iter() {
+                if let Ok(font_dict) = doc
+                    .get_object(font_obj.as_reference().unwrap_or((0, 0)))
+                    .and_then(|o| o.as_dict())
+                    && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name())
+                {
+                    font_names.insert(
+                        String::from_utf8_lossy(font_ref).to_string(),
+                        String::from_utf8_lossy(base_font).to_string(),
+                    );
                 }
-            let center_w = width / 2.0;
+            }
+        }
 
-            let content_data = doc.get_page_content(page_obj_id);
-            let content = lopdf::content::Content::decode(&content_data).unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
+        let mut spans = vec![];
 
-            let mut current_font_size: f32 = 12.0;
-            let mut is_bold = false;
-            let mut is_italic = false;
-            let mut current_color = String::new();
-            let mut current_x: f32 = 0.0;
-            let mut current_y: f32 = 0.0;
-            let mut current_text = String::new();
-
-            let mut font_names = std::collections::HashMap::new();
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(fonts) = resources.get(b"Font").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (font_ref, font_obj) in fonts.iter() {
-                        if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())
-                            && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name()) {
-                                font_names.insert(String::from_utf8_lossy(font_ref).to_string(), String::from_utf8_lossy(base_font).to_string());
+        for op in content.operations {
+            match op.operator.as_str() {
+                "Tf" => {
+                    if op.operands.len() == 2 {
+                        if let Ok(name) = op.operands[0].as_name() {
+                            let font_key = String::from_utf8_lossy(name).to_string();
+                            if let Some(base) = font_names.get(&font_key) {
+                                let lower_base = base.to_lowercase();
+                                is_bold = lower_base.contains("bold")
+                                    || lower_base.contains("black")
+                                    || lower_base.contains("heavy");
+                                is_italic =
+                                    lower_base.contains("italic") || lower_base.contains("oblique");
                             }
+                        }
+                        current_font_size = op.operands[1]
+                            .as_f32()
+                            .or_else(|_| op.operands[1].as_i64().map(|v| v as f32))
+                            .unwrap_or(12.0);
                     }
                 }
-
-            let mut spans = vec![];
-
-            for op in content.operations {
-                match op.operator.as_str() {
-                    "Tf" => {
-                        if op.operands.len() == 2 {
-                            if let Ok(name) = op.operands[0].as_name() {
-                                let font_key = String::from_utf8_lossy(name).to_string();
-                                if let Some(base) = font_names.get(&font_key) {
-                                    let lower_base = base.to_lowercase();
-                                    is_bold = lower_base.contains("bold") || lower_base.contains("black") || lower_base.contains("heavy");
-                                    is_italic = lower_base.contains("italic") || lower_base.contains("oblique");
-                                }
-                            }
-                            current_font_size = op.operands[1].as_f32().or_else(|_| op.operands[1].as_i64().map(|v| v as f32)).unwrap_or(12.0);
-                        }
+                "rg" | "g" | "k" => {
+                    if op.operator == "rg" && op.operands.len() == 3 {
+                        let r = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        let g = (op.operands[1].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        let b = (op.operands[2].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        current_color = format!("{:02X}{:02X}{:02X}", r, g, b);
+                    } else if op.operator == "g" && op.operands.len() == 1 {
+                        let gray = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
+                        current_color = format!("{:02X}{:02X}{:02X}", gray, gray, gray);
                     }
-                    "rg" | "g" | "k" => {
-                        if op.operator == "rg" && op.operands.len() == 3 {
-                            let r = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            let g = (op.operands[1].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            let b = (op.operands[2].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            current_color = format!("{:02X}{:02X}{:02X}", r, g, b);
-                        } else if op.operator == "g" && op.operands.len() == 1 {
-                            let gray = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            current_color = format!("{:02X}{:02X}{:02X}", gray, gray, gray);
-                        }
+                }
+                "Tm" => {
+                    if op.operands.len() == 6 {
+                        current_x = op.operands[4]
+                            .as_f32()
+                            .or_else(|_| op.operands[4].as_i64().map(|v| v as f32))
+                            .unwrap_or(0.0);
+                        current_y = op.operands[5]
+                            .as_f32()
+                            .or_else(|_| op.operands[5].as_i64().map(|v| v as f32))
+                            .unwrap_or(0.0);
                     }
-                    "Tm" => {
-                        if op.operands.len() == 6 {
-                            current_x = op.operands[4].as_f32().or_else(|_| op.operands[4].as_i64().map(|v| v as f32)).unwrap_or(0.0);
-                            current_y = op.operands[5].as_f32().or_else(|_| op.operands[5].as_i64().map(|v| v as f32)).unwrap_or(0.0);
-                        }
+                }
+                "Td" | "TD" => {
+                    if op.operands.len() == 2 {
+                        let dx = match &op.operands[0] {
+                            lopdf::Object::Real(f) => *f,
+                            lopdf::Object::Integer(i) => *i as f32,
+                            _ => 0.0,
+                        };
+                        let dy = match &op.operands[1] {
+                            lopdf::Object::Real(f) => *f,
+                            lopdf::Object::Integer(i) => *i as f32,
+                            _ => 0.0,
+                        };
+                        current_x += dx;
+                        current_y += dy;
                     }
-                    "Td" | "TD" => {
-                        if op.operands.len() == 2 {
-                            let dx = match &op.operands[0] {
-                                lopdf::Object::Real(f) => *f,
-                                lopdf::Object::Integer(i) => *i as f32,
-                                _ => 0.0,
-                            };
-                            let dy = match &op.operands[1] {
-                                lopdf::Object::Real(f) => *f,
-                                lopdf::Object::Integer(i) => *i as f32,
-                                _ => 0.0,
-                            };
-                            current_x += dx;
-                            current_y += dy;
-                        }
+                }
+                "Tj" => {
+                    if op.operands.len() == 1
+                        && let Ok(string_bytes) = op.operands[0].as_str()
+                    {
+                        let txt = String::from_utf8_lossy(string_bytes).to_string();
+                        current_text.push_str(&txt);
                     }
-                    "Tj" => {
-                        if op.operands.len() == 1
-                            && let Ok(string_bytes) = op.operands[0].as_str() {
-                                let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                current_text.push_str(&txt);
-                            }
-                        if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                        }
-                    }
-                    "TJ" => {
-                        if op.operands.len() == 1
-                            && let Ok(array) = op.operands[0].as_array() {
-                                for item in array {
-                                    if let Ok(string_bytes) = item.as_str() {
-                                        let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                        current_text.push_str(&txt);
-                                    } else if let Ok(num) = item.as_f32()
-                                        && num < -100.0 {
-                                            current_text.push(' ');
-                                        }
-                                }
-                            }
-                        if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                        }
-                    }
-                    "T*" | "'" | "\"" => {
-                         if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                         }
-                    }
-                    "ET" if !current_text.is_empty() => {
+                    if !current_text.is_empty() {
                         spans.push(TextSpan {
                             text: current_text.clone(),
                             font_size: current_font_size,
@@ -1871,204 +1864,255 @@ pub enum LayoutItem {
                         });
                         current_text.clear();
                     }
-                    _ => {}
                 }
-            }
-
-            if !current_text.is_empty() {
-                spans.push(TextSpan {
-                    text: current_text.clone(),
-                    font_size: current_font_size,
-                    is_bold,
-                    is_italic,
-                    color_hex: current_color.clone(),
-                    x: current_x,
-                    y: current_y,
-                    width: current_text.len() as f32 * current_font_size * 0.5,
-                    height: current_font_size,
-                });
-            }
-
-            // Clean empty spans
-            spans.retain(|s| !s.text.trim().is_empty());
-
-            let mut remaining_spans = spans.clone();
-            let mut layout_items = vec![];
-
-            // 1. Table Detection
-            let mut y_groups: Vec<(f32, Vec<TextSpan>)> = vec![];
-            for span in remaining_spans.clone() {
-                let mut found = false;
-                for (group_y, group_spans) in &mut y_groups {
-                    if (span.y - *group_y).abs() <= 2.0 {
-                        group_spans.push(span.clone());
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
-                    y_groups.push((span.y, vec![span]));
-                }
-            }
-
-            // Sort groups by y descending
-            y_groups.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-
-            let mut current_table_rows: Vec<Vec<TextSpan>> = vec![];
-            let mut table_spans_to_remove = std::collections::HashSet::new();
-
-            for (_y, row_spans) in y_groups {
-                if row_spans.len() >= 2 {
-                    current_table_rows.push(row_spans);
-                } else {
-                    if current_table_rows.len() >= 2 {
-                        let mut table_cells = vec![];
-                        for row in current_table_rows.drain(..) {
-                            let mut row_sorted = row.clone();
-                            row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-
-                            let mut cells = vec![];
-                            let mut current_cell = vec![];
-                            let mut last_x = -1000.0;
-                            let mut last_width = 0.0;
-
-                            for span in row_sorted {
-                                table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
-
-                                if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
-                                    cells.push(current_cell.clone());
-                                    current_cell.clear();
-                                }
-                                last_x = span.x;
-                                last_width = span.width;
-                                current_cell.push(span);
+                "TJ" => {
+                    if op.operands.len() == 1
+                        && let Ok(array) = op.operands[0].as_array()
+                    {
+                        for item in array {
+                            if let Ok(string_bytes) = item.as_str() {
+                                let txt = String::from_utf8_lossy(string_bytes).to_string();
+                                current_text.push_str(&txt);
+                            } else if let Ok(num) = item.as_f32()
+                                && num < -100.0
+                            {
+                                current_text.push(' ');
                             }
-                            if !current_cell.is_empty() {
-                                cells.push(current_cell);
-                            }
-                            table_cells.push(cells);
                         }
-                        layout_items.push(LayoutItem::Table(table_cells));
-                    } else {
-                        current_table_rows.clear();
+                    }
+                    if !current_text.is_empty() {
+                        spans.push(TextSpan {
+                            text: current_text.clone(),
+                            font_size: current_font_size,
+                            is_bold,
+                            is_italic,
+                            color_hex: current_color.clone(),
+                            x: current_x,
+                            y: current_y,
+                            width: current_text.len() as f32 * current_font_size * 0.5,
+                            height: current_font_size,
+                        });
+                        current_text.clear();
                     }
                 }
-            }
-            if current_table_rows.len() >= 2 {
-                let mut table_cells = vec![];
-                for row in current_table_rows.drain(..) {
-                    let mut row_sorted = row.clone();
-                    row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                    let mut cells = vec![];
-                    let mut current_cell = vec![];
-                    let mut last_x = -1000.0;
-                    let mut last_width = 0.0;
-
-                    for span in row_sorted {
-                        table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
-
-                        if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
-                            cells.push(current_cell.clone());
-                            current_cell.clear();
-                        }
-                        last_x = span.x;
-                        last_width = span.width;
-                        current_cell.push(span);
-                    }
-                    if !current_cell.is_empty() {
-                        cells.push(current_cell);
-                    }
-                    table_cells.push(cells);
-                }
-                layout_items.push(LayoutItem::Table(table_cells));
-            }
-
-            remaining_spans.retain(|s| !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text)));
-
-            // 2. XY-Cut Algorithm for remaining spans
-            let mut gutters = vec![];
-            let mut min_x = f32::MAX;
-            let mut max_x = f32::MIN;
-            for span in &remaining_spans {
-                if span.x < min_x { min_x = span.x; }
-                if span.x + span.width > max_x { max_x = span.x + span.width; }
-            }
-
-            if min_x < max_x && !remaining_spans.is_empty() {
-                // Projection profile
-                let mut intervals: Vec<(f32, f32)> = remaining_spans.iter().map(|s| (s.x, s.x + s.width)).collect();
-                intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-                let mut merged = vec![intervals[0]];
-                for interval in intervals.iter().skip(1) {
-                    let last = merged.last_mut().unwrap();
-                    if interval.0 <= last.1 {
-                        if interval.1 > last.1 {
-                            last.1 = interval.1;
-                        }
-                    } else {
-                        merged.push(*interval);
+                "T*" | "'" | "\"" => {
+                    if !current_text.is_empty() {
+                        spans.push(TextSpan {
+                            text: current_text.clone(),
+                            font_size: current_font_size,
+                            is_bold,
+                            is_italic,
+                            color_hex: current_color.clone(),
+                            x: current_x,
+                            y: current_y,
+                            width: current_text.len() as f32 * current_font_size * 0.5,
+                            height: current_font_size,
+                        });
+                        current_text.clear();
                     }
                 }
-
-                for i in 0..merged.len() - 1 {
-                    let gap = merged[i+1].0 - merged[i].1;
-                    if gap >= 15.0 {
-                        gutters.push(merged[i].1 + gap / 2.0);
-                    }
-                }
-            }
-
-            if !gutters.is_empty() {
-                let gutter_x = gutters[0];
-                let mut col1 = vec![];
-                let mut col2 = vec![];
-                for span in remaining_spans {
-                    if span.x < gutter_x {
-                        col1.push(span);
-                    } else {
-                        col2.push(span);
-                    }
-                }
-
-                let process_col = |col: Vec<TextSpan>| -> Vec<LayoutItem> {
-                    let mut sorted = col;
-                    sorted.sort_by(|a, b| {
-                        match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                            std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
-                            other => other,
-                        }
+                "ET" if !current_text.is_empty() => {
+                    spans.push(TextSpan {
+                        text: current_text.clone(),
+                        font_size: current_font_size,
+                        is_bold,
+                        is_italic,
+                        color_hex: current_color.clone(),
+                        x: current_x,
+                        y: current_y,
+                        width: current_text.len() as f32 * current_font_size * 0.5,
+                        height: current_font_size,
                     });
-                    let mut paras = vec![];
-                    let mut current_para = vec![];
-                    let mut last_y = f32::MAX;
-                    for span in sorted {
-                        if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
-                            paras.push(current_para.clone());
-                            current_para.clear();
-                        }
-                        current_para.push(span.clone());
-                        last_y = span.y;
-                    }
-                    if !current_para.is_empty() { paras.push(current_para); }
-                    paras.into_iter().map(LayoutItem::Paragraph).collect()
-                };
+                    current_text.clear();
+                }
+                _ => {}
+            }
+        }
 
-                layout_items.extend(process_col(col1));
-                layout_items.extend(process_col(col2));
+        if !current_text.is_empty() {
+            spans.push(TextSpan {
+                text: current_text.clone(),
+                font_size: current_font_size,
+                is_bold,
+                is_italic,
+                color_hex: current_color.clone(),
+                x: current_x,
+                y: current_y,
+                width: current_text.len() as f32 * current_font_size * 0.5,
+                height: current_font_size,
+            });
+        }
+
+        // Clean empty spans
+        spans.retain(|s| !s.text.trim().is_empty());
+
+        let mut remaining_spans = spans.clone();
+        let mut layout_items = vec![];
+
+        // 1. Table Detection
+        let mut y_groups: Vec<(f32, Vec<TextSpan>)> = vec![];
+        for span in remaining_spans.clone() {
+            let mut found = false;
+            for (group_y, group_spans) in &mut y_groups {
+                if (span.y - *group_y).abs() <= 2.0 {
+                    group_spans.push(span.clone());
+                    found = true;
+                    break;
+                }
+            }
+            if !found {
+                y_groups.push((span.y, vec![span]));
+            }
+        }
+
+        // Sort groups by y descending
+        y_groups.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+
+        let mut current_table_rows: Vec<Vec<TextSpan>> = vec![];
+        let mut table_spans_to_remove = std::collections::HashSet::new();
+
+        for (_y, row_spans) in y_groups {
+            if row_spans.len() >= 2 {
+                current_table_rows.push(row_spans);
             } else {
-                remaining_spans.sort_by(|a, b| {
+                if current_table_rows.len() >= 2 {
+                    let mut table_cells = vec![];
+                    for row in current_table_rows.drain(..) {
+                        let mut row_sorted = row.clone();
+                        row_sorted.sort_by(|a, b| {
+                            a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                        });
+
+                        let mut cells = vec![];
+                        let mut current_cell = vec![];
+                        let mut last_x = -1000.0;
+                        let mut last_width = 0.0;
+
+                        for span in row_sorted {
+                            table_spans_to_remove
+                                .insert(format!("{}_{}_{}", span.x, span.y, span.text));
+
+                            if (span.x - (last_x + last_width)).abs() > 15.0
+                                && !current_cell.is_empty()
+                            {
+                                cells.push(current_cell.clone());
+                                current_cell.clear();
+                            }
+                            last_x = span.x;
+                            last_width = span.width;
+                            current_cell.push(span);
+                        }
+                        if !current_cell.is_empty() {
+                            cells.push(current_cell);
+                        }
+                        table_cells.push(cells);
+                    }
+                    layout_items.push(LayoutItem::Table(table_cells));
+                } else {
+                    current_table_rows.clear();
+                }
+            }
+        }
+        if current_table_rows.len() >= 2 {
+            let mut table_cells = vec![];
+            for row in current_table_rows.drain(..) {
+                let mut row_sorted = row.clone();
+                row_sorted
+                    .sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
+                let mut cells = vec![];
+                let mut current_cell = vec![];
+                let mut last_x = -1000.0;
+                let mut last_width = 0.0;
+
+                for span in row_sorted {
+                    table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
+
+                    if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
+                        cells.push(current_cell.clone());
+                        current_cell.clear();
+                    }
+                    last_x = span.x;
+                    last_width = span.width;
+                    current_cell.push(span);
+                }
+                if !current_cell.is_empty() {
+                    cells.push(current_cell);
+                }
+                table_cells.push(cells);
+            }
+            layout_items.push(LayoutItem::Table(table_cells));
+        }
+
+        remaining_spans
+            .retain(|s| !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text)));
+
+        // 2. XY-Cut Algorithm for remaining spans
+        let mut gutters = vec![];
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for span in &remaining_spans {
+            if span.x < min_x {
+                min_x = span.x;
+            }
+            if span.x + span.width > max_x {
+                max_x = span.x + span.width;
+            }
+        }
+
+        if min_x < max_x && !remaining_spans.is_empty() {
+            // Projection profile
+            let mut intervals: Vec<(f32, f32)> = remaining_spans
+                .iter()
+                .map(|s| (s.x, s.x + s.width))
+                .collect();
+            intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+            let mut merged = vec![intervals[0]];
+            for interval in intervals.iter().skip(1) {
+                let last = merged.last_mut().unwrap();
+                if interval.0 <= last.1 {
+                    if interval.1 > last.1 {
+                        last.1 = interval.1;
+                    }
+                } else {
+                    merged.push(*interval);
+                }
+            }
+
+            for i in 0..merged.len() - 1 {
+                let gap = merged[i + 1].0 - merged[i].1;
+                if gap >= 15.0 {
+                    gutters.push(merged[i].1 + gap / 2.0);
+                }
+            }
+        }
+
+        if !gutters.is_empty() {
+            let gutter_x = gutters[0];
+            let mut col1 = vec![];
+            let mut col2 = vec![];
+            for span in remaining_spans {
+                if span.x < gutter_x {
+                    col1.push(span);
+                } else {
+                    col2.push(span);
+                }
+            }
+
+            let process_col = |col: Vec<TextSpan>| -> Vec<LayoutItem> {
+                let mut sorted = col;
+                sorted.sort_by(|a, b| {
                     match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                        std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
+                        std::cmp::Ordering::Equal => {
+                            a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                        }
                         other => other,
                     }
                 });
-
-                // Group into paragraphs by proximity
                 let mut paras = vec![];
                 let mut current_para = vec![];
                 let mut last_y = f32::MAX;
-                for span in remaining_spans {
+                for span in sorted {
                     if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
                         paras.push(current_para.clone());
                         current_para.clear();
@@ -2076,154 +2120,233 @@ pub enum LayoutItem {
                     current_para.push(span.clone());
                     last_y = span.y;
                 }
-                if !current_para.is_empty() { paras.push(current_para); }
-
-                for p in paras {
-                    layout_items.push(LayoutItem::Paragraph(p));
+                if !current_para.is_empty() {
+                    paras.push(current_para);
                 }
+                paras.into_iter().map(LayoutItem::Paragraph).collect()
+            };
+
+            layout_items.extend(process_col(col1));
+            layout_items.extend(process_col(col2));
+        } else {
+            remaining_spans.sort_by(|a, b| {
+                match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
+                    std::cmp::Ordering::Equal => {
+                        a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                    }
+                    other => other,
+                }
+            });
+
+            // Group into paragraphs by proximity
+            let mut paras = vec![];
+            let mut current_para = vec![];
+            let mut last_y = f32::MAX;
+            for span in remaining_spans {
+                if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
+                    paras.push(current_para.clone());
+                    current_para.clear();
+                }
+                current_para.push(span.clone());
+                last_y = span.y;
+            }
+            if !current_para.is_empty() {
+                paras.push(current_para);
             }
 
-            // Emit docx-rs
-            for item in layout_items {
-                match item {
-                    LayoutItem::Paragraph(spans) => {
-                        let mut sorted_spans = spans.clone();
-                        sorted_spans.sort_by(|a,b| b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal).then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)));
-
-                        let mut text_parts = vec![];
-                        let mut current_part = vec![];
-                        let mut current_y = sorted_spans.first().map(|s| s.y).unwrap_or(0.0);
-
-                        for span in sorted_spans {
-                            if (span.y - current_y).abs() > 2.0 {
-                                text_parts.push(current_part.clone());
-                                current_part.clear();
-                                current_y = span.y;
-                            }
-                            current_part.push(span);
-                        }
-                        if !current_part.is_empty() { text_parts.push(current_part); }
-
-                        for row in text_parts {
-                            let mut row_sorted = row;
-                            row_sorted.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                            let combined_text = row_sorted.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
-                            if combined_text.trim().is_empty() { continue; }
-
-                            let mut para = Paragraph::new();
-                            let rep_span = row_sorted.first().cloned().unwrap_or(TextSpan {
-                                text: "".to_string(),
-                                font_size: 12.0,
-                                is_bold: false,
-                                is_italic: false,
-                                color_hex: "".to_string(),
-                                x: 0.0,
-                                y: 0.0,
-                                width: 0.0,
-                                height: 0.0,
-                            });
-
-                            if (rep_span.x - center_w).abs() < (width * 0.15) {
-                                para = para.align(AlignmentType::Center);
-                            } else if rep_span.x > (width * 0.6) {
-                                para = para.align(AlignmentType::Right);
-                            }
-
-                            if rep_span.font_size >= 18.0 {
-                                para = para.style("Heading1");
-                            } else if (14.0..18.0).contains(&rep_span.font_size) {
-                                para = para.style("Heading2");
-                            }
-
-                            let mut run = Run::new().add_text(combined_text.trim().to_string());
-                            let size = rep_span.font_size;
-                            if size >= 18.0 {
-                                run = run.size(36);
-                            } else if (14.0..18.0).contains(&size) {
-                                run = run.size(28);
-                            } else {
-                                run = run.size((size * 2.0) as usize);
-                            }
-
-                            if rep_span.is_bold { run = run.bold(); }
-                            if rep_span.is_italic { run = run.italic(); }
-                            if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
-
-                            para = para.add_run(run);
-                            docx = docx.add_paragraph(para);
-                        }
-                    }
-                    LayoutItem::Table(rows) => {
-                        let mut table = Table::new(vec![]);
-                        for row in rows {
-                            let mut cells = vec![];
-                            for cell_spans in row {
-                                let mut tc = TableCell::new();
-                                let mut para = Paragraph::new();
-                                let mut sorted_spans = cell_spans.clone();
-                                sorted_spans.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                                let combined_text = sorted_spans.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
-                                if !combined_text.trim().is_empty() {
-                                    let rep_span = sorted_spans.first().cloned().unwrap_or(TextSpan {
-                                        text: "".to_string(),
-                                        font_size: 12.0,
-                                        is_bold: false,
-                                        is_italic: false,
-                                        color_hex: "".to_string(),
-                                        x: 0.0,
-                                        y: 0.0,
-                                        width: 0.0,
-                                        height: 0.0,
-                                    });
-                                    let mut run = Run::new().add_text(combined_text.trim().to_string());
-                                    let size = rep_span.font_size;
-                                    run = run.size((size * 2.0) as usize);
-                                    if rep_span.is_bold { run = run.bold(); }
-                                    if rep_span.is_italic { run = run.italic(); }
-                                    if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
-                                    para = para.add_run(run);
-                                }
-                                tc = tc.add_paragraph(para);
-                                cells.push(tc);
-                            }
-                            let tr = TableRow::new(cells);
-                            table = table.add_row(tr);
-                        }
-                        docx = docx.add_table(table);
-                    }
-                }
-            }
-
-            // Add images from Resources
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(xobjects) = resources.get(b"XObject").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (_xobj_name, xobj_ref) in xobjects.iter() {
-                        if let Ok(xobj_stream) = doc.get_object(xobj_ref.as_reference().unwrap_or((0, 0))).and_then(|obj| obj.as_stream())
-                            && let Ok(subtype) = xobj_stream.dict.get(b"Subtype").and_then(|obj| obj.as_name())
-                                && subtype == b"Image" {
-                                    let image_bytes = &xobj_stream.content;
-                                    let pic = docx_rs::Pic::new(image_bytes);
-                                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
-                                }
-                    }
-                }
-
-            if i < all_pages.len() - 1 {
-                docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
+            for p in paras {
+                layout_items.push(LayoutItem::Paragraph(p));
             }
         }
 
-        let mut out_buffer = Vec::new();
-        let mut cursor = std::io::Cursor::new(&mut out_buffer);
-        docx.build().pack(&mut cursor).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+        // Emit docx-rs
+        for item in layout_items {
+            match item {
+                LayoutItem::Paragraph(spans) => {
+                    let mut sorted_spans = spans.clone();
+                    sorted_spans.sort_by(|a, b| {
+                        b.y.partial_cmp(&a.y)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                            .then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal))
+                    });
 
-        Ok(out_buffer)
+                    let mut text_parts = vec![];
+                    let mut current_part = vec![];
+                    let mut current_y = sorted_spans.first().map(|s| s.y).unwrap_or(0.0);
+
+                    for span in sorted_spans {
+                        if (span.y - current_y).abs() > 2.0 {
+                            text_parts.push(current_part.clone());
+                            current_part.clear();
+                            current_y = span.y;
+                        }
+                        current_part.push(span);
+                    }
+                    if !current_part.is_empty() {
+                        text_parts.push(current_part);
+                    }
+
+                    for row in text_parts {
+                        let mut row_sorted = row;
+                        row_sorted.sort_by(|a, b| {
+                            a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                        });
+                        let combined_text = row_sorted
+                            .iter()
+                            .map(|s| s.text.clone())
+                            .collect::<Vec<_>>()
+                            .join(" ");
+                        if combined_text.trim().is_empty() {
+                            continue;
+                        }
+
+                        let mut para = Paragraph::new();
+                        let rep_span = row_sorted.first().cloned().unwrap_or(TextSpan {
+                            text: "".to_string(),
+                            font_size: 12.0,
+                            is_bold: false,
+                            is_italic: false,
+                            color_hex: "".to_string(),
+                            x: 0.0,
+                            y: 0.0,
+                            width: 0.0,
+                            height: 0.0,
+                        });
+
+                        if (rep_span.x - center_w).abs() < (width * 0.15) {
+                            para = para.align(AlignmentType::Center);
+                        } else if rep_span.x > (width * 0.6) {
+                            para = para.align(AlignmentType::Right);
+                        }
+
+                        if rep_span.font_size >= 18.0 {
+                            para = para.style("Heading1");
+                        } else if (14.0..18.0).contains(&rep_span.font_size) {
+                            para = para.style("Heading2");
+                        }
+
+                        let mut run = Run::new().add_text(combined_text.trim().to_string());
+                        let size = rep_span.font_size;
+                        if size >= 18.0 {
+                            run = run.size(36);
+                        } else if (14.0..18.0).contains(&size) {
+                            run = run.size(28);
+                        } else {
+                            run = run.size((size * 2.0) as usize);
+                        }
+
+                        if rep_span.is_bold {
+                            run = run.bold();
+                        }
+                        if rep_span.is_italic {
+                            run = run.italic();
+                        }
+                        if !rep_span.color_hex.is_empty() {
+                            run = run.color(rep_span.color_hex.clone());
+                        }
+
+                        para = para.add_run(run);
+                        docx = docx.add_paragraph(para);
+                    }
+                }
+                LayoutItem::Table(rows) => {
+                    let mut table = Table::new(vec![]);
+                    for row in rows {
+                        let mut cells = vec![];
+                        for cell_spans in row {
+                            let mut tc = TableCell::new();
+                            let mut para = Paragraph::new();
+                            let mut sorted_spans = cell_spans.clone();
+                            sorted_spans.sort_by(|a, b| {
+                                a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)
+                            });
+                            let combined_text = sorted_spans
+                                .iter()
+                                .map(|s| s.text.clone())
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            if !combined_text.trim().is_empty() {
+                                let rep_span = sorted_spans.first().cloned().unwrap_or(TextSpan {
+                                    text: "".to_string(),
+                                    font_size: 12.0,
+                                    is_bold: false,
+                                    is_italic: false,
+                                    color_hex: "".to_string(),
+                                    x: 0.0,
+                                    y: 0.0,
+                                    width: 0.0,
+                                    height: 0.0,
+                                });
+                                let mut run = Run::new().add_text(combined_text.trim().to_string());
+                                let size = rep_span.font_size;
+                                run = run.size((size * 2.0) as usize);
+                                if rep_span.is_bold {
+                                    run = run.bold();
+                                }
+                                if rep_span.is_italic {
+                                    run = run.italic();
+                                }
+                                if !rep_span.color_hex.is_empty() {
+                                    run = run.color(rep_span.color_hex.clone());
+                                }
+                                para = para.add_run(run);
+                            }
+                            tc = tc.add_paragraph(para);
+                            cells.push(tc);
+                        }
+                        let tr = TableRow::new(cells);
+                        table = table.add_row(tr);
+                    }
+                    docx = docx.add_table(table);
+                }
+            }
+        }
+
+        // Add images from Resources
+        if let Ok(resources) = page_dict
+            .get(b"Resources")
+            .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+            .and_then(|obj| obj.as_dict())
+            && let Ok(xobjects) = resources
+                .get(b"XObject")
+                .and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0))))
+                .and_then(|obj| obj.as_dict())
+        {
+            for (_xobj_name, xobj_ref) in xobjects.iter() {
+                if let Ok(xobj_stream) = doc
+                    .get_object(xobj_ref.as_reference().unwrap_or((0, 0)))
+                    .and_then(|obj| obj.as_stream())
+                    && let Ok(subtype) = xobj_stream
+                        .dict
+                        .get(b"Subtype")
+                        .and_then(|obj| obj.as_name())
+                    && subtype == b"Image"
+                {
+                    let image_bytes = &xobj_stream.content;
+                    let pic = docx_rs::Pic::new(image_bytes);
+                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
+                }
+            }
+        }
+
+        if i < all_pages.len() - 1 {
+            docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
+        }
+    }
+
+    let mut out_buffer = Vec::new();
+    let mut cursor = std::io::Cursor::new(&mut out_buffer);
+    docx.build()
+        .pack(&mut cursor)
+        .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+
+    Ok(out_buffer)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lopdf::{Document, Object, Dictionary};
+    use lopdf::{Dictionary, Document, Object};
 
     fn create_dummy_doc(pages: u32, content_str: Option<&str>) -> Document {
         let mut doc = Document::with_version("1.5");
@@ -2262,7 +2385,8 @@ mod tests {
         pages_dict.set("Kids", Object::Array(page_ids));
 
         doc.objects.insert(pages_id, Object::Dictionary(pages_dict));
-        doc.trailer.set("Root", Object::Dictionary(Dictionary::new()));
+        doc.trailer
+            .set("Root", Object::Dictionary(Dictionary::new()));
 
         let mut catalog = Dictionary::new();
         catalog.set("Type", Object::Name(b"Catalog".to_vec()));
@@ -2304,7 +2428,10 @@ mod tests {
         }
 
         let clean_text = pure_text.replace(" ", "");
-        assert!(clean_text.contains("Left1Left2Right1Right2") || clean_text.contains("Left1Right1Left2Right2"));
+        assert!(
+            clean_text.contains("Left1Left2Right1Right2")
+                || clean_text.contains("Left1Right1Left2Right2")
+        );
     }
 
     #[test]

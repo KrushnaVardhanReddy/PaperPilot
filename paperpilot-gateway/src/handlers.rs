@@ -22,12 +22,29 @@ pub struct HealthResponse {
     pub tools_count: usize,
 }
 
+/// Standard API response envelope (Responses section shows expected schema contract).
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct ApiResponse {
     #[schema(example = true)]
     pub success: bool,
     pub result: Option<Value>,
     pub error: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct OfficeConvertJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/test.xlsx")]
+    pub input: String,
+    #[schema(example = "tests/e2e_fixtures/out/penta_e2e/doc.md")]
+    pub output: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct RagChunksJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    pub max_chunk_size: Option<usize>,
+    pub overlap: Option<usize>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
@@ -158,7 +175,30 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
-/// Execute MCP tool directly by tool name with arbitrary JSON arguments
+/// List all available tools and operations across PaperPilot
+#[utoipa::path(
+    get,
+    path = "/api/v1/tools",
+    tag = "Tools",
+    responses(
+        (status = 200, description = "List of all registered tools and their schema definitions")
+    )
+)]
+pub async fn list_tools() -> impl IntoResponse {
+    match PaperPilotMcpServer::execute_list_tools() {
+        Ok(res) => (StatusCode::OK, Json(serde_json::json!({
+            "success": true,
+            "total": res.tools.len(),
+            "tools": res.tools
+        }))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
+            "success": false,
+            "error": e.message
+        }))),
+    }
+}
+
+/// Execute MCP tool directly by tool name with arbitrary JSON arguments [Input: JSON | Output: JSON]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/mcp-exec",
@@ -198,7 +238,7 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
     }
 }
 
-/// Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON
+/// Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON [Input: Multipart/JSON | Output: File/JSON]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/tools/{tool_name}",
@@ -301,7 +341,13 @@ pub async fn handle_tool(
 
     let mut request = CallToolRequestParams::default();
 
-    let mut resolved_name = if tool_name.starts_with("pdf_") {
+    let mut resolved_name = if tool_name.starts_with("pdf_")
+        || tool_name == "excel_to_json"
+        || tool_name == "excel_to_csv"
+        || tool_name == "json_to_pdf"
+        || tool_name == "workspace_search"
+        || tool_name.starts_with("office_")
+    {
         tool_name.clone()
     } else {
         format!("pdf_{}", tool_name)
@@ -458,21 +504,23 @@ pub async fn handle_tool(
     }
 }
 
-/// Merge multiple PDF documents into a single PDF
+/// Merge multiple PDF documents into a single PDF [Input: 2+ .pdfs | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/merge",
     tag = "PDF Operations",
     request_body(content = MergeJsonRequest, description = "JSON configuration or multipart form"),
     responses(
-        (status = 200, description = "Merged successfully", body = ApiResponse)
+        (status = 200, description = "Expected schema contract for successful merge", body = ApiResponse),
+        (status = 400, description = "Expected schema contract for invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Expected schema contract for engine execution errors", body = ApiResponse)
     )
 )]
 pub async fn merge(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("merge".to_string()), req).await
 }
 
-/// Split a PDF document into separate pages or ranges
+/// Split a PDF document into separate pages or ranges [Input: .pdf | Output: multiple .pdfs]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/split",
@@ -486,7 +534,7 @@ pub async fn split(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("split".to_string()), req).await
 }
 
-/// Compress a PDF document to reduce file size
+/// Compress a PDF document to reduce file size [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/compress",
@@ -500,7 +548,7 @@ pub async fn compress(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compress".to_string()), req).await
 }
 
-/// Extract clean text from a PDF document
+/// Extract clean text from a PDF document [Input: .pdf | Output: .txt]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/extract-text",
@@ -514,7 +562,7 @@ pub async fn extract_text(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("extract_text".to_string()), req).await
 }
 
-/// Convert a PDF to/from another format (docx, images, html, xlsx, etc.)
+/// Convert a PDF to/from another format (docx, images, html, xlsx, etc.) [Input: .pdf | Output: .docx/.png/.html/.xlsx]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/convert",
@@ -546,10 +594,12 @@ pub async fn convert(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received office convert request");
-    handle_tool(Path("office_modernize_legacy".to_string()), req).await.into_response()
+    handle_tool(Path("office_modernize_legacy".to_string()), req)
+        .await
+        .into_response()
 }
 
-/// Convert an Excel sheet into structured JSON format
+/// Convert an Excel sheet into structured JSON format [Input: .xlsx, .xls, .csv | Output: .json]
 #[utoipa::path(
     post,
     path = "/api/v1/office/excel-to-json",
@@ -563,10 +613,12 @@ pub async fn office_convert(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received excel_to_json request");
-    handle_tool(Path("excel_to_json".to_string()), req).await.into_response()
+    handle_tool(Path("excel_to_json".to_string()), req)
+        .await
+        .into_response()
 }
 
-/// Convert an Excel sheet into CSV format
+/// Convert an Excel sheet into CSV format [Input: .xlsx, .xls | Output: .csv]
 #[utoipa::path(
     post,
     path = "/api/v1/office/excel-to-csv",
@@ -580,10 +632,12 @@ pub async fn excel_to_json(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn excel_to_csv(req: axum::extract::Request) -> impl IntoResponse {
     tracing::info!("Received excel_to_csv request");
-    handle_tool(Path("excel_to_csv".to_string()), req).await.into_response()
+    handle_tool(Path("excel_to_csv".to_string()), req)
+        .await
+        .into_response()
 }
 
-/// Apply text or image watermarks to a PDF document
+/// Apply text or image watermarks to a PDF document [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/watermark",
@@ -597,7 +651,7 @@ pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("watermark".to_string()), req).await
 }
 
-/// Retrieve metadata and page information for a PDF document
+/// Retrieve metadata and page information for a PDF document [Input: .pdf | Output: .json]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/info",
@@ -611,7 +665,7 @@ pub async fn info(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("metadata".to_string()), req).await
 }
 
-/// Compare two PDF documents for visual and textual differences
+/// Compare two PDF documents for visual and textual differences [Input: 2 .pdfs | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/compare",
@@ -625,7 +679,7 @@ pub async fn compare(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_compare".to_string()), req).await
 }
 
-/// Render a single PDF page directly to a PNG image stream
+/// Render a single PDF page directly to a PNG image stream [Input: .pdf | Output: .png]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/render-page",
@@ -779,6 +833,192 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
         Err(e) => (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             e.message.clone(),
+        )
+            .into_response(),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/office-to-markdown",
+    request_body = OfficeConvertJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn office_to_markdown(
+    Json(payload): Json<OfficeConvertJsonRequest>,
+) -> impl IntoResponse {
+    let input = std::path::PathBuf::from(&payload.input);
+    let output = std::path::PathBuf::from(&payload.output);
+    match paperpilot_pdf::operations::office::OfficeToMarkdownOperation::execute(&input, &output) {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({"output": payload.output})),
+                error: None,
+            }),
+        )
+            .into_response(),
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/office-extract-text",
+    request_body = OfficeConvertJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn office_extract_text(
+    Json(payload): Json<OfficeConvertJsonRequest>,
+) -> impl IntoResponse {
+    let input = std::path::PathBuf::from(&payload.input);
+    let output = std::path::PathBuf::from(&payload.output);
+    match paperpilot_pdf::operations::office::OfficeExtractTextOperation::execute(&input, &output) {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({"output": payload.output})),
+                error: None,
+            }),
+        )
+            .into_response(),
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/rag-chunks",
+    request_body = RagChunksJsonRequest,
+    responses((status = 200, body = ApiResponse))
+)]
+pub async fn rag_chunks(Json(payload): Json<RagChunksJsonRequest>) -> impl IntoResponse {
+    use paperpilot_core::traits::PdfOperation;
+    use paperpilot_pdf::document::LopdfDocument;
+
+    let _max_chunk_size = payload.max_chunk_size.unwrap_or(1000);
+    let _overlap = payload.overlap.unwrap_or(200);
+
+    let input_path = std::path::PathBuf::from(&payload.input);
+
+    let mut doc = match LopdfDocument::load(&input_path) {
+        Ok(d) => d,
+        Err(e) => {
+            let err_str = e.to_string();
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let op = paperpilot_pdf::operations::rag_chunks::PdfRagChunksOperation::new();
+    match op.execute(&mut doc) {
+        Ok(_) => {
+            let chunks = op.chunks.lock().unwrap().clone();
+            let count = chunks.len();
+            (
+                StatusCode::OK,
+                Json(ApiResponse {
+                    success: true,
+                    result: Some(serde_json::json!({"chunks": chunks, "count": count})),
+                    error: None,
+                }),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            let err_str = e.to_string();
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(err_str),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
+    let input = payload
+        .get("input")
+        .or_else(|| payload.get("dir"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let query = payload.get("query").and_then(|v| v.as_str()).unwrap_or("");
+
+    use paperpilot_core::traits::PdfOperation;
+    use paperpilot_pdf::document::LopdfDocument;
+
+    let path = std::path::PathBuf::from(input);
+    let mut doc = match LopdfDocument::load(&path) {
+        Ok(d) => d,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse {
+                    success: false,
+                    result: None,
+                    error: Some(e.to_string()),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+    match op.execute(&mut doc) {
+        Ok(_) => {
+            let matches = op.match_pages.lock().unwrap().clone();
+            (
+                StatusCode::OK,
+                Json(ApiResponse {
+                    success: true,
+                    result: Some(serde_json::json!({ "matches": matches })),
+                    error: None,
+                }),
+            )
+                .into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse {
+                success: false,
+                result: None,
+                error: Some(e.to_string()),
+            }),
         )
             .into_response(),
     }

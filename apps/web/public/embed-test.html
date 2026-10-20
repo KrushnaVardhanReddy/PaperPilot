@@ -75,6 +75,18 @@
         data-license-key="PRO_DEMO_KEY"
       ></div>
     </div>
+
+    <!-- Demo 3: Automated Multi-Step Pipeline (Spec 078) -->
+    <div class="card">
+      <h2>3. Automated Document Pipeline (Zero-Server In-Browser WASM)</h2>
+      <p style="margin-bottom: 16px; font-size: 0.9rem;">Drop a PDF to auto-execute: <code>Extract Pages 1-3 ➔ Watermark ("APPROVED") ➔ Compress</code>.</p>
+      <div
+        data-paperpilot-widget
+        data-theme="dark"
+        data-brand-color="#8B5CF6"
+        data-pipeline='[{"tool":"extract_pages","pages":"1-3"},{"tool":"watermark","text":"APPROVED","opacity":0.3},{"tool":"compress"}]'
+      ></div>
+    </div>
   </div>
 
   <!-- Loads the embed widget script -->

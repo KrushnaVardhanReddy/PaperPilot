@@ -1,0 +1,98 @@
+# Task P5.9.39: Spec 063 - Mobile Touch UI, Camera Scanner with Auto-OCR & Adaptive Layout (apps/desktop)
+
+## Objective
+Implement a mobile touch-native layout in `apps/desktop` (Svelte 5) with an on-device Camera Document Scanner that captures photo pages, runs pure-Rust OCR to embed selectable text layers, and converts them to crisp searchable PDFs via `images_to_pdf`. Adapt navigation with a sleek bottom navigation bar, touch-friendly bottom-sheet parameter panels, and canvas pinch/swipe gestures.
+
+---
+
+## Technical Context & File Locations
+- **Mobile Engine Architecture**: Mobile does NOT use the REST API gateway (Axum), MCP JSON-RPC server, or external LLMs. All mobile document operations run directly in-memory against `paperpilot-pdf` traits via `process_mobile_buffer` (`mobile_bridge.rs`) or in-memory WASM buffer calls.
+- **Frontend Root**: `apps/desktop/src/`
+- **Root Layout**: `apps/desktop/src/routes/+layout.svelte`
+- **Bottom Nav**: `apps/desktop/src/lib/components/layout/BottomNav.svelte`
+- **Operations Dock / Panel**: `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+- **Canvas Viewer**: `apps/desktop/src/lib/components/viewer/`
+- **Engine Operations**: `images_to_pdf` (`paperpilot-pdf/src/operations/images_to_pdf.rs`), `ocr` (`paperpilot-pdf/src/operations/ocr.rs`)
+- **Output Report**: `reports/MOBILE_TOUCH_UI_ADAPTATION_REPORT.md`
+
+---
+
+## Detailed Implementation Instructions
+
+### Step 1: Camera Document Scanner with Auto-OCR Component
+1. Create `apps/desktop/src/lib/components/scanner/CameraScannerModal.svelte`:
+   - Access camera via HTML5 `navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })` or Tauri file/capture dialog.
+   - UI elements:
+     - Live camera viewfinder.
+     - Large circular shutter button (≥64px).
+     - Captured pages carousel at the bottom showing thumbnails of shots taken (e.g. Page 1, Page 2) with "Delete" and "Retake" actions.
+     - Toggle: "Make Searchable with OCR" (checked by default).
+     - Action button: **"Convert to PDF (N pages)"**.
+   - Pipeline Execution on Convert:
+     - Converts captured image buffers into PDF using `images_to_pdf`.
+     - When OCR is toggled on, runs `pdf_ocr` on the synthesized PDF to embed invisible selectable text and exact bounding box text layers.
+     - If OCR model files are not yet downloaded, safely falls back to visual PDF synthesis and displays a non-blocking toast prompt to download the offline OCR feature pack.
+     - Emits the completed PDF blob and adds it directly to `appState.addDocuments([pdfFile])` for instant viewing in the canvas viewer.
+
+### Step 2: Dynamic Responsive State & Viewport Detection (Tailwind v4 Unified UI)
+1. In `apps/desktop/src/lib/state/app.svelte.ts`:
+   - Add reactive mobile state tracking:
+     ```typescript
+     let isMobileViewport = $state(false);
+     let isTauriMobile = $state(false);
+     ```
+   - On initialization, detect whether running inside mobile environment (check `@tauri-apps/api/core` or window width < 768px) and expose `isMobile = $derived(isMobileViewport || isTauriMobile)`.
+2. Architecture & Design Mandate (Docly-inspired Single UI, No Code Duplication):
+   - Leverage **Tailwind CSS v4** (`@import "tailwindcss";` already configured in `app.css` and `vite.config.js`).
+   - Use standard responsive utility classes (`md:`, `lg:`) so the **same components** adapt seamlessly between desktop and mobile. Do NOT maintain two separate parallel apps.
+   - On desktop (`md:`): Left Sidebar + Center Document Canvas + Docked Right Operations Panel.
+   - On mobile: Sleek Top Header (featuring our PaperPilot logo `/logo.png`, document title, and quick-share action) + Center Document Canvas + Floating Action Camera Scanner + Bottom Navigation Bar.
+3. In-Memory Android Document Intake:
+   - In `apps/desktop/src/lib/components/ui/DropZone.svelte`:
+     - On mobile / touch screens, ensure clicking the intake triggers `<input type="file">` and reads the file into memory via `file.arrayBuffer()` / `Uint8Array` directly into `appState`.
+     - Do NOT rely on POSIX filesystem paths on Android because Android uses content URIs (`content://...`).
+
+### Step 3: Touch-First Navigation & Bottom Sheet
+1. Update `apps/desktop/src/lib/components/layout/BottomNav.svelte`:
+   - Active on `isMobile` (width < 768px):
+     - `📄 Documents` (Viewer & Active Docs)
+     - `📷 Scan` (Triggers `CameraScannerModal.svelte`)
+     - `⚡ Tools` (Full 50+ operations categorized grid)
+     - `⚙️ Settings` (Settings & AI models)
+   - Ensure tap targets are minimum `48px x 48px` with clear active states.
+   - Apply `padding-bottom: var(--safe-area-bottom)` so the bar floats comfortably above iPhone home indicators and Android navigation bars.
+2. Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+   - When on mobile (`isMobile === true`):
+     - Render as a modern modal **Bottom Sheet** with a drag-handle indicator at the top (`border-radius: 20px 20px 0 0;`).
+     - Max height `85vh` with smooth vertical scroll.
+     - Inputs, selects, and action buttons styled with `min-height: 48px; font-size: 16px;` (preventing iOS auto-zoom on input focus).
+3. Mobile Execution Dispatch (In-Memory Engine, No REST/MCP/LLM):
+   - On mobile, invoke_mcp_tool, REST API routes, and external LLM queries are not needed. Route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params) so operations run directly against paperpilot-pdf traits in-memory with zero server overhead.
+
+### Step 4: Touch Gestures in PDF Viewer
+1. In `apps/desktop/src/lib/components/viewer/`:
+   - Add pointer event listeners (`pointerdown`, `pointermove`, `pointerup`):
+     - Multi-touch (2 pointers): Calculate Euclidean distance between points to drive smooth pinch-to-zoom (`scale = initialScale * (currentDist / startDist)`).
+     - Horizontal swipe gesture (1 pointer threshold > 80px): Trigger `nextPage()` or `prevPage()` when document is zoomed to fit.
+
+### Step 5: Native Share Sheet
+1. For completed document jobs:
+   - Provide an "Export & Share" button that invokes Tauri opener / share plugins to pass output files directly to native apps (WhatsApp, Email, Files, Google Drive).
+
+### Step 6: Lean APK Size Optimization
+1. In `apps/desktop/src-tauri/gen/android/app/build.gradle.kts`:
+   - Remove `jniLibs.keepDebugSymbols` in `buildTypes { getByName("debug") }` so that DWARF debug symbols are stripped.
+2. Verify release builds strip native binary symbols (`opt-level = 3`, `strip = true`, `lto = "fat"`) and compile without desktop-only `paperpilot-gateway` / `paperpilot-mcp` crates, reducing APK from 1.4GB down to ~25-35MB.
+
+### Step 7: Verification & Automated Tests
+1. Add responsive layout & camera scan test:
+   - Emulate mobile viewports (iPhone SE 375px, iPhone 14/15 390px, Pixel 7 412px).
+   - Test multi-image capture piping into `images_to_pdf` and OCR overlay generation.
+   - Verify zero horizontal layout overflow.
+2. Generate `reports/MOBILE_TOUCH_UI_ADAPTATION_REPORT.md`.
+
+---
+
+## Strict Constraints
+- Preserve all existing desktop workflows, keyboard shortcuts, and canvas annotation features when on desktop viewports.
+- Do NOT revert any engine fixes or core operations.

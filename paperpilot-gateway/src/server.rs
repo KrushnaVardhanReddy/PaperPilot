@@ -24,7 +24,11 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::office_convert,
         handlers::excel_to_json,
         handlers::excel_to_csv,
-        handlers::handle_tool
+        handlers::office_to_markdown,
+        handlers::office_extract_text,
+        handlers::rag_chunks,
+        handlers::handle_tool,
+        handlers::list_tools
     ),
     components(
         schemas(
@@ -40,11 +44,14 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::InfoJsonRequest,
             handlers::CompareJsonRequest,
             handlers::ExcelToJsonRequest,
-            handlers::ExcelToCsvRequest
+            handlers::ExcelToCsvRequest,
+            handlers::OfficeConvertJsonRequest,
+            handlers::RagChunksJsonRequest
         )
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
+        (name = "Tools", description = "Discovery and capability listing across all 52 tools"),
         (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
         (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
         (name = "Office Operations", description = "Office document and spreadsheet ingestion and modernizing endpoints")
@@ -66,6 +73,7 @@ pub async fn build_app() -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/tools", get(handlers::list_tools))
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))
         .route("/api/v1/pdf/tools/{tool_name}", post(handlers::handle_tool))
@@ -80,8 +88,24 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
         .route("/api/v1/office/convert", post(handlers::office_convert))
-        .route("/api/v1/office/excel-to-json", post(handlers::excel_to_json))
+        .route(
+            "/api/v1/office/excel-to-json",
+            post(handlers::excel_to_json),
+        )
         .route("/api/v1/office/excel-to-csv", post(handlers::excel_to_csv))
+        .route(
+            "/api/v1/pdf/office-to-markdown",
+            post(handlers::office_to_markdown),
+        )
+        .route(
+            "/api/v1/pdf/office-extract-text",
+            post(handlers::office_extract_text),
+        )
+        .route("/api/v1/pdf/rag-chunks", post(handlers::rag_chunks))
+        .route(
+            "/api/v1/search/workspace_search",
+            post(handlers::workspace_search_handler),
+        )
         .layer(cors)
 }
 

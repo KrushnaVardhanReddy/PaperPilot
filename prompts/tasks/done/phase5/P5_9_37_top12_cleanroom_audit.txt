@@ -1,0 +1,43 @@
+# Task P5_9_37: Clean-Room E2E Verification & Audit for Top 12 Core Launch Tools
+# Associated Spec: specs/061-top12-cleanroom-audit/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Create an automated clean-room audit test runner for the Top 12 Core Launch Tools. Each run must execute in a freshly created, timestamped isolation sandbox directory, verifying real input files, verifying real output files on disk, and producing a detailed Markdown scorecard (`reports/TOP_12_CORE_TOOLS_AUDIT_REPORT.md`).
+
+### Detailed Scope & Context
+Read `specs/061-top12-cleanroom-audit/spec.md` for full background and the exact 12-tool matrix.
+
+1. **Clean-Room Sandbox Isolation**:
+   - The test must create a brand-new directory: `tests/e2e_fixtures/out/top12_audit_<timestamp>/`.
+   - Stale outputs from prior runs must never be touched or checked.
+   - If output directory exists from a prior test, wipe and recreate it.
+
+2. **Test Implementation (`tests/top12_cleanroom_audit.rs` or in `paperpilot-cli/tests/`)**:
+   Implement automated execution and dual-check verification across all 12 tools:
+   1. `pdf_merge`: Input `merge_a.pdf`, `merge_b.pdf` → Output `merged.pdf` → Validate page count == 2.
+   2. `pdf_split`: Input `multi_page.pdf` (5 pages) with `--every 2` → Output directory containing `split_1.pdf` (2p), `split_2.pdf` (2p), `split_3.pdf` (1p).
+   3. `pdf_rotate`: Input `single_page.pdf` with `--angle 90` → Output `rotated.pdf` → Validate `/Rotate` attribute == 90.
+   4. `pdf_delete_pages`: Input `multi_page.pdf` with `--pages 2,4` → Output `deleted.pdf` → Validate page count == 3.
+   5. `pdf_reorder_pages`: Input `multi_page.pdf` with `--order 5,4,3,2,1` → Output `reordered.pdf` → Validate page 1 contains "Page 5".
+   6. `pdf_compress`: Input `large_doc.pdf` → Output `compressed.pdf` → Validate valid PDF syntax and size <= original.
+   7. `pdf_watermark`: Input `single_page.pdf` with text "CONFIDENTIAL" → Output `watermarked.pdf` → Validate text present in content stream and fits page margins.
+   8. `pdf_ocr`: Input `single_page.pdf` → Output `ocr.txt` → Validate either extracted text or actionable missing model error.
+   9. `pdf_extract_text`: Input `single_page.pdf` → Output `extracted.txt` → Validate extracted text contains expected words.
+   10. `pdf_to_docx`: Input `single_page.pdf` → Output `converted.docx` → Validate valid OpenXML ZIP archive (`PK\x03\x04`).
+   11. `excel_to_json`: Input `test.xlsx` → Output `converted.json` → Validate file exists on disk, parses as valid JSON with columns `ColA, ColB, ColC` and rows count > 0.
+   12. `excel_to_csv`: Input `test.xlsx` → Output `converted.csv` → Validate file exists on disk with extension strictly `.csv`, containing `ColA,ColB,ColC` and data rows.
+
+3. **Scorecard Generation (`reports/TOP_12_CORE_TOOLS_AUDIT_REPORT.md`)**:
+   Format a detailed Markdown scorecard listing for every single tool:
+   - Tool ID & Name
+   - Exact Input path and input file size
+   - Exact Output path and output file size
+   - Exact Semantic checks executed and pass/fail verdict
+   - Execution duration / latency (ms)
+
+### Constraints & Rules
+- Concurrency bounded: strictly `-j 2` during compilation and testing to keep CPU load low.
+- Zero mocked passes: all 12 tools must execute the real engine on real disk files.
+- NEVER run `git reset`, `git checkout -- .`, `git restore`, or `git clean -fd`.

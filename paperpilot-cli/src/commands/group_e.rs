@@ -1,3 +1,4 @@
+#![cfg(feature = "pdf")]
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;

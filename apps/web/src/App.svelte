@@ -52,7 +52,7 @@
         <span class="separator">•</span>
         <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
         <span class="separator">•</span>
-        <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">44 Tools Handbook</a>
+        <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">50+ Tools Handbook</a>
         <span class="separator">•</span>
         <a href={DOWNLOAD_LINUX_URL} target="_blank" rel="noopener noreferrer">Linux</a>
         <span class="separator">•</span>

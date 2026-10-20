@@ -7,7 +7,7 @@
   <div class="hero-content">
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
-      100% Client-Side. 0 Bytes Uploaded. ~50–100ms WASM Execution.
+      100% Client-Side. 0 Bytes Uploaded. ~30–95ms WASM Execution.
     </p>
 
     <div class="hero-ctas">

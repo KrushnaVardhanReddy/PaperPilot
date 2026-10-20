@@ -42,6 +42,23 @@ struct CommandResult {
 }
 
 pub fn run() {
+    #[cfg(windows)]
+    {
+        // Windows default thread stack is only 1MB which overflows on large Clap parser hierarchies.
+        // We spawn a worker thread with an 8MB stack (standard Linux/macOS stack size).
+        let handler = std::thread::Builder::new()
+            .stack_size(8 * 1024 * 1024)
+            .spawn(run_impl)
+            .expect("Failed to spawn CLI thread with 8MB stack");
+        let _ = handler.join();
+    }
+    #[cfg(not(windows))]
+    {
+        run_impl();
+    }
+}
+
+fn run_impl() {
     let _ = env_logger::try_init();
 
     let mut args: Vec<String> = std::env::args().collect();

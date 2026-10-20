@@ -1,0 +1,88 @@
+# Task P5_9_41: Clean-Room E2E Verification & Audit for All 50 Tools
+# Associated Spec: specs/064-all-50-tools-cleanroom-audit/spec.md
+# Priority: High
+# Target Branch: main
+
+### Objective
+Expand the automated clean-room audit test runner from the Top 12 tools to all 50 PaperPilot tools. Each run must execute in a freshly created, timestamped isolation sandbox directory, verifying real input files, verifying real output files on disk, updating the Makefile with convenience test targets, and producing a detailed Markdown scorecard (`reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md`).
+
+### Detailed Scope & Context
+Read `specs/064-all-50-tools-cleanroom-audit/spec.md` for full background and the exact 50-tool validation matrix.
+
+1. **Clean-Room Sandbox Isolation**:
+   - The test must create a brand-new directory: `tests/e2e_fixtures/out/all50_audit_<timestamp>/`.
+   - Stale outputs from prior runs must never be touched or checked.
+   - If output directory exists from a prior test, wipe and recreate it.
+
+2. **Test Implementation (`paperpilot-cli/tests/all50_cleanroom_audit.rs`)**:
+   Implement automated execution and dual-check verification across all 50 tools:
+   1. `pdf_merge`: Input `merge_a.pdf`, `merge_b.pdf` → Output `merged.pdf` → Validate page count == 2.
+   2. `pdf_split`: Input `multi_page.pdf` (5 pages) with `--every 2` → Output directory containing `split_1.pdf` (2p), `split_2.pdf` (2p), `split_3.pdf` (1p).
+   3. `pdf_extract_pages`: Input `multi_page.pdf` (pages `1,3`) → Output `extracted_pages.pdf` → Validate page count == 2.
+   4. `pdf_delete_pages`: Input `multi_page.pdf` with `--pages 2,4` → Output `deleted.pdf` → Validate page count == 3.
+   5. `pdf_reorder_pages`: Input `multi_page.pdf` with `--order 5,4,3,2,1` → Output `reordered.pdf` → Validate page 1 contains "Page 5".
+   6. `pdf_rotate`: Input `single_page.pdf` with `--angle 90` → Output `rotated.pdf` → Validate `/Rotate` attribute == 90.
+   7. `pdf_crop`: Input `single_page.pdf` with margins `10,10,200,200` → Output `cropped.pdf` → Validate dictionary `/CropBox` or `/MediaBox`.
+   8. `pdf_burst`: Input `multi_page.pdf` (5 pages) → Output directory containing 5 separate 1-page PDF files.
+   9. `pdf_remove_blank`: Input `multi_page.pdf` → Output `no_blanks.pdf` → Validate valid PDF opens without corruption.
+   10. `pdf_compress`: Input `large_doc.pdf` → Output `compressed.pdf` → Validate valid PDF syntax and size <= original.
+   11. `pdf_repair`: Input `multi_page.pdf` → Output `repaired.pdf` → Validate valid cross-reference and EOF.
+   12. `pdf_linearize`: Input `single_page.pdf` → Output `linearized.pdf` → Validate `/Linearized` hint stream present.
+   13. `pdf_encrypt`: Input `single_page.pdf` with password `user123` → Output `encrypted.pdf` → Validate `/Encrypt` dictionary present.
+   14. `pdf_decrypt`: Input `tests/e2e_fixtures/real/encrypted.pdf` with password `user123` → Output `decrypted.pdf` → Validate `/Encrypt` removed.
+   15. `pdf_watermark`: Input `single_page.pdf` with text "CONFIDENTIAL" → Output `watermarked.pdf` → Validate text present in content stream.
+   16. `pdf_redact`: Input `single_page.pdf` with box `50,50,100,100` → Output `redacted.pdf` → Validate fill rectangle drawn.
+   17. `pdf_metadata`: Input `single_page.pdf` with title "AuditTitle" → Output `metadata.pdf` → Validate `/Title` equals "AuditTitle".
+   18. `pdf_sign`: Input `single_page.pdf` with signer "Audit Signer" → Output `signed.pdf` → Validate visual signature placed.
+   19. `pdf_flatten`: Input `single_page.pdf` → Output `flattened.pdf` → Validate interactive form annotations flattened.
+   20. `pdf_to_pdf_a`: Input `single_page.pdf` → Output `pdf_a.pdf` → Validate PDF/A XMP metadata stream present.
+   21. `pdf_header_footer`: Input `single_page.pdf` with header "Test Header" → Output `header_footer.pdf` → Validate string present.
+   22. `pdf_bates`: Input `multi_page.pdf` with prefix "CONF-" → Output `bates.pdf` → Validate "CONF-000001" and "CONF-000002".
+   23. `pdf_page_numbers`: Input `multi_page.pdf` with format `{n}/{total}` → Output `page_numbers.pdf` → Validate "1/5".
+   24. `pdf_extract_text`: Input `single_page.pdf` → Output `extracted.txt` → Validate text > 0 bytes without binary garbage.
+   25. `pdf_extract_images`: Input `multimodal.pdf` → Output directory with extracted PNG/JPEG files starting with valid image magic bytes.
+   26. `pdf_search`: Input `multi_page.pdf` with query "Page" → Output `search_results.json` → Validate parses as JSON with match locations.
+   27. `pdf_render`: Input `single_page.pdf` (page 1) → Output `rendered.png` → Validate starts with PNG magic bytes (`\x89PNG\r\n\x1a\n`).
+   28. `pdf_compare`: Input `merge_a.pdf`, `merge_b.pdf` → Output `diff.pdf` → Validate valid PDF diff overlay.
+   29. `pdf_ocr`: Input `single_page.pdf` → Output `ocr.txt` → Validate either extracted text or actionable missing model error.
+   30. `pdf_bookmarks`: Input `multi_page.pdf` → Output `bookmarks.json` → Validate parses as valid JSON array.
+   31. `pdf_images_to_pdf`: Input `test.png` → Output `img_converted.pdf` → Validate valid PDF with embedded image XObject.
+   32. `pdf_annotate`: Input `single_page.pdf` with note "Review Note" → Output `annotated.pdf` → Validate `/Annots` text note.
+   33. `pdf_classify_type`: Input `single_page.pdf` → Output `classify.json` → Validate JSON contains `type`, `confidence`.
+   34. `pdf_validate`: Input `single_page.pdf` → Output `validation.json` → Validate JSON `{ "valid": true }`.
+   35. `pdf_hash`: Input `single_page.pdf` → Output `hash.json` → Validate 64-character SHA-256 hex string.
+   36. `pdf_read_form`: Input `single_page.pdf` → Output `form_data.json` → Validate parses as JSON.
+   37. `pdf_fill_form`: Input `single_page.pdf` → Output `form_filled.pdf` → Validate valid PDF syntax.
+   38. `pdf_create_form_field`: Input `single_page.pdf` → Output `form_created.pdf` → Validate catalog contains `/AcroForm`.
+   39. `pdf_to_docx`: Input `single_page.pdf` → Output `converted.docx` → Validate valid OpenXML ZIP (`PK\x03\x04`) containing `word/document.xml`.
+   40. `pdf_to_xlsx`: Input `single_page.pdf` → Output `converted.xlsx` → Validate valid OpenXML ZIP (`PK\x03\x04`) containing `xl/workbook.xml`.
+   41. `pdf_to_pptx`: Input `single_page.pdf` → Output `converted.pptx` → Validate valid OpenXML ZIP (`PK\x03\x04`) containing `ppt/presentation.xml`.
+   42. `pdf_convert_html`: Input `test.html` → Output `html_converted.pdf` → Validate valid PDF with rendered content.
+   43. `pdf_convert_markdown`: Input `test.md` → Output `md_converted.pdf` → Validate valid PDF with formatted text.
+   44. `pdf_convert_excel`: Input `test.xlsx` → Output `xlsx_converted.pdf` → Validate valid PDF with table grid.
+   45. `pdf_to_html`: Input `single_page.pdf` → Output `converted.html` → Validate contains valid HTML tags.
+   46. `pdf_to_markdown`: Input `single_page.pdf` → Output `converted.md` → Validate contains markdown formatting.
+   47. `pdf_to_json`: Input `single_page.pdf` → Output `pdf_tree.json` → Validate JSON with pages and dimensions.
+   48. `json_to_pdf`: Input `json_doc.json` → Output `json_converted.pdf` → Validate starts with `%PDF`.
+   49. `excel_to_json`: Input `test.xlsx` → Output `converted.json` → Validate file exists on disk, parses as valid JSON with columns `ColA, ColB, ColC` and rows count > 0.
+   50. `excel_to_csv`: Input `test.xlsx` → Output `converted.csv` → Validate file exists on disk with extension strictly `.csv`, containing `ColA,ColB,ColC` and data rows.
+
+3. **Makefile Integration**:
+   Update `Makefile` to add dedicated audit targets:
+   - `test-cleanroom-top12`: Runs `cargo test --test top12_cleanroom_audit -j 2`
+   - `test-cleanroom-all50`: Runs `cargo test --test all50_cleanroom_audit -j 2`
+   - Add both targets to the `.PHONY` declaration.
+
+4. **Scorecard Generation (`reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md`)**:
+   Format a detailed Markdown scorecard listing for every single tool:
+   - Tool ID & Name
+   - Exact Input path and input file size
+   - Exact Output path and output file size
+   - Exact Semantic checks executed and pass/fail verdict
+   - Execution duration / latency (ms)
+
+### Constraints & Rules
+- Concurrency bounded: strictly `-j 2` during compilation and testing to keep CPU load low.
+- Zero mocked passes: all 50 tools must execute the real engine on real disk files.
+- NEVER run `git reset`, `git checkout -- .`, `git restore`, or `git clean -fd`.
+- Preserved fixtures: Use `tests/e2e_fixtures/real/test.xlsx` for Excel tools, `tests/e2e_fixtures/real/encrypted.pdf` for decrypt.

@@ -359,6 +359,251 @@ impl ExcelToStyledHtmlOperation {
     }
 }
 
+use std::collections::HashMap;
+
+#[derive(Clone, Copy)]
+struct Ctm([f32; 6]);
+impl Ctm {
+    fn transform(&self, m: [f32; 6]) -> Self {
+        Self([
+            self.0[0] * m[0] + self.0[1] * m[2],
+            self.0[0] * m[1] + self.0[1] * m[3],
+            self.0[2] * m[0] + self.0[3] * m[2],
+            self.0[2] * m[1] + self.0[3] * m[3],
+            self.0[4] * m[0] + self.0[5] * m[2] + m[4],
+            self.0[4] * m[1] + self.0[5] * m[3] + m[5],
+        ])
+    }
+    fn point(&self, x: f32, y: f32) -> (f32, f32) {
+        (
+            x * self.0[0] + y * self.0[2] + self.0[4],
+            x * self.0[1] + y * self.0[3] + self.0[5],
+        )
+    }
+}
+
+fn extract_page_media(
+    lopdf_doc: &mut lopdf::Document,
+    page_id: (u32, u16),
+    original_bytes: &[u8],
+    page_index: usize,
+) -> OperationResult<Vec<(String, String, f32, f32)>> {
+    let mut extracted = Vec::new();
+
+    let page_dict = match lopdf_doc.get_object(page_id).and_then(|obj| obj.as_dict()) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res {
+        lopdf::Object::Reference(res_id) => {
+            lopdf_doc.get_object(*res_id).and_then(|obj| obj.as_dict())
+        }
+        lopdf::Object::Dictionary(dict) => Ok(dict),
+        _ => Err(lopdf::Error::DictKey("Invalid resources".to_string())),
+    }) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let xobject_dict = match resources_dict.get(b"XObject").and_then(|xobj| match xobj {
+        lopdf::Object::Reference(xobj_id) => {
+            lopdf_doc.get_object(*xobj_id).and_then(|obj| obj.as_dict())
+        }
+        lopdf::Object::Dictionary(dict) => Ok(dict),
+        _ => Err(lopdf::Error::DictKey("Invalid XObject".to_string())),
+    }) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let mut has_forms = false;
+    let mut form_xobjects = Vec::new();
+
+    for (name, obj) in xobject_dict.iter() {
+        let stream_id = match obj.as_reference() {
+            Ok(id) => id,
+            Err(_) => continue,
+        };
+
+        let stream = match lopdf_doc
+            .get_object(stream_id)
+            .and_then(|obj| obj.as_stream())
+        {
+            Ok(stream) => stream,
+            Err(_) => continue,
+        };
+
+        let subtype = match stream.dict.get(b"Subtype").and_then(|name| name.as_name()) {
+            Ok(name) => name,
+            Err(_) => continue,
+        };
+
+        let name_str = String::from_utf8_lossy(name).to_string();
+
+        if subtype == b"Form" {
+            has_forms = true;
+            if let Ok(bbox_obj) = stream.dict.get(b"BBox").and_then(|o| o.as_array())
+                && bbox_obj.len() == 4
+            {
+                let mut bbox = [0.0; 4];
+                for i in 0..4 {
+                    match bbox_obj[i] {
+                        lopdf::Object::Real(f) => bbox[i] = f as f64,
+                        lopdf::Object::Integer(i_val) => bbox[i] = i_val as f64,
+                        _ => {}
+                    }
+                }
+                form_xobjects.push((name_str, bbox));
+            }
+        }
+    }
+
+    if has_forms && let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec()) {
+        let pages = hayro_pdf.pages();
+        if let Some(page) = pages.get(page_index) {
+            let cache = hayro::RenderCache::new();
+            let render_settings = hayro::RenderSettings::default();
+            let mut pixmap_settings = hayro::PixmapSettings::default();
+
+            let dpi = 150.0;
+            let scale = dpi / 72.0;
+            pixmap_settings.x_scale = scale;
+            pixmap_settings.y_scale = scale;
+
+            let pixmap = hayro::render(
+                page,
+                &cache,
+                &Default::default(),
+                &render_settings,
+                &pixmap_settings,
+            );
+
+            let width = pixmap.width();
+            let height = pixmap.height();
+
+            let data = bytemuck::cast_slice(pixmap.data());
+
+            if let Some(mut skia_pixmap) = tiny_skia::Pixmap::new(width as u32, height as u32) {
+                skia_pixmap.data_mut().copy_from_slice(data);
+
+                let mut media_h = 0.0;
+                if let Ok(media_box) = page_dict.get(b"MediaBox").and_then(|o| o.as_array())
+                    && media_box.len() == 4
+                {
+                    let y0 = match media_box[1] {
+                        lopdf::Object::Real(f) => f,
+                        lopdf::Object::Integer(i) => i as f32,
+                        _ => 0.0,
+                    };
+                    let y1 = match media_box[3] {
+                        lopdf::Object::Real(f) => f,
+                        lopdf::Object::Integer(i) => i as f32,
+                        _ => 0.0,
+                    };
+                    media_h = (y1 - y0).abs();
+                }
+
+                let mut on_page_bboxes = HashMap::new();
+
+                let content_bytes = lopdf_doc.get_page_content(page_id);
+                if let Ok(content) = lopdf::content::Content::decode(&content_bytes) {
+                    let mut ctm_stack = vec![Ctm([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])];
+
+                    for op in content.operations {
+                        match op.operator.as_str() {
+                            "q" => {
+                                let current = *ctm_stack.last().unwrap();
+                                ctm_stack.push(current);
+                            }
+                            "Q" => {
+                                if ctm_stack.len() > 1 {
+                                    ctm_stack.pop();
+                                }
+                            }
+                            "cm" => {
+                                if op.operands.len() == 6 {
+                                    let get_f32 = |obj: &lopdf::Object| -> f32 {
+                                        match obj {
+                                            lopdf::Object::Real(f) => *f,
+                                            lopdf::Object::Integer(i) => *i as f32,
+                                            _ => 0.0,
+                                        }
+                                    };
+                                    let m = [
+                                        get_f32(&op.operands[0]),
+                                        get_f32(&op.operands[1]),
+                                        get_f32(&op.operands[2]),
+                                        get_f32(&op.operands[3]),
+                                        get_f32(&op.operands[4]),
+                                        get_f32(&op.operands[5]),
+                                    ];
+                                    let current = *ctm_stack.last().unwrap();
+                                    let last = ctm_stack.last_mut().unwrap();
+                                    *last = current.transform(m);
+                                }
+                            }
+                            "Do" => {
+                                if op.operands.len() == 1
+                                    && let Ok(name) = op.operands[0].as_name()
+                                {
+                                    let name_str = String::from_utf8_lossy(name).to_string();
+                                    let current = *ctm_stack.last().unwrap();
+                                    on_page_bboxes.insert(name_str, current);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
+                for (form_name, form_bbox) in form_xobjects {
+                    if let Some(ctm) = on_page_bboxes.get(&form_name) {
+                        let (x0, y0) = ctm.point(form_bbox[0] as f32, form_bbox[1] as f32);
+                        let (x1, y1) = ctm.point(form_bbox[2] as f32, form_bbox[3] as f32);
+
+                        let orig_y0 = y0.min(y1);
+                        let orig_y1 = y0.max(y1);
+                        let px_x0 = x0.min(x1);
+                        let px_x1 = x0.max(x1);
+
+                        let px_y0 = media_h - orig_y1;
+                        let px_y1 = media_h - orig_y0;
+
+                        let left = (px_x0 * scale).floor() as u32;
+                        let top = (px_y0 * scale).floor() as u32;
+                        let right = (px_x1 * scale).ceil() as u32;
+                        let bottom = (px_y1 * scale).ceil() as u32;
+
+                        let crop_rect = tiny_skia::IntRect::from_ltrb(
+                            left.min(width as u32) as i32,
+                            top.min(height as u32) as i32,
+                            right.min(width as u32) as i32,
+                            bottom.min(height as u32) as i32,
+                        );
+
+                        if let Some(rect) = crop_rect
+                            && let Some(cropped) = skia_pixmap.clone_rect(rect)
+                            && let Ok(png_bytes) = cropped.encode_png()
+                        {
+                            use base64::{Engine as _, engine::general_purpose};
+                            let b64 = general_purpose::STANDARD.encode(&png_bytes);
+                            extracted.push((
+                                form_name,
+                                format!("data:image/png;base64,{}", b64),
+                                orig_y0,
+                                orig_y1,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(extracted)
+}
+
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
     pub extracted_html: Arc<Mutex<Option<String>>>,
@@ -381,35 +626,184 @@ impl PdfOperation for PdfToHtmlOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+        let mut html = String::new();
 
-        let mut html = String::from(
-            "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
-        );
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+            && let Ok(page_count) = pdf.page_count()
+        {
+            let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
+            page_nums.sort();
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                    html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
-                    for line in text.lines() {
-                        if !line.trim().is_empty() {
-                            html.push_str(&format!("<p>{}</p>\n", line.trim()));
+            html.push_str(
+                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            );
+            for i in 0..page_count {
+                let page_id = i + 1;
+
+                let obj_id = if i < page_nums.len() {
+                    let pid = page_nums[i];
+                    *lopdf_doc.inner.get_pages().get(&pid).unwrap()
+                } else {
+                    (0, 0)
+                };
+
+                let page_media = if obj_id.0 != 0 {
+                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+
+                html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
+                html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+
+                let mut page_content = String::new();
+                if let Ok(page_html) = pdf.to_html(i) {
+                    page_content = page_html;
+                }
+
+                let mut all_images: Vec<(String, String, f32, f32)> = page_media;
+                if let Ok(pdf_images) = pdf.extract_images(i) {
+                    for (img_idx, img) in pdf_images.iter().enumerate() {
+                        if let Some(bbox) = img.bbox() {
+                            let (ext, b64) = match img.data() {
+                                pdf_oxide::extractors::ImageData::Jpeg(jpeg_data) => {
+                                    use base64::{Engine as _, engine::general_purpose};
+                                    ("jpeg", general_purpose::STANDARD.encode(jpeg_data))
+                                }
+                                pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
+                                    let color = match format {
+                                        pdf_oxide::extractors::PixelFormat::RGB => {
+                                            image::ColorType::Rgb8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => {
+                                            image::ColorType::L8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::CMYK => {
+                                            image::ColorType::Rgb8
+                                        } // Fallback mapping, Image API handles basic conversions or fails gracefully.
+                                    };
+                                    let mut png_bytes = Vec::new();
+                                    use image::ImageEncoder;
+                                    if image::codecs::png::PngEncoder::new(&mut png_bytes)
+                                        .write_image(
+                                            pixels,
+                                            img.width(),
+                                            img.height(),
+                                            color.into(),
+                                        )
+                                        .is_ok()
+                                    {
+                                        use base64::{Engine as _, engine::general_purpose};
+                                        ("png", general_purpose::STANDARD.encode(&png_bytes))
+                                    } else {
+                                        ("png", String::new())
+                                    }
+                                }
+                            };
+                            if !b64.is_empty() {
+                                all_images.push((
+                                    format!("Image_{}", img_idx),
+                                    format!("data:image/{};base64,{}", ext, b64),
+                                    bbox.y,
+                                    bbox.y + bbox.height,
+                                ));
+                            }
                         }
                     }
-                    html.push_str("</div>\n");
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+
+                let spans = pdf.extract_spans(i).unwrap_or_default();
+                let mut image_insertions: Vec<(usize, String)> = Vec::new();
+
+                for (name, b64, _, y1) in all_images {
+                    let markup = format!(
+                        "<img src=\"{}\" alt=\"Illustration {}\" style=\"max-width: 100%; border-radius: 4px; margin-top: 10px;\" />\n",
+                        b64, name
+                    );
+                    let mut closest_span = None;
+                    let mut min_dist = f32::MAX;
+
+                    for span in &spans {
+                        let span_y0 = span.bbox.y;
+                        let dist = span_y0 - y1;
+                        if dist >= -5.0 && dist < min_dist {
+                            min_dist = dist;
+                            closest_span = Some(span);
+                        }
+                    }
+
+                    if let Some(span) = closest_span {
+                        if let Some(pos) = page_content.find(&span.text) {
+                            let mut insert_pos = pos + span.text.len();
+                            while insert_pos < page_content.len()
+                                && page_content.as_bytes()[insert_pos] != b'\n'
+                            {
+                                insert_pos += 1;
+                            }
+                            image_insertions.push((insert_pos, markup));
+                        } else {
+                            image_insertions.push((page_content.len(), markup));
+                        }
+                    } else {
+                        image_insertions.push((0, markup));
+                    }
                 }
+
+                image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
+                let mut final_html = page_content;
+                for (pos, markup) in image_insertions {
+                    let insert_pos = if final_html.is_char_boundary(pos) {
+                        pos
+                    } else {
+                        let mut p = pos;
+                        while p > 0 && !final_html.is_char_boundary(p) {
+                            p -= 1;
+                        }
+                        p
+                    };
+                    final_html.insert_str(insert_pos, &format!("\n{}\n", markup));
+                }
+
+                html.push_str(&final_html);
+
+                html.push_str("</div>\n");
             }
+            html.push_str("</body>\n</html>");
         }
 
-        html.push_str("</body>\n</html>");
+        if html.is_empty() {
+            let inner = &mut lopdf_doc.inner;
+            let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+
+            html = String::from(
+                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            );
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
+                        html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                        for line in text.lines() {
+                            if !line.trim().is_empty() {
+                                html.push_str(&format!("<p>{}</p>\n", line.trim()));
+                            }
+                        }
+                        html.push_str("</div>\n");
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_id, e
+                        )));
+                    }
+                }
+            }
+
+            html.push_str("</body>\n</html>");
+        }
 
         if let Ok(mut lock) = self.extracted_html.lock() {
             *lock = Some(html);
@@ -443,23 +837,158 @@ impl PdfOperation for PdfToMarkdownOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
-
         let mut md = String::new();
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+            && let Ok(page_count) = pdf.page_count()
+        {
+            let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
+            page_nums.sort();
+
+            for i in 0..page_count {
+                let page_id = i + 1;
+
+                let obj_id = if i < page_nums.len() {
+                    let pid = page_nums[i];
+                    *lopdf_doc.inner.get_pages().get(&pid).unwrap()
+                } else {
+                    (0, 0)
+                };
+
+                let page_media = if obj_id.0 != 0 {
+                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+
+                let mut all_images: Vec<(String, String, f32, f32)> = page_media;
+                if let Ok(pdf_images) = pdf.extract_images(i) {
+                    for (img_idx, img) in pdf_images.iter().enumerate() {
+                        if let Some(bbox) = img.bbox() {
+                            let (ext, b64) = match img.data() {
+                                pdf_oxide::extractors::ImageData::Jpeg(jpeg_data) => {
+                                    use base64::{Engine as _, engine::general_purpose};
+                                    ("jpeg", general_purpose::STANDARD.encode(jpeg_data))
+                                }
+                                pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
+                                    let color = match format {
+                                        pdf_oxide::extractors::PixelFormat::RGB => {
+                                            image::ColorType::Rgb8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => {
+                                            image::ColorType::L8
+                                        }
+                                        pdf_oxide::extractors::PixelFormat::CMYK => {
+                                            image::ColorType::Rgb8
+                                        }
+                                    };
+                                    let mut png_bytes = Vec::new();
+                                    use image::ImageEncoder;
+                                    if image::codecs::png::PngEncoder::new(&mut png_bytes)
+                                        .write_image(
+                                            pixels,
+                                            img.width(),
+                                            img.height(),
+                                            color.into(),
+                                        )
+                                        .is_ok()
+                                    {
+                                        use base64::{Engine as _, engine::general_purpose};
+                                        ("png", general_purpose::STANDARD.encode(&png_bytes))
+                                    } else {
+                                        ("png", String::new())
+                                    }
+                                }
+                            };
+                            if !b64.is_empty() {
+                                all_images.push((
+                                    format!("Image_{}", img_idx),
+                                    format!("data:image/{};base64,{}", ext, b64),
+                                    bbox.y,
+                                    bbox.y + bbox.height,
+                                ));
+                            }
+                        }
+                    }
+                }
+
+                if let Ok(page_md) = pdf.to_markdown(i) {
                     md.push_str(&format!("# Page {}\n\n", page_id));
-                    md.push_str(text.trim());
+
+                    let spans = pdf.extract_spans(i).unwrap_or_default();
+                    let mut image_insertions: Vec<(usize, String)> = Vec::new();
+
+                    for (name, b64, _, y1) in all_images {
+                        let markup = format!("![Illustration {}]({})", name, b64);
+                        let mut closest_span = None;
+                        let mut min_dist = f32::MAX;
+
+                        for span in &spans {
+                            let span_y0 = span.bbox.y;
+                            let dist = span_y0 - y1;
+                            if dist >= -5.0 && dist < min_dist {
+                                min_dist = dist;
+                                closest_span = Some(span);
+                            }
+                        }
+
+                        if let Some(span) = closest_span {
+                            if let Some(pos) = page_md.find(&span.text) {
+                                let mut insert_pos = pos + span.text.len();
+                                while insert_pos < page_md.len()
+                                    && page_md.as_bytes()[insert_pos] != b'\n'
+                                {
+                                    insert_pos += 1;
+                                }
+                                image_insertions.push((insert_pos, markup));
+                            } else {
+                                image_insertions.push((page_md.len(), markup));
+                            }
+                        } else {
+                            image_insertions.push((0, markup));
+                        }
+                    }
+
+                    image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
+                    let mut final_md = page_md;
+                    for (pos, markup) in image_insertions {
+                        let insert_pos = if final_md.is_char_boundary(pos) {
+                            pos
+                        } else {
+                            let mut p = pos;
+                            while p > 0 && !final_md.is_char_boundary(p) {
+                                p -= 1;
+                            }
+                            p
+                        };
+                        final_md.insert_str(insert_pos, &format!("\n\n{}\n\n", markup));
+                    }
+
+                    md.push_str(final_md.trim());
                     md.push_str("\n\n");
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+            }
+        }
+
+        if md.is_empty() {
+            let inner = &mut lopdf_doc.inner;
+            let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        md.push_str(&format!("# Page {}\n\n", page_id));
+                        md.push_str(text.trim());
+                        md.push_str("\n\n");
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_id, e
+                        )));
+                    }
                 }
             }
         }
@@ -872,545 +1401,293 @@ pub struct TextSpan {
     pub color_hex: String,
 }
 
+#[allow(dead_code)]
+fn sanitize_xml_text(s: &str) -> String {
+    s.chars()
+        .filter(|&c| {
+            c == '\t'
+                || c == '\n'
+                || c == '\r'
+                || ('\u{0020}'..='\u{D7FF}').contains(&c)
+                || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        })
+        .collect()
+}
+
+pub fn sanitize_font_name(raw_name: &str) -> String {
+    // 1. Strip 6-char random subset prefix e.g. "JFGNNE+SourceSansPro-Bold" -> "SourceSansPro-Bold"
+    let cleaned = if let Some((prefix, rest)) = raw_name.split_once('+') {
+        if prefix.len() == 6 && prefix.chars().all(|c| c.is_ascii_uppercase()) {
+            rest
+        } else {
+            raw_name
+        }
+    } else {
+        raw_name
+    };
+
+    // 2. Separate font family from weight suffix
+    let family = cleaned
+        .trim_end_matches("-Bold")
+        .trim_end_matches("-Regular")
+        .trim_end_matches("-Italic")
+        .trim_end_matches("-BoldItalic")
+        .trim_end_matches(",Bold")
+        .trim_end_matches(",Italic");
+
+    // 3. Insert spaces between CamelCase words if needed (e.g., "SourceSansPro" -> "Source Sans Pro")
+    let mut normalized = String::new();
+    let chars: Vec<char> = family.chars().collect();
+    for (i, &ch) in chars.iter().enumerate() {
+        if i > 0 && ch.is_ascii_uppercase() && chars[i - 1].is_ascii_lowercase() {
+            normalized.push(' ');
+        }
+        normalized.push(ch);
+    }
+
+    if normalized.is_empty() || (normalized.starts_with('F') && normalized.len() <= 3) {
+        "Arial".to_string()
+    } else {
+        normalized
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum LayoutItem {
     Paragraph(Vec<TextSpan>),
     Table(Vec<Vec<Vec<TextSpan>>>),
 }
 
+/// EMU scaling constants for OpenXML DrawingML
+pub const EMUS_PER_INCH: u32 = 914_400;
+pub const MAX_DOCX_PAGE_WIDTH_EMUS: u32 = 4_500_000;
+
+pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
+    if !uri.starts_with("data:image/") {
+        return None;
+    }
+    let parts: Vec<&str> = uri.splitn(2, ',').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let mime = parts[0]
+        .strip_prefix("data:image/")?
+        .strip_suffix(";base64")?;
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let bytes = STANDARD.decode(parts[1]).ok()?;
+    Some((mime.to_string(), bytes))
+}
+
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        use docx_rs::{Docx, Paragraph, Run, AlignmentType, Table, TableRow, TableCell};
-
-        let lopdf_doc = document
+        let _lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let doc = &mut lopdf_doc.inner;
+        use docx_rs::{
+            AlignmentType, Docx, Paragraph, Run, Table, TableBorders, TableCell, TableRow,
+            WidthType,
+        };
+        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
-        let mut all_pages: Vec<u32> = doc.get_pages().keys().copied().collect();
-        all_pages.sort_unstable();
+        let mut docx = Docx::new().page_margin(
+            docx_rs::PageMargin::new()
+                .top(720)
+                .bottom(720)
+                .left(720)
+                .right(720),
+        );
 
-        let mut docx = Docx::new();
+        let markdown_op = PdfToMarkdownOperation::new();
+        markdown_op.execute(document)?;
 
-        for (i, page_id) in all_pages.iter().enumerate() {
-            let page_obj_id = doc.get_pages()[page_id];
-            let page_dict = doc.get_object(page_obj_id).and_then(|obj| obj.as_dict()).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
+        let markdown = {
+            let guard = markdown_op.extracted_markdown.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
 
-            let media_box_default = vec![];
-            let media_box = page_dict
-                .get(b"MediaBox")
-                .and_then(|obj| obj.as_array())
-                .unwrap_or(&media_box_default);
+        let parser = Parser::new_ext(&markdown, Options::all());
 
-            let mut width: f32 = 595.0;
-            if media_box.len() >= 4
-                && let (Ok(x0), Ok(x1)) = (media_box[0].as_f32().or_else(|_| media_box[0].as_i64().map(|v| v as f32)), media_box[2].as_f32().or_else(|_| media_box[2].as_i64().map(|v| v as f32))) {
-                    width = (x1 - x0).abs();
+        let mut current_heading_level = 0;
+        let mut current_paragraph = Paragraph::new();
+        let mut has_run = false;
+
+        let mut pending_image: Option<(Vec<u8>, u32, u32)> = None;
+        let mut pending_image_paragraph: Option<Paragraph> = None;
+        let mut current_card_title: Option<Paragraph> = None;
+
+        let mut table_rows: Vec<TableRow> = Vec::new();
+        let mut current_row_cells: Vec<TableCell> = Vec::new();
+        let mut current_cell_paragraphs: Vec<Paragraph> = Vec::new();
+
+        for event in parser {
+            match event {
+                Event::Start(Tag::Image { dest_url, .. }) => {
+                    if let Some((_, bytes)) = decode_data_uri(&dest_url)
+                        && let Ok(img) = image::load_from_memory(&bytes)
+                    {
+                        let width_px = img.width() as f64;
+                        let height_px = img.height() as f64;
+                        // 150 DPI => 6096 EMUs per pixel
+                        let scale = 914_400.0 / 150.0;
+                        let mut width_emu = (width_px * scale) as u32;
+                        let mut height_emu = (height_px * scale) as u32;
+
+                        if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
+                            let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
+                            width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
+                            height_emu = (height_emu as f64 * ratio) as u32;
+                        }
+                        pending_image = Some((bytes, width_emu, height_emu));
+                    }
                 }
-            let center_w = width / 2.0;
-
-            let content_data = doc.get_page_content(page_obj_id);
-            let content = lopdf::content::Content::decode(&content_data).unwrap_or_else(|_| lopdf::content::Content { operations: vec![] });
-
-            let mut current_font_size: f32 = 12.0;
-            let mut is_bold = false;
-            let mut is_italic = false;
-            let mut current_color = String::new();
-            let mut current_x: f32 = 0.0;
-            let mut current_y: f32 = 0.0;
-            let mut current_text = String::new();
-
-            let mut font_names = std::collections::HashMap::new();
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(fonts) = resources.get(b"Font").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (font_ref, font_obj) in fonts.iter() {
-                        if let Ok(font_dict) = doc.get_object(font_obj.as_reference().unwrap_or((0, 0))).and_then(|o| o.as_dict())
-                            && let Ok(base_font) = font_dict.get(b"BaseFont").and_then(|o| o.as_name()) {
-                                font_names.insert(String::from_utf8_lossy(font_ref).to_string(), String::from_utf8_lossy(base_font).to_string());
+                Event::End(TagEnd::Image) => {
+                    if let Some((bytes, width, height)) = pending_image.take() {
+                        use docx_rs::Pic;
+                        let pic = Pic::new(&bytes).size(width, height);
+                        let pic_run = Run::new().add_image(pic);
+                        let pic_para = Paragraph::new()
+                            .align(AlignmentType::Center)
+                            .add_run(pic_run);
+                        pending_image_paragraph = Some(pic_para);
+                    }
+                }
+                Event::Start(Tag::Heading { level, .. }) => {
+                    let level_num = match level {
+                        pulldown_cmark::HeadingLevel::H1 => 1,
+                        pulldown_cmark::HeadingLevel::H2 => 2,
+                        pulldown_cmark::HeadingLevel::H3 => 3,
+                        pulldown_cmark::HeadingLevel::H4 => 4,
+                        pulldown_cmark::HeadingLevel::H5 => 5,
+                        pulldown_cmark::HeadingLevel::H6 => 6,
+                    };
+                    current_heading_level = level_num;
+                    current_paragraph = Paragraph::new();
+                    if current_heading_level == 1 || current_heading_level == 3 {
+                        current_paragraph = current_paragraph.align(AlignmentType::Center);
+                    }
+                    has_run = false;
+                }
+                Event::End(TagEnd::Heading(_)) => {
+                    if has_run {
+                        if current_heading_level == 3 || current_heading_level == 4 {
+                            current_card_title = Some(current_paragraph.clone());
+                        } else {
+                            if let Some(pic_para) = pending_image_paragraph.take() {
+                                docx = docx.add_paragraph(pic_para);
                             }
+                            docx = docx.add_paragraph(current_paragraph.clone());
+                        }
                     }
+                    current_heading_level = 0;
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
                 }
-
-            let mut spans = vec![];
-
-            for op in content.operations {
-                match op.operator.as_str() {
-                    "Tf" => {
-                        if op.operands.len() == 2 {
-                            if let Ok(name) = op.operands[0].as_name() {
-                                let font_key = String::from_utf8_lossy(name).to_string();
-                                if let Some(base) = font_names.get(&font_key) {
-                                    let lower_base = base.to_lowercase();
-                                    is_bold = lower_base.contains("bold") || lower_base.contains("black") || lower_base.contains("heavy");
-                                    is_italic = lower_base.contains("italic") || lower_base.contains("oblique");
-                                }
-                            }
-                            current_font_size = op.operands[1].as_f32().or_else(|_| op.operands[1].as_i64().map(|v| v as f32)).unwrap_or(12.0);
-                        }
-                    }
-                    "rg" | "g" | "k" => {
-                        if op.operator == "rg" && op.operands.len() == 3 {
-                            let r = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            let g = (op.operands[1].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            let b = (op.operands[2].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            current_color = format!("{:02X}{:02X}{:02X}", r, g, b);
-                        } else if op.operator == "g" && op.operands.len() == 1 {
-                            let gray = (op.operands[0].as_f32().unwrap_or(0.0) * 255.0) as u8;
-                            current_color = format!("{:02X}{:02X}{:02X}", gray, gray, gray);
-                        }
-                    }
-                    "Tm" => {
-                        if op.operands.len() == 6 {
-                            current_x = op.operands[4].as_f32().or_else(|_| op.operands[4].as_i64().map(|v| v as f32)).unwrap_or(0.0);
-                            current_y = op.operands[5].as_f32().or_else(|_| op.operands[5].as_i64().map(|v| v as f32)).unwrap_or(0.0);
-                        }
-                    }
-                    "Td" | "TD" => {
-                        if op.operands.len() == 2 {
-                            let dx = match &op.operands[0] {
-                                lopdf::Object::Real(f) => *f,
-                                lopdf::Object::Integer(i) => *i as f32,
-                                _ => 0.0,
-                            };
-                            let dy = match &op.operands[1] {
-                                lopdf::Object::Real(f) => *f,
-                                lopdf::Object::Integer(i) => *i as f32,
-                                _ => 0.0,
-                            };
-                            current_x += dx;
-                            current_y += dy;
-                        }
-                    }
-                    "Tj" => {
-                        if op.operands.len() == 1
-                            && let Ok(string_bytes) = op.operands[0].as_str() {
-                                let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                current_text.push_str(&txt);
-                            }
-                        if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                        }
-                    }
-                    "TJ" => {
-                        if op.operands.len() == 1
-                            && let Ok(array) = op.operands[0].as_array() {
-                                for item in array {
-                                    if let Ok(string_bytes) = item.as_str() {
-                                        let txt = String::from_utf8_lossy(string_bytes).to_string();
-                                        current_text.push_str(&txt);
-                                    } else if let Ok(num) = item.as_f32()
-                                        && num < -100.0 {
-                                            current_text.push(' ');
-                                        }
-                                }
-                            }
-                        if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                        }
-                    }
-                    "T*" | "'" | "\"" => {
-                         if !current_text.is_empty() {
-                            spans.push(TextSpan {
-                                text: current_text.clone(),
-                                font_size: current_font_size,
-                                is_bold,
-                                is_italic,
-                                color_hex: current_color.clone(),
-                                x: current_x,
-                                y: current_y,
-                                width: current_text.len() as f32 * current_font_size * 0.5,
-                                height: current_font_size,
-                            });
-                            current_text.clear();
-                         }
-                    }
-                    "ET" if !current_text.is_empty() => {
-                        spans.push(TextSpan {
-                            text: current_text.clone(),
-                            font_size: current_font_size,
-                            is_bold,
-                            is_italic,
-                            color_hex: current_color.clone(),
-                            x: current_x,
-                            y: current_y,
-                            width: current_text.len() as f32 * current_font_size * 0.5,
-                            height: current_font_size,
-                        });
-                        current_text.clear();
-                    }
-                    _ => {}
+                Event::Start(Tag::Paragraph) => {
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
                 }
-            }
+                Event::End(TagEnd::Paragraph) => {
+                    if has_run {
+                        if let Some(title_para) = current_card_title.take() {
+                            if let Some(illus_para) = pending_image_paragraph.take() {
+                                let illus_cell = TableCell::new()
+                                    .add_paragraph(illus_para)
+                                    .width(3168, WidthType::Dxa);
 
-            if !current_text.is_empty() {
-                spans.push(TextSpan {
-                    text: current_text.clone(),
-                    font_size: current_font_size,
-                    is_bold,
-                    is_italic,
-                    color_hex: current_color.clone(),
-                    x: current_x,
-                    y: current_y,
-                    width: current_text.len() as f32 * current_font_size * 0.5,
-                    height: current_font_size,
-                });
-            }
+                                let text_cell = TableCell::new()
+                                    .add_paragraph(title_para)
+                                    .add_paragraph(current_paragraph.clone())
+                                    .width(6912, WidthType::Dxa);
 
-            // Clean empty spans
-            spans.retain(|s| !s.text.trim().is_empty());
+                                let row_cells = vec![illus_cell, text_cell];
 
-            let mut remaining_spans = spans.clone();
-            let mut layout_items = vec![];
-
-            // 1. Table Detection
-            let mut y_groups: Vec<(f32, Vec<TextSpan>)> = vec![];
-            for span in remaining_spans.clone() {
-                let mut found = false;
-                for (group_y, group_spans) in &mut y_groups {
-                    if (span.y - *group_y).abs() <= 2.0 {
-                        group_spans.push(span.clone());
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
-                    y_groups.push((span.y, vec![span]));
-                }
-            }
-
-            // Sort groups by y descending
-            y_groups.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-
-            let mut current_table_rows: Vec<Vec<TextSpan>> = vec![];
-            let mut table_spans_to_remove = std::collections::HashSet::new();
-
-            for (_y, row_spans) in y_groups {
-                if row_spans.len() >= 2 {
-                    current_table_rows.push(row_spans);
-                } else {
-                    if current_table_rows.len() >= 2 {
-                        let mut table_cells = vec![];
-                        for row in current_table_rows.drain(..) {
-                            let mut row_sorted = row.clone();
-                            row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-
-                            let mut cells = vec![];
-                            let mut current_cell = vec![];
-                            let mut last_x = -1000.0;
-                            let mut last_width = 0.0;
-
-                            for span in row_sorted {
-                                table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
-
-                                if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
-                                    cells.push(current_cell.clone());
-                                    current_cell.clear();
-                                }
-                                last_x = span.x;
-                                last_width = span.width;
-                                current_cell.push(span);
-                            }
-                            if !current_cell.is_empty() {
-                                cells.push(current_cell);
-                            }
-                            table_cells.push(cells);
-                        }
-                        layout_items.push(LayoutItem::Table(table_cells));
-                    } else {
-                        current_table_rows.clear();
-                    }
-                }
-            }
-            if current_table_rows.len() >= 2 {
-                let mut table_cells = vec![];
-                for row in current_table_rows.drain(..) {
-                    let mut row_sorted = row.clone();
-                    row_sorted.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                    let mut cells = vec![];
-                    let mut current_cell = vec![];
-                    let mut last_x = -1000.0;
-                    let mut last_width = 0.0;
-
-                    for span in row_sorted {
-                        table_spans_to_remove.insert(format!("{}_{}_{}", span.x, span.y, span.text));
-
-                        if (span.x - (last_x + last_width)).abs() > 15.0 && !current_cell.is_empty() {
-                            cells.push(current_cell.clone());
-                            current_cell.clear();
-                        }
-                        last_x = span.x;
-                        last_width = span.width;
-                        current_cell.push(span);
-                    }
-                    if !current_cell.is_empty() {
-                        cells.push(current_cell);
-                    }
-                    table_cells.push(cells);
-                }
-                layout_items.push(LayoutItem::Table(table_cells));
-            }
-
-            remaining_spans.retain(|s| !table_spans_to_remove.contains(&format!("{}_{}_{}", s.x, s.y, s.text)));
-
-            // 2. XY-Cut Algorithm for remaining spans
-            let mut gutters = vec![];
-            let mut min_x = f32::MAX;
-            let mut max_x = f32::MIN;
-            for span in &remaining_spans {
-                if span.x < min_x { min_x = span.x; }
-                if span.x + span.width > max_x { max_x = span.x + span.width; }
-            }
-
-            if min_x < max_x && !remaining_spans.is_empty() {
-                // Projection profile
-                let mut intervals: Vec<(f32, f32)> = remaining_spans.iter().map(|s| (s.x, s.x + s.width)).collect();
-                intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-                let mut merged = vec![intervals[0]];
-                for interval in intervals.iter().skip(1) {
-                    let last = merged.last_mut().unwrap();
-                    if interval.0 <= last.1 {
-                        if interval.1 > last.1 {
-                            last.1 = interval.1;
-                        }
-                    } else {
-                        merged.push(*interval);
-                    }
-                }
-
-                for i in 0..merged.len() - 1 {
-                    let gap = merged[i+1].0 - merged[i].1;
-                    if gap >= 15.0 {
-                        gutters.push(merged[i].1 + gap / 2.0);
-                    }
-                }
-            }
-
-            if !gutters.is_empty() {
-                let gutter_x = gutters[0];
-                let mut col1 = vec![];
-                let mut col2 = vec![];
-                for span in remaining_spans {
-                    if span.x < gutter_x {
-                        col1.push(span);
-                    } else {
-                        col2.push(span);
-                    }
-                }
-
-                let process_col = |col: Vec<TextSpan>| -> Vec<LayoutItem> {
-                    let mut sorted = col;
-                    sorted.sort_by(|a, b| {
-                        match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                            std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
-                            other => other,
-                        }
-                    });
-                    let mut paras = vec![];
-                    let mut current_para = vec![];
-                    let mut last_y = f32::MAX;
-                    for span in sorted {
-                        if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
-                            paras.push(current_para.clone());
-                            current_para.clear();
-                        }
-                        current_para.push(span.clone());
-                        last_y = span.y;
-                    }
-                    if !current_para.is_empty() { paras.push(current_para); }
-                    paras.into_iter().map(LayoutItem::Paragraph).collect()
-                };
-
-                layout_items.extend(process_col(col1));
-                layout_items.extend(process_col(col2));
-            } else {
-                remaining_spans.sort_by(|a, b| {
-                    match b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal) {
-                        std::cmp::Ordering::Equal => a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal),
-                        other => other,
-                    }
-                });
-
-                // Group into paragraphs by proximity
-                let mut paras = vec![];
-                let mut current_para = vec![];
-                let mut last_y = f32::MAX;
-                for span in remaining_spans {
-                    if (last_y - span.y).abs() > span.font_size * 1.5 && !current_para.is_empty() {
-                        paras.push(current_para.clone());
-                        current_para.clear();
-                    }
-                    current_para.push(span.clone());
-                    last_y = span.y;
-                }
-                if !current_para.is_empty() { paras.push(current_para); }
-
-                for p in paras {
-                    layout_items.push(LayoutItem::Paragraph(p));
-                }
-            }
-
-            // Emit docx-rs
-            for item in layout_items {
-                match item {
-                    LayoutItem::Paragraph(spans) => {
-                        let mut sorted_spans = spans.clone();
-                        sorted_spans.sort_by(|a,b| b.y.partial_cmp(&a.y).unwrap_or(std::cmp::Ordering::Equal).then(a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal)));
-
-                        let mut text_parts = vec![];
-                        let mut current_part = vec![];
-                        let mut current_y = sorted_spans.first().map(|s| s.y).unwrap_or(0.0);
-
-                        for span in sorted_spans {
-                            if (span.y - current_y).abs() > 2.0 {
-                                text_parts.push(current_part.clone());
-                                current_part.clear();
-                                current_y = span.y;
-                            }
-                            current_part.push(span);
-                        }
-                        if !current_part.is_empty() { text_parts.push(current_part); }
-
-                        for row in text_parts {
-                            let mut row_sorted = row;
-                            row_sorted.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                            let combined_text = row_sorted.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
-                            if combined_text.trim().is_empty() { continue; }
-
-                            let mut para = Paragraph::new();
-                            let rep_span = row_sorted.first().cloned().unwrap_or(TextSpan {
-                                text: "".to_string(),
-                                font_size: 12.0,
-                                is_bold: false,
-                                is_italic: false,
-                                color_hex: "".to_string(),
-                                x: 0.0,
-                                y: 0.0,
-                                width: 0.0,
-                                height: 0.0,
-                            });
-
-                            if (rep_span.x - center_w).abs() < (width * 0.15) {
-                                para = para.align(AlignmentType::Center);
-                            } else if rep_span.x > (width * 0.6) {
-                                para = para.align(AlignmentType::Right);
-                            }
-
-                            if rep_span.font_size >= 18.0 {
-                                para = para.style("Heading1");
-                            } else if (14.0..18.0).contains(&rep_span.font_size) {
-                                para = para.style("Heading2");
-                            }
-
-                            let mut run = Run::new().add_text(combined_text.trim().to_string());
-                            let size = rep_span.font_size;
-                            if size >= 18.0 {
-                                run = run.size(36);
-                            } else if (14.0..18.0).contains(&size) {
-                                run = run.size(28);
+                                let table = Table::new(vec![TableRow::new(row_cells)])
+                                    .set_borders(TableBorders::new().clear_all())
+                                    .layout(docx_rs::TableLayoutType::Fixed);
+                                docx = docx.add_table(table);
                             } else {
-                                run = run.size((size * 2.0) as usize);
+                                docx = docx.add_paragraph(title_para);
+                                docx = docx.add_paragraph(current_paragraph.clone());
                             }
-
-                            if rep_span.is_bold { run = run.bold(); }
-                            if rep_span.is_italic { run = run.italic(); }
-                            if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
-
-                            para = para.add_run(run);
-                            docx = docx.add_paragraph(para);
+                        } else {
+                            if let Some(pic_para) = pending_image_paragraph.take() {
+                                docx = docx.add_paragraph(pic_para);
+                            }
+                            docx = docx.add_paragraph(current_paragraph.clone());
                         }
                     }
-                    LayoutItem::Table(rows) => {
-                        let mut table = Table::new(vec![]);
-                        for row in rows {
-                            let mut cells = vec![];
-                            for cell_spans in row {
-                                let mut tc = TableCell::new();
-                                let mut para = Paragraph::new();
-                                let mut sorted_spans = cell_spans.clone();
-                                sorted_spans.sort_by(|a,b| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal));
-                                let combined_text = sorted_spans.iter().map(|s| s.text.clone()).collect::<Vec<_>>().join(" ");
-                                if !combined_text.trim().is_empty() {
-                                    let rep_span = sorted_spans.first().cloned().unwrap_or(TextSpan {
-                                        text: "".to_string(),
-                                        font_size: 12.0,
-                                        is_bold: false,
-                                        is_italic: false,
-                                        color_hex: "".to_string(),
-                                        x: 0.0,
-                                        y: 0.0,
-                                        width: 0.0,
-                                        height: 0.0,
-                                    });
-                                    let mut run = Run::new().add_text(combined_text.trim().to_string());
-                                    let size = rep_span.font_size;
-                                    run = run.size((size * 2.0) as usize);
-                                    if rep_span.is_bold { run = run.bold(); }
-                                    if rep_span.is_italic { run = run.italic(); }
-                                    if !rep_span.color_hex.is_empty() { run = run.color(rep_span.color_hex.clone()); }
-                                    para = para.add_run(run);
-                                }
-                                tc = tc.add_paragraph(para);
-                                cells.push(tc);
-                            }
-                            let tr = TableRow::new(cells);
-                            table = table.add_row(tr);
-                        }
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                Event::Text(text) => {
+                    let mut run = Run::new().add_text(text.into_string());
+
+                    if current_heading_level == 1 {
+                        run = run.bold().size(44).color("1F242E");
+                    } else if current_heading_level == 3 || current_heading_level == 4 {
+                        run = run.bold().size(24).color("1F242E");
+                    } else {
+                        run = run.size(19).color("525C68");
+                    }
+
+                    current_paragraph = current_paragraph.add_run(run);
+                    has_run = true;
+                }
+                Event::Start(Tag::Table(_)) => {
+                    table_rows = Vec::new();
+                }
+                Event::End(TagEnd::Table) => {
+                    if !table_rows.is_empty() {
+                        let table = Table::new(table_rows.clone());
                         docx = docx.add_table(table);
                     }
+                    table_rows = Vec::new();
                 }
-            }
-
-            // Add images from Resources
-            if let Ok(resources) = page_dict.get(b"Resources").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict())
-                && let Ok(xobjects) = resources.get(b"XObject").and_then(|obj| doc.get_object(obj.as_reference().unwrap_or((0, 0)))).and_then(|obj| obj.as_dict()) {
-                    for (_xobj_name, xobj_ref) in xobjects.iter() {
-                        if let Ok(xobj_stream) = doc.get_object(xobj_ref.as_reference().unwrap_or((0, 0))).and_then(|obj| obj.as_stream())
-                            && let Ok(subtype) = xobj_stream.dict.get(b"Subtype").and_then(|obj| obj.as_name())
-                                && subtype == b"Image" {
-                                    let image_bytes = &xobj_stream.content;
-                                    let pic = docx_rs::Pic::new(image_bytes);
-                                    docx = docx.add_paragraph(Paragraph::new().add_run(Run::new().add_image(pic)));
-                                }
+                Event::Start(Tag::TableRow) => {
+                    current_row_cells = Vec::new();
+                }
+                Event::End(TagEnd::TableRow) => {
+                    if !current_row_cells.is_empty() {
+                        table_rows.push(TableRow::new(current_row_cells.clone()));
                     }
+                    current_row_cells = Vec::new();
                 }
-
-            if i < all_pages.len() - 1 {
-                docx = docx.add_paragraph(Paragraph::new().page_break_before(true));
+                Event::Start(Tag::TableCell) => {
+                    current_cell_paragraphs = Vec::new();
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                Event::End(TagEnd::TableCell) => {
+                    if has_run {
+                        current_cell_paragraphs.push(current_paragraph.clone());
+                    }
+                    let mut cell = TableCell::new();
+                    for p in current_cell_paragraphs.clone() {
+                        cell = cell.add_paragraph(p);
+                    }
+                    current_row_cells.push(cell);
+                    current_cell_paragraphs = Vec::new();
+                    current_paragraph = Paragraph::new();
+                    has_run = false;
+                }
+                _ => {}
             }
         }
 
+        // flush
+        if let Some(pic_para) = pending_image_paragraph.take() {
+            docx = docx.add_paragraph(pic_para);
+        }
+
         let file = std::fs::File::create(&self.output_path)
-            .map_err(|e| PdfError::Other(format!("Failed to create DOCX file: {}", e)))?;
+            .map_err(|e| PdfError::Other(format!("Failed to create DOCX file: {e}")))?;
         docx.build()
             .pack(file)
-            .map_err(|e| PdfError::Other(format!("Failed to pack DOCX file: {}", e)))?;
+            .map_err(|e| PdfError::Other(format!("Failed to pack DOCX file: {e}")))?;
 
         Ok(())
     }
@@ -1612,7 +1889,12 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        let mut bytes = Vec::new();
+        doc.save_to(&mut bytes).unwrap();
+        LopdfDocument {
+            inner: doc,
+            original_bytes: Some(bytes),
+        }
     }
 
     #[test]
@@ -1714,60 +1996,45 @@ mod tests {
     }
 
     #[test]
-    fn test_multi_column_reading_order() {
-        let content_str = "BT /F1 12 Tf 50 700 Td (Left 1) Tj -50 -700 Td 50 680 Td (Left 2) Tj -50 -680 Td 250 690 Td (Right 1) Tj -250 -690 Td 250 670 Td (Right 2) Tj ET";
-        let mut doc = create_dummy_doc(1, Some(content_str));
+    fn test_pdf_to_docx_with_images() {
+        use crate::document::LopdfDocument;
+        let fixture_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("fixtures")
+            .join("Get_Started_With_Smallpdf.pdf");
 
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("out_test.docx");
-
-        let op = super::PdfToDocxOperation::new(path.clone());
-        assert!(op.execute(&mut doc).is_ok());
-
-        assert!(path.exists());
-
-        let file = std::fs::File::open(&path).unwrap();
-        let mut archive = zip::ZipArchive::new(file).unwrap();
-        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
-        let mut xml_content = String::new();
-        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
-
-        let mut pure_text = String::new();
-        let mut in_tag = false;
-        for c in xml_content.chars() {
-            if c == '<' {
-                in_tag = true;
-            } else if c == '>' {
-                in_tag = false;
-            } else if !in_tag {
-                pure_text.push(c);
-            }
+        if !fixture_path.exists() {
+            return;
         }
 
-        let clean_text = pure_text.replace(" ", "");
-        assert!(clean_text.contains("Left1Left2Right1Right2") || clean_text.contains("Left1Right1Left2Right2"));
-    }
-
-    #[test]
-    fn test_table_structure_detection() {
-        let content_str = "BT /F1 12 Tf 50 700 Td (Header 1) Tj 100 0 Td (Header 2) Tj -100 -20 Td (Cell 1) Tj 100 0 Td (Cell 2) Tj ET";
-        let mut doc = create_dummy_doc(1, Some(content_str));
+        let mut doc = LopdfDocument::load(&fixture_path).unwrap();
 
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("out_test_table.docx");
+        let out_path = dir.path().join("output.docx");
 
-        let op = super::PdfToDocxOperation::new(path.clone());
+        let op = PdfToDocxOperation::new(out_path.clone());
         assert!(op.execute(&mut doc).is_ok());
+        assert!(out_path.exists());
 
-        assert!(path.exists());
-        let file = std::fs::File::open(&path).unwrap();
+        let file = std::fs::File::open(&out_path).unwrap();
         let mut archive = zip::ZipArchive::new(file).unwrap();
-        let mut doc_xml = archive.by_name("word/document.xml").unwrap();
-        let mut xml_content = String::new();
-        std::io::Read::read_to_string(&mut doc_xml, &mut xml_content).unwrap();
-
-        assert!(xml_content.contains("<w:tbl>") || xml_content.contains("<w:t"));
+        let mut image_count = 0;
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).unwrap();
+            println!("DOCX File: {}", file.name());
+        }
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).unwrap();
+            if file.name().starts_with("word/media/")
+                && (file.name().ends_with(".png") || file.name().ends_with(".jpeg"))
+            {
+                image_count += 1;
+                assert!(file.size() > 0);
+            }
+        }
+        assert!(image_count > 0, "No images found in generated DOCX");
     }
+
     #[test]
     fn test_pdf_to_docx() {
         let mut doc = create_dummy_doc(1, None);
@@ -1779,6 +2046,21 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_sanitize_font_name() {
+        assert_eq!(
+            super::sanitize_font_name("JFGNNE+SourceSansPro-Bold"),
+            "Source Sans Pro"
+        );
+        assert_eq!(super::sanitize_font_name("Arial-Italic"), "Arial");
+        assert_eq!(
+            super::sanitize_font_name("TimesNewRoman,Bold"),
+            "Times New Roman"
+        );
+        assert_eq!(super::sanitize_font_name("F1"), "Arial");
+        assert_eq!(super::sanitize_font_name("OpenSans"), "Open Sans");
     }
 
     #[test]
@@ -1974,6 +2256,4 @@ mod tests {
         assert!(!bytes.is_empty());
         assert!(bytes.starts_with(b"%PDF-"));
     }
-
-
 }

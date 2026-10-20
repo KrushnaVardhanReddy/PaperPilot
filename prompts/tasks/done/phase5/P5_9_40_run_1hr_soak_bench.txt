@@ -1,0 +1,23 @@
+Task: Execute Pure-Rust 1-Hour Sustained Soak Benchmark & Generate Verified Report
+
+OBJECTIVE:
+Run the newly merged pure-Rust `soak-bench` harness (`tools/soak-bench`) for a full 1-hour sustained endurance cycle (3,600 seconds) in release mode, and commit the resulting report and wiki updates.
+
+REQUIREMENTS:
+1. Benchmark Command Execution:
+   Run the pure-Rust benchmark tool for exactly 3,600 seconds in release mode:
+   ```bash
+   cargo run --release -p soak-bench -- --duration 3600 --output reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md --wiki wiki/19-One-Hour-Endurance-Benchmark.md
+   ```
+
+2. Output Verification:
+   Ensure the run completes with:
+   - Success Rate: 100% (0 crashes, 0 panics).
+   - Sustained Throughput: high throughput without throttling.
+   - Resource Stability: RSS memory remains stable with zero memory leaks.
+   - Per-Operation Latency Breakdown: Verify the generated `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md` contains the full 23+ individual operation rows with Mean, P50, P90, P95, P99, P99.9, Min, and Max metrics.
+
+3. Commit & Submit:
+   - Commit the generated `reports/ONE_HOUR_SUSTAINED_BENCHMARK_REPORT.md` and `wiki/19-One-Hour-Endurance-Benchmark.md`.
+   - Do NOT revert any engine fixes or core operations.
+   - Open a PR with the verified 1-hour benchmark results!

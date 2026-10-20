@@ -1,0 +1,103 @@
+# Task 5.9.68: Universal Pipeline Parity & Comprehensive Parameter Configuration
+
+Reference Spec: `specs/079-universal-pipeline-parity-and-parameter-configs/spec.md`
+Checklist: `specs/079-universal-pipeline-parity-and-parameter-configs/task.md`
+
+You are implementing universal tool parity, full parameter configuration, and robust intermediate pipeline hand-off across Desktop (`apps/desktop`) and Web Embed (`apps/embed`).
+
+Follow these detailed implementation instructions:
+
+---
+
+### Part 1: Comprehensive Parameter Schemas in `apps/desktop/src/lib/state/pipeline.svelte.ts`
+
+Ensure `OPERATION_REGISTRY` contains complete, user-friendly parameter schemas for ALL supported pipeline operations so that clicking any step opens intuitive controls:
+
+1. **`pdf_split`**:
+   - `defaultParams`: `{ input: '__input__', output_dir: '__output_dir__', split_at: '' }`
+   - `paramSchema`:
+     - `{ key: 'split_at', label: 'Split at pages (comma-separated, e.g. 1, 3, 5)', type: 'text', placeholder: 'e.g. 1, 3' }`
+2. **`pdf_extract_pages`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', pages: '1' }`
+   - `paramSchema`:
+     - `{ key: 'pages', label: 'Pages to extract (comma-separated or ranges)', type: 'text', placeholder: 'e.g. 1-3, 5' }`
+3. **`pdf_rotate`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', pages: 'all', angle: 90 }`
+   - `paramSchema`:
+     - `{ key: 'pages', label: 'Target Pages', type: 'text', placeholder: 'all or 1,2-4' }`
+     - `{ key: 'angle', label: 'Rotation Angle (degrees)', type: 'select', options: [90, 180, 270] }`
+4. **`pdf_watermark`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', text: 'CONFIDENTIAL', opacity: 0.3 }`
+   - `paramSchema`:
+     - `{ key: 'text', label: 'Watermark Text', type: 'text', placeholder: 'e.g. CONFIDENTIAL' }`
+     - `{ key: 'opacity', label: 'Opacity (0.0 to 1.0)', type: 'range', min: 0.05, max: 1.0, step: 0.05 }`
+5. **`pdf_encrypt`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', password: '' }`
+   - `paramSchema`:
+     - `{ key: 'password', label: 'User / Open Password', type: 'password', placeholder: 'Enter encryption password' }`
+6. **`pdf_decrypt`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', password: '' }`
+   - `paramSchema`:
+     - `{ key: 'password', label: 'Document Password', type: 'password', placeholder: 'Enter password to remove protection' }`
+7. **`pdf_redact`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', terms: '' }`
+   - `paramSchema`:
+     - `{ key: 'terms', label: 'Keywords to Redact (comma-separated)', type: 'text', placeholder: 'e.g. SSN, confidential, invoice' }`
+8. **`pdf_header_footer`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', header: '', footer: '' }`
+   - `paramSchema`:
+     - `{ key: 'header', label: 'Header Text', type: 'text', placeholder: 'Header text' }`
+     - `{ key: 'footer', label: 'Footer Text', type: 'text', placeholder: 'Footer text' }`
+9. **`pdf_bates`**:
+   - `defaultParams`: `{ input: '__input__', output: '__output__', start: 1, prefix: 'DOC-' }`
+   - `paramSchema`:
+     - `{ key: 'prefix', label: 'Bates Prefix', type: 'text', placeholder: 'e.g. EXHIBIT-' }`
+     - `{ key: 'start', label: 'Start Number', type: 'number', min: 1, step: 1 }`
+10. **`pdf_metadata`**:
+    - `defaultParams`: `{ input: '__input__', output: '__output__', title: '', author: '', subject: '' }`
+    - `paramSchema`:
+      - `{ key: 'title', label: 'Document Title', type: 'text', placeholder: 'Title' }`
+      - `{ key: 'author', label: 'Author Name', type: 'text', placeholder: 'Author' }`
+      - `{ key: 'subject', label: 'Subject / Keywords', type: 'text', placeholder: 'Subject' }`
+
+---
+
+### Part 2: Desktop Intermediate Data Hand-off in `PipelineRunner.svelte`
+
+In `apps/desktop/src/lib/components/pipeline/PipelineRunner.svelte`:
+- When chaining steps where step `N` outputs multiple files (e.g., `pdf_split`), the tool creates an output directory containing `split_1.pdf`, `split_2.pdf`, etc.
+- In `runPipeline()`:
+  ```typescript
+  let resolved = result.output_path ?? outputPath;
+  if (step.operationId === 'pdf_split' || resolved.endsWith('_dir')) {
+    // Pass the first generated part so downstream tools (OCR, Watermark, Encrypt) do not crash with directory error
+    workingPath = `${resolved}/split_1.pdf`;
+  } else {
+    workingPath = resolved;
+  }
+  ```
+- If a step fails, display the specific failed step name and the friendly error message in `toastState.error`.
+
+---
+
+### Part 3: Embed & Headless Pipeline Parity in `apps/embed/src/api.ts`
+
+In `apps/embed/src/api.ts`, ensure `runPipeline` supports the full suite of client-side operations:
+- **`rotate`**: handles `angle` or `degrees`, and `pages` ('all' or specific pages).
+- **`watermark`**: handles `text`, `opacity`, `angle`, `color`.
+- **`split` / `extract` / `extract_pages`**: extracts specified pages (`pages` or `split_at`).
+- **`delete_pages` / `delete`**: removes specified page indices.
+- **`reorder_pages` / `reorder`**: custom order array or 'reverse'.
+- **`compress` / `optimize`**: stream compression.
+- **`crop`**: margin or cropBox adjustment.
+- **`flatten`**: form field and annotation flattening via `doc.getForm().flatten()`.
+- **`metadata`**: updates document title, author, subject, keywords.
+
+---
+
+### Part 4: Verification & Tests
+
+1. Run `npm --prefix apps/embed test`:
+   - Ensure all 11 headless and visual pipeline tests pass.
+2. Run `npm --prefix apps/desktop run check`:
+   - Ensure TypeScript/Svelte checks pass with 0 errors.

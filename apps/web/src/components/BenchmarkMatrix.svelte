@@ -25,7 +25,7 @@
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
-            <td class="highlight-col text-success">~50-100ms</td>
+            <td class="highlight-col text-success">~30–95ms</td>
             <td class="text-warning">Network/Queue Dependent</td>
           </tr>
           <tr>
@@ -40,7 +40,7 @@
           </tr>
           <tr>
             <td class="feature-name">Deployment Size</td>
-            <td class="highlight-col text-success">~4MB (WASM)</td>
+            <td class="highlight-col text-success">~3MB gzipped / 8MB (WASM)</td>
             <td class="text-danger">Gigabytes (Docker/VMs)</td>
           </tr>
         </tbody>

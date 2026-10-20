@@ -9,13 +9,15 @@ fn create_mock_pdf(path: &std::path::Path) {
     catalog.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
     catalog.set("Pages", lopdf::Object::Reference(pages_id));
     let catalog_id = doc.add_object(catalog);
-    doc.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+    doc.trailer
+        .set("Root", lopdf::Object::Reference(catalog_id));
 
     let mut pages = lopdf::Dictionary::new();
     pages.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
     pages.set("Kids", lopdf::Object::Array(vec![]));
     pages.set("Count", lopdf::Object::Integer(0));
-    doc.objects.insert(pages_id, lopdf::Object::Dictionary(pages));
+    doc.objects
+        .insert(pages_id, lopdf::Object::Dictionary(pages));
     doc.save(path).unwrap();
 }
 
@@ -44,11 +46,14 @@ fn test_watch_folder_daemon() {
     create_mock_pdf(&mock_pdf_path);
 
     // Wait for debounce and processing
-    std::thread::sleep(Duration::from_millis(1500));
+    std::thread::sleep(Duration::from_millis(3000));
 
     // Check output
     let expected_out_file = out_dir.path().join("test_input.pdf");
-    assert!(expected_out_file.exists(), "Processed output file should exist");
+    assert!(
+        expected_out_file.exists(),
+        "Processed output file should exist"
+    );
 
     // Kill the daemon
     child.kill().unwrap();

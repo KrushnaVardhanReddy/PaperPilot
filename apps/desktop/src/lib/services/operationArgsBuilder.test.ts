@@ -69,6 +69,16 @@ describe('operationArgsBuilder', () => {
         });
     });
 
+    it('builds args for rotate with specific pages', async () => {
+        const args = await buildOperationArgs('rotate', { ...defaultContext, rotatePages: '1, 3, 5-7' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            pages: '1, 3, 5-7',
+            angle: 90,
+            output: '/docs/test_rotated.pdf'
+        });
+    });
+
     it('builds args for creation tools (md_to_pdf) with dialog mock', async () => {
         const args = await buildOperationArgs('md_to_pdf', defaultContext);
         expect(args).toEqual({

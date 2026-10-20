@@ -1,4 +1,8 @@
 <script lang="ts">
+  import type { ToolDefinition } from '$lib/types/tools';
+  import { allTools, allCategories } from '$lib/types/toolList';
+  import { rankToolsByContext } from '$lib/services/toolRegistry';
+
 
   async function safeInvoke(cmd: string, args?: any): Promise<any> {
     try {
@@ -30,6 +34,8 @@
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
+  import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
+  import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
   import { onMount } from 'svelte';
@@ -295,6 +301,13 @@
   let activeTool = $state('none');
   let annotations = $state<Annotation[]>([]);
 
+  let activePackIds = $derived(
+    appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
+  );
+  let ranked = $derived(
+    rankToolsByContext(allTools, appState.documents, activePackIds)
+  );
+
   $effect(() => {
     let objectUrl = '';
     let isAborted = false;
@@ -312,8 +325,9 @@
                 const bytes: number[] = await safeInvoke('read_file_bytes', { path });
                 if (isAborted) return; // Prevent overwriting state if user switched tabs
 
-                const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-                const newFile = new File([blob], file.name, { type: 'application/pdf' });
+                const inferredMime = file.type || getMimeType(file.name);
+                const blob = new Blob([new Uint8Array(bytes)], { type: inferredMime });
+                const newFile = new File([blob], file.name, { type: inferredMime });
                 Object.defineProperty(newFile, 'size', { value: file.size, writable: false });
                 (newFile as any)._localPath = path;
                 (newFile as any)._isLoaded = true;
@@ -379,7 +393,10 @@
       <div class="workspace-body">
         {#if appState.showDiffView}
           <PdfVisualDiff onClose={() => appState.showDiffView = false} />
-        {:else if appState.selectedDocumentIndex !== null}
+        {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+          <SpreadsheetViewer file={selectedDoc} />
+        {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
           <div class="viewer-wrapper">
             <div class="viewer-content">
             <PdfThumbnails {pdfDoc} bind:pageNum />
@@ -436,12 +453,94 @@
                 </p>
               </header>
 
-              <DropZone ondrop={handleFilesDropped} />
-              <DocumentList />
+              <div class="studio-hub-layout">
+                <div class="status-pills">
+                  <span class="status-pill">🔒 100% On-Device & Private</span>
+                  <span class="status-pill">Port 7823 REST Gateway</span>
+                  <span class="status-pill">Runtime: Offline NLP / Local Llamafile</span>
+                </div>
+                <DropZone ondrop={handleFilesDropped} />
 
-              <GlobalCommandBar />
+                {#if appState.documents.length > 0}
+                  <DocumentList />
+                {/if}
+
+                <GlobalCommandBar />
+
+                <!-- Studio Hub Operations Grid -->
+                <div class="studio-operations-grid">
+                   {#if appState.documents.length > 0 && ranked.recommended.length > 0}
+                     <div class="studio-category">
+                        <h3>⚡ Recommended</h3>
+                        <div class="studio-cards">
+                           {#each ranked.recommended as tool}
+                             <button class="studio-card" onclick={() => {
+                                appState.openTool(tool);
+                                const panel = document.querySelector('.operations-panel-wrapper');
+                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+                             }}>
+                                <div class="studio-card-icon">{tool.icon}</div>
+                                <div class="studio-card-content">
+                                   <h4>
+                                      {tool.title}
+                                      {#if appState.documents.length >= 2}
+                                        {#if tool.rule?.minDocuments === 2}
+                                          <span class="smart-badge-studio">Multi-File Action</span>
+                                        {:else if tool.rule?.isBatchable}
+                                          <span class="smart-badge-studio">Batch Action</span>
+                                        {/if}
+                                      {/if}
+                                   </h4>
+                                   {#if tool.inputFormat && tool.outputFormat}
+                                     <span class="format-pill">
+                                       <span class="fmt-in">{tool.inputFormat}</span>
+                                       <span class="fmt-arrow">➔</span>
+                                       <span class="fmt-out">{tool.outputFormat}</span>
+                                     </span>
+                                   {/if}
+                                   <p>{tool.description}</p>
+                                </div>
+                             </button>
+                           {/each}
+                        </div>
+                     </div>
+                   {/if}
+
+                   {#each allCategories.filter(c => c.id !== 'all') as cat}
+                     <div class="studio-category">
+                        <h3>{cat.icon} {cat.title}</h3>
+                        <div class="studio-cards">
+                           {#each allTools.filter(t => t.category === cat.id) as tool}
+                             <button class="studio-card" onclick={() => {
+                                appState.openTool(tool);
+                                const panel = document.querySelector('.operations-panel-wrapper');
+                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+                             }}>
+                                <div class="studio-card-icon">{tool.icon}</div>
+                                <div class="studio-card-content">
+                                   <h4>{tool.title}</h4>
+                                   {#if tool.inputFormat && tool.outputFormat}
+                                     <span class="format-pill">
+                                       <span class="fmt-in">{tool.inputFormat}</span>
+                                       <span class="fmt-arrow">➔</span>
+                                       <span class="fmt-out">{tool.outputFormat}</span>
+                                     </span>
+                                   {/if}
+                                   <p>{tool.description}</p>
+                                </div>
+                             </button>
+                           {/each}
+                        </div>
+                     </div>
+                   {/each}
+                </div>
+              </div>
             </div>
-            <OperationsPanel />
+            {#if !appState.isMobile}
+              <div class="operations-panel-wrapper layout-studio">
+                <OperationsPanel />
+              </div>
+            {/if}
           </div>
         {/if}
       </div>
@@ -460,6 +559,10 @@
     </div>
   {/if}
 </div>
+
+{#if appState.isMobile && (appState.activeTool || appState.activeTab === 'tools')}
+  <OperationsPanel />
+{/if}
 
 <style>
   .page-container {
@@ -555,4 +658,144 @@
     display: flex;
     flex-direction: column;
   }
+
+  .status-pills {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    justify-content: flex-start;
+  }
+  .status-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .studio-hub-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+  }
+
+  .documents-layout .documents-view {
+    max-width: 100%;
+  }
+  .operations-panel-wrapper {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .studio-operations-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 16px;
+  }
+  .studio-category h3 {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+  }
+  .studio-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .studio-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .studio-card:hover {
+    border-color: var(--accent-primary, #3b82f6);
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+  }
+  .studio-card-icon {
+    font-size: 1.5rem;
+  }
+  .studio-card-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+  .studio-card-content p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .batch-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+  .clear-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .clear-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+  .smart-badge-studio {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    vertical-align: middle;
+  }
+
+  .format-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .fmt-in {
+    color: var(--text-secondary, #9ca3af);
+  }
+  .fmt-arrow {
+    color: var(--accent-primary, #5e6ad2);
+    font-size: 8px;
+  }
+  .fmt-out {
+    color: var(--text-primary, #ffffff);
+  }
+
 </style>

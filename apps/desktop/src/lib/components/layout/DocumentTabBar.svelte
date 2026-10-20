@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import { getFileIcon } from '$lib/utils/fileType';
 
   function openFileObjects(files: File[]) {
     if (files.length === 0) return;
@@ -42,7 +43,7 @@
     <span class="btn-text">New</span>
     <input
       type="file"
-      accept=".pdf"
+      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
       style="display: none;"
       onchange={handleFileInputChange}
     />
@@ -62,7 +63,7 @@
           onkeydown={(e) => e.key === 'Enter' && appState.selectDocument(docIndex)}
           tabindex="0"
         >
-          <span class="tab-icon">📄</span>
+          <span class="tab-icon">{getFileIcon(doc.name)}</span>
           <span class="tab-title" title={doc.name}>{doc.name}</span>
           <button
             class="tab-close-btn"

@@ -34,18 +34,27 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Generate shell completions
+    Completions {
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
     // --- Group A: Page Manipulation ---
+    /// Merge PDFs: Combine multiple PDF files [Input: 2+ .pdfs | Output: .pdf]
     Merge {
         #[arg(long, required = true, num_args = 1..)]
         input: Vec<PathBuf>,
         #[arg(long)]
         output: PathBuf,
     },
+    /// Split PDF: Divide document into separate pages [Input: .pdf | Output: multiple .pdfs]
     Split {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "")]
         pages: String,
+        #[arg(long)]
+        every: Option<u32>,
         #[arg(long)]
         output: PathBuf,
     },
@@ -73,6 +82,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Rotate Pages: Rotate pages by 90, 180, or 270 degrees [Input: .pdf | Output: .pdf]
     Rotate {
         #[arg(long)]
         input: PathBuf,
@@ -83,6 +93,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Crop Pages: Crop pages to rectangular area [Input: .pdf | Output: .pdf]
     Crop {
         #[arg(long)]
         input: PathBuf,
@@ -101,12 +112,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Burst PDF: Split document into single pages [Input: .pdf | Output: multiple .pdfs]
     Burst {
         #[arg(long)]
         input: PathBuf,
         #[arg(long, aliases = &["output-dir"])]
         output: PathBuf,
     },
+    /// Remove Blank Pages: Remove empty or nearly empty pages [Input: .pdf | Output: .pdf]
     #[command(name = "remove-blank")]
     RemoveBlank {
         #[arg(long)]
@@ -116,6 +129,7 @@ pub enum Commands {
     },
 
     // --- Group B: Document Operations ---
+    /// Compress PDF: Reduce document file size [Input: .pdf | Output: .pdf]
     Compress {
         #[arg(long)]
         input: PathBuf,
@@ -130,12 +144,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Fast Web View: Optimize PDF for fast web viewing [Input: .pdf | Output: .pdf]
     Linearize {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
     },
+    /// Encrypt with Password: Protect document [Input: .pdf | Output: .pdf]
     Encrypt {
         #[arg(long)]
         input: PathBuf,
@@ -146,6 +162,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Remove Password: Remove password restrictions [Input: .pdf | Output: .pdf]
     Decrypt {
         #[arg(long)]
         input: PathBuf,
@@ -154,7 +171,8 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-        Watermark {
+    /// Add Watermark: Stamp text or branding [Input: .pdf | Output: .pdf]
+    Watermark {
         #[arg(long)]
         input: std::path::PathBuf,
         #[arg(long)]
@@ -170,6 +188,7 @@ pub enum Commands {
         #[arg(long)]
         output: std::path::PathBuf,
     },
+    /// Redact Text: Permanently remove sensitive information [Input: .pdf | Output: .pdf]
     Redact {
         #[arg(long)]
         input: PathBuf,
@@ -180,6 +199,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Edit Metadata: Edit document metadata [Input: .pdf | Output: .pdf]
     Metadata {
         #[arg(long)]
         input: PathBuf,
@@ -194,6 +214,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Sign Document: Apply digital signature to document [Input: .pdf | Output: .pdf]
     #[command(alias = "sign")]
     Signature {
         #[arg(long)]
@@ -203,12 +224,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Flatten Annotations: Bake annotations and forms into page [Input: .pdf | Output: .pdf]
     Flatten {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
     },
+    /// Convert to PDF/A: Archive-ready PDF format conversion [Input: .pdf | Output: .pdf]
     #[command(alias = "to-pdf-a")]
     PdfA {
         #[arg(long)]
@@ -216,6 +239,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
     HeaderFooter {
         #[arg(long)]
         input: PathBuf,
@@ -224,6 +248,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Bates Numbering: Apply Bates stamps to pages [Input: .pdf | Output: .pdf]
     Bates {
         #[arg(long)]
         input: PathBuf,
@@ -234,6 +259,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Add Page Numbers: Add dynamic page numbering [Input: .pdf | Output: .pdf]
     #[command(name = "page-numbers")]
     PageNumbers {
         #[arg(long)]
@@ -245,6 +271,7 @@ pub enum Commands {
     },
 
     // --- Group C & D: Extraction, Search & Conversion ---
+    /// PDF to Plain Text: Extract all raw textual content from a PDF [Input: .pdf | Output: .txt]
     ExtractText {
         #[arg(long)]
         input: PathBuf,
@@ -253,18 +280,21 @@ pub enum Commands {
         #[arg(long, default_value = "text")]
         format: String,
     },
+    /// Extract Embedded Images: Save all images found [Input: .pdf | Output: png images]
     ExtractImages {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
     },
+    /// Search Text: Search for text across document [Input: .pdf | Output: .json]
     Search {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         query: String,
     },
+    /// Render Page: Render page to image format [Input: .pdf | Output: png images]
     Render {
         #[arg(long)]
         input: PathBuf,
@@ -273,12 +303,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf]
     Compare {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         input_b: PathBuf,
     },
+    /// OCR Text Recognition: Run OCR on scanned pages [Input: .pdf | Output: .txt / .pdf]
     Ocr {
         #[arg(long)]
         input: PathBuf,
@@ -291,10 +323,12 @@ pub enum Commands {
         #[arg(long)]
         tier: Option<String>,
     },
+    /// Extract Bookmarks: Read document outline and bookmarks [Input: .pdf | Output: .json]
     Bookmarks {
         #[arg(long)]
         input: PathBuf,
     },
+    /// Images to PDF: Combine images into PDF [Input: images | Output: .pdf]
     ImagesToPdf {
         #[arg(long, required = true, num_args = 1..)]
         images: Vec<PathBuf>,
@@ -303,6 +337,7 @@ pub enum Commands {
     },
 
     // --- Validate ---
+    /// Add Annotations: Programmatically add annotations [Input: .pdf | Output: .pdf]
     Annotate {
         #[arg(long)]
         input: PathBuf,
@@ -315,10 +350,12 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
     },
+    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt]
     Validate {
         #[arg(long)]
         input: PathBuf,
     },
+    /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
     Hash {
         #[arg(long)]
         input: PathBuf,
@@ -351,6 +388,7 @@ pub enum Commands {
         inline_css: Option<String>,
     },
     // --- Headless Server / Automation Gateway ---
+    #[cfg(feature = "daemon")]
     Serve {
         #[arg(long, default_value = "7823")]
         port: u16,
@@ -358,7 +396,11 @@ pub enum Commands {
         bind: String,
     },
 
+    /// List all available tools, capabilities, and launch status
+    ListTools,
+
     // --- Office Document Conversion ---
+    #[cfg(feature = "office")]
     Office {
         #[command(subcommand)]
         command: crate::commands::office::OfficeCommands,

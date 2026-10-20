@@ -1,0 +1,70 @@
+# Task: Phase 5.9.44 — Production-Grade PDF Compression Optimization (Spec 067)
+# Base Branch: main
+# Target Branch: feat-production-pdf-compression
+# Priority: HIGH (Core Tool Quality & Size Reduction)
+# Spec: specs/067-production-pdf-compression/spec.md
+
+## Objective
+Upgrade `CompressOperation` in `paperpilot-pdf/src/operations/compress.rs` so that:
+1. High-resolution / uncompressed images are cleanly downsampled and re-encoded using preset JPEG quality (`low` = 40, `medium` = 60, `high` = 80).
+2. All non-image streams (content streams, font streams) that are uncompressed are automatically compressed with Flate.
+3. Unused/orphaned objects are pruned using `lopdf_doc.inner.prune_objects()`.
+4. Ensure minimal text PDFs (like `tests/e2e_fixtures/real/large_doc.pdf`) do not suffer size inflation.
+5. Demonstrate >= 30% to 60% real size reduction on `tests/e2e_fixtures/real/sample_photo_doc.pdf`.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/src/operations/compress.rs
+tests/e2e_fixtures/real/sample_photo_doc.pdf
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, or `v1_launch_plan.md`.
+
+---
+
+## 1. Requirements & Features
+
+### A. Compression Implementation (`paperpilot-pdf/src/operations/compress.rs`)
+1. **Quality Presets**:
+   - Parse `quality`:
+     - `"low"` / `"screen"` -> max dimension 1024, JPEG quality 40.
+     - `"medium"` / `"ebook"` (default) -> max dimension 1600, JPEG quality 60.
+     - `"high"` / `"prepress"` -> max dimension 2400, JPEG quality 80.
+     - Numeric strings (e.g. `"75"`) -> mapped to JPEG quality number, max dimension 1600.
+2. **Image Stream Processing**:
+   - Iterate over all stream objects in `lopdf_doc.inner.objects`.
+   - If `/Subtype /Image`:
+     - Decompress using `stream.decompressed_content()`.
+     - Decode image with `image::load_from_memory` (or reconstruct RGB/Gray buffer).
+     - Downsample with `image::imageops::FilterType::Triangle` if dimensions exceed `max_dim`.
+     - Re-encode as JPEG with `JpegEncoder::new_with_quality`.
+     - Replace stream bytes **only if** new JPEG size is strictly less than original size.
+3. **Flate Stream Compression**:
+   - For all stream objects that are not images:
+     - Check if `/Filter` dictionary entry is absent or uncompressed.
+     - If uncompressed, compress stream contents using `flate2::write::ZlibEncoder`.
+     - Set `/Filter` to `/FlateDecode`.
+4. **Pruning & Modern Packing**:
+   - Call `lopdf_doc.inner.prune_objects()` to eliminate unreferenced/dead objects.
+   - Call `lopdf_doc.inner.compress()`.
+
+### B. Unit & Fixture Tests
+1. Add a unit test in `paperpilot-pdf/src/operations/compress.rs`:
+   - `test_compress_sample_photo_document_reduction`:
+     - Load `tests/e2e_fixtures/real/sample_photo_doc.pdf`.
+     - Run `CompressOperation::new(Some("low".to_string()))`.
+     - Verify output byte size is reduced by at least 30%.
+2. Verify that `large_doc.pdf` does not cause syntax errors or crash.
+
+---
+
+## 2. Verification Commands
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf compress -j 4
+```

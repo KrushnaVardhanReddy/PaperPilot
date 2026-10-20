@@ -1,0 +1,133 @@
+# Task: Phase 5.9.45 — PDF-to-DOCX High-Fidelity Semantic Layout & Side-by-Side Table Reconstruction (Spec 068)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-semantic-layout
+# Priority: HIGH (Core Conversion Visual Parity)
+# Spec: specs/068-pdf-to-docx-semantic-layout/spec.md
+
+## Objective
+Upgrade `PdfToDocxOperation` in `paperpilot-pdf/src/operations/conversion.rs` to produce high-fidelity Word DOCX documents matching the layout of real-world multi-column marketing sheets and brochures.
+
+### Core Problem
+In `PdfToDocxOperation`:
+1. It currently checks `if !images_on_page.is_empty() && !text_blocks.is_empty()` to decide whether to create a 2-column table.
+2. In `fixtures/Get_Started_With_Smallpdf.pdf`, the card illustrations are **Form XObjects** (vector curves), NOT raster images (`images_on_page.is_empty()` is TRUE!).
+3. Because `images_on_page` is empty, it falls into the `else` block:
+   ```rust
+   for block in text_blocks {
+       docx = docx.add_paragraph(Paragraph::new().add_run(run));
+   }
+   ```
+   This dumps all text as raw paragraphs into a squashed block without 2-column tables or proper heading hierarchy!
+4. Furthermore, `doc.extract_text(&[*page_id])` strips semantic heading levels (`<h1>`, `<h3>`, `<h4>`), whereas `pdf_oxide` already provides them via `pdf.to_html(page_index)`.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/src/operations/conversion.rs
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## Exact Implementation Recipe for `PdfToDocxOperation::execute`
+
+Use `pdf_oxide` (which is already imported and used in `PdfToHtmlOperation` at line 388):
+
+### Step 1: Initialize Docx with 0.5-inch Margins
+```rust
+let mut docx = Docx::new().page_margin(
+    docx_rs::PageMargin::new()
+        .top(720)
+        .bottom(720)
+        .left(720)
+        .right(720),
+);
+```
+
+### Step 2: Extract Semantic HTML via `pdf_oxide`
+Check if `lopdf_doc.original_bytes` is present and initialize `pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())`.
+For each page, call `pdf.to_html(page_idx)` (just like `PdfToHtmlOperation` does).
+
+Parse the generated HTML tags (`h1`, `h2`, `h3`, `h4`, `p`, `a`):
+You can parse the tags with simple regex / string scanning or `scraper::Html`:
+- **`<h1>` (Title)**:
+  ```rust
+  Paragraph::new()
+      .align(docx_rs::AlignmentType::Center)
+      .add_run(Run::new().add_text(title_text).bold().size(44).color("1F242E"))
+  ```
+- **`<h3>` (Subtitle)**:
+  ```rust
+  Paragraph::new()
+      .align(docx_rs::AlignmentType::Center)
+      .add_run(Run::new().add_text(subtitle_text).size(22).color("757E8A"))
+  ```
+- **`<h4>` (Card Heading) + `<p>` (Card Description)**:
+  Whenever you encounter an `<h4>` followed by a `<p>`, treat them as a feature card.
+  If there are multiple cards on a page (e.g. 4 cards in `Get_Started_With_Smallpdf.pdf`), construct an alternating 2-column borderless table (`docx_rs::Table`):
+  
+  ```rust
+  // Card 0 (even index): Graphic/Badge on LEFT (2600 dxa), Text on RIGHT (5000 dxa)
+  // Card 1 (odd index): Text on LEFT (5000 dxa), Graphic/Badge on RIGHT (2600 dxa)
+  
+  let text_cell = TableCell::new()
+      .width(5000, WidthType::Dxa)
+      .add_paragraph(
+          Paragraph::new().add_run(Run::new().add_text(card_title).bold().size(24).color("1F242E"))
+      )
+      .add_paragraph(
+          Paragraph::new().add_run(Run::new().add_text(card_desc).size(19).color("333333"))
+      );
+
+  let graphic_cell = TableCell::new()
+      .width(2600, WidthType::Dxa)
+      .add_paragraph(
+          // If real raster image available, add Pic::new(&bytes)
+          // Otherwise, add a clean styled illustration badge placeholder
+          Paragraph::new()
+              .align(docx_rs::AlignmentType::Center)
+              .add_run(Run::new().add_text("✦").size(36).color("E85E34"))
+      );
+
+  let row = if card_idx % 2 == 0 {
+      TableRow::new(vec![graphic_cell, text_cell])
+  } else {
+      TableRow::new(vec![text_cell, graphic_cell])
+  };
+
+  let table = Table::new(vec![row])
+      .margins(docx_rs::TableCellMargins::new())
+      .set_borders(TableBorders::new().clear_all());
+
+  docx = docx.add_table(table);
+  ```
+
+### Step 3: Fallback if `pdf_oxide` or `original_bytes` is unavailable
+If `pdf_oxide` fails or `original_bytes` is None, fall back to the existing `doc.extract_text(&[*page_id])` loop.
+
+---
+
+## Verification Protocol
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4
+```
+
+Verify conversion on `fixtures/Get_Started_With_Smallpdf.pdf`:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output fixtures/Get_Started_With_Smallpdf.docx
+python3 -c "
+import zipfile
+with zipfile.ZipFile('fixtures/Get_Started_With_Smallpdf.docx') as z:
+    with z.open('word/document.xml') as f:
+        xml = f.read().decode('utf-8')
+assert '<w:tbl>' in xml, 'Must contain tables for 2-column feature cards'
+assert 'Welcome to Smallpdf' in xml
+print('Verification passed!')
+"
+```

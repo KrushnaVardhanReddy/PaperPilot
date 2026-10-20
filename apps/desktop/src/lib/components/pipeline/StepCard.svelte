@@ -12,9 +12,14 @@
 <div
   class="step-card"
   id={`pipeline-step-${step.id}`}
+  class:selected={pipelineState.selectedStepId === step.id}
   class:running={isRunning}
   class:completed={pipelineState.currentStepIndex !== null &&
                     pipelineState.currentStepIndex > index}
+  onclick={() => pipelineState.selectStep(step.id)}
+  role="button"
+  tabindex="0"
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') pipelineState.selectStep(step.id); }}
 >
   <div class="step-header">
     <span class="step-icon">{step.icon}</span>
@@ -22,7 +27,7 @@
     <button
       class="remove-btn"
       id={`remove-step-${step.id}`}
-      onclick={() => pipelineState.removeStep(step.id)}
+      onclick={(e) => { e.stopPropagation(); pipelineState.removeStep(step.id); }}
       title="Remove step"
       disabled={pipelineState.isRunning}
     >×</button>
@@ -50,6 +55,12 @@
   .step-card:hover {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+  }
+
+  .step-card.selected {
+    border-color: var(--accent-primary, #3b82f6);
+    background: var(--bg-surface-elevated, #1e293b);
+    box-shadow: 0 0 0 2px var(--accent-primary, #3b82f6);
   }
 
   .step-card.running {

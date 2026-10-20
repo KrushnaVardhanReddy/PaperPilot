@@ -79,7 +79,14 @@ impl PdfOperation for WatermarkOperation {
                 if let Ok(media_box) = page_dict.get(b"MediaBox") {
                     if let Ok(arr) = media_box.as_array() {
                         if arr.len() == 4 {
-                            if let (Ok(x2), Ok(y2)) = (arr[2].as_f32().or_else(|_| arr[2].as_i64().map(|v| v as f32)), arr[3].as_f32().or_else(|_| arr[3].as_i64().map(|v| v as f32))) {
+                            if let (Ok(x2), Ok(y2)) = (
+                                arr[2]
+                                    .as_f32()
+                                    .or_else(|_| arr[2].as_i64().map(|v| v as f32)),
+                                arr[3]
+                                    .as_f32()
+                                    .or_else(|_| arr[3].as_i64().map(|v| v as f32)),
+                            ) {
                                 page_width = x2;
                                 page_height = y2;
                             }
@@ -126,8 +133,15 @@ impl PdfOperation for WatermarkOperation {
             let cx = page_width / 2.0;
             let cy = page_height / 2.0;
 
-            let font_size = self.font_size.unwrap_or(54.0);
-            let approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+            let mut font_size = self.font_size.unwrap_or(54.0);
+            let mut approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+
+            if approx_text_width > page_width * 0.85 {
+                let scale = (page_width * 0.85) / approx_text_width;
+                font_size *= scale;
+                approx_text_width = (self.text.len() as f32) * (font_size * 0.5);
+            }
+
             let offset_x = -approx_text_width / 2.0;
             let offset_y = -font_size / 2.0;
 
@@ -224,7 +238,10 @@ mod tests {
             .trailer
             .set("Root", lopdf::Object::Reference(catalog_id));
 
-        LopdfDocument { inner }
+        LopdfDocument {
+            inner,
+            original_bytes: None,
+        }
     }
 
     #[test]
@@ -255,7 +272,12 @@ mod tests {
             lopdf::Object::Array(arr) => {
                 assert_eq!(arr.len(), 1);
                 let stream_id = arr[0].as_reference().unwrap();
-                let stream = doc.inner.get_object(stream_id).unwrap().as_stream().unwrap();
+                let stream = doc
+                    .inner
+                    .get_object(stream_id)
+                    .unwrap()
+                    .as_stream()
+                    .unwrap();
                 let content_str = std::str::from_utf8(&stream.content).unwrap();
                 assert!(content_str.contains("CONFIDENTIAL"));
             }
@@ -279,7 +301,12 @@ mod tests {
             lopdf::Object::Array(arr) => arr[0].as_reference().unwrap(),
             _ => panic!(),
         };
-        let stream = doc.inner.get_object(stream_id).unwrap().as_stream().unwrap();
+        let stream = doc
+            .inner
+            .get_object(stream_id)
+            .unwrap()
+            .as_stream()
+            .unwrap();
         let content_str = std::str::from_utf8(&stream.content).unwrap();
         // cos(0) = 1, sin(0) = 0 => 1 0 0 1
         assert!(content_str.contains("1 0 -0 1") || content_str.contains("1 0 0 1"));
@@ -303,7 +330,12 @@ mod tests {
             lopdf::Object::Array(arr) => arr[0].as_reference().unwrap(),
             _ => panic!(),
         };
-        let stream = doc.inner.get_object(stream_id).unwrap().as_stream().unwrap();
+        let stream = doc
+            .inner
+            .get_object(stream_id)
+            .unwrap()
+            .as_stream()
+            .unwrap();
         let content_str = std::str::from_utf8(&stream.content).unwrap();
         // Red color
         assert!(content_str.contains("1 0 0 rg"));

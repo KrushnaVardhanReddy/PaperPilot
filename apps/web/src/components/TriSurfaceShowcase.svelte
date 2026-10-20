@@ -42,7 +42,7 @@
       <ul class="feature-list">
         <li>✓ Zero server costs</li>
         <li>✓ Customizable branding</li>
-        <li>✓ ~50–100ms WASM execution</li>
+        <li>✓ ~30–95ms WASM execution</li>
       </ul>
       <button
         class="card-link"

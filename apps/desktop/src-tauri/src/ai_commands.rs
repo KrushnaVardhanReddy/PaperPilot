@@ -1,14 +1,14 @@
+use futures_util::StreamExt;
 use keyring::Entry;
 use lazy_static::lazy_static;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
-use tokio::sync::Mutex;
-use reqwest::Client;
-use futures_util::StreamExt;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -121,7 +121,8 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
             models.iter().find(|m| m.id == *aid && m.is_downloaded)
         } else {
             None
-        }.or_else(|| models.iter().find(|m| m.is_downloaded));
+        }
+        .or_else(|| models.iter().find(|m| m.is_downloaded));
 
         let model_name = match active_or_downloaded {
             Some(m) => m.name.clone(),
@@ -139,7 +140,10 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
         if let Ok(res) = client.get("http://127.0.0.1:8080/v1/models").send().await {
             if res.status().is_success() {
                 let duration = start.elapsed().as_millis();
-                return Ok(format!("Connected to Local LLM (port 8080) in {}ms — Model loaded in RAM: {}", duration, model_name));
+                return Ok(format!(
+                    "Connected to Local LLM (port 8080) in {}ms — Model loaded in RAM: {}",
+                    duration, model_name
+                ));
             }
         }
 
@@ -158,9 +162,12 @@ pub async fn test_ai_endpoint(config: AiSettingsConfig) -> Result<String, String
     }
 
     if config.mode == AiProviderMode::Byok {
-         let start = std::time::Instant::now();
-         tokio::time::sleep(std::time::Duration::from_millis(15)).await;
-         return Ok(format!("Connected to cloud in {}ms", start.elapsed().as_millis()));
+        let start = std::time::Instant::now();
+        tokio::time::sleep(std::time::Duration::from_millis(15)).await;
+        return Ok(format!(
+            "Connected to cloud in {}ms",
+            start.elapsed().as_millis()
+        ));
     }
 
     let client = Client::builder()
@@ -233,38 +240,132 @@ fn get_models_dir() -> std::path::PathBuf {
     path
 }
 
+#[derive(Debug, Deserialize)]
+struct RegistryJson {
+    #[serde(default)]
+    llm_models: Vec<RegistryLlmModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RegistryLlmModel {
+    id: String,
+    name: String,
+    description: String,
+    size_mb: u32,
+    download_url: String,
+}
+
 #[tauri::command]
 pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
     let models_dir = get_models_dir();
 
-    let mut models = vec![
-        ModelInfo {
-            id: "qwen2.5-coder".to_string(),
-            name: "Qwen 2.5 Coder 1.5B".to_string(),
-            description: "Fast & Lightweight".to_string(),
-            size_mb: 1100,
-            download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
-            local_path: None,
-            is_downloaded: false,
-        },
-        ModelInfo {
-            id: "llama3.2-3b".to_string(),
-            name: "Llama 3.2 3B Instruct".to_string(),
-            description: "Recommended for Legal Discovery".to_string(),
-            size_mb: 2100,
-            download_url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
-            local_path: None,
-            is_downloaded: false,
+    // 1. Try fetching latest model registry dynamically from our PaperPilot GitHub repository
+    let registry_url = "https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/models/registry.json";
+    let client = Client::builder()
+        .user_agent("PaperPilot-Desktop/1.0")
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .unwrap_or_else(|_| Client::new());
+
+    let mut loaded_models = None;
+
+    if let Ok(resp) = client.get(registry_url).send().await {
+        if resp.status().is_success() {
+            if let Ok(text) = resp.text().await {
+                if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&text) {
+                    if !parsed.llm_models.is_empty() {
+                        loaded_models = Some(
+                            parsed
+                                .llm_models
+                                .into_iter()
+                                .map(|m| ModelInfo {
+                                    id: m.id,
+                                    name: m.name,
+                                    description: m.description,
+                                    size_mb: m.size_mb,
+                                    download_url: m.download_url,
+                                    local_path: None,
+                                    is_downloaded: false,
+                                })
+                                .collect(),
+                        );
+                    }
+                }
+            }
         }
-    ];
+    }
+
+    // 2. Fallback to local models/registry.json file if offline or repo unreachable
+    if loaded_models.is_none() {
+        for candidate in [
+            std::path::PathBuf::from("models/registry.json"),
+            std::path::PathBuf::from("../../models/registry.json"),
+        ] {
+            if candidate.exists() {
+                if let Ok(content) = std::fs::read_to_string(&candidate) {
+                    if let Ok(parsed) = serde_json::from_str::<RegistryJson>(&content) {
+                        if !parsed.llm_models.is_empty() {
+                            loaded_models = Some(
+                                parsed
+                                    .llm_models
+                                    .into_iter()
+                                    .map(|m| ModelInfo {
+                                        id: m.id,
+                                        name: m.name,
+                                        description: m.description,
+                                        size_mb: m.size_mb,
+                                        download_url: m.download_url,
+                                        local_path: None,
+                                        is_downloaded: false,
+                                    })
+                                    .collect(),
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Fallback to hardcoded defaults
+    let mut models = loaded_models.unwrap_or_else(|| {
+        vec![
+            ModelInfo {
+                id: "qwen2.5-coder".to_string(),
+                name: "Qwen 2.5 Coder 1.5B".to_string(),
+                description: "Fast & Lightweight".to_string(),
+                size_mb: 1100,
+                download_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf".to_string(),
+                local_path: None,
+                is_downloaded: false,
+            },
+            ModelInfo {
+                id: "llama3.2-3b".to_string(),
+                name: "Llama 3.2 3B Instruct".to_string(),
+                description: "Recommended for Legal Discovery".to_string(),
+                size_mb: 2100,
+                download_url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
+                local_path: None,
+                is_downloaded: false,
+            },
+        ]
+    });
 
     for m in &mut models {
-        let file_name = m.download_url.split('/').next_back().unwrap_or("model.gguf");
+        let file_name = m
+            .download_url
+            .split('/')
+            .next_back()
+            .unwrap_or("model.gguf");
         let mut path = models_dir.clone();
         path.push(file_name);
         if path.exists() {
-            m.local_path = Some(path.to_string_lossy().to_string());
-            m.is_downloaded = true;
+            let file_size = std::fs::metadata(&path).map(|meta| meta.len()).unwrap_or(0);
+            if file_size > 1024 * 1024 {
+                m.local_path = Some(path.to_string_lossy().to_string());
+                m.is_downloaded = true;
+            }
         }
     }
 
@@ -290,7 +391,11 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
     let models_dir = get_models_dir();
     std::fs::create_dir_all(&models_dir).map_err(|e| e.to_string())?;
 
-    let file_name = model.download_url.split('/').next_back().unwrap_or("model.gguf");
+    let file_name = model
+        .download_url
+        .split('/')
+        .next_back()
+        .unwrap_or("model.gguf");
     let mut dest_path = models_dir.clone();
     dest_path.push(file_name);
 
@@ -312,8 +417,25 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
 
     let response = request.send().await.map_err(|e| e.to_string())?;
 
-    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-        return Err(format!("Download failed with status: {}", response.status()));
+    if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+        let _ = app.emit(
+            "model-download-progress",
+            DownloadProgress {
+                model_id: model_id.clone(),
+                percent: 100.0,
+                bytes_downloaded: downloaded,
+                total_bytes: downloaded,
+            },
+        );
+        return Ok(());
+    }
+
+    if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+    {
+        return Err(format!(
+            "Download failed with status: {}",
+            response.status()
+        ));
     }
 
     let total_bytes = response
@@ -322,7 +444,7 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
         .saturating_add(downloaded);
 
     if total_bytes > 0 && downloaded >= total_bytes {
-         let _ = app.emit(
+        let _ = app.emit(
             "model-download-progress",
             DownloadProgress {
                 model_id: model_id.clone(),
@@ -330,8 +452,8 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
                 bytes_downloaded: downloaded,
                 total_bytes,
             },
-         );
-         return Ok(());
+        );
+        return Ok(());
     }
 
     let mut file = OpenOptions::new()
@@ -357,7 +479,11 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<(), Stri
 
         file.write_all(&chunk).await.map_err(|e| e.to_string())?;
         downloaded += chunk.len() as u64;
-        let percent = if total_bytes > 0 { (downloaded as f64 / total_bytes as f64) * 100.0 } else { 0.0 };
+        let percent = if total_bytes > 0 {
+            (downloaded as f64 / total_bytes as f64) * 100.0
+        } else {
+            0.0
+        };
 
         let _ = app.emit(
             "model-download-progress",

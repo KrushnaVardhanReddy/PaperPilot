@@ -1,3 +1,4 @@
+#![cfg(feature = "pdf")]
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
@@ -91,7 +92,10 @@ pub fn handle_ocr(
         p.set_extension("txt");
         Some(p)
     } else if format.eq_ignore_ascii_case("pdf") && !clipboard {
-        let file_stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("document");
+        let file_stem = input
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("document");
         let parent = input.parent().unwrap_or_else(|| std::path::Path::new("."));
         Some(parent.join(format!("{}_ocr.pdf", file_stem)))
     } else {
@@ -107,12 +111,20 @@ pub fn handle_ocr(
 
     op.execute(&mut doc)?;
 
-    let extracted = op.extracted_text.lock().unwrap().clone().unwrap_or_default();
+    let extracted = op
+        .extracted_text
+        .lock()
+        .unwrap()
+        .clone()
+        .unwrap_or_default();
 
     // If clipboard is requested or format is 'clipboard', write to system clipboard
     if clipboard || format.eq_ignore_ascii_case("clipboard") {
         copy_text_to_clipboard(&extracted);
-        println!("OCR text copied to clipboard ({} characters).", extracted.len());
+        println!(
+            "OCR text copied to clipboard ({} characters).",
+            extracted.len()
+        );
     }
 
     if let Some(ref out) = resolved_output {
@@ -169,7 +181,8 @@ fn copy_text_to_clipboard(text: &str) {
     // Fallback: OSC 52 terminal clipboard escape sequence
     let b64 = {
         // Simple base64 encode using std/core
-        const B64_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const B64_CHARS: &[u8] =
+            b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         let bytes = text.as_bytes();
         let mut buf = String::with_capacity((bytes.len() * 4) / 3 + 4);
         for chunk in bytes.chunks(3) {

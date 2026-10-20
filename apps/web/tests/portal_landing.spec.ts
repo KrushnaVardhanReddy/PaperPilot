@@ -33,7 +33,7 @@ test.describe('usepaperpilot.com Official Web Portal', () => {
   test('Tri-surface showcase links function', async ({ page }) => {
     // Check desktop app download link
     const desktopLink = page.locator('.surface-card').nth(0).locator('.card-link');
-    await expect(desktopLink).toHaveAttribute('href', 'https://paperpilot.app/download');
+    await expect(desktopLink).toHaveAttribute('href', 'https://github.com/KrushnaVardhanReddy/PaperPilot/releases');
 
     // Check configure widget button scrolls
     const widgetBtn = page.locator('.surface-card').nth(1).locator('.card-link');

@@ -1,0 +1,46 @@
+# Phase 5.9.54 Task Prompt for Jules: High-Fidelity PDF-to-Markdown & PDF-to-HTML with Embedded Media
+
+Branch name: feat-pdf-to-markdown-html-media
+
+## Background & Mission
+We are decoupling PDF conversion into a robust two-stage pipeline:
+- **Stage 1 (This Task)**: Convert PDF $\to$ Markdown (`.md`) and PDF $\to$ HTML (`.html`) with all visual assets (both raster photos and vector Form XObject illustrations) extracted and embedded cleanly.
+- **Stage 2 (Subsequent Task)**: Convert Markdown/HTML $\to$ DOCX.
+
+Your mission in this task is to upgrade `PdfToMarkdownOperation` and `PdfToHtmlOperation` in `paperpilot-pdf/src/operations/conversion.rs` so they extract both raster and vector images, inserting them into the resulting Markdown and HTML.
+
+## Requirements & Implementation Details
+
+### 1. Media Extraction (`extract_page_media`)
+Implement media extraction from the PDF:
+- Check `/Resources -> /XObject` on each page:
+  - **Raster Images (`/Subtype /Image`)**:
+    - Extract stream bytes (JPEG via DCTDecode, or FlateDecode). Convert to PNG if needed using `image`.
+  - **Vector Form XObjects (`/Subtype /Form`)**:
+    - When vector content is detected (like `/Fm0`..`/Fm4` in `fixtures/Get_Started_With_Smallpdf.pdf`), use `hayro::render` (at 150 DPI) to render the page to a `tiny_skia::Pixmap` and crop the vector illustration bounding boxes into PNG bytes.
+
+### 2. Markdown Integration (`PdfToMarkdownOperation`)
+In `paperpilot-pdf/src/operations/conversion.rs`:
+- Associate extracted images with their layout position on the page.
+- Emit standard markdown image links:
+  ```markdown
+  ![Illustration](data:image/png;base64,<base64_data>)
+  ```
+  (or write to an output `media/` folder if output directory is provided).
+- Ensure headers, paragraphs, and lists preserve their natural document flow.
+
+### 3. HTML Integration (`PdfToHtmlOperation`)
+In `paperpilot-pdf/src/operations/conversion.rs`:
+- Emit `<img src="data:image/png;base64,..." alt="..." style="max-width: 100%; border-radius: 4px;" />`.
+- Maintain clean semantic structure (`<main>`, `<article>`, `<section>`, `<h1>`..`<h6>`, `<p>`).
+- Ensure CSS presets (`github`, `elegant`, `minimal`) render images nicely in browser viewports.
+
+### 4. Verification & Testing
+- Run `cargo test -p paperpilot-pdf test_pdf_to_markdown -j 4`.
+- Run `cargo test -p paperpilot-pdf test_pdf_to_html -j 4`.
+- Test CLI:
+  ```bash
+  cargo run -p paperpilot-cli -j 4 -- convert --format md --input fixtures/Get_Started_With_Smallpdf.pdf --output /tmp/test_extracted.md
+  cargo run -p paperpilot-cli -j 4 -- convert --format html --input fixtures/Get_Started_With_Smallpdf.pdf --output /tmp/test_extracted.html
+  ```
+  Confirm `/tmp/test_extracted.md` and `/tmp/test_extracted.html` contain actual base64/png images for all 4 features in `Get_Started_With_Smallpdf.pdf`.

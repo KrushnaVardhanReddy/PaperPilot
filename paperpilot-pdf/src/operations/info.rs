@@ -56,6 +56,7 @@ mod tests {
     fn create_empty_document() -> LopdfDocument {
         LopdfDocument {
             inner: LopdfInnerDocument::with_version("1.5"),
+            original_bytes: None,
         }
     }
 

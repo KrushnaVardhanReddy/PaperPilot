@@ -1,0 +1,97 @@
+# Task: Phase 5.9.52 — PDF-to-DOCX High-Fidelity Layout Synthesis & Vector Form XObject Rasterization (Spec 074)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-high-fidelity-images
+# Priority: HIGH (Core Conversion Visual Parity)
+# Spec: specs/074-pdf-to-docx-high-fidelity-layout-and-images/spec.md
+
+## Objective
+Upgrade `PdfToDocxOperation` in `paperpilot-pdf` to achieve full visual parity with `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`.
+
+Currently, `unpdf` extracts the multi-column text cards as 2-column borderless OpenXML tables (`<w:tbl>`). However, the feature card illustrations in `fixtures/Get_Started_With_Smallpdf.pdf` are implemented as **PDF Form XObjects (`/Fm0`–`/Fm4`) containing vector bezier paths**, so they are currently missing from the generated DOCX.
+
+You will implement the Form XObject / image extraction and embed them into the left column of each card table via `docx_rs::Pic::new(&png_bytes)` so that the generated DOCX matches `fixtures/Get_Started_With_Smallpdf_EXPECTED.docx`.
+
+---
+
+## STRICT File Ownership & Scope Guardrails
+You may **ONLY** create and touch files in these paths:
+```
+paperpilot-pdf/src/operations/conversion.rs
+paperpilot-pdf/Cargo.toml
+```
+
+### Prohibited Actions:
+- DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+- DO NOT run destructive git commands (`git reset --hard`, `git checkout -- .`, `git clean -fd`).
+- All commits MUST follow the convention: `jules: <commit description>`.
+
+---
+
+## Concrete Implementation Guidance (`paperpilot-pdf/src/operations/conversion.rs`)
+
+### 1. Form XObject / Image Detection
+In `PdfToDocxOperation::execute`:
+1. Inspect the input document's `/Resources` -> `/XObject` dictionary:
+   - Identify `/Subtype /Image` (raster) and `/Subtype /Form` (vector Form XObjects such as `/Fm0`, `/Fm1`, `/Fm2`, `/Fm3`).
+2. To extract/render these Form XObjects into PNG bytes:
+   - Use the existing `hayro` crate (already a dependency in `paperpilot-pdf`) or render the bounding box of each XObject into an in-memory RGBA buffer using `tiny-skia` / `image::codecs::png::PngEncoder`.
+   - Alternatively, if a Form XObject stream contains an embedded image or vector stream, rasterize its bounds into a compact PNG (`~150x150` px).
+   - Collect these images in order: `let card_images: Vec<Vec<u8>> = ...`.
+
+### 2. Embed Images into OpenXML Tables
+When building the 2-column card tables in `docx-rs`:
+```rust
+use docx_rs::{Pic, Table, TableRow, TableCell, WidthType, TableBorders};
+
+// For each card (e.g. Compress PDF, Convert from PDF, Edit PDF, Sign PDF):
+let pic = if let Some(png_bytes) = card_images.get(card_index) {
+    Some(Pic::new(png_bytes).size(1200000, 1200000)) // ~1.2 x 1.2 inches in EMUs (1 inch = 914400 EMUs)
+} else {
+    None
+};
+
+let mut left_cell = TableCell::new().width(2500, WidthType::Dxa);
+if let Some(p) = pic {
+    left_cell = left_cell.add_paragraph(Paragraph::new().add_pic(p));
+}
+
+let right_cell = TableCell::new()
+    .width(7500, WidthType::Dxa)
+    .add_paragraph(title_paragraph)
+    .add_paragraph(desc_paragraph);
+
+let table = Table::new(vec![TableRow::new(vec![left_cell, right_cell])])
+    .set_borders(TableBorders::new().clear_all())
+    .layout(docx_rs::TableLayoutType::Fixed);
+
+docx = docx.add_table(table);
+```
+
+### 3. Geometry & Strictly 1-Page Layout
+- Maintain page margins at `720 dxa` (0.5 in).
+- Keep paragraph spacing compact (`<w:spacing w:after="60"/>` or small line height) so that the entire brochure fits onto strictly 1 page in Word and LibreOffice without creating an accidental blank page 2.
+
+---
+
+## Verification Protocol
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf --lib test_pdf_to_docx -j 4
+```
+
+Test on the real fixture:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output fixtures/Get_Started_With_Smallpdf.docx
+python3 -c "
+import zipfile
+with zipfile.ZipFile('fixtures/Get_Started_With_Smallpdf.docx') as z:
+    names = z.namelist()
+    with z.open('word/document.xml') as f:
+        xml = f.read().decode('utf-8')
+assert '<w:tbl>' in xml, 'Must contain 2-column tables'
+assert 'Welcome to Smallpdf' in xml
+assert any('media/image' in name or '<w:drawing>' in xml for name in names), 'Must contain embedded card images'
+print('✅ DOCX layout and image verification passed!')
+"
+```

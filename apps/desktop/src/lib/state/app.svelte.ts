@@ -3,13 +3,23 @@ import { safeInvoke } from '$lib/utils/tauri';
 
 const MAX_OPEN_TABS = 8;
 
+export type WorkspaceLayoutMode = 'studio' | 'split' | 'hero';
+
 export class AppState {
-  activeTab = $state('home');
+  activeTab = $state('documents');
   isLoading = $state(false);
   theme = $state('dark');
   documents = $state<File[]>([]);
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
+  workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+
+  isMobileViewport = $state(false);
+  isTauriMobile = $state(false);
+  isMobile = $derived(this.isMobileViewport || this.isTauriMobile);
+
+  // Active Tool selection (used across middle hub, operations panel, toolbar)
+  activeTool = $state<any | null>(null);
 
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
@@ -27,6 +37,21 @@ export class AppState {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      this.isMobileViewport = window.innerWidth < 768;
+      window.addEventListener('resize', () => {
+        this.isMobileViewport = window.innerWidth < 768;
+      });
+      // Try to detect Tauri mobile via userAgent as a fallback if the API isn't ready
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('android') || ua.includes('iphone') || ua.includes('ipad')) {
+          this.isTauriMobile = true;
+      }
+
+      const storedLayout = localStorage.getItem('paperpilot_workspace_layout') as WorkspaceLayoutMode;
+      if (storedLayout === 'studio' || storedLayout === 'split' || storedLayout === 'hero') {
+        this.workspaceLayout = storedLayout;
+      }
+
       const storedDev = localStorage.getItem('paperpilot:developer-mode');
       if (storedDev === 'true') {
         this.developerMode = true;
@@ -44,6 +69,13 @@ export class AppState {
     }
 
     this.initPortableState();
+  }
+
+  setWorkspaceLayout(mode: WorkspaceLayoutMode) {
+    this.workspaceLayout = mode;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot_workspace_layout', mode);
+    }
   }
 
   async initPortableState() {
@@ -103,6 +135,14 @@ export class AppState {
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  openTool(tool: any) {
+    this.activeTool = tool;
+  }
+
+  closeTool() {
+    this.activeTool = null;
   }
 
   toggleDiffView(show?: boolean) {

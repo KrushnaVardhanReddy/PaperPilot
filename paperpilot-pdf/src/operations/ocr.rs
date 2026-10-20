@@ -31,7 +31,7 @@ impl Default for OcrOperationImpl {
     }
 }
 
-fn find_model(file_name: &str) -> Option<PathBuf> {
+pub fn find_model(file_name: &str) -> Option<PathBuf> {
     // 1. Explicit environment variable
     if let Ok(dir) = std::env::var("PAPERPILOT_OCR_MODELS_DIR") {
         let p = PathBuf::from(dir).join(file_name);
@@ -42,8 +42,14 @@ fn find_model(file_name: &str) -> Option<PathBuf> {
     // 2. Local workspace models directory and subdirectories
     for candidate in [
         PathBuf::from("models").join("ocr").join(file_name),
-        PathBuf::from("models").join("ocr").join("ppocrv4").join(file_name),
-        PathBuf::from("models").join("ocr").join("ppocrv6").join(file_name),
+        PathBuf::from("models")
+            .join("ocr")
+            .join("ppocrv4")
+            .join(file_name),
+        PathBuf::from("models")
+            .join("ocr")
+            .join("ppocrv6")
+            .join(file_name),
         PathBuf::from("../models").join("ocr").join(file_name),
         PathBuf::from("../../models").join("ocr").join(file_name),
     ] {
@@ -86,11 +92,14 @@ impl PdfOperation for OcrOperationImpl {
                         ocr_engine = Some(engine);
                     }
                     Err(err) => {
-                        eprintln!("Warning: Failed to initialize rusto-rs OCR engine: {:?}", err);
+                        eprintln!(
+                            "Warning: Failed to initialize rusto-rs OCR engine: {:?}",
+                            err
+                        );
                     }
                 }
             } else {
-                eprintln!("Warning: OCR models not found. Falling back to embedded text extraction.");
+                return Err(paperpilot_core::error::PdfError::Other("OCR models not found. Run 'paperpilot ocr setup' or download the model pack from settings.".to_string()));
             }
 
             if let Some(mut engine) = ocr_engine {
@@ -113,7 +122,8 @@ impl PdfOperation for OcrOperationImpl {
                         Err(_) => continue,
                     };
 
-                    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res {
+                    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res
+                    {
                         lopdf::Object::Reference(res_id) => {
                             inner.get_object(*res_id).and_then(|obj| obj.as_dict())
                         }
@@ -136,13 +146,24 @@ impl PdfOperation for OcrOperationImpl {
                             Err(_) => continue,
                         };
 
-                    let mut sorted_xobjects: Vec<(&Vec<u8>, &lopdf::Object)> = xobject_dict.iter().collect();
+                    let mut sorted_xobjects: Vec<(&Vec<u8>, &lopdf::Object)> =
+                        xobject_dict.iter().collect();
                     sorted_xobjects.sort_by(|a, b| {
                         let name_a = String::from_utf8_lossy(a.0);
                         let name_b = String::from_utf8_lossy(b.0);
                         // Extract trailing numbers for natural sorting (Image1, Image2, ... Image10)
-                        let num_a = name_a.chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse::<u32>().unwrap_or(0);
-                        let num_b = name_b.chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse::<u32>().unwrap_or(0);
+                        let num_a = name_a
+                            .chars()
+                            .filter(|c| c.is_ascii_digit())
+                            .collect::<String>()
+                            .parse::<u32>()
+                            .unwrap_or(0);
+                        let num_b = name_b
+                            .chars()
+                            .filter(|c| c.is_ascii_digit())
+                            .collect::<String>()
+                            .parse::<u32>()
+                            .unwrap_or(0);
                         num_a.cmp(&num_b)
                     });
                     // Extract page dimensions to map coordinates
@@ -173,8 +194,12 @@ impl PdfOperation for OcrOperationImpl {
                     let mut loaded_strips: Vec<image::DynamicImage> = Vec::new();
                     for (_, obj) in &sorted_xobjects {
                         if let Ok(stream_id) = obj.as_reference() {
-                            if let Ok(stream) = inner.get_object(stream_id).and_then(|o| o.as_stream()) {
-                                if let Ok(name) = stream.dict.get(b"Subtype").and_then(|n| n.as_name()) {
+                            if let Ok(stream) =
+                                inner.get_object(stream_id).and_then(|o| o.as_stream())
+                            {
+                                if let Ok(name) =
+                                    stream.dict.get(b"Subtype").and_then(|n| n.as_name())
+                                {
                                     if name == b"Image" {
                                         if let Ok(img) = image::load_from_memory(&stream.content) {
                                             if img.width() > 0 && img.height() > 0 {
@@ -189,16 +214,31 @@ impl PdfOperation for OcrOperationImpl {
 
                     // Check if we have image(s) to process
                     if !loaded_strips.is_empty() {
-                        // Stitch all vertical strips into one full-page canvas
-                        let max_w = loaded_strips.iter().map(|img| img.width()).max().unwrap_or(1);
+                        // Stitch all vertical strips into one full-page canvas.
+                        // Each strip is placed at x=0 and the running y-offset so that the
+                        // canvas pixel coordinate system is consistent with the bounding-box
+                        // coordinates that rusto-rs returns later.
+                        let max_w = loaded_strips
+                            .iter()
+                            .map(|img| img.width())
+                            .max()
+                            .unwrap_or(1);
                         let total_h: u32 = loaded_strips.iter().map(|img| img.height()).sum();
 
                         let mut stitched_canvas = image::RgbImage::new(max_w, total_h);
-                        let mut curr_y = 0;
+                        let mut curr_y: u32 = 0;
                         for strip in loaded_strips {
-                            let (_sw, sh) = (strip.width(), strip.height());
+                            let (sw, sh) = (strip.width(), strip.height());
                             let rgb_strip = strip.to_rgb8();
-                            image::imageops::overlay(&mut stitched_canvas, &rgb_strip, 0, curr_y as i64);
+                            // Centre narrower strips horizontally so OCR pixel coords are
+                            // consistent with the full-canvas width used for normalisation.
+                            let x_offset = ((max_w.saturating_sub(sw)) / 2) as i64;
+                            image::imageops::overlay(
+                                &mut stitched_canvas,
+                                &rgb_strip,
+                                x_offset,
+                                curr_y as i64,
+                            );
                             curr_y += sh;
                         }
 
@@ -206,14 +246,15 @@ impl PdfOperation for OcrOperationImpl {
                         let (orig_w, orig_h) = (stitched_dyn.width(), stitched_dyn.height());
 
                         // Scale down if image is higher than recommended resolution (RustO! recommendation: maxSideLen <= 1600)
-                        let target_w = if orig_w > 1600 {
-                            1600
-                        } else {
-                            orig_w
-                        };
-                        let target_h = (orig_h as f32 * target_w as f32 / orig_w as f32).round() as u32;
+                        let target_w = if orig_w > 1600 { 1600 } else { orig_w };
+                        let target_h =
+                            (orig_h as f32 * target_w as f32 / orig_w as f32).round() as u32;
                         let resized_img = if orig_w != target_w {
-                            stitched_dyn.resize_exact(target_w, target_h.max(1), image::imageops::FilterType::Triangle)
+                            stitched_dyn.resize_exact(
+                                target_w,
+                                target_h.max(1),
+                                image::imageops::FilterType::Triangle,
+                            )
                         } else {
                             stitched_dyn
                         };
@@ -222,14 +263,15 @@ impl PdfOperation for OcrOperationImpl {
                         let rgb_img = resized_img.to_rgb8();
                         let mut img_bytes: Vec<u8> = Vec::new();
                         // JPEG quality 85 is 10x faster to encode than PNG and preserves character stroke fidelity for DBNet/CTC
-                        let _ = image::DynamicImage::ImageRgb8(rgb_img)
-                            .write_to(
-                                &mut std::io::Cursor::new(&mut img_bytes),
-                                image::ImageFormat::Jpeg,
-                            );
+                        let _ = image::DynamicImage::ImageRgb8(rgb_img).write_to(
+                            &mut std::io::Cursor::new(&mut img_bytes),
+                            image::ImageFormat::Jpeg,
+                        );
 
                         let run_options = rusto::OcrRunOptions {
-                            output: rusto::rusto_ocr::OutputGranularity::Lines,
+                            output: rusto::rusto_ocr::OutputGranularity::Words,
+                            word_x_threshold: Some(0.3),
+                            line_y_threshold: Some(0.4),
                             max_side_len: Some(1600.0),
                             min_side_len: Some(64.0),
                             detection: Some(rusto::rusto_ocr::DetectionRunOptions {
@@ -245,7 +287,10 @@ impl PdfOperation for OcrOperationImpl {
                             ..Default::default()
                         };
 
-                        let ocr_results = match engine.detect_text(&rusto::rusto_ocr::ImageSource::Bytes(img_bytes), &run_options) {
+                        let ocr_results = match engine.detect_text(
+                            &rusto::rusto_ocr::ImageSource::Bytes(img_bytes),
+                            &run_options,
+                        ) {
                             Ok(rusto::rusto_ocr::DetectTextResult::Structured(results)) => results,
                             Ok(_) => Vec::new(),
                             Err(err) => {
@@ -264,10 +309,23 @@ impl PdfOperation for OcrOperationImpl {
                                 "CA" => 0.001,
                             ));
 
-                            let mut text_ops = String::from("q\n/GS_OCR gs\n0 0 0 rg\nBT\n");
+                            // Render text with Fill mode (0 Tr) under GS_OCR ExtGState (alpha 0.001).
+                            // This keeps the text transparent over the scan during normal viewing,
+                            // while allowing PDF viewers (like Evince / Poppler) to render the selected
+                            // characters in white / inverted text inside the selection highlight box!
+                            let mut text_ops = String::from("q\n/GS_OCR gs\n0 Tr\n0 0 0 rg\nBT\n");
 
                             let proc_wf = proc_w as f32;
                             let proc_hf = proc_h as f32;
+
+                            // Derive independent scale factors for each axis so the OCR pixel
+                            // bounding boxes map correctly to PDF points regardless of whether
+                            // the stitched image aspect ratio matches the PDF page aspect ratio.
+                            // Previously both axes used page_w/page_h uniformly which caused
+                            // horizontal mis-placement when scanned images are stored at a
+                            // different aspect ratio than the page (e.g. multi-column strips).
+                            let scale_x = page_w / proc_wf;
+                            let scale_y = page_h / proc_hf;
 
                             for word in ocr_results {
                                 let line = word.text.trim();
@@ -277,15 +335,19 @@ impl PdfOperation for OcrOperationImpl {
 
                                 let box_x = word.frame.left;
                                 let box_y = word.frame.top;
+                                let _box_w = word.frame.width;
                                 let box_h = word.frame.height;
 
-                                let norm_x = box_x / proc_wf;
-                                let norm_y = box_y / proc_hf;
-                                let norm_h = box_h / proc_hf;
+                                // The DBNet detection unclip_ratio (1.6) expands the raw bounding box
+                                // to ensure characters aren't clipped, making box_h ~1.33x taller than
+                                // the font's actual cap-height. Scaling by 0.75 restores the font size
+                                // to match the visual text in the scan.
+                                let font_size = ((box_h * scale_y) * 0.75).clamp(4.0, 72.0);
 
-                                let pdf_x = norm_x * page_w;
-                                let pdf_y = page_h - ((norm_y + norm_h) * page_h);
-                                let font_size = (norm_h * page_h).max(6.0);
+                                // In PDF, 'Tm' places text at the font baseline (not the box bottom).
+                                // Standard font descenders extend ~20% below the baseline.
+                                let pdf_x = box_x * scale_x;
+                                let pdf_y = page_h - (box_y * scale_y) - (font_size * 0.85);
 
                                 words_collected.push((pdf_y, pdf_x, font_size, line.to_string()));
 
@@ -295,73 +357,32 @@ impl PdfOperation for OcrOperationImpl {
                                     .replace(')', "\\)");
 
                                 text_ops.push_str(&format!("/F1 {:.2} Tf\n", font_size));
-                                text_ops.push_str(&format!("1 0 0 1 {:.2} {:.2} Tm\n({}) Tj\n", pdf_x, pdf_y, escaped));
+                                text_ops.push_str(&format!(
+                                    "1 0 0 1 {:.2} {:.2} Tm\n({}) Tj\n",
+                                    pdf_x, pdf_y, escaped
+                                ));
                             }
-                        text_ops.push_str("ET\nQ\n");
+                            text_ops.push_str("ET\nQ\n");
 
-                        let content_stream = lopdf::Stream::new(
-                            lopdf::Dictionary::new(),
-                            text_ops.into_bytes(),
-                        );
-                        let stream_obj_id = inner.add_object(content_stream);
+                            let content_stream =
+                                lopdf::Stream::new(lopdf::Dictionary::new(), text_ops.into_bytes());
+                            let stream_obj_id = inner.add_object(content_stream);
 
-                        // Ensure font & ExtGState reference in Resources
-                        let res_obj_id = inner
-                            .get_object(page_id)
-                            .ok()
-                            .and_then(|obj| obj.as_dict().ok())
-                            .and_then(|page_d| match page_d.get(b"Resources") {
-                                Ok(lopdf::Object::Reference(ref_id)) => Some(*ref_id),
-                                _ => None,
-                            });
+                            // Ensure font & ExtGState reference in Resources
+                            let res_obj_id = inner
+                                .get_object(page_id)
+                                .ok()
+                                .and_then(|obj| obj.as_dict().ok())
+                                .and_then(|page_d| match page_d.get(b"Resources") {
+                                    Ok(lopdf::Object::Reference(ref_id)) => Some(*ref_id),
+                                    _ => None,
+                                });
 
-                        if let Some(res_id) = res_obj_id {
-                            if let Ok(res_dict) = inner.get_object_mut(res_id).and_then(|obj| obj.as_dict_mut()) {
-                                let mut fonts = res_dict
-                                    .get(b"Font")
-                                    .and_then(|f| f.as_dict())
-                                    .cloned()
-                                    .unwrap_or_else(|_| lopdf::Dictionary::new());
-                                fonts.set("F1", lopdf::Object::Reference(font_id));
-                                res_dict.set("Font", lopdf::Object::Dictionary(fonts));
-
-                                let mut ext_gstates = res_dict
-                                    .get(b"ExtGState")
-                                    .and_then(|e| e.as_dict())
-                                    .cloned()
-                                    .unwrap_or_else(|_| lopdf::Dictionary::new());
-                                ext_gstates.set("GS_OCR", lopdf::Object::Reference(gs_id));
-                                res_dict.set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
-                            }
-                        }
-
-                        // Collect existing contents reference(s) to wrap with q ... Q so previous CTM doesn't leak
-                        let old_contents_refs: Option<Vec<lopdf::ObjectId>> = inner
-                            .get_object(page_id)
-                            .ok()
-                            .and_then(|obj| obj.as_dict().ok())
-                            .and_then(|dict| dict.get(b"Contents").ok())
-                            .and_then(|c| match c {
-                                lopdf::Object::Reference(r) => Some(vec![*r]),
-                                lopdf::Object::Array(arr) => Some(arr.iter().filter_map(|o| o.as_reference().ok()).collect()),
-                                _ => None,
-                            });
-
-                        if let Some(ref refs) = old_contents_refs {
-                            for &stream_ref in refs {
-                                if let Ok(stream) = inner.get_object_mut(stream_ref).and_then(|o| o.as_stream_mut()) {
-                                    let _ = stream.decompress();
-                                    let mut wrapped = b"q\n".to_vec();
-                                    wrapped.extend_from_slice(&stream.content);
-                                    wrapped.extend_from_slice(b"\nQ\n");
-                                    stream.set_content(wrapped);
-                                }
-                            }
-                        }
-
-                        if let Ok(lopdf::Object::Dictionary(page_d)) = inner.get_object_mut(page_id) {
-                            if res_obj_id.is_none() {
-                                if let Ok(res_dict) = page_d.get_mut(b"Resources").and_then(|res_obj| res_obj.as_dict_mut()) {
+                            if let Some(res_id) = res_obj_id {
+                                if let Ok(res_dict) = inner
+                                    .get_object_mut(res_id)
+                                    .and_then(|obj| obj.as_dict_mut())
+                                {
                                     let mut fonts = res_dict
                                         .get(b"Font")
                                         .and_then(|f| f.as_dict())
@@ -376,34 +397,93 @@ impl PdfOperation for OcrOperationImpl {
                                         .cloned()
                                         .unwrap_or_else(|_| lopdf::Dictionary::new());
                                     ext_gstates.set("GS_OCR", lopdf::Object::Reference(gs_id));
-                                    res_dict.set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
+                                    res_dict
+                                        .set("ExtGState", lopdf::Object::Dictionary(ext_gstates));
                                 }
                             }
 
-                            if let Ok(contents) = page_d.get_mut(b"Contents") {
-                                match contents {
-                                    lopdf::Object::Reference(ref_id) => {
-                                        *contents = lopdf::Object::Array(vec![
-                                            lopdf::Object::Reference(*ref_id),
-                                            lopdf::Object::Reference(stream_obj_id),
-                                        ]);
-                                    }
-                                    lopdf::Object::Array(arr) => {
-                                        arr.push(lopdf::Object::Reference(stream_obj_id));
-                                    }
-                                    _ => {
-                                        *contents = lopdf::Object::Reference(stream_obj_id);
+                            // Collect existing contents reference(s) to wrap with q ... Q so previous CTM doesn't leak
+                            let old_contents_refs: Option<Vec<lopdf::ObjectId>> = inner
+                                .get_object(page_id)
+                                .ok()
+                                .and_then(|obj| obj.as_dict().ok())
+                                .and_then(|dict| dict.get(b"Contents").ok())
+                                .and_then(|c| match c {
+                                    lopdf::Object::Reference(r) => Some(vec![*r]),
+                                    lopdf::Object::Array(arr) => Some(
+                                        arr.iter().filter_map(|o| o.as_reference().ok()).collect(),
+                                    ),
+                                    _ => None,
+                                });
+
+                            if let Some(ref refs) = old_contents_refs {
+                                for &stream_ref in refs {
+                                    if let Ok(stream) = inner
+                                        .get_object_mut(stream_ref)
+                                        .and_then(|o| o.as_stream_mut())
+                                    {
+                                        let _ = stream.decompress();
+                                        let mut wrapped = b"q\n".to_vec();
+                                        wrapped.extend_from_slice(&stream.content);
+                                        wrapped.extend_from_slice(b"\nQ\n");
+                                        stream.set_content(wrapped);
                                     }
                                 }
-                            } else {
-                                page_d.set("Contents", lopdf::Object::Reference(stream_obj_id));
+                            }
+
+                            if let Ok(lopdf::Object::Dictionary(page_d)) =
+                                inner.get_object_mut(page_id)
+                            {
+                                if res_obj_id.is_none() {
+                                    if let Ok(res_dict) = page_d
+                                        .get_mut(b"Resources")
+                                        .and_then(|res_obj| res_obj.as_dict_mut())
+                                    {
+                                        let mut fonts = res_dict
+                                            .get(b"Font")
+                                            .and_then(|f| f.as_dict())
+                                            .cloned()
+                                            .unwrap_or_else(|_| lopdf::Dictionary::new());
+                                        fonts.set("F1", lopdf::Object::Reference(font_id));
+                                        res_dict.set("Font", lopdf::Object::Dictionary(fonts));
+
+                                        let mut ext_gstates = res_dict
+                                            .get(b"ExtGState")
+                                            .and_then(|e| e.as_dict())
+                                            .cloned()
+                                            .unwrap_or_else(|_| lopdf::Dictionary::new());
+                                        ext_gstates.set("GS_OCR", lopdf::Object::Reference(gs_id));
+                                        res_dict.set(
+                                            "ExtGState",
+                                            lopdf::Object::Dictionary(ext_gstates),
+                                        );
+                                    }
+                                }
+
+                                if let Ok(contents) = page_d.get_mut(b"Contents") {
+                                    match contents {
+                                        lopdf::Object::Reference(ref_id) => {
+                                            *contents = lopdf::Object::Array(vec![
+                                                lopdf::Object::Reference(*ref_id),
+                                                lopdf::Object::Reference(stream_obj_id),
+                                            ]);
+                                        }
+                                        lopdf::Object::Array(arr) => {
+                                            arr.push(lopdf::Object::Reference(stream_obj_id));
+                                        }
+                                        _ => {
+                                            *contents = lopdf::Object::Reference(stream_obj_id);
+                                        }
+                                    }
+                                } else {
+                                    page_d.set("Contents", lopdf::Object::Reference(stream_obj_id));
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
         if !executed_ocr {
             let text_op = crate::operations::extract_text::ExtractTextOperation::new(None);
@@ -449,8 +529,14 @@ impl PdfOperation for OcrOperationImpl {
         }
 
         if let Some(path) = &self.output_path {
-            if path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("txt".to_string()) {
-                std::fs::write(path, full_text).map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
+            if path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|s| s.to_lowercase())
+                == Some("txt".to_string())
+            {
+                std::fs::write(path, full_text)
+                    .map_err(|e| paperpilot_core::error::PdfError::IoError(e))?;
             } else {
                 document.save(path)?;
             }
@@ -545,8 +631,23 @@ mod tests {
         op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
-        assert!(result.is_ok());
-        assert!(output_path.exists());
+
+        let models_path =
+            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+                .join(".paperpilot")
+                .join("models")
+                .join("text_recognition.onnx");
+        if models_path.exists() {
+            assert!(result.is_ok());
+            assert!(output_path.exists());
+        } else {
+            assert!(result.is_err());
+            if let Err(paperpilot_core::error::PdfError::Other(e)) = result {
+                assert!(e.contains("OCR models not found"));
+            } else {
+                panic!("Expected OCR models not found error");
+            }
+        }
     }
 
     #[test]
@@ -600,18 +701,34 @@ mod tests {
         op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
-        assert!(result.is_ok());
-        assert!(output_path.exists());
+        let models_path =
+            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+                .join(".paperpilot")
+                .join("models")
+                .join("text_recognition.onnx");
+        if models_path.exists() {
+            assert!(result.is_ok());
+            assert!(output_path.exists());
+        } else {
+            assert!(result.is_err());
+            if let Err(paperpilot_core::error::PdfError::Other(e)) = result {
+                assert!(e.contains("OCR models not found"));
+            } else {
+                panic!("Expected OCR models not found error");
+            }
+        }
     }
 
     #[test]
     fn test_e2e_full_ocr_generation() {
-        let input_path = std::path::PathBuf::from("/home/krushna/Downloads/I-140 approval notice.pdf");
+        let input_path =
+            std::path::PathBuf::from("/home/krushna/Downloads/I-140 approval notice.pdf");
         if !input_path.exists() {
             println!("Input file does not exist: {:?}", input_path);
             return;
         }
-        let out_path = std::path::PathBuf::from("/home/krushna/Downloads/I-140_approval_notice_ocr.pdf");
+        let out_path =
+            std::path::PathBuf::from("/home/krushna/Downloads/I-140_approval_notice_ocr.pdf");
         let mut doc = LopdfDocument::load(&input_path).unwrap();
         let mut op = OcrOperationImpl::new();
         op.output_path = Some(out_path.clone());

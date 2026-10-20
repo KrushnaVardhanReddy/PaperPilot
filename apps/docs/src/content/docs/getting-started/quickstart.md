@@ -28,4 +28,4 @@ paperpilot-cli merge --input file1.pdf file2.pdf --output merged.pdf
 For zero-installation and absolute privacy, use our in-browser WASM client.
 
 1.  Visit our web app.
-2.  All processing happens locally in your browser – your files never leave your device with ~50–100ms WASM Execution speeds.
+2.  All processing happens locally in your browser – your files never leave your device with ~45–75ms WASM Execution speeds.

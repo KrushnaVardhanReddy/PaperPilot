@@ -1,3 +1,5 @@
+import { appState } from '$lib/state/app.svelte';
+
 export interface OperationContext {
     docName: string;
     docPath: string;
@@ -9,7 +11,10 @@ export interface OperationContext {
 
     // UI control values
     splitPoints: string;
+    deletePages?: string;
+    extractPages?: string;
     rotateAngle: string;
+    rotatePages?: string;
     watermarkText: string;
     watermarkOrientation: string;
     watermarkOpacity: number;
@@ -38,7 +43,7 @@ export interface OperationContext {
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
     const {
         docName, docPath, getOutputPath, customOutputPath,
-        splitPoints, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
+        splitPoints, deletePages, extractPages, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
         password, batesPrefix, batesStart, batesPadding, ocrOutputFormat, cropBox,
         convertPreset, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality
     } = context;
@@ -54,7 +59,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'merge': {
             let outputPath: string | null = customOutputPath;
             const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
-            if (!outputPath) {
+            if (!outputPath && !appState.isMobile) {
                 try {
                     const { save } = await import('@tauri-apps/plugin-dialog');
                     outputPath = await save({
@@ -205,7 +210,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'rotate':
             args = {
                 input: docPath,
-                pages: 'all',
+                pages: context.rotatePages && context.rotatePages.trim() !== '' ? context.rotatePages.trim() : 'all',
                 angle: parseInt(rotateAngle, 10),
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rotated.pdf`)
             };
@@ -223,7 +228,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'delete_pages':
             args = {
                 input: docPath,
-                pages: '1',
+                pages: deletePages || '1',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_deleted.pdf`)
             };
             break;
@@ -354,7 +359,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'extract_pages':
             args = {
                 input: docPath,
-                pages: '1',
+                pages: extractPages || '1',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_extracted.pdf`)
             };
             break;
@@ -393,6 +398,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.md`)
             };
             break;
+        case 'pdf_to_html':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.html`)
+            };
+            break;
         case 'pdf_to_pptx':
             args = {
                 input: docPath,
@@ -420,6 +431,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'excel_to_json':
             args = {
                 input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.json`),
                 has_headers: true
             };
             break;

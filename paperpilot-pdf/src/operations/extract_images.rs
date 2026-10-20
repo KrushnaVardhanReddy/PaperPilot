@@ -141,7 +141,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]
@@ -200,7 +203,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        let mut lopdf_doc = LopdfDocument { inner: doc };
+        let mut lopdf_doc = LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        };
 
         let dir = tempdir().unwrap();
         let op = ExtractImagesOperation::new(dir.path().to_path_buf());

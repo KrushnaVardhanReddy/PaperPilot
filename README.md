@@ -10,10 +10,10 @@ PaperPilot is a blazing-fast, local-first document automation platform. It allow
 
 ## ✨ Features
 
-- **🚀 Native Performance & Zero-Chrome:** Powered entirely by pure-Rust (`lopdf`, `fulgur`, `hayro`, `ocrs`, `rten`) for sub-millisecond document manipulation and sub-60ms office conversions. Zero external Chromium or C++ runtime dependencies.
-- **🏆 100% Multi-Surface Parity:** All 44 PDF operations unified across CLI, MCP, and REST API, with 22 pure-Rust operations running directly client-side in the browser via WASM and serverless on Cloudflare Edge ([Verification Report](reports/TRI_INTERFACE_E2E_100_VERIFIED.md)).
+- **🚀 Native Performance & Zero-Chrome:** Powered entirely by pure-Rust (`lopdf`, `fulgur`, `hayro`, `rusto-rs` PaddleOCR v4, `rten`) for sub-millisecond document manipulation and sub-60ms office conversions. Zero external Chromium or C++ runtime dependencies.
+- **🏆 100% Penta-Interface Parity:** Over 50+ PDF and Office tools unified across 5 surfaces (CLI, MCP, REST, WASM, Cloudflare Edge) and orchestratable through the modern Desktop GUI ([Penta-Interface Report](reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md)).
 - **🧠 100% Offline AI & NLP:** Built-in hybrid engine featuring keyword/regex rule routing and embedded on-device intent classification (`TinyBERT-4L-312D` via pure-Rust SIMD tensor engine, <2ms latency). Zero server calls or external downloads required for command execution.
-- **💻 Desktop GUI (Svelte 5 + Tauri 2):** Fast, reactive desktop experience with a multi-tab canvas viewer, interactive sticky notes & drawing markups, visual side-by-side diff slider, and collapsible multi-turn AI chat side-drawer.
+- **💻 Desktop GUI (Svelte 5 + Tauri 2):** Fast, reactive desktop experience with dynamic context-aware tool ranking, multi-tab canvas viewer, interactive sticky notes & drawing markups, visual side-by-side diff slider, and collapsible multi-turn AI chat side-drawer.
 - **🌐 Client-Side Browser WASM & Edge Microservice:** Zero-install web suite (`apps/web`) executing 100% in browser memory with zero server upload, plus a Cloudflare Workers edge microservice (`apps/edge`) delivering sub-10ms serverless PDF processing.
 - **📦 Drop-In Embeddable Widget (`embed.js`):** Embed a full-featured, branded PDF processing portal into any website with just two lines of HTML.
 - **🤖 Model Context Protocol (MCP):** Connect PaperPilot directly to Claude Desktop, Cursor, OpenCode, or custom autonomous agents via stdio JSON-RPC.
@@ -57,10 +57,17 @@ PaperPilot follows a strict multi-crate workspace separation of concerns, keepin
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### ⚡ Quick Download (Pre-built Binaries)
+Pre-compiled standalone binaries for **Linux**, **macOS**, and **Windows** are available on our [GitHub Releases](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) page:
+- **`paperpilot`**: Standalone CLI with all 50+ document tools.
+- **`paperpilot-gateway`**: REST API microservice (`localhost:7823`).
+- **`paperpilot-mcp`**: JSON-RPC server for Claude Desktop, Cursor, and OpenCode.
+
+### Prerequisites (For Building from Source)
 - [Rust](https://rustup.rs/) (1.75+ stable)
 - [Node.js](https://nodejs.org/) & [pnpm](https://pnpm.io/)
 - Python 3.10+ (for E2E verification suites)
+
 
 ### Installation & Build
 
@@ -82,16 +89,55 @@ PaperPilot follows a strict multi-crate workspace separation of concerns, keepin
    pnpm tauri dev
    ```
 
-4. **Build Production Standalone Desktop App**
+4. **Run Web & Documentation Portals Concurrently**
+   ```bash
+   make run-all-web
+   ```
+   *Spins up both the Web Client (`http://localhost:5173`) and the Docs Portal (`http://localhost:4321`) concurrently.*
+
+5. **Build Production Standalone Desktop App**
    ```bash
    make build-release
    ```
 
-5. **Run Workspace Unit Tests & Verification**
+6. **Run Workspace Unit Tests & Verification**
    ```bash
    cargo test --workspace -- -j 2
    python3 scripts/test_tri_interface_e2e.py
    ```
+
+---
+
+## 🎯 v0.5.0 Launch Scope & Release Waves
+
+PaperPilot is engineered with an **Open Core Model** and a **Progressive Release Strategy**. All 52 tool core engines have been developed in pure Rust, and are released through systematic stability gates:
+
+### 🌟 Wave 1: Top 12 Core Launch Suite (`v0.5 Core` - Public Preview)
+Frozen as our primary launch suite for the `v0.5.0` Public Preview. Each tool is backed by unmocked real-disk Playwright tests, 100% Penta-Interface parity, and benchmarked at realistic **~45–75ms** end-to-end execution latency (+30–50ms buffer over raw engine runtime):
+
+| # | Tool ID | Interface Title | Category | Format Support | Latency SLA | Release Status |
+|---|---|---|---|---|---|---|
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | ~55–85ms | ✅ **v0.5 Core** (Production Ready) |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | ~65–95ms | ✅ **v0.5 Core** (Production Ready) |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ~45–70ms | ✅ **v0.5 Core** (Production Ready) |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
+
+### 📅 Progressive Release Schedule & SemVer Roadmap (Waves 2–7)
+*Engine development is complete; scheduled for progressive weekly rollouts backed by real Playwright testing:*
+- **Wave 2 (`v0.6.0` - Week 2): Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
+- **Wave 3 (`v0.7.0` - Week 3): Web & AI Synthesis Suite** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
+- **Wave 4 (`v0.8.0` - Week 4): Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
+- **Wave 5 (`v0.9.0` - Week 5): Security, Signing & Compliance** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
+- **Wave 6 (`v0.9.5` - Week 6): Page Geometry & Interactive Forms** (`read_form`, `fill_form`, `create_form_field`, `crop`, `bookmarks`, `annotate`)
+- **Wave 7 (`v1.0.0 GA` - Week 7): General Availability & Forensics** (`render`, `flatten`, `repair`, `compare`, `classify_type`, `pdf_to_pdf_a`, `bates`, `header_footer`, `linearize`)
 
 ---
 
@@ -147,7 +193,7 @@ Embed client-side PDF processing into any web page without uploading files to a 
 
 Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md), and [`HANDOFF.md`](./HANDOFF.md) for detailed progress tracking.
 
-- **Phase 1: Core Engine & CLI** — ✅ 100% Completed (All 44 PDF operations)
+- **Phase 1: Core Engine & CLI** — ✅ 100% Completed (All 44+ PDF operations)
 - **Phase 2: MCP & Gateway** — ✅ 100% Completed (Stdio JSON-RPC + Axum REST)
 - **Phase 3: Desktop App Foundation** — ✅ 100% Completed (Viewer, Canvas, Tools Dock)
 - **Phase 4: AI Layer, Multi-Interface Parity & Web** — ✅ 100% Completed
@@ -156,17 +202,22 @@ Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md)
   - Client-Side WASM Web App (`apps/web`): ✅ Completed (PR #137)
   - Cloudflare Edge Microservice (`apps/edge`): ✅ Completed (PR #140)
   - Universal Embed Widget (`embed.js`): ✅ Completed (PR #145)
-- **Phase 5: Zero-Chrome Pure-Rust Migrations** — ✅ 100% Completed
-  - Pure-Rust OCR Engine (`ocrs` via `rten` SIMD): ✅ Completed (PR #141)
-  - Pure-Rust PDF Rasterizer (`hayro` + `tiny-skia`): ✅ Completed (PR #142)
-  - Pure-Rust Sub-60ms Office Conversions (`fulgur`): ✅ Completed (PR #150)
-  - Universal High-Ratio Image Compression: ✅ Completed (`16f8ede`)
+- **Phase 5: Zero-Chrome Pure-Rust Migrations & Advanced Intelligence** — ✅ 100% Core Completed
+  - Pure-Rust High-Precision OCR (`rusto-rs` PaddleOCR v4 via `rten` SIMD): ✅ Completed (Spec 044)
+  - High-Speed Pure-Rust Office Engine (`office_oxide` DOCX, XLSX, PPTX): ✅ Completed (Spec 043, 046)
+  - Universal `pdf_oxide` Core Migration (Markdown, HTML, Plain Text, Search): ✅ Completed (Spec 040)
+  - Multimodal PDF-to-JSON & Bidirectional JSON-to-PDF Synthesis: ✅ Completed (Spec 032, 036)
+  - Desktop Binary Size Optimization (35MB release binary, ~67% reduction): ✅ Completed (PR #154)
+  - Adaptive Multi-Layout Workspace & Context-Aware Tool Dispatcher: ✅ Completed (PR #192, PR #193)
   - 1-Hour Sustained Soak & Endurance Benchmark (350K+ ops, 0 leaks): ✅ Completed (PR #151)
 - **Active v1.0 Launch Verification Gates:**
-  - `4.E2E.R4`: Tri-Interface Deep Behavioral Assertions Matrix ⏳ In Flight
-  - `5.9.1`: Desktop Release Binary Size Optimization (<75MB) & `rten` Inference Migration ⏳ In Flight
+  - **5.9.28**: Penta-Interface E2E Suite Expansion & Top 12 Unmocked Desktop Playwright Tests: ✅ Completed (PR #191)
+  - **5.9.31**: Full Catalog Penta-Interface & Unmocked Desktop UI Parity Suite (Deep Semantic Validation): ⏳ In Progress ([Spec 055](specs/055-all-tools-real-playwright-desktop-e2e/spec.md))
+- **Post-Launch Roadmap (v1.1+):**
+  - **Office Ecosystem (`paperpilot-office`)**: Deep OpenXML `.docx`, `.xlsx`, and `.pptx` manipulation.
+  - **Embedded Turso / libSQL Persistence**: Zero-cloud local database (`./data/paperpilot.db`) with native vector search (`libsql_vector`) for persistent document indexing and optional multi-device edge sync.
 
 ## 📄 License & Open Core Model
 
-- **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 44 PDF operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, client-side WASM engine, and the open-source Desktop App.
+- **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 50+ PDF and Office operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, client-side WASM engine, and the open-source Desktop App.
 - **Enterprise Edition (Commercial):** Hosted in a separate private repository for enterprise compliance: SAML 2.0/OIDC SSO, SCIM 2.0 provisioning, multi-tenant RBAC, cryptographic audit logs, DLP policy enforcement, and dedicated SLA support. See [LICENSE](LICENSE) for details.

@@ -46,7 +46,7 @@ const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
 
       <div class="api-info">
         <h3>100% Local & Private by Design</h3>
-        <p>Explore all 44 tools across CLI, MCP, Local REST API, and Browser WASM. No accounts, no API keys, and zero external telemetry.</p>
+        <p>Explore all 52 tools across CLI, MCP, Local REST API, and Browser WASM. No accounts, no API keys, and zero external telemetry.</p>
 
         <ul class="api-features">
           <li>✓ Standard Model Context Protocol (MCP) for AI IDEs</li>

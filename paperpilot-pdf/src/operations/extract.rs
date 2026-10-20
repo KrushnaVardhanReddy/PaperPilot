@@ -37,6 +37,8 @@ impl PdfOperation for ExtractPagesOperation {
             .collect();
 
         inner.delete_pages(&pages_to_delete);
+        inner.prune_objects();
+        inner.renumber_objects();
 
         Ok(())
     }
@@ -75,7 +77,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]

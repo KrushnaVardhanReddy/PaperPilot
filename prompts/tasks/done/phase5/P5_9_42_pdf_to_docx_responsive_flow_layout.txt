@@ -1,0 +1,111 @@
+# Task: Phase 5.9.42 — High-Fidelity Responsive Flow Layout & Inline Image Reconstruction for PDF-to-DOCX (Spec 065)
+# Base Branch: main
+# Target Branch: feat-pdf-to-docx-flow-layout-images
+# Priority: HIGH (Core Conversion Fidelity & Zero Tofu Glyphs)
+# Spec: specs/065-pdf-to-docx-flow-layout-images/spec.md
+
+## Objective
+Upgrade `paperpilot_pdf::operations::conversion::PdfToDocxOperation` in `paperpilot-pdf/src/operations/conversion.rs` to convert PDFs into responsive, clean Microsoft Word (.docx) documents.
+The engine must:
+1. Preserve 1-page document boundaries for single-page input documents without overflowing onto page 2.
+2. Strip random 6-character font subset prefixes (e.g. `JFGNNE+SourceSansPro-Bold` -> `Source Sans Pro`) and set clean fallback fonts (`Arial`, `Calibri`) to eliminate square tofu boxes (`□□□□□`) in LibreOffice and Word.
+3. Extract raster images from the document using `lopdf` or `pdf_oxide` and embed them inline as PNG pictures (`docx_rs::Pic`).
+4. Reconstruct side-by-side elements (such as icon on left, heading and description on right) into seamless borderless 2-column OpenXML tables (`docx_rs::Table`).
+5. Successfully convert `fixtures/Get_Started_With_Smallpdf.pdf` into a single-page DOCX with embedded images and zero tofu glyphs.
+
+---
+
+## STRICT File Ownership (0 Merge Conflicts Guarantee)
+You may **ONLY** touch files in these paths:
+```
+paperpilot-pdf/src/operations/conversion.rs
+```
+
+### Prohibited Files:
+DO NOT modify `paperpilot-core/`, `paperpilot-cli/`, `paperpilot-mcp/`, `paperpilot-gateway/`, `apps/`, `PHASES.md`, `v1_launch_plan.md`, or `HANDOFF.md`.
+
+---
+
+## 1. Concrete Implementation Guidance (`conversion.rs`)
+
+### A. Font Name Sanitization Function
+Implement helper function in `paperpilot-pdf/src/operations/conversion.rs`:
+```rust
+pub fn sanitize_font_name(raw_name: &str) -> String {
+    // 1. Strip 6-char random subset prefix e.g. "JFGNNE+SourceSansPro-Bold" -> "SourceSansPro-Bold"
+    let cleaned = if let Some((prefix, rest)) = raw_name.split_once('+') {
+        if prefix.len() == 6 && prefix.chars().all(|c| c.is_ascii_uppercase()) {
+            rest
+        } else {
+            raw_name
+        }
+    } else {
+        raw_name
+    };
+
+    // 2. Separate font family from weight suffix
+    let family = cleaned
+        .trim_end_matches("-Bold")
+        .trim_end_matches("-Regular")
+        .trim_end_matches("-Italic")
+        .trim_end_matches("-BoldItalic")
+        .trim_end_matches(",Bold")
+        .trim_end_matches(",Italic");
+
+    // 3. Insert spaces between CamelCase words if needed (e.g., "SourceSansPro" -> "Source Sans Pro")
+    let mut normalized = String::new();
+    let chars: Vec<char> = family.chars().collect();
+    for (i, &ch) in chars.iter().enumerate() {
+        if i > 0 && ch.is_ascii_uppercase() && chars[i - 1].is_ascii_lowercase() {
+            normalized.push(' ');
+        }
+        normalized.push(ch);
+    }
+
+    if normalized.is_empty() || (normalized.starts_with('F') && normalized.len() <= 3) {
+        "Arial".to_string()
+    } else {
+        normalized
+    }
+}
+```
+
+### B. Image Extraction & Bounding Box Extraction
+When executing `PdfToDocxOperation::execute(&self, document: &mut dyn PdfDocument)`:
+1. Downcast to `LopdfDocument`.
+2. Access the original PDF bytes `lopdf_doc.original_bytes.as_deref()`.
+3. If original bytes are present:
+   - Load `pdf = pdf_oxide::PdfDocument::from_bytes(bytes.to_vec())`.
+   - Call `pdf.to_docx(&self.output_path)`.
+   - Inspect the generated document or customize the docx generation using `docx_rs` directly:
+     - If using `docx_rs` directly to build the document:
+       - Set page margins to compact 720 dxa (0.5 in) on all 4 sides.
+       - Extract text spans per page with font size, bold/italic flags, and text.
+       - Clean font names with `sanitize_font_name(font_name)`.
+       - For images present in the page `/Resources /XObject` image dictionary:
+         - Extract image bytes, decode/re-encode to PNG via `image` crate.
+         - For side-by-side feature cards: construct a 2-column `docx_rs::Table` with `TableBorders::new().clear_all()`.
+           - Cell 1 (left): `Pic::new(&png_bytes)`
+           - Cell 2 (right): Heading (bold, font size 24 = 12pt) and body paragraph (font size 20 = 10pt).
+       - For centered headers: add `Paragraph::new().align(AlignmentType::Center)`.
+4. If `pdf_oxide` is used for `to_docx`, ensure font subset prefixes in `pdf_oxide` output are post-processed or sanitized so `w:rFonts` references `Source Sans Pro` or `Arial`, not raw subset tags.
+
+---
+
+## 2. Verification Protocol
+
+Run sequentially with `-j 4`:
+```bash
+cargo check -p paperpilot-pdf -j 4
+cargo test -p paperpilot-pdf -- conversion::tests::test_pdf_to_docx -j 4
+```
+
+Convert the Smallpdf fixture and inspect:
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --input fixtures/Get_Started_With_Smallpdf.pdf --format docx --output /tmp/test_smallpdf_output.docx
+unzip -l /tmp/test_smallpdf_output.docx
+```
+Confirm:
+1. Output file exists and is valid zip.
+2. Contains `word/document.xml`.
+3. No compile errors or clippy warnings.

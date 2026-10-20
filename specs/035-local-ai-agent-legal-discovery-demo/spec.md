@@ -123,7 +123,7 @@ To maximize developer adoption and network effects while building high-margin en
    - The Universal OpenAI-compatible endpoint client and BYOK OS Keyring manager.
    - The JSON-RPC MCP server for Claude Desktop, Cursor, and OpenCode.
 2. **Commercial Value Levers (Pro / Teams / Enterprise)**:
-   - **Desktop Pro ($5/mo)**: Background Watch Folder daemons, recurring Cron jobs, inbound webhooks, and unlimited pipeline step chains.
+   - **Desktop Pro ($5/mo)**: Background Watch Folder daemons, recurring Cron jobs, inbound webhooks, and cloud backup sync (Pipelines are 100% free and unlimited on all surfaces).
    - **Teams ($12/user/mo)**: Centralized license portal, shared team recipe/pipeline registry, concurrent execution, team audit trails.
    - **Enterprise ($22/user/mo or $2.5k–$10k/yr)**: SCIM 2.0 provisioning, SAML 2.0 federation, Air-gap Group Policy enforcement (GPO/MDM), Splunk/SIEM audit log streaming, and HIPAA BAA compliance.
    - **Managed White-Label Edge ($199–$399/mo)**: Cloudflare Worker custom domain with client branding for SMBs and firms without DevOps staff.

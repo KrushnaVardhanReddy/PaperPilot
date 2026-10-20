@@ -7,18 +7,18 @@
 
   // Tools configuration
   const tools = [
-    { id: 'merge', title: 'Merge PDFs', icon: '📑' },
-    { id: 'split', title: 'Split PDF', icon: '✂️' },
-    { id: 'rotate', title: 'Rotate Pages', icon: '🔄' },
-    { id: 'compress', title: 'Compress PDF', icon: '🗜️' },
-    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒' },
-    { id: 'watermark', title: 'Watermark', icon: '©️' },
-    { id: 'delete', title: 'Delete Pages', icon: '🗑️' },
-    { id: 'extract', title: 'Extract Pages', icon: '📤' },
-    { id: 'reorder', title: 'Reorder Pages', icon: '🔀' },
-    { id: 'crop', title: 'Crop PDF', icon: '📐' },
-    { id: 'flatten', title: 'Flatten Forms', icon: '📄' },
-    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️' }
+    { id: 'merge', title: 'Merge PDFs', icon: '📑', releaseStatus: 'v0.5-core' },
+    { id: 'split', title: 'Split PDF', icon: '✂️', releaseStatus: 'v0.5-core' },
+    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', releaseStatus: 'v0.5-core' },
+    { id: 'compress', title: 'Compress PDF', icon: '🗜️', releaseStatus: 'v0.5-core' },
+    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒', releaseStatus: 'preview' },
+    { id: 'watermark', title: 'Watermark', icon: '©️', releaseStatus: 'v0.5-core' },
+    { id: 'delete', title: 'Delete Pages', icon: '🗑️', releaseStatus: 'v0.5-core' },
+    { id: 'extract', title: 'Extract Pages', icon: '📤', releaseStatus: 'v0.5-core' },
+    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', releaseStatus: 'v0.5-core' },
+    { id: 'crop', title: 'Crop PDF', icon: '📐', releaseStatus: 'preview' },
+    { id: 'flatten', title: 'Flatten Forms', icon: '📄', releaseStatus: 'preview' },
+    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️', releaseStatus: 'preview' }
   ];
 
   // Tool specific states (batch array support)
@@ -478,20 +478,44 @@ let metadataFile: File | null = $state(null);
           mergeFiles[index + 1] = temp;
       }
   }
+
+  let filterMode = $state<'all' | 'ready'>('all');
+  let displayedTools = $derived(
+    filterMode === 'ready' ? tools.filter(t => t.releaseStatus !== 'preview') : tools
+  );
 </script>
 
 <div class="operations-view">
   <div class="tools-sidebar">
-    <h3>Tools</h3>
+    <div class="sidebar-header-row">
+      <h3>Tools</h3>
+      <div class="filter-toggle">
+        <button
+          class="toggle-btn"
+          class:active={filterMode === 'all'}
+          onclick={() => filterMode = 'all'}
+        >All</button>
+        <button
+          class="toggle-btn toggle-ready"
+          class:active={filterMode === 'ready'}
+          onclick={() => filterMode = 'ready'}
+        >✅ Ready</button>
+      </div>
+    </div>
     <div class="tools-list">
-      {#each tools as tool}
+      {#each displayedTools as tool}
         <button
           class="tool-btn"
           class:active={activeTool === tool.id}
           onclick={() => activeTool = tool.id}
         >
           <span class="tool-icon">{tool.icon}</span>
-          {tool.title}
+          <span class="tool-title-text">{tool.title}</span>
+          {#if tool.releaseStatus === 'v0.5-core'}
+            <span class="web-badge-v1">v0.5 Core</span>
+          {:else}
+            <span class="web-badge-preview">Preview</span>
+          {/if}
         </button>
       {/each}
     </div>
@@ -1123,13 +1147,50 @@ let metadataFile: File | null = $state(null);
     overflow-y: auto;
   }
 
-  .tools-sidebar h3 {
-    margin-top: 0;
+  .sidebar-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 16px;
+  }
+
+  .tools-sidebar h3 {
+    margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .filter-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px;
+    border-radius: var(--border-radius-sm, 6px);
+    border: 1px solid var(--border-color, #2a2a35);
+  }
+
+  .toggle-btn {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .toggle-btn.active {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary);
+  }
+
+  .toggle-btn.toggle-ready.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
   }
 
   .tools-list {
@@ -1141,8 +1202,8 @@ let metadataFile: File | null = $state(null);
   .tool-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 10px 12px;
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--border-radius-md);
@@ -1151,6 +1212,40 @@ let metadataFile: File | null = $state(null);
     transition: all var(--transition-fast);
     text-align: left;
     font-size: 0.95rem;
+    position: relative;
+  }
+
+  .tool-title-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .web-badge-v1 {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+  }
+
+  .web-badge-preview {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 9999px;
+    font-size: 7.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(147, 51, 234, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(147, 51, 234, 0.28);
   }
 
   .tool-btn:hover {

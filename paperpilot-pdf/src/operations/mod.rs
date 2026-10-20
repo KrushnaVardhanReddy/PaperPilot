@@ -27,6 +27,7 @@ pub mod ocr;
 pub mod office;
 pub mod page_numbers;
 pub mod pdf_a;
+pub mod rag_chunks;
 pub mod redact;
 pub mod render;
 pub mod reorder;

@@ -1,9 +1,10 @@
-import { mount, unmount, on, type EmbedOptions } from './api';
+import { mount, unmount, on, runPipeline, type EmbedOptions } from './api';
 
 const PaperPilotAPI = {
   mount,
   unmount,
   on,
+  runPipeline,
 };
 
 // Expose to window
@@ -21,8 +22,18 @@ function autoInit() {
     const brandColor = el.getAttribute('data-brand-color') || undefined;
     const logoUrl = el.getAttribute('data-logo-url') || undefined;
     const hideBadge = el.getAttribute('data-hide-badge') === 'true';
+    const pipelineAttr = el.getAttribute('data-pipeline');
 
-    mount(el, { tools, theme, brandColor, logoUrl, hideBadge });
+    let pipeline = undefined;
+    if (pipelineAttr) {
+      try {
+        pipeline = JSON.parse(pipelineAttr);
+      } catch (e) {
+        pipeline = pipelineAttr; // Fallback to raw string
+      }
+    }
+
+    mount(el, { tools, theme, brandColor, logoUrl, hideBadge, pipeline });
   });
 }
 

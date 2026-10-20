@@ -1,0 +1,56 @@
+# Phase 5.9.53 Task Prompt for Jules: Generic Dynamic Layout, N-Column Table Generation & Image Extraction for PDF-to-DOCX
+
+Branch name: feat-generic-dynamic-pdf-to-docx
+
+## Core Objective & Background
+In `paperpilot-pdf/src/operations/conversion.rs`, the current `PdfToDocxOperation` hardcoded an alternating 2-column table whenever it encountered a `Heading 3`, inserting dummy text `[ Feature N Illustration ]` into the cells. This was an expedient workaround for a single fixture, but breaks generic PDF conversions (such as standard multi-page documents, single-column essays, or actual data tables).
+
+Your task is to refactor `PdfToDocxOperation` to be **completely generic, adaptive, and production-ready for ANY input PDF**.
+
+## Concrete Implementation Requirements
+
+### 1. Dynamic Markdown Table Support (Arbitrary N Columns)
+Implement full support for `pulldown_cmark` table events:
+- `Event::Start(Tag::Table(alignments))`
+- `Event::Start(Tag::TableHead)`
+- `Event::Start(Tag::TableRow)`
+- `Event::Start(Tag::TableCell)`
+- `Event::End(TagEnd::TableCell)`
+- `Event::End(TagEnd::TableRow)`
+- `Event::End(TagEnd::Table)`
+
+Calculate column width dynamically:
+`let col_width = 10080 / alignments.len().max(1);` (in Dxa).
+Format cells with appropriate borders, margins, and paragraph content.
+
+### 2. Remove Hardcoded Heading 3 -> 2-Column Table Logic
+- **Do NOT** force `Heading 3` into 2-column tables.
+- Standard headings (`H1`..`H6`) must render as standard Word heading paragraphs with proper sizes, colors, and margins.
+- Standard paragraphs (`Event::Start(Tag::Paragraph)`) must render as linear flowing Word paragraphs (`<w:p>`).
+
+### 3. Brochure / Multi-Column Cards with Real Rasterized Images
+When converting documents like `fixtures/Get_Started_With_Smallpdf.pdf`:
+- Detect the 4 feature illustration regions or Form XObjects.
+- Render the page to a pixel buffer using `hayro::render` (at 150 DPI) or extract raster image streams directly.
+- Crop the 4 illustration coordinate boxes to PNG bytes.
+- Embed the actual PNG images using `docx_rs::Pic::new(&png_bytes).size(width, height)`.
+- **CRITICAL REQUIREMENT**: Never output `[ Feature N Illustration ]` or any placeholder text! Real image bytes must be embedded in the DOCX package (`word/media/image*.png`).
+
+### 4. Zero Regressions on Existing Test Suite
+- `cargo test -p paperpilot-pdf test_pdf_to_docx -j 4` must pass.
+- `cargo test -p paperpilot-cli --test all50_cleanroom_audit -j 4` must pass.
+- Converted `fixtures/Get_Started_With_Smallpdf.pdf` must fit on strictly 1 page in LibreOffice / Word.
+
+## Verification Command
+```bash
+cargo run -p paperpilot-cli -j 4 -- convert --format docx --input fixtures/Get_Started_With_Smallpdf.pdf --output /tmp/test_generic.docx
+python3 -c "
+import zipfile, xml.etree.ElementTree as ET
+with zipfile.ZipFile('/tmp/test_generic.docx') as z:
+    names = z.namelist()
+    print('Media images found:', [n for n in names if 'word/media/' in n])
+    xml = z.read('word/document.xml').decode('utf-8')
+    assert '[ Feature' not in xml, 'Found placeholder text!'
+print('Verification successful!')
+"
+```

@@ -4,7 +4,7 @@ members = [
     "paperpilot-pdf",
     "paperpilot-cli", "paperpilot-mcp", "apps/desktop/src-tauri",
     "tools/make-fixtures",
-    "tools/penta-interface-e2e"
+    "tools/penta-interface-e2e", "tools/soak-bench"
 , "paperpilot-nlp", "tools/gen-e2e-fixtures", "paperpilot-gateway", "paperpilot-wasm", "tools/jules-submit", "tools/demo-legal-fixtures", "paperpilot-ai"]
 resolver = "2"
 
@@ -22,12 +22,6 @@ debug = 1
 debug = 0
 
 [profile.dev.package.rten]
-opt-level = 3
-
-[profile.dev.package.rten-gemm]
-opt-level = 3
-
-[profile.dev.package.rten-simd]
 opt-level = 3
 
 [profile.dev.package.rten-tensor]

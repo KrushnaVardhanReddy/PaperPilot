@@ -173,7 +173,10 @@ mod tests {
         let catalog_id = doc.add_object(catalog);
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
-        LopdfDocument { inner: doc }
+        LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        }
     }
 
     #[test]

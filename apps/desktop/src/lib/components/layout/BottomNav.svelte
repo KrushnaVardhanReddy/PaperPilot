@@ -1,32 +1,36 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
   import { onMount } from 'svelte';
-
-  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  let isMobile = $derived(windowWidth < 600);
-
-  onMount(() => {
-    function handleResize() { windowWidth = window.innerWidth; }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  });
+  import CameraScannerModal from '$lib/components/scanner/CameraScannerModal.svelte';
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'documents', label: 'Documents', icon: '📄' },
-    { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
+    { id: 'scan', label: 'Scan', icon: '📷' },
+    { id: 'tools', label: 'Tools', icon: '⚡' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
+
+  let showScanner = $state(false);
+
+  function handleNavClick(id: string) {
+    if (id === 'scan') {
+      showScanner = true;
+    } else if (id === 'tools') {
+      appState.setActiveTab('tools');
+    } else {
+      appState.setActiveTab(id);
+    }
+  }
 </script>
 
-{#if isMobile}
+{#if appState.isMobile}
   <nav class="bottom-nav" id="mobile-bottom-nav" aria-label="Mobile navigation">
     {#each navItems as item (item.id)}
       <button
         class="bottom-nav-item"
-        class:active={appState.activeTab === item.id}
+        class:active={appState.activeTab === item.id && item.id !== 'scan'}
         id={`mobile-nav-${item.id}`}
-        onclick={() => appState.setActiveTab(item.id)}
+        onclick={() => handleNavClick(item.id)}
         aria-label={item.label}
         aria-current={appState.activeTab === item.id ? 'page' : undefined}
       >
@@ -35,6 +39,10 @@
       </button>
     {/each}
   </nav>
+
+  {#if showScanner}
+    <CameraScannerModal onClose={() => showScanner = false} />
+  {/if}
 {/if}
 
 <style>
@@ -51,6 +59,7 @@
     justify-content: space-around;
     z-index: 100;
     padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .bottom-nav-item {
@@ -60,6 +69,8 @@
     justify-content: center;
     gap: 2px;
     flex: 1;
+    min-height: 48px;
+    min-width: 48px;
     padding: 8px 4px;
     background: none;
     border: none;
