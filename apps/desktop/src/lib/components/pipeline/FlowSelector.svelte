@@ -1,10 +1,12 @@
 <script lang="ts">
     import { pipelineState } from '$lib/state/pipeline.svelte';
     import SaveFlowModal from './SaveFlowModal.svelte';
+    import ExportCodeModal from './ExportCodeModal.svelte';
     import { onMount } from 'svelte';
 
     let fileInput: HTMLInputElement;
     let isSaveModalOpen = $state(false);
+    let isExportCodeModalOpen = $state(false);
     let selectedFlowId = $state('');
 
     onMount(() => {
@@ -131,6 +133,10 @@
             💾 Save Flow
         </button>
 
+        <button class="tool-btn" id="flow-export-code-btn" disabled={!hasSteps} onclick={() => isExportCodeModalOpen = true}>
+            &lt;/&gt; Code / API
+        </button>
+
         <button class="tool-btn" disabled={!hasSteps} onclick={handleExport}>
             ⬇️ Export JSON
         </button>
@@ -154,6 +160,11 @@
     onSaveComplete={(id) => selectedFlowId = id}
 />
 
+<ExportCodeModal
+    isOpen={isExportCodeModalOpen}
+    onClose={() => isExportCodeModalOpen = false}
+/>
+
 <style>
     .flow-selector-toolbar {
         background: rgba(15, 23, 42, 0.6);
@@ -165,6 +176,8 @@
         justify-content: space-between;
         gap: 12px;
         flex-wrap: wrap;
+        position: relative;
+        z-index: 10;
     }
 
     .selector-group {

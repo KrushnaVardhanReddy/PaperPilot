@@ -85,6 +85,38 @@ test.describe('Pipeline Flow Management: Save, Export, Import', () => {
     // Assert dropdown correctly selected the imported flow
     const importedOptionText = await flowSelector.locator('option:checked').textContent();
     expect(importedOptionText).toContain('Quarterly Discovery');
+
+    // 7. Verify Export as Code / API Modal
+    const codeApiButton = page.locator('#flow-export-code-btn');
+    await expect(codeApiButton).toBeVisible();
+    await expect(codeApiButton).toBeEnabled();
+    await codeApiButton.click();
+
+    const exportCodeModal = page.locator('#export-code-modal');
+    await expect(exportCodeModal).toBeVisible();
+
+    // Verify Tabs and Code Content
+    const codeBlock = exportCodeModal.locator('.code-container code');
+
+    // cURL Tab (Default)
+    await expect(exportCodeModal.locator('button', { hasText: 'cURL (REST API)' })).toHaveClass(/active/);
+    await expect(codeBlock).toContainText('curl -X POST http://localhost:8080/api/v1/workflow/run');
+
+    // CLI Tab
+    await exportCodeModal.locator('button', { hasText: 'CLI Command' }).click();
+    await expect(codeBlock).toContainText('paperpilot workflow --recipe flow.json');
+
+    // MCP Agent Prompt Tab
+    await exportCodeModal.locator('button', { hasText: 'MCP Agent Prompt' }).click();
+    await expect(codeBlock).toContainText('Please invoke the `document_workflow` tool using the following recipe:');
+
+    // Embed JS Tab
+    await exportCodeModal.locator('button', { hasText: 'Embed JS' }).click();
+    await expect(codeBlock).toContainText('window.PaperPilot.runPipeline({');
+
+    // Close Modal
+    await exportCodeModal.locator('.close-btn').click();
+    await expect(exportCodeModal).not.toBeVisible();
   });
 
 });
