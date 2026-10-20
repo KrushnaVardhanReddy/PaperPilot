@@ -3305,45 +3305,50 @@ impl PaperPilotMcpServer {
                     .map_err(crate::error::to_mcp_error)?;
                 let total_pages = doc.page_count().map_err(crate::error::to_mcp_error)?;
 
-                let split_points: Vec<u32> = if let Some(every) = args.get("every").and_then(|v| v.as_u64()) {
-                    let mut pts = Vec::new();
-                    let mut pt = every as u32;
-                    while pt < total_pages {
-                        pts.push(pt);
-                        pt += every as u32;
-                    }
-                    pts
-                } else if let Some(ranges_val) = args.get("ranges").or_else(|| args.get("pages")).or_else(|| args.get("split_points")) {
-                    let ranges_str = ranges_val.as_str().unwrap_or("").trim();
-                    if ranges_str.is_empty() || ranges_str.eq_ignore_ascii_case("all") {
-                        (1..total_pages).collect()
-                    } else {
-                        // Support ranges like "1-3, 4-6" or cut points like "3, 6"
+                let split_points: Vec<u32> =
+                    if let Some(every) = args.get("every").and_then(|v| v.as_u64()) {
                         let mut pts = Vec::new();
-                        for part in ranges_str.split(',') {
-                            let part = part.trim();
-                            if let Some((_start, end)) = part.split_once('-') {
-                                if let Ok(end_num) = end.trim().parse::<u32>() {
-                                    if end_num < total_pages && !pts.contains(&end_num) {
-                                        pts.push(end_num);
-                                    }
-                                }
-                            } else if let Ok(pt) = part.parse::<u32>() {
-                                if pt < total_pages && !pts.contains(&pt) {
-                                    pts.push(pt);
-                                }
-                            }
+                        let mut pt = every as u32;
+                        while pt < total_pages {
+                            pts.push(pt);
+                            pt += every as u32;
                         }
-                        if pts.is_empty() {
+                        pts
+                    } else if let Some(ranges_val) = args
+                        .get("ranges")
+                        .or_else(|| args.get("pages"))
+                        .or_else(|| args.get("split_points"))
+                    {
+                        let ranges_str = ranges_val.as_str().unwrap_or("").trim();
+                        if ranges_str.is_empty() || ranges_str.eq_ignore_ascii_case("all") {
                             (1..total_pages).collect()
                         } else {
-                            pts.sort_unstable();
-                            pts
+                            // Support ranges like "1-3, 4-6" or cut points like "3, 6"
+                            let mut pts = Vec::new();
+                            for part in ranges_str.split(',') {
+                                let part = part.trim();
+                                if let Some((_start, end)) = part.split_once('-') {
+                                    if let Ok(end_num) = end.trim().parse::<u32>() {
+                                        if end_num < total_pages && !pts.contains(&end_num) {
+                                            pts.push(end_num);
+                                        }
+                                    }
+                                } else if let Ok(pt) = part.parse::<u32>() {
+                                    if pt < total_pages && !pts.contains(&pt) {
+                                        pts.push(pt);
+                                    }
+                                }
+                            }
+                            if pts.is_empty() {
+                                (1..total_pages).collect()
+                            } else {
+                                pts.sort_unstable();
+                                pts
+                            }
                         }
-                    }
-                } else {
-                    (1..total_pages).collect()
-                };
+                    } else {
+                        (1..total_pages).collect()
+                    };
 
                 let op = paperpilot_pdf::operations::split::SplitOperation::new(
                     PathBuf::from(&output_dir),
