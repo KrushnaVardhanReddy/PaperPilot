@@ -1,27 +1,21 @@
 <script lang="ts">
   import { pipelineState, OPERATION_REGISTRY } from '$lib/state/pipeline.svelte';
 
-  let selectedStepId = $state<string | null>(null);
-
-  // Derived: the selected step object
+  // Derived: the selected step object from global pipelineState
   let selectedStep = $derived(
-    selectedStepId ? pipelineState.steps.find(s => s.id === selectedStepId) ?? null : null
+    pipelineState.selectedStepId ? pipelineState.steps.find(s => s.id === pipelineState.selectedStepId) ?? null : null
   );
 
   let schema = $derived(
     selectedStep ? OPERATION_REGISTRY[selectedStep.operationId].paramSchema : []
   );
-
-  export function selectStep(id: string) {
-    selectedStepId = selectedStepId === id ? null : id;
-  }
 </script>
 
 {#if selectedStep && schema.length > 0}
   <div class="config-panel" id="step-config-panel">
     <div class="config-header">
       <span>{selectedStep.icon} Configure: {selectedStep.label}</span>
-      <button onclick={() => selectedStepId = null}>×</button>
+      <button onclick={() => pipelineState.selectStep(null)}>×</button>
     </div>
     <div class="config-fields">
       {#each schema as field}

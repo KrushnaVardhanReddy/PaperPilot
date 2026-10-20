@@ -116,11 +116,11 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     } else if (step.tool === 'compress' || step.tool === 'flatten') {
       // For now, these are minimal or no-ops in client-side pdf-lib
       // without heavy rebuilding, but we count them.
-    } else if (step.tool === 'extract_pages' || step.tool === 'delete_pages' || step.tool === 'reorder_pages') {
+    } else if (step.tool === 'extract_pages' || step.tool === 'extract' || step.tool === 'split' || step.tool === 'delete_pages' || step.tool === 'reorder_pages') {
         const total = doc.getPageCount();
         let targetIndices: number[] = [];
-        if (step.tool === 'extract_pages') {
-            targetIndices = parsePageNumbers(step.pages?.toString() || '1', total);
+        if (step.tool === 'extract_pages' || step.tool === 'extract' || step.tool === 'split') {
+            targetIndices = parsePageNumbers(step.pages?.toString() || step.pageInput?.toString() || '1', total);
         } else if (step.tool === 'delete_pages') {
             const toDelete = new Set(parsePageNumbers(step.pages?.toString() || '1', total));
             for(let p=0; p<total; p++) {

@@ -1,7 +1,7 @@
 // Type definitions
 export type OperationId =
   | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_merge'
-  | 'pdf_split' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
+  | 'pdf_split' | 'pdf_extract_pages' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
   | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign';
 
@@ -15,21 +15,28 @@ export interface PipelineStep {
 
 export class PipelineState {
   steps = $state<PipelineStep[]>([]);
+  selectedStepId = $state<string | null>(null);
   isRunning = $state(false);
   currentStepIndex = $state<number | null>(null); // which step is currently running
   lastError = $state<string | null>(null);
   lastSuccessOutput = $state<string | null>(null);
 
+  selectStep(id: string | null) {
+    this.selectedStepId = this.selectedStepId === id ? null : id;
+  }
+
   addStep(operationId: OperationId) {
     // Lookup the default params and label from OPERATION_REGISTRY
     const def = OPERATION_REGISTRY[operationId];
+    const newId = crypto.randomUUID();
     this.steps = [...this.steps, {
-      id: crypto.randomUUID(),
+      id: newId,
       operationId,
       label: def.label,
       icon: def.icon,
       params: { ...def.defaultParams }
     }];
+    this.selectedStepId = newId;
   }
 
   removeStep(id: string) {
@@ -222,6 +229,15 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     defaultParams: { input: '__input__', output_dir: '__output_dir__', split_at: '' },
     paramSchema: [
       { key: 'split_at', label: 'Split at pages (comma-separated)', type: 'text', placeholder: 'e.g. 3,7,12' }
+    ]
+  },
+  pdf_extract_pages: {
+    label: 'Extract Pages',
+    icon: '📑',
+    description: 'Extract specific pages into a new PDF',
+    defaultParams: { input: '__input__', output: '__output__', pages: '1' },
+    paramSchema: [
+      { key: 'pages', label: 'Pages (comma-separated or ranges)', type: 'text', placeholder: 'e.g. 1-3, 5' }
     ]
   }
 };

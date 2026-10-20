@@ -55,7 +55,13 @@
         }
 
         jobsState.updateJobStatus(jobId, 'success', result.message);
-        workingPath = result.output_path ?? outputPath;
+        let resolved = result.output_path ?? outputPath;
+        if (step.operationId === 'pdf_split' || resolved.endsWith('_dir')) {
+          // If the step output a directory of split parts, pipe split_1.pdf to downstream steps
+          workingPath = `${resolved}/split_1.pdf`;
+        } else {
+          workingPath = resolved;
+        }
       }
 
       pipelineState.setLastSuccessOutput(workingPath);
