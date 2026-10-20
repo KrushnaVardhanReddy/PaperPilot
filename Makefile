@@ -26,11 +26,15 @@ endif
 
 # Install desktop dependencies
 install-desktop:
-	@node -e "const fs = require('fs'); if (!fs.existsSync('apps/desktop/node_modules') || (!fs.existsSync('apps/desktop/node_modules/.bin/tauri') && !fs.existsSync('apps/desktop/node_modules/.bin/tauri.cmd'))) { console.log('Installing desktop dependencies...'); require('child_process').execSync('pnpm install || npm install', { cwd: 'apps/desktop', stdio: 'inherit' }); }"
+	@node -e "const fs = require('fs'); const missing = !fs.existsSync('apps/desktop/node_modules') || (!fs.existsSync('apps/desktop/node_modules/.bin/tauri') && !fs.existsSync('apps/desktop/node_modules/.bin/tauri.cmd')) || !fs.existsSync('apps/desktop/node_modules/xlsx'); if (missing) { console.log('Installing desktop dependencies...'); require('child_process').execSync('npm install', { cwd: 'apps/desktop', stdio: 'inherit' }); }"
 
 # Run desktop in live-reload dev mode (starts Vite + debug Tauri)
 dev: install-desktop
+ifeq ($(OS),Windows_NT)
+	@powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 1420 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $$_.OwningProcess -Force -ErrorAction SilentlyContinue }" 2>/dev/null || true
+else
 	@fuser -k 1420/tcp 2>/dev/null || true
+endif
 	cd apps/desktop && (npx tauri dev || npm run tauri dev)
 
 # Run web portal in live-reload dev mode
