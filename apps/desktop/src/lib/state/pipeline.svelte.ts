@@ -3,7 +3,7 @@ export type OperationId =
   | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_crop' | 'pdf_merge'
   | 'pdf_split' | 'pdf_extract_pages' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
-  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign';
+  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers';
 
 export interface PipelineStep {
   id: string;           // crypto.randomUUID()
@@ -13,6 +13,16 @@ export interface PipelineStep {
   params: Record<string, unknown>; // operation-specific params
 }
 
+export interface SavedPipeline {
+  id: string;               // e.g. "preset-legal-bates" or crypto.randomUUID()
+  name: string;             // User-visible flow title
+  description?: string;     // Purpose / notes
+  steps: PipelineStep[];    // Array of configured steps with tool operationId & params
+  updatedAt: string;        // ISO 8601 timestamp
+  isPreset?: boolean;       // System default vs user-created
+  teamId?: string;          // Optional workspace/team ID
+}
+
 export class PipelineState {
   steps = $state<PipelineStep[]>([]);
   selectedStepId = $state<string | null>(null);
@@ -20,6 +30,132 @@ export class PipelineState {
   currentStepIndex = $state<number | null>(null); // which step is currently running
   lastError = $state<string | null>(null);
   lastSuccessOutput = $state<string | null>(null);
+
+  savedFlows = $state<SavedPipeline[]>([]);
+  activeFlowId = $state<string | null>(null);
+
+  initStorage() {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('paperpilot_saved_flows');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as SavedPipeline[];
+          // Merge user flows with DEFAULT_PRESETS, ensuring presets are always present
+          const userFlows = parsed.filter(f => !f.isPreset);
+          this.savedFlows = [...DEFAULT_PRESETS, ...userFlows];
+        } catch (err) {
+          console.error('Failed to parse saved flows:', err);
+          this.savedFlows = [...DEFAULT_PRESETS];
+        }
+      } else {
+        this.savedFlows = [...DEFAULT_PRESETS];
+      }
+    } else {
+      this.savedFlows = [...DEFAULT_PRESETS];
+    }
+  }
+
+  loadFlow(flowId: string): boolean {
+    const flow = this.savedFlows.find(f => f.id === flowId);
+    if (!flow) return false;
+
+    // deep clone steps to prevent reference mutations
+    this.steps = JSON.parse(JSON.stringify(flow.steps));
+    this.activeFlowId = flowId;
+    this.selectedStepId = null;
+    return true;
+  }
+
+  saveCurrentFlow(name: string, description?: string): SavedPipeline {
+    const newFlow: SavedPipeline = {
+      id: crypto.randomUUID(),
+      name,
+      description,
+      steps: JSON.parse(JSON.stringify(this.steps)), // deep clone current steps
+      updatedAt: new Date().toISOString(),
+      isPreset: false
+    };
+
+    this.savedFlows = [newFlow, ...this.savedFlows];
+    this.activeFlowId = newFlow.id;
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      // Save all flows (both custom and default)
+      localStorage.setItem('paperpilot_saved_flows', JSON.stringify(this.savedFlows));
+    }
+
+    return newFlow;
+  }
+
+  deleteFlow(flowId: string): boolean {
+    const flow = this.savedFlows.find(f => f.id === flowId);
+    if (!flow || flow.isPreset) return false; // Cannot delete presets
+
+    this.savedFlows = this.savedFlows.filter(f => f.id !== flowId);
+    if (this.activeFlowId === flowId) {
+      this.activeFlowId = null;
+    }
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('paperpilot_saved_flows', JSON.stringify(this.savedFlows));
+    }
+
+    return true;
+  }
+
+  exportFlowJson(flowId?: string): string {
+    const targetFlowId = flowId || this.activeFlowId;
+    let flowToExport: SavedPipeline;
+
+    if (targetFlowId) {
+      const flow = this.savedFlows.find(f => f.id === targetFlowId);
+      if (flow) {
+        flowToExport = flow;
+      } else {
+        throw new Error('Flow not found');
+      }
+    } else {
+      // Export current unsaved flow
+      flowToExport = {
+        id: crypto.randomUUID(),
+        name: 'Exported Flow',
+        steps: this.steps,
+        updatedAt: new Date().toISOString(),
+        isPreset: false
+      };
+    }
+
+    return JSON.stringify(flowToExport, null, 2);
+  }
+
+  importFlowFromJson(jsonString: string): SavedPipeline {
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (err) {
+      throw new Error('Invalid JSON format');
+    }
+
+    if (!parsed.name || !Array.isArray(parsed.steps)) {
+      throw new Error('Invalid flow format: missing name or steps array');
+    }
+
+    const newFlow: SavedPipeline = {
+      ...parsed,
+      id: crypto.randomUUID(), // Generate new unique ID to avoid collision
+      updatedAt: new Date().toISOString(),
+      isPreset: false
+    };
+
+    this.savedFlows = [newFlow, ...this.savedFlows];
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('paperpilot_saved_flows', JSON.stringify(this.savedFlows));
+    }
+
+    this.loadFlow(newFlow.id);
+    return newFlow;
+  }
 
   selectStep(id: string | null) {
     this.selectedStepId = this.selectedStepId === id ? null : id;
@@ -252,8 +388,120 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     paramSchema: [
       { key: 'pages', label: 'Pages (comma-separated or ranges)', type: 'text', placeholder: 'e.g. 1-3, 5' }
     ]
+  },
+  pdf_remove_blank: {
+    label: 'Remove Blank Pages',
+    icon: '🧽',
+    description: 'Remove blank pages from the PDF',
+    defaultParams: { input: '__input__', output: '__output__', sensitivity: 95 },
+    paramSchema: [
+      { key: 'sensitivity', label: 'Sensitivity', type: 'number', min: 0, max: 100, step: 1 }
+    ]
+  },
+  pdf_page_numbers: {
+    label: 'Page Numbers',
+    icon: '🔢',
+    description: 'Add page numbers to the PDF',
+    defaultParams: { input: '__input__', output: '__output__', format: 'Page {n} of {total}', position: 'bottom-center' },
+    paramSchema: [
+      { key: 'format', label: 'Format String', type: 'text', placeholder: 'e.g. Page {n} of {total}' },
+      { key: 'position', label: 'Position', type: 'select', options: ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] }
+    ]
   }
 };
+
+export const DEFAULT_PRESETS: SavedPipeline[] = [
+  {
+    id: 'preset-legal-discovery',
+    name: 'Legal Discovery & Bates Stamping',
+    description: 'Consecutive litigation numbering, confidential stamp, and fast-web view optimization.',
+    isPreset: true,
+    updatedAt: new Date(0).toISOString(),
+    steps: [
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_bates',
+        label: 'Bates Numbering',
+        icon: '#️⃣',
+        params: { input: '__input__', output: '__output__', prefix: 'CASE-2026-', start: 1 }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_watermark',
+        label: 'Watermark',
+        icon: '💧',
+        params: { input: '__input__', output: '__output__', text: 'CONFIDENTIAL', opacity: 0.3, font_size: 48 }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_linearize',
+        label: 'Linearize',
+        icon: '⚡',
+        params: { input: '__input__', output: '__output__' }
+      }
+    ]
+  },
+  {
+    id: 'preset-clean-scan',
+    name: 'Scan Cleanup & Pagination',
+    description: 'Strip accidental empty pages, add dynamic pagination, and optimize file size.',
+    isPreset: true,
+    updatedAt: new Date(0).toISOString(),
+    steps: [
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_remove_blank',
+        label: 'Remove Blank Pages',
+        icon: '🧽',
+        params: { input: '__input__', output: '__output__', sensitivity: 95 }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_page_numbers',
+        label: 'Page Numbers',
+        icon: '🔢',
+        params: { input: '__input__', output: '__output__', format: 'Page {n} of {total}', position: 'bottom-center' }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_compress',
+        label: 'Compress',
+        icon: '🗜️',
+        params: { input: '__input__', output: '__output__', level: 'medium', mode: 'medium' }
+      }
+    ]
+  },
+  {
+    id: 'preset-redact-protect',
+    name: 'Redaction & Encryption',
+    description: 'Permanently scrub sensitive keywords, flatten annotations, and AES-256 encrypt.',
+    isPreset: true,
+    updatedAt: new Date(0).toISOString(),
+    steps: [
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_redact',
+        label: 'Redact',
+        icon: '⬛',
+        params: { input: '__input__', output: '__output__', terms: '', words: 'SSN, confidential, invoice' }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_flatten',
+        label: 'Flatten',
+        icon: '📄',
+        params: { input: '__input__', output: '__output__' }
+      },
+      {
+        id: crypto.randomUUID(),
+        operationId: 'pdf_encrypt',
+        label: 'Encrypt',
+        icon: '🔒',
+        params: { input: '__input__', output: '__output__', password: '', user_password: 'changeme' }
+      }
+    ]
+  }
+];
 
 // Param schema types for rendering the config form dynamically
 export interface ParamSchema {
