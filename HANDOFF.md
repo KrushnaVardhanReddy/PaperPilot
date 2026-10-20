@@ -12,7 +12,6 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **5.9.69A** | [Session 8874502492856873220](https://jules.google.com/session/8874502492856873220) | **Pipeline Flow State, Local Persistence & Industry Presets** (`apps/desktop/src/lib/state/pipeline.svelte.ts`) | 🔄 In Progress — Core state, 3 industry presets, localStorage persistence, and Vitest unit tests. Part B (`P5_9_69B`) will wire up `FlowSelector.svelte` UI once Part A completes. |
 | **5.9.70** | [Session 4388001643990007173](https://jules.google.com/session/4388001643990007173) | **Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools)** | 🔄 In Progress — Unmocked verification across CLI, MCP, REST, WASM Playwright, and Desktop for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). Note: Previous sessions 8451709229146498568 & 12126426629876311080 were superseded. |
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
@@ -20,7 +19,12 @@
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
 
-1. **PR #219 (Windows & Cross-Platform Makefile Compatibility)**:
+1. **Task 5.9.69A / Spec 081 (Pipeline Flow State, Local Persistence & Industry Presets)**:
+   - Merged (PR #220, commit `460ec1d`, Jules Session 8874502492856873220).
+   - Implemented `SavedPipeline` data model, `PipelineState` methods (`initStorage`, `loadFlow`, `saveCurrentFlow`, `deleteFlow`, `exportFlowJson`, `importFlowFromJson`).
+   - Integrated 3 default industry presets (`preset-legal-discovery`, `preset-clean-scan`, `preset-redact-protect`).
+   - Added complete Vitest unit test suite (7/7 tests passing in `pipeline.test.ts`).
+2. **PR #219 (Windows & Cross-Platform Makefile Compatibility)**:
    - Resolved merge conflicts with `main` (`.cargo/config.toml`, `Makefile`, `package-lock.json`).
    - Added cross-platform port 1420 cleanup in `Makefile` using PowerShell on Windows and `fuser` on Linux.
    - Preserved MSVC `/STACK:8388608` and `/PDBPAGESIZE:8192` flags.
@@ -90,15 +94,14 @@ PaperPilot/
 ## 📋 Resuming Checklist for Next Session
 
 ### Step 1: Monitor Active Jules Sessions
-- Check status of **Task 5.9.69A** ([Session 8874502492856873220](https://jules.google.com/session/8874502492856873220)):
-  - When PR is submitted by Jules, verify `npm --prefix apps/desktop test` passes cleanly.
-  - Merge into `main`.
+- **Task 5.9.69A** ([Session 8874502492856873220](https://jules.google.com/session/8874502492856873220)):
+  - ✅ Verified `npm test` passing (79/79) and merged into `main` (PR #220, commit `460ec1d`).
 - Check status of **Task 5.9.70** ([Session 4388001643990007173](https://jules.google.com/session/4388001643990007173)):
   - Review `reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md` and test results.
 - Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
 
 ### Step 2: Trigger Task 5.9.69B (Pipeline UI & Save Modal)
-- Once Task 5.9.69A lands on `main`:
+- Ready to dispatch now that Task 5.9.69A has landed on `main`:
   ```bash
   ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69B_pipeline_flow_selector_ui.txt
   ```
