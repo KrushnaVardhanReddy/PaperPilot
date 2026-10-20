@@ -1,12 +1,13 @@
-# Task: Pipeline Flow Management (Save, Switch, Export, Import)
+# Task: Pipeline Flow Management (Free Community vs Enterprise Team Flows)
 
 ## Status: Planned
 Spec: `specs/081-pipeline-flow-management-save-export-import/spec.md`
 
 ## Checklist
 
+### Phase 1: Free Community Tier (Local Disk & File-based)
 - [ ] **Data Model & State Updates (`apps/desktop/src/lib/state/pipeline.svelte.ts`)**
-  - [ ] Add `SavedPipeline` interface (`id`, `name`, `description`, `steps`, `updatedAt`, `isPreset`).
+  - [ ] Add `SavedPipeline` interface (`id`, `name`, `description`, `steps`, `updatedAt`, `isPreset`, `teamId?`).
   - [ ] Add `savedFlows` reactive state array loaded from / synced to `localStorage` (`paperpilot_pipeline_flows`).
   - [ ] Pre-populate system default presets (Legal Discovery, Redact & Protect, Split & Watermark).
   - [ ] Implement `loadFlow(flowId)`, `saveCurrentFlow(name, desc)`, and `deleteFlow(flowId)`.
@@ -24,5 +25,14 @@ Spec: `specs/081-pipeline-flow-management-save-export-import/spec.md`
   - [ ] Mount `FlowSelector` above the Pipeline canvas.
   - [ ] Ensure canvas reactive bindings refresh when switching flows.
 
-- [ ] **Automated Testing**
-  - [ ] Add Playwright test in `apps/desktop/tests/pipeline_flow.spec.ts` testing save, export, import, and flow switching.
+### Phase 2: Enterprise Tier (Team Sync & Workspaces)
+- [ ] **Gateway Team Pipeline API (`paperpilot-gateway`)**
+  - [ ] `GET /api/v1/team/pipelines`: List company-approved shared pipelines.
+  - [ ] `POST /api/v1/team/pipelines`: Publish/update shared pipeline (requires Editor role).
+  - [ ] Audit log event emitted on pipeline execution (`pipeline.executed`).
+- [ ] **Enterprise UI Badge in `FlowSelector.svelte`**
+  - [ ] Tab / section for "Team Pipelines (Cloud)".
+  - [ ] Visual lock indicator for read-only company flows.
+
+### Verification
+- [ ] Add Playwright test in `apps/desktop/tests/pipeline_flow.spec.ts` testing local save, export, import, and flow switching.

@@ -1,14 +1,21 @@
-# Spec 081: Pipeline Flow Management (Save, Multi-Flow Switcher, Export & Import)
+# Spec 081: Pipeline Flow Management (Community Free vs Enterprise Team Workspaces)
 
-## 1. Context & Motivation
-PaperPilot features a multi-step visual pipeline runner in Desktop (`apps/desktop`) and Web Embed (`apps/embed`). Users often construct complex custom document automation pipelines (e.g. Legal Discovery Bates Stamping, Financial Redaction & Encryption, Split & Fan-Out Watermarking). 
+## 1. Context & Business Model Alignment
+PaperPilot features a multi-step visual pipeline runner in Desktop (`apps/desktop`) and Web Embed (`apps/embed`). Users construct complex custom document automation pipelines (e.g., Legal Discovery Bates Stamping, Financial Redaction & Encryption, Split & Fan-Out Watermarking).
 
-Currently, steps configured in the visual canvas are volatile and cleared when the application resets. Users need the ability to:
-1. Select from multiple pre-configured industry standard flows or user-saved flows.
-2. Save custom workflows with names and descriptions.
-3. Switch seamlessly between different pipeline flows.
-4. Export pipelines to portable `.json` configuration files for sharing across teams.
-5. Import `.json` pipeline configuration files into the local builder.
+To align with PaperPilot's open-core business model ("*All 50+ tools and core desktop workflows are 100% free; monetize team collaboration, audit trails, and enterprise infrastructure*"):
+
+### Tier Breakdown
+
+| Capability | Free Community (Local) | Enterprise / Team (Cloud) |
+| :--- | :---: | :---: |
+| **Save Custom Flows** | ✅ Unlimited (Stored in local disk/browser `localStorage`) | ✅ Included |
+| **Export / Import Flows** | ✅ Manual file-based (`.json` file export & import) | ✅ Included |
+| **Default Industry Presets** | ✅ Out-of-the-box standard presets | ✅ Custom company-managed presets |
+| **Central Flow Library** | ❌ None | 👑 **Live Cloud Sync across team members** |
+| **Role-Based Access Control** | ❌ None | 👑 **Lock down approved flows / edit permissions** |
+| **Compliance Audit Logging** | ❌ None | 👑 **Tamper-evident logs of who executed what flow** |
+| **Headless Cloud Execution** | Manual local run | 👑 **Webhook / Cron automation in hosted cloud** |
 
 ---
 
@@ -23,10 +30,12 @@ export interface SavedPipeline {
   steps: PipelineStep[];    // Array of configured steps with tool operationId & params
   updatedAt: string;        // ISO 8601 timestamp
   isPreset?: boolean;       // System default vs user-created
+  teamId?: string;          // (Enterprise) Org/Team ID for cloud-synced flows
+  accessLevel?: 'viewer' | 'editor'; // (Enterprise) RBAC indicator
 }
 ```
 
-### Flow Presets (Out-of-the-Box)
+### Community Free Presets (Out-of-the-Box)
 1. **Legal Discovery & Bates Stamping**:
    - `pdf_bates` (Prefix: `CASE-2024-`, start: 1)
    - `pdf_watermark` (Text: `CONFIDENTIAL`, opacity: 0.3)
@@ -41,20 +50,30 @@ export interface SavedPipeline {
 
 ---
 
-## 3. Component Design (`apps/desktop/src/lib/components/pipeline/FlowSelector.svelte`)
+## 3. UI Implementation (`apps/desktop/src/lib/components/pipeline/FlowSelector.svelte`)
 
-### UI Requirements
+### Community Free Features
 1. **Flow Dropdown Selector**:
    - Displays presets and custom saved flows with step counts (e.g., `Legal Discovery (3 steps)`).
    - Selecting a flow immediately populates the canvas and config panels.
-2. **Action Toolbar**:
+2. **Local Management Toolbar**:
    - `💾 Save Flow`: Opens modal prompting for Flow Name & Description. Saves to `localStorage`.
-   - `📤 Export`: Downloads active flow as `<flow-name>.json`.
-   - `📥 Import`: Hidden file input allowing user to upload `.json` flow. Validates schema and activates imported flow.
-   - `🗑️ Delete`: Deletes user-saved flow (presets protected).
+   - `📤 Export JSON`: Downloads active flow as `<flow-name>.json` for sharing with colleagues.
+   - `📥 Import JSON`: File picker allowing user to upload any `.json` flow. Validates schema and activates imported flow.
+   - `🗑️ Delete Flow`: Deletes user-saved flow (presets protected).
+
+### Enterprise Integration Hooks (Extensible for Gateway/SSO)
+- Flow selector shows an unobtrusive **"Team Workspaces"** badge/dropdown option:
+  - If signed in with Enterprise Gateway license: auto-fetches `/api/v1/team/pipelines` from the connected Gateway/Cloud instance.
+  - If on Free Community: clicking "Team Workspaces" shows an informational modal explaining shared cloud flow libraries and SSO.
 
 ---
 
 ## 4. Verification & Testing
 - Unit test for `PipelineState` flow persistence, serialization, and import validation.
-- End-to-end Playwright test verifying saving a 3-step pipeline, exporting to JSON, clearing, importing the JSON back, and executing against a fixture PDF.
+- End-to-end Playwright test verifying:
+  1. Saving a 3-step pipeline locally.
+  2. Exporting to a `.json` file.
+  3. Resetting/clearing state.
+  4. Importing the `.json` file back and verifying all parameters are intact.
+  5. Running the imported pipeline against a test PDF.

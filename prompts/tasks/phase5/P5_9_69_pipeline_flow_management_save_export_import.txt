@@ -1,13 +1,13 @@
-# Task 5.9.69: Pipeline Flow Management (Save, Multi-Flow Switcher, Export & Import)
+# Task 5.9.69: Pipeline Flow Management (Community Free vs Enterprise Team Workspaces)
 
 Reference Spec: `specs/081-pipeline-flow-management-save-export-import/spec.md`
 Checklist: `specs/081-pipeline-flow-management-save-export-import/task.md`
 
-You are implementing multi-pipeline flow management, flow presets, and JSON export/import for PaperPilot's visual pipeline builder.
+You are implementing multi-pipeline flow management, flow presets, and JSON export/import for PaperPilot's visual pipeline builder, structured according to the Free Community vs Enterprise Team tiers:
 
-### Requirements:
-1. **State & Persistence (`apps/desktop/src/lib/state/pipeline.svelte.ts`)**:
-   - Define `SavedPipeline` interface (`id`, `name`, `description`, `steps`, `updatedAt`, `isPreset`).
+### Free Community Tier (Fully Client-Side / Local Disk):
+1. **State & Local Persistence (`apps/desktop/src/lib/state/pipeline.svelte.ts`)**:
+   - Define `SavedPipeline` interface (`id`, `name`, `description`, `steps`, `updatedAt`, `isPreset`, `teamId?`).
    - Maintain `savedFlows` in `PipelineState`, initialized with out-of-the-box presets (Legal Discovery, Redact & Protect, Split & Watermark) and synced to `localStorage`.
    - Implement `loadFlow(flowId)`, `saveCurrentFlow(name, description)`, `deleteFlow(flowId)`.
    - Implement `exportFlowJson(flowId?)` and `importFlowFromJson(jsonString)`.
@@ -16,12 +16,12 @@ You are implementing multi-pipeline flow management, flow presets, and JSON expo
    - Create a clean toolbar above the canvas featuring:
      - Flow dropdown selector.
      - "Save Flow" button with dialog for name/description.
-     - "Export" button triggering `<flow-name>.json` download.
-     - "Import" button with file picker reading and activating JSON flow.
+     - "Export JSON" button triggering `<flow-name>.json` download.
+     - "Import JSON" button with file picker reading and activating JSON flow.
      - "Delete" button for custom flows.
 
-3. **Mounting**:
-   - Integrate `FlowSelector` into `apps/desktop/src/lib/components/pipeline/PipelineView.svelte`.
+3. **Enterprise Extension Hooks**:
+   - Add a "Team Workspaces" tab/entry in the selector showing shared cloud sync capabilities (with links to enterprise upgrade / Gateway connect).
 
 4. **Testing**:
    - Verify with `pnpm check` and add automated Playwright e2e test verifying flow switching, export, and import.
