@@ -23,6 +23,19 @@ And generate the comprehensive audit scorecard report at `reports/WAVE_2_PENTA_I
 
 ---
 
+## Existing Reference Implementations (Wave 1 & Existing Suites)
+Study the existing Wave 1 implementation patterns in the codebase to follow exact conventions:
+1. **Rust Penta-Interface Execution & Assertions Reference**:
+   - `tools/penta-interface-e2e/src/cases/page_ops.rs` (shows how CLI, MCP, and REST Gateway are invoked with unmocked real disk assertions).
+   - `paperpilot-mcp/tests/wave2_mcp_tests.rs` (shows direct in-memory `PaperPilotMcpServer::execute_call_tool` invocations for all 6 Wave 2 tools).
+2. **Playwright WASM / Web Worker Test Reference**:
+   - `apps/web/tests/e2e_wasm_22_tools.spec.ts` (shows how Web Workers and WASM buffers are evaluated in headless Chromium and checked for `%PDF-` headers).
+3. **Scorecard & Wiki Documentation Reference**:
+   - `reports/WASM_12_TOOLS_E2E_SCORECARD.md` and `reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md` (exact table format for tool ID, interface, latency in ms, output size in bytes, and status).
+   - `wiki/06-Wasm-12-Tools-Suite.md` and `wiki/25-Penta-Interface-Mandate-And-E2E-Protocol.md`.
+
+---
+
 ## STRICT File Ownership
 You may ONLY create and touch the following files:
 ```
@@ -31,7 +44,7 @@ apps/web/tests/e2e_wave2_wasm.spec.ts
 reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md
 wiki/09-Wave-2-Penta-Testing.md
 ```
-Do NOT modify production core code unless a bug is discovered in Wave 2 handlers. All pre-existing clippy warnings in `paperpilot-mcp` have already been resolved on `main`. Keep system resource constraints in mind (`cargo test -j 2`).
+Do NOT modify production core code. Note that all pre-existing clippy warnings (including `clippy::collapsible-if` in `paperpilot-mcp/src/server.rs`) have ALREADY been fixed on `main` (commit `fcea5f0`). Remember system resource constraints (`cargo test -j 2`).
 
 ---
 
@@ -50,13 +63,13 @@ Do NOT modify production core code unless a bug is discovered in Wave 2 handlers
 
 ## 2. Test Execution Details
 
-### A. Rust Integration Tests (`tests/e2e/test_wave2_penta_interface.rs` or `paperpilot-mcp/tests/`)
+### A. Rust Integration Tests (`tests/e2e/test_wave2_penta_interface.rs`)
 1. **MCP Server**: Invoke `PaperPilotMcpServer::execute_call_tool(params)` for all 6 tools with real disk fixtures. Verify JSON response `success: true` and validate output files on disk. (Reference: see `paperpilot-mcp/tests/wave2_mcp_tests.rs`).
 2. **CLI**: Execute the compiled binary (`target/debug/paperpilot` or `paperpilot-cli`) using `std::process::Command` passing CLI arguments (e.g. `paperpilot burst`, `paperpilot search`, `paperpilot page-numbers`).
 3. **REST Gateway**: Use `axum::test` or `reqwest` against `paperpilot-gateway` endpoints (e.g. `/api/v1/pdf/search`, `/api/v1/pdf/burst`).
 
 ### B. Playwright Browser / Web Worker WASM Test (`apps/web/tests/e2e_wave2_wasm.spec.ts`)
-Run headless Chromium through Playwright testing client-side execution:
+Run headless Chromium through Playwright testing client-side execution (matching `apps/web/tests/e2e_wasm_22_tools.spec.ts`):
 1. Load `single_page.pdf` and image fixtures.
 2. Evaluate through `page.evaluate()` calling the Web Worker / WASM client.
 3. Assert that resulting buffers have valid `%PDF-` magic bytes and images extract cleanly.
