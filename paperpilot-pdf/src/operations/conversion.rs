@@ -359,6 +359,246 @@ impl ExcelToStyledHtmlOperation {
     }
 }
 
+use std::collections::HashMap;
+
+#[derive(Clone, Copy)]
+struct Ctm([f32; 6]);
+impl Ctm {
+    fn transform(&self, m: [f32; 6]) -> Self {
+        Self([
+            self.0[0] * m[0] + self.0[1] * m[2],
+            self.0[0] * m[1] + self.0[1] * m[3],
+            self.0[2] * m[0] + self.0[3] * m[2],
+            self.0[2] * m[1] + self.0[3] * m[3],
+            self.0[4] * m[0] + self.0[5] * m[2] + m[4],
+            self.0[4] * m[1] + self.0[5] * m[3] + m[5],
+        ])
+    }
+    fn point(&self, x: f32, y: f32) -> (f32, f32) {
+        (
+            x * self.0[0] + y * self.0[2] + self.0[4],
+            x * self.0[1] + y * self.0[3] + self.0[5],
+        )
+    }
+}
+
+fn extract_page_media(
+    lopdf_doc: &mut lopdf::Document,
+    page_id: (u32, u16),
+    original_bytes: &[u8],
+    page_index: usize,
+) -> OperationResult<Vec<(String, String, f32, f32)>> {
+    let mut extracted = Vec::new();
+
+    let page_dict = match lopdf_doc.get_object(page_id).and_then(|obj| obj.as_dict()) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let resources_dict = match page_dict.get(b"Resources").and_then(|res| match res {
+        lopdf::Object::Reference(res_id) => {
+            lopdf_doc.get_object(*res_id).and_then(|obj| obj.as_dict())
+        }
+        lopdf::Object::Dictionary(dict) => Ok(dict),
+        _ => Err(lopdf::Error::DictKey("Invalid resources".to_string())),
+    }) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let xobject_dict = match resources_dict.get(b"XObject").and_then(|xobj| match xobj {
+        lopdf::Object::Reference(xobj_id) => {
+            lopdf_doc.get_object(*xobj_id).and_then(|obj| obj.as_dict())
+        }
+        lopdf::Object::Dictionary(dict) => Ok(dict),
+        _ => Err(lopdf::Error::DictKey("Invalid XObject".to_string())),
+    }) {
+        Ok(dict) => dict,
+        Err(_) => return Ok(extracted),
+    };
+
+    let mut has_forms = false;
+    let mut form_xobjects = Vec::new();
+
+    for (name, obj) in xobject_dict.iter() {
+        let stream_id = match obj.as_reference() {
+            Ok(id) => id,
+            Err(_) => continue,
+        };
+
+        let stream = match lopdf_doc.get_object(stream_id).and_then(|obj| obj.as_stream()) {
+            Ok(stream) => stream,
+            Err(_) => continue,
+        };
+
+        let subtype = match stream.dict.get(b"Subtype").and_then(|name| name.as_name()) {
+            Ok(name) => name,
+            Err(_) => continue,
+        };
+
+        let name_str = String::from_utf8_lossy(name).to_string();
+
+        if subtype == b"Form" {
+            has_forms = true;
+            if let Ok(bbox_obj) = stream.dict.get(b"BBox").and_then(|o| o.as_array()) {
+                if bbox_obj.len() == 4 {
+                    let mut bbox = [0.0; 4];
+                    for i in 0..4 {
+                        match bbox_obj[i] {
+                            lopdf::Object::Real(f) => bbox[i] = f as f64,
+                            lopdf::Object::Integer(i_val) => bbox[i] = i_val as f64,
+                            _ => {}
+                        }
+                    }
+                    form_xobjects.push((name_str, bbox));
+                }
+            }
+        }
+    }
+
+    if has_forms {
+        if let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec()) {
+            let pages = hayro_pdf.pages();
+            if let Some(page) = pages.get(page_index) {
+                let cache = hayro::RenderCache::new();
+                let render_settings = hayro::RenderSettings::default();
+                let mut pixmap_settings = hayro::PixmapSettings::default();
+
+                let dpi = 150.0;
+                let scale = dpi / 72.0;
+                pixmap_settings.x_scale = scale;
+                pixmap_settings.y_scale = scale;
+
+                let pixmap = hayro::render(
+                    page,
+                    &cache,
+                    &Default::default(),
+                    &render_settings,
+                    &pixmap_settings,
+                );
+
+                let width = pixmap.width();
+                let height = pixmap.height();
+
+                let data = bytemuck::cast_slice(pixmap.data());
+
+                if let Some(mut skia_pixmap) = tiny_skia::Pixmap::new(width as u32, height as u32) {
+                    skia_pixmap.data_mut().copy_from_slice(data);
+
+                    let mut media_h = 0.0;
+                    if let Ok(media_box) = page_dict.get(b"MediaBox").and_then(|o| o.as_array()) {
+                        if media_box.len() == 4 {
+                            let y0 = match media_box[1] {
+                                lopdf::Object::Real(f) => f as f32,
+                                lopdf::Object::Integer(i) => i as f32,
+                                _ => 0.0,
+                            };
+                            let y1 = match media_box[3] {
+                                lopdf::Object::Real(f) => f as f32,
+                                lopdf::Object::Integer(i) => i as f32,
+                                _ => 0.0,
+                            };
+                            media_h = (y1 - y0).abs();
+                        }
+                    }
+
+                    let mut on_page_bboxes = HashMap::new();
+
+                    let content_bytes = lopdf_doc.get_page_content(page_id);
+                    if let Ok(content) = lopdf::content::Content::decode(&content_bytes) {
+                            let mut ctm_stack = vec![Ctm([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])];
+
+                            for op in content.operations {
+                                match op.operator.as_str() {
+                                    "q" => {
+                                        let current = *ctm_stack.last().unwrap();
+                                        ctm_stack.push(current);
+                                    }
+                                    "Q" => {
+                                        if ctm_stack.len() > 1 {
+                                            ctm_stack.pop();
+                                        }
+                                    }
+                                    "cm" => {
+                                        if op.operands.len() == 6 {
+                                            let get_f32 = |obj: &lopdf::Object| -> f32 {
+                                                match obj {
+                                                    lopdf::Object::Real(f) => *f as f32,
+                                                    lopdf::Object::Integer(i) => *i as f32,
+                                                    _ => 0.0,
+                                                }
+                                            };
+                                            let m = [
+                                                get_f32(&op.operands[0]),
+                                                get_f32(&op.operands[1]),
+                                                get_f32(&op.operands[2]),
+                                                get_f32(&op.operands[3]),
+                                                get_f32(&op.operands[4]),
+                                                get_f32(&op.operands[5]),
+                                            ];
+                                            let current = *ctm_stack.last().unwrap();
+                                            let last = ctm_stack.last_mut().unwrap();
+                                            *last = current.transform(m);
+                                        }
+                                    }
+                                    "Do" => {
+                                        if op.operands.len() == 1 {
+                                            if let Ok(name) = op.operands[0].as_name() {
+                                                let name_str = String::from_utf8_lossy(name).to_string();
+                                                let current = *ctm_stack.last().unwrap();
+                                                on_page_bboxes.insert(name_str, current);
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+
+                    for (form_name, form_bbox) in form_xobjects {
+                        if let Some(ctm) = on_page_bboxes.get(&form_name) {
+                            let (x0, y0) = ctm.point(form_bbox[0] as f32, form_bbox[1] as f32);
+                            let (x1, y1) = ctm.point(form_bbox[2] as f32, form_bbox[3] as f32);
+
+                            let orig_y0 = y0.min(y1);
+                            let orig_y1 = y0.max(y1);
+                            let px_x0 = x0.min(x1);
+                            let px_x1 = x0.max(x1);
+
+                            let px_y0 = media_h - orig_y1;
+                            let px_y1 = media_h - orig_y0;
+
+                            let left = (px_x0 * scale).floor() as u32;
+                            let top = (px_y0 * scale).floor() as u32;
+                            let right = (px_x1 * scale).ceil() as u32;
+                            let bottom = (px_y1 * scale).ceil() as u32;
+
+                            let crop_rect = tiny_skia::IntRect::from_ltrb(
+                                left.max(0).min(width as u32) as i32,
+                                top.max(0).min(height as u32) as i32,
+                                right.max(0).min(width as u32) as i32,
+                                bottom.max(0).min(height as u32) as i32,
+                            );
+
+                            if let Some(rect) = crop_rect {
+                                if let Some(cropped) = skia_pixmap.clone_rect(rect) {
+                                    if let Ok(png_bytes) = cropped.encode_png() {
+                                        use base64::{Engine as _, engine::general_purpose};
+                                        let b64 = general_purpose::STANDARD.encode(&png_bytes);
+                                        extracted.push((form_name, format!("data:image/png;base64,{}", b64), orig_y0, orig_y1));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(extracted)
+}
+
 #[derive(Default)]
 pub struct PdfToHtmlOperation {
     pub extracted_html: Arc<Mutex<Option<String>>>,
@@ -388,16 +628,121 @@ impl PdfOperation for PdfToHtmlOperation {
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
             && let Ok(page_count) = pdf.page_count()
         {
+            let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
+            page_nums.sort();
+
             html.push_str(
                 "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
             );
             for i in 0..page_count {
                 let page_id = i + 1;
+
+                let obj_id = if i < page_nums.len() {
+                    let pid = page_nums[i];
+                    *lopdf_doc.inner.get_pages().get(&pid).unwrap()
+                } else {
+                    (0, 0)
+                };
+
+                let page_media = if obj_id.0 != 0 {
+                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+
                 html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
                 html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+
+                let mut page_content = String::new();
                 if let Ok(page_html) = pdf.to_html(i) {
-                    html.push_str(&page_html);
+                    page_content = page_html;
                 }
+
+                let mut all_images: Vec<(String, String, f32, f32)> = page_media;
+                if let Ok(pdf_images) = pdf.extract_images(i) {
+                    for (img_idx, img) in pdf_images.iter().enumerate() {
+                        if let Some(bbox) = img.bbox() {
+                            let (ext, b64) = match img.data() {
+                                pdf_oxide::extractors::ImageData::Jpeg(jpeg_data) => {
+                                    use base64::{Engine as _, engine::general_purpose};
+                                    ("jpeg", general_purpose::STANDARD.encode(jpeg_data))
+                                }
+                                pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
+                                    let color = match format {
+                                        pdf_oxide::extractors::PixelFormat::RGB => image::ColorType::Rgb8,
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => image::ColorType::L8,
+                                        pdf_oxide::extractors::PixelFormat::CMYK => image::ColorType::Rgb8, // Fallback mapping, Image API handles basic conversions or fails gracefully.
+                                    };
+                                    let mut png_bytes = Vec::new();
+                                    use image::ImageEncoder;
+                                    if image::codecs::png::PngEncoder::new(&mut png_bytes)
+                                        .write_image(pixels, img.width(), img.height(), color.into())
+                                        .is_ok()
+                                    {
+                                        use base64::{Engine as _, engine::general_purpose};
+                                        ("png", general_purpose::STANDARD.encode(&png_bytes))
+                                    } else {
+                                        ("png", String::new())
+                                    }
+                                }
+                            };
+                            if !b64.is_empty() {
+                                all_images.push((
+                                    format!("Image_{}", img_idx),
+                                    format!("data:image/{};base64,{}", ext, b64),
+                                    bbox.y,
+                                    bbox.y + bbox.height,
+                                ));
+                            }
+                        }
+                    }
+                }
+
+                let spans = pdf.extract_spans(i).unwrap_or_default();
+                let mut image_insertions: Vec<(usize, String)> = Vec::new();
+
+                for (name, b64, _, y1) in all_images {
+                    let markup = format!("<img src=\"{}\" alt=\"Illustration {}\" style=\"max-width: 100%; border-radius: 4px; margin-top: 10px;\" />\n", b64, name);
+                    let mut closest_span = None;
+                    let mut min_dist = f32::MAX;
+
+                    for span in &spans {
+                        let span_y0 = span.bbox.y;
+                        let dist = span_y0 - y1;
+                        if dist >= -5.0 && dist < min_dist {
+                            min_dist = dist;
+                            closest_span = Some(span);
+                        }
+                    }
+
+                    if let Some(span) = closest_span {
+                        if let Some(pos) = page_content.find(&span.text) {
+                            let mut insert_pos = pos + span.text.len();
+                            while insert_pos < page_content.len() && page_content.as_bytes()[insert_pos] != b'\n' {
+                                insert_pos += 1;
+                            }
+                            image_insertions.push((insert_pos, markup));
+                        } else {
+                            image_insertions.push((page_content.len(), markup));
+                        }
+                    } else {
+                        image_insertions.push((0, markup));
+                    }
+                }
+
+                image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
+                let mut final_html = page_content;
+                for (pos, markup) in image_insertions {
+                    let insert_pos = if final_html.is_char_boundary(pos) { pos } else {
+                        let mut p = pos;
+                        while p > 0 && !final_html.is_char_boundary(p) { p -= 1; }
+                        p
+                    };
+                    final_html.insert_str(insert_pos, &format!("\n{}\n", markup));
+                }
+
+                html.push_str(&final_html);
+
                 html.push_str("</div>\n");
             }
             html.push_str("</body>\n</html>");
@@ -474,11 +819,112 @@ impl PdfOperation for PdfToMarkdownOperation {
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
             && let Ok(page_count) = pdf.page_count()
         {
+            let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
+            page_nums.sort();
+
             for i in 0..page_count {
                 let page_id = i + 1;
+
+                let obj_id = if i < page_nums.len() {
+                    let pid = page_nums[i];
+                    *lopdf_doc.inner.get_pages().get(&pid).unwrap()
+                } else {
+                    (0, 0)
+                };
+
+                let page_media = if obj_id.0 != 0 {
+                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+
+                let mut all_images: Vec<(String, String, f32, f32)> = page_media;
+                if let Ok(pdf_images) = pdf.extract_images(i) {
+                    for (img_idx, img) in pdf_images.iter().enumerate() {
+                        if let Some(bbox) = img.bbox() {
+                            let (ext, b64) = match img.data() {
+                                pdf_oxide::extractors::ImageData::Jpeg(jpeg_data) => {
+                                    use base64::{Engine as _, engine::general_purpose};
+                                    ("jpeg", general_purpose::STANDARD.encode(jpeg_data))
+                                }
+                                pdf_oxide::extractors::ImageData::Raw { pixels, format } => {
+                                    let color = match format {
+                                        pdf_oxide::extractors::PixelFormat::RGB => image::ColorType::Rgb8,
+                                        pdf_oxide::extractors::PixelFormat::Grayscale => image::ColorType::L8,
+                                        pdf_oxide::extractors::PixelFormat::CMYK => image::ColorType::Rgb8,
+                                    };
+                                    let mut png_bytes = Vec::new();
+                                    use image::ImageEncoder;
+                                    if image::codecs::png::PngEncoder::new(&mut png_bytes)
+                                        .write_image(pixels, img.width(), img.height(), color.into())
+                                        .is_ok()
+                                    {
+                                        use base64::{Engine as _, engine::general_purpose};
+                                        ("png", general_purpose::STANDARD.encode(&png_bytes))
+                                    } else {
+                                        ("png", String::new())
+                                    }
+                                }
+                            };
+                            if !b64.is_empty() {
+                                all_images.push((
+                                    format!("Image_{}", img_idx),
+                                    format!("data:image/{};base64,{}", ext, b64),
+                                    bbox.y,
+                                    bbox.y + bbox.height,
+                                ));
+                            }
+                        }
+                    }
+                }
+
                 if let Ok(page_md) = pdf.to_markdown(i) {
                     md.push_str(&format!("# Page {}\n\n", page_id));
-                    md.push_str(page_md.trim());
+
+                    let spans = pdf.extract_spans(i).unwrap_or_default();
+                    let mut image_insertions: Vec<(usize, String)> = Vec::new();
+
+                    for (name, b64, _, y1) in all_images {
+                        let markup = format!("![Illustration {}]({})", name, b64);
+                        let mut closest_span = None;
+                        let mut min_dist = f32::MAX;
+
+                        for span in &spans {
+                            let span_y0 = span.bbox.y;
+                            let dist = span_y0 - y1;
+                            if dist >= -5.0 && dist < min_dist {
+                                min_dist = dist;
+                                closest_span = Some(span);
+                            }
+                        }
+
+                        if let Some(span) = closest_span {
+                            if let Some(pos) = page_md.find(&span.text) {
+                                let mut insert_pos = pos + span.text.len();
+                                while insert_pos < page_md.len() && page_md.as_bytes()[insert_pos] != b'\n' {
+                                    insert_pos += 1;
+                                }
+                                image_insertions.push((insert_pos, markup));
+                            } else {
+                                image_insertions.push((page_md.len(), markup));
+                            }
+                        } else {
+                            image_insertions.push((0, markup));
+                        }
+                    }
+
+                    image_insertions.sort_by(|a, b| b.0.cmp(&a.0));
+                    let mut final_md = page_md;
+                    for (pos, markup) in image_insertions {
+                        let insert_pos = if final_md.is_char_boundary(pos) { pos } else {
+                            let mut p = pos;
+                            while p > 0 && !final_md.is_char_boundary(p) { p -= 1; }
+                            p
+                        };
+                        final_md.insert_str(insert_pos, &format!("\n\n{}\n\n", markup));
+                    }
+
+                    md.push_str(final_md.trim());
                     md.push_str("\n\n");
                 }
             }
