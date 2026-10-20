@@ -12,6 +12,7 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
+| **5.9.69B** | [Session 16322387546350290979](https://jules.google.com/session/16322387546350290979) | **Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs** (`[Spec 081]`) | 🔄 In Flight — `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, JSON export/import buttons, and Playwright E2E verification. |
 | **5.9.70** | [Session 4388001643990007173](https://jules.google.com/session/4388001643990007173) | **Wave 2 Penta-Interface E2E & Unmocked Playwright Testing Suite (6 Tools)** | 🔄 In Progress — Unmocked verification across CLI, MCP, REST, WASM Playwright, and Desktop for Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`). Note: Previous sessions 8451709229146498568 & 12126426629876311080 were superseded. |
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
@@ -100,12 +101,10 @@ PaperPilot/
   - Review `reports/WAVE_2_PENTA_INTERFACE_SCORECARD.md` and test results.
 - Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
 
-### Step 2: Trigger Task 5.9.69B (Pipeline UI & Save Modal)
-- Ready to dispatch now that Task 5.9.69A has landed on `main`:
-  ```bash
-  ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69B_pipeline_flow_selector_ui.txt
-  ```
-- This will implement `FlowSelector.svelte` and `SaveFlowModal.svelte` based on the tested state API, plus embed preset resolution.
+### Step 2: Monitor Task 5.9.69B (Pipeline UI & Save Modal)
+- Dispatched to Jules ([Session 16322387546350290979](https://jules.google.com/session/16322387546350290979)):
+  - Implements `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, and Playwright E2E verification.
+  - When PR is submitted by Jules, verify `npm --prefix apps/desktop test` passes and merge into `main`.
 
 ### Step 3: Trigger Task 5.9.69C (Penta-Interface Declarative Workflow Engine)
 - Follow-up task bringing full Penta-Interface parity for pipeline workflows:
