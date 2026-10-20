@@ -217,7 +217,13 @@ impl ExcelToCsvOperation {
                 // Sanitize sheet name for filenames (replace spaces and special chars with underscores)
                 let safe_sheet_name: String = s_name
                     .chars()
-                    .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+                    .map(|c| {
+                        if c.is_alphanumeric() || c == '-' || c == '_' {
+                            c
+                        } else {
+                            '_'
+                        }
+                    })
                     .collect();
 
                 let sheet_dest = parent_dir.join(format!("{}_{}.{}", stem, safe_sheet_name, ext));

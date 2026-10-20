@@ -186,15 +186,21 @@ pub async fn health() -> impl IntoResponse {
 )]
 pub async fn list_tools() -> impl IntoResponse {
     match PaperPilotMcpServer::execute_list_tools() {
-        Ok(res) => (StatusCode::OK, Json(serde_json::json!({
-            "success": true,
-            "total": res.tools.len(),
-            "tools": res.tools
-        }))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
-            "success": false,
-            "error": e.message
-        }))),
+        Ok(res) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "total": res.tools.len(),
+                "tools": res.tools
+            })),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "error": e.message
+            })),
+        ),
     }
 }
 
