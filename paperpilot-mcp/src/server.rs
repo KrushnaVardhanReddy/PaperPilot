@@ -3317,6 +3317,7 @@ impl PaperPilotMcpServer {
                     } else if let Some(ranges_val) = args
                         .get("ranges")
                         .or_else(|| args.get("pages"))
+                        .or_else(|| args.get("split_at"))
                         .or_else(|| args.get("split_points"))
                     {
                         let ranges_str = ranges_val.as_str().unwrap_or("").trim();
@@ -4897,8 +4898,8 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        // Base counts 52 pushes, one is a helper pushing 4 tools = 55 tools
-        assert_eq!(res.tools.len(), 55);
+        // 56 registered tools
+        assert_eq!(res.tools.len(), 56);
     }
 
     #[test]
