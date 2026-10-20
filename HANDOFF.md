@@ -14,13 +14,17 @@
 |---|---|---|---|
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 | **5.9.69C** | [Session 14694450703556332514](https://jules.google.com/session/14694450703556332514) | **Penta-Interface Declarative Workflow Engine & Recipe Execution** (`[Spec 081]`) | 🔄 In Flight — Multi-step in-memory workflow execution in `paperpilot-pdf`, CLI lifecycle (`run`/`list`/`inspect`), MCP tools (`list_workflows`, `document_workflow`), REST endpoints (`/api/v1/workflow/*`), WASM/Edge, and real assertion Penta-Interface E2E suite. |
-| **5.9.69D** | [Session 4310793047227771998](https://jules.google.com/session/4310793047227771998) | **Visual Pipeline "Export as Code / API / MCP Prompt" Modal** (`[Spec 081]`) | 🔄 In Flight — Developer & AI ergonomics modal in Desktop UI (`FlowSelector.svelte`), generating copyable snippets for cURL, CLI command, MCP Agent prompt, and Embed JS API. |
 
 ---
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
 
-1. **Task 5.9.69B (Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs)**:
+1. **Task 5.9.69D (Visual Pipeline "Export as Code / API / MCP Prompt" Modal)**:
+   - Merged (PR #223, commit `5b4436b`, Jules Session 4310793047227771998).
+   - Created `ExportCodeModal.svelte` for rendering live dynamic cURL, CLI, MCP prompt, and Embed JS code snippets from current pipeline steps.
+   - Integrated `<button id="flow-export-code-btn">` into `FlowSelector.svelte` toolbar.
+   - Added automated Playwright test in `e2e_pipeline_flow_management.spec.ts` asserting all 4 tabs and modal open/close lifecycle (100% passing).
+2. **Task 5.9.69B (Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs)**:
    - Merged (PR #222, commit `adf293c`, Jules Session 16322387546350290979).
    - Implemented `FlowSelector.svelte` toolbar with standard presets and saved user flows.
    - Implemented `SaveFlowModal.svelte` with step sequence badges and local persistence.
