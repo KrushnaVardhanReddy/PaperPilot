@@ -25,9 +25,12 @@
             <select
               id={`field-${selectedStep.id}-${field.key}`}
               value={String(selectedStep.params[field.key] ?? '')}
-              onchange={(e) => pipelineState.updateStepParam(
-                selectedStep!.id, field.key, Number((e.target as HTMLSelectElement).value)
-              )}
+              onchange={(e) => {
+                const val = (e.target as HTMLSelectElement).value;
+                const num = Number(val);
+                const finalVal = !isNaN(num) && val.trim() !== '' && typeof field.options?.[0] === 'number' ? num : val;
+                pipelineState.updateStepParam(selectedStep!.id, field.key, finalVal);
+              }}
             >
               {#each (field.options ?? []) as opt}
                 <option value={String(opt)}>{opt}</option>

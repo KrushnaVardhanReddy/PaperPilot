@@ -3351,14 +3351,26 @@ impl PaperPilotMcpServer {
                         (1..total_pages).collect()
                     };
 
+                let num_parts = split_points.len() + 1;
                 let op = paperpilot_pdf::operations::split::SplitOperation::new(
                     PathBuf::from(&output_dir),
                     split_points,
                 );
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
+                let generated_files: Vec<String> = (1..=num_parts)
+                    .map(|idx| {
+                        PathBuf::from(&output_dir)
+                            .join(format!("split_{}.pdf", idx))
+                            .to_string_lossy()
+                            .to_string()
+                    })
+                    .collect();
+
                 Ok(OperationResult {
-                    data: None,
+                    data: Some(serde_json::json!({
+                        "files": generated_files
+                    })),
                     success: true,
 
                     message: "PDF split successfully.".to_string(),

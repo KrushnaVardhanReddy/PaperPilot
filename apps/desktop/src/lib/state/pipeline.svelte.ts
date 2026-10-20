@@ -1,6 +1,6 @@
 // Type definitions
 export type OperationId =
-  | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_merge'
+  | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_crop' | 'pdf_merge'
   | 'pdf_split' | 'pdf_extract_pages' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
   | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign';
@@ -99,8 +99,19 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     label: 'Compress',
     icon: '🗜️',
     description: 'Reduce PDF file size',
-    defaultParams: { input: '__input__', output: '__output__' },
-    paramSchema: []
+    defaultParams: { input: '__input__', output: '__output__', level: 'medium' },
+    paramSchema: [
+      { key: 'level', label: 'Compression Level', type: 'select', options: ['low', 'medium', 'high', 'extreme'] }
+    ]
+  },
+  pdf_crop: {
+    label: 'Crop Pages',
+    icon: '📐',
+    description: 'Crop page boundaries (left, bottom, right, top in pt)',
+    defaultParams: { input: '__input__', output: '__output__', box: '50,50,550,750' },
+    paramSchema: [
+      { key: 'box', label: 'Crop Box (left,bottom,right,top)', type: 'text', placeholder: 'e.g. 50,50,550,750' }
+    ]
   },
   pdf_rotate: {
     label: 'Rotate Pages',
@@ -205,8 +216,10 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     label: 'OCR',
     icon: '🔍',
     description: 'Make a scanned PDF text-searchable',
-    defaultParams: { input: '__input__', output: '__output__' },
-    paramSchema: []
+    defaultParams: { input: '__input__', output: '__output__', language: 'eng' },
+    paramSchema: [
+      { key: 'language', label: 'Language', type: 'select', options: ['eng', 'deu', 'fra', 'spa', 'ita', 'chi_sim'] }
+    ]
   },
   pdf_sign: {
     label: 'Sign',

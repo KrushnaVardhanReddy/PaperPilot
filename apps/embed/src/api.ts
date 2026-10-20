@@ -143,7 +143,54 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     } else if (step.tool === 'merge') {
       // In pipeline, merge requires secondary file inputs, which is out of scope
       // for single-file sequential pipeline unless step.files is provided.
-    } else if (step.tool === 'crop') {
+    } else if (step.tool === 'metadata' || step.tool === 'pdf_metadata') {
+        if (step.title) doc.setTitle(step.title);
+        if (step.author) doc.setAuthor(step.author);
+        if (step.subject) doc.setSubject(step.subject);
+        if (step.keywords) doc.setKeywords(Array.isArray(step.keywords) ? step.keywords : [step.keywords]);
+        if (step.creator) doc.setCreator(step.creator);
+        if (step.producer) doc.setProducer(step.producer);
+    } else if (step.tool === 'header_footer' || step.tool === 'pdf_header_footer') {
+        const font = await doc.embedFont(StandardFonts.Helvetica);
+        const pages = doc.getPages();
+        for (const page of pages) {
+            const { width, height } = page.getSize();
+            if (step.header) {
+                page.drawText(String(step.header), {
+                    x: width / 2 - (String(step.header).length * 3),
+                    y: height - 30,
+                    size: 10,
+                    font,
+                    color: rgb(0.3, 0.3, 0.3)
+                });
+            }
+            if (step.footer) {
+                page.drawText(String(step.footer), {
+                    x: width / 2 - (String(step.footer).length * 3),
+                    y: 20,
+                    size: 10,
+                    font,
+                    color: rgb(0.3, 0.3, 0.3)
+                });
+            }
+        }
+    } else if (step.tool === 'bates' || step.tool === 'pdf_bates') {
+        const font = await doc.embedFont(StandardFonts.HelveticaBold);
+        const pages = doc.getPages();
+        const prefix = step.prefix ?? 'DOC-';
+        const start = Number(step.start ?? 1);
+        pages.forEach((page: any, idx: number) => {
+            const { width } = page.getSize();
+            const batesNum = `${prefix}${String(start + idx).padStart(6, '0')}`;
+            page.drawText(batesNum, {
+                x: width - 120,
+                y: 20,
+                size: 9,
+                font,
+                color: rgb(0.2, 0.2, 0.2)
+            });
+        });
+    } else if (step.tool === 'crop' || step.tool === 'pdf_crop') {
         // Simple margin crop
         const pages = doc.getPages();
         const margin = step.margin || 10;
