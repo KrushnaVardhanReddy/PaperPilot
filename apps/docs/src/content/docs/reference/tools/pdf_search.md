@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Searches for text within a PDF and returns exact page numbers and spatial bounding boxes.**  
+Instead of just telling you if a word is present, it returns coordinates `[x, y, width, height]` for each occurrence, allowing applications to highlight matches on screen or feed target locations into redaction workflows.
+
 ### CLI
 ```bash
 paperpilot search --input tests/e2e_fixtures/real/single_page.pdf --query test --json

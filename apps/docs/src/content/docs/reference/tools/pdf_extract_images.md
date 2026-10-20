@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Pulls out all photos, graphics, and figures embedded inside a PDF file and saves them to a folder.**  
+Extracts embedded image streams without lossy re-compression directly to `.png` or `.jpg` image files, making it easy to recover high-res graphics and photos from documents.
+
 ### CLI
 ```bash
 paperpilot extract-images --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/images --json

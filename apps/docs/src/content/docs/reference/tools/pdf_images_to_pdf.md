@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Combines one or more image files (PNG, JPG, WebP) into a single PDF document.**  
+Each image is placed onto its own page with original image dimensions preserved at standard print resolution (72 DPI baseline). Ideal for photo albums, scanned receipts, or creating a PDF presentation from graphic slides.
+
 ### CLI
 ```bash
 paperpilot images-to-pdf --images tests/e2e_fixtures/real/test.png --output tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf --json
