@@ -302,6 +302,7 @@ impl WasmPdfEngine {
             {"id": "ocr", "name": "Neural OCR", "status": "preview"},
             {"id": "json_to_pdf", "name": "JSON to PDF", "status": "preview"},
             {"id": "pdf_to_docx", "name": "PDF to DOCX", "status": "preview"}
-        ]).to_string()
+        ])
+        .to_string()
     }
 }

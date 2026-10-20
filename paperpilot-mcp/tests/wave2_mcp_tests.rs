@@ -43,7 +43,11 @@ fn test_wave2_tools_mcp_execution() {
     println!("✓ pdf_search output: {}", search_res["message"]);
 
     // 2. pdf_remove_blank
-    let no_blank_out = dir.path().join("no_blank.pdf").to_string_lossy().to_string();
+    let no_blank_out = dir
+        .path()
+        .join("no_blank.pdf")
+        .to_string_lossy()
+        .to_string();
     let blank_res = call_tool(
         "pdf_remove_blank",
         json!({
@@ -52,14 +56,28 @@ fn test_wave2_tools_mcp_execution() {
             "sensitivity": 95
         }),
     );
-    assert_eq!(blank_res["success"], true, "pdf_remove_blank should succeed");
-    assert!(fs::metadata(&no_blank_out).is_ok(), "no_blank output exists");
+    assert_eq!(
+        blank_res["success"], true,
+        "pdf_remove_blank should succeed"
+    );
+    assert!(
+        fs::metadata(&no_blank_out).is_ok(),
+        "no_blank output exists"
+    );
     let no_blank_meta = fs::metadata(&no_blank_out).unwrap();
     assert!(no_blank_meta.len() > 0);
-    println!("✓ pdf_remove_blank output: {} ({} bytes)", blank_res["message"], no_blank_meta.len());
+    println!(
+        "✓ pdf_remove_blank output: {} ({} bytes)",
+        blank_res["message"],
+        no_blank_meta.len()
+    );
 
     // 3. pdf_page_numbers
-    let numbered_out = dir.path().join("numbered.pdf").to_string_lossy().to_string();
+    let numbered_out = dir
+        .path()
+        .join("numbered.pdf")
+        .to_string_lossy()
+        .to_string();
     let num_res = call_tool(
         "pdf_page_numbers",
         json!({
@@ -70,10 +88,17 @@ fn test_wave2_tools_mcp_execution() {
         }),
     );
     assert_eq!(num_res["success"], true, "pdf_page_numbers should succeed");
-    assert!(fs::metadata(&numbered_out).is_ok(), "numbered output exists");
+    assert!(
+        fs::metadata(&numbered_out).is_ok(),
+        "numbered output exists"
+    );
     let num_meta = fs::metadata(&numbered_out).unwrap();
     assert!(num_meta.len() > 0);
-    println!("✓ pdf_page_numbers output: {} ({} bytes)", num_res["message"], num_meta.len());
+    println!(
+        "✓ pdf_page_numbers output: {} ({} bytes)",
+        num_res["message"],
+        num_meta.len()
+    );
 
     // 4. pdf_burst
     let burst_dir = dir.path().join("burst_out");
@@ -87,8 +112,15 @@ fn test_wave2_tools_mcp_execution() {
     );
     assert_eq!(burst_res["success"], true, "pdf_burst should succeed");
     let burst_files: Vec<_> = fs::read_dir(&burst_dir).unwrap().collect();
-    assert!(!burst_files.is_empty(), "burst_out directory must contain split pages");
-    println!("✓ pdf_burst output: {} ({} individual pages created)", burst_res["message"], burst_files.len());
+    assert!(
+        !burst_files.is_empty(),
+        "burst_out directory must contain split pages"
+    );
+    println!(
+        "✓ pdf_burst output: {} ({} individual pages created)",
+        burst_res["message"],
+        burst_files.len()
+    );
 
     // 5. pdf_extract_images
     let ext_dir = dir.path().join("ext_images");
@@ -100,7 +132,10 @@ fn test_wave2_tools_mcp_execution() {
             "output_dir": ext_dir.to_string_lossy().to_string()
         }),
     );
-    assert_eq!(ext_res["success"], true, "pdf_extract_images should succeed");
+    assert_eq!(
+        ext_res["success"], true,
+        "pdf_extract_images should succeed"
+    );
     println!("✓ pdf_extract_images output: {}", ext_res["message"]);
 
     // 6. pdf_images_to_pdf
@@ -117,8 +152,15 @@ fn test_wave2_tools_mcp_execution() {
         }),
     );
     assert_eq!(img_res["success"], true, "pdf_images_to_pdf should succeed");
-    assert!(fs::metadata(&img_pdf_out).is_ok(), "images.pdf output exists");
+    assert!(
+        fs::metadata(&img_pdf_out).is_ok(),
+        "images.pdf output exists"
+    );
     let img_pdf_meta = fs::metadata(&img_pdf_out).unwrap();
     assert!(img_pdf_meta.len() > 0);
-    println!("✓ pdf_images_to_pdf output: {} ({} bytes)", img_res["message"], img_pdf_meta.len());
+    println!(
+        "✓ pdf_images_to_pdf output: {} ({} bytes)",
+        img_res["message"],
+        img_pdf_meta.len()
+    );
 }
