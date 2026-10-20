@@ -12,14 +12,19 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **5.9.69B** | [Session 11757279139714605661](https://jules.google.com/session/11757279139714605661) | **Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs** (`[Spec 081]`) | 🔄 In Flight — `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, JSON export/import buttons, and Playwright E2E verification. (Resubmitted with explicit onMount initStorage & Playwright nav instructions). |
 | **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 
 ---
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
 
-1. **Task 5.9.70 (Wave 2 Penta-Interface E2E Testing & Playwright Verification)**:
+1. **Task 5.9.69B (Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs)**:
+   - Merged (PR #222, commit `adf293c`, Jules Session 16322387546350290979).
+   - Implemented `FlowSelector.svelte` toolbar with standard presets and saved user flows.
+   - Implemented `SaveFlowModal.svelte` with step sequence badges and local persistence.
+   - Updated `Widget.svelte` in `apps/embed` to map preset IDs properly.
+   - Added automated Playwright test `apps/desktop/tests/e2e_pipeline_flow_management.spec.ts` passing 100%.
+2. **Task 5.9.70 (Wave 2 Penta-Interface E2E Testing & Playwright Verification)**:
    - Merged (PR #221, commit `b7ff7c3`, Jules Session 4388001643990007173).
    - Validated unmocked real assertions across all 5 interfaces (CLI, MCP, REST Gateway, WASM Playwright, Desktop) for 6 Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`).
    - Verified 100% test pass rate in `paperpilot-mcp/tests/wave2_mcp_tests.rs`, CLI audit suite, and Gateway tests.
