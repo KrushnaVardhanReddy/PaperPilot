@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Appends visual annotations like text highlights, underlines, and sticky notes onto PDF pages.**  
+Injects standard PDF annotation elements (`/Highlight`, `/Underline`, `/Text`) at exact spatial coordinates.
+
 ### CLI
 ```bash
 paperpilot annotate --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/annotate_cli_Simple.pdf --data [{\"id\":\"1\",\"type\":\"highlight\",\"page\":1,\"x\":50.0,\"y\":50.0,\"w\":50.0,\"h\":50.0,\"color\":\"#ffff00\",\"content\":\"Test\"}] --json

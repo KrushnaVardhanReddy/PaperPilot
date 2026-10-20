@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts PDF pages into an editable Microsoft PowerPoint presentation (.pptx).**  
+Maps each page into a presentation slide with text boxes and background graphics.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format pptx --output tests/e2e_fixtures/out/penta_e2e/out.pptx --json

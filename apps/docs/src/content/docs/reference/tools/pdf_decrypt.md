@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Removes password protection and usage restrictions from an unlocked PDF.**  
+Decrypts the document using the known password and outputs an unrestricted PDF that can be opened, printed, and edited freely.
+
 ### CLI
 ```bash
 paperpilot decrypt --input tests/e2e_fixtures/real/encrypted.pdf --output tests/e2e_fixtures/out/penta_e2e_security/decrypt_cli_Simple.pdf --password testpass --json

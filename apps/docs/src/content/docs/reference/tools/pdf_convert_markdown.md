@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Extracts PDF document structure into clean, LLM-ready Markdown.**  
+Preserves section titles, bullet points, code blocks, and tables while discarding complex layout noise for AI pipelines.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/test.md --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_md.pdf --json

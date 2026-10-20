@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Recognizes text in scanned PDFs and camera photos using local neural OCR.**  
+Detects text in image-only documents and embeds an invisible searchable text layer behind the scan without sending data to the cloud.
+
 ### CLI
 ```bash
 paperpilot ocr --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/ocr.pdf --json

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Rearranges the sequence of pages in a PDF according to a custom order.**  
+Re-indexes the document page tree (e.g. `[3, 1, 2]`) to fix inverted scans or reorder presentation slides.
+
 ### CLI
 ```bash
 paperpilot reorder --input tests/e2e_fixtures/real/multi_page.pdf --order 2,1,3,4,5 --output tests/e2e_fixtures/out/penta_e2e/reordered.pdf --json

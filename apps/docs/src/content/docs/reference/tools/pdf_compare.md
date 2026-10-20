@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Compares two PDF documents and highlights visual and textual differences.**  
+Performs side-by-side diffing, identifying added, removed, or shifted text and graphics between document revisions.
+
 ### CLI
 ```bash
 paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e2e_fixtures/real/merge_b.pdf --json

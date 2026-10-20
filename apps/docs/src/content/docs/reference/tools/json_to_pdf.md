@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Generates a publication-quality PDF from structured JSON data.**  
+Takes layout, styled text blocks, and embedded base64 images from JSON and compiles them directly into a rendered PDF.
+
 ### CLI
 ```bash
 paperpilot process --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/out.pdf --json

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Optimizes a PDF for Fast Web View (byte-serving linearization).**  
+Restructures internal cross-reference tables and streams so web browsers can instantly render Page 1 before the entire file downloads.
+
 ### CLI
 ```bash
 paperpilot linearize --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/linearized.pdf --json

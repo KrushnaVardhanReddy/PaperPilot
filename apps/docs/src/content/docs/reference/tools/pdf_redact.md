@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Permanently blackouts and scrubs sensitive text or coordinates from a PDF.**  
+Unlike simple black highlight rectangles, this completely deletes the underlying text operators and vector data so redacted information cannot be recovered.
+
 ### CLI
 ```bash
 paperpilot redact --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/redact_cli_Simple.pdf --pages 1 --rect 0,0,100,100 --json

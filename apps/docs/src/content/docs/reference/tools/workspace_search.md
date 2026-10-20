@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Searches across all documents in a local folder for matching keywords.**  
+Performs multi-file document discovery, returning matching files, page numbers, and preview excerpts.
+
 ### CLI
 ```bash
 paperpilot search --query 'test' --dir tests/e2e_fixtures/real

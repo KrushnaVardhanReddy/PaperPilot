@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Applies consecutive legal Bates numbering stamps across documents.**  
+Stamps formatted identification numbers (e.g. `DOC-000001`, `EXHIBIT-A-00042`) onto page margins for legal discovery and court filings.
+
 ### CLI
 ```bash
 paperpilot bates --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/bates_cli_Simple.pdf --prefix BATES --start 1 --json

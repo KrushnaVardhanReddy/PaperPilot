@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Reads and exports all form field names, types, and values from a PDF into JSON.**  
+Dumps all filled AcroForm data (text inputs, checkboxes, dropdowns) for automated data ingestion.
+
 ### CLI
 ```bash
 paperpilot form read tests/e2e_fixtures/real/missing.pdf --json

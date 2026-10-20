@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Runs deep diagnostic checks on PDF structure and compliance.**  
+Validates cross-reference tables, font descriptors, catalog integrity, and identifies syntax errors or corruption warnings.
+
 ### CLI
 ```bash
 paperpilot validate --input tests/e2e_fixtures/real/single_page.pdf --json

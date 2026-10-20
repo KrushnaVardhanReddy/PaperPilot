@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Programmatically adds new interactive AcroForm form fields into a PDF.**  
+Inserts text inputs, checkboxes, or signature fields at specified coordinates so users can fill them out in any PDF reader.
+
 ### CLI
 ```bash
 paperpilot form add-field tests/e2e_fixtures/real/single_page.pdf --name signature --type text --rect 50,50,150,30 --output tests/e2e_fixtures/out/penta_e2e_security/create_form_field_cli_Simple.pdf --json

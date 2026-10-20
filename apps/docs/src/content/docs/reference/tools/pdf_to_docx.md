@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts PDF documents into editable Microsoft Word (.docx) files.**  
+Reconstructs text layout, headings, side-by-side tables, and embeds images into a fully editable Word document.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format docx --output tests/e2e_fixtures/out/penta_e2e/out.docx --json

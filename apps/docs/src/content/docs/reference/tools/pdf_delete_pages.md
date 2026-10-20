@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Removes specific pages from a document (e.g., delete pages 2, 5, and 8).**  
+Prunes unwanted pages from the PDF page tree and rewrites the document catalog cleanly.
+
 ### CLI
 ```bash
 paperpilot delete --input tests/e2e_fixtures/real/multi_page.pdf --pages 2,4 --output tests/e2e_fixtures/out/penta_e2e/deleted.pdf --json

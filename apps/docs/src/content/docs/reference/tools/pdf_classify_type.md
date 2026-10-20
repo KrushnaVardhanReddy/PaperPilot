@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Classifies a PDF document into standard taxonomy types using structural analysis.**  
+Automatically identifies whether a document is an Invoice, Contract, Scientific Paper, Presentation, or Form based on layout and typography.
+
 ### CLI
 ```bash
 paperpilot classify --input tests/e2e_fixtures/real/single_page.pdf --json

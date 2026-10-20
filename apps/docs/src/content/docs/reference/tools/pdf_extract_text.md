@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Extracts all readable text from a PDF with layout and reading-order awareness.**  
+Reads text character streams and reconstructs logical paragraphs and columns into a clean `.txt` output.
+
 ### CLI
 ```bash
 paperpilot extract-text --input tests/e2e_fixtures/real/single_page.pdf --json

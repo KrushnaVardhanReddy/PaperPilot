@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts a PDF into the ISO 19005 standard archival format (PDF/A).**  
+Embeds all fonts, strips external device dependencies and dynamic actions to guarantee the document can be read decades into the future.
+
 ### CLI
 ```bash
 paperpilot pdf-a --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf --json

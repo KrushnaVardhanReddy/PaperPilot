@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Splits a PDF into smaller documents based on page numbers or split points.**  
+Cuts a document into multiple files (e.g. split at page 3 gives pages 1-2 in one file, pages 3+ in another).
+
 ### CLI
 ```bash
 paperpilot split --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --output tests/e2e_fixtures/out/penta_e2e/pdf_split_simple --json

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Fills interactive PDF AcroForm fields automatically from a JSON key-value map.**  
+Populates text boxes, radio buttons, and checkboxes programmatically without opening a manual PDF editor.
+
 ### CLI
 ```bash
 paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_data.json --output tests/e2e_fixtures/out/penta_e2e_security/fill_form_cli_Simple.pdf --json

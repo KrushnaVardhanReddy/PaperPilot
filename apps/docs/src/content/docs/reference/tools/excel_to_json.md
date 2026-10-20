@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts Excel spreadsheets into structured JSON arrays.**  
+Parses rows and columns into key-value JSON objects ready for AI agents, APIs, or database imports.
+
 ### CLI
 ```bash
 paperpilot office excel-to-json --input tests/e2e_fixtures/real/test.xlsx

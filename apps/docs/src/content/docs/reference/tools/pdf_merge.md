@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Combines multiple separate PDF documents into a single continuous file.**  
+Appends pages in order, unifies document outlines/bookmarks, and consolidates shared font resources into one master document.
+
 ### CLI
 ```bash
 paperpilot merge --input tests/e2e_fixtures/real/merge_a.pdf tests/e2e_fixtures/real/merge_b.pdf --output tests/e2e_fixtures/out/penta_e2e/merge_cli_simple.pdf --json

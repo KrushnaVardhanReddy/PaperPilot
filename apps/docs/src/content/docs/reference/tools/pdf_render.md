@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Renders PDF pages into high-resolution raster images (PNG, JPEG).**  
+Rasterizes vector paths, text glyphs, and embedded graphics at target DPI for web previews, thumbnail generation, or image processing.
+
 ### CLI
 ```bash
 paperpilot render --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/rendered.png --json

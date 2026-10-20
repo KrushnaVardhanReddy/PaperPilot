@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Trims the margins or crops pages to a custom rectangular bounding box.**  
+Adjusts the PDF `/CropBox` and `/MediaBox` to remove printer crop marks, excessive white borders, or isolate a specific page region.
+
 ### CLI
 ```bash
 paperpilot crop --input tests/e2e_fixtures/real/single_page.pdf --rect 10,10,200,200 --output tests/e2e_fixtures/out/penta_e2e/cropped.pdf --json

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Splits a PDF into semantically meaningful text chunks tailored for AI RAG embeddings.**  
+Divides documents by headings, paragraphs, and token limits with overlap, returning structured JSON chunks for vector search.
+
 ### CLI
 ```bash
 paperpilot rag-chunks --input tests/e2e_fixtures/real/single_page.pdf

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Extracts specific pages or page ranges (e.g., pages 1-3, 5) into a new PDF.**  
+Pulls the selected pages into a standalone document without affecting the original file.
+
 ### CLI
 ```bash
 paperpilot extract --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --output tests/e2e_fixtures/out/penta_e2e/extracted.pdf --json

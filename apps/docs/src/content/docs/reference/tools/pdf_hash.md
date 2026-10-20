@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Calculates cryptographic checksums (MD5, SHA-256) of a PDF document.**  
+Produces a unique digital fingerprint to verify document integrity, detect tampering, and validate chain of custody.
+
 ### CLI
 ```bash
 paperpilot hash --input tests/e2e_fixtures/real/missing.pdf --json

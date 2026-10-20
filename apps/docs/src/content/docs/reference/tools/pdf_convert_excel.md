@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Extracts tables and tabular columns from PDFs into editable Excel spreadsheets (.xlsx).**  
+Detects table gridlines and cell boundaries to reconstruct structured rows and columns in an Excel workbook.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/test.csv --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_csv.pdf --json

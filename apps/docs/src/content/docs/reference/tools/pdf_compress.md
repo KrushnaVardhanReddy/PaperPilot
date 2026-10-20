@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Reduces PDF file size through intelligent image resampling and stream compression.**  
+Re-encodes high-resolution images, applies Flate compression to content streams, and strips redundant orphan objects to make PDFs email and web friendly.
+
 ### CLI
 ```bash
 paperpilot compress --input tests/e2e_fixtures/real/single_page.pdf --quality medium --output tests/e2e_fixtures/out/penta_e2e/compressed.pdf --json

@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts PDF documents into responsive, semantic HTML5 web pages.**  
+Translates layout, headings, paragraphs, and embedded graphics into clean HTML and CSS suitable for browser viewing.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/test.html --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_html.pdf --json

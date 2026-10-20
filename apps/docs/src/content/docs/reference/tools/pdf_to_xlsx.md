@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Extracts tabular data and financial statements from PDF into an Excel workbook (.xlsx).**  
+Detects table structures and cell values to generate clean, editable spreadsheets.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format xlsx --output tests/e2e_fixtures/out/penta_e2e/out.xlsx --json

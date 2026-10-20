@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Upgrades legacy binary Office files (.doc, .xls, .ppt) to modern OpenXML formats (.docx, .xlsx, .pptx).**  
+Eliminates obsolete binary structures and modernizes them into standard XML-based Office packages.
+
 ### CLI
 ```bash
 paperpilot office modernize --input tests/e2e_fixtures/real/test.xls --output tests/e2e_fixtures/out/penta_e2e/out.xlsx

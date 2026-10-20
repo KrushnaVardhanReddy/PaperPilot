@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Dumps all plain text from Microsoft Office files (.docx, .xlsx, .pptx).**  
+Bypasses formatting and extracts pure readable text strings for fast indexing, search, or LLM ingestion.
+
 ### CLI
 ```bash
 paperpilot office extract-text --input tests/e2e_fixtures/real/test.xlsx --output tests/e2e_fixtures/out/penta_e2e/out.txt

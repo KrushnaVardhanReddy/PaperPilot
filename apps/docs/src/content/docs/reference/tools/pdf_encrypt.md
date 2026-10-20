@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Secures a PDF document with standard AES-256 password encryption.**  
+Sets user opening passwords and owner permission passwords to restrict printing, copying text, or editing.
+
 ### CLI
 ```bash
 paperpilot encrypt --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e_security/encrypt_cli_Simple.pdf --user-password testpass --json

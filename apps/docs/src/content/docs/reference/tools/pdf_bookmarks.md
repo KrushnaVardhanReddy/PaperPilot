@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Reads, extracts, or updates the document outline and Table of Contents bookmarks.**  
+Allows inspection of internal document navigation trees and page target destinations.
+
 ### CLI
 ```bash
 paperpilot bookmarks --input tests/e2e_fixtures/real/multi_page.pdf --json

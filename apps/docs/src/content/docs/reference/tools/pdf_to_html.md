@@ -7,6 +7,10 @@ sidebar:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
+### What it does
+**Converts a PDF into styled, standalone HTML5.**  
+Extracts document layout, fonts, and inline media into responsive web-friendly markup without requiring browser plugins.
+
 ### CLI
 ```bash
 paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format html --output tests/e2e_fixtures/out/penta_e2e/doc.html
