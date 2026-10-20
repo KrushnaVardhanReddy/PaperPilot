@@ -1,0 +1,15 @@
+Implement the client-side automation pipeline in `apps/embed` according to Spec 078 (`specs/078-embeddable-js-automation-pipeline/spec.md`).
+
+Key requirements:
+1. In `apps/embed/src/api.ts`:
+   - Export `runPipeline(options: PipelineOptions): Promise<PipelineResult>`.
+   - Support sequential execution across steps (`rotate`, `compress`, `watermark`, `extract_pages`, `delete_pages`, `reorder_pages`, `crop`, `flatten`, `merge`).
+   - Emit progress callback `onProgress(stepIndex, step, percent)`.
+2. In `apps/embed/src/embed.ts`:
+   - Expose `window.PaperPilot.runPipeline`.
+   - Parse `data-pipeline` JSON attribute in `autoInit()` and pass to `mount(el, { pipeline, ... })`.
+3. In `apps/embed/src/Widget.svelte`:
+   - Accept `pipeline?: string | PipelineStep[]` prop.
+   - When `pipeline` is present, render the visual pipeline stepper view with live progress indicators.
+   - Dispatch `paperpilot:pipeline-complete` event with output bytes and metadata.
+4. Add automated test in `apps/embed/tests/` and verify `npm run build` passes cleanly.
