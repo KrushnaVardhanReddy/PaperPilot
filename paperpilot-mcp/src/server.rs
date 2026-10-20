@@ -3046,22 +3046,17 @@ impl PaperPilotMcpServer {
             }
             let mut pages = Vec::new();
             for part in pages_str.split(',') {
-                if part.contains('-') {
-                    let bounds: Vec<&str> = part.split('-').collect();
-                    if bounds.len() == 2 {
-                        let start = bounds[0]
-                            .trim()
-                            .parse::<u32>()
-                            .map_err(|_| ErrorData::invalid_params("Invalid page range", None))?;
-                        let end = bounds[1]
-                            .trim()
-                            .parse::<u32>()
-                            .map_err(|_| ErrorData::invalid_params("Invalid page range", None))?;
-                        for p in start..=end {
-                            pages.push(p);
-                        }
-                    } else {
-                        return Err(ErrorData::invalid_params("Invalid page range format", None));
+                if let Some((start_str, end_str)) = part.split_once('-') {
+                    let start = start_str
+                        .trim()
+                        .parse::<u32>()
+                        .map_err(|_| ErrorData::invalid_params("Invalid page range", None))?;
+                    let end = end_str
+                        .trim()
+                        .parse::<u32>()
+                        .map_err(|_| ErrorData::invalid_params("Invalid page range", None))?;
+                    for p in start..=end {
+                        pages.push(p);
                     }
                 } else {
                     let p = part
