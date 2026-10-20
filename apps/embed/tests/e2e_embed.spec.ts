@@ -59,8 +59,8 @@ test.describe('PaperPilot Embedded Widget', () => {
         return Array.from(shadowRoot.querySelectorAll('.pp-tool-card')).map(node => node.textContent?.trim());
     });
 
-    expect(toolNames).toContain('Merge PDF');
-    expect(toolNames).toContain('Compress PDF');
+    expect(toolNames).toContain('Merge PDFs');
+    expect(toolNames).toContain('Optimize/Save');
   });
 
   test('3. Badge Visibility (on by default)', async ({ page }) => {
