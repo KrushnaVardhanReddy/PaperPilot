@@ -141,57 +141,93 @@ impl ExcelToCsvOperation {
             )))
         })?;
 
-        let target_sheet = match sheet_name {
-            Some(name) => name.to_string(),
-            None => {
-                let sheet_names = workbook.sheet_names().to_vec();
-                if sheet_names.is_empty() {
-                    return Err(PdfError::IoError(std::io::Error::other(
-                        "No sheets found in workbook",
-                    )));
-                }
-                sheet_names[0].clone()
-            }
-        };
+        let sheet_names = workbook.sheet_names().to_vec();
+        if sheet_names.is_empty() {
+            return Err(PdfError::IoError(std::io::Error::other(
+                "No sheets found in workbook",
+            )));
+        }
 
-        if let Ok(range) = workbook.worksheet_range(&target_sheet) {
-            let mut wtr = csv::Writer::from_path(output_path).map_err(|e| {
-                PdfError::IoError(std::io::Error::other(format!(
-                    "Failed to create csv writer: {}",
-                    e
-                )))
-            })?;
-
-            for row in range.rows() {
-                let mut record = Vec::new();
-                for cell in row.iter() {
-                    let s = match cell {
-                        Data::String(s) => s.to_string(),
-                        Data::Float(f) => f.to_string(),
-                        Data::Int(i) => i.to_string(),
-                        Data::Bool(b) => b.to_string(),
-                        Data::DateTime(d) => d.as_f64().to_string(),
-                        Data::Error(e) => format!("Error({})", e),
-                        Data::Empty => "".to_string(),
-                        _ => "".to_string(),
-                    };
-                    record.push(s);
-                }
-                wtr.write_record(&record).map_err(|e| {
+        // Helper to export a single sheet to a destination path
+        let export_sheet = |wb: &mut calamine::Sheets<std::io::BufReader<std::fs::File>>,
+                            sheet: &str,
+                            dest: &Path|
+         -> OperationResult<()> {
+            if let Ok(range) = wb.worksheet_range(sheet) {
+                let mut wtr = csv::Writer::from_path(dest).map_err(|e| {
                     PdfError::IoError(std::io::Error::other(format!(
-                        "Failed to write csv record: {}",
+                        "Failed to create csv writer: {}",
                         e
                     )))
                 })?;
+
+                for row in range.rows() {
+                    let mut record = Vec::new();
+                    for cell in row.iter() {
+                        let s = match cell {
+                            Data::String(s) => s.to_string(),
+                            Data::Float(f) => f.to_string(),
+                            Data::Int(i) => i.to_string(),
+                            Data::Bool(b) => b.to_string(),
+                            Data::DateTime(d) => d.as_f64().to_string(),
+                            Data::Error(e) => format!("Error({})", e),
+                            Data::Empty => "".to_string(),
+                            _ => "".to_string(),
+                        };
+                        record.push(s);
+                    }
+                    wtr.write_record(&record).map_err(|e| {
+                        PdfError::IoError(std::io::Error::other(format!(
+                            "Failed to write csv record: {}",
+                            e
+                        )))
+                    })?;
+                }
+                wtr.flush().map_err(|e| {
+                    PdfError::IoError(std::io::Error::other(format!("Failed to flush csv: {}", e)))
+                })?;
+                Ok(())
+            } else {
+                Err(PdfError::IoError(std::io::Error::other(format!(
+                    "Failed to read sheet: {}",
+                    sheet
+                ))))
             }
-            wtr.flush().map_err(|e| {
-                PdfError::IoError(std::io::Error::other(format!("Failed to flush csv: {}", e)))
-            })?;
+        };
+
+        if let Some(target_sheet) = sheet_name {
+            // Specific sheet requested
+            export_sheet(&mut workbook, target_sheet, output_path)?;
+        } else if sheet_names.len() == 1 {
+            // Single sheet: write directly to output_path
+            export_sheet(&mut workbook, &sheet_names[0], output_path)?;
         } else {
-            return Err(PdfError::IoError(std::io::Error::other(format!(
-                "Failed to read sheet: {}",
-                target_sheet
-            ))));
+            // Multiple sheets: write output_path for first sheet, plus filename_<sheet>.csv for each sheet
+            let parent_dir = output_path.parent().unwrap_or_else(|| Path::new("."));
+            let stem = output_path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy();
+            let ext = output_path
+                .extension()
+                .map(|e| e.to_string_lossy())
+                .unwrap_or_else(|| "csv".into());
+
+            for (idx, s_name) in sheet_names.iter().enumerate() {
+                // Sanitize sheet name for filenames (replace spaces and special chars with underscores)
+                let safe_sheet_name: String = s_name
+                    .chars()
+                    .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+                    .collect();
+
+                let sheet_dest = parent_dir.join(format!("{}_{}.{}", stem, safe_sheet_name, ext));
+                export_sheet(&mut workbook, s_name, &sheet_dest)?;
+
+                // Also populate primary output_path with the first sheet for caller compatibility
+                if idx == 0 && sheet_dest != output_path {
+                    let _ = std::fs::copy(&sheet_dest, output_path);
+                }
+            }
         }
 
         Ok(())
@@ -287,6 +323,31 @@ mod tests {
         let content = std::fs::read_to_string(out_file.path()).unwrap();
         assert!(content.contains("Header1,Header2"));
         assert!(content.contains("Value1,42"));
+    }
+
+    #[test]
+    fn test_excel_to_csv_multi_sheet() {
+        let file = create_test_excel(); // has Sheet1 and Sheet2
+        let temp_dir = tempfile::tempdir().unwrap();
+        let out_path = temp_dir.path().join("report.csv");
+        let res = ExcelToCsvOperation::execute(file.path(), &out_path, None);
+        assert!(res.is_ok());
+
+        // Verify primary report.csv has Sheet1
+        let content_primary = std::fs::read_to_string(&out_path).unwrap();
+        assert!(content_primary.contains("Header1,Header2"));
+
+        // Verify report_Sheet1.csv exists
+        let sheet1_file = temp_dir.path().join("report_Sheet1.csv");
+        assert!(sheet1_file.exists());
+        let content_sheet1 = std::fs::read_to_string(sheet1_file).unwrap();
+        assert!(content_sheet1.contains("Header1,Header2"));
+
+        // Verify report_Sheet2.csv exists with Sheet2 data
+        let sheet2_file = temp_dir.path().join("report_Sheet2.csv");
+        assert!(sheet2_file.exists());
+        let content_sheet2 = std::fs::read_to_string(sheet2_file).unwrap();
+        assert!(content_sheet2.contains("OnlyOne"));
     }
 
     #[test]
