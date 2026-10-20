@@ -1,7 +1,8 @@
 <script lang="ts">
   import { runPipeline, type PipelineStep } from './api';
+  import { DEFAULT_PRESETS } from '../../desktop/src/lib/state/pipeline.svelte';
   interface Props {
-    pipeline?: string | PipelineStep[];
+    pipeline?: string | PipelineStep[] | null;
     tools?: string;
     hideBadge?: boolean;
     brandColor?: string;
@@ -10,9 +11,37 @@
   }
 
   let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null }: Props = $props();
-  let parsedPipeline = $derived(typeof pipeline === 'string' ? JSON.parse(pipeline) : (pipeline || null));
 
-  let brandColorVar = $derived(brandColor);
+  $effect(() => {
+    // Inject brand color into CSS var
+    if (brandColor && typeof document !== 'undefined') {
+      const el = document.querySelector('.pp-widget') as HTMLElement;
+      if (el) {
+        el.style.setProperty('--pp-brand-color', brandColor);
+      }
+    }
+  });
+
+  let parsedPipeline = $derived.by(() => {
+    if (!pipeline) return null;
+    if (typeof pipeline === 'string') {
+      const preset = DEFAULT_PRESETS.find(p => p.id === pipeline);
+      if (preset) {
+        // Map preset step format to widget PipelineStep format
+        return preset.steps.map(s => ({
+          tool: s.operationId.replace('pdf_', ''),
+          ...s.params
+        }));
+      }
+      try {
+        return JSON.parse(pipeline);
+      } catch (e) {
+        console.error("Invalid pipeline JSON string provided to widget.", e);
+        return null;
+      }
+    }
+    return pipeline;
+  });
 
   const allTools = [
     { id: 'merge', name: 'Merge PDFs', description: 'Combine multiple PDFs into one' },

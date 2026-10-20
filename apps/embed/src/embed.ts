@@ -1,4 +1,4 @@
-import { mount, unmount, on, runPipeline, type EmbedOptions } from './api';
+import { mount, unmount, on, runPipeline } from './api';
 
 const PaperPilotAPI = {
   mount,
