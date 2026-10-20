@@ -1,0 +1,230 @@
+# Task: Phase 5.9.69C — Penta-Interface Declarative Workflow Engine & Recipe Execution
+# Base Branch: main
+# Related Spec: specs/081-pipeline-flow-management-save-export-import/spec.md
+# Checklist: specs/081-pipeline-flow-management-save-export-import/task.md
+# Priority: HIGH (Complete Penta-Interface Parity across all 6 targets: Desktop, Embed, CLI, MCP, REST Gateway, WASM / Cloudflare Edge)
+
+## Objective
+Implement declarative multi-step workflow execution natively in the Rust core (`paperpilot-core`, `paperpilot-pdf`), enabling portable `.json` recipe files and industry presets (`legal-discovery`, `clean-scan`, `redact-protect`) to be discovered, listed, and executed seamlessly across Native CLI, Agent MCP Server, HTTP REST Gateway, Browser WASM Engine, and Cloudflare Edge Worker, backed by real-assertion Penta-Interface E2E suites.
+
+---
+
+## AI Agent & User Ergonomics Mandate
+AI agents and users must have full lifecycle control over pipeline jobs across **ALL 5/6 interfaces**:
+1. **List Available Workflows & Presets**: Discover what presets and operations exist.
+2. **Inspect / Validate Workflow Recipe**: Check the step sequence and required parameters before executing.
+3. **Execute / Start Workflow with Input**: Pass input document bytes or file paths, run the entire multi-step pipeline sequentially in memory, and produce the final artifact without disk roundtrips.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+paperpilot-core/src/workflow.rs
+paperpilot-core/src/lib.rs
+paperpilot-pdf/src/operations/workflow.rs
+paperpilot-pdf/src/operations/mod.rs
+paperpilot-cli/src/cli.rs
+paperpilot-cli/src/commands/workflow.rs
+paperpilot-cli/src/commands/mod.rs
+paperpilot-mcp/src/server.rs
+paperpilot-gateway/src/handlers.rs
+paperpilot-gateway/src/server.rs
+paperpilot-wasm/src/operations.rs
+paperpilot-wasm/src/lib.rs
+apps/edge/src/index.ts
+tools/penta-interface-e2e/src/cases/workflow.rs
+tools/penta-interface-e2e/src/cases/mod.rs
+tools/penta-interface-e2e/src/main.rs
+```
+
+---
+
+## 1. Core Workflow Schema & Presets (`paperpilot-core/src/workflow.rs`)
+Define serializable structs matching the `SavedPipeline` schema from Spec 081 & `apps/desktop/src/lib/state/pipeline.svelte.ts`:
+
+```rust
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowStep {
+    pub id: String,
+    #[serde(rename = "operationId", alias = "operation_id")]
+    pub operation_id: String,
+    #[serde(default)]
+    pub label: Option<String>,
+    #[serde(default)]
+    pub icon: Option<String>,
+    #[serde(default)]
+    pub params: HashMap<String, serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SavedWorkflow {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    pub steps: Vec<WorkflowStep>,
+    #[serde(rename = "updatedAt", alias = "updated_at")]
+    pub updated_at: String,
+    #[serde(default, rename = "isPreset", alias = "is_preset")]
+    pub is_preset: bool,
+    #[serde(default, rename = "teamId", alias = "team_id")]
+    pub team_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowExecutionReport {
+    pub workflow_id: String,
+    pub workflow_name: String,
+    pub steps_total: usize,
+    pub steps_completed: usize,
+    pub output_bytes_len: usize,
+    pub duration_ms: u64,
+}
+```
+
+Implement standard presets helper functions:
+- `get_default_presets() -> Vec<SavedWorkflow>`
+- `get_preset_by_id(id: &str) -> Option<SavedWorkflow>`:
+  - `legal-discovery` / `preset-legal-discovery`: `pdf_bates` -> `pdf_watermark` -> `pdf_linearize`
+  - `clean-scan` / `preset-clean-scan`: `pdf_remove_blank` (or `pdf_rotate`) -> `pdf_page_numbers` -> `pdf_compress`
+  - `redact-protect` / `preset-redact-protect`: `pdf_redact` -> `pdf_flatten` -> `pdf_encrypt`
+
+Export `workflow` module in `paperpilot-core/src/lib.rs`.
+
+---
+
+## 2. In-Memory Sequential Workflow Pipeline (`paperpilot-pdf/src/operations/workflow.rs`)
+Implement sequential in-memory execution:
+```rust
+pub fn run_workflow(
+    input_bytes: &[u8],
+    workflow: &SavedWorkflow,
+) -> Result<(Vec<u8>, WorkflowExecutionReport), anyhow::Error>
+```
+- Each step takes the output buffer of the previous step as its input buffer.
+- Map `step.operation_id` to existing `paperpilot_pdf::operations::*` implementations (e.g. `bates`, `watermark`, `linearize`, `compress`, `encrypt`, `flatten`, `page_numbers`, `rotate`, etc.).
+- Convert parameters from `step.params` into operation options. If any parameter is missing, use sensible defaults.
+- Return the final resulting PDF byte buffer along with execution summary metadata (`WorkflowExecutionReport`).
+
+Export in `paperpilot-pdf/src/operations/mod.rs`.
+
+---
+
+## 3. Native CLI Commands (`paperpilot-cli`)
+Support full workflow lifecycle in `paperpilot-cli/src/cli.rs`:
+```rust
+#[derive(Subcommand, Debug)]
+pub enum WorkflowCommands {
+    /// List available built-in workflow presets
+    List,
+    /// Inspect or validate a workflow preset or recipe JSON file
+    Inspect {
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        recipe: Option<PathBuf>,
+    },
+    /// Run a pipeline workflow against an input PDF
+    Run {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        recipe: Option<PathBuf>,
+    },
+}
+```
+And top-level command `Commands::Workflow`:
+- If invoked directly with `--input` and `--output` (or `paperpilot workflow run`), execute the flow.
+- If invoked with `paperpilot workflow list`, output formatted table or JSON (`--json`) of all presets.
+- If invoked with `paperpilot workflow inspect`, print the steps, operations, and parameters of the recipe.
+
+Implement in `paperpilot-cli/src/commands/workflow.rs` and wire into `commands/mod.rs`.
+
+---
+
+## 4. Agent MCP Server Tools (`paperpilot-mcp/src/server.rs`)
+Provide 2 dedicated tools for AI agents:
+
+1. **`list_workflows` / `list_workflow_presets`**:
+   - Description: "List all available built-in multi-step document workflow presets (e.g. legal-discovery, clean-scan, redact-protect) with their constituent steps and parameters."
+   - Parameters: `{}` (empty schema).
+   - Returns: JSON list of available presets and descriptions.
+
+2. **`document_workflow`**:
+   - Description: "Execute a declarative multi-step PDF pipeline workflow (preset or custom JSON recipe). Allows AI agents to run compound operations such as Bates stamping, watermarking, flattening, pagination, compression, and encryption against an input PDF in a single tool call."
+   - Parameters:
+     - `input`: Path to input PDF file (required)
+     - `output`: Path to output PDF file (required)
+     - `preset`: Optional string preset name (`legal-discovery`, `clean-scan`, `redact-protect`)
+     - `recipe`: Optional JSON string or object matching `SavedWorkflow`
+   - Returns: Summary confirmation with steps completed and output file size.
+
+---
+
+## 5. REST Gateway Endpoints (`paperpilot-gateway`)
+In `paperpilot-gateway/src/handlers.rs` & `paperpilot-gateway/src/server.rs`:
+- **`GET /api/v1/workflow/presets`**:
+  - Returns `200 OK` with JSON array of default presets and their step configurations.
+- **`POST /api/v1/workflow/validate`**:
+  - Validates a recipe JSON payload or preset name without executing; returns `{ valid: true, steps_count: N }` or `{ valid: false, error: "..." }`.
+- **`POST /api/v1/workflow/run`**:
+  - Multipart upload containing `file` (PDF bytes) and either `preset` field or `recipe` field (JSON).
+  - Returns processed PDF binary stream (`application/pdf`) with custom response headers (`X-Workflow-Steps-Executed`, `X-Workflow-Duration-Ms`).
+- **`POST /api/v1/workflow/run-json`**:
+  - Accepts JSON payload:
+    ```json
+    {
+      "input": "path/to/input.pdf",
+      "output": "path/to/output.pdf",
+      "preset": "legal-discovery",
+      "recipe": null
+    }
+    ```
+  - Returns JSON `{ "status": "success", "steps_executed": N, "duration_ms": M, "output": "..." }`.
+
+---
+
+## 6. WASM & Cloudflare Edge Worker (`paperpilot-wasm` & `apps/edge`)
+- In `paperpilot-wasm/src/operations.rs`:
+  - `pub fn workflow_presets() -> String`: Returns JSON list of built-in presets.
+  - `pub fn workflow(input_bytes: &[u8], recipe_or_preset: &str) -> Result<Vec<u8>, anyhow::Error>`
+- In `paperpilot-wasm/src/lib.rs`:
+  - Expose `WasmPdfEngine::workflow_presets() -> String`.
+  - Expose `WasmPdfEngine::workflow(input_bytes: &[u8], recipe_or_preset: &str) -> Result<js_sys::Uint8Array, JsValue>`.
+- In `apps/edge/src/index.ts`:
+  - `GET /api/v1/workflow/presets`: Returns available presets.
+  - `POST /api/v1/workflow`:
+    - Accepts query param `?preset=legal-discovery` or request body recipe.
+    - Executes `WasmPdfEngine.workflow(bytes, recipeOrPreset)`.
+    - Returns `application/pdf` response.
+
+---
+
+## 7. Real Assertion Penta-Interface Tests (`tools/penta-interface-e2e`)
+Implement `tools/penta-interface-e2e/src/cases/workflow.rs`:
+- Register `pub mod workflow;` in `tools/penta-interface-e2e/src/cases/mod.rs`.
+- Wire `cases::workflow::run_workflow_cases().await` into `main.rs` (callable when `--group workflow` or `--group all`).
+- Implement 20 unmocked test cases covering:
+  - 4 tiers: `Simple` (single preset run), `Medium` (custom recipe with params), `Complex` (multi-step clean scan + compress), `Negative` (invalid recipe / corrupt input).
+  - Across interfaces: `CLI`, `MCP`, `Api` (REST Gateway), `Wasm`, `CloudflareEdge`.
+- Verify real output byte buffers start with `%PDF`, pages are modified, and expected parameters are applied.
+
+---
+
+## 8. Compilation & Performance Rule
+- **CRITICAL**: For any Cargo build/test command, ALWAYS pass `-j 4` or `-j 6` (e.g. `cargo test --all -j 4`). Never invoke unbounded Cargo compilation.
+
+---
+
+## 9. Acceptance Criteria
+1. `cargo test -p paperpilot-core -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway -j 4` passes 100%.
+2. All 5/6 interfaces can discover/list presets, validate recipes, and execute workflows starting from user/agent input.
+3. `tools/penta-interface-e2e` workflow cases pass with real file assertions.
