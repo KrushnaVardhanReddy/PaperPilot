@@ -16,69 +16,22 @@
 
 ---
 
-## 🏆 Recently Completed & Merged Milestones (Oct 19–21, 2026)
+## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution)**:
-   - Completed & verified (Sessions `3461133562467863809` / `15691603918731845147`).
+1. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution `[Spec 081]`)**:
    - Implemented Single Core Runner `run_workflow_bytes` in `paperpilot-pdf/src/operations/workflow.rs`.
    - Built 5 thin wrappers across Native CLI (`paperpilot workflow`), MCP (`list_workflows`, `document_workflow`), REST Gateway (`/api/v1/workflow/*`), WASM engine (`workflow`), and Cloudflare Edge worker.
    - 20/20 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md`.
-2. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity: Dropzone, Interactive Steps, Save/Export/Import)**:
-   - Merged (PR #225, commit `3354863`, Jules Session 6908271606884666943).
-   - Replaced hidden file input with prominent `📁 Browse Files` button and file status card inside the pipeline dropzone.
-   - Implemented interactive stepper with step removal (`✕`) and dynamic tool picker modal (`+ Add Step`).
-   - Implemented flow management toolbar: presets & saved flows dropdown, `💾 Save Flow` (`localStorage`), `⬇️ Export JSON`, and `⬆️ Import JSON`.
-   - Updated `apps/web/public/embed-test.html` Demo 3 and verified 12/12 Playwright tests passing.
-   - Documented in `wiki/EmbedPipeline.md`.
-2. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench for Action Cards)**:
-   - Merged (PR #224, commit `95fcd5a`, Jules Session 17427853372924290951).
-   - Created centralized headless snippet generation engine in `apps/desktop/src/lib/utils/snippetGenerator.ts`.
-   - Updated `ExportCodeModal.svelte` to dynamically render snippets for both individual tools and multi-step pipeline recipes.
-   - Added `</> Code / API` button to `EditableActionCard.svelte` with live parameter synchronization.
-   - All 6 unit tests in `snippetGenerator.test.ts` passing, 0 svelte-check errors, and build verified.
-2. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images & Layout Synthesis)**:
-   - Merged (commit `8ddc7ff`, Jules Session 378425988505835118).
-   - Implemented Stage 2 decoupled conversion pipeline in `paperpilot-pdf/src/operations/conversion.rs`: consumes Stage 1 rich Markdown with inline base64 data URIs, parses via `pulldown_cmark`, decodes image bytes, scales dimensions to OpenXML DrawingML EMUs, and embeds genuine `docx_rs::Pic` image parts into `.docx` archives with 2-column card layout synthesis.
-   - All unit tests passing (`test_pdf_to_docx_with_images`).
-2. **Task 5.9.69D (Visual Pipeline "Export as Code / API / MCP Prompt" Modal)**:
-   - Merged (PR #223, commit `5b4436b`, Jules Session 4310793047227771998).
-   - Created `ExportCodeModal.svelte` for rendering live dynamic cURL, CLI, MCP prompt, and Embed JS code snippets from current pipeline steps.
-   - Integrated `<button id="flow-export-code-btn">` into `FlowSelector.svelte` toolbar.
-   - Added automated Playwright test in `e2e_pipeline_flow_management.spec.ts` asserting all 4 tabs and modal open/close lifecycle (100% passing).
-2. **Task 5.9.69B (Visual Pipeline Flow Selector Toolbar & Save/Import Dialogs)**:
-   - Merged (PR #222, commit `adf293c`, Jules Session 16322387546350290979).
-   - Implemented `FlowSelector.svelte` toolbar with standard presets and saved user flows.
-   - Implemented `SaveFlowModal.svelte` with step sequence badges and local persistence.
-   - Updated `Widget.svelte` in `apps/embed` to map preset IDs properly.
-   - Added automated Playwright test `apps/desktop/tests/e2e_pipeline_flow_management.spec.ts` passing 100%.
-2. **Task 5.9.70 (Wave 2 Penta-Interface E2E Testing & Playwright Verification)**:
-   - Merged (PR #221, commit `b7ff7c3`, Jules Session 4388001643990007173).
-   - Validated unmocked real assertions across all 5 interfaces (CLI, MCP, REST Gateway, WASM Playwright, Desktop) for 6 Wave 2 tools (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`).
-   - Verified 100% test pass rate in `paperpilot-mcp/tests/wave2_mcp_tests.rs`, CLI audit suite, and Gateway tests.
-   - Published testing architecture in `wiki/09-Wave-2-Penta-Testing.md`.
-2. **Task 5.9.69A / Spec 081 (Pipeline Flow State, Local Persistence & Industry Presets)**:
-   - Merged (PR #220, commit `460ec1d`, Jules Session 8874502492856873220).
-   - Implemented `SavedPipeline` data model, `PipelineState` methods (`initStorage`, `loadFlow`, `saveCurrentFlow`, `deleteFlow`, `exportFlowJson`, `importFlowFromJson`).
-   - Integrated 3 default industry presets (`preset-legal-discovery`, `preset-clean-scan`, `preset-redact-protect`).
-   - Added complete Vitest unit test suite (7/7 tests passing in `pipeline.test.ts`).
-2. **PR #219 (Windows & Cross-Platform Makefile Compatibility)**:
-   - Resolved merge conflicts with `main` (`.cargo/config.toml`, `Makefile`, `package-lock.json`).
-   - Added cross-platform port 1420 cleanup in `Makefile` using PowerShell on Windows and `fuser` on Linux.
-   - Preserved MSVC `/STACK:8388608` and `/PDBPAGESIZE:8192` flags.
-2. **53 Tools Documentation Plain-Language Sync (`apps/docs`)**:
-   - Added clear, simple "### What it does" explanations across all 53 individual tool markdown files in `apps/docs/src/content/docs/reference/tools/`.
-3. **Spec 081 Authored & Split for Wave 2**:
-   - Structured into Community Free Tier ($0, unlimited local storage in `localStorage`, file-based JSON export/import, standard industry presets) vs Enterprise Tier (team workspaces, cloud sync, RBAC).
-   - Authoring completed in [`specs/081-pipeline-flow-management-save-export-import/spec.md`](file:///home/krushna/Project/PaperPilot/specs/081-pipeline-flow-management-save-export-import/spec.md).
-   - Split into Task 5.9.69A (State & Storage) and Task 5.9.69B (UI & FlowSelector matching `AiSettingsModal.svelte`).
-4. **Task 5.9.68 / Spec 079 (Universal Pipeline Parity & Comprehensive Parameter Schemas)**:
-   - Merged in commit `b31bc2c`: added full parameter configuration schemas for all tools in Desktop and Embed, and resolved intermediate split fan-out.
-5. **CI Release Workflow & Multi-Platform Fixes**:
-   - Upgraded Android runner to `packages: 'platform-tools'`.
-   - Updated macOS build target to Apple Silicon `aarch64-apple-darwin`.
-   - Added `swatinem/rust-cache@v2` across all platform jobs.
-6. **Task 5.9.54 / Spec 076 (High-Fidelity PDF-to-Markdown & HTML with Media)**:
-   - Merged (PR #216, commit `66534e7`): Stage 1 extracts raster photos and vector Form XObjects (`hayro` rasterization) into base64 data URIs.
+2. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench `[Spec 082]`)**:
+   - Centralized snippet generation engine in `apps/desktop/src/lib/utils/snippetGenerator.ts`.
+   - Integrated live `</> Code / API` button and dynamic modal in **both** the Visual Pipeline Builder (`FlowSelector.svelte`) and Workspace Operations Panel (`OperationsPanel.svelte`, `EditableActionCard.svelte`).
+3. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity `[Spec 083]`)**:
+   - Replaced hidden file input with prominent browse button & file chip summary.
+   - Added interactive step stepper with dynamic tool picker (`+ Add Step`), deletion, presets dropdown, and flow persistence.
+4. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images `[Spec 077]`)**:
+   - High-fidelity conversion decoding inline base64 images into true DrawingML `.docx` image parts with 2-column card layout synthesis.
+5. **Spec 084 Authored (On-Device Document SLM Fine-Tuning)**:
+   - Authored specification for `PaperPilot-Qwen-0.6B` (~350 MB GGUF, sub-50ms offline inference) and training roadmap.
 
 ---
 
