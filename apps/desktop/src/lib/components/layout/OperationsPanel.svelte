@@ -12,6 +12,8 @@
 import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
 import { onMount } from 'svelte';
+import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
+import { type SnippetTarget } from '$lib/utils/snippetGenerator';
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
@@ -587,6 +589,52 @@ import { onMount } from 'svelte';
     }
   }
 
+  let isExportCodeModalOpen = $state(false);
+
+  let currentSnippetTarget = $derived.by(() => {
+    if (!activeTool) return null;
+    const docIndex = appState.selectedDocumentIndex ?? 0;
+    const docName = appState.documents.length > 0 ? (appState.documents[docIndex]?.name || appState.documents[0].name) : 'input.pdf';
+    const docPath = appState.documents.length > 0 ? (appState.documentPaths[docIndex] || docName) : 'input.pdf';
+    const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
+    const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
+
+    const toolId = activeTool.id.startsWith('pdf_') ? activeTool.id : `pdf_${activeTool.id}`;
+    let ext = '.pdf';
+    if (['extract_text', 'pdf_extract_text'].includes(toolId)) ext = '.txt';
+    else if (['pdf_to_json', 'excel_to_json'].includes(toolId)) ext = '.json';
+    else if (['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
+    else if (['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
+    else if (['pdf_to_docx'].includes(toolId)) ext = '.docx';
+    else if (['pdf_to_xlsx', 'excel_to_csv'].includes(toolId)) ext = toolId.includes('csv') ? '.csv' : '.xlsx';
+
+    const defaultOutput = docPath ? docPath.replace(/\.[^/.]+$/, `_${activeTool.id.replace('pdf_', '')}${ext}`) : `output${ext}`;
+    const output = customOutputPath || defaultOutput;
+
+    const params: Record<string, any> = {
+      input: docPath,
+      output,
+      pages: splitPoints || extractPages || deletePages || rotatePages || 'all',
+      angle: parseInt(rotateAngle, 10) || 90,
+      text: watermarkText || 'CONFIDENTIAL',
+      opacity: watermarkOpacity / 100,
+      password: password || 'secure123',
+      prefix: batesPrefix || 'BATES-',
+      start_number: batesStart || 1,
+      padding: batesPadding || 6,
+      quality: compressQuality || 80
+    };
+
+    return {
+      toolId,
+      intent: activeTool.title,
+      params,
+      inputFile: docPath,
+      outputFile: output,
+      inputs: appState.documentPaths.length > 0 ? appState.documentPaths : [docPath]
+    } as SnippetTarget;
+  });
+
   function moveUp(index: number) {
     if (index > 0) {
       appState.reorderDocuments(index, index - 1);
@@ -640,6 +688,14 @@ import { onMount } from 'svelte';
         <span class="tool-icon">{activeTool.icon}</span>
         <h3 class="inspector-title">{activeTool.title}</h3>
       </div>
+      <button
+        class="code-export-btn"
+        id="btn-tool-export-code"
+        onclick={() => isExportCodeModalOpen = true}
+        title="Export operation as cURL, CLI, MCP prompt, or Embed JS"
+      >
+        &lt;/&gt; Code / API
+      </button>
       {#if appState.isMobile}
         <button class="back-btn close-btn" onclick={() => {
           appState.closeTool();
@@ -1084,7 +1140,32 @@ import { onMount } from 'svelte';
   {/if}
 </div>
 
+<ExportCodeModal
+  isOpen={isExportCodeModalOpen}
+  target={currentSnippetTarget}
+  onClose={() => isExportCodeModalOpen = false}
+/>
+
 <style>
+  .code-export-btn {
+    margin-left: auto;
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    color: var(--text-primary, #ffffff);
+    padding: 4px 10px;
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  .code-export-btn:hover {
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+    border-color: var(--accent-primary, #5e6ad2);
+    color: var(--accent-primary, #5e6ad2);
+  }
   .operations-panel {
     width: 320px;
     min-width: 320px;
