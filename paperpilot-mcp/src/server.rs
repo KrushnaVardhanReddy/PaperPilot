@@ -3539,6 +3539,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output_dir = get_string("output_dir")?;
 
+                ensure_dir(&output_dir)?;
+
                 let mut doc = LopdfDocument::load(&PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
                 let op = paperpilot_pdf::operations::burst::BurstOperation::new(PathBuf::from(
