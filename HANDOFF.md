@@ -10,15 +10,18 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active Jules Sessions in Flight
-| Task ID | Session Link | Target & Purpose | Status / Notes |
-|---|---|---|---|
-| **5.9.59** | [Session 14243955832243643866](https://jules.google.com/session/14243955832243643866) | **Privacy & Deep Security Sanitizer (`pdf_sanitize`)** (`[Spec 085]`) | 🔄 In Flight — Pure-Rust deep security scrubber stripping `/Info`, XML `/Metadata`, `/EmbeddedFiles`, `/JS` executable actions, `/PieceInfo`, and thumbnail caches via the Single Core Runner + 5 Thin Wrappers pattern. |
+*No active sessions in flight. All Wave 2, Pipeline Flow, and Deep Security Sanitizer milestones complete.*
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution `[Spec 081]`)**:
+1. **Task 5.9.59 (Privacy & Deep Security Sanitizer `pdf_sanitize` `[Spec 085]`)**:
+   - Merged (PR #228, commit `00c2f67`).
+   - Implemented Single Core Runner `sanitize_pdf` in `paperpilot-pdf/src/operations/sanitize.rs` using pure in-memory `lopdf` manipulation to strip `/Info`, XML `/Metadata`, `/EmbeddedFiles`, `/AF`, active scripts (`/JavaScript`, `/OpenAction`, `/AA`), `/Thumb`, and private editing data (`/PieceInfo`).
+   - Built 5 thin wrappers across Native CLI (`paperpilot sanitize`), MCP (`pdf_sanitize`), REST Gateway (`/api/v1/pdf/sanitize`), WASM engine (`WasmPdfEngine.sanitize`), and Cloudflare Edge worker (`/api/v1/sanitize`).
+   - 10/10 (100.0%) unmocked real Penta-Interface semantic tests passing in `reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md`.
+2. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution `[Spec 081]`)**:
    - Implemented Single Core Runner `run_workflow_bytes` in `paperpilot-pdf/src/operations/workflow.rs`.
    - Built 5 thin wrappers across Native CLI (`paperpilot workflow`), MCP (`list_workflows`, `document_workflow`), REST Gateway (`/api/v1/workflow/*`), WASM engine (`workflow`), and Cloudflare Edge worker.
    - 20/20 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md`.
