@@ -1,37 +1,293 @@
 Implement Task 5.9.60 / Spec 086: Automated PII & Sensitive Information Scanner (`document_pii_scan`) following the strict "Single Core Runner + 5 Thin Wrappers" architecture (`specs/086-pii-sensitive-info-scanner/spec.md`).
 
-CRITICAL ARCHITECTURAL CONSTRAINTS:
-1. Pure Rust In-Memory Execution:
-   - Implement the core scanner in `paperpilot-pdf/src/operations/pii.rs` with `pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanReport, paperpilot_core::error::PdfError>`.
-   - Export in `paperpilot-pdf/src/operations/mod.rs`.
-   - Categories to detect:
-     * SSN: US Social Security Numbers (`\b\d{3}-\d{2}-\d{4}\b`).
-     * Credit Cards: Visa, MasterCard, Amex, Discover with Luhn checksum validation.
-     * Email Addresses: Standard RFC 5322 regex.
-     * Phone Numbers: E.164 and US formatted phone numbers.
-     * IBAN: International Bank Account Numbers with Modulo 97-10 checksum validation.
-   - Return structured report with masked values (e.g. `XXX-XX-1234`), 1-based page number, category, confidence (0.0 - 1.0), and text snippet.
+---
 
-2. Do NOT add `paperpilot-pdf` to `paperpilot-wasm`:
-   - In `paperpilot-wasm`, implement client-side PII scanning in `paperpilot-wasm/src/operations.rs` directly using in-memory regex without linking `paperpilot-pdf`.
-   - Export `pii_scan` on `WasmPdfEngine` in `paperpilot-wasm/src/lib.rs`.
+## 🏛️ THE SINGLE CORE RUNNER + 5 INTERFACE WRAPPERS ARCHITECTURE PATTERN
+PaperPilot strictly follows the Single Core Runner pattern (as documented in `HANDOFF.md` and recently demonstrated by `pdf_sanitize` in PR #228).
+Every tool MUST have:
+1. Exactly **ONE** primary pure-Rust in-memory engine implementation in `paperpilot-pdf` that takes input bytes + config and returns the result in memory.
+2. Exactly **5 thin wrappers** calling or mirroring that single core engine across:
+   - 💻 **CLI** (`paperpilot-cli`)
+   - 🤖 **MCP** (`paperpilot-mcp`)
+   - 🌐 **REST Gateway** (`paperpilot-gateway`)
+   - ⚡ **Browser WASM** (`paperpilot-wasm`)
+   - ☁️ **Cloudflare Edge** (`apps/edge`)
+3. **Penta-Interface E2E Suite**: 100% real semantic assertions across all 5 surfaces.
 
-3. Implement All 5 Thin Wrappers:
-   - CLI: Add `PiiScan` subcommand to `paperpilot-cli/src/cli.rs`, dispatch in `paperpilot-cli/src/commands/mod.rs`, and write handler in `paperpilot-cli/src/commands/pii.rs`. Output JSON report.
-   - MCP: Register tool `document_pii_scan` in `execute_list_tools` and dispatch in `execute_call_tool` (`paperpilot-mcp/src/server.rs`). Update tool count assertions in unit tests.
-   - REST Gateway: Add route `/api/v1/pdf/pii-scan` in `paperpilot-gateway/src/server.rs` and handler in `handlers.rs`.
-   - WASM: `WasmPdfEngine.pii_scan` in `paperpilot-wasm`.
-   - Edge: Add route `/api/v1/pii-scan` in `apps/edge/src/index.ts`.
+---
 
-4. Penta-Interface E2E Suite:
-   - Add test runner in `tools/penta-interface-e2e/src/cases/pii.rs` testing all 5 surfaces.
-   - Wire `--group pii` in `tools/penta-interface-e2e/src/main.rs`.
-   - Ensure 10/10 tests pass and write report to `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
+## 📁 EXACT FILES TO TOUCH / CREATE
 
-5. Documentation & UI:
-   - Register tool in `apps/desktop/src/lib/types/toolList.ts`, `pipeline.svelte.ts`, and `snippetGenerator.ts`.
-   - Create documentation in `wiki/document_pii_scan.md`.
+```
+paperpilot-pdf/src/operations/pii.rs              # Core PII engine + detection algorithms + unit tests
+paperpilot-pdf/src/operations/mod.rs              # Export pub mod pii; and pub use pii::scan_pii;
+paperpilot-cli/src/cli.rs                         # Add PiiScan command variant
+paperpilot-cli/src/commands/pii.rs                # CLI command handler calling scan_pii
+paperpilot-cli/src/commands/mod.rs                # Dispatch Commands::PiiScan
+paperpilot-mcp/src/server.rs                      # Register document_pii_scan schema & call_tool dispatch
+paperpilot-gateway/src/handlers.rs                # Add pii_scan handler
+paperpilot-gateway/src/server.rs                  # Add route /api/v1/pdf/pii-scan
+paperpilot-wasm/src/operations.rs                 # In-memory WASM pii_scan implementation (lopdf + regex)
+paperpilot-wasm/src/lib.rs                        # Expose WasmPdfEngine.pii_scan & update list_tools
+apps/edge/src/index.ts                            # Expose POST /api/v1/pii-scan
+apps/desktop/src/lib/types/toolList.ts            # Register document_pii_scan definition
+apps/desktop/src/lib/state/pipeline.svelte.ts     # Add document_pii_scan step definition
+apps/desktop/src/lib/utils/snippetGenerator.ts    # Add code snippets for CLI/cURL/MCP/Embed
+tools/penta-interface-e2e/src/cases/pii.rs        # E2E test suite covering CLI, MCP, API, WASM, Edge
+tools/penta-interface-e2e/src/cases/mod.rs        # Register pub mod pii;
+tools/penta-interface-e2e/src/main.rs             # Add "pii" | "5.9.60" group match
+wiki/document_pii_scan.md                         # Documentation & developer guide
+```
 
-6. Quality Guardrails:
-   - DO NOT run destructive git commands like `git reset`, `git checkout -- .`, or `git clean`.
-   - Run compilation and tests with `-j 4`.
+---
+
+## 1. THE SINGLE CORE RUNNER (`paperpilot-pdf/src/operations/pii.rs`)
+
+Implement pure in-memory PII scanning:
+
+```rust
+use lopdf::Document;
+use paperpilot_core::error::PdfError;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PiiScanOptions {
+    #[serde(default = "default_true")]
+    pub scan_ssn: bool,
+    #[serde(default = "default_true")]
+    pub scan_credit_cards: bool,
+    #[serde(default = "default_true")]
+    pub scan_emails: bool,
+    #[serde(default = "default_true")]
+    pub scan_phones: bool,
+    #[serde(default = "default_true")]
+    pub scan_iban: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for PiiScanOptions {
+    fn default() -> Self {
+        Self {
+            scan_ssn: true,
+            scan_credit_cards: true,
+            scan_emails: true,
+            scan_phones: true,
+            scan_iban: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PiiFinding {
+    pub category: String,        // "ssn", "credit_card", "email", "phone", "iban"
+    pub value_masked: String,    // e.g. "XXX-XX-1234", "**** **** **** 1234"
+    pub page: u32,               // 1-based page number
+    pub confidence: f32,         // 0.0 - 1.0
+    pub context_snippet: String, // Context snippet surrounding finding
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PiiScanReport {
+    pub total_findings: usize,
+    pub findings_by_category: HashMap<String, usize>,
+    pub findings: Vec<PiiFinding>,
+    pub execution_time_ms: f64,
+}
+
+pub fn scan_pii(
+    input_bytes: &[u8],
+    options: &PiiScanOptions,
+) -> Result<PiiScanReport, PdfError> {
+    let start = std::time::Instant::now();
+    let doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+
+    let mut findings = Vec::new();
+    let mut findings_by_category: HashMap<String, usize> = HashMap::new();
+
+    // Extract text page by page using lopdf::Document::extract_text
+    let pages = doc.get_pages();
+    let mut sorted_pages: Vec<u32> = pages.keys().copied().collect();
+    sorted_pages.sort_unstable();
+
+    for page_num in sorted_pages {
+        let page_text = doc.extract_text(&[page_num]).unwrap_or_default();
+        if page_text.trim().is_empty() {
+            continue;
+        }
+
+        // 1. SSN Detection: \b\d{3}-\d{2}-\d{4}\b
+        if options.scan_ssn {
+            // Regex or scan tokens for 3-2-4 digit pattern
+            // Mask as XXX-XX-last4
+        }
+
+        // 2. Credit Card Detection: 13-19 digits, Luhn check
+        if options.scan_credit_cards {
+            // Strip dashes/spaces, validate with Luhn algorithm, mask as **** **** **** last4
+        }
+
+        // 3. Email Detection: [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+        if options.scan_emails {
+            // Mask user portion: j***@domain.com
+        }
+
+        // 4. Phone Detection: US (XXX) XXX-XXXX / XXX-XXX-XXXX or E.164 +1XXXXXXXXXX
+        if options.scan_phones {
+            // Mask as (***) ***-1234
+        }
+
+        // 5. IBAN Detection: 2 letters + 2 check digits + alphanumeric, MOD 97-10 check
+        if options.scan_iban {
+            // Mask as GB** **** **** **** **12 34
+        }
+    }
+
+    let report = PiiScanReport {
+        total_findings: findings.len(),
+        findings_by_category,
+        findings,
+        execution_time_ms: start.elapsed().as_secs_f64() * 1000.0,
+    };
+
+    Ok(report)
+}
+```
+
+Include Luhn algorithm:
+```rust
+fn validate_luhn(number: &str) -> bool {
+    let digits: Vec<u32> = number.chars().filter_map(|c| c.to_digit(10)).collect();
+    if digits.len() < 13 || digits.len() > 19 {
+        return false;
+    }
+    let mut sum = 0;
+    let mut alternate = false;
+    for &digit in digits.iter().rev() {
+        if alternate {
+            let mut d = digit * 2;
+            if d > 9 { d -= 9; }
+            sum += d;
+        } else {
+            sum += digit;
+        }
+        alternate = !alternate;
+    }
+    sum % 10 == 0
+}
+```
+
+Include comprehensive unit tests in `pii.rs` testing clean PDFs, documents with synthetic SSNs, credit cards, emails, and invalid buffers.
+Export `pub mod pii;` in `paperpilot-pdf/src/operations/mod.rs` and `pub use pii::scan_pii;`.
+
+---
+
+## 2. THE 5 THIN WRAPPERS
+
+### Wrapper 1: Native CLI (`paperpilot-cli`)
+- In `paperpilot-cli/src/cli.rs`, add to `Commands` enum:
+```rust
+    /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
+    #[command(name = "pii-scan")]
+    PiiScan {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value_t = true)]
+        scan_ssn: bool,
+        #[arg(long, default_value_t = true)]
+        scan_credit_cards: bool,
+        #[arg(long, default_value_t = true)]
+        scan_emails: bool,
+        #[arg(long, default_value_t = true)]
+        scan_phones: bool,
+        #[arg(long, default_value_t = true)]
+        scan_iban: bool,
+    },
+```
+- In `paperpilot-cli/src/commands/mod.rs`: declare `pub mod pii;` and dispatch `Commands::PiiScan`.
+- In `paperpilot-cli/src/commands/pii.rs`: read file, invoke `paperpilot_pdf::operations::pii::scan_pii(&input_bytes, &options)`, and print formatted JSON or write to `output`.
+
+### Wrapper 2: Agent MCP Server (`paperpilot-mcp`)
+- Reference: Look at `pdf_sanitize` in `paperpilot-mcp/src/server.rs`.
+- In `execute_list_tools`, register `document_pii_scan`:
+  - Input schema: `input` (required string), `output` (optional string), `scan_ssn` (bool), `scan_credit_cards` (bool), `scan_emails` (bool), `scan_phones` (bool), `scan_iban` (bool).
+- In `execute_call_tool`, handle `"document_pii_scan"`, call `scan_pii`, and return `OperationResult` with the serialized report.
+- Update test assertion count: In `server::tests::test_execute_list_tools`, update `assert_eq!(res.tools.len(), 60);` (since `pdf_sanitize` made it 59, `document_pii_scan` will be 60).
+
+### Wrapper 3: REST Gateway (`paperpilot-gateway`)
+- Reference: Look at `/api/v1/pdf/sanitize` in `paperpilot-gateway/src/handlers.rs` & `server.rs`.
+- In `paperpilot-gateway/src/handlers.rs`:
+```rust
+/// Scan document for PII and sensitive data [Input: .pdf | Output: JSON report]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pii-scan",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PII scan completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pii_scan(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pii_scan".to_string()), req).await
+}
+```
+- In `paperpilot-gateway/src/server.rs`: add route `.route("/api/v1/pdf/pii-scan", post(handlers::pii_scan))`.
+
+### Wrapper 4: Browser WASM Engine (`paperpilot-wasm`)
+- **CRITICAL**: Do NOT add `paperpilot-pdf` to `paperpilot-wasm/Cargo.toml`!
+- Reference: See `sanitize` and `extract_text` in `paperpilot-wasm/src/operations.rs`.
+- In `paperpilot-wasm/src/operations.rs`: implement `pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<String>` using `lopdf::Document::load_mem` and regex directly, returning JSON.
+- In `paperpilot-wasm/src/lib.rs`: expose `pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> Result<String, JsValue>` on `WasmPdfEngine`, and add `{"id": "pii_scan", "name": "PII Scanner", "status": "stable"}` to `list_tools()`.
+
+### Wrapper 5: Cloudflare Edge Worker (`apps/edge`)
+- In `apps/edge/src/index.ts`: add route `if (url.pathname === '/api/v1/pii-scan')`:
+```typescript
+if (url.pathname === '/api/v1/pii-scan') {
+   const body = await request.arrayBuffer();
+   const options = url.searchParams.get('options') || '{}';
+   const result = WasmPdfEngine.pii_scan(new Uint8Array(body), options);
+   return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+}
+```
+
+---
+
+## 3. DESKTOP UI & PIPELINE INTEGRATION
+1. In `apps/desktop/src/lib/types/toolList.ts`:
+   - Add tool `{ id: 'document_pii_scan', title: 'PII Scanner', inputFormat: 'PDF', outputFormat: '.JSON', description: 'Scan document for SSNs, credit cards, emails, and sensitive PII', icon: '🔍', category: 'security', context: 'pdf', tags: ['pii', 'security', 'privacy', 'ssn', 'compliance'], releaseStatus: 'preview' }`.
+2. In `apps/desktop/src/lib/state/pipeline.svelte.ts`:
+   - Add `'document_pii_scan'` to `OperationId` and `OPERATION_REGISTRY`.
+3. In `apps/desktop/src/lib/utils/snippetGenerator.ts`:
+   - Add snippet generation for `'document_pii_scan'` for CLI, cURL, MCP, and Embed JS.
+4. Create documentation in `wiki/document_pii_scan.md`.
+
+---
+
+## 4. PENTA-INTERFACE REAL E2E TEST SUITE
+- Reference: See `tools/penta-interface-e2e/src/cases/sanitize.rs`.
+- Create `tools/penta-interface-e2e/src/cases/pii.rs` implementing `pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>>`.
+- Assert all 5 surfaces:
+  1. CLI: `paperpilot pii-scan --input tests/e2e_fixtures/real/multi_page.pdf` (Simple & Negative)
+  2. MCP: `tools/call` with `{"name": "document_pii_scan", "arguments": {"input": "tests/e2e_fixtures/real/single_page.pdf"}}` (Simple & Negative)
+  3. REST API: `POST /api/v1/pdf/pii-scan` (Simple & Negative)
+  4. WASM Target Parity (Simple & Negative)
+  5. Cloudflare Edge Parity (Simple & Negative)
+- In `tools/penta-interface-e2e/src/cases/mod.rs`: add `pub mod pii;`.
+- In `tools/penta-interface-e2e/src/main.rs`: match `"pii" | "5.9.60"` and write report to `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
+
+---
+
+## 5. QUALITY GUARDRAILS & ACCEPTANCE CRITERIA
+1. **Compilation**: Always use bounded concurrency: pass `-j 4` (e.g. `cargo test -p paperpilot-pdf -j 4`).
+2. **Never Run Destructive Git Commands**: Do NOT run `git reset`, `git checkout -- .`, or `git clean`.
+3. Verify test pass rate:
+   - `cargo test -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway -j 4` passes 100%.
+   - `cargo run -p penta-interface-e2e -- --group pii` passes **10 / 10 (100.0%)** and writes `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
