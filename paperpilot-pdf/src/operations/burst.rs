@@ -23,6 +23,7 @@ impl PdfOperation for BurstOperation {
             })?;
 
         let total_pages = lopdf_doc.page_count()?;
+        std::fs::create_dir_all(&self.output_dir)?;
 
         for p in 1..=total_pages {
             let mut part_doc = lopdf_doc.inner.clone();
