@@ -13,14 +13,19 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **5.9.69C** | [Session 15691603918731845147](https://jules.google.com/session/15691603918731845147) | **Penta-Interface Declarative Workflow Engine & Recipe Execution** (`[Spec 081]`) | 🔄 In Flight — Refined with Single Core Runner (`run_workflow_bytes`) + 5 Thin Wrappers pattern across CLI, MCP, REST Gateway, WASM Engine, Edge Worker, and real-assertion Penta-Interface E2E suite. |
-| **5.9.71** | [Session 17427853372924290951](https://jules.google.com/session/17427853372924290951) | **Universal "Export as Code / API / MCP Prompt" Workbench (All Tools)** (`[Spec 082]`) | 🔄 In Flight — Extend code/API export beyond pipelines to individual action cards in `EditableActionCard.svelte` via headless `snippetGenerator.ts`, with full Vitest & Playwright E2E coverage. |
 | **5.9.72** | [Session 6908271606884666943](https://jules.google.com/session/6908271606884666943) | **Embed Pipeline 1-to-1 Desktop Parity (Dropzone, Interactive Steps, Save/Export/Import)** (`[Spec 083]`) | 🔄 In Flight — Full desktop parity for embed pipeline: explicit browse button, file chip summary, `+ Add Step` dynamic tool picker, step deletion, preset/saved flow dropdown, `💾 Save Flow`, `⬇️ Export JSON`, and `⬆️ Import JSON`. |
 
 ---
 
-## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
+## 🏆 Recently Completed & Merged Milestones (Oct 19–21, 2026)
 
-1. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images & Layout Synthesis)**:
+1. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench for Action Cards)**:
+   - Merged (PR #224, commit `95fcd5a`, Jules Session 17427853372924290951).
+   - Created centralized headless snippet generation engine in `apps/desktop/src/lib/utils/snippetGenerator.ts`.
+   - Updated `ExportCodeModal.svelte` to dynamically render snippets for both individual tools and multi-step pipeline recipes.
+   - Added `</> Code / API` button to `EditableActionCard.svelte` with live parameter synchronization.
+   - All 6 unit tests in `snippetGenerator.test.ts` passing, 0 svelte-check errors, and build verified.
+2. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images & Layout Synthesis)**:
    - Merged (commit `8ddc7ff`, Jules Session 378425988505835118).
    - Implemented Stage 2 decoupled conversion pipeline in `paperpilot-pdf/src/operations/conversion.rs`: consumes Stage 1 rich Markdown with inline base64 data URIs, parses via `pulldown_cmark`, decodes image bytes, scales dimensions to OpenXML DrawingML EMUs, and embeds genuine `docx_rs::Pic` image parts into `.docx` archives with 2-column card layout synthesis.
    - All unit tests passing (`test_pdf_to_docx_with_images`).
