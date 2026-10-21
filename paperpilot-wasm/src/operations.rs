@@ -1016,6 +1016,91 @@ pub fn pdf_hash(input_bytes: &[u8]) -> OperationResult<String> {
 
 // --- New Tools (Phase 5.5.1) ---
 
+pub fn sanitize(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let mut doc =
+        lopdf::Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
+
+    #[derive(serde::Deserialize)]
+    struct SanitizeOptions {
+        #[serde(default = "default_true")]
+        remove_metadata: bool,
+        #[serde(default = "default_true")]
+        remove_attachments: bool,
+        #[serde(default = "default_true")]
+        remove_scripts: bool,
+        #[serde(default = "default_true")]
+        remove_thumbnails: bool,
+        #[serde(default = "default_true")]
+        remove_private_data: bool,
+    }
+    fn default_true() -> bool {
+        true
+    }
+
+    let options: SanitizeOptions = if options_json.trim().is_empty() {
+        SanitizeOptions {
+            remove_metadata: true,
+            remove_attachments: true,
+            remove_scripts: true,
+            remove_thumbnails: true,
+            remove_private_data: true,
+        }
+    } else {
+        serde_json::from_str(options_json).map_err(|e| PdfError::ParseError(e.to_string()))?
+    };
+
+    // 1. Strip Document Information Dictionary (/Info) & Metadata XMP
+    if options.remove_metadata {
+        doc.trailer.remove(b"Info");
+        if let Ok(catalog_id) = doc.catalog_mut() {
+            catalog_id.remove(b"Metadata");
+        }
+    }
+
+    // 2. Strip Embedded Files (/Names -> /EmbeddedFiles, /AF)
+    if options.remove_attachments
+        && let Ok(catalog) = doc.catalog_mut()
+    {
+        if let Ok(lopdf::Object::Dictionary(names_dict)) = catalog.get_mut(b"Names") {
+            names_dict.remove(b"EmbeddedFiles");
+        }
+        catalog.remove(b"AF");
+    }
+
+    // 3. Neutralize Active Scripts (/JavaScript, /JS, /OpenAction, /AA)
+    if options.remove_scripts
+        && let Ok(catalog) = doc.catalog_mut()
+    {
+        catalog.remove(b"OpenAction");
+        catalog.remove(b"AA");
+        if let Ok(lopdf::Object::Dictionary(names_dict)) = catalog.get_mut(b"Names") {
+            names_dict.remove(b"JavaScript");
+        }
+    }
+
+    // 4. Strip Page Thumbnails (/Thumb) & Private Editing Data (/PieceInfo)
+    let page_ids = doc.get_pages();
+    for (_page_num, page_id) in page_ids {
+        if let Ok(lopdf::Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
+            if options.remove_thumbnails {
+                page_dict.remove(b"Thumb");
+            }
+            if options.remove_private_data {
+                page_dict.remove(b"PieceInfo");
+            }
+            if options.remove_scripts {
+                page_dict.remove(b"AA");
+            }
+        }
+    }
+
+    let mut out_bytes = Vec::new();
+    doc.save_to(&mut out_bytes)
+        .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
+
+    Ok(out_bytes)
+}
+
 pub fn render_page(input_bytes: &[u8], page_index: u32, scale: f32) -> OperationResult<Vec<u8>> {
     let pdf = hayro_syntax::Pdf::new(input_bytes.to_vec())
         .map_err(|e| PdfError::ParseError(format!("Failed to parse PDF with hayro: {:?}", e)))?;
@@ -1748,6 +1833,11 @@ fn execute_step_wasm(
                 .and_then(|v| v.as_i64())
                 .unwrap_or(90) as u16;
             rotate(bytes, angle, "all")
+        }
+        "pdf_sanitize" | "sanitize" => {
+            let options_str =
+                serde_json::to_string(&step.params).unwrap_or_else(|_| "{}".to_string());
+            sanitize(bytes, &options_str)
         }
         _ => Ok(bytes.to_vec()),
     }

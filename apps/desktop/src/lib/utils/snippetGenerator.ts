@@ -71,6 +71,19 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_watermark', ${JSON.stringify(mcpArgs)});`;
       break;
     }
+    case 'pdf_sanitize': {
+      const rm_metadata = params.remove_metadata !== undefined ? params.remove_metadata : true;
+      const rm_attachments = params.remove_attachments !== undefined ? params.remove_attachments : true;
+      const rm_scripts = params.remove_scripts !== undefined ? params.remove_scripts : true;
+      cli = `paperpilot sanitize --input "${input}" --remove-metadata ${rm_metadata} --remove-attachments ${rm_attachments} --remove-scripts ${rm_scripts} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/pdf/sanitize -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "remove_metadata": ${rm_metadata}, "remove_attachments": ${rm_attachments}, "remove_scripts": ${rm_scripts}}'`;
+
+      const mcpArgs = { input, output, remove_metadata: rm_metadata, remove_attachments: rm_attachments, remove_scripts: rm_scripts };
+      mcpToolCall = JSON.stringify({ name: "pdf_sanitize", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Sanitize "${input}" and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_sanitize', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_encrypt': {
       const password = params.password || params.user_password || '';
       cli = `paperpilot encrypt --input "${input}" --password "${password}" --output "${output}"`;
