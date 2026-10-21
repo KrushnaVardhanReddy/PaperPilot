@@ -1,5 +1,7 @@
 <script lang="ts">
     import { appState } from '$lib/state/app.svelte';
+    import ExportCodeModal from './pipeline/ExportCodeModal.svelte';
+    import { type SnippetTarget } from '$lib/utils/snippetGenerator';
 
     // The raw plan from NLP
     export let plan: any;
@@ -14,6 +16,8 @@
     // Extracted state for editable UI
     let pagesMode = 'all'; // 'all', 'current', 'custom'
     let customPages = '';
+
+    let isExportCodeModalOpen = false;
 
     let angle = 90;
     let textInput = '';
@@ -45,9 +49,7 @@
         }
     }
 
-    function execute() {
-        // Collect args based on intent and edited state
-        isExecuting = true;
+    function getArgs(): Record<string, any> {
         const args: Record<string, any> = { intent: plan.intent };
 
         // Resolve input files to real local filesystem paths
@@ -133,6 +135,29 @@
             args.start_number = batesStart;
             args.padding = batesPadding;
         }
+
+        return args;
+    }
+
+    $: currentSnippetTarget = (() => {
+        const intent = plan.intent;
+        const toolId = `pdf_${intent.toLowerCase()}`;
+        const args = getArgs();
+
+        return {
+            toolId,
+            intent,
+            params: args,
+            inputFile: args.input,
+            outputFile: args.output,
+            inputs: args.inputs
+        } as SnippetTarget;
+    })();
+
+    function execute() {
+        // Collect args based on intent and edited state
+        isExecuting = true;
+        const args = getArgs();
 
         onExecute(args);
         isExecuting = false;
@@ -241,10 +266,21 @@
         </div>
 
     </div>
-    <button class="execute-btn" onclick={execute} disabled={isExecuting}>
-        {isExecuting ? 'Executing...' : '⚡ Execute Action'}
-    </button>
+    <div class="action-buttons">
+        <button class="execute-btn" onclick={execute} disabled={isExecuting}>
+            {isExecuting ? 'Executing...' : '⚡ Execute Action'}
+        </button>
+        <button class="export-btn" id="action-export-code-btn" onclick={() => isExportCodeModalOpen = true}>
+            &lt;/&gt; Code / API
+        </button>
+    </div>
 </div>
+
+<ExportCodeModal
+    isOpen={isExportCodeModalOpen}
+    target={currentSnippetTarget}
+    onClose={() => isExportCodeModalOpen = false}
+/>
 
 <style>
     .plan-card {
@@ -340,5 +376,24 @@
     .execute-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .export-btn {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.5rem;
+        cursor: pointer;
+        font-weight: bold;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+    .export-btn:hover {
+        opacity: 0.9;
+        background: var(--bg-primary);
     }
 </style>
