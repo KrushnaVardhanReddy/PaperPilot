@@ -5883,6 +5883,7 @@ version = "0.1.0"
 dependencies = [
  "image",
  "serde",
+ "serde_json",
  "thiserror 2.0.21",
 ]
 
@@ -6223,6 +6224,7 @@ dependencies = [
  "office_oxide",
  "paperpilot-core",
  "paperpilot-pdf",
+ "paperpilot-wasm",
  "quick-xml 0.31.0",
  "reqwest 0.12.28",
  "serde",

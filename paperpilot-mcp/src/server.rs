@@ -2971,6 +2971,45 @@ impl PaperPilotMcpServer {
             .clone(),
         ));
 
+        let schema_lw = serde_json::json!({
+            "type": "object",
+            "properties": {},
+            "required": []
+        });
+        tools.push(Tool::new(
+            "list_workflows".to_string(),
+            "List all available preset document workflows".to_string(),
+            schema_lw.as_object().unwrap().clone(),
+        ));
+
+        let schema_dw = serde_json::json!({
+            "type": "object",
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "description": "Path to input PDF file"
+                },
+                "output": {
+                    "type": "string",
+                    "description": "Path to output PDF file"
+                },
+                "preset": {
+                    "type": "string",
+                    "description": "Preset workflow ID (e.g. preset-legal-discovery, preset-clean-scan, preset-redact-protect)"
+                },
+                "recipe": {
+                    "type": "string",
+                    "description": "Path to custom workflow recipe JSON file or raw recipe JSON string"
+                }
+            },
+            "required": ["input", "output"]
+        });
+        tools.push(Tool::new(
+            "document_workflow".to_string(),
+            "Execute a declarative multi-step document workflow pipeline".to_string(),
+            schema_dw.as_object().unwrap().clone(),
+        ));
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -3070,6 +3109,85 @@ impl PaperPilotMcpServer {
         };
 
         let result = match request.name.as_ref() {
+            "list_workflows" => {
+                let presets = paperpilot_core::workflow::get_default_presets();
+                let json_data = serde_json::to_value(&presets).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to serialize presets: {}", e), None)
+                })?;
+                Ok(OperationResult {
+                    success: true,
+                    message: "Workflow presets retrieved successfully.".to_string(),
+                    output_path: None,
+                    diff_detected: None,
+                    data: Some(json_data),
+                })
+            }
+            "document_workflow" | "pdf_document_workflow" => {
+                let input_path = get_string("input")?;
+                let output_path = get_string("output")?;
+                ensure_parent_dir(&output_path)?;
+
+                let preset_opt = args.get("preset").and_then(|v| v.as_str());
+                let recipe_opt = args.get("recipe").and_then(|v| v.as_str());
+
+                let workflow = if let Some(preset_name) = preset_opt {
+                    paperpilot_core::workflow::get_preset_by_id(preset_name).ok_or_else(|| {
+                        ErrorData::invalid_params(
+                            format!("Preset not found: {}", preset_name),
+                            None,
+                        )
+                    })?
+                } else if let Some(recipe_str) = recipe_opt {
+                    let content = if std::path::Path::new(recipe_str).exists() {
+                        std::fs::read_to_string(recipe_str).map_err(|e| {
+                            ErrorData::invalid_params(
+                                format!("Failed to read recipe file: {}", e),
+                                None,
+                            )
+                        })?
+                    } else {
+                        recipe_str.to_string()
+                    };
+                    serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&content)
+                        .map_err(|e| {
+                            ErrorData::invalid_params(
+                                format!("Invalid workflow recipe JSON: {}", e),
+                                None,
+                            )
+                        })?
+                } else {
+                    return Err(ErrorData::invalid_params(
+                        "Must specify either 'preset' or 'recipe'",
+                        None,
+                    ));
+                };
+
+                let input_bytes = std::fs::read(&input_path).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to read input PDF: {}", e), None)
+                })?;
+
+                let (out_bytes, report) = paperpilot_pdf::operations::workflow::run_workflow_bytes(
+                    &input_bytes,
+                    &workflow,
+                )
+                .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output_path, out_bytes).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to write output PDF: {}", e), None)
+                })?;
+
+                let report_json = serde_json::to_value(&report).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to serialize report: {}", e), None)
+                })?;
+
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Workflow '{}' executed successfully.", report.workflow_name),
+                    output_path: Some(output_path),
+                    diff_detected: None,
+                    data: Some(report_json),
+                })
+            }
             "pdf_convert_html" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -3334,7 +3452,6 @@ impl PaperPilotMcpServer {
                                     #[allow(clippy::collapsible_if)]
                                     if pt < total_pages && !pts.contains(&pt) {
                                         pts.push(pt);
-                                    }
                                     }
                                 }
                             }
@@ -4908,8 +5025,38 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        // 56 registered tools
-        assert_eq!(res.tools.len(), 56);
+        assert_eq!(res.tools.len(), 58);
+    }
+
+    #[test]
+    fn test_mcp_list_workflows() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "list_workflows".into();
+        let res = PaperPilotMcpServer::execute_call_tool(request).unwrap();
+        if let rmcp::model::CallToolResponse::Complete(complete) = res {
+            let block = complete.content.first().unwrap();
+            if let rmcp::model::ContentBlock::Text(tb) = block {
+                assert!(tb.text.contains("preset-legal-discovery"));
+            } else {
+                panic!("Expected text block");
+            }
+        } else {
+            panic!("Expected Complete response");
+        }
+    }
+
+    #[test]
+    fn test_mcp_document_workflow_missing_input() {
+        let mut request = CallToolRequestParams::default();
+        request.name = "document_workflow".into();
+        let mut args = serde_json::Map::new();
+        args.insert(
+            "preset".to_string(),
+            serde_json::json!("preset-legal-discovery"),
+        );
+        request.arguments = Some(args);
+        let res = PaperPilotMcpServer::execute_call_tool(request);
+        assert!(res.is_err());
     }
 
     #[test]

@@ -17,10 +17,22 @@ export default {
       return Response.json({ status: 'ok', engine: 'paperpilot-wasm', version: '0.1.0' });
     }
 
+    if (request.method === 'GET' && url.pathname === '/api/v1/workflow/presets') {
+      await ensureWasm();
+      const presets = WasmPdfEngine.workflow_presets();
+      return new Response(presets, { headers: { 'Content-Type': 'application/json' } });
+    }
+
     await ensureWasm();
 
     if (request.method === 'POST') {
       try {
+        if (url.pathname === '/api/v1/workflow') {
+          const body = await request.arrayBuffer();
+          const recipeOrPreset = url.searchParams.get('preset') || url.searchParams.get('recipe') || 'preset-legal-discovery';
+          const result = WasmPdfEngine.workflow(new Uint8Array(body), recipeOrPreset);
+          return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
         if (url.pathname === '/api/v1/pdf_to_docx' || url.pathname === '/api/v1/convert' && url.searchParams.get('format') === 'docx') {
           const body = await request.arrayBuffer();
           const result = WasmPdfEngine.pdf_to_docx(new Uint8Array(body));

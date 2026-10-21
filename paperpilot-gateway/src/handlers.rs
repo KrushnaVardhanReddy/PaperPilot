@@ -977,6 +977,232 @@ pub async fn rag_chunks(Json(payload): Json<RagChunksJsonRequest>) -> impl IntoR
     }
 }
 
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct WorkflowValidateRequest {
+    #[schema(value_type = Object)]
+    pub recipe: Option<serde_json::Value>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct WorkflowRunJsonRequest {
+    pub input: String,
+    pub output: String,
+    pub preset: Option<String>,
+    #[schema(value_type = Object)]
+    pub recipe: Option<serde_json::Value>,
+}
+
+pub async fn workflow_presets() -> impl IntoResponse {
+    let presets = paperpilot_core::workflow::get_default_presets();
+    (StatusCode::OK, Json(presets))
+}
+
+pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> impl IntoResponse {
+    if let Some(recipe_val) = payload.recipe {
+        if let Ok(wf) =
+            serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val)
+        {
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "valid": true,
+                    "steps_count": wf.steps.len()
+                })),
+            )
+        } else {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "valid": false,
+                    "error": "Invalid recipe schema"
+                })),
+            )
+        }
+    } else {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "valid": false,
+                "error": "Missing recipe payload"
+            })),
+        )
+    }
+}
+
+pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> impl IntoResponse {
+    let workflow = if let Some(preset_name) = &payload.preset {
+        match paperpilot_core::workflow::get_preset_by_id(preset_name) {
+            Some(w) => w,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({"status": "error", "error": "Preset not found"})),
+                )
+                    .into_response();
+            }
+        }
+    } else if let Some(recipe_val) = payload.recipe {
+        match serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val) {
+            Ok(w) => w,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({"status": "error", "error": format!("Invalid recipe JSON: {}", e)})),
+                )
+                    .into_response();
+            }
+        }
+    } else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"status": "error", "error": "Must provide preset or recipe"})),
+        )
+            .into_response();
+    };
+
+    let input_bytes = match std::fs::read(&payload.input) {
+        Ok(b) => b,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"status": "error", "error": format!("Read input failed: {}", e)})),
+            )
+                .into_response();
+        }
+    };
+
+    let (out_bytes, report) =
+        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&input_bytes, &workflow) {
+            Ok(res) => res,
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"status": "error", "error": e.to_string()})),
+                )
+                    .into_response();
+            }
+        };
+
+    if let Some(parent) = std::path::Path::new(&payload.output).parent()
+        && !parent.as_os_str().is_empty()
+    {
+        let _ = std::fs::create_dir_all(parent);
+    }
+
+    if let Err(e) = std::fs::write(&payload.output, out_bytes) {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"status": "error", "error": format!("Write output failed: {}", e)})),
+        )
+            .into_response();
+    }
+
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "status": "success",
+            "report": report
+        })),
+    )
+        .into_response()
+}
+
+pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
+    use axum::extract::FromRequest;
+    use axum::http::HeaderMap;
+
+    let mut file_bytes = Vec::new();
+    let mut preset_name = None;
+    let mut recipe_json = None;
+
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.starts_with("application/json") {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+            Ok(b) => b,
+            Err(_) => {
+                return (StatusCode::BAD_REQUEST, "Invalid JSON body").into_response();
+            }
+        };
+        if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&body_bytes) {
+            if let Some(p) = val.get("preset").and_then(|v| v.as_str()) {
+                preset_name = Some(p.to_string());
+            }
+            if let Some(inp) = val.get("input").and_then(|v| v.as_str())
+                && let Ok(bytes) = std::fs::read(inp)
+            {
+                file_bytes = bytes;
+            }
+        }
+    } else {
+        let mut multipart = match axum::extract::Multipart::from_request(req, &()).await {
+            Ok(m) => m,
+            Err(_) => {
+                return (StatusCode::BAD_REQUEST, "Invalid multipart request").into_response();
+            }
+        };
+
+        while let Ok(Some(field)) = multipart.next_field().await {
+            let name = field.name().unwrap_or("").to_string();
+            let data = match field.bytes().await {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+
+            if name == "file" || name == "input" {
+                file_bytes = data.to_vec();
+            } else if name == "preset" {
+                preset_name = Some(String::from_utf8_lossy(&data).trim().to_string());
+            } else if name == "recipe" {
+                recipe_json = Some(String::from_utf8_lossy(&data).trim().to_string());
+            }
+        }
+    }
+
+    let workflow = if let Some(p) = preset_name {
+        match paperpilot_core::workflow::get_preset_by_id(&p) {
+            Some(w) => w,
+            None => {
+                return (StatusCode::BAD_REQUEST, "Preset not found").into_response();
+            }
+        }
+    } else if let Some(r) = recipe_json {
+        match serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&r) {
+            Ok(w) => w,
+            Err(_) => return (StatusCode::BAD_REQUEST, "Invalid recipe JSON").into_response(),
+        }
+    } else {
+        return (StatusCode::BAD_REQUEST, "Must provide preset or recipe").into_response();
+    };
+
+    if file_bytes.is_empty() {
+        return (StatusCode::BAD_REQUEST, "Missing input file bytes").into_response();
+    }
+
+    let (out_bytes, report) =
+        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&file_bytes, &workflow) {
+            Ok(res) => res,
+            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        };
+
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", "application/pdf".parse().unwrap());
+    headers.insert(
+        "X-Workflow-Steps-Executed",
+        report.steps_completed.to_string().parse().unwrap(),
+    );
+    headers.insert(
+        "X-Workflow-Duration-Ms",
+        report.duration_ms.to_string().parse().unwrap(),
+    );
+
+    (StatusCode::OK, headers, out_bytes).into_response()
+}
+
 pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
     let input = payload
         .get("input")
@@ -1169,6 +1395,35 @@ mod tests {
             .unwrap();
 
         let res = render_page(req).await.into_response();
+        assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_workflow_presets_handler() {
+        let res = workflow_presets().await.into_response();
+        assert_eq!(res.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_workflow_validate_handler() {
+        let preset = paperpilot_core::workflow::get_preset_by_id("preset-clean-scan").unwrap();
+        let preset_val = serde_json::to_value(&preset).unwrap();
+        let req = WorkflowValidateRequest {
+            recipe: Some(preset_val),
+        };
+        let res = workflow_validate(axum::Json(req)).await.into_response();
+        assert_eq!(res.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_workflow_run_json_invalid_preset() {
+        let req = WorkflowRunJsonRequest {
+            input: "in.pdf".to_string(),
+            output: "out.pdf".to_string(),
+            preset: Some("bad-preset".to_string()),
+            recipe: None,
+        };
+        let res = workflow_run_json(axum::Json(req)).await.into_response();
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
