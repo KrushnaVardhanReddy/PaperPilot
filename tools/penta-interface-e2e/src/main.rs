@@ -156,6 +156,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
             )?;
         }
+        "workflow" => {
+            let results = cases::workflow::run_workflow_cases().await?;
+            println!("Workflow finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.69C — Penta-Interface Declarative Workflow Engine",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md",
+            )?;
+        }
         "bench" => {
             let results = cases::bench::run_benchmark_suite().await?;
             println!("Benchmarking suite completed.");

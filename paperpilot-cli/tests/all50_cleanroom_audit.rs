@@ -121,7 +121,8 @@ fn test_all50_audit() {
         let latency_ms = start.elapsed().as_millis();
 
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
 
         if success && out_size > 0 {
@@ -142,7 +143,8 @@ fn test_all50_audit() {
 
         results.push(TestResult {
             tool_id: "pdf_merge".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "merge_a, merge_b".to_string(),
             input_size,
             output_path: "merged.pdf".to_string(),
@@ -175,7 +177,8 @@ fn test_all50_audit() {
         let latency_ms = start.elapsed().as_millis();
 
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let mut out_size = 0;
 
         if success {
@@ -210,7 +213,8 @@ fn test_all50_audit() {
 
         results.push(TestResult {
             tool_id: "pdf_split".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "split_dir".to_string(),
@@ -240,7 +244,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -255,7 +260,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_extract_pages".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "extracted_pages.pdf".to_string(),
@@ -285,7 +291,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -300,7 +307,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_delete_pages".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "deleted.pdf".to_string(),
@@ -330,7 +338,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -345,7 +354,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_reorder_pages".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "reordered.pdf".to_string(),
@@ -375,7 +385,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -391,7 +402,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_rotate".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "rotated.pdf".to_string(),
@@ -421,7 +433,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -432,7 +445,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_crop".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "cropped.pdf".to_string(),
@@ -461,7 +475,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = 0;
         if success {
             let files: Vec<_> = fs::read_dir(&output_dir)
@@ -488,7 +503,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_burst".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "burst_dir".to_string(),
@@ -516,7 +532,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -527,7 +544,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_remove_blank".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "no_blanks.pdf".to_string(),
@@ -557,7 +575,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -570,7 +589,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_compress".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "large_doc.pdf".to_string(),
             input_size,
             output_path: "compressed.pdf".to_string(),
@@ -599,7 +619,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -614,7 +635,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_repair".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "repaired.pdf".to_string(),
@@ -642,7 +664,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -653,7 +676,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_linearize".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "linearized.pdf".to_string(),
@@ -683,7 +707,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -695,7 +720,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_encrypt".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "encrypted.pdf".to_string(),
@@ -739,7 +765,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -752,7 +779,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_decrypt".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "encrypted.pdf".to_string(),
             input_size,
             output_path: "decrypted.pdf".to_string(),
@@ -782,7 +810,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -791,7 +820,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_watermark".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "watermarked.pdf".to_string(),
@@ -823,7 +853,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -832,7 +863,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_redact".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "redacted.pdf".to_string(),
@@ -862,7 +894,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -873,7 +906,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_metadata".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "metadata.pdf".to_string(),
@@ -903,7 +937,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -916,7 +951,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_sign".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "signed.pdf".to_string(),
@@ -944,7 +980,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -953,7 +990,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_flatten".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "flattened.pdf".to_string(),
@@ -981,7 +1019,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -990,7 +1029,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_pdf_a".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "pdf_a.pdf".to_string(),
@@ -1020,7 +1060,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1029,7 +1070,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_header_footer".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "header_footer.pdf".to_string(),
@@ -1061,7 +1103,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1070,7 +1113,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_bates".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "bates.pdf".to_string(),
@@ -1098,7 +1142,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1107,7 +1152,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_page_numbers".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "page_numbers.pdf".to_string(),
@@ -1135,7 +1181,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File exists and > 0 bytes passed".to_string());
@@ -1151,7 +1198,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_extract_text".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "extracted.txt".to_string(),
@@ -1182,7 +1230,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = 0;
         if success && output.exists() {
             checks.push("Check 1: Directory created passed".to_string());
@@ -1196,7 +1245,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_extract_images".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multimodal.pdf".to_string(),
             input_size,
             output_path: "extracted_imgs".to_string(),
@@ -1233,7 +1283,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_search".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "search_results.json".to_string(),
@@ -1261,7 +1312,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1277,7 +1329,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_render".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "rendered.png".to_string(),
@@ -1306,7 +1359,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = 0;
         if success {
             status = "PASS";
@@ -1314,7 +1368,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_compare".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "merge_a.pdf".to_string(),
             input_size,
             output_path: "diff.pdf".to_string(),
@@ -1342,7 +1397,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success {
             if out_size > 0 {
@@ -1360,7 +1416,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_ocr".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "ocr.txt".to_string(),
@@ -1382,7 +1439,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = 0;
         if success {
             status = "PASS";
@@ -1390,7 +1448,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_bookmarks".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "multi_page.pdf".to_string(),
             input_size,
             output_path: "bookmarks.json".to_string(),
@@ -1421,7 +1480,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1430,7 +1490,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_images_to_pdf".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.png".to_string(),
             input_size,
             output_path: "img_converted.pdf".to_string(),
@@ -1460,7 +1521,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1472,7 +1534,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_annotate".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "annotated.pdf".to_string(),
@@ -1496,7 +1559,8 @@ fn test_all50_audit() {
         checks.push("Pass - stdout output generated".to_string());
         results.push(TestResult {
             tool_id: "pdf_classify_type".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "classify.json".to_string(),
@@ -1520,7 +1584,8 @@ fn test_all50_audit() {
         checks.push("Pass - stdout output generated".to_string());
         results.push(TestResult {
             tool_id: "pdf_validate".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "validation.json".to_string(),
@@ -1544,7 +1609,8 @@ fn test_all50_audit() {
         checks.push("Pass - stdout output generated".to_string());
         results.push(TestResult {
             tool_id: "pdf_hash".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "hash.json".to_string(),
@@ -1568,7 +1634,8 @@ fn test_all50_audit() {
         checks.push("Pass - stdout output generated".to_string());
         results.push(TestResult {
             tool_id: "pdf_read_form".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "form_data.json".to_string(),
@@ -1598,7 +1665,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1610,7 +1678,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_fill_form".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "form_filled.pdf".to_string(),
@@ -1634,7 +1703,8 @@ fn test_all50_audit() {
         checks.push("Pass - stdout output generated".to_string());
         results.push(TestResult {
             tool_id: "pdf_create_form_field".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "form_created.pdf".to_string(),
@@ -1664,7 +1734,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1678,7 +1749,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_docx".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "converted.docx".to_string(),
@@ -1708,7 +1780,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1722,7 +1795,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_xlsx".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "converted.xlsx".to_string(),
@@ -1752,7 +1826,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1766,7 +1841,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_pptx".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "converted.pptx".to_string(),
@@ -1799,7 +1875,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1808,7 +1885,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_convert_html".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.html".to_string(),
             input_size,
             output_path: "html_converted.pdf".to_string(),
@@ -1841,7 +1919,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1850,7 +1929,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_convert_markdown".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.md".to_string(),
             input_size,
             output_path: "md_converted.pdf".to_string(),
@@ -1880,7 +1960,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1889,7 +1970,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_convert_excel".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.xlsx".to_string(),
             input_size,
             output_path: "xlsx_converted.pdf".to_string(),
@@ -1919,7 +2001,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1928,7 +2011,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_html".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "converted.html".to_string(),
@@ -1958,7 +2042,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -1967,7 +2052,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_markdown".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "converted.md".to_string(),
@@ -1997,7 +2083,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -2006,7 +2093,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "pdf_to_json".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "pdf_tree.json".to_string(),
@@ -2039,7 +2127,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File > 0 bytes passed".to_string());
@@ -2048,7 +2137,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "json_to_pdf".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "json_doc.json".to_string(),
             input_size,
             output_path: "json_converted.pdf".to_string(),
@@ -2080,7 +2170,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File exists and > 0 bytes passed".to_string());
@@ -2093,7 +2184,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "excel_to_json".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.xlsx".to_string(),
             input_size,
             output_path: "converted.json".to_string(),
@@ -2122,7 +2214,8 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        #[allow(unused_assignments)]
+let mut status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success && out_size > 0 {
             checks.push("Check 1: File exists, strictly .csv, > 0 bytes passed".to_string());
@@ -2135,7 +2228,8 @@ fn test_all50_audit() {
         }
         results.push(TestResult {
             tool_id: "excel_to_csv".to_string(),
-            status,
+        #[allow(clippy::assign_op_pattern)]
+    status,
             input_path: "test.xlsx".to_string(),
             input_size,
             output_path: "converted.csv".to_string(),

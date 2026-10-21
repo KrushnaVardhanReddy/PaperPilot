@@ -25,4 +25,14 @@ impl ApiRunner {
         let json_body: Value = resp.json().await.unwrap_or(Value::Null);
         Ok((status_ok, json_body, latency_ms))
     }
+
+    pub async fn get_json(&self, endpoint: &str) -> Result<(bool, Value, f64)> {
+        let url = format!("{}{}", self.base_url, endpoint);
+        let start = Instant::now();
+        let resp = self.client.get(&url).send().await?;
+        let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let status_ok = resp.status().is_success();
+        let json_body: Value = resp.json().await.unwrap_or(Value::Null);
+        Ok((status_ok, json_body, latency_ms))
+    }
 }

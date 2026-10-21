@@ -11,11 +11,10 @@ fn call_tool(name: &str, args: serde_json::Value) -> serde_json::Value {
         params.arguments = Some(map);
     }
     let res = PaperPilotMcpServer::execute_call_tool(params).expect("MCP tool execution failed");
-    if let rmcp::model::CallToolResponse::Complete(result) = res {
-        if let Some(ContentBlock::Text(text_content)) = result.content.first() {
+    if let rmcp::model::CallToolResponse::Complete(result) = res
+        && let Some(ContentBlock::Text(text_content)) = result.content.first() {
             return serde_json::from_str(&text_content.text).expect("Valid JSON response");
         }
-    }
     panic!("Unexpected response format");
 }
 
