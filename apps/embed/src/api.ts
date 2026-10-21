@@ -22,6 +22,8 @@ export interface PipelineResult {
 }
 
 export interface EmbedOptions extends ThemeConfig {
+  allowCustomization?: boolean;
+  autoExecute?: boolean;
   tools?: string | string[];
   hideBadge?: boolean;
   pipeline?: string | PipelineStep[];
@@ -253,6 +255,8 @@ export function mount(selector: string | HTMLElement, options: EmbedOptions = {}
   const component = mountSvelte(Widget, {
     target: shadow,
     props: {
+      allowCustomization: options.allowCustomization === true,
+      autoExecute: options.autoExecute !== false,
       tools: toolsString,
       hideBadge: options.hideBadge === true,
       brandColor: options.brandColor,

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { runPipeline, type PipelineStep } from './api';
   import { DEFAULT_PRESETS } from '../../desktop/src/lib/state/pipeline.svelte';
+  import type { SavedPipeline } from '../../desktop/src/lib/state/pipeline.svelte';
   interface Props {
+    allowCustomization?: boolean;
+    autoExecute?: boolean;
     pipeline?: string | PipelineStep[] | null;
     tools?: string;
     hideBadge?: boolean;
@@ -10,7 +13,7 @@
     logoUrl?: string;
   }
 
-  let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null }: Props = $props();
+  let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null, allowCustomization = false, autoExecute = true }: Props = $props();
 
   $effect(() => {
     // Inject brand color into CSS var
@@ -56,6 +59,117 @@
 
 
 
+
+  let customSteps = $state<PipelineStep[]>([]);
+  let savedFlows = $state<SavedPipeline[]>([]);
+  let selectedFlowId = $state<string>('');
+  let isSaveModalOpen = $state(false);
+  let importFileInput = $state<HTMLInputElement | null>(null);
+  let isStepPickerOpen = $state(false);
+
+  $effect(() => {
+    try {
+      const stored = localStorage.getItem('paperpilot_saved_flows');
+      if (stored) {
+        savedFlows = JSON.parse(stored);
+      }
+    } catch(e) {}
+  });
+
+  $effect(() => {
+    if (parsedPipeline && customSteps.length === 0 && !selectedFlowId) {
+       customSteps = [...parsedPipeline];
+       if (typeof pipeline === 'string') {
+          selectedFlowId = pipeline;
+       }
+    }
+  });
+
+  function getActiveSteps() {
+     return allowCustomization ? customSteps : parsedPipeline || [];
+  }
+
+  function removeStep(index: number) {
+    customSteps = customSteps.filter((_, i) => i !== index);
+    selectedFlowId = ''; // No longer matches exactly if modified
+  }
+
+  function addStep(step: PipelineStep) {
+    customSteps = [...customSteps, step];
+    isStepPickerOpen = false;
+    selectedFlowId = '';
+  }
+
+  function handleFlowChange() {
+     const preset = DEFAULT_PRESETS.find(p => p.id === selectedFlowId);
+     if (preset) {
+        customSteps = preset.steps.map(s => ({
+          tool: s.operationId.replace('pdf_', ''),
+          ...s.params
+        }));
+        return;
+     }
+     const saved = savedFlows.find(f => f.id === selectedFlowId);
+     if (saved) {
+        customSteps = saved.steps.map(s => ({
+          tool: s.operationId.replace('pdf_', ''),
+          ...s.params
+        }));
+     }
+  }
+
+  function saveCurrentFlow() {
+     const name = prompt("Enter a name for this custom flow:");
+     if (!name) return;
+
+     const newFlow: SavedPipeline = {
+        id: crypto.randomUUID(),
+        name,
+        description: 'Custom saved flow',
+        isPreset: false,
+        updatedAt: new Date().toISOString(),
+        steps: customSteps.map(s => ({
+           id: crypto.randomUUID(),
+           operationId: 'pdf_' + s.tool,
+           label: s.tool,
+           icon: '⚡',
+           params: { ...s }
+        }))
+     };
+
+     savedFlows = [...savedFlows, newFlow];
+     selectedFlowId = newFlow.id;
+     localStorage.setItem('paperpilot_saved_flows', JSON.stringify(savedFlows));
+  }
+
+  function handleExportJson() {
+     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(customSteps, null, 2));
+     const dlAnchorElem = document.createElement('a');
+     dlAnchorElem.setAttribute("href", dataStr);
+     dlAnchorElem.setAttribute("download", "flow.json");
+     dlAnchorElem.click();
+  }
+
+  function handleImportJson(e: Event) {
+     const target = e.target as HTMLInputElement;
+     if (target.files && target.files.length > 0) {
+        const file = target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+           try {
+              const imported = JSON.parse(event.target?.result as string);
+              if (Array.isArray(imported)) {
+                 customSteps = imported;
+                 selectedFlowId = ''; // Custom unsaved
+              }
+           } catch(err) {
+              console.error("Invalid JSON flow", err);
+           }
+        };
+        reader.readAsText(file);
+     }
+  }
+
   // @ts-ignore
   let pipelineProgress = $state<number>(0);
   // @ts-ignore
@@ -82,7 +196,7 @@
 
   let droppedFiles = $state<File[]>([]);
   let isDragging = $state(false);
-  let fileInputRef: HTMLInputElement | null = null;
+  let fileInputRef = $state<HTMLInputElement | null>(null);
 
   // Active tool and configurable options
   let activeToolId = $state<string | null>(null);
@@ -132,7 +246,7 @@
       droppedFiles = [...droppedFiles, ...toAdd];
       processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
-      if (parsedPipeline) {
+      if (getActiveSteps().length > 0 && autoExecute) {
         runVisualPipeline();
       }
     }
@@ -145,7 +259,7 @@
       droppedFiles = [...droppedFiles, ...incoming];
       processedFiles = [];
       dispatchEvent('files-selected', { count: droppedFiles.length, files: droppedFiles.map(f => f.name) });
-      if (parsedPipeline) {
+      if (getActiveSteps().length > 0 && autoExecute) {
         runVisualPipeline();
       }
     }
@@ -163,7 +277,7 @@
   }
 
   async function runVisualPipeline() {
-    if (droppedFiles.length === 0 || !parsedPipeline) {
+    if (droppedFiles.length === 0 || (getActiveSteps().length === 0)) {
       triggerFileDialog();
       return;
     }
@@ -171,14 +285,14 @@
     pipelineStatus = 'running';
     pipelineProgress = 0;
     pipelineActiveStep = 0;
-    dispatchEvent('pipeline-start', { files: droppedFiles.map(f => f.name), steps: parsedPipeline.length });
+    dispatchEvent('pipeline-start', { files: droppedFiles.map(f => f.name), steps: getActiveSteps().length });
 
     try {
       pipelineResults = [];
       for (const file of droppedFiles) {
         const result = await runPipeline({
           file,
-          steps: parsedPipeline,
+          steps: getActiveSteps(),
           onProgress: (stepIndex, _step, progressPercent) => {
              pipelineActiveStep = stepIndex;
              pipelineProgress = progressPercent;
@@ -190,7 +304,7 @@
         pipelineResults.push({ name: result.filename, url, size: blob.size });
       }
       pipelineStatus = 'done';
-      pipelineActiveStep = parsedPipeline.length;
+      pipelineActiveStep = getActiveSteps().length;
       pipelineProgress = 100;
 
       // Emit the final event with arrayBuffer
@@ -415,8 +529,44 @@
         </div>
         <input type="file" bind:this={fileInputRef} accept=".pdf" multiple onchange={handleFileInput} style="display: none;" />
 
+
+        {#if allowCustomization}
+          <div class="pp-flow-toolbar">
+            <div class="pp-flow-selector">
+              <label for="pp-flow-select">Flow:</label>
+              <select id="pp-flow-select" bind:value={selectedFlowId} onchange={handleFlowChange} class="pp-select">
+                <optgroup label="Standard Presets">
+                  {#each DEFAULT_PRESETS as preset}
+                    <option value={preset.id}>{preset.name}</option>
+                  {/each}
+                </optgroup>
+                {#if savedFlows.length > 0}
+                  <optgroup label="My Saved Flows">
+                    {#each savedFlows as flow}
+                      <option value={flow.id}>{flow.name}</option>
+                    {/each}
+                  </optgroup>
+                {/if}
+              </select>
+            </div>
+
+            <div class="pp-flow-actions">
+              <button type="button" class="pp-btn-sm" onclick={() => saveCurrentFlow()} disabled={customSteps.length === 0}>
+                💾 Save Flow
+              </button>
+              <button type="button" class="pp-btn-sm" onclick={handleExportJson} disabled={customSteps.length === 0}>
+                ⬇️ Export JSON
+              </button>
+              <button type="button" class="pp-btn-sm" onclick={() => importFileInput?.click()}>
+                ⬆️ Import JSON
+              </button>
+              <input type="file" accept=".json" bind:this={importFileInput} onchange={handleImportJson} style="display: none;" />
+            </div>
+          </div>
+        {/if}
+
         <div class="pp-pipeline-stepper">
-          {#each parsedPipeline as step, index}
+          {#each getActiveSteps() as step, index}
             <div class="pp-pipeline-step" class:active={pipelineActiveStep === index} class:done={pipelineActiveStep > index}>
               <div class="pp-step-indicator">
                 {#if pipelineActiveStep > index}
@@ -430,12 +580,45 @@
               <div class="pp-step-details">
                 <div class="pp-step-title">{index + 1}. {step.tool.charAt(0).toUpperCase() + step.tool.slice(1)}</div>
               </div>
+              {#if allowCustomization && pipelineStatus !== 'running'}
+                 <button type="button" class="pp-step-remove" onclick={() => removeStep(index)} title="Remove step">✕</button>
+              {/if}
             </div>
-            {#if index < parsedPipeline.length - 1}
-              <div class="pp-step-connector">➔</div>
-            {/if}
+            <div class="pp-step-connector">➔</div>
           {/each}
+          {#if allowCustomization && pipelineStatus !== 'running'}
+            <button type="button" class="pp-step-add" onclick={() => isStepPickerOpen = !isStepPickerOpen}>
+              + Add Step
+            </button>
+          {/if}
         </div>
+
+        {#if isStepPickerOpen}
+          <div class="pp-step-picker">
+             <h4>Add a Step</h4>
+             <div class="pp-picker-tools">
+               <button type="button" class="pp-btn-sm" onclick={() => addStep({ tool: 'rotate', angle: 90 })}>Rotate (90°)</button>
+               <button type="button" class="pp-btn-sm" onclick={() => addStep({ tool: 'watermark', text: 'CONFIDENTIAL', opacity: 0.3 })}>Watermark</button>
+               <button type="button" class="pp-btn-sm" onclick={() => addStep({ tool: 'compress' })}>Compress</button>
+               <button type="button" class="pp-btn-sm" onclick={() => addStep({ tool: 'extract', pages: '1' })}>Extract</button>
+               <button type="button" class="pp-btn-sm" onclick={() => addStep({ tool: 'split', pages: '1-2' })}>Split</button>
+             </div>
+          </div>
+        {/if}
+
+
+
+        {#if !autoExecute || allowCustomization}
+          <div style="display: flex; justify-content: center; margin-top: 12px; margin-bottom: 12px;">
+            <button
+              class="pp-btn pp-btn-primary pp-btn-run"
+              disabled={droppedFiles.length === 0 || getActiveSteps().length === 0 || pipelineStatus === 'running'}
+              onclick={runVisualPipeline}
+            >
+              {pipelineStatus === 'running' ? '⏳ Running...' : '⚡ Run Pipeline'}
+            </button>
+          </div>
+        {/if}
 
         {#if pipelineStatus === 'running'}
            <div class="pp-progress">
@@ -489,24 +672,23 @@
     tabindex="0"
     onkeydown={(e) => { if (e.key === 'Enter') triggerFileDialog(); }}
   >
-    {#if droppedFiles.length > 0}
-      <div class="file-summary">
-        <p class="file-success">
-          📄 <strong>{droppedFiles.length} PDF{droppedFiles.length > 1 ? 's' : ''} Ready</strong>
-        </p>
-        <ul class="file-list">
-          {#each droppedFiles as file}
-            <li>{file.name} ({(file.size / 1024).toFixed(1)} KB)</li>
-          {/each}
-        </ul>
-        <div class="file-actions">
-          <span class="sub-hint">Click or drop more files to add</span>
-          <button class="clear-btn" onclick={clearFiles}>Clear All</button>
-        </div>
+    {#if droppedFiles.length === 0 || droppedFiles.length === undefined}
+      <div class="pp-icon-upload">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       </div>
+      <p>Drag and drop a PDF here, or</p>
+      <button type="button" class="pp-btn-browse" onclick={(e) => { e.stopPropagation(); triggerFileDialog(); }}>
+        📁 Browse Files
+      </button>
     {:else}
-      <p>📁 Drag and drop multiple PDFs here, or <span class="browse-link">browse</span></p>
-      <span class="sub-hint">Files processed 100% locally in browser (Zero-Upload)</span>
+      <div class="pp-file-selected">
+        <span class="pp-file-icon">📄</span>
+        <div class="pp-file-details">
+          <span class="pp-file-name">{droppedFiles[0].name}</span>
+          <span class="pp-file-size">{(droppedFiles[0].size / 1024).toFixed(1)} KB</span>
+        </div>
+        <button type="button" class="pp-btn-clear" onclick={clearFiles} title="Change / remove file">✕ Change File</button>
+      </div>
     {/if}
   </div>
 
@@ -1030,6 +1212,130 @@
     background: rgba(239, 68, 68, 0.1);
     border-radius: 8px;
     text-align: center;
+  }
+
+
+  .pp-flow-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+    padding: 12px;
+    border-radius: 8px;
+    gap: 12px;
+  }
+  .pp-flow-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pp-flow-selector label {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--pp-text-muted);
+  }
+  .pp-flow-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pp-btn-sm {
+    background: var(--pp-background);
+    color: var(--pp-text);
+    border: 1px solid var(--pp-border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pp-btn-sm:hover:not(:disabled) {
+    border-color: var(--pp-brand-color);
+    color: var(--pp-brand-color);
+  }
+  .pp-btn-sm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pp-step-remove {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 4px;
+    margin-left: 4px;
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+  .pp-step-remove:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
+  }
+  .pp-step-add {
+    background: none;
+    border: 1px dashed var(--pp-text-muted);
+    color: var(--pp-text-muted);
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pp-step-add:hover {
+    color: var(--pp-brand-color);
+    border-color: var(--pp-brand-color);
+  }
+  .pp-step-picker {
+    background: var(--pp-background);
+    border: 1px solid var(--pp-border);
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: -8px;
+    margin-bottom: 12px;
+  }
+  .pp-step-picker h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--pp-text-muted);
+  }
+  .pp-picker-tools {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pp-btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pp-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pp-btn-primary {
+    background-color: var(--pp-brand-color);
+    color: white;
+  }
+  .pp-btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  .pp-btn-run {
+    width: 100%;
+    max-width: 300px;
+    font-size: 16px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
 </style>

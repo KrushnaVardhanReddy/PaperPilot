@@ -8,6 +8,109 @@ test.describe('PaperPilot Headless & Visual Pipeline', () => {
     await page.goto(fixtureUrl);
   });
 
+  test('3. Full Desktop Parity - Customization, Steps, & Flow Management', async ({ page }) => {
+    await page.addScriptTag({ path: resolve(import.meta.dirname, '../dist/embed.js') });
+
+    await page.evaluate(() => {
+        // @ts-ignore
+        window.PaperPilot.mount('#manual-portal', {
+            pipeline: [
+                { tool: 'compress' },
+            ],
+            allowCustomization: true,
+            autoExecute: false
+        });
+    });
+
+    const portal = page.locator('#manual-portal');
+    await page.waitForTimeout(500);
+
+    // Assert .pp-btn-browse exists in the dropzone
+    await page.waitForTimeout(500);
+    const hasBrowseBtn = await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        return !!root?.querySelector('.pp-btn-browse') || !!root?.querySelector('.pp-dropzone');
+    });
+    expect(hasBrowseBtn).toBe(true);
+
+    // Assert flow management toolbar and Save Flow/Export buttons exist
+    const hasToolbar = await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        return !!root?.querySelector('.pp-flow-toolbar') &&
+               !!root?.querySelector('.pp-flow-selector') &&
+               !!root?.querySelector('.pp-flow-actions button'); // Save flow btn
+    });
+    expect(hasToolbar).toBe(true);
+
+    // Assert dynamic addition/removal of steps
+    await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        // Click Add Step
+        (root?.querySelector('.pp-step-add') as HTMLElement)?.click();
+    });
+
+    await page.waitForTimeout(100);
+
+    // Click Watermark tool in the picker
+    await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        const btns = Array.from(root?.querySelectorAll('.pp-picker-tools .pp-btn-sm') || []);
+        const wmBtn = btns.find(b => b.textContent?.includes('Watermark'));
+        (wmBtn as HTMLElement)?.click();
+    });
+
+    await page.waitForTimeout(100);
+
+    // Assert Stepper updated
+    let stepTitles = await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        return Array.from(root?.querySelectorAll('.pp-step-title') || []).map(n => n.textContent?.trim());
+    });
+    expect(stepTitles).toEqual(['1. Compress', '2. Watermark']);
+
+    // Remove the compress step (first step)
+    await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        (root?.querySelector('.pp-step-remove') as HTMLElement)?.click();
+    });
+
+    await page.waitForTimeout(100);
+
+    stepTitles = await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        return Array.from(root?.querySelectorAll('.pp-step-title') || []).map(n => n.textContent?.trim());
+    });
+    expect(stepTitles).toEqual(['1. Watermark']);
+
+    // Mock local storage save
+    await page.evaluate(() => {
+        window.prompt = () => "My New Flow";
+    });
+
+    await portal.evaluate((el) => {
+        const root = el.shadowRoot;
+        const btns = Array.from(root?.querySelectorAll('.pp-flow-actions button') || []);
+        const saveBtn = btns.find(b => b.textContent?.includes('Save Flow'));
+        (saveBtn as HTMLElement)?.click();
+    });
+
+    await page.waitForTimeout(100);
+
+    // Assert local storage updated
+    const savedFlows = await page.evaluate(() => {
+        return JSON.parse(localStorage.getItem('paperpilot_saved_flows') || '[]');
+    });
+    expect(savedFlows.length).toBe(1);
+    expect(savedFlows[0].name).toBe('My New Flow');
+
+    // Check for Run Pipeline button presence (since autoExecute=false)
+    const hasRunBtn = await portal.evaluate((el) => {
+        return !!el.shadowRoot?.querySelector('.pp-btn-run');
+    });
+    expect(hasRunBtn).toBe(true);
+  });
+
+
   test('1. Headless Pipeline Execution', async ({ page }) => {
     const success = await page.evaluate(async () => {
       // Create a dummy PDF to pass in
