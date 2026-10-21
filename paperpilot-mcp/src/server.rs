@@ -3335,6 +3335,7 @@ impl PaperPilotMcpServer {
                                     if pt < total_pages && !pts.contains(&pt) {
                                         pts.push(pt);
                                     }
+                                    }
                                 }
                             }
                             if pts.is_empty() {
