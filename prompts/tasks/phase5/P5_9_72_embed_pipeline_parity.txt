@@ -1,12 +1,18 @@
-# Task 5.9.72: Embed Pipeline Parity — Browse Button & Interactive Step Selection
+# Task 5.9.72: Embed Pipeline 1-to-1 Desktop Parity — Dropzone Polish, Interactive Step Customization, and Flow Management (Save/Export/Import)
 # Base Branch: main
 # Related Spec: specs/083-embed-pipeline-parity-and-step-customization/spec.md
-# Priority: MEDIUM (Embed UX & Feature Parity with Desktop Pipeline)
+# Priority: MEDIUM (Full Desktop Pipeline Parity inside Web Embed)
 
 ## Objective
-Bring the Web Embed Pipeline (`apps/embed`) to functional and UX parity with the Desktop visual pipeline builder:
-1. **Explicit File Browsing**: Add a prominent, clickable `"Browse Files"` button and selected file preview chip into the embed pipeline dropzone.
-2. **Interactive Tool & Step Selection**: When `data-allow-customization="true"` (or `allowCustomization: true`), allow users to dynamically add new steps (`+ Add Step`), choose from available tools, remove existing steps (`×`), and execute the pipeline via an explicit `"⚡ Run Pipeline"` button.
+Bring the Web Embed Pipeline (`apps/embed`) to complete 1-to-1 feature parity with the Desktop visual pipeline builder:
+1. **Explicit File Browsing**: Add a prominent `📁 Browse Files` button and selected file card (icon, name, size, `✕ Change File`) in the embed dropzone.
+2. **Interactive Step Management**: When customization is enabled (`data-allow-customization="true"` or `allowCustomization: true`), allow users to remove steps (`✕`) and dynamically append steps (`+ Add Step`) from in-browser tools (`Rotate`, `Watermark`, `Compress`, `Extract`, `Split`).
+3. **Flow Management Toolbar (Save, Presets, Export, Import)**:
+   - Preset & Saved Flow `<select>` dropdown (using `DEFAULT_PRESETS` and `localStorage['paperpilot_saved_flows']`).
+   - `💾 Save Flow` button with lightweight modal/prompt saving custom recipes.
+   - `⬇️ Export JSON` button downloading portable `flow.json`.
+   - `⬆️ Import JSON` button loading portable `flow.json`.
+4. **Execution Controls**: Explicit `"⚡ Run Pipeline"` button when `autoExecute === false` (or when customizable).
 
 ---
 
@@ -23,61 +29,86 @@ apps/embed/tests/pipeline.spec.ts
 
 ## 1. Dropzone UX Polish (`apps/embed/src/Widget.svelte`)
 In the pipeline view (`{#if pipeline}` branch):
-- Replace the bare text inside `.pp-dropzone` with:
+- When no files are selected:
   ```svelte
-  {#if droppedFiles.length === 0}
-    <div class="pp-icon-upload">...</div>
-    <p>Drag and drop a PDF here, or</p>
-    <button type="button" class="pp-btn-browse" onclick={(e) => { e.stopPropagation(); triggerFileDialog(); }}>
-      📁 Browse Files
-    </button>
-  {:else}
-    <div class="pp-file-selected">
-      <span class="pp-file-icon">📄</span>
-      <div class="pp-file-details">
-        <span class="pp-file-name">{droppedFiles[0].name}</span>
-        <span class="pp-file-size">{(droppedFiles[0].size / 1024).toFixed(1)} KB</span>
-      </div>
-      <button type="button" class="pp-btn-clear" onclick={clearFiles} title="Remove file">✕</button>
-    </div>
-  {/if}
+  <div class="pp-icon-upload">...</div>
+  <p>Drag and drop a PDF here, or</p>
+  <button type="button" class="pp-btn-browse" onclick={(e) => { e.stopPropagation(); triggerFileDialog(); }}>
+    📁 Browse Files
+  </button>
   ```
-- Ensure styling for `.pp-btn-browse`:
-  - Background: `rgba(255, 255, 255, 0.1)` with subtle hover state.
-  - Border: `1px solid var(--border-color, rgba(255, 255, 255, 0.2))`.
-  - Border radius: `6px`.
-  - Cursor: pointer.
+- When a file is selected:
+  ```svelte
+  <div class="pp-file-selected">
+    <span class="pp-file-icon">📄</span>
+    <div class="pp-file-details">
+      <span class="pp-file-name">{droppedFiles[0].name}</span>
+      <span class="pp-file-size">{(droppedFiles[0].size / 1024).toFixed(1)} KB</span>
+    </div>
+    <button type="button" class="pp-btn-clear" onclick={clearFiles} title="Change / remove file">✕ Change File</button>
+  </div>
+  ```
 
 ---
 
-## 2. Interactive Step Selection & Customization (`apps/embed/src/Widget.svelte` & `apps/embed/src/api.ts`)
-- Add props:
-  - `allowCustomization: boolean = false`
-  - `autoExecute: boolean = true`
-- Read dataset attributes on mount:
-  - `data-allow-customization="true"`
-  - `data-auto-execute="false"`
-- When `allowCustomization` is `true`:
-  - Initialize mutable `$state` `pipelineSteps`:
-    ```ts
-    let customSteps = $state<PipelineStep[]>([]);
-    $effect(() => {
-      if (parsedPipeline && customSteps.length === 0) {
-        customSteps = [...parsedPipeline];
-      }
-    });
-    ```
-  - For each step in the stepper, show a remove button (`✕`) when hovering or active, allowing users to remove a step from `customSteps`.
-  - At the end of the stepper, add an `+ Add Step` button.
-  - Clicking `+ Add Step` opens a lightweight inline tool selector dropdown/grid containing in-browser operations:
-    - Rotate (`rotate`)
-    - Watermark (`watermark`)
-    - Compress (`compress`)
-    - Extract (`extract_pages`)
-    - Split (`split`)
-  - Selecting a tool appends it with default parameters to `customSteps`.
-- When `autoExecute` is `false` (or customization is active):
-  - Instead of immediately auto-running on file drop, display a prominent button:
+## 2. Flow Management Toolbar (`Widget.svelte`)
+Add a clean toolbar directly above or below the pipeline stepper:
+```svelte
+{#if allowCustomization}
+  <div class="pp-flow-toolbar">
+    <div class="pp-flow-selector">
+      <label for="pp-flow-select">Flow:</label>
+      <select id="pp-flow-select" bind:value={selectedFlowId} onchange={handleFlowChange} class="pp-select">
+        <optgroup label="Standard Presets">
+          {#each DEFAULT_PRESETS as preset}
+            <option value={preset.id}>{preset.name}</option>
+          {/each}
+        </optgroup>
+        {#if savedFlows.length > 0}
+          <optgroup label="My Saved Flows">
+            {#each savedFlows as flow}
+              <option value={flow.id}>{flow.name}</option>
+            {/each}
+          </optgroup>
+        {/if}
+      </select>
+    </div>
+
+    <div class="pp-flow-actions">
+      <button type="button" class="pp-btn-sm" onclick={() => isSaveModalOpen = true} disabled={customSteps.length === 0}>
+        💾 Save Flow
+      </button>
+      <button type="button" class="pp-btn-sm" onclick={handleExportJson} disabled={customSteps.length === 0}>
+        ⬇️ Export JSON
+      </button>
+      <button type="button" class="pp-btn-sm" onclick={() => importFileInput?.click()}>
+        ⬆️ Import JSON
+      </button>
+      <input type="file" accept=".json" bind:this={importFileInput} onchange={handleImportJson} style="display: none;" />
+    </div>
+  </div>
+{/if}
+```
+
+---
+
+## 3. Interactive Stepper & Step Picker (`Widget.svelte`)
+- Display steps in `.pp-pipeline-stepper`:
+  - Show a remove button (`✕`) on each step chip when `allowCustomization` is true.
+  - Render an `[+ Add Step]` button at the end of the stepper.
+  - Clicking `[+ Add Step]` opens a clean inline picker with tools:
+    - `rotate` (angle: 90)
+    - `watermark` (text: 'CONFIDENTIAL', opacity: 0.3)
+    - `compress`
+    - `extract` (pages: '1')
+    - `split` (pages: '1-2')
+  - Selecting an operation appends it to `customSteps`.
+
+---
+
+## 4. Execution Controls
+- When `autoExecute === false` or `allowCustomization === true`:
+  - Show a prominent action button below the stepper:
     ```svelte
     <button 
       class="pp-btn pp-btn-primary pp-btn-run" 
@@ -90,20 +121,15 @@ In the pipeline view (`{#if pipeline}` branch):
 
 ---
 
-## 3. Demo Page Update (`apps/web/public/embed-test.html`)
-Update Demo 3 in `apps/web/public/embed-test.html`:
-- Add `data-allow-customization="true"` and `data-auto-execute="false"`.
-- Update description: `"Drop or browse a PDF, customize steps (+ Add Step), and execute zero-server in browser WASM."`
-
----
-
-## 4. Tests & Verification (`apps/embed/tests/pipeline.spec.ts`)
-Add automated Playwright assertions:
-1. Verify `.pp-btn-browse` is rendered and visible inside the pipeline view dropzone.
-2. In customization mode, verify `+ Add Step` button exists.
-3. Verify clicking `+ Add Step` opens the tool selection menu and selecting a tool appends a new step to `.pp-pipeline-stepper`.
-4. Verify clicking remove on a step deletes it.
-5. Verify pipeline execution processes the custom steps successfully.
+## 5. Demo & Automated Playwright Tests
+- Update `apps/web/public/embed-test.html` Demo 3 with `data-allow-customization="true"` and `data-auto-execute="false"`.
+- In `apps/embed/tests/pipeline.spec.ts`:
+  1. Verify `.pp-btn-browse` is visible and functional.
+  2. In customizable mode, assert flow dropdown, `Save Flow`, and `Export JSON` buttons exist.
+  3. Assert selecting a different preset updates `customSteps`.
+  4. Assert adding a step (`+ Add Step`) and deleting a step (`✕`) updates the stepper.
+  5. Assert saving a flow updates `localStorage`.
+  6. Assert running the pipeline outputs the download card.
 
 ---
 
