@@ -1,0 +1,37 @@
+Implement Task 5.9.60 / Spec 086: Automated PII & Sensitive Information Scanner (`document_pii_scan`) following the strict "Single Core Runner + 5 Thin Wrappers" architecture (`specs/086-pii-sensitive-info-scanner/spec.md`).
+
+CRITICAL ARCHITECTURAL CONSTRAINTS:
+1. Pure Rust In-Memory Execution:
+   - Implement the core scanner in `paperpilot-pdf/src/operations/pii.rs` with `pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanReport, paperpilot_core::error::PdfError>`.
+   - Export in `paperpilot-pdf/src/operations/mod.rs`.
+   - Categories to detect:
+     * SSN: US Social Security Numbers (`\b\d{3}-\d{2}-\d{4}\b`).
+     * Credit Cards: Visa, MasterCard, Amex, Discover with Luhn checksum validation.
+     * Email Addresses: Standard RFC 5322 regex.
+     * Phone Numbers: E.164 and US formatted phone numbers.
+     * IBAN: International Bank Account Numbers with Modulo 97-10 checksum validation.
+   - Return structured report with masked values (e.g. `XXX-XX-1234`), 1-based page number, category, confidence (0.0 - 1.0), and text snippet.
+
+2. Do NOT add `paperpilot-pdf` to `paperpilot-wasm`:
+   - In `paperpilot-wasm`, implement client-side PII scanning in `paperpilot-wasm/src/operations.rs` directly using in-memory regex without linking `paperpilot-pdf`.
+   - Export `pii_scan` on `WasmPdfEngine` in `paperpilot-wasm/src/lib.rs`.
+
+3. Implement All 5 Thin Wrappers:
+   - CLI: Add `PiiScan` subcommand to `paperpilot-cli/src/cli.rs`, dispatch in `paperpilot-cli/src/commands/mod.rs`, and write handler in `paperpilot-cli/src/commands/pii.rs`. Output JSON report.
+   - MCP: Register tool `document_pii_scan` in `execute_list_tools` and dispatch in `execute_call_tool` (`paperpilot-mcp/src/server.rs`). Update tool count assertions in unit tests.
+   - REST Gateway: Add route `/api/v1/pdf/pii-scan` in `paperpilot-gateway/src/server.rs` and handler in `handlers.rs`.
+   - WASM: `WasmPdfEngine.pii_scan` in `paperpilot-wasm`.
+   - Edge: Add route `/api/v1/pii-scan` in `apps/edge/src/index.ts`.
+
+4. Penta-Interface E2E Suite:
+   - Add test runner in `tools/penta-interface-e2e/src/cases/pii.rs` testing all 5 surfaces.
+   - Wire `--group pii` in `tools/penta-interface-e2e/src/main.rs`.
+   - Ensure 10/10 tests pass and write report to `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
+
+5. Documentation & UI:
+   - Register tool in `apps/desktop/src/lib/types/toolList.ts`, `pipeline.svelte.ts`, and `snippetGenerator.ts`.
+   - Create documentation in `wiki/document_pii_scan.md`.
+
+6. Quality Guardrails:
+   - DO NOT run destructive git commands like `git reset`, `git checkout -- .`, or `git clean`.
+   - Run compilation and tests with `-j 4`.
