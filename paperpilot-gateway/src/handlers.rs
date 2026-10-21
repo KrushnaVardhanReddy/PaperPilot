@@ -992,11 +992,31 @@ pub struct WorkflowRunJsonRequest {
     pub recipe: Option<serde_json::Value>,
 }
 
+/// Discover all built-in declarative workflow presets (Legal Discovery, Clean Scan, Redact & Protect)
+#[utoipa::path(
+    get,
+    path = "/api/v1/workflow/presets",
+    tag = "Workflow",
+    responses(
+        (status = 200, description = "List of workflow presets")
+    )
+)]
 pub async fn workflow_presets() -> impl IntoResponse {
     let presets = paperpilot_core::workflow::get_default_presets();
     (StatusCode::OK, Json(presets))
 }
 
+/// Validate a workflow recipe JSON structure before execution
+#[utoipa::path(
+    post,
+    path = "/api/v1/workflow/validate",
+    tag = "Workflow",
+    request_body = WorkflowValidateRequest,
+    responses(
+        (status = 200, description = "Recipe validated successfully"),
+        (status = 400, description = "Invalid recipe schema")
+    )
+)]
 pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> impl IntoResponse {
     if let Some(recipe_val) = payload.recipe {
         if let Ok(wf) =
@@ -1029,6 +1049,18 @@ pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> 
     }
 }
 
+/// Execute a multi-step workflow recipe via JSON referencing file paths
+#[utoipa::path(
+    post,
+    path = "/api/v1/workflow/run-json",
+    tag = "Workflow",
+    request_body = WorkflowRunJsonRequest,
+    responses(
+        (status = 200, description = "Workflow executed successfully"),
+        (status = 400, description = "Invalid preset or recipe"),
+        (status = 500, description = "Execution error")
+    )
+)]
 pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> impl IntoResponse {
     let workflow = if let Some(preset_name) = &payload.preset {
         match paperpilot_core::workflow::get_preset_by_id(preset_name) {

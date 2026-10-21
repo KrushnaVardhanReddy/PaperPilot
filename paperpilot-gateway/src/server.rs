@@ -28,7 +28,10 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::office_extract_text,
         handlers::rag_chunks,
         handlers::handle_tool,
-        handlers::list_tools
+        handlers::list_tools,
+        handlers::workflow_presets,
+        handlers::workflow_validate,
+        handlers::workflow_run_json
     ),
     components(
         schemas(
@@ -46,7 +49,9 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::ExcelToJsonRequest,
             handlers::ExcelToCsvRequest,
             handlers::OfficeConvertJsonRequest,
-            handlers::RagChunksJsonRequest
+            handlers::RagChunksJsonRequest,
+            handlers::WorkflowValidateRequest,
+            handlers::WorkflowRunJsonRequest
         )
     ),
     tags(
@@ -54,7 +59,8 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "Tools", description = "Discovery and capability listing across all 52 tools"),
         (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
         (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
-        (name = "Office Operations", description = "Office document and spreadsheet ingestion and modernizing endpoints")
+        (name = "Office Operations", description = "Office document and spreadsheet ingestion and modernizing endpoints"),
+        (name = "Workflow", description = "Declarative multi-step document workflow execution and presets")
     ),
     info(
         title = "PaperPilot Gateway API & MCP Server",

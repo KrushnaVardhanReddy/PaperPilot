@@ -351,6 +351,42 @@
           "output"
         ],
         "type": "object"
+      },
+      "WorkflowRunJsonRequest": {
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "preset": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipe": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "input",
+          "output",
+          "recipe"
+        ],
+        "type": "object"
+      },
+      "WorkflowValidateRequest": {
+        "properties": {
+          "recipe": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "recipe"
+        ],
+        "type": "object"
       }
     }
   },
@@ -935,6 +971,77 @@
         ]
       }
     },
+    "/api/v1/workflow/presets": {
+      "get": {
+        "operationId": "workflow_presets",
+        "responses": {
+          "200": {
+            "description": "List of workflow presets"
+          }
+        },
+        "summary": "Discover all built-in declarative workflow presets (Legal Discovery, Clean Scan, Redact & Protect)",
+        "tags": [
+          "Workflow"
+        ]
+      }
+    },
+    "/api/v1/workflow/run-json": {
+      "post": {
+        "operationId": "workflow_run_json",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowRunJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow executed successfully"
+          },
+          "400": {
+            "description": "Invalid preset or recipe"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Execute a multi-step workflow recipe via JSON referencing file paths",
+        "tags": [
+          "Workflow"
+        ]
+      }
+    },
+    "/api/v1/workflow/validate": {
+      "post": {
+        "operationId": "workflow_validate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Recipe validated successfully"
+          },
+          "400": {
+            "description": "Invalid recipe schema"
+          }
+        },
+        "summary": "Validate a workflow recipe JSON structure before execution",
+        "tags": [
+          "Workflow"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health",
@@ -977,6 +1084,10 @@
     {
       "description": "Office document and spreadsheet ingestion and modernizing endpoints",
       "name": "Office Operations"
+    },
+    {
+      "description": "Declarative multi-step document workflow execution and presets",
+      "name": "Workflow"
     }
   ]
 }
