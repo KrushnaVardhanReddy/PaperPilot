@@ -199,6 +199,19 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
+    Sanitize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value_t = true)]
+        remove_metadata: bool,
+        #[arg(long, default_value_t = true)]
+        remove_attachments: bool,
+        #[arg(long, default_value_t = true)]
+        remove_scripts: bool,
+    },
     /// Edit Metadata: Edit document metadata [Input: .pdf | Output: .pdf]
     Metadata {
         #[arg(long)]

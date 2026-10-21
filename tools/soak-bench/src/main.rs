@@ -195,7 +195,7 @@ fn run_group_a_individual(
 
     // 2. pdf_split
     if time_op("pdf_split", lats, || {
-        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        use paperpilot_core::traits::PdfOperation;
         let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
             "tests/e2e_fixtures/multi_page.pdf",
         ))
@@ -304,7 +304,7 @@ fn run_group_a_individual(
 
     // 8. pdf_burst
     if time_op("pdf_burst", lats, || {
-        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        use paperpilot_core::traits::PdfOperation;
         let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
             "tests/e2e_fixtures/multi_page.pdf",
         ))
@@ -561,7 +561,7 @@ fn run_group_cde_individual(
 ) {
     // 22. pdf_extract_text
     if time_op("pdf_extract_text", lats, || {
-        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        use paperpilot_core::traits::PdfOperation;
         let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
             "tests/e2e_fixtures/single_page.pdf",
         ))
@@ -583,7 +583,7 @@ fn run_group_cde_individual(
 
     // 23. pdf_read_form
     if time_op("pdf_read_form", lats, || {
-        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        use paperpilot_core::traits::PdfOperation;
         let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
             "tests/e2e_fixtures/single_page.pdf",
         ))
@@ -601,7 +601,7 @@ fn run_group_cde_individual(
 
     // 24. pdf_validate
     if time_op("pdf_validate", lats, || {
-        use paperpilot_core::traits::{PdfDocument, PdfOperation};
+        use paperpilot_core::traits::PdfOperation;
         let mut doc = paperpilot_pdf::document::LopdfDocument::load(std::path::Path::new(
             "tests/e2e_fixtures/single_page.pdf",
         ))

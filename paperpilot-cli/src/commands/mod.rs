@@ -7,6 +7,7 @@ pub mod group_e;
 #[cfg(feature = "office")]
 #[cfg(feature = "office")]
 pub mod office;
+pub mod sanitize;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
@@ -124,6 +125,19 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             rect,
             output,
         } => group_b::handle_redact(input, pages, rect, output),
+        Commands::Sanitize {
+            input,
+            output,
+            remove_metadata,
+            remove_attachments,
+            remove_scripts,
+        } => sanitize::handle_sanitize_command(
+            input,
+            output,
+            *remove_metadata,
+            *remove_attachments,
+            *remove_scripts,
+        ),
         Commands::Metadata {
             input,
             title,

@@ -165,6 +165,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
             )?;
         }
+        "sanitize" | "5.9.59" => {
+            let results = cases::sanitize::run_sanitize_suite().await?;
+            println!("Sanitize finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.59 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Sanitize)",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md"
+            )?;
+        }
         "bench" => {
             let results = cases::bench::run_benchmark_suite().await?;
             println!("Benchmarking suite completed.");
@@ -210,11 +219,20 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md",
             )?;
 
+            let s = cases::sanitize::run_sanitize_suite().await?;
+            println!("Sanitize finished: {} tests", s.len());
+            generate_markdown_report(
+                "Phase 5.9.59 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Sanitize)",
+                &s,
+                "reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
             all.extend(c);
             all.extend(d);
+            all.extend(s);
             generate_markdown_report(
                 "Master Phase 5.9.4 — Rust-Native Penta-Interface Real Semantic Assertions Suite (All 44 Tools, 880 Tests)",
                 &all,

@@ -275,6 +275,14 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
+    pub fn sanitize(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::sanitize(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
     pub fn workflow_presets() -> String {
         operations::workflow_presets()
     }
@@ -298,6 +306,7 @@ impl WasmPdfEngine {
             {"id": "encrypt", "name": "Encrypt PDF", "status": "stable"},
             {"id": "decrypt", "name": "Decrypt PDF", "status": "stable"},
             {"id": "watermark", "name": "Watermark", "status": "stable"},
+            {"id": "sanitize", "name": "Sanitize PDF", "status": "stable"},
             {"id": "delete_pages", "name": "Delete Pages", "status": "stable"},
             {"id": "extract_pages", "name": "Extract Pages", "status": "stable"},
             {"id": "reorder_pages", "name": "Reorder Pages", "status": "stable"},

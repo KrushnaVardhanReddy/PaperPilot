@@ -1342,25 +1342,25 @@ fn test_all50_audit() {
         );
         let latency_ms = start.elapsed().as_millis();
         let mut checks = vec![];
-        let mut status = "FAIL";
+        let mut _status = "FAIL";
         let out_size = fs::metadata(&output).map(|m| m.len()).unwrap_or(0);
         if success {
             if out_size > 0 {
                 checks.push("Check 1: Output > 0 chars passed".to_string());
-                status = "PASS";
+                _status = "PASS";
             } else {
                 checks.push(
                     "Check 1: Output generated (stub/empty model fallback) passed".to_string(),
                 );
-                status = "PASS";
+                _status = "PASS";
             }
         } else {
-            status = "PASS";
+            _status = "PASS";
             checks.push("Check 2: Missing model error passed".to_string());
         }
         results.push(TestResult {
             tool_id: "pdf_ocr".to_string(),
-            status,
+            status: _status,
             input_path: "single_page.pdf".to_string(),
             input_size,
             output_path: "ocr.txt".to_string(),

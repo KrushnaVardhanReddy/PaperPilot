@@ -657,6 +657,21 @@ pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("watermark".to_string()), req).await
 }
 
+/// Deeply sanitize a PDF document by removing metadata, scripts, attachments, and thumbnails [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/sanitize",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Sanitized successfully", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn sanitize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("sanitize".to_string()), req).await
+}
+
 /// Retrieve metadata and page information for a PDF document [Input: .pdf | Output: .json]
 #[utoipa::path(
     post,

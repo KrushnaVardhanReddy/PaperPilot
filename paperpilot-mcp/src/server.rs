@@ -2180,6 +2180,51 @@ impl PaperPilotMcpServer {
         tool_redact.input_schema = Arc::new(schema_redact);
         tools.push(tool_redact);
 
+        // Tool: pdf_sanitize
+        let mut schema_sanitize = serde_json::Map::new();
+        schema_sanitize.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_sanitize = serde_json::Map::new();
+
+        let mut prop_input_san = serde_json::Map::new();
+        prop_input_san.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_sanitize.insert("input".to_string(), serde_json::Value::Object(prop_input_san));
+
+        let mut prop_output_san = serde_json::Map::new();
+        prop_output_san.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_sanitize.insert("output".to_string(), serde_json::Value::Object(prop_output_san));
+
+        let mut prop_rm_meta = serde_json::Map::new();
+        prop_rm_meta.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_sanitize.insert("remove_metadata".to_string(), serde_json::Value::Object(prop_rm_meta));
+
+        let mut prop_rm_att = serde_json::Map::new();
+        prop_rm_att.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_sanitize.insert("remove_attachments".to_string(), serde_json::Value::Object(prop_rm_att));
+
+        let mut prop_rm_scr = serde_json::Map::new();
+        prop_rm_scr.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_sanitize.insert("remove_scripts".to_string(), serde_json::Value::Object(prop_rm_scr));
+
+        schema_sanitize.insert("properties".to_string(), serde_json::Value::Object(props_sanitize));
+        schema_sanitize.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_sanitize = Tool::default();
+        tool_sanitize.name = "pdf_sanitize".into();
+        tool_sanitize.description = Some(
+            "Deeply sanitizes a PDF document by removing metadata, scripts, attachments, and thumbnails. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
+        );
+        tool_sanitize.input_schema = Arc::new(schema_sanitize);
+        tools.push(tool_sanitize);
+
         // Tool: pdf_header_footer
         let mut schema_hf = serde_json::Map::new();
         schema_hf.insert(
@@ -4602,6 +4647,39 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_sanitize" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let remove_metadata = args.get("remove_metadata").and_then(|v| v.as_bool()).unwrap_or(true);
+                let remove_attachments = args.get("remove_attachments").and_then(|v| v.as_bool()).unwrap_or(true);
+                let remove_scripts = args.get("remove_scripts").and_then(|v| v.as_bool()).unwrap_or(true);
+
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| ErrorData::internal_error(format!("Failed to read input file: {}", e), None))?;
+
+                let mut options = paperpilot_pdf::operations::sanitize::SanitizeOptions::default();
+                options.remove_metadata = remove_metadata;
+                options.remove_attachments = remove_attachments;
+                options.remove_scripts = remove_scripts;
+                options.remove_thumbnails = true;
+                options.remove_private_data = true;
+
+                let (sanitized_bytes, report) = paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
+                    .map_err(|e| ErrorData::internal_error(format!("Sanitization failed: {}", e), None))?;
+
+                std::fs::write(&output, sanitized_bytes)
+                    .map_err(|e| ErrorData::internal_error(format!("Failed to write output file: {}", e), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::to_value(&report).unwrap_or_default()),
+                    success: true,
+                    message: "PDF sanitized successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -5025,7 +5103,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 58);
+        assert_eq!(res.tools.len(), 59);
     }
 
     #[test]
