@@ -1,0 +1,112 @@
+# Task 5.9.72: Embed Pipeline Parity — Browse Button & Interactive Step Selection
+# Base Branch: main
+# Related Spec: specs/083-embed-pipeline-parity-and-step-customization/spec.md
+# Priority: MEDIUM (Embed UX & Feature Parity with Desktop Pipeline)
+
+## Objective
+Bring the Web Embed Pipeline (`apps/embed`) to functional and UX parity with the Desktop visual pipeline builder:
+1. **Explicit File Browsing**: Add a prominent, clickable `"Browse Files"` button and selected file preview chip into the embed pipeline dropzone.
+2. **Interactive Tool & Step Selection**: When `data-allow-customization="true"` (or `allowCustomization: true`), allow users to dynamically add new steps (`+ Add Step`), choose from available tools, remove existing steps (`×`), and execute the pipeline via an explicit `"⚡ Run Pipeline"` button.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/embed/src/Widget.svelte
+apps/embed/src/api.ts
+apps/web/public/embed-test.html
+apps/embed/tests/pipeline.spec.ts
+```
+
+---
+
+## 1. Dropzone UX Polish (`apps/embed/src/Widget.svelte`)
+In the pipeline view (`{#if pipeline}` branch):
+- Replace the bare text inside `.pp-dropzone` with:
+  ```svelte
+  {#if droppedFiles.length === 0}
+    <div class="pp-icon-upload">...</div>
+    <p>Drag and drop a PDF here, or</p>
+    <button type="button" class="pp-btn-browse" onclick={(e) => { e.stopPropagation(); triggerFileDialog(); }}>
+      📁 Browse Files
+    </button>
+  {:else}
+    <div class="pp-file-selected">
+      <span class="pp-file-icon">📄</span>
+      <div class="pp-file-details">
+        <span class="pp-file-name">{droppedFiles[0].name}</span>
+        <span class="pp-file-size">{(droppedFiles[0].size / 1024).toFixed(1)} KB</span>
+      </div>
+      <button type="button" class="pp-btn-clear" onclick={clearFiles} title="Remove file">✕</button>
+    </div>
+  {/if}
+  ```
+- Ensure styling for `.pp-btn-browse`:
+  - Background: `rgba(255, 255, 255, 0.1)` with subtle hover state.
+  - Border: `1px solid var(--border-color, rgba(255, 255, 255, 0.2))`.
+  - Border radius: `6px`.
+  - Cursor: pointer.
+
+---
+
+## 2. Interactive Step Selection & Customization (`apps/embed/src/Widget.svelte` & `apps/embed/src/api.ts`)
+- Add props:
+  - `allowCustomization: boolean = false`
+  - `autoExecute: boolean = true`
+- Read dataset attributes on mount:
+  - `data-allow-customization="true"`
+  - `data-auto-execute="false"`
+- When `allowCustomization` is `true`:
+  - Initialize mutable `$state` `pipelineSteps`:
+    ```ts
+    let customSteps = $state<PipelineStep[]>([]);
+    $effect(() => {
+      if (parsedPipeline && customSteps.length === 0) {
+        customSteps = [...parsedPipeline];
+      }
+    });
+    ```
+  - For each step in the stepper, show a remove button (`✕`) when hovering or active, allowing users to remove a step from `customSteps`.
+  - At the end of the stepper, add an `+ Add Step` button.
+  - Clicking `+ Add Step` opens a lightweight inline tool selector dropdown/grid containing in-browser operations:
+    - Rotate (`rotate`)
+    - Watermark (`watermark`)
+    - Compress (`compress`)
+    - Extract (`extract_pages`)
+    - Split (`split`)
+  - Selecting a tool appends it with default parameters to `customSteps`.
+- When `autoExecute` is `false` (or customization is active):
+  - Instead of immediately auto-running on file drop, display a prominent button:
+    ```svelte
+    <button 
+      class="pp-btn pp-btn-primary pp-btn-run" 
+      disabled={droppedFiles.length === 0 || customSteps.length === 0 || pipelineStatus === 'running'}
+      onclick={runVisualPipeline}
+    >
+      {pipelineStatus === 'running' ? 'Running...' : '⚡ Run Pipeline'}
+    </button>
+    ```
+
+---
+
+## 3. Demo Page Update (`apps/web/public/embed-test.html`)
+Update Demo 3 in `apps/web/public/embed-test.html`:
+- Add `data-allow-customization="true"` and `data-auto-execute="false"`.
+- Update description: `"Drop or browse a PDF, customize steps (+ Add Step), and execute zero-server in browser WASM."`
+
+---
+
+## 4. Tests & Verification (`apps/embed/tests/pipeline.spec.ts`)
+Add automated Playwright assertions:
+1. Verify `.pp-btn-browse` is rendered and visible inside the pipeline view dropzone.
+2. In customization mode, verify `+ Add Step` button exists.
+3. Verify clicking `+ Add Step` opens the tool selection menu and selecting a tool appends a new step to `.pp-pipeline-stepper`.
+4. Verify clicking remove on a step deletes it.
+5. Verify pipeline execution processes the custom steps successfully.
+
+---
+
+## Acceptance Criteria
+1. `npm --prefix apps/embed run build` builds cleanly with 0 errors.
+2. `npx --prefix apps/embed playwright test tests/pipeline.spec.ts` passes 100%.
