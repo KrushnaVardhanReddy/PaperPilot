@@ -12,7 +12,6 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **5.9.55** | [Session 378425988505835118](https://jules.google.com/session/378425988505835118) | **Decoupled Markdown-to-DOCX Compiler with DrawingML Media & Layout Synthesis** (`[Spec 077]`) | 🔄 In Flight — Stage 2: Consumes rich Markdown with base64 data URIs from Spec 076, translates to `docx_rs` elements, and embeds genuine `docx_rs::Pic` images. |
 | **5.9.69C** | [Session 14694450703556332514](https://jules.google.com/session/14694450703556332514) | **Penta-Interface Declarative Workflow Engine & Recipe Execution** (`[Spec 081]`) | 🔄 In Flight — Multi-step in-memory workflow execution in `paperpilot-pdf`, CLI lifecycle (`run`/`list`/`inspect`), MCP tools (`list_workflows`, `document_workflow`), REST endpoints (`/api/v1/workflow/*`), WASM/Edge, and real assertion Penta-Interface E2E suite. |
 | **5.9.71** | [Session 17427853372924290951](https://jules.google.com/session/17427853372924290951) | **Universal "Export as Code / API / MCP Prompt" Workbench (All Tools)** (`[Spec 082]`) | 🔄 In Flight — Extend code/API export beyond pipelines to individual action cards in `EditableActionCard.svelte` via headless `snippetGenerator.ts`, with full Vitest & Playwright E2E coverage. |
 | **5.9.72** | [Session 6908271606884666943](https://jules.google.com/session/6908271606884666943) | **Embed Pipeline 1-to-1 Desktop Parity (Dropzone, Interactive Steps, Save/Export/Import)** (`[Spec 083]`) | 🔄 In Flight — Full desktop parity for embed pipeline: explicit browse button, file chip summary, `+ Add Step` dynamic tool picker, step deletion, preset/saved flow dropdown, `💾 Save Flow`, `⬇️ Export JSON`, and `⬆️ Import JSON`. |
@@ -21,7 +20,11 @@
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–20, 2026)
 
-1. **Task 5.9.69D (Visual Pipeline "Export as Code / API / MCP Prompt" Modal)**:
+1. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images & Layout Synthesis)**:
+   - Merged (commit `8ddc7ff`, Jules Session 378425988505835118).
+   - Implemented Stage 2 decoupled conversion pipeline in `paperpilot-pdf/src/operations/conversion.rs`: consumes Stage 1 rich Markdown with inline base64 data URIs, parses via `pulldown_cmark`, decodes image bytes, scales dimensions to OpenXML DrawingML EMUs, and embeds genuine `docx_rs::Pic` image parts into `.docx` archives with 2-column card layout synthesis.
+   - All unit tests passing (`test_pdf_to_docx_with_images`).
+2. **Task 5.9.69D (Visual Pipeline "Export as Code / API / MCP Prompt" Modal)**:
    - Merged (PR #223, commit `5b4436b`, Jules Session 4310793047227771998).
    - Created `ExportCodeModal.svelte` for rendering live dynamic cURL, CLI, MCP prompt, and Embed JS code snippets from current pipeline steps.
    - Integrated `<button id="flow-export-code-btn">` into `FlowSelector.svelte` toolbar.
