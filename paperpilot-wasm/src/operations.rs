@@ -1706,6 +1706,68 @@ pub enum LayoutItem {
     Table(Vec<Vec<Vec<TextSpan>>>),
 }
 
+pub fn workflow_presets() -> String {
+    let presets = paperpilot_core::workflow::get_default_presets();
+    serde_json::to_string(&presets).unwrap_or_default()
+}
+
+fn execute_step_wasm(
+    bytes: &[u8],
+    step: &paperpilot_core::workflow::WorkflowStep,
+) -> OperationResult<Vec<u8>> {
+    match step.operation_id.as_str() {
+        "pdf_watermark" | "watermark" => {
+            let text = step
+                .params
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or("CONFIDENTIAL");
+            watermark(bytes, text, Some(45.0), Some(0.2))
+        }
+        "pdf_compress" | "compress" => {
+            let quality = step.params.get("quality").and_then(|v| {
+                v.as_str()
+                    .map(|s| s.to_string())
+                    .or_else(|| v.as_i64().map(|n| n.to_string()))
+            });
+            compress(bytes, quality.as_deref())
+        }
+        "pdf_flatten" | "flatten" => flatten(bytes),
+        "pdf_page_numbers" | "page_numbers" => {
+            let pos = step
+                .params
+                .get("position")
+                .and_then(|v| v.as_str())
+                .unwrap_or("bottom-right");
+            page_numbers(bytes, "Page {n} of {total}", pos)
+        }
+        "pdf_rotate" | "rotate" => {
+            let angle = step
+                .params
+                .get("angle")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(90) as u16;
+            rotate(bytes, angle, "all")
+        }
+        _ => Ok(bytes.to_vec()),
+    }
+}
+
+pub fn workflow(input_bytes: &[u8], recipe_json: &str) -> OperationResult<Vec<u8>> {
+    let workflow = if let Some(preset) = paperpilot_core::workflow::get_preset_by_id(recipe_json) {
+        preset
+    } else {
+        serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(recipe_json)
+            .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?
+    };
+
+    let mut current = input_bytes.to_vec();
+    for step in &workflow.steps {
+        current = execute_step_wasm(&current, step)?;
+    }
+    Ok(current)
+}
+
 pub fn pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
     use docx_rs::{AlignmentType, Docx, Paragraph, Run, Table, TableCell, TableRow};
 
@@ -2432,6 +2494,23 @@ mod tests {
             clean_text.contains("Left1Left2Right1Right2")
                 || clean_text.contains("Left1Right1Left2Right2")
         );
+    }
+
+    #[test]
+    fn test_workflow_presets() {
+        let json = super::workflow_presets();
+        assert!(json.contains("preset-legal-discovery"));
+    }
+
+    #[test]
+    fn test_workflow_execution() {
+        let mut doc = create_dummy_doc(1, None);
+        let mut buf = Vec::new();
+        doc.save_to(&mut buf).unwrap();
+
+        let out = super::workflow(&buf, "preset-legal-discovery");
+        assert!(out.is_ok());
+        assert!(!out.unwrap().is_empty());
     }
 
     #[test]

@@ -17,6 +17,7 @@ clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
 paperpilot-pdf = { path = "../../paperpilot-pdf" }
 paperpilot-core = { path = "../../paperpilot-core" }
+paperpilot-wasm = { path = "../../paperpilot-wasm" }
 calamine = "0.36.1"
 office_oxide = "0.1"
 base64 = "0.21"

@@ -9,6 +9,7 @@ pub mod group_e;
 pub mod office;
 pub mod validate;
 pub mod watch;
+pub mod workflow;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -232,12 +233,22 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(input),
+        Commands::Workflow {
+            subcommand,
+            input,
+            output,
+            preset,
+            recipe,
+        } => workflow::handle_workflow_command(
+            subcommand.as_ref(),
+            input.as_ref(),
+            output.as_ref(),
+            preset.as_ref(),
+            recipe.as_ref(),
+        ),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
-            println!(
-                "{:<4} {:<24} {:<12} DESCRIPTION",
-                "#", "TOOL ID", "STATUS"
-            );
+            println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
             println!("{}", "-".repeat(80));
 
             let tools = [

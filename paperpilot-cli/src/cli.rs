@@ -387,6 +387,27 @@ pub enum Commands {
         #[arg(long)]
         inline_css: Option<String>,
     },
+    /// Declarative multi-step document workflow execution
+    Workflow {
+        #[command(subcommand)]
+        subcommand: Option<WorkflowSubcommand>,
+
+        /// Input PDF file (when running workflow directly)
+        #[arg(long)]
+        input: Option<PathBuf>,
+
+        /// Output PDF file (when running workflow directly)
+        #[arg(long)]
+        output: Option<PathBuf>,
+
+        /// Preset workflow name (e.g. preset-legal-discovery, preset-clean-scan)
+        #[arg(long)]
+        preset: Option<String>,
+
+        /// Path to custom workflow recipe JSON file
+        #[arg(long)]
+        recipe: Option<PathBuf>,
+    },
     // --- Headless Server / Automation Gateway ---
     #[cfg(feature = "daemon")]
     Serve {
@@ -404,6 +425,30 @@ pub enum Commands {
     Office {
         #[command(subcommand)]
         command: crate::commands::office::OfficeCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum WorkflowSubcommand {
+    /// List all available workflow presets
+    List,
+    /// Inspect step sequence of a preset or recipe JSON file
+    Inspect {
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        recipe: Option<PathBuf>,
+    },
+    /// Execute workflow preset or recipe JSON against input PDF
+    Run {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        recipe: Option<PathBuf>,
     },
 }
 
@@ -439,29 +484,6 @@ mod tests {
     use super::*;
     use clap::Parser;
     use std::path::PathBuf;
-
-    #[test]
-    fn test_merge_multiple_inputs() {
-        let args = vec![
-            "paperpilot",
-            "merge",
-            "--input",
-            "a.pdf",
-            "b.pdf",
-            "--output",
-            "out.pdf",
-        ];
-        let cli = Cli::try_parse_from(args).unwrap();
-        match cli.command {
-            Commands::Merge { input, output } => {
-                assert_eq!(input.len(), 2);
-                assert_eq!(input[0], PathBuf::from("a.pdf"));
-                assert_eq!(input[1], PathBuf::from("b.pdf"));
-                assert_eq!(output, PathBuf::from("out.pdf"));
-            }
-            _ => panic!("Expected Merge command"),
-        }
-    }
 
     #[test]
     fn test_rotate_angle_alias() {
@@ -669,6 +691,63 @@ mod tests {
                 assert_eq!(output, PathBuf::from("out.pdf"));
             }
             _ => panic!("Expected PdfA command"),
+        }
+    }
+
+    #[test]
+    fn test_merge_multiple_inputs() {
+        let args = vec![
+            "paperpilot",
+            "merge",
+            "--input",
+            "a.pdf",
+            "b.pdf",
+            "--output",
+            "out.pdf",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Merge { input, output } => {
+                assert_eq!(input.len(), 2);
+                assert_eq!(input[0], PathBuf::from("a.pdf"));
+                assert_eq!(input[1], PathBuf::from("b.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+            }
+            _ => panic!("Expected Merge command"),
+        }
+    }
+
+    #[test]
+    fn test_workflow_run_args() {
+        let args = vec![
+            "paperpilot",
+            "workflow",
+            "run",
+            "--input",
+            "in.pdf",
+            "--output",
+            "out.pdf",
+            "--preset",
+            "preset-clean-scan",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        match cli.command {
+            Commands::Workflow {
+                subcommand:
+                    Some(WorkflowSubcommand::Run {
+                        input,
+                        output,
+                        preset,
+                        recipe,
+                    }),
+                ..
+            } => {
+                assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(output, PathBuf::from("out.pdf"));
+                assert_eq!(preset, Some("preset-clean-scan".to_string()));
+                assert_eq!(recipe, None);
+            }
+            _ => panic!("Expected Workflow Run command"),
         }
     }
 }

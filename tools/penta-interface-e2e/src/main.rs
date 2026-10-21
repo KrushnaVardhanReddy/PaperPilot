@@ -147,6 +147,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md"
             )?;
         }
+        "workflow" => {
+            let results = cases::workflow::run_workflow_suite().await?;
+            println!("Workflow finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.69C — Penta-Interface Declarative Workflow Engine & Recipe Execution",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md",
+            )?;
+        }
         "edge_cases" => {
             let results = cases::edge_cases::run_edge_cases_suite().await?;
             println!("Edge cases finished: {} tests", results.len());

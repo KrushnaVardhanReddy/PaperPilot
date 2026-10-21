@@ -10,15 +10,18 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active Jules Sessions in Flight
-| Task ID | Session Link | Target & Purpose | Status / Notes |
-|---|---|---|---|
-| **5.9.69C** | [Session 15691603918731845147](https://jules.google.com/session/15691603918731845147) | **Penta-Interface Declarative Workflow Engine & Recipe Execution** (`[Spec 081]`) | 🔄 In Flight — Refined with Single Core Runner (`run_workflow_bytes`) + 5 Thin Wrappers pattern across CLI, MCP, REST Gateway, WASM Engine, Edge Worker, and real-assertion Penta-Interface E2E suite. |
+*No active sessions in flight. All Wave 2 & Pipeline Flow milestones complete.*
 
 ---
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–21, 2026)
 
-1. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity: Dropzone, Interactive Steps, Save/Export/Import)**:
+1. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution)**:
+   - Completed & verified (Sessions `3461133562467863809` / `15691603918731845147`).
+   - Implemented Single Core Runner `run_workflow_bytes` in `paperpilot-pdf/src/operations/workflow.rs`.
+   - Built 5 thin wrappers across Native CLI (`paperpilot workflow`), MCP (`list_workflows`, `document_workflow`), REST Gateway (`/api/v1/workflow/*`), WASM engine (`workflow`), and Cloudflare Edge worker.
+   - 20/20 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md`.
+2. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity: Dropzone, Interactive Steps, Save/Export/Import)**:
    - Merged (PR #225, commit `3354863`, Jules Session 6908271606884666943).
    - Replaced hidden file input with prominent `📁 Browse Files` button and file status card inside the pipeline dropzone.
    - Implemented interactive stepper with step removal (`✕`) and dynamic tool picker modal (`+ Add Step`).

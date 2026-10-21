@@ -38,3 +38,6 @@ pub mod signature;
 pub mod split;
 pub mod validate;
 pub mod watermark;
+pub mod workflow;
+
+pub use workflow::run_workflow_bytes;

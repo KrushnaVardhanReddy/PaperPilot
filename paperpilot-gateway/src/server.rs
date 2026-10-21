@@ -106,6 +106,16 @@ pub async fn build_app() -> Router {
             "/api/v1/search/workspace_search",
             post(handlers::workspace_search_handler),
         )
+        .route("/api/v1/workflow/presets", get(handlers::workflow_presets))
+        .route(
+            "/api/v1/workflow/validate",
+            post(handlers::workflow_validate),
+        )
+        .route(
+            "/api/v1/workflow/run-json",
+            post(handlers::workflow_run_json),
+        )
+        .route("/api/v1/workflow/run", post(handlers::workflow_run))
         .layer(cors)
 }
 
