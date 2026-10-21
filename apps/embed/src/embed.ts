@@ -13,7 +13,7 @@ window.PaperPilot = PaperPilotAPI;
 
 // Auto-scan on load
 function autoInit() {
-  const portals = document.querySelectorAll('[data-paperpilot-portal], #paperpilot-portal, #nobadge-portal');
+  const portals = document.querySelectorAll('[data-paperpilot-portal], [data-paperpilot-widget], #paperpilot-portal, #nobadge-portal');
 
   portals.forEach(portal => {
     const el = portal as HTMLElement;
@@ -23,6 +23,8 @@ function autoInit() {
     const logoUrl = el.getAttribute('data-logo-url') || undefined;
     const hideBadge = el.getAttribute('data-hide-badge') === 'true';
     const pipelineAttr = el.getAttribute('data-pipeline');
+    const allowCustomization = el.getAttribute('data-allow-customization') === 'true';
+    const autoExecute = el.getAttribute('data-auto-execute') !== 'false';
 
     let pipeline = undefined;
     if (pipelineAttr) {
@@ -33,7 +35,7 @@ function autoInit() {
       }
     }
 
-    mount(el, { tools, theme, brandColor, logoUrl, hideBadge, pipeline });
+    mount(el, { tools, theme, brandColor, logoUrl, hideBadge, pipeline, allowCustomization, autoExecute });
   });
 }
 
