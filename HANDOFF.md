@@ -10,7 +10,9 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active Jules Sessions in Flight
-*No active sessions in flight. All Wave 2 & Pipeline Flow milestones complete.*
+| Task ID | Session Link | Target & Purpose | Status / Notes |
+|---|---|---|---|
+| **5.9.59** | [Session 14243955832243643866](https://jules.google.com/session/14243955832243643866) | **Privacy & Deep Security Sanitizer (`pdf_sanitize`)** (`[Spec 085]`) | 🔄 In Flight — Pure-Rust deep security scrubber stripping `/Info`, XML `/Metadata`, `/EmbeddedFiles`, `/JS` executable actions, `/PieceInfo`, and thumbnail caches via the Single Core Runner + 5 Thin Wrappers pattern. |
 
 ---
 

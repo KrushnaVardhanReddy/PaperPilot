@@ -1,0 +1,234 @@
+# Task: Phase 5.9.59 — Privacy & Deep Security Sanitizer (pdf_sanitize)
+# Base Branch: main
+# Related Spec: specs/085-deep-security-pdf-sanitizer/spec.md
+# Priority: HIGH (Core Document Privacy & Security)
+
+## Objective
+Implement `pdf_sanitize` natively in Rust following the **"Single Core Runner + 5 Thin Wrappers"** architecture.
+A single pure in-memory execution function (`sanitize_pdf` in `paperpilot-pdf/src/operations/sanitize.rs`) purges hidden metadata, XML XMP streams, embedded file attachments, executable JavaScript actions, private editing layers (`/PieceInfo`), and thumbnail caches, writing a clean, single-generation PDF.
+
+Each of the 5 interfaces (CLI, MCP, REST Gateway, WASM Engine, Edge Worker) serves strictly as a thin 5-line adapter calling that single function.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+paperpilot-pdf/src/operations/sanitize.rs
+paperpilot-pdf/src/operations/mod.rs
+paperpilot-pdf/src/operations/workflow.rs
+paperpilot-cli/src/cli.rs
+paperpilot-cli/src/commands/sanitize.rs
+paperpilot-cli/src/commands/mod.rs
+paperpilot-mcp/src/server.rs
+paperpilot-gateway/src/handlers.rs
+paperpilot-gateway/src/server.rs
+paperpilot-wasm/src/operations.rs
+paperpilot-wasm/src/lib.rs
+apps/edge/src/index.ts
+apps/desktop/src/lib/types/toolList.ts
+apps/desktop/src/lib/state/pipeline.svelte.ts
+apps/desktop/src/lib/utils/snippetGenerator.ts
+tools/penta-interface-e2e/src/cases/sanitize.rs
+tools/penta-interface-e2e/src/cases/mod.rs
+tools/penta-interface-e2e/src/main.rs
+```
+
+---
+
+## 1. THE SINGLE CORE RUNNER (`paperpilot-pdf/src/operations/sanitize.rs`)
+
+Implement pure in-memory sanitization:
+```rust
+use serde::{Deserialize, Serialize};
+use lopdf::{Document, Object};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SanitizeOptions {
+    #[serde(default = "default_true")]
+    pub remove_metadata: bool,
+    #[serde(default = "default_true")]
+    pub remove_attachments: bool,
+    #[serde(default = "default_true")]
+    pub remove_scripts: bool,
+    #[serde(default = "default_true")]
+    pub remove_thumbnails: bool,
+    #[serde(default = "default_true")]
+    pub remove_private_data: bool,
+}
+
+fn default_true() -> bool { true }
+
+impl Default for SanitizeOptions {
+    fn default() -> Self {
+        Self {
+            remove_metadata: true,
+            remove_attachments: true,
+            remove_scripts: true,
+            remove_thumbnails: true,
+            remove_private_data: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SanitizeReport {
+    pub metadata_stripped: bool,
+    pub attachments_removed: usize,
+    pub scripts_removed: usize,
+    pub thumbnails_removed: usize,
+    pub output_bytes: usize,
+}
+
+pub fn sanitize_pdf(
+    input_bytes: &[u8],
+    options: &SanitizeOptions,
+) -> Result<(Vec<u8>, SanitizeReport), anyhow::Error> {
+    let mut doc = Document::load_mem(input_bytes)?;
+    let mut attachments_removed = 0;
+    let mut scripts_removed = 0;
+    let mut thumbnails_removed = 0;
+
+    // 1. Strip Document Information Dictionary (/Info) & Metadata XMP
+    if options.remove_metadata {
+        doc.trailer.remove(b"Info");
+        // Remove /Metadata from Catalog and Pages
+        if let Ok(catalog_id) = doc.catalog_mut() {
+            catalog_id.remove(b"Metadata");
+        }
+    }
+
+    // 2. Strip Embedded Files (/Names -> /EmbeddedFiles, /AF)
+    if options.remove_attachments {
+        if let Ok(catalog) = doc.catalog_mut() {
+            if let Ok(names) = catalog.get_mut(b"Names") {
+                if let Object::Dictionary(ref mut names_dict) = names {
+                    if names_dict.remove(b"EmbeddedFiles").is_some() {
+                        attachments_removed += 1;
+                    }
+                }
+            }
+            if catalog.remove(b"AF").is_some() {
+                attachments_removed += 1;
+            }
+        }
+    }
+
+    // 3. Neutralize Active Scripts (/JavaScript, /JS, /OpenAction, /AA)
+    if options.remove_scripts {
+        if let Ok(catalog) = doc.catalog_mut() {
+            if catalog.remove(b"OpenAction").is_some() { scripts_removed += 1; }
+            if catalog.remove(b"AA").is_some() { scripts_removed += 1; }
+            if let Ok(names) = catalog.get_mut(b"Names") {
+                if let Object::Dictionary(ref mut names_dict) = names {
+                    if names_dict.remove(b"JavaScript").is_some() {
+                        scripts_removed += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Strip Page Thumbnails (/Thumb) & Private Editing Data (/PieceInfo)
+    for (_page_num, page_id) in doc.get_pages() {
+        if let Ok(page_obj) = doc.get_object_mut(page_id) {
+            if let Object::Dictionary(ref mut page_dict) = page_obj {
+                if options.remove_thumbnails && page_dict.remove(b"Thumb").is_some() {
+                    thumbnails_removed += 1;
+                }
+                if options.remove_private_data {
+                    page_dict.remove(b"PieceInfo");
+                }
+                if options.remove_scripts {
+                    page_dict.remove(b"AA");
+                }
+            }
+        }
+    }
+
+    // Clean xref & write to bytes
+    let mut output_bytes = Vec::new();
+    doc.save_to(&mut output_bytes)?;
+
+    let report = SanitizeReport {
+        metadata_stripped: options.remove_metadata,
+        attachments_removed,
+        scripts_removed,
+        thumbnails_removed,
+        output_bytes: output_bytes.len(),
+    };
+
+    Ok((output_bytes, report))
+}
+```
+
+Export `pub mod sanitize;` in `paperpilot-pdf/src/operations/mod.rs` and export `pub use sanitize::{sanitize_pdf, SanitizeOptions, SanitizeReport};`.
+Also wire `pdf_sanitize` into `paperpilot-pdf/src/operations/workflow.rs` step execution!
+
+---
+
+## 2. THE 5 THIN WRAPPERS
+
+### Wrapper 1: Native CLI (`paperpilot-cli`)
+- Add command in `paperpilot-cli/src/cli.rs`:
+```rust
+    /// Deeply sanitize PDF by stripping metadata, scripts, attachments, and hidden data
+    Sanitize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value_t = true)]
+        remove_metadata: bool,
+        #[arg(long, default_value_t = true)]
+        remove_attachments: bool,
+        #[arg(long, default_value_t = true)]
+        remove_scripts: bool,
+    },
+```
+- Implement in `paperpilot-cli/src/commands/sanitize.rs` calling `paperpilot_pdf::operations::sanitize::sanitize_pdf`.
+
+### Wrapper 2: Agent MCP Server (`paperpilot-mcp/src/server.rs`)
+Register tool `pdf_sanitize`:
+- Description: "Deeply sanitize a PDF document for enterprise security and privacy. Strips Document Info, XMP metadata streams, embedded file attachments, and active JavaScript actions."
+- Parameters:
+  - `input`: String (required)
+  - `output`: String (required)
+  - `remove_metadata`: Boolean (optional, default true)
+  - `remove_attachments`: Boolean (optional, default true)
+  - `remove_scripts`: Boolean (optional, default true)
+- Handler calls `sanitize_pdf` and returns JSON report.
+
+### Wrapper 3: REST Gateway (`paperpilot-gateway/src/handlers.rs` & `server.rs`)
+Add route `POST /api/v1/pdf/sanitize`:
+- Supports JSON payload `{ "input": "...", "output": "..." }` and multipart upload with `file`.
+- Calls `sanitize_pdf`.
+- Tagged under `"Document Security"`.
+
+### Wrapper 4: Browser WASM Engine (`paperpilot-wasm/src/operations.rs` & `lib.rs`)
+- Expose `pub fn sanitize(input_bytes: &[u8], options_json: &str) -> Result<Vec<u8>, anyhow::Error>` calling `sanitize_pdf`.
+
+### Wrapper 5: Cloudflare Edge Worker (`apps/edge/src/index.ts`)
+- Add route `POST /api/v1/sanitize` forwarding to `WasmPdfEngine.sanitize`.
+
+---
+
+## 3. Desktop UI Tool Definition (`apps/desktop`)
+1. In `apps/desktop/src/lib/types/toolList.ts`:
+   - Add tool with ID `pdf_sanitize` (or `sanitize`), Title `Sanitize Document`, icon `🛡️`, category `security`, inputFormat `PDF`, outputFormat `.PDF`.
+2. In `apps/desktop/src/lib/state/pipeline.svelte.ts`:
+   - Add tool step definition so it can be added into the visual pipeline builder.
+3. In `apps/desktop/src/lib/utils/snippetGenerator.ts`:
+   - Add snippet generation support for `pdf_sanitize`.
+
+---
+
+## 4. Compilation Rule
+- **CRITICAL**: For any Cargo build/test command, ALWAYS pass `-j 4` or `-j 6` (e.g. `cargo test --all -j 4`). Never invoke unbounded Cargo compilation.
+
+---
+
+## 5. Acceptance Criteria
+1. `cargo test -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway -j 4` passes 100%.
+2. All 5 interfaces (CLI, MCP, Gateway REST, WASM, Edge) execute `sanitize_pdf`.
+3. Unit tests verify `/Info`, `/Metadata`, and `/OpenAction` are completely stripped from sanitized PDFs.
