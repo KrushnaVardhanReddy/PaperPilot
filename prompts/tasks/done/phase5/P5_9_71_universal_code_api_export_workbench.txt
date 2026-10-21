@@ -1,0 +1,142 @@
+# Task 5.9.71: Universal "Export as Code / API / MCP Prompt" Workbench (All Tools)
+# Base Branch: main
+# Related Spec: specs/082-universal-code-api-mcp-export-workbench/spec.md
+# Priority: MEDIUM (Developer & AI Agent Ergonomics in Desktop UI)
+
+## Objective
+Implement Phase 2 of Spec 082: Bring the **"Export as Code / API / MCP Prompt" Workbench** to individual tools in the Desktop UI (`apps/desktop`). Users configuring tools in `EditableActionCard.svelte` should be able to click a `</> Code / API` button to immediately view copyable, live snippets for:
+1. **cURL (Gateway REST API)**: `curl -X POST http://localhost:8080/api/v1/...`
+2. **Native CLI Command**: `paperpilot <subcommand> ...`
+3. **AI Agent MCP Prompt & Tool Call**: Ready-to-paste prompt for Claude/ChatGPT/Gemini with tool arguments
+4. **JavaScript / TypeScript (Embed API)**: `await window.PaperPilot.executeTool(...)`
+
+All code generation logic must be centralized in a clean, pure TypeScript utility module `snippetGenerator.ts`, with 100% test coverage and Playwright E2E verification.
+
+---
+
+## STRICT File Ownership
+You may ONLY create and touch the following files:
+```
+apps/desktop/src/lib/utils/snippetGenerator.ts
+apps/desktop/src/lib/components/pipeline/ExportCodeModal.svelte
+apps/desktop/src/lib/components/EditableActionCard.svelte
+apps/desktop/tests/snippetGenerator.test.ts
+apps/desktop/tests/e2e_action_card_code_export.spec.ts
+```
+
+---
+
+## 1. Centralized Snippet Engine: `apps/desktop/src/lib/utils/snippetGenerator.ts`
+Implement a pure, headless snippet generation engine exporting:
+
+```typescript
+export interface SnippetTarget {
+  toolId: string; // e.g. 'pdf_rotate', 'pdf_bates', 'pdf_watermark', 'pdf_compress', 'pdf_encrypt', 'pdf_decrypt', 'pdf_redact', 'pdf_split', 'pdf_merge', etc., or 'document_workflow'
+  intent?: string; // e.g. 'Rotate', 'Bates', 'Watermark', 'Compress', 'Encrypt', etc.
+  params: Record<string, any>;
+  inputFile?: string;
+  outputFile?: string;
+  inputs?: string[];
+}
+
+export interface GeneratedSnippets {
+  cli: string;
+  curl: string;
+  mcpToolCall: string;
+  mcpAgentPrompt: string;
+  embedJs: string;
+}
+
+export function generateSnippets(target: SnippetTarget): GeneratedSnippets;
+```
+
+### Generation Rules:
+- Support common intents and tool IDs:
+  - `Rotate` / `pdf_rotate`:
+    - CLI: `paperpilot rotate --input "${input}" --angle ${angle} --output "${output}"` (include `--pages "${pages}"` if not "all")
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/rotate -F "file=@${input}" -F "angle=${angle}"`
+    - MCP Tool Call: `{ "name": "pdf_rotate", "arguments": { "input": "${input}", "angle": ${angle}, "output": "${output}" } }`
+    - MCP Prompt: `Please rotate "${input}" by ${angle} degrees and save to "${output}".`
+    - Embed JS: `await window.PaperPilot.executeTool('pdf_rotate', { input: '${input}', angle: ${angle}, output: '${output}' });`
+  - `Bates` / `pdf_bates`:
+    - CLI: `paperpilot bates --input "${input}" --prefix "${prefix}" --start ${start} --padding ${padding} --output "${output}"`
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/bates -F "file=@${input}" -F "prefix=${prefix}" -F "start=${start}"`
+    - MCP Tool Call: `{ "name": "pdf_bates", "arguments": { "input": "${input}", "prefix": "${prefix}", "start_number": ${start}, "output": "${output}" } }`
+    - MCP Prompt: `Apply Bates numbering to "${input}" starting with prefix "${prefix}" and save to "${output}".`
+    - Embed JS: `await window.PaperPilot.executeTool('pdf_bates', { input: '${input}', prefix: '${prefix}', start_number: ${start}, output: '${output}' });`
+  - `Watermark` / `pdf_watermark`:
+    - CLI: `paperpilot watermark --input "${input}" --text "${text}" --opacity ${opacity} --output "${output}"`
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/watermark -F "file=@${input}" -F "text=${text}"`
+    - MCP Tool Call: `{ "name": "pdf_watermark", "arguments": { "input": "${input}", "text": "${text}", "output": "${output}" } }`
+    - Embed JS: `await window.PaperPilot.executeTool('pdf_watermark', { input: '${input}', text: '${text}', output: '${output}' });`
+  - `Encrypt` / `pdf_encrypt`:
+    - CLI: `paperpilot encrypt --input "${input}" --password "${password}" --output "${output}"`
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/encrypt -F "file=@${input}" -F "password=${password}"`
+    - MCP Tool Call: `{ "name": "pdf_encrypt", "arguments": { "input": "${input}", "user_password": "${password}", "output": "${output}" } }`
+    - Embed JS: `await window.PaperPilot.executeTool('pdf_encrypt', { input: '${input}', password: '${password}', output: '${output}' });`
+  - `Compress` / `pdf_compress`:
+    - CLI: `paperpilot compress --input "${input}" --quality 80 --output "${output}"`
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/compress -F "file=@${input}" -F "quality=80"`
+    - MCP Tool Call: `{ "name": "pdf_compress", "arguments": { "input": "${input}", "output": "${output}" } }`
+    - Embed JS: `await window.PaperPilot.executeTool('pdf_compress', { input: '${input}', output: '${output}' });`
+  - Default Fallback for other tools (e.g. `pdf_split`, `pdf_merge`, `pdf_to_docx`, `img_to_pdf`, etc.):
+    - CLI: `paperpilot ${subcommand} --input "${input}" --output "${output}"`
+    - cURL: `curl -X POST http://localhost:8080/api/v1/tools/${subcommand} -F "file=@${input}"`
+    - MCP Tool Call: `{ "name": "${toolId}", "arguments": { ... } }`
+    - Embed JS: `await window.PaperPilot.executeTool('${toolId}', { ... });`
+
+---
+
+## 2. Update `ExportCodeModal.svelte`
+Update `apps/desktop/src/lib/components/pipeline/ExportCodeModal.svelte`:
+- Accept an optional prop: `target?: SnippetTarget | null`.
+- If `target` is provided:
+  - Generate snippets using `generateSnippets(target)`.
+  - For `cli` tab, display `snippets.cli`.
+  - For `curl` tab, display `snippets.curl`.
+  - For `mcp` tab, display `snippets.mcpAgentPrompt + '\n\nTool Call:\n' + snippets.mcpToolCall`.
+  - For `js` tab, display `snippets.embedJs`.
+  - Update header title to `"Export Action as Code / API"` (or `"Export as Code / API"`).
+- If `target` is null/undefined:
+  - Preserve the existing multi-step workflow recipe export logic from `pipelineState`.
+
+---
+
+## 3. Integrate into `EditableActionCard.svelte`
+In `apps/desktop/src/lib/components/EditableActionCard.svelte`:
+- Add a new button next to `<button class="execute-btn">`:
+  - Label: `</> Code / API` (with `id="action-export-code-btn"`, styled cleanly with secondary button styles).
+  - Clicking this button sets `isExportCodeModalOpen = true`.
+- Reactively compute `currentSnippetTarget`:
+  - Derive `toolId` from `plan.intent` (e.g. `Rotate` -> `pdf_rotate`, `Bates` -> `pdf_bates`, `Watermark` -> `pdf_watermark`, `Compress` -> `pdf_compress`, etc.).
+  - Gather inputs, outputs, angle, textInput, password, batesPrefix, etc.
+  - Pass `target={currentSnippetTarget}` to `<ExportCodeModal>`.
+- Render `<ExportCodeModal isOpen={isExportCodeModalOpen} target={currentSnippetTarget} onClose={() => isExportCodeModalOpen = false} />`.
+
+---
+
+## 4. Tests & Verification
+
+### Unit Tests (`apps/desktop/tests/snippetGenerator.test.ts`)
+Create Vitest unit tests asserting `generateSnippets` produces correct output:
+1. `Rotate`: CLI includes `--angle`, cURL includes `-F "angle=..."`, MCP has tool `pdf_rotate`.
+2. `Bates`: CLI includes `--prefix` and `--start`, MCP includes `pdf_bates`.
+3. `Watermark`: CLI includes `--text` and `--opacity`.
+4. `Encrypt`: CLI includes `--password`.
+5. `Compress`: CLI includes `compress`.
+
+### Playwright E2E Test (`apps/desktop/tests/e2e_action_card_code_export.spec.ts`)
+Create an automated test verifying:
+1. Navigate to the app.
+2. Render an action card (e.g. by dispatching a plan or interacting with an action).
+3. Click `#action-export-code-btn`.
+4. Verify `#export-code-modal` is visible.
+5. Check that the cURL, CLI, MCP, and Embed JS tabs can be toggled and display non-empty snippets with expected keywords.
+6. Close the modal and assert it is hidden.
+
+---
+
+## Acceptance Criteria
+1. `npm --prefix apps/desktop run check` passes with 0 errors.
+2. `npx --prefix apps/desktop vitest run tests/snippetGenerator.test.ts` passes 100%.
+3. `npm --prefix apps/desktop run build` builds without errors.
