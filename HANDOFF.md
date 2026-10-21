@@ -13,13 +13,19 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **5.9.69C** | [Session 15691603918731845147](https://jules.google.com/session/15691603918731845147) | **Penta-Interface Declarative Workflow Engine & Recipe Execution** (`[Spec 081]`) | 🔄 In Flight — Refined with Single Core Runner (`run_workflow_bytes`) + 5 Thin Wrappers pattern across CLI, MCP, REST Gateway, WASM Engine, Edge Worker, and real-assertion Penta-Interface E2E suite. |
-| **5.9.72** | [Session 6908271606884666943](https://jules.google.com/session/6908271606884666943) | **Embed Pipeline 1-to-1 Desktop Parity (Dropzone, Interactive Steps, Save/Export/Import)** (`[Spec 083]`) | 🔄 In Flight — Full desktop parity for embed pipeline: explicit browse button, file chip summary, `+ Add Step` dynamic tool picker, step deletion, preset/saved flow dropdown, `💾 Save Flow`, `⬇️ Export JSON`, and `⬆️ Import JSON`. |
 
 ---
 
 ## 🏆 Recently Completed & Merged Milestones (Oct 19–21, 2026)
 
-1. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench for Action Cards)**:
+1. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity: Dropzone, Interactive Steps, Save/Export/Import)**:
+   - Merged (PR #225, commit `3354863`, Jules Session 6908271606884666943).
+   - Replaced hidden file input with prominent `📁 Browse Files` button and file status card inside the pipeline dropzone.
+   - Implemented interactive stepper with step removal (`✕`) and dynamic tool picker modal (`+ Add Step`).
+   - Implemented flow management toolbar: presets & saved flows dropdown, `💾 Save Flow` (`localStorage`), `⬇️ Export JSON`, and `⬆️ Import JSON`.
+   - Updated `apps/web/public/embed-test.html` Demo 3 and verified 12/12 Playwright tests passing.
+   - Documented in `wiki/EmbedPipeline.md`.
+2. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench for Action Cards)**:
    - Merged (PR #224, commit `95fcd5a`, Jules Session 17427853372924290951).
    - Created centralized headless snippet generation engine in `apps/desktop/src/lib/utils/snippetGenerator.ts`.
    - Updated `ExportCodeModal.svelte` to dynamically render snippets for both individual tools and multi-step pipeline recipes.
