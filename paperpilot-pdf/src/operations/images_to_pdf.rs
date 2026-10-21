@@ -79,17 +79,23 @@ impl PdfOperation for ImagesToPdfOperation {
                 )))
             })?;
 
-            // Try to infer filter from extension, default to basic assumptions if not clear.
-            let filter = if let Some(ext) = path.extension() {
-                let ext = ext.to_string_lossy().to_lowercase();
-                match ext.as_str() {
-                    "jpg" | "jpeg" => b"DCTDecode".to_vec(),
-                    "jp2" => b"JPXDecode".to_vec(),
-                    "png" => b"FlateDecode".to_vec(), // Incomplete mapping for PDF purposes, but good enough for stubbing realistic PDF generation. In reality, PDF supports direct JPEG embedding (DCTDecode), while PNG requires decompression and raw insertion. We will just wrap the bytes and pretend for now as image conversion is complex.
-                    _ => b"FlateDecode".to_vec(),
-                }
+            let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+            let (filter, stream_bytes) = if ext == "jpg" || ext == "jpeg" {
+                (b"DCTDecode".to_vec(), img_data)
+            } else if ext == "jp2" {
+                (b"JPXDecode".to_vec(), img_data)
             } else {
-                b"FlateDecode".to_vec()
+                // For PNG, WEBP, BMP, etc.: Convert image pixels to raw RGB24 bytes and compress with FlateDecode
+                use flate2::write::ZlibEncoder;
+                use flate2::Compression;
+                use std::io::Write;
+
+                let rgb_img = img.to_rgb8();
+                let raw_pixels = rgb_img.as_raw();
+                let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                encoder.write_all(raw_pixels).map_err(|e| PdfError::IoError(e))?;
+                let compressed = encoder.finish().map_err(|e| PdfError::IoError(e))?;
+                (b"FlateDecode".to_vec(), compressed)
             };
 
             let mut image_stream_dict = Dictionary::new();
@@ -101,7 +107,7 @@ impl PdfOperation for ImagesToPdfOperation {
             image_stream_dict.set("BitsPerComponent", Object::Integer(8));
             image_stream_dict.set("Filter", Object::Name(filter));
 
-            let image_stream = Stream::new(image_stream_dict, img_data);
+            let image_stream = Stream::new(image_stream_dict, stream_bytes);
             let image_id = inner.add_object(Object::Stream(image_stream));
 
             let image_name = format!("Im{}", image_id.0);
