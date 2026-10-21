@@ -114,11 +114,28 @@ PaperPilot/
    - ⚡ **WASM (`paperpilot-wasm`)**: In-memory byte processing without filesystem IO.
    - 📱 **Desktop / Embed API (`apps/desktop`, `apps/embed`)**: Visual cards, parameter schemas, and pipeline execution.
 
-3. **Workspace Safety Rules:**
+3. **The Single Core Runner + Interface Wrappers Architecture Pattern (MANDATORY FOR ALL NEW TOOLS & WORKFLOWS):**
+   - **Problem It Solves:** Prevents logic duplication and fragile implementations across the 5 surfaces (CLI, MCP, REST Gateway, WASM, Desktop/Embed).
+   - **The Rule:** Every tool or workflow operation MUST have exactly **ONE** core in-memory engine implementation:
+     ```rust
+     // Pure in-memory: bytes in -> bytes out (in paperpilot-pdf)
+     pub fn run_operation_bytes(input_bytes: &[u8], config: &Config) -> Result<Vec<u8>, OperationError>
+     ```
+   - **The 5 Thin Interface Wrappers (1–5 lines each):**
+     1. 💻 **CLI (`paperpilot-cli`)**: `let bytes = fs::read(&input)?; let out = run_operation_bytes(&bytes, &cfg)?; fs::write(&output, out)?;`
+     2. 🤖 **MCP (`paperpilot-mcp`)**: Reads file path $\to$ calls `run_operation_bytes` $\to$ writes output path $\to$ returns JSON summary.
+     3. 🌐 **REST Gateway (`paperpilot-gateway`)**: Receives multipart upload $\to$ calls `run_operation_bytes` $\to$ streams PDF binary response.
+     4. ⚡ **WASM Engine (`paperpilot-wasm`)**: Receives `Uint8Array` $\to$ calls `run_operation_bytes` $\to$ returns `Uint8Array`.
+     5. 📱 **Web Embed & Desktop (`apps/embed`, `apps/desktop`)**:
+        - In Embed/Web WASM: Calls the WASM wrapper directly in-memory via `window.PaperPilot` / WebWorker.
+        - In Desktop: Calls either the native Rust sidecar via Tauri IPC or the Axum Gateway.
+   - **Zero Intermediate Disk I/O:** Pipelines chain output bytes from step $N$ directly into step $N+1$ in RAM without temporary disk roundtrips.
+
+4. **Workspace Safety Rules:**
    - **NEVER** execute `git reset --hard`, `git checkout -- .`, `git clean -fd`, or `git restore` under any circumstance.
    - Always commit or stash working progress.
 
-4. **Zero-Mock Policy:**
+5. **Zero-Mock Policy:**
    - All tests must use real disk fixtures and real in-memory byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`). No dummy `{ success: true }` echo stubs.
 
 ---
