@@ -187,7 +187,13 @@ pub async fn process_mobile_buffer(
                                     .filter_map(|p| p.trim().parse::<u32>().ok())
                                     .collect::<Vec<u32>>(),
                             )
-                        } else { v.as_array().map(|arr| arr.iter().filter_map(|p| p.as_u64().map(|n| n as u32)).collect::<Vec<u32>>()) }
+                        } else {
+                            v.as_array().map(|arr| {
+                                arr.iter()
+                                    .filter_map(|p| p.as_u64().map(|n| n as u32))
+                                    .collect::<Vec<u32>>()
+                            })
+                        }
                     });
 
                     let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(

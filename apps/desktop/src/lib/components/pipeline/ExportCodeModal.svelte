@@ -1,9 +1,11 @@
 <script lang="ts">
     import { slide, fade } from 'svelte/transition';
     import { pipelineState } from '$lib/state/pipeline.svelte';
+    import { type SnippetTarget, type GeneratedSnippets, generateSnippets } from '$lib/utils/snippetGenerator';
 
     export let isOpen = false;
     export let onClose: () => void;
+    export let target: SnippetTarget | null = null;
 
     let selectedTab = 'curl';
     let copyText = 'Copy to Clipboard';
@@ -16,26 +18,37 @@
         { id: 'js', label: 'Embed JS' }
     ];
 
-    $: recipeJSON = isOpen ? pipelineState.exportFlowJson() : '{}';
+    $: recipeJSON = isOpen && !target ? pipelineState.exportFlowJson() : '{}';
+    $: snippets = isOpen && target ? generateSnippets(target) : null;
 
     $: codeSnippet = (() => {
         if (!isOpen) return '';
 
-        switch (selectedTab) {
-            case 'curl':
-                return `curl -X POST http://localhost:8080/api/v1/workflow/run \\
+        if (snippets) {
+            switch (selectedTab) {
+                case 'curl': return snippets.curl;
+                case 'cli': return snippets.cli;
+                case 'mcp': return `${snippets.mcpAgentPrompt}\n\nTool Call:\n${snippets.mcpToolCall}`;
+                case 'js': return snippets.embedJs;
+                default: return '';
+            }
+        } else {
+            switch (selectedTab) {
+                case 'curl':
+                    return `curl -X POST http://localhost:8080/api/v1/workflow/run \\
   -H "Content-Type: application/json" \\
   -d '${recipeJSON}'`;
-            case 'cli':
-                return `paperpilot workflow --recipe flow.json --input doc.pdf --output out.pdf`;
-            case 'mcp':
-                return `Please invoke the \`document_workflow\` tool using the following recipe:
+                case 'cli':
+                    return `paperpilot workflow --recipe flow.json --input doc.pdf --output out.pdf`;
+                case 'mcp':
+                    return `Please invoke the \`document_workflow\` tool using the following recipe:
 
 ${recipeJSON}`;
-            case 'js':
-                return `window.PaperPilot.runPipeline(${recipeJSON});`;
-            default:
-                return '';
+                case 'js':
+                    return `window.PaperPilot.runPipeline(${recipeJSON});`;
+                default:
+                    return '';
+            }
         }
     })();
 
@@ -58,7 +71,7 @@ ${recipeJSON}`;
     <div class="modal-backdrop" id="export-code-modal" transition:fade={{duration: 200}}>
         <div class="modal-drawer" transition:slide={{axis: 'x', duration: 300}}>
             <div class="modal-header">
-                <h2>Export as Code / API</h2>
+                <h2>{target ? 'Export Action as Code / API' : 'Export as Code / API'}</h2>
                 <button class="close-btn" aria-label="Close" on:click={onClose}>✕</button>
             </div>
 
@@ -80,7 +93,7 @@ ${recipeJSON}`;
                     <button class="copy-btn" on:click={handleCopy}>{copyText}</button>
                 </div>
 
-                {#if selectedTab === 'cli'}
+                {#if selectedTab === 'cli' && !target}
                     <p class="help-text">Save the exported JSON to <code>flow.json</code> to run this CLI command.</p>
                 {/if}
             </div>

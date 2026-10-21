@@ -22,4 +22,4 @@ office_oxide = "0.1"
 base64 = "0.21"
 [[bin]]
 name = "wave2_e2e"
-path = "src/test_wave2_penta_interface.rs"
+path = "src/main.rs"

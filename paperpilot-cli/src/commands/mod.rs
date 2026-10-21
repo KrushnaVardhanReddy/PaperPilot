@@ -235,8 +235,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!(
-                "{:<4} {:<24} {:<12} {}",
-                "#", "TOOL ID", "STATUS", "DESCRIPTION"
+                "{:<4} {:<24} {:<12} DESCRIPTION",
+                "#", "TOOL ID", "STATUS"
             );
             println!("{}", "-".repeat(80));
 
