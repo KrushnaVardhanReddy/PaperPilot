@@ -10,7 +10,9 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active Jules Sessions in Flight
-*No active sessions in flight. All Wave 2, Pipeline Flow, and Deep Security Sanitizer milestones complete.*
+| Task ID | Session Link | Target & Purpose | Status / Notes |
+|---|---|---|---|
+| **5.9.60** | [Session 18364882261769805853](https://jules.google.com/session/18364882261769805853) | **PII & Sensitive Information Scanner (`document_pii_scan`)** (`[Spec 086]`) | 🔄 In Flight — Automated pure-Rust pattern detector for SSNs, credit cards (Luhn validated), emails, phone numbers, and IBANs (MOD 97-10 validated) returning masked values and audit reports across all 5 surfaces. |
 
 ---
 

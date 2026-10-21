@@ -128,9 +128,13 @@ pub fn archive_prompt(filepath: &Path) -> Result<()> {
     let abs_tasks_dir = fs::canonicalize(&tasks_dir).unwrap_or_else(|_| tasks_dir.clone());
 
     // Ensure the file is actually inside tasks_dir
-    let rel_path = abs_filepath
-        .strip_prefix(&abs_tasks_dir)
-        .context("File is not inside prompts/tasks directory")?;
+    let rel_path = match abs_filepath.strip_prefix(&abs_tasks_dir) {
+        Ok(p) => p,
+        Err(_) => {
+            println!("ℹ️  File is outside prompts/tasks directory; skipping archive move.");
+            return Ok(());
+        }
+    };
 
     let dest = tasks_dir.join("done").join(rel_path);
 
