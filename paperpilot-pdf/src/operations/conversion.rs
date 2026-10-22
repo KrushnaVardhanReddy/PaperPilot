@@ -218,9 +218,89 @@ impl HtmlToPdfOperation {
         );
         let styled_html = inject_css_into_html(&self.input_html, &css);
 
-        let engine = fulgur::Engine::builder().build();
+        let img_re = regex::Regex::new(r#"(?i)(<img\b[^>]*?\bsrc\s*=\s*['"])(.*?)(['"])"#).unwrap();
+
+        let bundle_cell =
+            std::sync::Arc::new(std::sync::Mutex::new(fulgur::asset::AssetBundle::new()));
+        let counter_cell = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+
+        let new_styled_html = img_re
+            .replace_all(&styled_html, |caps: &regex::Captures| {
+                let prefix = &caps[1];
+                let src = &caps[2];
+                let suffix = &caps[3];
+
+                let mut replaced_src = src.to_string();
+
+                if src.starts_with("data:image/") {
+                    if let Some(pos) = src.find(";base64,") {
+                        let b64 = &src[pos + 8..];
+                        use base64::{Engine as _, engine::general_purpose};
+                        if let Ok(bytes) = general_purpose::STANDARD.decode(b64) {
+                            let counter =
+                                counter_cell.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                            let asset_name = format!("inline_img_{}", counter);
+                            if let Ok(mut b) = bundle_cell.lock() {
+                                b.add_image(asset_name.clone(), bytes);
+                            }
+                            replaced_src = asset_name;
+                        } else {
+                            eprintln!("Warning: Failed to decode base64 image payload");
+                        }
+                    }
+                } else if !src.starts_with("http://") && !src.starts_with("https://") {
+                    let resolved_path = if let Some(parent) = self.output_path.parent() {
+                        parent.join(src)
+                    } else {
+                        std::path::PathBuf::from(src)
+                    };
+
+                    if resolved_path.exists() {
+                        match std::fs::read(&resolved_path) {
+                            Ok(bytes) => {
+                                let counter =
+                                    counter_cell.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                                let asset_name = format!("local_img_{}", counter);
+                                if let Ok(mut b) = bundle_cell.lock() {
+                                    b.add_image(asset_name.clone(), bytes);
+                                }
+                                replaced_src = asset_name;
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "Warning: Failed to read local image {}: {}",
+                                    resolved_path.display(),
+                                    e
+                                );
+                            }
+                        }
+                    } else {
+                        eprintln!(
+                            "Warning: Local image not found at {}",
+                            resolved_path.display()
+                        );
+                    }
+                }
+
+                format!("{}{}{}", prefix, replaced_src, suffix)
+            })
+            .into_owned();
+
+        let bundle = match std::sync::Arc::try_unwrap(bundle_cell) {
+            Ok(mutex) => match mutex.into_inner() {
+                Ok(b) => b,
+                Err(_) => return Err(PdfError::Other("Mutex poisoned".to_string())),
+            },
+            Err(_) => {
+                return Err(PdfError::Other(
+                    "Arc still has multiple references".to_string(),
+                ));
+            }
+        };
+
+        let engine = fulgur::Engine::builder().assets(bundle).build();
         let pdf_data = engine
-            .render(&styled_html)
+            .render(&new_styled_html)
             .map_err(|e| PdfError::Other(format!("Failed to render pdf: {:?}", e)))?;
 
         if pdf_data.is_empty() || !pdf_data.starts_with(b"%PDF-") {
@@ -2108,6 +2188,87 @@ mod tests {
 
         assert!(out_path.exists());
         assert!(out_path.metadata().unwrap().len() > 0);
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_html_to_pdf_with_base64_image() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_html_img.pdf");
+        let options = HtmlToPdfOptions {
+            preset: Some("minimal".to_string()),
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+
+        let html = r#"
+            <html><body>
+            <h1>Test HTML</h1>
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" width="50" height="50">
+            </body></html>
+        "#.to_string();
+
+        let op = HtmlToPdfOperation::new(html, out_path.clone(), options);
+        let res = op.render();
+
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_md_to_pdf_with_base64_image() {
+        let dir = tempfile::tempdir().unwrap();
+        let md = "![Pixel](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)".to_string();
+
+        let out_path = dir.path().join("out_md_img.pdf");
+        let options = HtmlToPdfOptions {
+            preset: Some("github".to_string()),
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+        let op = MarkdownToPdfOperation::new(md, out_path.clone(), options);
+        let res = op.render();
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+
+        let pdf_bytes = std::fs::read(&out_path).unwrap();
+        assert!(pdf_bytes.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_html_to_pdf_graceful_missing_image() {
+        let dir = tempfile::tempdir().unwrap();
+        let out_path = dir.path().join("out_html_missing_img.pdf");
+        let options = HtmlToPdfOptions {
+            preset: Some("minimal".to_string()),
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+        };
+
+        let html = r#"
+            <html><body>
+            <h1>Test Graceful HTML</h1>
+            <img src="data:image/png;base64,INVALIDBASE64$$$" width="50">
+            <img src="path/does/not/exist.png">
+            </body></html>
+        "#
+        .to_string();
+
+        let op = HtmlToPdfOperation::new(html, out_path.clone(), options);
+        let res = op.render();
+
+        assert!(res.is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+
         let pdf_bytes = std::fs::read(&out_path).unwrap();
         assert!(pdf_bytes.starts_with(b"%PDF-"));
     }
