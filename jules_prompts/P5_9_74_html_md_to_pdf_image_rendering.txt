@@ -1,0 +1,33 @@
+Task: Implement Task 5.9.74 / Spec 088 — Full-Fidelity Image & Asset Rendering in HTML & Markdown to PDF Synthesis (`html_to_pdf`, `md_to_pdf`).
+
+### Context & Problem Statement
+PaperPilot's Wave 3 Web & AI Synthesis Suite (`v0.7.0`) features `pdf_to_html` / `pdf_to_markdown` (extracting layout text and embedded visual assets as base64 data URIs) and `html_to_pdf` / `md_to_pdf` (synthesizing styled PDFs via pure-Rust `fulgur`).
+
+Currently, `HtmlToPdfOperation::render()` builds `fulgur::Engine::builder().build()` without an `AssetBundle`. When an HTML document or Markdown text has `<img src="...">` (data URIs or local file paths), `fulgur` skips the images or leaves empty blank vertical space, so synthesized PDFs only show text and CSS formatting.
+
+### Architectural Solution & Requirements
+In `paperpilot-pdf/src/operations/conversion.rs`:
+1. Enhance `HtmlToPdfOperation::render()`:
+   - Parse `<img>` tags from the input HTML string (extracting `src` attributes).
+   - Create a `fulgur::asset::AssetBundle::new()`.
+   - For `data:image/...;base64,<payload>` sources:
+     - Decode the base64 string to image bytes.
+     - Allocate a synthetic local name (e.g. `img_asset_0.png`).
+     - Register `bundle.add_image(name.clone(), img_bytes)`.
+     - Rewrite the `src` attribute in the HTML string to `name`.
+   - For local file paths (relative or absolute):
+     - Read the file bytes from disk (resolving relative paths against document base directory if provided in options or input path).
+     - Register `bundle.add_image(name.clone(), file_bytes)`.
+     - Rewrite the `src` attribute in the HTML string to `name`.
+   - Attach the bundle to the engine: `fulgur::Engine::builder().assets(bundle).build()`.
+   - If an image cannot be read or decoded, log a warning and do not panic or fail the entire document conversion.
+2. In `MarkdownToPdfOperation::render()`:
+   - Ensure the generated HTML from `pulldown_cmark` passes through `HtmlToPdfOperation` with image path resolution preserved.
+3. Unit & Integration Tests:
+   - Add unit tests in `conversion.rs`:
+     - `test_html_to_pdf_with_base64_image`: Verify that HTML with base64 PNG renders to a valid PDF containing embedded image content.
+     - `test_md_to_pdf_with_inline_image`: Verify markdown image `![img](data:image/png;base64,...)` renders without error.
+4. Validation & Guardrails:
+   - Run `cargo test -p paperpilot-pdf --lib operations::conversion::tests -j 4`.
+   - Ensure zero regressions in existing tests.
+   - Limit cargo concurrency to `-j 4`.
