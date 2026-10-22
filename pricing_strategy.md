@@ -17,7 +17,8 @@
 | **Pro (Desktop)** | **$5/month** (or $48/yr) | Power users, freelancers, consultants (unlimited steps, watch folders, BYOK) |
 | **Cloud Web Pro (SaaS)**| **$4/month** (or $38/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
 | **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
-| **Enterprise** | **$22/user/month** (or $211/yr) | 50+ seats, IT-managed, compliance-driven orgs (SAML, SCIM, Air-gap, audit) |
+| **Enterprise** | **$22/user/month** or **$15k–$35k/yr Flat VPC** | 50+ seats or air-gapped VPCs (SAML, SCIM, Air-gap, SIEM audit, BAA) |
+| **Managed White-Label Edge** | **$149 – $399 / month** | Branded customer portals (e.g. `pdf.firmname.com`, zero maintenance, >95% margin) |
 | **Cloud API Packages**| **$0 / $29 / $89 / mo** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (1k Free, 5k Dev, 20k Scale; sub-10ms pure-Rust edge) |
 
 > Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
@@ -87,19 +88,20 @@
 
 ## Tier 4: Enterprise (Fleet Governance & Compliance)
 
-* **Price:** $22/user/month (~$211/user/year billed annually)
-* **Minimum:** 50 seats; annual contract required.
+* **Pricing Models (Two Options):**
+  1. **Per-Seat Fleet License:** **$22/user/month** (~$211/user/year billed annually, minimum 50 seats = $10,550/yr).
+  2. **Flat Enterprise VPC / Air-Gap Appliance:** **$15,000 – $35,000/year flat** (unlimited internal seats, deployable via Kubernetes/Docker on AWS, Azure, GCP, or On-Premise SCIFs).
 * **Target:** Hospitals, law firms, financial institutions, defense contractors — organizations governed by strict IT, security, and audit standards.
 * **Why Enterprise Pays (We monetize Fleet Governance, NOT the Login Button):**
   - **SCIM 2.0 Automated Lifecycle Provisioning** — Instant Okta / Azure AD automated user on/off-boarding
   - **Enterprise SAML 2.0 Federation** with custom attribute mapping and conditional access policies
   - **MSI / MDM Silent Enterprise Deployments** — Pre-packaged Intune, Jamf, and SCCM deployment manifests
   - **Air-Gap Group Policy Lockdown (GPO / Plist)** — IT-enforced hard policies disabling all external network calls, blocking cloud LLM keys, and locking execution to 100% on-premise
-  - **SIEM / Compliance Audit Log Streaming** — Real-time event streaming to Splunk, Datadog, or AWS CloudWatch (tracking every document redact, export, and signature)
-  - **Commercial Indemnification & BAA (Business Associate Agreement)** for HIPAA compliance
-  - **On-premise offline license validation** (works in air-gapped SCIFs and defense environments)
+  - **SIEM / Compliance Audit Log Streaming** — Real-time event streaming to Splunk, Datadog, or AWS CloudWatch (tracking every document redact, export, and signature with SHA-256 fingerprints)
+  - **Commercial Indemnification & Signed BAA (Business Associate Agreement)** for HIPAA healthcare compliance
+  - **On-premise offline license validation (`license.key` via Ed25519)** (zero phone-home requirement, works in air-gapped SCIFs and defense environments)
   - **Dedicated Account Manager & 24/7 SLA with phone support**
-* **Why $22:** Large enterprises don't pay for login convenience; they pay for **legal compliance, risk mitigation, and zero data-leakage guarantees**. At $22/user/month, PaperPilot is cheaper than Adobe Acrobat Enterprise while providing 100% on-premise data residency.
+* **Why $15k–$35k:** Large enterprises don't pay for login convenience; they pay for **legal compliance, risk mitigation, and zero data-leakage guarantees**. At $15k–$35k flat or $22/seat/mo, PaperPilot is dramatically cheaper and faster than Adobe Acrobat Enterprise while providing 100% physical on-premise data residency.
 
 ---
 
