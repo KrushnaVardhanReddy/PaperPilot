@@ -22,7 +22,8 @@
     "@tauri-apps/plugin-opener": "^2.7.0",
     "pdfjs-dist": "^6.3.289",
     "tailwindcss": "^4.3.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

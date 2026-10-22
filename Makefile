@@ -86,15 +86,39 @@ build-macos:
 	@echo "Trigger GitHub Actions Rust CI or use: gh workflow run rust.yml for macOS build."
 
 # Android builds & installation
-# Note: uses CARGO_BUILD_JOBS=4 and --no-default-features for lean, responsive mobile compilation
+# Note: uses CARGO_BUILD_JOBS=2 and --no-default-features for lean, responsive mobile compilation
+# Auto-detect Android SDK if not already set by user environment
+ifeq ($(ANDROID_HOME),)
+  ifneq ($(wildcard $(HOME)/Android/Sdk),)
+    export ANDROID_HOME := $(HOME)/Android/Sdk
+  else ifneq ($(wildcard $(HOME)/AndroidSDK),)
+    export ANDROID_HOME := $(HOME)/AndroidSDK
+  else ifneq ($(wildcard /usr/lib/android-sdk),)
+    export ANDROID_HOME := /usr/lib/android-sdk
+  endif
+endif
+
+# Auto-detect NDK from ANDROID_HOME if not already set
+ifeq ($(NDK_HOME),)
+  ifneq ($(wildcard $(ANDROID_HOME)/ndk),)
+    export NDK_HOME := $(lastword $(sort $(wildcard $(ANDROID_HOME)/ndk/*)))
+  else ifneq ($(ANDROID_NDK_HOME),)
+    export NDK_HOME := $(ANDROID_NDK_HOME)
+  endif
+endif
+
+ifneq ($(ANDROID_HOME),)
+  export PATH := $(ANDROID_HOME)/cmdline-tools/latest/bin:$(ANDROID_HOME)/platform-tools:$(PATH)
+endif
+
 build-android:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --debug --target aarch64 --apk -- --no-default-features
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android build --debug --target aarch64 --apk -- --no-default-features
 
 build-android-release:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
 
 run-android:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-4} pnpm exec tauri android dev
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android dev
 
 install-android: build-android
 	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk 2>/dev/null || \
