@@ -6,5 +6,6 @@ pub mod conversions_pdf_tools;
 pub mod edge_cases;
 pub mod page_ops;
 pub mod sanitize;
+pub mod pii;
 pub mod security_forms;
 pub mod workflow;

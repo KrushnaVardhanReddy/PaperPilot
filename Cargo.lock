@@ -6017,6 +6017,7 @@ dependencies = [
  "ocrs",
  "paperpilot-core",
  "pdf_oxide",
+ "regex",
  "rten 0.21.0",
  "rten-tensor 0.21.0",
  "serde",

@@ -353,6 +353,7 @@ pub async fn handle_tool(
         || tool_name == "json_to_pdf"
         || tool_name == "workspace_search"
         || tool_name.starts_with("office_")
+        || tool_name == "document_pii_scan"
     {
         tool_name.clone()
     } else {
@@ -670,6 +671,21 @@ pub async fn watermark(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn sanitize(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("sanitize".to_string()), req).await
+}
+
+/// Scan document for PII and sensitive data [Input: .pdf | Output: JSON report]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pii-scan",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PII scan completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pii_scan(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("document_pii_scan".to_string()), req).await
 }
 
 /// Retrieve metadata and page information for a PDF document [Input: .pdf | Output: .json]

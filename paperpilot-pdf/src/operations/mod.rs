@@ -36,10 +36,12 @@ pub mod rotate;
 pub mod search;
 pub mod signature;
 pub mod split;
+pub mod pii;
 pub mod sanitize;
 pub mod validate;
 pub mod watermark;
 pub mod workflow;
 
 pub use sanitize::sanitize_pdf;
+pub use pii::scan_pii;
 pub use workflow::run_workflow_bytes;

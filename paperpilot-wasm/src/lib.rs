@@ -275,6 +275,13 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
+    pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> Result<String, JsValue> {
+        let result = operations::pii_scan(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        Ok(result)
+    }
+
     pub fn sanitize(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::sanitize(input_bytes, options_json)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -307,6 +314,7 @@ impl WasmPdfEngine {
             {"id": "decrypt", "name": "Decrypt PDF", "status": "stable"},
             {"id": "watermark", "name": "Watermark", "status": "stable"},
             {"id": "sanitize", "name": "Sanitize PDF", "status": "stable"},
+            {"id": "pii_scan", "name": "PII Scanner", "status": "stable"},
             {"id": "delete_pages", "name": "Delete Pages", "status": "stable"},
             {"id": "extract_pages", "name": "Extract Pages", "status": "stable"},
             {"id": "reorder_pages", "name": "Reorder Pages", "status": "stable"},

@@ -165,6 +165,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_EDGE_CASES_REPORT.md"
             )?;
         }
+        "pii" | "5.9.60" => {
+            let results = cases::pii::run_pii_suite().await?;
+            println!("PII finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.60 — Rust-Native Penta-Interface Real Semantic Assertions Suite (PII Scan)",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md"
+            )?;
+        }
         "sanitize" | "5.9.59" => {
             let results = cases::sanitize::run_sanitize_suite().await?;
             println!("Sanitize finished: {} tests", results.len());
@@ -219,6 +228,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md",
             )?;
 
+            let pii = cases::pii::run_pii_suite().await?;
+            println!("PII finished: {} tests", pii.len());
+            generate_markdown_report(
+                "Phase 5.9.60 — Rust-Native Penta-Interface Real Semantic Assertions Suite (PII Scan)",
+                &pii,
+                "reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md",
+            )?;
+
             let s = cases::sanitize::run_sanitize_suite().await?;
             println!("Sanitize finished: {} tests", s.len());
             generate_markdown_report(
@@ -233,6 +250,7 @@ async fn main() -> Result<()> {
             all.extend(c);
             all.extend(d);
             all.extend(s);
+            all.extend(pii);
             generate_markdown_report(
                 "Master Phase 5.9.4 — Rust-Native Penta-Interface Real Semantic Assertions Suite (All 44 Tools, 880 Tests)",
                 &all,
