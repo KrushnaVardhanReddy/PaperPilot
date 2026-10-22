@@ -227,6 +227,9 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
       case 'split':
         customOutputPath = getOutputPath(`${base}_split`);
         break;
+      case 'burst':
+        customOutputPath = getOutputPath(`${base}_burst`);
+        break;
       case 'compress':      customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
       case 'rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
       case 'watermark':     customOutputPath = getOutputPath(`${base}_watermarked.pdf`); break;
