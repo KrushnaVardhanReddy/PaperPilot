@@ -42,7 +42,14 @@ pub fn handle_extract_images(
 pub fn handle_search(input: &std::path::Path, query: &str) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    op.execute(&mut doc)
+    op.execute(&mut doc)?;
+    let matches = op.match_pages.lock().unwrap().clone();
+    if matches.is_empty() {
+        println!("No matches found for '{}'.", query);
+    } else {
+        println!("Found '{}' on page(s): {:?}", query, matches);
+    }
+    Ok(())
 }
 
 pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {

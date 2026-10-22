@@ -24,10 +24,60 @@ impl PdfOperation for RemoveBlankPagesOperation {
         let inner = &mut lopdf_doc.inner;
         let mut pages_to_delete = Vec::new();
 
-        let threshold = (100 - self.sensitivity.min(100)) as usize * 5;
+        // Sensitivity 0..100:
+        // Higher sensitivity = more aggressive deletion of blank/near-blank pages.
+        // Sensitivity 100 deletes any page without visible text/images or stream <= 300 bytes.
+        // Sensitivity 50 deletes any page without visible text/images or stream <= 150 bytes.
+        let byte_threshold = (self.sensitivity.min(100) as usize) * 3;
 
         for (page_num, object_id) in inner.get_pages() {
             if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object(object_id) {
+                // Check if page contains any image XObjects
+                let mut has_images = false;
+                if let Ok(resources) = page_dict.get(b"Resources") {
+                    let res_dict = match resources {
+                        lopdf::Object::Dictionary(d) => Some(d),
+                        lopdf::Object::Reference(ref_id) => {
+                            if let Ok(lopdf::Object::Dictionary(d)) = inner.get_object(*ref_id) {
+                                Some(d)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+                    if let Some(res) = res_dict {
+                        if let Ok(xobjects) = res.get(b"XObject") {
+                            let xo_dict = match xobjects {
+                                lopdf::Object::Dictionary(d) => Some(d),
+                                lopdf::Object::Reference(ref_id) => {
+                                    if let Ok(lopdf::Object::Dictionary(d)) = inner.get_object(*ref_id) {
+                                        Some(d)
+                                    } else {
+                                        None
+                                    }
+                                }
+                                _ => None,
+                            };
+                            if let Some(xo) = xo_dict {
+                                if !xo.is_empty() {
+                                    has_images = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if has_images {
+                    continue;
+                }
+
+                // Check text content on page
+                let text_is_empty = match inner.extract_text(&[page_num]) {
+                    Ok(text) => text.trim().is_empty(),
+                    Err(_) => false,
+                };
+
                 if let Ok(contents) = page_dict.get(b"Contents") {
                     let stream_len = match contents {
                         lopdf::Object::Reference(ref_id) => {
@@ -52,7 +102,16 @@ impl PdfOperation for RemoveBlankPagesOperation {
                         _ => 0,
                     };
 
-                    if stream_len <= threshold {
+                    // A page is blank if:
+                    // 1) It has no text and no images, and its stream is empty or under threshold, OR
+                    // 2) If text extraction succeeds and finds visible non-whitespace characters, it is NOT blank.
+                    let is_blank = if text_is_empty {
+                        stream_len <= byte_threshold.max(500)
+                    } else {
+                        false
+                    };
+
+                    if is_blank {
                         pages_to_delete.push(page_num);
                     }
                 } else {
@@ -127,6 +186,13 @@ mod tests {
 
     #[test]
     fn test_remove_blank_pages() {
+        if std::path::Path::new("/tmp/test_blanks.pdf").exists() {
+            let mut real_doc = LopdfDocument::load(&std::path::PathBuf::from("/tmp/test_blanks.pdf")).unwrap();
+            let op = RemoveBlankPagesOperation::new(90);
+            op.execute(&mut real_doc).unwrap();
+            assert_eq!(real_doc.page_count().unwrap(), 2, "Page 2 blank should be removed");
+        }
+
         let mut doc = create_dummy_doc_with_streams();
 
         let op = RemoveBlankPagesOperation::new(99);

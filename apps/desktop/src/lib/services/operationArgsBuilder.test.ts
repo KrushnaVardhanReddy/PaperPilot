@@ -115,6 +115,31 @@ describe('operationArgsBuilder', () => {
         });
     });
 
+    it('handles remove_blank sensitivity option', async () => {
+        const args = await buildOperationArgs('remove_blank', { ...defaultContext, blankSensitivity: 80 });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_cleaned.pdf',
+            sensitivity: 80
+        });
+    });
+
+    it('handles burst output directory', async () => {
+        const args = await buildOperationArgs('burst', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output_dir: '/docs/test_burst'
+        });
+    });
+
+    it('handles search query argument', async () => {
+        const args = await buildOperationArgs('search', { ...defaultContext, searchQuery: 'Confidential' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            query: 'Confidential'
+        });
+    });
+
     it('returns null if creation tool dialog is canceled', async () => {
         // Redefine mock temporarily for this test
         vi.mocked(await import('@tauri-apps/plugin-dialog')).open.mockResolvedValueOnce(null);

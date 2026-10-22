@@ -38,6 +38,8 @@ export interface OperationContext {
     footerText: string;
     metadataTitle: string;
     compressQuality: number;
+    blankSensitivity?: number;
+    searchQuery?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -45,7 +47,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         docName, docPath, getOutputPath, customOutputPath,
         splitPoints, deletePages, extractPages, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
         password, batesPrefix, batesStart, batesPadding, ocrOutputFormat, cropBox,
-        convertPreset, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality
+        convertPreset, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality,
+        blankSensitivity, searchQuery
     } = context;
 
     let args: Record<string, any> = {};
@@ -266,18 +269,27 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_signed.pdf`)
             };
             break;
+        case 'remove_blank':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_cleaned.pdf`),
+                sensitivity: blankSensitivity !== undefined ? blankSensitivity : 95
+            };
+            break;
         case 'validate':
         case 'hash':
-        case 'search':
         case 'read_form':
         case 'bookmarks':
         case 'classify_type':
             args = {
                 input: docPath
             };
-            if (toolId === 'search') {
-                args.query = 'text'; // Replace with a bound value if needed later
-            }
+            break;
+        case 'search':
+            args = {
+                input: docPath,
+                query: searchQuery && searchQuery.trim() !== '' ? searchQuery.trim() : 'PaperPilot'
+            };
             break;
         case 'bates':
             args = {

@@ -87,6 +87,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
 
   // New tool parameters
   let blankSensitivity = $state(99);
+  let textSearchQuery = $state('');
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
@@ -332,7 +333,9 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
             headerText,
             footerText,
             metadataTitle,
-            compressQuality
+            compressQuality,
+            blankSensitivity,
+            searchQuery: textSearchQuery
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -453,7 +456,9 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           headerText,
           footerText,
           metadataTitle,
-          compressQuality
+          compressQuality,
+          blankSensitivity,
+          searchQuery: textSearchQuery
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -892,6 +897,26 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
             {/if}
           </p>
         </div>
+      {:else if activeTool.id === 'search'}
+        <div class="operation-config">
+          <label for="textSearchQueryInput" class="section-desc">Search Text:</label>
+          <input
+            id="textSearchQueryInput"
+            type="text"
+            class="form-input"
+            bind:value={textSearchQuery}
+            placeholder="Enter word or phrase to find..."
+          />
+          <p class="section-desc" style="font-size: 0.78rem; color: #a1a1aa; margin-top: 6px;">
+            Scans the entire PDF document and locates all pages containing the query text.
+          </p>
+        </div>
+      {:else if activeTool.id === 'burst'}
+        <div class="operation-config">
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Bursts every single page into an individual standalone PDF file saved into an output directory.
+          </p>
+        </div>
       {:else}
         <div class="operation-config">
           <p class="section-desc">Applies directly to the active document.</p>
@@ -917,10 +942,10 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'md_to_pdf' && activeTool.id !== 'html_to_pdf' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'json_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
-            {activeTool.id === 'split' ? 'Output folder:' : 'Output file:'}
+            {activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder:' : 'Output file:'}
           </label>
           <div class="output-path-row">
             <input
@@ -928,7 +953,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
               type="text"
               class="form-input output-path-input"
               bind:value={customOutputPath}
-              placeholder={activeTool.id === 'split' ? 'Output folder path...' : 'Output file path...'}
+              placeholder={activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder path...' : 'Output file path...'}
               title="Edit the output path"
             />
           </div>
