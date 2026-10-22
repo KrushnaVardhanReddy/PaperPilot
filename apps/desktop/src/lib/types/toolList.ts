@@ -33,6 +33,7 @@ export const allTools: ToolDefinition[] = [
   { id: 'pdf_to_xlsx', title: 'PDF to Excel (XLSX)', inputFormat: 'PDF', outputFormat: '.XLSX', description: 'Extract tabular data into spreadsheets', icon: '📊', category: 'convert', context: 'pdf', tags: ['excel', 'sheet', 'table'], releaseStatus: 'preview' },
   { id: 'pdf_to_markdown', title: 'PDF to Markdown', inputFormat: 'PDF', outputFormat: '.MD', description: 'Convert clean layout into LLM-ready markdown text', icon: '📑', category: 'convert', context: 'pdf', tags: ['llm', 'markdown', 'md'], releaseStatus: 'preview' },
   { id: 'pdf_to_html', title: 'PDF to HTML', inputFormat: 'PDF', outputFormat: '.HTML', description: 'Export document as responsive, styled HTML5 web page', icon: '🌐', category: 'convert', context: 'pdf', tags: ['html', 'web', 'export', 'responsive'], releaseStatus: 'preview' },
+  { id: 'pdf_to_json', title: 'PDF to JSON', inputFormat: 'PDF', outputFormat: '.JSON', description: 'Multimodal layout & text JSON extraction with bounding boxes', icon: '⚡', category: 'convert', context: 'pdf', tags: ['json', 'ai', 'layout', 'extract', 'llm'], releaseStatus: 'preview' },
   { id: 'extract_text', title: 'PDF to Plain Text', inputFormat: 'PDF', outputFormat: '.TXT', description: 'Extract all raw textual content to a .txt file', icon: '📄', category: 'convert', context: 'pdf', tags: ['text', 'dump', 'raw'], releaseStatus: 'v0.5-core' },
 
   // AI & Intelligence

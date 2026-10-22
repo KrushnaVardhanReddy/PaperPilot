@@ -416,6 +416,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.html`)
             };
             break;
+        case 'pdf_to_json':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.json`)
+            };
+            break;
         case 'pdf_to_pptx':
             args = {
                 input: docPath,

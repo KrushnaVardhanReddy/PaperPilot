@@ -252,6 +252,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
       case 'pdf_to_xlsx':     customOutputPath = getOutputPath(`${base}.xlsx`);           break;
       case 'pdf_to_markdown': customOutputPath = getOutputPath(`${base}.md`);             break;
       case 'pdf_to_html':     customOutputPath = getOutputPath(`${base}.html`);           break;
+      case 'pdf_to_json':     customOutputPath = getOutputPath(`${base}.json`);           break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
       case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
       case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;
