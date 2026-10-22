@@ -254,7 +254,6 @@ pub fn run() {
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
         .invoke_handler(tauri::generate_handler![
             greet,
-            mobile_bridge::process_mobile_buffer,
             invoke_mcp_tool,
             cancel_job,
             query_documentation_rag,

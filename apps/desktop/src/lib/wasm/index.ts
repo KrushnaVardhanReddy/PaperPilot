@@ -12,9 +12,13 @@ export interface WasmPdfClient {
     flatten(file: Uint8Array): Promise<Uint8Array>;
     set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array>;
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
+    images_to_pdf(files: Uint8Array[]): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
+    runOperation(type: string, payload: any): Promise<any> {
+        return this.dispatch(type as any, payload);
+    }
     private worker: Worker;
     private messageIdCounter = 0;
     private pendingRequests = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void }>();
