@@ -88,6 +88,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
   // New tool parameters
   let blankSensitivity = $state(99);
   let textSearchQuery = $state('');
+  let searchResultDisplay = $state<string | null>(null);
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
@@ -524,6 +525,9 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
                 await navigator.clipboard.writeText(textToCopy);
               }
               msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
+            } else if (activeTool.id === 'search') {
+              msg = resObj.message || 'Search completed';
+              searchResultDisplay = resObj.message || 'No matches found.';
             } else {
               const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
               msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
@@ -910,6 +914,11 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           <p class="section-desc" style="font-size: 0.78rem; color: #a1a1aa; margin-top: 6px;">
             Scans the entire PDF document and locates all pages containing the query text.
           </p>
+          {#if searchResultDisplay}
+            <div style="margin-top: 10px; padding: 10px 12px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; font-size: 0.85rem; color: #38bdf8;">
+              🔍 {searchResultDisplay}
+            </div>
+          {/if}
         </div>
       {:else if activeTool.id === 'burst'}
         <div class="operation-config">
