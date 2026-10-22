@@ -92,6 +92,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
+  let tableFormat = $state('json');
 
   // Additional 44 tools parameter states
   let batesPrefix = $state('CONF-');

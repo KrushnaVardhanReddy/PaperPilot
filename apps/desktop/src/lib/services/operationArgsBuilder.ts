@@ -13,6 +13,7 @@ export interface OperationContext {
     splitPoints: string;
     deletePages?: string;
     extractPages?: string;
+  tableFormat?: string;
     rotateAngle: string;
     rotatePages?: string;
     watermarkText: string;

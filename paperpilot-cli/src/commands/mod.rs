@@ -12,6 +12,7 @@ pub mod pii;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
+pub mod table;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -195,6 +196,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             format,
         } => group_c::handle_extract_text(input, output, format),
         Commands::ExtractImages { input, output } => group_c::handle_extract_images(input, output),
+        Commands::ExtractTables { input, output, format, pages } => {
+            table::execute(input.clone(), output.clone(), format.clone(), pages.clone())
+        }
         Commands::Search { input, query } => group_c::handle_search(input, query),
         Commands::Render {
             input,
