@@ -200,6 +200,24 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
+    /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
+    #[command(name = "pii-scan")]
+    PiiScan {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value_t = true)]
+        scan_ssn: bool,
+        #[arg(long, default_value_t = true)]
+        scan_credit_cards: bool,
+        #[arg(long, default_value_t = true)]
+        scan_emails: bool,
+        #[arg(long, default_value_t = true)]
+        scan_phones: bool,
+        #[arg(long, default_value_t = true)]
+        scan_iban: bool,
+    },
     Sanitize {
         #[arg(long)]
         input: PathBuf,

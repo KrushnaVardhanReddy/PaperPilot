@@ -3,7 +3,7 @@ export type OperationId =
   | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_crop' | 'pdf_merge'
   | 'pdf_split' | 'pdf_extract_pages' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
-  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers' | 'pdf_sanitize';
+  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers' | 'pdf_sanitize' | 'document_pii_scan';
 
 export interface PipelineStep {
   id: string;           // crypto.randomUUID()
@@ -337,6 +337,19 @@ export const OPERATION_REGISTRY: Record<OperationId, {
       { key: 'remove_metadata', label: 'Remove Metadata', type: 'text', placeholder: 'true/false' },
       { key: 'remove_attachments', label: 'Remove Attachments', type: 'text', placeholder: 'true/false' },
       { key: 'remove_scripts', label: 'Remove Scripts', type: 'text', placeholder: 'true/false' }
+    ]
+  },
+  document_pii_scan: {
+    label: 'PII Scan',
+    icon: '🔍',
+    description: 'Scan document for SSNs, credit cards, emails, and sensitive PII',
+    defaultParams: { input: '__input__ ', output: '__output__ ', scan_ssn: true, scan_credit_cards: true, scan_emails: true, scan_phones: true, scan_iban: true },
+    paramSchema: [
+      { key: 'scan_ssn', label: 'Scan SSNs', type: 'text', placeholder: 'true/false' },
+      { key: 'scan_credit_cards', label: 'Scan Credit Cards', type: 'text', placeholder: 'true/false' },
+      { key: 'scan_emails', label: 'Scan Emails', type: 'text', placeholder: 'true/false' },
+      { key: 'scan_phones', label: 'Scan Phones', type: 'text', placeholder: 'true/false' },
+      { key: 'scan_iban', label: 'Scan IBAN', type: 'text', placeholder: 'true/false' }
     ]
   },
   pdf_header_footer: {

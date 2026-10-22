@@ -2223,6 +2223,55 @@ impl PaperPilotMcpServer {
             "Deeply sanitizes a PDF document by removing metadata, scripts, attachments, and thumbnails. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
         );
         tool_sanitize.input_schema = Arc::new(schema_sanitize);
+
+        // Tool: document_pii_scan
+        let mut schema_pii = serde_json::Map::new();
+        schema_pii.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut props_pii = serde_json::Map::new();
+
+        let mut prop_input_pii = serde_json::Map::new();
+        prop_input_pii.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pii.insert("input".to_string(), serde_json::Value::Object(prop_input_pii));
+
+        let mut prop_output_pii = serde_json::Map::new();
+        prop_output_pii.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pii.insert("output".to_string(), serde_json::Value::Object(prop_output_pii));
+
+        let mut prop_ssn = serde_json::Map::new();
+        prop_ssn.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pii.insert("scan_ssn".to_string(), serde_json::Value::Object(prop_ssn));
+
+        let mut prop_cc = serde_json::Map::new();
+        prop_cc.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pii.insert("scan_credit_cards".to_string(), serde_json::Value::Object(prop_cc));
+
+        let mut prop_emails = serde_json::Map::new();
+        prop_emails.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pii.insert("scan_emails".to_string(), serde_json::Value::Object(prop_emails));
+
+        let mut prop_phones = serde_json::Map::new();
+        prop_phones.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pii.insert("scan_phones".to_string(), serde_json::Value::Object(prop_phones));
+
+        let mut prop_iban = serde_json::Map::new();
+        prop_iban.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pii.insert("scan_iban".to_string(), serde_json::Value::Object(prop_iban));
+
+        schema_pii.insert("properties".to_string(), serde_json::Value::Object(props_pii));
+        schema_pii.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+            ]),
+        );
+
+        let mut tool_pii = Tool::default();
+        tool_pii.name = "document_pii_scan".into();
+        tool_pii.description = Some(
+            "Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]".into(),
+        );
+        tool_pii.input_schema = Arc::new(schema_pii);
+        tools.push(tool_pii);
         tools.push(tool_sanitize);
 
         // Tool: pdf_header_footer
@@ -4680,6 +4729,45 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "document_pii_scan" | "pdf_document_pii_scan" => {
+                let input = get_string("input")?;
+                let output = get_string("output").ok();
+
+                let scan_ssn = args.get("scan_ssn").and_then(|v| v.as_bool()).unwrap_or(true);
+                let scan_credit_cards = args.get("scan_credit_cards").and_then(|v| v.as_bool()).unwrap_or(true);
+                let scan_emails = args.get("scan_emails").and_then(|v| v.as_bool()).unwrap_or(true);
+                let scan_phones = args.get("scan_phones").and_then(|v| v.as_bool()).unwrap_or(true);
+                let scan_iban = args.get("scan_iban").and_then(|v| v.as_bool()).unwrap_or(true);
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| ErrorData::internal_error(format!("Failed to read input file: {}", e), None))?;
+
+                let options = paperpilot_pdf::operations::pii::PiiScanOptions {
+                    scan_ssn,
+                    scan_credit_cards,
+                    scan_emails,
+                    scan_phones,
+                    scan_iban,
+                };
+
+                let report = paperpilot_pdf::operations::pii::scan_pii(&input_bytes, &options)
+                    .map_err(|e| ErrorData::internal_error(format!("PII Scan failed: {}", e), None))?;
+
+                if let Some(out_path) = &output {
+                    ensure_parent_dir(out_path)?;
+                    let json = serde_json::to_string_pretty(&report).unwrap_or_default();
+                    std::fs::write(out_path, json)
+                        .map_err(|e| ErrorData::internal_error(format!("Failed to write output file: {}", e), None))?;
+                }
+
+                Ok(OperationResult {
+                    data: Some(serde_json::to_value(&report).unwrap_or_default()),
+                    success: true,
+                    message: "PII Scan completed successfully.".to_string(),
+                    output_path: output,
+                    diff_detected: None,
+                })
+            }
             "pdf_header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -5103,7 +5191,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 59);
+        assert_eq!(res.tools.len(), 60);
     }
 
     #[test]

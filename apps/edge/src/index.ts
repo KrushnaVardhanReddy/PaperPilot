@@ -132,6 +132,12 @@ export default {
            const result = WasmPdfEngine.flatten(new Uint8Array(body));
            return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
+        if (url.pathname === '/api/v1/pii-scan') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pii_scan(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
         if (url.pathname === '/api/v1/sanitize') {
            const body = await request.arrayBuffer();
            const options = url.searchParams.get('options') || '{}';

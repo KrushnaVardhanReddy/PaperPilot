@@ -56,6 +56,7 @@ export const allTools: ToolDefinition[] = [
   { id: 'crop', title: 'Crop Pages', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Crop pages to a specific rectangular area', icon: '✂️', category: 'pages', context: 'pdf', tags: ['crop', 'trim', 'cut'], releaseStatus: 'preview' },
 
   // Security & Integrity
+  { id: 'document_pii_scan', title: 'PII Scanner', inputFormat: 'PDF', outputFormat: '.JSON', description: 'Scan document for SSNs, credit cards, emails, and sensitive PII', icon: '🔍', category: 'security', context: 'pdf', tags: ['pii', 'security', 'privacy', 'ssn', 'compliance'], releaseStatus: 'preview' },
   { id: 'pdf_sanitize', title: 'Sanitize Document', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Deeply sanitize a PDF document for enterprise security and privacy', icon: '🛡️', category: 'security', context: 'pdf', tags: ['sanitize', 'security', 'metadata', 'remove', 'clean'], releaseStatus: 'preview' },
   { id: 'redact', title: 'Redact Text', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Permanently remove sensitive information', icon: '⬛', category: 'security', context: 'pdf', tags: ['redact', 'hide', 'censor', 'blackout'], releaseStatus: 'preview' },
   { id: 'sign', title: 'Sign Document', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Apply digital signature to document', icon: '✒️', category: 'security', context: 'pdf', tags: ['sign', 'signature', 'cert'], releaseStatus: 'preview' },

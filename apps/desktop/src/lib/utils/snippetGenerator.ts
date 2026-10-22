@@ -71,6 +71,21 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_watermark', ${JSON.stringify(mcpArgs)});`;
       break;
     }
+    case 'document_pii_scan': {
+      const scan_ssn = params.scan_ssn !== undefined ? params.scan_ssn : true;
+      const scan_credit_cards = params.scan_credit_cards !== undefined ? params.scan_credit_cards : true;
+      const scan_emails = params.scan_emails !== undefined ? params.scan_emails : true;
+      const scan_phones = params.scan_phones !== undefined ? params.scan_phones : true;
+      const scan_iban = params.scan_iban !== undefined ? params.scan_iban : true;
+      cli = `paperpilot pii-scan --input "${input}" --scan-ssn ${scan_ssn} --scan-credit-cards ${scan_credit_cards} --scan-emails ${scan_emails} --scan-phones ${scan_phones} --scan-iban ${scan_iban} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/pdf/pii-scan -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "scan_ssn": ${scan_ssn}, "scan_credit_cards": ${scan_credit_cards}, "scan_emails": ${scan_emails}, "scan_phones": ${scan_phones}, "scan_iban": ${scan_iban}}'`;
+
+      const mcpArgs = { input, output, scan_ssn, scan_credit_cards, scan_emails, scan_phones, scan_iban };
+      mcpToolCall = JSON.stringify({ name: "document_pii_scan", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Scan "${input}" for PII and save report to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('document_pii_scan', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_sanitize': {
       const rm_metadata = params.remove_metadata !== undefined ? params.remove_metadata : true;
       const rm_attachments = params.remove_attachments !== undefined ? params.remove_attachments : true;

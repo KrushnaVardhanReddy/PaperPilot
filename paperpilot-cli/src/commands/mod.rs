@@ -8,6 +8,7 @@ pub mod group_e;
 #[cfg(feature = "office")]
 pub mod office;
 pub mod sanitize;
+pub mod pii;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
@@ -125,6 +126,23 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             rect,
             output,
         } => group_b::handle_redact(input, pages, rect, output),
+        Commands::PiiScan {
+            input,
+            output,
+            scan_ssn,
+            scan_credit_cards,
+            scan_emails,
+            scan_phones,
+            scan_iban,
+        } => pii::handle_pii_scan(
+            input,
+            output,
+            *scan_ssn,
+            *scan_credit_cards,
+            *scan_emails,
+            *scan_phones,
+            *scan_iban,
+        ),
         Commands::Sanitize {
             input,
             output,
