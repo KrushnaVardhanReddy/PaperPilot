@@ -322,3 +322,30 @@ docker-logs:
 # Open interactive shell inside the container to test CLI & MCP
 docker-shell:
 	docker compose exec paperpilot bash || docker exec -it paperpilot bash
+
+# ==============================================================================
+# Cloud Agent Delegation Targets (Jules Dispatcher)
+# ==============================================================================
+.PHONY: jules-list jules-dry-run jules-submit
+
+# List all pending prompt files available for Jules delegation
+jules-list:
+	./scripts/jules_submit.sh --list
+
+# Test and preview the JSON payload sent to the Jules cloud API without dispatching
+# Example: make jules-dry-run FILE=prompts/tasks/phase5/P5_9_75_mobile_lean_wasm_and_ocr.txt
+jules-dry-run:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make jules-dry-run FILE=prompts/tasks/phase5/<prompt-file>.txt"; \
+		exit 1; \
+	fi
+	./scripts/jules_submit.sh --file $(FILE) --dry-run
+
+# Dispatch an async Jules session to generate PR for the specified prompt file
+# Example: make jules-submit FILE=prompts/tasks/phase5/P5_9_75_mobile_lean_wasm_and_ocr.txt
+jules-submit:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make jules-submit FILE=prompts/tasks/phase5/<prompt-file>.txt"; \
+		exit 1; \
+	fi
+	./scripts/jules_submit.sh --file $(FILE)

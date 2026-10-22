@@ -12,7 +12,7 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| *None* | — | All dispatched sessions completed and merged | ✅ All clear |
+| **Task 5.9.75** | [Session 7525956406631093564](https://jules.google.com/session/7525956406631093564) | Mobile Lean APK (<22 MB), 26+ WASM Catalog UI & On-Demand OCR `[Spec 089]` | ⏳ In-Flight (Dispatched Oct 22) |
 
 ---
 
@@ -147,12 +147,15 @@ Under **Spec 087**, mobile devices (Android APK & PWA/Embed) focus **exclusively
 5. **Compression (`pdf_compress`)**: Shrink documents (<2 MB) before sending via WhatsApp, Email, or Slack.
 6. **Native Sharing (`navigator.share()`)**: Push processed PDF bytes straight into OS intents without downloading to storage.
 
-#### ⚖️ Lean Mobile APK Optimization (Next Action Item)
-- **Problem**: Current debug APK is **82 MB** because `apps/desktop/src-tauri` still compiles the native `paperpilot-pdf` crate into `libdesktop_lib.so` (~32 MB), even though mobile operations run in-memory via `paperpilot-wasm` inside the WebView.
+#### ⚖️ Lean Mobile APK Optimization (Task 5.9.75 / Spec 089)
+- **Problem**: Current debug APK is **82 MB** because `apps/desktop/src-tauri` still compiles the native gateway/MCP sidecars and full desktop engines into `libdesktop_lib.so` (~32 MB), and bundles heavy dependencies.
+- **Specification**: Authored [Spec 089](specs/089-mobile-lean-architecture-and-on-demand-ocr/spec.md) and [Task 5.9.75](specs/089-mobile-lean-architecture-and-on-demand-ocr/task.md).
 - **Solution to implement**:
-  - In `apps/desktop/src-tauri/Cargo.toml`, move `paperpilot-pdf`, `paperpilot-nlp`, and `paperpilot-ai` behind the `desktop-features` flag (or `not(target_os = "android")`).
+  - In `apps/desktop/src-tauri/Cargo.toml`, move `paperpilot-gateway` and `paperpilot-mcp` behind `desktop-features` flag (or `not(target_os = "android")`).
   - Keep `src-tauri` on Android as a lightweight Tauri shell (~3 MB) that only handles WebView initialization and OS dialogs.
-  - This will cut mobile build times by **70%** and reduce final APK size to **~15–20 MB**.
+  - Implement mobile curated UX in `OperationsPanel.svelte`: **Quick Actions row** (4 hero tools: `Scan`, `Sign`, `Compress`, `Sanitize`) followed by the full **26+ WASM tool catalog** organized into clean collapsible category accordions (`Organize`, `Security`, `Conversions`, `Enhance`).
+  - Integrate cross-platform on-demand `ppocrv6-tiny` model download (~6 MB) on first OCR run instead of bundling models in APK/IPA assets.
+  - Reduces final APK size from 82 MB to **~15–20 MB** and cuts build times by **70%**.
 
 ---
 

@@ -1,0 +1,116 @@
+Implement Task 5.9.75 / Spec 089: Mobile Lean Architecture, Full 26+ WASM Tool Suite & On-Demand OCR Engine (`specs/089-mobile-lean-architecture-and-on-demand-ocr/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+
+PaperPilot is an offline-first document workstation across Desktop (Linux, macOS, Windows) and Mobile (Android APK, iOS IPA via Tauri 2.0).
+
+### 1. The Mobile Binary Bloat Issue (Reduce APK 82 MB -> <=22 MB)
+Currently, `apps/desktop/src-tauri` builds heavy native desktop gateway and MCP sidecars into the native library (`libdesktop_lib.so`), producing an 82 MB debug APK.
+- On Android and iOS, `src-tauri` must act as a lightweight shell (~3 MB native overhead) that only handles WebView lifecycle, camera capture permissions, sandboxed storage paths (`app_local_data_dir()`), and OS Share Sheet intents (`navigator.share`).
+- Heavy server crates (`paperpilot-gateway`, `paperpilot-mcp`) must only compile when targeting desktop platforms (behind `desktop-features`).
+
+### 2. Full 26+ WASM Tool Catalog & Mobile Information Architecture
+`paperpilot-wasm` (`WasmPdfEngine`) already compiles 26+ production operations in pure Rust WebAssembly.
+Mobile users should have access to ALL 26+ WASM tools, presented through an intuitive **"Quick Actions + Categorized Catalog"** UX in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+1. **⚡ Quick Actions Row**: 4 prominent hero cards at the top:
+   - 📷 **Scan (Camera to PDF)**
+   - ✍️ **Sign Document**
+   - ⚡ **Compress PDF**
+   - 🧹 **Deep Sanitize / PII Scan**
+2. **📂 Categorized Catalog Accordions**:
+   - Below Quick Actions, the full 26-tool WASM catalog is grouped into expandable sections:
+     - **Organize (8)**: `merge`, `split`, `rotate`, `delete_pages`, `extract_pages`, `reorder_pages`, `crop`, `flatten`
+     - **Security & Privacy (5)**: `sanitize`, `pii_scan`, `encrypt`, `decrypt`, `watermark`
+     - **Conversions & Text (7)**: `ocr`, `images_to_pdf`, `pdf_to_docx`, `json_to_pdf`, `extract_images`, `extract_text`, `render_page`
+     - **Enhance & Info (4)**: `page_numbers`, `header_footer`, `set_metadata`, `pdf_info`
+     - **Workflows (2)**: `workflow`, `workflow_presets`
+3. **Instant Filter/Search**: Fast text input filtering tools instantaneously.
+4. **Touch Ergonomics**: All cards have >=48px touch targets, tactile tap states, and responsive bottom sheet drawer.
+
+### 3. Cross-Platform On-Demand OCR Downloader
+- Do NOT bundle 12-18 MB OCR weights (`det.onnx`, `rec.onnx`, `dict.txt`) into the base APK or IPA.
+- When the user selects `ocr` on mobile:
+  - Check if `ppocrv6-tiny` (~6.0 MB) exists in the application sandbox data directory (`app_local_data_dir() + "/models/ocr/ppocrv6-tiny/"`).
+  - If missing, display a status pill: `○ Model not downloaded (~6 MB required)`.
+  - When the user taps "Run OCR", trigger the existing `download_ocr_model` progress sheet.
+  - Once downloaded to sandbox storage, automatically run OCR and cache permanently for offline use.
+
+---
+
+## 📁 EXACT FILES TO TOUCH / CREATE
+
+```
+apps/desktop/src-tauri/Cargo.toml                             # Feature gating for desktop-only crates
+apps/desktop/src-tauri/src/lib.rs                             # Conditionals for gateway/mcp handlers on mobile
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte # Mobile Quick Actions + Categorized Catalog UI & OCR download trigger
+apps/desktop/src/lib/state/app.svelte.ts                      # Mobile state helpers (if needed)
+specs/089-mobile-lean-architecture-and-on-demand-ocr/task.md  # Mark task completed
+PHASES.md                                                     # Mark Task 5.9.75 completed
+```
+
+---
+
+## 🛠️ IMPLEMENTATION DETAILS
+
+### 1. `apps/desktop/src-tauri/Cargo.toml`
+Ensure `paperpilot-gateway` and `paperpilot-mcp` are strictly optional and placed under `desktop-features`:
+```toml
+[dependencies]
+paperpilot-core = { path = "../../../paperpilot-core" }
+paperpilot-pdf = { path = "../../../paperpilot-pdf" }
+paperpilot-mcp = { path = "../../../paperpilot-mcp", optional = true }
+paperpilot-nlp = { path = "../../../paperpilot-nlp" }
+paperpilot-ai = { path = "../../../paperpilot-ai" }
+paperpilot-gateway = { path = "../../../paperpilot-gateway", optional = true }
+
+[features]
+default = ["desktop-features"]
+desktop-features = ["dep:paperpilot-gateway", "dep:paperpilot-mcp"]
+```
+Verify `src-tauri` builds cleanly with `--no-default-features` (as called by `make build-android`: `pnpm exec tauri android build ... -- --no-default-features`).
+
+### 2. `apps/desktop/src-tauri/src/lib.rs`
+Guard any code referencing `paperpilot_mcp` or `paperpilot_gateway` with `#[cfg(feature = "desktop-features")]`.
+For non-desktop targets (when `feature = "desktop-features"` is disabled):
+- Provide fallback stubs for `invoke_mcp_tool`:
+```rust
+#[tauri::command]
+#[cfg(not(feature = "desktop-features"))]
+async fn invoke_mcp_tool(
+    _tool_name: String,
+    _arguments: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    Err("MCP server is not enabled in mobile builds".to_string())
+}
+```
+Ensure all tests and commands compile cleanly both with and without `--no-default-features`.
+
+### 3. Mobile UI in `OperationsPanel.svelte`
+- When `appState.isMobile` is `true`:
+  - Show the **Quick Actions** block at the top with 4 hero cards:
+    - `images_to_pdf` (Scan)
+    - `sign` (Sign Document)
+    - `compress` (Compress PDF)
+    - `document_pii_scan` / `pdf_sanitize` (Sanitize / PII)
+  - Display the search filter input.
+  - Group all remaining tools into collapsible accordions by category (`Organize (8)`, `Security (5)`, `Conversions & AI (7)`, `Formatting (4)`).
+  - Inside the `ocr` tool view:
+    - Display OCR model status. If `ppocrv6-tiny` is not present, display download button / indicator.
+    - Hook into `download_ocr_model` Tauri command with progress updates.
+
+---
+
+## 🧪 VERIFICATION & CONSTRAINTS
+
+1. **System Resource Limit**:
+   - **ALWAYS** pass `-j 2` for all `cargo` commands: `cargo check -p desktop --lib -j 2` and `cargo check -p desktop --lib --no-default-features -j 2`.
+2. **Tests**:
+   - `cargo test -p desktop --lib -j 2`
+   - `pnpm --dir apps/desktop run check`
+   - `pnpm --dir apps/desktop exec playwright test`
+3. **Android Build Verification**:
+   - Check that `apps/desktop/src-tauri` compiles cleanly for android targets with `--no-default-features`.
+4. **Zero-Mock Policy**:
+   - Do not replace real implementations with dummy `{ success: true }` mocks.
