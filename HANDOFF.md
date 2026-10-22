@@ -12,7 +12,8 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **Task 5.9.75** | [Session 7525956406631093564](https://jules.google.com/session/7525956406631093564) | Mobile Lean APK (<22 MB), 26+ WASM Catalog UI & On-Demand OCR `[Spec 089]` | ⏳ In-Flight (Dispatched Oct 22) |
+| **Task 5.9.75 (Attempt 1)** | [Session 7525956406631093564](https://jules.google.com/session/7525956406631093564) | Mobile Lean APK, 26+ WASM Catalog & On-Demand OCR `[Spec 089]` | ⏳ Needs Corrections on PR #233 |
+| **Task 5.9.75 (Attempt 2)** | [Session 13940133439743256036](https://jules.google.com/session/13940133439743256036) | Fresh parallel attempt for Task 5.9.75 / Spec 089 | ⏳ In-Flight (Dispatched Oct 22) |
 | **Task 5.9.58** | [Session 334056780263731633](https://jules.google.com/session/334056780263731633) | Pure-Rust Tabular Data Extraction API `pdf_extract_tables` `[Spec 090]` | ⏳ In-Flight (Dispatched Oct 22) |
 
 ---
