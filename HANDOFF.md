@@ -122,34 +122,37 @@ PaperPilot/
 
 ## 📋 Resuming Checklist for Next Session
 
-### Step 1: Monitor Active Jules Sessions
-- **Task 5.9.69A** ([Session 8874502492856873220](https://jules.google.com/session/8874502492856873220)):
-  - ✅ Verified `npm test` passing (79/79) and merged into `main` (PR #220, commit `460ec1d`).
-- **Task 5.9.70** ([Session 4388001643990007173](https://jules.google.com/session/4388001643990007173)):
-  - ✅ Verified Wave 2 Penta-Interface tests across MCP, CLI, and Gateway, and merged into `main` (PR #221, commit `b7ff7c3`).
-- Check status of **Task 5.9.55** ([Session 378425988505835118](https://jules.google.com/session/378425988505835118)).
+### Step 1: Pending Tool Roadmap (6 Core Tools Pending)
+The following 6 tools remain to be specified and implemented to reach full feature completion:
 
-### Step 2: Monitor Task 5.9.69B (Pipeline UI & Save Modal)
-- Dispatched to Jules ([Session 11757279139714605661](https://jules.google.com/session/11757279139714605661)):
-  - Implements `FlowSelector.svelte`, `SaveFlowModal.svelte`, Embed preset resolution, and Playwright E2E verification.
-  - When PR is submitted by Jules, verify `npm --prefix apps/desktop test` passes and merge into `main`.
+| # | Tool ID | Phase 5 Task | Interface Title | Scope & Objectives |
+|---|---|---|---|---|
+| 1 | `pdf_extract_tables` | **Task 5.9.58** | Extract Tabular Data | Pure-Rust table bounding box & cell matrix extraction directly to JSON/CSV for FinTech & AI ingestion. |
+| 2 | `pdf_validate_signatures` | **Task 5.9.61** | Digital Signature Verifier | Cryptographic verification of PKCS#7 / CMS signatures, cert chains, timestamps, and post-signing tampering detection. |
+| 3 | `pdf_validate_accessibility` | **Task 5.9.62** | PDF/UA Accessibility Verifier | Section 508 / EAA structure tree audit, reading order, `/Lang` tags, and image `/Alt` validation. |
+| 4 | `pdf_compare_semantic` | **Task 5.9.63** | Semantic Legal & Clause Diffing | Meaning-based sentence & clause comparison for contracts, generating structured Markdown changelogs. |
+| 5 | `document_batch_process` | **Task 5.9.65** | Resilient Batch Directory Processor | Multi-threaded directory processing engine with retry telemetry and structured `failure_report.json`. |
+| 6 | `pdf_to_images` | **Task 5.9.66** | Convenience Multi-Page Exporter | One-call exporter dumping all pages of a PDF to a folder as PNG, JPEG, or WebP. |
 
-### Step 3: Trigger Task 5.9.69C (Penta-Interface Declarative Workflow Engine)
-- Follow-up task bringing full Penta-Interface parity for pipeline workflows:
-  ```bash
-  ./scripts/jules_submit.sh --file prompts/tasks/phase5/P5_9_69C_workflow_engine_penta_interface.txt
-  ```
-- Implements in-memory sequential execution in `paperpilot-pdf`, CLI `paperpilot workflow`, MCP tool `document_workflow`, REST Gateway endpoints, and 20 E2E assertions in `tools/penta-interface-e2e`.
+---
 
-### Step 4: Run Wave 2 Verification Tests
-- Run Wave 2 MCP tests:
-  ```bash
-  cargo test -p paperpilot-mcp --test wave2_mcp_tests -j 2
-  ```
-- Run desktop check:
-  ```bash
-  npm --prefix apps/desktop run check
-  ```
+### Step 2: Mobile Scoped Features & Lean Architecture Plan
+
+#### 📱 Mobile Scoped Feature Set (Emergency On-The-Go Operations)
+Under **Spec 087**, mobile devices (Android APK & PWA/Embed) focus **exclusively** on rapid, high-utility emergency tasks via the in-memory `paperpilot-wasm` engine:
+1. **Camera Scan to PDF (`images_to_pdf`)**: Take camera snapshots via `<input capture="camera">` or `CameraScannerModal.svelte`, crop, and convert to clean PDF in RAM.
+2. **Emergency Signing (`pdf_sign`)**: Draw touch signature or stamp pre-saved signature onto contracts.
+3. **Document Sanitization (`pdf_sanitize` & `document_pii_scan`)**: Strip metadata, private editing tags, and audit SSN/Credit Card leaks before sharing.
+4. **Organize (`pdf_merge`, `pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`)**: Fix orientation, remove bad pages, combine attachments.
+5. **Compression (`pdf_compress`)**: Shrink documents (<2 MB) before sending via WhatsApp, Email, or Slack.
+6. **Native Sharing (`navigator.share()`)**: Push processed PDF bytes straight into OS intents without downloading to storage.
+
+#### ⚖️ Lean Mobile APK Optimization (Next Action Item)
+- **Problem**: Current debug APK is **82 MB** because `apps/desktop/src-tauri` still compiles the native `paperpilot-pdf` crate into `libdesktop_lib.so` (~32 MB), even though mobile operations run in-memory via `paperpilot-wasm` inside the WebView.
+- **Solution to implement**:
+  - In `apps/desktop/src-tauri/Cargo.toml`, move `paperpilot-pdf`, `paperpilot-nlp`, and `paperpilot-ai` behind the `desktop-features` flag (or `not(target_os = "android")`).
+  - Keep `src-tauri` on Android as a lightweight Tauri shell (~3 MB) that only handles WebView initialization and OS dialogs.
+  - This will cut mobile build times by **70%** and reduce final APK size to **~15–20 MB**.
 
 ---
 
@@ -164,13 +167,19 @@ cargo test -p paperpilot-pdf --lib -j 2
 cargo test -p paperpilot-mcp --lib -j 2
 cargo test -p paperpilot-gateway --lib -j 2
 
-# 3. Clean-Room Audits
+# 3. Mobile Android Build & Install (Dynamic SDK/NDK detection)
+make build-android       # Builds APK to apps/desktop/src-tauri/gen/android/app/build/outputs/apk/
+make install-android     # Builds and installs APK to connected adb device/emulator
+make log-android         # Streams filtered mobile logcat
+
+# 4. Clean-Room Audits
 make test-cleanroom-top12
 make test-cleanroom-all50
 
-# 4. Playwright Desktop E2E
+# 5. Playwright E2E Suites
 pnpm --dir apps/desktop exec playwright test
+pnpm --dir apps/embed exec playwright test
 
-# 5. Dispatch Jules Tasks
+# 6. Dispatch Jules Tasks
 ./scripts/jules_submit.sh --file prompts/tasks/phase5/<prompt-file>.txt
 ```
