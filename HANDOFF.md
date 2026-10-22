@@ -13,6 +13,7 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **Task 5.9.75** | [Session 7525956406631093564](https://jules.google.com/session/7525956406631093564) | Mobile Lean APK (<22 MB), 26+ WASM Catalog UI & On-Demand OCR `[Spec 089]` | ⏳ In-Flight (Dispatched Oct 22) |
+| **Task 5.9.58** | [Session 334056780263731633](https://jules.google.com/session/334056780263731633) | Pure-Rust Tabular Data Extraction API `pdf_extract_tables` `[Spec 090]` | ⏳ In-Flight (Dispatched Oct 22) |
 
 ---
 

@@ -1,0 +1,232 @@
+Implement Task 5.9.58 / Spec 090: Pure-Rust Tabular Data Extraction (`pdf_extract_tables`) following the strict "Single Core Runner + 5 Thin Wrappers" architecture (`specs/090-pure-rust-pdf-extract-tables/spec.md`).
+
+---
+
+## 🏛️ THE SINGLE CORE RUNNER + 5 INTERFACE WRAPPERS ARCHITECTURE PATTERN
+PaperPilot strictly enforces the Single Core Runner pattern (as documented in `HANDOFF.md` and recently demonstrated by `document_pii_scan` in PR #232 and `pdf_sanitize` in PR #228).
+Every tool MUST have:
+1. Exactly **ONE** primary pure-Rust in-memory engine implementation in `paperpilot-pdf` that takes input bytes + config and returns the result in memory.
+2. Exactly **5 thin wrappers** calling or mirroring that single core engine across:
+   - 💻 **CLI** (`paperpilot-cli`)
+   - 🤖 **MCP** (`paperpilot-mcp`)
+   - 🌐 **REST Gateway** (`paperpilot-gateway`)
+   - ⚡ **Browser WASM** (`paperpilot-wasm`)
+   - ☁️ **Cloudflare Edge** (`apps/edge`)
+3. **Penta-Interface E2E Suite**: 100% real semantic assertions across all 5 surfaces.
+
+---
+
+## 📁 EXACT FILES TO TOUCH / CREATE
+
+```
+paperpilot-pdf/src/operations/table.rs             # Core table extraction engine + matrix algorithms + unit tests
+paperpilot-pdf/src/operations/mod.rs               # Export pub mod table; and pub use table::extract_tables;
+paperpilot-cli/src/cli.rs                          # Add ExtractTables command variant
+paperpilot-cli/src/commands/table.rs               # CLI command handler calling extract_tables
+paperpilot-cli/src/commands/mod.rs                 # Dispatch Commands::ExtractTables
+paperpilot-mcp/src/server.rs                       # Register pdf_extract_tables schema & call_tool dispatch
+paperpilot-gateway/src/handlers.rs                 # Add extract_tables handler
+paperpilot-gateway/src/server.rs                   # Add route /api/v1/pdf/extract-tables
+paperpilot-wasm/src/operations.rs                  # In-memory WASM extract_tables implementation
+paperpilot-wasm/src/lib.rs                         # Expose WasmPdfEngine.extract_tables & update list_tools
+apps/edge/src/index.ts                             # Expose POST /api/v1/extract-tables
+apps/desktop/src/lib/types/toolList.ts             # Register pdf_extract_tables definition
+apps/desktop/src/lib/state/pipeline.svelte.ts      # Add pdf_extract_tables step definition
+apps/desktop/src/lib/utils/snippetGenerator.ts     # Add code snippets for CLI/cURL/MCP/Embed
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte # Add UI parameter controls for format (JSON/CSV)
+tools/penta-interface-e2e/src/cases/table.rs       # E2E test suite covering CLI, MCP, API, WASM, Edge
+tools/penta-interface-e2e/src/cases/mod.rs         # Register pub mod table;
+tools/penta-interface-e2e/src/main.rs              # Add "table" | "5.9.58" group match
+wiki/pdf_extract_tables.md                         # Documentation & developer guide
+PHASES.md                                          # Update status of Task 5.9.58
+```
+
+---
+
+## 1. THE SINGLE CORE RUNNER (`paperpilot-pdf/src/operations/table.rs`)
+
+Implement pure in-memory table extraction:
+
+```rust
+use lopdf::Document;
+use paperpilot_core::error::PdfError;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TableExtractOptions {
+    #[serde(default = "default_pages")]
+    pub pages: String,
+    #[serde(default = "default_format")]
+    pub format: String, // "json" or "csv"
+    #[serde(default = "default_confidence")]
+    pub min_confidence: f32,
+}
+
+fn default_pages() -> String { "all".to_string() }
+fn default_format() -> String { "json".to_string() }
+fn default_confidence() -> f32 { 0.5 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedTable {
+    pub page: u32,
+    pub table_index: usize,
+    pub bbox: [f32; 4],
+    pub rows: usize,
+    pub cols: usize,
+    pub headers: Vec<String>,
+    pub data: Vec<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TableExtractResult {
+    pub total_tables: usize,
+    pub tables: Vec<ExtractedTable>,
+    pub csv_output: Option<String>,
+}
+
+/// Core runner: bytes in -> structured tables out
+pub fn extract_tables_bytes(
+    input_bytes: &[u8],
+    options: &TableExtractOptions,
+) -> Result<TableExtractResult, PdfError> {
+    let doc = Document::load_mem(input_bytes)
+        .map_err(|e| PdfError::ParseError(format!("Failed to load PDF bytes: {}", e)))?;
+
+    let mut tables = Vec::new();
+    let pages = doc.get_pages();
+
+    // Iterate pages and cluster words by Y coordinates into rows, and by X into columns
+    // Construct ExtractedTable structs with bounding boxes, headers, and rows
+    for (page_num, _page_id) in pages {
+        // Collect text elements with position coordinates
+        // Identify table structures with at least 2 rows and 2 columns
+        // Push discovered tables into tables
+    }
+
+    let csv_output = if options.format.to_lowercase() == "csv" {
+        Some(serialize_tables_to_csv(&tables))
+    } else {
+        None
+    };
+
+    Ok(TableExtractResult {
+        total_tables: tables.len(),
+        tables,
+        csv_output,
+    })
+}
+
+fn serialize_tables_to_csv(tables: &[ExtractedTable]) -> String {
+    let mut out = String::new();
+    for (i, table) in tables.iter().enumerate() {
+        if i > 0 {
+            out.push_str("\n\n");
+        }
+        if !table.headers.is_empty() {
+            let escaped_headers: Vec<String> = table.headers.iter().map(|h| escape_csv_cell(h)).collect();
+            out.push_str(&escaped_headers.join(","));
+            out.push('\n');
+        }
+        for row in &table.data {
+            let escaped_row: Vec<String> = row.iter().map(|cell| escape_csv_cell(cell)).collect();
+            out.push_str(&escaped_row.join(","));
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn escape_csv_cell(val: &str) -> String {
+    if val.contains(',') || val.contains('"') || val.contains('\n') {
+        format!("\"{}\"", val.replace('"', "\"\""))
+    } else {
+        val.to_string()
+    }
+}
+```
+
+Include comprehensive unit tests in `table.rs` verifying table extraction, cell positioning, CSV escaping, and empty document handling.
+
+---
+
+## 2. THE 5 THIN INTERFACE WRAPPERS
+
+### A. CLI (`paperpilot-cli`)
+Add subcommand to `cli.rs`:
+```rust
+/// Extract tabular data from PDF into JSON or CSV [Input: .pdf | Output: .json / .csv]
+ExtractTables {
+    #[arg(short, long)]
+    input: PathBuf,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+    #[arg(long, default_value = "json")]
+    format: String,
+    #[arg(long, default_value = "all")]
+    pages: String,
+}
+```
+Command handler reads input bytes $\to$ calls `extract_tables_bytes` $\to$ prints or writes JSON / CSV.
+
+### B. MCP Server (`paperpilot-mcp/src/server.rs`)
+Register tool `pdf_extract_tables`:
+- Input schema: `input` (string, required), `output` (string, optional), `format` (string: "json" | "csv", optional), `pages` (string, optional).
+- Call tool arm executes `extract_tables_bytes` and returns structured JSON text.
+
+### C. REST Gateway (`paperpilot-gateway`)
+- Route: `POST /api/v1/pdf/extract-tables`
+- Accepts multipart file upload or JSON `{ input, format, pages }`.
+- Returns `TableExtractResult` JSON or `text/csv` stream.
+
+### D. Browser WASM Engine (`paperpilot-wasm`)
+- In `operations.rs` & `lib.rs`:
+```rust
+#[wasm_bindgen]
+pub fn extract_tables(input_bytes: &[u8], options_json: &str) -> Result<String, JsValue> {
+    let options: TableExtractOptions = serde_json::from_str(options_json).unwrap_or_default();
+    let result = operations::extract_tables(input_bytes, &options)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    serde_json::to_string(&result).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+```
+Update `list_tools()` to include `{"id": "extract_tables", "name": "Extract Tables", "status": "stable"}`.
+
+### E. Cloudflare Edge Microservice (`apps/edge/src/index.ts`)
+- Route: `POST /api/v1/extract-tables`
+- Matches existing endpoints (e.g. `pii-scan`, `sanitize`).
+
+---
+
+## 3. UI INTEGRATION
+
+1. **Tool Definition (`apps/desktop/src/lib/types/toolList.ts`)**:
+   Add `pdf_extract_tables`: title "Extract Tables", icon "📊", category "ai", context "pdf", tags: `["table", "excel", "csv", "matrix", "financial"]`.
+2. **Operations Panel (`OperationsPanel.svelte`)**:
+   - Provide format selector: `JSON Matrix (.json)` vs `Comma Separated (.csv)`.
+   - Provide page range input.
+   - Support copy result to clipboard or save to disk.
+3. **Snippet Generator (`snippetGenerator.ts`)**:
+   Add generator cases for `pdf_extract_tables` outputting CLI, cURL, MCP prompt, and WASM/Embed JS.
+
+---
+
+## 4. PENTA-INTERFACE E2E TEST SUITE (`tools/penta-interface-e2e`)
+Create `tools/penta-interface-e2e/src/cases/table.rs` verifying 10 real unmocked assertions:
+1. `cli_extract_tables_json`: Run CLI and verify JSON output contains rows and columns.
+2. `cli_extract_tables_csv`: Run CLI and verify CSV output contains header commas and rows.
+3. `mcp_pdf_extract_tables`: Call tool via JSON-RPC, verify valid parsed response.
+4. `gateway_extract_tables_json`: Call REST endpoint with multipart upload.
+5. `gateway_extract_tables_csv`: Call REST endpoint with format=csv.
+6. `wasm_extract_tables`: Run in-memory WASM extraction on sample PDF bytes.
+7. `edge_extract_tables`: Verify mock edge handler request/response.
+8. `table_empty_pdf_graceful`: Verify PDF without tables returns 0 tables without error.
+9. `table_multipage_filtering`: Verify page range extraction (e.g. page 1 only).
+10. `table_csv_escaping_special_chars`: Verify proper RFC 4180 escaping of commas and quotes.
+
+Generate output scorecard to `reports/PENTA_INTERFACE_E2E_TABLE_REPORT.md`.
+
+---
+
+## 5. SYSTEM RESOURCE & EXECUTION CONSTRAINTS
+- **MANDATORY**: ALWAYS pass `-j 2` for all local `cargo` commands (`cargo test -p paperpilot-pdf --lib -j 2`).
+- Zero-mock policy: Tests must use real PDF fixtures and actual byte buffers.
