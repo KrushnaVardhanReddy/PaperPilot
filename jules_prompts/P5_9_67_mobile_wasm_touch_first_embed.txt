@@ -1,0 +1,102 @@
+Implement Task 5.9.67 / Spec 087: Mobile Touch-First WASM Engine & Embed Demonstration (`specs/087-mobile-wasm-touch-first-embed/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURE & GOAL
+Mobile users perform **emergency on-the-go micro-tasks** (e.g. camera-scan a receipt to PDF, emergency contract signature, merge two documents, rotate an upside-down page, strip blank pages, compress for email).
+Heavy enterprise batch pipelines and native mobile cross-compilation with Android scoped storage (`content://`) are error-prone and unnecessary.
+
+**Objective**:
+1. Route mobile operations directly to the pure in-memory `paperpilot-wasm` engine (`WasmPdfEngine`), operating 100% locally in-memory on `Uint8Array` buffers with zero network overhead.
+2. Adapt the **PaperPilot Embed / Mobile Touch Widget** (`apps/embed/src/Widget.svelte` and `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`) into a responsive, touch-first mobile interface:
+   - Touch targets satisfying ≥48px minimums.
+   - Smooth bottom-sheet parameter drawer with tactile drag pill for mobile screens (`max-width: 480px`).
+   - Emergency tool filter chip bar: **Scan to PDF**, **Sign**, **Merge**, **Rotate**, **Clean / Remove Blank**, **Compress**, **Sanitize**.
+   - Built-in HTML5 camera intake (`<input type="file" capture="environment" accept="image/*">`) and native mobile `navigator.share({ files: [...] })` with standard fallback.
+
+---
+
+## 📁 EXACT FILES TO TOUCH / CREATE
+
+```
+specs/087-mobile-wasm-touch-first-embed/spec.md               # Specification definition
+apps/embed/src/Widget.svelte                                 # Mobile-responsive bottom-sheet, touch targets, camera scan & share
+apps/embed/src/theme.ts                                      # Mobile touch spacing, bottom sheet z-indices, safe-area insets
+apps/desktop/src/lib/components/layout/OperationsPanel.svelte # In-memory WASM routing for mobile mode
+apps/embed/tests/mobile_touch_embed.spec.ts                  # Playwright mobile viewport emulation E2E tests
+PHASES.md                                                    # Update status of Task 5.9.67
+```
+
+---
+
+## 🛠️ IMPLEMENTATION DETAILS
+
+### 1. Mobile-First Touch UI in `apps/embed/src/Widget.svelte`
+- Wrap parameters in a responsive bottom drawer for mobile viewports (`@media (max-width: 640px)`):
+  - Fixed bottom positioning with `border-top-left-radius: 16px; border-top-right-radius: 16px;`.
+  - Tactile drag handle pill (`width: 36px; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; margin: 8px auto;`).
+  - Safe-area bottom padding (`padding-bottom: env(safe-area-inset-bottom, 16px);`).
+- Ensure all buttons, tool pills, and inputs have `min-height: 48px; min-width: 48px;`.
+- Add Camera Scan option directly on mobile:
+  ```svelte
+  <input
+    id="mobileCameraInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+    style="display: none;"
+    onchange={handleCameraCapture}
+  />
+  ```
+- Implement `Share Result` button using `navigator.share`:
+  ```ts
+  async function shareOutput(file: File) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: file.name,
+          text: 'Processed securely with PaperPilot'
+        });
+        return;
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.warn('Native share failed, falling back to download:', err);
+        } else {
+          return;
+        }
+      }
+    }
+    // Fallback: standard anchor download
+    triggerDownload(file);
+  }
+  ```
+
+### 2. In-Memory WASM Bridge in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`
+- When `appState.isMobile` is active, route tool execution directly through the in-memory `WasmPdfEngine`:
+  - Convert `File` / `Blob` to `Uint8Array`.
+  - Call `engine.execute(...)`.
+  - Reconstruct output `File` from result bytes and display success badge with `Share` option.
+
+---
+
+## 🧪 AUTOMATED TESTS & VERIFICATION
+1. Run Playwright mobile emulation tests:
+   ```bash
+   npx playwright test apps/embed/tests/mobile_touch_embed.spec.ts --project=mobile-chromium
+   ```
+2. Verify all Vitest desktop tests pass:
+   ```bash
+   cd apps/desktop && npm test
+   ```
+3. Verify zero regressions in core cargo crates:
+   ```bash
+   cargo test -p paperpilot-wasm --lib -j 4
+   ```
+
+---
+
+## ⚠️ STRICT SAFETY RULES
+- **DO NOT run destructive git commands** (`git reset`, `git clean`, `git checkout -- .`).
+- **Always keep cargo concurrency bounded** (`-j 4`).
+- Ensure all changes are committed cleanly.
