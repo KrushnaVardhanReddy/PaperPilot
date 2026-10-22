@@ -12,13 +12,19 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **5.9.60** | [Session 18364882261769805853](https://jules.google.com/session/18364882261769805853) | **PII & Sensitive Information Scanner (`document_pii_scan`)** (`[Spec 086]`) | 🔄 In Flight — Automated pure-Rust pattern detector for SSNs, credit cards (Luhn validated), emails, phone numbers, and IBANs (MOD 97-10 validated) returning masked values and audit reports across all 5 surfaces. |
+| *None* | — | All dispatched sessions completed and merged | ✅ All clear |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.67 (Mobile Touch-First WASM Engine & Embed Demonstration `[Spec 087]`)**:
+1. **Task 5.9.60 (PII & Sensitive Information Scanner `document_pii_scan` `[Spec 086]`)**:
+   - Merged (PR #232).
+   - Pure-Rust automated regex detector & validator for SSNs, credit cards (Luhn algorithm validated), emails, phone numbers, and IBANs (MOD 97-10 check validated).
+   - Single Core Runner in `paperpilot-pdf/src/operations/pii.rs` (`scan_pii_bytes`).
+   - 5 thin wrappers across CLI (`paperpilot pii-scan`), MCP (`document_pii_scan`), REST Gateway (`/api/v1/pdf/document-pii-scan`), WASM (`WasmPdfEngine.document_pii_scan`), and Cloudflare Edge (`/api/v1/pii-scan`).
+   - 10/10 (100.0%) unmocked Penta-Interface E2E assertions passing in `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
+2. **Task 5.9.67 (Mobile Touch-First WASM Engine & Embed Demonstration `[Spec 087]`)**:
    - Merged (PR #231, commit `024d957`).
    - Deprecated and removed bloated `process_mobile_buffer` Tauri bridge from `apps/desktop/src-tauri/src/mobile_bridge.rs`.
    - Wired `OperationsPanel.svelte` and `CameraScannerModal.svelte` to execute directly via in-memory `WasmPdfClientImpl` and `WasmPdfEngine.images_to_pdf`.
