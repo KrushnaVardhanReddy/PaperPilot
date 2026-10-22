@@ -1,33 +1,62 @@
 Task: Implement Task 5.9.74 / Spec 088 — Full-Fidelity Image & Asset Rendering in HTML & Markdown to PDF Synthesis (`html_to_pdf`, `md_to_pdf`).
 
 ### Context & Problem Statement
-PaperPilot's Wave 3 Web & AI Synthesis Suite (`v0.7.0`) features `pdf_to_html` / `pdf_to_markdown` (extracting layout text and embedded visual assets as base64 data URIs) and `html_to_pdf` / `md_to_pdf` (synthesizing styled PDFs via pure-Rust `fulgur`).
+In PaperPilot's Wave 3 Web & AI Synthesis Suite (`v0.7.0`):
+- `pdf_to_html` / `pdf_to_markdown`: Extracts text and visual assets (raster photos and vector illustrations as base64 data URIs or image files).
+- `html_to_pdf` / `md_to_pdf`: Synthesizes styled PDFs using pure-Rust `fulgur`.
 
-Currently, `HtmlToPdfOperation::render()` builds `fulgur::Engine::builder().build()` without an `AssetBundle`. When an HTML document or Markdown text has `<img src="...">` (data URIs or local file paths), `fulgur` skips the images or leaves empty blank vertical space, so synthesized PDFs only show text and CSS formatting.
+Currently, `HtmlToPdfOperation::render()` in `paperpilot-pdf/src/operations/conversion.rs` initializes `fulgur::Engine::builder().build()` without an `AssetBundle`.
+When an HTML document or Markdown text includes `<img src="...">` (data URIs or local file paths), `fulgur` skips the images or leaves an empty blank box, so synthesized PDFs only show text and CSS formatting.
 
-### Architectural Solution & Requirements
+### Architectural Solution & Implementation Details
 In `paperpilot-pdf/src/operations/conversion.rs`:
-1. Enhance `HtmlToPdfOperation::render()`:
-   - Parse `<img>` tags from the input HTML string (extracting `src` attributes).
-   - Create a `fulgur::asset::AssetBundle::new()`.
-   - For `data:image/...;base64,<payload>` sources:
-     - Decode the base64 string to image bytes.
-     - Allocate a synthetic local name (e.g. `img_asset_0.png`).
-     - Register `bundle.add_image(name.clone(), img_bytes)`.
-     - Rewrite the `src` attribute in the HTML string to `name`.
-   - For local file paths (relative or absolute):
-     - Read the file bytes from disk (resolving relative paths against document base directory if provided in options or input path).
-     - Register `bundle.add_image(name.clone(), file_bytes)`.
-     - Rewrite the `src` attribute in the HTML string to `name`.
-   - Attach the bundle to the engine: `fulgur::Engine::builder().assets(bundle).build()`.
-   - If an image cannot be read or decoded, log a warning and do not panic or fail the entire document conversion.
-2. In `MarkdownToPdfOperation::render()`:
-   - Ensure the generated HTML from `pulldown_cmark` passes through `HtmlToPdfOperation` with image path resolution preserved.
-3. Unit & Integration Tests:
-   - Add unit tests in `conversion.rs`:
-     - `test_html_to_pdf_with_base64_image`: Verify that HTML with base64 PNG renders to a valid PDF containing embedded image content.
-     - `test_md_to_pdf_with_inline_image`: Verify markdown image `![img](data:image/png;base64,...)` renders without error.
-4. Validation & Guardrails:
+
+1. **Asset Extraction & Registration**:
+   In `HtmlToPdfOperation::render()`:
+   - Use `scraper` (already in `paperpilot-pdf/Cargo.toml`) or `regex::Regex` to parse all `<img ... src="..." ...>` tags in `self.input_html`.
+   - Instantiate `mut bundle = fulgur::asset::AssetBundle::new()`.
+   - For each found `src` attribute:
+     a) **Base64 Data URIs (`data:image/...;base64,<payload>`)**:
+        - Strip the prefix (e.g. `data:image/png;base64,` or `data:image/jpeg;base64,`).
+        - Decode the base64 payload into `Vec<u8>` using `base64::engine::general_purpose::STANDARD.decode()`.
+        - Generate a unique asset name (e.g., `inline_img_0.png`, `inline_img_1.jpg`).
+        - Call `bundle.add_image(asset_name.clone(), decoded_bytes)`.
+        - Replace the original data URI `src` in the HTML string with `asset_name`.
+     b) **Local File Paths (relative or absolute)**:
+        - If the path is relative, resolve it relative to the parent directory of `self.output_path` or working directory.
+        - If the file exists on disk, read its bytes: `std::fs::read(&resolved_path)`.
+        - Generate an asset name (e.g. file name or sanitized key).
+        - Call `bundle.add_image(asset_name.clone(), file_bytes)`.
+        - Replace the file path in HTML `src` with `asset_name`.
+     c) **Error Handling & Resilience**:
+        - If any image fails to decode or read, log a warning via `eprintln!` or `log::warn!` and continue without panicking or aborting the document render.
+   - Configure the engine with the asset bundle:
+     ```rust
+     let engine = fulgur::Engine::builder()
+         .assets(bundle)
+         .build();
+     ```
+   - Render the transformed HTML using `engine.render(&styled_html)`.
+
+2. **Markdown to PDF Parity**:
+   In `MarkdownToPdfOperation::render()`:
+   - Markdown documents are converted to HTML via `pulldown_cmark::html::push_html`.
+   - Ensure `HtmlToPdfOperation` receives the HTML so that both `![alt](data:image/png;base64,...)` and `![alt](path/to/img.png)` are automatically picked up and rendered into the PDF.
+
+3. **Testing Requirements**:
+   In `paperpilot-pdf/src/operations/conversion.rs` `tests` module:
+   - `test_html_to_pdf_with_base64_image`:
+     - Provide an HTML string containing `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" width="50" height="50">`.
+     - Execute `HtmlToPdfOperation::render()`.
+     - Verify the resulting PDF is non-empty, starts with `%PDF-`, and has valid length.
+   - `test_md_to_pdf_with_base64_image`:
+     - Provide a Markdown string with an embedded image `![Pixel](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)`.
+     - Execute `MarkdownToPdfOperation::render()`.
+     - Verify the generated PDF exists and starts with `%PDF-`.
+   - `test_html_to_pdf_graceful_missing_image`:
+     - Test that an invalid base64 or nonexistent image path does not panic and still renders the document text.
+
+4. **Execution & CI Guardrails**:
    - Run `cargo test -p paperpilot-pdf --lib operations::conversion::tests -j 4`.
-   - Ensure zero regressions in existing tests.
-   - Limit cargo concurrency to `-j 4`.
+   - Ensure all other existing conversion tests pass.
+   - Maintain 100% clean formatting (`cargo fmt`).
