@@ -2,8 +2,8 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 20, 2026 (Afternoon EDT)  
-> **Active Target:** Wave 2 (`v0.6.0`) Media & Page Utilities + Pipeline Flow Management
+> **Date of Last Update:** October 22, 2026 (Morning EDT)  
+> **Active Target:** Wave 3 (`v0.7.0`) Web & AI Synthesis Suite + Mobile Touch-First WASM Engine
 
 ---
 
@@ -13,12 +13,18 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **5.9.60** | [Session 18364882261769805853](https://jules.google.com/session/18364882261769805853) | **PII & Sensitive Information Scanner (`document_pii_scan`)** (`[Spec 086]`) | 🔄 In Flight — Automated pure-Rust pattern detector for SSNs, credit cards (Luhn validated), emails, phone numbers, and IBANs (MOD 97-10 validated) returning masked values and audit reports across all 5 surfaces. |
+| **5.9.67** | Jules Session | **Mobile Touch-First WASM Engine & Embed Demonstration** (`[Spec 087]`) | 🔄 In Flight / Review — Pure in-memory WASM execution for mobile emergency operations with touch-first UI and Playwright verification. |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.59 (Privacy & Deep Security Sanitizer `pdf_sanitize` `[Spec 085]`)**:
+1. **Task 5.9.74 (HTML & Markdown to PDF Full-Fidelity Image Rendering via `AssetBundle` `[Spec 088]`)**:
+   - Merged (PR #230, commit `f276a78`).
+   - Implemented `fulgur::asset::AssetBundle` integration in `HtmlToPdfOperation` and `MdToPdfOperation` (`paperpilot-pdf/src/operations/conversion.rs`).
+   - Parses `<img src="...">` and Markdown links, decodes inline base64 image data URIs (`data:image/*;base64,...`), reads local relative/absolute disk images, registers them as in-memory asset buffers, and re-maps sources.
+   - End-to-end verified via `pdfimages -list` (embedded 200×200 RGB image streams confirmed) and 21 unit tests passing (`test_html_to_pdf_with_base64_image`, `test_md_to_pdf_with_base64_image`, `test_html_to_pdf_graceful_missing_image`).
+2. **Task 5.9.59 (Privacy & Deep Security Sanitizer `pdf_sanitize` `[Spec 085]`)**:
    - Merged (PR #228, commit `00c2f67`).
    - Implemented Single Core Runner `sanitize_pdf` in `paperpilot-pdf/src/operations/sanitize.rs` using pure in-memory `lopdf` manipulation to strip `/Info`, XML `/Metadata`, `/EmbeddedFiles`, `/AF`, active scripts (`/JavaScript`, `/OpenAction`, `/AA`), `/Thumb`, and private editing data (`/PieceInfo`).
    - Built 5 thin wrappers across Native CLI (`paperpilot sanitize`), MCP (`pdf_sanitize`), REST Gateway (`/api/v1/pdf/sanitize`), WASM engine (`WasmPdfEngine.sanitize`), and Cloudflare Edge worker (`/api/v1/sanitize`).
