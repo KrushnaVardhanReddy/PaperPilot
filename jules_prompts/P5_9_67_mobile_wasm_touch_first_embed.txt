@@ -34,7 +34,13 @@ PHASES.md                                                    # Update status of 
 
 ## 🛠️ IMPLEMENTATION DETAILS
 
-### 1. Camera Scanner & Document Polygon Crop (`CameraScannerModal` & `ImageCropModal`)
+### 1. Prune Obsolete Native Mobile Bridge (`process_mobile_buffer`)
+- In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+  - Previously, mobile routed execution through `invoke('process_mobile_buffer', { fileName, inputBytes, operation, params })` and had custom `read_file_bytes` / base64 document payloads.
+  - **Remove this complex branching**. Instead, on mobile, execute directly in-memory via `WasmPdfEngine` with `Uint8Array` buffers.
+  - The native Tauri mobile backend (`apps/desktop/src-tauri/src/mobile_bridge.rs`) is no longer required for document processing. Clean up or deprecate the Tauri IPC calls for document operations from Svelte.
+
+### 2. Camera Scanner & Document Polygon Crop (`CameraScannerModal` & `ImageCropModal`)
 - **CRITICAL**: Keep the rich Kaagaz-style document scanner with `ImageCropModal.svelte`:
   - Free 4-corner pin adjustments (`corners[activeIndex] = { x: newX, y: newY }`).
   - Polygon perspective / trapezoid transform onto target canvas.
@@ -43,7 +49,8 @@ PHASES.md                                                    # Update status of 
   - Instead of invoking native `process_mobile_buffer` over Tauri IPC, route directly through `WasmPdfEngine.images_to_pdf(imageBytesArray)` or `paperpilot-wasm` in-memory engine.
   - When Auto-OCR is checked, pass the generated PDF buffer to `WasmPdfEngine.ocr(...)`.
 
-### 2. Mobile-First Touch UI in `apps/embed/src/Widget.svelte`
+### 3. Mobile-First Touch UI in `apps/embed/src/Widget.svelte` (Branded "PaperPilot WASM Engine")
+- Header & Branding: Display **PaperPilot WASM Engine** with privacy badge (`🔒 100% Client-Side — 0 Bytes Uploaded`) matching the web hero playground.
 - Wrap parameters in a responsive bottom drawer for mobile viewports (`@media (max-width: 640px)`):
   - Fixed bottom positioning with `border-top-left-radius: 16px; border-top-right-radius: 16px;`.
   - Tactile drag handle pill (`width: 36px; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; margin: 8px auto;`).
