@@ -67,7 +67,14 @@ Mobile focuses exclusively on high-frequency, on-the-go tools:
 
 ## 4. Technical Requirements
 
-### 4.1 Mobile-Compatible Embed Demonstration (`apps/embed`)
+### 4.1 Camera Scanner & Document Polygon Crop (`CameraScannerModal` & `ImageCropModal`)
+- **Preserve Existing Quad/Polygon Cropper**: Retain `CameraScannerModal.svelte` and `ImageCropModal.svelte` with:
+  - 4-corner arbitrary quadrilateral draggable pins (Kaagaz style).
+  - Touch-drag repositioning (`deltaX`, `deltaY`) and polygon perspective transform.
+  - Multi-page document sequential queue.
+- **WASM Pipeline Integration**: Wire `convertToPdf` directly to `WasmPdfEngine.images_to_pdf(imageBytesArray)` and optional on-device OCR, eliminating the need for Tauri native `process_mobile_buffer`.
+
+### 4.2 Mobile-Compatible Embed Demonstration (`apps/embed`)
 - **Responsive Viewport Support**: Ensure `Widget.svelte` adapts gracefully from embedded iframe mode down to mobile viewports (`max-width: 480px`).
 - **Touch Target Minimums**: All interactive elements (tool selection chips, file upload buttons, slider thumbs, action triggers) must satisfy ≥48px minimum touch dimensions.
 - **Swipeable Bottom Drawer**: When a tool is selected, its configuration parameters slide up from the bottom (sheet modal) with a tactile drag pill, rather than awkward sidebars.

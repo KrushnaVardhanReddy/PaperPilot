@@ -12,7 +12,8 @@ Heavy enterprise batch pipelines and native mobile cross-compilation with Androi
    - Touch targets satisfying ≥48px minimums.
    - Smooth bottom-sheet parameter drawer with tactile drag pill for mobile screens (`max-width: 480px`).
    - Emergency tool filter chip bar: **Scan to PDF**, **Sign**, **Merge**, **Rotate**, **Clean / Remove Blank**, **Compress**, **Sanitize**.
-   - Built-in HTML5 camera intake (`<input type="file" capture="environment" accept="image/*">`) and native mobile `navigator.share({ files: [...] })` with standard fallback.
+   - **Camera Scanner with Document Edge Crop (ImageCropModal)**: Preserve and integrate the existing `CameraScannerModal.svelte` and `ImageCropModal.svelte` (Kaagaz-style arbitrary quad / multi-corner pin polygon drag crop). Do NOT replace it with a plain generic file input.
+   - Built-in HTML5 camera stream intake with live video canvas, touch corner handles, and native mobile `navigator.share({ files: [...] })` with standard fallback.
 
 ---
 
@@ -20,7 +21,9 @@ Heavy enterprise batch pipelines and native mobile cross-compilation with Androi
 
 ```
 specs/087-mobile-wasm-touch-first-embed/spec.md               # Specification definition
-apps/embed/src/Widget.svelte                                 # Mobile-responsive bottom-sheet, touch targets, camera scan & share
+apps/desktop/src/lib/components/scanner/CameraScannerModal.svelte # Connect directly to WASM images_to_pdf
+apps/desktop/src/lib/components/scanner/ImageCropModal.svelte     # Retain 4-corner / polygon pin drag crop
+apps/embed/src/Widget.svelte                                 # Mobile-responsive bottom-sheet, touch targets & share
 apps/embed/src/theme.ts                                      # Mobile touch spacing, bottom sheet z-indices, safe-area insets
 apps/desktop/src/lib/components/layout/OperationsPanel.svelte # In-memory WASM routing for mobile mode
 apps/embed/tests/mobile_touch_embed.spec.ts                  # Playwright mobile viewport emulation E2E tests
@@ -31,23 +34,21 @@ PHASES.md                                                    # Update status of 
 
 ## 🛠️ IMPLEMENTATION DETAILS
 
-### 1. Mobile-First Touch UI in `apps/embed/src/Widget.svelte`
+### 1. Camera Scanner & Document Polygon Crop (`CameraScannerModal` & `ImageCropModal`)
+- **CRITICAL**: Keep the rich Kaagaz-style document scanner with `ImageCropModal.svelte`:
+  - Free 4-corner pin adjustments (`corners[activeIndex] = { x: newX, y: newY }`).
+  - Polygon perspective / trapezoid transform onto target canvas.
+  - Multi-page document snapping queue before final synthesis.
+- In `CameraScannerModal.svelte`, update `convertToPdf()`:
+  - Instead of invoking native `process_mobile_buffer` over Tauri IPC, route directly through `WasmPdfEngine.images_to_pdf(imageBytesArray)` or `paperpilot-wasm` in-memory engine.
+  - When Auto-OCR is checked, pass the generated PDF buffer to `WasmPdfEngine.ocr(...)`.
+
+### 2. Mobile-First Touch UI in `apps/embed/src/Widget.svelte`
 - Wrap parameters in a responsive bottom drawer for mobile viewports (`@media (max-width: 640px)`):
   - Fixed bottom positioning with `border-top-left-radius: 16px; border-top-right-radius: 16px;`.
   - Tactile drag handle pill (`width: 36px; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; margin: 8px auto;`).
   - Safe-area bottom padding (`padding-bottom: env(safe-area-inset-bottom, 16px);`).
 - Ensure all buttons, tool pills, and inputs have `min-height: 48px; min-width: 48px;`.
-- Add Camera Scan option directly on mobile:
-  ```svelte
-  <input
-    id="mobileCameraInput"
-    type="file"
-    accept="image/*"
-    capture="environment"
-    style="display: none;"
-    onchange={handleCameraCapture}
-  />
-  ```
 - Implement `Share Result` button using `navigator.share`:
   ```ts
   async function shareOutput(file: File) {
