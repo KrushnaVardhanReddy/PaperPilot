@@ -13,13 +13,18 @@
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
 | **5.9.60** | [Session 18364882261769805853](https://jules.google.com/session/18364882261769805853) | **PII & Sensitive Information Scanner (`document_pii_scan`)** (`[Spec 086]`) | 🔄 In Flight — Automated pure-Rust pattern detector for SSNs, credit cards (Luhn validated), emails, phone numbers, and IBANs (MOD 97-10 validated) returning masked values and audit reports across all 5 surfaces. |
-| **5.9.67** | Jules Session | **Mobile Touch-First WASM Engine & Embed Demonstration** (`[Spec 087]`) | 🔄 In Flight / Review — Pure in-memory WASM execution for mobile emergency operations with touch-first UI and Playwright verification. |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.74 (HTML & Markdown to PDF Full-Fidelity Image Rendering via `AssetBundle` `[Spec 088]`)**:
+1. **Task 5.9.67 (Mobile Touch-First WASM Engine & Embed Demonstration `[Spec 087]`)**:
+   - Merged (PR #231, commit `024d957`).
+   - Deprecated and removed bloated `process_mobile_buffer` Tauri bridge from `apps/desktop/src-tauri/src/mobile_bridge.rs`.
+   - Wired `OperationsPanel.svelte` and `CameraScannerModal.svelte` to execute directly via in-memory `WasmPdfClientImpl` and `WasmPdfEngine.images_to_pdf`.
+   - Enhanced `Widget.svelte` with mobile touch drawer (<640px bottom-sheet, $\ge$48px touch targets, `safe-area-inset-bottom` protection).
+   - Created `apps/embed/playwright.config.ts` and verified 26/26 passing Playwright mobile tests, 88/88 passing desktop unit tests, and clean `svelte-check`.
+2. **Task 5.9.74 (HTML & Markdown to PDF Full-Fidelity Image Rendering via `AssetBundle` `[Spec 088]`)**:
    - Merged (PR #230, commit `f276a78`).
    - Implemented `fulgur::asset::AssetBundle` integration in `HtmlToPdfOperation` and `MdToPdfOperation` (`paperpilot-pdf/src/operations/conversion.rs`).
    - Parses `<img src="...">` and Markdown links, decodes inline base64 image data URIs (`data:image/*;base64,...`), reads local relative/absolute disk images, registers them as in-memory asset buffers, and re-maps sources.
