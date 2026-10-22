@@ -17,7 +17,7 @@ export interface WasmPdfClient {
 
 export class WasmPdfClientImpl implements WasmPdfClient {
     runOperation(type: string, payload: any): Promise<any> {
-        return this.dispatch(type as any, payload);
+        return this.sendRequest(type, payload);
     }
     private worker: Worker;
     private messageIdCounter = 0;
@@ -99,6 +99,10 @@ export class WasmPdfClientImpl implements WasmPdfClient {
 
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
         return this.sendRequest('pdf_to_docx', { file });
+    }
+
+    images_to_pdf(files: Uint8Array[]): Promise<Uint8Array> {
+        return this.sendRequest('images_to_pdf', { files });
     }
 }
 
