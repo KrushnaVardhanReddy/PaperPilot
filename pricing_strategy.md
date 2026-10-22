@@ -19,7 +19,7 @@
 | **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
 | **Enterprise** | **$22/user/month** or **$15k–$35k/yr Flat VPC** | 50+ seats or air-gapped VPCs (SAML, SCIM, Air-gap, SIEM audit, BAA) |
 | **Managed White-Label Edge** | **$149 – $399 / month** | Branded customer portals (e.g. `pdf.firmname.com`, zero maintenance, >95% margin) |
-| **Cloud API Packages**| **$0 / $29 / $89 / mo** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (1k Free, 5k Dev, 20k Scale; sub-10ms pure-Rust edge) |
+| **Cloud API Packages**| **$0 / $29 / $89 / mo** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (1k Free, 5k Dev, 20k Scale; sub-100ms pure-Rust edge) |
 
 > Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
 
@@ -183,7 +183,7 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
   - **Tier A (Fast Edge): Cloudflare Workers (Rust Wasm)**:
     - Used for 90%+ of standard operations (merge, split, rotate, compress, stamp, encrypt, metadata).
     - **Physical Zero-Disk Guarantee**: Cloudflare V8 Isolates do not have hard drive access; files are processed in-memory and immediately destroyed.
-    - Sub-10ms latency worldwide across 300+ edge locations with 0ms cold starts.
+    - Sub-100ms latency worldwide across 300+ edge locations with 0ms cold starts.
   - **Tier B (Heavy Compute): Ephemeral Kubernetes Sandbox**:
     - Used for resource-heavy workloads (scanned document OCR, multi-hundred-megabyte files, and chained batch pipelines).
     - Spawns isolated Pods on-demand (`emptyDir: { medium: "Memory" }` RAM mount) that self-destruct upon completion.
@@ -193,7 +193,7 @@ PaperPilot Cloud unlocks the power of our Rust engine directly in the browser an
 * **Features:**
   - **Hosted Cloud MCP Server (SSE & HTTP Gateway)**: Plug directly into AI agents to perform real PDF transforms with natural language tools.
   - **REST API Endpoints**: Full parity with `paperpilot-gateway` (`POST /api/v1/pdf/merge`, `POST /api/v1/pdf/compress`, etc.).
-  - **Blazing Speed & Low Infrastructure Cost**: Because our engine is pure Rust (sub-10ms execution, <50MB RAM), our server costs are ~50x lower than Java-based Stirling PDF or Python wrappers, allowing high-margin, aggressive pricing.
+  - **Blazing Speed & Low Infrastructure Cost**: Because our engine is pure Rust (sub-100ms execution, <50MB RAM), our server costs are ~50x lower than Java-based Stirling PDF or Python wrappers, allowing high-margin, aggressive pricing.
   - **Developer Dashboard**: Live API key management, rate limits, latency telemetry, and usage metering.
 
 ---
@@ -282,7 +282,7 @@ Hosted MCP endpoint for teams that can't run a local binary. Billed on usage-bas
 ### 9. Website Builder Plugins & Drop-In Embed Widgets (`embed.js`)
 - **Universal Embed**: 1-line `<script>` tag allowing any Webflow, Framer, Squarespace, or custom site to embed a client-side, zero-server-load PDF portal.
 - **WordPress & WooCommerce Plugin**: Gutenberg block + automatic WooCommerce digital file watermarking & dynamic password encryption.
-- **Shopify App**: Sub-10ms invoice generation & digital asset delivery at checkout via Cloudflare Edge.
+- **Shopify App**: Sub-100ms invoice generation & digital asset delivery at checkout via Cloudflare Edge.
 - **Viral Growth Engine**: Free embeds carry a tasteful "⚡ Powered by PaperPilot" badge driving organic adoption to Desktop Pro.
 *(See detailed architecture in [`docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md`](docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md))*
 
