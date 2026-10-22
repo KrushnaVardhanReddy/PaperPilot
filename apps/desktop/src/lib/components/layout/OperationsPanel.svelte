@@ -3,6 +3,7 @@
   import { toastState } from '$lib/state/toast.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { listen } from '@tauri-apps/api/event';
   import { formatUserFriendlyError } from '$lib/utils/errorFormatter';
 
   import type { ToolDefinition } from "$lib/types/tools";
@@ -103,6 +104,64 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
   let headerText = $state('');
   let footerText = $state('');
   let ocrOutputFormat = $state<'pdf' | 'txt' | 'clipboard'>('pdf');
+
+  interface OcrModelInfo {
+      id: string;
+      name: string;
+      description: string;
+      tier: string;
+      size_mb: number;
+      download_urls: string[];
+      local_path: string | null;
+      is_downloaded: boolean;
+  }
+
+  let ocrModelDownloaded = $state(true);
+  let isDownloadingOcr = $state(false);
+  let ocrDownloadPercent = $state(0);
+  let unlistenOcrProgress: (() => void) | null = null;
+
+  async function checkOcrModelStatus() {
+    try {
+      const models = await invoke<OcrModelInfo[]>('get_available_ocr_models');
+      const tinyModel = models.find((m: OcrModelInfo) => m.id === 'ppocrv6-tiny');
+      ocrModelDownloaded = tinyModel?.is_downloaded ?? false;
+    } catch (e) {
+      console.warn("Failed to check OCR models:", e);
+    }
+  }
+
+  async function startOcrDownload() {
+    if (isDownloadingOcr) return;
+    isDownloadingOcr = true;
+    ocrDownloadPercent = 0;
+    try {
+      if (!unlistenOcrProgress) {
+        unlistenOcrProgress = await listen<any>('ocr-download-progress', (event) => {
+          const payload = event.payload;
+          if (payload.model_id === 'ppocrv6-tiny') {
+            ocrDownloadPercent = payload.percent;
+            if (payload.percent >= 100) {
+              setTimeout(() => {
+                isDownloadingOcr = false;
+                checkOcrModelStatus();
+              }, 500);
+            }
+          }
+        });
+      }
+      await invoke('download_ocr_model', { modelId: 'ppocrv6-tiny' });
+    } catch (e: any) {
+      toastState.error(e.message || "Failed to download OCR model");
+      isDownloadingOcr = false;
+    }
+  }
+
+  $effect(() => {
+    if (activeTool && activeTool.id === 'ocr') {
+       checkOcrModelStatus();
+    }
+  });
 
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
@@ -906,8 +965,26 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
         </div>
       {:else if activeTool.id === 'ocr'}
         <div class="operation-config">
+          {#if !ocrModelDownloaded}
+             <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                 <h4 style="margin: 0 0 4px 0; font-size: 13px; color: #fca5a5;">○ Model not downloaded</h4>
+                 <p style="margin: 0 0 10px 0; font-size: 11px; color: #f87171; line-height: 1.4;">
+                     The offline OCR feature requires an initial ~6 MB download.
+                 </p>
+                 {#if isDownloadingOcr}
+                    <div style="width: 100%; background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
+                       <div style="width: {ocrDownloadPercent}%; background: var(--accent-primary, #5e6ad2); height: 100%; transition: width 0.2s;"></div>
+                    </div>
+                    <div style="font-size: 10px; color: #a1a1aa; text-align: right; margin-top: 4px;">{ocrDownloadPercent.toFixed(0)}%</div>
+                 {:else}
+                    <button class="run-btn" style="padding: 6px 12px; font-size: 12px; width: auto;" onclick={startOcrDownload}>
+                        Download OCR Model
+                    </button>
+                 {/if}
+             </div>
+          {/if}
           <label for="ocrOutputFormat" class="section-desc">Output Destination:</label>
-          <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input">
+          <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input" disabled={!ocrModelDownloaded}>
             <option value="pdf">Searchable PDF (.pdf)</option>
             <option value="txt">Plain Text File (.txt)</option>
             <option value="clipboard">Copy to Clipboard</option>
@@ -995,7 +1072,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           class="run-btn"
           class:run-btn--loading={isRunning}
           id="btn-run-operation"
-          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
+          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !ocrModelDownloaded && !isDownloadingOcr)}
           onclick={handleRunOperation}
         >
           {#if isRunning}
