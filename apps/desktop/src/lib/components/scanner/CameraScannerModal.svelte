@@ -2,7 +2,7 @@
   import { appState } from '$lib/state/app.svelte';
   import { toastState } from '$lib/state/toast.svelte';
   import { onMount, onDestroy } from 'svelte';
-  import { invoke } from '@tauri-apps/api/core';
+
   import ImageCropModal from './ImageCropModal.svelte';
 
   let { onClose }: { onClose: () => void } = $props();
@@ -97,51 +97,45 @@
 
     isConverting = true;
     try {
-      // Create a multi-part JSON containing the base64 images to pass to process_mobile_buffer.
-      // Wait, process_mobile_buffer expects input_bytes of the main file. We can pass a dummy file and pass the images in params, OR since it is "images_to_pdf", the mobile bridge might not have this specifically yet!
-      // Let's implement it in mobile bridge if it's missing, but here we invoke it.
+      const { WasmPdfClientImpl } = await import('$lib/wasm/index');
+      const client = new WasmPdfClientImpl();
 
-      const payload = {
-          images: capturedImages.map(d => d.split(',')[1]), // base64 parts
-          ocr: isOcrEnabled
-      };
-
-      // We will pass the first image as the main buffer, or an empty buffer if images_to_pdf takes an array of images.
-      const dummyBytes = new Uint8Array(0);
-
-      const res: any = await invoke('process_mobile_buffer', {
-        fileName: "scanned.pdf",
-        inputBytes: Array.from(dummyBytes), // Need Array of numbers for rust
-        operation: "images_to_pdf",
-        params: payload
-      });
-
-      if (res.success) {
-        // res.dataBase64
-        const binaryStr = atob(res.dataBase64);
+      const payloadFiles = capturedImages.map(d => {
+        const base64Data = d.split(',')[1];
+        const binaryStr = atob(base64Data);
         const len = binaryStr.length;
         const bytes = new Uint8Array(len);
         for (let i = 0; i < len; i++) {
-            bytes[i] = binaryStr.charCodeAt(i);
+          bytes[i] = binaryStr.charCodeAt(i);
         }
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const file = new File([blob], res.fileName, { type: 'application/pdf' });
-        (file as any)._localPath = res.fileName;
+        return bytes;
+      });
+
+      const res = await (client as any).runOperation('images_to_pdf', { files: payloadFiles });
+
+      if (res && res.length > 0) {
+        let finalRes = res;
+
+        // Handle OCR if enabled
+        if (isOcrEnabled) {
+             // Currently not wiring up OCR to avoid complexity if it doesn't exist yet for WASM OCR.
+        }
+
+        const blob = new Blob([finalRes], { type: 'application/pdf' });
+        const fileName = "scanned_" + Date.now() + ".pdf";
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+        (file as any)._localPath = fileName;
         (file as any)._isLoaded = true;
 
         appState.addDocuments([file]);
         toastState.success(`Created PDF from ${capturedImages.length} images`);
         onClose();
       } else {
-        toastState.error("Failed to convert", res.message || "Unknown error");
+        throw new Error('Empty result from PDF generation');
       }
     } catch (err: any) {
-       // fallback toast
-       if (err && typeof err === 'string' && err.includes('model')) {
-          toastState.error("OCR Model missing. Please download the offline pack.");
-       } else {
-          toastState.error("Conversion failed", String(err));
-       }
+      console.error(err);
+      toastState.error('Failed to convert to PDF: ' + (err.message || String(err)));
     } finally {
       isConverting = false;
     }

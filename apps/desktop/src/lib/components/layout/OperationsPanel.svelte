@@ -357,20 +357,33 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
                // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
                // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
 
-               let inputBytes: number[] = [];
+               const { WasmPdfClientImpl } = await import('$lib/wasm/index');
+               const client = new WasmPdfClientImpl();
+               let fileData = new Uint8Array();
+
                if (doc && (doc as any)._isLoaded) {
                    const arrayBuf = await doc.arrayBuffer();
-                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+                   fileData = new Uint8Array(arrayBuf);
                } else if (docPath) {
-                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+                   const rawBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+                   fileData = new Uint8Array(rawBytes);
                }
 
-               result = await invoke('process_mobile_buffer', {
-                   fileName: docName,
-                   inputBytes: inputBytes,
-                   operation: activeTool.id,
-                   params: mobileParams
-               });
+               // Remove pdf_ prefix for engine compatibility if needed
+               let opType = activeTool.id;
+               if (opType.startsWith('pdf_') && opType !== 'pdf_to_docx') {
+                   opType = opType.replace('pdf_', '');
+               }
+
+               let opPayload: any = { ...mobileParams, file: fileData };
+               result = await (client as any).runOperation(opType, opPayload);
+
+               // Re-structure to match expected MCP/REST response for single execution
+               result = {
+                   success: true,
+                   fileName: getDocOutputPath(customOutputPath || `${docName}_out.pdf`),
+                   dataBase64: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(result))))
+               };
             } else {
                 result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
             }
@@ -480,39 +493,43 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
                // We will pass empty buffer and rely on path/file access or handle in rust if we were to fully bridge.
                // However, as per spec: "route tool execution directly through process_mobile_buffer(file_name, input_bytes, operation, params)"
 
-               let inputBytes: number[] = [];
+               const { WasmPdfClientImpl } = await import('$lib/wasm/index');
+               const client = new WasmPdfClientImpl();
+               let fileData = new Uint8Array();
+
                const currentDoc = appState.documents[docIndex];
                if (currentDoc && (currentDoc as any)._isLoaded) {
                    const arrayBuf = await currentDoc.arrayBuffer();
-                   inputBytes = Array.from(new Uint8Array(arrayBuf));
+                   fileData = new Uint8Array(arrayBuf);
                } else if (docPath) {
-                   inputBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+                   const rawBytes = await invoke<number[]>('read_file_bytes', { path: docPath }).catch(() => []);
+                   fileData = new Uint8Array(rawBytes);
                }
 
-               if ((activeTool.id === 'merge' || activeTool.id === 'pdf_merge') && appState.documents.length > 1) {
-                   const docsPayload = [];
+               let opType = activeTool.id;
+               if (opType.startsWith('pdf_') && opType !== 'pdf_to_docx') {
+                   opType = opType.replace('pdf_', '');
+               }
+
+               let opPayload: any = { ...mobileParams, file: fileData };
+
+               if (opType === 'merge') {
+                   const filePayloads = [];
                    for (let idx = 0; idx < appState.documents.length; idx++) {
                        const d = appState.documents[idx];
                        const buf = await d.arrayBuffer();
-                       const bytes = new Uint8Array(buf);
-                       let binary = '';
-                       for (let b = 0; b < bytes.length; b++) {
-                           binary += String.fromCharCode(bytes[b]);
-                       }
-                       docsPayload.push({
-                           name: d.name || `doc_${idx + 1}.pdf`,
-                           dataBase64: btoa(binary)
-                       });
+                       filePayloads.push(new Uint8Array(buf));
                    }
-                   mobileParams.documents = docsPayload;
+                   opPayload = { files: filePayloads };
                }
 
-               result = await invoke('process_mobile_buffer', {
-                   fileName: docName,
-                   inputBytes: inputBytes,
-                   operation: activeTool.id,
-                   params: mobileParams
-               });
+               result = await (client as any).runOperation(opType, opPayload);
+
+               result = {
+                   success: true,
+                   fileName: getOutputPath(customOutputPath || `${docName}_out.pdf`),
+                   dataBase64: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(result))))
+               };
             } else {
                 result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
             }
