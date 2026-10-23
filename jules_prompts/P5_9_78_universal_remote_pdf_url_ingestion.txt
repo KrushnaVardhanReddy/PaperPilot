@@ -1,0 +1,67 @@
+Implement Task 5.9.78 / Spec 093: Universal Remote PDF URL Ingestion Across Penta-Interface (`specs/093-universal-remote-pdf-url-ingestion/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+
+Currently, PaperPilot operations across all 5 surfaces expect local file paths or raw binary payloads. In real-world automated workflows, documents frequently live at remote URLs (e.g. S3 presigned URLs, arXiv research papers, Stripe invoice webhooks, public links like `https://www.princexml.com/samples/newsletter/drylab.pdf`).
+
+Your task is to implement **Universal Remote PDF URL Ingestion** so that users and AI agents can pass URLs directly anywhere an input PDF is expected.
+
+---
+
+## 🎯 OBJECTIVES & WORK ITEMS
+
+### 1. Cloudflare Edge URL Parameter Ingestion (`apps/edge`)
+- In `apps/edge/src/index.ts`:
+  - Add helper function `async function resolveInputBytes(request: Request, url: URL): Promise<Uint8Array>`.
+  - Check if `url.searchParams.get('url')` or request JSON body `{"url": "..."}` is provided.
+  - **SSRF Protection**: Block private/loopback IP addresses (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`).
+  - If a valid URL is present, `fetch(url)`, check `res.ok`, and verify the first 4 bytes match `%PDF` (magic byte validation).
+  - Return the `Uint8Array` so all existing operations (`/rotate`, `/compress`, `/watermark`, `/sanitize`, `/extract-tables`, etc.) execute seamlessly with `?url=...`.
+  - Add tests in `apps/edge/tests/edge.spec.ts`.
+
+### 2. Desktop & Embed Web UI URL Ingestion (`apps/desktop` & `apps/embed`)
+- In `apps/desktop/src/lib/components/layout/DropZone.svelte`:
+  - Add a **"🔗 Import URL"** button / input field.
+  - When a user inputs a URL (e.g., `https://www.princexml.com/samples/newsletter/drylab.pdf`):
+    - Fetch the remote URL as a `Blob` (or via Tauri IPC `fetch` / safe invoke).
+    - Validate that it starts with `%PDF`.
+    - Create a standard `File` object deriving the name from the URL pathname or `Content-Disposition`.
+    - Dispatch to the document store (`ondrop([file])`).
+  - Add a spinner while fetching, and toast a human-friendly error if the URL is unreachable or not a PDF.
+- Mirror in `apps/embed/src/components/DropZone.svelte` if present.
+
+### 3. Native CLI Remote URL Resolution (`paperpilot-cli`)
+- In `paperpilot-cli`:
+  - When `--input` (or any input file argument) starts with `http://` or `https://`:
+    - Download the stream into memory or a temporary file using `reqwest`.
+    - Validate `%PDF` magic bytes.
+    - Pass the resolved path or bytes to the target operation.
+
+### 4. MCP Server URL Resolution (`paperpilot-mcp`)
+- In `paperpilot-mcp/src/server.rs`:
+  - In `get_input_bytes` or when reading the `input` argument, if it begins with `http://` or `https://`:
+    - Download the remote PDF via `reqwest` into a temporary file or buffer before executing.
+
+---
+
+## 📁 FILES TO TOUCH / CREATE
+```
+apps/edge/src/index.ts
+apps/edge/tests/edge.spec.ts
+apps/desktop/src/lib/components/layout/DropZone.svelte
+paperpilot-cli/src/commands/mod.rs (or CLI input resolver)
+paperpilot-mcp/src/server.rs
+specs/093-universal-remote-pdf-url-ingestion/task.md
+PHASES.md
+```
+
+---
+
+## 🚫 CONSTRAINTS
+- SSRF protection is mandatory: never allow fetching private or local loopback IP ranges.
+- Magic byte validation: verify `%PDF` (`[0x25, 0x50, 0x44, 0x46]`) on every downloaded stream.
+- Pure Rust / standard TypeScript: no bulky external binary dependencies.
+- Strictly compile cargo tests with `-j 2` (`cargo test -p paperpilot-pdf --lib -j 2`).
+- Never perform destructive git commands (`git reset --hard`).
