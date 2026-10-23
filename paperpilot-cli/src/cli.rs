@@ -311,7 +311,17 @@ pub enum Commands {
         #[arg(long, default_value = "text")]
         format: String,
     },
-    /// Extract Embedded Images: Save all images found [Input: .pdf | Output: png images]
+    /// Extract Tabular Data: Extract tables to JSON or CSV [Input: .pdf | Output: .json / .csv]
+    ExtractTables {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "json")]
+        format: String,
+        #[arg(long, default_value = "all")]
+        pages: String,
+    },
     ExtractImages {
         #[arg(long)]
         input: PathBuf,

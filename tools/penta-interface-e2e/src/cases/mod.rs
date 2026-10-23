@@ -9,3 +9,5 @@ pub mod sanitize;
 pub mod pii;
 pub mod security_forms;
 pub mod workflow;
+
+pub mod table;

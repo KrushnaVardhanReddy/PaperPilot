@@ -93,8 +93,8 @@ impl PdfOperation for ImagesToPdfOperation {
                 let rgb_img = img.to_rgb8();
                 let raw_pixels = rgb_img.as_raw();
                 let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-                encoder.write_all(raw_pixels).map_err(|e| PdfError::IoError(e))?;
-                let compressed = encoder.finish().map_err(|e| PdfError::IoError(e))?;
+                encoder.write_all(raw_pixels).map_err(PdfError::IoError)?;
+                let compressed = encoder.finish().map_err(PdfError::IoError)?;
                 (b"FlateDecode".to_vec(), compressed)
             };
 

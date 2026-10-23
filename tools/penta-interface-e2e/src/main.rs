@@ -138,6 +138,15 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md"
             )?;
         }
+        "table" | "5.9.58" => {
+            let results = cases::table::run_table_suite().await?;
+            println!("Table extraction finished: {} tests", results.len());
+            generate_markdown_report(
+                "Phase 5.9.58 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Tabular Extraction)",
+                &results,
+                "reports/PENTA_INTERFACE_E2E_TABLE_REPORT.md"
+            )?;
+        }
         "conversions" | "5.9.4D" => {
             let results = cases::conversions::run_conversions_suite().await?;
             println!("Conversions finished: {} tests", results.len());

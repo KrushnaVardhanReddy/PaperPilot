@@ -323,6 +323,7 @@ impl WasmPdfEngine {
             {"id": "set_metadata", "name": "Edit Metadata", "status": "stable"},
             {"id": "images_to_pdf", "name": "Images to PDF", "status": "stable"},
             {"id": "extract_images", "name": "Extract Images", "status": "stable"},
+            {"id": "extract_tables", "name": "Extract Tables", "status": "stable"},
             {"id": "pdf_hash", "name": "PDF Hash", "status": "stable"},
             {"id": "render_page", "name": "Render Page", "status": "stable"},
             {"id": "extract_text", "name": "Extract Text", "status": "stable"},

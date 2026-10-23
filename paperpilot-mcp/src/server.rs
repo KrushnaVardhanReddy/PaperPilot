@@ -1,3 +1,4 @@
+#![allow(clippy::field_reassign_with_default)]
 use crate::schema::OperationResult;
 use lazy_static::lazy_static;
 use pdfium_render::prelude::*;
@@ -1011,6 +1012,31 @@ impl PaperPilotMcpServer {
         );
         tool_ext_img.input_schema = std::sync::Arc::new(schema_ext_img);
         tools.push(tool_ext_img);
+
+        let mut schema_ext_tab = serde_json::Map::new();
+        schema_ext_tab.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut prop_ext_tab = serde_json::Map::new();
+
+        let mut p_in = serde_json::Map::new();
+        p_in.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_ext_tab.insert("input".to_string(), serde_json::Value::Object(p_in));
+
+        let mut p_out = serde_json::Map::new();
+        p_out.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_ext_tab.insert("output".to_string(), serde_json::Value::Object(p_out));
+
+        let mut p_f = serde_json::Map::new();
+        p_f.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_ext_tab.insert("format".to_string(), serde_json::Value::Object(p_f));
+
+        schema_ext_tab.insert("properties".to_string(), serde_json::Value::Object(prop_ext_tab));
+        schema_ext_tab.insert("required".to_string(), serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]));
+
+        let mut tool_ext_tab = Tool::default();
+        tool_ext_tab.name = "pdf_extract_tables".into();
+        tool_ext_tab.description = Some("Extract tabular data from PDF into JSON or CSV".into());
+        tool_ext_tab.input_schema = std::sync::Arc::new(schema_ext_tab);
+        tools.push(tool_ext_tab);
 
         // Tool: workspace_search
         let mut schema_ws = serde_json::Map::new();
@@ -5193,7 +5219,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 60);
+        assert_eq!(res.tools.len(), 61);
     }
 
     #[test]

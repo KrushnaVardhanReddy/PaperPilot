@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_match)]
 use lopdf::{Document, Object};
 use serde::{Deserialize, Serialize};
 
