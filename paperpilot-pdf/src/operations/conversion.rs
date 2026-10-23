@@ -2,6 +2,7 @@ use crate::document::LopdfDocument;
 use lopdf::dictionary;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
+#[cfg(feature = "office")]
 use rust_xlsxwriter::Workbook;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
@@ -370,8 +371,6 @@ impl ExcelToStyledHtmlOperation {
     }
 
     pub fn render(&self) -> OperationResult<()> {
-        use calamine::{Data, Reader, open_workbook_auto};
-
         let mut html =
             String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
 
@@ -397,45 +396,53 @@ impl ExcelToStyledHtmlOperation {
             }
             html.push_str("</table>");
         } else {
-            let mut workbook = open_workbook_auto(&self.input_path)
-                .map_err(|e| PdfError::Other(format!("Failed to open workbook: {}", e)))?;
+            #[cfg(feature = "office")]
+            {
+                use calamine::{Data, Reader, open_workbook_auto};
+                let mut workbook = open_workbook_auto(&self.input_path)
+                    .map_err(|e| PdfError::Other(format!("Failed to open workbook: {}", e)))?;
 
-            let sheets = workbook.sheet_names().to_owned();
-            for sheet_name in sheets {
-                html.push_str(&format!(
-                    "<h2>{}</h2>",
-                    html_escape::encode_text(&sheet_name)
-                ));
-                if let Ok(range) = workbook.worksheet_range(&sheet_name) {
-                    html.push_str("<table>");
-                    let mut is_first_row = true;
-                    for row in range.rows() {
-                        html.push_str("<tr>");
-                        for cell in row {
-                            let cell_tag = if is_first_row { "th" } else { "td" };
-                            let cell_val = match cell {
-                                Data::String(s) => s.to_string(),
-                                Data::Float(f) => f.to_string(),
-                                Data::Int(i) => i.to_string(),
-                                Data::Bool(b) => b.to_string(),
-                                Data::Error(e) => format!("Error: {:?}", e),
-                                Data::Empty => String::new(),
-                                Data::DateTime(d) => d.as_f64().to_string(),
-                                Data::DateTimeIso(d) => d.to_string(),
-                                Data::DurationIso(d) => d.to_string(),
-                            };
-                            html.push_str(&format!(
-                                "<{}>{}</{}>",
-                                cell_tag,
-                                html_escape::encode_text(&cell_val),
-                                cell_tag
-                            ));
+                let sheets = workbook.sheet_names().to_owned();
+                for sheet_name in sheets {
+                    html.push_str(&format!(
+                        "<h2>{}</h2>",
+                        html_escape::encode_text(&sheet_name)
+                    ));
+                    if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                        html.push_str("<table>");
+                        let mut is_first_row = true;
+                        for row in range.rows() {
+                            html.push_str("<tr>");
+                            for cell in row {
+                                let cell_tag = if is_first_row { "th" } else { "td" };
+                                let cell_val = match cell {
+                                    Data::String(s) => s.to_string(),
+                                    Data::Float(f) => f.to_string(),
+                                    Data::Int(i) => i.to_string(),
+                                    Data::Bool(b) => b.to_string(),
+                                    Data::Error(e) => format!("Error: {:?}", e),
+                                    Data::Empty => String::new(),
+                                    Data::DateTime(d) => d.as_f64().to_string(),
+                                    Data::DateTimeIso(d) => d.to_string(),
+                                    Data::DurationIso(d) => d.to_string(),
+                                };
+                                html.push_str(&format!(
+                                    "<{}>{}</{}>",
+                                    cell_tag,
+                                    html_escape::encode_text(&cell_val),
+                                    cell_tag
+                                ));
+                            }
+                            html.push_str("</tr>");
+                            is_first_row = false;
                         }
-                        html.push_str("</tr>");
-                        is_first_row = false;
+                        html.push_str("</table>");
                     }
-                    html.push_str("</table>");
                 }
+            }
+            #[cfg(not(feature = "office"))]
+            {
+                return Err(PdfError::UnsupportedOperation("Office Excel parsing is not enabled in this build".to_string()));
             }
         }
         html.push_str("</body></html>");
@@ -1789,6 +1796,7 @@ impl PdfToXlsxOperation {
     }
 }
 
+#[cfg(feature = "office")]
 impl PdfOperation for PdfToXlsxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let lopdf_doc = document
@@ -1842,6 +1850,13 @@ impl PdfOperation for PdfToXlsxOperation {
             .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {}", e)))?;
 
         Ok(())
+    }
+}
+
+#[cfg(not(feature = "office"))]
+impl PdfOperation for PdfToXlsxOperation {
+    fn execute(&self, _document: &mut dyn PdfDocument) -> OperationResult<()> {
+        Err(PdfError::UnsupportedOperation("Office Excel export is not enabled in this build".to_string()))
     }
 }
 

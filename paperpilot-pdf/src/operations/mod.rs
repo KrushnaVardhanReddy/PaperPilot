@@ -23,7 +23,9 @@ pub mod info;
 pub mod linearize;
 pub mod merge;
 pub mod metadata;
+#[cfg(feature = "ocr")]
 pub mod ocr;
+#[cfg(feature = "office")]
 pub mod office;
 pub mod page_numbers;
 pub mod pdf_a;
