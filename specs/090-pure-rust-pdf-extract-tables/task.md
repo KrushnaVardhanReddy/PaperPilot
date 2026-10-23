@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 090](file:///home/krushna/Project/PaperPilot/specs/090-pure-rust-pdf-extract-tables/spec.md)
 - Target: Wave 3 (`v0.7.0`) Advanced Intelligence & Structured Data
-- Status: ✅ Completed (Merged PR #234, Jules Session [`334056780263731633`](https://jules.google.com/session/334056780263731633))
+- Status: ⏳ Stage 2 In-Flight (Jules Session [`17392106531061751840`](https://jules.google.com/session/17392106531061751840)) — Scaffolding merged in PR #234; Stage 2 implementing real spatial text and column clustering in `table.rs`.
 
 ---
 
