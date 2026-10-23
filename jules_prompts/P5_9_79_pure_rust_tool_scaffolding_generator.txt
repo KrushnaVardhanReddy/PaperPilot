@@ -3,95 +3,75 @@ Implement Task 5.9.79 / Spec 094: Pure-Rust Tool Scaffolding Generator (`specs/0
 ---
 
 ## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+In PaperPilot, adding any new tool requires wiring across 8 distinct directories across our 5-interface surface model (Core Rust, CLI, MCP Server, REST Gateway, WASM, Cloudflare Edge, Desktop UI, and Penta E2E Suite). Manually doing this for every tool introduces boilerplate fatigue and merge conflicts.
 
-In PaperPilot, adding any new tool requires wiring across 8 distinct files across our 5-interface surface model (Core Rust, CLI, MCP Server, REST Gateway, WASM, Cloudflare Edge, Desktop UI, and Penta E2E Suite). Manually doing this for every tool introduces boilerplate fatigue, typos, and merge conflicts.
-
-Your task is to build a standalone, pure-Rust CLI tool in `tools/penta-scaffold` that automatically generates clean, compiling scaffolding across all 5 surfaces from a single command.
-
----
-
-## 🎯 OBJECTIVES & WORK ITEMS
-
-### 1. Create `tools/penta-scaffold` Crate
-- Create `tools/penta-scaffold/Cargo.toml`:
-  ```toml
-  [package]
-  name = "penta-scaffold"
-  version = "0.1.0"
-  edition = "2024"
-
-  [dependencies]
-  clap = { version = "4", features = ["derive"] }
-  heck = "0.5"
-  anyhow = "1.0"
-  ```
-- Add `"tools/penta-scaffold"` to root workspace `Cargo.toml`.
-
-### 2. Implement Generator Engine (`src/main.rs`, `src/templates.rs`)
-- Command Line Options (`clap`):
-  - `--name <NAME>` (e.g. `pdf_validate_signatures`)
-  - `--title <TITLE>` (e.g. `"Validate Digital Signatures"`)
-  - `--category <CATEGORY>` (e.g. `"security"`, `"organize"`, `"conversions"`)
-  - `--icon <ICON>` (e.g. `"🔏"`)
-  - `--input-format <IN>` (e.g. `"pdf"`)
-  - `--output-format <OUT>` (e.g. `"json"`, `"pdf"`, `"csv"`)
-  - `--description <DESC>` (e.g. `"Cryptographically verify digital signatures and certificates."`)
-  - `--dry-run` (Boolean flag: preview generated file changes without modifying files)
-
-### 3. Generated Files & Appending Logic
-Use string templates and clean AST/line-based insertion to generate:
-1. **Core Operation** (`paperpilot-pdf/src/operations/<name_stem>.rs`):
-   - Type definitions: `struct <PascalCase>Operation`, `PdfOperation` implementation, parameter struct, and `#[cfg(test)]` test stub.
-   - Append `pub mod <name_stem>;` to `paperpilot-pdf/src/operations/mod.rs`.
-2. **CLI Subcommand** (`paperpilot-cli/src/commands/<name_stem>.rs`):
-   - Command execution function.
-   - Insert enum variant into `paperpilot-cli/src/cli.rs` under `Commands`.
-   - Insert dispatch arm into `paperpilot-cli/src/commands/mod.rs`.
-3. **MCP Server Tool** (`paperpilot-mcp/src/server.rs`):
-   - Add tool JSON schema in `list_tools()` with property descriptions.
-   - Add execution match arm in `call_tool()`.
-4. **REST Gateway** (`paperpilot-gateway`):
-   - Add handler function in `src/handlers.rs`.
-   - Register route in `src/server.rs` under `/api/v1/pdf/<endpoint>`.
-5. **Browser WASM** (`paperpilot-wasm/src/lib.rs`):
-   - Expose `WasmPdfEngine.<method>()`.
-   - Add tool definition into `WasmPdfEngine.list_tools()`.
-6. **Desktop & Embed UI** (`apps/desktop/src/lib/types/toolList.ts`):
-   - Append `ToolDefinition` object to `allTools` array with `inputFormat` and `outputFormat`.
-7. **Penta-Interface E2E Suite** (`tools/penta-interface-e2e/src/cases/<name_stem>.rs`):
-   - Scaffold the 10 unmocked test assertions across all 5 surfaces.
-   - Register module in `tools/penta-interface-e2e/src/cases/mod.rs` and `main.rs`.
+Build a standalone, pure-Rust CLI tool in `tools/penta-scaffold` that automatically generates 100% compiling boilerplate across all 5 surfaces from a single command.
 
 ---
 
-## 🔍 REFERENCE TOOLS TO MODEL AFTER
-Study these two existing cleanroom implementations for the exact naming conventions and code structure:
-1. **`pdf_sanitize`** (`Task 5.9.59`):
-   - Core: `paperpilot-pdf/src/operations/sanitize.rs`
-   - CLI: `paperpilot-cli/src/commands/sanitize.rs`
-   - MCP: `paperpilot-mcp/src/server.rs` (search `"pdf_sanitize"`)
-   - E2E: `tools/penta-interface-e2e/src/cases/sanitize.rs`
-2. **`document_pii_scan`** (`Task 5.9.60`):
-   - Core: `paperpilot-pdf/src/operations/pii.rs`
-   - CLI: `paperpilot-cli/src/commands/pii.rs`
-   - MCP: `paperpilot-mcp/src/server.rs` (search `"document_pii_scan"`)
-   - E2E: `tools/penta-interface-e2e/src/cases/pii.rs`
+## ⚠️ CRITICAL IMPLEMENTATION RULES & EXACT PATTERNS
+
+### 1. Zero Python Mandate
+The tool MUST be 100% pure Rust (using `clap`, `heck`, `anyhow`, standard library `fs` and string manipulation). Do NOT use Python scripts or python-based replacements!
+
+### 2. MCP Server (`paperpilot-mcp/src/server.rs`) Exact Pattern
+In `server.rs`, individual tool match arms inside `execute_call_tool` return `Ok(OperationResult { ... })`, NOT `CallToolResponse::Complete`!
+`CallToolResponse::Complete` is handled once at the very bottom of `execute_call_tool`.
+
+Your injected MCP match arm must look EXACTLY like this:
+```rust
+"{tool_name}" => {{
+    let input = get_string("input")?;
+    let output = get_string("output")?;
+    ensure_parent_dir(&output)?;
+
+    let input_bytes = std::fs::read(&input)
+        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+    let options = paperpilot_pdf::operations::{snake_name}::{PascalCase}Options::default();
+    let result = paperpilot_pdf::operations::{snake_name}::{snake_name}_bytes(&input_bytes, &options)
+        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+    std::fs::write(&output, result)
+        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+    Ok(OperationResult {{
+        data: Some(serde_json::json!({{ "output_path": output }})),
+        success: true,
+        message: "{display_title} executed successfully".to_string(),
+        output_path: Some(output),
+        diff_detected: None,
+    }})
+}}
+```
+
+**CRITICAL RUST FORMAT RULE:** In Rust `format!` templates, literal JSON braces `{` and `}` MUST be escaped as `{{` and `}}`!
+
+### 3. Core Operation Pattern (`paperpilot-pdf/src/operations/<name>.rs`)
+Model directly after `paperpilot-pdf/src/operations/table.rs` and `sanitize.rs`:
+- Provide `<PascalCase>Options` with `serde::{Serialize, Deserialize}` and `Default`.
+- Provide `<snake_name>_bytes(input_bytes: &[u8], options: &<PascalCase>Options) -> Result<Vec<u8>, PdfError>` (or appropriate return type).
+- Provide `<PascalCase>Operation` implementing `paperpilot_core::traits::PdfOperation`.
+- Provide unit tests in `#[cfg(test)] mod tests` verifying empty document behavior.
+- Add `pub mod <snake_name>;` into `paperpilot-pdf/src/operations/mod.rs`.
+
+### 4. CLI Subcommand (`paperpilot-cli`)
+- Add `<PascalCase> { input: PathBuf, output: PathBuf }` to `Commands` enum in `paperpilot-cli/src/cli.rs`.
+- In `paperpilot-cli/src/commands/mod.rs`, add match arm routing to the command handler.
+
+### 5. WASM & Desktop Catalog
+- In `paperpilot-wasm/src/operations.rs`: Expose `pub fn {snake_name}(...)`.
+- In `apps/desktop/src/lib/types/toolList.ts`: Append `ToolDefinition` item to `allTools` array with `inputFormat` and `outputFormat`.
 
 ---
 
-## 🛠️ INTEGRATION & TESTING
-- Add `make new-tool` to root `Makefile`:
-  ```makefile
-  new-tool:
-  	cargo run -p penta-scaffold -- $(ARGS)
-  ```
-- Write comprehensive unit tests in `tools/penta-scaffold/src/` testing template generation and `--dry-run`.
-- Verify `cargo check --workspace` passes cleanly.
-
----
-
-## 🚫 CONSTRAINTS
-- Pure Rust only.
-- Safe file editing: create backups or refuse to overwrite existing files unless explicitly specified.
-- Strictly compile cargo tests with `-j 2` (`cargo test -p penta-scaffold --lib -j 2`).
-- Never perform destructive git commands (`git reset --hard`).
+## 🧪 VALIDATION & EXIT CRITERIA
+1. `tools/penta-scaffold` must compile cleanly with `cargo check -p penta-scaffold`.
+2. Running a `--dry-run` must print planned changes without errors:
+   ```bash
+   cargo run -p penta-scaffold -- --name pdf_validate_signatures --title "Validate Digital Signatures" --category "security" --icon "🔏" --input-format "pdf" --output-format "json" --description "Cryptographic verification of signatures" --dry-run
+   ```
+3. Full workspace must pass:
+   ```bash
+   cargo check --workspace
+   ```
+4. Update `specs/094-pure-rust-tool-scaffolding-generator/task.md` marking all checklist items complete.

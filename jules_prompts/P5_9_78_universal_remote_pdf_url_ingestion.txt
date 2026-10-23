@@ -3,65 +3,60 @@ Implement Task 5.9.78 / Spec 093: Universal Remote PDF URL Ingestion Across Pent
 ---
 
 ## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+Currently, PaperPilot operations across all 5 surfaces expect local file paths or raw binary payloads. In real-world automated workflows, documents frequently live at remote URLs (e.g. S3 presigned URLs, arXiv research papers, Stripe invoice webhooks).
 
-Currently, PaperPilot operations across all 5 surfaces expect local file paths or raw binary payloads. In real-world automated workflows, documents frequently live at remote URLs (e.g. S3 presigned URLs, arXiv research papers, Stripe invoice webhooks, public links like `https://www.princexml.com/samples/newsletter/drylab.pdf`).
-
-Your task is to implement **Universal Remote PDF URL Ingestion** so that users and AI agents can pass URLs directly anywhere an input PDF is expected.
-
----
-
-## 🎯 OBJECTIVES & WORK ITEMS
-
-### 1. Cloudflare Edge URL Parameter Ingestion (`apps/edge`)
-- In `apps/edge/src/index.ts`:
-  - Add helper function `async function resolveInputBytes(request: Request, url: URL): Promise<Uint8Array>`.
-  - Check if `url.searchParams.get('url')` or request JSON body `{"url": "..."}` is provided.
-  - **SSRF Protection**: Block private/loopback IP addresses (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`).
-  - If a valid URL is present, `fetch(url)`, check `res.ok`, and verify the first 4 bytes match `%PDF` (magic byte validation).
-  - Return the `Uint8Array` so all existing operations (`/rotate`, `/compress`, `/watermark`, `/sanitize`, `/extract-tables`, etc.) execute seamlessly with `?url=...`.
-  - Add tests in `apps/edge/tests/edge.spec.ts`.
-
-### 2. Desktop & Embed Web UI URL Ingestion (`apps/desktop` & `apps/embed`)
-- In `apps/desktop/src/lib/components/layout/DropZone.svelte`:
-  - Add a **"🔗 Import URL"** button / input field.
-  - When a user inputs a URL (e.g., `https://www.princexml.com/samples/newsletter/drylab.pdf`):
-    - Fetch the remote URL as a `Blob` (or via Tauri IPC `fetch` / safe invoke).
-    - Validate that it starts with `%PDF`.
-    - Create a standard `File` object deriving the name from the URL pathname or `Content-Disposition`.
-    - Dispatch to the document store (`ondrop([file])`).
-  - Add a spinner while fetching, and toast a human-friendly error if the URL is unreachable or not a PDF.
-- Mirror in `apps/embed/src/components/DropZone.svelte` if present.
-
-### 3. Native CLI Remote URL Resolution (`paperpilot-cli`)
-- In `paperpilot-cli`:
-  - When `--input` (or any input file argument) starts with `http://` or `https://`:
-    - Download the stream into memory or a temporary file using `reqwest`.
-    - Validate `%PDF` magic bytes.
-    - Pass the resolved path or bytes to the target operation.
-
-### 4. MCP Server URL Resolution (`paperpilot-mcp`)
-- In `paperpilot-mcp/src/server.rs`:
-  - In `get_input_bytes` or when reading the `input` argument, if it begins with `http://` or `https://`:
-    - Download the remote PDF via `reqwest` into a temporary file or buffer before executing.
+Your task is to implement **Universal Remote PDF URL Ingestion** so users and AI agents can pass URLs directly anywhere an input PDF is expected.
 
 ---
 
-## 📁 FILES TO TOUCH / CREATE
-```
-apps/edge/src/index.ts
-apps/edge/tests/edge.spec.ts
-apps/desktop/src/lib/components/layout/DropZone.svelte
-paperpilot-cli/src/commands/mod.rs (or CLI input resolver)
-paperpilot-mcp/src/server.rs
-specs/093-universal-remote-pdf-url-ingestion/task.md
-PHASES.md
-```
+## ⚠️ EXACT IMPLEMENTATION DETAILS & PATTERNS
+
+### 1. Core Pure-Rust URL Fetcher (`paperpilot-core/src/url_fetch.rs`)
+- Add `reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "blocking"] }` to `paperpilot-core/Cargo.toml`.
+- Implement `pub fn fetch_remote_pdf(url_str: &str, max_bytes: usize) -> Result<Vec<u8>, PdfError>`:
+  - **SSRF Guard**: Parse URL. Reject scheme if not `http` or `https`. Reject host if it resolves to private/loopback/link-local IP addresses:
+    - `127.0.0.0/8`, `localhost`
+    - `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+    - `169.254.169.254` (cloud metadata)
+  - Execute HTTP GET request with a 15-second timeout and 100MB limit.
+  - **Magic Byte Validation**: Validate that the first 4 bytes equal `b"%PDF"` (or start with `%PDF-`). If not, return `PdfError::InvalidFormat("Missing %PDF- magic bytes")`.
+- Expose `pub mod url_fetch;` in `paperpilot-core/src/lib.rs`.
+
+### 2. Cloudflare Edge Worker (`apps/edge/src/index.ts`)
+- Implement `async function resolveInputBytes(request: Request, url: URL): Promise<Uint8Array>`:
+  - Check `url.searchParams.get('url')`.
+  - Check if `request.method === 'POST'` and `request.headers.get('content-type') === 'application/json'` with `{ "url": "..." }`.
+  - If URL is present:
+    - Validate SSRF: block private IPs / localhost before fetching.
+    - Fetch the remote resource with standard `fetch(targetUrl)`. Check `res.ok`.
+    - Read `arrayBuffer()`. Check that the first 4 bytes match `%PDF`.
+    - Return `new Uint8Array(buffer)`.
+  - Otherwise, return `new Uint8Array(await request.arrayBuffer())`.
+- In `apps/edge/tests/edge.spec.ts`:
+  - Test valid PDF URL fetch (mocked or local test fixture).
+  - Test SSRF blocking (e.g. `http://127.0.0.1:8080/secret` -> returns 400 Bad Request).
+  - Test invalid magic bytes (e.g. URL returning HTML or JSON -> returns 400 Bad Request).
+
+### 3. Native CLI Ingestion (`paperpilot-cli`)
+- In `paperpilot-cli`, before opening the input path, check:
+  ```rust
+  let input_bytes = if input_str.starts_with("http://") || input_str.starts_with("https://") {
+      paperpilot_core::url_fetch::fetch_remote_pdf(&input_str, 100 * 1024 * 1024)?
+  } else {
+      std::fs::read(&input_path)?
+  };
+  ```
+
+### 4. MCP Server Ingestion (`paperpilot-mcp/src/server.rs`)
+- In `paperpilot-mcp/src/server.rs`, when resolving the `input` argument for any tool:
+  - If `input.starts_with("http://") || input.starts_with("https://")`:
+    - Download bytes via `paperpilot_core::url_fetch::fetch_remote_pdf`.
+    - Write to a temporary file via `tempfile::NamedTempFile` or pass bytes directly.
 
 ---
 
-## 🚫 CONSTRAINTS
-- SSRF protection is mandatory: never allow fetching private or local loopback IP ranges.
-- Magic byte validation: verify `%PDF` (`[0x25, 0x50, 0x44, 0x46]`) on every downloaded stream.
-- Pure Rust / standard TypeScript: no bulky external binary dependencies.
-- Strictly compile cargo tests with `-j 2` (`cargo test -p paperpilot-pdf --lib -j 2`).
-- Never perform destructive git commands (`git reset --hard`).
+## 🧪 VALIDATION & EXIT CRITERIA
+1. `cargo test -p paperpilot-core --lib -j 2` must pass including `url_fetch` tests.
+2. `npm run test` in `apps/edge/` must pass.
+3. `cargo check --workspace` must pass with zero warnings.
+4. Update `specs/093-universal-remote-pdf-url-ingestion/task.md` marking completed tasks.
