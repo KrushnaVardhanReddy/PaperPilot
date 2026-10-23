@@ -1,0 +1,86 @@
+   Compiling pdf_oxide v0.3.78
+   Compiling rusto-rs v0.3.1
+   Compiling rmcp-macros v3.5.1
+   Compiling utoipa-swagger-ui v10.0.1
+   Compiling onig v6.5.3
+   Compiling fulgur v0.40.0
+   Compiling mime_guess v1.8.8
+   Compiling rand v0.9.5
+   Compiling derive_builder v0.20.2
+   Compiling ahash v0.8.12
+   Compiling rand_chacha v0.3.1
+   Compiling esaxx-rs v0.1.10
+   Compiling docx-rs v0.4.22
+   Compiling mustache v0.9.0
+   Compiling rust_xlsxwriter v0.99.1
+   Compiling rayon-cond v0.4.0
+   Compiling axum-core v0.5.6
+   Compiling utf16string v0.2.0
+   Compiling serde_path_to_error v0.1.20
+   Compiling dary_heap v0.3.9
+   Compiling unicode-normalization-alignments v0.1.12
+   Compiling libloading v0.9.0
+   Compiling groupable v0.2.0
+   Compiling chunked_transfer v0.3.1
+   Compiling unicode_categories v0.1.1
+   Compiling ascii v0.8.7
+   Compiling maybe-owned v0.3.4
+   Compiling matchit v0.8.4
+   Compiling axum v0.8.9
+   Compiling pdfium-render v0.9.4
+   Compiling tiny_http v0.6.4
+   Compiling tokenizers v0.21.4
+   Compiling nickel v0.11.0
+   Compiling paperpilot-pdf v0.1.0 (/app/paperpilot-pdf)
+warning: unused import: `dictionary`
+ --> paperpilot-pdf/src/operations/pdf_nup.rs:4:13
+  |
+4 | use lopdf::{dictionary, Document, Dictionary, Object, Stream, content::Co...
+  |             ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `options` is never read
+   --> paperpilot-pdf/src/operations/pdf_nup.rs:251:5
+    |
+250 | pub struct PdfNupOperation {
+    |            --------------- field in this struct
+251 |     options: PdfNupOptions,
+    |     ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling rand v0.8.8
+   Compiling iron v0.6.1
+   Compiling rmcp v3.5.1
+   Compiling utoipa v6.0.0
+   Compiling inotify-sys v0.1.8
+   Compiling buf_redux v0.8.4
+   Compiling matchers v0.2.0
+   Compiling sharded-slab v0.1.7
+   Compiling tracing-log v0.2.0
+   Compiling rust-stemmers v1.2.0
+   Compiling twoway v0.1.8
+   Compiling thread_local v1.1.10
+   Compiling nu-ansi-term v0.50.3
+   Compiling http-range-header v0.4.2
+   Compiling multipart v0.18.0
+   Compiling tower-http v0.7.1
+   Compiling tracing-subscriber v0.3.23
+   Compiling paperpilot-nlp v0.1.0 (/app/paperpilot-nlp)
+   Compiling inotify v0.9.6
+   Compiling paperpilot-mcp v0.1.0 (/app/paperpilot-mcp)
+   Compiling tokio-stream v0.1.19
+   Compiling mio v0.8.11
+   Compiling filetime v0.2.29
+   Compiling urlencoding v2.1.3
+   Compiling paperpilot-gateway v0.1.0 (/app/paperpilot-gateway)
+   Compiling notify v6.1.1
+   Compiling clap_complete v4.6.11
+   Compiling paperpilot-cli v0.1.0 (/app/paperpilot-cli)
+warning: `paperpilot-pdf` (lib) generated 2 warnings (run `cargo fix --lib -p paperpilot-pdf` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 53s
+warning: the following packages contain code that will be rejected by a future version of Rust: buf_redux v0.8.4, multipart v0.18.0, typemap v0.3.3
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running `target/debug/paperpilot-cli pdf-nup --input tests/e2e_fixtures/real/single_page.pdf --output out.pdf`
+PdfNup complete.

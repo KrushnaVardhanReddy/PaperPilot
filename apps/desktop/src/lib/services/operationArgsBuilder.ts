@@ -41,6 +41,11 @@ export interface OperationContext {
     compressQuality: number;
     blankSensitivity?: number;
     searchQuery?: string;
+    nupPages?: number;
+    nupOrdering?: string;
+    nupMargin?: number;
+    nupSpacing?: number;
+    nupDrawBorders?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -478,6 +483,17 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_tables.${context.tableFormat === 'csv' ? 'csv' : 'json'}`),
                 format: context.tableFormat || 'json'
+            };
+            break;
+        case 'pdf_nup':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_nup.pdf`),
+                nup: context.nupPages || 2,
+                ordering: context.nupOrdering || 'horizontal',
+                margin_pt: context.nupMargin ?? 18.0,
+                spacing_pt: context.nupSpacing ?? 10.0,
+                draw_borders: context.nupDrawBorders ?? false
             };
             break;
         default:

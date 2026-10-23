@@ -193,8 +193,12 @@ async fn main() -> Result<()> {
             )?;
         }
         "pdf_validate_signatures" | "5.9.61" => {
-            let results = cases::pdf_validate_signatures::run_pdf_validate_signatures_suite().await?;
-            println!("Validate Digital Signatures finished: {} tests", results.len());
+            let results =
+                cases::pdf_validate_signatures::run_pdf_validate_signatures_suite().await?;
+            println!(
+                "Validate Digital Signatures finished: {} tests",
+                results.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.61 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Validate Digital Signatures)",
                 &results,
@@ -214,7 +218,10 @@ async fn main() -> Result<()> {
         }
         "pdf_booklet" => {
             let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
-            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            println!(
+                "Booklet Imposition finished: {} tests",
+                res_pdf_booklet.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
                 &res_pdf_booklet,
@@ -293,11 +300,22 @@ async fn main() -> Result<()> {
             )?;
 
             let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
-            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            println!(
+                "Booklet Imposition finished: {} tests",
+                res_pdf_booklet.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
                 &res_pdf_booklet,
                 "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
+            )?;
+
+            let res_pdf_nup = cases::pdf_nup::run_pdf_nup_suite().await?;
+            println!("N-Up Page Imposition finished: {} tests", res_pdf_nup.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (N-Up Page Imposition)",
+                &res_pdf_nup,
+                "reports/PENTA_INTERFACE_E2E_PDF_NUP_REPORT.md",
             )?;
 
             let mut all = Vec::new();
@@ -307,6 +325,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_nup);
             all.extend(res_pdf_booklet);
             all.extend(generated_res);
             generate_markdown_report(

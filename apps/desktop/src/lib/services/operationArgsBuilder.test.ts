@@ -180,4 +180,17 @@ describe('operationArgsBuilder', () => {
             format: 'csv'
         });
     });
+
+    it('builds args for pdf_nup', async () => {
+        const args = await buildOperationArgs('pdf_nup', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_nup.pdf',
+            nup: 2,
+            ordering: 'horizontal',
+            margin_pt: 18.0,
+            spacing_pt: 10.0,
+            draw_borders: false
+        });
+    });
 });

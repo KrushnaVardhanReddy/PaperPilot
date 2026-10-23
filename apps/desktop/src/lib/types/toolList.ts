@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
+  { id: 'pdf_nup', name: 'N-Up Page Imposition', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.', icon: '📑', category: 'organize', context: 'pdf', tags: ['pdf_nup'], releaseStatus: 'preview' },
   { id: 'pdf_booklet', title: 'Booklet Imposition', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Reorder and impose pages for 2-sided folding booklet printing.', icon: '📖', category: 'pages', context: 'pdf', tags: ['pdf_booklet'], releaseStatus: 'preview' },
   { id: 'pdf_validate_signatures', title: 'Validate Digital Signatures', inputFormat: 'PDF', outputFormat: '.JSON', description: 'Cryptographically verify digital signatures, certificate chains, and document integrity.', icon: '🔏', category: 'security', context: 'pdf', tags: ['pdf_validate_signatures'], releaseStatus: 'preview' },
   // Quick / Popular

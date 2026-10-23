@@ -188,13 +188,16 @@ pub fn pdf_validate_signatures_bytes(
                         let len2 = byte_range[3];
 
                         if offset1 != 0 {
-                            error_message = Some("Invalid ByteRange: offset1 must be 0".to_string());
+                            error_message =
+                                Some("Invalid ByteRange: offset1 must be 0".to_string());
                         } else if offset1 + len1 >= offset2 {
-                            error_message =
-                                Some("Invalid ByteRange: offset1 + len1 must be < offset2".to_string());
+                            error_message = Some(
+                                "Invalid ByteRange: offset1 + len1 must be < offset2".to_string(),
+                            );
                         } else if offset2 + len2 > input_bytes.len() as i64 {
-                            error_message =
-                                Some("Invalid ByteRange: offset2 + len2 exceeds file size".to_string());
+                            error_message = Some(
+                                "Invalid ByteRange: offset2 + len2 exceeds file size".to_string(),
+                            );
                         } else {
                             is_valid = true;
                             let end_of_sig = (offset2 + len2) as usize;

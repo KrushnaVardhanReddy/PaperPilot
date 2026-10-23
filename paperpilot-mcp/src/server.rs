@@ -2386,6 +2386,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_booklet.input_schema = Arc::new(schema_pdf_booklet);
         tools.push(tool_pdf_booklet);
+        let mut schema_pdf_nup = serde_json::Map::new();
+        schema_pdf_nup.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_nup = serde_json::Map::new();
+
+        let mut prop_input_pdf_nup = serde_json::Map::new();
+        prop_input_pdf_nup.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_nup.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_nup),
+        );
+
+        let mut prop_output_pdf_nup = serde_json::Map::new();
+        prop_output_pdf_nup.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_nup.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_nup),
+        );
+
+        schema_pdf_nup.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_nup),
+        );
+        schema_pdf_nup.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_nup = Tool::default();
+        tool_pdf_nup.name = "pdf_nup".into();
+        tool_pdf_nup.description = Some(
+            "N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_nup.input_schema = Arc::new(schema_pdf_nup);
+        tools.push(tool_pdf_nup);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -4971,8 +5017,11 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options = paperpilot_pdf::operations::pdf_booklet::PdfBookletOptions::default();
-                let result = paperpilot_pdf::operations::pdf_booklet::pdf_booklet_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let result = paperpilot_pdf::operations::pdf_booklet::pdf_booklet_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -4981,6 +5030,29 @@ impl PaperPilotMcpServer {
                     data: Some(serde_json::json!({ "output_path": output })),
                     success: true,
                     message: "Booklet Imposition executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_nup" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_nup::PdfNupOptions::default();
+                let result =
+                    paperpilot_pdf::operations::pdf_nup::pdf_nup_bytes(&input_bytes, &options)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "N-Up Page Imposition executed successfully".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

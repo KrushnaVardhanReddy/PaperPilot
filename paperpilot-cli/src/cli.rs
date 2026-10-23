@@ -444,6 +444,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.
+    #[command(name = "pdf-nup")]
+    PdfNup {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

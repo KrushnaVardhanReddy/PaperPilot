@@ -941,7 +941,6 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
     Ok(())
 }
 
-
 fn append_desktop_args_builder(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
     let builder_path = "apps/desktop/src/lib/services/operationArgsBuilder.ts";
     if Path::new(builder_path).exists() {

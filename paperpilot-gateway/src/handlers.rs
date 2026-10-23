@@ -1548,3 +1548,17 @@ pub async fn pdf_validate_signatures(req: axum::extract::Request) -> impl IntoRe
 pub async fn pdf_booklet(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(axum::extract::Path("pdf_booklet".to_string()), req).await
 }
+/// N-Up Page Imposition [Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/nup",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "N-Up Page Imposition completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_nup(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_nup".to_string()), req).await
+}
