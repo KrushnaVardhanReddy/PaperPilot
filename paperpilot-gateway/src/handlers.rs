@@ -276,6 +276,23 @@ pub async fn handle_tool(
             .unwrap_or_default();
         if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
             args = map;
+
+            // Check if URL is in JSON payload
+            if let Some(Value::String(url_str)) = args.get("url")
+                && (url_str.starts_with("http://") || url_str.starts_with("https://")) {
+                    if let Ok(path) = paperpilot_core::url_fetch::resolve_url_to_temp_file(url_str)
+                    {
+                        args.insert(
+                            "input".to_string(),
+                            Value::String(path.to_string_lossy().to_string()),
+                        );
+                    } else {
+                        return (
+                            axum::http::StatusCode::BAD_REQUEST,
+                            Json(serde_json::json!({"success": false, "error": "Failed to fetch URL"})),
+                        ).into_response();
+                    }
+                }
         }
     } else {
         use axum::extract::FromRequest;
@@ -336,7 +353,19 @@ pub async fn handle_tool(
                 temp_files.push(temp_file);
             } else {
                 let s = String::from_utf8_lossy(&data).to_string();
-                if let Ok(val) = serde_json::from_str::<Value>(&s) {
+                if name == "url" && (s.starts_with("http://") || s.starts_with("https://")) {
+                    if let Ok(path) = paperpilot_core::url_fetch::resolve_url_to_temp_file(&s) {
+                        args.insert(
+                            "input".to_string(),
+                            Value::String(path.to_string_lossy().to_string()),
+                        );
+                    } else {
+                        return (
+                            axum::http::StatusCode::BAD_REQUEST,
+                            Json(serde_json::json!({"success": false, "error": "Failed to fetch URL"})),
+                        ).into_response();
+                    }
+                } else if let Ok(val) = serde_json::from_str::<Value>(&s) {
                     args.insert(name, val);
                 } else {
                     args.insert(name, Value::String(s));

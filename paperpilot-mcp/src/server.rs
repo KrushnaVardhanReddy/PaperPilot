@@ -3238,7 +3238,21 @@ impl PaperPilotMcpServer {
         let get_string = |key: &str| -> Result<String, ErrorData> {
             args.get(key)
                 .and_then(|v| v.as_str())
-                .map(|s| s.to_string())
+                .map(|s| {
+                    if (key == "input"
+                        || key == "file"
+                        || key.starts_with("input_")
+                        || key.starts_with("file_"))
+                        && (s.starts_with("http://") || s.starts_with("https://"))
+                    {
+                        match paperpilot_core::url_fetch::resolve_url_to_temp_file(s) {
+                            Ok(path) => path.to_string_lossy().to_string(),
+                            Err(_) => s.to_string(),
+                        }
+                    } else {
+                        s.to_string()
+                    }
+                })
                 .ok_or_else(|| {
                     ErrorData::invalid_params(
                         format!("Missing or invalid '{}' parameter", key),
@@ -3252,7 +3266,23 @@ impl PaperPilotMcpServer {
                 .and_then(|v| v.as_array())
                 .map(|arr| {
                     arr.iter()
-                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .filter_map(|v| {
+                            v.as_str().map(|s| {
+                                if (key == "input"
+                                    || key == "images"
+                                    || key == "files"
+                                    || key == "paths")
+                                    && (s.starts_with("http://") || s.starts_with("https://"))
+                                {
+                                    match paperpilot_core::url_fetch::resolve_url_to_temp_file(s) {
+                                        Ok(path) => path.to_string_lossy().to_string(),
+                                        Err(_) => s.to_string(),
+                                    }
+                                } else {
+                                    s.to_string()
+                                }
+                            })
+                        })
                         .collect()
                 })
                 .ok_or_else(|| {

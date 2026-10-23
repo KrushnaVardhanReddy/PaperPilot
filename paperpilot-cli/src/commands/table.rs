@@ -9,7 +9,7 @@ pub fn execute(
     format: String,
     pages: String,
 ) -> Result<(), PdfError> {
-    let input_bytes = fs::read(&input).map_err(|e| PdfError::IoError(e))?;
+    let input_bytes = fs::read(&input).map_err(PdfError::IoError)?;
 
     let options = TableExtractOptions {
         format: format.clone(),
@@ -26,7 +26,7 @@ pub fn execute(
     };
 
     if let Some(out_path) = output {
-        fs::write(&out_path, out_str).map_err(|e| PdfError::IoError(e))?;
+        fs::write(&out_path, out_str).map_err(PdfError::IoError)?;
         println!("Extracted {} tables to {:?}", result.total_tables, out_path);
     } else {
         println!("{}", out_str);

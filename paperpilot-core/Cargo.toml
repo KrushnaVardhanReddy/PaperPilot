@@ -8,3 +8,6 @@ image = "0.25.6"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0.21"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+[dev-dependencies]
+httptest = "0.15.5"

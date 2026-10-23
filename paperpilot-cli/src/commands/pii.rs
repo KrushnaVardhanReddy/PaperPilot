@@ -11,7 +11,7 @@ pub fn handle_pii_scan(
     scan_phones: bool,
     scan_iban: bool,
 ) -> Result<(), PdfError> {
-    let input_bytes = std::fs::read(&input).map_err(|e| PdfError::IoError(e))?;
+    let input_bytes = std::fs::read(input).map_err(PdfError::IoError)?;
     let options = PiiScanOptions {
         scan_ssn,
         scan_credit_cards,
@@ -24,7 +24,7 @@ pub fn handle_pii_scan(
     let json = serde_json::to_string_pretty(&report).unwrap_or_default();
 
     if let Some(out_path) = output {
-        std::fs::write(out_path, json).map_err(|e| PdfError::IoError(e))?;
+        std::fs::write(out_path, json).map_err(PdfError::IoError)?;
         println!("PII Scan complete. Report saved to {:?}", out_path);
     } else {
         println!("{}", json);

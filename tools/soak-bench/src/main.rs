@@ -312,7 +312,7 @@ fn run_group_a_individual(
         let op = paperpilot_pdf::operations::burst::BurstOperation {
             output_dir: out_dir.join("burst"),
         };
-        let _ = std::fs::create_dir_all(&out_dir.join("burst"));
+        let _ = std::fs::create_dir_all(out_dir.join("burst"));
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         Ok(())
     })
@@ -570,7 +570,7 @@ fn run_group_cde_individual(
         op.execute(&mut doc).map_err(|e| anyhow::anyhow!(e))?;
         let text_lock = op.extracted_text.lock().unwrap();
         if let Some(text_pages) = text_lock.as_ref() {
-            std::fs::write(&out_dir.join("extracted.txt"), text_pages.join("\n"))?;
+            std::fs::write(out_dir.join("extracted.txt"), text_pages.join("\n"))?;
         }
         Ok(())
     })
@@ -714,9 +714,7 @@ fn generate_report(
         0.0
     };
 
-    let mut report_content = format!(
-        "# PaperPilot — 1-Hour Sustained Soak & Endurance Benchmark Report\nGenerated Natively in Pure Rust\n\n"
-    );
+    let mut report_content = "# PaperPilot — 1-Hour Sustained Soak & Endurance Benchmark Report\nGenerated Natively in Pure Rust\n\n".to_string();
     report_content.push_str("## 1. Executive Summary\n\n| Metric | Measured Value | Analysis / Verdict |\n|---|---|---|\n");
     report_content.push_str(&format!("| **Test Duration** | **{:.1} seconds** (~{:.1} minutes) | Continuous sustained stress across tools |\n", actual_duration, actual_duration / 60.0));
     report_content.push_str(&format!(
@@ -788,7 +786,7 @@ fn generate_report(
             stats.max,
         ));
     }
-    report_content.push_str("\n");
+    report_content.push('\n');
 
     report_content.push_str("## 3. Resource Stability & Zero-Leak Verification\n\n");
     report_content.push_str("- **Memory Leak Analysis**: Measured Peak RSS using child process telemetry. Verified 0 memory leaks or continuous bloat over 60 minutes.\n");

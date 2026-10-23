@@ -12,6 +12,8 @@ pub enum PdfError {
     UnsupportedOperation(String),
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+    #[error("Invalid format: {0}")]
+    InvalidFormat(String),
     #[error("Other error: {0}")]
     Other(String),
 }

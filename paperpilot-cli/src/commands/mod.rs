@@ -17,6 +17,14 @@ pub mod workflow;
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
 
+fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::PathBuf> {
+    if let Some(s) = path.to_str()
+        && (s.starts_with("http://") || s.starts_with("https://")) {
+            return paperpilot_core::url_fetch::resolve_url_to_temp_file(s);
+        }
+    Ok(path.to_path_buf())
+}
+
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
         Commands::Completions { shell } => {
@@ -27,35 +35,38 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             Ok(())
         }
         // Group A
-        Commands::Merge { input, output } => group_a::handle_merge(input, output),
+        Commands::Merge { input, output } => {
+            let resolved: Result<Vec<_>, _> = input.iter().map(|p| resolve_input_path(p)).collect();
+            group_a::handle_merge(&resolved?, output)
+        }
         Commands::Split {
             input,
             pages,
             every,
             output,
-        } => group_a::handle_split(input, pages, *every, output),
+        } => group_a::handle_split(&resolve_input_path(input)?, pages, *every, output),
         Commands::Extract {
             input,
             pages,
             output,
-        } => group_a::handle_extract(input, pages, output),
+        } => group_a::handle_extract(&resolve_input_path(input)?, pages, output),
         Commands::Delete {
             input,
             pages,
             output,
-        } => group_a::handle_delete(input, pages, output),
+        } => group_a::handle_delete(&resolve_input_path(input)?, pages, output),
         Commands::Reorder {
             input,
             order,
             output,
-        } => group_a::handle_reorder(input, order, output),
+        } => group_a::handle_reorder(&resolve_input_path(input)?, order, output),
         Commands::Rotate {
             input,
             pages,
             degrees,
             output,
         } => group_a::handle_rotate(
-            input,
+            &resolve_input_path(input)?,
             &pages.clone().unwrap_or_else(|| "all".to_string()),
             *degrees,
             output,
@@ -82,28 +93,41 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             let resolved_pages = pages.clone().unwrap_or_else(|| "all".to_string());
             group_a::handle_crop(input, &resolved_pages, &resolved_rect, output)
         }
-        Commands::Burst { input, output } => group_a::handle_burst(input, output),
-        Commands::RemoveBlank { input, output } => group_a::handle_remove_blank(input, output),
+        Commands::Burst { input, output } => {
+            group_a::handle_burst(&resolve_input_path(input)?, output)
+        }
+        Commands::RemoveBlank { input, output } => {
+            group_a::handle_remove_blank(&resolve_input_path(input)?, output)
+        }
 
         // Group B
         Commands::Compress {
             input,
             quality,
             output,
-        } => group_b::handle_compress(input, quality, output),
-        Commands::Repair { input, output } => group_b::handle_repair(input, output),
-        Commands::Linearize { input, output } => group_b::handle_linearize(input, output),
+        } => group_b::handle_compress(&resolve_input_path(input)?, quality, output),
+        Commands::Repair { input, output } => {
+            group_b::handle_repair(&resolve_input_path(input)?, output)
+        }
+        Commands::Linearize { input, output } => {
+            group_b::handle_linearize(&resolve_input_path(input)?, output)
+        }
         Commands::Encrypt {
             input,
             user_password,
             owner_password,
             output,
-        } => group_b::handle_encrypt(input, user_password, owner_password, output),
+        } => group_b::handle_encrypt(
+            &resolve_input_path(input)?,
+            user_password,
+            owner_password,
+            output,
+        ),
         Commands::Decrypt {
             input,
             password,
             output,
-        } => group_b::handle_decrypt(input, password, output),
+        } => group_b::handle_decrypt(&resolve_input_path(input)?, password, output),
         Commands::Watermark {
             input,
             text,
@@ -113,7 +137,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             font_size,
             output,
         } => group_b::handle_watermark(
-            input,
+            &resolve_input_path(input)?,
             text,
             *angle,
             *opacity,
@@ -126,7 +150,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pages,
             rect,
             output,
-        } => group_b::handle_redact(input, pages, rect, output),
+        } => group_b::handle_redact(&resolve_input_path(input)?, pages, rect, output),
         Commands::PiiScan {
             input,
             output,
@@ -136,7 +160,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             scan_phones,
             scan_iban,
         } => pii::handle_pii_scan(
-            input,
+            &resolve_input_path(input)?,
             output,
             *scan_ssn,
             *scan_credit_cards,
@@ -151,7 +175,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             remove_attachments,
             remove_scripts,
         } => sanitize::handle_sanitize_command(
-            input,
+            &resolve_input_path(input)?,
             output,
             *remove_metadata,
             *remove_attachments,
@@ -164,51 +188,68 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             subject,
             keywords,
             output,
-        } => group_b::handle_metadata(input, title, author, subject, keywords, output),
+        } => group_b::handle_metadata(
+            &resolve_input_path(input)?,
+            title,
+            author,
+            subject,
+            keywords,
+            output,
+        ),
         Commands::Signature {
             input,
             cert,
             output,
-        } => group_b::handle_signature(input, cert, output),
-        Commands::Flatten { input, output } => group_b::handle_flatten(input, output),
-        Commands::PdfA { input, output } => group_b::handle_pdf_a(input, output),
+        } => group_b::handle_signature(&resolve_input_path(input)?, cert, output),
+        Commands::Flatten { input, output } => {
+            group_b::handle_flatten(&resolve_input_path(input)?, output)
+        }
+        Commands::PdfA { input, output } => {
+            group_b::handle_pdf_a(&resolve_input_path(input)?, output)
+        }
         Commands::HeaderFooter {
             input,
             text,
             output,
-        } => group_b::handle_header_footer(input, text, output),
+        } => group_b::handle_header_footer(&resolve_input_path(input)?, text, output),
         Commands::Bates {
             input,
             prefix,
             start,
             output,
-        } => group_b::handle_bates(input, prefix, *start, output),
+        } => group_b::handle_bates(&resolve_input_path(input)?, prefix, *start, output),
         Commands::PageNumbers {
             input,
             output,
             position,
-        } => group_b::handle_page_numbers(input, output, position),
+        } => group_b::handle_page_numbers(&resolve_input_path(input)?, output, position),
 
         // Group C
         Commands::ExtractText {
             input,
             output,
             format,
-        } => group_c::handle_extract_text(input, output, format),
-        Commands::ExtractImages { input, output } => group_c::handle_extract_images(input, output),
+        } => group_c::handle_extract_text(&resolve_input_path(input)?, output, format),
+        Commands::ExtractImages { input, output } => {
+            group_c::handle_extract_images(&resolve_input_path(input)?, output)
+        }
         Commands::ExtractTables {
             input,
             output,
             format,
             pages,
-        } => table::execute(input.clone(), output.clone(), format.clone(), pages.clone()),
-        Commands::Search { input, query } => group_c::handle_search(input, query),
+        } => table::execute(resolve_input_path(input)?, output.clone(), format.clone(), pages.clone()),
+        Commands::Search { input, query } => {
+            group_c::handle_search(&resolve_input_path(input)?, query)
+        }
         Commands::Render {
             input,
             page: _,
             output,
-        } => group_c::handle_render(input, output),
-        Commands::Compare { input, input_b } => group_c::handle_compare(input, input_b),
+        } => group_c::handle_render(&resolve_input_path(input)?, output),
+        Commands::Compare { input, input_b } => {
+            group_c::handle_compare(&resolve_input_path(input)?, &resolve_input_path(input_b)?)
+        }
         Commands::Ocr {
             input,
             output,
@@ -216,37 +257,43 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             clipboard,
             tier,
         } => group_c::handle_ocr(
-            input,
+            &resolve_input_path(input)?,
             output.as_deref(),
             format,
             *clipboard,
             tier.as_deref(),
         ),
-        Commands::Bookmarks { input } => group_c::handle_bookmarks(input),
-        Commands::ImagesToPdf { images, output } => group_c::handle_images_to_pdf(images, output),
+        Commands::Bookmarks { input } => group_c::handle_bookmarks(&resolve_input_path(input)?),
+        Commands::ImagesToPdf { images, output } => {
+            let resolved: Result<Vec<_>, _> =
+                images.iter().map(|p| resolve_input_path(p)).collect();
+            group_c::handle_images_to_pdf(&resolved?, output)
+        }
 
         // Validate
         Commands::Annotate {
             input,
             data,
             output,
-        } => annotate::handle_annotate(input, data, output),
-        Commands::Validate { input } => validate::handle_validate(input),
-        Commands::Hash { input } => validate::handle_hash(input),
+        } => annotate::handle_annotate(&resolve_input_path(input)?, data, output),
+        Commands::Validate { input } => validate::handle_validate(&resolve_input_path(input)?),
+        Commands::Hash { input } => validate::handle_hash(&resolve_input_path(input)?),
         Commands::Verify {
             input,
             expected_hash,
-        } => validate::handle_verify(input, expected_hash),
+        } => validate::handle_verify(&resolve_input_path(input)?, expected_hash),
         // Group D
 
         // Group E
         Commands::Form { command: form_cmd } => match form_cmd {
-            crate::cli::FormCommands::Read { input } => group_e::handle_form_read(input),
+            crate::cli::FormCommands::Read { input } => {
+                group_e::handle_form_read(&resolve_input_path(input)?)
+            }
             crate::cli::FormCommands::Fill {
                 input,
                 data,
                 output,
-            } => group_e::handle_form_fill(input, data, output),
+            } => group_e::handle_form_fill(&resolve_input_path(input)?, data, output),
             crate::cli::FormCommands::AddField {
                 input,
                 name,
@@ -254,7 +301,14 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 page,
                 rect,
                 output,
-            } => group_e::handle_form_add_field(input, name, r#type, *page, rect, output),
+            } => group_e::handle_form_add_field(
+                &resolve_input_path(input)?,
+                name,
+                r#type,
+                *page,
+                rect,
+                output,
+            ),
         },
         Commands::Convert {
             format,
@@ -265,13 +319,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css,
         } => group_d::handle_convert(
             format,
-            input,
+            &resolve_input_path(input)?,
             output.as_deref(),
             css.as_deref(),
             css_preset.as_deref(),
             inline_css.as_deref(),
         ),
-        Commands::Classify { input } => group_d::handle_classify(input),
+        Commands::Classify { input } => group_d::handle_classify(&resolve_input_path(input)?),
         Commands::Workflow {
             subcommand,
             input,
