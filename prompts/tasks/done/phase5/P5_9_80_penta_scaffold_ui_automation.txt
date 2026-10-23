@@ -1,0 +1,126 @@
+# Task 5.9.80 Prompt: Penta-Scaffold UI Automation & Universal Audit Report Visualizer
+
+You are implementing Task 5.9.80: Penta-Scaffold UI Automation & Universal Audit Report Visualizer (Spec 100) in PaperPilot.
+Follow this systematic workflow:
+1. Update `penta-scaffold` to automatically wire `operationArgsBuilder.ts` and `operationArgsBuilder.test.ts`.
+2. Retroactively wire `pdf_validate_signatures`, `document_pii_scan`, and `pdf_extract_tables` in `operationArgsBuilder.ts`.
+3. Create `AuditReportViewer.svelte` for rendering JSON reports directly in the Desktop OperationsPanel.
+4. Verify all tests pass cleanly.
+
+---
+
+### Step 1: Update Scaffolding Generator (`tools/penta-scaffold/src/generator.rs`)
+
+Implement `append_desktop_args_builder`:
+```rust
+fn append_desktop_args_builder(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let builder_path = "apps/desktop/src/lib/services/operationArgsBuilder.ts";
+    if !Path::new(builder_path).exists() {
+        return Ok(());
+    }
+    let content = fs::read_to_string(builder_path)?;
+    if content.contains(&format!("case '{}':", name_snake)) {
+        return Ok(());
+    }
+
+    let ext = args.output_format.to_lowercase();
+    let arm = format!(
+        r#"        case '{name_snake}':
+            args = {{
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${{docName.replace(/\.[^.]+$/i, '')}}_output.{ext}`)
+            }};
+            break;
+"#,
+        name_snake = name_snake,
+        ext = ext
+    );
+
+    // Insert before "default:"
+    if let Some(pos) = content.find("        default:") {
+        let mut new_content = content[..pos].to_string();
+        new_content.push_str(&arm);
+        new_content.push_str(&content[pos..]);
+        write_or_print(builder_path, &new_content, args.dry_run)?;
+    }
+    Ok(())
+}
+```
+Call `append_desktop_args_builder(args, &name_snake)?;` in `generate_all()`.
+
+---
+
+### Step 2: Retrofit Recently Completed Operations in `operationArgsBuilder.ts`
+
+In `apps/desktop/src/lib/services/operationArgsBuilder.ts`, explicitly add match cases for:
+- `pdf_validate_signatures`:
+  ```typescript
+  case 'pdf_validate_signatures':
+      args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_signature_report.json`)
+      };
+      break;
+  ```
+- `document_pii_scan`:
+  ```typescript
+  case 'document_pii_scan':
+      args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_pii_report.json`)
+      };
+      break;
+  ```
+- `pdf_extract_tables`:
+  ```typescript
+  case 'pdf_extract_tables':
+      args = {
+          input: docPath,
+          output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_tables.${context.tableFormat === 'csv' ? 'csv' : 'json'}`),
+          format: context.tableFormat || 'json'
+      };
+      break;
+  ```
+
+---
+
+### Step 3: Universal Audit & Report Visualizer (`AuditReportViewer.svelte`)
+
+Create `apps/desktop/src/lib/components/ui/AuditReportViewer.svelte`:
+```svelte
+<script lang="ts">
+  interface Props {
+    title: string;
+    report: Record<string, any>;
+    outputPath?: string;
+  }
+  let { title, report, outputPath }: Props = $props();
+  let copied = $state(false);
+
+  async function copyJson() {
+    await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+    copied = true;
+    setTimeout(() => copied = false, 2000);
+  }
+</script>
+
+<div class="audit-viewer" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-top: 12px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <h4 style="margin: 0; font-size: 13px; font-weight: 600;">📊 {title} Findings</h4>
+    <button onclick={copyJson} style="font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-subtle);">
+      {copied ? '✓ Copied' : 'Copy JSON'}
+    </button>
+  </div>
+  <pre style="font-size: 11px; background: var(--bg-canvas); padding: 8px; border-radius: 6px; overflow-x: auto; max-height: 200px;">{JSON.stringify(report, null, 2)}</pre>
+</div>
+```
+
+Integrate into `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` inside the `lastExecution` result box when output format is `.json` or `.JSON`.
+
+---
+
+### Step 4: Verification & Tests
+1. Run `cargo test -p penta-scaffold -j 2`
+2. Run `pnpm --dir apps/desktop test`
+3. Run `pnpm --dir apps/desktop check`
+4. Confirm `cargo check --workspace -j 2` passes cleanly.
