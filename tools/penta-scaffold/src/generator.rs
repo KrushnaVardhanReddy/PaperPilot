@@ -903,11 +903,11 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
         if all_suites_idx > 0 {
             let add_all_block = format!(
                 r#"
-            let generated_res = cases::{name_snake}::run_{name_snake}_suite().await?;
-            println!("{title} finished: {{}} tests", generated_res.len());
+            let res_{name_snake} = cases::{name_snake}::run_{name_snake}_suite().await?;
+            println!("{title} finished: {{}} tests", res_{name_snake}.len());
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite ({title})",
-                &generated_res,
+                &res_{name_snake},
                 "reports/PENTA_INTERFACE_E2E_{name_snake_upper}_REPORT.md",
             )?;"#,
                 name_snake = name_snake,
@@ -928,7 +928,7 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
             if insert_idx > 0 {
                 lines.insert(
                     insert_idx,
-                    "            all.extend(generated_res);".to_string(),
+                    format!("            all.extend(res_{});", name_snake),
                 );
             }
         }
