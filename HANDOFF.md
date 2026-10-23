@@ -12,13 +12,16 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **Task 5.3.1** | [Session 13309495698920986331](https://jules.google.com/session/13309495698920986331) | Booklet Imposition Engine (`pdf_booklet`) `[Spec 096]` | ⏳ In-Flight (Dispatched Oct 23) |
+| *None* | — | All Wave 2 Batch 1 tasks completed | Ready for Batch 2 dispatch |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.61 (Cryptographic Digital Signature Verification Engine `pdf_validate_signatures` `[Spec 095]`)**:
+1. **Task 5.3.1 (Booklet Imposition Engine `pdf_booklet` `[Spec 096]`)**:
+   - Pure-Rust booklet imposition algorithm calculating duplex page sequences (`[N, 1, 2, N-1, ...]`) with automatic page padding $N \pmod 4 = 0$.
+   - 10/10 (100.0%) unmocked Penta-Interface E2E assertions passing in `reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
+2. **Task 5.9.61 (Cryptographic Digital Signature Verification Engine `pdf_validate_signatures` `[Spec 095]`)**:
    - Merged (PR #238, commit `a6e68c6`).
    - Pure-Rust digital signature extraction & `/ByteRange` verification engine traversing `/AcroForm` and page widgets.
    - Detects signer identity, signing timestamp, PKCS#7 / CMS subfilters (`adbe.pkcs7.detached`), byte boundaries, and post-signing tampering (extra bytes, structural changes).
@@ -35,35 +38,35 @@
    - Single Core Runner in `paperpilot-pdf/src/operations/pii.rs` (`scan_pii_bytes`).
    - 5 thin wrappers across CLI (`paperpilot pii-scan`), MCP (`document_pii_scan`), REST Gateway (`/api/v1/pdf/document-pii-scan`), WASM (`WasmPdfEngine.document_pii_scan`), and Cloudflare Edge (`/api/v1/pii-scan`).
    - 10/10 (100.0%) unmocked Penta-Interface E2E assertions passing in `reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md`.
-2. **Task 5.9.67 (Mobile Touch-First WASM Engine & Embed Demonstration `[Spec 087]`)**:
+5. **Task 5.9.67 (Mobile Touch-First WASM Engine & Embed Demonstration `[Spec 087]`)**:
    - Merged (PR #231, commit `024d957`).
    - Deprecated and removed bloated `process_mobile_buffer` Tauri bridge from `apps/desktop/src-tauri/src/mobile_bridge.rs`.
    - Wired `OperationsPanel.svelte` and `CameraScannerModal.svelte` to execute directly via in-memory `WasmPdfClientImpl` and `WasmPdfEngine.images_to_pdf`.
    - Enhanced `Widget.svelte` with mobile touch drawer (<640px bottom-sheet, $\ge$48px touch targets, `safe-area-inset-bottom` protection).
    - Created `apps/embed/playwright.config.ts` and verified 26/26 passing Playwright mobile tests, 88/88 passing desktop unit tests, and clean `svelte-check`.
-2. **Task 5.9.74 (HTML & Markdown to PDF Full-Fidelity Image Rendering via `AssetBundle` `[Spec 088]`)**:
+6. **Task 5.9.74 (HTML & Markdown to PDF Full-Fidelity Image Rendering via `AssetBundle` `[Spec 088]`)**:
    - Merged (PR #230, commit `f276a78`).
    - Implemented `fulgur::asset::AssetBundle` integration in `HtmlToPdfOperation` and `MdToPdfOperation` (`paperpilot-pdf/src/operations/conversion.rs`).
    - Parses `<img src="...">` and Markdown links, decodes inline base64 image data URIs (`data:image/*;base64,...`), reads local relative/absolute disk images, registers them as in-memory asset buffers, and re-maps sources.
    - End-to-end verified via `pdfimages -list` (embedded 200×200 RGB image streams confirmed) and 21 unit tests passing (`test_html_to_pdf_with_base64_image`, `test_md_to_pdf_with_base64_image`, `test_html_to_pdf_graceful_missing_image`).
-2. **Task 5.9.59 (Privacy & Deep Security Sanitizer `pdf_sanitize` `[Spec 085]`)**:
+7. **Task 5.9.59 (Privacy & Deep Security Sanitizer `pdf_sanitize` `[Spec 085]`)**:
    - Merged (PR #228, commit `00c2f67`).
    - Implemented Single Core Runner `sanitize_pdf` in `paperpilot-pdf/src/operations/sanitize.rs` using pure in-memory `lopdf` manipulation to strip `/Info`, XML `/Metadata`, `/EmbeddedFiles`, `/AF`, active scripts (`/JavaScript`, `/OpenAction`, `/AA`), `/Thumb`, and private editing data (`/PieceInfo`).
    - Built 5 thin wrappers across Native CLI (`paperpilot sanitize`), MCP (`pdf_sanitize`), REST Gateway (`/api/v1/pdf/sanitize`), WASM engine (`WasmPdfEngine.sanitize`), and Cloudflare Edge worker (`/api/v1/sanitize`).
    - 10/10 (100.0%) unmocked real Penta-Interface semantic tests passing in `reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md`.
-2. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution `[Spec 081]`)**:
+8. **Task 5.9.69C (Penta-Interface Declarative Workflow Engine & Recipe Execution `[Spec 081]`)**:
    - Implemented Single Core Runner `run_workflow_bytes` in `paperpilot-pdf/src/operations/workflow.rs`.
    - Built 5 thin wrappers across Native CLI (`paperpilot workflow`), MCP (`list_workflows`, `document_workflow`), REST Gateway (`/api/v1/workflow/*`), WASM engine (`workflow`), and Cloudflare Edge worker.
    - 20/20 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_WORKFLOW_REPORT.md`.
-2. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench `[Spec 082]`)**:
+9. **Task 5.9.71 (Universal "Export as Code / API / MCP Prompt" Workbench `[Spec 082]`)**:
    - Centralized snippet generation engine in `apps/desktop/src/lib/utils/snippetGenerator.ts`.
    - Integrated live `</> Code / API` button and dynamic modal in **both** the Visual Pipeline Builder (`FlowSelector.svelte`) and Workspace Operations Panel (`OperationsPanel.svelte`, `EditableActionCard.svelte`).
-3. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity `[Spec 083]`)**:
+10. **Task 5.9.72 (Embed Pipeline 1-to-1 Desktop Parity `[Spec 083]`)**:
    - Replaced hidden file input with prominent browse button & file chip summary.
    - Added interactive step stepper with dynamic tool picker (`+ Add Step`), deletion, presets dropdown, and flow persistence.
-4. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images `[Spec 077]`)**:
+11. **Task 5.9.55 (Decoupled Markdown-to-DOCX Compiler with DrawingML Images `[Spec 077]`)**:
    - High-fidelity conversion decoding inline base64 images into true DrawingML `.docx` image parts with 2-column card layout synthesis.
-5. **Spec 084 Authored (On-Device Document SLM Fine-Tuning)**:
+12. **Spec 084 Authored (On-Device Document SLM Fine-Tuning)**:
    - Authored specification for `PaperPilot-Qwen-0.6B` (~350 MB GGUF, sub-50ms offline inference) and training roadmap.
 
 ---
@@ -144,17 +147,18 @@ PaperPilot/
 
 ## 📋 Resuming Checklist for Next Session
 
-### Step 1: Pending Tool Roadmap (6 Core Tools Pending)
-The following 6 tools remain to be specified and implemented to reach full feature completion:
+### Step 1: Pending Tool Roadmap (Wave 2 Core Operations)
+The following tools are actively targeted in Wave 2 to reach full feature completion:
 
-| # | Tool ID | Phase 5 Task | Interface Title | Scope & Objectives |
+| # | Tool ID | Phase Task | Interface Title | Status / Scope & Objectives |
 |---|---|---|---|---|
-| 1 | `pdf_extract_tables` | **Task 5.9.58** | Extract Tabular Data | Pure-Rust table bounding box & cell matrix extraction directly to JSON/CSV for FinTech & AI ingestion. |
-| 2 | `pdf_validate_signatures` | **Task 5.9.61** | Digital Signature Verifier | Cryptographic verification of PKCS#7 / CMS signatures, cert chains, timestamps, and post-signing tampering detection. |
-| 3 | `pdf_validate_accessibility` | **Task 5.9.62** | PDF/UA Accessibility Verifier | Section 508 / EAA structure tree audit, reading order, `/Lang` tags, and image `/Alt` validation. |
-| 4 | `pdf_compare_semantic` | **Task 5.9.63** | Semantic Legal & Clause Diffing | Meaning-based sentence & clause comparison for contracts, generating structured Markdown changelogs. |
-| 5 | `document_batch_process` | **Task 5.9.65** | Resilient Batch Directory Processor | Multi-threaded directory processing engine with retry telemetry and structured `failure_report.json`. |
-| 6 | `pdf_to_images` | **Task 5.9.66** | Convenience Multi-Page Exporter | One-call exporter dumping all pages of a PDF to a folder as PNG, JPEG, or WebP. |
+| 1 | `pdf_nup` | **Task 5.3.2** | Multi-Page N-Up Imposition | 📋 **Spec 097 Authored** — 2-up, 4-up, 9-up grid layouts with auto-scaling, borders, and margins. |
+| 2 | `pdf_scale_pages` | **Task 5.3.3** | Page Dimension Rescaling | 📋 **Spec 098 Authored** — Scale to standard paper sizes (A4, Letter, A3) or custom factor with centering. |
+| 3 | `pdf_remove_signatures` | **Task 5.3.13** | Strip Digital Signatures | 📋 **Spec 099 Authored** — Strip signature dictionaries and `/ByteRange` locks to restore editability. |
+| 4 | `pdf_validate_accessibility` | **Task 5.9.62** | PDF/UA Accessibility Verifier | 📋 Planned — Section 508 / EAA structure tree audit, reading order, `/Lang` tags, and image `/Alt` validation. |
+| 5 | `pdf_compare_semantic` | **Task 5.9.63** | Semantic Legal & Clause Diffing | 📋 Planned — Meaning-based sentence & clause comparison for contracts, generating structured Markdown changelogs. |
+| 6 | `document_batch_process` | **Task 5.9.65** | Resilient Batch Directory Processor | 📋 Planned — Multi-threaded directory processing engine with retry telemetry and structured `failure_report.json`. |
+| 7 | `pdf_to_images` | **Task 5.9.66** | Convenience Multi-Page Exporter | 📋 Planned — One-call exporter dumping all pages of a PDF to a folder as PNG, JPEG, or WebP. |
 
 ---
 

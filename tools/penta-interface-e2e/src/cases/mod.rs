@@ -12,3 +12,4 @@ pub mod workflow;
 
 pub mod pdf_validate_signatures;
 pub mod table;
+pub mod pdf_booklet;

@@ -212,6 +212,24 @@ async fn main() -> Result<()> {
                 "reports/PDF_TO_JSON_MULTIMODAL_BENCH.md",
             )?;
         }
+        "pdf_booklet" => {
+            let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
+            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
+                &res_pdf_booklet,
+                "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
+            )?;
+        }
+        "pdf_booklet" => {
+            let res = cases::pdf_booklet::run_pdf_booklet_suite().await?;
+            println!("Booklet Imposition finished: {} tests", res.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
+                &res,
+                "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
+            )?;
+        }
         _ => {
             println!("Running all suites...");
             let a = cases::page_ops::run_page_ops_suite().await?;
@@ -274,6 +292,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md",
             )?;
 
+            let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
+            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
+                &res_pdf_booklet,
+                "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -281,6 +307,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_booklet);
             all.extend(generated_res);
             generate_markdown_report(
                 "Master Phase 5.9.4 — Rust-Native Penta-Interface Real Semantic Assertions Suite (All 44 Tools, 880 Tests)",

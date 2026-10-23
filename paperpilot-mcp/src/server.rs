@@ -2340,6 +2340,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_validate_signatures.input_schema = Arc::new(schema_pdf_validate_signatures);
         tools.push(tool_pdf_validate_signatures);
+        let mut schema_pdf_booklet = serde_json::Map::new();
+        schema_pdf_booklet.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_booklet = serde_json::Map::new();
+
+        let mut prop_input_pdf_booklet = serde_json::Map::new();
+        prop_input_pdf_booklet.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_booklet.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_booklet),
+        );
+
+        let mut prop_output_pdf_booklet = serde_json::Map::new();
+        prop_output_pdf_booklet.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_booklet.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_booklet),
+        );
+
+        schema_pdf_booklet.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_booklet),
+        );
+        schema_pdf_booklet.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_booklet = Tool::default();
+        tool_pdf_booklet.name = "pdf_booklet".into();
+        tool_pdf_booklet.description = Some(
+            "Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_booklet.input_schema = Arc::new(schema_pdf_booklet);
+        tools.push(tool_pdf_booklet);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -4913,6 +4959,28 @@ impl PaperPilotMcpServer {
                     data: Some(serde_json::json!({ "output_path": output })),
                     success: true,
                     message: "Validate Digital Signatures executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_booklet" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_booklet::PdfBookletOptions::default();
+                let result = paperpilot_pdf::operations::pdf_booklet::pdf_booklet_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Booklet Imposition executed successfully".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

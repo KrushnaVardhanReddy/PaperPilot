@@ -1009,7 +1009,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 5.3.1 | Booklet Imposition | Reorder and layout pages for 2-sided booklet printing |
+| 5.3.1 | Booklet Imposition (`pdf_booklet`) `[Spec 096]` ✅ | **Completed** — Pure-Rust booklet imposition algorithm (duplex sheet ordering, automatic page padding $N \pmod 4 = 0$, center fold line), verified across all 5 surfaces (CLI `paperpilot pdf-booklet`, MCP `pdf_booklet`, REST Gateway `POST /api/v1/pdf/booklet`, WASM, Cloudflare Edge) with 10/10 unmocked E2E assertions passing (`reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md`, `wiki/PDF-Booklet.md`). |
 | 5.3.2 | Multi-Page Layout (N-Up) | Layout 2, 4, 9, or 16 pages per physical sheet |
 | 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) with margin offsets |
 | 5.3.4 | Image / Logo Watermark Stamp | Place transparent PNG/JPEG stamps at exact coordinates on pages |

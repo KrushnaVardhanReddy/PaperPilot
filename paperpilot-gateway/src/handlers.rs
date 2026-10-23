@@ -1534,3 +1534,17 @@ mod tests {
 pub async fn pdf_validate_signatures(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_validate_signatures".to_string()), req).await
 }
+/// Booklet Imposition [Reorder and impose pages for 2-sided folding booklet printing.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/booklet",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Booklet Imposition completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_booklet(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(axum::extract::Path("pdf_booklet".to_string()), req).await
+}

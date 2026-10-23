@@ -222,6 +222,12 @@ export default {
            const result = WasmPdfEngine.pdf_validate_signatures(new Uint8Array(body), options);
            return new Response(result, { headers: { 'Content-Type': 'application/json' } });
         }
+        if (url.pathname === '/api/v1/booklet') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_booklet(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
+        }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {
           status: 500,

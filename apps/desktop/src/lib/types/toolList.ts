@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
+  { id: 'pdf_booklet', name: 'Booklet Imposition', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Reorder and impose pages for 2-sided folding booklet printing.', icon: '📖', category: 'organize', context: 'pdf', tags: ['pdf_booklet'], releaseStatus: 'preview' },
   { id: 'pdf_validate_signatures', name: 'Validate Digital Signatures', inputFormat: 'PDF', outputFormat: '.JSON', description: 'Cryptographically verify digital signatures, certificate chains, and document integrity.', icon: '🔏', category: 'security', context: 'pdf', tags: ['pdf_validate_signatures'], releaseStatus: 'preview' },
   // Quick / Popular
   { id: 'compress', title: 'Compress PDF', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Reduce document file size with image optimization', icon: '🗜️', category: 'quick', context: 'pdf', tags: ['shrink', 'size', 'optimize'], releaseStatus: 'v0.5-core', rule: { supportedExtensions: ['pdf'], isBatchable: true } },

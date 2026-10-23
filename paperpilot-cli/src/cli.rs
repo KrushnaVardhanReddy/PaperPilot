@@ -436,6 +436,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing.
+    #[command(name = "pdf-booklet")]
+    PdfBooklet {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

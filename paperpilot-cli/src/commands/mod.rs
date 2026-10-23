@@ -14,6 +14,7 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
+pub mod pdf_booklet;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -349,6 +350,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfValidateSignatures { input, output } => {
             pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output)
         }
+        Commands::PdfBooklet { input, output } => pdf_booklet::handle_pdf_booklet_command(input, output),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -614,6 +616,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_booklet",
+                    "Preview",
+                    "Reorder and impose pages for 2-sided folding booklet printing.",
                 ),
                 (
                     "pdf_validate_signatures",

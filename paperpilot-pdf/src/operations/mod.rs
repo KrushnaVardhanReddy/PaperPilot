@@ -43,6 +43,7 @@ pub mod table;
 pub mod validate;
 pub mod watermark;
 pub mod workflow;
+pub mod pdf_booklet;
 
 pub use pii::scan_pii;
 pub use sanitize::sanitize_pdf;
