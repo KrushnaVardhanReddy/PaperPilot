@@ -166,9 +166,9 @@ impl Default for HtmlToPdfOptions {
 
 pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
     let preset_css = match preset.unwrap_or("github") {
-        "elegant" => CSS_PRESET_ELEGANT,
-        "minimal" => CSS_PRESET_MINIMAL,
-        "branded" => CSS_PRESET_BRANDED,
+        "elegant" | "academic" => CSS_PRESET_ELEGANT,
+        "minimal" | "minimalist" => CSS_PRESET_MINIMAL,
+        "branded" | "corporate" => CSS_PRESET_BRANDED,
         "compact" => CSS_PRESET_COMPACT,
         _ => CSS_PRESET_GITHUB,
     };
@@ -332,8 +332,14 @@ impl MarkdownToPdfOperation {
     }
 
     pub fn render(&self) -> OperationResult<()> {
-        use pulldown_cmark::{Parser, html};
-        let parser = Parser::new(&self.input_md);
+        use pulldown_cmark::{Options, Parser, html};
+        let mut parser_options = Options::empty();
+        parser_options.insert(Options::ENABLE_TABLES);
+        parser_options.insert(Options::ENABLE_STRIKETHROUGH);
+        parser_options.insert(Options::ENABLE_TASKLISTS);
+        parser_options.insert(Options::ENABLE_HEADING_ATTRIBUTES);
+
+        let parser = Parser::new_ext(&self.input_md, parser_options);
         let mut html_output = String::new();
         html::push_html(&mut html_output, parser);
 

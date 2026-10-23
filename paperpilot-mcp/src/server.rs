@@ -3659,6 +3659,33 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "json_to_pdf" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_str = std::fs::read_to_string(&input).map_err(|e| {
+                    ErrorData::invalid_params(format!("Failed to read input file: {}", e), None)
+                })?;
+
+                let op = paperpilot_pdf::operations::conversion::JsonToPdfOperation::new(input_str);
+                let mut doc = paperpilot_pdf::document::LopdfDocument::new();
+                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                doc.inner.save(&output).map_err(|e| {
+                    crate::error::to_mcp_error(paperpilot_core::error::PdfError::Other(
+                        e.to_string(),
+                    ))
+                })?;
+
+                Ok(OperationResult {
+                    data: None,
+                    success: true,
+                    message: "JSON synthesized to PDF successfully.".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
 
             "pdf_remove_blank" => {
                 let input = get_string("input")?;

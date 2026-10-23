@@ -95,26 +95,34 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         }
         case 'md_to_pdf': {
-            let selected: any, outputPath: string | null = null;
-            try {
-                const { open, save } = await import('@tauri-apps/plugin-dialog');
-                selected = await open({
-                    title: 'Select Markdown File',
-                    multiple: false,
-                    filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
-                });
-                if (!selected) return null;
-                const suggested = getOutputPath('output.pdf');
-                outputPath = await save({
-                    title: 'Save PDF As...',
-                    defaultPath: suggested,
-                    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-                });
-                if (!outputPath) return null;
-            } catch(e) {
-                return null;
+            let inputPath = docPath && (docPath.endsWith('.md') || docPath.endsWith('.markdown')) ? docPath : null;
+            let outputPath = customOutputPath ? customOutputPath : null;
+
+            if (!inputPath || !outputPath) {
+                try {
+                    const { open, save } = await import('@tauri-apps/plugin-dialog');
+                    if (!inputPath) {
+                        const selected = await open({
+                            title: 'Select Markdown File',
+                            multiple: false,
+                            filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
+                        });
+                        if (!selected) return null;
+                        inputPath = Array.isArray(selected) ? selected[0] : selected;
+                    }
+                    if (!outputPath) {
+                        const suggested = getOutputPath('output.pdf');
+                        outputPath = await save({
+                            title: 'Save PDF As...',
+                            defaultPath: suggested,
+                            filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+                        });
+                        if (!outputPath) return null;
+                    }
+                } catch(e) {
+                    return null;
+                }
             }
-            const inputPath = Array.isArray(selected) ? selected[0] : selected;
             args = {
                 input: inputPath,
                 output: outputPath,
@@ -123,26 +131,34 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         }
         case 'html_to_pdf': {
-            let selected: any, outputPath: string | null = null;
-            try {
-                const { open, save } = await import('@tauri-apps/plugin-dialog');
-                selected = await open({
-                    title: 'Select HTML File',
-                    multiple: false,
-                    filters: [{ name: 'HTML', extensions: ['html', 'htm'] }]
-                });
-                if (!selected) return null;
-                const suggested = getOutputPath('output.pdf');
-                outputPath = await save({
-                    title: 'Save PDF As...',
-                    defaultPath: suggested,
-                    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-                });
-                if (!outputPath) return null;
-            } catch(e) {
-                return null;
+            let inputPath = docPath && (docPath.endsWith('.html') || docPath.endsWith('.htm')) ? docPath : null;
+            let outputPath = customOutputPath ? customOutputPath : null;
+
+            if (!inputPath || !outputPath) {
+                try {
+                    const { open, save } = await import('@tauri-apps/plugin-dialog');
+                    if (!inputPath) {
+                        const selected = await open({
+                            title: 'Select HTML File',
+                            multiple: false,
+                            filters: [{ name: 'HTML', extensions: ['html', 'htm'] }]
+                        });
+                        if (!selected) return null;
+                        inputPath = Array.isArray(selected) ? selected[0] : selected;
+                    }
+                    if (!outputPath) {
+                        const suggested = getOutputPath('output.pdf');
+                        outputPath = await save({
+                            title: 'Save PDF As...',
+                            defaultPath: suggested,
+                            filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+                        });
+                        if (!outputPath) return null;
+                    }
+                } catch(e) {
+                    return null;
+                }
             }
-            const inputPath = Array.isArray(selected) ? selected[0] : selected;
             args = {
                 input: inputPath,
                 output: outputPath,
@@ -178,26 +194,34 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         }
         case 'json_to_pdf': {
-            let selected: any, outputPath: string | null = null;
-            try {
-                const { open, save } = await import('@tauri-apps/plugin-dialog');
-                selected = await open({
-                    title: 'Select Structured JSON File',
-                    multiple: false,
-                    filters: [{ name: 'JSON Document', extensions: ['json'] }]
-                });
-                if (!selected) return null;
-                const suggested = getOutputPath('synthesized.pdf');
-                outputPath = await save({
-                    title: 'Save Synthesized PDF As...',
-                    defaultPath: suggested,
-                    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-                });
-                if (!outputPath) return null;
-            } catch(e) {
-                return null;
+            let inputPath = docPath && docPath.endsWith('.json') ? docPath : null;
+            let outputPath = customOutputPath ? customOutputPath : null;
+
+            if (!inputPath || !outputPath) {
+                try {
+                    const { open, save } = await import('@tauri-apps/plugin-dialog');
+                    if (!inputPath) {
+                        const selected = await open({
+                            title: 'Select Structured JSON File',
+                            multiple: false,
+                            filters: [{ name: 'JSON Document', extensions: ['json'] }]
+                        });
+                        if (!selected) return null;
+                        inputPath = Array.isArray(selected) ? selected[0] : selected;
+                    }
+                    if (!outputPath) {
+                        const suggested = getOutputPath('synthesized.pdf');
+                        outputPath = await save({
+                            title: 'Save Synthesized PDF As...',
+                            defaultPath: suggested,
+                            filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+                        });
+                        if (!outputPath) return null;
+                    }
+                } catch(e) {
+                    return null;
+                }
             }
-            const inputPath = Array.isArray(selected) ? selected[0] : selected;
             args = {
                 input: inputPath,
                 output: outputPath
