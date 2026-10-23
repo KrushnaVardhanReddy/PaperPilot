@@ -1104,7 +1104,12 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 **Goal:** Organizations can deploy and govern PaperPilot at scale.
 
-**Exit condition:** An IT admin can deploy PaperPilot, set up SSO, configure AI policies, and review audit logs — without touching source code.
+**Architecture & Repository Boundary:**
+> ⚠️ **IMPORTANT ARCHITECTURAL MANDATE:** All Phase 6 enterprise governance tasks (SAML/SSO, SCIM, SIEM Audit, Air-Gapped Ed25519 Licensing, Argon2id DRM) are implemented in the private **`PaperPilot-Enterprise`** downstream repository.
+> The enterprise repository imports `paperpilot-core` and `paperpilot-pdf` as upstream Cargo dependencies, ensuring **zero code duplication** and **zero intellectual property leakage**.
+> See detailed architectural blueprint: [`docs/architecture/OPEN_CORE_MULTI_REPO_STRATEGY.md`](file:///home/krushna/Project/PaperPilot/docs/architecture/OPEN_CORE_MULTI_REPO_STRATEGY.md).
+
+**Exit condition:** An IT admin can deploy PaperPilot Enterprise, set up SSO, configure AI policies, and review audit logs — without touching source code.
 
 **[BLOCKED BY Phase 4]**
 **[Can run in parallel with Phase 5]**
