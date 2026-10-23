@@ -135,9 +135,10 @@
 ### 1. In-Flight Tasks (Active Jules Sessions)
 | Task # | Feature Name | Spec / Crate | Jules Session ID / Status |
 |---|---|---|---|
-| **5.9.58** | Pure-Rust Spatial Table Extraction (Stage 2) | Spec 090 / `table.rs` | ✅ Merged to `main` (commit `5d1f0ce`) |
-| **5.9.78** | Universal Remote PDF URL Ingestion | Spec 093 / `url_fetch.rs` | ⏳ In-Flight ([`6136209794630860269`](https://jules.google.com/session/6136209794630860269)) |
-| **5.9.79** | Pure-Rust Tool Scaffolding Generator (`penta-scaffold`) | Spec 094 / `tools/penta-scaffold` | ⏳ In-Flight ([`8915713543148419332`](https://jules.google.com/session/8915713543148419332)) |
+| **5.9.61** | Digital Signature Verification Engine (`pdf_validate_signatures`) | Spec 095 / `pdf_validate_signatures.rs` | ✅ Merged to `main` (PR #238, commit `a6e68c6`) |
+| **5.3.1**  | Booklet Imposition Engine (`pdf_booklet`) | Spec 096 / `pdf_booklet.rs` | ⏳ In-Flight ([`13309495698920986331`](https://jules.google.com/session/13309495698920986331)) |
+| **5.9.78** | Universal Remote PDF URL Ingestion | Spec 093 / `url_fetch.rs` | ✅ Merged to `main` (commit `d826eb4`) |
+| **5.9.79** | Pure-Rust Tool Scaffolding Generator (`penta-scaffold`) | Spec 094 / `tools/penta-scaffold` | ✅ Merged to `main` (commit `5fd9155`) |
 
 ---
 
@@ -146,13 +147,11 @@
 
 | Task # | Feature Name | Core Functionality | Impact / Market Need |
 |---|---|---|---|
-| **5.9.61** | `pdf_validate_signatures` | PKCS#7 / CMS cryptographic signature & cert chain check | Legal, Banking, Government |
-| **5.9.62** | `pdf_validate_accessibility` | PDF/UA, Section 508, `/Lang`, and `/Alt` tags validation | Higher Ed & Enterprise Procurement |
-| **5.9.63** | `pdf_compare_semantic` | Legal clause & sentence meaning diffing | Contract Review & M&A Due Diligence |
-| **5.9.66** | `pdf_to_images` | Batch page rendering to PNG/JPEG/WebP directories | Archival & Web Previews |
-| **5.3.1** | `pdf_booklet` | 2-sided booklet signature imposition | Commercial & Office Printing |
-| **5.3.2** | `pdf_nup` | Multi-page layout (2, 4, 9, 16 pages per sheet) | Paper Reduction & Handouts |
-| **5.3.3** | `pdf_scale_pages` | Dimensional scaling (A4 $\leftrightarrow$ Letter) with aspect preservation | Multi-region Normalization |
+| **5.9.61** | `pdf_validate_signatures` | PKCS#7 / CMS cryptographic signature & cert chain check | ✅ Completed (PR #238) |
+| **5.3.1**  | `pdf_booklet` | 2-sided booklet signature imposition | ⏳ In-Flight (Session `13309495698920986331`) |
+| **5.3.2**  | `pdf_nup` | Multi-page layout (2, 4, 9, 16 pages per sheet) | Spec 097 Ready |
+| **5.3.3**  | `pdf_scale_pages` | Dimensional scaling (A4 $\leftrightarrow$ Letter) with aspect preservation | Spec 098 Ready |
+| **5.3.13** | `pdf_remove_signatures`| Strip `/ByteRange` signature dictionaries for editing | Spec 099 Ready |
 | **5.3.4** | `pdf_stamp` | Coordinate-exact logo/image placement | Corporate Invoicing & Branding |
 | **5.3.8** | `pdf_overlay_underlay` | Digital letterhead & background stamping | Letterhead & Stationary |
 | **5.3.10** | `pdf_auto_rotate` | Heuristic font baseline + OCR automatic page uprighting | Scanned Document Intake |

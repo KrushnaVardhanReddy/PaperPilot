@@ -2,8 +2,8 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 22, 2026 (Morning EDT)  
-> **Active Target:** Wave 3 (`v0.7.0`) Web & AI Synthesis Suite + Mobile Touch-First WASM Engine
+> **Date of Last Update:** October 23, 2026 (Morning EDT)  
+> **Active Target:** Wave 2 (`v0.7.1`) Core Operations Sprint + Penta-Interface Parity
 
 ---
 
@@ -12,15 +12,24 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **Task 5.9.75 (Session 3)** | [Session 9046641581324215599](https://jules.google.com/session/9046641581324215599) | Mobile Lean APK, 26+ WASM Catalog & On-Demand OCR `[Spec 089]` | ⏳ In-Flight (Dispatched Oct 22) |
-| **Task 5.9.75 (Session 1)** | [Session 7525956406631093564](https://jules.google.com/session/7525956406631093564) | Mobile Lean APK, 26+ WASM Catalog & On-Demand OCR `[Spec 089]` | ⏳ Responded with fix guidance |
-| **Task 5.9.58** | [Session 334056780263731633](https://jules.google.com/session/334056780263731633) | Pure-Rust Tabular Data Extraction API `pdf_extract_tables` `[Spec 090]` | ⏳ In-Flight (Finalizing E2E) |
+| **Task 5.3.1** | [Session 13309495698920986331](https://jules.google.com/session/13309495698920986331) | Booklet Imposition Engine (`pdf_booklet`) `[Spec 096]` | ⏳ In-Flight (Dispatched Oct 23) |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.60 (PII & Sensitive Information Scanner `document_pii_scan` `[Spec 086]`)**:
+1. **Task 5.9.61 (Cryptographic Digital Signature Verification Engine `pdf_validate_signatures` `[Spec 095]`)**:
+   - Merged (PR #238, commit `a6e68c6`).
+   - Pure-Rust digital signature extraction & `/ByteRange` verification engine traversing `/AcroForm` and page widgets.
+   - Detects signer identity, signing timestamp, PKCS#7 / CMS subfilters (`adbe.pkcs7.detached`), byte boundaries, and post-signing tampering (extra bytes, structural changes).
+   - 10/10 (100.0%) unmocked real Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md`.
+2. **Task 5.9.79 (Pure-Rust Tool Scaffolding Generator `penta-scaffold` `[Spec 094]`)**:
+   - Merged (commit `5fd9155` / `e411d41` & bugfix `dc0c089`).
+   - CLI generator creating 1-click zero-boilerplate wiring across all 5 surfaces (Core Rust, CLI, MCP, REST Gateway, WASM, Desktop UI, E2E harness).
+3. **Task 5.9.78 (Universal Remote PDF URL Ingestion `url_fetch` `[Spec 093]`)**:
+   - Merged (commit `d826eb4` / `6e3a019`).
+   - Native pure-Rust streaming URL fetcher via `reqwest`.
+4. **Task 5.9.60 (PII & Sensitive Information Scanner `document_pii_scan` `[Spec 086]`)**:
    - Merged (PR #232).
    - Pure-Rust automated regex detector & validator for SSNs, credit cards (Luhn algorithm validated), emails, phone numbers, and IBANs (MOD 97-10 check validated).
    - Single Core Runner in `paperpilot-pdf/src/operations/pii.rs` (`scan_pii_bytes`).
