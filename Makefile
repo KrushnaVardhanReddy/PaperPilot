@@ -349,3 +349,7 @@ jules-submit:
 		exit 1; \
 	fi
 	./scripts/jules_submit.sh --file $(FILE)
+
+# Penta-Scaffold Code Generator
+new-tool:
+	cargo run -p penta-scaffold -- --name $(NAME) --title "$(TITLE)" --category $(CATEGORY) --icon "$(ICON)" --input-format $(IN) --output-format $(OUT) --description "$(DESC)"
