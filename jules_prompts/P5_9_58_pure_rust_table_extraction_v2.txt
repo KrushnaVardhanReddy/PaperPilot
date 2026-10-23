@@ -1,0 +1,83 @@
+Implement Task 5.9.58 (Stage 2): Real Spatial & Text-Clustering Table Extraction Engine in paperpilot-pdf (`specs/090-pure-rust-pdf-extract-tables/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+
+In PR #234, the Penta-Interface scaffolding for `pdf_extract_tables` (CLI, MCP, REST Gateway, WASM, Edge, and Svelte UI) was completed. However, the core extraction runner in `paperpilot-pdf/src/operations/table.rs` is currently a heuristic stub that returns mock `["Alice", "Bob"]` data when vector drawing operators are detected.
+
+Your objective is to replace the mock logic in `paperpilot-pdf/src/operations/table.rs` with **genuine, pure-Rust spatial text and column clustering**.
+
+---
+
+## 🎯 OBJECTIVES & REQUIREMENTS
+
+### 1. Pure-Rust Spatial Text & Table Extraction (`paperpilot-pdf/src/operations/table.rs`)
+- Extract real page text from `lopdf::Document` (or `unpdf` / `pdf_oxide` already present in `Cargo.toml`).
+- Extract word/text elements with their bounding boxes `[x, y, width, height]`.
+- **Row Clustering Algorithm**:
+  - Group text elements sharing overlapping $Y$-coordinates (within standard line height tolerance ~4–8pt) into rows.
+  - Sort rows top-to-bottom ($Y$ descending in standard PDF coordinate space).
+- **Column Detection Algorithm**:
+  - Project $X$-coordinates to identify column boundaries / gutters.
+  - Form an $M \times N$ cell matrix: assign each word to column $k$ based on its $X$-interval.
+  - Merge multi-word tokens inside the same cell.
+- **Header Detection**:
+  - Treat the first detected row of the table as `headers`.
+  - Rows 2..$N$ form `data: Vec<Vec<String>>`.
+- **Options Compliance**:
+  - Respect `options.pages` ("all", "1", "1-3,5").
+  - Respect `options.min_confidence`.
+  - Respect `options.format`: Output structured `JSON` or RFC 4180 `CSV` (escaped commas, quotes, and newlines).
+- When a document or page has no tabular data, gracefully return `total_tables: 0, tables: [], csv_output: None`.
+
+### 2. Zero Breaking Changes to Public Types
+Preserve the existing public API:
+```rust
+pub struct TableExtractOptions {
+    pub pages: String,
+    pub format: String,
+    pub min_confidence: f32,
+}
+
+pub struct ExtractedTable {
+    pub page: u32,
+    pub table_index: usize,
+    pub bbox: [f32; 4],
+    pub rows: usize,
+    pub cols: usize,
+    pub headers: Vec<String>,
+    pub data: Vec<Vec<String>>,
+}
+
+pub struct TableExtractResult {
+    pub total_tables: usize,
+    pub tables: Vec<ExtractedTable>,
+    pub csv_output: Option<String>,
+}
+
+pub fn extract_tables_bytes(
+    input_bytes: &[u8],
+    options: &TableExtractOptions,
+) -> Result<TableExtractResult, PdfError>;
+```
+
+### 3. Unit & Penta-Interface Tests
+- Add comprehensive unit tests in `table.rs` using real or programmatically constructed PDFs containing real table rows and columns.
+- Verify `cargo test -p paperpilot-pdf --lib table -j 2` passes 100%.
+- Verify `cargo run -p penta-interface-e2e -- --group table` passes 10/10 tests without regression.
+
+---
+
+## 📁 FILES TO MODIFY
+```
+paperpilot-pdf/src/operations/table.rs
+tools/penta-interface-e2e/src/cases/table.rs
+```
+
+---
+
+## 🚫 CONSTRAINTS
+- Pure Rust only (no Python, external C libraries, or web service dependencies).
+- Strictly compile cargo tests with `-j 2` (`cargo test -p paperpilot-pdf --lib -j 2`).
+- Never perform destructive git commands (`git reset --hard`).
