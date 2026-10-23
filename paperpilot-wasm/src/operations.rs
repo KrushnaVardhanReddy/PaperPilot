@@ -2684,7 +2684,9 @@ fn validate_luhn(number: &str) -> bool {
     for &digit in digits.iter().rev() {
         if alternate {
             let mut d = digit * 2;
-            if d > 9 { d -= 9; }
+            if d > 9 {
+                d -= 9;
+            }
             sum += d;
         } else {
             sum += digit;
@@ -2717,19 +2719,20 @@ fn extract_context(text: &str, start: usize, end: usize, ctx_len: usize) -> Stri
 }
 
 pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<String> {
-    let options: PiiScanOptions = serde_json::from_str(options_json)
-        .unwrap_or_default();
+    let options: PiiScanOptions = serde_json::from_str(options_json).unwrap_or_default();
 
-    let doc = lopdf::Document::load_mem(input_bytes)
-        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let doc =
+        lopdf::Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     let mut findings = Vec::new();
     let mut findings_by_category = std::collections::HashMap::new();
 
     let ssn_re = regex::Regex::new(r"\b(\d{3})-(\d{2})-(\d{4})\b").unwrap();
     let cc_re = regex::Regex::new(r"\b(?:\d[ -]*?){13,19}\b").unwrap();
-    let email_re = regex::Regex::new(r"\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b").unwrap();
-    let phone_re = regex::Regex::new(r"\b(\+?1?[-.\s]?)?(\()?\d{3}(\))?[-.\s]?\d{3}[-.\s]?\d{4}\b").unwrap();
+    let email_re =
+        regex::Regex::new(r"\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b").unwrap();
+    let phone_re =
+        regex::Regex::new(r"\b(\+?1?[-.\s]?)?(\()?\d{3}(\))?[-.\s]?\d{3}[-.\s]?\d{4}\b").unwrap();
     let iban_re = regex::Regex::new(r"\b[A-Z]{2}[0-9]{2}(?:[ ]?[a-zA-Z0-9]){11,28}\b").unwrap();
 
     let pages = doc.get_pages();
@@ -2774,7 +2777,9 @@ pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<Strin
                         confidence: 0.95,
                         context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                     });
-                    *findings_by_category.entry("credit_card".to_string()).or_insert(0) += 1;
+                    *findings_by_category
+                        .entry("credit_card".to_string())
+                        .or_insert(0) += 1;
                 }
             }
         }
@@ -2785,7 +2790,7 @@ pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<Strin
                 let user = cap.get(1).unwrap().as_str();
                 let domain = cap.get(2).unwrap().as_str();
                 let masked_user = if user.len() > 1 {
-                    format!("{}***{}", &user[..1], &user[user.len()-1..])
+                    format!("{}***{}", &user[..1], &user[user.len() - 1..])
                 } else {
                     "***".to_string()
                 };
@@ -2828,7 +2833,7 @@ pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<Strin
                 let len = s.len();
                 let masked = if len >= 8 {
                     let country = &s[..2];
-                    let last4 = &s[len-4..];
+                    let last4 = &s[len - 4..];
                     format!("{}** **** **** **** **{}", country, last4)
                 } else {
                     "****".to_string()
@@ -2852,8 +2857,8 @@ pub fn pii_scan(input_bytes: &[u8], options_json: &str) -> OperationResult<Strin
         execution_time_ms: 0.0,
     };
 
-    let json = serde_json::to_string_pretty(&report)
-        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let json =
+        serde_json::to_string_pretty(&report).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     Ok(json)
 }
