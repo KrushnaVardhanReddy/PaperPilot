@@ -27,6 +27,15 @@ impl PdfOperation for ExtractImagesOperation {
         let inner = &mut lopdf_doc.inner;
         let mut image_count = 0;
 
+        // Ensure the output directory exists
+        std::fs::create_dir_all(&self.output_dir).map_err(|e| {
+            PdfError::IoError(std::io::Error::other(format!(
+                "Failed to create output directory {}: {}",
+                self.output_dir.display(),
+                e
+            )))
+        })?;
+
         let pages = inner.get_pages();
         for (_, page_id) in pages {
             let page_dict = match inner.get_object(page_id).and_then(|obj| obj.as_dict()) {
@@ -77,38 +86,113 @@ impl PdfOperation for ExtractImagesOperation {
                 }
 
                 image_count += 1;
-                let ext = match stream.dict.get(b"Filter").and_then(|filter| match filter {
+                let filter = stream.dict.get(b"Filter").and_then(|filter| match filter {
                     lopdf::Object::Name(name) => Ok(name.as_slice()),
                     lopdf::Object::Array(arr) => arr
                         .first()
                         .and_then(|f| f.as_name().ok())
                         .ok_or(lopdf::Error::DictKey("Invalid filter".to_string())),
                     _ => Err(lopdf::Error::DictKey("Invalid filter".to_string())),
-                }) {
-                    Ok(b"DCTDecode") => "jpg",
-                    Ok(b"JPXDecode") => "jp2",
-                    Ok(b"FlateDecode") => "png", // Simplified mapping
-                    _ => "bin",
-                };
+                });
 
-                let file_name = format!("image_{}.{}", image_count, ext);
-                let output_path = self.output_dir.join(file_name);
+                match filter {
+                    Ok(b"DCTDecode") => {
+                        let file_name = format!("image_{}.jpg", image_count);
+                        let output_path = self.output_dir.join(file_name);
+                        let mut file = File::create(&output_path).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to create output file: {}",
+                                e
+                            )))
+                        })?;
+                        file.write_all(&stream.content).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to write to output file: {}",
+                                e
+                            )))
+                        })?;
+                    }
+                    Ok(b"JPXDecode") => {
+                        let file_name = format!("image_{}.jp2", image_count);
+                        let output_path = self.output_dir.join(file_name);
+                        let mut file = File::create(&output_path).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to create output file: {}",
+                                e
+                            )))
+                        })?;
+                        file.write_all(&stream.content).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to write to output file: {}",
+                                e
+                            )))
+                        })?;
+                    }
+                    Ok(b"FlateDecode") => {
+                        // Decompress zlib stream
+                        let decompressed = match stream.decompressed_content() {
+                            Ok(data) => data,
+                            Err(_) => stream.content.clone(),
+                        };
 
-                let mut file = File::create(&output_path).map_err(|e| {
-                    PdfError::IoError(std::io::Error::other(format!(
-                        "Failed to create output file: {}",
-                        e
-                    )))
-                })?;
+                        let width = stream.dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
+                        let height = stream.dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
 
-                // Note: content is the compressed stream bytes if Filter is present and we don't decompress.
-                // We write raw content bytes. We might need `stream.content` or decompressed data, but we'll use raw stream content for now as we're saving to `.bin` or `.jpg` depending on filter.
-                file.write_all(&stream.content).map_err(|e| {
-                    PdfError::IoError(std::io::Error::other(format!(
-                        "Failed to write to output file: {}",
-                        e
-                    )))
-                })?;
+                        let color_type = if width > 0 && height > 0 {
+                            let total_pixels = (width as usize) * (height as usize);
+                            if decompressed.len() == total_pixels * 4 {
+                                Some(image::ExtendedColorType::Rgba8)
+                            } else if decompressed.len() == total_pixels * 3 {
+                                Some(image::ExtendedColorType::Rgb8)
+                            } else if decompressed.len() == total_pixels {
+                                Some(image::ExtendedColorType::L8)
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        };
+
+                        if let Some(ct) = color_type {
+                            let file_name = format!("image_{}.png", image_count);
+                            let output_path = self.output_dir.join(file_name);
+                            if let Err(e) = image::save_buffer_with_format(
+                                &output_path,
+                                &decompressed,
+                                width,
+                                height,
+                                ct,
+                                image::ImageFormat::Png,
+                            ) {
+                                // Fallback to raw bytes with .bin if PNG encoding fails
+                                let fallback_path = self.output_dir.join(format!("image_{}.bin", image_count));
+                                let _ = std::fs::write(&fallback_path, &decompressed);
+                                eprintln!("Failed to encode PNG for image {}: {}", image_count, e);
+                            }
+                        } else {
+                            // Cannot determine valid PNG dimensions/color type, write raw decompressed bytes
+                            let file_name = format!("image_{}.bin", image_count);
+                            let output_path = self.output_dir.join(file_name);
+                            let _ = std::fs::write(&output_path, &decompressed);
+                        }
+                    }
+                    _ => {
+                        let file_name = format!("image_{}.bin", image_count);
+                        let output_path = self.output_dir.join(file_name);
+                        let mut file = File::create(&output_path).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to create output file: {}",
+                                e
+                            )))
+                        })?;
+                        file.write_all(&stream.content).map_err(|e| {
+                            PdfError::IoError(std::io::Error::other(format!(
+                                "Failed to write to output file: {}",
+                                e
+                            )))
+                        })?;
+                    }
+                }
             }
         }
 
