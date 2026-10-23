@@ -18,6 +18,9 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+
       - name: Install Linux GUI Dependencies
         run: |
           sudo apt-get update
@@ -42,6 +45,9 @@ jobs:
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
 
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
