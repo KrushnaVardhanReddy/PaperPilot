@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 089](file:///home/krushna/Project/PaperPilot/specs/089-mobile-lean-architecture-and-on-demand-ocr/spec.md)
 - Target: Wave 3 (`v0.7.0`) Mobile Touch-First WASM & Lean APK Optimization
-- Status: ⏳ In-Flight (Jules Session [`7525956406631093564`](https://jules.google.com/session/7525956406631093564))
+- Status: ✅ Completed (Merged commit `df8c673`)
 
 ---
 
