@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 090](file:///home/krushna/Project/PaperPilot/specs/090-pure-rust-pdf-extract-tables/spec.md)
 - Target: Wave 3 (`v0.7.0`) Advanced Intelligence & Structured Data
-- Status: ⏳ In-Flight (Jules Session [`334056780263731633`](https://jules.google.com/session/334056780263731633))
+- Status: ✅ Completed (Merged PR #234, Jules Session [`334056780263731633`](https://jules.google.com/session/334056780263731633))
 
 ---
 
