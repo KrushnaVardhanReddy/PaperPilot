@@ -12,16 +12,22 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| **Task 5.9.80** | [Session 13294597354865675497](https://jules.google.com/session/13294597354865675497) | Penta-Scaffold UI Automation & Universal Audit Report Visualizer `[Spec 100]` | ⏳ In-Flight (Dispatched Oct 23) |
+| *None* | — | All dispatched sessions merged | Ready for next task dispatch |
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.3.1 (Booklet Imposition Engine `pdf_booklet` `[Spec 096]`)**:
+1. **Task 5.9.80 (Penta-Scaffold UI Automation & Universal Audit Report Visualizer `[Spec 100]`)**:
+   - Merged (PR #240, commit `5ca9e5c`).
+   - Automatically injects desktop `operationArgsBuilder.ts` match arms and unit tests on tool scaffolding.
+   - Retroactively wired `pdf_validate_signatures`, `document_pii_scan`, and `pdf_extract_tables`.
+   - Built `<AuditReportViewer />` component in Desktop UI to automatically render structured findings, copy JSON, and inspect reports for all `.JSON` tools.
+   - All 92/92 Vitest unit tests and `penta-scaffold` CLI tests passing cleanly.
+2. **Task 5.3.1 (Booklet Imposition Engine `pdf_booklet` `[Spec 096]`)**:
    - Pure-Rust booklet imposition algorithm calculating duplex page sequences (`[N, 1, 2, N-1, ...]`) with automatic page padding $N \pmod 4 = 0$.
    - 10/10 (100.0%) unmocked Penta-Interface E2E assertions passing in `reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
-2. **Task 5.9.61 (Cryptographic Digital Signature Verification Engine `pdf_validate_signatures` `[Spec 095]`)**:
+3. **Task 5.9.61 (Cryptographic Digital Signature Verification Engine `pdf_validate_signatures` `[Spec 095]`)**:
    - Merged (PR #238, commit `a6e68c6`).
    - Pure-Rust digital signature extraction & `/ByteRange` verification engine traversing `/AcroForm` and page widgets.
    - Detects signer identity, signing timestamp, PKCS#7 / CMS subfilters (`adbe.pkcs7.detached`), byte boundaries, and post-signing tampering (extra bytes, structural changes).
