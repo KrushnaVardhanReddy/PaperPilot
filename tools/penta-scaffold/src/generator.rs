@@ -218,7 +218,7 @@ pub fn handle_{name_snake}_command(
 
         let mut tools_list_idx = 0;
         for (i, line) in lines.iter().enumerate() {
-            if line.contains("excel_to_csv") {
+            if line.contains("\"excel_to_csv\"") {
                 tools_list_idx = i;
             }
         }
@@ -231,7 +231,7 @@ pub fn handle_{name_snake}_command(
                 format!("                ),"),
             ];
             for (idx, line) in insert_lines.into_iter().enumerate() {
-                lines.insert(tools_list_idx + 6 + idx, line);
+                lines.insert(tools_list_idx + 4 + idx, line);
             }
         }
 

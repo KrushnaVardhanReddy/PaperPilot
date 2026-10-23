@@ -13,6 +13,7 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
+pub mod pdf_validate_signatures;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -339,6 +340,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset.as_ref(),
             recipe.as_ref(),
         ),
+        Commands::PdfValidateSignatures { input, output } => pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -604,6 +606,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_validate_signatures",
+                    "Preview",
+                    "Cryptographically verify digital signatures, certificate chains, and document integrity.",
                 ),
             ];
 

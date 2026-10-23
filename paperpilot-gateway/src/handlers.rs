@@ -1519,3 +1519,17 @@ mod tests {
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
+/// Validate Digital Signatures [Cryptographically verify digital signatures, certificate chains, and document integrity.] [Input: .pdf | Output: .json]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/validate-signatures",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Validate Digital Signatures completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_validate_signatures(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_validate_signatures".to_string()), req).await
+}

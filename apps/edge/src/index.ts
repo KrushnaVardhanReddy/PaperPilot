@@ -216,6 +216,12 @@ export default {
            return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
 
+        if (url.pathname === '/api/v1/validate-signatures') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_validate_signatures(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {
           status: 500,

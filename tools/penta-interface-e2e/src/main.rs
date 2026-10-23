@@ -253,6 +253,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md",
             )?;
 
+            let generated_res = cases::pdf_validate_signatures::run_pdf_validate_signatures_suite().await?;
+            println!("Validate Digital Signatures finished: {} tests", generated_res.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Validate Digital Signatures)",
+                &generated_res,
+                "reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -260,6 +268,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(generated_res);
             generate_markdown_report(
                 "Master Phase 5.9.4 — Rust-Native Penta-Interface Real Semantic Assertions Suite (All 44 Tools, 880 Tests)",
                 &all,

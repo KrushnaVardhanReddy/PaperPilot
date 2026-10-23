@@ -6052,6 +6052,7 @@ dependencies = [
  "lopdf 0.45.0",
  "ocrs",
  "paperpilot-core",
+ "paperpilot-pdf",
  "pdf_oxide",
  "regex",
  "rten 0.21.0",

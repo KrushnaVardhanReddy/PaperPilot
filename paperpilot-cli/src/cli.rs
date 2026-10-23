@@ -428,6 +428,14 @@ pub enum Commands {
         #[arg(long)]
         inline_css: Option<String>,
     },
+    /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
+    #[command(name = "pdf-validate-signatures")]
+    PdfValidateSignatures {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

@@ -1,0 +1,90 @@
+Implement Task 5.9.61 / Spec 095: Digital Signature Verification Engine (`specs/095-pdf-validate-signatures/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+The scaffolding across all 5 surfaces for `pdf_validate_signatures` has already been generated via `tools/penta-scaffold` and compiles cleanly into the workspace:
+* Core Rust: `paperpilot-pdf/src/operations/pdf_validate_signatures.rs`
+* CLI: `paperpilot-cli/src/commands/pdf_validate_signatures.rs`
+* MCP Server: `paperpilot-mcp/src/server.rs`
+* REST Gateway: `paperpilot-gateway/src/handlers.rs` & `server.rs`
+* WASM / Edge: `paperpilot-wasm/src/operations.rs` & `apps/edge/src/index.ts`
+* Desktop UI: `apps/desktop/src/lib/types/toolList.ts`
+* Penta E2E Suite: `tools/penta-interface-e2e/src/cases/pdf_validate_signatures.rs`
+
+Your task is to implement the **real cryptographic signature verification algorithm** inside `paperpilot-pdf/src/operations/pdf_validate_signatures.rs` and verify all Penta-Interface test suites.
+
+---
+
+## ⚠️ EXACT IMPLEMENTATION DETAILS
+
+### 1. Data Structures (`paperpilot-pdf/src/operations/pdf_validate_signatures.rs`)
+Define and serialize the following report structs:
+```rust
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DigitalSignatureInfo {
+    pub field_name: String,
+    pub signer_name: Option<String>,
+    pub organization: Option<String>,
+    pub signing_time: Option<String>,
+    pub sub_filter: String,         // e.g. "adbe.pkcs7.detached"
+    pub byte_range: Vec<i64>,       // [offset1, len1, offset2, len2]
+    pub is_valid: bool,
+    pub is_tampered: bool,
+    pub error_message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignatureValidationReport {
+    pub total_signatures: usize,
+    pub valid_signatures: usize,
+    pub all_valid: bool,
+    pub signatures: Vec<DigitalSignatureInfo>,
+}
+```
+
+### 2. Core Verification Algorithm (`pdf_validate_signatures_bytes`)
+Implement `pub fn pdf_validate_signatures_bytes(input_bytes: &[u8], options: &PdfValidateSignaturesOptions) -> Result<Vec<u8>, PdfError>`:
+1. **Load Document**: Load `lopdf::Document::load_mem(input_bytes)`.
+2. **Scan Signature Fields**:
+   - Inspect `/Root` dictionary $\to$ `/AcroForm` $\to$ `/Fields`.
+   - Also scan page dictionaries (`doc.get_pages()`) for `/Annots` containing `/Subtype /Widget` with `/FT /Sig`.
+   - For each signature dictionary (either direct or indirect via `/V`):
+     - Extract field name (`/T`).
+     - Extract `/SubFilter` (e.g. `adbe.pkcs7.detached`, `adbe.pkcs7.sha1`).
+     - Extract `/Name` or `/M` (signer / date string).
+     - Extract `/ByteRange`: array of 4 integers `[offset1, len1, offset2, len2]`.
+     - Extract `/Contents`: hex/binary PKCS#7 container string.
+3. **ByteRange Integrity & Tamper Check**:
+   - Check that `offset1 == 0`.
+   - Check that `offset1 + len1 < offset2`.
+   - Check that `offset2 + len2 <= input_bytes.len() as i64`.
+   - If there are trailing bytes after `offset2 + len2`, check if they contain incremental xref tables modifying previous objects. If unexpected revisions are detected, flag `is_tampered = true`.
+4. **Validation Logic**:
+   - If valid signature structures exist, set `is_valid = true, is_tampered = false`.
+   - If document is unsigned (no `/Sig` fields found), return:
+     ```json
+     {
+       "total_signatures": 0,
+       "valid_signatures": 0,
+       "all_valid": true,
+       "signatures": []
+     }
+     ```
+5. **Serialize to JSON**:
+   - Serialize the `SignatureValidationReport` into pretty JSON bytes (`serde_json::to_vec_pretty(&report)`).
+
+### 3. Unit Tests (`#[cfg(test)] mod tests`)
+1. `test_pdf_validate_signatures_empty_document`: verifies empty bytes return `PdfError::ParseError`.
+2. `test_pdf_validate_signatures_unsigned_pdf`: verifies a valid minimal PDF with no signatures returns `total_signatures: 0` and `all_valid: true`.
+3. `test_pdf_validate_signatures_synthetic_signature`: create a document using `LopdfDocument`, inject a `/Sig` field with `/ByteRange [0, 100, 200, 50]`, and verify the parser extracts `field_name`, `sub_filter`, and `byte_range`.
+
+---
+
+## 🧪 VALIDATION & EXIT CRITERIA
+1. `cargo test -p paperpilot-pdf --lib operations::pdf_validate_signatures -j 2` must pass.
+2. `cargo check --workspace` must pass with zero errors.
+3. `cargo run -p penta-interface-e2e -- cases::pdf_validate_signatures -j 2` must pass.
+4. Update `specs/095-pdf-validate-signatures/task.md` marking completed checklist items.
