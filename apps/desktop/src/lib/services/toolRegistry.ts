@@ -42,6 +42,10 @@ export function rankToolsByContext(
       return name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv');
   });
 
+  const hasJson = documents.some(f => f.name.toLowerCase().endsWith('.json'));
+  const hasMarkdown = documents.some(f => f.name.toLowerCase().endsWith('.md') || f.name.toLowerCase().endsWith('.markdown'));
+  const hasHtml = documents.some(f => f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.htm'));
+
   const allPdf = documents.length > 0 && documents.every(f => f.name.toLowerCase().endsWith('.pdf'));
 
   for (const tool of tools) {
@@ -49,7 +53,22 @@ export function rankToolsByContext(
     let contextMatches = false;
 
     if (documents.length === 0) {
-      if (['img_to_pdf', 'json_to_pdf', 'md_to_pdf'].includes(tool.id)) {
+      if (['img_to_pdf', 'json_to_pdf', 'md_to_pdf', 'html_to_pdf'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasJson) {
+      if (['json_to_pdf'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasMarkdown) {
+      if (['md_to_pdf'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasHtml) {
+      if (['html_to_pdf'].includes(tool.id)) {
         isRecommended = true;
         contextMatches = true;
       }

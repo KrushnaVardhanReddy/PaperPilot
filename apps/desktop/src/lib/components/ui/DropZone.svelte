@@ -29,6 +29,13 @@
       xls: 'application/vnd.ms-excel',
       pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       ppt: 'application/vnd.ms-powerpoint',
+      json: 'application/json',
+      html: 'text/html',
+      htm: 'text/html',
+      md: 'text/markdown',
+      markdown: 'text/markdown',
+      txt: 'text/plain',
+      csv: 'text/csv',
     };
     return map[ext] ?? 'application/octet-stream';
   }
@@ -72,11 +79,14 @@
     const selected = await open({
       multiple: true,
       filters: [
-        { name: 'Documents (PDF & Office)', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt'] },
+        { name: 'All Supported Formats', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt','json','html','htm','md','markdown','txt'] },
         { name: 'PDF Files', extensions: ['pdf'] },
         { name: 'Word Documents', extensions: ['docx','doc'] },
-        { name: 'Excel Spreadsheets', extensions: ['xlsx','xls'] },
-        { name: 'PowerPoint Presentations', extensions: ['pptx','ppt'] }
+        { name: 'Excel Spreadsheets', extensions: ['xlsx','xls','csv'] },
+        { name: 'PowerPoint Presentations', extensions: ['pptx','ppt'] },
+        { name: 'Web & Markdown (HTML, MD)', extensions: ['html','htm','md','markdown'] },
+        { name: 'Data Files (JSON, TXT, CSV)', extensions: ['json','txt','csv'] },
+        { name: 'All Files', extensions: ['*'] }
       ]
     });
     if (!selected) return;
@@ -194,7 +204,7 @@
   <div class="drop-content">
     <div class="icon" aria-hidden="true">{dropIcon()}</div>
     <h3 class="title">{dropTitle()}</h3>
-    <p class="subtitle">PDF, Word, Excel, PowerPoint · or click to browse</p>
+    <p class="subtitle">PDF, Office, Markdown, HTML, JSON · or click to browse</p>
 
     <div class="actions">
       <button type="button" class="browse-btn" onclick={handleBrowseClick}>
@@ -234,7 +244,7 @@
       bind:this={fileInputRef}
       type="file"
       multiple
-      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,application/pdf"
+      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.json,.html,.htm,.md,.markdown,.txt,application/pdf"
       onchange={handleFileInputChange}
       style="display: none;"
     />
