@@ -279,20 +279,21 @@ pub async fn handle_tool(
 
             // Check if URL is in JSON payload
             if let Some(Value::String(url_str)) = args.get("url")
-                && (url_str.starts_with("http://") || url_str.starts_with("https://")) {
-                    if let Ok(path) = paperpilot_core::url_fetch::resolve_url_to_temp_file(url_str)
-                    {
-                        args.insert(
-                            "input".to_string(),
-                            Value::String(path.to_string_lossy().to_string()),
-                        );
-                    } else {
-                        return (
-                            axum::http::StatusCode::BAD_REQUEST,
-                            Json(serde_json::json!({"success": false, "error": "Failed to fetch URL"})),
-                        ).into_response();
-                    }
+                && (url_str.starts_with("http://") || url_str.starts_with("https://"))
+            {
+                if let Ok(path) = paperpilot_core::url_fetch::resolve_url_to_temp_file(url_str) {
+                    args.insert(
+                        "input".to_string(),
+                        Value::String(path.to_string_lossy().to_string()),
+                    );
+                } else {
+                    return (
+                        axum::http::StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({"success": false, "error": "Failed to fetch URL"})),
+                    )
+                        .into_response();
                 }
+            }
         }
     } else {
         use axum::extract::FromRequest;
