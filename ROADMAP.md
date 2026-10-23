@@ -203,7 +203,7 @@
 
 | Task # | Feature Name | Core Functionality | Impact / Market Need |
 |---|---|---|---|
-| **5.7.4** | Cloudflare Workers Edge Microservice | Memory-only edge processing via `paperpilot-wasm` ($0.005/run) | Infinite Serverless Scale |
+| **5.7.4** | Cloudflare Workers Edge Microservice | Memory-only edge processing via `paperpilot-wasm` ($0.005/run) with Bearer token / Cloudflare Access auth guard | Infinite Serverless Scale |
 | **5.5.3** | Streamable Remote MCP over SSE | Expose MCP tools over `/mcp/sse` for remote AI agents | Zero-Setup Agent Tools |
 | **5.7.3** | In-Browser Web Worker Threading | Multi-threaded client WASM via `wasm-bindgen-rayon` | Fast Browser Operations |
 | **5.7.5** | Ephemeral Kubernetes Sandbox Worker | On-demand K8s Pods with RAM-only disks for massive 1GB+ files | Heavy Enterprise Workloads |

@@ -1079,7 +1079,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.7.1 | `paperpilot-wasm` Crate & Bindings | Compile core `paperpilot-pdf` algorithms to `wasm32-unknown-unknown` / `wasm32-wasi` via `wasm-bindgen` |
 | 5.7.2 | Client-Side In-Browser Operations | Run Merge, Split, Rotate, Compress, Encrypt, and Redact 100% locally in browser memory without network requests |
 | 5.7.3 | Web Worker Threading (`wasm-bindgen-rayon`) | Multi-threaded page processing in web browsers using Web Workers and SharedArrayBuffer |
-| 5.7.4 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk, $0.005/run) |
+| 5.7.4 | Cloudflare Workers Edge Microservice | Deploy `paperpilot-wasm` to Cloudflare Workers for sub-10ms, memory-only edge processing (0ms cold start, zero disk, $0.005/run); gated by Bearer secret token / Cloudflare Access service token to prevent unauthenticated public execution |
 | 5.7.5 | Ephemeral Kubernetes Sandbox Worker | On-demand K8s Job / KEDA runner (`emptyDir: { medium: "Memory" }`) for heavy OCR, multi-gigabyte documents, and complex pipelines that auto-terminates and wipes RAM upon job completion |
 | 5.7.6 | Smart Hybrid Dispatch Router | Gateway router that routes light operations (merge, split, rotate, stamp) to Cloudflare Workers and routes heavy compute (OCR, large rendering) to Ephemeral K8s Pods |
 | 5.7.7 | Zero-Knowledge Audit & Ephemeral Proof | Cryptographic verification asserting zero files touch persistent storage and in-memory streams are purged upon delivery |
@@ -1238,7 +1238,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 |---|---|---|
 | 7.2.1 | Billing and usage tracking | Per-org metering |
 | 7.2.2 | Admin dashboard | Org management, usage, billing |
-| 7.2.3 | Onboarding flow | Signup, org setup, first document |
+| 7.2.3 | Onboarding flow & API Key Lifecycle | Self-service signup (GitHub/Google OAuth + Magic Links), org setup, developer API key provisioning (`pp_live_...`), and initial quota allocation verified at Cloudflare Edge via KV/D1 |
 | 7.2.4 | SLA monitoring | Track and report uptime against commitments |
 | 7.2.5 | Enterprise support tooling | Ticket system, escalation paths |
 | 7.2.6 | E2E Cloud tenant tests | End-to-end multi-tenant isolation and billing workflow tests (No Mocking) |
