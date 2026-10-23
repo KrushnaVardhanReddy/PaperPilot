@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 094](file:///home/krushna/Project/PaperPilot/specs/094-pure-rust-tool-scaffolding-generator/spec.md)
 - Target: Wave 3 (`v0.7.0`) Developer Ergonomics & Rapid Expansion Engine
-- Status: Ready for Implementation
+- Status: ⏳ In-Flight (Jules Session [`8915713543148419332`](https://jules.google.com/session/8915713543148419332))
 
 ---
 
