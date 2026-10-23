@@ -1,0 +1,131 @@
+# Task 5.9.61 Prompt: Digital Signature Verification Engine (`pdf_validate_signatures`)
+
+You are implementing Task 5.9.61: `pdf_validate_signatures` in PaperPilot.
+The penta-interface scaffolding across all 5 surfaces (Core Rust, CLI, MCP, Gateway, WASM) and the E2E harness are already created and committed to `main` at `86167be`.
+
+Your goal is to implement the real signature extraction and verification in `paperpilot-pdf/src/operations/pdf_validate_signatures.rs` and verify all tests pass with zero warnings and zero regressions.
+
+---
+
+### 1. Requirements & Data Structures
+
+In `paperpilot-pdf/src/operations/pdf_validate_signatures.rs`:
+
+```rust
+use lopdf::{Document, Object, Dictionary};
+use paperpilot_core::error::PdfError;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PdfValidateSignaturesOptions {
+    #[serde(default)]
+    pub verify_byte_range_only: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DigitalSignatureInfo {
+    pub field_name: String,
+    pub signer_name: Option<String>,
+    pub organization: Option<String>,
+    pub signing_time: Option<String>,
+    pub sub_filter: String,         // e.g. "adbe.pkcs7.detached"
+    pub byte_range: Vec<i64>,       // [offset1, len1, offset2, len2]
+    pub is_valid: bool,
+    pub is_tampered: bool,
+    pub error_message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignatureValidationReport {
+    pub total_signatures: usize,
+    pub valid_signatures: usize,
+    pub all_valid: bool,
+    pub signatures: Vec<DigitalSignatureInfo>,
+}
+```
+
+---
+
+### 2. Implementation Logic for `pdf_validate_signatures_bytes`
+
+Implement `pdf_validate_signatures_bytes`:
+```rust
+pub fn pdf_validate_signatures_bytes(
+    input_bytes: &[u8],
+    options: &PdfValidateSignaturesOptions,
+) -> Result<Vec<u8>, PdfError>
+```
+
+1. **Load Document**:
+   ```rust
+   let doc = Document::load_mem(input_bytes)
+       .map_err(|e| PdfError::ParseError(e.to_string()))?;
+   ```
+2. **Scan for Signatures**:
+   - Inspect `doc.trailer.get(b"Root")` -> Catalog `/AcroForm` -> `/Fields`.
+   - Also scan `doc.objects` for dictionaries where `/Type == "Sig"` or `/FT == "Sig"`.
+   - For each signature dictionary (or field pointing to a signature dictionary `/V`):
+     - Extract field name (`/T` string or string name).
+     - Extract `/Name` or `/M` (Date) from the dictionary.
+     - Extract `/SubFilter` (Name object converted to String, e.g. `"adbe.pkcs7.detached"`).
+     - Extract `/ByteRange` (Array of 4 integers: `[offset1, len1, offset2, len2]`).
+3. **ByteRange Integrity & Tamper Check**:
+   - A valid PDF ByteRange starts at 0: `offset1 == 0`.
+   - `len1 < offset2`.
+   - `end = offset2 + len2`.
+   - If `end > input_bytes.len() as i64`: mark `is_valid = false, is_tampered = true, error_message = Some("ByteRange extends beyond file length")`.
+   - If there are non-whitespace trailing bytes after `end` exceeding standard EOF markers: flag `is_tampered = true`.
+   - If `/ByteRange` is valid and no tampering detected, set `is_valid = true, is_tampered = false`.
+4. **Unsigned Documents**:
+   - If no signatures exist in the PDF, return an empty report:
+     `SignatureValidationReport { total_signatures: 0, valid_signatures: 0, all_valid: true, signatures: vec![] }`.
+5. **Serialize to JSON Bytes**:
+   - Return `serde_json::to_vec_pretty(&report).map_err(|e| PdfError::Other(e.to_string()))`.
+6. **Implement `PdfValidateSignaturesOperation::execute`**:
+   - In `execute(&self, document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()>`:
+     Allow executing against `LopdfDocument` or return `Ok(())` if in-memory document validation is performed.
+
+---
+
+### 3. Existing Unit Tests Pattern
+
+In `paperpilot-pdf/src/operations/pdf_validate_signatures.rs`:
+Add unit tests using synthetic PDF generation (see `tests` in `paperpilot-pdf/src/operations/sanitize.rs` and `paperpilot-pdf/src/operations/signature.rs`):
+
+1. `test_validate_unsigned_pdf`:
+   - Pass a minimal 1-page PDF.
+   - Assert `report.total_signatures == 0`.
+   - Assert `report.all_valid == true`.
+2. `test_validate_synthetic_signed_pdf`:
+   - Create a minimal lopdf document with an AcroForm signature field `/V` having `/Type /Sig`, `/ByteRange [0, 100, 200, 50]`, `/SubFilter /adbe.pkcs7.detached`.
+   - Validate that `report.total_signatures == 1`.
+   - Assert `report.signatures[0].sub_filter == "adbe.pkcs7.detached"`.
+3. `test_validate_empty_bytes`:
+   - Empty buffer `&[]` returns `Err(PdfError::ParseError(_))`.
+
+---
+
+### 4. How to Run & Verify
+
+**IMPORTANT**: Always pass `-j 2` on all cargo commands to avoid resource limits.
+Do NOT modify `tools/penta-interface-e2e/src/main.rs` — the match arm is already present on `main`.
+
+Run verification commands in this order:
+
+1. **Unit tests in paperpilot-pdf:**
+   ```bash
+   cargo test -p paperpilot-pdf --lib operations::pdf_validate_signatures -j 2
+   ```
+
+2. **E2E Penta-Interface Runner:**
+   ```bash
+   cargo run -p penta-interface-e2e -- --group pdf_validate_signatures -j 2
+   ```
+
+3. **Workspace Check:**
+   ```bash
+   cargo check --workspace -j 2
+   ```
+
+Ensure all warnings and unused imports are cleaned up before creating your pull request.
