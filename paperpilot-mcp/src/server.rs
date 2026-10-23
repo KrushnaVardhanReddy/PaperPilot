@@ -4971,8 +4971,11 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options = paperpilot_pdf::operations::pdf_booklet::PdfBookletOptions::default();
-                let result = paperpilot_pdf::operations::pdf_booklet::pdf_booklet_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let result = paperpilot_pdf::operations::pdf_booklet::pdf_booklet_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;

@@ -193,8 +193,12 @@ async fn main() -> Result<()> {
             )?;
         }
         "pdf_validate_signatures" | "5.9.61" => {
-            let results = cases::pdf_validate_signatures::run_pdf_validate_signatures_suite().await?;
-            println!("Validate Digital Signatures finished: {} tests", results.len());
+            let results =
+                cases::pdf_validate_signatures::run_pdf_validate_signatures_suite().await?;
+            println!(
+                "Validate Digital Signatures finished: {} tests",
+                results.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.61 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Validate Digital Signatures)",
                 &results,
@@ -214,7 +218,10 @@ async fn main() -> Result<()> {
         }
         "pdf_booklet" => {
             let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
-            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            println!(
+                "Booklet Imposition finished: {} tests",
+                res_pdf_booklet.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
                 &res_pdf_booklet,
@@ -293,7 +300,10 @@ async fn main() -> Result<()> {
             )?;
 
             let res_pdf_booklet = cases::pdf_booklet::run_pdf_booklet_suite().await?;
-            println!("Booklet Imposition finished: {} tests", res_pdf_booklet.len());
+            println!(
+                "Booklet Imposition finished: {} tests",
+                res_pdf_booklet.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
                 &res_pdf_booklet,

@@ -1229,6 +1229,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
                     {tool.title}
                     {#if tool.releaseStatus === 'v0.5-core'}
                       <span class="status-badge-v1">v0.5 Core</span>
+                    {:else if tool.releaseStatus === 'v0.6-core'}
+                      <span class="status-badge-v06">v0.6 Core</span>
                     {:else}
                       <span class="status-badge-preview">Preview</span>
                     {/if}
@@ -1266,6 +1268,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
                           <span class="tool-card-title">{tool.title}</span>
                           {#if tool.releaseStatus === 'v0.5-core'}
                             <span class="status-badge-v1">v0.5 Core</span>
+                          {:else if tool.releaseStatus === 'v0.6-core'}
+                            <span class="status-badge-v06">v0.6 Core</span>
                           {:else}
                             <span class="status-badge-preview">Preview</span>
                           {/if}
@@ -2030,6 +2034,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     background: rgba(34, 197, 94, 0.15);
     color: #4ade80;
     border: 1px solid rgba(34, 197, 94, 0.35);
+    vertical-align: middle;
+  }
+  .status-badge-v06 {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.35);
     vertical-align: middle;
   }
   .status-badge-preview {

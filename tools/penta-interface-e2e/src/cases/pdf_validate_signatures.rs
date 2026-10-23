@@ -24,12 +24,12 @@ pub async fn run_pdf_validate_signatures_suite() -> anyhow::Result<Vec<TestExecu
     // 1. CLI Tests
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
         let out_path = out_dir.join(format!("{}_cli_{}.json", tool, tier as u8));
-        
+
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
-        
+
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
             cli_tool,
@@ -43,14 +43,19 @@ pub async fn run_pdf_validate_signatures_suite() -> anyhow::Result<Vec<TestExecu
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && (crate::verify_output_file(&out_path, "json").unwrap_or(false) || out_path.exists())
+            success
+                && (crate::verify_output_file(&out_path, "json").unwrap_or(false)
+                    || out_path.exists())
         };
 
         results.push(TestExecutionResult {
             tool_id: tool.into(),
             interface: InterfaceType::Cli,
             tier,
-            data_sent: format!("paperpilot {} --input ... --output {:?}", cli_tool, out_path),
+            data_sent: format!(
+                "paperpilot {} --input ... --output {:?}",
+                cli_tool, out_path
+            ),
             expected_result: if tier == ComplexityTier::Negative {
                 "Fail/Error".into()
             } else {
@@ -66,7 +71,7 @@ pub async fn run_pdf_validate_signatures_suite() -> anyhow::Result<Vec<TestExecu
     // 2. MCP Parity Checks
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
         let out_path = out_dir.join(format!("{}_mcp_{}.json", tool, tier as u8));
-        
+
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
@@ -78,11 +83,13 @@ pub async fn run_pdf_validate_signatures_suite() -> anyhow::Result<Vec<TestExecu
         });
 
         let (success, resp, latency) = McpRunner::call_tool(tool, mcp_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && (crate::verify_output_file(&out_path, "json").unwrap_or(false) || out_path.exists())
+            success
+                && (crate::verify_output_file(&out_path, "json").unwrap_or(false)
+                    || out_path.exists())
         };
 
         results.push(TestExecutionResult {
@@ -116,11 +123,13 @@ pub async fn run_pdf_validate_signatures_suite() -> anyhow::Result<Vec<TestExecu
         });
 
         let (success, resp, latency) = api.post_json(api_path, api_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && out_path.exists() && out_path.metadata().map(|m| m.len() > 0).unwrap_or(false)
+            success
+                && out_path.exists()
+                && out_path.metadata().map(|m| m.len() > 0).unwrap_or(false)
         };
 
         results.push(TestExecutionResult {

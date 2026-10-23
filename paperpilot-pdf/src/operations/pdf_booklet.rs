@@ -1,4 +1,4 @@
-use lopdf::{Document, Object, Dictionary};
+use lopdf::{Dictionary, Document, Object};
 use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
@@ -40,8 +40,8 @@ pub fn pdf_booklet_bytes(
     if input_bytes.is_empty() {
         return Err(PdfError::ParseError("Empty document".into()));
     }
-    let mut doc = Document::load_mem(input_bytes)
-        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let mut doc =
+        Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     let pages = doc.get_pages(); // BTreeMap<u32, ObjectId>
     let page_count = pages.len();
@@ -64,8 +64,13 @@ pub fn pdf_booklet_bytes(
         sequence.push(total_pages - 2 * i - 1);
     }
 
-    let catalog = doc.catalog().map_err(|e| PdfError::ParseError(e.to_string()))?;
-    let pages_id = catalog.get(b"Pages").and_then(|o| o.as_reference()).map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let catalog = doc
+        .catalog()
+        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let pages_id = catalog
+        .get(b"Pages")
+        .and_then(|o| o.as_reference())
+        .map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     let mut new_kids = Vec::new();
 
@@ -92,11 +97,14 @@ pub fn pdf_booklet_bytes(
         pages_dict.set("Kids", Object::Array(new_kids));
         pages_dict.set("Count", Object::Integer(total_pages as i64));
     } else {
-        return Err(PdfError::ParseError("Pages node is not a dictionary".into()));
+        return Err(PdfError::ParseError(
+            "Pages node is not a dictionary".into(),
+        ));
     }
 
     let mut out_bytes = Vec::new();
-    doc.save_to(&mut out_bytes).map_err(|e| PdfError::Other(e.to_string()))?;
+    doc.save_to(&mut out_bytes)
+        .map_err(|e| PdfError::Other(e.to_string()))?;
     Ok(out_bytes)
 }
 
@@ -112,9 +120,14 @@ impl PdfBookletOperation {
 }
 
 impl PdfOperation for PdfBookletOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
+    fn execute(
+        &self,
+        _document: &mut dyn PdfDocument,
+    ) -> paperpilot_core::error::OperationResult<()> {
         // Operation based execution is not yet implemented for Document in memory.
-        Err(PdfError::UnsupportedOperation("PdfBookletOperation only supports bytes execution".to_string()))
+        Err(PdfError::UnsupportedOperation(
+            "PdfBookletOperation only supports bytes execution".to_string(),
+        ))
     }
 }
 
@@ -160,7 +173,7 @@ mod booklet_tests {
         let catalog_id = doc.add_object(Object::Dictionary(catalog));
 
         doc.trailer.set("Root", Object::Reference(catalog_id));
-        
+
         let mut out = Vec::new();
         doc.save_to(&mut out).unwrap();
         out
@@ -171,7 +184,7 @@ mod booklet_tests {
         let bytes = create_test_pdf(4);
         let options = PdfBookletOptions::default();
         let result = pdf_booklet_bytes(&bytes, &options).expect("Should succeed");
-        
+
         let doc = Document::load_mem(&result).unwrap();
         assert_eq!(doc.get_pages().len(), 4);
     }
@@ -181,7 +194,7 @@ mod booklet_tests {
         let bytes = create_test_pdf(3);
         let options = PdfBookletOptions::default();
         let result = pdf_booklet_bytes(&bytes, &options).expect("Should succeed");
-        
+
         let doc = Document::load_mem(&result).unwrap();
         assert_eq!(doc.get_pages().len(), 4);
     }
@@ -191,7 +204,7 @@ mod booklet_tests {
         let bytes = create_test_pdf(8);
         let options = PdfBookletOptions::default();
         let result = pdf_booklet_bytes(&bytes, &options).expect("Should succeed");
-        
+
         let doc = Document::load_mem(&result).unwrap();
         assert_eq!(doc.get_pages().len(), 8);
     }

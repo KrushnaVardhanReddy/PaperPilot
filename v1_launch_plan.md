@@ -31,33 +31,29 @@ These 12 operations are frozen as the **v0.5 Core Suite**. They undergo **unmock
 Following the initial `v0.5.0` Public Preview release, each subsequent wave of tools will undergo dedicated unmocked E2E testing, bug hardening, and official rollout following a predictable SemVer cadence:
 
 ### 🌟 Wave 1: `v0.5.0` — Core Launch Suite (Top 12)
-*Status: Production Ready / Public Preview (`prerelease: true`)*
+*Status: Production Ready / Released (`v0.5.0`)*
 - Tools (12): `pdf_merge`, `pdf_split`, `pdf_rotate`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_compress`, `pdf_watermark`, `pdf_ocr`, `pdf_extract_text`, `extract_pages`, `excel_to_json`, `excel_to_csv`.
 - Target: Full Penta-Interface parity, unmocked Playwright tests, ~45–75ms latency SLA.
 
-### 🌊 Wave 2: `v0.6.0` — Essential Media & Page Utilities (Week 2)
-Focuses on simple, 100% deterministic, high-demand everyday utilities:
+### 🌊 Waves 2 & 3: `v0.6.0` — Essential Media, Page Utilities & Web/AI Synthesis (Consolidated Release)
+*Status: Production Ready / Released (`v0.6.0`)*
+Focuses on simple high-demand utilities alongside text-to-document synthesis, Markdown, and AI ingestion pipelines:
 | # | Tool ID | Interface Title | Category | Target Value | Release Milestone |
 |---|---|---|---|---|---|
-| 13 | `img_to_pdf` | Images to PDF | Convert | Stitch JPG/PNG/WebP photo albums into PDF without layout complexity | 🚀 `v0.6.0` |
-| 14 | `extract_images` | Extract Embedded Images | Extract | Dump all embedded graphics and photos directly to directory | 🚀 `v0.6.0` |
-| 15 | `remove_blank` | Remove Blank Pages | Organize | Scan and strip accidental blank pages from scans | 🚀 `v0.6.0` |
-| 16 | `page_numbers` | Add Page Numbers | Edit | Dynamic header/footer pagination with custom numbering | 🚀 `v0.6.0` |
-| 17 | `burst` | Burst PDF | Organize | Explode multi-page document into individual 1-page files | 🚀 `v0.6.0` |
-| 18 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights | 🚀 `v0.6.0` |
+| 13 | `img_to_pdf` | Images to PDF | Convert | Stitch JPG/PNG/WebP photo albums into PDF without layout complexity | ✅ `v0.6.0` |
+| 14 | `extract_images` | Extract Embedded Images | Extract | Dump all embedded graphics and photos directly to directory | ✅ `v0.6.0` |
+| 15 | `remove_blank` | Remove Blank Pages | Organize | Scan and strip accidental blank pages from scans | ✅ `v0.6.0` |
+| 16 | `page_numbers` | Add Page Numbers | Edit | Dynamic header/footer pagination with custom numbering | ✅ `v0.6.0` |
+| 17 | `burst` | Burst PDF | Organize | Explode multi-page document into individual 1-page files | ✅ `v0.6.0` |
+| 18 | `search` | Search Text & BBoxes | AI / Search | Spatial word search with bounding-box highlights | ✅ `v0.6.0` |
+| 19 | `pdf_to_markdown` | PDF to Markdown | Convert | LLM-ready clean layout markdown for AI RAG | ✅ `v0.6.0` |
+| 20 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis | ✅ `v0.6.0` |
+| 21 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) | ✅ `v0.6.0` |
+| 22 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator | ✅ `v0.6.0` |
+| 23 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images | ✅ `v0.6.0` |
+| 24 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON | ✅ `v0.6.0` |
 
-### 🌊 Wave 3: `v0.7.0` — Web & AI Synthesis Suite (Week 3)
-Focuses on text-to-document synthesis, Markdown, and AI ingestion pipelines:
-| # | Tool ID | Interface Title | Category | Target Value | Release Milestone |
-|---|---|---|---|---|---|
-| 19 | `pdf_to_markdown` | PDF to Markdown | Convert | LLM-ready clean layout markdown for AI RAG | 🚀 `v0.7.0` |
-| 20 | `pdf_to_html` | PDF to HTML | Convert | Semantic, responsive HTML5 web document synthesis | 🚀 `v0.7.0` |
-| 21 | `html_to_pdf` | HTML to PDF | Convert | Chromium-free HTML synthesis to styled PDF (`fulgur`) | 🚀 `v0.7.0` |
-| 22 | `md_to_pdf` | Markdown to PDF | Convert | Fast developer documentation to PDF generator | 🚀 `v0.7.0` |
-| 23 | `pdf_to_json` | PDF to JSON | AI / Convert | Multimodal layout & text JSON extraction with bounding boxes & base64 images | 🚀 `v0.7.0` |
-| 24 | `json_to_pdf` | JSON to PDF | AI / Convert | Bidirectional synthesis of publication-ready PDFs from structured JSON | 🚀 `v0.7.0` |
-
-### 🌊 Wave 4: `v0.8.0` — Office Modernization & Spreadsheets (Week 4)
+### 🌊 Wave 4: `v0.7.0` — Office Modernization & Spreadsheets (Upcoming)
 Focuses on full Microsoft Office suite interoperability and deep vector layout reconstruction:
 | # | Tool ID | Interface Title | Category | Target Value | Release Milestone |
 |---|---|---|---|---|---|
