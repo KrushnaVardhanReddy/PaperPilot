@@ -59,6 +59,17 @@
 
 ---
 
+## 🧠 Knowledge Graph & Token-Saving Architecture (`graphify-out/` & Obsidian)
+
+> ⚡ **CRITICAL TOKEN-SAVING INSTRUCTION FOR AGENTS (Antigravity & Jules):**
+> This repository is fully indexed with an AST Knowledge Graph at `graphify-out/graph.json` (3,937 nodes, 7,369 edges, 296 communities).
+> - **DO NOT scan dozens of raw source files** when exploring functions, callers, traits, or dependencies.
+> - **Query the Knowledge Graph First:** Use `graphify query "<question>"` (CLI) or inspect `graphify-out/.graphify_analysis.json` to immediately find the exact file and line.
+> - **Obsidian Vault:** The entire codebase graph and architectural docs are exported to `wiki/vault/` (with `graph.canvas` and 4,233 interconnected notes). Run `flatpak run md.obsidian.Obsidian` to explore.
+> - **Keep Current:** After adding or modifying core tools, run `graphify update .` (local AST, zero cost) to update the graph.
+
+---
+
 ## 🏗️ Architecture & Key Crate Boundaries
 
 ```
