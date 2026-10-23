@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 095](file:///home/krushna/Project/PaperPilot/specs/095-pdf-validate-signatures/spec.md)
 - Target: Wave 2 (`v0.7.1`) Core Operations Sprint
-- Status: ⏳ In-Flight (Jules Session [`1189804270885667850`](https://jules.google.com/session/1189804270885667850))
+- Status: ⏳ In-Flight (Jules Session [`14693800322057187019`](https://jules.google.com/session/14693800322057187019))
 
 ---
 
