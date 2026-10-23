@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import worker from '../src/index';
 
 // Mock the wasm module and init function since Node ESM does not support native .wasm imports without flags
@@ -117,4 +117,57 @@ describe('Cloudflare Edge Worker', () => {
     expect(bytes[3]).toBe(70);
     expect(bytes[4]).toBe(45);
   });
+
+  describe('URL Ingestion & SSRF Protection', () => {
+    const originalFetch = global.fetch;
+
+    beforeEach(() => {
+      global.fetch = vi.fn();
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('should successfully fetch and process a remote URL returning a valid PDF', async () => {
+      const dummyPdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]); // %PDF-1.4
+      global.fetch = vi.fn().mockResolvedValue(new Response(dummyPdfBytes));
+
+      const request = new Request('http://localhost/api/v1/rotate?url=https://example.com/test.pdf', { method: 'POST' });
+      const response = await worker.fetch(request, {}, {});
+      expect(response.status).toBe(200);
+      expect(global.fetch).toHaveBeenCalledWith('https://example.com/test.pdf');
+    });
+
+    it('should reject URLs returning non-PDF magic bytes', async () => {
+      const dummyHtmlBytes = new Uint8Array([0x3c, 0x68, 0x74, 0x6d, 0x6c, 0x3e]); // <html>
+      global.fetch = vi.fn().mockResolvedValue(new Response(dummyHtmlBytes));
+
+      const request = new Request('http://localhost/api/v1/rotate?url=https://example.com/test.html', { method: 'POST' });
+      const response = await worker.fetch(request, {}, {});
+      expect(response.status).toBe(500);
+      const data = await response.json();
+      expect(data.error).toContain('URL does not return a valid PDF document');
+    });
+
+    it('should block SSRF attempts to private networks without calling fetch', async () => {
+      const badUrls = [
+        'http://127.0.0.1:8080/secret',
+        'http://localhost/foo',
+        'http://169.254.169.254/latest/meta-data',
+        'http://10.0.0.1/test.pdf',
+        'http://192.168.1.1/test.pdf'
+      ];
+
+      for (const badUrl of badUrls) {
+        const request = new Request(`http://localhost/api/v1/rotate?url=${badUrl}`, { method: 'POST' });
+        const response = await worker.fetch(request, {}, {});
+        expect(response.status).toBe(500);
+        const data = await response.json();
+        expect(data.error).toContain('SSRF blocked');
+        expect(global.fetch).not.toHaveBeenCalled();
+      }
+    });
+  });
+
 });

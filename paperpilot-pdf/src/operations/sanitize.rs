@@ -118,8 +118,9 @@ pub fn sanitize_pdf(
 
     // Clean xref & write to bytes
     let mut output_bytes = Vec::new();
-    doc.save_to(&mut output_bytes)
-        .map_err(|e| paperpilot_core::error::PdfError::IoError(std::io::Error::other(e.to_string())))?;
+    doc.save_to(&mut output_bytes).map_err(|e| {
+        paperpilot_core::error::PdfError::IoError(std::io::Error::other(e.to_string()))
+    })?;
 
     let report = SanitizeReport {
         metadata_stripped: options.remove_metadata,
@@ -142,7 +143,10 @@ mod tests {
 
         // Info dictionary
         let mut info_dict = Dictionary::new();
-        info_dict.set("Title", Object::String(b"Test Document".to_vec(), lopdf::StringFormat::Literal));
+        info_dict.set(
+            "Title",
+            Object::String(b"Test Document".to_vec(), lopdf::StringFormat::Literal),
+        );
         let info_id = doc.add_object(Object::Dictionary(info_dict));
         doc.trailer.set("Info", Object::Reference(info_id));
 
@@ -181,7 +185,8 @@ mod tests {
 
         catalog_dict.set("AF", Object::Array(vec![]));
 
-        doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+        doc.objects
+            .insert(catalog_id, Object::Dictionary(catalog_dict));
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let mut buf = Vec::new();
@@ -222,7 +227,11 @@ mod tests {
         // Verify page
         let page_ids = sanitized_doc.get_pages();
         for (_, page_id) in page_ids {
-            let page_dict = sanitized_doc.get_object(page_id).unwrap().as_dict().unwrap();
+            let page_dict = sanitized_doc
+                .get_object(page_id)
+                .unwrap()
+                .as_dict()
+                .unwrap();
             assert!(page_dict.get(b"Thumb").is_err());
             assert!(page_dict.get(b"PieceInfo").is_err());
             assert!(page_dict.get(b"AA").is_err());

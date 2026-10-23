@@ -1014,23 +1014,41 @@ impl PaperPilotMcpServer {
         tools.push(tool_ext_img);
 
         let mut schema_ext_tab = serde_json::Map::new();
-        schema_ext_tab.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        schema_ext_tab.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
         let mut prop_ext_tab = serde_json::Map::new();
 
         let mut p_in = serde_json::Map::new();
-        p_in.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        p_in.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         prop_ext_tab.insert("input".to_string(), serde_json::Value::Object(p_in));
 
         let mut p_out = serde_json::Map::new();
-        p_out.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        p_out.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         prop_ext_tab.insert("output".to_string(), serde_json::Value::Object(p_out));
 
         let mut p_f = serde_json::Map::new();
-        p_f.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        p_f.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
         prop_ext_tab.insert("format".to_string(), serde_json::Value::Object(p_f));
 
-        schema_ext_tab.insert("properties".to_string(), serde_json::Value::Object(prop_ext_tab));
-        schema_ext_tab.insert("required".to_string(), serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]));
+        schema_ext_tab.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_ext_tab),
+        );
+        schema_ext_tab.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
+        );
 
         let mut tool_ext_tab = Tool::default();
         tool_ext_tab.name = "pdf_extract_tables".into();
@@ -2215,26 +2233,59 @@ impl PaperPilotMcpServer {
         let mut props_sanitize = serde_json::Map::new();
 
         let mut prop_input_san = serde_json::Map::new();
-        prop_input_san.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        props_sanitize.insert("input".to_string(), serde_json::Value::Object(prop_input_san));
+        prop_input_san.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_sanitize.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_san),
+        );
 
         let mut prop_output_san = serde_json::Map::new();
-        prop_output_san.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        props_sanitize.insert("output".to_string(), serde_json::Value::Object(prop_output_san));
+        prop_output_san.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_sanitize.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_san),
+        );
 
         let mut prop_rm_meta = serde_json::Map::new();
-        prop_rm_meta.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_sanitize.insert("remove_metadata".to_string(), serde_json::Value::Object(prop_rm_meta));
+        prop_rm_meta.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_sanitize.insert(
+            "remove_metadata".to_string(),
+            serde_json::Value::Object(prop_rm_meta),
+        );
 
         let mut prop_rm_att = serde_json::Map::new();
-        prop_rm_att.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_sanitize.insert("remove_attachments".to_string(), serde_json::Value::Object(prop_rm_att));
+        prop_rm_att.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_sanitize.insert(
+            "remove_attachments".to_string(),
+            serde_json::Value::Object(prop_rm_att),
+        );
 
         let mut prop_rm_scr = serde_json::Map::new();
-        prop_rm_scr.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_sanitize.insert("remove_scripts".to_string(), serde_json::Value::Object(prop_rm_scr));
+        prop_rm_scr.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_sanitize.insert(
+            "remove_scripts".to_string(),
+            serde_json::Value::Object(prop_rm_scr),
+        );
 
-        schema_sanitize.insert("properties".to_string(), serde_json::Value::Object(props_sanitize));
+        schema_sanitize.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_sanitize),
+        );
         schema_sanitize.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
@@ -2252,49 +2303,93 @@ impl PaperPilotMcpServer {
 
         // Tool: document_pii_scan
         let mut schema_pii = serde_json::Map::new();
-        schema_pii.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        schema_pii.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
         let mut props_pii = serde_json::Map::new();
 
         let mut prop_input_pii = serde_json::Map::new();
-        prop_input_pii.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        props_pii.insert("input".to_string(), serde_json::Value::Object(prop_input_pii));
+        prop_input_pii.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pii.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pii),
+        );
 
         let mut prop_output_pii = serde_json::Map::new();
-        prop_output_pii.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        props_pii.insert("output".to_string(), serde_json::Value::Object(prop_output_pii));
+        prop_output_pii.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pii.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pii),
+        );
 
         let mut prop_ssn = serde_json::Map::new();
-        prop_ssn.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        prop_ssn.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
         props_pii.insert("scan_ssn".to_string(), serde_json::Value::Object(prop_ssn));
 
         let mut prop_cc = serde_json::Map::new();
-        prop_cc.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pii.insert("scan_credit_cards".to_string(), serde_json::Value::Object(prop_cc));
+        prop_cc.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pii.insert(
+            "scan_credit_cards".to_string(),
+            serde_json::Value::Object(prop_cc),
+        );
 
         let mut prop_emails = serde_json::Map::new();
-        prop_emails.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pii.insert("scan_emails".to_string(), serde_json::Value::Object(prop_emails));
+        prop_emails.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pii.insert(
+            "scan_emails".to_string(),
+            serde_json::Value::Object(prop_emails),
+        );
 
         let mut prop_phones = serde_json::Map::new();
-        prop_phones.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pii.insert("scan_phones".to_string(), serde_json::Value::Object(prop_phones));
+        prop_phones.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pii.insert(
+            "scan_phones".to_string(),
+            serde_json::Value::Object(prop_phones),
+        );
 
         let mut prop_iban = serde_json::Map::new();
-        prop_iban.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pii.insert("scan_iban".to_string(), serde_json::Value::Object(prop_iban));
+        prop_iban.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pii.insert(
+            "scan_iban".to_string(),
+            serde_json::Value::Object(prop_iban),
+        );
 
-        schema_pii.insert("properties".to_string(), serde_json::Value::Object(props_pii));
+        schema_pii.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pii),
+        );
         schema_pii.insert(
             "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-            ]),
+            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
         );
 
         let mut tool_pii = Tool::default();
         tool_pii.name = "document_pii_scan".into();
         tool_pii.description = Some(
-            "Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]".into(),
+            "Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]"
+                .into(),
         );
         tool_pii.input_schema = Arc::new(schema_pii);
         tools.push(tool_pii);
@@ -3143,7 +3238,21 @@ impl PaperPilotMcpServer {
         let get_string = |key: &str| -> Result<String, ErrorData> {
             args.get(key)
                 .and_then(|v| v.as_str())
-                .map(|s| s.to_string())
+                .map(|s| {
+                    if (key == "input"
+                        || key == "file"
+                        || key.starts_with("input_")
+                        || key.starts_with("file_"))
+                        && (s.starts_with("http://") || s.starts_with("https://"))
+                    {
+                        match paperpilot_core::url_fetch::resolve_url_to_temp_file(s) {
+                            Ok(path) => path.to_string_lossy().to_string(),
+                            Err(_) => s.to_string(),
+                        }
+                    } else {
+                        s.to_string()
+                    }
+                })
                 .ok_or_else(|| {
                     ErrorData::invalid_params(
                         format!("Missing or invalid '{}' parameter", key),
@@ -3157,7 +3266,23 @@ impl PaperPilotMcpServer {
                 .and_then(|v| v.as_array())
                 .map(|arr| {
                     arr.iter()
-                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .filter_map(|v| {
+                            v.as_str().map(|s| {
+                                if (key == "input"
+                                    || key == "images"
+                                    || key == "files"
+                                    || key == "paths")
+                                    && (s.starts_with("http://") || s.starts_with("https://"))
+                                {
+                                    match paperpilot_core::url_fetch::resolve_url_to_temp_file(s) {
+                                        Ok(path) => path.to_string_lossy().to_string(),
+                                        Err(_) => s.to_string(),
+                                    }
+                                } else {
+                                    s.to_string()
+                                }
+                            })
+                        })
                         .collect()
                 })
                 .ok_or_else(|| {
@@ -4727,14 +4852,24 @@ impl PaperPilotMcpServer {
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let remove_metadata = args.get("remove_metadata").and_then(|v| v.as_bool()).unwrap_or(true);
-                let remove_attachments = args.get("remove_attachments").and_then(|v| v.as_bool()).unwrap_or(true);
-                let remove_scripts = args.get("remove_scripts").and_then(|v| v.as_bool()).unwrap_or(true);
+                let remove_metadata = args
+                    .get("remove_metadata")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let remove_attachments = args
+                    .get("remove_attachments")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let remove_scripts = args
+                    .get("remove_scripts")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
 
                 ensure_parent_dir(&output)?;
 
-                let input_bytes = std::fs::read(&input)
-                    .map_err(|e| ErrorData::internal_error(format!("Failed to read input file: {}", e), None))?;
+                let input_bytes = std::fs::read(&input).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to read input file: {}", e), None)
+                })?;
 
                 let mut options = paperpilot_pdf::operations::sanitize::SanitizeOptions::default();
                 options.remove_metadata = remove_metadata;
@@ -4743,11 +4878,15 @@ impl PaperPilotMcpServer {
                 options.remove_thumbnails = true;
                 options.remove_private_data = true;
 
-                let (sanitized_bytes, report) = paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
-                    .map_err(|e| ErrorData::internal_error(format!("Sanitization failed: {}", e), None))?;
+                let (sanitized_bytes, report) =
+                    paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
+                        .map_err(|e| {
+                            ErrorData::internal_error(format!("Sanitization failed: {}", e), None)
+                        })?;
 
-                std::fs::write(&output, sanitized_bytes)
-                    .map_err(|e| ErrorData::internal_error(format!("Failed to write output file: {}", e), None))?;
+                std::fs::write(&output, sanitized_bytes).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to write output file: {}", e), None)
+                })?;
 
                 Ok(OperationResult {
                     data: Some(serde_json::to_value(&report).unwrap_or_default()),
@@ -4761,14 +4900,30 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output").ok();
 
-                let scan_ssn = args.get("scan_ssn").and_then(|v| v.as_bool()).unwrap_or(true);
-                let scan_credit_cards = args.get("scan_credit_cards").and_then(|v| v.as_bool()).unwrap_or(true);
-                let scan_emails = args.get("scan_emails").and_then(|v| v.as_bool()).unwrap_or(true);
-                let scan_phones = args.get("scan_phones").and_then(|v| v.as_bool()).unwrap_or(true);
-                let scan_iban = args.get("scan_iban").and_then(|v| v.as_bool()).unwrap_or(true);
+                let scan_ssn = args
+                    .get("scan_ssn")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let scan_credit_cards = args
+                    .get("scan_credit_cards")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let scan_emails = args
+                    .get("scan_emails")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let scan_phones = args
+                    .get("scan_phones")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                let scan_iban = args
+                    .get("scan_iban")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
 
-                let input_bytes = std::fs::read(&input)
-                    .map_err(|e| ErrorData::internal_error(format!("Failed to read input file: {}", e), None))?;
+                let input_bytes = std::fs::read(&input).map_err(|e| {
+                    ErrorData::internal_error(format!("Failed to read input file: {}", e), None)
+                })?;
 
                 let options = paperpilot_pdf::operations::pii::PiiScanOptions {
                     scan_ssn,
@@ -4779,13 +4934,19 @@ impl PaperPilotMcpServer {
                 };
 
                 let report = paperpilot_pdf::operations::pii::scan_pii(&input_bytes, &options)
-                    .map_err(|e| ErrorData::internal_error(format!("PII Scan failed: {}", e), None))?;
+                    .map_err(|e| {
+                        ErrorData::internal_error(format!("PII Scan failed: {}", e), None)
+                    })?;
 
                 if let Some(out_path) = &output {
                     ensure_parent_dir(out_path)?;
                     let json = serde_json::to_string_pretty(&report).unwrap_or_default();
-                    std::fs::write(out_path, json)
-                        .map_err(|e| ErrorData::internal_error(format!("Failed to write output file: {}", e), None))?;
+                    std::fs::write(out_path, json).map_err(|e| {
+                        ErrorData::internal_error(
+                            format!("Failed to write output file: {}", e),
+                            None,
+                        )
+                    })?;
                 }
 
                 Ok(OperationResult {

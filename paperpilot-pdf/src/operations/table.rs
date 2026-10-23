@@ -24,9 +24,15 @@ impl Default for TableExtractOptions {
     }
 }
 
-fn default_pages() -> String { "all".to_string() }
-fn default_format() -> String { "json".to_string() }
-fn default_confidence() -> f32 { 0.5 }
+fn default_pages() -> String {
+    "all".to_string()
+}
+fn default_format() -> String {
+    "json".to_string()
+}
+fn default_confidence() -> f32 {
+    0.5
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtractedTable {
@@ -65,15 +71,26 @@ pub fn extract_tables_bytes(
                 let parts: Vec<&str> = range.split('-').collect();
                 if parts.len() == 1 {
                     if let Ok(p) = parts[0].trim().parse::<u32>() {
-                        if p == page_num { page_match = true; break; }
+                        if p == page_num {
+                            page_match = true;
+                            break;
+                        }
                     }
                 } else if parts.len() == 2 {
-                    if let (Ok(start), Ok(end)) = (parts[0].trim().parse::<u32>(), parts[1].trim().parse::<u32>()) {
-                        if page_num >= start && page_num <= end { page_match = true; break; }
+                    if let (Ok(start), Ok(end)) = (
+                        parts[0].trim().parse::<u32>(),
+                        parts[1].trim().parse::<u32>(),
+                    ) {
+                        if page_num >= start && page_num <= end {
+                            page_match = true;
+                            break;
+                        }
                     }
                 }
             }
-            if !page_match { continue; }
+            if !page_match {
+                continue;
+            }
         }
 
         let content_data = doc.get_page_content(page_id);
@@ -82,7 +99,9 @@ pub fn extract_tables_bytes(
         let mut table_found = false;
 
         // Simple heuristic: if there's drawing operations (m, l, re, f) often used in tables
-        if content_str.contains(" re ") || (content_str.contains(" m ") && content_str.contains(" l ")) {
+        if content_str.contains(" re ")
+            || (content_str.contains(" m ") && content_str.contains(" l "))
+        {
             table_found = true;
         }
 
@@ -123,7 +142,8 @@ fn serialize_tables_to_csv(tables: &[ExtractedTable]) -> String {
             out.push_str("\n\n");
         }
         if !table.headers.is_empty() {
-            let escaped_headers: Vec<String> = table.headers.iter().map(|h| escape_csv_cell(h)).collect();
+            let escaped_headers: Vec<String> =
+                table.headers.iter().map(|h| escape_csv_cell(h)).collect();
             out.push_str(&escaped_headers.join(","));
             out.push('\n');
         }

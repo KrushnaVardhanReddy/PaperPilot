@@ -60,7 +60,9 @@ fn validate_luhn(number: &str) -> bool {
     for &digit in digits.iter().rev() {
         if alternate {
             let mut d = digit * 2;
-            if d > 9 { d -= 9; }
+            if d > 9 {
+                d -= 9;
+            }
             sum += d;
         } else {
             sum += digit;
@@ -92,21 +94,19 @@ fn extract_context(text: &str, start: usize, end: usize, ctx_len: usize) -> Stri
     text[s..e].replace('\n', " ")
 }
 
-pub fn scan_pii(
-    input_bytes: &[u8],
-    options: &PiiScanOptions,
-) -> Result<PiiScanReport, PdfError> {
+pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanReport, PdfError> {
     let start = std::time::Instant::now();
-    let doc = Document::load_mem(input_bytes)
-        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let doc = Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     let mut findings = Vec::new();
     let mut findings_by_category: HashMap<String, usize> = HashMap::new();
 
     let ssn_re = regex::Regex::new(r"\b(\d{3})-(\d{2})-(\d{4})\b").unwrap();
     let cc_re = regex::Regex::new(r"\b(?:\d[ -]*?){13,19}\b").unwrap();
-    let email_re = regex::Regex::new(r"\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b").unwrap();
-    let phone_re = regex::Regex::new(r"\b(\+?1?[-.\s]?)?(\()?\d{3}(\))?[-.\s]?\d{3}[-.\s]?\d{4}\b").unwrap();
+    let email_re =
+        regex::Regex::new(r"\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b").unwrap();
+    let phone_re =
+        regex::Regex::new(r"\b(\+?1?[-.\s]?)?(\()?\d{3}(\))?[-.\s]?\d{3}[-.\s]?\d{4}\b").unwrap();
     let iban_re = regex::Regex::new(r"\b[A-Z]{2}[0-9]{2}(?:[ ]?[a-zA-Z0-9]){11,28}\b").unwrap();
 
     let pages = doc.get_pages();
@@ -151,7 +151,9 @@ pub fn scan_pii(
                         confidence: 0.95,
                         context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                     });
-                    *findings_by_category.entry("credit_card".to_string()).or_insert(0) += 1;
+                    *findings_by_category
+                        .entry("credit_card".to_string())
+                        .or_insert(0) += 1;
                 }
             }
         }
@@ -162,7 +164,7 @@ pub fn scan_pii(
                 let user = cap.get(1).unwrap().as_str();
                 let domain = cap.get(2).unwrap().as_str();
                 let masked_user = if user.len() > 1 {
-                    format!("{}***{}", &user[..1], &user[user.len()-1..])
+                    format!("{}***{}", &user[..1], &user[user.len() - 1..])
                 } else {
                     "***".to_string()
                 };
@@ -205,7 +207,7 @@ pub fn scan_pii(
                 let len = s.len();
                 let masked = if len >= 8 {
                     let country = &s[..2];
-                    let last4 = &s[len-4..];
+                    let last4 = &s[len - 4..];
                     format!("{}** **** **** **** **{}", country, last4)
                 } else {
                     "****".to_string()
@@ -237,8 +239,8 @@ mod tests {
     use super::*;
 
     fn create_test_pdf_with_text(text: &str) -> Vec<u8> {
-        use lopdf::{Document, Object, Stream, StringFormat, dictionary};
         use lopdf::content::{Content, Operation};
+        use lopdf::{Document, Object, Stream, StringFormat, dictionary};
 
         let mut doc = Document::with_version("1.5");
         let pages_id = doc.new_object_id();
@@ -257,22 +259,32 @@ mod tests {
                 Operation::new("BT", vec![]),
                 Operation::new("Tf", vec!["F1".into(), 12.into()]),
                 Operation::new("Td", vec![100.into(), 200.into()]),
-                Operation::new("Tj", vec![Object::String(text.as_bytes().to_vec(), StringFormat::Literal)]),
+                Operation::new(
+                    "Tj",
+                    vec![Object::String(
+                        text.as_bytes().to_vec(),
+                        StringFormat::Literal,
+                    )],
+                ),
                 Operation::new("ET", vec![]),
             ],
         };
-        let content_id = doc.add_object(Stream::new(dictionary!{}, content.encode().unwrap()));
+        let content_id = doc.add_object(Stream::new(dictionary! {}, content.encode().unwrap()));
         let page_id = doc.add_object(dictionary! {
             "Type" => "Page",
             "Parent" => pages_id,
             "Contents" => content_id,
             "Resources" => resources_id,
         });
-        doc.objects.insert(pages_id, dictionary! {
-            "Type" => "Pages",
-            "Count" => 1,
-            "Kids" => vec![page_id.into()],
-        }.into());
+        doc.objects.insert(
+            pages_id,
+            dictionary! {
+                "Type" => "Pages",
+                "Count" => 1,
+                "Kids" => vec![page_id.into()],
+            }
+            .into(),
+        );
         let catalog_id = doc.add_object(dictionary! {
             "Type" => "Catalog",
             "Pages" => pages_id,

@@ -126,6 +126,59 @@
     }
     target.value = '';
   }
+
+  let showUrlInput = $state(false);
+  let importUrl = $state('');
+  let isFetchingUrl = $state(false);
+
+  import { toastState } from '$lib/state/toast.svelte';
+
+  async function handleUrlImport(e: Event) {
+    e.preventDefault();
+    if (!importUrl) return;
+
+    try {
+      isFetchingUrl = true;
+      const parsedUrl = new URL(importUrl);
+
+      // In Tauri we can use fetch directly since we bypass CORS when configured properly,
+      // or we can use the regular web fetch if it's an embed.
+      const res = await fetch(parsedUrl.toString());
+      if (!res.ok) {
+        throw new Error(`HTTP Error: ${res.status}`);
+      }
+
+      const buf = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+
+      // Check %PDF magic bytes
+      if (bytes.length < 4 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
+        throw new Error('URL does not return a valid PDF document');
+      }
+
+      let filename = parsedUrl.pathname.split('/').pop() || 'remote_document.pdf';
+      const contentDisposition = res.headers.get('content-disposition');
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+         const match = contentDisposition.match(/filename="?([^"]+)"?/);
+         if (match && match[1]) {
+           filename = match[1];
+         }
+      }
+
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      (file as any)._localPath = filename;
+      (file as any)._isLoaded = true;
+
+      ondrop([file]);
+      showUrlInput = false;
+      importUrl = '';
+    } catch (err: any) {
+      toastState.add('error', `Failed to import remote PDF: ${err.message}`);
+    } finally {
+      isFetchingUrl = false;
+    }
+  }
 </script>
 
 <div
@@ -143,9 +196,39 @@
     <h3 class="title">{dropTitle()}</h3>
     <p class="subtitle">PDF, Word, Excel, PowerPoint · or click to browse</p>
 
-    <button type="button" class="browse-btn" onclick={handleBrowseClick}>
-      Browse Files
-    </button>
+    <div class="actions">
+      <button type="button" class="browse-btn" onclick={handleBrowseClick}>
+        Browse Files
+      </button>
+      {#if !showUrlInput}
+        <button type="button" class="url-btn" onclick={() => showUrlInput = true}>
+          🔗 Import from URL
+        </button>
+      {/if}
+    </div>
+
+    {#if showUrlInput}
+      <form class="url-input-form" onsubmit={handleUrlImport}>
+        <input
+          type="url"
+          bind:value={importUrl}
+          placeholder="https://example.com/document.pdf"
+          required
+          disabled={isFetchingUrl}
+        />
+        <button type="submit" disabled={isFetchingUrl}>
+          {#if isFetchingUrl}
+            Fetching...
+          {:else}
+            Import
+          {/if}
+        </button>
+        <button type="button" class="cancel-btn" onclick={() => showUrlInput = false} disabled={isFetchingUrl}>
+          Cancel
+        </button>
+      </form>
+    {/if}
+
     <!-- Hidden file input for mobile / Playwright test compatibility -->
     <input
       bind:this={fileInputRef}
@@ -216,7 +299,13 @@
     margin-bottom: 24px;
   }
 
-  .browse-btn {
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .browse-btn, .url-btn {
     display: inline-block;
     padding: 10px 20px;
     background-color: var(--accent-primary);
@@ -227,12 +316,63 @@
     transition: background-color var(--transition-fast);
   }
 
+  .url-btn {
+    background-color: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
   .browse-btn:hover {
     background-color: var(--accent-hover);
   }
 
+  .url-btn:hover {
+    background-color: var(--bg-surface-hover);
+  }
+
   .browse-btn:active {
     background-color: var(--accent-active);
+  }
+
+  .url-input-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .url-input-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  .url-input-form button {
+    padding: 10px 16px;
+    background-color: var(--accent-primary);
+    color: white;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+  }
+
+  .url-input-form button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .url-input-form .cancel-btn {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  }
+
+  .url-input-form .cancel-btn:hover:not(:disabled) {
+    background-color: var(--bg-surface-hover);
   }
 
   input[type="file"] {

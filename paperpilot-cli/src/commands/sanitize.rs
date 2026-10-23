@@ -10,15 +10,11 @@ pub fn handle_sanitize_command(
 ) -> Result<(), PdfError> {
     let input_bytes = std::fs::read(input).map_err(PdfError::IoError)?;
 
-    let mut options = paperpilot_pdf::operations::sanitize::SanitizeOptions::default();
-    options.remove_metadata = remove_metadata;
-    options.remove_attachments = remove_attachments;
-    options.remove_scripts = remove_scripts;
-    options.remove_thumbnails = true;
-    options.remove_private_data = true;
+    let options = paperpilot_pdf::operations::sanitize::SanitizeOptions { remove_metadata, remove_attachments, remove_scripts, remove_thumbnails: true, remove_private_data: true };
 
-    let (output_bytes, report) = paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
-        .map_err(|e| PdfError::Other(e.to_string()))?;
+    let (output_bytes, report) =
+        paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
+            .map_err(|e| PdfError::Other(e.to_string()))?;
 
     std::fs::write(output, output_bytes).map_err(PdfError::IoError)?;
 

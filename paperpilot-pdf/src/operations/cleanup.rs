@@ -53,7 +53,9 @@ impl PdfOperation for RemoveBlankPagesOperation {
                             let xo_dict = match xobjects {
                                 lopdf::Object::Dictionary(d) => Some(d),
                                 lopdf::Object::Reference(ref_id) => {
-                                    if let Ok(lopdf::Object::Dictionary(d)) = inner.get_object(*ref_id) {
+                                    if let Ok(lopdf::Object::Dictionary(d)) =
+                                        inner.get_object(*ref_id)
+                                    {
                                         Some(d)
                                     } else {
                                         None
@@ -189,10 +191,15 @@ mod tests {
     #[test]
     fn test_remove_blank_pages() {
         if std::path::Path::new("/tmp/test_blanks.pdf").exists() {
-            let mut real_doc = LopdfDocument::load(&std::path::PathBuf::from("/tmp/test_blanks.pdf")).unwrap();
+            let mut real_doc =
+                LopdfDocument::load(&std::path::PathBuf::from("/tmp/test_blanks.pdf")).unwrap();
             let op = RemoveBlankPagesOperation::new(90);
             op.execute(&mut real_doc).unwrap();
-            assert_eq!(real_doc.page_count().unwrap(), 2, "Page 2 blank should be removed");
+            assert_eq!(
+                real_doc.page_count().unwrap(),
+                2,
+                "Page 2 blank should be removed"
+            );
         }
 
         let mut doc = create_dummy_doc_with_streams();
