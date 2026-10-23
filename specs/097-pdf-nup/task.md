@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 097](file:///home/krushna/Project/PaperPilot/specs/097-pdf-nup/spec.md)
 - Target: Wave 2 (`v0.7.1`) Core Operations Sprint
-- Status: ⏳ Ready for Jules Submission
+- Status: ⏳ In-Flight (Jules Session [`14575779739699636673`](https://jules.google.com/session/14575779739699636673))
 
 ---
 
@@ -27,7 +27,17 @@
   - `test_nup_4_up`: 4 pages $\rightarrow$ 1 output sheet.
   - `test_nup_empty`: Empty document returns error.
 
-### 3. Verification & Conformance
+### 3. Desktop UI Controls & Argument Builder (`apps/desktop`)
+- [ ] In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+  - Add reactive UI state: `nupPages` (2), `nupOrdering` ('horizontal'), `nupMargin` (18), `nupSpacing` (10), `nupDrawBorders` (false).
+  - Add `{:else if activeTool.id === 'pdf_nup'}` configuration card with grid preset buttons (2, 4, 9, 16), ordering dropdown, margin/spacing sliders, and border checkbox.
+- [ ] In `apps/desktop/src/lib/services/operationArgsBuilder.ts`:
+  - Wire `case 'pdf_nup':` with `nup`, `ordering`, `margin_pt`, `spacing_pt`, `draw_borders`.
+- [ ] In `apps/desktop/src/lib/services/operationArgsBuilder.test.ts`:
+  - Add test asserting `pdf_nup` builds full options payload.
+
+### 4. Verification & Conformance
 - [ ] `cargo test -p paperpilot-pdf --lib operations::pdf_nup -j 2`
 - [ ] `cargo run -j 2 -p penta-interface-e2e -- --group pdf_nup`
+- [ ] `pnpm --dir apps/desktop test`
 - [ ] `cargo check --workspace -j 2`

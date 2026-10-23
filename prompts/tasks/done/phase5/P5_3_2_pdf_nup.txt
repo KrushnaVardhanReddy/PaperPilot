@@ -94,10 +94,84 @@ In `paperpilot-pdf/src/operations/pdf_nup.rs`:
 
 ---
 
-### Step 4: Verification Commands
+### Step 4: Desktop UI Controls & Argument Builder (`apps/desktop`)
+
+1. In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+   - Declare state variables:
+     ```typescript
+     let nupPages = $state(2);
+     let nupOrdering = $state('horizontal');
+     let nupMargin = $state(18);
+     let nupSpacing = $state(10);
+     let nupDrawBorders = $state(false);
+     ```
+   - Add parameter block in `OperationsPanel.svelte`:
+     ```svelte
+     {:else if activeTool.id === 'pdf_nup'}
+       <div class="operation-config">
+         <label class="section-desc">Pages Per Sheet:</label>
+         <div class="segmented" style="display: flex; gap: 8px; margin-bottom: 12px;">
+           {#each [2, 4, 9, 16] as n}
+             <button
+               type="button"
+               class="btn-segment"
+               style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {nupPages === n ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {nupPages === n ? '#fff' : 'var(--text-primary)'}; font-size: 13px;"
+               onclick={() => nupPages = n}
+             >
+               {n}-Up
+             </button>
+           {/each}
+         </div>
+
+         <label for="nupOrdering" class="section-desc">Ordering Direction:</label>
+         <select id="nupOrdering" bind:value={nupOrdering} class="form-input" style="margin-bottom: 12px;">
+           <option value="horizontal">Horizontal (Left to Right)</option>
+           <option value="vertical">Vertical (Top to Bottom)</option>
+         </select>
+
+         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+           <div>
+             <label for="nupMargin" class="section-desc">Margin ({nupMargin} pt):</label>
+             <input id="nupMargin" type="range" min="0" max="72" bind:value={nupMargin} class="range-input" />
+           </div>
+           <div>
+             <label for="nupSpacing" class="section-desc">Spacing ({nupSpacing} pt):</label>
+             <input id="nupSpacing" type="range" min="0" max="36" bind:value={nupSpacing} class="range-input" />
+           </div>
+         </div>
+
+         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+           <input type="checkbox" bind:checked={nupDrawBorders} />
+           Draw borders around each page
+         </label>
+       </div>
+     ```
+   - In `OperationContext` interface in `apps/desktop/src/lib/services/operationArgsBuilder.ts`:
+     Add `nupPages?: number; nupOrdering?: string; nupMargin?: number; nupSpacing?: number; nupDrawBorders?: boolean;`
+   - Pass these values from `OperationsPanel.svelte` to `buildOperationArgs`.
+   - In `operationArgsBuilder.ts`:
+     ```typescript
+     case 'pdf_nup':
+         args = {
+             input: docPath,
+             output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_nup.pdf`),
+             nup: context.nupPages || 2,
+             ordering: context.nupOrdering || 'horizontal',
+             margin_pt: context.nupMargin ?? 18.0,
+             spacing_pt: context.nupSpacing ?? 10.0,
+             draw_borders: context.nupDrawBorders ?? false
+         };
+         break;
+     ```
+   - Update `operationArgsBuilder.test.ts` to assert that `pdf_nup` builds full options.
+
+---
+
+### Step 5: Verification Commands
 Always pass `-j 2`:
 ```bash
 cargo test -p paperpilot-pdf --lib operations::pdf_nup -j 2
 cargo run -j 2 -p penta-interface-e2e -- --group pdf_nup
+pnpm --dir apps/desktop test
 cargo check --workspace -j 2
 ```

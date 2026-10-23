@@ -81,8 +81,28 @@ impl Default for PdfNupOptions {
 
 ---
 
-## 4. Verification & Testing
+## 4. Desktop UI & Parameter Card Specification
+
+In `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+When `activeTool.id === 'pdf_nup'`, render dedicated imposition controls:
+1. **Grid Preset (`nup`)**:
+   - Segmented buttons: `2-Up` | `4-Up` | `9-Up` | `16-Up`.
+2. **Page Ordering (`ordering`)**:
+   - Select dropdown: `Horizontal (Left-to-Right)` vs `Vertical (Top-to-Bottom)`.
+3. **Margins & Spacing**:
+   - Outer Margin (`margin_pt`): Number input / slider (0–72 pt, default 18 pt).
+   - Cell Spacing (`spacing_pt`): Number input / slider (0–36 pt, default 10 pt).
+4. **Cell Borders (`draw_borders`)**:
+   - Checkbox toggle: *"Draw boundary borders around each page"*.
+
+In `apps/desktop/src/lib/services/operationArgsBuilder.ts`:
+- Map the UI state into the backend invocation arguments payload.
+
+---
+
+## 5. Verification & Testing
 1. 8 input pages with `nup = 2` yields exactly 4 output sheets.
 2. 8 input pages with `nup = 4` yields exactly 2 output sheets.
 3. 5 input pages with `nup = 4` yields 2 output sheets (second sheet partially filled).
-4. All 5 interfaces pass conformance verification.
+4. 10/10 unmocked Penta-Interface E2E tests pass across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
+5. Desktop UI parameters build valid payload and Vitest unit tests pass.

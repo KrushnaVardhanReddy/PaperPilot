@@ -137,6 +137,7 @@
 |---|---|---|---|
 | **5.9.61** | Digital Signature Verification Engine (`pdf_validate_signatures`) | Spec 095 / `pdf_validate_signatures.rs` | ✅ Merged to `main` (PR #238, commit `a6e68c6`) |
 | **5.3.1**  | Booklet Imposition Engine (`pdf_booklet`) | Spec 096 / `pdf_booklet.rs` | ✅ Completed (10/10 Penta E2E tests passing) |
+| **5.3.2**  | Multi-Page N-Up Imposition Engine (`pdf_nup`) | Spec 097 / `pdf_nup.rs` & `apps/desktop` | ⏳ In-Flight ([`14575779739699636673`](https://jules.google.com/session/14575779739699636673)) |
 | **5.9.80** | Penta-Scaffold UI Automation & Universal Audit Report Visualizer | Spec 100 / `generator.rs` & `apps/desktop` | ✅ Completed (PR #240) |
 | **5.9.79** | Pure-Rust Tool Scaffolding Generator (`penta-scaffold`) | Spec 094 / `tools/penta-scaffold` | ✅ Merged to `main` (commit `5fd9155`) |
 

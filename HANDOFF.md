@@ -12,7 +12,7 @@
 ### 1. Active Jules Sessions in Flight
 | Task ID | Session Link | Target & Purpose | Status / Notes |
 |---|---|---|---|
-| *None* | — | All dispatched sessions merged | Ready for next task dispatch |
+| **Task 5.3.2** | [Session 14575779739699636673](https://jules.google.com/session/14575779739699636673) | Multi-Page N-Up Imposition Engine (`pdf_nup`) `[Spec 097]` | ⏳ In-Flight (Dispatched Oct 23) |
 
 ---
 
