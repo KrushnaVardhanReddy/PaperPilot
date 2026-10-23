@@ -3,6 +3,7 @@
   import { toastState } from '$lib/state/toast.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { listen } from '@tauri-apps/api/event';
   import { formatUserFriendlyError } from '$lib/utils/errorFormatter';
 
   import type { ToolDefinition } from "$lib/types/tools";
@@ -12,8 +13,9 @@
 import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
 import { onMount } from 'svelte';
+import type { SnippetTarget } from '$lib/utils/snippetGenerator';
 import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
-import { type SnippetTarget } from '$lib/utils/snippetGenerator';
+
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
@@ -42,6 +44,12 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
   $effect(() => {
     localStorage.setItem('operations-panel-width', String(panelWidth));
   });
+
+    // Mobile OCR downloader state
+  let isOcrDownloaded = $state(true);
+  let ocrDownloadProgress = $state(0);
+  let isOcrDownloading = $state(false);
+  let ocrDownloadUnlisten = $state<any>(null);
 
   function startResize(e: MouseEvent) {
     if (isCollapsed) return;
@@ -92,7 +100,6 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
-  let tableFormat = $state('json');
 
   // Additional 44 tools parameter states
   let batesPrefix = $state('CONF-');
@@ -107,7 +114,46 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
 
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
-  // Auto-switch tool context based on loaded files
+    async function checkOcrStatus() {
+    try {
+      const models = await invoke<{id: string, is_downloaded: boolean}[]>('get_available_ocr_models');
+      const tinyModel = models.find(m => m.id === 'ppocrv6-tiny');
+      if (tinyModel) {
+        isOcrDownloaded = tinyModel.is_downloaded;
+      }
+    } catch (e) {
+      console.warn('Failed to check OCR status:', e);
+    }
+  }
+
+  $effect(() => {
+    if (activeTool?.id === 'ocr' || appState.isMobile) {
+      checkOcrStatus();
+    }
+  });
+
+  async function startOcrDownload() {
+    isOcrDownloading = true;
+    ocrDownloadProgress = 0;
+    try {
+      ocrDownloadUnlisten = await listen('ocr-download-progress', (event: any) => {
+        if (event.payload?.model_id === 'ppocrv6-tiny') {
+          ocrDownloadProgress = event.payload.percent;
+          if (event.payload.percent >= 100) {
+             isOcrDownloaded = true;
+             isOcrDownloading = false;
+             if (ocrDownloadUnlisten) ocrDownloadUnlisten();
+          }
+        }
+      });
+      await invoke('download_ocr_model', { modelId: 'ppocrv6-tiny' });
+    } catch (e) {
+      console.error('Failed to download OCR:', e);
+      isOcrDownloading = false;
+    }
+  }
+
+// Auto-switch tool context based on loaded files
   $effect(() => {
     const paths = appState.documentPaths;
     if (!paths || paths.length === 0) return;
@@ -905,7 +951,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           <label for="footerText" class="section-desc">Footer Text:</label>
           <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
         </div>
-      {:else if activeTool.id === 'ocr'}
+            {:else if activeTool.id === 'ocr'}
         <div class="operation-config">
           <label for="ocrOutputFormat" class="section-desc">Output Destination:</label>
           <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input">
@@ -922,8 +968,30 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
               Copies the recognized text straight to your operating system clipboard!
             {/if}
           </p>
+
+          {#if !isOcrDownloaded}
+            <div style="margin-top: 16px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px;">
+               <p style="margin: 0 0 8px 0; font-size: 13px; color: #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                 <span style="color: #60a5fa;">○</span> Model not downloaded (~6 MB required)
+               </p>
+               {#if isOcrDownloading}
+                 <div style="width: 100%; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px;">
+                    <div style="width: {ocrDownloadProgress}%; height: 100%; background: #3b82f6; transition: width 0.2s;"></div>
+                 </div>
+                 <p style="margin: 4px 0 0 0; font-size: 11px; color: #94a3b8; text-align: right;">{ocrDownloadProgress.toFixed(1)}%</p>
+               {:else}
+                 <button class="run-btn" style="background: #3b82f6; padding: 6px 12px; font-size: 12px; width: auto;" onclick={startOcrDownload}>
+                   Download Offline OCR Engine
+                 </button>
+               {/if}
+            </div>
+          {:else}
+             <div style="margin-top: 16px; font-size: 12px; color: #10b981; display: flex; align-items: center; gap: 6px;">
+                <span>●</span> OCR Ready (Offline)
+             </div>
+          {/if}
         </div>
-      {:else if activeTool.id === 'search'}
+{:else if activeTool.id === 'search'}
         <div class="operation-config">
           <label for="textSearchQueryInput" class="section-desc">Search Text:</label>
           <input
@@ -996,7 +1064,7 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           class="run-btn"
           class:run-btn--loading={isRunning}
           id="btn-run-operation"
-          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0)}
+          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !isOcrDownloaded)}
           onclick={handleRunOperation}
         >
           {#if isRunning}
@@ -1031,6 +1099,28 @@ import { type SnippetTarget } from '$lib/utils/snippetGenerator';
           }} title="Close">✕</button>
         </div>
       {/if}
+      
+      {#if appState.isMobile}
+        <div class="mobile-quick-actions" style="margin-top: 16px; margin-bottom: 16px;">
+          <h4 style="margin: 0 0 10px 16px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">⚡ Quick Actions</h4>
+          <div class="quick-actions-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px;">
+            {#each [
+              { id: 'img_to_pdf', title: 'Scan', icon: '📷', tool: allTools.find(t => t.id === 'img_to_pdf') },
+              { id: 'sign', title: 'Sign', icon: '✍️', tool: allTools.find(t => t.id === 'sign') },
+              { id: 'compress', title: 'Compress', icon: '⚡', tool: allTools.find(t => t.id === 'compress') },
+              { id: 'pdf_sanitize', title: 'Sanitize', icon: '🧹', tool: allTools.find(t => t.id === 'document_pii_scan') || allTools.find(t => t.id === 'pdf_sanitize') }
+            ] as action}
+              {#if action.tool}
+                <button class="quick-action-card" onclick={() => selectTool(action.tool as import('$lib/types/tools').ToolDefinition)} style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <span style="font-size: 24px;">{action.icon}</span>
+                  <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">{action.title}</span>
+                </button>
+              {/if}
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Context Filter Chip Bar -->
       <div class="context-bar" role="tablist" aria-label="Filter context">
         {#each [

@@ -52,10 +52,13 @@ test.describe('App Launch and Navigation', () => {
   test('layout is functional at mobile viewport (390x844)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
-    await expect(page.locator('.operations-panel')).toBeVisible();
 
     // In mobile view, bottom nav should appear instead of sidebar
     await expect(page.locator('#mobile-nav-documents')).toBeVisible();
+
+    // Click Tools tab on bottom nav to display the mobile OperationsPanel
+    await page.click('#mobile-nav-tools');
+    await expect(page.locator('.operations-panel')).toBeVisible();
   });
 
   test('layout is functional at tablet viewport (768x1024)', async ({ page }) => {
