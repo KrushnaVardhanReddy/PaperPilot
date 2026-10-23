@@ -117,7 +117,6 @@ pub fn handle_{name_snake}_command(
     std::fs::write(output, output_bytes).map_err(PdfError::IoError)?;
 
     println!("{name_pascal} complete.");
-
     Ok(())
 }}
 "#
@@ -244,6 +243,7 @@ pub fn handle_{name_snake}_command(
     append_gateway(&args, name_snake)?;
     append_wasm_desktop(&args, name_snake, &name_pascal)?;
     append_edge_e2e(&args, name_snake, &name_pascal)?;
+    append_desktop_args_builder(&args, name_snake)?;
 
     Ok(())
 }
@@ -936,6 +936,67 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
         let mut new_main = lines.join("\n");
         ensure_newline_at_eof(&mut new_main);
         write_or_print(test_main_path, &new_main, args.dry_run)?;
+    }
+
+    Ok(())
+}
+
+
+fn append_desktop_args_builder(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let builder_path = "apps/desktop/src/lib/services/operationArgsBuilder.ts";
+    if Path::new(builder_path).exists() {
+        let content = fs::read_to_string(builder_path)?;
+        if !content.contains(&format!("case '{}':", name_snake)) {
+            let ext = args.output_format.to_lowercase();
+            let arm = format!(
+                r#"        case '{name_snake}':
+            args = {{
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${{docName.replace(/\.[^.]+$/i, '')}}_output.{ext}`)
+            }};
+            break;
+"#,
+                name_snake = name_snake,
+                ext = ext
+            );
+
+            // Insert before "default:"
+            if let Some(pos) = content.find("        default:") {
+                let mut new_content = content[..pos].to_string();
+                new_content.push_str(&arm);
+                new_content.push_str(&content[pos..]);
+                write_or_print(builder_path, &new_content, args.dry_run)?;
+            }
+        }
+    }
+
+    // Add Test File wiring
+    let test_path = "apps/desktop/src/lib/services/operationArgsBuilder.test.ts";
+    if Path::new(test_path).exists() {
+        let content = fs::read_to_string(test_path)?;
+        if !content.contains(&format!("builds args for {}", name_snake)) {
+            let ext = args.output_format.to_lowercase();
+            let test_arm = format!(
+                r#"
+    it('builds args for {name_snake}', async () => {{
+        const args = await buildOperationArgs('{name_snake}', defaultContext);
+        expect(args).toEqual({{
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.{ext}'
+        }});
+    }});
+"#,
+                name_snake = name_snake,
+                ext = ext
+            );
+
+            if let Some(pos) = content.rfind("});") {
+                let mut new_content = content[..pos].to_string();
+                new_content.push_str(&test_arm);
+                new_content.push_str(&content[pos..]);
+                write_or_print(test_path, &new_content, args.dry_run)?;
+            }
+        }
     }
 
     Ok(())

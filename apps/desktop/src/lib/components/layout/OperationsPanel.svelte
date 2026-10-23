@@ -15,6 +15,7 @@ import { buildOperationArgs, type OperationContext } from '$lib/services/operati
 import { onMount } from 'svelte';
 import type { SnippetTarget } from '$lib/utils/snippetGenerator';
 import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
+import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
 
   let searchQuery = $state('');
@@ -241,6 +242,7 @@ import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
     toolTitle: string;
     timestamp: Date;
     message: string;
+    report?: Record<string, any>;
   }
 
   let lastExecution = $state<ExecutionResult | null>(null);
@@ -625,7 +627,8 @@ import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
               durationFormatted,
               toolTitle: activeTool.title,
               timestamp: new Date(),
-              message: msg
+              message: msg,
+              report: (customOutputPath || args.output)?.toLowerCase().endsWith('.json') && resObj.data ? resObj.data : undefined
             };
             executionHistory = [lastExecution, ...executionHistory].slice(0, 10);
           } else {
@@ -1085,6 +1088,9 @@ import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
               {lastExecution.success ? 'Completed' : 'Failed'} in <strong>{lastExecution.durationFormatted}</strong>
             </span>
           </div>
+          {#if lastExecution.success && lastExecution.report}
+            <AuditReportViewer title={lastExecution.toolTitle} report={lastExecution.report} />
+          {/if}
         {/if}
       </div>
     </div>

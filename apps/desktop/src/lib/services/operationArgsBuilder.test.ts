@@ -146,4 +146,38 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('md_to_pdf', defaultContext);
         expect(args).toBeNull();
     });
+
+    it('builds args for pdf_validate_signatures', async () => {
+        const args = await buildOperationArgs('pdf_validate_signatures', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_signature_report.json'
+        });
+    });
+
+    it('builds args for document_pii_scan', async () => {
+        const args = await buildOperationArgs('document_pii_scan', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_pii_report.json'
+        });
+    });
+
+    it('builds args for pdf_extract_tables', async () => {
+        const args = await buildOperationArgs('pdf_extract_tables', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_tables.json',
+            format: 'json'
+        });
+    });
+
+    it('builds args for pdf_extract_tables with csv format', async () => {
+        const args = await buildOperationArgs('pdf_extract_tables', { ...defaultContext, tableFormat: 'csv' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_tables.csv',
+            format: 'csv'
+        });
+    });
 });
