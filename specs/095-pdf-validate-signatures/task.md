@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 095](file:///home/krushna/Project/PaperPilot/specs/095-pdf-validate-signatures/spec.md)
 - Target: Wave 2 (`v0.7.1`) Core Operations Sprint
-- Status: ⏳ In-Flight (Jules Session [`14693800322057187019`](https://jules.google.com/session/14693800322057187019))
+- Status: ✅ Complete (Merged PR #238, commit [`a6e68c6`](https://github.com/KrushnaVardhanReddy/PaperPilot/commit/a6e68c6))
 
 ---
 
