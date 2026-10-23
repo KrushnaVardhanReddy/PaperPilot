@@ -3705,6 +3705,7 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.6",
  "tower-service",
+ "webpki-roots 1.0.11",
 ]
 
 [[package]]
@@ -7516,7 +7517,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots",
+ "webpki-roots 0.25.4",
  "winreg 0.50.0",
 ]
 
@@ -7547,6 +7548,8 @@ dependencies = [
  "native-tls",
  "percent-encoding 2.3.2",
  "pin-project-lite",
+ "quinn",
+ "rustls 0.23.45",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -7554,6 +7557,7 @@ dependencies = [
  "sync_wrapper 1.0.2",
  "tokio",
  "tokio-native-tls",
+ "tokio-rustls 0.26.6",
  "tower",
  "tower-http 0.6.11",
  "tower-service",
@@ -7561,6 +7565,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+ "webpki-roots 1.0.11",
 ]
 
 [[package]]
@@ -7571,10 +7576,8 @@ checksum = "16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029"
 dependencies = [
  "base64 0.23.1",
  "bytes",
- "encoding_rs",
  "futures-core",
  "futures-util",
- "h2 0.4.20",
  "http 1.5.0",
  "http-body 1.1.0",
  "http-body-util",
@@ -7583,7 +7586,6 @@ dependencies = [
  "hyper-util",
  "js-sys",
  "log 0.4.34",
- "mime 0.3.17",
  "percent-encoding 2.3.2",
  "pin-project-lite",
  "quinn",
@@ -7969,6 +7971,7 @@ checksum = "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634"
 dependencies = [
  "aws-lc-rs",
  "once_cell",
+ "ring",
  "rustls-pki-types",
  "rustls-webpki 0.103.15",
  "subtle",
@@ -11050,6 +11053,15 @@ name = "webpki-roots"
 version = "0.25.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
+
+[[package]]
+name = "webpki-roots"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5f280bbb2b287bc8e7de7e3852945a0ff50d1bbcb5ed42b6c7a568c546df171"
+dependencies = [
+ "rustls-pki-types",
+]
 
 [[package]]
 name = "webview2-com"
