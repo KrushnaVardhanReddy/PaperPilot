@@ -460,6 +460,26 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.csv`)
             };
             break;
+
+        case 'pdf_validate_signatures':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_signature_report.json`)
+            };
+            break;
+        case 'document_pii_scan':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_pii_report.json`)
+            };
+            break;
+        case 'pdf_extract_tables':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_tables.${context.tableFormat === 'csv' ? 'csv' : 'json'}`),
+                format: context.tableFormat || 'json'
+            };
+            break;
         default:
             args = {
                 input: docPath,
