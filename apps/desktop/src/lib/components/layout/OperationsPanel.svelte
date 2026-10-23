@@ -1070,7 +1070,16 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !isOcrDownloaded)}
           onclick={handleRunOperation}
         >
-                  {#if isRunning}
+          {#if isRunning}
+            <span class="spinner" aria-hidden="true"></span>
+            Running...
+          {:else if applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1}
+            Run Batch {activeTool.title} ({appState.documents.length} files)
+          {:else}
+            Run {activeTool.title}
+          {/if}
+        </button>
+        {#if isRunning}
           <div class="elapsed-timer" aria-live="polite">⏱ {elapsedDisplay} elapsed</div>
         {:else if lastExecution}
           <div class="last-execution-badge" class:badge-success={lastExecution.success} class:badge-error={!lastExecution.success} title={lastExecution.message}>
