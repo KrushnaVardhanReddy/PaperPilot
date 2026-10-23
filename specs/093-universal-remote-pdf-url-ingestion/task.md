@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 093](file:///home/krushna/Project/PaperPilot/specs/093-universal-remote-pdf-url-ingestion/spec.md)
 - Target: Wave 3 (`v0.7.0`) Advanced Ingestion & Integration
-- Status: Ready for Implementation
+- Status: ⏳ In-Flight (Jules Session [`6136209794630860269`](https://jules.google.com/session/6136209794630860269))
 
 ---
 
