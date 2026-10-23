@@ -3,7 +3,7 @@
 ## Status
 - Spec: [Spec 096](file:///home/krushna/Project/PaperPilot/specs/096-pdf-booklet/spec.md)
 - Target: Wave 2 (`v0.7.1`) Core Operations Sprint
-- Status: ⏳ Ready for Jules Submission
+- Status: ⏳ In-Flight (Jules Session [`13309495698920986331`](https://jules.google.com/session/13309495698920986331))
 
 ---
 
