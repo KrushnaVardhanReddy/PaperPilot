@@ -135,8 +135,16 @@ impl PdfOperation for ExtractImagesOperation {
                             Err(_) => stream.content.clone(),
                         };
 
-                        let width = stream.dict.get(b"Width").and_then(|w| w.as_i64()).unwrap_or(0) as u32;
-                        let height = stream.dict.get(b"Height").and_then(|h| h.as_i64()).unwrap_or(0) as u32;
+                        let width = stream
+                            .dict
+                            .get(b"Width")
+                            .and_then(|w| w.as_i64())
+                            .unwrap_or(0) as u32;
+                        let height = stream
+                            .dict
+                            .get(b"Height")
+                            .and_then(|h| h.as_i64())
+                            .unwrap_or(0) as u32;
 
                         let color_type = if width > 0 && height > 0 {
                             let total_pixels = (width as usize) * (height as usize);
@@ -165,7 +173,8 @@ impl PdfOperation for ExtractImagesOperation {
                                 image::ImageFormat::Png,
                             ) {
                                 // Fallback to raw bytes with .bin if PNG encoding fails
-                                let fallback_path = self.output_dir.join(format!("image_{}.bin", image_count));
+                                let fallback_path =
+                                    self.output_dir.join(format!("image_{}.bin", image_count));
                                 let _ = std::fs::write(&fallback_path, &decompressed);
                                 eprintln!("Failed to encode PNG for image {}: {}", image_count, e);
                             }

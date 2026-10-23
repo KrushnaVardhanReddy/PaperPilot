@@ -32,8 +32,10 @@ pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
             "pii-scan",
-            "--input", &actual_input,
-            "--output", &out_path_str,
+            "--input",
+            &actual_input,
+            "--output",
+            &out_path_str,
         ];
 
         let (success, out_msg, latency) = CliRunner::run(&args).await?;
@@ -48,7 +50,11 @@ pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
             interface: InterfaceType::Cli,
             tier,
             data_sent: format!("paperpilot pii-scan --input ... --output {:?}", out_path),
-            expected_result: if tier == ComplexityTier::Negative { "Fail/Error".into() } else { "JSON Report".into() },
+            expected_result: if tier == ComplexityTier::Negative {
+                "Fail/Error".into()
+            } else {
+                "JSON Report".into()
+            },
             actual_result: out_msg,
             passed,
             latency_ms: latency,
@@ -74,7 +80,8 @@ pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
         let (success, resp, latency) = McpRunner::call_tool(
             tool,
             serde_json::Value::Object(mcp_args.as_object().unwrap().clone()),
-        ).await?;
+        )
+        .await?;
 
         let passed = if tier == ComplexityTier::Negative {
             !success
@@ -87,7 +94,11 @@ pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
             interface: InterfaceType::Mcp,
             tier,
             data_sent: "mcp call document_pii_scan".to_string(),
-            expected_result: if tier == ComplexityTier::Negative { "Fail/Error".into() } else { "JSON Report".into() },
+            expected_result: if tier == ComplexityTier::Negative {
+                "Fail/Error".into()
+            } else {
+                "JSON Report".into()
+            },
             actual_result: resp.to_string(),
             passed,
             latency_ms: latency,
@@ -120,7 +131,11 @@ pub async fn run_pii_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
             interface: InterfaceType::Api,
             tier,
             data_sent: "POST /api/v1/pdf/pii-scan".to_string(),
-            expected_result: if tier == ComplexityTier::Negative { "Fail/Error".into() } else { "JSON Report".into() },
+            expected_result: if tier == ComplexityTier::Negative {
+                "Fail/Error".into()
+            } else {
+                "JSON Report".into()
+            },
             actual_result: resp.to_string(),
             passed,
             latency_ms: latency,

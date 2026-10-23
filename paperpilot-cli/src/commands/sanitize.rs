@@ -17,8 +17,9 @@ pub fn handle_sanitize_command(
     options.remove_thumbnails = true;
     options.remove_private_data = true;
 
-    let (output_bytes, report) = paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
-        .map_err(|e| PdfError::Other(e.to_string()))?;
+    let (output_bytes, report) =
+        paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
+            .map_err(|e| PdfError::Other(e.to_string()))?;
 
     std::fs::write(output, output_bytes).map_err(PdfError::IoError)?;
 

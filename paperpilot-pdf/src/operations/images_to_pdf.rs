@@ -79,15 +79,18 @@ impl PdfOperation for ImagesToPdfOperation {
                 )))
             })?;
 
-            let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+            let ext = path
+                .extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                .unwrap_or_default();
             let (filter, stream_bytes) = if ext == "jpg" || ext == "jpeg" {
                 (b"DCTDecode".to_vec(), img_data)
             } else if ext == "jp2" {
                 (b"JPXDecode".to_vec(), img_data)
             } else {
                 // For PNG, WEBP, BMP, etc.: Convert image pixels to raw RGB24 bytes and compress with FlateDecode
-                use flate2::write::ZlibEncoder;
                 use flate2::Compression;
+                use flate2::write::ZlibEncoder;
                 use std::io::Write;
 
                 let rgb_img = img.to_rgb8();

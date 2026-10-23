@@ -1,6 +1,6 @@
-use paperpilot_pdf::operations::pii::{scan_pii, PiiScanOptions};
-use std::path::PathBuf;
 use paperpilot_core::error::PdfError;
+use paperpilot_pdf::operations::pii::{PiiScanOptions, scan_pii};
+use std::path::PathBuf;
 
 pub fn handle_pii_scan(
     input: &PathBuf,
