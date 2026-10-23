@@ -10,5 +10,5 @@ pub mod sanitize;
 pub mod security_forms;
 pub mod workflow;
 
-pub mod table;
 pub mod pdf_validate_signatures;
+pub mod table;

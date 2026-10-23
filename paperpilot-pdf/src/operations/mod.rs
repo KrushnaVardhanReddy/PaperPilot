@@ -27,6 +27,7 @@ pub mod ocr;
 pub mod office;
 pub mod page_numbers;
 pub mod pdf_a;
+pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod rag_chunks;
 pub mod redact;
@@ -42,7 +43,6 @@ pub mod table;
 pub mod validate;
 pub mod watermark;
 pub mod workflow;
-pub mod pdf_validate_signatures;
 
 pub use pii::scan_pii;
 pub use sanitize::sanitize_pdf;

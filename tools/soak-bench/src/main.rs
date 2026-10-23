@@ -694,6 +694,7 @@ fn calculate_percentiles(mut data: Vec<f64>) -> Percentiles {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_report(
     duration_arg: u64,
     output_path: String,

@@ -96,7 +96,10 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
-        .route("/api/v1/pdf/validate-signatures", post(handlers::pdf_validate_signatures) )
+        .route(
+            "/api/v1/pdf/validate-signatures",
+            post(handlers::pdf_validate_signatures),
+        )
         .route("/api/v1/office/convert", post(handlers::office_convert))
         .route(
             "/api/v1/office/excel-to-json",

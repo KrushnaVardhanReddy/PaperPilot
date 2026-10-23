@@ -7,22 +7,23 @@ pub mod group_e;
 #[cfg(feature = "office")]
 #[cfg(feature = "office")]
 pub mod office;
+pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
 pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
-pub mod pdf_validate_signatures;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
 
 fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::PathBuf> {
     if let Some(s) = path.to_str()
-        && (s.starts_with("http://") || s.starts_with("https://")) {
-            return paperpilot_core::url_fetch::resolve_url_to_temp_file(s);
-        }
+        && (s.starts_with("http://") || s.starts_with("https://"))
+    {
+        return paperpilot_core::url_fetch::resolve_url_to_temp_file(s);
+    }
     Ok(path.to_path_buf())
 }
 
@@ -239,7 +240,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             output,
             format,
             pages,
-        } => table::execute(resolve_input_path(input)?, output.clone(), format.clone(), pages.clone()),
+        } => table::execute(
+            resolve_input_path(input)?,
+            output.clone(),
+            format.clone(),
+            pages.clone(),
+        ),
         Commands::Search { input, query } => {
             group_c::handle_search(&resolve_input_path(input)?, query)
         }
@@ -340,7 +346,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset.as_ref(),
             recipe.as_ref(),
         ),
-        Commands::PdfValidateSignatures { input, output } => pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output),
+        Commands::PdfValidateSignatures { input, output } => {
+            pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
