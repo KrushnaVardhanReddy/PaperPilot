@@ -1,0 +1,97 @@
+Implement Task 5.9.79 / Spec 094: Pure-Rust Tool Scaffolding Generator (`specs/094-pure-rust-tool-scaffolding-generator/spec.md`).
+
+---
+
+## 🏛️ ARCHITECTURAL GOALS & CONTEXT
+
+In PaperPilot, adding any new tool requires wiring across 8 distinct files across our 5-interface surface model (Core Rust, CLI, MCP Server, REST Gateway, WASM, Cloudflare Edge, Desktop UI, and Penta E2E Suite). Manually doing this for every tool introduces boilerplate fatigue, typos, and merge conflicts.
+
+Your task is to build a standalone, pure-Rust CLI tool in `tools/penta-scaffold` that automatically generates clean, compiling scaffolding across all 5 surfaces from a single command.
+
+---
+
+## 🎯 OBJECTIVES & WORK ITEMS
+
+### 1. Create `tools/penta-scaffold` Crate
+- Create `tools/penta-scaffold/Cargo.toml`:
+  ```toml
+  [package]
+  name = "penta-scaffold"
+  version = "0.1.0"
+  edition = "2024"
+
+  [dependencies]
+  clap = { version = "4", features = ["derive"] }
+  heck = "0.5"
+  anyhow = "1.0"
+  ```
+- Add `"tools/penta-scaffold"` to root workspace `Cargo.toml`.
+
+### 2. Implement Generator Engine (`src/main.rs`, `src/templates.rs`)
+- Command Line Options (`clap`):
+  - `--name <NAME>` (e.g. `pdf_validate_signatures`)
+  - `--title <TITLE>` (e.g. `"Validate Digital Signatures"`)
+  - `--category <CATEGORY>` (e.g. `"security"`, `"organize"`, `"conversions"`)
+  - `--icon <ICON>` (e.g. `"🔏"`)
+  - `--input-format <IN>` (e.g. `"pdf"`)
+  - `--output-format <OUT>` (e.g. `"json"`, `"pdf"`, `"csv"`)
+  - `--description <DESC>` (e.g. `"Cryptographically verify digital signatures and certificates."`)
+  - `--dry-run` (Boolean flag: preview generated file changes without modifying files)
+
+### 3. Generated Files & Appending Logic
+Use string templates and clean AST/line-based insertion to generate:
+1. **Core Operation** (`paperpilot-pdf/src/operations/<name_stem>.rs`):
+   - Type definitions: `struct <PascalCase>Operation`, `PdfOperation` implementation, parameter struct, and `#[cfg(test)]` test stub.
+   - Append `pub mod <name_stem>;` to `paperpilot-pdf/src/operations/mod.rs`.
+2. **CLI Subcommand** (`paperpilot-cli/src/commands/<name_stem>.rs`):
+   - Command execution function.
+   - Insert enum variant into `paperpilot-cli/src/cli.rs` under `Commands`.
+   - Insert dispatch arm into `paperpilot-cli/src/commands/mod.rs`.
+3. **MCP Server Tool** (`paperpilot-mcp/src/server.rs`):
+   - Add tool JSON schema in `list_tools()` with property descriptions.
+   - Add execution match arm in `call_tool()`.
+4. **REST Gateway** (`paperpilot-gateway`):
+   - Add handler function in `src/handlers.rs`.
+   - Register route in `src/server.rs` under `/api/v1/pdf/<endpoint>`.
+5. **Browser WASM** (`paperpilot-wasm/src/lib.rs`):
+   - Expose `WasmPdfEngine.<method>()`.
+   - Add tool definition into `WasmPdfEngine.list_tools()`.
+6. **Desktop & Embed UI** (`apps/desktop/src/lib/types/toolList.ts`):
+   - Append `ToolDefinition` object to `allTools` array with `inputFormat` and `outputFormat`.
+7. **Penta-Interface E2E Suite** (`tools/penta-interface-e2e/src/cases/<name_stem>.rs`):
+   - Scaffold the 10 unmocked test assertions across all 5 surfaces.
+   - Register module in `tools/penta-interface-e2e/src/cases/mod.rs` and `main.rs`.
+
+---
+
+## 🔍 REFERENCE TOOLS TO MODEL AFTER
+Study these two existing cleanroom implementations for the exact naming conventions and code structure:
+1. **`pdf_sanitize`** (`Task 5.9.59`):
+   - Core: `paperpilot-pdf/src/operations/sanitize.rs`
+   - CLI: `paperpilot-cli/src/commands/sanitize.rs`
+   - MCP: `paperpilot-mcp/src/server.rs` (search `"pdf_sanitize"`)
+   - E2E: `tools/penta-interface-e2e/src/cases/sanitize.rs`
+2. **`document_pii_scan`** (`Task 5.9.60`):
+   - Core: `paperpilot-pdf/src/operations/pii.rs`
+   - CLI: `paperpilot-cli/src/commands/pii.rs`
+   - MCP: `paperpilot-mcp/src/server.rs` (search `"document_pii_scan"`)
+   - E2E: `tools/penta-interface-e2e/src/cases/pii.rs`
+
+---
+
+## 🛠️ INTEGRATION & TESTING
+- Add `make new-tool` to root `Makefile`:
+  ```makefile
+  new-tool:
+  	cargo run -p penta-scaffold -- $(ARGS)
+  ```
+- Write comprehensive unit tests in `tools/penta-scaffold/src/` testing template generation and `--dry-run`.
+- Verify `cargo check --workspace` passes cleanly.
+
+---
+
+## 🚫 CONSTRAINTS
+- Pure Rust only.
+- Safe file editing: create backups or refuse to overwrite existing files unless explicitly specified.
+- Strictly compile cargo tests with `-j 2` (`cargo test -p penta-scaffold --lib -j 2`).
+- Never perform destructive git commands (`git reset --hard`).
