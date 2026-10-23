@@ -1,0 +1,103 @@
+# Task 5.3.2 Prompt: Multi-Page N-Up Imposition Engine (`pdf_nup`)
+
+You are implementing Task 5.3.2: `pdf_nup` (Spec 097) in PaperPilot.
+Follow this systematic workflow:
+1. Run the scaffolding generator to wire all 5 surfaces.
+2. Verify the wiring compiles cleanly with `cargo check -p penta-interface-e2e -j 2`.
+3. Implement the core N-Up grid layout algorithm and unit tests.
+4. Verify all tests pass cleanly.
+
+---
+
+### Step 1: Run Penta-Scaffold Generator
+```bash
+cargo run -j 2 -p penta-scaffold -- --name pdf_nup --title "N-Up Page Imposition" --category organize --icon "📑" --input-type pdf --output-type pdf --description "Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout."
+```
+
+Verify compilation:
+```bash
+cargo check -p penta-interface-e2e -j 2
+```
+
+---
+
+### Step 2: Implementation Details (`paperpilot-pdf/src/operations/pdf_nup.rs`)
+
+```rust
+use lopdf::{Document, Object, Dictionary, Stream};
+use paperpilot_core::error::PdfError;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PdfNupOptions {
+    #[serde(default = "default_nup")]
+    pub nup: u32, // 2, 4, 9, or 16
+    #[serde(default = "default_ordering")]
+    pub ordering: String, // "horizontal" or "vertical"
+    #[serde(default = "default_margin")]
+    pub margin_pt: f32,
+    #[serde(default = "default_spacing")]
+    pub spacing_pt: f32,
+    #[serde(default)]
+    pub draw_borders: bool,
+}
+
+fn default_nup() -> u32 { 2 }
+fn default_ordering() -> String { "horizontal".to_string() }
+fn default_margin() -> f32 { 18.0 }
+fn default_spacing() -> f32 { 10.0 }
+
+impl Default for PdfNupOptions {
+    fn default() -> Self {
+        Self {
+            nup: 2,
+            ordering: default_ordering(),
+            margin_pt: 18.0,
+            spacing_pt: 10.0,
+            draw_borders: false,
+        }
+    }
+}
+```
+
+#### Imposition Algorithm
+1. Parse document:
+   ```rust
+   let doc = Document::load_mem(input_bytes)
+       .map_err(|e| PdfError::ParseError(e.to_string()))?;
+   let page_ids = doc.get_pages();
+   if page_ids.is_empty() {
+       return Err(PdfError::InvalidInput("No pages in document".into()));
+   }
+   ```
+2. Determine rows and cols:
+   - `nup == 2` $\rightarrow$ rows = 1, cols = 2 (landscape sheet) or rows = 2, cols = 1.
+   - `nup == 4` $\rightarrow$ rows = 2, cols = 2.
+   - `nup == 9` $\rightarrow$ rows = 3, cols = 3.
+   - `nup == 16` $\rightarrow$ rows = 4, cols = 4.
+3. Group input pages into chunks of size `nup`.
+4. For each chunk of pages:
+   - Create a new composite sheet page.
+   - Compute cell box `(cell_w, cell_h)` based on sheet width/height minus margins and inter-cell spacing.
+   - Calculate scale factor $s$ and translation $(tx, ty)$ for each page in its cell.
+   - Embed original page content as Form XObjects or combine streams wrapped with transformation matrix `cm`.
+5. Return output PDF bytes via `doc.save_to(&mut buf)`.
+
+---
+
+### Step 3: Unit Tests
+In `paperpilot-pdf/src/operations/pdf_nup.rs`:
+- `test_nup_2_up`: 4-page test PDF $\rightarrow$ 2 output sheets.
+- `test_nup_4_up`: 4-page test PDF $\rightarrow$ 1 output sheet.
+- `test_nup_empty_input`: Returns `Err(PdfError::ParseError(_))` or `InvalidInput`.
+
+---
+
+### Step 4: Verification Commands
+Always pass `-j 2`:
+```bash
+cargo test -p paperpilot-pdf --lib operations::pdf_nup -j 2
+cargo run -j 2 -p penta-interface-e2e -- --group pdf_nup
+cargo check --workspace -j 2
+```

@@ -1,0 +1,95 @@
+# Task 5.3.3 Prompt: Page Dimensional Scaling Engine (`pdf_scale_pages`)
+
+You are implementing Task 5.3.3: `pdf_scale_pages` (Spec 098) in PaperPilot.
+Follow this systematic workflow:
+1. Run the scaffolding generator to wire all 5 surfaces.
+2. Verify the wiring compiles cleanly with `cargo check -p penta-interface-e2e -j 2`.
+3. Implement page dimensional scaling and transformation matrix wrapping.
+4. Verify all tests pass cleanly.
+
+---
+
+### Step 1: Run Penta-Scaffold Generator
+```bash
+cargo run -j 2 -p penta-scaffold -- --name pdf_scale_pages --title "Scale Page Dimensions" --category organize --icon "📐" --input-type pdf --output-type pdf --description "Scale page dimensions between standard formats (A4, Letter, Legal) or arbitrary percentages."
+```
+
+Verify compilation:
+```bash
+cargo check -p penta-interface-e2e -j 2
+```
+
+---
+
+### Step 2: Implementation Details (`paperpilot-pdf/src/operations/pdf_scale_pages.rs`)
+
+```rust
+use lopdf::{Document, Object, Dictionary, Stream};
+use paperpilot_core::error::PdfError;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PdfScalePagesOptions {
+    #[serde(default = "default_target_size")]
+    pub target_size: String, // "A4", "Letter", "Legal", "A3", "A5", "Tabloid"
+    #[serde(default = "default_scale_factor")]
+    pub scale_factor: f32,
+    #[serde(default = "default_true")]
+    pub maintain_aspect_ratio: bool,
+    #[serde(default = "default_true")]
+    pub center_content: bool,
+}
+
+fn default_target_size() -> String { "A4".to_string() }
+fn default_scale_factor() -> f32 { 1.0 }
+fn default_true() -> bool { true }
+
+impl Default for PdfScalePagesOptions {
+    fn default() -> Self {
+        Self {
+            target_size: default_target_size(),
+            scale_factor: 1.0,
+            maintain_aspect_ratio: true,
+            center_content: true,
+        }
+    }
+}
+```
+
+#### Page Sizing Reference Dimensions (in PostScript points, 72 pt = 1 inch)
+- `A4`: 595.28 $\times$ 841.89
+- `Letter`: 612.0 $\times$ 792.0
+- `Legal`: 612.0 $\times$ 1008.0
+- `A3`: 841.89 $\times$ 1190.55
+- `A5`: 419.53 $\times$ 595.28
+- `Tabloid`: 792.0 $\times$ 1224.0
+
+#### Transformation Implementation
+1. Load PDF bytes with `Document::load_mem(input_bytes)`.
+2. For each page in `doc.get_pages()`:
+   - Extract `/MediaBox` array `[x0, y0, x1, y1]`. Original width $w = x1 - x0$, height $h = y1 - y0$.
+   - Target dimensions: if `target_size` is specified (e.g. `"A4"`), use standard target box; if `scale_factor != 1.0`, multiply by factor.
+   - Calculate uniform scale $s = \min(target\_w / w, target\_h / h)$.
+   - Calculate centering offsets $tx, ty$.
+   - Prepend `q\n{s} 0 0 {s} {tx} {ty} cm\n` and append `\nQ\n` around the page `/Contents` stream.
+   - Update `/MediaBox` and `/CropBox` on the page dictionary to the target dimensions.
+3. Save output bytes: `doc.save_to(&mut buf)`.
+
+---
+
+### Step 3: Unit Tests
+In `paperpilot-pdf/src/operations/pdf_scale_pages.rs`:
+- `test_scale_to_a4`: Input Letter PDF $\rightarrow$ output page `/MediaBox` matches A4 dimensions.
+- `test_scale_factor_half`: 50% scale factor $\rightarrow$ page `/MediaBox` and stream scaled.
+- `test_scale_empty_document`: Returns error on empty bytes.
+
+---
+
+### Step 4: Verification Commands
+Always pass `-j 2`:
+```bash
+cargo test -p paperpilot-pdf --lib operations::pdf_scale_pages -j 2
+cargo run -j 2 -p penta-interface-e2e -- --group pdf_scale_pages
+cargo check --workspace -j 2
+```

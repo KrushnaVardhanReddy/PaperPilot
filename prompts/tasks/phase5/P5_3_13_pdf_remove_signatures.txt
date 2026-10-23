@@ -1,0 +1,78 @@
+# Task 5.3.13 Prompt: Digital Signature Removal Engine (`pdf_remove_signatures`)
+
+You are implementing Task 5.3.13: `pdf_remove_signatures` (Spec 099) in PaperPilot.
+Follow this systematic workflow:
+1. Run the scaffolding generator to wire all 5 surfaces.
+2. Verify the wiring compiles cleanly with `cargo check -p penta-interface-e2e -j 2`.
+3. Implement signature removal and AcroForm widget sanitization.
+4. Verify all tests pass cleanly.
+
+---
+
+### Step 1: Run Penta-Scaffold Generator
+```bash
+cargo run -j 2 -p penta-scaffold -- --name pdf_remove_signatures --title "Remove Digital Signatures" --category security --icon "🔓" --input-type pdf --output-type pdf --description "Strip digital signature fields, cryptographic locks, and widget annotations."
+```
+
+Verify compilation:
+```bash
+cargo check -p penta-interface-e2e -j 2
+```
+
+---
+
+### Step 2: Implementation Details (`paperpilot-pdf/src/operations/pdf_remove_signatures.rs`)
+
+```rust
+use lopdf::{Document, Object, Dictionary, ObjectId};
+use paperpilot_core::error::PdfError;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PdfRemoveSignaturesOptions {
+    #[serde(default = "default_true")]
+    pub remove_empty_signature_fields: bool,
+}
+
+fn default_true() -> bool { true }
+```
+
+#### Removal Logic
+1. Load PDF bytes with `Document::load_mem(input_bytes)`.
+2. Inspect Catalog `/Root` $\rightarrow$ `/AcroForm`:
+   - If `/AcroForm` exists (as direct dict or reference), inspect `/Fields` array.
+   - Collect IDs of fields where:
+     - The field dictionary has `/FT == /Sig` (Name object `b"Sig"`).
+     - Or the field value `/V` references a dictionary with `/Type == /Sig`.
+   - Remove these field references from the `/Fields` array.
+   - If `/Fields` is now empty, remove `/AcroForm` from the catalog or clear `/SigFlags`.
+   - Delete the identified signature objects from `doc.objects`.
+3. Inspect all pages in `doc.get_pages()`:
+   - For each page, inspect `/Annots` array if present.
+   - Filter out any annotation references pointing to the deleted signature widgets or where `/Subtype == /Widget` and `/FT == /Sig`.
+   - If `/Annots` is now empty, optionally remove the `/Annots` key.
+4. Save cleaned document: `doc.save_to(&mut buf)`.
+
+---
+
+### Step 3: Unit Tests
+In `paperpilot-pdf/src/operations/pdf_remove_signatures.rs`:
+- `test_remove_signatures_from_signed_pdf`:
+  - Create a synthetic PDF with an AcroForm signature field and `/SigFlags`.
+  - Execute `pdf_remove_signatures_bytes`.
+  - Verify output document has no `/SigFlags` and no signature field in `/AcroForm`.
+- `test_remove_signatures_from_unsigned_pdf`:
+  - Pass unsigned PDF $\rightarrow$ succeeds and leaves pages intact.
+- `test_remove_signatures_empty_bytes`:
+  - Empty input returns error.
+
+---
+
+### Step 4: Verification Commands
+Always pass `-j 2`:
+```bash
+cargo test -p paperpilot-pdf --lib operations::pdf_remove_signatures -j 2
+cargo run -j 2 -p penta-interface-e2e -- --group pdf_remove_signatures
+cargo check --workspace -j 2
+```
