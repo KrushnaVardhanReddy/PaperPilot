@@ -57,15 +57,17 @@ pub struct SignatureValidationReport {
    - Load both `doc` (input) and `baseline_doc` (baseline).
    - Compare page counts:
      - If count differs, return `baseline_match: false`, `verdict: "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`, `diff_summary: ["Page count mismatch: baseline has X pages, signed file has Y pages"]`.
-   - For each page index (1..=page_count):
-     - Extract raw text streams from baseline page `/Contents` and signed page `/Contents`.
-     - Filter out signature widget appearances (marked with `/Subtype /Widget` and `/FT /Sig`).
-     - Compare normalized page text. If differences exist:
-       - Record page number in `altered_pages`.
-       - Add concise description of difference to `diff_summary` (e.g. `"Page 1 text mismatch: altered clauses or numbers detected"`).
-   - If `altered_pages` is empty:
-     - Set `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
-   - Else:
+   - **Tier 1 (SHA-256 Fast Path)**:
+     - For each page index (1..=page_count), extract the raw `/Contents` streams.
+     - Compute sha256 checksums. If all match and no non-signature objects changed $\to$ early exit with `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
+   - **Tier 2 (Signature Whitelist)**:
+     - If differences exist, verify if they are strictly signature objects (`/Type /Sig`, `/Widget` annotations on the signature page, `/AcroForm` updates).
+     - If so, mark as `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
+   - **Tier 3 (Semantic Token Diffing)**:
+     - If non-signature stream differences exist:
+       - Extract text tokens from baseline page `/Contents` and signed page `/Contents`.
+       - Record differing page in `altered_pages`.
+       - Add concise description to `diff_summary` (e.g. `"Page 1 text mismatch: altered clauses or numbers detected"`).
      - Set `baseline_match: false`, `verdict: "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`.
 3. Include `baseline_report` in `SignatureValidationReport`.
 

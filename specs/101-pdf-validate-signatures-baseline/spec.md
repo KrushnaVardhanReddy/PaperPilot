@@ -58,29 +58,34 @@ pub struct SignatureValidationReport {
 
 ---
 
-## 3. Core Engine Algorithm
+## 3. Core Engine Algorithm (3-Tier Hierarchical Detection)
 
-1. **Digital Signature Verification**:
-   - Extract `/AcroForm` and `/Page` `/Annots` signature references.
-   - Parse `/ByteRange`, `/Contents`, and `/SubFilter`.
-   - Compute digest over specified byte ranges and verify against PKCS#7 container.
-   - Check if incremental updates exist past `/ByteRange` (`is_tampered`).
+When `--baseline` is supplied, PaperPilot executes a 3-tier verification pipeline designed for sub-25ms throughput:
 
-2. **Baseline Comparison Pipeline (when baseline is supplied)**:
-   - Load baseline bytes from `options.baseline_path` or `options.baseline_bytes`.
-   - Parse both `baseline_doc` and `signed_doc` via `lopdf::Document`.
-   - **Page Count & Geometry Check**: Assert identical page count and `/MediaBox` dimensions.
-   - **Content Stream Diffing**:
-     - For each page, extract text operators and `/Contents` streams.
-     - Normalize whitespace and compare text tokens.
-     - Identify any modified numbers, clauses, or text lines (e.g., `"24.99%"` vs `"4.99%"`).
-   - **Object Whitelist Verification**:
-     - A legitimate "Sign-Only" operation should *only* introduce:
-       - `/Sig` dictionary.
-       - Signature `/Widget` annotation.
-       - Modified `/Annots` array on the target page.
-       - Modified `/AcroForm` `/Fields` array and `/SigFlags`.
-     - Any modified `/Contents`, `/Resources`, or non-signature form fields flag the document as `CONTENT_ALTERED_PRIOR_TO_SIGNATURE`.
+### Tier 1: Page-by-Page Content Stream Hashing (`SHA-256` Fast Path)
+- For every page `i` in `1..=page_count`:
+  - Extract the raw byte stream(s) of `/Contents` from both `baseline_doc` and `signed_doc`.
+  - Compute `sha256(baseline_page_contents)` vs `sha256(signed_page_contents)`.
+- If hashes across all pages match identically:
+  - **Result**: Immediate Early Exit $\to$ `baseline_match = true`, `verdict = "UNTOUCHED_JUST_SIGNED"` (Latency: `< 5ms`).
+
+### Tier 2: Signature Object & Annotation Whitelist Verification
+- If any page content or object hash differs:
+  - Check whether the diff is caused solely by signature addition.
+  - Whitelist:
+    - `/Type /Sig` dictionary entries.
+    - `/Subtype /Widget` annotations on the signature target page where `/FT == /Sig`.
+    - Updates to the page's `/Annots` array and `/Root /AcroForm` (`/Fields`, `/SigFlags`).
+- If all differences belong strictly to the signature whitelist:
+  - **Result**: `baseline_match = true`, `verdict = "UNTOUCHED_JUST_SIGNED"`.
+
+### Tier 3: Semantic Text Token Diffing (Exact Clause & Number Pinpointing)
+- If non-signature differences exist on page `k`:
+  - Extract text tokens and text operators (`Tj`, `TJ`, `'`, `"`) from both baseline and signed content streams.
+  - Normalize whitespace and identify exact token differences (e.g. `"24.99%"` $\to$ `"4.99%"`).
+  - Record modified page numbers in `altered_pages`.
+  - Append descriptive diff lines to `diff_summary` (e.g. `"Page 1: modified text detected ('24.99%' vs '4.99%')"`).
+  - **Result**: `baseline_match = false`, `verdict = "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`.
 
 ---
 
