@@ -30,6 +30,7 @@ pub mod office;
 pub mod page_numbers;
 pub mod pdf_a;
 pub mod pdf_booklet;
+pub mod pdf_nup;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod rag_chunks;

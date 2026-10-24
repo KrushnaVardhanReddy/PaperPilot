@@ -95,6 +95,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let metadataTitle = $state('');
 
   // New tool parameters
+  let nupPages = $state(2);
+  let nupOrdering = $state('horizontal');
+  let nupMargin = $state(18);
+  let nupSpacing = $state(10);
+  let nupDrawBorders = $state(false);
   let blankSensitivity = $state(99);
   let textSearchQuery = $state('');
   let searchResultDisplay = $state<string | null>(null);
@@ -389,7 +394,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             metadataTitle,
             compressQuality,
             blankSensitivity,
-            searchQuery: textSearchQuery
+            searchQuery: textSearchQuery,
+            nupPages,
+            nupOrdering,
+            nupMargin,
+            nupSpacing,
+            nupDrawBorders
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -525,7 +535,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           metadataTitle,
           compressQuality,
           blankSensitivity,
-          searchQuery: textSearchQuery
+          searchQuery: textSearchQuery,
+          nupPages,
+          nupOrdering,
+          nupMargin,
+          nupSpacing,
+          nupDrawBorders
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1012,6 +1027,44 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               🔍 {searchResultDisplay}
             </div>
           {/if}
+        </div>
+      {:else if activeTool.id === 'pdf_nup'}
+        <div class="operation-config">
+          <label class="section-desc">Pages Per Sheet:</label>
+          <div class="segmented" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            {#each [2, 4, 9, 16] as n}
+              <button
+                type="button"
+                class="btn-segment"
+                style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {nupPages === n ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {nupPages === n ? '#fff' : 'var(--text-primary)'}; font-size: 13px;"
+                onclick={() => nupPages = n}
+              >
+                {n}-Up
+              </button>
+            {/each}
+          </div>
+
+          <label for="nupOrdering" class="section-desc">Ordering Direction:</label>
+          <select id="nupOrdering" bind:value={nupOrdering} class="form-input" style="margin-bottom: 12px;">
+            <option value="horizontal">Horizontal (Left to Right)</option>
+            <option value="vertical">Vertical (Top to Bottom)</option>
+          </select>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <label for="nupMargin" class="section-desc">Margin ({nupMargin} pt):</label>
+              <input id="nupMargin" type="range" min="0" max="72" bind:value={nupMargin} class="range-input" />
+            </div>
+            <div>
+              <label for="nupSpacing" class="section-desc">Spacing ({nupSpacing} pt):</label>
+              <input id="nupSpacing" type="range" min="0" max="36" bind:value={nupSpacing} class="range-input" />
+            </div>
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" bind:checked={nupDrawBorders} />
+            Draw borders around each page
+          </label>
         </div>
       {:else if activeTool.id === 'burst'}
         <div class="operation-config">

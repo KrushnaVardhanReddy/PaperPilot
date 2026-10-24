@@ -11,5 +11,6 @@ pub mod security_forms;
 pub mod workflow;
 
 pub mod pdf_booklet;
+pub mod pdf_nup;
 pub mod pdf_validate_signatures;
 pub mod table;

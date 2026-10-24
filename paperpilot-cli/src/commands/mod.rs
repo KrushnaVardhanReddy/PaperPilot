@@ -8,6 +8,7 @@ pub mod group_e;
 #[cfg(feature = "office")]
 pub mod office;
 pub mod pdf_booklet;
+pub mod pdf_nup;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
@@ -353,6 +354,10 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfBooklet { input, output } => {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
+<<<<<<< HEAD
+=======
+        Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
+>>>>>>> origin/jules-14575779739699636673-f4a3e23c
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -618,6 +623,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_nup",
+                    "Preview",
+                    "Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.",
                 ),
                 (
                     "pdf_booklet",

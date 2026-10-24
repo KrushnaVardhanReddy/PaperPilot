@@ -310,6 +310,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
             )?;
 
+            let res_pdf_nup = cases::pdf_nup::run_pdf_nup_suite().await?;
+            println!("N-Up Page Imposition finished: {} tests", res_pdf_nup.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (N-Up Page Imposition)",
+                &res_pdf_nup,
+                "reports/PENTA_INTERFACE_E2E_PDF_NUP_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -317,6 +325,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_nup);
             all.extend(res_pdf_booklet);
             all.extend(generated_res);
             generate_markdown_report(
