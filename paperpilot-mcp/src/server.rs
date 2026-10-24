@@ -2310,6 +2310,19 @@ impl PaperPilotMcpServer {
             "input".to_string(),
             serde_json::Value::Object(prop_input_pdf_validate_signatures),
         );
+        let mut prop_baseline = serde_json::Map::new();
+        prop_baseline.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        prop_baseline.insert(
+            "description".to_string(),
+            serde_json::Value::String("Capture and report pre-sign incremental update tamper forensics / baseline integrity".to_string()),
+        );
+        props_pdf_validate_signatures.insert(
+            "baseline".to_string(),
+            serde_json::Value::Object(prop_baseline),
+        );
 
         let mut prop_output_pdf_validate_signatures = serde_json::Map::new();
         prop_output_pdf_validate_signatures.insert(
@@ -5525,9 +5538,18 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
+                // Extract baseline boolean (defaults to false if absent)
+                let baseline = args
+                    .get("baseline")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions::default();
+
+                let mut options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions::default();
+                options.baseline = baseline;
+
                 let result = paperpilot_pdf::operations::pdf_validate_signatures::pdf_validate_signatures_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 

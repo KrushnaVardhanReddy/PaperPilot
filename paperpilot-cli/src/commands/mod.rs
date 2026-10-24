@@ -359,8 +359,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset.as_ref(),
             recipe.as_ref(),
         ),
-        Commands::PdfValidateSignatures { input, output } => {
-            pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output)
+        Commands::PdfValidateSignatures {
+            input,
+            output,
+            baseline,
+        } => {
+            pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output, baseline)
         }
         Commands::PdfBooklet { input, output } => {
             pdf_booklet::handle_pdf_booklet_command(input, output)
