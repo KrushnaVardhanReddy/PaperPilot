@@ -27,6 +27,7 @@
 | **Task 103A** | libSQL Storage Engine (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 1855248125635554831](https://jules.google.com/session/1855248125635554831) | ✅ Merged (PR #246) |
 | **Task 103B** | Vector Store & Semantic Search (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 16885534241118434886](https://jules.google.com/session/16885534241118434886) | 🚀 Active In-Flight |
 | **Task 104A** | Web WASM Portal Parity & Categorized Navigation (`apps/web` `[Spec 104]`) | `main` | [Session 14514876981403026200](https://jules.google.com/session/14514876981403026200) | 🚀 Active In-Flight |
+| **Task 105A** | Embed Widget Parity & Sandbox Upgrade (`apps/embed` `[Spec 105]`) | `main` | [Session 9795447210386010979](https://jules.google.com/session/9795447210386010979) | 🚀 Active In-Flight |
 
 ### 3. Immediate Next Roadmap Target (Selected: Option A + Strategy Option 1)
 **Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine (Section 6.8 / Wave 7)**:
