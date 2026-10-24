@@ -11,7 +11,7 @@ PaperPilot is a blazing-fast, local-first document automation platform. It allow
 ## ✨ Features
 
 - **🚀 Native Performance & Zero-Chrome:** Powered entirely by pure-Rust (`lopdf`, `fulgur`, `hayro`, `rusto-rs` PaddleOCR v4, `rten`) for sub-millisecond document manipulation and sub-60ms office conversions. Zero external Chromium or C++ runtime dependencies.
-- **🏆 100% Penta-Interface Parity:** Over 50+ PDF and Office tools unified across 5 surfaces (CLI, MCP, REST, WASM, Cloudflare Edge) and orchestratable through the modern Desktop GUI ([Penta-Interface Report](reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md)).
+- **🏆 100% Penta-Interface Parity:** Over 60+ PDF and Office tools unified across 5 surfaces (CLI, MCP, REST, WASM, Cloudflare Edge) and orchestratable through the modern Desktop GUI ([Penta-Interface Report](reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md)).
 - **🧠 100% Offline AI & NLP:** Built-in hybrid engine featuring keyword/regex rule routing and embedded on-device intent classification (`TinyBERT-4L-312D` via pure-Rust SIMD tensor engine, <2ms latency). Zero server calls or external downloads required for command execution.
 - **💻 Desktop GUI (Svelte 5 + Tauri 2):** Fast, reactive desktop experience with dynamic context-aware tool ranking, multi-tab canvas viewer, interactive sticky notes & drawing markups, visual side-by-side diff slider, and collapsible multi-turn AI chat side-drawer.
 - **🌐 Client-Side Browser WASM & Edge Microservice:** Zero-install web suite (`apps/web`) executing 100% in browser memory with zero server upload, plus a Cloudflare Workers edge microservice (`apps/edge`) delivering sub-10ms serverless PDF processing.
@@ -38,7 +38,7 @@ PaperPilot follows a strict multi-crate workspace separation of concerns, keepin
 │                                 Rust Core Workspace                                    │
 ├───────────────────┬──────────────────────────────────────────┬─────────────────────────┤
 │ paperpilot-core   │ Shared traits, data models & abstractions│ PdfOperation, types     │
-│ paperpilot-pdf    │ 44 PDF operations (Pure-Rust engine)     │ lopdf, fulgur, hayro    │
+│ paperpilot-pdf    │ 60+ Document operations (Pure-Rust)      │ lopdf, fulgur, hayro    │
 │ paperpilot-nlp    │ Offline AI intent & entity engine        │ TinyBERT, rten, rules   │
 │ paperpilot-gateway│ Axum HTTP REST server & OpenAPI engine   │ Swagger UI, healthcheck │
 │ paperpilot-mcp    │ Model Context Protocol server            │ Stdio JSON-RPC protocol │
@@ -108,36 +108,40 @@ Pre-compiled standalone binaries for **Linux**, **macOS**, and **Windows** are a
 
 ---
 
-## 🎯 v0.5.0 Launch Scope & Release Waves
+## 🎯 v0.6.0 Launch Scope & Release Waves
 
-PaperPilot is engineered with an **Open Core Model** and a **Progressive Release Strategy**. All 52 tool core engines have been developed in pure Rust, and are released through systematic stability gates:
+PaperPilot is engineered with an **Open Core Model** and a **Progressive Release Strategy**. Over 60+ tool core engines are implemented in pure Rust, validated across all 5 deployment surfaces:
 
-### 🌟 Wave 1: Top 12 Core Launch Suite (`v0.5 Core` - Public Preview)
-Frozen as our primary launch suite for the `v0.5.0` Public Preview. Each tool is backed by unmocked real-disk Playwright tests, 100% Penta-Interface parity, and benchmarked at realistic **~45–75ms** end-to-end execution latency (+30–50ms buffer over raw engine runtime):
+### 🌟 Wave 1 & 2 Core Launch Suite (`v0.6` - Production Ready)
+Each tool is backed by unmocked real-disk Playwright tests, 100% Penta-Interface parity, and benchmarked at realistic **~45–75ms** end-to-end execution latency (+30–50ms buffer over raw engine runtime):
 
 | # | Tool ID | Interface Title | Category | Format Support | Latency SLA | Release Status |
 |---|---|---|---|---|---|---|
-| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
-| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
-| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
-| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
-| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.5 Core** (Production Ready) |
-| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | ~55–85ms | ✅ **v0.5 Core** (Production Ready) |
-| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | ~45–65ms | ✅ **v0.5 Core** (Production Ready) |
-| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | ~65–95ms | ✅ **v0.5 Core** (Production Ready) |
-| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
-| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ~40–55ms | ✅ **v0.5 Core** (Production Ready) |
-| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ~45–70ms | ✅ **v0.5 Core** (Production Ready) |
-| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ~40–60ms | ✅ **v0.5 Core** (Production Ready) |
+| 1 | `pdf_merge` | Merge Documents | Organize | `.pdf` | ~45–65ms | ✅ **v0.6 Core** (Production Ready) |
+| 2 | `pdf_split` | Split PDF | Organize | `.pdf` | ~45–60ms | ✅ **v0.6 Core** (Production Ready) |
+| 3 | `pdf_rotate` | Rotate Pages | Organize | `.pdf` | ~40–55ms | ✅ **v0.6 Core** (Production Ready) |
+| 4 | `pdf_delete_pages` | Delete Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.6 Core** (Production Ready) |
+| 5 | `pdf_reorder_pages` | Reorder Pages | Organize | `.pdf` | ~45–60ms | ✅ **v0.6 Core** (Production Ready) |
+| 6 | `pdf_compress` | Compress PDF | Optimize | `.pdf` | ~55–85ms | ✅ **v0.6 Core** (Production Ready) |
+| 7 | `pdf_watermark` | Add Watermark | Security | `.pdf` | ~45–65ms | ✅ **v0.6 Core** (Production Ready) |
+| 8 | `pdf_ocr` | OCR Text Recognition | AI / OCR | `.pdf`, Images | ~65–95ms | ✅ **v0.6 Core** (Production Ready) |
+| 9 | `pdf_extract_text` | Extract Plain Text | Extract | `.pdf` | ~40–60ms | ✅ **v0.6 Core** (Production Ready) |
+| 10 | `extract_pages` | Extract PDF Pages | Organize | `.pdf` $\to$ `.pdf` | ~40–55ms | ✅ **v0.6 Core** (Production Ready) |
+| 11 | `excel_to_json` | Excel to JSON | Office Data | `.xlsx`, `.xls` $\to$ `.json` | ~45–70ms | ✅ **v0.6 Core** (Production Ready) |
+| 12 | `excel_to_csv` | Excel to CSV | Office Data | `.xlsx`, `.xls` $\to$ `.csv` | ~40–60ms | ✅ **v0.6 Core** (Production Ready) |
+| 13 | `pdf_booklet` | Booklet Imposition | Organize | `.pdf` | ~35–50ms | ✅ **v0.6 Core** (Production Ready) |
+| 14 | `pdf_nup` | Multi-Page N-Up Grid | Organize | `.pdf` | ~35–50ms | ✅ **v0.6 Core** (Production Ready) |
+| 15 | `pdf_validate_signatures` | Digital Signature Validation | Security | `.pdf` | ~25–40ms | ✅ **v0.6 Core** (Production Ready) |
+| 16 | `pdf_remove_signatures` | Strip Digital Signatures | Security | `.pdf` | ~25–40ms | ✅ **v0.6 Core** (Production Ready) |
+| 17 | `document_pii_scan` | PII & Leak Scanner | Security | `.pdf` | ~30–50ms | ✅ **v0.6 Core** (Production Ready) |
+| 18 | `pdf_sanitize` | Deep Security Sanitizer | Security | `.pdf` | ~30–50ms | ✅ **v0.6 Core** (Production Ready) |
 
-### 📅 Progressive Release Schedule & SemVer Roadmap (Waves 2–7)
-*Engine development is complete; scheduled for progressive weekly rollouts backed by real Playwright testing:*
-- **Wave 2 (`v0.6.0` - Week 2): Essential Media & Page Utilities** (`img_to_pdf`, `extract_images`, `remove_blank`, `page_numbers`, `burst`, `search`)
-- **Wave 3 (`v0.7.0` - Week 3): Web & AI Synthesis Suite** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
-- **Wave 4 (`v0.8.0` - Week 4): Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
-- **Wave 5 (`v0.9.0` - Week 5): Security, Signing & Compliance** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
-- **Wave 6 (`v0.9.5` - Week 6): Page Geometry & Interactive Forms** (`read_form`, `fill_form`, `create_form_field`, `crop`, `bookmarks`, `annotate`)
-- **Wave 7 (`v1.0.0 GA` - Week 7): General Availability & Forensics** (`render`, `flatten`, `repair`, `compare`, `classify_type`, `pdf_to_pdf_a`, `bates`, `header_footer`, `linearize`)
+### 📅 Progressive Release Schedule & SemVer Roadmap (Waves 3–7)
+- **Wave 3 (`v0.7.0`): Web & AI Synthesis Suite** (`pdf_to_markdown`, `pdf_to_html`, `html_to_pdf`, `md_to_pdf`, `pdf_to_json`, `json_to_pdf`)
+- **Wave 4 (`v0.8.0`): Office Modernization & Spreadsheets** (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`)
+- **Wave 5 (`v0.9.0`): Security, Signing & Compliance** (`encrypt`, `decrypt`, `metadata`, `sign`, `redact`, `validate`, `hash`)
+- **Wave 6 (`v0.9.5`): Page Geometry & Interactive Forms** (`read_form`, `fill_form`, `create_form_field`, `crop`, `bookmarks`, `annotate`)
+- **Wave 7 (`v1.0.0 GA`): General Availability & Forensics** (`render`, `flatten`, `repair`, `compare`, `classify_type`, `pdf_to_pdf_a`, `bates`, `header_footer`, `linearize`)
 
 ---
 
