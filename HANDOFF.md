@@ -11,6 +11,7 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **PR #247 (Vector Store & Semantic Search - Spec 103 / Task 103B)**: Pure-Rust cosine similarity vector search and libSQL document chunk storage engine with 7/7 unit tests in `paperpilot-storage`.
   - **PR #245 (`pdf_auto_rotate` - Spec 102 / Task 5.3.10)**: Pure-Rust automated page uprighting engine, validated with 3/3 unit tests and 10/10 unmocked Penta-Interface E2E tests (`reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md`).
   - **PR #246 (`paperpilot-storage` core - Spec 103 / Task 103A)**: Embedded Turso / libSQL storage engine with connection pooling and automated schema migrations (`jobs`, `webhooks`, `document_chunks`, `audit_logs`).
 - **Workspace Health**: All crates (`paperpilot-storage`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, `paperpilot-wasm`, `desktop`) compiling cleanly with zero errors.
@@ -20,7 +21,6 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 103B** | `[Spec 103]` | libSQL Vector Store & Cosine Semantic Search (`paperpilot-storage`) | `main` | [Session 16885534241118434886](https://jules.google.com/session/16885534241118434886) | 🚀 Active In-Flight |
 | **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 12328196680624646186](https://jules.google.com/session/12328196680624646186) | 🚀 Active In-Flight |
 | **Task 104A** | `[Spec 104]` | Web WASM Portal Parity & Categorized Navigation (`apps/web`) | `main` | [Session 14514876981403026200](https://jules.google.com/session/14514876981403026200) | 🚀 Active In-Flight |
 | **Task 105A** | `[Spec 105]` | Embed Widget Tool Parity & `/embed-test` Sandbox Upgrade (`apps/embed`) | `main` | [Session 9795447210386010979](https://jules.google.com/session/9795447210386010979) | 🚀 Active In-Flight |
@@ -29,7 +29,15 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 103A (Embedded libSQL Core Storage Engine & Migrations `[Spec 103]`)**:
+1. **Task 103B (Vector Store & Cosine Semantic Search `[Spec 103]`)**:
+   - Merged (PR #247).
+   - Fast, pure-Rust cosine similarity vector calculation in `paperpilot_storage::vector`.
+   - `StorageEngine` methods: `store_chunks`, `search_chunks`, `delete_chunks_by_document`, `count_chunks_by_document`.
+   - Zero external embedding API overhead; embeddings stored as JSON strings in embedded libSQL SQLite.
+   - Verified with 7/7 unit tests in `paperpilot-storage`.
+   - Documented in `wiki/103-Vector-Store-Engine.md` and `apps/docs/src/content/docs/reference/tools/semantic_search.md`.
+
+2. **Task 103A (Embedded libSQL Core Storage Engine & Migrations `[Spec 103]`)**:
    - Merged (PR #246).
    - Dedicated workspace crate `paperpilot-storage` with `libsql 0.10.0`.
    - Embedded zero-setup local SQLite file in `get_app_data_root()` and in-memory execution.
