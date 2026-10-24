@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as pdfjsLib from 'pdfjs-dist';
+  import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import { appState } from '$lib/state/app.svelte';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
   let {
     onClose
@@ -15,7 +18,7 @@
 
   let pageNum = $state(1);
   let scale = $state(1.0);
-  let viewMode = $state<'split' | 'overlay' | 'side-by-side'>('split');
+  let viewMode = $state<'split' | 'overlay' | 'side-by-side' | 'text-diff'>('split');
   let splitPercent = $state(50); // 0 to 100%
   let isDraggingSplitter = $state(false);
 
@@ -28,11 +31,24 @@
 
   let canvasA: HTMLCanvasElement | undefined = $state();
   let canvasB: HTMLCanvasElement | undefined = $state();
+  let canvasSideA: HTMLCanvasElement | undefined = $state();
+  let canvasSideB: HTMLCanvasElement | undefined = $state();
   let canvasDiff: HTMLCanvasElement | undefined = $state();
   let containerRef: HTMLDivElement | undefined = $state();
+  let canvasWidth = $state(600);
 
   let changedPixelCount = $state(0);
   let isComparing = $state(false);
+
+  // Git-style unified text diff state
+  interface DiffLine {
+    type: 'add' | 'del' | 'eq';
+    lineA?: number;
+    lineB?: number;
+    text: string;
+  }
+  let textDiffLines = $state<DiffLine[]>([]);
+  let textDiffStats = $state({ additions: 0, deletions: 0 });
 
   async function loadDoc(file: File): Promise<any> {
     const arrayBuffer = await file.arrayBuffer();
@@ -40,28 +56,59 @@
     return await loadingTask.promise;
   }
 
-  // Load Doc A
-  $effect(() => {
-    if (appState.documents[docAIndex]) {
-      loadDoc(appState.documents[docAIndex]).then(doc => {
-        pdfDocA = doc;
-      }).catch(err => console.error("Failed loading Doc A:", err));
+  async function loadBothDocs(idxA: number, idxB: number) {
+    const fileA = appState.documents[idxA];
+    const fileB = appState.documents[idxB];
+
+    const [docA, docB] = await Promise.all([
+      fileA ? loadDoc(fileA).catch(e => { console.error("Doc A load fail", e); return null; }) : Promise.resolve(null),
+      fileB ? loadDoc(fileB).catch(e => { console.error("Doc B load fail", e); return null; }) : Promise.resolve(null)
+    ]);
+
+    pdfDocA = docA;
+    pdfDocB = docB;
+    await renderComparison(pageNum, scale);
+  }
+
+  // Reload when user picks from dropdown
+  async function handleDocAChange(newIdx: number | string) {
+    const idx = Number(newIdx);
+    docAIndex = idx;
+    const file = appState.documents[idx];
+    if (file) {
+      pdfDocA = await loadDoc(file);
+      await renderComparison(pageNum, scale);
+    }
+  }
+
+  async function handleDocBChange(newIdx: number | string) {
+    const idx = Number(newIdx);
+    docBIndex = idx;
+    const file = appState.documents[idx];
+    if (file) {
+      pdfDocB = await loadDoc(file);
+      await renderComparison(pageNum, scale);
+    }
+  }
+
+  // Initial mount load
+  onMount(() => {
+    if (appState.documents.length > 0) {
+      loadBothDocs(docAIndex, docBIndex);
     }
   });
 
-  // Load Doc B
+  // Render both pages and compute diff when page, scale, viewMode, or docs change
   $effect(() => {
-    if (appState.documents[docBIndex]) {
-      loadDoc(appState.documents[docBIndex]).then(doc => {
-        pdfDocB = doc;
-      }).catch(err => console.error("Failed loading Doc B:", err));
-    }
-  });
+    // Explicit dependencies for Svelte 5 rune tracking
+    const _docA = pdfDocA;
+    const _docB = pdfDocB;
+    const _p = pageNum;
+    const _s = scale;
+    const _m = viewMode;
 
-  // Render both pages and compute diff when page, scale, or docs change
-  $effect(() => {
-    if (pdfDocA || pdfDocB) {
-      renderComparison(pageNum, scale);
+    if (_docA || _docB) {
+      renderComparison(_p, _s);
     }
   });
 
@@ -73,29 +120,49 @@
       let width = 600;
       let height = 800;
 
-      // Render Doc A
+      // Determine page dimensions from whichever doc has it
       if (pdfDocA && page <= pdfDocA.numPages) {
         const pA = await pdfDocA.getPage(page);
         const vpA = pA.getViewport({ scale: currentScale });
         width = Math.floor(vpA.width);
         height = Math.floor(vpA.height);
+      }
+      if (pdfDocB && page <= pdfDocB.numPages) {
+        const pB = await pdfDocB.getPage(page);
+        const vpB = pB.getViewport({ scale: currentScale });
+        width = Math.max(width, Math.floor(vpB.width));
+        height = Math.max(height, Math.floor(vpB.height));
+      }
 
-        if (canvasA) {
-          canvasA.width = width;
-          canvasA.height = height;
-          const ctxA = canvasA.getContext('2d');
-          if (ctxA) {
-            ctxA.clearRect(0, 0, width, height);
-            await pA.render({ canvasContext: ctxA, viewport: vpA }).promise;
+      canvasWidth = width;
+
+      // Render Doc A
+      if (pdfDocA && page <= pdfDocA.numPages) {
+        const pA = await pdfDocA.getPage(page);
+        const vpA = pA.getViewport({ scale: currentScale });
+
+        for (const c of [canvasA, canvasSideA]) {
+          if (c) {
+            c.width = width;
+            c.height = height;
+            const ctx = c.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, width, height);
+              await pA.render({ canvasContext: ctx, viewport: vpA }).promise;
+            }
           }
         }
-      } else if (canvasA) {
-        canvasA.width = width;
-        canvasA.height = height;
-        const ctxA = canvasA.getContext('2d');
-        if (ctxA) {
-          ctxA.fillStyle = '#f8fafc';
-          ctxA.fillRect(0, 0, width, height);
+      } else {
+        for (const c of [canvasA, canvasSideA]) {
+          if (c) {
+            c.width = width;
+            c.height = height;
+            const ctx = c.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = '#f8fafc';
+              ctx.fillRect(0, 0, width, height);
+            }
+          }
         }
       }
 
@@ -103,25 +170,29 @@
       if (pdfDocB && page <= pdfDocB.numPages) {
         const pB = await pdfDocB.getPage(page);
         const vpB = pB.getViewport({ scale: currentScale });
-        width = Math.max(width, Math.floor(vpB.width));
-        height = Math.max(height, Math.floor(vpB.height));
 
-        if (canvasB) {
-          canvasB.width = width;
-          canvasB.height = height;
-          const ctxB = canvasB.getContext('2d');
-          if (ctxB) {
-            ctxB.clearRect(0, 0, width, height);
-            await pB.render({ canvasContext: ctxB, viewport: vpB }).promise;
+        for (const c of [canvasB, canvasSideB]) {
+          if (c) {
+            c.width = width;
+            c.height = height;
+            const ctx = c.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, width, height);
+              await pB.render({ canvasContext: ctx, viewport: vpB }).promise;
+            }
           }
         }
-      } else if (canvasB) {
-        canvasB.width = width;
-        canvasB.height = height;
-        const ctxB = canvasB.getContext('2d');
-        if (ctxB) {
-          ctxB.fillStyle = '#f8fafc';
-          ctxB.fillRect(0, 0, width, height);
+      } else {
+        for (const c of [canvasB, canvasSideB]) {
+          if (c) {
+            c.width = width;
+            c.height = height;
+            const ctx = c.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = '#f8fafc';
+              ctx.fillRect(0, 0, width, height);
+            }
+          }
         }
       }
 
@@ -152,18 +223,38 @@
 
             if (dist > 30) {
               diffCount++;
-              // Highlight removed/altered as red, added/new as green tint
-              out[i] = 239;     // Red
-              out[i + 1] = 68;  // Green
-              out[i + 2] = 68;  // Blue
-              out[i + 3] = 200; // Alpha
+
+              // Lum calculation to detect dark text strokes vs white background
+              const lumA = 0.299 * rA + 0.587 * gA + 0.114 * bA;
+              const lumB = 0.299 * rB + 0.587 * gB + 0.114 * bB;
+
+              if (lumA < 200 && lumB >= 200) {
+                // Pixel existed in Doc A but removed in Doc B -> Red (Deletions)
+                out[i] = 239;     // R
+                out[i + 1] = 68;  // G
+                out[i + 2] = 68;  // B
+                out[i + 3] = 255; // A
+              } else if (lumB < 200 && lumA >= 200) {
+                // Pixel added in Doc B that wasn't in Doc A -> Emerald Green (Additions)
+                out[i] = 16;      // R
+                out[i + 1] = 185; // G
+                out[i + 2] = 129; // B
+                out[i + 3] = 255; // A
+              } else {
+                // Shifted or modified pixel color/position -> Amber
+                out[i] = 245;     // R
+                out[i + 1] = 158; // G
+                out[i + 2] = 11;  // B
+                out[i + 3] = 240; // A
+              }
             } else {
-              // Dim identical content for high contrast
-              const gray = (rA * 0.299 + gA * 0.587 + bA * 0.114);
+              // Unchanged content: keep it legible in soft high-contrast grayscale
+              const gray = Math.round(rA * 0.299 + gA * 0.587 + bA * 0.114);
               out[i] = gray;
               out[i + 1] = gray;
               out[i + 2] = gray;
-              out[i + 3] = 70; // Faded
+              // Dim background white to crisp clean white, but keep text dark enough to read
+              out[i + 3] = (gray > 240) ? 255 : 120;
             }
           }
 
@@ -171,6 +262,9 @@
           changedPixelCount = diffCount;
         }
       }
+
+      // Compute Git-style Line Diff
+      await computeTextDiff(page);
     } catch (err) {
       console.error("Comparison render error:", err);
     } finally {
@@ -178,65 +272,147 @@
     }
   }
 
-  function handleSplitterDrag(e: MouseEvent) {
+  // Extract lines of text from page
+  async function getPageLines(doc: any, page: number): Promise<string[]> {
+    if (!doc || page > doc.numPages) return [];
+    try {
+      const p = await doc.getPage(page);
+      const textContent = await p.getTextContent();
+      // Group text items by vertical position Y
+      const lineMap = new Map<number, string[]>();
+      for (const item of textContent.items) {
+        if ('str' in item && item.str.trim()) {
+          const y = Math.round(item.transform[5] / 4) * 4;
+          if (!lineMap.has(y)) lineMap.set(y, []);
+          lineMap.get(y)!.push(item.str);
+        }
+      }
+      // Sort top to bottom (PDF Y is bottom-up)
+      const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+      return sortedYs.map(y => lineMap.get(y)!.join(' ').trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  async function computeTextDiff(page: number) {
+    const [linesA, linesB] = await Promise.all([
+      getPageLines(pdfDocA, page),
+      getPageLines(pdfDocB, page)
+    ]);
+
+    // Simple LCS diff for clean Git-style view
+    const diffs: DiffLine[] = [];
+    let i = 0, j = 0;
+    let addCount = 0, delCount = 0;
+
+    while (i < linesA.length || j < linesB.length) {
+      if (i < linesA.length && j < linesB.length && linesA[i] === linesB[j]) {
+        diffs.push({ type: 'eq', lineA: i + 1, lineB: j + 1, text: linesA[i] });
+        i++; j++;
+      } else if (j < linesB.length && (!linesA.includes(linesB[j]) || linesB.indexOf(linesA[i]) > j)) {
+        diffs.push({ type: 'add', lineB: j + 1, text: linesB[j] });
+        addCount++;
+        j++;
+      } else if (i < linesA.length) {
+        diffs.push({ type: 'del', lineA: i + 1, text: linesA[i] });
+        delCount++;
+        i++;
+      } else {
+        diffs.push({ type: 'add', lineB: j + 1, text: linesB[j] });
+        addCount++;
+        j++;
+      }
+    }
+
+    textDiffLines = diffs;
+    textDiffStats = { additions: addCount, deletions: delCount };
+  }
+
+  function handlePointerMove(e: PointerEvent) {
     if (!isDraggingSplitter || !containerRef) return;
     const rect = containerRef.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const percent = Math.min(Math.max((x / rect.width) * 100, 5), 95);
+    const percent = Math.min(Math.max((x / rect.width) * 100, 2), 98);
     splitPercent = percent;
   }
 
-  function stopSplitterDrag() {
+  function handlePointerUp(e: PointerEvent) {
     isDraggingSplitter = false;
-    window.removeEventListener('mousemove', handleSplitterDrag);
-    window.removeEventListener('mouseup', stopSplitterDrag);
+    try {
+      (e.target as HTMLElement)?.releasePointerCapture(e.pointerId);
+    } catch {}
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', handlePointerUp);
   }
 
-  function startSplitterDrag(e: MouseEvent) {
+  function startSplitterDrag(e: PointerEvent) {
     e.preventDefault();
+    e.stopPropagation();
     isDraggingSplitter = true;
-    window.addEventListener('mousemove', handleSplitterDrag);
-    window.addEventListener('mouseup', stopSplitterDrag);
+    try {
+      (e.currentTarget as HTMLElement)?.setPointerCapture(e.pointerId);
+    } catch {}
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
   }
 </script>
 
 <div class="diff-viewer" id="visual-diff-container">
-  <!-- Top Control Header -->
+  <!-- Top Control Header (Compact Single-Line Toolbar) -->
   <header class="diff-header">
-    <div class="diff-title-section">
-      <span class="diff-badge">⚡ Core Feature</span>
-      <h2>Visual PDF Comparison</h2>
+    <!-- Left: Title & Quick Status -->
+    <div class="diff-left-section">
+      <div class="diff-brand">
+        <span class="diff-badge">⚡ Compare</span>
+      </div>
+
+      <!-- Compact Document Selectors -->
+      <div class="diff-doc-selectors">
+        <select
+          id="doc-a-select"
+          class="compact-select"
+          bind:value={docAIndex}
+          onchange={(e) => handleDocAChange((e.target as HTMLSelectElement).value)}
+          title="Base Document (Doc A)"
+        >
+          {#each appState.documents as doc, idx}
+            <option value={idx}>{doc.name}</option>
+          {/each}
+        </select>
+
+        <span class="vs-divider">vs</span>
+
+        <select
+          id="doc-b-select"
+          class="compact-select"
+          bind:value={docBIndex}
+          onchange={(e) => handleDocBChange((e.target as HTMLSelectElement).value)}
+          title="Comparison Document (Doc B)"
+        >
+          {#each appState.documents as doc, idx}
+            <option value={idx}>{doc.name}</option>
+          {/each}
+        </select>
+      </div>
+
       {#if changedPixelCount > 0}
-        <span class="diff-status changed">⚠️ {changedPixelCount.toLocaleString()} visual pixel differences</span>
+        <span class="diff-status changed" title={`${changedPixelCount.toLocaleString()} visual pixels differ`}>
+          ⚠️ {changedPixelCount.toLocaleString()} diffs
+        </span>
       {:else}
-        <span class="diff-status identical">✅ Pages visually identical</span>
+        <span class="diff-status identical">✅ Identical</span>
+      {/if}
+
+      {#if viewMode === 'overlay'}
+        <div class="diff-legend">
+          <span class="legend-item"><span class="legend-dot red"></span> Removed</span>
+          <span class="legend-item"><span class="legend-dot green"></span> Added</span>
+        </div>
       {/if}
     </div>
 
-    <!-- Document Selectors -->
-    <div class="diff-doc-selectors">
-      <div class="selector-group">
-        <label for="doc-a-select">Base (Doc A):</label>
-        <select id="doc-a-select" bind:value={docAIndex}>
-          {#each appState.documents as doc, idx}
-            <option value={idx}>{doc.name}</option>
-          {/each}
-        </select>
-      </div>
-
-      <span class="vs-divider">vs</span>
-
-      <div class="selector-group">
-        <label for="doc-b-select">Compare (Doc B):</label>
-        <select id="doc-b-select" bind:value={docBIndex}>
-          {#each appState.documents as doc, idx}
-            <option value={idx}>{doc.name}</option>
-          {/each}
-        </select>
-      </div>
-    </div>
-
-    <!-- View Mode Switches -->
+    <!-- Center: View Mode Switches -->
     <div class="diff-mode-switches">
       <button
         class="mode-btn"
@@ -245,7 +421,7 @@
         onclick={() => viewMode = 'split'}
         title="Interactive split-slider before/after"
       >
-        ↔️ Split Slider
+        ↔️ Split
       </button>
       <button
         class="mode-btn"
@@ -254,7 +430,7 @@
         onclick={() => viewMode = 'overlay'}
         title="Highlight pixel discrepancies"
       >
-        🔥 Difference Map
+        🔥 Overlay
       </button>
       <button
         class="mode-btn"
@@ -265,9 +441,18 @@
       >
         📑 Side-by-Side
       </button>
+      <button
+        class="mode-btn"
+        class:active={viewMode === 'text-diff'}
+        id="diff-mode-git"
+        onclick={() => viewMode = 'text-diff'}
+        title="Git-style line additions & deletions"
+      >
+        🌿 Git Diff
+      </button>
     </div>
 
-    <!-- Pagination & Scale Controls -->
+    <!-- Right: Page Controls & Close -->
     <div class="diff-nav-controls">
       <button
         class="nav-btn"
@@ -275,73 +460,109 @@
         disabled={pageNum <= 1}
         onclick={() => pageNum = Math.max(pageNum - 1, 1)}
       >
-        ‹ Prev Page
+        ‹
       </button>
-      <span class="page-indicator">Page {pageNum} of {totalPages}</span>
+      <span class="page-indicator">{pageNum}/{totalPages}</span>
       <button
         class="nav-btn"
         id="diff-next-page"
         disabled={pageNum >= totalPages}
         onclick={() => pageNum = Math.min(pageNum + 1, totalPages)}
       >
-        Next Page ›
+        ›
       </button>
 
       {#if onClose}
-        <button class="close-btn" id="diff-close-btn" onclick={onClose} title="Exit Comparison">×</button>
+        <button class="close-btn" id="diff-close-btn" onclick={onClose} title="Exit Comparison">✕</button>
       {/if}
     </div>
   </header>
 
   <!-- Interactive Comparison Canvas Area -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="diff-canvas-area" bind:this={containerRef}>
-    {#if viewMode === 'split'}
-      <div class="split-comparison-container">
-        <!-- Underneath: Doc B (Right side) -->
-        <canvas bind:this={canvasB} class="canvas-base"></canvas>
+  <div class="diff-canvas-area">
+    <div
+      class="split-comparison-container"
+      bind:this={containerRef}
+      class:hidden-mode={viewMode !== 'split'}
+    >
+      <!-- Underneath: Doc B (Right side) -->
+      <canvas bind:this={canvasB} class="canvas-base"></canvas>
 
-        <!-- Top Layer: Doc A (Clipped to splitPercent) -->
-        <div class="split-clip-wrapper" style={`width: ${splitPercent}%;`}>
-          <canvas bind:this={canvasA} class="canvas-overlay"></canvas>
-        </div>
-
-        <!-- Draggable Divider Handle -->
-        <div
-          class="split-slider-handle"
-          id="diff-split-handle"
-          style={`left: ${splitPercent}%;`}
-          onmousedown={startSplitterDrag}
-        >
-          <div class="handle-bar"></div>
-          <div class="handle-knob">‹ ›</div>
-        </div>
-
-        <!-- Hidden canvas for diff calc -->
-        <canvas bind:this={canvasDiff} style="display: none;"></canvas>
+      <!-- Top Layer: Doc A (Clipped to splitPercent) -->
+      <div class="split-clip-wrapper" style={`width: ${splitPercent}%;`}>
+        <canvas bind:this={canvasA} class="canvas-overlay" style={`width: ${canvasWidth}px; max-width: none;`}></canvas>
       </div>
 
-    {:else if viewMode === 'overlay'}
-      <div class="overlay-container">
-        <canvas bind:this={canvasDiff} class="canvas-diff-view" id="diff-overlay-canvas"></canvas>
-        <!-- Retain A and B in DOM for rendering computations -->
-        <canvas bind:this={canvasA} style="display: none;"></canvas>
-        <canvas bind:this={canvasB} style="display: none;"></canvas>
+      <!-- Draggable Divider Handle -->
+      <div
+        class="split-slider-handle"
+        id="diff-split-handle"
+        style={`left: ${splitPercent}%;`}
+        onpointerdown={startSplitterDrag}
+      >
+        <div class="handle-bar"></div>
+        <div class="handle-knob">‹ ›</div>
       </div>
+    </div>
 
-    {:else if viewMode === 'side-by-side'}
-      <div class="side-by-side-container">
-        <div class="side-pane">
-          <span class="pane-label">Doc A: {appState.documents[docAIndex]?.name ?? ''}</span>
-          <canvas bind:this={canvasA} class="side-canvas"></canvas>
-        </div>
-        <div class="side-pane">
-          <span class="pane-label">Doc B: {appState.documents[docBIndex]?.name ?? ''}</span>
-          <canvas bind:this={canvasB} class="side-canvas"></canvas>
-        </div>
-        <canvas bind:this={canvasDiff} style="display: none;"></canvas>
+    <!-- Difference Map (Overlay) View -->
+    <div class="overlay-container" class:hidden-mode={viewMode !== 'overlay'}>
+      <canvas bind:this={canvasDiff} class="canvas-diff-view" id="diff-overlay-canvas"></canvas>
+    </div>
+
+    <!-- Side-by-Side View -->
+    <div class="side-by-side-container" class:hidden-mode={viewMode !== 'side-by-side'}>
+      <div class="side-pane">
+        <span class="pane-label">Doc A: {appState.documents[docAIndex]?.name ?? ''}</span>
+        <canvas bind:this={canvasSideA} class="side-canvas"></canvas>
       </div>
-    {/if}
+      <div class="side-pane">
+        <span class="pane-label">Doc B: {appState.documents[docBIndex]?.name ?? ''}</span>
+        <canvas bind:this={canvasSideB} class="side-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Git-Style Line Diff View -->
+    <div class="git-diff-container" class:hidden-mode={viewMode !== 'text-diff'}>
+      <div class="git-diff-card">
+        <div class="git-diff-header">
+          <div class="git-diff-summary">
+            <span class="git-diff-stat-add">+{textDiffStats.additions} additions</span>
+            <span class="git-diff-stat-del">-{textDiffStats.deletions} deletions</span>
+          </div>
+          <span class="git-diff-file-label">
+            {appState.documents[docAIndex]?.name ?? 'Doc A'} → {appState.documents[docBIndex]?.name ?? 'Doc B'}
+          </span>
+        </div>
+        <div class="git-diff-body">
+          {#if textDiffLines.length === 0}
+            <div class="git-diff-empty">No text changes detected on page {pageNum}</div>
+          {:else}
+            <table class="git-diff-table">
+              <tbody>
+                {#each textDiffLines as item}
+                  <tr class="git-diff-row {item.type}">
+                    <td class="git-num line-a">{item.lineA ?? ''}</td>
+                    <td class="git-num line-b">{item.lineB ?? ''}</td>
+                    <td class="git-marker">
+                      {#if item.type === 'add'}
+                        +
+                      {:else if item.type === 'del'}
+                        -
+                      {:else}
+                        {' '}
+                      {/if}
+                    </td>
+                    <td class="git-code">{item.text}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -360,39 +581,41 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 10px 16px;
+    gap: 12px;
+    padding: 6px 14px;
     background: var(--surface-1, #141416);
     border-bottom: 1px solid var(--border-color, #27272a);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     z-index: 10;
+    min-height: 44px;
   }
 
-  .diff-title-section {
+  .diff-left-section {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .diff-brand {
+    display: flex;
+    align-items: center;
   }
 
   .diff-badge {
     font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
+    font-weight: 700;
+    padding: 2px 7px;
     background: rgba(94, 106, 210, 0.2);
-    color: var(--accent-primary, #5e6ad2);
-    border-radius: 9999px;
-  }
-
-  .diff-title-section h2 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0;
+    color: var(--accent-primary, #818cf8);
+    border-radius: 4px;
   }
 
   .diff-status {
-    font-size: 12px;
-    padding: 2px 8px;
+    font-size: 11px;
+    padding: 2px 6px;
     border-radius: 4px;
+    white-space: nowrap;
   }
 
   .diff-status.changed {
@@ -405,35 +628,76 @@
     color: #22c55e;
   }
 
-  .diff-doc-selectors {
-    display: flex;
+  .diff-legend {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-  }
-
-  .selector-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    padding: 2px 6px;
+    background: var(--surface-2, #1e1e24);
+    border-radius: 4px;
+    border: 1px solid var(--border-color, #27272a);
+    font-size: 10px;
     color: var(--text-secondary, #9ca3af);
   }
 
-  .selector-group select {
-    background: var(--surface-2, #1e1e24);
-    color: var(--text-primary, #ffffff);
-    border: 1px solid var(--border-color, #27272a);
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.red {
+    background: #ef4444;
+  }
+
+  .legend-dot.green {
+    background: #10b981;
+  }
+
+  .diff-doc-selectors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .compact-select {
+    background-color: #18181b !important;
+    color: #f4f4f5 !important;
+    border: 1px solid #3f3f46 !important;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 4px 22px 4px 8px;
     font-size: 12px;
-    max-width: 140px;
+    font-weight: 500;
+    min-width: 140px;
+    max-width: 190px;
     outline: none;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+  }
+
+  .compact-select option {
+    background-color: #18181b !important;
+    color: #f4f4f5 !important;
+    padding: 6px;
   }
 
   .vs-divider {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted, #71717a);
+    text-transform: uppercase;
   }
 
   .diff-mode-switches {
@@ -540,14 +804,16 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 20px;
-    margin-left: -10px;
+    width: 32px;
+    margin-left: -16px;
     cursor: ew-resize;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 20;
+    z-index: 30;
+    touch-action: none;
+    user-select: none;
   }
 
   .handle-bar {
@@ -556,21 +822,24 @@
     bottom: 0;
     width: 2px;
     background: var(--accent-primary, #5e6ad2);
+    pointer-events: none;
   }
 
   .handle-knob {
     position: relative;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: var(--accent-primary, #5e6ad2);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     user-select: none;
+    pointer-events: auto;
   }
 
   /* Overlay View */
@@ -606,5 +875,119 @@
     display: block;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     background: #ffffff;
+  }
+
+  /* Git-Style Diff */
+  .git-diff-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .git-diff-card {
+    background: var(--surface-1, #141416);
+    border: 1px solid var(--border-color, #27272a);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .git-diff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--surface-2, #1e1e24);
+    border-bottom: 1px solid var(--border-color, #27272a);
+    font-size: 13px;
+  }
+
+  .git-diff-summary {
+    display: flex;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .git-diff-stat-add {
+    color: #10b981;
+  }
+
+  .git-diff-stat-del {
+    color: #ef4444;
+  }
+
+  .git-diff-file-label {
+    color: var(--text-secondary, #9ca3af);
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  .git-diff-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .git-diff-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  .git-diff-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .git-diff-row.add {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+  }
+
+  .git-diff-row.del {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+
+  .git-diff-row.eq {
+    color: #cbd5e1;
+  }
+
+  .git-num {
+    width: 40px;
+    padding: 3px 8px;
+    text-align: right;
+    color: #52525b;
+    user-select: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 11px;
+  }
+
+  .git-marker {
+    width: 20px;
+    text-align: center;
+    user-select: none;
+    font-weight: bold;
+    padding: 3px 0;
+  }
+
+  .git-diff-row.add .git-marker {
+    color: #10b981;
+  }
+
+  .git-diff-row.del .git-marker {
+    color: #ef4444;
+  }
+
+  .git-code {
+    padding: 3px 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .hidden-mode {
+    display: none !important;
   }
 </style>

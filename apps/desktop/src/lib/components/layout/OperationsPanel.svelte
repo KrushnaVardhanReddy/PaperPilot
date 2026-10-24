@@ -1019,6 +1019,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Bursts every single page into an individual standalone PDF file saved into an output directory.
           </p>
         </div>
+      {:else if activeTool.id === 'compare'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Interactive comparison tool to visually inspect differences, slide between document revisions, or generate pixel discrepancy maps between two open PDFs.
+          </p>
+        </div>
       {:else}
         <div class="operation-config">
           <p class="section-desc">Applies directly to the active document.</p>
@@ -1044,7 +1050,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder:' : 'Output file:'}
