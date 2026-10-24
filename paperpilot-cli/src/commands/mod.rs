@@ -354,10 +354,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfBooklet { input, output } => {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
-<<<<<<< HEAD
-=======
         Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
->>>>>>> origin/jules-14575779739699636673-f4a3e23c
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
