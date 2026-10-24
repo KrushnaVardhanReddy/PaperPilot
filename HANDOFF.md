@@ -18,8 +18,9 @@
 ### 2. Dispatched Overnight Jules Sessions (Zero-Conflict Fast Track)
 | Task ID | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|---|---|---|---|
-| **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | 🚀 Active In-Flight |
-| **Task 5.3.4** | Image & Logo Stamp (`pdf_stamp`) | `main` | [Session 6577354180696056670](https://jules.google.com/session/6577354180696056670) | 🚀 Active In-Flight |
+| **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | ✅ Merged (PR #243) |
+| **Task 5.3.4 (A)** | Image & Logo Stamp (`pdf_stamp`) | `main` | [Session 6577354180696056670](https://jules.google.com/session/6577354180696056670) | 🚀 Active In-Flight |
+| **Task 5.3.4 (B)** | Image & Logo Stamp (`pdf_stamp` - Parallel) | `main` | [Session 8384172369592473139](https://jules.google.com/session/8384172369592473139) | 🚀 Active In-Flight |
 | **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | ✅ Merged (PR #242) |
 
 ### 3. Immediate Next Roadmap Target (Selected: Option A + Strategy Option 1)
