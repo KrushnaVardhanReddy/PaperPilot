@@ -221,6 +221,38 @@ Check out [`PHASES.md`](./PHASES.md), [`v1_launch_plan.md`](./v1_launch_plan.md)
   - **Office Ecosystem (`paperpilot-office`)**: Deep OpenXML `.docx`, `.xlsx`, and `.pptx` manipulation.
   - **Embedded Turso / libSQL Persistence**: Zero-cloud local database (`./data/paperpilot.db`) with native vector search (`libsql_vector`) for persistent document indexing and optional multi-device edge sync.
 
+## 🙏 Acknowledgements & Open Source Ecosystem
+
+PaperPilot is proudly built on top of the incredible open-source Rust, Web, and Systems communities. We extend our gratitude to the authors and maintainers of the foundational crates and libraries that power PaperPilot:
+
+### Core PDF & Document Processing
+- **[lopdf](https://github.com/J-F-Liu/lopdf)** — Robust low-level PDF document and object tree manipulation in pure Rust.
+- **[pdf_oxide](https://crates.io/crates/pdf_oxide)** & **[unpdf](https://crates.io/crates/unpdf)** — High-level layout analysis, text extraction, and page structure reconstruction.
+- **[hayro](https://github.com/the-paperless-project/hayro)** / **hayro-syntax** — Pure-Rust PDF parsing and AST synthesis.
+- **[fulgur](https://crates.io/crates/fulgur)** — PDF content stream and appearance generation.
+- **[docx-rs](https://github.com/bokuweb/docx-rs)** & **[office_oxide](https://crates.io/crates/office_oxide)** — Pure-Rust OpenXML Word (`.docx`), Excel (`.xlsx`), and presentation handling.
+- **[calamine](https://github.com/tafia/calamine)** & **[rust_xlsxwriter](https://github.com/jmcnamara/rust_xlsxwriter)** — High-speed spreadsheet reading and writing.
+
+### Graphics, Rendering & Machine Learning
+- **[tiny-skia](https://github.com/RazrFalcon/tiny-skia)** — Fast, lightweight 2D software rendering for page transformations and watermarking.
+- **[image](https://github.com/image-rs/image)** — Image decoding, encoding, and color space transformations.
+- **[rten](https://github.com/robertknight/rten)** — Pure-Rust ONNX model runtime with SIMD vectorization.
+- **[ocrs](https://github.com/robertknight/ocrs)** & **[rusto-rs](https://crates.io/crates/rusto-rs)** — Zero-C++ local neural OCR and layout detection.
+
+### Networking, Async & Runtime
+- **[tokio](https://tokio.rs/)** & **[axum](https://github.com/tokio-rs/axum)** — High-performance asynchronous runtime and modular REST API gateway.
+- **[reqwest](https://github.com/seanmonstar/reqwest)** — Ergonomic HTTP client for remote ingestion and RFC 3161 TSA timestamping.
+- **[wasm-bindgen](https://github.com/rustwasm/wasm-bindgen)** — Seamless Rust $\leftrightarrow$ WebAssembly bridge for in-browser client-side execution.
+- **[serde](https://serde.rs/)** & **serde_json** — Declarative serialization and schema handling across all 5 surfaces.
+
+### Desktop & Frontend Architecture
+- **[Tauri](https://tauri.app/)** — Ultra-lightweight, secure desktop application framework.
+- **[Svelte 5](https://svelte.dev/)** & **[SvelteKit](https://kit.svelte.dev/)** — Modern reactive frontend with runes and zero-overhead DOM updates.
+- **[Tailwind CSS](https://tailwindcss.com/)** — Utility-first styling and theme tokenization.
+- **[PDF.js](https://mozilla.github.io/pdf.js/)** — Mozilla's canvas-based PDF rendering engine for desktop viewer preview.
+
+---
+
 ## 📄 License & Open Core Model
 
 - **Community Edition (This Repository):** Licensed under the **[Apache License 2.0](LICENSE)**. Includes all 50+ PDF and Office operations, Terminal CLI, MCP server, local REST gateway sidecar, offline NLP, client-side WASM engine, and the open-source Desktop App.
