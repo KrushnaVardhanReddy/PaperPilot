@@ -20,6 +20,12 @@
 | **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | 🚀 Active In-Flight |
 | **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | 🚀 Active In-Flight |
 
+### 3. Immediate Next Roadmap Target (Selected: Option A)
+**Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine (Section 6.8 / Wave 7)**:
+- **Phase 1 (6.8.3):** Embedded **Turso / libSQL** (`libsql` crate) database integration with zero-setup local SQLite file in `get_app_data_root()` and automatic schema migrations (`jobs`, `webhooks`, `audit_logs`).
+- **Phase 2 (6.8.1):** Asynchronous Job Queue & HTTP Callback Engine (`POST /api/v1/jobs/async` returning `202 Accepted`, HMAC-SHA256 signature verification, startup recovery query for interrupted jobs).
+- **Phase 3 (6.8.2):** Outbound Webhook Subscriptions (`diff.completed`, `ocr.finished`, `signature.verified`) with retry queues & exponential backoff.
+
 ---
 
 ## 🏆 Recently Completed Milestones
