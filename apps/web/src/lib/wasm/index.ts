@@ -23,7 +23,17 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     pdf_info(file: Uint8Array): Promise<string>;
     ocr(file: Uint8Array): Promise<string>;
     json_to_pdf(json_str: string): Promise<Uint8Array>;
-
+    pdf_nup(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_booklet(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_scale_pages(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_auto_rotate(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_stamp(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_overlay_underlay(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_remove_signatures(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pdf_validate_signatures(file: Uint8Array, options: any): Promise<string>;
+    sanitize(file: Uint8Array, options: any): Promise<Uint8Array>;
+    pii_scan(file: Uint8Array, options: any): Promise<string>;
+    pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -147,6 +157,50 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
 
     json_to_pdf(json_str: string): Promise<Uint8Array> {
         return this.sendRequest('json_to_pdf', { json_str });
+    }
+
+    pdf_nup(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_nup', { file, options });
+    }
+
+    pdf_booklet(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_booklet', { file, options });
+    }
+
+    pdf_scale_pages(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_scale_pages', { file, options });
+    }
+
+    pdf_auto_rotate(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_auto_rotate', { file, options });
+    }
+
+    pdf_stamp(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_stamp', { file, options });
+    }
+
+    pdf_overlay_underlay(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_overlay_underlay', { file, options });
+    }
+
+    pdf_remove_signatures(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_remove_signatures', { file, options });
+    }
+
+    pdf_validate_signatures(file: Uint8Array, options: any): Promise<string> {
+        return this.sendRequest('pdf_validate_signatures', { file, options });
+    }
+
+    sanitize(file: Uint8Array, options: any): Promise<Uint8Array> {
+        return this.sendRequest('sanitize', { file, options });
+    }
+
+    pii_scan(file: Uint8Array, options: any): Promise<string> {
+        return this.sendRequest('pii_scan', { file, options });
+    }
+
+    pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_docx', { file });
     }
 
 }

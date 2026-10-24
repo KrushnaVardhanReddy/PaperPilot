@@ -5,20 +5,60 @@
   let activeTool = $state('merge');
   let isProcessing = $state(false);
 
+  interface WebTool {
+    id: string;
+    title: string;
+    icon: string;
+    category: 'pages' | 'edit' | 'optimize' | 'security' | 'convert';
+    description?: string;
+    releaseStatus: 'v0.5-core' | 'preview';
+  }
+
   // Tools configuration
-  const tools = [
-    { id: 'merge', title: 'Merge PDFs', icon: '📑', releaseStatus: 'v0.5-core' },
-    { id: 'split', title: 'Split PDF', icon: '✂️', releaseStatus: 'v0.5-core' },
-    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', releaseStatus: 'v0.5-core' },
-    { id: 'compress', title: 'Compress PDF', icon: '🗜️', releaseStatus: 'v0.5-core' },
-    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒', releaseStatus: 'preview' },
-    { id: 'watermark', title: 'Watermark', icon: '©️', releaseStatus: 'v0.5-core' },
-    { id: 'delete', title: 'Delete Pages', icon: '🗑️', releaseStatus: 'v0.5-core' },
-    { id: 'extract', title: 'Extract Pages', icon: '📤', releaseStatus: 'v0.5-core' },
-    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', releaseStatus: 'v0.5-core' },
-    { id: 'crop', title: 'Crop PDF', icon: '📐', releaseStatus: 'preview' },
-    { id: 'flatten', title: 'Flatten Forms', icon: '📄', releaseStatus: 'preview' },
-    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️', releaseStatus: 'preview' }
+  const tools: WebTool[] = [
+    // Pages & Imposition
+    { id: 'merge', title: 'Merge PDFs', icon: '📑', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'split', title: 'Split PDF', icon: '✂️', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'rotate', title: 'Rotate Pages', icon: '🔄', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'delete', title: 'Delete Pages', icon: '🗑️', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'extract', title: 'Extract Pages', icon: '📤', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'reorder', title: 'Reorder Pages', icon: '🔀', category: 'pages', releaseStatus: 'v0.5-core' },
+    { id: 'crop', title: 'Crop PDF', icon: '📐', category: 'pages', releaseStatus: 'preview' },
+    { id: 'pdf_nup', title: 'N-Up', icon: '🎛️', category: 'pages', releaseStatus: 'preview' },
+    { id: 'pdf_booklet', title: 'Booklet', icon: '📖', category: 'pages', releaseStatus: 'preview' },
+    { id: 'pdf_scale_pages', title: 'Scale Pages', icon: '📏', category: 'pages', releaseStatus: 'preview' },
+    { id: 'pdf_auto_rotate', title: 'Auto Rotate', icon: '📐', category: 'pages', releaseStatus: 'preview' },
+
+    // Edit & Stationery
+    { id: 'watermark', title: 'Watermark', icon: '©️', category: 'edit', releaseStatus: 'v0.5-core' },
+    { id: 'flatten', title: 'Flatten Forms', icon: '📄', category: 'edit', releaseStatus: 'preview' },
+    { id: 'metadata', title: 'Edit Metadata', icon: '🏷️', category: 'edit', releaseStatus: 'preview' },
+    { id: 'header_footer', title: 'Header & Footer', icon: '📝', category: 'edit', releaseStatus: 'preview' },
+    { id: 'page_numbers', title: 'Page Numbers', icon: '🔢', category: 'edit', releaseStatus: 'preview' },
+    { id: 'pdf_stamp', title: 'Add Stamp', icon: '💮', category: 'edit', releaseStatus: 'preview' },
+    { id: 'pdf_overlay_underlay', title: 'Overlay/Underlay', icon: '🥪', category: 'edit', releaseStatus: 'preview' },
+
+    // Optimize
+    { id: 'compress', title: 'Compress PDF', icon: '🗜️', category: 'optimize', releaseStatus: 'v0.5-core' },
+    { id: 'pdf_hash', title: 'Hash PDF', icon: '#️⃣', category: 'optimize', releaseStatus: 'preview' },
+    { id: 'pdf_info', title: 'PDF Info', icon: 'ℹ️', category: 'optimize', releaseStatus: 'preview' },
+
+    // Security
+    { id: 'encrypt', title: 'Encrypt PDF', icon: '🔒', category: 'security', releaseStatus: 'preview' },
+    { id: 'decrypt', title: 'Decrypt PDF', icon: '🔓', category: 'security', releaseStatus: 'preview' },
+    { id: 'sanitize', title: 'Sanitize', icon: '🧹', category: 'security', releaseStatus: 'preview' },
+    { id: 'pii_scan', title: 'PII Scan', icon: '🔍', category: 'security', releaseStatus: 'preview' },
+    { id: 'pdf_validate_signatures', title: 'Validate Sigs', icon: '✅', category: 'security', releaseStatus: 'preview' },
+    { id: 'pdf_remove_signatures', title: 'Remove Sigs', icon: '❌', category: 'security', releaseStatus: 'preview' },
+
+    // Convert
+    { id: 'images_to_pdf', title: 'Images to PDF', icon: '🖼️', category: 'convert', releaseStatus: 'preview' },
+    { id: 'extract_images', title: 'Extract Images', icon: '📸', category: 'convert', releaseStatus: 'preview' },
+    { id: 'extract_text', title: 'Extract Text', icon: '📝', category: 'convert', releaseStatus: 'preview' },
+    { id: 'render_page', title: 'Render Page', icon: '🖼️', category: 'convert', releaseStatus: 'preview' },
+    { id: 'json_to_pdf', title: 'JSON to PDF', icon: '📜', category: 'convert', releaseStatus: 'preview' },
+    { id: 'pdf_to_docx', title: 'PDF to DOCX', icon: '📝', category: 'convert', releaseStatus: 'preview' },
+    { id: 'ocr', title: 'OCR PDF', icon: '👁️', category: 'convert', releaseStatus: 'preview' }
   ];
 
   // Tool specific states (batch array support)
@@ -90,6 +130,40 @@ let metadataFile: File | null = $state(null);
 
   let ocrFile: File | null = $state(null);
   let ocrData: string = $state("");
+
+  // New Tool States
+  let nupFile: File | null = $state(null);
+  let nupGrid: number = $state(2);
+  let nupOrdering: string = $state('horizontal');
+
+  let bookletFile: File | null = $state(null);
+  let bookletPageFormat: string = $state('a4');
+
+  let scalePagesFile: File | null = $state(null);
+  let scalePagesTarget: string = $state('a4');
+  let scalePagesPercentage: number = $state(100);
+
+  let autoRotateFile: File | null = $state(null);
+  let autoRotateOrientation: string = $state('portrait');
+
+  let stampFile: File | null = $state(null);
+  let stampImageFile: File | null = $state(null);
+  let stampPosition: string = $state('bottom-right');
+
+  let overlayUnderlayFile: File | null = $state(null);
+  let overlayUnderlaySecondaryFile: File | null = $state(null);
+  let overlayUnderlayMode: string = $state('overlay');
+
+  let removeSignaturesFile: File | null = $state(null);
+
+  let validateSignaturesFile: File | null = $state(null);
+  let validateSignaturesBaselineFile: File | null = $state(null);
+  let validateSignaturesResult: string | null = $state(null);
+
+  let sanitizeFile: File | null = $state(null);
+  let piiScanFile: File | null = $state(null);
+  let piiScanResult: string | null = $state(null);
+  let pdfToDocxFile: File | null = $state(null);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -457,6 +531,201 @@ let metadataFile: File | null = $state(null);
     }
   }
 
+  async function handleNup() {
+    if (!nupFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await nupFile.arrayBuffer());
+      const result = await wasmPdfClient.pdf_nup(buffer, { grid: nupGrid, ordering: nupOrdering });
+      download(result, `nup_${nupFile.name}`);
+    } catch (e) {
+      alert(`Error applying N-Up: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleBooklet() {
+    if (!bookletFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await bookletFile.arrayBuffer());
+      const result = await wasmPdfClient.pdf_booklet(buffer, { page_format: bookletPageFormat });
+      download(result, `booklet_${bookletFile.name}`);
+    } catch (e) {
+      alert(`Error generating booklet: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleScalePages() {
+    if (!scalePagesFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await scalePagesFile.arrayBuffer());
+      let options: any = {};
+      if (scalePagesTarget === 'percentage') {
+          options.percentage = scalePagesPercentage;
+      } else {
+          options.format = scalePagesTarget;
+      }
+      const result = await wasmPdfClient.pdf_scale_pages(buffer, options);
+      download(result, `scaled_${scalePagesFile.name}`);
+    } catch (e) {
+      alert(`Error scaling pages: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleAutoRotate() {
+    if (!autoRotateFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await autoRotateFile.arrayBuffer());
+      const result = await wasmPdfClient.pdf_auto_rotate(buffer, { target_orientation: autoRotateOrientation });
+      download(result, `autorotated_${autoRotateFile.name}`);
+    } catch (e) {
+      alert(`Error auto-rotating pages: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleStamp() {
+    if (!stampFile || !stampImageFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await stampFile.arrayBuffer());
+      const reader = new FileReader();
+      reader.readAsDataURL(stampImageFile);
+      await new Promise<void>((resolve, reject) => {
+        reader.onload = () => resolve();
+        reader.onerror = error => reject(error);
+      });
+      const dataUrl = reader.result as string;
+      const base64Image = dataUrl.split(',')[1];
+      const result = await wasmPdfClient.pdf_stamp(buffer, { image_data: base64Image, position: stampPosition });
+      download(result, `stamped_${stampFile.name}`);
+    } catch (e) {
+      alert(`Error applying stamp: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleOverlayUnderlay() {
+    if (!overlayUnderlayFile || !overlayUnderlaySecondaryFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await overlayUnderlayFile.arrayBuffer());
+      const reader = new FileReader();
+      reader.readAsDataURL(overlayUnderlaySecondaryFile);
+      await new Promise<void>((resolve, reject) => {
+        reader.onload = () => resolve();
+        reader.onerror = error => reject(error);
+      });
+      const dataUrl = reader.result as string;
+      const base64Secondary = dataUrl.split(',')[1];
+      const result = await wasmPdfClient.pdf_overlay_underlay(buffer, { mode: overlayUnderlayMode, secondary_pdf: base64Secondary });
+      download(result, `overlayed_${overlayUnderlayFile.name}`);
+    } catch (e) {
+      alert(`Error applying overlay/underlay: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleRemoveSignatures() {
+    if (!removeSignaturesFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await removeSignaturesFile.arrayBuffer());
+      const result = await wasmPdfClient.pdf_remove_signatures(buffer, {});
+      download(result, `unlocked_${removeSignaturesFile.name}`);
+    } catch (e) {
+      alert(`Error removing signatures: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleValidateSignatures() {
+    if (!validateSignaturesFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await validateSignaturesFile.arrayBuffer());
+      let baselineBase64 = undefined;
+      if (validateSignaturesBaselineFile) {
+        const reader = new FileReader();
+        reader.readAsDataURL(validateSignaturesBaselineFile);
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = () => resolve();
+          reader.onerror = error => reject(error);
+        });
+        const dataUrl = reader.result as string;
+        baselineBase64 = dataUrl.split(',')[1];
+      }
+      const result = await wasmPdfClient.pdf_validate_signatures(buffer, { baseline_pdf: baselineBase64 });
+      validateSignaturesResult = result;
+    } catch (e) {
+      alert(`Error validating signatures: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleSanitize() {
+    if (!sanitizeFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await sanitizeFile.arrayBuffer());
+      const result = await wasmPdfClient.sanitize(buffer, {});
+      download(result, `sanitized_${sanitizeFile.name}`);
+    } catch (e) {
+      alert(`Error sanitizing PDF: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePiiScan() {
+    if (!piiScanFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await piiScanFile.arrayBuffer());
+      const result = await wasmPdfClient.pii_scan(buffer, {});
+      piiScanResult = result;
+    } catch (e) {
+      alert(`Error scanning for PII: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePdfToDocx() {
+    if (!pdfToDocxFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await pdfToDocxFile.arrayBuffer());
+      const result = await wasmPdfClient.pdf_to_docx(buffer);
+      const blob = new Blob([result.buffer as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `converted_${pdfToDocxFile.name}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(`Error converting to DOCX: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
 
   // Helpers for merge files
   function removeMergeFile(index: number) {
@@ -480,8 +749,31 @@ let metadataFile: File | null = $state(null);
   }
 
   let filterMode = $state<'all' | 'ready'>('all');
+  let selectedCategory = $state<'all' | 'pages' | 'edit' | 'optimize' | 'security' | 'convert'>('all');
+  let searchQuery = $state('');
+
+  const categories = [
+    { id: 'all', label: 'All Tools', icon: '⭐' },
+    { id: 'pages', label: 'Pages & Imposition', icon: '📑' },
+    { id: 'edit', label: 'Edit & Stationery', icon: '🎨' },
+    { id: 'optimize', label: 'Optimize', icon: '🗜️' },
+    { id: 'security', label: 'Security', icon: '🔒' },
+    { id: 'convert', label: 'Convert', icon: '🔁' }
+  ] as const;
+
+  function getCategoryCount(catId: string) {
+    if (catId === 'all') return tools.length;
+    return tools.filter(t => t.category === catId).length;
+  }
+
   let displayedTools = $derived(
-    filterMode === 'ready' ? tools.filter(t => t.releaseStatus !== 'preview') : tools
+    tools.filter(t => {
+      const modeMatch = filterMode === 'ready' ? t.releaseStatus !== 'preview' : true;
+      const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
+      const searchMatch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      return modeMatch && categoryMatch && searchMatch;
+    })
   );
 </script>
 
@@ -502,6 +794,31 @@ let metadataFile: File | null = $state(null);
         >✅ Ready</button>
       </div>
     </div>
+
+    <div class="search-box" style="margin-bottom: 12px;">
+      <input
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search tools..."
+        style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);"
+      />
+    </div>
+
+    <div class="category-tabs" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;">
+      {#each categories as cat}
+        <button
+          class="cat-tab"
+          class:active={selectedCategory === cat.id}
+          onclick={() => selectedCategory = cat.id}
+          style="flex: 1; min-width: 45%; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.8rem; background: {selectedCategory === cat.id ? 'var(--primary-color)' : 'transparent'}; border: 1px solid {selectedCategory === cat.id ? 'var(--primary-color)' : 'var(--border-color)'}; border-radius: var(--border-radius-sm); color: {selectedCategory === cat.id ? 'white' : 'var(--text-secondary)'}; cursor: pointer;"
+        >
+          <span>{cat.icon}</span>
+          <span style="flex: 1; text-align: left;">{cat.label}</span>
+          <span class="count" style="font-size: 0.7rem; opacity: 0.7;">{getCategoryCount(cat.id)}</span>
+        </button>
+      {/each}
+    </div>
+
     <div class="tools-list">
       {#each displayedTools as tool}
         <button
@@ -1123,6 +1440,303 @@ let metadataFile: File | null = $state(null);
             {/if}
         {/if}
       </div>
+
+    {:else if activeTool === 'pdf_nup'}
+      <div class="tool-pane">
+        <h2>N-Up Document Layout</h2>
+        <p>Combine multiple pages into a grid on a single page.</p>
+        {#if !nupFile}
+            <DropZone ondrop={(files: File[]) => nupFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{nupFile.name}</span>
+                <button onclick={() => nupFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Grid Option:</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button style="flex: 1; padding: 8px;" class:active={nupGrid === 2} onclick={() => nupGrid = 2}>2 (2x1)</button>
+                    <button style="flex: 1; padding: 8px;" class:active={nupGrid === 4} onclick={() => nupGrid = 4}>4 (2x2)</button>
+                    <button style="flex: 1; padding: 8px;" class:active={nupGrid === 9} onclick={() => nupGrid = 9}>9 (3x3)</button>
+                    <button style="flex: 1; padding: 8px;" class:active={nupGrid === 16} onclick={() => nupGrid = 16}>16 (4x4)</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Ordering:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={nupOrdering === 'horizontal'} onclick={() => nupOrdering = 'horizontal'}>Horizontal</button>
+                    <button style="flex: 1; padding: 8px;" class:active={nupOrdering === 'vertical'} onclick={() => nupOrdering = 'vertical'}>Vertical</button>
+                </div>
+            </div>
+            <button class="action-btn" onclick={handleNup} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Apply N-Up'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_booklet'}
+      <div class="tool-pane">
+        <h2>Create Booklet</h2>
+        <p>Rearrange pages into a booklet layout for double-sided printing.</p>
+        {#if !bookletFile}
+            <DropZone ondrop={(files: File[]) => bookletFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{bookletFile.name}</span>
+                <button onclick={() => bookletFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Page Format:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={bookletPageFormat === 'a4'} onclick={() => bookletPageFormat = 'a4'}>A4</button>
+                    <button style="flex: 1; padding: 8px;" class:active={bookletPageFormat === 'letter'} onclick={() => bookletPageFormat = 'letter'}>Letter</button>
+                </div>
+            </div>
+            <button class="action-btn" onclick={handleBooklet} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Generate Booklet'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_scale_pages'}
+      <div class="tool-pane">
+        <h2>Scale Pages</h2>
+        <p>Resize all pages in a document to a target format.</p>
+        {#if !scalePagesFile}
+            <DropZone ondrop={(files: File[]) => scalePagesFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{scalePagesFile.name}</span>
+                <button onclick={() => scalePagesFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Target Format:</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'a4'} onclick={() => scalePagesTarget = 'a4'}>A4</button>
+                    <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'letter'} onclick={() => scalePagesTarget = 'letter'}>Letter</button>
+                    <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'legal'} onclick={() => scalePagesTarget = 'legal'}>Legal</button>
+                    <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'a3'} onclick={() => scalePagesTarget = 'a3'}>A3</button>
+                    <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'percentage'} onclick={() => scalePagesTarget = 'percentage'}>Percentage</button>
+                </div>
+            </div>
+            {#if scalePagesTarget === 'percentage'}
+                <div class="input-group">
+                    <label>Scale Percentage: {scalePagesPercentage}%</label>
+                    <input type="range" bind:value={scalePagesPercentage} min="50" max="200" style="width: 100%;" />
+                </div>
+            {/if}
+            <button class="action-btn" onclick={handleScalePages} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Scale Pages'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_auto_rotate'}
+      <div class="tool-pane">
+        <h2>Auto Rotate</h2>
+        <p>Automatically rotate pages to match the target orientation.</p>
+        {#if !autoRotateFile}
+            <DropZone ondrop={(files: File[]) => autoRotateFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{autoRotateFile.name}</span>
+                <button onclick={() => autoRotateFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Target Orientation:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={autoRotateOrientation === 'portrait'} onclick={() => autoRotateOrientation = 'portrait'}>Portrait</button>
+                    <button style="flex: 1; padding: 8px;" class:active={autoRotateOrientation === 'landscape'} onclick={() => autoRotateOrientation = 'landscape'}>Landscape</button>
+                </div>
+            </div>
+            <button class="action-btn" onclick={handleAutoRotate} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Auto Rotate'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_stamp'}
+      <div class="tool-pane">
+        <h2>Add Stamp</h2>
+        <p>Stamp an image (PNG/JPEG) onto a PDF document.</p>
+        {#if !stampFile}
+            <DropZone ondrop={(files: File[]) => stampFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{stampFile.name} (PDF)</span>
+                <button onclick={() => stampFile = null}>✕</button>
+            </div>
+            {#if !stampImageFile}
+                <div style="margin-top: 16px;">
+                    <label>Select Stamp Image:</label>
+                    <DropZone ondrop={(files: File[]) => stampImageFile = files[0]} multiple={false} />
+                </div>
+            {:else}
+                <div class="selected-file" style="margin-top: 16px;">
+                    <span class="file-name">{stampImageFile.name} (Stamp Image)</span>
+                    <button onclick={() => stampImageFile = null}>✕</button>
+                </div>
+                <div class="input-group">
+                    <label>Position:</label>
+                    <select bind:value={stampPosition} style="width: 100%; padding: 8px;">
+                        <option value="top-left">Top Left</option>
+                        <option value="center">Center</option>
+                        <option value="bottom-right">Bottom Right</option>
+                    </select>
+                </div>
+                <button class="action-btn" onclick={handleStamp} disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : 'Add Stamp'}
+                </button>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_overlay_underlay'}
+      <div class="tool-pane">
+        <h2>Overlay / Underlay</h2>
+        <p>Apply one PDF over or under another PDF.</p>
+        {#if !overlayUnderlayFile}
+            <label>Primary PDF:</label>
+            <DropZone ondrop={(files: File[]) => overlayUnderlayFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{overlayUnderlayFile.name} (Primary)</span>
+                <button onclick={() => overlayUnderlayFile = null}>✕</button>
+            </div>
+            {#if !overlayUnderlaySecondaryFile}
+                <div style="margin-top: 16px;">
+                    <label>Secondary PDF:</label>
+                    <DropZone ondrop={(files: File[]) => overlayUnderlaySecondaryFile = files[0]} multiple={false} />
+                </div>
+            {:else}
+                <div class="selected-file" style="margin-top: 16px;">
+                    <span class="file-name">{overlayUnderlaySecondaryFile.name} (Secondary)</span>
+                    <button onclick={() => overlayUnderlaySecondaryFile = null}>✕</button>
+                </div>
+                <div class="input-group">
+                    <label>Mode:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button style="flex: 1; padding: 8px;" class:active={overlayUnderlayMode === 'overlay'} onclick={() => overlayUnderlayMode = 'overlay'}>Overlay (On Top)</button>
+                        <button style="flex: 1; padding: 8px;" class:active={overlayUnderlayMode === 'underlay'} onclick={() => overlayUnderlayMode = 'underlay'}>Underlay (Behind)</button>
+                    </div>
+                </div>
+                <button class="action-btn" onclick={handleOverlayUnderlay} disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : 'Apply Overlay/Underlay'}
+                </button>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_validate_signatures'}
+      <div class="tool-pane">
+        <h2>Validate Signatures</h2>
+        <p>Check the validity and integrity of signatures in a PDF.</p>
+        {#if !validateSignaturesFile}
+            <DropZone ondrop={(files: File[]) => { validateSignaturesFile = files[0]; validateSignaturesResult = null; }} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{validateSignaturesFile.name}</span>
+                <button onclick={() => { validateSignaturesFile = null; validateSignaturesResult = null; }}>✕</button>
+            </div>
+            <div style="margin-top: 16px;">
+                <label>Baseline PDF (Optional, for tamper detection):</label>
+                {#if !validateSignaturesBaselineFile}
+                    <DropZone ondrop={(files: File[]) => validateSignaturesBaselineFile = files[0]} multiple={false} />
+                {:else}
+                    <div class="selected-file">
+                        <span class="file-name">{validateSignaturesBaselineFile.name}</span>
+                        <button onclick={() => validateSignaturesBaselineFile = null}>✕</button>
+                    </div>
+                {/if}
+            </div>
+
+            <button class="action-btn" onclick={handleValidateSignatures} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Validate Signatures'}
+            </button>
+
+            {#if validateSignaturesResult}
+                <div style="margin-top: 16px; padding: 16px; background-color: var(--bg-surface); border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-secondary);">Validation Report</h3>
+                    <pre style="font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; word-break: break-all;">{validateSignaturesResult}</pre>
+                </div>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_remove_signatures'}
+      <div class="tool-pane">
+        <h2>Remove Signatures</h2>
+        <p>Remove all digital signatures and permissions from a PDF.</p>
+        {#if !removeSignaturesFile}
+            <DropZone ondrop={(files: File[]) => removeSignaturesFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{removeSignaturesFile.name}</span>
+                <button onclick={() => removeSignaturesFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleRemoveSignatures} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Remove Signatures'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'sanitize'}
+      <div class="tool-pane">
+        <h2>Sanitize Document</h2>
+        <p>Remove hidden metadata, embedded files, JavaScript, and other non-visible data.</p>
+        {#if !sanitizeFile}
+            <DropZone ondrop={(files: File[]) => sanitizeFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{sanitizeFile.name}</span>
+                <button onclick={() => sanitizeFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleSanitize} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Sanitize Document'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pii_scan'}
+      <div class="tool-pane">
+        <h2>PII Scan</h2>
+        <p>Scan the document for Personally Identifiable Information (PII) like emails or SSNs.</p>
+        {#if !piiScanFile}
+            <DropZone ondrop={(files: File[]) => { piiScanFile = files[0]; piiScanResult = null; }} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{piiScanFile.name}</span>
+                <button onclick={() => { piiScanFile = null; piiScanResult = null; }}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handlePiiScan} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Scan Document'}
+            </button>
+            {#if piiScanResult}
+                <div style="margin-top: 16px; padding: 16px; background-color: var(--bg-surface); border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-secondary);">Scan Results</h3>
+                    <pre style="font-family: monospace; font-size: 0.9rem; white-space: pre-wrap;">{piiScanResult}</pre>
+                </div>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_to_docx'}
+      <div class="tool-pane">
+        <h2>Convert PDF to DOCX</h2>
+        <p>Convert a PDF document into a Microsoft Word (.docx) file.</p>
+        {#if !pdfToDocxFile}
+            <DropZone ondrop={(files: File[]) => pdfToDocxFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{pdfToDocxFile.name}</span>
+                <button onclick={() => pdfToDocxFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handlePdfToDocx} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Convert to DOCX'}
+            </button>
+        {/if}
+      </div>
+
     {/if}
   </div>
 </div>
