@@ -30,7 +30,7 @@ pub async fn run_pdf_overlay_underlay_suite() -> anyhow::Result<Vec<TestExecutio
 
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "overlay-underlay",
+            "pdf-overlay-underlay",
             "--input",
             &actual_input,
             "--output",
@@ -110,8 +110,12 @@ pub async fn run_pdf_overlay_underlay_suite() -> anyhow::Result<Vec<TestExecutio
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
 
+        let out_path = out_dir.join(format!("{}_api_{}.pdf", tool, tier as u8));
+        let out_path_str = out_path.to_str().unwrap().to_string();
+
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input,
+            "output": out_path_str
         });
 
         let (success, resp, latency) = api
