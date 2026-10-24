@@ -1066,6 +1066,41 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Draw borders around each page
           </label>
         </div>
+      {:else if activeTool.id === 'pdf_scale_pages'}
+        <div class="operation-config">
+          <label for="scaleTargetSize" class="section-desc">Target Paper Size:</label>
+          <select id="scaleTargetSize" bind:value={convertPreset} class="form-input" style="margin-bottom: 12px;">
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="Letter">US Letter (8.5 × 11 in)</option>
+            <option value="Legal">US Legal (8.5 × 14 in)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+            <option value="A5">A5 (148 × 210 mm)</option>
+            <option value="Tabloid">Tabloid (11 × 17 in)</option>
+          </select>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Scales page dimensions uniformly while preserving original aspect ratio and centering contents.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_remove_signatures'}
+        <div class="operation-config">
+          <p class="section-desc" style="font-size: 0.85rem; color: #f59e0b; line-height: 1.4; margin-bottom: 8px;">
+            ⚠️ Strips cryptographic signature dictionaries, locks, and widget annotations to enable editing.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_stamp'}
+        <div class="operation-config">
+          <label for="stampText" class="section-desc">Stamp Label / Text:</label>
+          <input id="stampText" type="text" bind:value={watermarkText} class="form-input" placeholder="APPROVED / CONFIDENTIAL" style="margin-bottom: 12px;" />
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa;">
+            Applies coordinate-exact visual stamps and branding onto target pages.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_auto_rotate'}
+        <div class="operation-config">
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Heuristically inspects text reading baselines and scan orientations to automatically rotate upside-down or sideways pages upright.
+          </p>
+        </div>
       {:else if activeTool.id === 'burst'}
         <div class="operation-config">
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">

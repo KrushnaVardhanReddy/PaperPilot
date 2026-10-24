@@ -1011,19 +1011,22 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | # | Task | Notes |
 |---|---|---|
 | 5.3.1 | Booklet Imposition (`pdf_booklet`) `[Spec 096]` ✅ | **Completed** — Pure-Rust booklet imposition algorithm (duplex sheet ordering, automatic page padding $N \pmod 4 = 0$, center fold line), verified across all 5 surfaces (CLI `paperpilot pdf-booklet`, MCP `pdf_booklet`, REST Gateway `POST /api/v1/pdf/booklet`, WASM, Cloudflare Edge) with 10/10 unmocked E2E assertions passing (`reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md`, `wiki/PDF-Booklet.md`). |
-| 5.3.2 | Multi-Page Layout (N-Up) (`pdf_nup`) `[Spec 097]` 🔄 | **In Progress** (Jules Session [`14575779739699636673`](https://jules.google.com/session/14575779739699636673)) — Layout 2, 4, 9, or 16 pages per sheet with configurable ordering, margins, spacing, hairline borders, and Desktop UI controls (`specs/097-pdf-nup/spec.md`). |
-| 5.3.3 | Scale / Resize Page Dimensions | Uniformly scale pages to target standards (A4, Letter, Legal) with margin offsets |
-| 5.3.4 | Image / Logo Watermark Stamp | Place transparent PNG/JPEG stamps at exact coordinates on pages |
-| 5.3.5 | Validate Digital Signatures | Verify cryptographic signature validity, certificate chain, and tamper hashes |
-| 5.3.6 | PDF Sanitization | Strip embedded JavaScript, external launch links, and dangerous metadata |
-| 5.3.7 | Remove Annotations (Batch) | Programmatically strip or flatten all annotations across pages |
-| 5.3.8 | Overlay / Underlay PDFs | Stamp one PDF on top of or behind another (letterhead/watermark layer) |
-| 5.3.9 | Visual Pixel PDF Comparison Slider | Side-by-side & overlay dual-canvas pixel-diff tool in Rust (`image` crate) with grayscale identical background and red/green visual shift highlights |
-| 5.3.10 | Auto-Rotate (Orientation Heuristics & OCR) | Detect sideways/inverted pages (0°/90°/180°/270°) using font baseline metrics and lightweight OCR orientation detection to auto-upright all pages |
-| 5.3.11 | PDF to Single Large Page (Continuous Canvas) | Stitch all pages vertically or horizontally into a single continuous-scroll canvas (ideal for receipts, invoices, and blueprints) |
-| 5.3.12 | Manage Attachments & PDF Portfolios | Embed, inspect, extract, or delete arbitrary files attached in the PDF `/EmbeddedFiles` name tree (PDF Portfolios) |
-| 5.3.13 | Remove Digital / Certificate Signatures | Strip `/ByteRange` cryptographic signature dictionaries and incremental revisions to restore documents to an editable, unsigned state |
-| 5.3.14 | Timestamp PDF (RFC 3161 TSA) | Query an RFC 3161-compliant Time-Stamp Authority (TSA) and embed cryptographic timestamp tokens alongside digital signatures |
+| 5.3.2 | Multi-Page Layout (N-Up) (`pdf_nup`) `[Spec 097]` ✅ | **Merged to main (PR #241)** — Pure-Rust N-Up grid imposition engine (2, 4, 9, 16 pages per sheet), horizontal/vertical ordering, configurable margin & spacing, optional hairline grid borders, and Desktop UI controls (`reports/PENTA_INTERFACE_E2E_PDF_NUP_REPORT.md`, `wiki/097-pdf-nup.md`). |
+| 5.3.3 | Scale / Resize Page Dimensions (`pdf_scale_pages`) `[Spec 098]` 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration, CLI command, MCP schema, REST Gateway endpoint, WASM binding, and Desktop UI selector. Core algorithm & E2E assertions ready for Jules execution (`specs/098-pdf-scale-pages/task.md`). |
+| 5.3.4 | Image / Logo Watermark Stamp (`pdf_stamp`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI parameter controls for coordinate-exact PNG/JPEG placement on pages. |
+| 5.3.5 | Validate Digital Signatures (`pdf_validate_signatures`) `[Spec 095]` ✅ | **Completed (PR #238)** — Cryptographically verify PKCS#7 / CMS digital signatures, certificate chains, and document integrity hashes. |
+| 5.3.6 | PDF Sanitization (`sanitize`) `[Spec 085]` ✅ | **Completed** — Deep security sanitizer stripping embedded JavaScript, launch actions, external URI hooks, and dangerous metadata. |
+| 5.3.7 | Remove Annotations (Batch) ✅ | **Completed** — Programmatically strip or flatten annotations across pages (`pdf_flatten`). |
+| 5.3.8 | Overlay / Underlay PDFs (`pdf_overlay_underlay`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI controls for digital stationary and background templates. |
+| 5.3.9 | Visual Pixel PDF Comparison Slider (`pdf_compare`) ✅ | **Completed** — Side-by-side split slider, overlay diffing, and GitHub-style line addition/deletion diff (`🌿 Git Diff`). |
+| 5.3.10 | Auto-Rotate (`pdf_auto_rotate`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI controls for text baseline & OCR scan uprighting. |
+| 5.3.11 | PDF Continuous Canvas Stitch (`pdf_stitch_canvas`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for vertical/horizontal continuous single-sheet canvas stitch. |
+| 5.3.12 | Manage Attachments & PDF Portfolios (`pdf_attachments`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and JSON inspection for embedded `/EmbeddedFiles` trees. |
+| 5.3.13 | Remove Digital Signatures (`pdf_remove_signatures`) `[Spec 099]` 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI controls for stripping signature dictionaries and AcroForm locks (`specs/099-pdf-remove-signatures/task.md`). |
+| 5.3.14 | Timestamp PDF RFC 3161 TSA (`pdf_timestamp`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and REST/CLI endpoints for TSA timestamping. |
+| 5.3.15 | Modify PDF Permissions (`pdf_change_permissions`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for security flag and user/owner permission manipulation. |
+| 5.3.16 | Split Scanned Book Spine (`pdf_split_scanned_book`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for two-up gutter scan center splitting. |
+| 5.3.17 | Comic Archive Conversion (`pdf_comic_archive`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for PDF $\leftrightarrow$ CBZ/CBR archive bidirectional synthesis. |
 
 ---
 

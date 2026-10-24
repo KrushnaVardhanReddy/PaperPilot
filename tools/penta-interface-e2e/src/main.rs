@@ -318,6 +318,94 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_NUP_REPORT.md",
             )?;
 
+            let res_pdf_scale_pages = cases::pdf_scale_pages::run_pdf_scale_pages_suite().await?;
+            println!("Scale Page Dimensions finished: {} tests", res_pdf_scale_pages.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Scale Page Dimensions)",
+                &res_pdf_scale_pages,
+                "reports/PENTA_INTERFACE_E2E_PDF_SCALE_PAGES_REPORT.md",
+            )?;
+
+            let res_pdf_remove_signatures = cases::pdf_remove_signatures::run_pdf_remove_signatures_suite().await?;
+            println!("Remove Digital Signatures finished: {} tests", res_pdf_remove_signatures.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Remove Digital Signatures)",
+                &res_pdf_remove_signatures,
+                "reports/PENTA_INTERFACE_E2E_PDF_REMOVE_SIGNATURES_REPORT.md",
+            )?;
+
+            let res_pdf_stamp = cases::pdf_stamp::run_pdf_stamp_suite().await?;
+            println!("Stamp Image & Logo finished: {} tests", res_pdf_stamp.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Stamp Image & Logo)",
+                &res_pdf_stamp,
+                "reports/PENTA_INTERFACE_E2E_PDF_STAMP_REPORT.md",
+            )?;
+
+            let res_pdf_overlay_underlay = cases::pdf_overlay_underlay::run_pdf_overlay_underlay_suite().await?;
+            println!("Overlay & Underlay Stationary finished: {} tests", res_pdf_overlay_underlay.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Overlay & Underlay Stationary)",
+                &res_pdf_overlay_underlay,
+                "reports/PENTA_INTERFACE_E2E_PDF_OVERLAY_UNDERLAY_REPORT.md",
+            )?;
+
+            let res_pdf_auto_rotate = cases::pdf_auto_rotate::run_pdf_auto_rotate_suite().await?;
+            println!("Auto Upright Orientation finished: {} tests", res_pdf_auto_rotate.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Auto Upright Orientation)",
+                &res_pdf_auto_rotate,
+                "reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md",
+            )?;
+
+            let res_pdf_stitch_canvas = cases::pdf_stitch_canvas::run_pdf_stitch_canvas_suite().await?;
+            println!("Stitch Continuous Canvas finished: {} tests", res_pdf_stitch_canvas.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Stitch Continuous Canvas)",
+                &res_pdf_stitch_canvas,
+                "reports/PENTA_INTERFACE_E2E_PDF_STITCH_CANVAS_REPORT.md",
+            )?;
+
+            let res_pdf_attachments = cases::pdf_attachments::run_pdf_attachments_suite().await?;
+            println!("PDF Portfolio Attachments finished: {} tests", res_pdf_attachments.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (PDF Portfolio Attachments)",
+                &res_pdf_attachments,
+                "reports/PENTA_INTERFACE_E2E_PDF_ATTACHMENTS_REPORT.md",
+            )?;
+
+            let res_pdf_timestamp = cases::pdf_timestamp::run_pdf_timestamp_suite().await?;
+            println!("Cryptographic Timestamp TSA finished: {} tests", res_pdf_timestamp.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Cryptographic Timestamp TSA)",
+                &res_pdf_timestamp,
+                "reports/PENTA_INTERFACE_E2E_PDF_TIMESTAMP_REPORT.md",
+            )?;
+
+            let res_pdf_change_permissions = cases::pdf_change_permissions::run_pdf_change_permissions_suite().await?;
+            println!("Modify PDF Permissions finished: {} tests", res_pdf_change_permissions.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Modify PDF Permissions)",
+                &res_pdf_change_permissions,
+                "reports/PENTA_INTERFACE_E2E_PDF_CHANGE_PERMISSIONS_REPORT.md",
+            )?;
+
+            let res_pdf_split_scanned_book = cases::pdf_split_scanned_book::run_pdf_split_scanned_book_suite().await?;
+            println!("Split Scanned Book Spine finished: {} tests", res_pdf_split_scanned_book.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Split Scanned Book Spine)",
+                &res_pdf_split_scanned_book,
+                "reports/PENTA_INTERFACE_E2E_PDF_SPLIT_SCANNED_BOOK_REPORT.md",
+            )?;
+
+            let res_pdf_comic_archive = cases::pdf_comic_archive::run_pdf_comic_archive_suite().await?;
+            println!("Comic Archive Conversion finished: {} tests", res_pdf_comic_archive.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Comic Archive Conversion)",
+                &res_pdf_comic_archive,
+                "reports/PENTA_INTERFACE_E2E_PDF_COMIC_ARCHIVE_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -325,6 +413,17 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_comic_archive);
+            all.extend(res_pdf_split_scanned_book);
+            all.extend(res_pdf_change_permissions);
+            all.extend(res_pdf_timestamp);
+            all.extend(res_pdf_attachments);
+            all.extend(res_pdf_stitch_canvas);
+            all.extend(res_pdf_auto_rotate);
+            all.extend(res_pdf_overlay_underlay);
+            all.extend(res_pdf_stamp);
+            all.extend(res_pdf_remove_signatures);
+            all.extend(res_pdf_scale_pages);
             all.extend(res_pdf_nup);
             all.extend(res_pdf_booklet);
             all.extend(generated_res);

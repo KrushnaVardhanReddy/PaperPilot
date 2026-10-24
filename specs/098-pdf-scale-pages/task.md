@@ -10,8 +10,8 @@
 ## Objectives & Work Items
 
 ### 1. Scaffolding
-- [ ] Run `cargo run -j 2 -p penta-scaffold -- --name pdf_scale_pages --title "Scale Page Dimensions" --category organize --icon "📐" --input-type pdf --output-type pdf --description "Scale page dimensions between standard formats (A4, Letter, Legal) or arbitrary percentages."`
-- [ ] Verify clean compilation across all 5 surfaces.
+- [x] Run `cargo run -j 2 -p penta-scaffold -- --name pdf_scale_pages --title "Scale Page Dimensions" --category organize --icon "📐" --input-type pdf --output-type pdf --description "Scale page dimensions between standard formats (A4, Letter, Legal) or arbitrary percentages."` ✅ (Completed in main)
+- [x] Verify clean compilation across all 5 surfaces. ✅ (Verified clean)
 
 ### 2. Core Scaling Algorithm (`paperpilot-pdf/src/operations/pdf_scale_pages.rs`)
 - [ ] Implement `PdfScalePagesOptions` with paper format dimensions (A4, Letter, Legal, A3, Tabloid).

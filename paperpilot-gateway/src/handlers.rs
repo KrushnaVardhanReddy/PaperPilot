@@ -1562,3 +1562,157 @@ pub async fn pdf_booklet(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn pdf_nup(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_nup".to_string()), req).await
 }
+/// Scale Page Dimensions [Scale page dimensions between standard formats or percentages.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/scale-pages",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Scale Page Dimensions completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_scale_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_scale_pages".to_string()), req).await
+}
+/// Remove Digital Signatures [Strip digital signature fields, cryptographic locks, and widget annotations.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/remove-signatures",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Remove Digital Signatures completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_remove_signatures(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_remove_signatures".to_string()), req).await
+}
+/// Stamp Image & Logo [Place coordinate-exact images, logos, and badges onto PDF pages.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/stamp",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Stamp Image & Logo completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_stamp(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_stamp".to_string()), req).await
+}
+/// Overlay & Underlay Stationary [Apply letterheads, watermarked stationary, and templates as background or foreground.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/overlay-underlay",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Overlay & Underlay Stationary completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_overlay_underlay(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_overlay_underlay".to_string()), req).await
+}
+/// Auto Upright Orientation [Heuristically detect text baseline and rotation angle to automatically upright pages.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/auto-rotate",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Auto Upright Orientation completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_auto_rotate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_auto_rotate".to_string()), req).await
+}
+/// Stitch Continuous Canvas [Combine multiple pages vertically or horizontally into a continuous single-page canvas.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/stitch-canvas",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Stitch Continuous Canvas completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_stitch_canvas(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_stitch_canvas".to_string()), req).await
+}
+/// PDF Portfolio Attachments [Inspect, extract, or embed file attachments into PDF portfolios.] [Input: .pdf | Output: .json]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/attachments",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PDF Portfolio Attachments completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_attachments(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_attachments".to_string()), req).await
+}
+/// Cryptographic Timestamp TSA [Apply RFC 3161 cryptographically verified TSA timestamp tokens.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/timestamp",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Cryptographic Timestamp TSA completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_timestamp(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_timestamp".to_string()), req).await
+}
+/// Modify PDF Permissions [Configure user and owner permissions for printing, copying, and modification.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/change-permissions",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Modify PDF Permissions completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_change_permissions(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_change_permissions".to_string()), req).await
+}
+/// Split Scanned Book Spine [Detect center binding gutter spine and split two-up page scans into single pages.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/split-scanned-book",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Split Scanned Book Spine completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_split_scanned_book(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_split_scanned_book".to_string()), req).await
+}
+/// Comic Archive Conversion [Convert between PDF documents and comic book archive formats (CBZ/CBR).] [Input: .pdf | Output: .cbr]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/comic-archive",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Comic Archive Conversion completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_comic_archive(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_comic_archive".to_string()), req).await
+}

@@ -10,8 +10,8 @@
 ## Objectives & Work Items
 
 ### 1. Scaffolding
-- [ ] Run `cargo run -j 2 -p penta-scaffold -- --name pdf_remove_signatures --title "Remove Digital Signatures" --category security --icon "🔓" --input-type pdf --output-type pdf --description "Strip digital signature fields, cryptographic locks, and widget annotations."`
-- [ ] Verify clean compilation across all 5 surfaces.
+- [x] Run `cargo run -j 2 -p penta-scaffold -- --name pdf_remove_signatures --title "Remove Digital Signatures" --category security --icon "🔓" --input-type pdf --output-type pdf --description "Strip digital signature fields, cryptographic locks, and widget annotations."` ✅ (Completed in main)
+- [x] Verify clean compilation across all 5 surfaces. ✅ (Verified clean)
 
 ### 2. Core Removal Logic (`paperpilot-pdf/src/operations/pdf_remove_signatures.rs`)
 - [ ] Implement `PdfRemoveSignaturesOptions`.

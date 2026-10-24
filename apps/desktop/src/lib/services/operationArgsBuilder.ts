@@ -520,6 +520,72 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 draw_borders: context.nupDrawBorders ?? false
             };
             break;
+        case 'pdf_scale_pages':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_remove_signatures':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_stamp':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_overlay_underlay':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_auto_rotate':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_stitch_canvas':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_attachments':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.json`)
+            };
+            break;
+        case 'pdf_timestamp':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_change_permissions':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_split_scanned_book':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
+        case 'pdf_comic_archive':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.cbr`)
+            };
+            break;
         default:
             args = {
                 input: docPath,

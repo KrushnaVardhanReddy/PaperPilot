@@ -2432,6 +2432,512 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_nup.input_schema = Arc::new(schema_pdf_nup);
         tools.push(tool_pdf_nup);
+        let mut schema_pdf_scale_pages = serde_json::Map::new();
+        schema_pdf_scale_pages.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_scale_pages = serde_json::Map::new();
+
+        let mut prop_input_pdf_scale_pages = serde_json::Map::new();
+        prop_input_pdf_scale_pages.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_scale_pages.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_scale_pages),
+        );
+
+        let mut prop_output_pdf_scale_pages = serde_json::Map::new();
+        prop_output_pdf_scale_pages.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_scale_pages.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_scale_pages),
+        );
+
+        schema_pdf_scale_pages.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_scale_pages),
+        );
+        schema_pdf_scale_pages.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_scale_pages = Tool::default();
+        tool_pdf_scale_pages.name = "pdf_scale_pages".into();
+        tool_pdf_scale_pages.description = Some(
+            "Scale Page Dimensions: Scale page dimensions between standard formats or percentages. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_scale_pages.input_schema = Arc::new(schema_pdf_scale_pages);
+        tools.push(tool_pdf_scale_pages);
+        let mut schema_pdf_remove_signatures = serde_json::Map::new();
+        schema_pdf_remove_signatures.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_remove_signatures = serde_json::Map::new();
+
+        let mut prop_input_pdf_remove_signatures = serde_json::Map::new();
+        prop_input_pdf_remove_signatures.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_remove_signatures.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_remove_signatures),
+        );
+
+        let mut prop_output_pdf_remove_signatures = serde_json::Map::new();
+        prop_output_pdf_remove_signatures.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_remove_signatures.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_remove_signatures),
+        );
+
+        schema_pdf_remove_signatures.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_remove_signatures),
+        );
+        schema_pdf_remove_signatures.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_remove_signatures = Tool::default();
+        tool_pdf_remove_signatures.name = "pdf_remove_signatures".into();
+        tool_pdf_remove_signatures.description = Some(
+            "Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_remove_signatures.input_schema = Arc::new(schema_pdf_remove_signatures);
+        tools.push(tool_pdf_remove_signatures);
+        let mut schema_pdf_stamp = serde_json::Map::new();
+        schema_pdf_stamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_stamp = serde_json::Map::new();
+
+        let mut prop_input_pdf_stamp = serde_json::Map::new();
+        prop_input_pdf_stamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_stamp.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_stamp),
+        );
+
+        let mut prop_output_pdf_stamp = serde_json::Map::new();
+        prop_output_pdf_stamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_stamp.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_stamp),
+        );
+
+        schema_pdf_stamp.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_stamp),
+        );
+        schema_pdf_stamp.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_stamp = Tool::default();
+        tool_pdf_stamp.name = "pdf_stamp".into();
+        tool_pdf_stamp.description = Some(
+            "Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_stamp.input_schema = Arc::new(schema_pdf_stamp);
+        tools.push(tool_pdf_stamp);
+        let mut schema_pdf_overlay_underlay = serde_json::Map::new();
+        schema_pdf_overlay_underlay.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_overlay_underlay = serde_json::Map::new();
+
+        let mut prop_input_pdf_overlay_underlay = serde_json::Map::new();
+        prop_input_pdf_overlay_underlay.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_overlay_underlay.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_overlay_underlay),
+        );
+
+        let mut prop_output_pdf_overlay_underlay = serde_json::Map::new();
+        prop_output_pdf_overlay_underlay.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_overlay_underlay.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_overlay_underlay),
+        );
+
+        schema_pdf_overlay_underlay.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_overlay_underlay),
+        );
+        schema_pdf_overlay_underlay.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_overlay_underlay = Tool::default();
+        tool_pdf_overlay_underlay.name = "pdf_overlay_underlay".into();
+        tool_pdf_overlay_underlay.description = Some(
+            "Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_overlay_underlay.input_schema = Arc::new(schema_pdf_overlay_underlay);
+        tools.push(tool_pdf_overlay_underlay);
+        let mut schema_pdf_auto_rotate = serde_json::Map::new();
+        schema_pdf_auto_rotate.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_auto_rotate = serde_json::Map::new();
+
+        let mut prop_input_pdf_auto_rotate = serde_json::Map::new();
+        prop_input_pdf_auto_rotate.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_auto_rotate.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_auto_rotate),
+        );
+
+        let mut prop_output_pdf_auto_rotate = serde_json::Map::new();
+        prop_output_pdf_auto_rotate.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_auto_rotate.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_auto_rotate),
+        );
+
+        schema_pdf_auto_rotate.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_auto_rotate),
+        );
+        schema_pdf_auto_rotate.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_auto_rotate = Tool::default();
+        tool_pdf_auto_rotate.name = "pdf_auto_rotate".into();
+        tool_pdf_auto_rotate.description = Some(
+            "Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_auto_rotate.input_schema = Arc::new(schema_pdf_auto_rotate);
+        tools.push(tool_pdf_auto_rotate);
+        let mut schema_pdf_stitch_canvas = serde_json::Map::new();
+        schema_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_stitch_canvas = serde_json::Map::new();
+
+        let mut prop_input_pdf_stitch_canvas = serde_json::Map::new();
+        prop_input_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_stitch_canvas.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_stitch_canvas),
+        );
+
+        let mut prop_output_pdf_stitch_canvas = serde_json::Map::new();
+        prop_output_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_stitch_canvas.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_stitch_canvas),
+        );
+
+        schema_pdf_stitch_canvas.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_stitch_canvas),
+        );
+        schema_pdf_stitch_canvas.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_stitch_canvas = Tool::default();
+        tool_pdf_stitch_canvas.name = "pdf_stitch_canvas".into();
+        tool_pdf_stitch_canvas.description = Some(
+            "Stitch Continuous Canvas: Combine multiple pages vertically or horizontally into a continuous single-page canvas. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_stitch_canvas.input_schema = Arc::new(schema_pdf_stitch_canvas);
+        tools.push(tool_pdf_stitch_canvas);
+        let mut schema_pdf_attachments = serde_json::Map::new();
+        schema_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_attachments = serde_json::Map::new();
+
+        let mut prop_input_pdf_attachments = serde_json::Map::new();
+        prop_input_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_attachments),
+        );
+
+        let mut prop_output_pdf_attachments = serde_json::Map::new();
+        prop_output_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_attachments),
+        );
+
+        schema_pdf_attachments.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_attachments),
+        );
+        schema_pdf_attachments.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_attachments = Tool::default();
+        tool_pdf_attachments.name = "pdf_attachments".into();
+        tool_pdf_attachments.description = Some(
+            "PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios. [Input: .pdf | Output: .json]".into(),
+        );
+        tool_pdf_attachments.input_schema = Arc::new(schema_pdf_attachments);
+        tools.push(tool_pdf_attachments);
+        let mut schema_pdf_timestamp = serde_json::Map::new();
+        schema_pdf_timestamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_timestamp = serde_json::Map::new();
+
+        let mut prop_input_pdf_timestamp = serde_json::Map::new();
+        prop_input_pdf_timestamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_timestamp.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_timestamp),
+        );
+
+        let mut prop_output_pdf_timestamp = serde_json::Map::new();
+        prop_output_pdf_timestamp.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_timestamp.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_timestamp),
+        );
+
+        schema_pdf_timestamp.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_timestamp),
+        );
+        schema_pdf_timestamp.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_timestamp = Tool::default();
+        tool_pdf_timestamp.name = "pdf_timestamp".into();
+        tool_pdf_timestamp.description = Some(
+            "Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_timestamp.input_schema = Arc::new(schema_pdf_timestamp);
+        tools.push(tool_pdf_timestamp);
+        let mut schema_pdf_change_permissions = serde_json::Map::new();
+        schema_pdf_change_permissions.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_change_permissions = serde_json::Map::new();
+
+        let mut prop_input_pdf_change_permissions = serde_json::Map::new();
+        prop_input_pdf_change_permissions.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_change_permissions.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_change_permissions),
+        );
+
+        let mut prop_output_pdf_change_permissions = serde_json::Map::new();
+        prop_output_pdf_change_permissions.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_change_permissions.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_change_permissions),
+        );
+
+        schema_pdf_change_permissions.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_change_permissions),
+        );
+        schema_pdf_change_permissions.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_change_permissions = Tool::default();
+        tool_pdf_change_permissions.name = "pdf_change_permissions".into();
+        tool_pdf_change_permissions.description = Some(
+            "Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_change_permissions.input_schema = Arc::new(schema_pdf_change_permissions);
+        tools.push(tool_pdf_change_permissions);
+        let mut schema_pdf_split_scanned_book = serde_json::Map::new();
+        schema_pdf_split_scanned_book.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_split_scanned_book = serde_json::Map::new();
+
+        let mut prop_input_pdf_split_scanned_book = serde_json::Map::new();
+        prop_input_pdf_split_scanned_book.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_split_scanned_book.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_split_scanned_book),
+        );
+
+        let mut prop_output_pdf_split_scanned_book = serde_json::Map::new();
+        prop_output_pdf_split_scanned_book.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_split_scanned_book.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_split_scanned_book),
+        );
+
+        schema_pdf_split_scanned_book.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_split_scanned_book),
+        );
+        schema_pdf_split_scanned_book.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_split_scanned_book = Tool::default();
+        tool_pdf_split_scanned_book.name = "pdf_split_scanned_book".into();
+        tool_pdf_split_scanned_book.description = Some(
+            "Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_split_scanned_book.input_schema = Arc::new(schema_pdf_split_scanned_book);
+        tools.push(tool_pdf_split_scanned_book);
+        let mut schema_pdf_comic_archive = serde_json::Map::new();
+        schema_pdf_comic_archive.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_comic_archive = serde_json::Map::new();
+
+        let mut prop_input_pdf_comic_archive = serde_json::Map::new();
+        prop_input_pdf_comic_archive.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_comic_archive.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_comic_archive),
+        );
+
+        let mut prop_output_pdf_comic_archive = serde_json::Map::new();
+        prop_output_pdf_comic_archive.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_comic_archive.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_comic_archive),
+        );
+
+        schema_pdf_comic_archive.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_comic_archive),
+        );
+        schema_pdf_comic_archive.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_comic_archive = Tool::default();
+        tool_pdf_comic_archive.name = "pdf_comic_archive".into();
+        tool_pdf_comic_archive.description = Some(
+            "Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR). [Input: .pdf | Output: .cbr]".into(),
+        );
+        tool_pdf_comic_archive.input_schema = Arc::new(schema_pdf_comic_archive);
+        tools.push(tool_pdf_comic_archive);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -5080,6 +5586,248 @@ impl PaperPilotMcpServer {
                     data: Some(serde_json::json!({ "output_path": output })),
                     success: true,
                     message: "N-Up Page Imposition executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_scale_pages" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_scale_pages::PdfScalePagesOptions::default();
+                let result = paperpilot_pdf::operations::pdf_scale_pages::pdf_scale_pages_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Scale Page Dimensions executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_remove_signatures" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_remove_signatures::PdfRemoveSignaturesOptions::default();
+                let result = paperpilot_pdf::operations::pdf_remove_signatures::pdf_remove_signatures_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Remove Digital Signatures executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_stamp" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
+                let result = paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Stamp Image & Logo executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_overlay_underlay" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
+                let result = paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Overlay & Underlay Stationary executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_auto_rotate" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_auto_rotate::PdfAutoRotateOptions::default();
+                let result = paperpilot_pdf::operations::pdf_auto_rotate::pdf_auto_rotate_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Auto Upright Orientation executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_stitch_canvas" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions::default();
+                let result = paperpilot_pdf::operations::pdf_stitch_canvas::pdf_stitch_canvas_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Stitch Continuous Canvas executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_attachments" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_attachments::PdfAttachmentsOptions::default();
+                let result = paperpilot_pdf::operations::pdf_attachments::pdf_attachments_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "PDF Portfolio Attachments executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_timestamp" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_timestamp::PdfTimestampOptions::default();
+                let result = paperpilot_pdf::operations::pdf_timestamp::pdf_timestamp_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Cryptographic Timestamp TSA executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_change_permissions" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_change_permissions::PdfChangePermissionsOptions::default();
+                let result = paperpilot_pdf::operations::pdf_change_permissions::pdf_change_permissions_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Modify PDF Permissions executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_split_scanned_book" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_split_scanned_book::PdfSplitScannedBookOptions::default();
+                let result = paperpilot_pdf::operations::pdf_split_scanned_book::pdf_split_scanned_book_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Split Scanned Book Spine executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_comic_archive" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_comic_archive::PdfComicArchiveOptions::default();
+                let result = paperpilot_pdf::operations::pdf_comic_archive::pdf_comic_archive_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Comic Archive Conversion executed successfully".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

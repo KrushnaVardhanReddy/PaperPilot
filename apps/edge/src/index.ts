@@ -234,6 +234,72 @@ export default {
            const result = WasmPdfEngine.pdf_nup(new Uint8Array(body), options);
            return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
+        if (url.pathname === '/api/v1/scale-pages') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_scale_pages(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/remove-signatures') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_remove_signatures(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/stamp') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_stamp(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/overlay-underlay') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_overlay_underlay(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/auto-rotate') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_auto_rotate(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/stitch-canvas') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_stitch_canvas(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/attachments') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_attachments(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/timestamp') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_timestamp(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/change-permissions') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_change_permissions(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/split-scanned-book') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_split_scanned_book(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/comic-archive') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_comic_archive(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {
           status: 500,

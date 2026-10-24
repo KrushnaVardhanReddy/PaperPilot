@@ -452,6 +452,94 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
+    #[command(name = "pdf-scale-pages")]
+    PdfScalePages {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
+    #[command(name = "pdf-remove-signatures")]
+    PdfRemoveSignatures {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages.
+    #[command(name = "pdf-stamp")]
+    PdfStamp {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
+    #[command(name = "pdf-overlay-underlay")]
+    PdfOverlayUnderlay {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages.
+    #[command(name = "pdf-auto-rotate")]
+    PdfAutoRotate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Stitch Continuous Canvas: Combine multiple pages vertically or horizontally into a continuous single-page canvas.
+    #[command(name = "pdf-stitch-canvas")]
+    PdfStitchCanvas {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios.
+    #[command(name = "pdf-attachments")]
+    PdfAttachments {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
+    #[command(name = "pdf-timestamp")]
+    PdfTimestamp {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification.
+    #[command(name = "pdf-change-permissions")]
+    PdfChangePermissions {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages.
+    #[command(name = "pdf-split-scanned-book")]
+    PdfSplitScannedBook {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
+    #[command(name = "pdf-comic-archive")]
+    PdfComicArchive {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

@@ -29,6 +29,17 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_comic_archive,
+        handlers::pdf_split_scanned_book,
+        handlers::pdf_change_permissions,
+        handlers::pdf_timestamp,
+        handlers::pdf_attachments,
+        handlers::pdf_stitch_canvas,
+        handlers::pdf_auto_rotate,
+        handlers::pdf_overlay_underlay,
+        handlers::pdf_stamp,
+        handlers::pdf_remove_signatures,
+        handlers::pdf_scale_pages,
         handlers::pdf_nup,
         handlers::pdf_booklet,
         handlers::pdf_validate_signatures,
@@ -98,6 +109,17 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/comic-archive", post(handlers::pdf_comic_archive) )
+        .route("/api/v1/pdf/split-scanned-book", post(handlers::pdf_split_scanned_book) )
+        .route("/api/v1/pdf/change-permissions", post(handlers::pdf_change_permissions) )
+        .route("/api/v1/pdf/timestamp", post(handlers::pdf_timestamp) )
+        .route("/api/v1/pdf/attachments", post(handlers::pdf_attachments) )
+        .route("/api/v1/pdf/stitch-canvas", post(handlers::pdf_stitch_canvas) )
+        .route("/api/v1/pdf/auto-rotate", post(handlers::pdf_auto_rotate) )
+        .route("/api/v1/pdf/overlay-underlay", post(handlers::pdf_overlay_underlay) )
+        .route("/api/v1/pdf/stamp", post(handlers::pdf_stamp) )
+        .route("/api/v1/pdf/remove-signatures", post(handlers::pdf_remove_signatures) )
+        .route("/api/v1/pdf/scale-pages", post(handlers::pdf_scale_pages) )
         .route("/api/v1/pdf/nup", post(handlers::pdf_nup))
         .route("/api/v1/booklet", post(handlers::pdf_booklet))
         .route(

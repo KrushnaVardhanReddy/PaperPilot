@@ -193,4 +193,92 @@ describe('operationArgsBuilder', () => {
             draw_borders: false
         });
     });
+
+    it('builds args for pdf_scale_pages', async () => {
+        const args = await buildOperationArgs('pdf_scale_pages', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_remove_signatures', async () => {
+        const args = await buildOperationArgs('pdf_remove_signatures', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_stamp', async () => {
+        const args = await buildOperationArgs('pdf_stamp', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_overlay_underlay', async () => {
+        const args = await buildOperationArgs('pdf_overlay_underlay', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_auto_rotate', async () => {
+        const args = await buildOperationArgs('pdf_auto_rotate', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_stitch_canvas', async () => {
+        const args = await buildOperationArgs('pdf_stitch_canvas', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_attachments', async () => {
+        const args = await buildOperationArgs('pdf_attachments', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.json'
+        });
+    });
+
+    it('builds args for pdf_timestamp', async () => {
+        const args = await buildOperationArgs('pdf_timestamp', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_change_permissions', async () => {
+        const args = await buildOperationArgs('pdf_change_permissions', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_split_scanned_book', async () => {
+        const args = await buildOperationArgs('pdf_split_scanned_book', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
+
+    it('builds args for pdf_comic_archive', async () => {
+        const args = await buildOperationArgs('pdf_comic_archive', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.cbr'
+        });
+    });
 });

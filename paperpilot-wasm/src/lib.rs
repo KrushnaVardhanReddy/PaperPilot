@@ -330,6 +330,83 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+    #[wasm_bindgen]
+    pub fn pdf_scale_pages(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_scale_pages(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_remove_signatures(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_remove_signatures(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_stamp(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_stamp(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_overlay_underlay(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_overlay_underlay(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_auto_rotate(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_auto_rotate(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_stitch_canvas(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_stitch_canvas(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_attachments(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_attachments(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_timestamp(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_timestamp(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_change_permissions(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_change_permissions(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_split_scanned_book(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_split_scanned_book(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn pdf_comic_archive(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_comic_archive(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},

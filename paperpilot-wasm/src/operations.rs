@@ -2886,3 +2886,69 @@ pub fn pdf_nup(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8
             .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_nup::pdf_nup_bytes(input_bytes, &options)
 }
+
+pub fn pdf_scale_pages(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_scale_pages::PdfScalePagesOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_scale_pages::pdf_scale_pages_bytes(input_bytes, &options)
+}
+
+pub fn pdf_remove_signatures(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_remove_signatures::PdfRemoveSignaturesOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_remove_signatures::pdf_remove_signatures_bytes(input_bytes, &options)
+}
+
+pub fn pdf_stamp(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_stamp::PdfStampOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(input_bytes, &options)
+}
+
+pub fn pdf_overlay_underlay(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(input_bytes, &options)
+}
+
+pub fn pdf_auto_rotate(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_auto_rotate::PdfAutoRotateOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_auto_rotate::pdf_auto_rotate_bytes(input_bytes, &options)
+}
+
+pub fn pdf_stitch_canvas(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_stitch_canvas::pdf_stitch_canvas_bytes(input_bytes, &options)
+}
+
+pub fn pdf_attachments(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_attachments::PdfAttachmentsOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_attachments::pdf_attachments_bytes(input_bytes, &options)
+}
+
+pub fn pdf_timestamp(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_timestamp::PdfTimestampOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_timestamp::pdf_timestamp_bytes(input_bytes, &options)
+}
+
+pub fn pdf_change_permissions(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_change_permissions::PdfChangePermissionsOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_change_permissions::pdf_change_permissions_bytes(input_bytes, &options)
+}
+
+pub fn pdf_split_scanned_book(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_split_scanned_book::PdfSplitScannedBookOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_split_scanned_book::pdf_split_scanned_book_bytes(input_bytes, &options)
+}
+
+pub fn pdf_comic_archive(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_comic_archive::PdfComicArchiveOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_comic_archive::pdf_comic_archive_bytes(input_bytes, &options)
+}

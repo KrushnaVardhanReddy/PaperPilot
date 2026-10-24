@@ -47,6 +47,17 @@ pub mod table;
 pub mod validate;
 pub mod watermark;
 pub mod workflow;
+pub mod pdf_scale_pages;
+pub mod pdf_remove_signatures;
+pub mod pdf_stamp;
+pub mod pdf_overlay_underlay;
+pub mod pdf_auto_rotate;
+pub mod pdf_stitch_canvas;
+pub mod pdf_attachments;
+pub mod pdf_timestamp;
+pub mod pdf_change_permissions;
+pub mod pdf_split_scanned_book;
+pub mod pdf_comic_archive;
 
 pub use pii::scan_pii;
 pub use sanitize::sanitize_pdf;

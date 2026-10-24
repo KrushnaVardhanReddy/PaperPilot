@@ -1,20 +1,14 @@
 # Task 5.3.13 Prompt: Digital Signature Removal Engine (`pdf_remove_signatures`)
 
 You are implementing Task 5.3.13: `pdf_remove_signatures` (Spec 099) in PaperPilot.
-Follow this systematic workflow:
-1. Run the scaffolding generator to wire all 5 surfaces.
-2. Verify the wiring compiles cleanly with `cargo check -p penta-interface-e2e -j 2`.
-3. Implement signature removal and AcroForm widget sanitization.
-4. Verify all tests pass cleanly.
+
+> **NOTE:** Scaffolding across all 5 surfaces (CLI, MCP, Gateway REST, WASM, and Desktop Svelte) has ALREADY been generated and wired in `main`!
+> Do NOT rerun `penta-scaffold`. You only need to implement the core algorithm and tests in `paperpilot-pdf/src/operations/pdf_remove_signatures.rs`, plus the E2E verification test in `tools/penta-interface-e2e/src/cases/pdf_remove_signatures.rs`.
 
 ---
 
-### Step 1: Run Penta-Scaffold Generator
-```bash
-cargo run -j 2 -p penta-scaffold -- --name pdf_remove_signatures --title "Remove Digital Signatures" --category security --icon "🔓" --input-type pdf --output-type pdf --description "Strip digital signature fields, cryptographic locks, and widget annotations."
-```
-
-Verify compilation:
+### Step 1: Verify Initial State
+Confirm clean compilation:
 ```bash
 cargo check -p penta-interface-e2e -j 2
 ```

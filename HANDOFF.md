@@ -2,23 +2,31 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 23, 2026 (Morning EDT)  
-> **Active Target:** Wave 2 (`v0.7.1`) Core Operations Sprint + Penta-Interface Parity
+> **Date of Last Update:** October 23, 2026 (Night EDT)  
+> **Active Target:** Wave 2 (`v0.7.1`) Core Operations Sprint + Penta-Interface Parity (66 Tools Total)
 
 ---
 
 ## 🧭 Executive Context & Active In-Flight Sessions
 
-### 1. Active Jules Sessions in Flight
-| Task ID | Session Link | Target & Purpose | Status / Notes |
-|---|---|---|---|
-| **Task 5.3.2** | [Session 14575779739699636673](https://jules.google.com/session/14575779739699636673) | Multi-Page N-Up Imposition Engine (`pdf_nup`) `[Spec 097]` | ⏳ In-Flight (Dispatched Oct 23) |
+### 1. Active Status & Nightly Dispatch
+- **Merged PR #241 (`pdf_nup` - Spec 097)**: Fully merged to `main`, conflicts resolved, clean verified with 3/3 tests passing and 0 stray files.
+- **Batch Scaffolding (11 Tools)**: Pre-scaffolded across all 5 surfaces (CLI, MCP, Gateway, WASM, Desktop Svelte, E2E harness).
+- **Tool Registry**: Scaled from 55 to **66 tools** registered in `paperpilot-cli`!
+- **Overnight Ready**: Prompts in `prompts/tasks/phase5/` updated to instruct Jules to bypass scaffolding and directly implement the core engine and E2E assertions for zero merge conflicts.
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.9.80 (Penta-Scaffold UI Automation & Universal Audit Report Visualizer `[Spec 100]`)**:
+1. **Task 5.3.2 (Multi-Page N-Up Imposition Engine `pdf_nup` `[Spec 097]`)**:
+   - Merged (PR #241, commit `5f37009`).
+   - Pure-Rust N-Up grid imposition engine (2, 4, 9, 16 pages per sheet), horizontal/vertical ordering, margins, spacing, and hairline borders.
+   - Verified across Desktop UI controls, CLI, and Penta-Interface E2E harness.
+2. **Batch Pre-Scaffolding for 11 Operations Sprint Tools**:
+   - `pdf_scale_pages` (Spec 098), `pdf_remove_signatures` (Spec 099), `pdf_stamp`, `pdf_overlay_underlay`, `pdf_auto_rotate`, `pdf_stitch_canvas`, `pdf_attachments`, `pdf_timestamp`, `pdf_change_permissions`, `pdf_split_scanned_book`, `pdf_comic_archive`.
+   - Wired in `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, `paperpilot-wasm`, `tools/penta-interface-e2e`, and `apps/desktop`.
+   - All 104 desktop tests and workspace `cargo check` passing cleanly.
    - Merged (PR #240, commit `5ca9e5c`).
    - Automatically injects desktop `operationArgsBuilder.ts` match arms and unit tests on tool scaffolding.
    - Retroactively wired `pdf_validate_signatures`, `document_pii_scan`, and `pdf_extract_tables`.
