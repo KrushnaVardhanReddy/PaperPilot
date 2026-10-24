@@ -1,0 +1,81 @@
+# Task 5.3.10: Automated Page Orientation & Uprighting Engine (pdf_auto_rotate)
+
+## Context & Objectives
+You are implementing the pure-Rust automated page orientation and uprighting engine `pdf_auto_rotate` [Spec 102] in PaperPilot.
+The tool has already been scaffolded across all 5 surfaces (CLI, MCP, Gateway, WASM, and Desktop UI).
+Your task is to implement the core engine in `paperpilot-pdf/src/operations/pdf_auto_rotate.rs`, verify unit tests pass, and verify `cargo check --workspace -j 2`.
+
+## Implementation Details
+
+### File: `paperpilot-pdf/src/operations/pdf_auto_rotate.rs`
+
+1. Define `PdfAutoRotateOptions`:
+```rust
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PdfAutoRotateOptions {
+    /// Target orientation: "portrait" (default), "landscape", or "auto"
+    #[serde(default = "default_target_orientation")]
+    pub target_orientation: String,
+
+    /// Optional specific 1-based page numbers to rotate. None = all pages.
+    #[serde(default)]
+    pub pages: Option<Vec<u32>>,
+}
+
+fn default_target_orientation() -> String {
+    "portrait".to_string()
+}
+
+impl Default for PdfAutoRotateOptions {
+    fn default() -> Self {
+        Self {
+            target_orientation: default_target_orientation(),
+            pages: None,
+        }
+    }
+}
+```
+
+2. Implement `pdf_auto_rotate_bytes`:
+- Parse document with `lopdf::Document::load_mem(input_bytes)`. Return `PdfError::ParseError` on failure.
+- Fetch all pages via `doc.get_pages()`.
+- Filter pages if `options.pages` is specified (note: 1-based indices).
+- For each page object:
+  - Extract the page dictionary.
+  - Read `/MediaBox` (array of 4 numbers: `[llx, lly, urx, ury]`).
+    - If `/MediaBox` is not found on the page dict, check inherited page parents if possible, or fallback to standard Letter [0, 0, 612, 792].
+    - Calculate physical width $W = |urx - llx|$ and height $H = |ury - lly|$.
+  - Read `/Rotate` integer if present (default `0`). Normalize to `(rotate % 360 + 360) % 360`.
+  - Calculate effective dimensions:
+    - If current rotation is 90 or 270, $W_{\text{eff}} = H$ and $H_{\text{eff}} = W$.
+    - Otherwise, $W_{\text{eff}} = W$ and $H_{\text{eff}} = H$.
+  - Evaluate target rotation:
+    - If `target_orientation == "portrait"` or `"auto"`:
+      - If $W_{\text{eff}} > H_{\text{eff}}$ (landscape):
+        - Needs rotation: `let new_rotation = (current_rotation + 90) % 360;`
+        - Update dict: `dict.set("Rotate", lopdf::Object::Integer(new_rotation as i64));`
+    - If `target_orientation == "landscape"`:
+      - If $H_{\text{eff}} > W_{\text{eff}}$ (portrait):
+        - Needs rotation: `let new_rotation = (current_rotation + 90) % 360;`
+        - Update dict: `dict.set("Rotate", lopdf::Object::Integer(new_rotation as i64));`
+- Save document bytes via `doc.save_to(&mut output)` and return `Ok(output)`.
+
+3. Implement `PdfAutoRotateOperation` implementing `paperpilot_core::traits::PdfOperation`.
+- Similar logic operating on `&mut dyn PdfDocument` (or using inner `lopdf_doc.inner`).
+
+4. Write comprehensive unit tests in `mod tests`:
+- `test_auto_rotate_landscape_to_portrait`: Construct a lopdf doc with landscape MediaBox `[0, 0, 842, 595]`, run `pdf_auto_rotate_bytes`, verify the output document page dict has `/Rotate` = 90.
+- `test_auto_rotate_already_portrait`: Construct portrait MediaBox `[0, 0, 595, 842]`, verify `/Rotate` remains unchanged (or 0).
+- `test_auto_rotate_empty_document`: Pass empty vector, assert `result.is_err()`.
+
+5. Documentation:
+- Create `apps/docs/src/content/docs/reference/tools/pdf_auto_rotate.md` explaining the options and usage.
+- Create `wiki/102-Pdf-Auto-Rotate.md`.
+
+## CRITICAL SAFETY & TESTING RULES:
+1. Only run unit tests: `cargo test -p paperpilot-pdf --lib operations::pdf_auto_rotate -j 2`
+2. Run compilation check: `cargo check --workspace -j 2`
+3. DO NOT run `penta-interface-e2e` or generate files in `reports/`.
+4. Keep all changes clean, tested, and self-contained.

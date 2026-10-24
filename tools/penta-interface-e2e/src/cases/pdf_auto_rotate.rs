@@ -30,7 +30,7 @@ pub async fn run_pdf_auto_rotate_suite() -> anyhow::Result<Vec<TestExecutionResu
 
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "auto-rotate",
+            "pdf-auto-rotate",
             "--input",
             &actual_input,
             "--output",
@@ -107,8 +107,10 @@ pub async fn run_pdf_auto_rotate_suite() -> anyhow::Result<Vec<TestExecutionResu
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
 
+        let out_path = out_dir.join(format!("{}_api_{}.pdf", tool, tier as u8));
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input,
+            "output": out_path.to_str().unwrap()
         });
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/auto-rotate", api_args).await?;
