@@ -228,13 +228,13 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
             )?;
         }
-        "pdf_booklet" => {
-            let res = cases::pdf_booklet::run_pdf_booklet_suite().await?;
-            println!("Booklet Imposition finished: {} tests", res.len());
+        "pdf_auto_rotate" | "5.3.10" => {
+            let res = cases::pdf_auto_rotate::run_pdf_auto_rotate_suite().await?;
+            println!("Auto Upright Orientation finished: {} tests", res.len());
             generate_markdown_report(
-                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Booklet Imposition)",
+                "Phase 5.3.10 — Rust-Native Penta-Interface Real Semantic Assertions Suite (Auto Upright Orientation)",
                 &res,
-                "reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md",
+                "reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md",
             )?;
         }
         _ => {
