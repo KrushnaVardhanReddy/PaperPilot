@@ -11,6 +11,7 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **PR #248 (Embed Widget Tool Parity - Spec 105 / Task 105A)**: Wave 2 tools (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_validate_signatures`, `pdf_remove_signatures`), category filtering, parameter controls, and upgraded `/embed-test.html` sandbox with 26/26 Playwright tests passing.
   - **PR #247 (Vector Store & Semantic Search - Spec 103 / Task 103B)**: Pure-Rust cosine similarity vector search and libSQL document chunk storage engine with 7/7 unit tests in `paperpilot-storage`.
   - **PR #245 (`pdf_auto_rotate` - Spec 102 / Task 5.3.10)**: Pure-Rust automated page uprighting engine, validated with 3/3 unit tests and 10/10 unmocked Penta-Interface E2E tests (`reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md`).
   - **PR #246 (`paperpilot-storage` core - Spec 103 / Task 103A)**: Embedded Turso / libSQL storage engine with connection pooling and automated schema migrations (`jobs`, `webhooks`, `document_chunks`, `audit_logs`).
@@ -23,13 +24,19 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 |---|:---:|---|---|---|:---:|
 | **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 12328196680624646186](https://jules.google.com/session/12328196680624646186) | 🚀 Active In-Flight |
 | **Task 104A** | `[Spec 104]` | Web WASM Portal Parity & Categorized Navigation (`apps/web`) | `main` | [Session 14514876981403026200](https://jules.google.com/session/14514876981403026200) | 🚀 Active In-Flight |
-| **Task 105A** | `[Spec 105]` | Embed Widget Tool Parity & `/embed-test` Sandbox Upgrade (`apps/embed`) | `main` | [Session 9795447210386010979](https://jules.google.com/session/9795447210386010979) | 🚀 Active In-Flight |
 
 ---
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 103B (Vector Store & Cosine Semantic Search `[Spec 103]`)**:
+1. **Task 105A (Embed Widget Tool Parity & Categorized Sandboxes `[Spec 105]`)**:
+   - Merged (PR #248).
+   - Added 8 Wave 2 tools to `Widget.svelte` (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_validate_signatures`, `pdf_remove_signatures`).
+   - Categorized embedding with `category` prop (`pages`, `edit`, `optimize`, `security`, `convert`, `all`).
+   - Upgraded `apps/web/public/embed-test.html` showcasing Imposition, Contract Forensics, Classic Page Editing, and Multi-Step Pipelines.
+   - 26/26 Playwright test suite passing in `apps/embed`.
+
+2. **Task 103B (Vector Store & Cosine Semantic Search `[Spec 103]`)**:
    - Merged (PR #247).
    - Fast, pure-Rust cosine similarity vector calculation in `paperpilot_storage::vector`.
    - `StorageEngine` methods: `store_chunks`, `search_chunks`, `delete_chunks_by_document`, `count_chunks_by_document`.
@@ -37,7 +44,7 @@ The following sessions are actively executing in the cloud on isolated, non-conf
    - Verified with 7/7 unit tests in `paperpilot-storage`.
    - Documented in `wiki/103-Vector-Store-Engine.md` and `apps/docs/src/content/docs/reference/tools/semantic_search.md`.
 
-2. **Task 103A (Embedded libSQL Core Storage Engine & Migrations `[Spec 103]`)**:
+3. **Task 103A (Embedded libSQL Core Storage Engine & Migrations `[Spec 103]`)**:
    - Merged (PR #246).
    - Dedicated workspace crate `paperpilot-storage` with `libsql 0.10.0`.
    - Embedded zero-setup local SQLite file in `get_app_data_root()` and in-memory execution.
