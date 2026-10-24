@@ -11,6 +11,7 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **PR #249 (Web WASM Portal Parity & Categorized Navigation - Spec 104 / Task 104A)**: Expanded Web Worker bridge (`pdfWorker.ts`, `WasmPdfClient`) with dynamic categorized tool navigation (`pages`, `edit`, `optimize`, `security`, `convert`), real-time search, and dedicated parameter panels in `apps/web`.
   - **PR #248 (Embed Widget Tool Parity - Spec 105 / Task 105A)**: Wave 2 tools (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_validate_signatures`, `pdf_remove_signatures`), category filtering, parameter controls, and upgraded `/embed-test.html` sandbox with 26/26 Playwright tests passing.
   - **PR #247 (Vector Store & Semantic Search - Spec 103 / Task 103B)**: Pure-Rust cosine similarity vector search and libSQL document chunk storage engine with 7/7 unit tests in `paperpilot-storage`.
   - **PR #245 (`pdf_auto_rotate` - Spec 102 / Task 5.3.10)**: Pure-Rust automated page uprighting engine, validated with 3/3 unit tests and 10/10 unmocked Penta-Interface E2E tests (`reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md`).
@@ -23,13 +24,19 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
 | **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 12328196680624646186](https://jules.google.com/session/12328196680624646186) | 🚀 Active In-Flight |
-| **Task 104A** | `[Spec 104]` | Web WASM Portal Parity & Categorized Navigation (`apps/web`) | `main` | [Session 14514876981403026200](https://jules.google.com/session/14514876981403026200) | 🚀 Active In-Flight |
 
 ---
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 105A (Embed Widget Tool Parity & Categorized Sandboxes `[Spec 105]`)**:
+1. **Task 104A (Web WASM Portal Parity & Categorized Navigation `[Spec 104]`)**:
+   - Merged (PR #249).
+   - Expanded Web Worker bridge in `apps/web/src/lib/wasm/` (`pdfWorker.ts`, `index.ts`) for all new in-browser WASM tools.
+   - Built category-based navigation (`pages`, `edit`, `optimize`, `security`, `convert`) with live search in `OperationsView.svelte`.
+   - Added interactive parameter panes for N-Up grid, booklet imposition, dimensional scaling, auto-rotate, stamp, overlay, sanitization, and baseline contract forensics.
+   - Verified clean production build (`pnpm --dir apps/web run build`).
+
+2. **Task 105A (Embed Widget Tool Parity & Categorized Sandboxes `[Spec 105]`)**:
    - Merged (PR #248).
    - Added 8 Wave 2 tools to `Widget.svelte` (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_validate_signatures`, `pdf_remove_signatures`).
    - Categorized embedding with `category` prop (`pages`, `edit`, `optimize`, `security`, `convert`, `all`).
