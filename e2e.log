@@ -1,0 +1,266 @@
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.12.28
+   Compiling paperpilot-core v0.1.0 (/app/paperpilot-core)
+   Compiling paperpilot-pdf v0.1.0 (/app/paperpilot-pdf)
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_scale_pages.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_stamp.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_overlay_underlay.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_auto_rotate.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_stitch_canvas.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_attachments.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_timestamp.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_change_permissions.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_split_scanned_book.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: unused import: `std::any::Any`
+ --> paperpilot-pdf/src/operations/pdf_comic_archive.rs:4:5
+  |
+4 | use std::any::Any;
+  |     ^^^^^^^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_scale_pages.rs:20:5
+   |
+19 | pub struct PdfScalePagesOperation {
+   |            ---------------------- field in this struct
+20 |     options: PdfScalePagesOptions,
+   |     ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `options` is never read
+   --> paperpilot-pdf/src/operations/pdf_remove_signatures.rs:230:5
+    |
+229 | pub struct PdfRemoveSignaturesOperation {
+    |            ---------------------------- field in this struct
+230 |     options: PdfRemoveSignaturesOptions,
+    |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_stamp.rs:20:5
+   |
+19 | pub struct PdfStampOperation {
+   |            ----------------- field in this struct
+20 |     options: PdfStampOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_overlay_underlay.rs:20:5
+   |
+19 | pub struct PdfOverlayUnderlayOperation {
+   |            --------------------------- field in this struct
+20 |     options: PdfOverlayUnderlayOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_auto_rotate.rs:20:5
+   |
+19 | pub struct PdfAutoRotateOperation {
+   |            ---------------------- field in this struct
+20 |     options: PdfAutoRotateOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_stitch_canvas.rs:20:5
+   |
+19 | pub struct PdfStitchCanvasOperation {
+   |            ------------------------ field in this struct
+20 |     options: PdfStitchCanvasOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_attachments.rs:20:5
+   |
+19 | pub struct PdfAttachmentsOperation {
+   |            ----------------------- field in this struct
+20 |     options: PdfAttachmentsOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_timestamp.rs:20:5
+   |
+19 | pub struct PdfTimestampOperation {
+   |            --------------------- field in this struct
+20 |     options: PdfTimestampOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_change_permissions.rs:20:5
+   |
+19 | pub struct PdfChangePermissionsOperation {
+   |            ----------------------------- field in this struct
+20 |     options: PdfChangePermissionsOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_split_scanned_book.rs:20:5
+   |
+19 | pub struct PdfSplitScannedBookOperation {
+   |            ---------------------------- field in this struct
+20 |     options: PdfSplitScannedBookOptions,
+   |     ^^^^^^^
+
+warning: field `options` is never read
+  --> paperpilot-pdf/src/operations/pdf_comic_archive.rs:20:5
+   |
+19 | pub struct PdfComicArchiveOperation {
+   |            ------------------------ field in this struct
+20 |     options: PdfComicArchiveOptions,
+   |     ^^^^^^^
+
+warning: `paperpilot-pdf` (lib) generated 21 warnings (run `cargo fix --lib -p paperpilot-pdf` to apply 10 suggestions)
+   Compiling paperpilot-wasm v0.1.0 (/app/paperpilot-wasm)
+   Compiling penta-interface-e2e v0.1.0 (/app/tools/penta-interface-e2e)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 16.50s
+     Running `target/debug/wave2_e2e --group pdf_remove_signatures`
+=== PaperPilot Penta-Interface E2E Suite ===
+Initializing fixtures...
+Running all suites...
+Starting PaperPilot Gateway on port 7823...
+Testing tool: pdf_merge...
+Testing tool: pdf_split...
+Testing tool: pdf_extract_pages...
+Testing tool: pdf_delete_pages...
+Testing tool: pdf_reorder_pages...
+Testing tool: pdf_rotate...
+Testing tool: pdf_crop...
+Testing tool: pdf_burst...
+Testing tool: pdf_remove_blank...
+Page ops finished: 180 tests
+Report written to: reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4A.md
+Starting PaperPilot Gateway on port 7823...
+Testing tool: pdf_encrypt...
+Testing tool: pdf_decrypt...
+Testing tool: pdf_redact...
+Testing tool: pdf_sign...
+Testing tool: pdf_hash...
+Testing tool: pdf_watermark...
+Testing tool: pdf_header_footer...
+Testing tool: pdf_bates...
+Testing tool: pdf_page_numbers...
+Testing tool: pdf_annotate...
+Testing tool: pdf_read_form...
+Testing tool: pdf_fill_form...
+Testing tool: pdf_flatten...
+Testing tool: pdf_create_form_field...
+Security & forms finished: 280 tests
+Report written to: reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4B.md
+Starting PaperPilot Gateway on port 7823...
+Testing tool: pdf_compress...
+Testing tool: pdf_repair...
+Testing tool: pdf_linearize...
+Testing tool: pdf_extract_text...
+Testing tool: pdf_extract_images...
+Testing tool: pdf_search...
+Testing tool: pdf_render...
+Testing tool: pdf_compare...
+Testing tool: pdf_metadata...
+Testing tool: pdf_bookmarks...
+Testing tool: pdf_classify_type...
+Testing tool: pdf_validate...
+Testing tool: pdf_ocr...
+Completed Extraction, Analysis & Optimization tests: 260 assertions evaluated
+Testing tool: workspace_search...
+Analysis finished: 280 tests
+Report written to: reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4C.md
+Starting PaperPilot Gateway on port 7823...
+Running Conversions test cases (5.9.4D)...
+Testing tool: pdf_images_to_pdf...
+Testing tool: pdf_to_pdf_a...
+Testing tool: pdf_to_docx...
+Testing tool: pdf_to_xlsx...
+Testing tool: pdf_to_pptx...
+Testing tool: pdf_convert_html...
+Testing tool: pdf_convert_markdown...
+Testing tool: pdf_convert_excel...
+Testing tool: json_to_pdf...
+Completed conversion tests: 161 assertions evaluated
+Testing tool: excel_to_json...
+Testing tool: excel_to_csv...
+Testing tool: office_to_markdown...
+Testing tool: office_extract_text...
+Testing tool: office_modernize_legacy...
+Testing tool: pdf_rag_chunks...
+Testing tool: pdf_to_html...
+Conversions finished: 301 tests
+Report written to: reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT_5_9_4D.md
+PII finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PII_SCAN_REPORT.md
+Sanitize finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_SANITIZE_REPORT.md
+Validate Digital Signatures finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md
+Booklet Imposition finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_BOOKLET_REPORT.md
+N-Up Page Imposition finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_NUP_REPORT.md
+Scale Page Dimensions finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_SCALE_PAGES_REPORT.md
+Remove Digital Signatures finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_REMOVE_SIGNATURES_REPORT.md
+Stamp Image & Logo finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_STAMP_REPORT.md
+Overlay & Underlay Stationary finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_OVERLAY_UNDERLAY_REPORT.md
+Auto Upright Orientation finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md
+Stitch Continuous Canvas finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_STITCH_CANVAS_REPORT.md
+PDF Portfolio Attachments finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_ATTACHMENTS_REPORT.md
+Cryptographic Timestamp TSA finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_TIMESTAMP_REPORT.md
+Modify PDF Permissions finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_CHANGE_PERMISSIONS_REPORT.md
+Split Scanned Book Spine finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_SPLIT_SCANNED_BOOK_REPORT.md
+Comic Archive Conversion finished: 10 tests
+Report written to: reports/PENTA_INTERFACE_E2E_PDF_COMIC_ARCHIVE_REPORT.md
+Report written to: reports/PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md
