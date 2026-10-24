@@ -7,8 +7,19 @@ pub mod group_e;
 #[cfg(feature = "office")]
 #[cfg(feature = "office")]
 pub mod office;
+pub mod pdf_attachments;
+pub mod pdf_auto_rotate;
 pub mod pdf_booklet;
+pub mod pdf_change_permissions;
+pub mod pdf_comic_archive;
 pub mod pdf_nup;
+pub mod pdf_overlay_underlay;
+pub mod pdf_remove_signatures;
+pub mod pdf_scale_pages;
+pub mod pdf_split_scanned_book;
+pub mod pdf_stamp;
+pub mod pdf_stitch_canvas;
+pub mod pdf_timestamp;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
@@ -16,17 +27,6 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
-pub mod pdf_scale_pages;
-pub mod pdf_remove_signatures;
-pub mod pdf_stamp;
-pub mod pdf_overlay_underlay;
-pub mod pdf_auto_rotate;
-pub mod pdf_stitch_canvas;
-pub mod pdf_attachments;
-pub mod pdf_timestamp;
-pub mod pdf_change_permissions;
-pub mod pdf_split_scanned_book;
-pub mod pdf_comic_archive;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -366,17 +366,37 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
         Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
-        Commands::PdfScalePages { input, output } => pdf_scale_pages::handle_pdf_scale_pages_command(input, output),
-        Commands::PdfRemoveSignatures { input, output } => pdf_remove_signatures::handle_pdf_remove_signatures_command(input, output),
+        Commands::PdfScalePages { input, output } => {
+            pdf_scale_pages::handle_pdf_scale_pages_command(input, output)
+        }
+        Commands::PdfRemoveSignatures { input, output } => {
+            pdf_remove_signatures::handle_pdf_remove_signatures_command(input, output)
+        }
         Commands::PdfStamp { input, output } => pdf_stamp::handle_pdf_stamp_command(input, output),
-        Commands::PdfOverlayUnderlay { input, output } => pdf_overlay_underlay::handle_pdf_overlay_underlay_command(input, output),
-        Commands::PdfAutoRotate { input, output } => pdf_auto_rotate::handle_pdf_auto_rotate_command(input, output),
-        Commands::PdfStitchCanvas { input, output } => pdf_stitch_canvas::handle_pdf_stitch_canvas_command(input, output),
-        Commands::PdfAttachments { input, output } => pdf_attachments::handle_pdf_attachments_command(input, output),
-        Commands::PdfTimestamp { input, output } => pdf_timestamp::handle_pdf_timestamp_command(input, output),
-        Commands::PdfChangePermissions { input, output } => pdf_change_permissions::handle_pdf_change_permissions_command(input, output),
-        Commands::PdfSplitScannedBook { input, output } => pdf_split_scanned_book::handle_pdf_split_scanned_book_command(input, output),
-        Commands::PdfComicArchive { input, output } => pdf_comic_archive::handle_pdf_comic_archive_command(input, output),
+        Commands::PdfOverlayUnderlay { input, output } => {
+            pdf_overlay_underlay::handle_pdf_overlay_underlay_command(input, output)
+        }
+        Commands::PdfAutoRotate { input, output } => {
+            pdf_auto_rotate::handle_pdf_auto_rotate_command(input, output)
+        }
+        Commands::PdfStitchCanvas { input, output } => {
+            pdf_stitch_canvas::handle_pdf_stitch_canvas_command(input, output)
+        }
+        Commands::PdfAttachments { input, output } => {
+            pdf_attachments::handle_pdf_attachments_command(input, output)
+        }
+        Commands::PdfTimestamp { input, output } => {
+            pdf_timestamp::handle_pdf_timestamp_command(input, output)
+        }
+        Commands::PdfChangePermissions { input, output } => {
+            pdf_change_permissions::handle_pdf_change_permissions_command(input, output)
+        }
+        Commands::PdfSplitScannedBook { input, output } => {
+            pdf_split_scanned_book::handle_pdf_split_scanned_book_command(input, output)
+        }
+        Commands::PdfComicArchive { input, output } => {
+            pdf_comic_archive::handle_pdf_comic_archive_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");

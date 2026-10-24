@@ -126,7 +126,10 @@ async fn download_remote_file(url: String) -> Result<RemoteFileResult, String> {
 
     let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
-        return Err(format!("HTTP Error {}: Failed to fetch file", resp.status()));
+        return Err(format!(
+            "HTTP Error {}: Failed to fetch file",
+            resp.status()
+        ));
     }
 
     let mut filename = "document.pdf".to_string();
@@ -134,7 +137,12 @@ async fn download_remote_file(url: String) -> Result<RemoteFileResult, String> {
         if let Ok(cd_str) = cd.to_str() {
             if let Some(idx) = cd_str.find("filename=") {
                 let name_part = &cd_str[idx + 9..];
-                let clean_name = name_part.trim_matches('"').trim_matches('\'').split(';').next().unwrap_or("document.pdf");
+                let clean_name = name_part
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .split(';')
+                    .next()
+                    .unwrap_or("document.pdf");
                 if !clean_name.is_empty() {
                     filename = clean_name.to_string();
                 }

@@ -442,7 +442,9 @@ impl ExcelToStyledHtmlOperation {
             }
             #[cfg(not(feature = "office"))]
             {
-                return Err(PdfError::UnsupportedOperation("Office Excel parsing is not enabled in this build".to_string()));
+                return Err(PdfError::UnsupportedOperation(
+                    "Office Excel parsing is not enabled in this build".to_string(),
+                ));
             }
         }
         html.push_str("</body></html>");
@@ -1856,7 +1858,9 @@ impl PdfOperation for PdfToXlsxOperation {
 #[cfg(not(feature = "office"))]
 impl PdfOperation for PdfToXlsxOperation {
     fn execute(&self, _document: &mut dyn PdfDocument) -> OperationResult<()> {
-        Err(PdfError::UnsupportedOperation("Office Excel export is not enabled in this build".to_string()))
+        Err(PdfError::UnsupportedOperation(
+            "Office Excel export is not enabled in this build".to_string(),
+        ))
     }
 }
 

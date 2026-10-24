@@ -1,7 +1,6 @@
 use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PdfAutoRotateOptions {
@@ -12,23 +11,30 @@ pub fn pdf_auto_rotate_bytes(
     _input_bytes: &[u8],
     _options: &PdfAutoRotateOptions,
 ) -> Result<Vec<u8>, PdfError> {
-    Err(PdfError::UnsupportedOperation("Not yet implemented".to_string()))
+    Err(PdfError::UnsupportedOperation(
+        "Not yet implemented".to_string(),
+    ))
 }
 
 #[derive(Default)]
 pub struct PdfAutoRotateOperation {
-    options: PdfAutoRotateOptions,
+    _options: PdfAutoRotateOptions,
 }
 
 impl PdfAutoRotateOperation {
     pub fn new(options: PdfAutoRotateOptions) -> Self {
-        Self { options }
+        Self { _options: options }
     }
 }
 
 impl PdfOperation for PdfAutoRotateOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
-        Err(PdfError::UnsupportedOperation("Not yet implemented".to_string()))
+    fn execute(
+        &self,
+        _document: &mut dyn PdfDocument,
+    ) -> paperpilot_core::error::OperationResult<()> {
+        Err(PdfError::UnsupportedOperation(
+            "Not yet implemented".to_string(),
+        ))
     }
 }
 

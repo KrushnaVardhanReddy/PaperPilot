@@ -224,17 +224,24 @@ mod tests {
             ("BaseFont", "Helvetica".into()),
         ]));
 
-        let resources_id = doc.add_object(Dictionary::from_iter(vec![
-            ("Font", Dictionary::from_iter(vec![("F1", font_id.into())]).into()),
-        ]));
+        let resources_id = doc.add_object(Dictionary::from_iter(vec![(
+            "Font",
+            Dictionary::from_iter(vec![("F1", font_id.into())]).into(),
+        )]));
 
-        let content_id = doc.add_object(Stream::new(Dictionary::new(), b"BT /F1 12 Tf 100 100 Td (Hello World) Tj ET".to_vec()));
+        let content_id = doc.add_object(Stream::new(
+            Dictionary::new(),
+            b"BT /F1 12 Tf 100 100 Td (Hello World) Tj ET".to_vec(),
+        ));
 
         let page_dict = Dictionary::from_iter(vec![
             ("Type", "Page".into()),
             ("Parent", pages_id.into()),
             ("Resources", resources_id.into()),
-            ("MediaBox", vec![0.into(), 0.into(), 612.into(), 792.into()].into()),
+            (
+                "MediaBox",
+                vec![0.into(), 0.into(), 612.into(), 792.into()].into(),
+            ),
             ("Contents", content_id.into()),
         ]);
 
@@ -282,10 +289,26 @@ mod tests {
             }
         };
 
-        assert!((get_f32(&media_box[0]) - 0.0).abs() < 0.01, "Expected 0.0, got {}", get_f32(&media_box[0]));
-        assert!((get_f32(&media_box[1]) - 0.0).abs() < 0.01, "Expected 0.0, got {}", get_f32(&media_box[1]));
-        assert!((get_f32(&media_box[2]) - 595.28).abs() < 0.01, "Expected ~595.28, got {}", get_f32(&media_box[2]));
-        assert!((get_f32(&media_box[3]) - 841.89).abs() < 0.01, "Expected ~841.89, got {}", get_f32(&media_box[3]));
+        assert!(
+            (get_f32(&media_box[0]) - 0.0).abs() < 0.01,
+            "Expected 0.0, got {}",
+            get_f32(&media_box[0])
+        );
+        assert!(
+            (get_f32(&media_box[1]) - 0.0).abs() < 0.01,
+            "Expected 0.0, got {}",
+            get_f32(&media_box[1])
+        );
+        assert!(
+            (get_f32(&media_box[2]) - 595.28).abs() < 0.01,
+            "Expected ~595.28, got {}",
+            get_f32(&media_box[2])
+        );
+        assert!(
+            (get_f32(&media_box[3]) - 841.89).abs() < 0.01,
+            "Expected ~841.89, got {}",
+            get_f32(&media_box[3])
+        );
     }
 
     #[test]
@@ -312,10 +335,26 @@ mod tests {
             }
         };
 
-        assert!((get_f32(&media_box[0]) - 0.0).abs() < 0.01, "Expected 0.0, got {}", get_f32(&media_box[0]));
-        assert!((get_f32(&media_box[1]) - 0.0).abs() < 0.01, "Expected 0.0, got {}", get_f32(&media_box[1]));
-        assert!((get_f32(&media_box[2]) - 306.0).abs() < 0.01, "Expected 306.0, got {}", get_f32(&media_box[2]));
-        assert!((get_f32(&media_box[3]) - 396.0).abs() < 0.01, "Expected 396.0, got {}", get_f32(&media_box[3]));
+        assert!(
+            (get_f32(&media_box[0]) - 0.0).abs() < 0.01,
+            "Expected 0.0, got {}",
+            get_f32(&media_box[0])
+        );
+        assert!(
+            (get_f32(&media_box[1]) - 0.0).abs() < 0.01,
+            "Expected 0.0, got {}",
+            get_f32(&media_box[1])
+        );
+        assert!(
+            (get_f32(&media_box[2]) - 306.0).abs() < 0.01,
+            "Expected 306.0, got {}",
+            get_f32(&media_box[2])
+        );
+        assert!(
+            (get_f32(&media_box[3]) - 396.0).abs() < 0.01,
+            "Expected 396.0, got {}",
+            get_f32(&media_box[3])
+        );
     }
 
     #[test]

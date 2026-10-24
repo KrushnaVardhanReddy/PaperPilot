@@ -1,7 +1,6 @@
 use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PdfAttachmentsOptions {
@@ -12,23 +11,30 @@ pub fn pdf_attachments_bytes(
     _input_bytes: &[u8],
     _options: &PdfAttachmentsOptions,
 ) -> Result<Vec<u8>, PdfError> {
-    Err(PdfError::UnsupportedOperation("Not yet implemented".to_string()))
+    Err(PdfError::UnsupportedOperation(
+        "Not yet implemented".to_string(),
+    ))
 }
 
 #[derive(Default)]
 pub struct PdfAttachmentsOperation {
-    options: PdfAttachmentsOptions,
+    _options: PdfAttachmentsOptions,
 }
 
 impl PdfAttachmentsOperation {
     pub fn new(options: PdfAttachmentsOptions) -> Self {
-        Self { options }
+        Self { _options: options }
     }
 }
 
 impl PdfOperation for PdfAttachmentsOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
-        Err(PdfError::UnsupportedOperation("Not yet implemented".to_string()))
+    fn execute(
+        &self,
+        _document: &mut dyn PdfDocument,
+    ) -> paperpilot_core::error::OperationResult<()> {
+        Err(PdfError::UnsupportedOperation(
+            "Not yet implemented".to_string(),
+        ))
     }
 }
 

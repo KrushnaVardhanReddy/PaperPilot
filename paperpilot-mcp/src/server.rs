@@ -5597,9 +5597,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_scale_pages::PdfScalePagesOptions::default();
-                let result = paperpilot_pdf::operations::pdf_scale_pages::pdf_scale_pages_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_scale_pages::PdfScalePagesOptions::default();
+                let result = paperpilot_pdf::operations::pdf_scale_pages::pdf_scale_pages_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5620,7 +5624,11 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options = paperpilot_pdf::operations::pdf_remove_signatures::PdfRemoveSignaturesOptions::default();
-                let result = paperpilot_pdf::operations::pdf_remove_signatures::pdf_remove_signatures_bytes(&input_bytes, &options)
+                let result =
+                    paperpilot_pdf::operations::pdf_remove_signatures::pdf_remove_signatures_bytes(
+                        &input_bytes,
+                        &options,
+                    )
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
@@ -5642,8 +5650,9 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
-                let result = paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let result =
+                    paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(&input_bytes, &options)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5664,7 +5673,11 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
-                let result = paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(&input_bytes, &options)
+                let result =
+                    paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(
+                        &input_bytes,
+                        &options,
+                    )
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
@@ -5685,9 +5698,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_auto_rotate::PdfAutoRotateOptions::default();
-                let result = paperpilot_pdf::operations::pdf_auto_rotate::pdf_auto_rotate_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_auto_rotate::PdfAutoRotateOptions::default();
+                let result = paperpilot_pdf::operations::pdf_auto_rotate::pdf_auto_rotate_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5707,8 +5724,14 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions::default();
-                let result = paperpilot_pdf::operations::pdf_stitch_canvas::pdf_stitch_canvas_bytes(&input_bytes, &options)
+                let options =
+                    paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions::default(
+                    );
+                let result =
+                    paperpilot_pdf::operations::pdf_stitch_canvas::pdf_stitch_canvas_bytes(
+                        &input_bytes,
+                        &options,
+                    )
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
@@ -5729,9 +5752,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_attachments::PdfAttachmentsOptions::default();
-                let result = paperpilot_pdf::operations::pdf_attachments::pdf_attachments_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_attachments::PdfAttachmentsOptions::default();
+                let result = paperpilot_pdf::operations::pdf_attachments::pdf_attachments_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5751,9 +5778,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_timestamp::PdfTimestampOptions::default();
-                let result = paperpilot_pdf::operations::pdf_timestamp::pdf_timestamp_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_timestamp::PdfTimestampOptions::default();
+                let result = paperpilot_pdf::operations::pdf_timestamp::pdf_timestamp_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5817,8 +5848,14 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_comic_archive::PdfComicArchiveOptions::default();
-                let result = paperpilot_pdf::operations::pdf_comic_archive::pdf_comic_archive_bytes(&input_bytes, &options)
+                let options =
+                    paperpilot_pdf::operations::pdf_comic_archive::PdfComicArchiveOptions::default(
+                    );
+                let result =
+                    paperpilot_pdf::operations::pdf_comic_archive::pdf_comic_archive_bytes(
+                        &input_bytes,
+                        &options,
+                    )
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
