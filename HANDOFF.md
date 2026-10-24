@@ -26,6 +26,7 @@
 | **Task 5.9.90** | Baseline Tamper Forensics (`pdf_validate_signatures --baseline` `[Spec 101]`) | `main` | [Session 12328196680624646186](https://jules.google.com/session/12328196680624646186) | 🚀 Active In-Flight |
 | **Task 103A** | libSQL Storage Engine (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 1855248125635554831](https://jules.google.com/session/1855248125635554831) | ✅ Merged (PR #246) |
 | **Task 103B** | Vector Store & Semantic Search (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 16885534241118434886](https://jules.google.com/session/16885534241118434886) | 🚀 Active In-Flight |
+| **Task 104A** | Web WASM Portal Parity & Categorized Navigation (`apps/web` `[Spec 104]`) | `main` | [Session 14514876981403026200](https://jules.google.com/session/14514876981403026200) | 🚀 Active In-Flight |
 
 ### 3. Immediate Next Roadmap Target (Selected: Option A + Strategy Option 1)
 **Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine (Section 6.8 / Wave 7)**:

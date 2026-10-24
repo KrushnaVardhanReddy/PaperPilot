@@ -1,0 +1,116 @@
+# Task 103B: Vector Store & Semantic Search Engine (`paperpilot-storage`)
+
+## Context & Objectives
+In Task 103A (Spec 103), we established the dedicated `paperpilot-storage` workspace crate with embedded **Turso / libSQL** (`libsql = "0.10.0"`), connection initialization (`open_local` and `open_in_memory`), and schema migrations creating the `document_chunks` table.
+
+Now in **Task 103B**, you will implement the pure-Rust **Vector Store & Semantic Cosine Search Engine** in `paperpilot-storage`. This allows PaperPilot to index document text chunks along with high-dimensional floating-point embeddings (e.g. 384-dimensional or 768-dimensional vectors from embedding models) and perform nearest-neighbor semantic search directly on the embedded SQLite database.
+
+## Database Schema (Already in migrations)
+```sql
+CREATE TABLE IF NOT EXISTS document_chunks (
+    id TEXT PRIMARY KEY,
+    document_hash TEXT NOT NULL,
+    document_name TEXT NOT NULL,
+    page_number INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    embedding_json TEXT NOT NULL, -- JSON array of floats (e.g. [0.0123, -0.0456, ...])
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_doc_chunks_hash ON document_chunks(document_hash);
+```
+
+## Implementation Requirements
+
+### 1. Data Models (`paperpilot-storage/src/models.rs`)
+Add models for document chunks, search queries, and search results:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NewDocumentChunk {
+    pub id: Option<String>, // If None, generate UUID v4
+    pub document_hash: String,
+    pub document_name: String,
+    pub page_number: u32,
+    pub chunk_index: u32,
+    pub content: String,
+    pub embedding: Vec<f32>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DocumentChunkRecord {
+    pub id: String,
+    pub document_hash: String,
+    pub document_name: String,
+    pub page_number: u32,
+    pub chunk_index: u32,
+    pub content: String,
+    pub embedding: Vec<f32>,
+    pub created_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SemanticSearchResult {
+    pub chunk: DocumentChunkRecord,
+    pub score: f32, // Cosine similarity in range [-1.0, 1.0] (higher is more similar)
+}
+```
+
+### 2. Pure-Rust Vector Math (`paperpilot-storage/src/vector.rs`)
+Create a fast, pure-Rust vector math helper module `vector.rs`:
+- `cosine_similarity(a: &[f32], b: &[f32]) -> f32`:
+  - Calculate dot product: $\sum (a_i \cdot b_i)$
+  - Calculate Euclidean norms: $\|a\| = \sqrt{\sum a_i^2}$, $\|b\| = \sqrt{\sum b_i^2}$
+  - Handle division by zero safely (return `0.0` if norm is zero or lengths mismatch).
+  - Return dot / (norm_a * norm_b).
+
+### 3. StorageEngine API Extensions (`paperpilot-storage/src/lib.rs`)
+Extend `StorageEngine` with:
+
+```rust
+impl StorageEngine {
+    /// Inserts a batch of document chunks into `document_chunks`.
+    /// Serializes `chunk.embedding` into `embedding_json`.
+    pub async fn store_chunks(&self, chunks: &[NewDocumentChunk]) -> Result<usize, StorageError>;
+
+    /// Deletes all chunks associated with a specific document hash.
+    pub async fn delete_chunks_by_document(&self, document_hash: &str) -> Result<usize, StorageError>;
+
+    /// Retrieves all chunks for a specific document hash.
+    pub async fn get_chunks_by_document(&self, document_hash: &str) -> Result<Vec<DocumentChunkRecord>, StorageError>;
+
+    /// Counts total indexed chunks in the database.
+    pub async fn count_chunks(&self) -> Result<usize, StorageError>;
+
+    /// Performs semantic cosine similarity search across all stored chunks (or filtered by document_hash if provided).
+    /// Retrieves chunks, computes `cosine_similarity` with `query_embedding`, sorts descending by score,
+    /// and returns the top `limit` results.
+    pub async fn search_chunks(
+        &self,
+        query_embedding: &[f32],
+        limit: usize,
+        filter_document_hash: Option<&str>,
+    ) -> Result<Vec<SemanticSearchResult>, StorageError>;
+}
+```
+
+### 4. Comprehensive Unit Tests (`paperpilot-storage/src/lib.rs` and `vector.rs`)
+Add unit tests verifying:
+1. `test_cosine_similarity`:
+   - Identical vectors have similarity `1.0`.
+   - Orthogonal vectors have similarity `0.0`.
+   - Opposite vectors have similarity `-1.0`.
+2. `test_store_and_count_chunks`:
+   - Store 3 chunks across 2 documents, verify count is 3.
+3. `test_semantic_search_ranking`:
+   - Create chunk A with embedding close to query (e.g. `[1.0, 0.0, 0.0]`).
+   - Create chunk B with embedding farther from query (e.g. `[0.1, 0.9, 0.0]`).
+   - Query with `[1.0, 0.05, 0.0]`, assert chunk A ranks first with score > 0.95.
+4. `test_delete_chunks_by_document`:
+   - Delete document 1, verify document 2 chunks remain untouched.
+
+### 5. Architectural Guardrails
+- Concurrency constraint: use `-j 2` for all `cargo` commands.
+- Crate isolation: `paperpilot-storage` must not depend on `paperpilot-pdf` or UI packages.
+- Zero mock policy: all tests use real embedded in-memory libSQL databases (`StorageEngine::open_in_memory()`).
+- Keep code clean, well-documented, with zero compiler warnings.
