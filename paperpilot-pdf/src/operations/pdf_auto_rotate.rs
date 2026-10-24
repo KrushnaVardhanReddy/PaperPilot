@@ -82,11 +82,9 @@ fn rotate_page_dict(page_dict: &mut lopdf::Dictionary, options: &PdfAutoRotateOp
             let new_rotation = (normalized_rotation + 90) % 360;
             page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
         }
-    } else if target == "landscape" {
-        if h_eff > w_eff {
-            let new_rotation = (normalized_rotation + 90) % 360;
-            page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
-        }
+    } else if target == "landscape" && h_eff > w_eff {
+        let new_rotation = (normalized_rotation + 90) % 360;
+        page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
     }
 }
 
@@ -94,16 +92,18 @@ pub fn pdf_auto_rotate_bytes(
     input_bytes: &[u8],
     options: &PdfAutoRotateOptions,
 ) -> Result<Vec<u8>, PdfError> {
-    let mut doc = lopdf::Document::load_mem(input_bytes)
-        .map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let mut doc =
+        lopdf::Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
     let pages = doc.get_pages();
 
     for (page_num, page_id) in pages {
-        if let Some(target_pages) = &options.pages {
-            if !target_pages.contains(&page_num) {
-                continue;
-            }
+        if options
+            .pages
+            .as_ref()
+            .is_some_and(|target_pages| !target_pages.contains(&page_num))
+        {
+            continue;
         }
 
         let page_dict = match doc.get_object_mut(page_id) {
@@ -115,8 +115,7 @@ pub fn pdf_auto_rotate_bytes(
     }
 
     let mut output = Vec::new();
-    doc.save_to(&mut output)
-        .map_err(|e| PdfError::IoError(e))?;
+    doc.save_to(&mut output).map_err(PdfError::IoError)?;
 
     Ok(output)
 }
@@ -144,10 +143,13 @@ impl PdfOperation for PdfAutoRotateOperation {
             let pages = doc.get_pages();
 
             for (page_num, page_id) in pages {
-                if let Some(target_pages) = &self.options.pages {
-                    if !target_pages.contains(&page_num) {
-                        continue;
-                    }
+                if self
+                    .options
+                    .pages
+                    .as_ref()
+                    .is_some_and(|target_pages| !target_pages.contains(&page_num))
+                {
+                    continue;
                 }
 
                 let page_dict = match doc.get_object_mut(page_id) {
@@ -159,7 +161,9 @@ impl PdfOperation for PdfAutoRotateOperation {
             }
             Ok(())
         } else {
-            Err(PdfError::UnsupportedOperation("Only LopdfDocument is supported".to_string()))
+            Err(PdfError::UnsupportedOperation(
+                "Only LopdfDocument is supported".to_string(),
+            ))
         }
     }
 }
@@ -182,16 +186,21 @@ mod tests {
         let mut pages_dict = lopdf::Dictionary::new();
         pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
         pages_dict.set("Count", lopdf::Object::Integer(1));
-        pages_dict.set("Kids", lopdf::Object::Array(vec![lopdf::Object::Reference(page_id)]));
+        pages_dict.set(
+            "Kids",
+            lopdf::Object::Array(vec![lopdf::Object::Reference(page_id)]),
+        );
 
-        doc.objects.insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+        doc.objects
+            .insert(pages_id, lopdf::Object::Dictionary(pages_dict));
 
         let mut catalog = lopdf::Dictionary::new();
         catalog.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
         catalog.set("Pages", lopdf::Object::Reference(pages_id));
         let catalog_id = doc.add_object(catalog);
 
-        doc.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+        doc.trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
 
         let mut bytes = Vec::new();
         doc.save_to(&mut bytes).unwrap();
@@ -255,7 +264,10 @@ mod tests {
         let page_id = pages.get(&1).unwrap();
 
         if let lopdf::Object::Dictionary(dict) = result_doc.get_object(*page_id).unwrap() {
-            assert!(dict.get(b"Rotate").is_err(), "Rotate should not be set for already portrait");
+            assert!(
+                dict.get(b"Rotate").is_err(),
+                "Rotate should not be set for already portrait"
+            );
         } else {
             panic!("Page is not a dictionary");
         }

@@ -149,7 +149,7 @@ async fn download_remote_file(url: String) -> Result<RemoteFileResult, String> {
             }
         }
     } else if let Ok(parsed) = reqwest::Url::parse(&url) {
-        if let Some(seg) = parsed.path_segments().and_then(|s| s.last()) {
+        if let Some(seg) = parsed.path_segments().and_then(|mut s| s.next_back()) {
             if !seg.is_empty() {
                 filename = seg.to_string();
             }
