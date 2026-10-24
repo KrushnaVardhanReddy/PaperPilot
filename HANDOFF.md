@@ -24,6 +24,7 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
 | **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 13176531858440555731](https://jules.google.com/session/13176531858440555731) | 🚀 Active In-Flight |
+| **Task 103C** | `[Spec 103]` | Desktop UI Async Job Drawer & Vector Search (`apps/desktop`) | `main` | [Session 16139327879580052646](https://jules.google.com/session/16139327879580052646) | 🚀 Active In-Flight |
 
 ---
 
