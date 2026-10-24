@@ -24,20 +24,25 @@
 | **Task 5.3.10** | Automated Page Orientation (`pdf_auto_rotate` `[Spec 102]`) | `main` | [Session 10078476370268706067](https://jules.google.com/session/10078476370268706067) | ✅ Merged (PR #245) |
 | **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | ✅ Merged (PR #242) |
 | **Task 5.9.90** | Baseline Tamper Forensics (`pdf_validate_signatures --baseline` `[Spec 101]`) | `main` | [Session 9563501665020719300](https://jules.google.com/session/9563501665020719300) | 🚀 Active In-Flight |
-| **Task 103A** | libSQL Storage Engine (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 1855248125635554831](https://jules.google.com/session/1855248125635554831) | 🚀 Active In-Flight |
+| **Task 103A** | libSQL Storage Engine (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 1855248125635554831](https://jules.google.com/session/1855248125635554831) | ✅ Merged (PR #246) |
 
 ### 3. Immediate Next Roadmap Target (Selected: Option A + Strategy Option 1)
 **Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine (Section 6.8 / Wave 7)**:
 - **Repo Strategy Decision (Option 1):** Develop modularly within this Cargo workspace first (`paperpilot-enterprise` crate / `--features enterprise`). This gives maximum development velocity and zero cross-repo dependency friction during rapid development, while keeping a clean boundary that can be extracted to `PaperPilot-Enterprise` in 15 minutes prior to commercial release.
-- **Phase 1 (6.8.3):** Embedded **Turso / libSQL** (`libsql` crate) database integration with zero-setup local SQLite file in `get_app_data_root()` and automatic schema migrations (`jobs`, `webhooks`, `audit_logs`).
-- **Phase 2 (6.8.1):** Asynchronous Job Queue & HTTP Callback Engine (`POST /api/v1/jobs/async` returning `202 Accepted`, HMAC-SHA256 signature verification, startup recovery query for interrupted jobs).
-- **Phase 3 (6.8.2):** Outbound Webhook Subscriptions (`diff.completed`, `ocr.finished`, `signature.verified`) with retry queues & exponential backoff.
+- **Phase 1 (6.8.3 / Task 103A):** ✅ **Completed in PR #246** — Embedded **Turso / libSQL** (`libsql` crate) database integration in dedicated `paperpilot-storage` crate with local SQLite file / in-memory support and automatic schema migrations (`jobs`, `webhooks`, `document_chunks`, `audit_logs`).
+- **Phase 2 (6.8.1 / Task 103B):** Asynchronous Job Queue & HTTP Callback Engine (`POST /api/v1/jobs/async` returning `202 Accepted`, HMAC-SHA256 signature verification, startup recovery query for interrupted jobs).
+- **Phase 3 (6.8.2 / Task 103C):** Outbound Webhook Subscriptions (`diff.completed`, `ocr.finished`, `signature.verified`) with retry queues & exponential backoff.
 
 ---
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.3.10 (Automated Page Orientation Engine `pdf_auto_rotate` `[Spec 102]`)**:
+1. **Task 103A (Embedded libSQL Core Storage Engine & Migrations `paperpilot-storage` `[Spec 103]`)**:
+   - Merged (PR #246).
+   - Embedded libSQL database engine supporting zero-setup local SQLite file and in-memory execution.
+   - Automatic DDL schema migrations: `jobs`, `webhooks`, `document_chunks` (vector embeddings), and `audit_logs`.
+   - Verified with unit tests (`test_job_lifecycle`, `test_record_audit_event`, `test_storage_engine_in_memory_migrations`) and workspace check.
+2. **Task 5.3.10 (Automated Page Orientation Engine `pdf_auto_rotate` `[Spec 102]`)**:
    - Merged (PR #245).
    - Pure-Rust automated page orientation and uprighting engine (effective aspect-ratio calculation via MediaBox & current Rotate dictionary entries, 90°/180°/270° orientation uprighting, page filtering).
    - 10/10 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
