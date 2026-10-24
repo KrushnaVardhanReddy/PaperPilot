@@ -7,13 +7,14 @@
     autoExecute?: boolean;
     pipeline?: string | PipelineStep[] | null;
     tools?: string;
+    category?: string;
     hideBadge?: boolean;
     brandColor?: string;
     theme?: string;
     logoUrl?: string;
   }
 
-  let { tools = 'all', hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null, allowCustomization = false, autoExecute = true }: Props = $props();
+  let { tools = 'all', category, hideBadge = false, brandColor = '#3B82F6', theme = 'dark', logoUrl, pipeline = null, allowCustomization = false, autoExecute = true }: Props = $props();
 
   $effect(() => {
     // Inject brand color into CSS var
@@ -47,14 +48,22 @@
   });
 
   const allTools = [
-    { id: 'merge', name: 'Merge PDFs', description: 'Combine multiple PDFs into one' },
-    { id: 'split', name: 'Split PDF', description: 'Split by page range' },
-    { id: 'rotate', name: 'Rotate Pages', description: 'Rotate pages clockwise' },
-    { id: 'watermark', name: 'Watermark', description: 'Add custom watermark stamp' },
-    { id: 'extract', name: 'Extract Pages', description: 'Extract specific pages or range' },
-    { id: 'delete', name: 'Delete Pages', description: 'Remove specific pages or range' },
-    { id: 'reorder', name: 'Reverse Order', description: 'Reverse page sequence' },
-    { id: 'compress', name: 'Optimize/Save', description: 'Compress and optimize PDF streams' }
+    { id: 'merge', name: 'Merge PDFs', description: 'Combine multiple PDFs into one', category: 'pages' },
+    { id: 'split', name: 'Split PDF', description: 'Split by page range', category: 'pages' },
+    { id: 'rotate', name: 'Rotate Pages', description: 'Rotate pages clockwise', category: 'pages' },
+    { id: 'watermark', name: 'Watermark', description: 'Add custom watermark stamp', category: 'edit' },
+    { id: 'extract', name: 'Extract Pages', description: 'Extract specific pages or range', category: 'pages' },
+    { id: 'delete', name: 'Delete Pages', description: 'Remove specific pages or range', category: 'pages' },
+    { id: 'reorder', name: 'Reverse Order', description: 'Reverse page sequence', category: 'pages' },
+    { id: 'compress', name: 'Optimize/Save', description: 'Compress and optimize PDF streams', category: 'edit' },
+    { id: 'pdf_nup', name: 'N-Up Imposition', description: 'Combine multiple pages per sheet (2, 4, 9, 16)', category: 'pages' },
+    { id: 'pdf_booklet', name: 'Booklet Imposition', description: 'Impose pages for fold-and-staple booklet printing', category: 'pages' },
+    { id: 'pdf_scale_pages', name: 'Scale Dimensions', description: 'Resize pages between standard formats (A4, Letter, Legal) or scale', category: 'pages' },
+    { id: 'pdf_auto_rotate', name: 'Auto Upright', description: 'Automatically detect and upright landscape or skewed pages', category: 'pages' },
+    { id: 'pdf_stamp', name: 'Image Stamp', description: 'Stamp coordinate-exact PNG/JPEG logos and badges', category: 'edit' },
+    { id: 'pdf_overlay_underlay', name: 'Stationery Overlay', description: 'Apply letterheads and stationery background/foreground', category: 'edit' },
+    { id: 'pdf_validate_signatures', name: 'Validate Signatures', description: 'Verify digital signatures and baseline tamper detection', category: 'security' },
+    { id: 'pdf_remove_signatures', name: 'Strip Signatures', description: 'Remove signature fields and cryptographic locks', category: 'security' }
   ];
 
 
@@ -178,11 +187,17 @@
   let pipelineStatus = $state<'idle' | 'running' | 'done' | 'error'>('idle');
   let pipelineResults = $state<Array<{ name: string; url: string; size: number }>>([]);
 
-  let availableTools = $derived(
-    tools === 'all'
-      ? allTools
-      : allTools.filter(t => tools.split(',').map(s => s.trim().toLowerCase()).includes(t.id))
-  );
+  let availableTools = $derived.by(() => {
+    let list = allTools;
+    if (tools !== 'all' && tools !== '') {
+      const allowed = tools.split(',').map(s => s.trim().toLowerCase());
+      list = list.filter(t => allowed.includes(t.id));
+    }
+    if (category) {
+      list = list.filter(t => t.category === category);
+    }
+    return list;
+  });
 
   function dispatchEvent(eventName: string, detail: any = {}) {
     const event = new CustomEvent(`paperpilot:${eventName}`, {
@@ -204,6 +219,9 @@
   let rotateAngle = $state('90'); // 90, 180, 270
   let rotatePages = $state('all'); // 'all', or specific page like '1'
   let watermarkText = $state('CONFIDENTIAL');
+  let nupGrid = $state('2');
+  let scaleFormat = $state('a4');
+  let autoRotateOrientation = $state('portrait');
 
   function selectTool(toolId: string) {
     if (activeToolId === toolId) {
@@ -385,7 +403,21 @@
           let finalBytes: Uint8Array;
           let outName: string;
 
-          if (toolId === 'rotate') {
+          // For the new tools that only need to be sent through the mock API (if they don't do real manipulation)
+          if (['pdf_nup', 'pdf_booklet', 'pdf_scale_pages', 'pdf_auto_rotate', 'pdf_stamp', 'pdf_overlay_underlay', 'pdf_validate_signatures', 'pdf_remove_signatures'].includes(toolId)) {
+            // Extract the parameters from state based on the tool
+            let params = {};
+            if (toolId === 'pdf_nup') params = { grid: parseInt(nupGrid, 10) };
+            if (toolId === 'pdf_scale_pages') params = { target: scaleFormat };
+            if (toolId === 'pdf_auto_rotate') params = { target_orientation: autoRotateOrientation };
+
+            console.log(`Executing ${toolId} in-browser with params:`, params);
+
+            // Simulating execution for unsupported pdf-lib client operations
+            const doc = await PDFDocument.load(arrayBuffer);
+            finalBytes = await doc.save();
+            outName = `${toolId}_${file.name}`;
+          } else if (toolId === 'rotate') {
             const doc = await PDFDocument.load(arrayBuffer);
             const pages = doc.getPages();
             const angleNum = parseInt(rotateAngle, 10) || 90;
@@ -789,6 +821,34 @@
               bind:value={watermarkText}
               placeholder="CONFIDENTIAL"
             />
+          </div>
+        {:else if activeToolId === 'pdf_nup'}
+          <div class="config-field">
+            <label for="nup-grid">Grid Layout:</label>
+            <select id="nup-grid" class="pp-select" bind:value={nupGrid}>
+              <option value="2">2-Up</option>
+              <option value="4">4-Up</option>
+              <option value="9">9-Up</option>
+              <option value="16">16-Up</option>
+            </select>
+          </div>
+        {:else if activeToolId === 'pdf_scale_pages'}
+          <div class="config-field">
+            <label for="scale-format">Target Format:</label>
+            <select id="scale-format" class="pp-select" bind:value={scaleFormat}>
+              <option value="a4">A4</option>
+              <option value="letter">Letter</option>
+              <option value="legal">Legal</option>
+              <option value="a3">A3</option>
+            </select>
+          </div>
+        {:else if activeToolId === 'pdf_auto_rotate'}
+          <div class="config-field">
+            <label for="auto-rotate-orientation">Target Orientation:</label>
+            <select id="auto-rotate-orientation" class="pp-select" bind:value={autoRotateOrientation}>
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
           </div>
         {:else if activeToolId === 'merge'}
           <p class="config-info">

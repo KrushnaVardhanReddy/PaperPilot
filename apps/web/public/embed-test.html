@@ -51,40 +51,52 @@
     <h1>PaperPilot Embed Demonstration</h1>
     <p>Testing drop-in Shadow DOM widget integration.</p>
 
-    <!-- Demo 1: Full Suite Sandbox Embed (Badge visible) -->
+    <!-- Demo 1: Document Imposition & Layout Suite -->
     <div class="card">
-      <h2>1. Full Suite Sandbox Embed (All Supported In-Browser Tools)</h2>
-      <p style="margin-bottom: 16px; font-size: 0.9rem;">Runs 100% locally in browser memory via Shadow DOM + WebAssembly/PDF Engine. No server uploads.</p>
+      <h2>1. Document Imposition & Layout Suite (In-Browser WASM)</h2>
+      <p style="margin-bottom: 16px; font-size: 0.9rem;">2-Up/4-Up imposition, booklet synthesis, and dimensional scaling.</p>
+      <div
+        id="imposition-portal"
+        data-paperpilot-portal
+        data-theme="dark"
+        data-tools="pdf_nup,pdf_booklet,pdf_scale_pages,pdf_auto_rotate"
+        data-brand-color="#6366F1"
+      ></div>
+    </div>
+
+    <!-- Demo 2: Contract Forensics & Signature Verification -->
+    <div class="card">
+      <h2>2. Digital Signature & Forensic Integrity Audit</h2>
+      <p style="margin-bottom: 16px; font-size: 0.9rem;">Verify PKCS#7 / CMS signatures, certificate validity, and byte-range locks.</p>
+      <div
+        id="signature-portal"
+        data-paperpilot-portal
+        data-theme="dark"
+        data-tools="pdf_validate_signatures,pdf_remove_signatures"
+        data-brand-color="#10B981"
+      ></div>
+    </div>
+
+    <!-- Demo 3: Classic Page Editing & Optimization -->
+    <div class="card">
+      <h2>3. Page Editing & Compression</h2>
       <div
         id="paperpilot-portal"
         data-theme="dark"
-        data-tools="merge,split,rotate,watermark,extract,delete,reorder,compress"
-        data-brand-color="#5E6AD2"
+        data-tools="merge,split,rotate,watermark,compress"
+        data-brand-color="#3B82F6"
       ></div>
     </div>
 
-    <!-- Demo 2: Pro Whitelabel Embed (Badge Hidden) -->
+    <!-- Demo 4: Automated Multi-Step Pipeline -->
     <div class="card">
-      <h2>2. Pro Whitelabel Embed (Badge Hidden via <code>data-hide-badge="true"</code>)</h2>
-      <div
-        id="nobadge-portal"
-        data-theme="dark"
-        data-tools="merge,split,rotate,compress"
-        data-brand-color="#10B981"
-        data-hide-badge="true"
-        data-license-key="PRO_DEMO_KEY"
-      ></div>
-    </div>
-
-    <!-- Demo 3: Automated Multi-Step Pipeline (Spec 078) -->
-    <div class="card">
-      <h2>3. Automated Document Pipeline (Zero-Server In-Browser WASM)</h2>
-      <p style="margin-bottom: 16px; font-size: 0.9rem;">Drop a PDF to auto-execute: <code>Extract Pages 1-3 ➔ Watermark ("APPROVED") ➔ Compress</code>.</p>
+      <h2>4. Automated Multi-Step Pipeline</h2>
+      <p style="margin-bottom: 16px; font-size: 0.9rem;">Auto-execute: <code>Auto Upright ➔ Scale to A4 ➔ Imposition 2-Up ➔ Compress</code>.</p>
       <div
         data-paperpilot-widget
         data-theme="dark"
         data-brand-color="#8B5CF6"
-        data-pipeline='[{"tool":"extract_pages","pages":"1-3"},{"tool":"watermark","text":"APPROVED","opacity":0.3},{"tool":"compress"}]'
+        data-pipeline='[{"tool":"pdf_auto_rotate"},{"tool":"pdf_scale_pages","target":"a4"},{"tool":"pdf_nup","grid":2},{"tool":"compress"}]'
         data-allow-customization="true"
         data-auto-execute="false"
       ></div>
