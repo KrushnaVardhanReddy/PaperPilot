@@ -1211,6 +1211,18 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 ---
 
+### 6.8 — Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine `[ENTERPRISE]`
+
+> High-throughput enterprise automation, asynchronous execution, and persistent event dispatching for headless and integration workloads.
+
+| # | Task | Notes |
+|---|---|---|
+| 6.8.1 | **Async Job Engine & HTTP Callbacks** | Per-request `callback_url` with HMAC-SHA256 signature verification for long-running batch operations (OCR, PDF/A conversion, high-compression) over REST Gateway to prevent Cloudflare/Nginx reverse proxy timeouts. |
+| 6.8.2 | **Outbound Webhook Event Dispatcher** | Permanent organization-level webhook subscriptions (`diff.completed`, `ocr.finished`, `document.sanitized`, `signature.verified`) with retry queues, exponential backoff, and dead-letter routing to Slack, Teams, or SIEM endpoints. |
+| 6.8.3 | **Embedded Database Engine Evaluation (Turso vs PGlite vs SQLite)** | Architecture and performance bake-off for local persistent job state, audit trails, and webhook delivery records:<br>• **[Turso / libSQL](https://github.com/tursodatabase/turso):** Rust-native embedded SQLite fork with optional remote vector & edge cloud replication.<br>• **[PGlite](https://pglite.dev/):** WASM-packaged lightweight PostgreSQL engine for in-browser client-side relational storage.<br>• **SQLite / `rusqlite`:** Zero-dependency, zero-maintenance single-file air-gapped local database embedded directly in the binary. |
+
+---
+
 ## Phase 7 — Managed Cloud
 
 **Goal:** Organizations that don't want to self-host can use PaperPilot as a service.
