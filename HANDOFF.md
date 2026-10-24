@@ -21,7 +21,7 @@
 | **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | ✅ Merged (PR #243) |
 | **Task 5.3.4** | Image & Logo Stamp (`pdf_stamp`) | `main` | [Session 8384172369592473139](https://jules.google.com/session/8384172369592473139) | ✅ Merged (PR #243 / #244 prep) |
 | **Task 5.3.8** | Overlay & Underlay Stationary (`pdf_overlay_underlay`) | `main` | [Session 16199328015910459749](https://jules.google.com/session/16199328015910459749) | ✅ Merged (PR #244) |
-| **Task 5.3.10** | Automated Page Orientation (`pdf_auto_rotate` `[Spec 102]`) | `main` | [Session 10078476370268706067](https://jules.google.com/session/10078476370268706067) | 🚀 Active In-Flight |
+| **Task 5.3.10** | Automated Page Orientation (`pdf_auto_rotate` `[Spec 102]`) | `main` | [Session 10078476370268706067](https://jules.google.com/session/10078476370268706067) | ✅ Merged (PR #245) |
 | **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | ✅ Merged (PR #242) |
 | **Task 5.9.90** | Baseline Tamper Forensics (`pdf_validate_signatures --baseline` `[Spec 101]`) | `main` | [Session 9563501665020719300](https://jules.google.com/session/9563501665020719300) | 🚀 Active In-Flight |
 | **Task 103A** | libSQL Storage Engine (`paperpilot-storage` `[Spec 103]`) | `main` | [Session 1855248125635554831](https://jules.google.com/session/1855248125635554831) | 🚀 Active In-Flight |
@@ -37,7 +37,11 @@
 
 ## 🏆 Recently Completed Milestones
 
-1. **Task 5.3.2 (Multi-Page N-Up Imposition Engine `pdf_nup` `[Spec 097]`)**:
+1. **Task 5.3.10 (Automated Page Orientation Engine `pdf_auto_rotate` `[Spec 102]`)**:
+   - Merged (PR #245).
+   - Pure-Rust automated page orientation and uprighting engine (effective aspect-ratio calculation via MediaBox & current Rotate dictionary entries, 90°/180°/270° orientation uprighting, page filtering).
+   - 10/10 (100.0%) unmocked Penta-Interface E2E tests passing in `reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
+2. **Task 5.3.2 (Multi-Page N-Up Imposition Engine `pdf_nup` `[Spec 097]`)**:
    - Merged (PR #241, commit `5f37009`).
    - Pure-Rust N-Up grid imposition engine (2, 4, 9, 16 pages per sheet), horizontal/vertical ordering, margins, spacing, and hairline borders.
    - Verified across Desktop UI controls, CLI, and Penta-Interface E2E harness.
