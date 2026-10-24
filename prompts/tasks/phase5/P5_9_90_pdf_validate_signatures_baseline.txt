@@ -109,11 +109,11 @@ Update the documentation page to explain and demonstrate the `--baseline` parame
 Always pass `-j 2`:
 ```bash
 cargo test -p paperpilot-pdf --lib operations::pdf_validate_signatures -j 2
-cargo run -j 2 -p penta-interface-e2e -- --group pdf_validate_signatures
 cargo check --workspace -j 2
 ```
 
 > ⚠️ MANDATORY SAFETY RULES:
-> - Scoped testing only (`--group pdf_validate_signatures`).
+> - Unit tests and workspace compilation check only.
+> - Do NOT run `penta-interface-e2e` or generate files in `reports/`.
 > - Do not commit temporary logs or test runner scripts.
 > - Ensure all unit tests pass with zero warnings.

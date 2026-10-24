@@ -9,8 +9,13 @@ MANDATORY RULES — VIOLATION = REJECTED PR:
    - Create or update the relevant documentation in `wiki/` (e.g. `wiki/XX-Module-Name.md`).
    - Create or update the user-facing tool reference page at `apps/docs/src/content/docs/reference/tools/<tool_id>.md` with frontmatter, concise description of what it does, and verified invocation examples for CLI, MCP JSON-RPC, and REST API.
 8. PERIODIC PROGRESS UPDATES: You MUST proactively send a concise progress update message to the session conversation every 10 to 15 minutes or after completing each logical milestone/step (e.g., "Step 2/4 completed: tests passed, now modifying X..."), so the team is never left without visibility into ongoing progress.
-9. SCOPED E2E TESTING ONLY: When running `penta-interface-e2e`, YOU MUST pass `--group <tool_name>` (e.g. `cargo run -j 2 -p penta-interface-e2e -- --group pdf_scale_pages`). NEVER run the suite without `--group`, and NEVER modify or commit unrelated reports in `reports/` (such as `PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` or other tools' reports). Only the markdown report for your specific tool should be created/updated.
-10. NO STRAY ARTIFACTS: NEVER commit temporary files, log files (`*.log`), pid tracking files (`*.txt`), or test runner binaries (`test_script`). Keep `git status` clean and free of junk files before committing.
+9. UNIT TESTS & WORKSPACE CHECK ONLY: 
+   - For every operation or engine file you implement, write thorough unit tests in `#[cfg(test)]` modules inside that file.
+   - Run ONLY your unit tests and compilation check:
+     `cargo test -p paperpilot-pdf --lib operations::<tool_id> -j 2`
+     `cargo check --workspace -j 2`
+   - DO NOT run `penta-interface-e2e` or generate files in `reports/`. Multi-interface E2E testing and report generation are handled during integration review.
+10. NO STRAY ARTIFACTS: NEVER commit temporary files, log files (`*.log`), pid tracking files (`*.txt`), test runner binaries (`test_script`), or files in `reports/`. Keep `git status` clean and stage only your implementation, unit tests, and docs before opening a PR.
 
 Project: PaperPilot
 Tech stack:
@@ -26,4 +31,4 @@ Critical Rules:
 - Do NOT use Electron; use Tauri 2.
 - The AI should not directly manipulate document bytes, only use MCP tool operations.
 - Proactively send progress updates in chat every 10-15 minutes.
-- Only run scoped E2E tests (`--group <tool>`) and NEVER commit master reports or stray logs.
+- Focus on unit tests (`cargo test -p paperpilot-pdf`) and workspace checks. NEVER run `penta-interface-e2e` or commit files in `reports/`.
