@@ -75,10 +75,12 @@ pub fn pdf_stamp_bytes(input_bytes: &[u8], options: &PdfStampOptions) -> Result<
 
     // Load image bytes
     let img_bytes = if let Some(ref path) = options.image_path {
-        std::fs::read(path).or_else(|_| {
-            let alt = format!("../{}", path);
-            std::fs::read(&alt)
-        }).map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?
+        std::fs::read(path)
+            .or_else(|_| {
+                let alt = format!("../{}", path);
+                std::fs::read(&alt)
+            })
+            .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?
     } else if let Some(ref data) = options.image_data {
         use base64::Engine;
         base64::engine::general_purpose::STANDARD
