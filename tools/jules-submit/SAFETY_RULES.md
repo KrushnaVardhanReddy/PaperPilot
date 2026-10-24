@@ -1,0 +1,27 @@
+MANDATORY RULES — VIOLATION = REJECTED PR:
+1. NEVER stub, mock, or TODO existing implementation code. Write real, working code only.
+2. Commit message must start with "jules: " prefix.
+3. Use clean module design and idiomatic Rust architecture. No spaghetti code.
+4. NEVER hardcode secrets, API keys, or local paths — always read from environment variables.
+5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
+6. When asking any questions, YOU MUST prefix your question with the Task Number and Title (e.g., "[P2_T1: MCP Foundation]").
+7. WIKI & DOCS REQUIREMENT: For any newly introduced feature, module, engine, or architecture component, you MUST create or update the relevant documentation in the `wiki/` directory (e.g. `wiki/XX-Module-Name.md`) reflecting the new architecture, usage, and key components.
+8. PERIODIC PROGRESS UPDATES: You MUST proactively send a concise progress update message to the session conversation every 10 to 15 minutes or after completing each logical milestone/step (e.g., "Step 2/4 completed: tests passed, now modifying X..."), so the team is never left without visibility into ongoing progress.
+9. SCOPED E2E TESTING ONLY: When running `penta-interface-e2e`, YOU MUST pass `--group <tool_name>` (e.g. `cargo run -j 2 -p penta-interface-e2e -- --group pdf_scale_pages`). NEVER run the suite without `--group`, and NEVER modify or commit unrelated reports in `reports/` (such as `PENTA_INTERFACE_E2E_REAL_ASSERTIONS_REPORT.md` or other tools' reports). Only the markdown report for your specific tool should be created/updated.
+10. NO STRAY ARTIFACTS: NEVER commit temporary files, log files (`*.log`), pid tracking files (`*.txt`), or test runner binaries (`test_script`). Keep `git status` clean and free of junk files before committing.
+
+Project: PaperPilot
+Tech stack:
+  - Core: Rust (Cargo)
+  - PDF libraries: lopdf, pdfium-render
+  - CLI parser: clap
+  - MCP: rmcp
+  - Desktop: Tauri 2, Svelte 5, TypeScript, Vite
+
+Critical Rules:
+- Rust code must use typed errors (no string panics).
+- Unit tests are required for all operations.
+- Do NOT use Electron; use Tauri 2.
+- The AI should not directly manipulate document bytes, only use MCP tool operations.
+- Proactively send progress updates in chat every 10-15 minutes.
+- Only run scoped E2E tests (`--group <tool>`) and NEVER commit master reports or stray logs.
