@@ -10,7 +10,8 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active Status & Nightly Dispatch
-- **Merged PR #241 (`pdf_nup` - Spec 097)**: Fully merged to `main`, conflicts resolved, clean verified with 3/3 tests passing and 0 stray files.
+- **Merged PR #242 (`pdf_remove_signatures` - Spec 099)**: Fully merged to `main`, validated with live real-fixture CLI execution and 3/3 unit tests passing, 0 stray files.
+- **Merged PR #241 (`pdf_nup` - Spec 097)**: Fully merged to `main`, clean verified with 3/3 tests passing.
 - **Batch Scaffolding (11 Tools)**: Pre-scaffolded across all 5 surfaces (CLI, MCP, Gateway, WASM, Desktop Svelte, E2E harness).
 - **Tool Registry**: Scaled from 55 to **66 tools** registered in `paperpilot-cli`!
 
@@ -18,7 +19,7 @@
 | Task ID | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|---|---|---|---|
 | **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | 🚀 Active In-Flight |
-| **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | 🚀 Active In-Flight |
+| **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | ✅ Merged (PR #242) |
 
 ### 3. Immediate Next Roadmap Target (Selected: Option A + Strategy Option 1)
 **Enterprise Asynchronous Processing, Webhooks & Embedded Database Engine (Section 6.8 / Wave 7)**:
