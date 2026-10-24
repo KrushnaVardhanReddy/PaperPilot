@@ -435,6 +435,9 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        /// Optional path to the baseline reference PDF for pre-sign tamper detection
+        #[arg(long)]
+        baseline: Option<PathBuf>,
     },
     /// Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing.
     #[command(name = "pdf-booklet")]
