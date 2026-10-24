@@ -3,9 +3,9 @@ title: 50 Tools Handbook
 description: Comprehensive guide to all 50 PaperPilot tools across CLI, MCP, and REST interfaces.
 ---
 
-This handbook provides verified execution snippets for all 50 PaperPilot tools across the CLI, MCP, and REST interfaces. Use the sidebar on the left or the list below to jump directly to any tool's reference.
+# 50 Tools Handbook
 
-
+This handbook provides verified execution snippets for all 50 PaperPilot tools across the CLI, MCP, and REST interfaces.
 
 ## 1. `excel_to_csv`
 
