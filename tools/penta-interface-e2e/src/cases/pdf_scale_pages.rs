@@ -22,15 +22,15 @@ pub async fn run_pdf_scale_pages_suite() -> anyhow::Result<Vec<TestExecutionResu
     // 1. CLI Tests
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
         let out_path = out_dir.join(format!("{}_cli_{}.pdf", tool, tier as u8));
-        
+
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
-        
+
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "scale-pages",
+            "pdf-scale-pages",
             "--input",
             &actual_input,
             "--output",
@@ -64,7 +64,7 @@ pub async fn run_pdf_scale_pages_suite() -> anyhow::Result<Vec<TestExecutionResu
     // 2. MCP Parity Checks
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
         let out_path = out_dir.join(format!("{}_mcp_{}.pdf", tool, tier as u8));
-        
+
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
@@ -72,11 +72,17 @@ pub async fn run_pdf_scale_pages_suite() -> anyhow::Result<Vec<TestExecutionResu
 
         let mcp_args = json!({
             "input": actual_input,
-            "output": out_path.to_str().unwrap()
+            "output": out_path.to_str().unwrap(),
+            "options": {
+                "target_size": "A4",
+                "scale_factor": 1.0,
+                "maintain_aspect_ratio": true,
+                "center_content": true
+            }
         });
 
         let (success, resp, latency) = McpRunner::call_tool(tool, mcp_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
@@ -107,12 +113,16 @@ pub async fn run_pdf_scale_pages_suite() -> anyhow::Result<Vec<TestExecutionResu
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
 
+        let out_path = out_dir.join(format!("{}_api_{}.pdf", tool, tier as u8));
+        let out_path_str = out_path.to_str().unwrap().to_string();
+
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input,
+            "output": out_path_str
         });
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/scale-pages", api_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {

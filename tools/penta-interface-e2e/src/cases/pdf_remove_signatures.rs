@@ -30,7 +30,7 @@ pub async fn run_pdf_remove_signatures_suite() -> anyhow::Result<Vec<TestExecuti
         
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "remove-signatures",
+            "pdf-remove-signatures",
             "--input",
             &actual_input,
             "--output",
@@ -108,7 +108,7 @@ pub async fn run_pdf_remove_signatures_suite() -> anyhow::Result<Vec<TestExecuti
         }
 
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input, "output": out_dir.join(format!("{}_api_{}.pdf", tool, tier as u8)).to_str().unwrap()
         });
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/remove-signatures", api_args).await?;
