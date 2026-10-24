@@ -1022,7 +1022,7 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.10 | Auto-Rotate (`pdf_auto_rotate`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI controls for text baseline & OCR scan uprighting. |
 | 5.3.11 | PDF Continuous Canvas Stitch (`pdf_stitch_canvas`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for vertical/horizontal continuous single-sheet canvas stitch. |
 | 5.3.12 | Manage Attachments & PDF Portfolios (`pdf_attachments`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and JSON inspection for embedded `/EmbeddedFiles` trees. |
-| 5.3.13 | Remove Digital Signatures (`pdf_remove_signatures`) `[Spec 099]` 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and UI controls for stripping signature dictionaries and AcroForm locks (`specs/099-pdf-remove-signatures/task.md`). |
+| 5.3.13 | Remove Digital Signatures (`pdf_remove_signatures`) `[Spec 099]` ✅ | **Completed (PR #242)** — Pure-Rust digital signature removal engine stripping `/AcroForm` signature fields, `/ByteRange` cryptographic locks, and widget annotations (`reports/PENTA_INTERFACE_E2E_PDF_REMOVE_SIGNATURES_REPORT.md`, `wiki/100-Pdf-Remove-Signatures.md`). |
 | 5.3.14 | Timestamp PDF RFC 3161 TSA (`pdf_timestamp`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration and REST/CLI endpoints for TSA timestamping. |
 | 5.3.15 | Modify PDF Permissions (`pdf_change_permissions`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for security flag and user/owner permission manipulation. |
 | 5.3.16 | Split Scanned Book Spine (`pdf_split_scanned_book`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for two-up gutter scan center splitting. |
