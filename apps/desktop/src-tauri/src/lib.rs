@@ -111,6 +111,50 @@ async fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| e.to_string())
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct RemoteFileResult {
+    pub name: String,
+    pub bytes: Vec<u8>,
+}
+
+#[tauri::command]
+async fn download_remote_file(url: String) -> Result<RemoteFileResult, String> {
+    let client = reqwest::Client::builder()
+        .user_agent("PaperPilot/0.6.0")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("HTTP Error {}: Failed to fetch file", resp.status()));
+    }
+
+    let mut filename = "document.pdf".to_string();
+    if let Some(cd) = resp.headers().get("content-disposition") {
+        if let Ok(cd_str) = cd.to_str() {
+            if let Some(idx) = cd_str.find("filename=") {
+                let name_part = &cd_str[idx + 9..];
+                let clean_name = name_part.trim_matches('"').trim_matches('\'').split(';').next().unwrap_or("document.pdf");
+                if !clean_name.is_empty() {
+                    filename = clean_name.to_string();
+                }
+            }
+        }
+    } else if let Ok(parsed) = reqwest::Url::parse(&url) {
+        if let Some(seg) = parsed.path_segments().and_then(|s| s.last()) {
+            if !seg.is_empty() {
+                filename = seg.to_string();
+            }
+        }
+    }
+
+    let bytes = resp.bytes().await.map_err(|e| e.to_string())?.to_vec();
+    Ok(RemoteFileResult {
+        name: filename,
+        bytes,
+    })
+}
+
 #[derive(serde::Serialize)]
 struct GatewayStatus {
     is_running: bool,
@@ -259,6 +303,7 @@ pub fn run() {
             query_documentation_rag,
             save_annotations,
             read_file_bytes,
+            download_remote_file,
             get_file_metadata,
             get_gateway_status,
             start_gateway,
