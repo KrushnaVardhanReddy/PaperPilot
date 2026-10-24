@@ -1,5 +1,6 @@
 pub mod error;
 pub mod models;
+pub mod vector;
 
 use error::StorageError;
 use models::*;
@@ -195,11 +196,254 @@ impl StorageEngine {
         ).await?;
         Ok(())
     }
+
+    pub async fn store_chunks(&self, chunks: &[NewDocumentChunk]) -> Result<usize, StorageError> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let mut count = 0;
+        for chunk in chunks {
+            let id = chunk
+                .id
+                .clone()
+                .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+            let embedding_json =
+                serde_json::to_string(&chunk.embedding).unwrap_or_else(|_| "[]".to_string());
+
+            self.conn.execute(
+                "INSERT INTO document_chunks (id, document_hash, document_name, page_number, chunk_index, content, embedding_json, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                libsql::params![
+                    id,
+                    chunk.document_hash.clone(),
+                    chunk.document_name.clone(),
+                    chunk.page_number as i64,
+                    chunk.chunk_index as i64,
+                    chunk.content.clone(),
+                    embedding_json,
+                    now.clone(),
+                ]
+            ).await?;
+            count += 1;
+        }
+        Ok(count)
+    }
+
+    pub async fn delete_chunks_by_document(
+        &self,
+        document_hash: &str,
+    ) -> Result<usize, StorageError> {
+        let changes = self
+            .conn
+            .execute(
+                "DELETE FROM document_chunks WHERE document_hash = ?1",
+                libsql::params![document_hash.to_string()],
+            )
+            .await?;
+        Ok(changes as usize)
+    }
+
+    pub async fn get_chunks_by_document(
+        &self,
+        document_hash: &str,
+    ) -> Result<Vec<DocumentChunkRecord>, StorageError> {
+        let mut rows = self.conn.query(
+            "SELECT id, document_hash, document_name, page_number, chunk_index, content, embedding_json, created_at FROM document_chunks WHERE document_hash = ?1 ORDER BY chunk_index",
+            libsql::params![document_hash.to_string()]
+        ).await?;
+
+        let mut chunks = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let embedding_json: String = row.get(6)?;
+            let embedding: Vec<f32> = serde_json::from_str(&embedding_json).unwrap_or_default();
+
+            chunks.push(DocumentChunkRecord {
+                id: row.get(0)?,
+                document_hash: row.get(1)?,
+                document_name: row.get(2)?,
+                page_number: row.get::<i64>(3)? as u32,
+                chunk_index: row.get::<i64>(4)? as u32,
+                content: row.get(5)?,
+                embedding,
+                created_at: row.get(7)?,
+            });
+        }
+        Ok(chunks)
+    }
+
+    pub async fn count_chunks(&self) -> Result<usize, StorageError> {
+        let mut rows = self
+            .conn
+            .query("SELECT COUNT(*) FROM document_chunks", ())
+            .await?;
+        if let Some(row) = rows.next().await? {
+            let count: i64 = row.get(0)?;
+            Ok(count as usize)
+        } else {
+            Ok(0)
+        }
+    }
+
+    pub async fn search_chunks(
+        &self,
+        query_embedding: &[f32],
+        limit: usize,
+        filter_document_hash: Option<&str>,
+    ) -> Result<Vec<SemanticSearchResult>, StorageError> {
+        let mut rows = if let Some(hash) = filter_document_hash {
+            self.conn.query(
+                "SELECT id, document_hash, document_name, page_number, chunk_index, content, embedding_json, created_at FROM document_chunks WHERE document_hash = ?1",
+                libsql::params![hash.to_string()]
+            ).await?
+        } else {
+            self.conn.query(
+                "SELECT id, document_hash, document_name, page_number, chunk_index, content, embedding_json, created_at FROM document_chunks",
+                ()
+            ).await?
+        };
+
+        let mut results = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let embedding_json: String = row.get(6)?;
+            let embedding: Vec<f32> = serde_json::from_str(&embedding_json).unwrap_or_default();
+
+            let score = vector::cosine_similarity(query_embedding, &embedding);
+
+            let chunk = DocumentChunkRecord {
+                id: row.get(0)?,
+                document_hash: row.get(1)?,
+                document_name: row.get(2)?,
+                page_number: row.get::<i64>(3)? as u32,
+                chunk_index: row.get::<i64>(4)? as u32,
+                content: row.get(5)?,
+                embedding,
+                created_at: row.get(7)?,
+            };
+
+            results.push(SemanticSearchResult { chunk, score });
+        }
+
+        // Sort descending by score
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(limit);
+
+        Ok(results)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn test_store_and_count_chunks() {
+        let engine = StorageEngine::open_in_memory().await.unwrap();
+        let chunks = vec![
+            NewDocumentChunk {
+                id: None,
+                document_hash: "hash1".to_string(),
+                document_name: "doc1".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "content 1".to_string(),
+                embedding: vec![0.1, 0.2],
+            },
+            NewDocumentChunk {
+                id: None,
+                document_hash: "hash1".to_string(),
+                document_name: "doc1".to_string(),
+                page_number: 1,
+                chunk_index: 2,
+                content: "content 2".to_string(),
+                embedding: vec![0.3, 0.4],
+            },
+            NewDocumentChunk {
+                id: None,
+                document_hash: "hash2".to_string(),
+                document_name: "doc2".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "content 3".to_string(),
+                embedding: vec![0.5, 0.6],
+            },
+        ];
+
+        engine.store_chunks(&chunks).await.unwrap();
+        assert_eq!(engine.count_chunks().await.unwrap(), 3);
+
+        let doc1_chunks = engine.get_chunks_by_document("hash1").await.unwrap();
+        assert_eq!(doc1_chunks.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_semantic_search_ranking() {
+        let engine = StorageEngine::open_in_memory().await.unwrap();
+        let chunks = vec![
+            NewDocumentChunk {
+                id: None,
+                document_hash: "hash1".to_string(),
+                document_name: "doc1".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "Chunk A".to_string(),
+                embedding: vec![1.0, 0.0, 0.0],
+            },
+            NewDocumentChunk {
+                id: None,
+                document_hash: "hash2".to_string(),
+                document_name: "doc2".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "Chunk B".to_string(),
+                embedding: vec![0.1, 0.9, 0.0],
+            },
+        ];
+        engine.store_chunks(&chunks).await.unwrap();
+
+        let query = vec![1.0, 0.05, 0.0];
+        let results = engine.search_chunks(&query, 2, None).await.unwrap();
+
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].chunk.content, "Chunk A");
+        assert!(results[0].score > 0.95);
+        assert_eq!(results[1].chunk.content, "Chunk B");
+    }
+
+    #[tokio::test]
+    async fn test_delete_chunks_by_document() {
+        let engine = StorageEngine::open_in_memory().await.unwrap();
+        let chunks = vec![
+            NewDocumentChunk {
+                id: None,
+                document_hash: "doc1".to_string(),
+                document_name: "name1".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "A".to_string(),
+                embedding: vec![1.0],
+            },
+            NewDocumentChunk {
+                id: None,
+                document_hash: "doc2".to_string(),
+                document_name: "name2".to_string(),
+                page_number: 1,
+                chunk_index: 1,
+                content: "B".to_string(),
+                embedding: vec![2.0],
+            },
+        ];
+        engine.store_chunks(&chunks).await.unwrap();
+        assert_eq!(engine.count_chunks().await.unwrap(), 2);
+
+        let deleted = engine.delete_chunks_by_document("doc1").await.unwrap();
+        assert_eq!(deleted, 1);
+
+        assert_eq!(engine.count_chunks().await.unwrap(), 1);
+        let remaining = engine.get_chunks_by_document("doc2").await.unwrap();
+        assert_eq!(remaining.len(), 1);
+    }
 
     #[tokio::test]
     async fn test_storage_engine_in_memory_migrations() {
