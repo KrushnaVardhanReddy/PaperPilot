@@ -30,7 +30,7 @@ pub async fn run_pdf_stamp_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
         
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "stamp",
+            "pdf-stamp",
             "--input",
             &actual_input,
             "--output",
@@ -108,7 +108,8 @@ pub async fn run_pdf_stamp_suite() -> anyhow::Result<Vec<TestExecutionResult>> {
         }
 
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input,
+            "output": out_dir.join(format!("{}_api_{}.pdf", tool, tier as u8)).to_str().unwrap()
         });
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/stamp", api_args).await?;
