@@ -106,6 +106,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
+  let autoRotateOrientation = $state('portrait');
 
   // Additional 44 tools parameter states
   let batesPrefix = $state('CONF-');
@@ -1097,8 +1098,27 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'pdf_auto_rotate'}
         <div class="operation-config">
+          <label for="autoRotateTarget" class="section-desc">Target Upright Orientation:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {autoRotateOrientation === 'portrait' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => autoRotateOrientation = 'portrait'}
+            >
+              📄 Portrait (Default)
+            </button>
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {autoRotateOrientation === 'landscape' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => autoRotateOrientation = 'landscape'}
+            >
+              🖼️ Landscape
+            </button>
+          </div>
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
-            Heuristically inspects text reading baselines and scan orientations to automatically rotate upside-down or sideways pages upright.
+            Heuristically inspects dimensions and reading baselines to automatically rotate sideways or upside-down pages into upright orientation.
           </p>
         </div>
       {:else if activeTool.id === 'burst'}
