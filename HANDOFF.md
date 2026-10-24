@@ -20,6 +20,7 @@
 |---|---|---|---|---|
 | **Task 5.3.3** | Page Dimensional Scaling (`pdf_scale_pages` `[Spec 098]`) | `main` | [Session 11505281124052234531](https://jules.google.com/session/11505281124052234531) | ✅ Merged (PR #243) |
 | **Task 5.3.4** | Image & Logo Stamp (`pdf_stamp`) | `main` | [Session 8384172369592473139](https://jules.google.com/session/8384172369592473139) | ✅ Completed |
+| **Task 5.3.8** | Overlay & Underlay Stationary (`pdf_overlay_underlay`) | `main` | [Session 16199328015910459749](https://jules.google.com/session/16199328015910459749) | 🚀 Active In-Flight |
 | **Task 5.3.13** | Digital Signature Removal (`pdf_remove_signatures` `[Spec 099]`) | `main` | [Session 1595313133805116906](https://jules.google.com/session/1595313133805116906) | ✅ Merged (PR #242) |
 | **Task 5.9.90** | Baseline Tamper Forensics (`pdf_validate_signatures --baseline` `[Spec 101]`) | `main` | [Session 9563501665020719300](https://jules.google.com/session/9563501665020719300) | 🚀 Active In-Flight |
 
