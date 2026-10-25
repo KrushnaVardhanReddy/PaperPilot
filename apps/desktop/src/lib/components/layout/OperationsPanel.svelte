@@ -108,6 +108,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let convertPreset = $state('academic');
   let autoRotateOrientation = $state('portrait');
 
+  // PDF Attachments parameter states
+  let attachmentAction = $state('list');
+  let attachmentFileName = $state('');
+  let attachmentDescription = $state('');
+  let attachmentBase64 = $state('');
+
   // Additional 44 tools parameter states
   let batesPrefix = $state('CONF-');
   let batesStart = $state(1);
@@ -400,7 +406,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             nupOrdering,
             nupMargin,
             nupSpacing,
-            nupDrawBorders
+            nupDrawBorders,
+            action: attachmentAction,
+            file_name: attachmentFileName,
+            description: attachmentDescription,
+            file_data_base64: attachmentBase64
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -541,7 +551,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           nupOrdering,
           nupMargin,
           nupSpacing,
-          nupDrawBorders
+          nupDrawBorders,
+          action: attachmentAction,
+          file_name: attachmentFileName,
+          description: attachmentDescription,
+          file_data_base64: attachmentBase64
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1095,6 +1109,41 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa;">
             Applies coordinate-exact visual stamps and branding onto target pages.
           </p>
+        </div>
+      {:else if activeTool.id === 'pdf_attachments'}
+        <div class="operation-config">
+          <label class="section-desc">Action:</label>
+          <div class="segmented" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'list' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'list' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'list'}>📋 List</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'add' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'add' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'add'}>➕ Add</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'extract' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'extract' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'extract'}>📥 Extract</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'remove' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'remove' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'remove'}>❌ Remove</button>
+          </div>
+
+          {#if attachmentAction !== 'list'}
+            <label for="attachmentFileName" class="section-desc">File Name in Portfolio:</label>
+            <input id="attachmentFileName" type="text" class="form-input" bind:value={attachmentFileName} placeholder="e.g. secret.txt" style="margin-bottom: 12px;" />
+          {/if}
+
+          {#if attachmentAction === 'add'}
+            <label for="attachmentDescription" class="section-desc">Description (Optional):</label>
+            <input id="attachmentDescription" type="text" class="form-input" bind:value={attachmentDescription} placeholder="Confidential report..." style="margin-bottom: 12px;" />
+
+            <label for="attachmentFile" class="section-desc">File to Embed:</label>
+            <input id="attachmentFile" type="file" style="margin-bottom: 12px; font-size: 13px;" onchange={async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) {
+                 const buffer = await file.arrayBuffer();
+                 const uint8 = new Uint8Array(buffer);
+                 let binary = '';
+                 for (let i = 0; i < uint8.byteLength; i++) {
+                     binary += String.fromCharCode(uint8[i]);
+                 }
+                 attachmentBase64 = window.btoa(binary);
+                 if (!attachmentFileName) attachmentFileName = file.name;
+              }
+            }} />
+          {/if}
         </div>
       {:else if activeTool.id === 'pdf_auto_rotate'}
         <div class="operation-config">

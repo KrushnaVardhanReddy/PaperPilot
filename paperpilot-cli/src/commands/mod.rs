@@ -111,9 +111,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Burst { input, output } => {
             group_a::handle_burst(&resolve_input_path(input)?, output)
         }
-        Commands::RemoveBlank { input, output } => {
-            group_a::handle_remove_blank(&resolve_input_path(input)?, output)
-        }
+        Commands::RemoveBlank {
+            input,
+            output,
+            action: _,
+            file_name: _,
+            file: _,
+        } => group_a::handle_remove_blank(&resolve_input_path(input)?, output),
 
         // Group B
         Commands::Compress {
@@ -121,9 +125,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             quality,
             output,
         } => group_b::handle_compress(&resolve_input_path(input)?, quality, output),
-        Commands::Repair { input, output } => {
-            group_b::handle_repair(&resolve_input_path(input)?, output)
-        }
+        Commands::Repair {
+            input,
+            output,
+            action: _,
+            file_name: _,
+            file: _,
+        } => group_b::handle_repair(&resolve_input_path(input)?, output),
         Commands::Linearize { input, output } => {
             group_b::handle_linearize(&resolve_input_path(input)?, output)
         }
@@ -386,9 +394,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfStitchCanvas { input, output } => {
             pdf_stitch_canvas::handle_pdf_stitch_canvas_command(input, output)
         }
-        Commands::PdfAttachments { input, output } => {
-            pdf_attachments::handle_pdf_attachments_command(input, output)
-        }
+        Commands::PdfAttachments {
+            input,
+            output,
+            action,
+            file_name,
+            file,
+        } => pdf_attachments::handle_pdf_attachments_command(
+            &input, &output, &action, &file_name, &file,
+        ),
         Commands::PdfTimestamp { input, output } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
         }
