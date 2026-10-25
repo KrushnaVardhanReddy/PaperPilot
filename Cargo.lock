@@ -2084,6 +2084,7 @@ dependencies = [
  "paperpilot-mcp",
  "paperpilot-nlp",
  "paperpilot-pdf",
+ "paperpilot-storage",
  "reqwest 0.13.5",
  "rmcp",
  "serde",

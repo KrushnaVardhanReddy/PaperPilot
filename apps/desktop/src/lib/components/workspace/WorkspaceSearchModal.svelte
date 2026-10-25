@@ -14,6 +14,7 @@
   let searchQuery = '';
   let matchCase = false;
   let wholeWord = false;
+  let searchMode: 'exact' | 'semantic' = 'exact';
   let activeFilter: 'all' | 'pdf' | 'docx' | 'xlsx' = 'all';
 
   let inputEl: HTMLInputElement;
@@ -79,46 +80,90 @@
     return text;
   }
 
+  function textToPseudoVector(text: string): number[] {
+    const vector = new Array(384).fill(0);
+    for (let i = 0; i < text.length; i++) {
+        vector[i % 384] += text.charCodeAt(i) / 255.0;
+    }
+    // Normalize
+    const mag = Math.sqrt(vector.reduce((acc, val) => acc + val * val, 0)) || 1;
+    return vector.map(v => v / mag);
+  }
+
   async function performSearch() {
-    if (!searchQuery.trim()) {
-        searchResults = null;
-        isSearching = false;
-        return;
+    if (!searchQuery.trim() || !isOpen) {
+      searchResults = null;
+      isSearching = false;
+      return;
     }
 
     isSearching = true;
-
     let totalMatches = 0;
-    const matchesByDoc = [];
+    const matchesByDoc: Array<{ docIndex: number, docName: string, matches: SearchSnippetMatch[] }> = [];
 
-    const openIndices = appState.openDocIndices;
+    if (searchMode === 'semantic') {
+      try {
+        const queryEmbedding = textToPseudoVector(searchQuery);
+        const data = await safeInvoke('search_document_vectors', { queryEmbedding, limit: 10 });
+        if (data && Array.isArray(data)) {
+           for (const hit of data) {
+               const docIndex = appState.documentPaths.findIndex(p => p.includes(hit.chunk.document_name));
+               if (docIndex !== -1) {
+                  const matchGroup = matchesByDoc.find(m => m.docIndex === docIndex);
+                  const snippet: SearchSnippetMatch = {
+                      matchIndex: 0,
+                      docIndex: docIndex,
+                      docName: hit.chunk.document_name,
+                      docType: (hit.chunk.document_name.split('.').pop()?.toLowerCase() || 'other') as any,
+                      snippet: `<span class="semantic-score-badge">${Math.round(hit.score * 100)}% match</span> ${hit.chunk.content.substring(0, 100)}...`,
+                      location: `Chunk ${hit.chunk.chunk_index}` as any,
+                      pageOrSheetNum: hit.chunk.page_number ? hit.chunk.page_number : 0
+                  };
+                  if (matchGroup) {
+                      matchGroup.matches.push(snippet);
+                  } else {
+                      matchesByDoc.push({
+                          docIndex,
+                          docName: hit.chunk.document_name,
+                          matches: [snippet]
+                      });
+                  }
+                  totalMatches++;
+               }
+           }
+        }
+      } catch (err) {
+        console.error("Semantic search failed:", err);
+      }
+    } else {
+        // Existing exact match logic
+        for (let docIndex = 0; docIndex < appState.documents.length; docIndex++) {
+            const docName = appState.documents[docIndex]?.name;
+            const docPath = appState.documentPaths[docIndex];
+            const docFile = appState.documents[docIndex];
 
-    for (const docIndex of openIndices) {
-        const docName = appState.documents[docIndex]?.name;
-        const docPath = appState.documentPaths[docIndex];
-        const docFile = appState.documents[docIndex];
+            if (!docName || !docPath || !docFile) continue;
 
-        if (!docName || !docPath || !docFile) continue;
+            const ext = docName.split('.').pop()?.toLowerCase() || '';
+            if (activeFilter === 'pdf' && ext !== 'pdf') continue;
+            if (activeFilter === 'docx' && !['docx', 'doc'].includes(ext)) continue;
+            if (activeFilter === 'xlsx' && !['xlsx', 'xls'].includes(ext)) continue;
 
-        const ext = docName.split('.').pop()?.toLowerCase() || '';
-        if (activeFilter === 'pdf' && ext !== 'pdf') continue;
-        if (activeFilter === 'docx' && !['docx', 'doc'].includes(ext)) continue;
-        if (activeFilter === 'xlsx' && !['xlsx', 'xls'].includes(ext)) continue;
+            const text = await ensureDocTextCached(docIndex, docPath, docName, docFile);
 
-        const text = await ensureDocTextCached(docIndex, docPath, docName, docFile);
-
-        const docMatches = searchDocumentText(docIndex, docName, text, searchQuery, {
-            caseSensitive: matchCase,
-            wholeWord: wholeWord
-        });
-
-        if (docMatches.length > 0) {
-            matchesByDoc.push({
-                docIndex,
-                docName,
-                matches: docMatches
+            const docMatches = searchDocumentText(docIndex, docName, text, searchQuery, {
+                caseSensitive: matchCase,
+                wholeWord: wholeWord
             });
-            totalMatches += docMatches.length;
+
+            if (docMatches.length > 0) {
+                matchesByDoc.push({
+                    docIndex,
+                    docName,
+                    matches: docMatches
+                });
+                totalMatches += docMatches.length;
+            }
         }
     }
 
@@ -130,7 +175,6 @@
 
     isSearching = false;
   }
-
   function handleInput() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -197,10 +241,16 @@
           bind:value={searchQuery}
           oninput={handleInput}
         />
-        <div class="search-options">
-           <button class="option-btn" class:active={matchCase} onclick={() => toggleOption('case')} title="Match Case">Aa</button>
-           <button class="option-btn" class:active={wholeWord} onclick={() => toggleOption('word')} title="Whole Word">W</button>
+        <div class="search-mode-toggle">
+           <button class="mode-btn" class:active={searchMode === 'exact'} onclick={() => searchMode = 'exact'} title="Exact Text Search">Exact</button>
+           <button class="mode-btn" class:active={searchMode === 'semantic'} onclick={() => searchMode = 'semantic'} title="Semantic Vector Search">🧠 Semantic</button>
         </div>
+        {#if searchMode === 'exact'}
+          <div class="search-options">
+             <button class="option-btn" class:active={matchCase} onclick={() => toggleOption('case')} title="Match Case">Aa</button>
+             <button class="option-btn" class:active={wholeWord} onclick={() => toggleOption('word')} title="Whole Word">W</button>
+          </div>
+        {/if}
         <button class="close-btn" onclick={() => isOpen = false} title="Close (Esc)">×</button>
       </div>
 
@@ -459,4 +509,40 @@
     padding: 0 2px;
     border-radius: 2px;
   }
+
+  :global(.semantic-score-badge) {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-right: 8px;
+    font-weight: 600;
+  }
+
+  .search-mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,0.2);
+    padding: 2px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-btn.active {
+    background: var(--accent-primary);
+    color: white;
+  }
+
 </style>
