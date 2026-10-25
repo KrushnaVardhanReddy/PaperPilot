@@ -1,10 +1,143 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: http://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PaperPilot — Fast, 100% Private Client-Side PDF Tools</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="theme-color" content="#1e1e2e" />
+
+    <title>PaperPilot — 100% Private Client-Side PDF & Document Tools (No Upload)</title>
+    <meta
+      name="description"
+      content="100% private, client-side PDF and document processing powered by pure-Rust WebAssembly. Files never leave your browser. Merge, split, compress, OCR, convert to Word/Excel, validate signatures, and edit securely."
+    />
+    <meta
+      name="keywords"
+      content="free pdf tools, private pdf tools, local pdf, client-side wasm pdf, merge pdf, compress pdf, split pdf, pdf to word, pdf to excel, pdf ocr, sign pdf, redact pdf, invert pdf dark mode, bates numbering, offline pdf editor"
+    />
+    <meta name="author" content="PaperPilot" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="canonical" href="https://paperpilot.app/" />
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:site_name" content="PaperPilot" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://paperpilot.app/" />
+    <meta property="og:title" content="PaperPilot — 100% Private Client-Side PDF Tools" />
+    <meta
+      property="og:description"
+      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser."
+    />
+    <meta property="og:image" content="https://paperpilot.app/og-image.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PaperPilot — 100% Private Client-Side PDF Tools" />
+    <meta
+      name="twitter:description"
+      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser."
+    />
+    <meta name="twitter:image" content="https://paperpilot.app/og-image.png" />
+
+    <!-- Schema.org WebApplication & Tool ItemList Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://paperpilot.app/#website",
+            "url": "https://paperpilot.app/",
+            "name": "PaperPilot",
+            "description": "Privacy-first pure-Rust WebAssembly document manipulation and intelligence suite.",
+            "inLanguage": "en"
+          },
+          {
+            "@type": ["SoftwareApplication", "WebApplication"],
+            "@id": "https://paperpilot.app/#application",
+            "name": "PaperPilot Web Studio",
+            "url": "https://paperpilot.app/",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web, macOS, Windows, Linux, Android, iOS",
+            "browserRequirements": "Requires WebAssembly and modern browser with HTML5 support",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "100% Client-Side In-Browser Execution",
+              "Zero File Uploads & Zero Server Data Storage",
+              "PDF Merge, Split, Burst, and Reorder",
+              "Pure-Rust High-Fidelity Compression",
+              "OCR with Selectable Text Injection",
+              "PDF to Word DOCX & Excel XLSX Conversion",
+              "PKCS#7 Digital Signature Verification and Baseline Forensics",
+              "Vector Glyph Redaction & PII Scanning",
+              "Dark Mode Vector Stream Inversion",
+              "Booklet and N-Up Imposition"
+            ]
+          },
+          {
+            "@type": "ItemList",
+            "@id": "https://paperpilot.app/#tools-catalog",
+            "name": "PaperPilot Client-Side Tool Suite",
+            "itemListElement": [
+              {
+                "@type": "SoftwareApplication",
+                "position": 1,
+                "name": "Merge PDF",
+                "description": "Combine multiple PDF documents into a single file with custom ordering."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 2,
+                "name": "Compress PDF",
+                "description": "Reduce PDF file sizes with pure-Rust Flate stream optimization and image downsampling."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 3,
+                "name": "Split PDF",
+                "description": "Separate PDF documents into individual pages, chapters, or custom ranges."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 4,
+                "name": "PDF to Word (DOCX)",
+                "description": "Convert PDF layouts into editable Microsoft Word documents."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 5,
+                "name": "PDF to Excel (XLSX)",
+                "description": "Extract tabular data directly into structured Excel spreadsheets."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 6,
+                "name": "Optical Character Recognition (OCR)",
+                "description": "Render scans and embed searchable, selectable text layers directly on-device."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 7,
+                "name": "Verify Digital Signatures",
+                "description": "Cryptographically validate PKCS#7 signatures and detect pre-sign baseline document tampering."
+              },
+              {
+                "@type": "SoftwareApplication",
+                "position": 8,
+                "name": "Invert Colors / Dark Mode",
+                "description": "Invert vector stream colors for comfortable nighttime reading preserving selectable typography."
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
