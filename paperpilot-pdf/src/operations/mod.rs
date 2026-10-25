@@ -64,4 +64,4 @@ pub use sanitize::sanitize_pdf;
 pub use table::extract_tables_bytes;
 pub use workflow::run_workflow_bytes;
 pub mod pdf_invert_colors;
-pub use pdf_invert_colors::{invert_pdf_colors, InvertColorsOptions, InvertMode};
+pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};

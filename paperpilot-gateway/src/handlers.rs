@@ -1759,14 +1759,14 @@ pub async fn pdf_timestamp(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn pdf_change_permissions(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_change_permissions".to_string()), req).await
 }
-/// Split Scanned Book Spine [Detect center binding gutter spine and split two-up page scans into single pages.] [Input: .pdf | Output: .pdf]
+/// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages. [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/split-scanned-book",
     tag = "PDF Operations",
+    request_body(content = PdfSplitScannedBookJsonRequest, description = "JSON request containing file paths and split options", content_type = "application/json"),
     responses(
-        (status = 200, description = "Split Scanned Book Spine completed", body = ApiResponse),
-        (status = 400, description = "Invalid request arguments"),
+        (status = 200, description = "Split successful"),
         (status = 500, description = "Execution error")
     )
 )]
@@ -1813,4 +1813,16 @@ pub struct PdfInvertColorsJsonRequest {
 )]
 pub async fn pdf_invert_colors(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_invert_colors".to_string()), req).await
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct PdfSplitScannedBookJsonRequest {
+    pub input: String,
+    pub output: String,
+    #[schema(example = "ltr")]
+    pub reading_direction: Option<String>,
+    #[schema(example = 0.0)]
+    pub gutter_overlap: Option<f32>,
+    #[schema(example = false)]
+    pub split_horizontal: Option<bool>,
 }

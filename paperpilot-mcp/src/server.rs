@@ -1,4 +1,6 @@
-use paperpilot_pdf::operations::pdf_invert_colors::{invert_pdf_colors, InvertColorsOptions, InvertMode};
+use paperpilot_pdf::operations::pdf_invert_colors::{
+    InvertColorsOptions, InvertMode, invert_pdf_colors,
+};
 
 use crate::schema::OperationResult;
 use lazy_static::lazy_static;
@@ -4819,25 +4821,40 @@ impl PaperPilotMcpServer {
                 })
             }
 
-        "pdf_invert_colors" => {
-            let input_path = args.get("input").and_then(|v| v.as_str()).unwrap_or("");
-            let output_path = args.get("output").and_then(|v| v.as_str()).unwrap_or("");
-            let mut doc = LopdfDocument::load(std::path::Path::new(input_path)).map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
-            let mode_str = args.get("mode").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let pages = args.get("pages").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let mode = match mode_str.as_deref() {
-                Some("true_invert") => Some(InvertMode::TrueInvert),
-                Some("high_contrast") => Some(InvertMode::HighContrast),
-                Some("sepia") => Some(InvertMode::Sepia),
-                Some("dark_mode") => Some(InvertMode::DarkMode),
-                Some(_) => Some(InvertMode::DarkMode),
-                None => Some(InvertMode::DarkMode),
-            };
-            let options = InvertColorsOptions { mode, pages };
-            invert_pdf_colors(&mut doc.inner, &options).map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
-            doc.save(std::path::Path::new(output_path)).map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
-            Ok(OperationResult { success: true, message: format!("Color inverted successfully to {}", output_path), data: None, diff_detected: None, output_path: Some(output_path.to_string()) })
-        }
+            "pdf_invert_colors" => {
+                let input_path = args.get("input").and_then(|v| v.as_str()).unwrap_or("");
+                let output_path = args.get("output").and_then(|v| v.as_str()).unwrap_or("");
+                let mut doc = LopdfDocument::load(std::path::Path::new(input_path))
+                    .map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
+                let mode_str = args
+                    .get("mode")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let pages = args
+                    .get("pages")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let mode = match mode_str.as_deref() {
+                    Some("true_invert") => Some(InvertMode::TrueInvert),
+                    Some("high_contrast") => Some(InvertMode::HighContrast),
+                    Some("sepia") => Some(InvertMode::Sepia),
+                    Some("dark_mode") => Some(InvertMode::DarkMode),
+                    Some(_) => Some(InvertMode::DarkMode),
+                    None => Some(InvertMode::DarkMode),
+                };
+                let options = InvertColorsOptions { mode, pages };
+                invert_pdf_colors(&mut doc.inner, &options)
+                    .map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
+                doc.save(std::path::Path::new(output_path))
+                    .map_err(|e| rmcp::model::ErrorData::internal_error(e.to_string(), None))?;
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Color inverted successfully to {}", output_path),
+                    data: None,
+                    diff_detected: None,
+                    output_path: Some(output_path.to_string()),
+                })
+            }
             "pdf_search" => {
                 let input = get_string("input")?;
                 let query = get_string("query")?;
@@ -5656,8 +5673,7 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
-                let mut options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions::default();
-                options.baseline = baseline;
+                let options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions { baseline, ..Default::default() };
 
                 let result = paperpilot_pdf::operations::pdf_validate_signatures::pdf_validate_signatures_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -5986,7 +6002,16 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_split_scanned_book::PdfSplitScannedBookOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_split_scanned_book::PdfSplitScannedBookOptions::default();
+                if let Some(v) = args.get("reading_direction").and_then(|v| v.as_str()) {
+                    options.reading_direction = Some(v.to_string());
+                }
+                if let Some(v) = args.get("gutter_overlap").and_then(|v| v.as_f64()) {
+                    options.gutter_overlap = Some(v as f32);
+                }
+                if let Some(v) = args.get("split_horizontal").and_then(|v| v.as_bool()) {
+                    options.split_horizontal = Some(v);
+                }
                 let result = paperpilot_pdf::operations::pdf_split_scanned_book::pdf_split_scanned_book_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
@@ -6051,12 +6076,13 @@ impl PaperPilotMcpServer {
                     ErrorData::internal_error(format!("Failed to read input file: {}", e), None)
                 })?;
 
-                let mut options = paperpilot_pdf::operations::sanitize::SanitizeOptions::default();
-                options.remove_metadata = remove_metadata;
-                options.remove_attachments = remove_attachments;
-                options.remove_scripts = remove_scripts;
-                options.remove_thumbnails = true;
-                options.remove_private_data = true;
+                let options = paperpilot_pdf::operations::sanitize::SanitizeOptions {
+                    remove_metadata,
+                    remove_attachments,
+                    remove_scripts,
+                    remove_thumbnails: true,
+                    remove_private_data: true,
+                };
 
                 let (sanitized_bytes, report) =
                     paperpilot_pdf::operations::sanitize::sanitize_pdf(&input_bytes, &options)
