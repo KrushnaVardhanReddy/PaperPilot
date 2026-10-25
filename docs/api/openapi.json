@@ -278,6 +278,37 @@
         ],
         "type": "object"
       },
+      "PdfInvertColorsJsonRequest": {
+        "properties": {
+          "input": {
+            "example": "tests/e2e_fixtures/real/single_page.pdf",
+            "type": "string"
+          },
+          "mode": {
+            "example": "dark_mode",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output": {
+            "example": "tests/e2e_fixtures/out/penta_e2e/inverted.pdf",
+            "type": "string"
+          },
+          "pages": {
+            "example": "1",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
       "PdfValidateSignaturesJsonRequest": {
         "properties": {
           "baseline": {
