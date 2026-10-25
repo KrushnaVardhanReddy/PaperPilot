@@ -23,6 +23,7 @@ COPY paperpilot-core/Cargo.toml ./paperpilot-core/
 COPY paperpilot-pdf/Cargo.toml ./paperpilot-pdf/
 COPY paperpilot-nlp/Cargo.toml ./paperpilot-nlp/
 COPY paperpilot-ai/Cargo.toml ./paperpilot-ai/
+COPY paperpilot-storage/Cargo.toml ./paperpilot-storage/
 COPY paperpilot-mcp/Cargo.toml ./paperpilot-mcp/
 COPY paperpilot-gateway/Cargo.toml ./paperpilot-gateway/
 COPY paperpilot-cli/Cargo.toml ./paperpilot-cli/
@@ -35,6 +36,7 @@ COPY paperpilot-core ./paperpilot-core
 COPY paperpilot-pdf ./paperpilot-pdf
 COPY paperpilot-nlp ./paperpilot-nlp
 COPY paperpilot-ai ./paperpilot-ai
+COPY paperpilot-storage ./paperpilot-storage
 COPY paperpilot-mcp ./paperpilot-mcp
 COPY paperpilot-gateway ./paperpilot-gateway
 COPY paperpilot-cli ./paperpilot-cli
@@ -70,6 +72,7 @@ WORKDIR /data
 ENV PORT=7823
 ENV BIND=0.0.0.0
 ENV RUST_LOG=info
+ENV PAPERPILOT_DATA_DIR=/data
 ENV PAPERPILOT_OCR_MODELS_DIR=/models
 
 # Expose Gateway REST API & MCP Server port

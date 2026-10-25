@@ -324,6 +324,12 @@ async fn store_document_chunks(
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn clear_jobs_history() -> Result<usize, String> {
+    let engine = storage::get_storage_engine().await?;
+    engine.clear_all_jobs().await.map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -363,6 +369,7 @@ pub fn run() {
             stop_gateway,
             resolve_natural_language,
             get_jobs_history,
+            clear_jobs_history,
             get_audit_events,
             search_document_vectors,
             store_document_chunks,

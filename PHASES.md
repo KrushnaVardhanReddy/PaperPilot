@@ -1160,8 +1160,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 
 | # | Task | Notes |
 |---|---|---|
-| 6.4.1 | Docker image | Production-ready Dockerfile |
-| 6.4.2 | Docker Compose setup | For easy self-hosted deployment |
+| 6.4.1 | Docker image ✅ | **Completed** — Multi-stage production `Dockerfile` bundling `paperpilot-gateway`, `paperpilot-cli`, `paperpilot-mcp`, and embedded `paperpilot-storage` on Debian Bookworm Slim with zero external compilation dependencies. |
+| 6.4.2 | Docker Compose setup ✅ | **Completed** — Production `docker-compose.yml` with healthchecks (`:7823/health`), persistent SQLite/libSQL volume mounts (`/data`), and models persistence (`/models`) documented in `DOCKER.md`. |
 | 6.4.3 | Kubernetes manifests | Helm chart or plain manifests |
 | 6.4.4 | Air-gapped deployment guide | No external network dependencies |
 | 6.4.5 | Upgrade / migration tooling | Safe schema migrations, zero-downtime updates |

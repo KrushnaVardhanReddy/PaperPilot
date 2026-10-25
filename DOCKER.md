@@ -76,6 +76,26 @@ Response:
 {"status":"ok","version":"0.1.0","tools_count":51}
 ```
 
+### 5. 💾 Data Persistence & Retention Lifecycle
+
+The Docker container runs with an embedded **libSQL / Turso** database engine (`paperpilot.db`) storing async jobs, audit records, and semantic vector chunks:
+
+- **Where data is stored**:
+  - Mounted at `/data` (points to `./data` on your host machine).
+  - The SQLite database is created at `/data/paperpilot.db`.
+- **Automatic Archiving & Cleanup**:
+  - The database records can be pruned using retention policies:
+    ```bash
+    # Clear completed/failed background job history
+    docker exec -it paperpilot paperpilot storage clear-jobs
+    ```
+  - Document vector chunks can be deleted by document hash:
+    ```bash
+    # Remove indexed document chunks from vector store
+    docker exec -it paperpilot paperpilot storage delete-chunks --hash <DOC_SHA256>
+    ```
+  - To completely wipe local history and start clean, simply remove `./data/paperpilot.db` or restart with an empty volume.
+
 ---
 
 ## 🛑 Stopping the Container

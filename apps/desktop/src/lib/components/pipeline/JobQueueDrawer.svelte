@@ -79,6 +79,14 @@
     const d = new Date(isoStr);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+  async function clearJobs() {
+    try {
+      await safeInvoke('clear_jobs_history', {});
+      jobs = [];
+    } catch (err) {
+      console.error("Failed to clear job history:", err);
+    }
+  }
 </script>
 
 {#if isOpen}
@@ -104,9 +112,14 @@
           <button class:active={activeFilter === 'Completed'} onclick={() => activeFilter = 'Completed'}>Completed</button>
           <button class:active={activeFilter === 'Failed'} onclick={() => activeFilter = 'Failed'}>Failed</button>
         </div>
-        <button class="refresh-btn" onclick={fetchJobs} disabled={isLoading}>
-          {isLoading ? '...' : '↻'}
-        </button>
+        <div class="header-btns">
+          <button class="action-btn" onclick={clearJobs} title="Clear history" disabled={jobs.length === 0}>
+            🗑️
+          </button>
+          <button class="refresh-btn" onclick={fetchJobs} disabled={isLoading} title="Refresh">
+            {isLoading ? '...' : '↻'}
+          </button>
+        </div>
       </div>
 
       <div class="job-list">
@@ -212,6 +225,32 @@
     background: rgba(94, 106, 210, 0.2);
     color: var(--accent-primary, #5e6ad2);
     border-color: var(--accent-primary, #5e6ad2);
+  }
+
+  .header-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .action-btn:not(:disabled):hover {
+    background: rgba(239, 68, 68, 0.15);
   }
 
   .refresh-btn {

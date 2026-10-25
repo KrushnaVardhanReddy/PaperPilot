@@ -221,6 +221,23 @@ impl StorageEngine {
         Ok(jobs)
     }
 
+    pub async fn delete_old_jobs(&self, older_than_days: u32) -> Result<usize, StorageError> {
+        let modifier = format!("-{} days", older_than_days);
+        let changes = self
+            .conn
+            .execute(
+                "DELETE FROM jobs WHERE created_at < datetime('now', ?1)",
+                libsql::params![modifier],
+            )
+            .await?;
+        Ok(changes as usize)
+    }
+
+    pub async fn clear_all_jobs(&self) -> Result<usize, StorageError> {
+        let changes = self.conn.execute("DELETE FROM jobs", ()).await?;
+        Ok(changes as usize)
+    }
+
     pub async fn record_audit_event(&self, event: &AuditEvent) -> Result<(), StorageError> {
         self.conn.execute(
             "INSERT INTO audit_logs (id, event_type, tool_id, actor, payload_hash, details_json, timestamp)
@@ -597,5 +614,25 @@ mod tests {
         } else {
             panic!("Could not query audit_logs");
         }
+    }
+
+    #[tokio::test]
+    async fn test_clear_all_jobs() {
+        let engine = StorageEngine::open_in_memory().await.unwrap();
+        let new_job = NewJob {
+            operation: "test_op".to_string(),
+            input_path: None,
+            output_path: None,
+            parameters_json: None,
+            callback_url: None,
+        };
+        engine.create_job(&new_job).await.unwrap();
+        let count_before = engine.list_jobs(10).await.unwrap().len();
+        assert_eq!(count_before, 1);
+
+        let cleared = engine.clear_all_jobs().await.unwrap();
+        assert_eq!(cleared, 1);
+        let count_after = engine.list_jobs(10).await.unwrap().len();
+        assert_eq!(count_after, 0);
     }
 }
