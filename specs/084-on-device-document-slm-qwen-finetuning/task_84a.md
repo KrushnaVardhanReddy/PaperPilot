@@ -72,16 +72,26 @@ Generate training pairs across 5 styles:
 - Automatically splits into `train.jsonl` and `val.jsonl`.
 - Ensures 100% valid JSON on every single generated line.
 
-### 6. Automated Unit Tests (`test_dataset_generator.py`)
-- Runs with `pytest tools/slm-training/test_dataset_generator.py`.
+### 6. Documentation Cross-Reference & Tool Schema Accuracy
+- Cross-reference all tool declarations and schemas against:
+  - `paperpilot-mcp/src/server.rs` (all 75+ registered MCP tools)
+  - `apps/desktop/src/lib/types/toolList.ts` (desktop tool definitions)
+  - `docs/TRI_INTERFACE_E2E_AND_DOCS.md` (living CLI/REST/MCP tool usage and flags)
+- Ensure all tool identifiers, parameters, and defaults match actual codebase implementations.
+- Provide a `tools/slm-training/README.md` with instructions on running tests and dataset generation.
+
+### 7. Automated Unit Tests (`test_dataset_generator.py`)
+- Runs with `pytest tools/slm-training/test_dataset_generator.py -v`.
 - Asserts that generated lines parse as valid JSON.
 - Asserts ChatML message structure (`system`, `user`, `assistant`).
 - Asserts that all registered tools have at least $N$ diverse training examples.
 - Asserts multi-step workflows parse correctly into arrays of steps.
+- Asserts representation across all 5 linguistic styles (direct, casual, domain jargon, typo-tolerant, compound).
 
 ---
 
 ## Verification & Acceptance Criteria
 1. `python3 -m venv .venv && pip install -r tools/slm-training/requirements.txt`
-2. `pytest tools/slm-training/test_dataset_generator.py` passes 100%.
-3. `python3 tools/slm-training/generate_dataset.py --count 1000 --output-dir /tmp/paperpilot_test_dataset` runs cleanly and generates valid `train.jsonl` and `val.jsonl`.
+2. `pytest tools/slm-training/test_dataset_generator.py -v` passes 100%.
+3. `python3 tools/slm-training/generate_dataset.py --count 1000 --output-dir /tmp/paperpilot_test_dataset --sample 3` runs cleanly and generates valid `train.jsonl` and `val.jsonl`.
+4. Validated zero external GPU or heavyweight CUDA dependencies are required.

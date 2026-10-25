@@ -20,7 +20,16 @@ pytest>=7.0.0
 
 ---
 
-### Step 2: Implement `tool_registry.py`
+### Step 2: Cross-Reference Documentation & Tool Catalog
+Before implementing the tool registry, cross-reference existing tool definitions and living documentation:
+- MCP Tool Declarations: Check `paperpilot-mcp/src/server.rs` (contains all 75+ registered tool schemas and parameter structures).
+- Desktop Tool Registry: Check `apps/desktop/src/lib/types/toolList.ts`.
+- Living Documentation & Architecture: Check `docs/TRI_INTERFACE_E2E_AND_DOCS.md`, `ROADMAP.md`, and `specs/084-on-device-document-slm-qwen-finetuning/spec.md`.
+Ensure all tool names, categories, parameters, and types match the existing code and documentation exactly.
+
+---
+
+### Step 3: Implement `tool_registry.py`
 In `tools/slm-training/tool_registry.py`:
 - Define all PaperPilot operations (covering all 60+ tools from `paperpilot-mcp/src/server.rs` and `apps/desktop/src/lib/types/toolList.ts`).
 - Include:
@@ -29,7 +38,7 @@ In `tools/slm-training/tool_registry.py`:
 
 ---
 
-### Step 3: Implement `templates.py`
+### Step 4: Implement `templates.py`
 In `tools/slm-training/templates.py`:
 - Create templates across 5 linguistic tiers:
   1. **Direct Imperatives**: "Split input.pdf every 2 pages", "Compress document with high ratio".
@@ -42,7 +51,7 @@ In `tools/slm-training/templates.py`:
 
 ---
 
-### Step 4: Implement `generate_dataset.py`
+### Step 5: Implement `generate_dataset.py`
 In `tools/slm-training/generate_dataset.py`:
 - CLI flags:
   - `--count <int>` (default `25000`)
@@ -74,19 +83,24 @@ In `tools/slm-training/generate_dataset.py`:
 
 ---
 
-### Step 5: Unit Tests in `test_dataset_generator.py`
+### Step 6: Unit Tests in `test_dataset_generator.py` & Documentation
 In `tools/slm-training/test_dataset_generator.py`:
 - Test that generator produces valid JSON for every line.
-- Verify ChatML message schema.
+- Verify ChatML message schema (`system`, `user`, `assistant`).
 - Verify that every registered tool appears in the dataset.
 - Verify multi-step workflow serialization.
+- Verify distribution across all 5 linguistic styles.
+Add a concise `tools/slm-training/README.md` explaining how to run the generator, the ChatML schema, and how to verify with pytest.
 
 ---
 
-### Step 6: Verification
-Run:
+### Step 7: Verification & Testing
+Execute the following verification steps:
 ```bash
-python3 -m pytest tools/slm-training/test_dataset_generator.py
-python3 tools/slm-training/generate_dataset.py --count 100 --output-dir /tmp/test_dataset
+python3 -m pytest tools/slm-training/test_dataset_generator.py -v
+python3 tools/slm-training/generate_dataset.py --count 100 --output-dir /tmp/test_dataset --sample 3
 ```
-Ensure all tests pass and files are created cleanly.
+Confirm:
+1. All pytest tests pass cleanly.
+2. The generated `/tmp/test_dataset/train.jsonl` and `val.jsonl` contain valid, uncorrupted JSON on every line.
+3. No external GPU or heavy PyTorch/CUDA dependencies are required to run tests or generation.
