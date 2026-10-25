@@ -1,3 +1,7 @@
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_match)]
+#![allow(clippy::ptr_arg)]
+#![allow(clippy::needless_borrow)]
 pub mod annotate;
 pub mod group_a;
 pub mod group_b;
@@ -15,6 +19,7 @@ pub mod pdf_comic_archive;
 pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
 pub mod pdf_remove_signatures;
+pub mod pdf_invert_colors;
 pub mod pdf_scale_pages;
 pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
@@ -219,6 +224,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Flatten { input, output } => {
             group_b::handle_flatten(&resolve_input_path(input)?, output)
         }
+        Commands::InvertColors { input, output, mode, pages } => {
+            crate::commands::pdf_invert_colors::handle_invert_colors(input, output, mode, pages)
+        },
         Commands::PdfA { input, output } => {
             group_b::handle_pdf_a(&resolve_input_path(input)?, output)
         }
