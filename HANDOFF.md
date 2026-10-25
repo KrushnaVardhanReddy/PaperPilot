@@ -26,7 +26,7 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
 | **Task 106A** | `[Spec 106]` | Embed Studio Experience & Portal Parity (`apps/embed`) | `main` | [Session 14201620318764272859](https://jules.google.com/session/14201620318764272859) | 🚀 Active In-Flight |
-| **Task 107A** | `[Spec 107]` | Continuous Canvas Stitching (`pdf_stitch_canvas`) | `main` | Ready to Dispatch (`prompts/tasks/phase5/P5_3_11_pdf_stitch_canvas.txt`) | 📋 Ready for Jules |
+| **Task 107A** | `[Spec 107]` | Continuous Canvas Stitching (`pdf_stitch_canvas`) | `main` | [Session 14277467325396919194](https://jules.google.com/session/14277467325396919194) | 🚀 Active In-Flight |
 
 ---
 
