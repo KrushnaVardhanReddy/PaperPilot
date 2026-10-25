@@ -1037,6 +1037,9 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.21 | Cross-Format Comparison (`doc_compare_cross`) 💡 | **Planned** — Pure-Rust `PDF ⇄ DOCX` direct document diffing without manual conversions (Draftable Desktop parity). |
 | 5.3.22 | Word Document to PDF Synthesis (`docx_to_pdf` / `office_to_pdf`) 💡 | **Planned** — Pure-Rust OpenXML `.docx` document parsing and layout engine rendering styled paragraphs, tables, and images directly into a paged PDF document. |
 | 5.3.23 | EPUB eBook to PDF Conversion (`epub_to_pdf`) 💡 | **Planned** — Pure-Rust `.epub` container extraction, XHTML/CSS reflow parsing, and chapter-based pagination into printable PDF. |
+| 5.3.24 | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) 💡 | **Planned** — Interleave pages from two documents alternating between odd and even pages (e.g. Doc A p1, Doc B p1, Doc A p2, Doc B p2) with reverse even option for double-sided scanner batch intake. |
+| 5.3.25 | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) 💡 | **Planned** — Automatically traverse `/Outlines` hierarchy tree and split multi-chapter documents at named bookmark destinations into individual chapter PDFs. |
+| 5.3.26 | Posterize / Multi-Sheet Tile Print (`pdf_posterize`) 💡 | **Planned** — Tile single large pages (A0, A1, A2, architectural blueprints) across standard grid of A4/Letter sheets with printable overlap crop marks. |
 
 ---
 

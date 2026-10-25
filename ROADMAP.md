@@ -166,6 +166,9 @@
 | **5.3.9B** | `doc_compare_cross` | Cross-Format Diff (`PDF ⇄ DOCX`) comparing PDF against Word directly | Publishing & Legal Drafting |
 | **5.3.22** | `docx_to_pdf` | Pure-Rust Word `.docx` to styled paged PDF document converter | Office Document Ingestion |
 | **5.3.23** | `epub_to_pdf` | Pure-Rust `.epub` eBook container unpacker & reflow PDF printer | Digital Reading & Archival |
+| **5.3.24** | `pdf_merge_alternate` | Interleave alternating odd/even pages from dual documents | Scanner Batch Collation |
+| **5.3.25** | `pdf_split_by_outline`| Traverse `/Outlines` and split PDF by chapter bookmarks | Document De-bundling |
+| **5.3.26** | `pdf_posterize` | Tile large sheets (A0-A2) across grid of standard A4/Letter pages | Large-Format Print Tiling |
 
 ---
 
