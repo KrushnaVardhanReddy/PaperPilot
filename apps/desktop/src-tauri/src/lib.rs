@@ -279,6 +279,51 @@ fn query_documentation_rag(
     }
 }
 
+#[tauri::command]
+async fn get_jobs_history(
+    limit: Option<usize>,
+) -> Result<Vec<paperpilot_storage::models::JobRecord>, String> {
+    let engine = storage::get_storage_engine().await?;
+    engine
+        .list_jobs(limit.unwrap_or(50))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_audit_events(
+    limit: Option<usize>,
+) -> Result<Vec<paperpilot_storage::models::AuditEvent>, String> {
+    let engine = storage::get_storage_engine().await?;
+    engine
+        .list_audit_events(limit.unwrap_or(50))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn search_document_vectors(
+    query_embedding: Vec<f32>,
+    limit: Option<usize>,
+) -> Result<Vec<paperpilot_storage::models::SemanticSearchResult>, String> {
+    let engine = storage::get_storage_engine().await?;
+    engine
+        .search_chunks(&query_embedding, limit.unwrap_or(10), None)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn store_document_chunks(
+    chunks: Vec<paperpilot_storage::models::NewDocumentChunk>,
+) -> Result<usize, String> {
+    let engine = storage::get_storage_engine().await?;
+    engine
+        .store_chunks(&chunks)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -317,6 +362,10 @@ pub fn run() {
             start_gateway,
             stop_gateway,
             resolve_natural_language,
+            get_jobs_history,
+            get_audit_events,
+            search_document_vectors,
+            store_document_chunks,
             ai_commands::get_available_models,
             ai_commands::download_model,
             ai_commands::cancel_model_download,
