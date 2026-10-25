@@ -383,9 +383,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfAutoRotate { input, output } => {
             pdf_auto_rotate::handle_pdf_auto_rotate_command(input, output)
         }
-        Commands::PdfStitchCanvas { input, output } => {
-            pdf_stitch_canvas::handle_pdf_stitch_canvas_command(input, output)
-        }
+        Commands::PdfStitchCanvas {
+            input,
+            output,
+            direction,
+            margin,
+            spacing,
+        } => pdf_stitch_canvas::handle_pdf_stitch_canvas_command(
+            input, output, direction, margin, spacing,
+        ),
         Commands::PdfAttachments { input, output } => {
             pdf_attachments::handle_pdf_attachments_command(input, output)
         }

@@ -502,6 +502,12 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value = "vertical")]
+        direction: String,
+        #[arg(long, default_value_t = 0.0)]
+        margin: f32,
+        #[arg(long, default_value_t = 0.0)]
+        spacing: f32,
     },
     /// PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios.
     #[command(name = "pdf-attachments")]

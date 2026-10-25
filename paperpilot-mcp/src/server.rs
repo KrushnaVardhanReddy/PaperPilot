@@ -2702,6 +2702,55 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_output_pdf_stitch_canvas),
         );
 
+        let mut prop_direction_pdf_stitch_canvas = serde_json::Map::new();
+        prop_direction_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_direction_pdf_stitch_canvas.insert(
+            "enum".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("vertical".to_string()),
+                serde_json::Value::String("horizontal".to_string()),
+            ]),
+        );
+        prop_direction_pdf_stitch_canvas.insert(
+            "default".to_string(),
+            serde_json::Value::String("vertical".to_string()),
+        );
+        props_pdf_stitch_canvas.insert(
+            "direction".to_string(),
+            serde_json::Value::Object(prop_direction_pdf_stitch_canvas),
+        );
+
+        let mut prop_margin_pdf_stitch_canvas = serde_json::Map::new();
+        prop_margin_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        prop_margin_pdf_stitch_canvas.insert(
+            "default".to_string(),
+            serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap()),
+        );
+        props_pdf_stitch_canvas.insert(
+            "margin_pt".to_string(),
+            serde_json::Value::Object(prop_margin_pdf_stitch_canvas),
+        );
+
+        let mut prop_spacing_pdf_stitch_canvas = serde_json::Map::new();
+        prop_spacing_pdf_stitch_canvas.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        prop_spacing_pdf_stitch_canvas.insert(
+            "default".to_string(),
+            serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap()),
+        );
+        props_pdf_stitch_canvas.insert(
+            "spacing_pt".to_string(),
+            serde_json::Value::Object(prop_spacing_pdf_stitch_canvas),
+        );
+
         schema_pdf_stitch_canvas.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_pdf_stitch_canvas),
@@ -5742,13 +5791,29 @@ impl PaperPilotMcpServer {
             "pdf_stitch_canvas" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
+                let direction = args
+                    .get("direction")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("vertical")
+                    .to_string();
+                let margin_pt = args
+                    .get("margin_pt")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0) as f32;
+                let spacing_pt = args
+                    .get("spacing_pt")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0) as f32;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let options =
-                    paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions::default(
-                    );
+                    paperpilot_pdf::operations::pdf_stitch_canvas::PdfStitchCanvasOptions {
+                        direction,
+                        margin_pt,
+                        spacing_pt,
+                    };
                 let result =
                     paperpilot_pdf::operations::pdf_stitch_canvas::pdf_stitch_canvas_bytes(
                         &input_bytes,
@@ -6422,7 +6487,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 61);
+        assert_eq!(res.tools.len(), 75);
     }
 
     #[test]
