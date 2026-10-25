@@ -6422,7 +6422,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 61);
+        assert_eq!(res.tools.len(), 75);
     }
 
     #[test]

@@ -268,7 +268,7 @@ export default {
            const body = await request.arrayBuffer();
            const options = url.searchParams.get('options') || '{}';
            const result = WasmPdfEngine.pdf_stitch_canvas(new Uint8Array(body), options);
-           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+           return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
         if (url.pathname === '/api/v1/attachments') {
            const body = await request.arrayBuffer();
