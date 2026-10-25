@@ -11,6 +11,8 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **PR #251 (Desktop UI libSQL Storage & Vector Search Integration - Spec 103 / Task 103C)**: Integrated `paperpilot-storage` into Tauri desktop app. Implemented IPC commands (`get_jobs_history`, `get_audit_events`, `search_document_vectors`, `store_document_chunks`), added slide-out `<JobQueueDrawer />` with real-time status monitoring, badge counter in `<GlobalCommandBar />`, and semantic vector search toggle in `<WorkspaceSearchModal />`.
+  - **PR #250 (Baseline Pre-Sign Tamper Detection - Spec 101 / Task 5.9.90)**: Enhanced `pdf_validate_signatures` with dual-layer forensics (cryptographic PKCS#7 digest verification + content stream / page text baseline comparison) and 10/10 unmocked Penta-Interface E2E coverage.
   - **PR #249 (Web WASM Portal Parity & Categorized Navigation - Spec 104 / Task 104A)**: Expanded Web Worker bridge (`pdfWorker.ts`, `WasmPdfClient`) with dynamic categorized tool navigation (`pages`, `edit`, `optimize`, `security`, `convert`), real-time search, and dedicated parameter panels in `apps/web`.
   - **PR #248 (Embed Widget Tool Parity - Spec 105 / Task 105A)**: Wave 2 tools (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_validate_signatures`, `pdf_remove_signatures`), category filtering, parameter controls, and upgraded `/embed-test.html` sandbox with 26/26 Playwright tests passing.
   - **PR #247 (Vector Store & Semantic Search - Spec 103 / Task 103B)**: Pure-Rust cosine similarity vector search and libSQL document chunk storage engine with 7/7 unit tests in `paperpilot-storage`.
@@ -23,14 +25,28 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 13176531858440555731](https://jules.google.com/session/13176531858440555731) | 🚀 Active In-Flight |
-| **Task 103C** | `[Spec 103]` | Desktop UI Async Job Drawer & Vector Search (`apps/desktop`) | `main` | [Session 16139327879580052646](https://jules.google.com/session/16139327879580052646) | 🚀 Active In-Flight |
+| **Task 106A** | `[Spec 106]` | Embed Studio Experience & Portal Parity (`apps/embed`) | `main` | [Session 14201620318764272859](https://jules.google.com/session/14201620318764272859) | 🚀 Active In-Flight |
+| **Task 107A** | `[Spec 107]` | Continuous Canvas Stitching (`pdf_stitch_canvas`) | `main` | [Session 14277467325396919194](https://jules.google.com/session/14277467325396919194) | 🚀 Active In-Flight |
 
 ---
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 104A (Web WASM Portal Parity & Categorized Navigation `[Spec 104]`)**:
+1. **Task 103C (Desktop UI libSQL Storage & Async Jobs Drawer `[Spec 103]`)**:
+   - Merged (PR #251).
+   - Added Tauri IPC commands: `get_jobs_history`, `get_audit_events`, `search_document_vectors`, `store_document_chunks` wired to embedded `StorageEngine`.
+   - Created `<JobQueueDrawer.svelte>` slide-out tray with status filtering (`All`, `Running`, `Completed`, `Failed`), live progress bars, and polling.
+   - Added background job indicator and counter button in `<GlobalCommandBar.svelte>`.
+   - Added Semantic Vector Search mode toggle and cosine score badges in `<WorkspaceSearchModal.svelte>`.
+   - 17/17 tests passing in `desktop`, 7/7 tests passing in `paperpilot-storage`, and Svelte typecheck passing with 0 errors.
+
+2. **Task 5.9.90 (Baseline Pre-Sign Tamper Detection `[Spec 101]`)**:
+   - Merged (PR #250).
+   - Enhanced `pdf_validate_signatures` with optional `--baseline <PATH>` or `baseline_bytes` audit.
+   - Dual-layer forensics: cryptographic PKCS#7 digest verification + content stream / page text baseline comparison.
+   - 6/6 unit tests passed, 10/10 (100.0%) unmocked Penta-Interface E2E assertions passed in `reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
+
+2. **Task 104A (Web WASM Portal Parity & Categorized Navigation `[Spec 104]`)**:
    - Merged (PR #249).
    - Expanded Web Worker bridge in `apps/web/src/lib/wasm/` (`pdfWorker.ts`, `index.ts`) for all new in-browser WASM tools.
    - Built category-based navigation (`pages`, `edit`, `optimize`, `security`, `convert`) with live search in `OperationsView.svelte`.

@@ -6,10 +6,11 @@ use error::StorageError;
 use models::*;
 use std::path::Path;
 
+#[derive(Clone)]
 pub struct StorageEngine {
     #[allow(dead_code)]
-    db: libsql::Database,
-    conn: libsql::Connection,
+    db: std::sync::Arc<libsql::Database>,
+    conn: std::sync::Arc<libsql::Connection>,
 }
 
 impl StorageEngine {
@@ -17,7 +18,10 @@ impl StorageEngine {
         let path_str = path.to_string_lossy().to_string();
         let db = libsql::Builder::new_local(path_str).build().await?;
         let conn = db.connect()?;
-        let engine = Self { db, conn };
+        let engine = Self {
+            db: std::sync::Arc::new(db),
+            conn: std::sync::Arc::new(conn),
+        };
         engine.run_migrations().await?;
         Ok(engine)
     }
@@ -25,7 +29,10 @@ impl StorageEngine {
     pub async fn open_in_memory() -> Result<Self, StorageError> {
         let db = libsql::Builder::new_local(":memory:").build().await?;
         let conn = db.connect()?;
-        let engine = Self { db, conn };
+        let engine = Self {
+            db: std::sync::Arc::new(db),
+            conn: std::sync::Arc::new(conn),
+        };
         engine.run_migrations().await?;
         Ok(engine)
     }
@@ -180,6 +187,57 @@ impl StorageEngine {
         }
     }
 
+    pub async fn list_jobs(&self, limit: usize) -> Result<Vec<JobRecord>, StorageError> {
+        let mut rows = self.conn.query(
+            "SELECT id, operation, status, input_path, output_path, parameters_json, error_message, progress_percentage, callback_url, created_at, updated_at FROM jobs ORDER BY created_at DESC LIMIT ?1",
+            libsql::params![limit as i64]
+        ).await?;
+
+        let mut jobs = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let status_str: String = row.get(2)?;
+            let status = match status_str.as_str() {
+                "running" => JobStatus::Running,
+                "completed" => JobStatus::Completed,
+                "failed" => JobStatus::Failed,
+                _ => JobStatus::Pending,
+            };
+
+            let prog: i64 = row.get(7)?;
+            jobs.push(JobRecord {
+                id: row.get(0)?,
+                operation: row.get(1)?,
+                status,
+                input_path: row.get(3).ok(),
+                output_path: row.get(4).ok(),
+                parameters_json: row.get(5)?,
+                error_message: row.get(6).ok(),
+                progress_percentage: prog as u8,
+                callback_url: row.get(8).ok(),
+                created_at: row.get(9)?,
+                updated_at: row.get(10)?,
+            });
+        }
+        Ok(jobs)
+    }
+
+    pub async fn delete_old_jobs(&self, older_than_days: u32) -> Result<usize, StorageError> {
+        let modifier = format!("-{} days", older_than_days);
+        let changes = self
+            .conn
+            .execute(
+                "DELETE FROM jobs WHERE created_at < datetime('now', ?1)",
+                libsql::params![modifier],
+            )
+            .await?;
+        Ok(changes as usize)
+    }
+
+    pub async fn clear_all_jobs(&self) -> Result<usize, StorageError> {
+        let changes = self.conn.execute("DELETE FROM jobs", ()).await?;
+        Ok(changes as usize)
+    }
+
     pub async fn record_audit_event(&self, event: &AuditEvent) -> Result<(), StorageError> {
         self.conn.execute(
             "INSERT INTO audit_logs (id, event_type, tool_id, actor, payload_hash, details_json, timestamp)
@@ -195,6 +253,27 @@ impl StorageEngine {
             ]
         ).await?;
         Ok(())
+    }
+
+    pub async fn list_audit_events(&self, limit: usize) -> Result<Vec<AuditEvent>, StorageError> {
+        let mut rows = self.conn.query(
+            "SELECT id, event_type, tool_id, actor, payload_hash, details_json, timestamp FROM audit_logs ORDER BY timestamp DESC LIMIT ?1",
+            libsql::params![limit as i64]
+        ).await?;
+
+        let mut events = Vec::new();
+        while let Some(row) = rows.next().await? {
+            events.push(AuditEvent {
+                id: row.get(0)?,
+                event_type: row.get(1)?,
+                tool_id: row.get(2)?,
+                actor: row.get(3)?,
+                payload_hash: row.get(4)?,
+                details_json: row.get(5)?,
+                timestamp: row.get(6)?,
+            });
+        }
+        Ok(events)
     }
 
     pub async fn store_chunks(&self, chunks: &[NewDocumentChunk]) -> Result<usize, StorageError> {
@@ -535,5 +614,25 @@ mod tests {
         } else {
             panic!("Could not query audit_logs");
         }
+    }
+
+    #[tokio::test]
+    async fn test_clear_all_jobs() {
+        let engine = StorageEngine::open_in_memory().await.unwrap();
+        let new_job = NewJob {
+            operation: "test_op".to_string(),
+            input_path: None,
+            output_path: None,
+            parameters_json: None,
+            callback_url: None,
+        };
+        engine.create_job(&new_job).await.unwrap();
+        let count_before = engine.list_jobs(10).await.unwrap().len();
+        assert_eq!(count_before, 1);
+
+        let cleared = engine.clear_all_jobs().await.unwrap();
+        assert_eq!(cleared, 1);
+        let count_after = engine.list_jobs(10).await.unwrap().len();
+        assert_eq!(count_after, 0);
     }
 }

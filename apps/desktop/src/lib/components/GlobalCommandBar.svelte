@@ -3,6 +3,8 @@
   import { safeInvoke } from '$lib/utils/tauri';
   import EditableActionCard from './EditableActionCard.svelte';
   import { toastState } from '$lib/state/toast.svelte';
+  import JobQueueDrawer from './pipeline/JobQueueDrawer.svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   let inputRef = $state<HTMLInputElement | null>(null);
   let commandText = $state('');
@@ -15,6 +17,35 @@
   let showAutocomplete = $state(false);
   let autocompleteQuery = $state('');
   let selectedIndex = $state(0);
+
+
+  let isJobQueueDrawerOpen = $state(false);
+  let runningJobCount = $state(0);
+  let pollInterval: ReturnType<typeof setInterval>;
+
+  async function fetchJobCount() {
+    try {
+      const data = await safeInvoke('get_jobs_history', { limit: 10 });
+      if (data) {
+        const jobs = data as any[];
+        runningJobCount = jobs.filter(j => j.status === 'Running' || j.status === 'Pending').length;
+      }
+    } catch (err) {
+      console.error("Failed to fetch jobs for counter:", err);
+    }
+  }
+
+  function toggleJobQueue() {
+    isJobQueueDrawerOpen = !isJobQueueDrawerOpen;
+  }
+
+  onMount(() => {
+    fetchJobCount();
+    pollInterval = setInterval(fetchJobCount, 10000);
+  });
+  onDestroy(() => {
+    if (pollInterval) clearInterval(pollInterval);
+  });
 
   let filteredDocuments = $derived(
     appState.documents.filter(doc =>
@@ -237,6 +268,8 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
+<JobQueueDrawer bind:isOpen={isJobQueueDrawerOpen} />
+
 <div class="global-command-bar-wrapper">
   {#if resolvedPlan}
     <div class="plan-preview-popover">
@@ -286,6 +319,15 @@
     {/if}
   </div>
   </div>
+
+  <div class="toolbar-actions">
+    <button class="icon-btn job-queue-btn" title="View Job Queue" onclick={toggleJobQueue}>
+      ⏱️
+      {#if runningJobCount > 0}
+        <span class="job-badge">{runningJobCount}</span>
+      {/if}
+    </button>
+  </div>
 </div>
 
 <style>
@@ -296,7 +338,8 @@
     right: 0;
     z-index: 50;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
     width: 100%;
     margin-top: 16px;
@@ -357,7 +400,8 @@
     -webkit-backdrop-filter: blur(12px);
 
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
     gap: 8px;
   }
 
@@ -461,5 +505,44 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    margin-bottom: 16px;
+  }
+
+  .icon-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: relative;
+    padding: 12px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
+
+  .job-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--accent-primary);
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-weight: 600;
   }
 </style>

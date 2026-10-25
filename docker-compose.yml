@@ -12,6 +12,7 @@ services:
       - PORT=7823
       - BIND=0.0.0.0
       - RUST_LOG=info
+      - PAPERPILOT_DATA_DIR=/data
       - PAPERPILOT_OCR_MODELS_DIR=/models
     volumes:
       # Mount a local directory to test and process files on the host

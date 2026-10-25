@@ -65,7 +65,8 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::OfficeConvertJsonRequest,
             handlers::RagChunksJsonRequest,
             handlers::WorkflowValidateRequest,
-            handlers::WorkflowRunJsonRequest
+            handlers::WorkflowRunJsonRequest,
+            handlers::PdfValidateSignaturesJsonRequest
         )
     ),
     tags(

@@ -34,6 +34,34 @@ pub fn is_portable_mode() -> bool {
     false
 }
 
+lazy_static::lazy_static! {
+    static ref GLOBAL_STORAGE: std::sync::Arc<tokio::sync::Mutex<Option<paperpilot_storage::StorageEngine>>> =
+        std::sync::Arc::new(tokio::sync::Mutex::new(None));
+}
+
+pub async fn get_storage_engine() -> Result<paperpilot_storage::StorageEngine, String> {
+    let mut lock = GLOBAL_STORAGE.lock().await;
+    if let Some(ref engine) = *lock {
+        return Ok(engine.clone());
+    }
+
+    let root = get_app_data_root();
+    std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+    let db_path = root.join("paperpilot.db");
+
+    let engine = paperpilot_storage::StorageEngine::open_local(&db_path)
+        .await
+        .map_err(|e| format!("Failed to open libSQL storage: {}", e))?;
+
+    engine
+        .run_migrations()
+        .await
+        .map_err(|e| format!("Failed to run migrations: {}", e))?;
+
+    *lock = Some(engine.clone());
+    Ok(engine)
+}
+
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
@@ -64,5 +92,11 @@ pub(crate) mod tests {
         }
 
         std::env::remove_var("PAPERPILOT_DATA_DIR");
+    }
+
+    #[tokio::test]
+    async fn test_get_storage_engine() {
+        let engine = get_storage_engine().await;
+        assert!(engine.is_ok());
     }
 }

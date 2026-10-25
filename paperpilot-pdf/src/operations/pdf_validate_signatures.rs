@@ -16,20 +16,40 @@ pub struct DigitalSignatureInfo {
     pub error_message: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BaselineComparisonReport {
+    pub baseline_checked: bool,
+    pub baseline_match: bool,
+    pub verdict: String,
+    pub altered_pages: Vec<u32>,
+    pub diff_summary: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignatureValidationReport {
     pub total_signatures: usize,
     pub valid_signatures: usize,
     pub all_valid: bool,
     pub signatures: Vec<DigitalSignatureInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub baseline_report: Option<BaselineComparisonReport>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct PdfValidateSignaturesOptions {}
+pub struct PdfValidateSignaturesOptions {
+    #[serde(default)]
+    pub baseline_path: Option<String>,
+    #[serde(default)]
+    pub baseline_bytes: Option<Vec<u8>>,
+    #[serde(default)]
+    pub verify_byte_range_only: bool,
+    #[serde(default)]
+    pub baseline: bool,
+}
 
 pub fn pdf_validate_signatures_bytes(
     input_bytes: &[u8],
-    _options: &PdfValidateSignaturesOptions,
+    options: &PdfValidateSignaturesOptions,
 ) -> Result<Vec<u8>, PdfError> {
     let doc = Document::load_mem(input_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
 
@@ -38,7 +58,68 @@ pub fn pdf_validate_signatures_bytes(
         valid_signatures: 0,
         all_valid: true,
         signatures: Vec::new(),
+        baseline_report: None,
     };
+
+    let baseline_bytes_opt = if let Some(ref bytes) = options.baseline_bytes {
+        Some(bytes.clone())
+    } else if let Some(ref path_str) = options.baseline_path {
+        let path = std::path::PathBuf::from(path_str);
+        if path.exists() {
+            std::fs::read(&path).ok()
+        } else {
+            let fallback_path = std::path::PathBuf::from(format!("../{}", path_str));
+            std::fs::read(&fallback_path).ok()
+        }
+    } else {
+        None
+    };
+
+    #[allow(clippy::collapsible_if)]
+    if let Some(baseline_bytes) = baseline_bytes_opt {
+        if let Ok(baseline_doc) = Document::load_mem(&baseline_bytes) {
+            let mut baseline_report = BaselineComparisonReport {
+                baseline_checked: true,
+                baseline_match: true,
+                verdict: "UNTOUCHED_JUST_SIGNED".to_string(),
+                altered_pages: Vec::new(),
+                diff_summary: Vec::new(),
+            };
+
+            let signed_pages = doc.get_pages();
+            let baseline_pages = baseline_doc.get_pages();
+            let signed_page_count = signed_pages.len();
+            let baseline_page_count = baseline_pages.len();
+
+            if signed_page_count != baseline_page_count {
+                baseline_report.baseline_match = false;
+                baseline_report.verdict = "CONTENT_ALTERED_PRIOR_TO_SIGNATURE".to_string();
+                baseline_report.diff_summary.push(format!(
+                    "Page count mismatch: baseline has {}, signed document has {}",
+                    baseline_page_count, signed_page_count
+                ));
+            }
+
+            let min_pages = std::cmp::min(signed_page_count, baseline_page_count) as u32;
+
+            for p in 1..=min_pages {
+                let signed_content = doc.get_page_content(*signed_pages.get(&p).unwrap());
+                let baseline_content =
+                    baseline_doc.get_page_content(*baseline_pages.get(&p).unwrap());
+
+                if signed_content != baseline_content {
+                    baseline_report.altered_pages.push(p);
+                    baseline_report.diff_summary.push(format!(
+                        "Page {}: text content stream was altered prior to signing",
+                        p
+                    ));
+                    baseline_report.baseline_match = false;
+                    baseline_report.verdict = "CONTENT_ALTERED_PRIOR_TO_SIGNATURE".to_string();
+                }
+            }
+            report.baseline_report = Some(baseline_report);
+        }
+    }
 
     let mut signature_refs = Vec::new();
 
@@ -418,5 +499,119 @@ mod additional_tests {
         );
         assert_eq!(report.signatures[0].sub_filter, "adbe.pkcs7.detached");
         assert!(report.signatures[0].is_valid);
+    }
+
+    fn generate_baseline_doc() -> Document {
+        use lopdf::Stream;
+        let mut doc = Document::with_version("1.5");
+        let pages_id = doc.new_object_id();
+
+        let mut pages_dict = Dictionary::new();
+        pages_dict.set("Type", Object::Name(b"Pages".to_vec()));
+        pages_dict.set("Kids", Object::Array(vec![]));
+        pages_dict.set("Count", Object::Integer(0));
+        doc.set_object(pages_id, pages_dict);
+
+        let stream_dict = Dictionary::new();
+        let stream_content = b"BT /F1 12 Tf 100 100 Td (Hello World) Tj ET".to_vec();
+        let stream = Stream::new(stream_dict, stream_content);
+        let stream_id = doc.add_object(Object::Stream(stream));
+
+        let mut page_dict = Dictionary::new();
+        page_dict.set("Type", Object::Name(b"Page".to_vec()));
+        page_dict.set("Parent", Object::Reference(pages_id));
+        page_dict.set("Contents", Object::Reference(stream_id));
+        let page_id = doc.add_object(page_dict);
+
+        if let Object::Dictionary(pages) = doc.get_object_mut(pages_id).unwrap() {
+            pages.set("Kids", Object::Array(vec![Object::Reference(page_id)]));
+            pages.set("Count", Object::Integer(1));
+        }
+
+        let mut catalog_dict = Dictionary::new();
+        catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("Pages", Object::Reference(pages_id));
+        let catalog_id = doc.add_object(catalog_dict);
+
+        doc.trailer.set("Root", Object::Reference(catalog_id));
+        doc
+    }
+
+    #[test]
+    fn test_validate_signatures_without_baseline() {
+        let mut doc = generate_baseline_doc();
+        let mut bytes = Vec::new();
+        doc.save_to(&mut bytes).unwrap();
+
+        let options = PdfValidateSignaturesOptions::default();
+        let result_bytes = pdf_validate_signatures_bytes(&bytes, &options).expect("Should succeed");
+        let report: SignatureValidationReport =
+            serde_json::from_slice(&result_bytes).expect("Should deserialize");
+
+        assert!(report.baseline_report.is_none());
+    }
+
+    #[test]
+    fn test_validate_signatures_with_matching_baseline() {
+        let mut doc = generate_baseline_doc();
+        let mut bytes = Vec::new();
+        doc.save_to(&mut bytes).unwrap();
+
+        let options = PdfValidateSignaturesOptions {
+            baseline_bytes: Some(bytes.clone()),
+            ..Default::default()
+        };
+
+        let result_bytes = pdf_validate_signatures_bytes(&bytes, &options).expect("Should succeed");
+        let report: SignatureValidationReport =
+            serde_json::from_slice(&result_bytes).expect("Should deserialize");
+
+        assert!(report.baseline_report.is_some());
+        let baseline_report = report.baseline_report.unwrap();
+        assert!(baseline_report.baseline_match);
+        assert_eq!(baseline_report.verdict, "UNTOUCHED_JUST_SIGNED");
+        assert!(baseline_report.altered_pages.is_empty());
+    }
+
+    #[test]
+    fn test_validate_signatures_with_altered_baseline() {
+        let mut baseline_doc = generate_baseline_doc();
+        let mut baseline_bytes = Vec::new();
+        baseline_doc.save_to(&mut baseline_bytes).unwrap();
+
+        let mut altered_doc = generate_baseline_doc();
+        for (_id, obj) in altered_doc.objects.iter_mut() {
+            if let Object::Stream(stream) = obj {
+                stream.content = b"BT /F1 12 Tf 100 100 Td (Hacked World) Tj ET".to_vec();
+                break;
+            }
+        }
+        let mut altered_bytes = Vec::new();
+        altered_doc.save_to(&mut altered_bytes).unwrap();
+
+        let options = PdfValidateSignaturesOptions {
+            baseline_bytes: Some(baseline_bytes),
+            ..Default::default()
+        };
+
+        let result_bytes =
+            pdf_validate_signatures_bytes(&altered_bytes, &options).expect("Should succeed");
+        let report: SignatureValidationReport =
+            serde_json::from_slice(&result_bytes).expect("Should deserialize");
+
+        assert!(report.baseline_report.is_some());
+        let baseline_report = report.baseline_report.unwrap();
+        assert!(!baseline_report.baseline_match);
+        assert_eq!(
+            baseline_report.verdict,
+            "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"
+        );
+        assert_eq!(baseline_report.altered_pages, vec![1]);
+        assert!(
+            baseline_report
+                .diff_summary
+                .iter()
+                .any(|m| m.contains("Page 1"))
+        );
     }
 }
