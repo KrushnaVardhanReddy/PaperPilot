@@ -4,6 +4,7 @@
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+  import ShareModal from './components/ShareModal.svelte';
   import {
     DOWNLOAD_URL,
     DOWNLOAD_LINUX_URL,
@@ -25,11 +26,14 @@
         <h1>PaperPilot <span class="badge">Web</span></h1>
       </div>
 
-      <div class="cta-banner">
-        <span>Need OCR or Offline AI?</span>
-        <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" class="download-btn">
-          Download Desktop
-        </a>
+      <div class="header-actions">
+        <ShareModal />
+        <div class="cta-banner">
+          <span>Need OCR or Offline AI?</span>
+          <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" class="download-btn">
+            Download Desktop
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -123,6 +127,12 @@
     border-radius: 12px;
     font-weight: 600;
     text-transform: uppercase;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
 
   .cta-banner {
