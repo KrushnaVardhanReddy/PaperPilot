@@ -1,0 +1,19 @@
+# Jules Prompt: Task 116A — Actionable RAG Workspace & Bi-Directional Citation Canvas (Task 4.3.9)
+
+## Context
+In `apps/desktop`, users can ask natural language questions in `PdfChatPanel.svelte`. When answers cite document locations (e.g. `[Page 4]` or `{ "page": 4, "bbox": ... }`), clicking the citation should navigate `PdfViewer.svelte` to that page and pulse an indicator box over the cited content.
+
+## Acceptance Criteria
+1. **`apps/desktop/src/lib/components/PdfViewer.svelte`**:
+   - Listen for window event `paperpilot:jump-to-citation`.
+   - When received, switch `pageNum = event.detail.page`.
+   - If `event.detail.bbox` is provided, calculate canvas viewport coordinates using `viewportState.convertToViewportPoint` and display a transient glowing citation highlight (`.citation-pulse`) for 2.5 seconds.
+   - If no bbox is provided, pulse a subtle page indicator banner or header pulse.
+2. **`apps/desktop/src/lib/components/PdfChatPanel.svelte`**:
+   - Detect citations in assistant messages matching regex `/\[(?:Page|p\.)\s*(\d+)\]/gi` or structured citation arrays.
+   - Render them as interactive pill buttons with icon `📄 p. <N>`.
+   - On click, dispatch `paperpilot:jump-to-citation` with `{ page: <N> }`.
+3. **Styling**:
+   - Use existing PaperPilot design system (dark theme, `#6366f1` accent, `@keyframes pulse-ring`).
+4. **Validation**:
+   - Run `pnpm --dir apps/desktop check` and verify `apps/desktop` compiles cleanly with zero TypeScript/Svelte errors.
