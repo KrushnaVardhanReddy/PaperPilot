@@ -283,6 +283,276 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "check {input} for pii (ssn {scan_ssn}, cc {scan_credit_cards}, emails {scan_emails}, phones {scan_phones}, iban {scan_iban}) -> {output}",
         ],
     },
+    "pdf_nup": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Combine {input} into a n-up grid and save to {output}.",
+            "Impose {input} into an N-up layout -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "hey can you nup {input} into a grid and save it as {output}?",
+            "squash {input} into a multi-page grid layout for me at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Prepare multi-page layout for {input} via N-up imposition to save paper, output to {output}.",
+            "Execute N-up grid reduction on {input} and save consolidated version to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "put {input} into a nwup grid and sav as {output}.",
+            "nup impostion {input} -> {output} plz.",
+        ],
+    },
+    "pdf_booklet": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Create a saddle-stitch booklet from {input} and save to {output}.",
+            "Impose {input} for booklet printing -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "make a booklet out of {input} and drop it at {output}.",
+            "impose {input} for saddle-stitch folding plz at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Generate print-ready saddle-stitched booklet format for {input} at {output}.",
+            "Format {input} for booklet imposition prior to physical binding, output as {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "mke boklet from {input} -> {output}.",
+            "imppose {input} for bookelt at {output}.",
+        ],
+    },
+    "pdf_scale_pages": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Scale the dimensions of pages in {input} and save to {output}.",
+            "Resize {input} pages and save to {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "scale up or down {input} and save it as {output}.",
+            "resize {input} for me to {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Adjust page dimensions for {input} to meet court filing standards and save as {output}.",
+            "Execute page scaling on {input} for standardized archival, outputting to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "scale pges in {input} to {output}.",
+            "resz {input} -> {output}.",
+        ],
+    },
+    "pdf_crop": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Crop margins of {input} with bounds {box} and save to {output}.",
+            "Apply crop box {box} to {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "crop the edges of {input} using {box} and save as {output}.",
+            "trim {input} with {box} and output to {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Remove unnecessary margins from {input} using crop box {box} for cleaner presentation at {output}.",
+            "Execute precise margin cropping on {input} with parameters {box}, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "crp {input} with bounds {box} to {output}.",
+            "trim edges {input} {box} -> {output}.",
+        ],
+    },
+    "pdf_reorder": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Reorder pages in {input} to {order} and save to {output}.",
+            "Rearrange {input} pages to {order} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "shuffle pages in {input} so they are {order} and put it at {output}.",
+            "move pages around in {input} to {order}, save as {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Reorganize exhibit sequence in {input} to {order} and output as {output}.",
+            "Adjust pagination sequence for {input} to {order} for proper filing, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "reodr {input} to {order} -> {output}.",
+            "shufl pages {input} to {order} at {output}.",
+        ],
+    },
+    "pdf_delete_pages": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Remove pages {pages} from {input} and save to {output}.",
+            "Delete {pages} from {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "take out pages {pages} from {input} and save as {output}.",
+            "trash pages {pages} in {input} and put the rest in {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Exclude irrelevant pages {pages} from exhibit {input} and save to {output}.",
+            "Purge pages {pages} from document {input} prior to distribution, outputting to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "delt {pages} from {input} -> {output}.",
+            "rmove pages {pages} in {input} at {output}.",
+        ],
+    },
+    "pdf_reverse": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Reverse page sequence of {input} and save to {output}.",
+            "Invert page order for {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "flip the pages backwards in {input} and save as {output}.",
+            "reverse the order of {input} and put it at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Invert document pagination sequence for {input} to match scan order, output to {output}.",
+            "Execute page reversal on {input} for proper chronological alignment, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "revers {input} -> {output}.",
+            "flp pages backwrds {input} at {output}.",
+        ],
+    },
+    "pdf_stamp": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Stamp {input} and save to {output}.",
+            "Apply stamp to {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "put a stamp on {input} and save it as {output}.",
+            "stamp {input} for me at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Apply official seal or stamp to document {input} and output to {output}.",
+            "Execute stamping procedure on {input} for authentication, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "stmp {input} -> {output}.",
+            "aply stamp to {input} at {output}.",
+        ],
+    },
+    "pdf_overlay_underlay": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Overlay or underlay onto {input} and save to {output}.",
+            "Apply overlay/underlay to {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "put a layer over or under {input} and save as {output}.",
+            "overlay {input} and put it at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Apply standardized letterhead underlay to {input} and output as {output}.",
+            "Execute document overlay procedure on {input} for composite presentation, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "ovrly {input} -> {output}.",
+            "apply layer to {input} at {output}.",
+        ],
+    },
+    "pdf_stitch_canvas": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Stitch pages of {input} into a continuous canvas and save to {output}.",
+            "Combine {input} into single canvas -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "stitch all pages of {input} together into one long page and save it as {output}.",
+            "make {input} one continuous scroll at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Generate continuous spatial canvas from {input} for unified architectural review at {output}.",
+            "Execute canvas stitching on {input} for seamless timeline presentation, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "stich canvas {input} -> {output}.",
+            "make {input} one long pge at {output}.",
+        ],
+    },
+    "pdf_attachments": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Manage portfolio attachments for {input} with action '{action}', file '{file_name}', desc '{description}', b64 '{b64}' and save to {output}.",
+            "Execute '{action}' on attachments in {input} for file '{file_name}' (desc: '{description}', b64: '{b64}') -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "can you {action} the attachment '{file_name}' (desc: '{description}', b64: '{b64}') in {input} and save to {output}?",
+            "{action} file '{file_name}' (desc: '{description}', b64: '{b64}') in portfolio {input} at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Perform attachment {action} procedure for exhibit '{file_name}' (desc: '{description}', b64: '{b64}') in {input}, outputting to {output}.",
+            "Manage embedded digital assets via {action} for file '{file_name}' (desc: '{description}', b64: '{b64}') in {input}, saving as {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "{action} attachmnt '{file_name}' desc: '{description}', b64: '{b64}' in {input} -> {output}.",
+            "mangae atachments {action} '{file_name}' desc: '{description}', b64: '{b64}' for {input} at {output}.",
+        ],
+    },
+    "pdf_validate_signatures": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Audit digital signatures in {input} and output report to {output}.",
+            "Validate signatures on {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "check if the signatures on {input} are valid and save the report to {output}.",
+            "audit signatures for {input} and drop the json at {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Perform cryptographic audit of digital signatures in {input} against baseline digest, outputting JSON report to {output}.",
+            "Execute signature validation protocol on {input} for compliance verification, saving results to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "valdate signs in {input} -> {output}.",
+            "chek signatures {input} at {output}.",
+        ],
+    },
+    "pdf_remove_signatures": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Strip signatures from {input} and save to {output}.",
+            "Remove all signatures on {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "take off the signatures from {input} so i can edit it, save as {output}.",
+            "strip signatures for {input} and output to {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Remove cryptographic signature layers from {input} to allow further modification, outputting to {output}.",
+            "Execute signature stripping protocol on {input} prior to redaction, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "remov signs {input} -> {output}.",
+            "strip sgnatures {input} at {output}.",
+        ],
+    },
+    "pdf_flatten_annotations": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Flatten annotations and form fields in {input} and save to {output}.",
+            "Flatten {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "flatten the form fields in {input} so they can't be changed, save to {output}.",
+            "make the annotations in {input} permanent and save as {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Execute flattening procedure on {input} to lock all interactive form elements, outputting to {output}.",
+            "Flatten all vector annotations into the base content layer of {input} for secure distribution at {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "flatn {input} -> {output}.",
+            "flattten annotations in {input} at {output}.",
+        ],
+    },
+    "pdf_header_footer": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Add text '{text}' at position '{position}' to {input} and save to {output}.",
+            "Apply header/footer '{text}' at '{position}' to {input} -> {output}.",
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "put '{text}' at the '{position}' of {input} and save it as {output}.",
+            "add a header or footer saying '{text}' at '{position}' on {input} and output to {output}.",
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Apply standardized header/footer '{text}' at position '{position}' to {input} for court submission, outputting to {output}.",
+            "Execute header injection '{text}' at '{position}' on {input} to maintain page tracking, saving to {output}.",
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "add '{text}' at '{position}' {input} -> {output}.",
+            "hedr fotter '{text}' at '{position}' on {input} at {output}.",
+        ],
+    },
 }
 
 # Compound workflows define a sequence of tools to run.

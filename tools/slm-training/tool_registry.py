@@ -193,6 +193,167 @@ document_pii_scan = ToolDef(
     required=["input", "output"]
 )
 
+
+
+pdf_nup = ToolDef(
+    name="pdf_nup",
+    description="Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_booklet = ToolDef(
+    name="pdf_booklet",
+    description="Reorder and impose pages for 2-sided folding booklet printing.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_scale_pages = ToolDef(
+    name="pdf_scale_pages",
+    description="Scale page dimensions between standard formats or percentages.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_crop = ToolDef(
+    name="pdf_crop",
+    description="Crops pages to specific dimensions.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "box": ToolParameter(type="string", description="Crop box bounds (left, bottom, right, top)."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "box", "output"]
+)
+
+pdf_reorder = ToolDef(
+    name="pdf_reorder",
+    description="Reorders pages.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "order": ToolParameter(type="string", description="The new page order (e.g. '1,3,2,4')."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "order", "output"]
+)
+
+pdf_delete_pages = ToolDef(
+    name="pdf_delete_pages",
+    description="Deletes specific pages.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "pages": ToolParameter(type="string", description="The pages to delete."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "pages", "output"]
+)
+
+pdf_reverse = ToolDef(
+    name="pdf_reverse",
+    description="Reverse page sequence.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_stamp = ToolDef(
+    name="pdf_stamp",
+    description="Place coordinate-exact images, logos, and badges onto PDF pages.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_overlay_underlay = ToolDef(
+    name="pdf_overlay_underlay",
+    description="Overlay or underlay document.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_stitch_canvas = ToolDef(
+    name="pdf_stitch_canvas",
+    description="Combine multiple pages vertically or horizontally into a continuous single-page canvas.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_attachments = ToolDef(
+    name="pdf_attachments",
+    description="Portfolio file attachments.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "action": ToolParameter(type="string", description="Action: list, extract, or add."),
+        "file_name": ToolParameter(type="string", description="File name for the attachment."),
+        "description": ToolParameter(type="string", description="Description of the attachment."),
+        "b64": ToolParameter(type="string", description="Base64 encoded attachment content."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_validate_signatures = ToolDef(
+    name="pdf_validate_signatures",
+    description="Digital signature audit.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output JSON report path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_remove_signatures = ToolDef(
+    name="pdf_remove_signatures",
+    description="Strip signatures.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_flatten_annotations = ToolDef(
+    name="pdf_flatten_annotations",
+    description="Flattens a PDF by merging interactive elements into the page content.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_header_footer = ToolDef(
+    name="pdf_header_footer",
+    description="Adds a header or footer to a PDF.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output PDF file path."),
+        "text": ToolParameter(type="string", description="Text to add."),
+        "position": ToolParameter(type="string", description="Position to add text.")
+    },
+    required=["input", "output"]
+)
+
 TOOLS_REGISTRY: Dict[str, ToolDef] = {
     "pdf_merge": pdf_merge,
     "pdf_split": pdf_split,
@@ -209,4 +370,19 @@ TOOLS_REGISTRY: Dict[str, ToolDef] = {
     "pdf_sanitize": pdf_sanitize,
     "pdf_auto_rotate": pdf_auto_rotate,
     "document_pii_scan": document_pii_scan,
+    "pdf_nup": pdf_nup,
+    "pdf_booklet": pdf_booklet,
+    "pdf_scale_pages": pdf_scale_pages,
+    "pdf_crop": pdf_crop,
+    "pdf_reorder": pdf_reorder,
+    "pdf_delete_pages": pdf_delete_pages,
+    "pdf_reverse": pdf_reverse,
+    "pdf_stamp": pdf_stamp,
+    "pdf_overlay_underlay": pdf_overlay_underlay,
+    "pdf_stitch_canvas": pdf_stitch_canvas,
+    "pdf_attachments": pdf_attachments,
+    "pdf_validate_signatures": pdf_validate_signatures,
+    "pdf_remove_signatures": pdf_remove_signatures,
+    "pdf_flatten_annotations": pdf_flatten_annotations,
+    "pdf_header_footer": pdf_header_footer,
 }

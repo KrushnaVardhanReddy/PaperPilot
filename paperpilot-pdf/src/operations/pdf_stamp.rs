@@ -288,6 +288,7 @@ mod tests {
         options.width = 200.0;
         options.height = 100.0;
         options.opacity = 0.5;
+        options.image_path = Some("tests/e2e_fixtures/img1.png".to_string());
 
         let result = pdf_stamp_bytes(&bytes, &options).unwrap();
         assert!(result.starts_with(b"%PDF"));

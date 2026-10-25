@@ -1692,6 +1692,7 @@ pub async fn pdf_attachments(req: axum::extract::Request) -> impl IntoResponse {
 
     // We get query parameters if they exist to pass action / file_name / etc.
     let uri = req.uri().clone();
+    #[allow(clippy::collapsible_if)]
     if let Some(query) = uri.query() {
         if let Ok(params) = serde_urlencoded::from_str::<serde_json::Value>(query) {
             if let Some(obj) = params.as_object() {

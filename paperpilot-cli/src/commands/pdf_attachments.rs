@@ -18,6 +18,7 @@ pub fn handle_pdf_attachments_command(
         options.file_name = Some(fn_name.clone());
     }
 
+    #[allow(clippy::collapsible_if)]
     if options.action == "add" {
         if let Some(f) = file {
             let file_bytes = std::fs::read(f).map_err(PdfError::IoError)?;

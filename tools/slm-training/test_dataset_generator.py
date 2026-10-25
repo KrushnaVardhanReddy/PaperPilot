@@ -9,7 +9,7 @@ from templates import SINGLE_TOOL_TEMPLATES, TemplateCategory
 @pytest.fixture(scope="session")
 def generated_dataset(tmp_path_factory):
     out_dir = tmp_path_factory.mktemp("dataset")
-    subprocess.run(["python3", "tools/slm-training/generate_dataset.py", "--count", "100", "--output-dir", str(out_dir)], check=True)
+    subprocess.run(["python3", "tools/slm-training/generate_dataset.py", "--count", "5000", "--output-dir", str(out_dir)], check=True)
     return out_dir
 
 def test_json_validity(generated_dataset):
