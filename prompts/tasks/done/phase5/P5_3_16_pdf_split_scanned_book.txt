@@ -1,0 +1,28 @@
+You are working on PaperPilot, a privacy-first, on-device document processing engine.
+
+Task: Implement Task 112A (Scanned Dual-Page Book Center Spine Split: pdf_split_scanned_book)
+Specification: specs/112-pdf-split-scanned-book/task_112a.md
+Parent Spec: specs/112-pdf-split-scanned-book/spec.md
+Impacted Crates: paperpilot-pdf, paperpilot-cli, paperpilot-mcp, paperpilot-gateway
+
+### Requirements:
+1. Implement pure-Rust 2-up book center spine split in `paperpilot-pdf/src/operations/pdf_split_scanned_book.rs`:
+   - Expand `PdfSplitScannedBookOptions` with: `reading_direction` ("ltr" vs "rtl"), `gutter_overlap` (f32 points), `split_horizontal` (bool).
+   - Implement `pdf_split_scanned_book_bytes` using `lopdf::Document` to split each page along its center midline, generating 2 output pages per spread with adjusted `/MediaBox` and `/CropBox` preserving all underlying content streams and vectors.
+   - Support `gutter_overlap` to avoid losing text in the spine curve.
+   - Write thorough unit tests in `operations::pdf_split_scanned_book::tests` verifying LTR, RTL, and overlap dimensions.
+
+2. Interface Integration:
+   - CLI: `paperpilot-cli/src/commands/pdf_split_scanned_book.rs` (ensure parameters map cleanly).
+   - MCP: `paperpilot-mcp/src/server.rs` (ensure schema properties match options).
+   - Gateway: verify `/api/v1/pdf/split-scanned-book` handles parameters.
+
+3. Documentation:
+   - Create `wiki/112-Pdf-Split-Scanned-Book.md`.
+   - Create `apps/docs/src/content/docs/reference/tools/pdf_split_scanned_book.md`.
+
+4. Verification:
+   - Run ONLY your unit tests and workspace check:
+     `cargo test -p paperpilot-pdf --lib operations::pdf_split_scanned_book -j 2`
+     `cargo check --workspace -j 2`
+   - Do NOT run `penta-interface-e2e` or generate files in `reports/`.

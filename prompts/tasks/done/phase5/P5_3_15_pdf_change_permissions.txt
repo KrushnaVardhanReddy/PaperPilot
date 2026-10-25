@@ -1,0 +1,27 @@
+You are working on PaperPilot, a privacy-first, on-device document processing engine.
+
+Task: Implement Task 111A (Modify PDF Permissions & Rights Management: pdf_change_permissions)
+Specification: specs/111-pdf-change-permissions/task_111a.md
+Parent Spec: specs/111-pdf-change-permissions/spec.md
+Impacted Crates: paperpilot-pdf, paperpilot-cli, paperpilot-mcp, paperpilot-gateway
+
+### Requirements:
+1. Implement pure-Rust permission bitmask manipulation in `paperpilot-pdf/src/operations/pdf_change_permissions.rs`:
+   - Expand `PdfChangePermissionsOptions` with: `allow_printing`, `allow_copying`, `allow_modifying`, `allow_annotations`, `allow_form_filling`, `allow_accessibility`, `owner_password`, `user_password`.
+   - Update `pdf_change_permissions_bytes` using `lopdf::Document` to read, modify, and write `/Encrypt` dictionary `/P` permission flags (ISO 32000-1 § 7.6.3.2 Table 22).
+   - Write thorough unit tests in `operations::pdf_change_permissions::tests` validating bitmask calculations and document roundtripping.
+
+2. Wire up interface parameters:
+   - CLI: `paperpilot-cli/src/commands/pdf_change_permissions.rs` (ensure flags map cleanly).
+   - MCP: `paperpilot-mcp/src/server.rs` (ensure schema properties match options).
+   - Gateway: verify `/api/v1/pdf/change-permissions` handles the parameters.
+
+3. Documentation:
+   - Create `wiki/111-Pdf-Change-Permissions.md`.
+   - Create `apps/docs/src/content/docs/reference/tools/pdf_change_permissions.md`.
+
+4. Verification:
+   - Run ONLY your unit tests and workspace check:
+     `cargo test -p paperpilot-pdf --lib operations::pdf_change_permissions -j 2`
+     `cargo check --workspace -j 2`
+   - Do NOT run `penta-interface-e2e` or generate files in `reports/`.
