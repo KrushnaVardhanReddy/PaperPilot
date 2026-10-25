@@ -36,9 +36,15 @@ def test_chatml_schema(generated_dataset):
             assert messages[1]["role"] == "user"
             assert isinstance(messages[1]["content"], str)
 
+
             assert messages[2]["role"] == "assistant"
-            # Assistant content must be parseable JSON
-            assistant_data = json.loads(messages[2]["content"])
+            # Assistant content must be parseable JSON OR a refusal message
+            content_str = messages[2]["content"]
+            if content_str == "I cannot assist with that request.":
+                continue # Passed negative guardrail format check
+
+            assistant_data = json.loads(content_str)
+
             if isinstance(assistant_data, list):
                 # Compound workflow
                 for step in assistant_data:
@@ -49,13 +55,19 @@ def test_chatml_schema(generated_dataset):
                 assert "tool" in assistant_data
                 assert "parameters" in assistant_data
 
+
 def test_tool_coverage(generated_dataset):
     found_tools = set()
     for split in ["train.jsonl", "val.jsonl"]:
         with open(os.path.join(generated_dataset, split), "r") as f:
             for line in f:
                 record = json.loads(line)
-                assistant_data = json.loads(record["messages"][2]["content"])
+                content_str = record["messages"][2]["content"]
+                if content_str == "I cannot assist with that request.":
+                    continue
+
+                assistant_data = json.loads(content_str)
+
                 if isinstance(assistant_data, list):
                     for step in assistant_data:
                         found_tools.add(step["tool"])
@@ -93,3 +105,14 @@ def test_linguistic_styles():
         assert TemplateCategory.CONVERSATIONAL in cats
         assert TemplateCategory.DOMAIN_LEGAL_FINANCE in cats
         assert TemplateCategory.TYPO_NOISE in cats
+
+def test_negative_guardrails():
+    # specifically test the single tool record generator for negative guardrails
+    from generate_dataset import generate_single_tool_record
+    refusals = 0
+    for _ in range(500):
+        record = generate_single_tool_record()
+        if record["messages"][2]["content"] == "I cannot assist with that request.":
+            refusals += 1
+
+    assert refusals > 0, "No negative guardrail examples generated in 500 attempts."

@@ -354,7 +354,179 @@ pdf_header_footer = ToolDef(
     required=["input", "output"]
 )
 
+
+pdf_to_docx = ToolDef(
+    name="pdf_to_docx",
+    description="Converts a PDF document to DOCX format by extracting its text.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_to_xlsx = ToolDef(
+    name="pdf_to_xlsx",
+    description="Converts a PDF document to XLSX format by using best effort table extraction.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_to_pptx = ToolDef(
+    name="pdf_to_pptx",
+    description="Converts a PDF document to PPTX format via best effort slide generation.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output file path.")
+    },
+    required=["input", "output"]
+)
+
+office_to_markdown = ToolDef(
+    name="office_to_markdown",
+    description="Convert Office document to Markdown.",
+    properties={
+        "input": ToolParameter(type="string", description="The input Office file path."),
+        "output": ToolParameter(type="string", description="The output Markdown file path.")
+    },
+    required=["input", "output"]
+)
+
+office_extract_text = ToolDef(
+    name="office_extract_text",
+    description="Extract raw text from an Office document.",
+    properties={
+        "input": ToolParameter(type="string", description="The input Office file path."),
+        "output": ToolParameter(type="string", description="The output text file path.")
+    },
+    required=["input", "output"]
+)
+
+office_modernize_legacy = ToolDef(
+    name="office_modernize_legacy",
+    description="Modernize legacy Office document.",
+    properties={
+        "input": ToolParameter(type="string", description="The input legacy Office file path."),
+        "output": ToolParameter(type="string", description="The output modern Office file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_to_markdown = ToolDef(
+    name="pdf_to_markdown",
+    description="Converts a PDF document into a Markdown file.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output Markdown file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_to_html = ToolDef(
+    name="pdf_to_html",
+    description="Converts a PDF document into responsive, styled HTML5 web page.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output": ToolParameter(type="string", description="The output HTML file path.")
+    },
+    required=["input", "output"]
+)
+
+pdf_to_images = ToolDef(
+    name="pdf_to_images",
+    description="Extract raster images from a PDF.",
+    properties={
+        "input": ToolParameter(type="string", description="The input PDF file path."),
+        "output_dir": ToolParameter(type="string", description="The directory where images will be saved.")
+    },
+    required=["input", "output_dir"]
+)
+
+images_to_pdf = ToolDef(
+    name="images_to_pdf",
+    description="Converts a list of images to a PDF.",
+    properties={
+        "inputs": ToolParameter(type="array", description="Array of image file paths.", items={"type": "string"}),
+        "output": ToolParameter(type="string", description="The output PDF file path.")
+    },
+    required=["inputs", "output"]
+)
+
+pdf_compare_text = ToolDef(
+    name="pdf_compare_text",
+    description="Compares text between two PDFs.",
+    properties={
+        "input_a": ToolParameter(type="string", description="First input PDF file path."),
+        "input_b": ToolParameter(type="string", description="Second input PDF file path."),
+        "output": ToolParameter(type="string", description="The output report file path.")
+    },
+    required=["input_a", "input_b", "output"]
+)
+
+pdf_compare_visual = ToolDef(
+    name="pdf_compare_visual",
+    description="Compares two PDFs visually.",
+    properties={
+        "input_a": ToolParameter(type="string", description="First input PDF file path."),
+        "input_b": ToolParameter(type="string", description="Second input PDF file path."),
+        "output": ToolParameter(type="string", description="The output report file path.")
+    },
+    required=["input_a", "input_b", "output"]
+)
+
+pdf_invert_colors = ToolDef(
+    name="pdf_invert_colors",
+    description="Invert PDF colors.",
+    properties={
+        "input": ToolParameter(type="string", description="Path to input PDF file."),
+        "output": ToolParameter(type="string", description="Path to output PDF file."),
+        "mode": ToolParameter(type="string", description="Invert mode (e.g. true_invert, dark_mode)."),
+        "pages": ToolParameter(type="string", description="Pages to invert (e.g. 1-3).")
+    },
+    required=["input", "output"]
+)
+
+pdf_linearize = ToolDef(
+    name="pdf_linearize",
+    description="Linearizes a PDF.",
+    properties={
+        "input": ToolParameter(type="string", description="Path to the PDF to linearize."),
+        "output": ToolParameter(type="string", description="Path to save the linearized PDF.")
+    },
+    required=["input", "output"]
+)
+
+pdf_repair = ToolDef(
+    name="pdf_repair",
+    description="Repairs a corrupted or malformed PDF.",
+    properties={
+        "input": ToolParameter(type="string", description="Path to the PDF to repair."),
+        "output": ToolParameter(type="string", description="Path to save the repaired PDF.")
+    },
+    required=["input", "output"]
+)
+
+
 TOOLS_REGISTRY: Dict[str, ToolDef] = {
+    "pdf_to_docx": pdf_to_docx,
+    "pdf_to_xlsx": pdf_to_xlsx,
+    "pdf_to_pptx": pdf_to_pptx,
+    "office_to_markdown": office_to_markdown,
+    "office_extract_text": office_extract_text,
+    "office_modernize_legacy": office_modernize_legacy,
+    "pdf_to_markdown": pdf_to_markdown,
+    "pdf_to_html": pdf_to_html,
+    "pdf_to_images": pdf_to_images,
+    "images_to_pdf": images_to_pdf,
+    "pdf_compare_text": pdf_compare_text,
+    "pdf_compare_visual": pdf_compare_visual,
+    "pdf_invert_colors": pdf_invert_colors,
+    "pdf_linearize": pdf_linearize,
+    "pdf_repair": pdf_repair,
+
     "pdf_merge": pdf_merge,
     "pdf_split": pdf_split,
     "pdf_compress": pdf_compress,
