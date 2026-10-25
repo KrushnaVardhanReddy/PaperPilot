@@ -1027,6 +1027,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.15 | Modify PDF Permissions (`pdf_change_permissions`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for security flag and user/owner permission manipulation. |
 | 5.3.16 | Split Scanned Book Spine (`pdf_split_scanned_book`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for two-up gutter scan center splitting. |
 | 5.3.17 | Comic Archive Conversion (`pdf_comic_archive`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for PDF $\leftrightarrow$ CBZ/CBR archive bidirectional synthesis. |
+| 5.3.18 | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) 💡 | **Planned** — Pure-Rust vector stream color inversion (dark mode, sepia, high-contrast) preserving selectable text layers. |
+| 5.3.19 | Steganographic PDF Fingerprinting (`pdf_fingerprint`) 💡 | **Planned** — Embed imperceptible zero-width unicode tokens & micro-metadata watermarks to trace source of confidential document leaks. |
 
 ---
 

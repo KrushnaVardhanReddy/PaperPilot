@@ -239,6 +239,8 @@
 | **6.4.1–6.4.5** | Production Docker & K8s Manifests | Official Helm charts, zero-downtime database migrations | DevOps & Self-Hosting |
 | **6.6.1** | Offline Argon2id Memory-Burn Encryption| 1–2 GB RAM + 2s compute per guess to defeat GPU brute-forcing | Military-Grade Document Security |
 | **6.6.2–6.6.5** | Decoy Honeypots & Lockouts | Coercion decoy passcodes and progressive delay penalties | Physical Anti-Tamper Security |
+| **6.6.6** | Steganographic PDF Fingerprinting (`pdf_fingerprint`) | Invisible zero-width unicode & micro-metadata watermarks to trace source of leaked confidential documents | Document Leak Forensics |
+| **5.3.18** | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) | Pure-Rust vector stream color inversion for night reading/e-readers preserving text selection | Accessibility & Reading Comfort |
 | **6.8.1** *(Enterprise)* | Async Job Queue & HTTP Callbacks | Per-request `callback_url` with HMAC-SHA256 signatures for long-running batch OCR & conversions | Cloudflare/Nginx Timeout Prevention |
 | **6.8.2** *(Enterprise)* | Outbound Webhook Event Dispatcher | Permanent webhook subscriptions (`diff.completed`, `ocr.finished`, `signature.verified`) with retry & exponential backoff | Slack, SIEM & CRM Integrations |
 | **6.8.3** *(Enterprise)* | Turso / libSQL Embedded Database | Embedded local-first libSQL file in `get_app_data_root()` with optional edge cloud sync for audit trails and jobs | Enterprise Local & Hybrid Storage |

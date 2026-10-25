@@ -31,6 +31,11 @@ This document analyzes the current landscape of PDF manipulation tools and compa
 * **Pros:** Fast native apps, offline processing, has a "Chat with PDF" copilot, completely free right now.
 * **Cons:** Closed-source (privacy promises rely on trust), AI is focused strictly on "chatting" with text rather than automating document workflows.
 
+### 6. The Zero-Upload Web Challenger: ihatepdf.cv
+* **Description:** Fast-growing privacy-first web utility with 60+ tools running entirely in the browser via React 18, `pdf-lib`, `pdfjs-dist`, and WebAssembly.
+* **Pros:** 100% free with zero watermarks, zero upload (client-side execution), works offline (PWA), includes consumer-friendly features (GST Invoices, Invert Colors/Dark Mode, PDF-to-Audio, Steganographic Document Fingerprinting, P2P Share).
+* **Cons:** JavaScript/React-only browser sandbox without native desktop performance; no headless CLI or MCP server for AI agents; single-file memory limits (~50MB mobile, ~150MB desktop); lacks deep PDF forensics, coordinate-exact vector synthesis, or persistent enterprise storage.
+
 ---
 
 ## Feature Comparison Matrix (Honest & Updated)
