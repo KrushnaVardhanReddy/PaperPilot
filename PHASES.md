@@ -1029,6 +1029,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.17 | Comic Archive Conversion (`pdf_comic_archive`) 🏗️ | **Scaffolded across all 5 surfaces** — Unified registration for PDF $\leftrightarrow$ CBZ/CBR archive bidirectional synthesis. |
 | 5.3.18 | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) 💡 | **Planned** — Pure-Rust vector stream color inversion (dark mode, sepia, high-contrast) preserving selectable text layers. |
 | 5.3.19 | Steganographic PDF Fingerprinting (`pdf_fingerprint`) 💡 | **Planned** — Embed imperceptible zero-width unicode tokens & micro-metadata watermarks to trace source of confidential document leaks. |
+| 5.3.20 | Exportable Redline Comparison Report (`pdf_compare_redline`) 💡 | **Planned** — Generate downloadable visual redline audit PDF (`.pdf` / `.json`) with strikethroughs, additions, and change metrics. |
+| 5.3.21 | Cross-Format Comparison (`doc_compare_cross`) 💡 | **Planned** — Pure-Rust `PDF ⇄ DOCX` direct document diffing without manual conversions (Draftable Desktop parity). |
 
 ---
 

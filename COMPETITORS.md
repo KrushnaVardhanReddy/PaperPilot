@@ -208,9 +208,13 @@ Recent updates to Stirling PDF have created **deep community backlash and functi
 * **Stirling's Mistake:** Features exist as isolated silos. If a user wants to fill a form, add a signature, and split the document, they must run tool #1, download the PDF, upload it to tool #2, download, and repeat.
 * **PaperPilot Advantage:** Unified SPA and Native Desktop workspace with persistent canvas state. Dropping a file keeps it live in the canvas; users apply sequential actions (Sign ➔ Compress ➔ Convert) as a continuous modification stack without intermediate downloads.
 
-### 3. Basic "Text-Only" Comparison vs. Pixel Visual Diff
-* **Stirling's Mistake:** Stirling’s PDF comparison is strictly textual word-diffing. It completely breaks if layout shifts, margins move, or logos/charts change.
-* **PaperPilot Advantage:** Deliver a **Visual Pixel-by-Pixel Diff Overlay Slider** in Phase 5.3: rendering identical regions in grayscale and highlighting any graphical, structural, or typographic shifts in high-contrast red/green.
+### 3. Basic "Text-Only" Comparison vs. Pixel, Cross-Format, & Redline Diff
+* **Competitor Limitations (Stirling, PDF24, Diffchecker, Draftable, ABBYY):** Most open-source tools provide only primitive textual word-diffing that breaks on layout shifts or image changes. Specialized offline commercial tools like Draftable Desktop and ABBYY FineReader cost $150–$300/yr, while web utilities (LEADTOOLS, PDFforge) risk leaking confidential contracts to cloud servers.
+* **PaperPilot Advantage:**
+  - **Triple-Engine Diff**: 1) Synchronized Side-by-Side Dual Viewer, 2) Visual Pixel-by-Pixel Diff Overlay Slider (highlighting typographic, image, and vector shifts in red/green), and 3) Token/Git Diff mode.
+  - **Cross-Format Comparison (`PDF ⇄ DOCX`)**: Uses `office-oxide` to compare exported PDFs directly against original Word documents without manual conversions (matching Draftable Desktop).
+  - **Exportable Redline Audit Report (`.pdf` / `.json`)**: Generates downloadable redline PDFs with visual strikethroughs, insertions, and change metrics (matching Adobe & ABBYY).
+  - **100% Offline & Free**: Zero cloud leakage for confidential legal contracts and zero licensing cost.
 
 ### 4. Heavy & Bloated Tech Stack (Resource Gap)
 * **Stirling's Mistake:** Java (Spring Boot) wrapping massive external CLI dependencies (LibreOffice, Ghostscript, Python, OpenCV). Docker images regularly exceed 1.5GB–2.5GB and consume gigabytes of idle RAM with narrow concurrency limits.

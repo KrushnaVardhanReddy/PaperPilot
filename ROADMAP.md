@@ -160,9 +160,10 @@
 | **5.3.12** | `pdf_attachments` | Inspect, extract, or embed PDF Portfolio attachments | Legal & Case Files |
 | **5.3.13** | `pdf_remove_signatures`| Strip `/ByteRange` signature dictionaries for editing | Document Re-authoring |
 | **5.3.14** | `pdf_timestamp` | RFC 3161 TSA cryptographic timestamp stamping | Non-repudiation Auditing |
-| **5.4.5** | `pdf_change_permissions`| Modify user/owner permission flags (print, copy, edit) | Security Configuration |
 | **5.4.7** | `pdf_split_scanned_book`| Detect center spine and split dual-page scans to single pages | Book Archival & Libraries |
 | **5.4.8** | `pdf_comic_archive` | Convert PDF $\leftrightarrow$ CBR/CBZ preserving sequence | Digital Media & Publishing |
+| **5.3.9A** | `pdf_compare_redline` | Exportable Redline Audit Report (`.pdf` / `.json`) with change metrics | Legal Contract Revisions |
+| **5.3.9B** | `doc_compare_cross` | Cross-Format Diff (`PDF ⇄ DOCX`) comparing PDF against Word directly | Publishing & Legal Drafting |
 
 ---
 
