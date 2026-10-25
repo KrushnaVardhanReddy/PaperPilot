@@ -1,0 +1,92 @@
+# Task 4.1.8 Prompt: On-Device Document SLM Dataset Generator Engine (`tools/slm-training`)
+
+You are implementing Task 4.1.8 (Spec 084 / Task 84A): On-Device Document SLM Dataset Generator Engine in PaperPilot.
+Follow this systematic workflow:
+
+---
+
+### Goal
+Implement a modular, high-speed Python synthetic dataset generation engine under `tools/slm-training/`.
+This engine will programmatically create thousands of training examples in ChatML format mapping natural language user instructions (single tools, compound workflows, legal/finance jargon, typos, informal speech) to strict JSON tool calls.
+
+---
+
+### Step 1: Directory & Requirements
+Create `tools/slm-training/requirements.txt`:
+```text
+pydantic>=2.0.0
+pytest>=7.0.0
+```
+
+---
+
+### Step 2: Implement `tool_registry.py`
+In `tools/slm-training/tool_registry.py`:
+- Define all PaperPilot operations (covering all 60+ tools from `paperpilot-mcp/src/server.rs` and `apps/desktop/src/lib/types/toolList.ts`).
+- Include:
+  - Tool ID (e.g. `pdf_merge`, `pdf_split`, `pdf_compress`, `pdf_rotate`, `pdf_bates_numbering`, `pdf_watermark`, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_extract_text`, `pdf_extract_tables`, `pdf_auto_rotate`, `pdf_scale_pages`, `pdf_nup`, `pdf_booklet`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_stitch_canvas`, `pdf_attachments`, `pdf_validate_signatures`, `pdf_remove_signatures`, `document_pii_scan`, `sanitize`, `pdf_ocr`, `office_convert`, `excel_to_json`, `excel_to_csv`, `pdf_invert_colors`, `pdf_fingerprint`, etc.)
+  - Category, description, and parameter specifications (name, type, defaults, allowed ranges).
+
+---
+
+### Step 3: Implement `templates.py`
+In `tools/slm-training/templates.py`:
+- Create templates across 5 linguistic tiers:
+  1. **Direct Imperatives**: "Split input.pdf every 2 pages", "Compress document with high ratio".
+  2. **Conversational / Casual**: "hey can u make this pdf smaller it's too big to email", "turn this sideways scan upright".
+  3. **Domain Legal & Finance**: "Apply Bates prefix SEC-DISCOVERY- starting at 1001 to all production documents", "Redact all SSN and PAN numbers and deep sanitize metadata".
+  4. **Typo & Noise Robustness**: "watermrak 'CONFIDENTIAL' on pgs 1-5", "extarct tables to exel", "stapm company logo on first page".
+  5. **Compound Workflows**: Multi-step chained actions:
+     - "Clean this scan, deskew it, and run OCR" -> `[pdf_auto_rotate, sanitize, pdf_ocr]`
+     - "Prepare for legal production: Bates stamp, add confidential watermark, and linearize" -> `[pdf_bates_numbering, pdf_watermark, pdf_linearize]`
+
+---
+
+### Step 4: Implement `generate_dataset.py`
+In `tools/slm-training/generate_dataset.py`:
+- CLI flags:
+  - `--count <int>` (default `25000`)
+  - `--output-dir <path>` (default `dataset/`)
+  - `--val-ratio <float>` (default `0.1`)
+  - `--sample <int>` (print N sample items to stdout)
+- Outputs each record in standard **ChatML JSON format**:
+  ```json
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls."
+      },
+      {
+        "role": "user",
+        "content": "Stamp 'DRAFT' diagonally in red across all pages with 30% opacity"
+      },
+      {
+        "role": "assistant",
+        "content": "{\"tool\": \"pdf_watermark\", \"parameters\": {\"text\": \"DRAFT\", \"color\": \"#FF0000\", \"opacity\": 0.3, \"rotation\": 45, \"pages\": \"all\"}}"
+      }
+    ]
+  }
+  ```
+- Randomly shuffles and partitions output into:
+  - `<output-dir>/train.jsonl` (90%)
+  - `<output-dir>/val.jsonl` (10%)
+
+---
+
+### Step 5: Unit Tests in `test_dataset_generator.py`
+In `tools/slm-training/test_dataset_generator.py`:
+- Test that generator produces valid JSON for every line.
+- Verify ChatML message schema.
+- Verify that every registered tool appears in the dataset.
+- Verify multi-step workflow serialization.
+
+---
+
+### Step 6: Verification
+Run:
+```bash
+python3 -m pytest tools/slm-training/test_dataset_generator.py
+python3 tools/slm-training/generate_dataset.py --count 100 --output-dir /tmp/test_dataset
+```
+Ensure all tests pass and files are created cleanly.
