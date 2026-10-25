@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_match)]
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -1783,4 +1785,31 @@ pub async fn pdf_split_scanned_book(req: axum::extract::Request) -> impl IntoRes
 )]
 pub async fn pdf_comic_archive(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_comic_archive".to_string()), req).await
+}
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct PdfInvertColorsJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    #[schema(example = "tests/e2e_fixtures/out/penta_e2e/inverted.pdf")]
+    pub output: String,
+    #[schema(example = "dark_mode")]
+    pub mode: Option<String>,
+    #[schema(example = "1")]
+    pub pages: Option<String>,
+}
+
+/// Invert PDF colors or apply dark mode [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/invert-colors",
+    tag = "PDF Operations",
+    request_body(content = PdfInvertColorsJsonRequest, description = "JSON configuration", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Colors inverted successfully", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_invert_colors(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_invert_colors".to_string()), req).await
 }

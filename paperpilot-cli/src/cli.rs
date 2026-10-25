@@ -263,6 +263,17 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Convert to PDF/A: Archive-ready PDF format conversion [Input: .pdf | Output: .pdf]
+    /// Invert PDF colors or apply dark mode
+    InvertColors {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        mode: Option<String>,
+        #[arg(long)]
+        pages: Option<String>,
+    },
     #[command(alias = "to-pdf-a")]
     PdfA {
         #[arg(long)]
