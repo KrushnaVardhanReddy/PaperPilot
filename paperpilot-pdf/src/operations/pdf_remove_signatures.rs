@@ -245,7 +245,7 @@ impl PdfOperation for PdfRemoveSignaturesOperation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lopdf::{Dictionary, dictionary};
+    use lopdf::dictionary;
 
     #[test]
     fn test_remove_signatures_empty_bytes() {
