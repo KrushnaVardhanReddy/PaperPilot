@@ -1,0 +1,124 @@
+# Task 106A: Embed Studio Experience & Portal Parity (`apps/embed` & `/embed-test`)
+
+## Context & Objectives
+You are implementing **Task 106A (Spec 106)**: Upgrading the PaperPilot drop-in embed widget (`apps/embed`) so that it delivers the same rich, modern **PaperPilot WASM Engine** studio experience as seen on `usepaperpilot.com` (window dots `● ● ●`, categorized tabs `📑 Pages`, `🎨 Edit`, `🔒 Security`, search bar, active tool title, and parameter controls), rather than looking like a bare, stripped-down upload box.
+
+---
+
+## Detailed Implementation Requirements
+
+### 1. Studio Layout & Categorized Architecture in `apps/embed/src/Widget.svelte`
+
+#### A. Layout Modes (`layout?: 'studio' | 'compact'`)
+Accept a new prop `layout?: string` with default `'studio'` (or auto-switch to `'compact'` if only 1 tool is specified via `tools` prop):
+- If `layout === 'studio'`:
+  - Render top macOS window frame dots (`● ● ●`).
+  - Render studio title bar: `PaperPilot Studio — 100% In-Browser WASM` (or custom title if provided).
+  - Render category filter tabs across the top:
+    - `⭐ All Tools`
+    - `📑 Pages & Imposition`
+    - `🎨 Edit & Stationery`
+    - `🗜️ Optimize`
+    - `🔒 Security`
+    - `🔁 Convert`
+  - Render a 2-column studio layout matching `OperationsView.svelte`:
+    - **Left Column (Tools Sidebar)**: Search input, tool list button scroll area with icons, tool title, and release status badge.
+    - **Right Column (Active Canvas)**:
+      - Active tool header: Tool title (e.g. `Merge PDFs` or `N-Up Imposition`), icon, and human-readable description.
+      - Sleek upload dropzone with "Drop PDF files here or click to browse" and file chips.
+      - Rich inline parameter controls:
+        - `pdf_nup`: 2/4/9/16 grid buttons, horizontal/vertical ordering toggle.
+        - `pdf_scale_pages`: standard formats (A4, Letter, Legal, A3) or custom percentage slider.
+        - `pdf_auto_rotate`: portrait vs landscape orientation toggle.
+        - `pdf_stamp`: secondary stamp image picker (PNG/JPEG) and 9-point grid placement.
+        - `watermark`: text input, rotation angle toggle.
+        - `rotate`: 90°, 180°, 270° angle buttons.
+        - `split` / `extract`: page range input.
+      - Prominent primary action button: e.g. `Merge & Download`, `Impose & Download`, `Verify Signatures`.
+
+- If `layout === 'compact'`:
+  - Render a clean, standalone card ideal for embedding a single isolated operation (e.g. just a PDF Compressor or Signer).
+
+---
+
+### 2. Update Embed Attributes & Initialization (`apps/embed/src/embed.ts` & `api.ts`)
+- In `embed.ts`, read `data-layout`:
+  ```typescript
+  const layout = (el.getAttribute('data-layout') || (tools && tools.split(',').length === 1 ? 'compact' : 'studio')) as 'studio' | 'compact';
+  ```
+- Pass `layout` to `mount(el, { ..., layout })`.
+
+---
+
+### 3. Update Embed Test Sandbox (`apps/web/public/embed-test.html`)
+Update `apps/web/public/embed-test.html` so users and developers immediately see the studio experience:
+1. **Demo 1: Full Suite Studio Embed**:
+   ```html
+   <div class="card">
+     <h2>1. Full Suite Studio Embed (All Categories & Tools)</h2>
+     <div
+       id="paperpilot-studio"
+       data-paperpilot-portal
+       data-theme="dark"
+       data-layout="studio"
+       data-brand-color="#5E6AD2"
+     ></div>
+   </div>
+   ```
+2. **Demo 2: Imposition & Layout Category Studio**:
+   ```html
+   <div class="card">
+     <h2>2. Document Imposition & Layout Studio (`data-category="pages"`)</h2>
+     <div
+       id="imposition-portal"
+       data-paperpilot-portal
+       data-theme="dark"
+       data-category="pages"
+       data-brand-color="#6366F1"
+     ></div>
+   </div>
+   ```
+3. **Demo 3: Contract Forensics & Signature Studio**:
+   ```html
+   <div class="card">
+     <h2>3. Digital Signature & Security Studio (`data-category="security"`)</h2>
+     <div
+       id="security-portal"
+       data-paperpilot-portal
+       data-theme="dark"
+       data-category="security"
+       data-brand-color="#10B981"
+     ></div>
+   </div>
+   ```
+4. **Demo 4: Compact Single-Tool Card Embed**:
+   ```html
+   <div class="card">
+     <h2>4. Compact Single-Tool Card Embed (`data-tools="compress" data-layout="compact"`)</h2>
+     <div
+       id="compress-portal"
+       data-paperpilot-portal
+       data-theme="dark"
+       data-tools="compress"
+       data-layout="compact"
+       data-brand-color="#3B82F6"
+     ></div>
+   </div>
+   ```
+
+---
+
+### 4. Automated Build Synchronization
+In `apps/embed/package.json`:
+Add a postbuild step or update `build` command so `dist/embed.js` is automatically copied to `apps/web/public/embed.js`:
+```json
+"build": "vite build && cp dist/embed.js ../web/public/embed.js"
+```
+Ensure `apps/web/public/embed.js` is updated in the commit.
+
+---
+
+### 5. Verification
+- Run `pnpm --dir apps/embed run build` to verify widget bundling.
+- Run `pnpm --dir apps/web run build` to ensure zero compilation or bundle errors.
+- Ensure all styling uses sleek dark mode glassmorphism matching PaperPilot standards.
