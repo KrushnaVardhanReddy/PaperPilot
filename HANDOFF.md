@@ -11,6 +11,7 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **PR #253 (Embed Studio Experience & Portal Parity - Spec 106 / Task 106A)**: Upgraded `apps/embed` to deliver full macOS/Studio window parity (`● ● ●`, categorized functional tabs, search filtering, 2-column studio layout, active canvas, and parameter controls) with dual layout modes (`studio` vs `compact`), updated `/embed-test.html`, automated build synchronization, and 24/24 Playwright tests passing.
   - **PR #251 (Desktop UI libSQL Storage & Vector Search Integration - Spec 103 / Task 103C)**: Integrated `paperpilot-storage` into Tauri desktop app. Implemented IPC commands (`get_jobs_history`, `get_audit_events`, `search_document_vectors`, `store_document_chunks`), added slide-out `<JobQueueDrawer />` with real-time status monitoring, badge counter in `<GlobalCommandBar />`, and semantic vector search toggle in `<WorkspaceSearchModal />`.
   - **PR #250 (Baseline Pre-Sign Tamper Detection - Spec 101 / Task 5.9.90)**: Enhanced `pdf_validate_signatures` with dual-layer forensics (cryptographic PKCS#7 digest verification + content stream / page text baseline comparison) and 10/10 unmocked Penta-Interface E2E coverage.
   - **PR #249 (Web WASM Portal Parity & Categorized Navigation - Spec 104 / Task 104A)**: Expanded Web Worker bridge (`pdfWorker.ts`, `WasmPdfClient`) with dynamic categorized tool navigation (`pages`, `edit`, `optimize`, `security`, `convert`), real-time search, and dedicated parameter panels in `apps/web`.
@@ -25,22 +26,29 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 106A** | `[Spec 106]` | Embed Studio Experience & Portal Parity (`apps/embed`) | `main` | [Session 14201620318764272859](https://jules.google.com/session/14201620318764272859) | 🚀 Active In-Flight |
 | **Task 107A** | `[Spec 107]` | Continuous Canvas Stitching (`pdf_stitch_canvas`) | `main` | [Session 14277467325396919194](https://jules.google.com/session/14277467325396919194) | 🚀 Active In-Flight |
 
 ---
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 103C (Desktop UI libSQL Storage & Async Jobs Drawer `[Spec 103]`)**:
+1. **Task 106A (Embed Studio Experience & Portal Parity `[Spec 106]`)**:
+   - Merged (PR #253).
+   - Re-architected `Widget.svelte` into a macOS-style studio frame (`● ● ●`, categorized tabs `📑 Pages`, `🎨 Edit`, `🔒 Security`, search bar, active canvas).
+   - Supported dual layout modes: `data-layout="studio"` vs `data-layout="compact"`.
+   - Upgraded `apps/web/public/embed-test.html` featuring all 4 demonstration modes.
+   - Configured auto-sync build copying `dist/embed.js` to `apps/web/public/embed.js`.
+   - 24/24 Playwright tests passing, 0 Svelte diagnostics errors.
+
+2. **Task 103C (Desktop UI libSQL Storage & Async Jobs Drawer `[Spec 103]`)**:
    - Merged (PR #251).
-   - Added Tauri IPC commands: `get_jobs_history`, `get_audit_events`, `search_document_vectors`, `store_document_chunks` wired to embedded `StorageEngine`.
-   - Created `<JobQueueDrawer.svelte>` slide-out tray with status filtering (`All`, `Running`, `Completed`, `Failed`), live progress bars, and polling.
+   - Added Tauri IPC commands: `get_jobs_history`, `clear_jobs_history`, `get_audit_events`, `search_document_vectors`, `store_document_chunks` wired to embedded `StorageEngine`.
+   - Created `<JobQueueDrawer.svelte>` slide-out tray with status filtering (`All`, `Running`, `Completed`, `Failed`), live progress bars, polling, and history clearing.
    - Added background job indicator and counter button in `<GlobalCommandBar.svelte>`.
    - Added Semantic Vector Search mode toggle and cosine score badges in `<WorkspaceSearchModal.svelte>`.
-   - 17/17 tests passing in `desktop`, 7/7 tests passing in `paperpilot-storage`, and Svelte typecheck passing with 0 errors.
+   - 17/17 tests passing in `desktop`, 8/8 tests passing in `paperpilot-storage`, and Svelte typecheck passing with 0 errors.
 
-2. **Task 5.9.90 (Baseline Pre-Sign Tamper Detection `[Spec 101]`)**:
+3. **Task 5.9.90 (Baseline Pre-Sign Tamper Detection `[Spec 101]`)**:
    - Merged (PR #250).
    - Enhanced `pdf_validate_signatures` with optional `--baseline <PATH>` or `baseline_bytes` audit.
    - Dual-layer forensics: cryptographic PKCS#7 digest verification + content stream / page text baseline comparison.
