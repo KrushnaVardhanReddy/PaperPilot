@@ -227,8 +227,7 @@ pub fn pdf_stitch_canvas_bytes(
     doc.prune_objects();
 
     let mut output_bytes = Vec::new();
-    doc.save_to(&mut output_bytes)
-        .map_err(|e| PdfError::IoError(e))?;
+    doc.save_to(&mut output_bytes).map_err(PdfError::IoError)?;
     Ok(output_bytes)
 }
 

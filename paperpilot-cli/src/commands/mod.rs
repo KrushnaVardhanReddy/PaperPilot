@@ -16,10 +16,10 @@ pub mod pdf_auto_rotate;
 pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
+pub mod pdf_invert_colors;
 pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
 pub mod pdf_remove_signatures;
-pub mod pdf_invert_colors;
 pub mod pdf_scale_pages;
 pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
@@ -224,9 +224,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Flatten { input, output } => {
             group_b::handle_flatten(&resolve_input_path(input)?, output)
         }
-        Commands::InvertColors { input, output, mode, pages } => {
-            crate::commands::pdf_invert_colors::handle_invert_colors(input, output, mode, pages)
-        },
+        Commands::InvertColors {
+            input,
+            output,
+            mode,
+            pages,
+        } => crate::commands::pdf_invert_colors::handle_invert_colors(input, output, mode, pages),
         Commands::PdfA { input, output } => {
             group_b::handle_pdf_a(&resolve_input_path(input)?, output)
         }
@@ -406,18 +409,28 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             action,
             file_name,
             file,
-        } => pdf_attachments::handle_pdf_attachments_command(
-            input, output, action, file_name, file,
-        ),
+        } => {
+            pdf_attachments::handle_pdf_attachments_command(input, output, action, file_name, file)
+        }
         Commands::PdfTimestamp { input, output } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
         }
         Commands::PdfChangePermissions { input, output } => {
             pdf_change_permissions::handle_pdf_change_permissions_command(input, output)
         }
-        Commands::PdfSplitScannedBook { input, output } => {
-            pdf_split_scanned_book::handle_pdf_split_scanned_book_command(input, output)
-        }
+        Commands::PdfSplitScannedBook {
+            input,
+            output,
+            reading_direction,
+            gutter_overlap,
+            split_horizontal,
+        } => pdf_split_scanned_book::handle_pdf_split_scanned_book_command(
+            input,
+            output,
+            reading_direction,
+            *gutter_overlap,
+            *split_horizontal,
+        ),
         Commands::PdfComicArchive { input, output } => {
             pdf_comic_archive::handle_pdf_comic_archive_command(input, output)
         }

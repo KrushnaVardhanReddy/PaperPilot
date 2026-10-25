@@ -557,6 +557,15 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        /// Reading direction (ltr or rtl)
+        #[arg(long, default_value = "ltr")]
+        reading_direction: String,
+        /// Gutter overlap in points
+        #[arg(long, default_value = "0.0")]
+        gutter_overlap: f32,
+        /// Split horizontally (top/bottom)
+        #[arg(long)]
+        split_horizontal: bool,
     },
     /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
     #[command(name = "pdf-comic-archive")]
