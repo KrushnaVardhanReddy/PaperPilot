@@ -19,6 +19,9 @@ tools/train-nlp/output/
 !tools/train-nlp/output/tokenizer.json
 !tools/train-nlp/output/config.json
 tools/train-nlp/logs/
+!tools/slm-training/*.py
+tools/slm-training/dataset/
+tools/slm-training/*.jsonl
 __pycache__/
 venv/
 tests/e2e_fixtures/
@@ -33,6 +36,7 @@ add_*.py
 insert_*.py
 update_*.py
 *.py
+!tools/slm-training/*.py
 *.sh
 run_tests.sh
 parse_test.rs
