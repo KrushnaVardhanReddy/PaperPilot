@@ -5,6 +5,7 @@
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
   import ShareModal from './components/ShareModal.svelte';
+  import DownloadBadge from './components/DownloadBadge.svelte';
   import {
     DOWNLOAD_URL,
     DOWNLOAD_LINUX_URL,
@@ -27,6 +28,7 @@
       </div>
 
       <div class="header-actions">
+        <DownloadBadge />
         <ShareModal />
         <div class="cta-banner">
           <span>Need OCR or Offline AI?</span>

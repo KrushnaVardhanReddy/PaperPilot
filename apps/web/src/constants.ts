@@ -25,3 +25,8 @@ export const getDocsBaseUrl = (): string => {
 export const getToolsHandbookUrl = (): string => {
   return `${getDocsBaseUrl()}/reference/50-tools-handbook/`;
 };
+
+// Feature Flags
+// Set ENABLE_DOWNLOAD_COUNT_BADGE to true once total releases downloads cross target threshold (e.g. 100+ or 500+)
+export const ENABLE_DOWNLOAD_COUNT_BADGE = false;
+export const MIN_DOWNLOAD_COUNT_THRESHOLD = 50;
