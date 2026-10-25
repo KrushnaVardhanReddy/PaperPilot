@@ -10,8 +10,8 @@
 
 ## Detailed Requirements
 
-### 1. Pure Client-Side QR Matrix Generator (`apps/web/src/lib/qr.ts`)
-- Lightweight, zero-external-dependency QR code matrix generator returning an SVG string or matrix array for the current URL.
+### 1. Verified Static QR Code Asset (`apps/web/public/qr_code.svg`)
+- Zero-external-dependency, standard crisp SVG QR code for mobile handoff.
 
 ### 2. Svelte 5 Share Modal Component (`apps/web/src/components/ShareModal.svelte`)
 - State management using Svelte 5 runes (`$state`).

@@ -1,12 +1,9 @@
 <script lang="ts">
-  import { generateQrSvg } from '../lib/qr';
-
   let isOpen = $state(false);
   let copied = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout>;
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://paperpilot.app/';
-  const qrSvg = generateQrSvg(currentUrl, 180);
 
   const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 
@@ -89,7 +86,7 @@
 
       <div class="qr-preview-box">
         <div class="qr-inner">
-          {@html qrSvg}
+          <img src="/qr_code.svg" alt="PaperPilot Web QR Code" width="180" height="180" class="qr-image" />
         </div>
         <span class="qr-caption">📱 Point camera to open immediately</span>
       </div>
