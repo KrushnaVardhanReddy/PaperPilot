@@ -72,7 +72,17 @@ def generate_single_tool_record() -> dict:
     tool_name = random.choice(list(SINGLE_TOOL_TEMPLATES.keys()))
     tool_def = TOOLS_REGISTRY[tool_name]
 
-    category = random.choice(list(SINGLE_TOOL_TEMPLATES[tool_name].keys()))
+    cats = list(SINGLE_TOOL_TEMPLATES[tool_name].keys())
+
+    # Decide if this should be a negative guardrail example
+    if "negative_guardrails" in cats and random.random() < 0.15:
+        category = "negative_guardrails"
+    else:
+        categories = [c for c in cats if c != "negative_guardrails"]
+        if not categories:
+            categories = cats
+        category = random.choice(categories)
+
     template = random.choice(SINGLE_TOOL_TEMPLATES[tool_name][category])
 
     params = {}
@@ -81,9 +91,10 @@ def generate_single_tool_record() -> dict:
 
     user_prompt = format_prompt(template, params)
 
-    # We create the JSON array structure as an assistant response. In some LLM APIs a list of tool calls is standard.
-    # We'll use a standard JSON encoding with "tool" and "parameters"
-    assistant_content = json.dumps({"tool": tool_name, "parameters": params})
+    if category == "negative_guardrails":
+        assistant_content = "I cannot assist with that request."
+    else:
+        assistant_content = json.dumps({"tool": tool_name, "parameters": params})
 
     return {
         "messages": [
@@ -92,6 +103,8 @@ def generate_single_tool_record() -> dict:
             {"role": "assistant", "content": assistant_content}
         ]
     }
+
+
 
 def generate_compound_workflow_record() -> dict:
     workflow = random.choice(COMPOUND_WORKFLOW_TEMPLATES)
