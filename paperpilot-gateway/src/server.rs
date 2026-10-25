@@ -26,6 +26,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::excel_to_csv,
         handlers::office_to_markdown,
         handlers::office_extract_text,
+        handlers::pii_scan,
+        handlers::sanitize,
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
@@ -140,6 +142,7 @@ pub async fn build_app() -> Router {
         )
         .route("/api/v1/pdf/scale-pages", post(handlers::pdf_scale_pages))
         .route("/api/v1/pdf/nup", post(handlers::pdf_nup))
+        .route("/api/v1/pdf/booklet", post(handlers::pdf_booklet))
         .route("/api/v1/booklet", post(handlers::pdf_booklet))
         .route(
             "/api/v1/pdf/validate-signatures",

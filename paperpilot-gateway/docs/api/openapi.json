@@ -1016,6 +1016,33 @@
         ]
       }
     },
+    "/api/v1/pdf/pii-scan": {
+      "post": {
+        "operationId": "pii_scan",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "PII scan completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Scan document for PII and sensitive data [Input: .pdf | Output: JSON report]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/rag-chunks": {
       "post": {
         "operationId": "rag_chunks",
@@ -1090,6 +1117,33 @@
           }
         },
         "summary": "Render a single PDF page directly to a PNG image stream [Input: .pdf | Output: .png]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/sanitize": {
+      "post": {
+        "operationId": "sanitize",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Sanitized successfully"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Deeply sanitize a PDF document by removing metadata, scripts, attachments, and thumbnails [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
