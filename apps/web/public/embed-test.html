@@ -51,54 +51,52 @@
     <h1>PaperPilot Embed Demonstration</h1>
     <p>Testing drop-in Shadow DOM widget integration.</p>
 
-    <!-- Demo 1: Document Imposition & Layout Suite -->
+    <!-- Demo 1: Full Suite Studio Embed -->
     <div class="card">
-      <h2>1. Document Imposition & Layout Suite (In-Browser WASM)</h2>
-      <p style="margin-bottom: 16px; font-size: 0.9rem;">2-Up/4-Up imposition, booklet synthesis, and dimensional scaling.</p>
+      <h2>1. Full Suite Studio Embed (All Categories & Tools)</h2>
+      <div
+        id="paperpilot-studio"
+        data-paperpilot-portal
+        data-theme="dark"
+        data-layout="studio"
+        data-brand-color="#5E6AD2"
+      ></div>
+    </div>
+
+    <!-- Demo 2: Document Imposition & Layout Studio -->
+    <div class="card">
+      <h2>2. Document Imposition & Layout Studio (`data-category="pages"`)</h2>
       <div
         id="imposition-portal"
         data-paperpilot-portal
         data-theme="dark"
-        data-tools="pdf_nup,pdf_booklet,pdf_scale_pages,pdf_auto_rotate"
+        data-category="pages"
         data-brand-color="#6366F1"
       ></div>
     </div>
 
-    <!-- Demo 2: Contract Forensics & Signature Verification -->
+    <!-- Demo 3: Contract Forensics & Signature Studio -->
     <div class="card">
-      <h2>2. Digital Signature & Forensic Integrity Audit</h2>
-      <p style="margin-bottom: 16px; font-size: 0.9rem;">Verify PKCS#7 / CMS signatures, certificate validity, and byte-range locks.</p>
+      <h2>3. Digital Signature & Security Studio (`data-category="security"`)</h2>
       <div
-        id="signature-portal"
+        id="security-portal"
         data-paperpilot-portal
         data-theme="dark"
-        data-tools="pdf_validate_signatures,pdf_remove_signatures"
+        data-category="security"
         data-brand-color="#10B981"
       ></div>
     </div>
 
-    <!-- Demo 3: Classic Page Editing & Optimization -->
+    <!-- Demo 4: Compact Single-Tool Card Embed -->
     <div class="card">
-      <h2>3. Page Editing & Compression</h2>
+      <h2>4. Compact Single-Tool Card Embed (`data-tools="compress" data-layout="compact"`)</h2>
       <div
-        id="paperpilot-portal"
+        id="compress-portal"
+        data-paperpilot-portal
         data-theme="dark"
-        data-tools="merge,split,rotate,watermark,compress"
+        data-tools="compress"
+        data-layout="compact"
         data-brand-color="#3B82F6"
-      ></div>
-    </div>
-
-    <!-- Demo 4: Automated Multi-Step Pipeline -->
-    <div class="card">
-      <h2>4. Automated Multi-Step Pipeline</h2>
-      <p style="margin-bottom: 16px; font-size: 0.9rem;">Auto-execute: <code>Auto Upright ➔ Scale to A4 ➔ Imposition 2-Up ➔ Compress</code>.</p>
-      <div
-        data-paperpilot-widget
-        data-theme="dark"
-        data-brand-color="#8B5CF6"
-        data-pipeline='[{"tool":"pdf_auto_rotate"},{"tool":"pdf_scale_pages","target":"a4"},{"tool":"pdf_nup","grid":2},{"tool":"compress"}]'
-        data-allow-customization="true"
-        data-auto-execute="false"
       ></div>
     </div>
   </div>

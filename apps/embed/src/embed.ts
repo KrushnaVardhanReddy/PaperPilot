@@ -26,6 +26,8 @@ function autoInit() {
     const pipelineAttr = el.getAttribute('data-pipeline');
     const allowCustomization = el.getAttribute('data-allow-customization') === 'true';
     const autoExecute = el.getAttribute('data-auto-execute') !== 'false';
+    const layoutAttr = el.getAttribute('data-layout');
+    const layout = (layoutAttr || (tools && tools.split(',').length === 1 ? 'compact' : 'studio')) as 'studio' | 'compact';
 
     let pipeline = undefined;
     if (pipelineAttr) {
@@ -36,7 +38,7 @@ function autoInit() {
       }
     }
 
-    mount(el, { tools, category, theme, brandColor, logoUrl, hideBadge, pipeline, allowCustomization, autoExecute });
+    mount(el, { tools, category, theme, brandColor, logoUrl, hideBadge, pipeline, allowCustomization, autoExecute, layout });
   });
 }
 
