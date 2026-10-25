@@ -22,32 +22,46 @@ pytest>=7.0.0
 
 ### Step 2: Cross-Reference Documentation & Tool Catalog
 Before implementing the tool registry, cross-reference existing tool definitions and living documentation:
-- MCP Tool Declarations: Check `paperpilot-mcp/src/server.rs` (contains all 75+ registered tool schemas and parameter structures).
-- Desktop Tool Registry: Check `apps/desktop/src/lib/types/toolList.ts`.
+- MCP Tool Declarations: Check `paperpilot-mcp/src/server.rs` (contains tool declarations and parameter structures).
 - Living Documentation & Architecture: Check `docs/TRI_INTERFACE_E2E_AND_DOCS.md`, `ROADMAP.md`, and `specs/084-on-device-document-slm-qwen-finetuning/spec.md`.
-Ensure all tool names, categories, parameters, and types match the existing code and documentation exactly.
+Ensure all tool names, parameters, and types match the existing code and documentation exactly.
 
 ---
 
-### Step 3: Implement `tool_registry.py`
+### Step 3: Implement `tool_registry.py` (Wave 1: Top 15 Core Tools)
 In `tools/slm-training/tool_registry.py`:
-- Define all PaperPilot operations (covering all 60+ tools from `paperpilot-mcp/src/server.rs` and `apps/desktop/src/lib/types/toolList.ts`).
-- Include:
-  - Tool ID (e.g. `pdf_merge`, `pdf_split`, `pdf_compress`, `pdf_rotate`, `pdf_bates_numbering`, `pdf_watermark`, `pdf_encrypt`, `pdf_decrypt`, `pdf_redact`, `pdf_extract_text`, `pdf_extract_tables`, `pdf_auto_rotate`, `pdf_scale_pages`, `pdf_nup`, `pdf_booklet`, `pdf_stamp`, `pdf_overlay_underlay`, `pdf_stitch_canvas`, `pdf_attachments`, `pdf_validate_signatures`, `pdf_remove_signatures`, `document_pii_scan`, `sanitize`, `pdf_ocr`, `office_convert`, `excel_to_json`, `excel_to_csv`, `pdf_invert_colors`, `pdf_fingerprint`, etc.)
-  - Category, description, and parameter specifications (name, type, defaults, allowed ranges).
+- Establish the tool registration data structure (e.g., dataclass or Pydantic model with tool ID, category, description, parameters with types and defaults).
+- Implement the **Top 15 Core Tools** for this first wave:
+  1. `pdf_merge`: Combine multiple PDFs.
+  2. `pdf_split`: Split PDF by page numbers or ranges.
+  3. `pdf_compress`: Optimize and compress PDF.
+  4. `pdf_rotate`: Rotate specific or all pages.
+  5. `pdf_watermark`: Add diagonal or horizontal watermark text.
+  6. `pdf_encrypt`: Password protect and encrypt PDF.
+  7. `pdf_decrypt`: Decrypt PDF with password.
+  8. `pdf_ocr`: Extract or burn in OCR text.
+  9. `pdf_bates_numbering`: Legal Bates stamp numbering.
+  10. `pdf_extract_text`: Extract raw text from document.
+  11. `pdf_extract_tables`: Extract tabular data to JSON/CSV.
+  12. `pdf_redact`: Redact sensitive text or bounding boxes.
+  13. `sanitize`: Strip metadata, JavaScript, hidden layers.
+  14. `pdf_auto_rotate`: Automatically upright rotated pages.
+  15. `document_pii_scan`: Audit document for SSN, credit cards, emails.
+
+*(Note: Future tasks 84B and 84C will add the remaining organization and conversion tools).*
 
 ---
 
-### Step 4: Implement `templates.py`
+### Step 4: Implement `templates.py` (Wave 1 Templates)
 In `tools/slm-training/templates.py`:
-- Create templates across 5 linguistic tiers:
-  1. **Direct Imperatives**: "Split input.pdf every 2 pages", "Compress document with high ratio".
-  2. **Conversational / Casual**: "hey can u make this pdf smaller it's too big to email", "turn this sideways scan upright".
+- Create templates across 5 linguistic tiers covering the 15 core tools:
+  1. **Direct Imperatives**: "Split input.pdf every 2 pages", "Compress document with high ratio", "Rotate page 3 by 90 degrees".
+  2. **Conversational / Casual**: "hey can u make this pdf smaller it's too big to email", "turn this sideways scan upright", "strip all private metadata from this pdf".
   3. **Domain Legal & Finance**: "Apply Bates prefix SEC-DISCOVERY- starting at 1001 to all production documents", "Redact all SSN and PAN numbers and deep sanitize metadata".
-  4. **Typo & Noise Robustness**: "watermrak 'CONFIDENTIAL' on pgs 1-5", "extarct tables to exel", "stapm company logo on first page".
+  4. **Typo & Noise Robustness**: "watermrak 'CONFIDENTIAL' on pgs 1-5", "extarct tables to exel", "encrpyt with password pass123".
   5. **Compound Workflows**: Multi-step chained actions:
-     - "Clean this scan, deskew it, and run OCR" -> `[pdf_auto_rotate, sanitize, pdf_ocr]`
-     - "Prepare for legal production: Bates stamp, add confidential watermark, and linearize" -> `[pdf_bates_numbering, pdf_watermark, pdf_linearize]`
+     - "Clean this scan, upright sideways pages, and run OCR" -> `[pdf_auto_rotate, sanitize, pdf_ocr]`
+     - "Prepare for legal production: Bates stamp, add confidential watermark, and scan for PII" -> `[pdf_bates_numbering, pdf_watermark, document_pii_scan]`
 
 ---
 

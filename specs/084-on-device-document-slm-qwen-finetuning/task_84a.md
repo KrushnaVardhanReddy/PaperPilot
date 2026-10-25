@@ -28,21 +28,35 @@ pydantic>=2.0.0
 pytest>=7.0.0
 ```
 
-### 3. Tool Registry Definition (`tool_registry.py`)
-- Define all PaperPilot tools (60+ tools from `paperpilot-mcp` and desktop toolList) with:
-  - `tool_name` (e.g., `pdf_merge`, `pdf_compress`, `pdf_bates_numbering`, `pdf_watermark`, `pdf_ocr`, `pdf_invert_colors`, `pdf_stitch_canvas`, `pdf_attachments`, `document_pii_scan`, etc.)
-  - `category` (`pages`, `security`, `conversion`, `organize`, `enhance`, etc.)
-  - `parameters`: typed definitions with defaults and valid ranges.
+### 3. Tool Registry Definition (`tool_registry.py`) — Wave 1 Core Scope
+For Task 84A, establish the architecture and implement the **top 15 core operations**:
+1. `pdf_merge`: Combines multiple input PDFs into a single document.
+2. `pdf_split`: Splits document by pages or ranges.
+3. `pdf_compress`: Reduces document size (`screen`, `ebook`, `prepress`, etc.).
+4. `pdf_rotate`: Rotates specific pages or all pages by 90, 180, 270 degrees.
+5. `pdf_watermark`: Adds text or image watermark with opacity, color, rotation.
+6. `pdf_encrypt`: Sets password protection and permissions.
+7. `pdf_decrypt`: Removes encryption with password.
+8. `pdf_ocr`: Runs OCR text recognition on scanned pages.
+9. `pdf_bates_numbering`: Applies legal Bates stamping (prefix, digits, position).
+10. `pdf_extract_text`: Extracts raw text streams from pages.
+11. `pdf_extract_tables`: Extracts structured tables to JSON/CSV.
+12. `pdf_redact`: Redacts bounding boxes or text occurrences.
+13. `sanitize`: Strips metadata, hidden layers, JavaScript, and embedded files.
+14. `pdf_auto_rotate`: Automatically detects page text orientation and uprights sideways pages.
+15. `document_pii_scan`: Scans document for SSN, credit cards, emails, and sensitive entities.
+
+*(Note: Subsequent waves Task 84B and 84C will add the remaining tools to `tool_registry.py`).*
 
 ### 4. Template Engine (`templates.py`)
-Generate training pairs across 5 styles:
+Generate training pairs across 5 styles for the 15 Wave 1 tools:
 1. **Direct Commands**: e.g., "Rotate page 3 by 90 degrees clockwise", "Compress this PDF to high compression".
-2. **Informal / Chat Phrasing**: e.g., "hey can u make this pdf smaller it's too big to email", "turn this sideways scan upright".
+2. **Informal / Casual**: e.g., "hey can u make this pdf smaller it's too big to email", "turn this sideways scan upright".
 3. **Domain Legal & Finance Jargon**: e.g., "Apply Bates prefix SEC-DISCOVERY- starting at 1001 to all production documents", "Redact all SSN and PAN numbers and deep sanitize metadata".
-4. **Noisy / Typo Robustness**: e.g., "watermrak 'CONFIDENTIAL' on pgs 1-5", "extarct tables to exel".
+4. **Noisy / Typo Robustness**: e.g., "watermrak 'CONFIDENTIAL' on pgs 1-5", "extarct tables to exel", "encrpyt with password pass123".
 5. **Multi-Step Workflows**: Compound chained recipes:
-   - "Clean this scan, deskew it, and run OCR" $\to$ `[pdf_auto_rotate, sanitize, pdf_ocr]`
-   - "Prepare for legal production: Bates stamp, add confidential watermark, and linearize" $\to$ `[pdf_bates_numbering, pdf_watermark, pdf_linearize]`
+   - "Clean this scan, upright sideways pages, and run OCR" $\to$ `[pdf_auto_rotate, sanitize, pdf_ocr]`
+   - "Prepare for legal production: Bates stamp, add confidential watermark, and scan for PII" $\to$ `[pdf_bates_numbering, pdf_watermark, document_pii_scan]`
 
 ### 5. Dataset Generation CLI (`generate_dataset.py`)
 - Accepts arguments:
