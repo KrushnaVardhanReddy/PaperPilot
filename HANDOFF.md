@@ -12,6 +12,7 @@
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
   - **Task 107A (Continuous Canvas Stitching `[Spec 107]`)**: Merged pure-Rust continuous vertical/horizontal scrollable single-canvas stitching engine (`pdf_stitch_canvas`) with 3/3 unit tests, 75 MCP tools, 14/14 CLI tests passing.
+  - **Task 84A (On-Device Document SLM Dataset Generator Engine `[Spec 084]`)**: Merged Python synthetic dataset generation engine (`tools/slm-training`) producing ChatML training pairs across 5 linguistic tiers (direct, casual, legal/finance jargon, typos, compound workflows) for top 15 core tools with 5/5 pytest passing.
   - **Task 108A (PDF Portfolio Attachments Engine `[Spec 108]`)**: Merged pure-Rust ISO 32000-1 `/EmbeddedFiles` Name Tree inspection, binary stream extraction, and FlateDecode attachment injection (`pdf_attachments`) with 5/5 unit tests, 76 MCP tools, 14 CLI tests, and REST Gateway endpoints passing.
   - **Task 107A (Continuous Canvas Stitching `[Spec 107]`)**: Merged pure-Rust continuous vertical/horizontal scrollable single-canvas stitching engine (`pdf_stitch_canvas`) with 3/3 unit tests, 75 MCP tools, 14/14 CLI tests passing.
   - **OpenAPI Synchronization**: Fully audited and updated `docs/api/openapi.json` and `paperpilot-gateway/docs/api/openapi.json` to register omitted endpoints (`/api/v1/pdf/pii-scan`, `/api/v1/pdf/sanitize`, and `/api/v1/pdf/booklet`).
@@ -24,8 +25,7 @@
   - **PR #245 (`pdf_auto_rotate` - Spec 102 / Task 5.3.10)**: Pure-Rust automated page uprighting engine, validated with 3/3 unit tests and 10/10 unmocked Penta-Interface E2E tests (`reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md`).
   - **PR #246 (`paperpilot-storage` core - Spec 103 / Task 103A)**: Embedded Turso / libSQL storage engine with connection pooling and automated schema migrations (`jobs`, `webhooks`, `document_chunks`, `audit_logs`).
 - **Active Scaffolding**:
-  - **Task 84A (`tools/slm-training` Dataset Generator Engine — Wave 1: Core 15 Tools - Spec 084 / Task 4.1.9)**: In flight with Jules ([Session 17682577633163496827](https://jules.google.com/session/17682577633163496827)).
-  - **Task 84B (Wave 2: Organization & Layout Tools - Task 4.1.10)**: Scheduled for subsequent dispatch once 84A merges.
+  - **Task 84B (Wave 2: Organization & Layout Tools - Task 4.1.10)**: Scheduled for prompt preparation and dispatch to Jules.
   - **Task 84C (Wave 3: Conversions, Forensics & Negative Guards - Task 4.1.11)**: Scheduled to complete the dataset catalog.
 - **Workspace Health**: All crates (`paperpilot-storage`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, `paperpilot-wasm`, `desktop`) compiling cleanly with zero errors.
 
@@ -35,8 +35,8 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
 | **Task 108A** | `[Spec 108]` | PDF Attachments & Portfolio Engine (`pdf_attachments`) | `main` | [Session 17693334025127438627](https://jules.google.com/session/17693334025127438627) | ✅ Completed & Merged |
-| **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | [Session 17682577633163496827](https://jules.google.com/session/17682577633163496827) | 🚀 Active In-Flight |
-| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | Planned after Task 84A | ⏳ Queued |
+| **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | [Session 17682577633163496827](https://jules.google.com/session/17682577633163496827) | ✅ Completed & Merged |
+| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | Prompt preparation | ⏳ Queued |
 | **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | Planned after Task 84B | ⏳ Queued |
 
 ---
