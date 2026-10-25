@@ -1,0 +1,116 @@
+# Task 107A: Implement Continuous Canvas Stitching (`pdf_stitch_canvas`) Across All Surfaces
+
+## Context & Objectives
+You are implementing **Task 107A (Spec 107)**: Creating the pure-Rust continuous single-sheet canvas stitch engine (`pdf_stitch_canvas`) and wiring it across all 5 PaperPilot surfaces (CLI, MCP, REST Gateway, WASM, Desktop/Edge).
+
+The operation already has scaffolding placeholders across crates, but currently returns `PdfError::UnsupportedOperation("Not yet implemented")`.
+
+---
+
+## Detailed Implementation Requirements
+
+### 1. Core Engine: `paperpilot-pdf/src/operations/pdf_stitch_canvas.rs`
+
+1. **Options Definition**:
+```rust
+use lopdf::{
+    Dictionary, Document, Object, Stream, content::Content, content::Operation as ContentOperation,
+};
+use paperpilot_core::error::PdfError;
+use paperpilot_core::traits::{PdfDocument, PdfOperation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PdfStitchCanvasOptions {
+    /// "vertical" (default) or "horizontal"
+    #[serde(default = "default_direction")]
+    pub direction: String,
+    /// Margin around outer canvas in points (default: 0.0)
+    #[serde(default)]
+    pub margin_pt: f32,
+    /// Spacing between pages in points (default: 0.0)
+    #[serde(default)]
+    pub spacing_pt: f32,
+}
+
+fn default_direction() -> String {
+    "vertical".to_string()
+}
+
+impl Default for PdfStitchCanvasOptions {
+    fn default() -> Self {
+        Self {
+            direction: default_direction(),
+            margin_pt: 0.0,
+            spacing_pt: 0.0,
+        }
+    }
+}
+```
+
+2. **Core Algorithm (`pdf_stitch_canvas_bytes`)**:
+- Load document with `Document::load_mem(input_bytes)`. Return `PdfError::InvalidInput` if empty or 0 pages.
+- Determine if `direction == "horizontal"` (case-insensitive) vs `"vertical"`.
+- Measure `/MediaBox` of each page $(W_i, H_i)$.
+- Calculate canvas total size:
+  - If vertical:
+    - $W_{\text{canvas}} = \max_i(W_i) + 2M$
+    - $H_{\text{canvas}} = \sum_i H_i + 2M + (N - 1)S$
+    - Center each page horizontally: $X_i = M + (W_{\text{canvas}} - 2M - W_i)/2.0$.
+    - Stack vertically starting from top: $Y_i = H_{\text{canvas}} - M - \sum_{k=1}^i H_k - (i-1)S$.
+  - If horizontal:
+    - $W_{\text{canvas}} = \sum_i W_i + 2M + (N - 1)S$
+    - $H_{\text{canvas}} = \max_i(H_i) + 2M$
+    - Center each page vertically: $Y_i = M + (H_{\text{canvas}} - 2M - H_i)/2.0$.
+    - Place horizontally left-to-right: $X_i = M + \sum_{k=1}^{i-1} W_k + (i-1)S$.
+- For each page:
+  - Create a Form XObject stream:
+    - Set `/Type /XObject`, `/Subtype /Form`, `/BBox [0 0 W_i H_i]`.
+    - Copy `/Resources` and decompress `/Contents` from the original page.
+    - Insert into document objects with `doc.add_object`.
+  - In canvas operations, push `q`, `cm [1.0, 0.0, 0.0, 1.0, X_i, Y_i]`, `Do /Fm{i}`, and `Q`.
+- Create a new single `/Page` dictionary with the combined content stream and resources, and make it the only kid in `/Pages`.
+- Update catalog `/Root /Pages` reference to the new pages dictionary.
+- Prune unreferenced objects (`doc.prune_objects()`) and save to `output_bytes`.
+
+3. **Implement `PdfOperation` for `PdfStitchCanvasOperation`**:
+```rust
+impl PdfOperation for PdfStitchCanvasOperation {
+    fn execute(&self, document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
+        let input_bytes = document.to_bytes()?;
+        let output_bytes = pdf_stitch_canvas_bytes(&input_bytes, &self.options)?;
+        *document = *paperpilot_core::traits::load_pdf_from_bytes(&output_bytes)?;
+        Ok(())
+    }
+}
+```
+
+4. **Unit Tests**:
+- Test empty document fails gracefully.
+- Test vertical stitch: 3 pages of $300 \times 400$ with $M=10, S=5$ results in 1 page of $320 \times 1230$.
+- Test horizontal stitch: 2 pages of $200 \times 500$ with $M=20, S=10$ results in 1 page of $450 \times 540$.
+
+---
+
+### 2. Interface Wrappers
+
+1. **`paperpilot-cli`**:
+   - Update `PdfStitchCanvas` command in `paperpilot-cli/src/cli.rs`:
+     - `#[arg(long, default_value = "vertical")] direction: String`
+     - `#[arg(long, default_value_t = 0.0)] margin: f32`
+     - `#[arg(long, default_value_t = 0.0)] spacing: f32`
+   - Update `paperpilot-cli/src/commands/pdf_stitch_canvas.rs` to accept and pass these options to `pdf_stitch_canvas_bytes`.
+   - Update command dispatch in `paperpilot-cli/src/commands/mod.rs`.
+
+2. **`paperpilot-mcp`**:
+   - In `paperpilot-mcp/src/server.rs`:
+     - Add `direction` (enum: `"vertical"`, `"horizontal"`), `margin_pt` (number), and `spacing_pt` (number) to `schema_pdf_stitch_canvas`.
+     - In `execute_call_tool`, parse `direction`, `margin_pt`, `spacing_pt` from arguments if provided and pass to `PdfStitchCanvasOptions`.
+
+---
+
+### 3. Verification & Guardrails
+- **Resource limit**: Always use `-j 2` for all cargo commands.
+- Run `cargo test -p paperpilot-pdf operations::pdf_stitch_canvas -j 2`.
+- Run `cargo check --workspace -j 2`.
+- Commit changes cleanly.
