@@ -3,7 +3,7 @@
   import { DOWNLOAD_URL } from "../constants";
 </script>
 
-<div class="hero-section">
+<div id="hero-section" class="hero-section">
   <div class="hero-content">
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="hero-playground">
+  <div id="wasm-playground" class="hero-playground">
     <div class="playground-wrapper">
       <div class="playground-header">
         <div class="window-controls">

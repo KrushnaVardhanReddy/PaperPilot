@@ -1,5 +1,6 @@
 <script lang="ts">
   import HeroPlayground from './components/HeroPlayground.svelte';
+  import UseCasesShowcase from './components/UseCasesShowcase.svelte';
   import TriSurfaceShowcase from './components/TriSurfaceShowcase.svelte';
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
@@ -42,6 +43,7 @@
 
   <main class="main-content">
     <HeroPlayground />
+    <UseCasesShowcase />
     <TriSurfaceShowcase />
     <EmbedGenerator />
     <ApiExplorer />

@@ -11,6 +11,7 @@
 
 ### 1. Active Status Overview
 - **Completed & Merged in this Session**:
+  - **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**: Built responsive `<UseCasesShowcase />` featuring 6 personas (Legal, Healthcare/HIPAA, Finance, Academic, Print, Developers) with problem/solution descriptions and deep-links to WASM tools and dev snippets.
   - **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**: Expanded `tools/slm-training` to 45 tools and 10% negative guardrails for ChatML finetuning, 6/6 tests passing.
   - **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**: Built `<ShareModal />` with 1-click URL copy, native `navigator.share`, and verified static SVG asset (`apps/web/public/qr_code.svg`).
   - **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**: Built `<DownloadBadge />` with 15-minute `sessionStorage` caching, summing releases assets dynamically. Configured behind feature flag `ENABLE_DOWNLOAD_COUNT_BADGE = true` with auto-threshold `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` in `apps/web/src/constants.ts`.
