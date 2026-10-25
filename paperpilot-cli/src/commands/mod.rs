@@ -386,9 +386,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfStitchCanvas { input, output } => {
             pdf_stitch_canvas::handle_pdf_stitch_canvas_command(input, output)
         }
-        Commands::PdfAttachments { input, output } => {
-            pdf_attachments::handle_pdf_attachments_command(input, output)
-        }
+        Commands::PdfAttachments {
+            input,
+            output,
+            action,
+            file_name,
+            file,
+        } => pdf_attachments::handle_pdf_attachments_command(
+            &input, &output, &action, &file_name, &file,
+        ),
         Commands::PdfTimestamp { input, output } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
         }

@@ -2748,6 +2748,46 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_output_pdf_attachments),
         );
 
+        let mut prop_action_pdf_attachments = serde_json::Map::new();
+        prop_action_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "action".to_string(),
+            serde_json::Value::Object(prop_action_pdf_attachments),
+        );
+
+        let mut prop_file_name_pdf_attachments = serde_json::Map::new();
+        prop_file_name_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "file_name".to_string(),
+            serde_json::Value::Object(prop_file_name_pdf_attachments),
+        );
+
+        let mut prop_desc_pdf_attachments = serde_json::Map::new();
+        prop_desc_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "description".to_string(),
+            serde_json::Value::Object(prop_desc_pdf_attachments),
+        );
+
+        let mut prop_b64_pdf_attachments = serde_json::Map::new();
+        prop_b64_pdf_attachments.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_attachments.insert(
+            "file_data_base64".to_string(),
+            serde_json::Value::Object(prop_b64_pdf_attachments),
+        );
+
         schema_pdf_attachments.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_pdf_attachments),
@@ -5774,8 +5814,21 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options =
+                let mut options =
                     paperpilot_pdf::operations::pdf_attachments::PdfAttachmentsOptions::default();
+                if let Some(a) = args.get("action").and_then(|v| v.as_str()) {
+                    options.action = a.to_string();
+                }
+                if let Some(f) = args.get("file_name").and_then(|v| v.as_str()) {
+                    options.file_name = Some(f.to_string());
+                }
+                if let Some(d) = args.get("description").and_then(|v| v.as_str()) {
+                    options.description = Some(d.to_string());
+                }
+                if let Some(b) = args.get("file_data_base64").and_then(|v| v.as_str()) {
+                    options.file_data_base64 = Some(b.to_string());
+                }
+
                 let result = paperpilot_pdf::operations::pdf_attachments::pdf_attachments_bytes(
                     &input_bytes,
                     &options,

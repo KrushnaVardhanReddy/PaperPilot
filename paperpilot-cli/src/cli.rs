@@ -510,6 +510,12 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        action: Option<String>,
+        #[arg(long)]
+        file_name: Option<String>,
+        #[arg(long)]
+        file: Option<PathBuf>,
     },
     /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
     #[command(name = "pdf-timestamp")]

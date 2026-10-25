@@ -153,6 +153,18 @@ pub struct ExcelToCsvRequest {
     pub sheet: Option<String>,
 }
 
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct PdfAttachmentsJsonRequest {
+    #[schema(example = "in.pdf")]
+    pub input: String,
+    #[schema(example = "list")]
+    pub action: Option<String>,
+    #[schema(example = "report.pdf")]
+    pub output: Option<String>,
+    #[schema(example = "invoice.pdf")]
+    pub file_name: Option<String>,
+}
+
 /// Gateway health check
 #[utoipa::path(
     get,
@@ -1666,6 +1678,7 @@ pub async fn pdf_stitch_canvas(req: axum::extract::Request) -> impl IntoResponse
     post,
     path = "/api/v1/pdf/attachments",
     tag = "PDF Operations",
+    request_body(content = PdfAttachmentsJsonRequest, description = "JSON configuration or multipart form"),
     responses(
         (status = 200, description = "PDF Portfolio Attachments completed", body = ApiResponse),
         (status = 400, description = "Invalid request arguments"),
@@ -1673,7 +1686,47 @@ pub async fn pdf_stitch_canvas(req: axum::extract::Request) -> impl IntoResponse
     )
 )]
 pub async fn pdf_attachments(req: axum::extract::Request) -> impl IntoResponse {
-    handle_tool(Path("pdf_attachments".to_string()), req).await
+    let mut args = serde_json::Map::new();
+
+    // We get query parameters if they exist to pass action / file_name / etc.
+    let uri = req.uri().clone();
+    if let Some(query) = uri.query() {
+        if let Ok(params) = serde_urlencoded::from_str::<serde_json::Value>(query) {
+            if let Some(obj) = params.as_object() {
+                for (k, v) in obj {
+                    args.insert(k.clone(), v.clone());
+                }
+            }
+        }
+    }
+
+    let action_str = args
+        .get("action")
+        .and_then(|v| v.as_str())
+        .unwrap_or("list")
+        .to_string();
+
+    let mut response = handle_tool(Path("pdf_attachments".to_string()), req)
+        .await
+        .into_response();
+
+    if response.status() == StatusCode::OK {
+        if action_str == "list" {
+            response
+                .headers_mut()
+                .insert("Content-Type", "application/json".parse().unwrap());
+        } else if action_str == "extract" {
+            response
+                .headers_mut()
+                .insert("Content-Type", "application/octet-stream".parse().unwrap());
+        } else {
+            response
+                .headers_mut()
+                .insert("Content-Type", "application/pdf".parse().unwrap());
+        }
+    }
+
+    response
 }
 /// Cryptographic Timestamp TSA [Apply RFC 3161 cryptographically verified TSA timestamp tokens.] [Input: .pdf | Output: .pdf]
 #[utoipa::path(

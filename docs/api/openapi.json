@@ -245,6 +245,39 @@
         ],
         "type": "object"
       },
+      "PdfAttachmentsJsonRequest": {
+        "properties": {
+          "action": {
+            "example": "list",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_name": {
+            "example": "invoice.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input": {
+            "example": "in.pdf",
+            "type": "string"
+          },
+          "output": {
+            "example": "report.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
       "PdfValidateSignaturesJsonRequest": {
         "properties": {
           "baseline": {
@@ -523,6 +556,17 @@
     "/api/v1/pdf/attachments": {
       "post": {
         "operationId": "pdf_attachments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfAttachmentsJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
