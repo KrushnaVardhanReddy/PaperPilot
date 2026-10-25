@@ -164,6 +164,8 @@
 | **5.4.8** | `pdf_comic_archive` | Convert PDF $\leftrightarrow$ CBR/CBZ preserving sequence | Digital Media & Publishing |
 | **5.3.9A** | `pdf_compare_redline` | Exportable Redline Audit Report (`.pdf` / `.json`) with change metrics | Legal Contract Revisions |
 | **5.3.9B** | `doc_compare_cross` | Cross-Format Diff (`PDF ⇄ DOCX`) comparing PDF against Word directly | Publishing & Legal Drafting |
+| **5.3.22** | `docx_to_pdf` | Pure-Rust Word `.docx` to styled paged PDF document converter | Office Document Ingestion |
+| **5.3.23** | `epub_to_pdf` | Pure-Rust `.epub` eBook container unpacker & reflow PDF printer | Digital Reading & Archival |
 
 ---
 

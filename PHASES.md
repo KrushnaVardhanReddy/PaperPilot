@@ -1035,6 +1035,8 @@ Each MCP tool wraps the corresponding Phase 1 Rust operation.
 | 5.3.19 | Steganographic PDF Fingerprinting (`pdf_fingerprint`) 💡 | **Planned** — Embed imperceptible zero-width unicode tokens & micro-metadata watermarks to trace source of confidential document leaks. |
 | 5.3.20 | Exportable Redline Comparison Report (`pdf_compare_redline`) 💡 | **Planned** — Generate downloadable visual redline audit PDF (`.pdf` / `.json`) with strikethroughs, additions, and change metrics. |
 | 5.3.21 | Cross-Format Comparison (`doc_compare_cross`) 💡 | **Planned** — Pure-Rust `PDF ⇄ DOCX` direct document diffing without manual conversions (Draftable Desktop parity). |
+| 5.3.22 | Word Document to PDF Synthesis (`docx_to_pdf` / `office_to_pdf`) 💡 | **Planned** — Pure-Rust OpenXML `.docx` document parsing and layout engine rendering styled paragraphs, tables, and images directly into a paged PDF document. |
+| 5.3.23 | EPUB eBook to PDF Conversion (`epub_to_pdf`) 💡 | **Planned** — Pure-Rust `.epub` container extraction, XHTML/CSS reflow parsing, and chapter-based pagination into printable PDF. |
 
 ---
 
