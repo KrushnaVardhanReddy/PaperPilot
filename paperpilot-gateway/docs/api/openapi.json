@@ -245,6 +245,30 @@
         ],
         "type": "object"
       },
+      "PdfValidateSignaturesJsonRequest": {
+        "properties": {
+          "baseline": {
+            "description": "Capture and report pre-sign incremental update tamper forensics / baseline integrity",
+            "example": false,
+            "type": "boolean"
+          },
+          "input": {
+            "description": "Input PDF document path or base64 encoded bytes",
+            "example": "contract.pdf",
+            "type": "string"
+          },
+          "output": {
+            "description": "Output JSON report path",
+            "example": "report.json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
       "RagChunksJsonRequest": {
         "properties": {
           "input": {
@@ -493,6 +517,141 @@
         "summary": "Convert an Excel sheet into structured JSON format [Input: .xlsx, .xls, .csv | Output: .json]",
         "tags": [
           "Office Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/attachments": {
+      "post": {
+        "operationId": "pdf_attachments",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "PDF Portfolio Attachments completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "PDF Portfolio Attachments [Inspect, extract, or embed file attachments into PDF portfolios.] [Input: .pdf | Output: .json]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/auto-rotate": {
+      "post": {
+        "operationId": "pdf_auto_rotate",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Auto Upright Orientation completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Auto Upright Orientation [Heuristically detect text baseline and rotation angle to automatically upright pages.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/booklet": {
+      "post": {
+        "operationId": "pdf_booklet",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Booklet Imposition completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Booklet Imposition [Reorder and impose pages for 2-sided folding booklet printing.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/change-permissions": {
+      "post": {
+        "operationId": "pdf_change_permissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Modify PDF Permissions completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Modify PDF Permissions [Configure user and owner permissions for printing, copying, and modification.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/comic-archive": {
+      "post": {
+        "operationId": "pdf_comic_archive",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Comic Archive Conversion completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Comic Archive Conversion [Convert between PDF documents and comic book archive formats (CBZ/CBR).] [Input: .pdf | Output: .cbr]",
+        "tags": [
+          "PDF Operations"
         ]
       }
     },
@@ -745,6 +904,33 @@
         ]
       }
     },
+    "/api/v1/pdf/nup": {
+      "post": {
+        "operationId": "pdf_nup",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "N-Up Page Imposition completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "N-Up Page Imposition [Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/office-extract-text": {
       "post": {
         "operationId": "office_extract_text",
@@ -803,6 +989,33 @@
         ]
       }
     },
+    "/api/v1/pdf/overlay-underlay": {
+      "post": {
+        "operationId": "pdf_overlay_underlay",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Overlay & Underlay Stationary completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Overlay & Underlay Stationary [Apply letterheads, watermarked stationary, and templates as background or foreground.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/rag-chunks": {
       "post": {
         "operationId": "rag_chunks",
@@ -832,6 +1045,33 @@
         ]
       }
     },
+    "/api/v1/pdf/remove-signatures": {
+      "post": {
+        "operationId": "pdf_remove_signatures",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Remove Digital Signatures completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Remove Digital Signatures [Strip digital signature fields, cryptographic locks, and widget annotations.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/render-page": {
       "post": {
         "operationId": "render_page",
@@ -850,6 +1090,33 @@
           }
         },
         "summary": "Render a single PDF page directly to a PNG image stream [Input: .pdf | Output: .png]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/scale-pages": {
+      "post": {
+        "operationId": "pdf_scale_pages",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Scale Page Dimensions completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Scale Page Dimensions [Scale page dimensions between standard formats or percentages.] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -882,6 +1149,114 @@
           }
         },
         "summary": "Split a PDF document into separate pages or ranges [Input: .pdf | Output: multiple .pdfs]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/split-scanned-book": {
+      "post": {
+        "operationId": "pdf_split_scanned_book",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Split Scanned Book Spine completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Split Scanned Book Spine [Detect center binding gutter spine and split two-up page scans into single pages.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/stamp": {
+      "post": {
+        "operationId": "pdf_stamp",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Stamp Image & Logo completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Stamp Image & Logo [Place coordinate-exact images, logos, and badges onto PDF pages.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/stitch-canvas": {
+      "post": {
+        "operationId": "pdf_stitch_canvas",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Stitch Continuous Canvas completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Stitch Continuous Canvas [Combine multiple pages vertically or horizontally into a continuous single-page canvas.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/timestamp": {
+      "post": {
+        "operationId": "pdf_timestamp",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Cryptographic Timestamp TSA completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Cryptographic Timestamp TSA [Apply RFC 3161 cryptographically verified TSA timestamp tokens.] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -922,6 +1297,44 @@
         "summary": "Execute any MCP tool by URL path param (/api/v1/pdf/tools/{tool_name}) via multipart or JSON [Input: Multipart/JSON | Output: File/JSON]",
         "tags": [
           "MCP"
+        ]
+      }
+    },
+    "/api/v1/pdf/validate-signatures": {
+      "post": {
+        "operationId": "pdf_validate_signatures",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfValidateSignaturesJsonRequest"
+              }
+            }
+          },
+          "description": "Validate Signatures arguments",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Validate Digital Signatures completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Validate Digital Signatures [Cryptographically verify digital signatures, certificate chains, and document integrity.] [Input: .pdf | Output: .json]",
+        "tags": [
+          "PDF Operations"
         ]
       }
     },
