@@ -10,31 +10,40 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active In-Flight Jules Cloud Sessions (Zero-Conflict Fast Track)
-The following sessions are actively executing in the cloud on isolated, non-conflicting branches from `main`:
+All queued Jules cloud sessions for Wave 3/4 have completed and merged to `main`!
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 111A** | `[Spec 111]` | Modify PDF Permissions (`pdf_change_permissions`) | `main` | [Session 8073581921523239798](https://jules.google.com/session/8073581921523239798) | 🚀 Active In-Flight |
-| **Task 112A** | `[Spec 112]` | Scanned Dual-Page Book Center Split (`pdf_split_scanned_book`) | `main` | [Session 2005125894355067826](https://jules.google.com/session/2005125894355067826) | 🚀 Active In-Flight |
+| **Task 111A** | `[Spec 111]` | Modify PDF Permissions (`pdf_change_permissions`) | `main` | [Session 8073581921523239798](https://jules.google.com/session/8073581921523239798) | ✅ Merged (PR #262) |
+| **Task 112A** | `[Spec 112]` | Scanned Dual-Page Book Center Split (`pdf_split_scanned_book`) | `main` | [Session 2005125894355067826](https://jules.google.com/session/2005125894355067826) | ✅ Merged (PR #261) |
 
 ---
 
 ## 🏆 Current Session Highlights (All Pushed to `origin/main`)
 
-1. **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**:
+1. **Task 111A (Modify PDF Permissions `[Spec 111]`, PR #262, Task 5.9.86)**:
+   - Added standard ISO 32000-1 `/P` permissions bitflags via `lopdf::EncryptionState` and `EncryptionVersion::V2`.
+   - Supports permission toggles for printing, copying, modifications, annotations, form filling, and accessibility across Core, CLI, MCP, and Gateway.
+   - 3/3 unittests passed.
+
+2. **Task 112A (Scanned Dual-Page Book Center Spine Split `[Spec 112]`, PR #261, Task 5.9.85)**:
+   - Pure-Rust dual-page center spine splitting engine supporting horizontal/vertical splits, configurable gutter overlap margins, and LTR/RTL page ordering.
+   - Tested across Core, CLI, Gateway, and MCP (`wave4_mcp_tests.rs`), 5/5 unit tests passed.
+
+3. **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**:
    - Added responsive `<UseCasesShowcase />` (`apps/web/src/components/UseCasesShowcase.svelte`) directly under hero playground.
    - 6 workflow personas: Legal/Compliance, Healthcare/HIPAA, Finance/Operations, Academic/Research, Print/Prepress, Developers/AI Agents.
    - Interactive deep-links: Click CTA to auto-select tool via `window.dispatchEvent('select-tool')` and smooth scroll to playground.
    - Pure Svelte 5 runes (`$state`, `$derived`), zero NPM dependencies, dark glassmorphism styling.
 
-2. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
+4. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
    - Built `<DownloadBadge />` with 15-minute `sessionStorage` caching, querying releases assets dynamically.
    - Configured behind feature flag `ENABLE_DOWNLOAD_COUNT_BADGE = true` with auto-threshold `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` in `apps/web/src/constants.ts`.
 
-3. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
+5. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
    - Built `<ShareModal />` with 1-click URL copy, native `navigator.share`, and verified static SVG asset (`apps/web/public/qr_code.svg`).
 
-4. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
+6. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
    - Expanded `tools/slm-training` to 45 tools and 10% negative guardrails for ChatML finetuning, 6/6 tests passing.
 
 ---
