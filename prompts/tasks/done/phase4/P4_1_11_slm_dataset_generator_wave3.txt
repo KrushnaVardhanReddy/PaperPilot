@@ -1,0 +1,31 @@
+You are working on PaperPilot, a privacy-first, on-device document processing engine.
+
+Task: Implement Task 84C (Wave 3 SLM Dataset Generator: Conversions, Forensics & Negative Guards)
+Specification: specs/084-on-device-document-slm-qwen-finetuning/task_84c.md
+Parent Spec: specs/084-on-device-document-slm-qwen-finetuning/spec.md
+Impacted Area: tools/slm-training/
+
+### Requirements:
+1. Expand `tools/slm-training/tool_registry.py` with 15 Wave 3 tools matching schemas in `paperpilot-mcp/src/server.rs`:
+   - `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`
+   - `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`
+   - `pdf_to_markdown`, `pdf_to_html`, `pdf_to_images`, `images_to_pdf`
+   - `pdf_compare_text`, `pdf_compare_visual`, `pdf_invert_colors`, `pdf_linearize`, `pdf_repair`
+   Total tools in `TOOLS_REGISTRY` should reach 45.
+
+2. Expand `tools/slm-training/templates.py`:
+   - Provide realistic user query templates across 5 linguistic tiers (direct, casual, jargon, typos, multi-step) for each of the 15 tools.
+   - Implement negative guardrail templates (security/DRM bypass refusals, out-of-domain query refusals) where assistant returns a polite refusal message instead of a tool call.
+
+3. Update `tools/slm-training/generate_dataset.py`:
+   - Ensure negative examples are synthesized (e.g. 5-10% distribution) and follow ChatML formatting:
+     `{"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", "content": "I cannot assist with..."}]}`.
+
+4. Update `tools/slm-training/test_dataset_generator.py`:
+   - Verify coverage across all 45 tools.
+   - Add test verifying negative guardrail refusals adhere to ChatML schema.
+   - Ensure all tests pass with `python3 -m pytest tools/slm-training/test_dataset_generator.py -v`.
+
+5. Constraints:
+   - Do NOT commit generated dataset files (*.jsonl, dataset/ directory). Only commit code and tests.
+   - Ensure `cargo check --workspace` and pytest pass cleanly without regressions.
