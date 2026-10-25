@@ -23,13 +23,20 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 5.9.90** | `[Spec 101]` | Baseline Pre-Sign Tamper Forensics (`pdf_validate_signatures --baseline`) | `main` | [Session 13176531858440555731](https://jules.google.com/session/13176531858440555731) | 🚀 Active In-Flight |
+| **Task 103C** | `[Spec 103]` | Desktop UI Async Job Drawer & Vector Search (`apps/desktop`) | `main` | [Session 16139327879580052646](https://jules.google.com/session/16139327879580052646) | 🚀 Active In-Flight |
+| **Task 106A** | `[Spec 106]` | Embed Studio Experience & Portal Parity (`apps/embed`) | `main` | [Session 14201620318764272859](https://jules.google.com/session/14201620318764272859) | 🚀 Active In-Flight |
 
 ---
 
 ## 🏆 Recently Merged Milestones (Wave 2 Core Sprint)
 
-1. **Task 104A (Web WASM Portal Parity & Categorized Navigation `[Spec 104]`)**:
+1. **Task 5.9.90 (Baseline Pre-Sign Tamper Detection `[Spec 101]`)**:
+   - Merged (PR #250).
+   - Enhanced `pdf_validate_signatures` with optional `--baseline <PATH>` or `baseline_bytes` audit.
+   - Dual-layer forensics: cryptographic PKCS#7 digest verification + content stream / page text baseline comparison.
+   - 6/6 unit tests passed, 10/10 (100.0%) unmocked Penta-Interface E2E assertions passed in `reports/PENTA_INTERFACE_E2E_PDF_VALIDATE_SIGNATURES_REPORT.md` across CLI, MCP, REST Gateway, WASM, and Cloudflare Edge.
+
+2. **Task 104A (Web WASM Portal Parity & Categorized Navigation `[Spec 104]`)**:
    - Merged (PR #249).
    - Expanded Web Worker bridge in `apps/web/src/lib/wasm/` (`pdfWorker.ts`, `index.ts`) for all new in-browser WASM tools.
    - Built category-based navigation (`pages`, `edit`, `optimize`, `security`, `convert`) with live search in `OperationsView.svelte`.

@@ -1520,10 +1520,25 @@ mod tests {
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
     }
 }
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+pub struct PdfValidateSignaturesJsonRequest {
+    /// Input PDF document path or base64 encoded bytes
+    #[schema(example = "contract.pdf")]
+    pub input: String,
+    /// Output JSON report path
+    #[schema(example = "report.json")]
+    pub output: String,
+    /// Capture and report pre-sign incremental update tamper forensics / baseline integrity
+    #[schema(example = false)]
+    #[serde(default)]
+    pub baseline: bool,
+}
+
 /// Validate Digital Signatures [Cryptographically verify digital signatures, certificate chains, and document integrity.] [Input: .pdf | Output: .json]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/validate-signatures",
+    request_body(content = PdfValidateSignaturesJsonRequest, description = "Validate Signatures arguments", content_type = "application/json"),
     tag = "PDF Operations",
     responses(
         (status = 200, description = "Validate Digital Signatures completed", body = ApiResponse),

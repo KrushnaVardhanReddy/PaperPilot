@@ -333,9 +333,7 @@ impl PdfOperation for PdfNupOperation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lopdf::{
-        Dictionary, Document, Object, Stream, content::Content, content::Operation, dictionary,
-    };
+    use lopdf::{Document, Object, Stream, content::Content, content::Operation, dictionary};
 
     fn create_test_pdf(num_pages: u32) -> Vec<u8> {
         let mut doc = Document::with_version("1.5");

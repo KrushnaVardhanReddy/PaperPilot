@@ -82,9 +82,12 @@ fn rotate_page_dict(page_dict: &mut lopdf::Dictionary, options: &PdfAutoRotateOp
             let new_rotation = (normalized_rotation + 90) % 360;
             page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
         }
-    } else if target == "landscape" && h_eff > w_eff {
-        let new_rotation = (normalized_rotation + 90) % 360;
-        page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
+    } else if target == "landscape" {
+        #[allow(clippy::collapsible_if)]
+        if h_eff > w_eff {
+            let new_rotation = (normalized_rotation + 90) % 360;
+            page_dict.set("Rotate", lopdf::Object::Integer(new_rotation));
+        }
     }
 }
 
@@ -98,12 +101,11 @@ pub fn pdf_auto_rotate_bytes(
     let pages = doc.get_pages();
 
     for (page_num, page_id) in pages {
-        if options
-            .pages
-            .as_ref()
-            .is_some_and(|target_pages| !target_pages.contains(&page_num))
-        {
-            continue;
+        #[allow(clippy::collapsible_if)]
+        if let Some(target_pages) = &options.pages {
+            if !target_pages.contains(&page_num) {
+                continue;
+            }
         }
 
         let page_dict = match doc.get_object_mut(page_id) {
@@ -143,13 +145,11 @@ impl PdfOperation for PdfAutoRotateOperation {
             let pages = doc.get_pages();
 
             for (page_num, page_id) in pages {
-                if self
-                    .options
-                    .pages
-                    .as_ref()
-                    .is_some_and(|target_pages| !target_pages.contains(&page_num))
-                {
-                    continue;
+                #[allow(clippy::collapsible_if)]
+                if let Some(target_pages) = &self.options.pages {
+                    if !target_pages.contains(&page_num) {
+                        continue;
+                    }
                 }
 
                 let page_dict = match doc.get_object_mut(page_id) {
