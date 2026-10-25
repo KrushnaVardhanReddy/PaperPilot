@@ -1,0 +1,105 @@
+# Task 5.3.12 Prompt: PDF Attachments & Portfolio Engine (`pdf_attachments`)
+
+You are implementing Task 5.3.12 (Spec 108 / Task 108A): PDF Attachments & Portfolio Management (`pdf_attachments`) in PaperPilot.
+Follow this systematic workflow:
+
+---
+
+### Step 1: Implement Core Engine in `paperpilot-pdf/src/operations/pdf_attachments.rs`
+
+1. Define data structures:
+   ```rust
+   use serde::{Deserialize, Serialize};
+
+   #[derive(Debug, Clone, Serialize, Deserialize)]
+   pub struct AttachmentInfo {
+       pub name: String,
+       pub size_bytes: usize,
+       pub mime_type: Option<String>,
+       pub description: Option<String>,
+   }
+
+   #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+   pub struct PdfAttachmentsOptions {
+       #[serde(default = "default_action")]
+       pub action: String, // "list", "extract", "add", "remove"
+       pub file_name: Option<String>,
+       pub description: Option<String>,
+       pub mime_type: Option<String>,
+       pub file_data_base64: Option<String>,
+   }
+
+   fn default_action() -> String {
+       "list".to_string()
+   }
+
+   #[derive(Debug, Clone, Serialize, Deserialize)]
+   pub struct AttachmentsReport {
+       pub attachments: Vec<AttachmentInfo>,
+       pub total_count: usize,
+   }
+   ```
+
+2. Implement `pdf_attachments_bytes(input_bytes: &[u8], options: &PdfAttachmentsOptions) -> Result<Vec<u8>, PdfError>`:
+   - Load document via `lopdf::Document::load_mem(input_bytes)`.
+   - **Action `list`**:
+     - Inspect document catalog `/Root` -> `/Names` -> `/EmbeddedFiles`.
+     - Recursively or iteratively traverse `/Names` array: `[ (name1) ref1 (name2) ref2 ... ]`.
+     - For each filespec object, extract name (`/F` or `/UF`), description (`/Desc`), and embedded stream object (`/EF /F`).
+     - Retrieve stream length / uncompressed size.
+     - Serialize `AttachmentsReport` to JSON bytes (`serde_json::to_vec_pretty(&report)`).
+   - **Action `add`**:
+     - If `file_name` and `file_data_base64` are provided, decode data bytes.
+     - Create stream object: `/Type /EmbeddedFile`, `/Subtype /...`, compressed with `lopdf::Stream::new` FlateDecode.
+     - Create `/Filespec` object: `/Type /Filespec`, `/F (file_name)`, `/UF (file_name)`, `/EF << /F stream_id >>`.
+     - Register into `/Catalog /Names /EmbeddedFiles /Names`.
+     - Save document via `doc.save_to(&mut output_bytes)` and return PDF bytes.
+   - **Action `extract`**:
+     - Locate requested `file_name` in `/EmbeddedFiles`.
+     - Extract stream content, decompress if flate encoded, and return raw file bytes.
+   - **Action `remove`**:
+     - Remove matching key/value entry from `/EmbeddedFiles /Names`.
+     - Return updated PDF bytes.
+
+3. Add comprehensive unit tests in `pdf_attachments.rs`:
+   - `test_pdf_attachments_empty_document` (assert error on zero-byte input)
+   - `test_pdf_attachments_list_empty` (assert 0 attachments on blank PDF)
+   - `test_pdf_attachments_add_and_list` (add attachment, list, assert total_count == 1 and name matches)
+   - `test_pdf_attachments_extract` (add attachment, extract by name, assert exact byte parity)
+   - `test_pdf_attachments_remove` (add attachment, remove by name, assert total_count == 0)
+
+---
+
+### Step 2: Update CLI, MCP & Gateway Handlers
+
+1. **CLI (`paperpilot-cli/src/commands/pdf_attachments.rs`)**:
+   - Parse `--action`, `--file-name`, `--file` flags.
+   - For `list`, write JSON report to `--output`.
+   - For `extract`, write extracted file to `--output`.
+   - For `add`/`remove`, save modified PDF to `--output`.
+2. **MCP (`paperpilot-mcp/src/server.rs`)**:
+   - Update `schema_pdf_attachments` to document parameters: `action`, `file_name`, `description`, `file_data_base64`.
+   - Wire extraction and JSON reporting cleanly into `call_tool`.
+3. **REST Gateway (`paperpilot-gateway/src/handlers.rs`)**:
+   - Support query parameters `action`, `file_name` on `POST /api/v1/pdf/attachments`.
+   - Return `application/json` for `list`, `application/pdf` for `add`/`remove`, or `application/octet-stream` for `extract`.
+
+---
+
+### Step 3: Desktop UI Controls (`apps/desktop/src/lib/components/layout/OperationsPanel.svelte`)
+
+Add custom controls when `activeTool.id === 'pdf_attachments'`:
+- Action buttons: `📋 List Attachments`, `➕ Add Attachment`, `📥 Extract Attachment`.
+- File input picker for adding attachments.
+- When `list` completes, render the results using `AuditReportViewer.svelte` or attachment list cards with file names and size badges.
+
+---
+
+### Step 4: Verification
+
+Run verification:
+```bash
+cargo test -p paperpilot-pdf operations::pdf_attachments -j 2
+cargo check --workspace -j 2
+```
+Ensure all tests pass and there are no warnings or errors.
