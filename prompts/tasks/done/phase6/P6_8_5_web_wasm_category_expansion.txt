@@ -1,0 +1,147 @@
+# Task 104A: Web Worker Bridge Expansion & Category Navigation Bar (`apps/web`)
+
+## Context & Objectives
+You are implementing **Task 104A (Spec 104)**: Expanding the PaperPilot client-side Web portal (`apps/web`) to support all operations compiled in `paperpilot-wasm`, and upgrading the toolbar from a flat 12-item list into a clean, categorized navigation dock (`pages`, `edit`, `optimize`, `security`, `convert`).
+
+All operations execute 100% in the user's browser via WebAssembly with zero network uploads.
+
+---
+
+## Detailed Implementation Tasks
+
+### 1. Web Worker Bridge Expansion (`apps/web/src/lib/wasm/`)
+
+#### A. In `apps/web/src/lib/wasm/pdfWorker.ts`:
+Add `case` handlers in `self.onmessage`:
+```typescript
+case 'pdf_nup':
+    result = WasmPdfEngine.pdf_nup(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_booklet':
+    result = WasmPdfEngine.pdf_booklet(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_scale_pages':
+    result = WasmPdfEngine.pdf_scale_pages(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_auto_rotate':
+    result = WasmPdfEngine.pdf_auto_rotate(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_stamp':
+    result = WasmPdfEngine.pdf_stamp(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_overlay_underlay':
+    result = WasmPdfEngine.pdf_overlay_underlay(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_remove_signatures':
+    result = WasmPdfEngine.pdf_remove_signatures(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_validate_signatures':
+    result = WasmPdfEngine.pdf_validate_signatures(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'sanitize':
+    result = WasmPdfEngine.sanitize(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pii_scan':
+    result = WasmPdfEngine.pii_scan(payload.file, JSON.stringify(payload.options || {}));
+    break;
+case 'pdf_to_docx':
+    result = WasmPdfEngine.pdf_to_docx(payload.file);
+    break;
+```
+
+#### B. In `apps/web/src/lib/wasm/index.ts`:
+Add matching method signatures in interface `WasmPdfClient` and implementation `WasmPdfClientImpl`:
+- `pdf_nup(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_booklet(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_scale_pages(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_auto_rotate(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_stamp(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_overlay_underlay(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_remove_signatures(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pdf_validate_signatures(file: Uint8Array, options: any): Promise<string>`
+- `sanitize(file: Uint8Array, options: any): Promise<Uint8Array>`
+- `pii_scan(file: Uint8Array, options: any): Promise<string>`
+- `pdf_to_docx(file: Uint8Array): Promise<Uint8Array>`
+
+---
+
+### 2. Category Taxonomy & UI Navigation (`apps/web/src/views/OperationsView.svelte`)
+
+#### A. Tool Definitions & Categories
+Update the `tools` array to include category metadata:
+```typescript
+export interface WebTool {
+  id: string;
+  title: string;
+  icon: string;
+  category: 'pages' | 'edit' | 'optimize' | 'security' | 'convert';
+  description: string;
+  releaseStatus: 'v0.5-core' | 'preview';
+}
+```
+Define categories:
+- `all`: "All Tools" (⭐)
+- `pages`: "Pages & Imposition" (📑) — `merge`, `split`, `rotate`, `delete`, `extract`, `reorder`, `crop`, `pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`
+- `edit`: "Edit & Stationery" (🎨) — `watermark`, `header_footer`, `page_numbers`, `pdf_stamp`, `pdf_overlay_underlay`, `flatten`, `metadata`
+- `optimize`: "Optimize" (🗜️) — `compress`, `pdf_hash`, `pdf_info`
+- `security`: "Security" (🔒) — `encrypt`, `decrypt`, `sanitize`, `pii_scan`, `pdf_validate_signatures`, `pdf_remove_signatures`
+- `convert`: "Convert" (🔁) — `images_to_pdf`, `extract_images`, `extract_text`, `render_page`, `json_to_pdf`, `pdf_to_docx`, `ocr`
+
+#### B. Category Filter Pills
+In the toolbar above the tool list, render horizontal category filter tabs:
+```svelte
+<div class="category-tabs">
+  {#each categories as cat}
+    <button
+      class="cat-tab"
+      class:active={selectedCategory === cat.id}
+      onclick={() => selectedCategory = cat.id}
+    >
+      <span>{cat.icon}</span>
+      <span>{cat.label}</span>
+      <span class="count">{getCategoryCount(cat.id)}</span>
+    </button>
+  {/each}
+</div>
+```
+Filter `displayedTools` by `selectedCategory` and the existing search text.
+
+---
+
+### 3. Tool Panels & Input Handling for New Tools
+In `OperationsView.svelte`, add interactive parameter panes for the new operations:
+
+1. **`pdf_nup`**:
+   - Primary PDF dropzone.
+   - Grid selector buttons: `2` (2x1), `4` (2x2), `9` (3x3), `16` (4x4).
+   - Ordering: `horizontal` vs `vertical`.
+   - Action: `wasmPdfClient.pdf_nup(bytes, { grid, ordering })` $\to$ download `nup_${file.name}`.
+2. **`pdf_booklet`**:
+   - Primary PDF dropzone.
+   - Page format: `a4` vs `letter`.
+   - Action: `wasmPdfClient.pdf_booklet(bytes, { page_format })` $\to$ download `booklet_${file.name}`.
+3. **`pdf_scale_pages`**:
+   - Primary PDF dropzone.
+   - Target format: `a4`, `letter`, `legal`, `a3`, or percentage slider (50% to 200%).
+   - Action: `wasmPdfClient.pdf_scale_pages(bytes, options)` $\to$ download `scaled_${file.name}`.
+4. **`pdf_auto_rotate`**:
+   - Primary PDF dropzone.
+   - Target orientation toggle: `portrait` vs `landscape`.
+   - Action: `wasmPdfClient.pdf_auto_rotate(bytes, { target_orientation })` $\to$ download `autorotated_${file.name}`.
+5. **`pdf_stamp`**:
+   - Primary PDF dropzone + Secondary Stamp Image picker (PNG/JPEG).
+   - Position picker (top-left, center, bottom-right).
+   - Action: read image as base64 or bytes $\to$ `wasmPdfClient.pdf_stamp(bytes, { image_data: b64, position })` $\to$ download.
+6. **`pdf_validate_signatures`**:
+   - Signed PDF dropzone + optional Baseline PDF dropzone.
+   - Action: `wasmPdfClient.pdf_validate_signatures(bytes, options)` $\to$ renders formatted JSON inspection report with signer, certificate validity, and baseline tamper verdict.
+7. **`pdf_remove_signatures`**:
+   - Signed PDF dropzone.
+   - Action: `wasmPdfClient.pdf_remove_signatures(bytes, {})` $\to$ download `unlocked_${file.name}`.
+
+---
+
+### 4. Build & Verification
+- Concurrency constraint: use `-j 2` for all `cargo` commands.
+- Run `pnpm --dir apps/web run build` or `pnpm --dir apps/web check` to ensure zero TypeScript/Svelte errors.
+- Ensure all styling follows modern dark mode aesthetics matching PaperPilot design guidelines.

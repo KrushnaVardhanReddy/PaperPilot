@@ -89,6 +89,50 @@ case 'set_metadata':
             case 'json_to_pdf':
                 result = WasmPdfEngine.json_to_pdf(payload.json_str);
                 break;
+            case 'pdf_nup':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_nup(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_booklet':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_booklet(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_scale_pages':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_scale_pages(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_auto_rotate':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_auto_rotate(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_stamp':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_stamp(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_overlay_underlay':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_overlay_underlay(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_remove_signatures':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_remove_signatures(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_validate_signatures':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_validate_signatures(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'sanitize':
+                // @ts-ignore
+                result = WasmPdfEngine.sanitize(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pii_scan':
+                // @ts-ignore
+                result = WasmPdfEngine.pii_scan(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_to_docx':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_to_docx(payload.file);
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

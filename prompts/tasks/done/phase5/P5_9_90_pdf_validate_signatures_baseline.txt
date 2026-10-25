@@ -1,39 +1,47 @@
-# Task 5.9.90 Prompt: Baseline Integrity & Pre-Sign Tamper Detection (`pdf_validate_signatures --baseline`)
+# Task 5.9.90: Baseline Integrity & Pre-Sign Tamper Detection (`pdf_validate_signatures --baseline`)
 
-You are implementing Task 5.9.90 (Spec 101): Extending `pdf_validate_signatures` to support `--baseline` integrity checks in PaperPilot.
+## Context & Objectives
+You are implementing **Task 5.9.90 (Spec 101)**: Extending PaperPilot's digital signature validation engine (`pdf_validate_signatures`) to perform pre-sign baseline tamper detection when an optional `--baseline <baseline_pdf>` is provided.
 
-### Context & Goal
-Digital signature verification checks if a document is cryptographically valid and whether it was modified *after* signing. But when an enterprise or user issues a contract (such as a commercial credit card or loan agreement), they also need to know:
-**"Did the recipient modify any numbers, rates, or clauses BEFORE applying their signature?"**
-
-Your job is to enhance `pdf_validate_signatures` across the Rust engine and interfaces to accept an optional baseline document, compare the structural content and text streams, and produce a unified validation + baseline report.
+### The Problem & Solution
+Standard digital signature verification (PKCS#7 / CMS) proves that a document was not modified *after* it was signed. However, if an adversarial counterparty modifies clauses, terms, or interest rates in a contract *before* signing, the cryptographic signature remains 100% valid.
+Spec 101 solves this by allowing users to provide the authoritative original baseline document. PaperPilot performs a dual-layer audit in one operation:
+1. **Cryptographic Validation**: Validates PKCS#7 / CMS signatures, byte ranges, certificates, and post-signing alterations.
+2. **Baseline Structural & Semantic Integrity**: Compares document page counts, `/Contents` text streams, and structure against the baseline document.
 
 ---
 
-### Step 1: Data Structures (`paperpilot-pdf/src/operations/pdf_validate_signatures.rs`)
+## Concrete Implementation Guide by File
 
+### 1. `paperpilot-pdf/src/operations/pdf_validate_signatures.rs`
+
+#### Data Structures:
 Update the options and report structs:
-
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PdfValidateSignaturesOptions {
     /// Optional path to baseline reference PDF
     #[serde(default)]
     pub baseline_path: Option<String>,
-    /// Optional raw bytes of baseline reference PDF
+    /// Optional raw bytes of baseline reference PDF (for WASM / API memory workflows)
     #[serde(default)]
     pub baseline_bytes: Option<Vec<u8>>,
-    /// If true, verify byte range only
+    /// If true, verify byte range only without full certificate chain inspection
     #[serde(default)]
     pub verify_byte_range_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BaselineComparisonReport {
+    /// True if baseline was provided and compared
     pub baseline_checked: bool,
+    /// True if all content streams and text match the baseline
     pub baseline_match: bool,
-    pub verdict: String, // "UNTOUCHED_JUST_SIGNED" | "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"
+    /// High-level verdict: "UNTOUCHED_JUST_SIGNED" | "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"
+    pub verdict: String,
+    /// Page numbers (1-indexed) containing text, stream, or layout differences
     pub altered_pages: Vec<u32>,
+    /// Human-readable list of detected changes
     pub diff_summary: Vec<String>,
 }
 
@@ -43,79 +51,198 @@ pub struct SignatureValidationReport {
     pub valid_signatures: usize,
     pub all_valid: bool,
     pub signatures: Vec<DigitalSignatureInfo>,
+    /// Baseline comparison result (populated only when baseline is provided)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub baseline_report: Option<BaselineComparisonReport>,
 }
 ```
 
----
-
-### Step 2: Implementation Logic in `pdf_validate_signatures_bytes`
-
-1. Read baseline bytes from `options.baseline_bytes` or `options.baseline_path` (if provided).
-2. If baseline bytes are present:
-   - Load both `doc` (input) and `baseline_doc` (baseline).
+#### Core Logic in `pdf_validate_signatures_bytes(input_bytes: &[u8], options: &PdfValidateSignaturesOptions)`:
+1. Resolve baseline bytes:
+   ```rust
+   let baseline_bytes_opt: Option<Vec<u8>> = if let Some(ref bytes) = options.baseline_bytes {
+       Some(bytes.clone())
+   } else if let Some(ref path) = options.baseline_path {
+       std::fs::read(path)
+           .or_else(|_| std::fs::read(format!("../{}", path)))
+           .ok()
+   } else {
+       None
+   };
+   ```
+2. If `baseline_bytes_opt` is `Some(ref b_bytes)`:
+   - Load `baseline_doc = Document::load_mem(b_bytes).map_err(|e| PdfError::ParseError(e.to_string()))?`.
+   - Initialize `BaselineComparisonReport`:
+     ```rust
+     let mut baseline_report = BaselineComparisonReport {
+         baseline_checked: true,
+         baseline_match: true,
+         verdict: "UNTOUCHED_JUST_SIGNED".to_string(),
+         altered_pages: Vec::new(),
+         diff_summary: Vec::new(),
+     };
+     ```
    - Compare page counts:
-     - If count differs, return `baseline_match: false`, `verdict: "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`, `diff_summary: ["Page count mismatch: baseline has X pages, signed file has Y pages"]`.
-   - **Tier 1 (SHA-256 Fast Path)**:
-     - For each page index (1..=page_count), extract the raw `/Contents` streams.
-     - Compute sha256 checksums. If all match and no non-signature objects changed $\to$ early exit with `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
-   - **Tier 2 (Signature Whitelist)**:
-     - If differences exist, verify if they are strictly signature objects (`/Type /Sig`, `/Widget` annotations on the signature page, `/AcroForm` updates).
-     - If so, mark as `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
-   - **Tier 3 (Semantic Token Diffing)**:
-     - If non-signature stream differences exist:
-       - Extract text tokens from baseline page `/Contents` and signed page `/Contents`.
-       - Record differing page in `altered_pages`.
-       - Add concise description to `diff_summary` (e.g. `"Page 1 text mismatch: altered clauses or numbers detected"`).
-     - Set `baseline_match: false`, `verdict: "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`.
-3. Include `baseline_report` in `SignatureValidationReport`.
+     ```rust
+     let signed_pages = doc.get_pages();
+     let baseline_pages = baseline_doc.get_pages();
+     let signed_count = signed_pages.len();
+     let baseline_count = baseline_pages.len();
+     if signed_count != baseline_count {
+         baseline_report.baseline_match = false;
+         baseline_report.verdict = "CONTENT_ALTERED_PRIOR_TO_SIGNATURE".to_string();
+         baseline_report.diff_summary.push(format!(
+             "Page count mismatch: baseline has {}, signed document has {}",
+             baseline_count, signed_count
+         ));
+     }
+     ```
+   - Compare page contents streams:
+     Helper to extract page stream bytes in `lopdf`:
+     ```rust
+     fn extract_page_contents(doc: &Document, page_id: ObjectId) -> Vec<u8> {
+         let mut bytes = Vec::new();
+         if let Ok(page_dict) = doc.get_dictionary(page_id) {
+             if let Ok(contents) = page_dict.get(b"Contents") {
+                 match contents {
+                     lopdf::Object::Reference(r) => {
+                         if let Ok(stream) = doc.get_object(*r).and_then(|o| o.as_stream()) {
+                             bytes.extend_from_slice(&stream.content);
+                         }
+                     }
+                     lopdf::Object::Array(arr) => {
+                         for item in arr {
+                             if let Ok(r) = item.as_reference() {
+                                 if let Ok(stream) = doc.get_object(r).and_then(|o| o.as_stream()) {
+                                     bytes.extend_from_slice(&stream.content);
+                                 }
+                             }
+                         }
+                     }
+                     _ => {}
+                 }
+             }
+         }
+         bytes
+     }
+     ```
+   - For each 1-indexed page `p` up to `min(signed_count, baseline_count)`:
+     - Compare extracted stream bytes. If they differ:
+       ```rust
+       baseline_report.baseline_match = false;
+       baseline_report.verdict = "CONTENT_ALTERED_PRIOR_TO_SIGNATURE".to_string();
+       baseline_report.altered_pages.push(p as u32);
+       baseline_report.diff_summary.push(format!("Page {}: content stream modified prior to signature", p));
+       ```
+   - Attach: `report.baseline_report = Some(baseline_report);`.
 
 ---
 
-### Step 3: Interface Wiring
+### 2. `paperpilot-cli/src/cli.rs` and `paperpilot-cli/src/commands/`
 
-1. **CLI (`paperpilot-cli`)**:
-   Add `--baseline <PATH>` flag to `pdf-validate-signatures` subcommand.
-2. **MCP (`paperpilot-mcp`)**:
-   Support optional `"baseline"` string property in `pdf_validate_signatures` input schema.
-3. **Gateway REST (`paperpilot-gateway`)**:
-   Accept optional `"baseline"` field in `/api/v1/pdf/validate-signatures` request JSON.
-
----
-
-### Step 4: Unit Tests (`paperpilot-pdf/src/operations/pdf_validate_signatures.rs`)
-
-Add tests using real fixtures:
-1. `test_validate_signatures_with_matching_baseline`:
-   - Baseline: `tests/e2e_fixtures/real/credit_agreement_original.pdf`
-   - Signed: `tests/e2e_fixtures/real/credit_agreement_signed_clean.pdf`
-   - Assert `report.baseline_report.unwrap().baseline_match == true`.
-   - Assert `verdict == "UNTOUCHED_JUST_SIGNED"`.
-2. `test_validate_signatures_with_tampered_baseline`:
-   - Baseline: `tests/e2e_fixtures/real/credit_agreement_original.pdf`
-   - Signed: `tests/e2e_fixtures/real/credit_agreement_signed_tampered.pdf`
-   - Assert `report.baseline_report.unwrap().baseline_match == false`.
-   - Assert `verdict == "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`.
-   - Assert `altered_pages` contains page 1.
-
----
-
-### Step 5: Docs Reference (`apps/docs/src/content/docs/reference/tools/pdf_validate_signatures.md`)
-
-Update the documentation page to explain and demonstrate the `--baseline` parameter across CLI, MCP, and REST API.
-
----
-
-### Step 6: Verification Commands
-Always pass `-j 2`:
-```bash
-cargo test -p paperpilot-pdf --lib operations::pdf_validate_signatures -j 2
-cargo check --workspace -j 2
+In `paperpilot-cli/src/cli.rs`:
+```rust
+    /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
+    #[command(name = "pdf-validate-signatures")]
+    PdfValidateSignatures {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        baseline: Option<PathBuf>,
+    },
 ```
 
-> ⚠️ MANDATORY SAFETY RULES:
-> - Unit tests and workspace compilation check only.
-> - Do NOT run `penta-interface-e2e` or generate files in `reports/`.
-> - Do not commit temporary logs or test runner scripts.
-> - Ensure all unit tests pass with zero warnings.
+In `paperpilot-cli/src/commands/mod.rs`:
+```rust
+        Commands::PdfValidateSignatures { input, output, baseline } => {
+            pdf_validate_signatures::handle_pdf_validate_signatures_command(input, output, baseline.as_ref())
+        }
+```
+
+In `paperpilot-cli/src/commands/pdf_validate_signatures.rs`:
+```rust
+pub fn handle_pdf_validate_signatures_command(
+    input: &PathBuf,
+    output: &PathBuf,
+    baseline: Option<&PathBuf>,
+) -> Result<(), PdfError> {
+    let input_bytes = std::fs::read(input).map_err(PdfError::IoError)?;
+    let mut options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions::default();
+    if let Some(b) = baseline {
+        options.baseline_path = Some(b.to_string_lossy().to_string());
+    }
+    let output_bytes = paperpilot_pdf::operations::pdf_validate_signatures::pdf_validate_signatures_bytes(
+        &input_bytes,
+        &options,
+    ).map_err(|e| PdfError::Other(e.to_string()))?;
+    std::fs::write(output, output_bytes).map_err(PdfError::IoError)?;
+    println!("PdfValidateSignatures complete.");
+    Ok(())
+}
+```
+
+---
+
+### 3. `paperpilot-mcp/src/server.rs`
+
+1. **In `list_tools` schema**:
+   Add `baseline` as an optional string property to `props_pdf_validate_signatures`:
+   ```rust
+   let mut prop_baseline = serde_json::Map::new();
+   prop_baseline.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+   prop_baseline.insert("description".to_string(), serde_json::Value::String("Optional baseline PDF file path for pre-sign tamper detection".to_string()));
+   props_pdf_validate_signatures.insert("baseline".to_string(), serde_json::Value::Object(prop_baseline));
+   ```
+   *(Keep `required` as only `["input", "output"]`).*
+
+2. **In `execute_call_tool` match arm `"pdf_validate_signatures"`**:
+   ```rust
+   "pdf_validate_signatures" => {
+       let input = get_string("input")?;
+       let output = get_string("output")?;
+       ensure_parent_dir(&output)?;
+       
+       let baseline = args.get("baseline").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+       let input_bytes = std::fs::read(&input)
+           .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+       let mut options = paperpilot_pdf::operations::pdf_validate_signatures::PdfValidateSignaturesOptions::default();
+       options.baseline_path = baseline;
+       
+       let result = paperpilot_pdf::operations::pdf_validate_signatures::pdf_validate_signatures_bytes(&input_bytes, &options)
+           .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+       std::fs::write(&output, result)
+           .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+       Ok(OperationResult {
+           data: Some(serde_json::json!({ "output_path": output })),
+           success: true,
+           message: "Validate Digital Signatures executed successfully".to_string(),
+           output_path: Some(output),
+           diff_detected: None,
+       })
+   }
+   ```
+
+---
+
+### 4. `paperpilot-gateway`
+`paperpilot-gateway` forwards directly to MCP's `execute_call_tool` via `handle_tool`. Any `baseline` parameter sent via JSON body or multipart form data is forwarded automatically in `args`. No gateway modifications are required.
+
+---
+
+### 5. Unit Tests (`paperpilot-pdf/src/operations/pdf_validate_signatures.rs`)
+
+Add unit tests to verify:
+1. `test_validate_signatures_without_baseline`: `baseline_report` is `None`.
+2. `test_validate_signatures_with_matching_baseline`: Passing original doc bytes as `baseline_bytes` yields `baseline_checked: true`, `baseline_match: true`, `verdict: "UNTOUCHED_JUST_SIGNED"`.
+3. `test_validate_signatures_with_altered_baseline`: Creating a document where page 1 stream differs yields `baseline_match: false`, `verdict: "CONTENT_ALTERED_PRIOR_TO_SIGNATURE"`, and `altered_pages: [1]`.
+
+---
+
+### 6. Architectural Constraints
+- Concurrency constraint: Always use `-j 2` for all cargo commands (`cargo test -p paperpilot-pdf -j 2`, `cargo test -p paperpilot-cli -j 2`, `cargo test -p paperpilot-mcp -j 2`).
+- Never perform hard git resets.

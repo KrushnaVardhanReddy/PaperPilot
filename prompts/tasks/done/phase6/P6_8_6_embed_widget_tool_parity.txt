@@ -1,0 +1,103 @@
+# Task 105A: Embed Widget Tool Parity & Categorized Embeds (`apps/embed` & `/embed-test`)
+
+## Context & Objectives
+You are implementing **Task 105A (Spec 105)**: Upgrading the PaperPilot drop-in embed widget (`apps/embed`) and its live demonstration sandbox (`apps/web/public/embed-test.html`) to support all newly completed Wave 2 operations.
+
+Developers embedding PaperPilot widgets on external websites can now embed full imposition suites (`pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`), stationery stamping (`pdf_stamp`, `pdf_overlay_underlay`), and contract forensics (`pdf_validate_signatures`).
+
+---
+
+## Detailed Implementation Tasks
+
+### 1. Tool Expansion & Categorization (`apps/embed/src/Widget.svelte`)
+1. Expand the `allTools` array in `Widget.svelte` with:
+   - `pdf_nup`: "N-Up Imposition" (category: `'pages'`, description: "Combine multiple pages per sheet (2, 4, 9, 16)")
+   - `pdf_booklet`: "Booklet Imposition" (category: `'pages'`, description: "Impose pages for fold-and-staple booklet printing")
+   - `pdf_scale_pages`: "Scale Dimensions" (category: `'pages'`, description: "Resize pages between standard formats (A4, Letter, Legal) or scale")
+   - `pdf_auto_rotate`: "Auto Upright" (category: `'pages'`, description: "Automatically detect and upright landscape or skewed pages")
+   - `pdf_stamp`: "Image Stamp" (category: `'edit'`, description: "Stamp coordinate-exact PNG/JPEG logos and badges")
+   - `pdf_overlay_underlay`: "Stationery Overlay" (category: `'edit'`, description: "Apply letterheads and stationery background/foreground")
+   - `pdf_validate_signatures`: "Validate Signatures" (category: `'security'`, description: "Verify digital signatures and baseline tamper detection")
+   - `pdf_remove_signatures`: "Strip Signatures" (category: `'security'`, description: "Remove signature fields and cryptographic locks")
+
+2. Support `category` filtering prop:
+   - Accept `category?: string` (e.g. `data-category="pages"` or `data-category="security"`).
+   - If `category` is supplied, filter `filteredTools` to only include tools matching that category unless explicit `tools` list is given.
+
+3. Parameter Inputs inside Widget:
+   - When `pdf_nup` is selected, show 2/4/9/16 grid selection buttons.
+   - When `pdf_scale_pages` is selected, show format dropdown (A4, Letter, Legal, A3).
+   - When `pdf_auto_rotate` is selected, show orientation toggle (Portrait, Landscape).
+
+---
+
+### 2. Pipeline Execution Expansion (`apps/embed/src/api.ts`)
+In `runPipeline`:
+1. Add handling for `pdf_nup`, `pdf_booklet`, `pdf_scale_pages`, `pdf_auto_rotate`, `pdf_stamp`:
+   - Support step parameters (e.g. `grid: 2`, `format: 'a4'`, `target_orientation: 'portrait'`).
+2. Keep client execution 100% in-browser.
+
+---
+
+### 3. Update Live Embed Test Sandbox (`apps/web/public/embed-test.html`)
+Update `apps/web/public/embed-test.html` to showcase:
+1. **Demo 1: Document Imposition & Layout Suite**:
+   ```html
+   <div class="card">
+     <h2>1. Document Imposition & Layout Suite (In-Browser WASM)</h2>
+     <p style="margin-bottom: 16px; font-size: 0.9rem;">2-Up/4-Up imposition, booklet synthesis, and dimensional scaling.</p>
+     <div
+       id="imposition-portal"
+       data-theme="dark"
+       data-tools="pdf_nup,pdf_booklet,pdf_scale_pages,pdf_auto_rotate"
+       data-brand-color="#6366F1"
+     ></div>
+   </div>
+   ```
+2. **Demo 2: Contract Forensics & Signature Verification**:
+   ```html
+   <div class="card">
+     <h2>2. Digital Signature & Forensic Integrity Audit</h2>
+     <p style="margin-bottom: 16px; font-size: 0.9rem;">Verify PKCS#7 / CMS signatures, certificate validity, and byte-range locks.</p>
+     <div
+       id="signature-portal"
+       data-theme="dark"
+       data-tools="pdf_validate_signatures,pdf_remove_signatures"
+       data-brand-color="#10B981"
+     ></div>
+   </div>
+   ```
+3. **Demo 3: Classic Page Editing & Optimization**:
+   ```html
+   <div class="card">
+     <h2>3. Page Editing & Compression</h2>
+     <div
+       id="paperpilot-portal"
+       data-theme="dark"
+       data-tools="merge,split,rotate,watermark,compress"
+       data-brand-color="#3B82F6"
+     ></div>
+   </div>
+   ```
+4. **Demo 4: Automated Multi-Step Pipeline**:
+   ```html
+   <div class="card">
+     <h2>4. Automated Multi-Step Pipeline</h2>
+     <p style="margin-bottom: 16px; font-size: 0.9rem;">Auto-execute: <code>Auto Upright ➔ Scale to A4 ➔ Imposition 2-Up ➔ Compress</code>.</p>
+     <div
+       data-paperpilot-widget
+       data-theme="dark"
+       data-brand-color="#8B5CF6"
+       data-pipeline='[{"tool":"pdf_auto_rotate"},{"tool":"pdf_scale_pages","target":"a4"},{"tool":"pdf_nup","grid":2},{"tool":"compress"}]'
+       data-allow-customization="true"
+       data-auto-execute="false"
+     ></div>
+   </div>
+   ```
+
+---
+
+### 4. Build & Verification
+- Concurrency constraint: use `-j 2` for all `cargo` commands.
+- Run `pnpm --dir apps/embed run build` to verify widget bundling.
+- Run `pnpm --dir apps/web run build` to ensure the web app and `/embed-test` bundle cleanly.
