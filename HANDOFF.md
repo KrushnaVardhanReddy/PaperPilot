@@ -35,7 +35,7 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 |---|:---:|---|---|---|:---:|
 | **Task 108A** | `[Spec 108]` | PDF Attachments & Portfolio Engine (`pdf_attachments`) | `main` | [Session 17693334025127438627](https://jules.google.com/session/17693334025127438627) | ✅ Completed & Merged |
 | **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | [Session 17682577633163496827](https://jules.google.com/session/17682577633163496827) | ✅ Completed & Merged |
-| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | [Session 11055015021161649810](https://jules.google.com/session/11055015021161649810) | 🚀 Active In-Flight |
+| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | [Session 11055015021161649810](https://jules.google.com/session/11055015021161649810) | ✅ Completed & Merged (PR #259) |
 | **Task 109A** | `[Spec 109]` | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) | `main` | [Session 11658717195560231927](https://jules.google.com/session/11658717195560231927) | ✅ Completed & Merged (PR #258) |
 | **Task 110A** | `[Spec 110]` | Wave 4 (Office) Unmocked E2E & Real Testing Suite | `main` | [Session 2052459974142158496](https://jules.google.com/session/2052459974142158496) | ✅ Completed & Merged (PR #256) |
 | **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | Planned after Task 84B | ⏳ Queued |
