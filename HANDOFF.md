@@ -33,7 +33,7 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
 | **Task 108A** | `[Spec 108]` | PDF Attachments & Portfolio Engine (`pdf_attachments`) | `main` | [Session 17693334025127438627](https://jules.google.com/session/17693334025127438627) | 🚀 Active In-Flight |
-| **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | Prompt ready at `prompts/tasks/phase4/P4_1_8_slm_dataset_generator.txt` | 📋 Ready for Dispatch |
+| **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | [Session 17682577633163496827](https://jules.google.com/session/17682577633163496827) | 🚀 Active In-Flight |
 | **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | Planned after Task 84A | ⏳ Queued |
 | **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | Planned after Task 84B | ⏳ Queued |
 
