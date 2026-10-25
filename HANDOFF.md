@@ -39,6 +39,8 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 | **Task 109A** | `[Spec 109]` | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) | `main` | [Session 11658717195560231927](https://jules.google.com/session/11658717195560231927) | ✅ Completed & Merged (PR #258) |
 | **Task 110A** | `[Spec 110]` | Wave 4 (Office) Unmocked E2E & Real Testing Suite | `main` | [Session 2052459974142158496](https://jules.google.com/session/2052459974142158496) | ✅ Completed & Merged (PR #256) |
 | **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | [Session 11707325928057949102](https://jules.google.com/session/11707325928057949102) | 🚀 Active In-Flight |
+| **Task 111A** | `[Spec 111]` | Modify PDF Permissions (`pdf_change_permissions`) | `main` | [Prompt](file:///home/krushna/Project/PaperPilot/prompts/tasks/phase5/P5_3_15_pdf_change_permissions.txt) | 🚀 Ready for Dispatch |
+| **Task 112A** | `[Spec 112]` | Scanned Dual-Page Book Center Split (`pdf_split_scanned_book`) | `main` | [Prompt](file:///home/krushna/Project/PaperPilot/prompts/tasks/phase5/P5_3_16_pdf_split_scanned_book.txt) | 🚀 Ready for Dispatch |
 
 ---
 
