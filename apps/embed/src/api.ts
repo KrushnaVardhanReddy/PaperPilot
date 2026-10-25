@@ -28,6 +28,7 @@ export interface EmbedOptions extends ThemeConfig {
   category?: string;
   hideBadge?: boolean;
   pipeline?: string | PipelineStep[];
+  layout?: 'studio' | 'compact';
 }
 
 export interface EmbedInstance {
@@ -278,6 +279,7 @@ export function mount(selector: string | HTMLElement, options: EmbedOptions = {}
       logoUrl: options.logoUrl,
       category: options.category,
       pipeline: typeof options.pipeline === 'object' ? JSON.stringify(options.pipeline) : options.pipeline,
+      layout: options.layout,
     },
   });
 

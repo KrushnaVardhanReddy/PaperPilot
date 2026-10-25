@@ -48,7 +48,7 @@ test.describe('PaperPilot Embedded Widget', () => {
     const toolCount = await portal.evaluate((el) => {
         const shadowRoot = el.shadowRoot;
         if (!shadowRoot) return 0;
-        return shadowRoot.querySelectorAll('.pp-tool-card').length;
+        return shadowRoot.querySelectorAll('.pp-tool-list-item').length || shadowRoot.querySelectorAll('.pp-tool-card').length;
     });
 
     expect(toolCount).toBe(2);
@@ -56,7 +56,7 @@ test.describe('PaperPilot Embedded Widget', () => {
     const toolNames = await portal.evaluate((el) => {
         const shadowRoot = el.shadowRoot;
         if (!shadowRoot) return [];
-        return Array.from(shadowRoot.querySelectorAll('.pp-tool-card')).map(node => node.textContent?.trim());
+        return Array.from(shadowRoot.querySelectorAll('.pp-tool-list-item .tool-list-name, .pp-tool-card')).map(node => node.textContent?.trim());
     });
 
     expect(toolNames).toContain('Merge PDFs');
@@ -69,7 +69,7 @@ test.describe('PaperPilot Embedded Widget', () => {
     const hasBadge = await portal.evaluate((el) => {
         const shadowRoot = el.shadowRoot;
         if (!shadowRoot) return false;
-        return !!shadowRoot.querySelector('.pp-badge');
+        return !!shadowRoot.querySelector('.pp-badge') || !!shadowRoot.querySelector('.pp-badge-small');
     });
 
     expect(hasBadge).toBe(true);
@@ -81,7 +81,7 @@ test.describe('PaperPilot Embedded Widget', () => {
     const hasBadge = await noBadgePortal.evaluate((el) => {
         const shadowRoot = el.shadowRoot;
         if (!shadowRoot) return true; // Fail safe
-        return !!shadowRoot.querySelector('.pp-badge');
+        return !!shadowRoot.querySelector('.pp-badge') || !!shadowRoot.querySelector('.pp-badge-small');
     });
 
     expect(hasBadge).toBe(false);
@@ -108,7 +108,7 @@ test.describe('PaperPilot Embedded Widget', () => {
     const toolNames = await manualPortal.evaluate((el) => {
         const shadowRoot = el.shadowRoot;
         if (!shadowRoot) return [];
-        return Array.from(shadowRoot.querySelectorAll('.pp-tool-card')).map(node => node.textContent?.trim());
+        return Array.from(shadowRoot.querySelectorAll('.pp-tool-list-item .tool-list-name, .pp-tool-card')).map(node => node.textContent?.trim());
     });
     expect(toolNames).toEqual(['Split PDF']);
 
