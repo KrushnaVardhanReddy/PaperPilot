@@ -393,7 +393,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             file_name,
             file,
         } => pdf_attachments::handle_pdf_attachments_command(
-            &input, &output, &action, &file_name, &file,
+            input, output, action, file_name, file,
         ),
         Commands::PdfTimestamp { input, output } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
