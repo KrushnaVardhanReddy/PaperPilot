@@ -1,0 +1,60 @@
+# Task 4.1.10 Prompt: On-Device Document SLM Dataset Generator — Wave 2 (Organization & Layout Tools)
+
+You are implementing Task 4.1.10 (Spec 084 / Task 84B): Wave 2 Organization & Layout Tools in `tools/slm-training/`.
+Follow this systematic workflow:
+
+---
+
+### Goal
+Expand the existing synthetic dataset generator in `tools/slm-training/` by adding the next **15 organization, layout, and document structure tools** to `tool_registry.py` and `templates.py`.
+
+---
+
+### Step 1: Cross-Reference Codebase & Schemas
+Inspect the actual implementations and schemas in:
+- `paperpilot-mcp/src/server.rs`
+- `docs/TRI_INTERFACE_E2E_AND_DOCS.md`
+
+Ensure parameter names, types, and defaults match exactly.
+
+---
+
+### Step 2: Expand `tool_registry.py`
+Register the 15 Wave 2 tools in `tools/slm-training/tool_registry.py`:
+1. `pdf_nup`: N-up page grid (e.g. `nup`: 2, 4, 9).
+2. `pdf_booklet`: Saddle-stitch booklet imposition.
+3. `pdf_scale_pages`: Scale page dimensions (`scale_factor`, `target_size`).
+4. `pdf_crop`: Crop margins (`top`, `bottom`, `left`, `right`).
+5. `pdf_reorder`: Reorder pages (`order`: e.g. "1,3,2,4").
+6. `pdf_delete_pages`: Remove pages (`pages`).
+7. `pdf_reverse`: Reverse page sequence.
+8. `pdf_stamp`: Apply stamp image/text (`stamp_text`, `position`).
+9. `pdf_overlay_underlay`: Overlay or underlay document (`overlay_path`, `is_underlay`).
+10. `pdf_stitch_canvas`: Continuous canvas stitch (`direction`: "vertical" / "horizontal", `spacing`).
+11. `pdf_attachments`: Portfolio file attachments (`action`: "list"/"extract"/"add", `file_name`).
+12. `pdf_validate_signatures`: Digital signature audit (`baseline`).
+13. `pdf_remove_signatures`: Strip signatures.
+14. `pdf_flatten_annotations`: Flatten annotations and form fields.
+15. `pdf_header_footer`: Add headers and footers (`header_text`, `footer_text`).
+
+---
+
+### Step 3: Expand `templates.py`
+Add diverse templates for these 15 tools across the 5 linguistic styles:
+1. **Direct Imperatives**: "Reorder pages to 4, 1, 2, 3", "Create a 2-up booklet layout for printing".
+2. **Conversational / Casual**: "hey flip the page order backwards", "take off the signatures so i can edit it".
+3. **Domain Legal & Finance**: "Extract all embedded portfolio exhibits and CSV attachments", "Perform cryptographic audit against baseline pre-sign digest".
+4. **Typo / Noise**: "stich canvas horiznotal", "reverce document pages".
+5. **Compound Workflows**: "Crop margins, scale to Letter, and stitch vertically into a single canvas".
+
+---
+
+### Step 4: Verification & Testing
+Run:
+```bash
+python3 -m pytest tools/slm-training/test_dataset_generator.py -v
+python3 tools/slm-training/generate_dataset.py --count 100 --output-dir /tmp/test_dataset --sample 3
+```
+Confirm:
+1. All pytest tests pass cleanly and verify that all 30 tools (Wave 1 + Wave 2) are represented.
+2. The generated `/tmp/test_dataset/train.jsonl` contains valid, uncorrupted JSON on every line.

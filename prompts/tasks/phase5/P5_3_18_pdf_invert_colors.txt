@@ -1,0 +1,86 @@
+# Task 5.3.18 Prompt: Implement PDF Invert Colors & Dark Mode (`pdf_invert_colors`)
+
+You are implementing Task 5.3.18 (Spec 109 / Task 109A): PDF Color Inversion & High-Contrast Dark Mode in PaperPilot.
+Follow this systematic workflow:
+
+---
+
+### Goal
+Implement a pure-Rust vector stream color inversion and dark mode engine (`pdf_invert_colors`) using `lopdf`.
+Preserve 100% of selectable vector text and embedded fonts (do not rasterize to images!).
+
+---
+
+### Step 1: Core Engine in `paperpilot-pdf`
+Create `paperpilot-pdf/src/operations/pdf_invert_colors.rs`:
+- Define:
+  ```rust
+  #[derive(Debug, Clone, Serialize, Deserialize)]
+  #[serde(rename_all = "snake_case")]
+  pub enum InvertMode {
+      DarkMode,
+      TrueInvert,
+      HighContrast,
+      Sepia,
+  }
+
+  #[derive(Debug, Clone, Serialize, Deserialize)]
+  pub struct InvertColorsOptions {
+      pub mode: Option<InvertMode>,
+      pub pages: Option<String>,
+  }
+  ```
+- Implement `pub fn invert_pdf_colors(doc: &mut lopdf::Document, options: &InvertColorsOptions) -> Result<(), PaperPilotError>`.
+- For each target page:
+  1. Retrieve `/MediaBox` rectangle `[x, y, w, h]`.
+  2. Inject background fill rectangle (e.g., `#181818` for DarkMode) at the beginning of the page `/Contents` stream.
+  3. Scan the `/Contents` stream bytes for color operands (`rg`, `RG`, `g`, `G`, `k`, `K`) or invert text fill from black to white.
+  4. Write unit tests:
+     - `test_invert_pdf_colors_dark_mode`
+     - `test_invert_pdf_colors_true_invert`
+     - `test_invert_pdf_colors_page_subset`
+- Export from `paperpilot-pdf/src/operations/mod.rs` and `paperpilot-pdf/src/lib.rs`.
+
+---
+
+### Step 2: CLI Command in `paperpilot-cli`
+In `paperpilot-cli/src/cli.rs`:
+- Add `InvertColors` command:
+  ```rust
+  #[command(name = "invert-colors")]
+  InvertColors {
+      #[arg(long)]
+      input: PathBuf,
+      #[arg(long)]
+      output: PathBuf,
+      #[arg(long)]
+      mode: Option<String>,
+      #[arg(long)]
+      pages: Option<String>,
+  },
+  ```
+- Wire handler in `paperpilot-cli/src/commands/mod.rs`.
+
+---
+
+### Step 3: MCP Tool in `paperpilot-mcp`
+In `paperpilot-mcp/src/server.rs`:
+- Add `pdf_invert_colors` tool schema to `list_tools`.
+- Handle `pdf_invert_colors` in `call_tool`.
+
+---
+
+### Step 4: REST Gateway in `paperpilot-gateway`
+- Add handler in `paperpilot-gateway/src/handlers.rs`.
+- Add route `.route("/api/v1/pdf/invert-colors", post(handlers::pdf_invert_colors))` in `paperpilot-gateway/src/server.rs`.
+
+---
+
+### Step 5: Verification & Testing
+Run:
+```bash
+cargo check --workspace -j 2
+cargo test -p paperpilot-pdf --lib operations::pdf_invert_colors -j 2
+cargo test -p paperpilot-cli -j 2
+```
+Ensure all tests compile cleanly with zero errors.

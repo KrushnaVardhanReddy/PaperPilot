@@ -25,7 +25,8 @@
   - **PR #245 (`pdf_auto_rotate` - Spec 102 / Task 5.3.10)**: Pure-Rust automated page uprighting engine, validated with 3/3 unit tests and 10/10 unmocked Penta-Interface E2E tests (`reports/PENTA_INTERFACE_E2E_PDF_AUTO_ROTATE_REPORT.md`).
   - **PR #246 (`paperpilot-storage` core - Spec 103 / Task 103A)**: Embedded Turso / libSQL storage engine with connection pooling and automated schema migrations (`jobs`, `webhooks`, `document_chunks`, `audit_logs`).
 - **Active Scaffolding**:
-  - **Task 84B (Wave 2: Organization & Layout Tools - Task 4.1.10)**: Scheduled for prompt preparation and dispatch to Jules.
+  - **Task 84B (Wave 2: Organization & Layout Tools - Spec 084 / Task 4.1.10)**: Spec, task definition, and dispatch prompt ready at `prompts/tasks/phase4/P4_1_10_slm_dataset_generator_wave2.txt`.
+  - **Task 109A (Invert PDF Colors & Dark Mode - Spec 109 / Task 5.3.18)**: Spec, task definition, and dispatch prompt ready at `prompts/tasks/phase5/P5_3_18_pdf_invert_colors.txt`.
   - **Task 84C (Wave 3: Conversions, Forensics & Negative Guards - Task 4.1.11)**: Scheduled to complete the dataset catalog.
 - **Workspace Health**: All crates (`paperpilot-storage`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, `paperpilot-wasm`, `desktop`) compiling cleanly with zero errors.
 
@@ -36,7 +37,8 @@ The following sessions are actively executing in the cloud on isolated, non-conf
 |---|:---:|---|---|---|:---:|
 | **Task 108A** | `[Spec 108]` | PDF Attachments & Portfolio Engine (`pdf_attachments`) | `main` | [Session 17693334025127438627](https://jules.google.com/session/17693334025127438627) | ✅ Completed & Merged |
 | **Task 84A** | `[Spec 084]` | Synthetic Dataset Generator Engine (Wave 1: Core 15 Tools) | `main` | [Session 17682577633163496827](https://jules.google.com/session/17682577633163496827) | ✅ Completed & Merged |
-| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | Prompt preparation | ⏳ Queued |
+| **Task 84B** | `[Spec 084]` | Dataset Generator Wave 2: Organization & Layout Tools | `main` | Prompt ready at `prompts/tasks/phase4/P4_1_10_slm_dataset_generator_wave2.txt` | 📋 Ready for Dispatch |
+| **Task 109A** | `[Spec 109]` | Invert PDF Colors & Dark Mode (`pdf_invert_colors`) | `main` | Prompt ready at `prompts/tasks/phase5/P5_3_18_pdf_invert_colors.txt` | 📋 Ready for Dispatch |
 | **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | Planned after Task 84B | ⏳ Queued |
 
 ---
