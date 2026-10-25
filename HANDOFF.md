@@ -2,63 +2,40 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 25, 2026 (Evening EDT)  
+> **Date of Last Update:** October 25, 2026 (Night EDT)  
 > **Active Target:** Wave 3 & 4 Core Operations + Web/SLM Parity + Continuous Tooling (75+ Tools Total)
 
 ---
 
 ## 🧭 Executive Context & Active In-Flight Sessions
 
-### 1. Active Status Overview
-- **Completed & Merged in this Session**:
-  - **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**: Built responsive `<UseCasesShowcase />` featuring 6 personas (Legal, Healthcare/HIPAA, Finance, Academic, Print, Developers) with problem/solution descriptions and deep-links to WASM tools and dev snippets.
-  - **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**: Expanded `tools/slm-training` to 45 tools and 10% negative guardrails for ChatML finetuning, 6/6 tests passing.
-  - **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**: Built `<ShareModal />` with 1-click URL copy, native `navigator.share`, and verified static SVG asset (`apps/web/public/qr_code.svg`).
-  - **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**: Built `<DownloadBadge />` with 15-minute `sessionStorage` caching, summing releases assets dynamically. Configured behind feature flag `ENABLE_DOWNLOAD_COUNT_BADGE = true` with auto-threshold `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` in `apps/web/src/constants.ts`.
-  - **Task 110A (Wave 4 Office Modernization Real E2E Tests `[Spec 110]`, PR #256)**: Merged unmocked tests in `paperpilot-mcp/tests/wave4_mcp_tests.rs` and documented in `wiki/33-Wave-4-Office-Penta-Testing.md`.
-  - **Task 109A (Invert PDF Colors & Dark Mode `[Spec 109]`, PR #258)**: Merged pure-Rust color inversion engine (`pdf_invert_colors`) across all 5 surfaces.
-  - **Task 84B (Wave 2 SLM Dataset Generator `[Spec 084]`, PR #259)**: Expanded SLM generator to 30 layout and organization tools.
-  - **Task 107A (Continuous Canvas Stitching `[Spec 107]`, PR #257)**: Merged continuous vertical/horizontal canvas stitching engine (`pdf_stitch_canvas`) across all surfaces.
-  - **Task 108A (PDF Portfolio Attachments Engine `[Spec 108]`)**: Merged pure-Rust ISO 32000-1 `/EmbeddedFiles` Name Tree engine (`pdf_attachments`).
-  - **SEO & Schema.org Enhancement**: Injected JSON-LD microdata (`SoftwareApplication`, `ItemList`) and OpenGraph/Twitter Card metadata into `apps/web/index.html`.
-  - **Competitive Landscape Audit & Phase 5.3 Gap Backlog**: Added 5 competitive operations (`docx_to_pdf`, `epub_to_pdf`, `pdf_merge_alternate`, `pdf_split_by_outline`, `pdf_posterize`) to `PHASES.md` and `ROADMAP.md`.
-- **Workspace Health**: All crates (`paperpilot-storage`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, `paperpilot-wasm`, `desktop`, `web`) compiling cleanly with zero errors.
-
-### 2. Dispatched In-Flight Jules Cloud Sessions (Zero-Conflict Fast Track)
+### 1. Active In-Flight Jules Cloud Sessions (Zero-Conflict Fast Track)
 The following sessions are actively executing in the cloud on isolated, non-conflicting branches from `main`:
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 84C** | `[Spec 084]` | Dataset Generator Wave 3: Conversions, Forensics & Guards | `main` | [Session 11707325928057949102](https://jules.google.com/session/11707325928057949102) | ✅ Completed & Merged (PR #260) |
 | **Task 111A** | `[Spec 111]` | Modify PDF Permissions (`pdf_change_permissions`) | `main` | [Session 8073581921523239798](https://jules.google.com/session/8073581921523239798) | 🚀 Active In-Flight |
 | **Task 112A** | `[Spec 112]` | Scanned Dual-Page Book Center Split (`pdf_split_scanned_book`) | `main` | [Session 2005125894355067826](https://jules.google.com/session/2005125894355067826) | 🚀 Active In-Flight |
 
 ---
 
-## 🏆 Recently Merged Milestones
+## 🏆 Current Session Highlights (All Pushed to `origin/main`)
 
-1. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
-   - Expanded `tools/slm-training/tool_registry.py` and `templates.py` to **45 tools**.
-   - Added 10% negative guardrail refusal prompts for out-of-scope/safety queries.
-   - 6/6 tests passing in pytest (`test_dataset_generator.py`).
+1. **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**:
+   - Added responsive `<UseCasesShowcase />` (`apps/web/src/components/UseCasesShowcase.svelte`) directly under hero playground.
+   - 6 workflow personas: Legal/Compliance, Healthcare/HIPAA, Finance/Operations, Academic/Research, Print/Prepress, Developers/AI Agents.
+   - Interactive deep-links: Click CTA to auto-select tool via `window.dispatchEvent('select-tool')` and smooth scroll to playground.
+   - Pure Svelte 5 runes (`$state`, `$derived`), zero NPM dependencies, dark glassmorphism styling.
 
-2. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
-   - Added `<ShareModal />` in web header.
-   - Clean, verified SVG QR code asset (`apps/web/public/qr_code.svg`) for instant mobile handoff.
-   - 1-click clipboard copy + native `navigator.share` fallback.
+2. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
+   - Built `<DownloadBadge />` with 15-minute `sessionStorage` caching, querying releases assets dynamically.
+   - Configured behind feature flag `ENABLE_DOWNLOAD_COUNT_BADGE = true` with auto-threshold `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` in `apps/web/src/constants.ts`.
 
-3. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
-   - Added `<DownloadBadge />` in `apps/web/src/components/DownloadBadge.svelte`.
-   - Aggregates live asset downloads from GitHub Releases API with 15-minute `sessionStorage` caching.
-   - Guarded by `ENABLE_DOWNLOAD_COUNT_BADGE = true` and `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` to prevent negative social proof before reaching 1,000 downloads.
+3. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
+   - Built `<ShareModal />` with 1-click URL copy, native `navigator.share`, and verified static SVG asset (`apps/web/public/qr_code.svg`).
 
-4. **Task 109A (Invert PDF Colors / Dark Mode `[Spec 109]`, PR #258)**:
-   - Pure-Rust `/ExtGState` `Difference` inversion and text luminance transformation.
-   - Penta-interface parity across Core, CLI, MCP, Gateway, and WASM.
-
-5. **Task 110A (Wave 4 Office Penta Testing Suite `[Spec 110]`, PR #256)**:
-   - Real, unmocked tests covering `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`.
-   - Magic byte verification (`PK\x03\x04`, `\xD0\xCF\x11\xE0`).
+4. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
+   - Expanded `tools/slm-training` to 45 tools and 10% negative guardrails for ChatML finetuning, 6/6 tests passing.
 
 ---
 
