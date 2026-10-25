@@ -27,6 +27,6 @@ export const getToolsHandbookUrl = (): string => {
 };
 
 // Feature Flags
-// Set ENABLE_DOWNLOAD_COUNT_BADGE to true once total releases downloads cross target threshold (e.g. 50+ or 500+)
-export const ENABLE_DOWNLOAD_COUNT_BADGE = false;
-export const MIN_DOWNLOAD_COUNT_THRESHOLD = 50;
+// Automatically displays the badge once total releases downloads reach 1,000+
+export const ENABLE_DOWNLOAD_COUNT_BADGE = true;
+export const MIN_DOWNLOAD_COUNT_THRESHOLD = 1000;
