@@ -1,0 +1,93 @@
+# Task: Wave 4 (Office Modernization & Spreadsheets) Unmocked E2E & Real Testing Suite
+
+Hey Jules! We have established real tests for Wave 1 and Wave 2 (refer to `paperpilot-mcp/tests/wave2_mcp_tests.rs` and `wiki/09-Wave-2-Penta-Testing.md`). Now, we need the exact same rigorous, unmocked test coverage and documentation for **Wave 4 (`v0.8.0`): Office Modernization & Spreadsheets**.
+
+---
+
+### Reference Implementation to Follow
+Examine how Wave 2 tests were implemented:
+- Read `paperpilot-mcp/tests/wave2_mcp_tests.rs` as the reference pattern for MCP execution tests.
+- Read `wiki/09-Wave-2-Penta-Testing.md` as the reference pattern for tester documentation.
+- Existing real fixtures are available at:
+  - `fixtures/Get_Started_With_Smallpdf.pdf`
+  - `tests/e2e_fixtures/real/test.xlsx`
+  - `tests/e2e_fixtures/real/single_page.pdf`
+
+---
+
+### Step 1: Implement `paperpilot-mcp/tests/wave4_mcp_tests.rs`
+Create `paperpilot-mcp/tests/wave4_mcp_tests.rs`:
+- Use the exact same `call_tool` harness as `wave2_mcp_tests.rs`:
+  ```rust
+  use paperpilot_mcp::server::PaperPilotMcpServer;
+  use rmcp::model::{CallToolRequestParams, ContentBlock};
+  use serde_json::json;
+  use std::fs;
+  use tempfile::tempdir;
+
+  fn call_tool(name: &str, args: serde_json::Value) -> serde_json::Value {
+      let mut params = CallToolRequestParams::default();
+      params.name = name.to_string().into();
+      if let serde_json::Value::Object(map) = args {
+          params.arguments = Some(map);
+      }
+      let res = PaperPilotMcpServer::execute_call_tool(params).expect("MCP tool execution failed");
+      if let rmcp::model::CallToolResponse::Complete(result) = res
+          && let Some(ContentBlock::Text(text_content)) = result.content.first()
+      {
+          return serde_json::from_str(&text_content.text).expect("Valid JSON response");
+      }
+      panic!("Unexpected response format");
+  }
+  ```
+
+- Test all 6 Wave 4 operations:
+  1. **`pdf_to_docx`**: Convert `fixtures/Get_Started_With_Smallpdf.pdf` to `output.docx`.
+     - Assert `res["success"] == true`.
+     - Assert `output.docx` exists and length > 0.
+     - Assert magic bytes start with `[0x50, 0x4B]` (`PK` ZIP container).
+  2. **`pdf_to_xlsx`**: Convert `fixtures/Get_Started_With_Smallpdf.pdf` to `output.xlsx`.
+     - Assert `res["success"] == true`.
+     - Assert `output.xlsx` exists and length > 0.
+     - Assert magic bytes start with `[0x50, 0x4B]`.
+  3. **`pdf_to_pptx`**: Convert `fixtures/Get_Started_With_Smallpdf.pdf` to `output.pptx`.
+     - Assert `res["success"] == true`.
+     - Assert `output.pptx` exists and length > 0.
+     - Assert magic bytes start with `[0x50, 0x4B]`.
+  4. **`office_to_markdown`**: Convert `tests/e2e_fixtures/real/test.xlsx` to `output.md`.
+     - Assert `res["success"] == true`.
+     - Assert `output.md` exists and contains Markdown table delimiters (`|` or `---`).
+  5. **`office_extract_text`**: Extract text from `tests/e2e_fixtures/real/test.xlsx`.
+     - Assert `res["success"] == true`.
+     - Assert output text is non-empty.
+  6. **`office_modernize_legacy`**: Modernize `tests/e2e_fixtures/real/test.xlsx` to `output_modern.xlsx`.
+     - Assert `res["success"] == true`.
+     - Assert output exists and is a valid ZIP package.
+
+---
+
+### Step 2: Implement `wiki/33-Wave-4-Office-Penta-Testing.md`
+Create `wiki/33-Wave-4-Office-Penta-Testing.md` following `wiki/09-Wave-2-Penta-Testing.md`:
+- Detail the 6 Wave 4 tools:
+  - `pdf_to_docx`
+  - `pdf_to_xlsx`
+  - `pdf_to_pptx`
+  - `office_to_markdown`
+  - `office_extract_text`
+  - `office_modernize_legacy`
+- Provide exact copy-pasteable commands for:
+  - **CLI Commands** (e.g. `paperpilot convert --format docx ...`, `paperpilot office to-markdown ...`)
+  - **MCP Call Payloads**
+  - **REST API `curl` Commands**
+- Document verification checks:
+  - Valid ZIP OpenXML header (`PK\x03\x04`).
+  - Markdown table structural integrity.
+
+---
+
+### Step 3: Verification
+Run:
+```bash
+cargo test -p paperpilot-mcp --test wave4_mcp_tests -j 2
+```
+Ensure all 6 tool assertions pass cleanly and output sizes and metrics are printed with `✓`.
