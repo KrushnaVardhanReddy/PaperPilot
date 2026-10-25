@@ -61,7 +61,11 @@ fn test_wave4_tools_mcp_execution() {
     let docx_meta = fs::metadata(&docx_out).unwrap();
     assert!(docx_meta.len() > 0, "docx output length > 0");
     check_zip_magic(&docx_out);
-    println!("✓ pdf_to_docx output: {} ({} bytes)", docx_res["message"], docx_meta.len());
+    println!(
+        "✓ pdf_to_docx output: {} ({} bytes)",
+        docx_res["message"],
+        docx_meta.len()
+    );
 
     // 2. pdf_to_xlsx
     let xlsx_out = dir.path().join("output.xlsx").to_string_lossy().to_string();
@@ -77,7 +81,11 @@ fn test_wave4_tools_mcp_execution() {
     let xlsx_meta = fs::metadata(&xlsx_out).unwrap();
     assert!(xlsx_meta.len() > 0, "xlsx output length > 0");
     check_zip_magic(&xlsx_out);
-    println!("✓ pdf_to_xlsx output: {} ({} bytes)", xlsx_res["message"], xlsx_meta.len());
+    println!(
+        "✓ pdf_to_xlsx output: {} ({} bytes)",
+        xlsx_res["message"],
+        xlsx_meta.len()
+    );
 
     // 3. pdf_to_pptx
     let pptx_out = dir.path().join("output.pptx").to_string_lossy().to_string();
@@ -93,7 +101,11 @@ fn test_wave4_tools_mcp_execution() {
     let pptx_meta = fs::metadata(&pptx_out).unwrap();
     assert!(pptx_meta.len() > 0, "pptx output length > 0");
     check_zip_magic(&pptx_out);
-    println!("✓ pdf_to_pptx output: {} ({} bytes)", pptx_res["message"], pptx_meta.len());
+    println!(
+        "✓ pdf_to_pptx output: {} ({} bytes)",
+        pptx_res["message"],
+        pptx_meta.len()
+    );
 
     // 4. office_to_markdown
     let md_out = dir.path().join("output.md").to_string_lossy().to_string();
@@ -109,8 +121,15 @@ fn test_wave4_tools_mcp_execution() {
     let md_meta = fs::metadata(&md_out).unwrap();
     assert!(md_meta.len() > 0, "md output length > 0");
     let md_contents = fs::read_to_string(&md_out).unwrap();
-    assert!(md_contents.contains('|') || md_contents.contains("---"), "Markdown output should contain table delimiters");
-    println!("✓ office_to_markdown output: {} ({} bytes)", md_res["message"], md_meta.len());
+    assert!(
+        md_contents.contains('|') || md_contents.contains("---"),
+        "Markdown output should contain table delimiters"
+    );
+    println!(
+        "✓ office_to_markdown output: {} ({} bytes)",
+        md_res["message"],
+        md_meta.len()
+    );
 
     // 5. office_extract_text
     let txt_out = dir.path().join("output.txt").to_string_lossy().to_string();
@@ -121,16 +140,30 @@ fn test_wave4_tools_mcp_execution() {
             "output": txt_out
         }),
     );
-    assert_eq!(txt_res["success"], true, "office_extract_text should succeed");
+    assert_eq!(
+        txt_res["success"], true,
+        "office_extract_text should succeed"
+    );
     assert!(fs::metadata(&txt_out).is_ok(), "txt output exists");
     let txt_meta = fs::metadata(&txt_out).unwrap();
     assert!(txt_meta.len() > 0, "txt output length > 0");
     let txt_contents = fs::read_to_string(&txt_out).unwrap();
-    assert!(!txt_contents.is_empty(), "Extracted text should not be empty");
-    println!("✓ office_extract_text output: {} ({} bytes)", txt_res["message"], txt_meta.len());
+    assert!(
+        !txt_contents.is_empty(),
+        "Extracted text should not be empty"
+    );
+    println!(
+        "✓ office_extract_text output: {} ({} bytes)",
+        txt_res["message"],
+        txt_meta.len()
+    );
 
     // 6. office_modernize_legacy
-    let modern_out = dir.path().join("output_modern.xlsx").to_string_lossy().to_string();
+    let modern_out = dir
+        .path()
+        .join("output_modern.xlsx")
+        .to_string_lossy()
+        .to_string();
     let modern_res = call_tool(
         "office_modernize_legacy",
         json!({
@@ -138,10 +171,17 @@ fn test_wave4_tools_mcp_execution() {
             "output": modern_out
         }),
     );
-    assert_eq!(modern_res["success"], true, "office_modernize_legacy should succeed");
+    assert_eq!(
+        modern_res["success"], true,
+        "office_modernize_legacy should succeed"
+    );
     assert!(fs::metadata(&modern_out).is_ok(), "modern output exists");
     let modern_meta = fs::metadata(&modern_out).unwrap();
     assert!(modern_meta.len() > 0, "modern output length > 0");
     check_zip_magic(&modern_out);
-    println!("✓ office_modernize_legacy output: {} ({} bytes)", modern_res["message"], modern_meta.len());
+    println!(
+        "✓ office_modernize_legacy output: {} ({} bytes)",
+        modern_res["message"],
+        modern_meta.len()
+    );
 }

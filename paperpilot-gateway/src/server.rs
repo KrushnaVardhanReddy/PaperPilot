@@ -128,7 +128,10 @@ pub async fn build_app() -> Router {
         )
         .route("/api/v1/pdf/timestamp", post(handlers::pdf_timestamp))
         .route("/api/v1/pdf/attachments", post(handlers::pdf_attachments))
-        .route("/api/v1/pdf/invert-colors", post(handlers::pdf_invert_colors))
+        .route(
+            "/api/v1/pdf/invert-colors",
+            post(handlers::pdf_invert_colors),
+        )
         .route(
             "/api/v1/pdf/stitch-canvas",
             post(handlers::pdf_stitch_canvas),

@@ -3,9 +3,11 @@
 #![allow(clippy::ptr_arg)]
 #![allow(clippy::needless_borrow)]
 use paperpilot_core::error::OperationResult;
-use paperpilot_pdf::operations::pdf_invert_colors::{invert_pdf_colors, InvertColorsOptions, InvertMode};
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_core::traits::PdfDocument;
+use paperpilot_pdf::document::LopdfDocument;
+use paperpilot_pdf::operations::pdf_invert_colors::{
+    InvertColorsOptions, InvertMode, invert_pdf_colors,
+};
 use std::path::PathBuf;
 
 pub fn handle_invert_colors(

@@ -1,7 +1,10 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
+use lopdf::{
+    Document, Object, Stream,
+    content::{Content, Operation},
+};
 use paperpilot_core::error::{OperationResult, PdfError};
-use lopdf::{Document, Object, content::{Content, Operation}, Stream};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,7 +35,11 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
                     p.push(num);
                 }
             }
-            if p.is_empty() { pages.keys().copied().collect() } else { p }
+            if p.is_empty() {
+                pages.keys().copied().collect()
+            } else {
+                p
+            }
         }
     } else {
         pages.keys().copied().collect()
@@ -41,7 +48,9 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
     let mode = options.mode.as_ref().unwrap_or(&InvertMode::DarkMode);
 
     for page_id in target_pages {
-        let page_obj_id = *pages.get(&page_id).ok_or_else(|| PdfError::Other("Page not found".to_string()))?;
+        let page_obj_id = *pages
+            .get(&page_id)
+            .ok_or_else(|| PdfError::Other("Page not found".to_string()))?;
 
         let mut width = 612.0;
         let mut height = 792.0;
@@ -49,7 +58,12 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
         if let Ok(page_dict) = doc.get_dictionary(page_obj_id) {
             if let Ok(Object::Array(media_box)) = page_dict.get(b"MediaBox") {
                 if media_box.len() == 4 {
-                    if let (Ok(x1), Ok(y1), Ok(x2), Ok(y2)) = (get_f64(&media_box[0]), get_f64(&media_box[1]), get_f64(&media_box[2]), get_f64(&media_box[3])) {
+                    if let (Ok(x1), Ok(y1), Ok(x2), Ok(y2)) = (
+                        get_f64(&media_box[0]),
+                        get_f64(&media_box[1]),
+                        get_f64(&media_box[2]),
+                        get_f64(&media_box[3]),
+                    ) {
                         width = x2 - x1;
                         height = y2 - y1;
                     }
@@ -66,8 +80,23 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
 
         let mut new_ops = vec![
             Operation::new("q", vec![]),
-            Operation::new("rg", vec![Object::Real(bg_color[0] as f32), Object::Real(bg_color[1] as f32), Object::Real(bg_color[2] as f32)]),
-            Operation::new("re", vec![Object::Real(0.0), Object::Real(0.0), Object::Real(width as f32), Object::Real(height as f32)]),
+            Operation::new(
+                "rg",
+                vec![
+                    Object::Real(bg_color[0] as f32),
+                    Object::Real(bg_color[1] as f32),
+                    Object::Real(bg_color[2] as f32),
+                ],
+            ),
+            Operation::new(
+                "re",
+                vec![
+                    Object::Real(0.0),
+                    Object::Real(0.0),
+                    Object::Real(width as f32),
+                    Object::Real(height as f32),
+                ],
+            ),
             Operation::new("f", vec![]),
             Operation::new("Q", vec![]),
         ];
@@ -83,7 +112,8 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
                         if op.operands.len() == 3 {
                             for i in 0..3 {
                                 if let Ok(val) = get_f64(&op.operands[i]) {
-                                    op.operands[i] = Object::Real(invert_color_val(val, mode) as f32);
+                                    op.operands[i] =
+                                        Object::Real(invert_color_val(val, mode) as f32);
                                 }
                             }
                         }
@@ -97,7 +127,12 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
                     }
                     "k" | "K" => {
                         if op.operands.len() == 4 {
-                            if let (Ok(c), Ok(m), Ok(y), Ok(k)) = (get_f64(&op.operands[0]), get_f64(&op.operands[1]), get_f64(&op.operands[2]), get_f64(&op.operands[3])) {
+                            if let (Ok(c), Ok(m), Ok(y), Ok(k)) = (
+                                get_f64(&op.operands[0]),
+                                get_f64(&op.operands[1]),
+                                get_f64(&op.operands[2]),
+                                get_f64(&op.operands[3]),
+                            ) {
                                 let (nc, nm, ny, nk) = invert_cmyk_val(c, m, y, k, mode);
                                 op.operands[0] = Object::Real(nc as f32);
                                 op.operands[1] = Object::Real(nm as f32);
@@ -112,8 +147,11 @@ pub fn invert_pdf_colors(doc: &mut Document, options: &InvertColorsOptions) -> O
             new_ops.extend(content.operations);
         }
 
-        let new_content = Content { operations: new_ops };
-        let new_content_bytes = new_content.encode()
+        let new_content = Content {
+            operations: new_ops,
+        };
+        let new_content_bytes = new_content
+            .encode()
             .map_err(|e| PdfError::Other(format!("Failed to encode content: {}", e)))?;
 
         let stream = Stream::new(lopdf::Dictionary::new(), new_content_bytes);
@@ -135,11 +173,13 @@ fn invert_color_val(val: f64, mode: &InvertMode) -> f64 {
         }
         InvertMode::TrueInvert => 1.0 - val,
         InvertMode::HighContrast => {
-            if val < 0.5 { 1.0 } else { 0.0 }
+            if val < 0.5 {
+                1.0
+            } else {
+                0.0
+            }
         }
-        InvertMode::Sepia => {
-            val * 0.8
-        }
+        InvertMode::Sepia => val * 0.8,
     }
 }
 
@@ -152,9 +192,7 @@ fn invert_cmyk_val(c: f64, m: f64, y: f64, k: f64, mode: &InvertMode) -> (f64, f
                 (c, m, y, 1.0 - k)
             }
         }
-        InvertMode::Sepia => {
-            (c, m, y, k * 0.8)
-        }
+        InvertMode::Sepia => (c, m, y, k * 0.8),
     }
 }
 
@@ -179,19 +217,41 @@ mod tests {
 
         let content = Content {
             operations: vec![
-                Operation::new("rg", vec![Object::Real(1.0), Object::Real(1.0), Object::Real(1.0)]),
-                Operation::new("re", vec![Object::Real(10.0), Object::Real(10.0), Object::Real(50.0), Object::Real(50.0)]),
+                Operation::new(
+                    "rg",
+                    vec![Object::Real(1.0), Object::Real(1.0), Object::Real(1.0)],
+                ),
+                Operation::new(
+                    "re",
+                    vec![
+                        Object::Real(10.0),
+                        Object::Real(10.0),
+                        Object::Real(50.0),
+                        Object::Real(50.0),
+                    ],
+                ),
                 Operation::new("f", vec![]),
             ],
         };
 
-        doc.objects.insert(content_id, Object::Stream(Stream::new(Dictionary::new(), content.encode().unwrap())));
+        doc.objects.insert(
+            content_id,
+            Object::Stream(Stream::new(Dictionary::new(), content.encode().unwrap())),
+        );
 
         let mut page_dict = Dictionary::new();
         page_dict.set("Type", "Page");
         page_dict.set("Parent", pages_id);
         page_dict.set("Contents", Object::Reference(content_id));
-        page_dict.set("MediaBox", vec![Object::Real(0.0), Object::Real(0.0), Object::Real(100.0), Object::Real(100.0)]);
+        page_dict.set(
+            "MediaBox",
+            vec![
+                Object::Real(0.0),
+                Object::Real(0.0),
+                Object::Real(100.0),
+                Object::Real(100.0),
+            ],
+        );
         doc.objects.insert(page_id, Object::Dictionary(page_dict));
 
         let mut pages_dict = Dictionary::new();
@@ -212,7 +272,10 @@ mod tests {
     #[test]
     fn test_invert_pdf_colors_dark_mode() {
         let mut doc = create_test_pdf();
-        let options = InvertColorsOptions { mode: Some(InvertMode::DarkMode), pages: None };
+        let options = InvertColorsOptions {
+            mode: Some(InvertMode::DarkMode),
+            pages: None,
+        };
         invert_pdf_colors(&mut doc, &options).unwrap();
 
         let page_id = *doc.get_pages().get(&1).unwrap();
@@ -225,7 +288,11 @@ mod tests {
         let mut found_orig_rg = false;
         for op in &content.operations {
             if op.operator == "rg" {
-                if let (Ok(r), Ok(g), Ok(b)) = (get_f64(&op.operands[0]), get_f64(&op.operands[1]), get_f64(&op.operands[2])) {
+                if let (Ok(r), Ok(g), Ok(b)) = (
+                    get_f64(&op.operands[0]),
+                    get_f64(&op.operands[1]),
+                    get_f64(&op.operands[2]),
+                ) {
                     if r < 0.3 && g < 0.3 && b < 0.3 {
                         found_orig_rg = true;
                     }
@@ -238,7 +305,10 @@ mod tests {
     #[test]
     fn test_invert_pdf_colors_true_invert() {
         let mut doc = create_test_pdf();
-        let options = InvertColorsOptions { mode: Some(InvertMode::TrueInvert), pages: None };
+        let options = InvertColorsOptions {
+            mode: Some(InvertMode::TrueInvert),
+            pages: None,
+        };
         invert_pdf_colors(&mut doc, &options).unwrap();
 
         let page_id = *doc.get_pages().get(&1).unwrap();
@@ -248,8 +318,13 @@ mod tests {
         let mut found_invert = false;
         for op in content.operations.iter() {
             if op.operator == "rg" {
-                if let (Ok(r), Ok(g), Ok(b)) = (get_f64(&op.operands[0]), get_f64(&op.operands[1]), get_f64(&op.operands[2])) {
-                    if r < 0.01 && g < 0.01 && b < 0.01 { // True invert of 1,1,1
+                if let (Ok(r), Ok(g), Ok(b)) = (
+                    get_f64(&op.operands[0]),
+                    get_f64(&op.operands[1]),
+                    get_f64(&op.operands[2]),
+                ) {
+                    if r < 0.01 && g < 0.01 && b < 0.01 {
+                        // True invert of 1,1,1
                         found_invert = true;
                     }
                 }
@@ -261,7 +336,10 @@ mod tests {
     #[test]
     fn test_invert_pdf_colors_page_subset() {
         let mut doc = create_test_pdf();
-        let options = InvertColorsOptions { mode: Some(InvertMode::TrueInvert), pages: Some("1".to_string()) };
+        let options = InvertColorsOptions {
+            mode: Some(InvertMode::TrueInvert),
+            pages: Some("1".to_string()),
+        };
         let res = invert_pdf_colors(&mut doc, &options);
         assert!(res.is_ok());
     }
