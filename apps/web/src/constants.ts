@@ -28,5 +28,5 @@ export const getToolsHandbookUrl = (): string => {
 
 // Feature Flags
 // Automatically displays the badge once total releases downloads reach 1,000+
-export const ENABLE_DOWNLOAD_COUNT_BADGE = false;
-export const MIN_DOWNLOAD_COUNT_THRESHOLD = 0;
+export const ENABLE_DOWNLOAD_COUNT_BADGE = true;
+export const MIN_DOWNLOAD_COUNT_THRESHOLD = 1000;
