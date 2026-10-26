@@ -10,11 +10,12 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active In-Flight Jules Cloud Sessions (Zero-Conflict Fast Track)
-All queued Jules cloud sessions have completed and merged cleanly to `main`!
+The following 2 cloud sessions are actively executing in parallel on isolated branches from `main`:
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 116A** | `[Spec 116]` | Actionable RAG Workspace & Citation Canvas (Task 4.3.9) | `main` | [Session 14413569953505972234](https://jules.google.com/session/14413569953505972234) | ✅ Merged (PR #263) |
+| **Task 117A** | `[Spec 117]` | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) | `main` | [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417) | 🚀 Active In-Flight |
+| **Task 118A** | `[Spec 118]` | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) | `main` | [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238) | 🚀 Active In-Flight |
 
 ---
 
