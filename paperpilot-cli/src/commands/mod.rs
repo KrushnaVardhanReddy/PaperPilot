@@ -32,6 +32,7 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
+pub mod pdf_merge_alternate;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -434,6 +435,17 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfComicArchive { input, output } => {
             pdf_comic_archive::handle_pdf_comic_archive_command(input, output)
         }
+        Commands::PdfMergeAlternate {
+            input_a,
+            input_b,
+            output,
+            reverse_a,
+            reverse_b,
+            step,
+            step_b,
+        } => pdf_merge_alternate::handle_pdf_merge_alternate_command(
+            input_a, input_b, output, *reverse_a, *reverse_b, *step, *step_b,
+        ),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -699,6 +711,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_merge_alternate",
+                    "Preview",
+                    "Interleave pages from two PDF documents.",
                 ),
                 (
                     "pdf_comic_archive",

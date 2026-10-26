@@ -300,6 +300,12 @@ export default {
            const result = WasmPdfEngine.pdf_comic_archive(new Uint8Array(body), options);
            return new Response(result, { headers: { 'Content-Type': 'application/json' } });
         }
+        if (url.pathname === '/api/v1/merge-alternate') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.pdf_merge_alternate(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {
           status: 500,

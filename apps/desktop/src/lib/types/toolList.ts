@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
+  { id: 'pdf_merge_alternate', name: 'Alternating PDF Merge', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Interleave pages from two PDF documents.', icon: '📄', category: 'organize', context: 'pdf', tags: ['pdf_merge_alternate'], releaseStatus: 'preview' },
   { id: 'pdf_comic_archive', title: 'Comic Archive Conversion', inputFormat: 'PDF', outputFormat: '.CBR', description: 'Convert between PDF documents and comic book archive formats (CBZ/CBR).', icon: '📚', category: 'convert', context: 'pdf', tags: ['pdf_comic_archive'], releaseStatus: 'preview' },
   { id: 'pdf_split_scanned_book', title: 'Split Scanned Book Spine', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Detect center binding gutter spine and split two-up page scans into single pages.', icon: '📖', category: 'pages', context: 'pdf', tags: ['pdf_split_scanned_book'], releaseStatus: 'preview' },
   { id: 'pdf_change_permissions', title: 'Modify PDF Permissions', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Configure user and owner permissions for printing, copying, and modification.', icon: '🛡️', category: 'security', context: 'pdf', tags: ['pdf_change_permissions'], releaseStatus: 'preview' },

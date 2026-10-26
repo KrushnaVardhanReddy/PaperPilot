@@ -575,6 +575,24 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Alternating PDF Merge: Interleave pages from two PDF documents.
+    #[command(name = "pdf-merge-alternate")]
+    PdfMergeAlternate {
+        #[arg(long)]
+        input_a: PathBuf,
+        #[arg(long)]
+        input_b: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "false")]
+        reverse_a: bool,
+        #[arg(long, default_value = "false")]
+        reverse_b: bool,
+        #[arg(long, default_value = "1")]
+        step: usize,
+        #[arg(long, default_value = "1")]
+        step_b: usize,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

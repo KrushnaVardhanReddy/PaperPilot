@@ -2975,3 +2975,15 @@ pub fn pdf_comic_archive(input_bytes: &[u8], options_json: &str) -> OperationRes
             .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_comic_archive::pdf_comic_archive_bytes(input_bytes, &options)
 }
+
+pub fn pdf_merge_alternate(buffers: Vec<Vec<u8>>, options_json: &str) -> OperationResult<Vec<u8>> {
+    if buffers.len() < 2 {
+        return Err(paperpilot_core::error::PdfError::InvalidInput(
+            "Exactly two document buffers are required for alternating merge".into(),
+        ));
+    }
+
+    let options: paperpilot_pdf::operations::pdf_merge_alternate::PdfMergeAlternateOptions = serde_json::from_str(options_json)
+        .map_err(|e| paperpilot_core::error::PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(&buffers[0], &buffers[1], &options)
+}
