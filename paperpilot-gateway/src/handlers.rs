@@ -1840,3 +1840,18 @@ pub struct PdfSplitScannedBookJsonRequest {
 pub async fn pdf_split_by_outline(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_split_by_outline".to_string()), req).await
 }
+
+/// Alternating PDF Merge [Interleave pages from two PDF documents.] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/merge-alternate",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Alternating PDF Merge completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_merge_alternate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_merge_alternate".to_string()), req).await
+}

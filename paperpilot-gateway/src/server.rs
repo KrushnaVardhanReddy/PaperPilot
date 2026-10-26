@@ -32,6 +32,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::handle_tool,
         handlers::list_tools,
         handlers::pdf_split_by_outline,
+        handlers::pdf_merge_alternate,
         handlers::pdf_comic_archive,
         handlers::pdf_split_scanned_book,
         handlers::pdf_change_permissions,
@@ -116,6 +117,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/merge-alternate", post(handlers::pdf_merge_alternate) )
         .route(
             "/api/v1/pdf/split-by-outline",
             post(handlers::pdf_split_by_outline),

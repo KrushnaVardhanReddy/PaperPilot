@@ -289,4 +289,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.zip'
         });
     });
+
+    it('builds args for pdf_merge_alternate', async () => {
+        const args = await buildOperationArgs('pdf_merge_alternate', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
 });

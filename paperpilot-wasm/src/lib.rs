@@ -450,6 +450,20 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+    #[wasm_bindgen]
+    pub fn pdf_merge_alternate(buffers: js_sys::Array, options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let mut rust_buffers = Vec::new();
+        for i in 0..buffers.length() {
+            let item = buffers.get(i);
+            let u8_array = js_sys::Uint8Array::new(&item);
+            rust_buffers.push(u8_array.to_vec());
+        }
+
+        let result = operations::pdf_merge_alternate(rust_buffers, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},
