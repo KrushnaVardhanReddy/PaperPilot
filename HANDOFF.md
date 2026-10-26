@@ -24,7 +24,7 @@
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
 | **Task 128A** | `[Spec 128]` | P0 | CI / Security | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 9314721983274075613](https://jules.google.com/session/9314721983274075613)<br>Pinning third-party GitHub Actions across `.github/workflows/` to immutable 40-char commit SHAs. |
-| **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **Ready for Jules Dispatch**: `jules_prompts/P5_3_27_pdf_dedup_streams.txt`<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
+| **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
 | **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | 📋 **Backlog / Planned** (`specs/126-...`)<br>Sub-15ms Tika-compatible `/tika/rmeta/text` REST & MCP tool for Open-WebUI integration. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
