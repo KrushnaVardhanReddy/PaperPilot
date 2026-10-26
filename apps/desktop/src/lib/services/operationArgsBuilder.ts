@@ -8,6 +8,10 @@ export interface OperationContext {
     allDocuments: { name: string }[];
     getOutputPath: (filename: string) => string;
     customOutputPath: string;
+    action?: string;
+    file_name?: string;
+    description?: string;
+    file_data_base64?: string;
 
     // UI control values
     splitPoints: string;

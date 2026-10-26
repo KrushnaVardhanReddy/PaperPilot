@@ -110,6 +110,32 @@
   let searchHighlights: SearchMatchItem[] = $state([]);
   let viewportState: any = $state(null);
 
+  let citationHighlight: { page: number; bbox?: number[] } | null = $state(null);
+  let citationTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  $effect(() => {
+      const handleJumpToCitation = (e: CustomEvent<{ page: number, bbox?: number[] }>) => {
+          const { page, bbox } = e.detail;
+          if (page) {
+              pageNum = page;
+              citationHighlight = { page, bbox };
+
+              if (citationTimeoutId) {
+                  clearTimeout(citationTimeoutId);
+              }
+              citationTimeoutId = setTimeout(() => {
+                  citationHighlight = null;
+              }, 2500);
+          }
+      };
+
+      window.addEventListener('paperpilot:jump-to-citation', handleJumpToCitation as EventListener);
+      return () => {
+          window.removeEventListener('paperpilot:jump-to-citation', handleJumpToCitation as EventListener);
+          if (citationTimeoutId) clearTimeout(citationTimeoutId);
+      };
+  });
+
   $effect(() => {
       if (pdfDoc && pageNum && scale) {
           pdfDoc.getPage(pageNum).then((page: pdfjsLib.PDFPageProxy) => {
@@ -131,9 +157,20 @@
 <div class="pdf-viewer-wrapper">
   <PdfSearchBar {pdfDoc} bind:pageNum bind:searchHighlights />
   <div class="viewer-container">
+    {#if citationHighlight && citationHighlight.page === pageNum && !citationHighlight.bbox}
+        <div class="page-citation-banner">
+            Viewing Cited Page {pageNum}
+        </div>
+    {/if}
     <div class="page-container">
       <canvas bind:this={canvas} style="display: block;"></canvas>
       {#if viewportState}
+        {#if citationHighlight && citationHighlight.page === pageNum && citationHighlight.bbox}
+            {@const pt = pdfjsLib.Util.normalizeRect(citationHighlight.bbox)}
+            {@const vpPt1 = viewportState.convertToViewportPoint(pt[0], pt[1])}
+            {@const vpPt2 = viewportState.convertToViewportPoint(pt[2], pt[3])}
+            <div class="citation-pulse" style="left: {Math.min(vpPt1[0], vpPt2[0])}px; top: {Math.min(vpPt1[1], vpPt2[1])}px; width: {Math.abs(vpPt2[0] - vpPt1[0])}px; height: {Math.abs(vpPt1[1] - vpPt2[1])}px;"></div>
+        {/if}
         <div class="search-highlights-layer" style="width: {viewportState.width}px; height: {viewportState.height}px;">
            {#each searchHighlights as item}
                {@const pt = pdfjsLib.Util.normalizeRect([
@@ -197,5 +234,57 @@
     position: absolute;
     background-color: rgba(255, 255, 0, 0.4);
     border-radius: 2px;
+  }
+
+  .page-citation-banner {
+    position: absolute;
+    top: 4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(99, 102, 241, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    animation: fadeInOut 2.5s ease-in-out forwards;
+    pointer-events: none;
+  }
+
+  .citation-pulse {
+    position: absolute;
+    border: 2px solid #6366f1;
+    background: rgba(99, 102, 241, 0.2);
+    border-radius: 4px;
+    z-index: 20;
+    pointer-events: none;
+    animation: pulse-ring 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+      opacity: 1;
+    }
+    70% {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -10px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -10px); }
   }
 </style>
