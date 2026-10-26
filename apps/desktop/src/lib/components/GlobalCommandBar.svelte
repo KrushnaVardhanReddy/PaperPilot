@@ -345,6 +345,18 @@
     margin-top: 16px;
   }
 
+  @media (max-width: 768px) {
+    .global-command-bar-wrapper {
+      bottom: calc(64px + env(safe-area-inset-bottom, 16px) + 8px);
+      margin-top: 8px;
+    }
+
+    .global-command-bar {
+      margin: 0 8px 8px 8px;
+      padding: 8px 10px;
+    }
+  }
+
   .plan-preview-popover {
     width: 95%;
     max-width: 600px;

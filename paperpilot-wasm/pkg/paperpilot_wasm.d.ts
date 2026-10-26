@@ -2,6 +2,28 @@
 /* eslint-disable */
 
 /**
+ * Chroma subsampling format
+ */
+export enum ChromaSampling {
+    /**
+     * Both vertically and horizontally subsampled.
+     */
+    Cs420 = 0,
+    /**
+     * Horizontally subsampled.
+     */
+    Cs422 = 1,
+    /**
+     * Not subsampled.
+     */
+    Cs444 = 2,
+    /**
+     * Monochrome.
+     */
+    Cs400 = 3,
+}
+
+/**
  * A line of text that has been detected, but not recognized.
  *
  * This contains information about the location of the text, but not the
@@ -192,21 +214,42 @@ export class WasmPdfEngine {
      * Convert JSON document into a PDF Uint8Array
      */
     static json_to_pdf(json_str: string): Uint8Array;
+    static list_tools(): string;
     /**
      * Merge multiple PDF buffers (Array of Uint8Array) into a single PDF Uint8Array
      */
     static merge(buffers: Array<any>): Uint8Array;
     static ocr(image_or_pdf_bytes: Uint8Array): string;
     static page_numbers(input_bytes: Uint8Array, format: string, position: string): Uint8Array;
+    static pdf_attachments(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_auto_rotate(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_booklet(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_change_permissions(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_comic_archive(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_hash(input_bytes: Uint8Array): string;
     static pdf_info(input_bytes: Uint8Array): string;
+    static pdf_nup(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_overlay_underlay(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_remove_signatures(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_scale_pages(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_split_by_outline(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_split_scanned_book(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_stamp(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_stitch_canvas(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_timestamp(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_to_docx(input_bytes: Uint8Array): Uint8Array;
+    /**
+     * List all registered tools and their availability in the WASM engine
+     */
+    static pdf_validate_signatures(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pii_scan(input_bytes: Uint8Array, options_json: string): string;
     static render_page(input_bytes: Uint8Array, page_index: number, scale: number): Uint8Array;
     static reorder_pages(input_bytes: Uint8Array, new_order: Uint32Array): Uint8Array;
     /**
      * Rotate specific pages ("all", "1,2", or "1") by angle (90, 180, 270)
      */
     static rotate(input_bytes: Uint8Array, angle: number, pages: string): Uint8Array;
+    static sanitize(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static set_metadata(input_bytes: Uint8Array, title?: string | null, author?: string | null, subject?: string | null, keywords?: string | null): Uint8Array;
     /**
      * Split PDF by page ranges (e.g. "1-2, 3-4") returning an Array of Uint8Arrays
@@ -216,6 +259,8 @@ export class WasmPdfEngine {
      * Add watermark text across pages
      */
     static watermark(input_bytes: Uint8Array, text: string, angle?: number | null, opacity?: number | null): Uint8Array;
+    static workflow(input_bytes: Uint8Array, recipe_json: string): Uint8Array;
+    static workflow_presets(): string;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -272,18 +317,46 @@ export interface InitOutput {
     readonly wasmpdfengine_header_footer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly wasmpdfengine_images_to_pdf: (a: number, b: number) => void;
     readonly wasmpdfengine_json_to_pdf: (a: number, b: number, c: number) => void;
+    readonly wasmpdfengine_list_tools: (a: number) => void;
     readonly wasmpdfengine_merge: (a: number, b: number) => void;
     readonly wasmpdfengine_ocr: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_page_numbers: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
+    readonly rust_zstd_wasm_shim_free: (a: number) => void;
+    readonly rust_zstd_wasm_shim_malloc: (a: number) => number;
+    readonly rust_zstd_wasm_shim_memcmp: (a: number, b: number, c: number) => number;
+    readonly rust_zstd_wasm_shim_memcpy: (a: number, b: number, c: number) => number;
+    readonly rust_zstd_wasm_shim_memmove: (a: number, b: number, c: number) => number;
+    readonly rust_zstd_wasm_shim_memset: (a: number, b: number, c: number) => number;
+    readonly rust_zstd_wasm_shim_qsort: (a: number, b: number, c: number, d: number) => void;
+    readonly wasmpdfengine_pdf_attachments: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_auto_rotate: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_booklet: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_change_permissions: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_comic_archive: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_hash: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_pdf_info: (a: number, b: number, c: number) => void;
+    readonly wasmpdfengine_pdf_nup: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_overlay_underlay: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_remove_signatures: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_scale_pages: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_split_by_outline: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_split_scanned_book: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_stamp: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_stitch_canvas: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_timestamp: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_to_docx: (a: number, b: number, c: number) => void;
+    readonly wasmpdfengine_pdf_validate_signatures: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pii_scan: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_render_page: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_reorder_pages: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_rotate: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly wasmpdfengine_sanitize: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_set_metadata: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => void;
     readonly wasmpdfengine_split: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_watermark: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly wasmpdfengine_workflow: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_workflow_presets: (a: number) => void;
     readonly __wbindgen_export: (a: number) => void;
     readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number) => void;

@@ -617,6 +617,12 @@
     margin: 0 auto;
   }
 
+  @media (max-width: 768px) {
+    .documents-view {
+      padding: 16px 12px 100px 12px;
+    }
+  }
+
   .view-header {
     margin-bottom: 24px;
   }
