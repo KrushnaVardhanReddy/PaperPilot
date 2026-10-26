@@ -3129,20 +3129,39 @@ impl PaperPilotMcpServer {
         );
 
         let mut prop_step = serde_json::Map::new();
-        prop_step.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        prop_step.insert(
+            "type".to_string(),
+            serde_json::Value::String("integer".to_string()),
+        );
         props_pdf_merge_alternate.insert("step".to_string(), serde_json::Value::Object(prop_step));
 
         let mut prop_step_b = serde_json::Map::new();
-        prop_step_b.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
-        props_pdf_merge_alternate.insert("step_b".to_string(), serde_json::Value::Object(prop_step_b));
+        prop_step_b.insert(
+            "type".to_string(),
+            serde_json::Value::String("integer".to_string()),
+        );
+        props_pdf_merge_alternate
+            .insert("step_b".to_string(), serde_json::Value::Object(prop_step_b));
 
         let mut prop_rev_a = serde_json::Map::new();
-        prop_rev_a.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pdf_merge_alternate.insert("reverse_a".to_string(), serde_json::Value::Object(prop_rev_a));
+        prop_rev_a.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "reverse_a".to_string(),
+            serde_json::Value::Object(prop_rev_a),
+        );
 
         let mut prop_rev_b = serde_json::Map::new();
-        prop_rev_b.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        props_pdf_merge_alternate.insert("reverse_b".to_string(), serde_json::Value::Object(prop_rev_b));
+        prop_rev_b.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "reverse_b".to_string(),
+            serde_json::Value::Object(prop_rev_b),
+        );
 
         schema_pdf_merge_alternate.insert(
             "properties".to_string(),
@@ -6248,33 +6267,49 @@ impl PaperPilotMcpServer {
                 })
             }
             "pdf_merge_alternate" => {
-                let input_a = args.get("input_a").and_then(|v| v.as_str()).ok_or_else(|| {
-                    rmcp::ErrorData::invalid_params("Missing input_a".to_string(), None)
-                })?;
-                let input_b = args.get("input_b").and_then(|v| v.as_str()).ok_or_else(|| {
-                    rmcp::ErrorData::invalid_params("Missing input_b".to_string(), None)
-                })?;
+                let input_a = args
+                    .get("input_a")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        rmcp::ErrorData::invalid_params("Missing input_a".to_string(), None)
+                    })?;
+                let input_b = args
+                    .get("input_b")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        rmcp::ErrorData::invalid_params("Missing input_b".to_string(), None)
+                    })?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let step = args.get("step").and_then(|v| v.as_u64()).unwrap_or(1) as usize;
                 let step_b = args.get("step_b").and_then(|v| v.as_u64()).unwrap_or(1) as usize;
-                let reverse_a = args.get("reverse_a").and_then(|v| v.as_bool()).unwrap_or(false);
-                let reverse_b = args.get("reverse_b").and_then(|v| v.as_bool()).unwrap_or(false);
+                let reverse_a = args
+                    .get("reverse_a")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let reverse_b = args
+                    .get("reverse_b")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
 
                 let a_bytes = std::fs::read(input_a)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let b_bytes = std::fs::read(input_b)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
-                let options = paperpilot_pdf::operations::pdf_merge_alternate::PdfMergeAlternateOptions {
-                    step,
-                    step_b,
-                    reverse_a,
-                    reverse_b,
-                };
+                let options =
+                    paperpilot_pdf::operations::pdf_merge_alternate::PdfMergeAlternateOptions {
+                        step,
+                        step_b,
+                        reverse_a,
+                        reverse_b,
+                    };
 
-                let result = paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(&a_bytes, &b_bytes, &options)
+                let result =
+                    paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(
+                        &a_bytes, &b_bytes, &options,
+                    )
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
@@ -6295,9 +6330,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions::default();
-                let result = paperpilot_pdf::operations::pdf_posterize::pdf_posterize_bytes(&input_bytes, &options)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions::default();
+                let result = paperpilot_pdf::operations::pdf_posterize::pdf_posterize_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;

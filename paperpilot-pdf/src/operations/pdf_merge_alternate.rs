@@ -1,6 +1,6 @@
+use lopdf::{Document, Object};
 use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use lopdf::{Document, Object};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -104,7 +104,10 @@ pub fn pdf_merge_alternate_bytes(
     };
 
     if let Ok(Object::Dictionary(pages_dict)) = doc_a.get_object_mut(pages_id) {
-        let kids_array = collated_pages.iter().map(|&id| Object::Reference(id)).collect();
+        let kids_array = collated_pages
+            .iter()
+            .map(|&id| Object::Reference(id))
+            .collect();
         pages_dict.set("Kids", Object::Array(kids_array));
         pages_dict.set("Count", Object::Integer(collated_pages.len() as i64));
     }
@@ -116,7 +119,9 @@ pub fn pdf_merge_alternate_bytes(
     }
 
     let mut out_bytes = Vec::new();
-    doc_a.save_to(&mut out_bytes).map_err(|e| PdfError::Other(e.to_string()))?;
+    doc_a
+        .save_to(&mut out_bytes)
+        .map_err(|e| PdfError::Other(e.to_string()))?;
     Ok(out_bytes)
 }
 
@@ -156,8 +161,13 @@ impl PdfMergeAlternateOperation {
 }
 
 impl PdfOperation for PdfMergeAlternateOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
-        Err(PdfError::UnsupportedOperation("Not yet implemented for in-memory".to_string()))
+    fn execute(
+        &self,
+        _document: &mut dyn PdfDocument,
+    ) -> paperpilot_core::error::OperationResult<()> {
+        Err(PdfError::UnsupportedOperation(
+            "Not yet implemented for in-memory".to_string(),
+        ))
     }
 }
 
@@ -179,7 +189,8 @@ mod tests {
     #[test]
     fn test_pdf_merge_alternate_with_real_fixture() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let fixture_path = PathBuf::from(manifest_dir).join("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
+        let fixture_path =
+            PathBuf::from(manifest_dir).join("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
 
         let a_bytes = fs::read(&fixture_path).expect("Failed to read fixture A");
         // For testing interleaving, we just use the same single page fixture for both.
@@ -204,13 +215,18 @@ mod tests {
 
         let parsed_doc = doc.unwrap();
         // Since we combined 1 page from A and 1 page from B (same single page doc), total pages should be 2.
-        assert_eq!(parsed_doc.get_pages().len(), 2, "Expected exactly 2 pages in collated doc");
+        assert_eq!(
+            parsed_doc.get_pages().len(),
+            2,
+            "Expected exactly 2 pages in collated doc"
+        );
     }
 
     #[test]
     fn test_pdf_merge_alternate_reverse_and_step() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let fixture_path = PathBuf::from(manifest_dir).join("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
+        let fixture_path =
+            PathBuf::from(manifest_dir).join("../tests/e2e_fixtures/real/sample_photo_doc.pdf");
 
         let a_bytes = fs::read(&fixture_path).unwrap();
         let b_bytes = fs::read(&fixture_path).unwrap();
