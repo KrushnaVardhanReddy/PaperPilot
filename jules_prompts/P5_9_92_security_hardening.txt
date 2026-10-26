@@ -1,0 +1,57 @@
+Hey Jules! Please implement Task 123A: Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening across PaperPilot.
+
+### CRITICAL STARTING BRANCH INSTRUCTION
+- Target / Base Branch: `feature/dev` (DO NOT base on `main`).
+- Create and work on your own branch off `feature/dev`.
+
+### Requirements & Scope
+Follow `specs/123-production-security-hardening/spec.md` and `reports/SECURITY_AUDIT_REPORT.md`:
+
+1. **Desktop Stored XSS Remediation (`apps/desktop/src/lib/services/workspaceSearch.ts`)**:
+   - In `generateSnippets`, document text is currently interpolated directly into HTML `<mark>` tags without escaping: `${prefix}<mark>${matchedText}</mark>${suffix}`.
+   - Implement an HTML escape function that sanitizes `&`, `<`, `>`, `"`, and `'`.
+   - Escape `prefix`, `matchedText`, and `suffix` before wrapping `<mark>`:
+     ```typescript
+     function escapeHtml(str: string): string {
+       return str
+         .replace(/&/g, '&amp;')
+         .replace(/</g, '&lt;')
+         .replace(/>/g, '&gt;')
+         .replace(/"/g, '&quot;')
+         .replace(/'/g, '&#039;');
+     }
+     ```
+   - In `apps/desktop/src/lib/services/workspaceSearch.test.ts`, add unit tests asserting that text containing `<img src=x onerror=alert(1)>` and `<script>evil()</script>` is cleanly escaped.
+   - In `apps/desktop/src-tauri/tauri.conf.json`, configure a strict CSP:
+     ```json
+     "csp": "default-src 'self' tauri:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: blob: data:; connect-src 'self' http://localhost:* ws://localhost:*;"
+     ```
+
+2. **Path Traversal Elimination in Feature Packs (`apps/desktop/src-tauri/src/pack_commands.rs`)**:
+   - In `download_feature_pack` and `install_feature_pack`, validate `pack_id` before using it in file paths.
+   - Verify that `pack_id` strictly matches regex `^[a-zA-Z0-9_-]+$`.
+   - Reject any `pack_id` containing `..`, `/`, `\`, or null bytes with an `Err(DesktopError::InvalidInput("Invalid pack ID"))`.
+
+3. **SSRF Redirect & IP Range Hardening (`paperpilot-core/src/url_fetch.rs`)**:
+   - In `resolve_url_to_bytes`, disable automatic HTTP redirects:
+     ```rust
+     let client = Client::builder()
+         .redirect(reqwest::redirect::Policy::none())
+         .timeout(Duration::from_secs(30))
+         .build()?;
+     ```
+   - Extend `is_private_ip(ip)` to also block:
+     - `ip.is_loopback()` (including IPv6 `::1`)
+     - Link-local `169.254.0.0/16` and IPv6 link-local
+     - Unspecified `0.0.0.0` and `::`
+     - Shared address space / CGNAT `100.64.0.0/10`
+   - Run `cargo test -p paperpilot-core` to verify SSRF tests pass.
+
+4. **Container Non-Root User (`Dockerfile`)**:
+   - In `Dockerfile`, add a non-root user `paperpilot` and set `USER paperpilot`.
+
+### Constraints & Quality Gates
+- Do NOT touch `paperpilot-gateway` in this task (it is being hardened in parallel).
+- Verify `pnpm --dir apps/desktop test` passes cleanly.
+- Verify `cargo test -p paperpilot-core -j 2` passes cleanly.
+- Submit the PR targeting base branch `feature/dev`.
