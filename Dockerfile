@@ -68,12 +68,19 @@ COPY --from=rust-builder /app/target/release/paperpilot-mcp /usr/local/bin/paper
 RUN mkdir -p /data /models
 WORKDIR /data
 
+# Create non-root user and set permissions
+RUN groupadd -r paperpilot && useradd -r -g paperpilot paperpilot && \
+    chown -R paperpilot:paperpilot /data /models /app /usr/local/bin/paperpilot*
+
 # Default environment configuration
 ENV PORT=7823
 ENV BIND=0.0.0.0
 ENV RUST_LOG=info
 ENV PAPERPILOT_DATA_DIR=/data
 ENV PAPERPILOT_OCR_MODELS_DIR=/models
+
+# Switch to non-root user
+USER paperpilot
 
 # Expose Gateway REST API & MCP Server port
 EXPOSE 7823

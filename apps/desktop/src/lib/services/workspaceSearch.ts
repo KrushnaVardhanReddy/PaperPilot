@@ -18,6 +18,15 @@ export interface WorkspaceSearchResult {
   }[];
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function searchDocumentText(
   docIndex: number,
   docName: string,
@@ -81,7 +90,7 @@ export function searchDocumentText(
     if (startSnippet > 0) prefix = '...' + prefix;
     if (endSnippet < text.length) suffix = suffix + '...';
 
-    const snippet = `${prefix}<mark>${matchedText}</mark>${suffix}`;
+    const snippet = `${escapeHtml(prefix)}<mark>${escapeHtml(matchedText)}</mark>${escapeHtml(suffix)}`;
 
     matches.push({
       docIndex,

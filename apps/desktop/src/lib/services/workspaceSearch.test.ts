@@ -59,4 +59,18 @@ describe('workspaceSearch', () => {
         const matchesOther = searchDocumentText(5, 'file.txt', 'test', 'test');
         expect(matchesOther[0].docType).toBe('other');
     });
+
+    it('escapes HTML to prevent XSS in generated snippets', () => {
+        const textWithXss1 = 'Here is a malicious <img src=x onerror=alert(1)> tag payload.';
+        const matches1 = searchDocumentText(0, 'test1.pdf', textWithXss1, 'malicious');
+        expect(matches1.length).toBe(1);
+        expect(matches1[0].snippet).toContain('&lt;img src=x onerror=alert(1)&gt;');
+        expect(matches1[0].snippet).not.toContain('<img');
+
+        const textWithXss2 = 'And this is a <script>evil()</script> injection attempt.';
+        const matches2 = searchDocumentText(0, 'test2.pdf', textWithXss2, 'injection');
+        expect(matches2.length).toBe(1);
+        expect(matches2[0].snippet).toContain('&lt;script&gt;evil()&lt;/script&gt;');
+        expect(matches2[0].snippet).not.toContain('<script>');
+    });
 });

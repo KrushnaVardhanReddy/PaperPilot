@@ -19,7 +19,8 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 | **Task 119A** | `[Spec 119]` | Multi-Sheet Poster Tile Slicer (`pdf_posterize`) | `feature/dev` | [Session 14717167755470526744](https://jules.google.com/session/14717167755470526744) | 🚀 In Progress (Targeting `feature/dev`) |
 | **Task 121A** | `[Spec 121]` | Mobile Touch Gestures & Viewport Panning (`PdfPreview.svelte`) | `feature/dev` | [Session 10726916767408006847](https://jules.google.com/session/10726916767408006847) | ✅ Merged into `feature/dev` (PR #269) |
 | **Task 122A** | `[Spec 122]` | Lossless Stream Deduplication & CMYK Safety (`pdf_dedup_streams`) | `feature/dev` | Backlog / Planned | 📋 Spec & Task Created |
-| **Task 123A** | `[Spec 123]` | Production Security Hardening & Vulnerability Remediation | `feature/dev` | In Progress (Local Fixes) | 🛡️ Security Audit Completed |
+| **Task 123A** | `[Spec 123]` | Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening | `feature/dev` | [Session 18198933508777026291](https://jules.google.com/session/18198933508777026291) | 🚀 In Progress (Targeting `feature/dev`) |
+| **Task 123B** | `[Spec 123]` | REST Gateway CORS Lockdown, Request Body Limit & Auth | `feature/dev` | Local Execution (Antigravity) | 🛡️ In Progress |
 
 ---
 
