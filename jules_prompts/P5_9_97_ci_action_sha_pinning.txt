@@ -5,23 +5,36 @@ Hey Jules! Please implement Task 128A: CI Supply Chain Hardening & Action SHA Pi
 - Create and work on your own branch off `feature/dev`.
 
 ### Requirements & Scope
-Follow `specs/128-ci-supply-chain-sha-pinning/spec.md`:
-1. **Immutable Commit SHA Pinning**:
-   - Inspect all GitHub Action workflows in `.github/workflows/`:
-     - `.github/workflows/release.yml`
-     - `.github/workflows/rust.yml`
-     - `.github/workflows/security.yml`
-   - Pin every third-party GitHub Action (e.g. `actions/checkout`, `actions/setup-node`, `actions-rust-lang/setup-rust-toolchain`, `github/codeql-action/upload-sarif`, `tauri-apps/tauri-action`, etc.) to its immutable 40-character commit SHA with an inline comment indicating the version:
-     Example:
-     ```yaml
-     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-     ```
-2. **Safe Installer Scripts**:
-   - In `.github/workflows/release.yml`, inspect how tools like `wasm-pack` are installed. Replace any unsafe `curl -sSf ... | sh` with verified version downloads or `cargo install wasm-pack --locked`.
-3. **Automated Dependabot Action SHA Updates**:
-   - Update or create `.github/dependabot.yml` to track `github-actions` with package ecosystem `github-actions`, directory `/`, schedule daily/weekly, and ensure it preserves commit SHA pinning with version comments.
+Follow `specs/128-ci-supply-chain-sha-pinning/spec.md` and `specs/128-ci-supply-chain-sha-pinning/task_128a.md`:
 
-### Constraints & Verification
-- Do NOT alter the underlying build steps or test matrix targets.
-- Verify YAML syntax validity across all workflows.
-- Submit the PR targeting base branch `feature/dev`.
+1. **Pin All GitHub Actions to Immutable 40-Character Commit SHAs with Inline Version Comments**:
+   Inspect and update all workflows in `.github/workflows/`:
+   - `.github/workflows/security.yml`
+   - `.github/workflows/rust.yml`
+   - `.github/workflows/release.yml`
+
+   Replace mutable tags (like `@v4`, `@v3`, `@v2`, `@stable`) with their exact 40-character commit SHAs:
+   - `actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`
+   - `github/codeql-action/upload-sarif@48ab28a6f5dab2a7254580218764ddb44ecddb90 # v3.28.1`
+   - `dtolnay/rust-toolchain@a54c7fe9363c9033d27f38488693fb106733fe4c # stable`
+   - `swatinem/rust-cache@f0deed1e0edfc6a9be95417271a02b6009b1bed8 # v2.7.7`
+   - `actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb99ba841c # v4.6.1`
+   - `actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9`
+   - `actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3`
+   - `pnpm/action-setup@a3252b78c470c02df07e9d79298aa2cff490e5da # v4.0.0`
+   - `softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8`
+   - `tauri-apps/tauri-action@b7f08b3a726beea8655099308e9ca85b37651dd0 # v0.5.17`
+
+2. **Eliminate Unverified Installer Scripts in `.github/workflows/release.yml`**:
+   - In `build-wasm-universal` job (around line 178), replace raw pipe:
+     `curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`
+     with verified:
+     `which wasm-pack || cargo install wasm-pack --locked`
+
+3. **Configure Automated Dependabot Action Tracking**:
+   - Create `.github/dependabot.yml` tracking `github-actions` on a weekly schedule.
+
+### Constraints & Quality Gates
+- Do NOT alter test matrix, build flags, or release binaries.
+- Ensure all YAML files parse cleanly with no syntax errors.
+- Submit the Pull Request targeting base branch `feature/dev`.
