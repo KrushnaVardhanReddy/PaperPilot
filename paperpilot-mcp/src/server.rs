@@ -3043,6 +3043,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_comic_archive.input_schema = Arc::new(schema_pdf_comic_archive);
         tools.push(tool_pdf_comic_archive);
+        let mut schema_pdf_split_by_outline = serde_json::Map::new();
+        schema_pdf_split_by_outline.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_split_by_outline = serde_json::Map::new();
+
+        let mut prop_input_pdf_split_by_outline = serde_json::Map::new();
+        prop_input_pdf_split_by_outline.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_split_by_outline.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_split_by_outline),
+        );
+
+        let mut prop_output_pdf_split_by_outline = serde_json::Map::new();
+        prop_output_pdf_split_by_outline.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_split_by_outline.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_split_by_outline),
+        );
+
+        schema_pdf_split_by_outline.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_split_by_outline),
+        );
+        schema_pdf_split_by_outline.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_split_by_outline = Tool::default();
+        tool_pdf_split_by_outline.name = "pdf_split_by_outline".into();
+        tool_pdf_split_by_outline.description = Some(
+            "Split PDF by Outline: Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy [Input: .pdf | Output: .zip]".into(),
+        );
+        tool_pdf_split_by_outline.input_schema = Arc::new(schema_pdf_split_by_outline);
+        tools.push(tool_pdf_split_by_outline);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -6054,6 +6100,32 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_split_by_outline" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_split_by_outline::PdfSplitByOutlineOptions::default();
+                let result =
+                    paperpilot_pdf::operations::pdf_split_by_outline::pdf_split_by_outline_bytes(
+                        &input_bytes,
+                        &options,
+                    )
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Split PDF by Outline executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -6586,7 +6658,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 75);
+        assert_eq!(res.tools.len(), 76);
     }
 
     #[test]

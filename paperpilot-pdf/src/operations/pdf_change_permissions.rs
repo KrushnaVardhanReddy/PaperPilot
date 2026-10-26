@@ -79,7 +79,7 @@ pub fn pdf_change_permissions_bytes(
         PdfError::Other(format!("Re-encryption with new permissions failed: {}", e))
     })?;
 
-        let mut out_bytes = Vec::new();
+    let mut out_bytes = Vec::new();
     doc.save_to(&mut out_bytes)
         .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
     Ok(out_bytes)
@@ -154,7 +154,6 @@ mod tests {
         bytes
     }
 
-
     #[test]
     fn test_pdf_change_permissions_revoke_printing() {
         let bytes = create_empty_pdf_bytes();
@@ -165,7 +164,9 @@ mod tests {
         let result_bytes = pdf_change_permissions_bytes(&bytes, &options).unwrap();
         let s = String::from_utf8_lossy(&result_bytes);
         let p_idx = s.find("/P ").unwrap();
-        let end_idx = s[p_idx + 3..].find(|c: char| !c.is_ascii_digit() && c != '-').unwrap_or(s.len() - p_idx - 3);
+        let end_idx = s[p_idx + 3..]
+            .find(|c: char| !c.is_ascii_digit() && c != '-')
+            .unwrap_or(s.len() - p_idx - 3);
         let p_val: i32 = s[p_idx + 3..p_idx + 3 + end_idx].parse().unwrap();
         assert_eq!((p_val as u32) & 4, 0);
     }
@@ -180,7 +181,9 @@ mod tests {
         let result1 = pdf_change_permissions_bytes(&bytes, &options1).unwrap();
         let s1 = String::from_utf8_lossy(&result1);
         let p_idx1 = s1.find("/P ").unwrap();
-        let end_idx1 = s1[p_idx1 + 3..].find(|c: char| !c.is_ascii_digit() && c != '-').unwrap_or(s1.len() - p_idx1 - 3);
+        let end_idx1 = s1[p_idx1 + 3..]
+            .find(|c: char| !c.is_ascii_digit() && c != '-')
+            .unwrap_or(s1.len() - p_idx1 - 3);
         let p1: i32 = s1[p_idx1 + 3..p_idx1 + 3 + end_idx1].parse().unwrap();
         assert_eq!((p1 as u32) & 16, 0);
 
@@ -191,7 +194,9 @@ mod tests {
         let result2 = pdf_change_permissions_bytes(&result1, &options2).unwrap();
         let s2 = String::from_utf8_lossy(&result2);
         let p_idx2 = s2.find("/P ").unwrap();
-        let end_idx2 = s2[p_idx2 + 3..].find(|c: char| !c.is_ascii_digit() && c != '-').unwrap_or(s2.len() - p_idx2 - 3);
+        let end_idx2 = s2[p_idx2 + 3..]
+            .find(|c: char| !c.is_ascii_digit() && c != '-')
+            .unwrap_or(s2.len() - p_idx2 - 3);
         let p2: i32 = s2[p_idx2 + 3..p_idx2 + 3 + end_idx2].parse().unwrap();
         assert_eq!((p2 as u32) & 16, 16);
     }
@@ -207,10 +212,11 @@ mod tests {
         let out_bytes = pdf_change_permissions_bytes(&bytes, &options).unwrap();
         let s = String::from_utf8_lossy(&out_bytes);
         let p_idx = s.find("/P ").unwrap();
-        let end_idx = s[p_idx + 3..].find(|c: char| !c.is_ascii_digit() && c != '-').unwrap_or(s.len() - p_idx - 3);
+        let end_idx = s[p_idx + 3..]
+            .find(|c: char| !c.is_ascii_digit() && c != '-')
+            .unwrap_or(s.len() - p_idx - 3);
         let p: i32 = s[p_idx + 3..p_idx + 3 + end_idx].parse().unwrap();
         assert_eq!((p as u32) & 4, 0);
         assert_eq!((p as u32) & 8, 0);
     }
-
 }

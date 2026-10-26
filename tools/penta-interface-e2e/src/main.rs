@@ -442,6 +442,18 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_COMIC_ARCHIVE_REPORT.md",
             )?;
 
+            let res_pdf_split_by_outline =
+                cases::pdf_split_by_outline::run_pdf_split_by_outline_suite().await?;
+            println!(
+                "Split PDF by Outline finished: {} tests",
+                res_pdf_split_by_outline.len()
+            );
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Split PDF by Outline)",
+                &res_pdf_split_by_outline,
+                "reports/PENTA_INTERFACE_E2E_PDF_SPLIT_BY_OUTLINE_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -449,6 +461,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_split_by_outline);
             all.extend(res_pdf_comic_archive);
             all.extend(res_pdf_split_scanned_book);
             all.extend(res_pdf_change_permissions);
