@@ -6320,6 +6320,7 @@ dependencies = [
 name = "paperpilot-mcp"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "image",
  "lazy_static",
  "lopdf 0.45.0",
@@ -6333,6 +6334,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
+ "toml 0.8.2",
 ]
 
 [[package]]

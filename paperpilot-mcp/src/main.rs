@@ -1,16 +1,44 @@
+mod client_config;
+
+use clap::Parser;
 use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse, ContentBlock};
 use std::io::{self, BufRead};
-use std::time::Duration;
-use tokio::io::AsyncBufReadExt;
-use tokio::time::timeout;
+
+#[derive(Parser)]
+#[command(version, about = "Local PDF tools over MCP (stdio)")]
+struct Args {
+    /// Print client configuration to stdout, then exit without starting the server
+    #[arg(long, value_enum, conflicts_with = "direct_tool_call")]
+    client_config: Option<client_config::Client>,
+
+    /// Executable to put in the configuration (defaults to this executable's path)
+    #[arg(long, requires = "client_config")]
+    server_command: Option<String>,
+
+    /// Execute one tools/call request from stdin (diagnostic mode, not MCP transport)
+    #[arg(long)]
+    direct_tool_call: bool,
+}
 
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let args = Args::parse();
+
+    if let Some(client) = args.client_config {
+        let command = args.server_command.unwrap_or_else(|| {
+            std::env::current_exe()
+                .expect("Cannot locate paperpilot-mcp; supply --server-command")
+                .into_os_string()
+                .into_string()
+                .expect("Executable path is not UTF-8; supply --server-command")
+        });
+        println!("{}", client_config::render(client, &command).unwrap());
+        return;
+    }
 
     // Check if we are running with explicit flag
-    if args.iter().any(|arg| arg == "--direct-tool-call") {
+    if args.direct_tool_call {
         let stdin = io::stdin();
         let mut handle = stdin.lock();
         let mut first_line = String::new();
@@ -61,58 +89,8 @@ async fn main() {
         std::process::exit(1);
     }
 
-    // Intercept the first line of stdin for tools/call JSON-RPC testing piped without flags
-    let mut stdin_buf = tokio::io::BufReader::new(tokio::io::stdin());
-    let mut first_line = String::new();
-
-    if let Ok(Ok(bytes_read)) = timeout(
-        Duration::from_millis(300),
-        stdin_buf.read_line(&mut first_line),
-    )
-    .await
-        && bytes_read > 0
-        && first_line.contains("tools/call")
-        && let Ok(value) = serde_json::from_str::<serde_json::Value>(&first_line)
-        && let Some(params) = value.get("params")
-        && let Some(name) = params.get("name").and_then(|v| v.as_str())
-    {
-        let name_string = name.to_string();
-        if let Some(serde_json::Value::Object(args_map)) = params.get("arguments") {
-            let mut request = CallToolRequestParams::default();
-            request.name = name_string.into();
-            request.arguments = Some(args_map.clone());
-
-            match PaperPilotMcpServer::execute_call_tool(request) {
-                Ok(CallToolResponse::Complete(result)) => {
-                    let text = result
-                        .content
-                        .first()
-                        .and_then(|c| match c {
-                            ContentBlock::Text(t) => Some(t.text.clone()),
-                            _ => None,
-                        })
-                        .unwrap_or_else(|| "{\"success\":true}".to_string());
-
-                    // Support both format expectations (raw content array or parsed result)
-                    let parsed: serde_json::Value =
-                        serde_json::from_str(&text).unwrap_or(serde_json::json!({"success": true}));
-                    println!(
-                        "{}",
-                        serde_json::json!({
-                            "jsonrpc": "2.0",
-                            "id": value.get("id").unwrap_or(&serde_json::json!(null)),
-                            "result": parsed
-                        })
-                    );
-                }
-                Ok(_) => {}
-                Err(e) => eprintln!("Error executing MCP tool: {:?}", e),
-            }
-            return;
-        }
-    }
-
-    // Default: full MCP server mode
+    // Let rmcp read stdin from the very first byte. Peeking here can consume
+    // initialize (or part of it), breaking clients that send immediately.
     let server_impl = PaperPilotMcpServer::new();
     let transport = rmcp::transport::stdio();
     let running_service = rmcp::serve_server(server_impl, transport).await.unwrap();

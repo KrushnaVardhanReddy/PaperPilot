@@ -1,9 +1,16 @@
 [build]
 rustflags = ["-Csymbol-mangling-version=v0"]
 
-[target.'cfg(windows)']
+[target.'cfg(all(windows, target_env = "msvc"))']
 rustflags = [
     "-Csymbol-mangling-version=v0",
     "-C", "link-arg=/STACK:8388608",
     "-C", "link-arg=/PDBPAGESIZE:8192",
+]
+
+[target.'cfg(all(windows, target_env = "gnu"))']
+rustflags = [
+    "-Csymbol-mangling-version=v0",
+    "-Clink-self-contained=yes",
+    "-Clink-arg=-Wl,--stack,8388608",
 ]

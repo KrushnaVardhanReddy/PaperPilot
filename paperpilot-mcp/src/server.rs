@@ -6606,6 +6606,14 @@ impl PaperPilotMcpServer {
 
 #[allow(clippy::manual_async_fn)]
 impl ServerHandler for PaperPilotMcpServer {
+    fn get_info(&self) -> rmcp::model::ServerConfig {
+        rmcp::model::ServerConfig::new(
+            rmcp::model::ServerCapabilities::builder()
+                .enable_tools()
+                .build(),
+        )
+    }
+
     fn list_tools(
         &self,
         _request: Option<rmcp::model::PaginatedRequestParams>,
