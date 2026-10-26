@@ -129,11 +129,22 @@ pub fn get_feature_packs() -> Result<Vec<FeaturePackInfo>, DesktopError> {
     Ok(packs)
 }
 
+fn is_valid_pack_id(pack_id: &str) -> bool {
+    !pack_id.is_empty()
+        && pack_id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+}
+
 #[tauri::command]
 pub async fn download_feature_pack(
     app: tauri::AppHandle,
     pack_id: String,
 ) -> Result<(), DesktopError> {
+    if !is_valid_pack_id(&pack_id) {
+        return Err(DesktopError::InvalidInput("Invalid pack ID".to_string()));
+    }
+
     if pack_id == "core" {
         return Ok(());
     }
@@ -225,6 +236,10 @@ pub async fn download_feature_pack(
 
 #[tauri::command]
 pub fn set_feature_pack_enabled(pack_id: String, enabled: bool) -> Result<(), DesktopError> {
+    if !is_valid_pack_id(&pack_id) {
+        return Err(DesktopError::InvalidInput("Invalid pack ID".to_string()));
+    }
+
     let mut state = load_packs_state();
     state.insert(pack_id, enabled);
 
