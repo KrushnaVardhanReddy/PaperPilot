@@ -64,8 +64,11 @@ COPY --from=rust-builder /app/target/release/paperpilot-gateway /usr/local/bin/p
 COPY --from=rust-builder /app/target/release/paperpilot-cli /usr/local/bin/paperpilot
 COPY --from=rust-builder /app/target/release/paperpilot-mcp /usr/local/bin/paperpilot-mcp
 
-# Create shared data folder for mounting local host PDFs and models
-RUN mkdir -p /data /models
+# Create non-root paperpilot user and directories
+RUN useradd -m -u 10001 paperpilot && \
+    mkdir -p /data /models && \
+    chown -R paperpilot:paperpilot /data /models
+
 WORKDIR /data
 
 # Default environment configuration
@@ -78,5 +81,9 @@ ENV PAPERPILOT_OCR_MODELS_DIR=/models
 # Expose Gateway REST API & MCP Server port
 EXPOSE 7823
 
+# Run container as non-root user
+USER paperpilot
+
 # Default startup command runs the unified Gateway Server
 ENTRYPOINT ["/usr/local/bin/paperpilot-gateway"]
+
