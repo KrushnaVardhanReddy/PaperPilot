@@ -20,9 +20,19 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 
 ---
 
-## 🏆 Current Session Highlights (All Pushed to `origin/main`)
+## 🏆 Current Session Highlights
 
-1. **Task 118A (Split PDF by Outline / Bookmarks `[Spec 118]`, PR #264, Task 5.9.88)**:
+1. **Task 117A (Interleave / Alternate PDF Collation `[Spec 117]`, PR #268, Task 5.9.87)**:
+   - Validated and merged into `feature/dev`. Pure-Rust alternating two-document PDF page collator.
+   - Supports configurable step cadences (`step`, `step_b`) and page reversal (`reverse_a`, `reverse_b`).
+   - Svelte tool definition added to `apps/desktop`, documentation in `wiki/117-Pdf-Merge-Alternate.md`, and 106/106 Vitest tests passing.
+
+2. **Task 119A (Multi-Sheet Poster Tile Slicing Engine `[Spec 119]`, Task 5.9.89)**:
+   - Dispatched to Jules ([Session 14717167755470526744](https://jules.google.com/session/14717167755470526744)) targeting base branch `feature/dev`.
+   - Penta-scaffolding and core unit tests (`test_pdf_posterize_2x2_grid`) verified on `feature/dev`.
+   - Fixed generator warning templates in `tools/penta-scaffold/src/generator.rs`.
+
+3. **Task 118A (Split PDF by Outline / Bookmarks `[Spec 118]`, PR #264, Task 5.9.88)**:
    - Implemented `pdf_split_by_outline` across Core, CLI, MCP Server, Gateway REST, WASM, and Edge.
    - Parses document `/Outlines` / `/First` / `/Next` hierarchy recursively with configurable `max_depth` and filename sanitization.
    - Emits a ZIP archive containing segmented PDFs corresponding to each bookmark/TOC chapter.
