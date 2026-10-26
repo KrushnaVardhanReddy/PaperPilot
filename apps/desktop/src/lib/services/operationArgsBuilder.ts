@@ -605,7 +605,13 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_posterize':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`),
+                target_sheet: params.target_sheet || 'a4',
+                grid_cols: params.grid_cols ? Number(params.grid_cols) : undefined,
+                grid_rows: params.grid_rows ? Number(params.grid_rows) : undefined,
+                overlap_pt: params.overlap_pt ? Number(params.overlap_pt) : 14.17,
+                scale: params.scale ? Number(params.scale) : 1.0,
+                include_guides: params.include_guides !== undefined ? Boolean(params.include_guides) : true
             };
             break;
         default:

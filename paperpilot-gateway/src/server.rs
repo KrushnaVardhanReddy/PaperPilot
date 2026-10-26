@@ -74,6 +74,7 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WorkflowValidateRequest,
             handlers::WorkflowRunJsonRequest,
             handlers::PdfValidateSignaturesJsonRequest,
+            handlers::PdfPosterizeJsonRequest,
             handlers::PdfAttachmentsJsonRequest
         )
     ),

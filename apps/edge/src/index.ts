@@ -316,7 +316,7 @@ export default {
            const body = await request.arrayBuffer();
            const options = url.searchParams.get('options') || '{}';
            const result = WasmPdfEngine.pdf_posterize(new Uint8Array(body), options);
-           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+           return new Response(result, { headers: { 'Content-Type': 'application/pdf' } });
         }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {

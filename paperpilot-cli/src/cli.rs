@@ -608,6 +608,16 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value = "a4")]
+        target_sheet: String,
+        #[arg(long)]
+        grid: Option<String>,
+        #[arg(long, default_value = "14.17")]
+        overlap: f32,
+        #[arg(long, default_value = "1.0")]
+        scale: f32,
+        #[arg(long, default_value = "true")]
+        guides: bool,
     },
     /// Declarative multi-step document workflow execution
     Workflow {

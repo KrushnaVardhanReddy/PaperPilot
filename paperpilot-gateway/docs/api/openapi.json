@@ -309,6 +309,71 @@
         ],
         "type": "object"
       },
+      "PdfPosterizeJsonRequest": {
+        "properties": {
+          "grid_cols": {
+            "description": "Explicit grid columns (optional)",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "grid_rows": {
+            "description": "Explicit grid rows (optional)",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "include_guides": {
+            "description": "Include corner cut trim marks and tile coordinates (default: true)",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {
+            "description": "Document identifier (file path or URL)",
+            "type": "string"
+          },
+          "output": {
+            "description": "Output document path",
+            "type": "string"
+          },
+          "overlap_pt": {
+            "description": "Overlap margin in points between adjacent tiles (default: 14.17 pt ~= 5mm)",
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scale": {
+            "description": "Scale factor multiplier (default: 1.0)",
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "target_sheet": {
+            "description": "Target paper sheet size: \"a4\", \"letter\", \"legal\", or \"custom\" (default: \"a4\")",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
       "PdfSplitScannedBookJsonRequest": {
         "properties": {
           "gutter_overlap": {
@@ -1185,6 +1250,17 @@
     "/api/v1/pdf/posterize": {
       "post": {
         "operationId": "pdf_posterize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfPosterizeJsonRequest"
+              }
+            }
+          },
+          "description": "Multi-Sheet Poster Tile Slicer",
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {

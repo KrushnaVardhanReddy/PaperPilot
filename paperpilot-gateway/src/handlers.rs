@@ -1855,11 +1855,33 @@ pub async fn pdf_split_by_outline(req: axum::extract::Request) -> impl IntoRespo
 pub async fn pdf_merge_alternate(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_merge_alternate".to_string()), req).await
 }
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct PdfPosterizeJsonRequest {
+    /// Document identifier (file path or URL)
+    pub input: String,
+    /// Output document path
+    pub output: String,
+    /// Target paper sheet size: "a4", "letter", "legal", or "custom" (default: "a4")
+    pub target_sheet: Option<String>,
+    /// Explicit grid columns (optional)
+    pub grid_cols: Option<u32>,
+    /// Explicit grid rows (optional)
+    pub grid_rows: Option<u32>,
+    /// Overlap margin in points between adjacent tiles (default: 14.17 pt ~= 5mm)
+    pub overlap_pt: Option<f32>,
+    /// Scale factor multiplier (default: 1.0)
+    pub scale: Option<f32>,
+    /// Include corner cut trim marks and tile coordinates (default: true)
+    pub include_guides: Option<bool>,
+}
+
 /// Multi-Sheet Poster Tile Slicer [Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides] [Input: .pdf | Output: .pdf]
 #[utoipa::path(
     post,
     path = "/api/v1/pdf/posterize",
     tag = "PDF Operations",
+    request_body(content = PdfPosterizeJsonRequest, description = "Multi-Sheet Poster Tile Slicer", content_type = "application/json"),
     responses(
         (status = 200, description = "Multi-Sheet Poster Tile Slicer completed", body = ApiResponse),
         (status = 400, description = "Invalid request arguments"),
