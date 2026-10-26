@@ -3191,6 +3191,31 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_output_pdf_posterize),
         );
 
+        let mut prop_target_sheet_posterize = serde_json::Map::new();
+        prop_target_sheet_posterize.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        props_pdf_posterize.insert("target_sheet".to_string(), serde_json::Value::Object(prop_target_sheet_posterize));
+
+        let mut prop_grid_cols_posterize = serde_json::Map::new();
+        prop_grid_cols_posterize.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_pdf_posterize.insert("grid_cols".to_string(), serde_json::Value::Object(prop_grid_cols_posterize));
+
+        let mut prop_grid_rows_posterize = serde_json::Map::new();
+        prop_grid_rows_posterize.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_pdf_posterize.insert("grid_rows".to_string(), serde_json::Value::Object(prop_grid_rows_posterize));
+
+        let mut prop_overlap_pt_posterize = serde_json::Map::new();
+        prop_overlap_pt_posterize.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_pdf_posterize.insert("overlap_pt".to_string(), serde_json::Value::Object(prop_overlap_pt_posterize));
+
+        let mut prop_scale_posterize = serde_json::Map::new();
+        prop_scale_posterize.insert("type".to_string(), serde_json::Value::String("number".to_string()));
+        props_pdf_posterize.insert("scale".to_string(), serde_json::Value::Object(prop_scale_posterize));
+
+        let mut prop_guides_posterize = serde_json::Map::new();
+        prop_guides_posterize.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        props_pdf_posterize.insert("include_guides".to_string(), serde_json::Value::Object(prop_guides_posterize));
+
+
         schema_pdf_posterize.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_pdf_posterize),
@@ -6295,7 +6320,23 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions::default();
+
+                let target_sheet = args.get("target_sheet").and_then(|v| v.as_str()).unwrap_or("a4").to_string();
+                let grid_cols = args.get("grid_cols").and_then(|v| v.as_u64()).map(|v| v as u32);
+                let grid_rows = args.get("grid_rows").and_then(|v| v.as_u64()).map(|v| v as u32);
+                let overlap_pt = args.get("overlap_pt").and_then(|v| v.as_f64()).unwrap_or(14.17) as f32;
+                let scale = args.get("scale").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
+                let include_guides = args.get("include_guides").and_then(|v| v.as_bool()).unwrap_or(true);
+
+                let options = paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions {
+                    target_sheet,
+                    grid_cols,
+                    grid_rows,
+                    overlap_pt,
+                    scale,
+                    include_guides,
+                };
+
                 let result = paperpilot_pdf::operations::pdf_posterize::pdf_posterize_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 

@@ -451,7 +451,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => pdf_merge_alternate::handle_pdf_merge_alternate_command(
             input_a, input_b, output, *reverse_a, *reverse_b, *step, *step_b,
         ),
-        Commands::PdfPosterize { input, output } => pdf_posterize::handle_pdf_posterize_command(input, output),
+        Commands::PdfPosterize { input, output, target_sheet, grid, overlap, scale, guides } => pdf_posterize::handle_pdf_posterize_command(input, output, target_sheet, grid, overlap, scale, guides),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
