@@ -16,11 +16,17 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 |---|:---:|---|---|---|:---:|
 | **Task 117A** | `[Spec 117]` | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) | `main` | [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417) | ✅ Merged into `feature/dev` (PR #268) |
 | **Task 118A** | `[Spec 118]` | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) | `main` | [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238) | ✅ Merged (PR #264) |
-| **Task 119A** | `[Spec 119]` | Multi-Sheet Poster Tile Slicer (`pdf_posterize`) | `feature/dev` | [Session 14717167755470526744](https://jules.google.com/session/14717167755470526744) | 🚀 In Progress (Targeting `feature/dev`) |
+| **Task 119A** | `[Spec 119]` | Multi-Sheet Poster Tile Slicer (`pdf_posterize`) | `feature/dev` | [Session 14717167755470526744](https://jules.google.com/session/14717167755470526744) | ✅ Merged into `feature/dev` (PR #270) |
 | **Task 121A** | `[Spec 121]` | Mobile Touch Gestures & Viewport Panning (`PdfPreview.svelte`) | `feature/dev` | [Session 10726916767408006847](https://jules.google.com/session/10726916767408006847) | ✅ Merged into `feature/dev` (PR #269) |
 | **Task 122A** | `[Spec 122]` | Lossless Stream Deduplication & CMYK Safety (`pdf_dedup_streams`) | `feature/dev` | Backlog / Planned | 📋 Spec & Task Created |
 | **Task 123A** | `[Spec 123]` | Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening | `feature/dev` | [Session 18198933508777026291](https://jules.google.com/session/18198933508777026291) | 🚀 In Progress (Targeting `feature/dev`) |
-| **Task 123B** | `[Spec 123]` | REST Gateway CORS Lockdown, Request Body Limit & Auth | `feature/dev` | Local Execution (Antigravity) | 🛡️ In Progress |
+| **Task 123B** | `[Spec 123]` | REST Gateway CORS Lockdown, Request Body Limit & Auth | `feature/dev` | Local Execution (Antigravity) | ✅ Completed on `feature/dev` |
+| **Task 124A** | `[Spec 124]` | Mobile Web / Browser Sandbox Responsive Overhaul | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/124-...`) |
+| **Task 125A** | `[Spec 125]` | Single-File Offline Self-Contained HTML Sandbox | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/125-...`) |
+| **Task 126A** | `[Spec 126]` | Open-WebUI & Apache Tika Replacement Ingestion Adapter | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/126-...`) |
+| **Task 127A** | `[Spec 127]` | PDF-to-EPUB Semantic Engine via Intermediate AST | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/127-...`) |
+| **Task 128A** | `[Spec 128]` | CI Supply Chain Hardening & Action SHA Pinning | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/128-...`) |
+| **Task 129A** | `[Spec 129]` | Automated Security Regression & Fuzzing Harness for Malformed PDFs | `feature/dev` | Backlog / Planned | 📋 Spec Created (`specs/129-...`) |
 
 ---
 
