@@ -168,6 +168,33 @@
             setTimeout(() => chatInputRef?.focus(), 0);
         }
     }
+
+    function dispatchCitation(page: number, bbox?: number[]) {
+        window.dispatchEvent(new CustomEvent('paperpilot:jump-to-citation', {
+            detail: { page, bbox }
+        }));
+    }
+
+    function parseContentWithCitations(content: string) {
+        const regex = /\[(?:Page|p\.)\s*(\d+)\]/gi;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(content)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push({ type: 'text', text: content.substring(lastIndex, match.index) });
+            }
+            parts.push({ type: 'citation', page: parseInt(match[1], 10), text: match[0] });
+            lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < content.length) {
+            parts.push({ type: 'text', text: content.substring(lastIndex) });
+        }
+
+        return parts;
+    }
 </script>
 
 <div class="chat-panel">
@@ -188,8 +215,26 @@
         {#each messages as msg}
             <div class="message {msg.role}">
                 <div class="bubble">
-                    {msg.content}
+                    {#each parseContentWithCitations(msg.content) as part}
+                        {#if part.type === 'citation'}
+                            <button class="citation-pill" onclick={() => dispatchCitation(part.page as number)}>
+                                📄 p. {part.page}
+                            </button>
+                        {:else}
+                            {part.text}
+                        {/if}
+                    {/each}
                 </div>
+                {#if msg.result?.citations && msg.result.citations.length > 0}
+                    <div class="structured-citations">
+                        <span class="citations-label">Sources:</span>
+                        {#each msg.result.citations as citation}
+                            <button class="citation-pill" onclick={() => dispatchCitation(citation.page, citation.bbox)}>
+                                📄 p. {citation.page}
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
                 {#if msg.plan}
                     <EditableActionCard plan={msg.plan} onExecute={executePlan} />
                 {/if}
@@ -354,6 +399,46 @@
         border: 1px solid var(--border-color);
         color: var(--text-primary);
         border-bottom-left-radius: 2px;
+    }
+
+    .citation-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: #6366f1;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        margin: 0 0.2rem;
+        transition: all 0.2s ease;
+        vertical-align: middle;
+    }
+
+    .citation-pill:hover {
+        background: rgba(99, 102, 241, 0.2);
+        border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .structured-citations {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+    }
+
+    .citations-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 600;
     }
 
     .thinking .bubble {
