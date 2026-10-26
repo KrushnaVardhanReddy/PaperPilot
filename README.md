@@ -11,7 +11,7 @@ PaperPilot is a PDF and document toolkit written in Rust. The same engine runs a
 
 | Surface | Use it for |
 |---|---|
-| **MCP server** | Give Claude Desktop, Cursor, or any MCP client the ability to merge, split, OCR, and compress PDFs |
+| **MCP server** | Give Codex, Claude Code, Kimi Code, Pi, Claude Desktop, Cursor, or any MCP client the ability to merge, split, OCR, and compress PDFs |
 | **CLI** | Batch and scripted workflows |
 | **Browser (WASM)** | Zero-install tools; files are processed in browser memory, nothing is uploaded |
 | **Desktop app** | Tauri + Svelte GUI with viewer, markup, and diff |
@@ -23,7 +23,17 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ## Quick start
 
-### 1. Use it with Claude / Cursor (MCP)
+### 1. Use it with your coding agent (MCP)
+
+Codex, Claude Code, Kimi Code, and current Pi releases connect to the same local
+stdio server. See the [coding agent setup guide](docs/coding-agents.md) for each
+client's configuration and verification steps. Builds from this source can also
+print ready-to-merge configuration:
+
+```bash
+paperpilot-mcp --client-config codex
+# Also: claude-code, kimi-code, pi, claude-desktop, cursor
+```
 
 Download `paperpilot-mcp` from [Releases](https://github.com/KrushnaVardhanReddy/PaperPilot/releases), then add it to `claude_desktop_config.json`:
 
