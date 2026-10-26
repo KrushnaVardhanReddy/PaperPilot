@@ -32,24 +32,24 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
    - Supports permission toggles for printing, copying, modifications, annotations, form filling, and accessibility across Core, CLI, MCP, and Gateway.
    - 3/3 unittests passed.
 
-2. **Task 112A (Scanned Dual-Page Book Center Spine Split `[Spec 112]`, PR #261, Task 5.9.85)**:
+3. **Task 112A (Scanned Dual-Page Book Center Spine Split `[Spec 112]`, PR #261, Task 5.9.85)**:
    - Pure-Rust dual-page center spine splitting engine supporting horizontal/vertical splits, configurable gutter overlap margins, and LTR/RTL page ordering.
    - Tested across Core, CLI, Gateway, and MCP (`wave4_mcp_tests.rs`), 5/5 unit tests passed.
 
-3. **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**:
+4. **Task 115A (Web Portal Use Cases Showcase & Scenario Cards `[Spec 115]`, Task 5.9.84)**:
    - Added responsive `<UseCasesShowcase />` (`apps/web/src/components/UseCasesShowcase.svelte`) directly under hero playground.
    - 6 workflow personas: Legal/Compliance, Healthcare/HIPAA, Finance/Operations, Academic/Research, Print/Prepress, Developers/AI Agents.
    - Interactive deep-links: Click CTA to auto-select tool via `window.dispatchEvent('select-tool')` and smooth scroll to playground.
    - Pure Svelte 5 runes (`$state`, `$derived`), zero NPM dependencies, dark glassmorphism styling.
 
-4. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
+5. **Task 114A (Web Portal Dynamic Releases Download Counter Badge `[Spec 114]`, Task 5.9.83)**:
    - Built `<DownloadBadge />` with 15-minute `sessionStorage` caching, querying releases assets dynamically.
    - Configured behind feature flag `ENABLE_DOWNLOAD_COUNT_BADGE = true` with auto-threshold `MIN_DOWNLOAD_COUNT_THRESHOLD = 1000` in `apps/web/src/constants.ts`.
 
-5. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
+6. **Task 113A (Web Portal Mobile Handoff QR Code & Share Modal `[Spec 113]`, Task 5.9.82)**:
    - Built `<ShareModal />` with 1-click URL copy, native `navigator.share`, and verified static SVG asset (`apps/web/public/qr_code.svg`).
 
-6. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
+7. **Task 84C (Wave 3 SLM Dataset Generator `[Spec 084]`, PR #260)**:
    - Expanded `tools/slm-training` to 45 tools and 10% negative guardrails for ChatML finetuning, 6/6 tests passing.
 
 ---
@@ -58,21 +58,19 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 
 When starting the next session, perform the following sequence:
 
-1. **Check Status of In-Flight Jules Sessions**:
+1. **Check Status of Active In-Flight Jules Sessions**:
    - Run `git fetch origin` and check for PRs on:
-     - **Task 111A (`pdf_change_permissions`)**: [Session 8073581921523239798](https://jules.google.com/session/8073581921523239798)
-     - **Task 112A (`pdf_split_scanned_book`)**: [Session 2005125894355067826](https://jules.google.com/session/2005125894355067826)
+     - **Task 117A (`pdf_merge_alternate`)**: [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417)
+     - **Task 118A (`pdf_split_by_outline`)**: [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238)
    - When PRs open:
      - Check out branch, test with `cargo test -p paperpilot-pdf -j 2`, merge to `main`, and push.
      - Update `PHASES.md` and `HANDOFF.md`.
      - Run `graphify update .`.
 
 2. **Next Backlog Features to Dispatch or Implement**:
+   - **Task 5.3.26 (`pdf_posterize`)**: Multi-sheet poster tile slicing with overlap margins.
    - **Task 5.3.22 (`docx_to_pdf` / `office_to_pdf`)**: Direct pure-Rust/WASM document rendering to PDF.
    - **Task 5.3.23 (`epub_to_pdf`)**: EPUB e-book rendering and pagination into standard PDF.
-   - **Task 5.3.24 (`pdf_merge_alternate`)**: Alternating collation for duplex scanner splits.
-   - **Task 5.3.25 (`pdf_split_by_outline`)**: Bookmark/outline-based chapter splitting.
-   - **Task 5.3.26 (`pdf_posterize`)**: Multi-sheet poster tile slicing with overlap margins.
 
 ---
 
