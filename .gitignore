@@ -52,3 +52,7 @@ LAUNCH_POSTS.md
 graphify-out/
 wiki/vault/
 .obsidian/
+
+# Local Strategy & Security Scan Reports
+pricing_strategy.md
+semgrep_report.json
