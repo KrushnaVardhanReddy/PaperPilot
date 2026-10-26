@@ -13,9 +13,9 @@
 - **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
 - **System Stability & Audits**:
   - `cargo check --workspace -j 2`: **100% Clean**.
-  - Local security audit (`make audit` running Semgrep, Trivy, and Cargo-Audit): **0 blocking vulnerabilities**.
+  - Local security audit (Semgrep, Trivy, and Cargo-Audit): **0 blocking vulnerabilities**.
   - MCP Tool Count: **78 tools registered and verified** (`paperpilot-mcp`).
-  - Desktop Vitest Suite: **111/111 passing tests** (`pnpm --dir apps/desktop test`).
+  - Desktop Vitest Suite: **112/112 passing tests** (`pnpm --dir apps/desktop test`).
 
 ---
 
@@ -23,7 +23,6 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 123A** | `[Spec 123]` | P0 | Security / Tauri / Core | `feature/dev` | 🔄 **In-Flight in Jules**: [Session 18198933508777026291](https://jules.google.com/session/18198933508777026291)<br>Hardening `pack_commands.rs`, `url_fetch.rs` (SSRF IP validation), and `tauri.conf.json` (strict CSP). |
 | **Task 124A** | `[Spec 124]` | P1 | Web / UI Mobile | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/124-...`)<br>Mobile web playground overhaul (`apps/web/src/components/HeroPlayground.svelte`): responsive bottom sheet / drawer, >=44px touch targets. |
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/122-...`)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 128A** | `[Spec 128]` | P1 | CI / Security | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/128-...`)<br>Pin all third-party GitHub Actions across `.github/workflows/` to immutable 40-char commit SHAs. |
@@ -36,13 +35,19 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 119A (Multi-Sheet Poster Tile Slicer `[Spec 119]`, PR #270, Task 5.9.89)**:
+1. **Task 123A (Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening `[Spec 123]`, PR #271)**:
+   - Sanitized search snippets in `workspaceSearch.ts` with HTML entity escaping and added test coverage.
+   - Configured strict CSP in `tauri.conf.json`.
+   - Hardened `pack_commands.rs` against path traversal using alphanumeric regex.
+   - Blocked SSRF loopback, link-local, unspecified, and CGNAT IP ranges and disabled automatic redirects in `url_fetch.rs`.
+   - Set non-root `paperpilot` user in `Dockerfile`.
+2. **Task 119A (Multi-Sheet Poster Tile Slicer `[Spec 119]`, PR #270, Task 5.9.89)**:
    - Slices oversized or scaled documents across standard printable grid sheets (A4, Letter) with glue gutters (`overlap_pt`) and cut trim marks.
-   - Cleanly resolved merge conflicts across CLI, MCP (78 tools total), Gateway, and `operationArgsBuilder.ts` (Desktop). Merged to `feature/dev`.
-2. **Task 123B (Gateway Security Lockdown & Automated Security Gates `[Spec 123]`)**:
+   - Cleanly merged across Core, CLI, MCP (78 tools total), Gateway, and Desktop.
+3. **Task 123B (Gateway Security Lockdown & Automated Security Gates `[Spec 123]`)**:
    - Enforced localhost/app-origin CORS restrictions and 100MB body limit (`DefaultBodyLimit::max(100MB)`).
-   - Local `make audit` and `.github/workflows/security.yml` integrated.
-3. **Task 121A (Mobile Touch Gestures & Viewport Panning `[Spec 121]`, PR #269, Task 5.9.90)**:
+4. **Task 121A (Mobile Touch Gestures & Viewport Panning `[Spec 121]`, PR #269, Task 5.9.90)**:
+   - Viewport double-tap zoom, 2D panning, and swipe page navigation in `PdfPreview.svelte`.
    - Viewport double-tap zoom, 2D panning, and swipe page navigation in `PdfPreview.svelte`.
 
 ---
