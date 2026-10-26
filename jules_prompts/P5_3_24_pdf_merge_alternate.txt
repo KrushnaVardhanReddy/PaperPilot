@@ -1,0 +1,21 @@
+# Jules Prompt: Task 117A — Implement Alternating PDF Merge & Duplex Collation (`pdf_merge_alternate`)
+
+## Context
+Implement Spec 117 (`pdf_merge_alternate`) in PaperPilot to interleave pages from two PDF documents (e.g. front pages and back pages from manual duplex scanners).
+
+## Acceptance Criteria
+1. **Core Engine (`paperpilot-pdf/src/operations/pdf_merge_alternate.rs`)**:
+   - Implement `pub fn merge_alternate_bytes(a_bytes: &[u8], b_bytes: &[u8], options: &PdfMergeAlternateOptions) -> Result<Vec<u8>, OperationError>`.
+   - Support `step` (pages taken from Doc A per cycle, default 1), `step_b` (pages taken from Doc B per cycle, default 1), `reverse_b` (reverse Doc B page order, default false), and `reverse_a` (default false).
+   - Re-index object IDs cleanly when importing pages into target document.
+   - Add unit tests with real fixtures in `paperpilot-pdf`.
+2. **CLI (`paperpilot-cli/src/commands/pdf_merge_alternate.rs`)**:
+   - Subcommand `merge-alternate` with `--input-a`, `--input-b`, `--output`, `--reverse-b`, `--reverse-a`, `--step`, `--step-b`.
+3. **MCP Server (`paperpilot-mcp/src/server.rs`)**:
+   - Register tool `pdf_merge_alternate`.
+4. **REST Gateway (`paperpilot-gateway/src/handlers.rs`)**:
+   - Endpoint `POST /api/v1/pdf/merge-alternate`.
+5. **Documentation**:
+   - Add `wiki/117-Pdf-Merge-Alternate.md` and `apps/docs/src/content/docs/reference/tools/pdf_merge_alternate.md`.
+6. **Zero-Conflict Rule**:
+   - Do NOT edit existing tests or unrelated operations. Add new files or append cleanly to match arms.

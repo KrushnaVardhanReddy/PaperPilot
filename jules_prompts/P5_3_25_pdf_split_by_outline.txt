@@ -1,0 +1,22 @@
+# Jules Prompt: Task 118A — Implement Split PDF by Outline / Bookmarks (`pdf_split_by_outline`)
+
+## Context
+Implement Spec 118 (`pdf_split_by_outline`) in PaperPilot to automatically split multi-chapter PDF documents based on their `/Outlines` bookmark hierarchy.
+
+## Acceptance Criteria
+1. **Core Engine (`paperpilot-pdf/src/operations/pdf_split_by_outline.rs`)**:
+   - Parse `/Outlines` dictionary from `lopdf::Document`.
+   - Traverse bookmark nodes up to `max_depth` (default 1).
+   - Resolve `/Dest` and `/GoTo` actions to calculate 1-indexed start and end page numbers for each chapter.
+   - Extract each section into a standalone PDF in-memory (`Vec<OutlineSectionResult>`).
+   - Add unit tests with real PDF fixtures in `paperpilot-pdf`.
+2. **CLI (`paperpilot-cli/src/commands/pdf_split_by_outline.rs`)**:
+   - Subcommand `split-by-outline` with `--input`, `--output-dir`, and optional `--max-depth`.
+3. **MCP Server (`paperpilot-mcp/src/server.rs`)**:
+   - Register tool `pdf_split_by_outline`.
+4. **REST Gateway (`paperpilot-gateway/src/handlers.rs`)**:
+   - Endpoint `POST /api/v1/pdf/split-by-outline`.
+5. **Documentation**:
+   - Add `wiki/118-Pdf-Split-By-Outline.md` and `apps/docs/src/content/docs/reference/tools/pdf_split_by_outline.md`.
+6. **Zero-Conflict Rule**:
+   - Do NOT edit existing tests or unrelated operations. Add new files or append cleanly to match arms.
