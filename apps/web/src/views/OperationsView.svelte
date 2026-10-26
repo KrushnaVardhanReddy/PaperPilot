@@ -2010,17 +2010,54 @@ let metadataFile: File | null = $state(null);
   @media (max-width: 768px) {
     .operations-view {
       flex-direction: column;
+      gap: 16px;
     }
     .tools-sidebar {
       width: 100%;
+      max-height: 180px;
+      padding: 12px;
     }
     .tools-list {
+      display: flex;
       flex-direction: row;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 8px;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
     }
     .tool-btn {
-      flex: 1;
-      min-width: 140px;
+      flex: 0 0 auto;
+      min-width: 120px;
+      min-height: 44px;
+      padding: 8px 12px;
+    }
+    .tool-content {
+      padding: 16px;
+      min-height: 480px;
+    }
+    .action-btn {
+      min-height: 48px;
+      font-size: 1.05rem;
+    }
+    .file-controls button, .selected-file button {
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tool-pane h2 {
+      font-size: 1.25rem;
+    }
+    .tools-sidebar {
+      max-height: 150px;
+    }
+    .tool-content {
+      padding: 12px;
     }
   }
 </style>
