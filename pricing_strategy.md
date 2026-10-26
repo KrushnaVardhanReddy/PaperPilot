@@ -1,344 +1,65 @@
-# PaperPilot Pricing Strategy (v2 — Competitive Update)
+# PaperPilot Pricing & Business Strategy (Two-Tier Model)
 
-**Target Market:** Individual developers, power users, SMBs, and Enterprise PDF teams.
-**Overhead:** $0.00 compute cost on local processing (our core advantage over every cloud-based tool).
-**Goal:** Beat Stirling PDF's usage-based model with a simpler "pay once, run forever locally" message, while building a sustainable B2B revenue stream from teams and enterprise.
+**Core Model:** Open-Core with **Two Tiers Only**:
+1. **Community Edition (100% Free Forever, Apache 2.0)**: Individual developers, power users, solo consultants, researchers, and open-source contributors.
+2. **Enterprise Edition (Commercial License)**: Organizations requiring fleet governance, security compliance, air-gapped deployments, and audit trails.
 
-> **Key Counter-Positioning vs. Stirling PDF:**
-> Stirling charges $0.01 per automation run (their Processor product) — even on self-hosted setups. PaperPilot's **local processing is always free**: every automation, every pipeline run, every batch job on your machine costs $0, forever. Our Cloud API tier offers usage-based pricing for teams that need hosted infrastructure — but that's opt-in, not a tax on local workflows. For developers and power users running hundreds of automations a month on their own hardware, we are dramatically cheaper.
+**The Golden Philosophy:**
+- **Zero local tax**: No paywalls on local processing. 0 bytes uploaded to external servers, 0 limits on tool execution, 0 user caps for self-hosted instances.
+- **We monetize fleet governance, NOT individual tools**: Everything that runs on a single user's workstation or personal homelab is completely free. We charge organizations for central IT administration, compliance audits, SCIM, and signed BAA agreements.
 
 ---
 
-## Tier Overview
+## The Two Tiers
 
-| Tier | Price | Best For |
+| Dimension | **Community Edition** | **Enterprise Edition** |
 |---|---|---|
-| **Community** | **Free Forever** | Everyone — individuals, students, open-source developers |
-| **Pro (Desktop)** | **$5/month** (or $48/yr) | Power users, freelancers, consultants (unlimited steps, watch folders, BYOK) |
-| **Cloud Web Pro (SaaS)**| **$4/month** (or $38/yr) | Zero-install web browser users (iLovePDF alternative, ephemeral RAM compute) |
-| **Teams** | **$12/user/month** (or $115/yr) | Small teams, agencies, law firms (2–50 seats, shared recipe library) |
-| **Enterprise** | **$22/user/month** or **$15k–$35k/yr Flat VPC** | 50+ seats or air-gapped VPCs (SAML, SCIM, Air-gap, SIEM audit, BAA) |
-| **Managed White-Label Edge** | **$149 – $399 / month** | Branded customer portals (e.g. `pdf.firmname.com`, zero maintenance, >95% margin) |
-| **Cloud API Packages**| **$0 / $29 / $89 / mo** *(Waitlist / Phase 7)* | Developers, CI/CD, SaaS platforms (1k Free, 5k Dev, 20k Scale; sub-100ms pure-Rust edge) |
-
-> Prices are positioned below Stirling's ecosystem cost (editor free + $0.01/run adds up fast for teams), below Adobe Acrobat ($20/user/month), below iLovePDF ($7/month), and well below typical B2B PDF SaaS ($25–$50/user/month).
-
----
-
-## Tier 1: Community (100% Free Forever & Open Source — Apache 2.0)
-
-* **Price:** $0 — always, unconditionally open source.
-* **Target:** Individual users, students, developers, legal aid clinics, researchers, self-hosters, and anyone running PaperPilot locally.
-* **Features:**
-  - **All 50+ core PDF operations** (Merge, Split, Rotate, Compress, Redact, Encrypt, OCR, Forms, Annotations, Convert, Bates Stamping, Conformance verification, etc.)
-  - **Full PDF Viewer** with annotations, canvas markup, and form filling
-  - **Offline AI Mode** (100% local, zero API key — embedded NeuML `bert-hash-nano-embeddings` <1.1MB ONNX model & Aho-Corasick rule engine for instant sub-millisecond command resolution)
-  - **Local AI Agent & LLM Multi-Step Reasoning (100% Open Source):**
-    - **Mozilla `llamafile` 1-Click Offline Runner**: Zero-install standalone local LLM with in-app model downloader
-    - **Universal OpenAI-Compatible Endpoint**: Connect to ANY local or LAN endpoint (Ollama, LM Studio, vLLM, local GPU server)
-    - **Commercial BYOK (Bring Your Own Key)**: Direct client-side connection with user's own OpenAI, Anthropic, Gemini, Groq, or OpenRouter keys (stored safely in local OS Keyring)
-  - **Zero Data Leakage Guarantee:** Raw PDF files NEVER leave your local machine.
-  - **Basic Pipeline Builder** — up to 3 steps, manual trigger
-  - **Full MCP Server** (`paperpilot-mcp` — all 45+ tools for Claude Desktop, Cursor, OpenCode)
-  - **Full CLI** (all commands, JSON output, webhooks)
-  - **Unlimited Self-Hosted Users** (Zero user caps — no 5-user paywall)
-  - **Standard OIDC / OAuth SSO** (Google, GitHub, Authentik, Keycloak) — free with zero "SSO Tax"
-  - **Community support** (GitHub Discussions, Discord)
-* **Strategic Open-Source Advantage:** By making local AI execution, Llamafile, and BYOK 100% free and open source, PaperPilot becomes the universal standard "hands" for AI agents and developers worldwide, eliminating adoption friction.
+| **Price** | **$0 / Free Forever (Apache 2.0)** | **$22/user/month** or **$15k–$35k/year Flat VPC** |
+| **Target** | Individuals, developers, researchers, small teams | Mid-market, healthcare (HIPAA), legal firms, defense, banking |
+| **All 75+ Core Tools** | ✅ Full access (Merge, Split, OCR, Redact, Sign, Permissions, Imposition, etc.) | ✅ Full access |
+| **CLI & Local REST API** | ✅ Included (`localhost:7823`) | ✅ Included |
+| **Model Context Protocol (MCP)** | ✅ Native MCP server for Claude Desktop, Cursor, and OpenCode | ✅ Native MCP server |
+| **Desktop Application** | ✅ Full Tauri 2 + Svelte 5 GUI (macOS, Windows, Linux) | ✅ Pre-packaged silent installers (MSI, Jamf, SCCM) |
+| **Client-Side WASM Web Engine** | ✅ 100% in-browser privacy (usepaperpilot.com) | ✅ Optional Managed White-Label Edge Portal |
+| **Offline Vector Search & RAG** | ✅ Embedded `libsql_vector` + citation canvas | ✅ Embedded `libsql_vector` + citation canvas |
+| **Pipeline Builder** | ✅ Unlimited steps & local execution | ✅ Unlimited steps & shared team recipe library |
+| **Single Sign-On (SSO)** | ✅ Standard OIDC / OAuth (Google, GitHub, Keycloak, Authentik) | ✅ Enterprise SAML 2.0 with custom claim mapping |
+| **Lifecycle Provisioning** | ❌ Manual | ✅ Automated **SCIM 2.0** (Okta, Azure AD, OneLogin) |
+| **Air-Gap Hardening** | Manual configuration | ✅ Enforced GPO/MDM policies (hard-blocks all network egress) |
+| **SIEM Compliance Auditing** | Local SQLite logs | ✅ Real-time audit log streaming to Splunk, Datadog, CloudWatch |
+| **Compliance & Legal** | Apache 2.0 license | ✅ Signed **BAA (HIPAA)**, SOC2 report, commercial indemnification |
+| **Support** | Community (GitHub Discussions, Discord) | Dedicated account manager, 24/7 phone SLA, custom builds |
 
 ---
 
-## Tier 2: Pro (Automation & Power Daemons)
+## 1. Community Edition ($0 — 100% Free Forever)
 
-* **Price:** $5/month (~$48/year billed annually)
-* **Target:** Power users, solo legal/finance consultants, freelancers, and power automation users.
-* **Features (everything in Community, plus):**
-  - **Unlimited pipeline steps** (Community is capped at 3)
-  - **Continuous Automation Daemons:**
-    - **Watch Folder Daemon:** Automatically watches designated folders on disk and processes incoming PDFs (OCR, Bates stamp, flatten, convert) in background
-    - **Cron Scheduling:** Recurring scheduled document jobs and archival pipelines
-    - **Inbound Webhook Triggers:** Trigger local pipelines from external system events
-  - **LLM-Ready Multi-Doc Synthesis & Export:** High-density RAG-optimized Markdown + structured JSON sidecars
-  - **Voice input** for desktop NLP command interface
-  - **Plugin Registry access:** 1-click install and use community plugins
-  - **HMAC Signed Webhook Outputs:** Cryptographically signed outbound webhooks
-  - **1 year of update entitlement** + priority email support (48h response SLA)
-* **Why $5:** We do not paywall your AI keys or local compute. Users gladly pay $5/mo for "set-it-and-forget-it" background folder watchers, cron automation, and unlimited pipeline chains.
+* **Who it's for:** Every developer, student, freelancer, privacy advocate, and self-hoster.
+* **Why it's completely free:**
+  - Traditional competitors (Adobe, Smallpdf) pay millions in cloud server and GPU costs, so they are forced to charge $10–$25/month.
+  - Because PaperPilot runs **100% locally on the user's CPU/RAM via Rust and WASM**, our marginal server cost per user is **$0.00**.
+  - We do not gatekeep local pipelines, watch folders, or CLI commands.
+* **Included out of the box:**
+  - Complete 75+ operation catalog with no artificial limits.
+  - Full desktop app, terminal CLI, and in-browser WASM sandbox.
+  - Model Context Protocol (MCP) server for local AI agents.
+  - Zero telemetry, zero cloud tracking, zero file retention.
 
 ---
 
-## Tier 3: Teams
+## 2. Enterprise Edition (Fleet Governance & Compliance)
 
-* **Price:** $12/user/month (~$115/user/year billed annually)
-* **Minimum:** 2 seats
-* **Target:** Agencies, small law firms, accounting teams, startups — 2 to 50 seats.
-* **Features (everything in Pro, plus):**
-  - **Centralized license portal** ✅ — admin manages seats, assigns roles, revokes access from one dashboard
-  - **Concurrent pipeline execution** ✅ — team members run pipelines simultaneously without blocking each other
-  - **Priority support** ✅ — 4-hour response SLA (vs. 48h for Pro)
-  - **Shared pipeline/recipe library** 🚧 *(Phase 3.4.11 — Q1 2025)* — team recipes stored in a private registry; once a firm standardizes their invoice, contract, or Bates stamping pipeline across staff, switching cost is high
-  - **Team audit log** 🚧 *(Phase 6.3)* — searchable job history per user (what ran, when, result)
-  - **SDK access** 🚧 *(Phase 4 early access)* — Python and JavaScript SDK libraries for embedding PaperPilot into internal tooling
-
-> **Why Teams over two individual Pro licenses?** At 2 seats you pay $24/month vs $10/month for two Pro licenses — the immediate concrete value is centralized seat management and concurrent pipeline execution. The shared recipe library (shipping Phase 3.4.11) is what makes Teams the obvious permanent home for any firm once it's live: a standardized pipeline your whole team runs is worth far more than each person maintaining their own copy.
-
-* **Why $12:** Centralized administration and concurrent execution are day-one differentiators. The recipe library becomes the retention engine the moment it ships — once a team standardizes their workflows, switching cost is high.
+* **Who it's for:** Hospitals, law firms, financial institutions, and government agencies.
+* **Why they pay:** Enterprises do not pay for basic PDF merging; they pay for **risk mitigation, compliance, and IT fleet control**:
+  1. **Automated Provisioning (SCIM 2.0)**: Automatically assign and revoke seats when employees join or leave via Okta / Azure Active Directory.
+  2. **Air-Gap SCIF Deployment**: Validated Ed25519 offline license files with zero phone-home calls for classified government networks.
+  3. **Immutable Audit Trails**: Streams every document hash, redaction event, and signature to enterprise SIEMs (Splunk, Datadog) for regulatory compliance.
+  4. **Signed HIPAA BAA & Legal Indemnification**: Required by corporate legal teams before software can touch protected health information (PHI).
 
 ---
 
-## Tier 4: Enterprise (Fleet Governance & Compliance)
+## Strategic Advantage vs. Competitors
 
-* **Pricing Models (Two Options):**
-  1. **Per-Seat Fleet License:** **$22/user/month** (~$211/user/year billed annually, minimum 50 seats = $10,550/yr).
-  2. **Flat Enterprise VPC / Air-Gap Appliance:** **$15,000 – $35,000/year flat** (unlimited internal seats, deployable via Kubernetes/Docker on AWS, Azure, GCP, or On-Premise SCIFs).
-* **Target:** Hospitals, law firms, financial institutions, defense contractors — organizations governed by strict IT, security, and audit standards.
-* **Why Enterprise Pays (We monetize Fleet Governance, NOT the Login Button):**
-  - **SCIM 2.0 Automated Lifecycle Provisioning** — Instant Okta / Azure AD automated user on/off-boarding
-  - **Enterprise SAML 2.0 Federation** with custom attribute mapping and conditional access policies
-  - **MSI / MDM Silent Enterprise Deployments** — Pre-packaged Intune, Jamf, and SCCM deployment manifests
-  - **Air-Gap Group Policy Lockdown (GPO / Plist)** — IT-enforced hard policies disabling all external network calls, blocking cloud LLM keys, and locking execution to 100% on-premise
-  - **SIEM / Compliance Audit Log Streaming** — Real-time event streaming to Splunk, Datadog, or AWS CloudWatch (tracking every document redact, export, and signature with SHA-256 fingerprints)
-  - **Commercial Indemnification & Signed BAA (Business Associate Agreement)** for HIPAA healthcare compliance
-  - **On-premise offline license validation (`license.key` via Ed25519)** (zero phone-home requirement, works in air-gapped SCIFs and defense environments)
-  - **Dedicated Account Manager & 24/7 SLA with phone support**
-* **Why $15k–$35k:** Large enterprises don't pay for login convenience; they pay for **legal compliance, risk mitigation, and zero data-leakage guarantees**. At $15k–$35k flat or $22/seat/mo, PaperPilot is dramatically cheaper and faster than Adobe Acrobat Enterprise while providing 100% physical on-premise data residency.
-
----
-
-## 🏢 Enterprise Delivery Models: Managed White-Label Edge vs. Self-Hosted On-Prem
-
-Enterprise customers fall into two distinct buyer categories with completely different infrastructure preferences:
-
-| Attribute | **Managed White-Label Edge (SaaS)** | **Self-Hosted Enterprise License (On-Prem)** |
-|---|---|---|
-| **Target Buyer** | Mid-market businesses, law firms, CPAs, clinics, agencies wanting their own branded portal without IT ops. | Banks, defense, healthcare giants, strict air-gapped orgs with dedicated SecOps/DevOps teams. |
-| **Delivery Model** | **Cloudflare Workers (WASM Isolates)** with SSL for SaaS. | **Docker Container / Standalone Binary** (`paperpilot-gateway` / desktop). |
-| **Domain Setup** | Custom enterprise CNAME (e.g. `pdf.firmname.com`). | Internal intranet / VPC URL (e.g. `pdf.internal.bank.com`). |
-| **Maintenance** | **Zero Ops**: Cloudflare handles SSL, global CDN, and automated WASM upgrades. Zero disk storage. | **Client Managed**: Installed on customer's AWS/Azure VPC or bare-metal servers. |
-| **Compliance** | HIPAA/SOC2 compliance through physical zero-disk V8 Isolates and in-memory execution. | 100% air-gapped network isolation. Zero external network egress. |
-| **Pricing** | **$149 – $399 / month** (or $1,500 – $3,900 / year). | **$2,500 – $10,000 / year** (flat per-server or per-seat license). |
-
-### 1. Managed White-Label Edge ($149 – $399/mo)
-* **The Value Proposition:** A 30-person law or accounting firm cannot afford a full-time DevOps engineer to babysit a Linux/Docker server, update SSL certificates, and debug crashes. Paying $199/month for a fully managed Cloudflare custom domain (`pdf.smithlegal.com`) is **dramatically cheaper than hiring an IT consultant ($150/hr)**.
-* **White-Label Features:**
-  - Dynamic CNAME routing (`pdf.customer.com` -> PaperPilot Edge Worker).
-  - Client logo, custom favicon, primary brand colors, and custom email notifications.
-  - Automated SSL provisioning via Cloudflare Custom Hostnames (SSL for SaaS).
-  - Multi-tenant isolated Cloudflare KV configuration for access controls and API key management.
-  - Physical zero-disk guarantee: all documents execute in V8 RAM buffers and are immediately wiped.
-* **Unit Economics & Margin:**
-  - Cloudflare Workers cost: $5/mo base + $2/mo per custom hostname.
-  - Cost to serve: ~$7.00/mo per tenant.
-  - Price charged: $149 – $399/mo.
-  - **Gross Margin: >95%**.
-
-### 2. Self-Hosted Enterprise License ($2,500 – $10,000/yr)
-* **The Value Proposition:** Banks, government agencies, and defense contractors whose compliance rules strictly forbid sending document bytes outside their firewall. They pay an annual software license to run our single-binary Rust server or Docker image entirely inside their own AWS/Azure/On-Prem VPC.
-* **Deliverables:**
-  - Single standalone binary (or lightweight Docker image <25MB).
-  - Offline license file activation (zero phone-home requirement).
-  - SAML 2.0 / SCIM 2.0 enterprise identity integration.
-  - Annual upgrade entitlement, security patches, and 24/7 priority SLA.
-
----
-
-## Tier 5: PaperPilot Cloud (Web SaaS & Developer API)
- 
-PaperPilot Cloud unlocks the power of our Rust engine directly in the browser and via cloud endpoints for users who cannot or prefer not to install local binaries.
-
-### 5A. Consumer Web SaaS ("The Modern iLovePDF Alternative")
-* **Target:** Chromebooks, iPad/tablet users, students, accountants, and corporate employees whose locked-down machines forbid installing desktop binaries (`.deb`/`.dmg`/`.exe`).
-* **Web Free Tier:**
-  - Free web processing up to **3 tasks per day**.
-  - All 44 core tools accessible via web browser.
-* **Cloud Web Pro:** **$4/month** (or **$38/year** billed annually)
-  - **Unlimited tasks and batch runs** in any modern web browser.
-  - Zero file size restrictions (up to 200MB/file).
-  - High-speed cloud OCR (Tesseract / multi-lingual engine).
-  - Hybrid Perk: Desktop Pro ($5/mo) subscribers automatically receive Cloud Web Pro for free!
-* **The "Zero-Knowledge" Ephemeral Privacy Guarantee:**
-  - Files are processed **strictly in-memory (RAM / `/dev/shm`)** on secure edge workers.
-  - Documents **never touch persistent hard drives**.
-  - Immediate cryptographic wipe: files are purged immediately upon download completion (or strictly 10 minutes post-upload).
-  - No logs, no telemetry, no document indexing.
-
----
-
-### 5B. Cloud API & MCP Gateway ("Stripe / Cloudinary for PDFs")
-* **Target:** B2B SaaS platforms, FinTech apps, ERP platforms, and AI Agent builders (Claude, OpenAI Custom GPTs, LangChain) that need reliable programmatic PDF generation.
-* **v1.0 Launch Strategy (Safest Rollout):** 
-  - For the **v1.0 launch**, the Cloudflare Edge engine (`apps/edge/`) is deployed strictly for **Internal Web Demo support, WooCommerce watermarking webhooks, and public demonstration**.
-  - No public unauthenticated write endpoints are exposed without rate limiting.
-  - Public commercial usage-based API key management, domain whitelisting, and Stripe metered billing are scheduled for **Phase 7 (Managed Cloud)**. A "Join Developer API Waitlist" CTA captures inbound demand during v1.0.
-* **Planned Commercial Pricing (Phase 7 — Strategy 2 Developer Packages):**
-  - **Hobby / Free**: **$0/month** (1,000 runs/mo included, hard stop — perfect for evaluation & hackathons).
-  - **Developer / Startup**: **$29/month** (5,000 runs/mo included, +$0.008/run overage).
-  - **Growth / Scale**: **$89/month** (20,000 runs/mo included, +$0.005/run overage).
-  - **Enterprise**: **Custom quote** (100k+ runs, dedicated SLA, custom data residency).
-* **Unit Economics & Margin Assurance (Zero Harm Guarantee):**
-  - Developer Tier ($29/mo for 5,000 runs): Cloudflare compute cost is **~$0.0025** (a quarter of a cent). Net profit after Stripe fees ($1.14) is **$27.83 (96.0% profit margin)**.
-  - Growth Tier ($89/mo for 20,000 runs): Cloudflare compute cost is **~$0.010** (one cent). Net profit after Stripe fees ($2.88) is **$86.11 (96.8% profit margin)**.
-  - The business cannot be harmed by high volume because Cloudflare's marginal CPU cost is fractions of a millicent.
-* **Dual-Tier Hybrid Cloud Execution Model:**
-  - **Tier A (Fast Edge): Cloudflare Workers (Rust Wasm)**:
-    - Used for 90%+ of standard operations (merge, split, rotate, compress, stamp, encrypt, metadata).
-    - **Physical Zero-Disk Guarantee**: Cloudflare V8 Isolates do not have hard drive access; files are processed in-memory and immediately destroyed.
-    - Sub-100ms latency worldwide across 300+ edge locations with 0ms cold starts.
-  - **Tier B (Heavy Compute): Ephemeral Kubernetes Sandbox**:
-    - Used for resource-heavy workloads (scanned document OCR, multi-hundred-megabyte files, and chained batch pipelines).
-    - Spawns isolated Pods on-demand (`emptyDir: { medium: "Memory" }` RAM mount) that self-destruct upon completion.
-* **Smart Hybrid Pricing**:
-  - Edge Operations (Tier A): Billed at low-cost tier (**$0.005–$0.01/run**).
-  - Heavy OCR & Bulk Compute (Tier B): Billed transparently with compute add-on (**$0.02–$0.03/run**).
-* **Features:**
-  - **Hosted Cloud MCP Server (SSE & HTTP Gateway)**: Plug directly into AI agents to perform real PDF transforms with natural language tools.
-  - **REST API Endpoints**: Full parity with `paperpilot-gateway` (`POST /api/v1/pdf/merge`, `POST /api/v1/pdf/compress`, etc.).
-  - **Blazing Speed & Low Infrastructure Cost**: Because our engine is pure Rust (sub-100ms execution, <50MB RAM), our server costs are ~50x lower than Java-based Stirling PDF or Python wrappers, allowing high-margin, aggressive pricing.
-  - **Developer Dashboard**: Live API key management, rate limits, latency telemetry, and usage metering.
-
----
-
-## 💡 Upstream Open-Source Dependency Sustainability Pledge
-
-**Philosophy:** PaperPilot's speed, privacy, and architecture stand on the shoulders of the open-source Rust ecosystem. Stripping value from open-source maintainers without giving back is unsustainable. PaperPilot is committed to supporting the exact upstream crates and authors that make our engine possible.
-
-### The Commitment: Sustainable Ecosystem Reinvestment
-- **Code & Bug Reports First (Day 1):** We actively contribute upstream bug fixes, performance optimizations, and repro test fixtures back to the repositories we depend on.
-- **Upstream Sponsorship Fund:** As PaperPilot achieves operational sustainability and paid revenue milestones (post cash-flow positive operations), a dedicated allocation of proceeds is directed into an **Upstream Maintainer Fund** to sponsor key library authors via **GitHub Sponsors** and **Open Collective**.
-- **100% Transparent:** The total fund balance, recipient breakdown, and payment receipts will be published openly on our website, in our developer newsletter, and in public documentation.
-
-### Focus Areas for Sponsorship
-When financial disbursements activate, funding is prioritized across critical supply-chain foundations:
-
-| Priority Focus | Focus Area | Core Upstream Crates Targeted |
-| :--- | :--- | :--- |
-| **1. Core PDF Foundations** | Low-level PDF object tree, parsing, writing, and vector typesetting | `lopdf`, `pdf-writer`, `typst` ecosystem |
-| **2. Pure-Rust Engines & Layout** | Pure-Rust OCR (`ocrs`), neural runtime (`rten`), document synthesis (`fulgur`), spreadsheets (`calamine`, `rust_xlsxwriter`), and formats (`docx-rs`) | `ocrs`, `rten`, `fulgur`, `calamine`, `rust_xlsxwriter`, `docx-rs` |
-| **3. Pure-Rust Graphics & Rasterization** | Pure-Rust vector rasterization, color pipelines, and 2D graphics | `hayro`, `tiny-skia`, `image` |
-| **4. Ecosystem & Cross-Platform Runtime** | Client-side WebAssembly, fast tokenization, and desktop container | `wasm-bindgen`, `tokenizers`, `tauri` |
-
-### Payout & Contribution Process
-1. Grants are distributed quarterly directly to official maintainer GitHub Sponsors profiles, Open Collective funds, or crate author foundations.
-2. If an upstream crate does not have an active sponsorship profile, PaperPilot proactively reaches out to establish one, or places the allocation in an escrow rollover for that crate.
-3. Every quarterly disbursement is logged in public documentation and highlighted in our changelog and developer newsletter.
-
-### Strategic Impact & Moat
-1. **Supply-Chain Security & Reliability:** When our core dependencies are well-funded, critical upstream bug fixes, security audits, and performance optimizations happen faster, directly benefiting PaperPilot.
-2. **Developer & Community Goodwill:** In an industry cynical of commercial developer tools, an authentic give-back commitment establishes unmatched trust across Hacker News, Reddit, and the Rust community.
-3. **Enterprise ESG Alignment:** Enterprise buyers increasingly prioritize software vendors that actively support and de-risk their open-source supply chains.
-
----
-
-## 🚀 Key Messaging vs. Competitors
-
-### vs. Stirling PDF
-> *"Stirling charges $0.01 per automation run on local self-hosted workflows. PaperPilot's local processing is free, forever — no run counter, no billing surprise. For teams running hundreds of document workflows a month on their own machine, that's the difference between a $50 bill and $0. Our Cloud API tier also offers usage-based pricing for teams that need hosted infrastructure, but local processing will never cost you a cent."*
-
-### vs. Adobe Acrobat Pro
-> *"Adobe charges $20/user/month and uploads your documents to Adobe's cloud. PaperPilot Enterprise is $22/user/month — and your documents never leave your network. At scale, the on-premise data residency alone eliminates compliance risk that money can't fully offset."*
-
-### vs. iLovePDF / Smallpdf
-> *"Those tools require uploading your sensitive documents to a third-party server. PaperPilot processes everything on your device. Your legal briefs, medical records, and financial statements stay yours."*
-
-### vs. PDFgear
-> *"PDFgear is free and closed-source — you're trusting their privacy policy. PaperPilot is free and open-source — you can read the code yourself and verify exactly what happens with your documents."*
-
----
-
-## 🚀 Growth Feature Roadmap
-
-These features transform PaperPilot from a tool into a platform:
-
-### 1. Plugin / Extension System
-Community-built `PdfOperation` plugins. Legal firms publish a "HIPAA Redactor". Accounting firms publish an "Invoice Normalizer". Plugin authors earn from the contributor pool. This is the network effect moat.
-
-### 2. Workflow / Pipeline Builder (GUI) — Phase 3.4.10+
-Visual drag-and-drop pipeline: `Validate → Redact → Bates Number → Sign → Webhook`. Basic pipelines are **free in Community**. Advanced triggers (scheduling, webhooks, watch folders) require Pro.
-
-### 3. Watch Folder Mode (CLI Daemon)
-```
-paperpilot watch ./incoming --recipe compress --output ./done --webhook $SLACK_WEBHOOK
-```
-Auto-processes every new file dropped in a watched folder. Pro tier feature. The "set-and-forget" for IT departments.
-
-### 4. SDK Libraries (Python, JavaScript, Go)
-First-class SDKs wrapping the CLI/MCP interface. PaperPilot becomes a standard dependency in company automation scripts. Teams tier gets early access.
-
-### 5. Zapier / Make.com / n8n Integration Nodes
-One-click PaperPilot nodes in no-code automation platforms. Unlocks non-technical users — office managers and legal assistants building workflows without code.
-
-### 6. Document Intelligence Dashboard
-Analytics panel: what operations run most often, error rates, average processing time, searchable job history. Enterprise admins love this for compliance reporting.
-
-### 7. Cloud MCP Gateway (Phase 7)
-Hosted MCP endpoint for teams that can't run a local binary. Billed on usage-based Cloud tier. Enables PaperPilot as a drop-in PDF backend for any AI agent via the internet.
-
-### 8. Zero-Dependency CI/CD PDF Testing Assertions (`@paperpilot/test-utils` / WASM)
-**The Problem:** Modern SaaS, billing, and fintech web apps generate PDFs (invoices, receipts, legal docs) and struggle to test them in CI/CD pipelines (GitHub Actions, GitLab CI), having to install bloated Docker containers, Python (`pdfplumber`), or Java (`PDFBox`), which slows CI runs by 40–90 seconds.  
-**The Solution:** An ultra-lightweight npm package (`@paperpilot/test-utils` / `@paperpilot/wasm`) running in Node.js, Bun, Vitest, or Jest with **zero system dependencies**:
-- Asserts PDF validity, text content, bounding boxes, form fields, and SHA-256 snapshots **in-memory in <5ms**.
-- **Viral Developer Funnel:** Software engineering teams adopt it for lightning-fast test suites; once familiar with PaperPilot's speed, they naturally standardize on PaperPilot for their production PDF manipulation and enterprise workflows.
-
-### 9. Website Builder Plugins & Drop-In Embed Widgets (`embed.js`)
-- **Universal Embed**: 1-line `<script>` tag allowing any Webflow, Framer, Squarespace, or custom site to embed a client-side, zero-server-load PDF portal.
-- **WordPress & WooCommerce Plugin**: Gutenberg block + automatic WooCommerce digital file watermarking & dynamic password encryption.
-- **Shopify App**: Sub-100ms invoice generation & digital asset delivery at checkout via Cloudflare Edge.
-- **Viral Growth Engine**: Free embeds carry a tasteful "⚡ Powered by PaperPilot" badge driving organic adoption to Desktop Pro.
-*(See detailed architecture in [`docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md`](docs/EMBEDDED_WEB_DISTRIBUTION_STRATEGY.md))*
-
----
-
-## 💡 Open Source Monetization Architecture: How We Make Money While Being Open Source
-
-A common strategic question is: *“If the core engine, CLI, MCP server, and local AI agent (llamafile + BYOK) are 100% Free & Open Source, can we still make money or is having this Pro better?”*
-
-**The Answer:** Keeping the local engine and AI agent open source makes us **far more money** than paywalling basic AI access. 
-
-Companies like **GitLab, Grafana, HashiCorp, and Supabase** proved that paywalling core utility creates friction and invites forks, whereas the **Open-Core & Commercial Enterprise Governance Model** creates massive enterprise ARR:
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                   COMMUNITY (100% Free & Open Source)                  │
-│  • 50+ PDF Operations • CLI & MCP Server • Local AI (Llamafile/BYOK)   │
-│  • Desktop Viewer • Basic Pipelines • Unlimited Self-Hosted Users      │
-│  ────────────────────────────────────────────────────────────────────  │
-│  GOAL: Maximize adoption, developer love, viral growth, GitHub stars   │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │
-           ┌─────────────────────────┴─────────────────────────┐
-           ▼                                                   ▼
-┌──────────────────────────────────────┐  ┌──────────────────────────────────────┐
-│       INDIVIDUAL PRO ($5/mo)         │  │     TEAMS & ENTERPRISE B2B           │
-│  • Watch Folder Background Daemons   │  │  • Teams ($12/user/mo):              │
-│  • Recurring Cron Jobs & Webhooks    │  │    - Shared Recipe/Pipeline Library  │
-│  • Multi-doc RAG Sidecar Synthesizer │  │    - Centralized License Seat Portal │
-│  • Voice Input & Plugin Marketplace  │  │    - Team Audit Trail                │
-│  ──────────────────────────────────  │  │  • Enterprise ($22/user/mo):         │
-│  Buyer: Solo legal/tax pros, devs    │  │    - SCIM 2.0 & SAML 2.0 Okta/Azure  │
-│  Value: Set-and-forget automation    │  │    - Air-Gap GPO / Plist Hard Policy │
-│                                      │  │    - SIEM Audit Log Streams (Splunk) │
-│                                      │  │    - MDM/MSI Jamf/Intune Deployments │
-│                                      │  │    - BAA / HIPAA Compliance Guarantees│
-│                                      │  │  • Managed White-Label ($199–$399/mo)│
-│                                      │  │    - Cloudflare Edge custom domain   │
-└──────────────────────────────────────┘  └──────────────────────────────────────┘
-```
-
-### Why Open Source is Our Biggest Revenue Multiplier:
-1. **Zero-Friction Distribution & Trust**: Legal teams, banks, and privacy-conscious users refuse to upload sensitive contracts to closed-source cloud SaaS. Open sourcing the engine and local AI creates unassailable developer trust.
-2. **Developers Bring It to Work**: A developer uses the free CLI or Claude MCP at home, loves it, and recommends PaperPilot to their law firm or bank's IT department.
-3. **Enterprises Never Pay for PDF Features — They Pay for Governance**: Enterprise procurement does not care about paying for PDF split/merge; they pay for **SCIM provisioning, SAML 2.0 integration, air-gap policy enforcement, Splunk audit logging, and HIPAA BAAs**.
-4. **Team Sticky Loops**: Once a 15-person accounting firm saves standard Bates stamping, invoicing, and redaction recipes in their shared Teams library, churn drops to near-zero.
-
-### Revenue Projection Model (Year 1–2 Target):
-
-| Stream | Target Volume | Unit Price | Projected ARR |
-|---|---|---|---|
-| **Individual Pro Subscriptions** | 1,500 subscribers | $48 / yr ($5/mo) | $72,000 |
-| **B2B Teams (Law / Accounting)** | 80 teams (avg 8 seats) | $115 / seat / yr ($12/mo) | $73,600 |
-| **Enterprise Fleet Licenses** | 12 enterprise contracts | $12,500 / yr avg ($22/seat or site) | $150,000 |
-| **Managed White-Label Edge** | 25 custom domains | $2,400 / yr ($199/mo) | $49,750 |
-| **Cloud Web Pro / API Packages** | 500 web users + 40 API orgs | Mixed | $54,000 |
-| **Total Target ARR** | | | **~$399,350** |
-
-By keeping the core local AI agent and operations 100% free and open source, our top-of-funnel CAC (Customer Acquisition Cost) is near zero, while high-margin B2B contracts fund long-term growth and open-source sustainability.
+- **vs. Adobe Acrobat ($240/user/yr)**: PaperPilot is 100% private, never sends client documents to external clouds, boots in <100ms, and integrates natively with AI tools via MCP.
+- **vs. Stirling-PDF (Open-Core with usage taxes)**: Stirling charges $0.01 per automation run on their Processor and gates team features. PaperPilot's local automation is **$0 forever**.
+- **vs. BentoPDF (Browser only)**: BentoPDF has no CLI, no REST API, no desktop app, and no MCP server for AI agents. PaperPilot gives users the complete penta-interface.
