@@ -452,7 +452,10 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn pdf_merge_alternate(buffers: js_sys::Array, options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn pdf_merge_alternate(
+        buffers: js_sys::Array,
+        options_json: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let mut rust_buffers = Vec::new();
         for i in 0..buffers.length() {
             let item = buffers.get(i);
@@ -466,7 +469,10 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn pdf_posterize(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn pdf_posterize(
+        input_bytes: &[u8],
+        options_json: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::pdf_posterize(input_bytes, options_json)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))

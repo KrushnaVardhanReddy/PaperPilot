@@ -20,8 +20,10 @@ pub fn handle_pdf_merge_alternate_command(
         reverse_b,
     };
 
-    let output_bytes = paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(&a_bytes, &b_bytes, &options)
-        .map_err(|e| PdfError::Other(e.to_string()))?;
+    let output_bytes = paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(
+        &a_bytes, &b_bytes, &options,
+    )
+    .map_err(|e| PdfError::Other(e.to_string()))?;
 
     std::fs::write(output, output_bytes).map_err(PdfError::IoError)?;
 

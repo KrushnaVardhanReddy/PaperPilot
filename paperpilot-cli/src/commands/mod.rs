@@ -17,8 +17,10 @@ pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
 pub mod pdf_invert_colors;
+pub mod pdf_merge_alternate;
 pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
+pub mod pdf_posterize;
 pub mod pdf_remove_signatures;
 pub mod pdf_scale_pages;
 pub mod pdf_split_by_outline;
@@ -33,8 +35,6 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
-pub mod pdf_merge_alternate;
-pub mod pdf_posterize;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -451,7 +451,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => pdf_merge_alternate::handle_pdf_merge_alternate_command(
             input_a, input_b, output, *reverse_a, *reverse_b, *step, *step_b,
         ),
-        Commands::PdfPosterize { input, output } => pdf_posterize::handle_pdf_posterize_command(input, output),
+        Commands::PdfPosterize { input, output } => {
+            pdf_posterize::handle_pdf_posterize_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");

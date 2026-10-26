@@ -4,8 +4,13 @@
 
   // Touch gesture state
   let initialPinchDistance = $state<number | null>(null);
-  let currentScale = $state(1);
+  let currentScale = $state(1.0);
   let touchStartX = $state<number | null>(null);
+  let panX = $state(0);
+  let panY = $state(0);
+  let lastTapTime = $state(0);
+  let isPanning = $state(false);
+  let startPanCoords = $state<{ x: number; y: number } | null>(null);
 
   async function handleShare() {
      const doc = appState.documents[appState.selectedDocumentIndex!];
@@ -38,10 +43,30 @@
     activePointers.set(e.pointerId, e);
 
     if (activePointers.size === 1) {
-      touchStartX = e.clientX;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        // Double tap
+        if (currentScale > 1.2) {
+          currentScale = 1.0;
+          panX = 0;
+          panY = 0;
+        } else {
+          currentScale = 2.5;
+          // Simple center, full focal transform logic could go here
+        }
+      } else {
+        if (currentScale > 1.05) {
+          startPanCoords = { x: e.clientX, y: e.clientY };
+          isPanning = true;
+        } else {
+          touchStartX = e.clientX;
+        }
+      }
+      lastTapTime = now;
     } else if (activePointers.size === 2) {
       const pointers = Array.from(activePointers.values());
       initialPinchDistance = getDistance(pointers[0], pointers[1]);
+      isPanning = false;
     }
   }
 
@@ -52,10 +77,23 @@
       activePointers.set(e.pointerId, e);
     }
 
+    if (activePointers.size === 1 && isPanning && startPanCoords) {
+      const deltaX = e.clientX - startPanCoords.x;
+      const deltaY = e.clientY - startPanCoords.y;
+
+      // Simple clamping to prevent it going way off screen could be added here
+
+
+      panX += deltaX;
+      panY += deltaY;
+
+      startPanCoords = { x: e.clientX, y: e.clientY };
+    }
+
     if (activePointers.size === 2 && initialPinchDistance) {
       const pointers = Array.from(activePointers.values());
       const currentDist = getDistance(pointers[0], pointers[1]);
-      currentScale = Math.max(0.5, Math.min(3, currentScale * (currentDist / initialPinchDistance)));
+      currentScale = Math.max(1.0, Math.min(3.5, currentScale * (currentDist / initialPinchDistance))); // clamped 1.0 to 3.5 per spec
       initialPinchDistance = currentDist; // Reset for smooth continuous zooming
     }
   }
@@ -69,16 +107,22 @@
       initialPinchDistance = null;
     }
 
-    if (touchStartX !== null && activePointers.size === 0) {
-      const diffX = e.clientX - touchStartX;
-      if (Math.abs(diffX) > 80 && currentScale <= 1.1) {
-        if (diffX > 0) {
-           toastState.success("Swiped Right"); // Trigger prevPage() logic if multi-page viewer
-        } else {
-           toastState.success("Swiped Left"); // Trigger nextPage() logic
+    if (activePointers.size === 0) {
+      if (isPanning) {
+        isPanning = false;
+        startPanCoords = null;
+      } else if (touchStartX !== null && currentScale <= 1.05) {
+        const diffX = e.clientX - touchStartX;
+        if (Math.abs(diffX) > 80) {
+          if (diffX > 0) {
+             toastState.success("Swiped Right"); // Trigger prevPage() logic if multi-page viewer
+          } else {
+             toastState.success("Swiped Left"); // Trigger nextPage() logic
+          }
+          navigator.vibrate?.(10);
         }
+        touchStartX = null;
       }
-      touchStartX = null;
     }
   }
 
@@ -86,6 +130,8 @@
      activePointers.delete(e.pointerId);
      initialPinchDistance = null;
      touchStartX = null;
+     isPanning = false;
+     startPanCoords = null;
   }
 
 
@@ -160,12 +206,7 @@
   }
 </script>
 
-<div class="pdf-preview-container"
-  onpointerdown={onPointerDown}
-  onpointermove={onPointerMove}
-  onpointerup={onPointerUp}
-  style="transform: scale({currentScale}); transform-origin: top left; transition: transform 0.1s ease;"
->
+<div class="pdf-preview-container">
   <div class="preview-header">
     <div class="header-left">
       <button class="back-btn" onclick={handleBack} title="Back to List">
@@ -189,8 +230,15 @@
     </div>
   </div>
 
-  <div class="preview-content">
-    <div class="thumbnails-grid">
+  <div class="preview-content"
+    onpointerdown={onPointerDown}
+    onpointermove={onPointerMove}
+    onpointerup={onPointerUp}
+    onpointercancel={onPointerCancel}
+  >
+    <div class="thumbnails-grid"
+      style="transform: translate({panX}px, {panY}px) scale({currentScale}); transform-origin: top left; transition: transform 0.1s ease;"
+    >
       {#each pages as page, i}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -325,7 +373,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 24px;
-    padding-bottom: 24px;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 16px));
   }
 
   .thumbnail-wrapper {

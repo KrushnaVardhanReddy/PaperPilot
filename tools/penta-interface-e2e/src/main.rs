@@ -455,7 +455,10 @@ async fn main() -> Result<()> {
             )?;
 
             let res_pdf_posterize = cases::pdf_posterize::run_pdf_posterize_suite().await?;
-            println!("Multi-Sheet Poster Tile Slicer finished: {} tests", res_pdf_posterize.len());
+            println!(
+                "Multi-Sheet Poster Tile Slicer finished: {} tests",
+                res_pdf_posterize.len()
+            );
             generate_markdown_report(
                 "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Multi-Sheet Poster Tile Slicer)",
                 &res_pdf_posterize,

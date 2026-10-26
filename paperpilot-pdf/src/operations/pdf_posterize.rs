@@ -83,7 +83,9 @@ pub fn pdf_posterize_bytes(
     let rows = options.grid_rows.max(1);
     let overlap = options.overlap_pt.max(0.0);
 
-    let catalog = doc.catalog().map_err(|e| PdfError::ParseError(e.to_string()))?;
+    let catalog = doc
+        .catalog()
+        .map_err(|e| PdfError::ParseError(e.to_string()))?;
     let pages_id = catalog
         .get(b"Pages")
         .and_then(Object::as_reference)
@@ -141,12 +143,20 @@ pub fn pdf_posterize_bytes(
         for r in 0..rows {
             // PDF origin is bottom-left; top row has highest y
             let row_from_top = (rows - 1) - r;
-            let tile_y0 = y0 + (row_from_top as f32 * tile_h) - if row_from_top > 0 { overlap } else { 0.0 };
-            let tile_y1 = y0 + ((row_from_top + 1) as f32 * tile_h) + if (row_from_top + 1) < rows { overlap } else { 0.0 };
+            let tile_y0 =
+                y0 + (row_from_top as f32 * tile_h) - if row_from_top > 0 { overlap } else { 0.0 };
+            let tile_y1 = y0
+                + ((row_from_top + 1) as f32 * tile_h)
+                + if (row_from_top + 1) < rows {
+                    overlap
+                } else {
+                    0.0
+                };
 
             for c in 0..cols {
                 let tile_x0 = x0 + (c as f32 * tile_w) - if c > 0 { overlap } else { 0.0 };
-                let tile_x1 = x0 + ((c + 1) as f32 * tile_w) + if (c + 1) < cols { overlap } else { 0.0 };
+                let tile_x1 =
+                    x0 + ((c + 1) as f32 * tile_w) + if (c + 1) < cols { overlap } else { 0.0 };
 
                 let crop_box = vec![
                     Object::Real(tile_x0),
@@ -166,6 +176,7 @@ pub fn pdf_posterize_bytes(
         }
     }
 
+    #[allow(clippy::collapsible_if)]
     if let Ok(catalog) = doc.catalog() {
         if let Ok(pages_id) = catalog.get(b"Pages").and_then(Object::as_reference) {
             if let Ok(pages_dict) = doc.get_object_mut(pages_id).and_then(Object::as_dict_mut) {
@@ -197,8 +208,13 @@ impl PdfPosterizeOperation {
 }
 
 impl PdfOperation for PdfPosterizeOperation {
-    fn execute(&self, _document: &mut dyn PdfDocument) -> paperpilot_core::error::OperationResult<()> {
-        Err(PdfError::UnsupportedOperation("Execute via pdf_posterize_bytes".to_string()))
+    fn execute(
+        &self,
+        _document: &mut dyn PdfDocument,
+    ) -> paperpilot_core::error::OperationResult<()> {
+        Err(PdfError::UnsupportedOperation(
+            "Execute via pdf_posterize_bytes".to_string(),
+        ))
     }
 }
 
@@ -260,6 +276,10 @@ mod tests {
         let result = pdf_posterize_bytes(&buf, &options).expect("Posterize should succeed");
         let out_doc = Document::load_mem(&result).expect("Output should be valid PDF");
         let out_pages = out_doc.get_pages();
-        assert_eq!(out_pages.len(), 4, "1 page sliced into 2x2 grid should yield 4 tile pages");
+        assert_eq!(
+            out_pages.len(),
+            4,
+            "1 page sliced into 2x2 grid should yield 4 tile pages"
+        );
     }
 }

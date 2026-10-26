@@ -118,8 +118,11 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
-        .route("/api/v1/pdf/posterize", post(handlers::pdf_posterize) )
-        .route("/api/v1/pdf/merge-alternate", post(handlers::pdf_merge_alternate) )
+        .route("/api/v1/pdf/posterize", post(handlers::pdf_posterize))
+        .route(
+            "/api/v1/pdf/merge-alternate",
+            post(handlers::pdf_merge_alternate),
+        )
         .route(
             "/api/v1/pdf/split-by-outline",
             post(handlers::pdf_split_by_outline),
