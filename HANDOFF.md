@@ -17,7 +17,7 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 | **Task 117A** | `[Spec 117]` | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) | `main` | [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417) | ✅ Merged into `feature/dev` (PR #268) |
 | **Task 118A** | `[Spec 118]` | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) | `main` | [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238) | ✅ Merged (PR #264) |
 | **Task 119A** | `[Spec 119]` | Multi-Sheet Poster Tile Slicer (`pdf_posterize`) | `feature/dev` | [Session 14717167755470526744](https://jules.google.com/session/14717167755470526744) | 🚀 In Progress (Targeting `feature/dev`) |
-| **Task 121A** | `[Spec 121]` | Mobile Touch Gestures & Viewport Panning (`PdfPreview.svelte`) | `feature/dev` | [Session 10726916767408006847](https://jules.google.com/session/10726916767408006847) | 🚀 In Progress (Targeting `feature/dev`) |
+| **Task 121A** | `[Spec 121]` | Mobile Touch Gestures & Viewport Panning (`PdfPreview.svelte`) | `feature/dev` | [Session 10726916767408006847](https://jules.google.com/session/10726916767408006847) | ✅ Merged into `feature/dev` (PR #269) |
 | **Task 122A** | `[Spec 122]` | Lossless Stream Deduplication & CMYK Safety (`pdf_dedup_streams`) | `feature/dev` | Backlog / Planned | 📋 Spec & Task Created |
 
 ---
