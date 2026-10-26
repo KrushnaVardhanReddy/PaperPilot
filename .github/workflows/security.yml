@@ -63,11 +63,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@0.29.0
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '0' # Non-blocking on initial rollout, can be flipped to '1' once all deps bumped
+      - name: Install and Run Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy fs --severity HIGH,CRITICAL .
+
