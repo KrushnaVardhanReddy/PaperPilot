@@ -254,7 +254,8 @@ jobs:
           CARGO_BUILD_JOBS: 4
         run: |
           cd apps/desktop
-          pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+          rm -f pnpm-workspace.yaml
+          npx tauri android build --target aarch64 --apk -- --no-default-features
 
       - name: Package Android Release APK
         run: |
