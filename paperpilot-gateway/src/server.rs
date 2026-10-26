@@ -94,8 +94,16 @@ use utoipa_swagger_ui::SwaggerUi;
 pub struct ApiDoc;
 
 pub async fn build_app() -> Router {
+    // Restrict CORS: Allow only trusted local origins (Tauri desktop client, Vite dev server, localhost)
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(tower_http::cors::AllowOrigin::predicate(|origin, _| {
+            let s = origin.to_str().unwrap_or("");
+            s.starts_with("tauri://")
+                || s.starts_with("http://localhost")
+                || s.starts_with("http://127.0.0.1")
+                || s.starts_with("https://localhost")
+                || s.starts_with("https://127.0.0.1")
+        }))
         .allow_methods(Any)
         .allow_headers(Any);
 
@@ -196,6 +204,7 @@ pub async fn build_app() -> Router {
             post(handlers::workflow_run_json),
         )
         .route("/api/v1/workflow/run", post(handlers::workflow_run))
+        .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
 }
 

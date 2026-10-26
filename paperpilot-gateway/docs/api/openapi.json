@@ -309,6 +309,43 @@
         ],
         "type": "object"
       },
+      "PdfSplitScannedBookJsonRequest": {
+        "properties": {
+          "gutter_overlap": {
+            "example": 0.0,
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "input": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "reading_direction": {
+            "example": "ltr",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "split_horizontal": {
+            "example": false,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
       "PdfValidateSignaturesJsonRequest": {
         "properties": {
           "baseline": {
@@ -979,6 +1016,33 @@
         ]
       }
     },
+    "/api/v1/pdf/merge-alternate": {
+      "post": {
+        "operationId": "pdf_merge_alternate",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Alternating PDF Merge completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Alternating PDF Merge [Interleave pages from two PDF documents.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/nup": {
       "post": {
         "operationId": "pdf_nup",
@@ -1113,6 +1177,33 @@
           }
         },
         "summary": "Scan document for PII and sensitive data [Input: .pdf | Output: JSON report]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/posterize": {
+      "post": {
+        "operationId": "pdf_posterize",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Multi-Sheet Poster Tile Slicer completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Multi-Sheet Poster Tile Slicer [Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -1283,9 +1374,9 @@
         ]
       }
     },
-    "/api/v1/pdf/split-scanned-book": {
+    "/api/v1/pdf/split-by-outline": {
       "post": {
-        "operationId": "pdf_split_scanned_book",
+        "operationId": "pdf_split_by_outline",
         "responses": {
           "200": {
             "content": {
@@ -1295,7 +1386,7 @@
                 }
               }
             },
-            "description": "Split Scanned Book Spine completed"
+            "description": "Split PDF by Outline completed"
           },
           "400": {
             "description": "Invalid request arguments"
@@ -1304,7 +1395,35 @@
             "description": "Execution error"
           }
         },
-        "summary": "Split Scanned Book Spine [Detect center binding gutter spine and split two-up page scans into single pages.] [Input: .pdf | Output: .pdf]",
+        "summary": "Split PDF by Outline [Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy] [Input: .pdf | Output: .zip]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/split-scanned-book": {
+      "post": {
+        "operationId": "pdf_split_scanned_book",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfSplitScannedBookJsonRequest"
+              }
+            }
+          },
+          "description": "JSON request containing file paths and split options",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Split successful"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages. [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]

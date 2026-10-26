@@ -117,3 +117,38 @@ async fn test_swagger_ui_endpoint() {
         serde_json::to_string_pretty(&json).unwrap(),
     );
 }
+
+#[tokio::test]
+async fn test_cors_origin_restriction() {
+    let app = build_app().await;
+
+    // Test request from untrusted external origin
+    let request_untrusted = Request::builder()
+        .uri("/health")
+        .method("GET")
+        .header("origin", "https://malicious-website.com")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.clone().oneshot(request_untrusted).await.unwrap();
+    // Untrusted origin should NOT get an Access-Control-Allow-Origin header matching its origin
+    assert_ne!(
+        response.headers().get("access-control-allow-origin").and_then(|h| h.to_str().ok()),
+        Some("https://malicious-website.com")
+    );
+
+    // Test request from trusted local origin (Tauri app)
+    let request_trusted = Request::builder()
+        .uri("/health")
+        .method("GET")
+        .header("origin", "tauri://localhost")
+        .body(Body::empty())
+        .unwrap();
+
+    let response_trusted = app.oneshot(request_trusted).await.unwrap();
+    assert_eq!(
+        response_trusted.headers().get("access-control-allow-origin").and_then(|h| h.to_str().ok()),
+        Some("tauri://localhost")
+    );
+}
+
