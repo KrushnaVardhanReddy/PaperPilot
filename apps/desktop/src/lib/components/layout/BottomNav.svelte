@@ -48,18 +48,24 @@
 <style>
   .bottom-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: calc(16px + env(safe-area-inset-bottom, 12px));
+    left: 16px;
+    right: 16px;
+    max-width: 480px;
+    margin: 0 auto;
     height: 64px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
+    background: rgba(22, 26, 37, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 32px;
     display: flex;
     align-items: center;
     justify-content: space-around;
     z-index: 100;
-    padding: 0 8px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding: 0 12px;
+    box-sizing: border-box;
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 
   .bottom-nav-item {
@@ -67,36 +73,38 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 3px;
     flex: 1;
-    min-height: 48px;
-    min-width: 48px;
-    padding: 8px 4px;
+    height: 48px;
+    padding: 4px 0;
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: var(--text-muted, #9ca3af);
     cursor: pointer;
-    border-radius: var(--border-radius-md);
-    transition: color var(--transition-fast), background-color var(--transition-fast);
+    border-radius: 24px;
+    transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
   }
 
-  .bottom-nav-item:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-surface);
+  .bottom-nav-item:hover,
+  .bottom-nav-item:active {
+    color: var(--text-primary, #ffffff);
+    background-color: rgba(255, 255, 255, 0.08);
   }
 
   .bottom-nav-item.active {
-    color: var(--accent-primary);
+    color: var(--accent-primary, #6366f1);
+    background-color: rgba(99, 102, 241, 0.15);
   }
 
   .bottom-nav-icon {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+    line-height: 1;
   }
 
   .bottom-nav-label {
-    font-size: 0.65rem;
-    font-weight: 500;
+    font-size: 0.62rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
   }
 </style>

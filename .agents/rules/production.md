@@ -32,6 +32,11 @@ Before committing and pushing any feature or fix to `main`, the following verifi
   4. WASM Engine (`paperpilot-wasm`)
   5. Desktop & Embed UI (`apps/desktop`, `apps/embed`)
 
-## 5. Host Safety & Concurrency Constraint
+## 5. Branching Strategy (No Direct Pushes to `main`)
+- Active development must take place on `feature/dev` or dedicated feature branches (e.g. `feat/...`).
+- **Never push unverified experimental commits directly to `main`**.
+- Code merges into `main` only after complete local validation across all test suites.
+
+## 6. Host Safety & Concurrency Constraint
 - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo clippy` commands. Unbounded compilation (`cargo test` without `-j 2`) will exhaust RAM and freeze the development environment.
 - Never execute destructive git commands: `git reset --hard`, `git clean -fd`, or `git restore .`.
