@@ -14,14 +14,21 @@ The following 2 cloud sessions are actively executing in parallel on isolated br
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 117A** | `[Spec 117]` | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) | `main` | [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417) | 🚀 Active In-Flight |
-| **Task 118A** | `[Spec 118]` | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) | `main` | [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238) | 🚀 Active In-Flight |
+| **Task 117A** | `[Spec 117]` | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) | `main` | [Session 17612337481863412417](https://jules.google.com/session/17612337481863412417) | 🚀 In Progress (Final Pre-commit / PR) |
+| **Task 118A** | `[Spec 118]` | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) | `main` | [Session 6774330169288969238](https://jules.google.com/session/6774330169288969238) | ✅ Merged (PR #264) |
 
 ---
 
 ## 🏆 Current Session Highlights (All Pushed to `origin/main`)
 
-1. **Task 116A (Actionable RAG Workspace & Bi-Directional Citation Canvas `[Spec 116]`, PR #263, Task 4.3.9)**:
+1. **Task 118A (Split PDF by Outline / Bookmarks `[Spec 118]`, PR #264, Task 5.9.88)**:
+   - Implemented `pdf_split_by_outline` across Core, CLI, MCP Server, Gateway REST, WASM, and Edge.
+   - Parses document `/Outlines` / `/First` / `/Next` hierarchy recursively with configurable `max_depth` and filename sanitization.
+   - Emits a ZIP archive containing segmented PDFs corresponding to each bookmark/TOC chapter.
+   - Added Svelte tool definition in `apps/desktop` and documentation in `apps/docs` and `wiki/118-Pdf-Split-By-Outline.md`.
+   - All 4 unit tests + 21 MCP tests + 105 Desktop Vitest unit tests passing 100%.
+
+2. **Task 116A (Actionable RAG Workspace & Bi-Directional Citation Canvas `[Spec 116]`, PR #263, Task 4.3.9)**:
    - Wired bidirectional linkage between `PdfChatPanel.svelte` citations and the interactive canvas in `PdfViewer.svelte`.
    - Assistant citations (`[Page N]`, `[p. N]`) render as interactive badges (`📄 p. N`); clicking dispatches `paperpilot:jump-to-citation`.
    - `PdfViewer.svelte` listens for event, navigates `pageNum`, and renders a glowing pulse bounding box overlay (`.citation-pulse`) for 2.5s.
