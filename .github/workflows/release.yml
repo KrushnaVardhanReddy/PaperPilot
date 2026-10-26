@@ -64,7 +64,7 @@ jobs:
 
       - name: Build Optimized Release Binaries
         run: |
-          cargo build --release --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+          cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
 
       - name: Package Release Assets (Linux / macOS)
         if: runner.os != 'Windows'
