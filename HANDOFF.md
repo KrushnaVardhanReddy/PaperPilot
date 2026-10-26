@@ -81,7 +81,9 @@ When starting the next session, perform the following sequence:
 
 ---
 
-## ⚖️ Rules of Engagement & System Constraints
+## ⚖️ Rules of Engagement & Production Constraints (LIVE PRODUCT)
+
+> ⚠️ **CRITICAL**: PaperPilot is now a live, trending product on Hacker News with active users downloading binaries and running the web sandbox. All development must maintain production stability.
 
 1. **System Resource Constraint (`-j 2` is MANDATORY on local machine):**
    - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo clippy` commands (e.g. `cargo test -p paperpilot-pdf -j 2`).
@@ -94,9 +96,21 @@ When starting the next session, perform the following sequence:
      ```
    - 5 Thin Interface Wrappers: CLI (`paperpilot-cli`), MCP (`paperpilot-mcp`), REST Gateway (`paperpilot-gateway`), WASM Engine (`paperpilot-wasm`), and Desktop/Embed (`apps/desktop`, `apps/embed`).
 
-3. **Workspace Safety Rules:**
+3. **Zero-Mock Policy on Tests:**
+   - Real users use malformed PDFs and varied environments. All test fixtures must be real disk fixtures or synthesized byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`). Never mock PDF bytes or operation responses.
+
+4. **Zero-Cloud & Absolute Privacy Guarantee:**
+   - 0 bytes uploaded to external servers. Never introduce unexpected analytics beacons, telemetry, or external network requests into Core, CLI, MCP, Desktop, or WASM.
+
+5. **Mandatory Pre-Push Verification Matrix:**
+   - Run before committing to `main`:
+     1. `cargo check --workspace -j 2`
+     2. `cargo test -p paperpilot-pdf -j 2`
+     3. `cargo test -p paperpilot-mcp -j 2`
+     4. `pnpm --dir apps/desktop test` (105/105 passing)
+
+6. **Workspace Safety Rules:**
    - **NEVER** execute `git reset --hard`, `git checkout -- .`, `git clean -fd`, or `git restore`.
-   - Zero-Mock Policy: All tests must use real disk fixtures and real in-memory byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`).
 
 ---
 
