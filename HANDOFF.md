@@ -10,17 +10,23 @@
 ## 🧭 Executive Context & Active In-Flight Sessions
 
 ### 1. Active In-Flight Jules Cloud Sessions (Zero-Conflict Fast Track)
-The following cloud session is actively executing on an isolated branch from `main`:
+All queued Jules cloud sessions have completed and merged cleanly to `main`!
 
 | Task ID | Spec | Feature Name | Starting Branch | Jules Session Link | Status |
 |---|:---:|---|---|---|:---:|
-| **Task 116A** | `[Spec 116]` | Actionable RAG Workspace & Citation Canvas (Task 4.3.9) | `main` | [Session 14413569953505972234](https://jules.google.com/session/14413569953505972234) | 🚀 Active In-Flight |
+| **Task 116A** | `[Spec 116]` | Actionable RAG Workspace & Citation Canvas (Task 4.3.9) | `main` | [Session 14413569953505972234](https://jules.google.com/session/14413569953505972234) | ✅ Merged (PR #263) |
 
 ---
 
 ## 🏆 Current Session Highlights (All Pushed to `origin/main`)
 
-1. **Task 111A (Modify PDF Permissions `[Spec 111]`, PR #262, Task 5.9.86)**:
+1. **Task 116A (Actionable RAG Workspace & Bi-Directional Citation Canvas `[Spec 116]`, PR #263, Task 4.3.9)**:
+   - Wired bidirectional linkage between `PdfChatPanel.svelte` citations and the interactive canvas in `PdfViewer.svelte`.
+   - Assistant citations (`[Page N]`, `[p. N]`) render as interactive badges (`📄 p. N`); clicking dispatches `paperpilot:jump-to-citation`.
+   - `PdfViewer.svelte` listens for event, navigates `pageNum`, and renders a glowing pulse bounding box overlay (`.citation-pulse`) for 2.5s.
+   - Svelte check & all 104 Vitest unit tests in `apps/desktop` passing 100%.
+
+2. **Task 111A (Modify PDF Permissions `[Spec 111]`, PR #262, Task 5.9.86)**:
    - Added standard ISO 32000-1 `/P` permissions bitflags via `lopdf::EncryptionState` and `EncryptionVersion::V2`.
    - Supports permission toggles for printing, copying, modifications, annotations, form filling, and accessibility across Core, CLI, MCP, and Gateway.
    - 3/3 unittests passed.
