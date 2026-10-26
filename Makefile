@@ -116,13 +116,13 @@ ifneq ($(ANDROID_HOME),)
 endif
 
 build-android:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android build --debug --target aarch64 --apk -- --no-default-features
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} npx tauri android build --debug --target aarch64 --apk -- --no-default-features
 
 build-android-release:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android build --target aarch64 --apk -- --no-default-features
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} npx tauri android build --target aarch64 --apk -- --no-default-features
 
 run-android:
-	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} pnpm exec tauri android dev
+	cd apps/desktop && CARGO_BUILD_JOBS=$${CARGO_BUILD_JOBS:-2} npx tauri android dev
 
 install-android: build-android
 	adb install -r apps/desktop/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk 2>/dev/null || \
