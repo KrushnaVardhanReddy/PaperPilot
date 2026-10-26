@@ -1,0 +1,30 @@
+Hey Jules! Please implement Task 119A: Multi-Sheet Poster Tile Slicing Engine (`pdf_posterize`) across PaperPilot.
+
+### CRITICAL STARTING BRANCH INSTRUCTION
+- Target / Base Branch: `feature/dev` (DO NOT base on `main`).
+- Create and work on your own branch off `feature/dev`.
+
+### Requirements & Scope
+Follow `specs/119-pdf-posterize/spec.md` and `specs/119-pdf-posterize/task_119a.md`:
+1. **Core Engine (`paperpilot-pdf/src/operations/pdf_posterize.rs`)**:
+   - Implement `run_operation_bytes(input_bytes: &[u8], config: &PdfPosterizeConfig) -> Result<Vec<u8>, OperationError>` using `lopdf`.
+   - Support slicing oversized or scaled PDF pages across a grid (e.g. 2x2, 3x3) of standard sheets (A4, Letter, etc.).
+   - Support configurable overlap glue gutters (points) and trim guide cut marks.
+   - Write comprehensive unit tests in the same file using real synthesized PDF byte buffers (Zero-Mock policy).
+2. **CLI (`paperpilot-cli`)**:
+   - Implement `posterize` subcommand (`paperpilot-cli/src/commands/pdf_posterize.rs`).
+3. **MCP Server (`paperpilot-mcp`)**:
+   - Add `pdf_posterize` tool schema and handler in `paperpilot-mcp/src/server.rs`.
+4. **REST Gateway (`paperpilot-gateway`)**:
+   - Add endpoint `POST /api/v1/pdf/posterize` and `PdfPosterizeJsonRequest` in `handlers.rs` and `server.rs`.
+5. **WASM & Edge**:
+   - Wrap `posterize` in `paperpilot-wasm/src/operations.rs` and `apps/edge/src/index.ts`.
+6. **Desktop & Documentation**:
+   - Add tool definition to `apps/desktop/src/lib/types/toolList.ts`.
+   - Update `apps/desktop/src/lib/services/operationArgsBuilder.ts`.
+   - Create documentation in `wiki/119-Pdf-Posterize.md` and `apps/docs/src/content/docs/reference/tools/pdf_posterize.md`.
+
+### Quality & Safety Constraints
+- Pass `cargo check --workspace` and `cargo test -p paperpilot-pdf` before submitting.
+- Do NOT add synthetic or mock E2E tests in `tools/penta-interface-e2e`.
+- Submit the PR against `feature/dev`.
