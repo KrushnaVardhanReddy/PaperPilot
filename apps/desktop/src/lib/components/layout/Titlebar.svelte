@@ -231,4 +231,11 @@
     background-color: #E81123;
     color: white;
   }
+
+  @media (max-width: 768px) {
+    .titlebar,
+    .window-controls {
+      display: none !important;
+    }
+  }
 </style>

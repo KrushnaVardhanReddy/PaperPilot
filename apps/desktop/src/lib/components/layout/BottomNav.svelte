@@ -51,15 +51,15 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 64px;
+    height: calc(64px + env(safe-area-inset-bottom, 16px));
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-around;
     z-index: 100;
-    padding: 0 8px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding: 8px 8px env(safe-area-inset-bottom, 16px);
+    box-sizing: border-box;
   }
 
   .bottom-nav-item {
