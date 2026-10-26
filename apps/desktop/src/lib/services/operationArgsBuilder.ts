@@ -590,6 +590,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.cbr`)
             };
             break;
+        case 'pdf_split_by_outline':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.zip`)
+            };
+            break;
         default:
             args = {
                 input: docPath,

@@ -21,6 +21,7 @@ pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
 pub mod pdf_remove_signatures;
 pub mod pdf_scale_pages;
+pub mod pdf_split_by_outline;
 pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
@@ -434,6 +435,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfComicArchive { input, output } => {
             pdf_comic_archive::handle_pdf_comic_archive_command(input, output)
         }
+        Commands::PdfSplitByOutline { input, output } => {
+            pdf_split_by_outline::handle_pdf_split_by_outline_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -699,6 +703,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_split_by_outline",
+                    "Preview",
+                    "Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy",
                 ),
                 (
                     "pdf_comic_archive",

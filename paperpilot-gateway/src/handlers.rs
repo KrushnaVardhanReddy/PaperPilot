@@ -1826,3 +1826,17 @@ pub struct PdfSplitScannedBookJsonRequest {
     #[schema(example = false)]
     pub split_horizontal: Option<bool>,
 }
+/// Split PDF by Outline [Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy] [Input: .pdf | Output: .zip]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/split-by-outline",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Split PDF by Outline completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_split_by_outline(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_split_by_outline".to_string()), req).await
+}

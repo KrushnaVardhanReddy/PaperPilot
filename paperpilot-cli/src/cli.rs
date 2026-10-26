@@ -575,6 +575,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Split PDF by Outline: Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy
+    #[command(name = "pdf-split-by-outline")]
+    PdfSplitByOutline {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

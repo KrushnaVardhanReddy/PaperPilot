@@ -281,4 +281,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.cbr'
         });
     });
+
+    it('builds args for pdf_split_by_outline', async () => {
+        const args = await buildOperationArgs('pdf_split_by_outline', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.zip'
+        });
+    });
 });

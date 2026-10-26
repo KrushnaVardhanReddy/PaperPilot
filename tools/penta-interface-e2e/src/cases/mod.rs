@@ -19,6 +19,7 @@ pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
 pub mod pdf_remove_signatures;
 pub mod pdf_scale_pages;
+pub mod pdf_split_by_outline;
 pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
