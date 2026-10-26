@@ -602,6 +602,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
             };
             break;
+        case 'pdf_posterize':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+            };
+            break;
         default:
             args = {
                 input: docPath,

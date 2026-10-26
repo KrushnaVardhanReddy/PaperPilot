@@ -3164,6 +3164,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_merge_alternate.input_schema = Arc::new(schema_pdf_merge_alternate);
         tools.push(tool_pdf_merge_alternate);
+        let mut schema_pdf_posterize = serde_json::Map::new();
+        schema_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_posterize = serde_json::Map::new();
+
+        let mut prop_input_pdf_posterize = serde_json::Map::new();
+        prop_input_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_posterize),
+        );
+
+        let mut prop_output_pdf_posterize = serde_json::Map::new();
+        prop_output_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_posterize),
+        );
+
+        schema_pdf_posterize.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_posterize),
+        );
+        schema_pdf_posterize.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_posterize = Tool::default();
+        tool_pdf_posterize.name = "pdf_posterize".into();
+        tool_pdf_posterize.description = Some(
+            "Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_posterize.input_schema = Arc::new(schema_pdf_posterize);
+        tools.push(tool_pdf_posterize);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -6238,6 +6284,28 @@ impl PaperPilotMcpServer {
                     data: Some(serde_json::json!({ "output_path": output })),
                     success: true,
                     message: "Alternating PDF Merge executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_posterize" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions::default();
+                let result = paperpilot_pdf::operations::pdf_posterize::pdf_posterize_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Multi-Sheet Poster Tile Slicer executed successfully".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

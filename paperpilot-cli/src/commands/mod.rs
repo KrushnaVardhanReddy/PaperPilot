@@ -34,6 +34,7 @@ pub mod validate;
 pub mod watch;
 pub mod workflow;
 pub mod pdf_merge_alternate;
+pub mod pdf_posterize;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -450,6 +451,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => pdf_merge_alternate::handle_pdf_merge_alternate_command(
             input_a, input_b, output, *reverse_a, *reverse_b, *step, *step_b,
         ),
+        Commands::PdfPosterize { input, output } => pdf_posterize::handle_pdf_posterize_command(input, output),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -715,6 +717,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_posterize",
+                    "Preview",
+                    "Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides",
                 ),
                 (
                     "pdf_split_by_outline",

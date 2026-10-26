@@ -297,4 +297,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.pdf'
         });
     });
+
+    it('builds args for pdf_posterize', async () => {
+        const args = await buildOperationArgs('pdf_posterize', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
 });

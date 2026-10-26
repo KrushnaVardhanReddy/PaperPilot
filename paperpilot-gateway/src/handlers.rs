@@ -1855,3 +1855,17 @@ pub async fn pdf_split_by_outline(req: axum::extract::Request) -> impl IntoRespo
 pub async fn pdf_merge_alternate(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_merge_alternate".to_string()), req).await
 }
+/// Multi-Sheet Poster Tile Slicer [Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/posterize",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Multi-Sheet Poster Tile Slicer completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_posterize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_posterize".to_string()), req).await
+}

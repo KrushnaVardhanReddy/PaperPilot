@@ -601,6 +601,14 @@ pub enum Commands {
         #[arg(long, default_value = "1")]
         step_b: usize,
     },
+    /// Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides
+    #[command(name = "pdf-posterize")]
+    PdfPosterize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

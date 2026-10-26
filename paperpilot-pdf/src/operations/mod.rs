@@ -66,4 +66,5 @@ pub use workflow::run_workflow_bytes;
 pub mod pdf_invert_colors;
 pub mod pdf_split_by_outline;
 pub mod pdf_merge_alternate;
+pub mod pdf_posterize;
 pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};

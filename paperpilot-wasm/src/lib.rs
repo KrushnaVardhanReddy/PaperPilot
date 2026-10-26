@@ -464,6 +464,13 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+    #[wasm_bindgen]
+    pub fn pdf_posterize(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_posterize(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},

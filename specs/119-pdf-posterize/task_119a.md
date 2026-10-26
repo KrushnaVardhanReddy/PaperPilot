@@ -8,9 +8,9 @@ Implement the `pdf_posterize` operation across the entire PaperPilot stack accor
 
 ## Deliverables
 1. **Core Engine**: `paperpilot-pdf/src/operations/pdf_posterize.rs`:
-   - Slice large source pages across target paper sheets (A4, Letter, etc.) with grid rows/cols and scale factor.
-   - Inject overlap margins (glue gutters) and optional trim cut marks.
-   - Unit tests with real PDF fixtures in `paperpilot-pdf/src/operations/pdf_posterize.rs`.
+   - Scaffolding and types (`PdfPosterizeOptions`, `pdf_posterize_bytes`) are already generated.
+   - Slices large source pages across a grid (e.g. 2x2, 3x3) with configurable glue gutters (`overlap_pt`) and optional trim marks.
+   - Unit tests with real synthesized PDF fixtures in `paperpilot-pdf/src/operations/pdf_posterize.rs`.
 2. **CLI**: `paperpilot-cli/src/commands/pdf_posterize.rs`:
    - Subcommand `posterize` with `--input`, `--output`, `--target-sheet`, `--grid`, `--overlap`, `--scale`, `--guides`.
 3. **MCP Server**: `paperpilot-mcp/src/server.rs`:

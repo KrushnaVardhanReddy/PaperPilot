@@ -26,3 +26,4 @@ pub mod pdf_stitch_canvas;
 pub mod pdf_timestamp;
 pub mod pdf_validate_signatures;
 pub mod table;
+pub mod pdf_posterize;

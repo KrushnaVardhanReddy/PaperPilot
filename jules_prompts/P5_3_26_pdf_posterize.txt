@@ -7,10 +7,9 @@ Hey Jules! Please implement Task 119A: Multi-Sheet Poster Tile Slicing Engine (`
 ### Requirements & Scope
 Follow `specs/119-pdf-posterize/spec.md` and `specs/119-pdf-posterize/task_119a.md`:
 1. **Core Engine (`paperpilot-pdf/src/operations/pdf_posterize.rs`)**:
-   - Implement `run_operation_bytes(input_bytes: &[u8], config: &PdfPosterizeConfig) -> Result<Vec<u8>, OperationError>` using `lopdf`.
-   - Support slicing oversized or scaled PDF pages across a grid (e.g. 2x2, 3x3) of standard sheets (A4, Letter, etc.).
-   - Support configurable overlap glue gutters (points) and trim guide cut marks.
-   - Write comprehensive unit tests in the same file using real synthesized PDF byte buffers (Zero-Mock policy).
+   - The tool structure, `PdfPosterizeOptions`, and `pdf_posterize_bytes` are already scaffolded and compiling.
+   - Complete any edge-case grid slicing, overlap margin calculation, and trim marks.
+   - Ensure comprehensive unit tests pass via `cargo test -p paperpilot-pdf --lib operations::pdf_posterize -j 2` (Zero-Mock policy).
 2. **CLI (`paperpilot-cli`)**:
    - Implement `posterize` subcommand (`paperpilot-cli/src/commands/pdf_posterize.rs`).
 3. **MCP Server (`paperpilot-mcp`)**:

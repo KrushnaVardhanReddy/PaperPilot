@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
+  { id: 'pdf_posterize', name: 'Multi-Sheet Poster Tile Slicer', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides', icon: '🧩', category: 'organize', context: 'pdf', tags: ['pdf_posterize'], releaseStatus: 'preview' },
   { id: 'pdf_merge_alternate', name: 'Alternating PDF Merge', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Interleave pages from two PDF documents.', icon: '📄', category: 'organize', context: 'pdf', tags: ['pdf_merge_alternate'], releaseStatus: 'preview' },
   { id: 'pdf_comic_archive', title: 'Comic Archive Conversion', inputFormat: 'PDF', outputFormat: '.CBR', description: 'Convert between PDF documents and comic book archive formats (CBZ/CBR).', icon: '📚', category: 'convert', context: 'pdf', tags: ['pdf_comic_archive'], releaseStatus: 'preview' },
   { id: 'pdf_split_by_outline', title: 'Split by Document Outline', inputFormat: 'PDF', outputFormat: '.ZIP', description: 'Split a PDF into separate section files according to its outline bookmarks.', icon: '📑', category: 'pages', context: 'pdf', tags: ['pdf_split_by_outline', 'bookmarks', 'toc'], releaseStatus: 'preview' },
