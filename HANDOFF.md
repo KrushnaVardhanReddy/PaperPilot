@@ -23,10 +23,9 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 124A** | `[Spec 124]` | P1 | Web / UI Mobile | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/124-...`)<br>Mobile web playground overhaul (`apps/web/src/components/HeroPlayground.svelte`): responsive bottom sheet / drawer, >=44px touch targets. |
-| **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/122-...`)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
-| **Task 128A** | `[Spec 128]` | P1 | CI / Security | `feature/dev` | 🎯 **Ready for Immediate Dispatch** (`specs/128-...`)<br>Pin all third-party GitHub Actions across `.github/workflows/` to immutable 40-char commit SHAs. |
-| **Task 125A** | `[Spec 125]` | P2 | Web / Standalone | `feature/dev` | 📋 **Backlog / Planned** (`specs/125-...`)<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
+| **Task 128A** | `[Spec 128]` | P0 | CI / Security | `feature/dev` | 🚀 **Ready for Jules Dispatch**: `jules_prompts/P5_9_97_ci_action_sha_pinning.txt`<br>Pin all third-party GitHub Actions across `.github/workflows/` to immutable 40-char commit SHAs. |
+| **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **Ready for Jules Dispatch**: `jules_prompts/P5_3_27_pdf_dedup_streams.txt`<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
+| **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
 | **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | 📋 **Backlog / Planned** (`specs/126-...`)<br>Sub-15ms Tika-compatible `/tika/rmeta/text` REST & MCP tool for Open-WebUI integration. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 | **Task 129A** | `[Spec 129]` | P2 | Quality / Fuzzing | `feature/dev` | 📋 **Backlog / Planned** (`specs/129-...`)<br>Malformed PDF fuzzing harness (circular xrefs, corrupted streams, memory safety). |
@@ -35,7 +34,10 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 123A (Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening `[Spec 123]`, PR #271)**:
+1. **Task 124A (Mobile Web / Browser Sandbox Responsive Overhaul `[Spec 124]`)**:
+   - Upgraded `HeroPlayground.svelte` and `OperationsView.svelte` for small/mobile screens (`< 768px` and `< 480px`).
+   - Added horizontal scrollable tool tab bar, minimum 44px touch targets on buttons/dropzones, fluid full-height layouts.
+2. **Task 123A (Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening `[Spec 123]`, PR #271)**:
    - Sanitized search snippets in `workspaceSearch.ts` with HTML entity escaping and added test coverage.
    - Configured strict CSP in `tauri.conf.json`.
    - Hardened `pack_commands.rs` against path traversal using alphanumeric regex.

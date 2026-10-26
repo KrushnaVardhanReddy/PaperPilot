@@ -1,0 +1,27 @@
+Hey Jules! Please implement Task 128A: CI Supply Chain Hardening & Action SHA Pinning across PaperPilot.
+
+### CRITICAL STARTING BRANCH INSTRUCTION
+- Target / Base Branch: `feature/dev` (DO NOT base on `main`).
+- Create and work on your own branch off `feature/dev`.
+
+### Requirements & Scope
+Follow `specs/128-ci-supply-chain-sha-pinning/spec.md`:
+1. **Immutable Commit SHA Pinning**:
+   - Inspect all GitHub Action workflows in `.github/workflows/`:
+     - `.github/workflows/release.yml`
+     - `.github/workflows/rust.yml`
+     - `.github/workflows/security.yml`
+   - Pin every third-party GitHub Action (e.g. `actions/checkout`, `actions/setup-node`, `actions-rust-lang/setup-rust-toolchain`, `github/codeql-action/upload-sarif`, `tauri-apps/tauri-action`, etc.) to its immutable 40-character commit SHA with an inline comment indicating the version:
+     Example:
+     ```yaml
+     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+     ```
+2. **Safe Installer Scripts**:
+   - In `.github/workflows/release.yml`, inspect how tools like `wasm-pack` are installed. Replace any unsafe `curl -sSf ... | sh` with verified version downloads or `cargo install wasm-pack --locked`.
+3. **Automated Dependabot Action SHA Updates**:
+   - Update or create `.github/dependabot.yml` to track `github-actions` with package ecosystem `github-actions`, directory `/`, schedule daily/weekly, and ensure it preserves commit SHA pinning with version comments.
+
+### Constraints & Verification
+- Do NOT alter the underlying build steps or test matrix targets.
+- Verify YAML syntax validity across all workflows.
+- Submit the PR targeting base branch `feature/dev`.
