@@ -1769,7 +1769,7 @@ let metadataFile: File | null = $state(null);
   }
 
   .tools-sidebar {
-    width: 240px;
+    width: 280px;
     flex-shrink: 0;
     background-color: var(--bg-secondary);
     border-radius: var(--border-radius-lg);
