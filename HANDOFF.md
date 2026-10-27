@@ -33,7 +33,12 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 125A (Single-File Offline Self-Contained HTML Sandbox `[Spec 125]`)**:
+1. **Task 84 (On-Device Document SLM Fine-Tuning & Local Verification `[Spec 084]`, Task 5.9.73)**:
+   - Generated 5,000 ChatML training pairs across 45+ tools with 5 linguistic noise tiers (`tools/slm-training/generate_dataset.py`).
+   - Fine-tuned `Qwen/Qwen2.5-0.5B-Instruct` using 4-bit QLoRA and `paged_adamw_8bit` on local NVIDIA RTX 4070 (846 steps, train loss dropped from ~2.1 to 0.47, eval loss 0.496, 90.4% token accuracy).
+   - Saved 17 MB adapter weights to `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`.
+   - Verified 100% exact JSON tool call generation across test bench queries (`tools/slm-training/infer_local.py`).
+2. **Task 125A (Single-File Offline Self-Contained HTML Sandbox `[Spec 125]`)**:
    - Packaged standalone `paperpilot-portable.html` distribution embedding the full UI and in-memory base64-encoded WebAssembly engine.
    - Enforced strict air-gapped Content Security Policy (`default-src 'none'`).
    - Automated generator in `scripts/build_portable_html.js` and targets `make build-portable` / `make test-portable`.
