@@ -26,7 +26,6 @@
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
-| **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 | **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704)<br>Automated adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
 
@@ -34,7 +33,12 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 126A (Open-WebUI & Apache Tika Ingestion Adapter `[Spec 126]`, PR #273)**:
+1. **Task 125A (Single-File Offline Self-Contained HTML Sandbox `[Spec 125]`)**:
+   - Packaged standalone `paperpilot-portable.html` distribution embedding the full UI and in-memory base64-encoded WebAssembly engine.
+   - Enforced strict air-gapped Content Security Policy (`default-src 'none'`).
+   - Automated generator in `scripts/build_portable_html.js` and targets `make build-portable` / `make test-portable`.
+   - Verified with Playwright: 0 external network requests and working client-side operations.
+2. **Task 126A (Open-WebUI & Apache Tika Ingestion Adapter `[Spec 126]`, PR #273)**:
    - Implemented in-memory Open-WebUI Tika 3 (`PUT /tika/text`), Tika 4 (`PUT /tika/json/md`), and root metadata routes in `paperpilot-gateway`.
    - Shared in-memory `run_extract_text_bytes` engine in `paperpilot-pdf` with Tokio `spawn_blocking` offloading.
    - Includes Open-WebUI integration guide (`docs/integrations/open_webui.md`) and custom folder tool script.

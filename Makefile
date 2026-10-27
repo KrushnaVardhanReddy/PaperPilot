@@ -259,6 +259,14 @@ clean-all-cache: clean clean-sweep clean-cache
 build-wasm:
 	wasm-pack build --target web paperpilot-wasm
 
+# Build self-contained air-gapped single-file HTML distribution (Spec 125)
+build-portable: build-wasm
+	node scripts/build_portable_html.js
+
+# Test portable air-gapped HTML sandbox (asserts 0 network requests)
+test-portable: build-portable
+	npx --prefix apps/web playwright test tests/portable_html.spec.ts
+
 # Test client-side WebAssembly crate natively
 test-wasm:
 	cargo test -p paperpilot-wasm
