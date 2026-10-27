@@ -6,7 +6,7 @@ import string
 from tool_registry import TOOLS_REGISTRY
 from templates import SINGLE_TOOL_TEMPLATES, COMPOUND_WORKFLOW_TEMPLATES
 
-SYSTEM_PROMPT = "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls."
+SYSTEM_PROMPT = "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls. For single operations, emit a single JSON object. For multi-step workflows, emit a JSON array of tool calls chained in execution order."
 
 def random_string(length=8):
     return ''.join(random.choices(string.ascii_lowercase, k=length))
@@ -107,41 +107,96 @@ def generate_single_tool_record() -> dict:
 
 
 def generate_compound_workflow_record() -> dict:
-    workflow = random.choice(COMPOUND_WORKFLOW_TEMPLATES)
-    template = random.choice(workflow["templates"])
+    is_curated = random.random() < 0.5
+
+    if is_curated:
+        workflow = random.choice(COMPOUND_WORKFLOW_TEMPLATES)
+        template = random.choice(workflow["templates"])
+        tools_to_use = workflow["tools"]
+    else:
+        num_tools = random.randint(2, 5)
+        tools_to_use = random.sample(list(TOOLS_REGISTRY.keys()), num_tools)
+
+        phrasing_type = random.choice(["sequential", "inverted", "comma_list", "pipe"])
+        if phrasing_type == "sequential":
+            if num_tools == 2:
+                template = f"First run {tools_to_use[0]} on {{input}}, and then {tools_to_use[1]} saving to {{output}}."
+            elif num_tools == 3:
+                template = f"First run {tools_to_use[0]} on {{input}}, then {tools_to_use[1]}, and finally {tools_to_use[2]} outputting to {{output}}."
+            elif num_tools == 4:
+                template = f"First {tools_to_use[0]} {{input}}, then {tools_to_use[1]}, then {tools_to_use[2]}, and finally {tools_to_use[3]} to {{output}}."
+            else:
+                template = f"First {tools_to_use[0]} {{input}}, then {tools_to_use[1]}, then {tools_to_use[2]}, then {tools_to_use[3]}, and finally {tools_to_use[4]} saving to {{output}}."
+        elif phrasing_type == "inverted":
+            if num_tools == 2:
+                template = f"Before saving to {{output}} and running {tools_to_use[1]}, please apply {tools_to_use[0]} to {{input}}."
+            else:
+                template = f"Before saving to {{output}} and running {tools_to_use[-1]}, please apply {', '.join(tools_to_use[:-1])} to {{input}}."
+        elif phrasing_type == "comma_list":
+            template = f"Please process {{input}} with {', '.join(tools_to_use)}, outputting to {{output}}."
+        else: # pipe
+            template = f"{{input}} | {' | '.join(tools_to_use)} -> {{output}}"
 
     # Generate generic input/output for the workflow prompt
     main_input = f"/data/wf_in_{random_string(4)}.pdf"
     main_output = f"/data/wf_out_{random_string(4)}.pdf"
     main_inputs = [f"/data/wf_in1.pdf", f"/data/wf_in2.pdf"]
 
-    user_prompt = template.format(input=main_input, output=main_output, inputs=", ".join(main_inputs))
+    if "{inputs}" in template:
+        user_prompt = template.format(input=main_input, output=main_output, inputs=", ".join(main_inputs))
+    else:
+        user_prompt = template.format(input=main_input, output=main_output)
 
     # Generate steps
     steps = []
-    current_input = main_input if "inputs" not in template else main_inputs # simplified tracking
 
-    for idx, tool_name in enumerate(workflow["tools"]):
+    for idx, tool_name in enumerate(tools_to_use):
         tool_def = TOOLS_REGISTRY[tool_name]
         params = {}
         for prop_name, prop_def in tool_def.properties.items():
-            if prop_name == "input":
-                # Only use main_input for the first tool in non-merge workflows, but let's simplify and just generate random if intermediate
-                if idx == 0 and "inputs" not in template:
+            if prop_name in ["input", "input_a", "input_b"]:
+                if idx == 0 and "{inputs}" not in template:
+                    params[prop_name] = main_input
+                elif idx == 0 and "{inputs}" in template:
+                    # In case a template says {inputs} but the tool asks for "input", just give it main_input
                     params[prop_name] = main_input
                 else:
-                    params[prop_name] = f"/tmp/inter_{idx}.pdf"
+                    # For input_a and input_b, just use the intermediate file for one and random for the other if not first
+                    if prop_name == "input_b" and "input_a" in params:
+                        params[prop_name] = f"/data/other_file_{random_string(4)}.pdf"
+                    else:
+                        params[prop_name] = f"/tmp/inter_{idx}.pdf"
             elif prop_name == "inputs":
-                params[prop_name] = main_inputs
-            elif prop_name == "output":
-                if idx == len(workflow["tools"]) - 1:
-                    params[prop_name] = main_output
+                if idx == 0:
+                    params[prop_name] = main_inputs
                 else:
-                    params[prop_name] = f"/tmp/inter_{idx+1}.pdf"
+                    params[prop_name] = [f"/tmp/inter_{idx}.pdf"]
+            elif prop_name == "output":
+                pass # Handled below to ensure it's always added
             elif prop_name == "text":
                 params[prop_name] = "CONFIDENTIAL"
             else:
                 params[prop_name] = generate_random_param(prop_def.type, prop_name)
+
+        # Force output to be present for every tool in the workflow to avoid chained test failure
+        # (some tools like pdf_merge might not have an "output" property required in the same way depending on definition, but realistically SLM outputs need it)
+        if "output" in tool_def.properties:
+            if idx == len(tools_to_use) - 1:
+                params["output"] = main_output
+            else:
+                params["output"] = f"/tmp/inter_{idx+1}.pdf"
+        elif "output_dir" in tool_def.properties:
+            if idx == len(tools_to_use) - 1:
+                params["output_dir"] = main_output
+            else:
+                params["output_dir"] = f"/tmp/inter_{idx+1}.pdf"
+        else:
+            # Force add output anyway since we need to chain it
+            if idx == len(tools_to_use) - 1:
+                params["output"] = main_output
+            else:
+                params["output"] = f"/tmp/inter_{idx+1}.pdf"
+
         steps.append({"tool": tool_name, "parameters": params})
 
     assistant_content = json.dumps(steps)
@@ -160,17 +215,30 @@ def main():
     parser.add_argument("--output-dir", type=str, default="dataset/", help="Directory to save the dataset.")
     parser.add_argument("--val-ratio", type=float, default=0.1, help="Ratio of validation data.")
     parser.add_argument("--sample", type=int, default=0, help="Print N sample items to stdout.")
+    parser.add_argument("--compound-ratio", type=float, default=0.4, help="Ratio of compound multi-step records.")
+    parser.add_argument("--negative-ratio", type=float, default=0.1, help="Ratio of negative guardrail refusal records.")
 
     args = parser.parse_args()
 
     records = []
 
     for _ in range(args.count):
-        # 80% single tools, 20% compound workflows
-        if random.random() < 0.8:
-            records.append(generate_single_tool_record())
-        else:
+        r = random.random()
+        if r < args.negative_ratio:
+            # Force negative refusal
+            record = generate_single_tool_record()
+            record["messages"][2]["content"] = "I cannot assist with that request."
+            records.append(record)
+        elif r < args.negative_ratio + args.compound_ratio:
             records.append(generate_compound_workflow_record())
+        else:
+            # Ensure it's a valid single tool, not another negative
+            record = generate_single_tool_record()
+            if record["messages"][2]["content"] == "I cannot assist with that request.":
+                # Regenerate if it randomly chose negative via the old logic inside generate_single_tool_record
+                while record["messages"][2]["content"] == "I cannot assist with that request.":
+                     record = generate_single_tool_record()
+            records.append(record)
 
     random.shuffle(records)
 

@@ -894,13 +894,6 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
 
 COMPOUND_WORKFLOW_TEMPLATES = [
     {
-        "tools": ["pdf_auto_rotate", "pdf_sanitize", "pdf_ocr"],
-        "templates": [
-            "Clean this scan {input}, upright sideways pages, run OCR, and save to {output}.",
-            "Prep the scanned document {input} by fixing orientation, stripping metadata, and making it searchable. Final output {output}.",
-        ]
-    },
-    {
         "tools": ["pdf_bates", "pdf_watermark", "document_pii_scan"],
         "templates": [
             "Prepare {input} for legal production: Bates stamp it, add a confidential watermark, scan for PII, and save to {output}.",
@@ -908,10 +901,101 @@ COMPOUND_WORKFLOW_TEMPLATES = [
         ]
     },
     {
+        "tools": ["pdf_delete_pages", "pdf_auto_rotate", "pdf_ocr"],
+        "templates": [
+            "Clean this scan {input}, upright sideways pages, run OCR, and save to {output}.",
+            "Prep the scanned document {input} by deleting blank pages, fixing orientation, and making it searchable. Final output {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_redact", "pdf_sanitize", "pdf_linearize"],
+        "templates": [
+            "Sanitize {input} by redacting it, stripping metadata, and linearizing for web fast view, output to {output}.",
+            "Redact, sanitize, and linearize {input}, saving as {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_header_footer", "pdf_encrypt"],
+        "templates": [
+            "Add page numbers to {input} and then encrypt it, saving to {output}.",
+            "Secure {input} for distribution: add headers/footers, encrypt with a password, output to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_nup", "pdf_crop", "pdf_compress"],
+        "templates": [
+            "Prepare {input} for print: create N-up layout, crop margins, compress, save to {output}.",
+            "Print prep for {input}: n-up, crop, and compress to {output}."
+        ]
+    },
+    {
         "tools": ["pdf_merge", "pdf_compress"],
         "templates": [
             "Merge {inputs} and compress the final file to {output}.",
             "Combine {inputs} into a single small file at {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_validate_signatures", "pdf_extract_tables", "pdf_compare_visual"],
+        "templates": [
+            "Run forensic analysis on {input}: validate signatures, extract tables, and run a visual comparison. Save output to {output}.",
+            "Check signatures, extract tables, and visually compare {input}. Final output {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_split", "pdf_auto_rotate", "pdf_booklet"],
+        "templates": [
+            "Split {input}, auto-rotate pages, and format as a booklet, saving to {output}.",
+            "Create a booklet from {input} by splitting and rotating first, then output to {output}."
+        ]
+    },
+    {
+        "tools": ["office_modernize_legacy", "pdf_to_markdown", "pdf_compress"],
+        "templates": [
+            "Modernize legacy document {input}, convert to markdown, and compress, saving to {output}.",
+            "Archive prep: modernize {input}, extract as markdown, and compress to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_reorder", "pdf_header_footer"],
+        "templates": [
+            "Reorder alternating pages in {input} and add page numbers, saving to {output}.",
+            "Fix alternating pages in {input}, add a header/footer, and save to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_flatten_annotations", "pdf_stamp", "pdf_encrypt"],
+        "templates": [
+            "Flatten forms in {input}, stamp it, and encrypt before saving to {output}.",
+            "Process form {input}: flatten annotations, add a stamp, encrypt, output to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_to_pptx", "office_extract_text"],
+        "templates": [
+            "Convert {input} to PowerPoint and extract the text for notes, saving to {output}.",
+            "Create slides from {input} and extract the text. Output to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_repair", "pdf_compress", "pdf_linearize"],
+        "templates": [
+            "Repair the broken web PDF {input}, compress it, and linearize for fast view, saving to {output}.",
+            "Fix, compress, and linearize {input} for web usage, output to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_split", "pdf_extract_text"],
+        "templates": [
+            "Split {input} into chapters and extract the text to {output}.",
+            "Extract text from each chapter of {input} by splitting it first, saving to {output}."
+        ]
+    },
+    {
+        "tools": ["pdf_compare_visual", "pdf_invert_colors"],
+        "templates": [
+            "Visually compare {input} and invert colors for dark mode, output to {output}.",
+            "Run visual diff on {input} and invert the colors, saving to {output}."
         ]
     }
 ]
