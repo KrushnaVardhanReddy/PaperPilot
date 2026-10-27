@@ -317,3 +317,14 @@ permissions = { print = true, edit = false }
 
 ---
 
+### 8.12 — Dynamic Public Roadmap Board `[Spec 131 / Task 131A]` 🚀
+
+**Goal:** Provide an interactive, automated 3-column public Roadmap UI (`usepaperpilot.com/roadmap` and modal) that visualizes shipped features, active work, and community backlog.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.12.1 | Automated Roadmap Parser (`scripts/sync_roadmap.ts`) | Traverses `phases/*.md` in pure TypeScript/Node, extracts milestone statuses, emits `apps/web/public/roadmap.json` during prebuild. |
+| 8.12.2 | Interactive Glassmorphic Kanban (`RoadmapModal.svelte`) | 3-column board: Shipped (with PR badges), In Progress, and Planned / Up Next. |
+| 8.12.3 | Community Upvote / Feature Request Integration | Clicking "Vote / Request" on planned items opens pre-filled GitHub issue templates to preserve Feature Freeze. |
+| 8.12.4 | Header & Footer Navigation Wiring | Add Roadmap button to web app header and footer. |
+
