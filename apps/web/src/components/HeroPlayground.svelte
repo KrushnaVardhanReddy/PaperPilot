@@ -146,7 +146,7 @@
 
   .hero-playground {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto 64px auto;
     perspective: 1000px;
     min-height: 700px;

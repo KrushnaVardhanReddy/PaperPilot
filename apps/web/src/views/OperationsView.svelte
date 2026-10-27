@@ -1764,12 +1764,12 @@ let metadataFile: File | null = $state(null);
     display: flex;
     gap: 32px;
     height: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
   }
 
   .tools-sidebar {
-    width: 280px;
+    width: 350px;
     flex-shrink: 0;
     background-color: var(--bg-secondary);
     border-radius: var(--border-radius-lg);
