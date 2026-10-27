@@ -39,7 +39,7 @@ def load_inference_model():
 
 def ask(prompt: str, tokenizer, model, device):
     messages = [
-        {"role": "system", "content": "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls."},
+        {"role": "system", "content": "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls. For single operations, emit a single JSON object. For multi-step workflows, emit a JSON array of tool calls chained in execution order."},
         {"role": "user", "content": prompt}
     ]
     
