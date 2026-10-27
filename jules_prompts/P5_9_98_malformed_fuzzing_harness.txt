@@ -1,0 +1,64 @@
+# Task: [P129_T129A: Automated Malformed PDF Fuzzing & Security Regression Harness]
+
+## 1. Role & Objective
+You are an expert Rust systems and application security engineer working on PaperPilot.
+Your objective is to implement **Task 129A / Phase 5.9.98** (`specs/129-pdf-fuzzing-and-malformed-harness/spec.md` and `specs/129-pdf-fuzzing-and-malformed-harness/task_129a.md`).
+
+You must build a world-class, bulletproof automated adversarial regression test suite in `paperpilot-pdf/tests/malformed_regression.rs` that tests PaperPilot against maliciously crafted, corrupt, and malformed PDFs.
+
+Make this implementation the absolute best it can be:
+- Zero crashes, zero unhandled panics, zero memory leaks, and zero infinite loops.
+- Clean propagation of `PdfError::ParseError` or `PdfError::InvalidInput`.
+- Fast, deterministic in-memory execution (<1s total runtime).
+
+---
+
+## 2. Technical Context & Requirements
+Location: `paperpilot-pdf/tests/malformed_regression.rs`
+Dependencies to use:
+- `paperpilot_core::traits::{PdfDocument, PdfOperation}`
+- `paperpilot_core::error::PdfError`
+- `paperpilot_pdf::document::LopdfDocument`
+- Core operations: `paperpilot_pdf::operations::{extract_text, split, page_count, delete, compress, merge, pdf_posterize}`
+
+### Attack Scenarios to Cover:
+1. **Truncated / Random Corrupt Byte Streams**:
+   - Empty byte slice `b""`.
+   - Partial magic headers: `b"%PDF"`, `b"%PDF-1.7\n"`.
+   - Random non-printable binary garbage, high-byte sequences (`0xFF, 0xFE, 0x00`).
+   - Missing `startxref` or broken `%%EOF` markers.
+   - Assert `LopdfDocument::from_bytes` or operations reject without panicking.
+
+2. **Circular Reference & Infinite Tree Loops**:
+   - Synthetic PDF where a `/Pages` node references itself as both `/Parent` and `/Kids` (`/Kids [2 0 R] /Parent 2 0 R`).
+   - Synthetic circular indirect reference chains (`1 0 R -> 2 0 R -> 1 0 R`).
+   - Execute tree-traversing operations like `PageCountOperation`, `SplitOperation`, and `ExtractTextOperation`.
+   - Assert the operations terminate cleanly and do NOT hang in an infinite loop or cause stack overflow.
+
+3. **Stream Length Bombs & Memory Exhaustion Guards**:
+   - Synthetic PDF declaring `/Length 1073741824` (1 GiB) or `2147483647` but providing only a few bytes in the stream body.
+   - Assert the parser bounds allocations or fails with `Err`, never attempting unbounded memory allocation (OOM panic).
+
+4. **Deeply Nested Structures**:
+   - Deeply nested dictionaries/arrays (100+ nested levels: `<< /Nested << /Nested ... >> >>`).
+   - Verify parser handles deep recursion with error/depth limits rather than crashing.
+
+5. **Corrupted Cross-Reference (XRef) Tables**:
+   - Invalid xref entry types, out-of-bounds byte offsets, negative object numbers, overlapping object IDs.
+   - Assert parser returns `Err(PdfError::ParseError)` gracefully.
+
+6. **Operations Stress on Malformed Documents**:
+   - When a malformed document is loaded (or partially loaded), verify executing multiple operations (`ExtractTextOperation`, `SplitOperation`, `DeletePagesOperation`, `PageCountOperation`) handles invalid page indices and broken streams with standard `PdfError::InvalidInput` or `PdfError::ParseError`.
+
+---
+
+## 3. Strict Pre-Submission Verification (Mandatory in Container)
+You must execute the following commands in the Jules container before opening your PR:
+1. `cargo check -p paperpilot-pdf -j 2` — verify compilation is 100% clean.
+2. `cargo fmt --check` — verify zero formatting issues.
+3. `cargo clippy -p paperpilot-pdf --test malformed_regression -- -D warnings` — zero warnings.
+4. `cargo test -p paperpilot-pdf --test malformed_regression -j 2` — all adversarial tests pass.
+5. `semgrep scan --config auto paperpilot-pdf/tests/malformed_regression.rs` — verify 0 findings.
+
+**Target Branch**: `feature/dev` (strictly `feature/dev`, NEVER `main`).
+Provide a detailed PR description detailing the test cases, security vectors covered, and test verification output.
