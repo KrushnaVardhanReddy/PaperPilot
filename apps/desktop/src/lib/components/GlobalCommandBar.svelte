@@ -412,8 +412,7 @@
     -webkit-backdrop-filter: blur(12px);
 
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
     gap: 8px;
   }
 
