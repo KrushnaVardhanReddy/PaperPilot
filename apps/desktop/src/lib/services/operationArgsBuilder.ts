@@ -617,7 +617,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_to_epub':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output..epub`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.epub`)
             };
             break;
         default:

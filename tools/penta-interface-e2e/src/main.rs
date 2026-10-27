@@ -21,7 +21,7 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
     }
     match expected_ext {
         "pdf" => Ok(content.starts_with(b"%PDF")),
-        "xlsx" | "docx" => Ok(content.starts_with(b"PK")),
+        "xlsx" | "docx" | "epub" => Ok(content.starts_with(b"PK")),
         "md" => {
             let s = String::from_utf8_lossy(&content);
             Ok(s.contains('|') || s.contains('#'))

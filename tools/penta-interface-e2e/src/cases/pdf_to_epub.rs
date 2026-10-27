@@ -41,7 +41,7 @@ pub async fn run_pdf_to_epub_suite() -> anyhow::Result<Vec<TestExecutionResult>>
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "epub").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {
@@ -80,7 +80,7 @@ pub async fn run_pdf_to_epub_suite() -> anyhow::Result<Vec<TestExecutionResult>>
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "epub").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {
@@ -107,8 +107,10 @@ pub async fn run_pdf_to_epub_suite() -> anyhow::Result<Vec<TestExecutionResult>>
             actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
         }
 
+        let out_path = out_dir.join(format!("{}_api_{}.epub", tool, tier as u8));
         let api_args = json!({
-            "input": actual_input
+            "input": actual_input,
+            "output": out_path.to_str().unwrap()
         });
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/to-epub", api_args).await?;

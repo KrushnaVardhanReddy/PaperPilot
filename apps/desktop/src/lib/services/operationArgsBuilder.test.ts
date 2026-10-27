@@ -318,7 +318,7 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_to_epub', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output..epub'
+            output: '/docs/test_output.epub'
         });
     });
 });
