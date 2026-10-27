@@ -71,13 +71,9 @@ Create `paperpilot-cli/src/commands/ask.rs`:
      ```
    - Read line from `std::io::stdin()`. If user answers 'n' or 'N', abort with message.
 7. Map `plan.intent` to existing CLI operation execution:
-   - `Intent::Rotate` ➔ Call `paperpilot_pdf::operations::rotate::RotateOperation`
-   - `Intent::Compress` ➔ Call `paperpilot_pdf::operations::compress::CompressOperation`
-   - `Intent::Merge` ➔ Call `paperpilot_pdf::operations::merge::MergeOperation`
-   - `Intent::Split` ➔ Call `paperpilot_pdf::operations::split::SplitOperation`
-   - `Intent::Watermark` ➔ Call `paperpilot_pdf::operations::watermark::WatermarkOperation`
-   - `Intent::Crop` ➔ Call `paperpilot_pdf::operations::crop::CropOperation`
-   - `Intent::ExtractText` ➔ Call `paperpilot_pdf::operations::extract_text::ExtractTextOperation`
+   - Handle all intents supported by `paperpilot_nlp::intent::Intent` (40+ intents including `Merge`, `Split`, `Compress`, `Rotate`, `Crop`, `Watermark`, `Encrypt`, `Decrypt`, `ExtractText`, `ExtractImages`, `Ocr`, `Bates`, `Flatten`, `Linearize`, `Repair`, `Redact`, `PdfA`, `HeaderFooter`, `Metadata`, etc.).
+   - Delegate each intent to the matching existing command handlers in `paperpilot_cli::commands::*` (e.g. `group_a`, `group_b`, `group_c`, etc.) so that the entire 40+ operation catalog can be triggered via natural language.
+   - For any operations not yet wired to a headless CLI handler, return a clean `PdfError::UnsupportedOperation` error rather than a silent failure.
 
 ### Step 4: Wire Subcommand in `paperpilot-cli/src/commands/mod.rs`
 - Add `pub mod ask;`

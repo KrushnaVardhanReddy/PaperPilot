@@ -52,14 +52,9 @@ Implement the `paperpilot ask` CLI subcommand to enable natural language PDF man
    - Call `resolver.resolve_with_context(&prompt, &context)`.
    - Support `--dry-run`: print formatted plan summary (or JSON if `--json` is enabled).
    - If not `--yes` and running interactively, prompt user `Execute this plan? [Y/n]`.
-   - Dispatch resolved plan to the appropriate operations:
-     - `Intent::Rotate` -> `paperpilot_pdf::operations::rotate`
-     - `Intent::Compress` -> `paperpilot_pdf::operations::compress`
-     - `Intent::Merge` -> `paperpilot_pdf::operations::merge`
-     - `Intent::Split` -> `paperpilot_pdf::operations::split`
-     - `Intent::Watermark` -> `paperpilot_pdf::operations::watermark`
-     - `Intent::Crop` -> `paperpilot_pdf::operations::crop`
-     - `Intent::ExtractText` -> `paperpilot_pdf::operations::extract_text`
+   - **Exhaustive Intent Dispatching**: The dispatcher must support all 40+ canonical intents defined in `paperpilot_nlp::intent::Intent` by routing them to their existing handlers in `paperpilot_cli::commands::*` (e.g. `group_a`, `group_b`, `group_c`, `sanitize`, `pii`, `workflow`, etc.).
+     - Common examples: `Rotate`, `Compress`, `Merge`, `Split`, `Watermark`, `Crop`, `Delete`, `Reorder`, `Burst`, `ExtractText`, `ExtractImages`, `Ocr`, `Bates`, `Flatten`, `Linearize`, `Repair`, `Redact`, `PdfA`, `Encrypt`, `Decrypt`, etc.
+     - For any intent not yet wired to a headless CLI handler, return a clean `PdfError::UnsupportedOperation` error with an informative message.
    - Handle errors gracefully, emitting friendly diagnostics when intent is ambiguous.
 
 4. **Integration Test Suite**:

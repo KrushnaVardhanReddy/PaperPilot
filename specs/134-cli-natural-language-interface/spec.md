@@ -90,18 +90,14 @@ Success / Error Output + Exit Code (0 for success, non-zero for failure)
 
 ---
 
-## 4. Supported Intents for MVP
-The MVP integrates directly with `paperpilot-nlp`'s established `Intent` enum:
-- `Intent::Merge`
-- `Intent::Split`
-- `Intent::Compress`
-- `Intent::Rotate`
-- `Intent::Crop`
-- `Intent::Watermark`
-- `Intent::Encrypt` / `Intent::Decrypt`
-- `Intent::ExtractText`
-- `Intent::ExtractImages`
-- `Intent::Ocr`
+## 4. Supported Intents
+The CLI natural language interface supports all 40+ canonical intents defined in `paperpilot_nlp::intent::Intent`:
+- **Page Manipulation**: `Merge`, `Split`, `Rotate`, `Crop`, `Delete`, `Reorder`, `Burst`, `Extract`
+- **Document Optimization & Security**: `Compress`, `Watermark`, `Encrypt`, `Decrypt`, `Linearize`, `Repair`, `Redact`, `Flatten`, `PdfA`, `Sanitize`, `Sign`, `Validate`, `HeaderFooter`, `Bates`, `Hash`
+- **Extraction & Analysis**: `ExtractText`, `ExtractImages`, `Ocr`, `Search`, `Compare`, `Metadata`, `Classify`, `Render`, `ImagesToPdf`
+- **Format Conversions & Forms**: `ToMarkdown`, `ToJson`, `ToDocx`, `ToPptx`, `ToHtml`, `FormFill`, `FormRead`, `FormCreate`, `Bookmarks`
+
+The dispatcher in `ask.rs` matches against `plan.intent` and routes to the matching handlers in `paperpilot-cli::commands::*` (or returns `PdfError::UnsupportedOperation` for any unhandled variants).
 
 ---
 
