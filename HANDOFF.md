@@ -100,8 +100,9 @@ When resuming a new session, follow these steps:
    - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 2`).
    - Unbounded cargo compilations will freeze the host machine.
 
-2. **Target Branch Protocol:**
-   - All feature development, Jules cloud sessions, and local merges MUST target `feature/dev`. Never push unreviewed code directly to `main`.
+2. **Feature Branch Protocol (No Direct Pushes to `feature/dev` or `main`):**
+   - All development, bug fixes, and experiments must occur on dedicated feature branches (e.g. `feat/...`, `fix/...`).
+   - Never push directly to `feature/dev` or `main`. Code is merged into `feature/dev` only after review and complete local test verification.
 
 3. **The Single Core Runner + 5 Wrappers Architecture Pattern:**
    - Every tool operation MUST have exactly **ONE** core in-memory engine implementation in `paperpilot-pdf`:
