@@ -25,15 +25,18 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 84D** | `[Spec 084]` | P1 | SLM / AI Pipeline | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 17536454483435898495](https://jules.google.com/session/17536454483435898495)<br>Compound multi-step dataset expansion, dynamic arbitrary tool chaining (2–5 tools), and parameter piping for visual pipeline generation. |
-| **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704)<br>Adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 
 ---
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 129A (Automated Malformed PDF Fuzzing & Security Regression Harness `[Spec 129]`, PR #276)**:
+1. **Task 84D (Compound SLM Workflow Recipes & Multi-Step Chaining `[Spec 084]`, PR #277)**:
+   - Added 15 compound multi-step workflow recipes in `tools/slm-training/templates.py` (e.g. Legal Discovery, Contract Redaction, Print Prep Booklet, Form Processing, Archival OCR).
+   - Implemented dynamic parameter piping (`/tmp/inter_*.pdf`) ensuring sequential step outputs chain directly into subsequent tool inputs.
+   - Rebalanced training dataset distribution to 50% single-tool, 40% compound multi-step pipelines, and 10% safety refusals.
+   - Added comprehensive test suite in `tools/slm-training/test_dataset_generator.py` (8/8 tests passing).
+2. **Task 129A (Automated Malformed PDF Fuzzing & Security Regression Harness `[Spec 129]`, PR #276)**:
    - Added `paperpilot-pdf/tests/malformed_regression.rs` verifying 5 distinct corruption attack vectors exit cleanly via `Result::Err` with zero panics or memory loops:
      - Corrupted XRef table offsets & negative indices.
      - Corrupted `%PDF-` header and random arbitrary byte sequences.
