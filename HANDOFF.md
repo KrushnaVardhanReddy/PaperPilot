@@ -2,14 +2,16 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 26, 2026 (Evening EDT)  
+> **Date of Last Update:** October 27, 2026 (Asia/Hong_Kong)
+>
 > **Active Target:** Post-Launch Security Hardening + Wave 3 & 4 Core Operations + Mobile/Web Parity (78+ Tools Total)
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Current Git Branch**: `feature/dev` (strictly synchronized with `origin/feature/dev`).
+- **Integration Branch**: `feature/dev`; Task 126A baseline is `origin/feature/dev` at `9c8e605`.
+- **Local Continuation Branch**: `feat/open-webui-tika-adapter` (Task 126A changes are local and unmerged).
 - **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
 - **System Stability & Audits**:
   - `cargo check --workspace -j 2`: **100% Clean**.
@@ -25,7 +27,7 @@
 |---|:---:|:---:|---|---|---|
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
-| **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | 📋 **Backlog / Planned** (`specs/126-...`)<br>Sub-15ms Tika-compatible `/tika/rmeta/text` REST & MCP tool for Open-WebUI integration. |
+| **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | ✅ **Implemented and verified locally (unmerged)** on `feat/open-webui-tika-adapter`.<br>In-memory Tika 3/4 upload routes, root metadata arrays, shared Rust extraction runner, 5 core + 21 gateway tests passed, and real HTTP/MCP/custom-Tool smoke checks passed ([report](reports/TIKA_INGESTION_ADAPTER_REPORT.md)). |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 | **Task 129A** | `[Spec 129]` | P2 | Quality / Fuzzing | `feature/dev` | 📋 **Backlog / Planned** (`specs/129-...`)<br>Malformed PDF fuzzing harness (circular xrefs, corrupted streams, memory safety). |
 
@@ -61,6 +63,11 @@
 ## 📋 Resuming Checklist for Next Session
 
 Follow this exact sequence to resume work:
+
+0. **Review the local Task 126A continuation**:
+   - Read `reports/TIKA_INGESTION_ADAPTER_REPORT.md` for test results, scope, and the reusable task-local Windows Rust/MinGW environment.
+   - Integration setup and the optional Open-WebUI Tool are in `docs/integrations/open_webui.md`.
+   - Keep the original `feat/coding-agent-mcp-setup` branch and existing `reports/agent-validation/` artifacts intact. Target any reviewed integration at `feature/dev`.
 
 1. **Check Jules Task 123A (Security Hardening)**:
    - Check [Jules Session 18198933508777026291](https://jules.google.com/session/18198933508777026291).

@@ -37,6 +37,7 @@ insert_*.py
 update_*.py
 *.py
 !tools/slm-training/*.py
+!docs/integrations/open_webui_tool.py
 *.sh
 run_tests.sh
 parse_test.rs

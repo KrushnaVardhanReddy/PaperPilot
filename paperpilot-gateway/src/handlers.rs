@@ -1,8 +1,9 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
 use axum::{
+    body::Bytes,
     extract::Path,
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
 use paperpilot_mcp::server::PaperPilotMcpServer;
@@ -31,6 +32,197 @@ pub struct ApiResponse {
     pub success: bool,
     pub result: Option<Value>,
     pub error: Option<String>,
+}
+
+/// Binary PDF upload schema for Swagger/OpenAPI.
+#[derive(ToSchema)]
+#[schema(value_type = String, format = Binary)]
+pub struct TikaPdfBody(pub Vec<u8>);
+
+/// Tika 3 / recursive-metadata response, consumed by Open-WebUI's Tika loader.
+#[derive(Serialize, ToSchema)]
+pub struct TikaMetadata {
+    #[serde(rename = "X-TIKA:content")]
+    pub content: String,
+    #[serde(rename = "Content-Type")]
+    pub content_type: String,
+    #[serde(rename = "xmpTPg:NPages")]
+    pub page_count: String,
+}
+
+/// Tika 4 renamed the content key to `tk:content`.
+#[derive(Serialize, ToSchema)]
+pub struct TikaMarkdownMetadata {
+    #[serde(rename = "tk:content")]
+    pub content: String,
+    #[serde(rename = "Content-Type")]
+    pub content_type: String,
+    #[serde(rename = "xmpTPg:NPages")]
+    pub page_count: String,
+}
+
+type TikaError = (StatusCode, Json<ApiResponse>);
+
+fn tika_error(status: StatusCode, message: &str) -> TikaError {
+    (
+        status,
+        Json(ApiResponse {
+            success: false,
+            result: None,
+            error: Some(message.to_owned()),
+        }),
+    )
+}
+
+async fn extract_tika_metadata(
+    headers: &HeaderMap,
+    body: Bytes,
+) -> Result<TikaMetadata, TikaError> {
+    if body.is_empty() {
+        return Err(tika_error(StatusCode::BAD_REQUEST, "The PDF body is empty"));
+    }
+    let media_type = headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("application/octet-stream")
+        .split(';')
+        .next()
+        .unwrap_or_default()
+        .trim();
+    if !(media_type.eq_ignore_ascii_case("application/pdf")
+        || media_type.eq_ignore_ascii_case("application/octet-stream"))
+        || !body.starts_with(b"%PDF-")
+    {
+        return Err(tika_error(
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            "Send raw PDF bytes with Content-Type application/pdf or application/octet-stream",
+        ));
+    }
+
+    // PDF parsing is CPU-bound; keep it off Tokio's async request workers.
+    // Bytes extraction applies the router's existing 100 MiB body limit.
+    let pages = tokio::task::spawn_blocking(move || {
+        paperpilot_pdf::operations::extract_text::run_extract_text_bytes(&body, None)
+    })
+    .await
+    .map_err(|error| {
+        tracing::error!(%error, "Tika extraction worker failed");
+        tika_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "PDF extraction worker failed",
+        )
+    })?
+    .map_err(|error| {
+        tracing::debug!(%error, "Tika PDF extraction failed");
+        tika_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Unable to extract this PDF",
+        )
+    })?;
+    if pages.is_empty() {
+        return Err(tika_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "The PDF has no pages",
+        ));
+    }
+    Ok(TikaMetadata {
+        page_count: pages.len().to_string(),
+        content: pages.join("\n\n"),
+        content_type: "application/pdf".to_owned(),
+    })
+}
+
+/// Extract a raw PDF as UTF-8 text, or a metadata object with Accept: application/json.
+#[utoipa::path(
+    put, path = "/tika", tag = "Document Ingestion",
+    request_body(content = TikaPdfBody, content_type = "application/pdf"),
+    responses(
+        (status = 200, description = "Page-ordered text with detected Markdown tables", body = String, content_type = "text/plain"),
+        (status = 400, description = "Empty body"),
+        (status = 413, description = "Body exceeds 100 MiB"),
+        (status = 415, description = "Only raw PDF uploads are supported"),
+        (status = 422, description = "PDF could not be parsed")
+    )
+)]
+pub async fn tika(headers: HeaderMap, body: Bytes) -> impl IntoResponse {
+    match extract_tika_metadata(&headers, body).await {
+        Ok(metadata) => {
+            let wants_json = headers
+                .get(axum::http::header::ACCEPT)
+                .and_then(|value| value.to_str().ok())
+                .is_some_and(|accept| {
+                    accept.split(',').any(|value| {
+                        value
+                            .split(';')
+                            .next()
+                            .unwrap_or_default()
+                            .trim()
+                            .eq_ignore_ascii_case("application/json")
+                    })
+                });
+            if wants_json {
+                Json(metadata).into_response()
+            } else {
+                metadata.content.into_response()
+            }
+        }
+        Err(error) => error.into_response(),
+    }
+}
+
+/// Open-WebUI's Tika 3 loader expects an object even without an Accept header.
+#[utoipa::path(
+    put, path = "/tika/text", tag = "Document Ingestion",
+    request_body(content = TikaPdfBody, content_type = "application/pdf"),
+    responses((status = 200, description = "Open-WebUI Tika 3 metadata", body = TikaMetadata))
+)]
+pub async fn tika_text(headers: HeaderMap, body: Bytes) -> Result<Json<TikaMetadata>, TikaError> {
+    extract_tika_metadata(&headers, body).await.map(Json)
+}
+
+/// Open-WebUI's Tika 4 loader uses a different route and content key.
+#[utoipa::path(
+    put, path = "/tika/json/md", tag = "Document Ingestion",
+    request_body(content = TikaPdfBody, content_type = "application/pdf"),
+    responses((status = 200, description = "Open-WebUI Tika 4 metadata", body = TikaMarkdownMetadata))
+)]
+pub async fn tika_markdown(
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<Json<TikaMarkdownMetadata>, TikaError> {
+    let metadata = extract_tika_metadata(&headers, body).await?;
+    Ok(Json(TikaMarkdownMetadata {
+        content: metadata.content,
+        content_type: metadata.content_type,
+        page_count: metadata.page_count,
+    }))
+}
+
+/// Tika's recursive metadata contract is an array; this adapter returns the root PDF only.
+#[utoipa::path(
+    put, path = "/rmeta/text", tag = "Document Ingestion",
+    request_body(content = TikaPdfBody, content_type = "application/pdf"),
+    responses((status = 200, description = "Root PDF metadata array; attachments are not parsed", body = Vec<TikaMetadata>))
+)]
+pub async fn tika_rmeta(
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<Json<Vec<TikaMetadata>>, TikaError> {
+    extract_tika_metadata(&headers, body)
+        .await
+        .map(|metadata| Json(vec![metadata]))
+}
+
+#[utoipa::path(
+    post, path = "/api/v1/tika/rmeta/text", tag = "Document Ingestion",
+    request_body(content = TikaPdfBody, content_type = "application/pdf"),
+    responses((status = 200, description = "Tika-compatible root PDF metadata array", body = Vec<TikaMetadata>))
+)]
+pub async fn tika_rmeta_api(
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<Json<Vec<TikaMetadata>>, TikaError> {
+    tika_rmeta(headers, body).await
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
