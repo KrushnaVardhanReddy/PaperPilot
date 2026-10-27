@@ -49,13 +49,17 @@ impl LopdfDocument {
         }
     }
 
-    pub fn load(path: &Path) -> OperationResult<Self> {
-        let bytes = std::fs::read(path).map_err(PdfError::IoError)?;
-        let doc = Document::load_mem(&bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
+    pub fn from_bytes(bytes: &[u8]) -> OperationResult<Self> {
+        let doc = Document::load_mem(bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
         Ok(Self {
             inner: doc,
-            original_bytes: Some(bytes),
+            original_bytes: Some(bytes.to_vec()),
         })
+    }
+
+    pub fn load(path: &Path) -> OperationResult<Self> {
+        let bytes = std::fs::read(path).map_err(PdfError::IoError)?;
+        Self::from_bytes(&bytes)
     }
 }
 

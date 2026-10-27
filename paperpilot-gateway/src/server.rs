@@ -1,7 +1,7 @@
 use crate::{handlers, sse};
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
@@ -11,6 +11,11 @@ use utoipa_swagger_ui::SwaggerUi;
 #[openapi(
     paths(
         handlers::health,
+        handlers::tika,
+        handlers::tika_text,
+        handlers::tika_markdown,
+        handlers::tika_rmeta,
+        handlers::tika_rmeta_api,
         handlers::mcp_exec,
         handlers::merge,
         handlers::split,
@@ -31,7 +36,10 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_dedup_streams,
+        handlers::pdf_posterize,
         handlers::pdf_split_by_outline,
+        handlers::pdf_merge_alternate,
         handlers::pdf_comic_archive,
         handlers::pdf_split_scanned_book,
         handlers::pdf_change_permissions,
@@ -57,6 +65,9 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::HealthResponse,
             handlers::McpExecRequest,
             handlers::ApiResponse,
+            handlers::TikaMetadata,
+            handlers::TikaMarkdownMetadata,
+            handlers::TikaPdfBody,
             handlers::MergeJsonRequest,
             handlers::SplitJsonRequest,
             handlers::CompressJsonRequest,
@@ -72,11 +83,13 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WorkflowValidateRequest,
             handlers::WorkflowRunJsonRequest,
             handlers::PdfValidateSignaturesJsonRequest,
+            handlers::PdfPosterizeJsonRequest,
             handlers::PdfAttachmentsJsonRequest
         )
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
+        (name = "Document Ingestion", description = "In-memory PDF extraction for Open-WebUI and Tika-compatible clients"),
         (name = "Tools", description = "Discovery and capability listing across all 52 tools"),
         (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
         (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
@@ -92,14 +105,37 @@ use utoipa_swagger_ui::SwaggerUi;
 pub struct ApiDoc;
 
 pub async fn build_app() -> Router {
+    // Restrict CORS: Allow only trusted local origins (Tauri desktop client, Vite dev server, localhost)
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(tower_http::cors::AllowOrigin::predicate(|origin, _| {
+            let s = origin.to_str().unwrap_or("");
+            s.starts_with("tauri://")
+                || s.starts_with("http://localhost")
+                || s.starts_with("http://127.0.0.1")
+                || s.starts_with("https://localhost")
+                || s.starts_with("https://127.0.0.1")
+        }))
         .allow_methods(Any)
         .allow_headers(Any);
 
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/tika", put(handlers::tika))
+        .route("/tika/text", put(handlers::tika_text))
+        .route("/tika/json/md", put(handlers::tika_markdown))
+        .route(
+            "/rmeta/text",
+            put(handlers::tika_rmeta).post(handlers::tika_rmeta),
+        )
+        .route(
+            "/tika/rmeta/text",
+            put(handlers::tika_rmeta).post(handlers::tika_rmeta),
+        )
+        .route(
+            "/api/v1/tika/rmeta/text",
+            post(handlers::tika_rmeta_api).put(handlers::tika_rmeta),
+        )
         .route("/api/v1/tools", get(handlers::list_tools))
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))
@@ -116,6 +152,15 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route(
+            "/api/v1/pdf/dedup-streams",
+            post(handlers::pdf_dedup_streams),
+        )
+        .route("/api/v1/pdf/posterize", post(handlers::pdf_posterize))
+        .route(
+            "/api/v1/pdf/merge-alternate",
+            post(handlers::pdf_merge_alternate),
+        )
         .route(
             "/api/v1/pdf/split-by-outline",
             post(handlers::pdf_split_by_outline),
@@ -189,6 +234,7 @@ pub async fn build_app() -> Router {
             post(handlers::workflow_run_json),
         )
         .route("/api/v1/workflow/run", post(handlers::workflow_run))
+        .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
 }
 

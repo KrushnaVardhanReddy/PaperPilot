@@ -454,6 +454,29 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_SPLIT_BY_OUTLINE_REPORT.md",
             )?;
 
+            let res_pdf_posterize = cases::pdf_posterize::run_pdf_posterize_suite().await?;
+            println!(
+                "Multi-Sheet Poster Tile Slicer finished: {} tests",
+                res_pdf_posterize.len()
+            );
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Multi-Sheet Poster Tile Slicer)",
+                &res_pdf_posterize,
+                "reports/PENTA_INTERFACE_E2E_PDF_POSTERIZE_REPORT.md",
+            )?;
+
+            let res_pdf_dedup_streams =
+                cases::pdf_dedup_streams::run_pdf_dedup_streams_suite().await?;
+            println!(
+                "Lossless Stream Deduplication finished: {} tests",
+                res_pdf_dedup_streams.len()
+            );
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Lossless Stream Deduplication)",
+                &res_pdf_dedup_streams,
+                "reports/PENTA_INTERFACE_E2E_PDF_DEDUP_STREAMS_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -461,6 +484,8 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_dedup_streams);
+            all.extend(res_pdf_posterize);
             all.extend(res_pdf_split_by_outline);
             all.extend(res_pdf_comic_archive);
             all.extend(res_pdf_split_scanned_book);

@@ -130,7 +130,8 @@ impl PaperPilotMcpServer {
         schema_rb.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("input_a".to_string()),
+                serde_json::Value::String("input_b".to_string()),
                 serde_json::Value::String("output".to_string()),
             ]),
         );
@@ -3089,6 +3090,251 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_split_by_outline.input_schema = Arc::new(schema_pdf_split_by_outline);
         tools.push(tool_pdf_split_by_outline);
+
+        let mut schema_pdf_merge_alternate = serde_json::Map::new();
+        schema_pdf_merge_alternate.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_merge_alternate = serde_json::Map::new();
+
+        let mut prop_input_a_pdf_merge_alternate = serde_json::Map::new();
+        prop_input_a_pdf_merge_alternate.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "input_a".to_string(),
+            serde_json::Value::Object(prop_input_a_pdf_merge_alternate),
+        );
+
+        let mut prop_input_b_pdf_merge_alternate = serde_json::Map::new();
+        prop_input_b_pdf_merge_alternate.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "input_b".to_string(),
+            serde_json::Value::Object(prop_input_b_pdf_merge_alternate),
+        );
+
+        let mut prop_output_pdf_merge_alternate = serde_json::Map::new();
+        prop_output_pdf_merge_alternate.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_merge_alternate),
+        );
+
+        let mut prop_step = serde_json::Map::new();
+        prop_step.insert(
+            "type".to_string(),
+            serde_json::Value::String("integer".to_string()),
+        );
+        props_pdf_merge_alternate.insert("step".to_string(), serde_json::Value::Object(prop_step));
+
+        let mut prop_step_b = serde_json::Map::new();
+        prop_step_b.insert(
+            "type".to_string(),
+            serde_json::Value::String("integer".to_string()),
+        );
+        props_pdf_merge_alternate
+            .insert("step_b".to_string(), serde_json::Value::Object(prop_step_b));
+
+        let mut prop_rev_a = serde_json::Map::new();
+        prop_rev_a.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "reverse_a".to_string(),
+            serde_json::Value::Object(prop_rev_a),
+        );
+
+        let mut prop_rev_b = serde_json::Map::new();
+        prop_rev_b.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pdf_merge_alternate.insert(
+            "reverse_b".to_string(),
+            serde_json::Value::Object(prop_rev_b),
+        );
+
+        schema_pdf_merge_alternate.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_merge_alternate),
+        );
+        schema_pdf_merge_alternate.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input_a".to_string()),
+                serde_json::Value::String("input_b".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_merge_alternate = Tool::default();
+        tool_pdf_merge_alternate.name = "pdf_merge_alternate".into();
+        tool_pdf_merge_alternate.description = Some(
+            "Alternating PDF Merge: Interleave pages from two PDF documents. [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_merge_alternate.input_schema = Arc::new(schema_pdf_merge_alternate);
+        tools.push(tool_pdf_merge_alternate);
+        let mut schema_pdf_posterize = serde_json::Map::new();
+        schema_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_posterize = serde_json::Map::new();
+
+        let mut prop_input_pdf_posterize = serde_json::Map::new();
+        prop_input_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_posterize),
+        );
+
+        let mut prop_output_pdf_posterize = serde_json::Map::new();
+        prop_output_pdf_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_posterize),
+        );
+
+        let mut prop_target_sheet_posterize = serde_json::Map::new();
+        prop_target_sheet_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "target_sheet".to_string(),
+            serde_json::Value::Object(prop_target_sheet_posterize),
+        );
+
+        let mut prop_grid_cols_posterize = serde_json::Map::new();
+        prop_grid_cols_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "grid_cols".to_string(),
+            serde_json::Value::Object(prop_grid_cols_posterize),
+        );
+
+        let mut prop_grid_rows_posterize = serde_json::Map::new();
+        prop_grid_rows_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "grid_rows".to_string(),
+            serde_json::Value::Object(prop_grid_rows_posterize),
+        );
+
+        let mut prop_overlap_pt_posterize = serde_json::Map::new();
+        prop_overlap_pt_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "overlap_pt".to_string(),
+            serde_json::Value::Object(prop_overlap_pt_posterize),
+        );
+
+        let mut prop_scale_posterize = serde_json::Map::new();
+        prop_scale_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("number".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "scale".to_string(),
+            serde_json::Value::Object(prop_scale_posterize),
+        );
+
+        let mut prop_guides_posterize = serde_json::Map::new();
+        prop_guides_posterize.insert(
+            "type".to_string(),
+            serde_json::Value::String("boolean".to_string()),
+        );
+        props_pdf_posterize.insert(
+            "include_guides".to_string(),
+            serde_json::Value::Object(prop_guides_posterize),
+        );
+
+        schema_pdf_posterize.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_posterize),
+        );
+        schema_pdf_posterize.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_posterize = Tool::default();
+        tool_pdf_posterize.name = "pdf_posterize".into();
+        tool_pdf_posterize.description = Some(
+            "Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_posterize.input_schema = Arc::new(schema_pdf_posterize);
+        tools.push(tool_pdf_posterize);
+        let mut schema_pdf_dedup_streams = serde_json::Map::new();
+        schema_pdf_dedup_streams.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_dedup_streams = serde_json::Map::new();
+
+        let mut prop_input_pdf_dedup_streams = serde_json::Map::new();
+        prop_input_pdf_dedup_streams.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_dedup_streams.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_dedup_streams),
+        );
+
+        let mut prop_output_pdf_dedup_streams = serde_json::Map::new();
+        prop_output_pdf_dedup_streams.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_dedup_streams.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_dedup_streams),
+        );
+
+        schema_pdf_dedup_streams.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_dedup_streams),
+        );
+        schema_pdf_dedup_streams.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_dedup_streams = Tool::default();
+        tool_pdf_dedup_streams.name = "pdf_dedup_streams".into();
+        tool_pdf_dedup_streams.description = Some(
+            "Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression [Input: .pdf | Output: .pdf]".into(),
+        );
+        tool_pdf_dedup_streams.input_schema = Arc::new(schema_pdf_dedup_streams);
+        tools.push(tool_pdf_dedup_streams);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -6126,6 +6372,147 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_merge_alternate" => {
+                let input_a = args
+                    .get("input_a")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        rmcp::ErrorData::invalid_params("Missing input_a".to_string(), None)
+                    })?;
+                let input_b = args
+                    .get("input_b")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        rmcp::ErrorData::invalid_params("Missing input_b".to_string(), None)
+                    })?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let step = args.get("step").and_then(|v| v.as_u64()).unwrap_or(1) as usize;
+                let step_b = args.get("step_b").and_then(|v| v.as_u64()).unwrap_or(1) as usize;
+                let reverse_a = args
+                    .get("reverse_a")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let reverse_b = args
+                    .get("reverse_b")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                let a_bytes = std::fs::read(input_a)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let b_bytes = std::fs::read(input_b)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                let options =
+                    paperpilot_pdf::operations::pdf_merge_alternate::PdfMergeAlternateOptions {
+                        step,
+                        step_b,
+                        reverse_a,
+                        reverse_b,
+                    };
+
+                let result =
+                    paperpilot_pdf::operations::pdf_merge_alternate::pdf_merge_alternate_bytes(
+                        &a_bytes, &b_bytes, &options,
+                    )
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Alternating PDF Merge executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_posterize" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let target_sheet = args
+                    .get("target_sheet")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("a4")
+                    .to_string();
+                let grid_cols = args
+                    .get("grid_cols")
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as u32);
+                let grid_rows = args
+                    .get("grid_rows")
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as u32);
+                let overlap_pt = args
+                    .get("overlap_pt")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(14.17) as f32;
+                let scale = args.get("scale").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
+                let include_guides = args
+                    .get("include_guides")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+
+                let options = paperpilot_pdf::operations::pdf_posterize::PdfPosterizeOptions {
+                    target_sheet,
+                    grid_cols,
+                    grid_rows,
+                    overlap_pt,
+                    scale,
+                    include_guides,
+                };
+
+                let result = paperpilot_pdf::operations::pdf_posterize::pdf_posterize_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Multi-Sheet Poster Tile Slicer executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_dedup_streams" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options =
+                    paperpilot_pdf::operations::pdf_dedup_streams::PdfDedupStreamsOptions::default(
+                    );
+                let result =
+                    paperpilot_pdf::operations::pdf_dedup_streams::pdf_dedup_streams_bytes(
+                        &input_bytes,
+                        &options,
+                    )
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Lossless Stream Deduplication executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -6666,7 +7053,7 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 76);
+        assert_eq!(res.tools.len(), 79);
     }
 
     #[test]

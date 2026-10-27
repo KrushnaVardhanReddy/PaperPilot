@@ -14,6 +14,7 @@ pub fn is_url(s: &str) -> bool {
 
 pub fn resolve_url_to_bytes(url: &str) -> OperationResult<Vec<u8>> {
     let client = Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_secs(30))
         .build()
         .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
@@ -123,13 +124,12 @@ pub fn resolve_url_to_temp_file(url: &str) -> OperationResult<PathBuf> {
 }
 
 fn is_private_ip(ip: IpAddr) -> bool {
+    if ip.is_loopback() || ip.is_unspecified() {
+        return true;
+    }
     match ip {
         IpAddr::V4(ipv4) => {
             let octets = ipv4.octets();
-            // 127.0.0.0/8 (Loopback)
-            if octets[0] == 127 {
-                return true;
-            }
             // 10.0.0.0/8 (Private)
             if octets[0] == 10 {
                 return true;
@@ -142,8 +142,12 @@ fn is_private_ip(ip: IpAddr) -> bool {
             if octets[0] == 192 && octets[1] == 168 {
                 return true;
             }
-            // 169.254.169.254 (Cloud metadata / link local)
+            // 169.254.0.0/16 (Link local / Cloud metadata)
             if octets[0] == 169 && octets[1] == 254 {
+                return true;
+            }
+            // 100.64.0.0/10 (Shared address space / CGNAT)
+            if octets[0] == 100 && octets[1] >= 64 && octets[1] <= 127 {
                 return true;
             }
 
@@ -151,12 +155,12 @@ fn is_private_ip(ip: IpAddr) -> bool {
         }
         IpAddr::V6(ipv6) => {
             let segments = ipv6.segments();
-            // ::1/128 (Loopback)
-            if ipv6.is_loopback() {
-                return true;
-            }
             // Unique local address (fc00::/7)
             if segments[0] & 0xfe00 == 0xfc00 {
+                return true;
+            }
+            // Link local address (fe80::/10)
+            if segments[0] & 0xffc0 == 0xfe80 {
                 return true;
             }
 
@@ -210,6 +214,12 @@ mod tests {
         assert!(is_private_ip("172.16.0.1".parse().unwrap()));
         assert!(is_private_ip("192.168.1.1".parse().unwrap()));
         assert!(is_private_ip("169.254.169.254".parse().unwrap()));
+        assert!(is_private_ip("169.254.0.1".parse().unwrap()));
+        assert!(is_private_ip("0.0.0.0".parse().unwrap()));
+        assert!(is_private_ip("100.64.0.1".parse().unwrap()));
+        assert!(is_private_ip("::1".parse().unwrap()));
+        assert!(is_private_ip("::".parse().unwrap()));
+        assert!(is_private_ip("fe80::1".parse().unwrap()));
 
         assert!(!is_private_ip("8.8.8.8".parse().unwrap()));
         assert!(!is_private_ip("1.1.1.1".parse().unwrap()));

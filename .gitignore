@@ -3,6 +3,7 @@
 target/
 node_modules/
 dist/
+dist-portable/
 build/
 *.pdf
 !tests/fixtures/*.pdf
@@ -22,6 +23,7 @@ tools/train-nlp/logs/
 !tools/slm-training/*.py
 tools/slm-training/dataset/
 tools/slm-training/*.jsonl
+tools/slm-training/output/
 __pycache__/
 venv/
 tests/e2e_fixtures/
@@ -37,6 +39,7 @@ insert_*.py
 update_*.py
 *.py
 !tools/slm-training/*.py
+!docs/integrations/open_webui_tool.py
 *.sh
 run_tests.sh
 parse_test.rs
@@ -52,3 +55,7 @@ LAUNCH_POSTS.md
 graphify-out/
 wiki/vault/
 .obsidian/
+
+# Local Strategy & Security Scan Reports
+pricing_strategy.md
+semgrep_report.json

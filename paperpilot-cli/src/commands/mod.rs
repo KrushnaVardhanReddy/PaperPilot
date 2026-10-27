@@ -16,9 +16,12 @@ pub mod pdf_auto_rotate;
 pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
+pub mod pdf_dedup_streams;
 pub mod pdf_invert_colors;
+pub mod pdf_merge_alternate;
 pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
+pub mod pdf_posterize;
 pub mod pdf_remove_signatures;
 pub mod pdf_scale_pages;
 pub mod pdf_split_by_outline;
@@ -438,6 +441,37 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfSplitByOutline { input, output } => {
             pdf_split_by_outline::handle_pdf_split_by_outline_command(input, output)
         }
+        Commands::PdfMergeAlternate {
+            input_a,
+            input_b,
+            output,
+            reverse_a,
+            reverse_b,
+            step,
+            step_b,
+        } => pdf_merge_alternate::handle_pdf_merge_alternate_command(
+            input_a, input_b, output, *reverse_a, *reverse_b, *step, *step_b,
+        ),
+        Commands::PdfPosterize {
+            input,
+            output,
+            target_sheet,
+            grid,
+            overlap,
+            scale,
+            guides,
+        } => pdf_posterize::handle_pdf_posterize_command(
+            input,
+            output,
+            target_sheet,
+            grid,
+            overlap,
+            scale,
+            guides,
+        ),
+        Commands::PdfDedupStreams { input, output } => {
+            pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -705,9 +739,24 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "Export Excel worksheets to standard CSV files",
                 ),
                 (
+                    "pdf_dedup_streams",
+                    "Preview",
+                    "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression",
+                ),
+                (
+                    "pdf_posterize",
+                    "Preview",
+                    "Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides",
+                ),
+                (
                     "pdf_split_by_outline",
                     "Preview",
                     "Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy",
+                ),
+                (
+                    "pdf_merge_alternate",
+                    "Preview",
+                    "Interleave pages from two PDF documents.",
                 ),
                 (
                     "pdf_comic_archive",

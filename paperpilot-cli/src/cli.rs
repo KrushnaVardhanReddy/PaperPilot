@@ -583,6 +583,50 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Alternating PDF Merge: Interleave pages from two PDF documents.
+    #[command(name = "pdf-merge-alternate")]
+    PdfMergeAlternate {
+        #[arg(long)]
+        input_a: PathBuf,
+        #[arg(long)]
+        input_b: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "false")]
+        reverse_a: bool,
+        #[arg(long, default_value = "false")]
+        reverse_b: bool,
+        #[arg(long, default_value = "1")]
+        step: usize,
+        #[arg(long, default_value = "1")]
+        step_b: usize,
+    },
+    /// Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides
+    #[command(name = "pdf-posterize")]
+    PdfPosterize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "a4")]
+        target_sheet: String,
+        #[arg(long)]
+        grid: Option<String>,
+        #[arg(long, default_value = "14.17")]
+        overlap: f32,
+        #[arg(long, default_value = "1.0")]
+        scale: f32,
+        #[arg(long, default_value = "true")]
+        guides: bool,
+    },
+    /// Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression
+    #[command(name = "pdf-dedup-streams")]
+    PdfDedupStreams {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

@@ -1,0 +1,45 @@
+Hey Jules! Please implement Task 122A: Lossless Stream Deduplication & CMYK Safety (`pdf_dedup_streams`) across PaperPilot.
+
+### CRITICAL STARTING BRANCH INSTRUCTION
+- Target / Base Branch: `feature/dev` (DO NOT base on `main`).
+- Create and work on your own branch off `feature/dev`.
+
+### Requirements & Scope
+Follow `specs/122-lossless-stream-deduplication-and-cmyk-safety/spec.md`:
+1. **Core Engine (`paperpilot-pdf/src/operations/pdf_dedup_streams.rs`)**:
+   - Port hash-based indirect object stream deduplication from `SimonBure/presse`.
+   - Hash stream data (SHA-256) and point duplicate indirect object references to the canonical object.
+   - Guard CMYK and ICC color profiles to prevent corrupting print profiles or lossy color alterations.
+   - Signature:
+     ```rust
+     pub fn pdf_dedup_streams_bytes(input_bytes: &[u8], options: &PdfDedupStreamsOptions) -> Result<Vec<u8>, OperationError>
+     ```
+   - Provide unit tests verifying byte deduplication on synthesized PDFs with repeated image streams.
+2. **5 Wrappers**:
+   - **CLI**: `paperpilot-cli/src/commands/pdf_dedup_streams.rs` (`paperpilot dedup-streams <INPUT> -o <OUTPUT>`).
+   - **MCP**: Register `pdf_dedup_streams` in `paperpilot-mcp/src/server.rs`.
+   - **Gateway**: Add `POST /api/v1/pdf/dedup-streams` in `paperpilot-gateway/src/handlers.rs` and `server.rs`.
+   - **WASM**: Export wrapper in `paperpilot-wasm/src/operations.rs`.
+   - **Desktop**: Add tool entry in `apps/desktop/src/lib/types/toolList.ts` and `apps/desktop/src/lib/services/operationArgsBuilder.ts`.
+
+---
+
+### 🦀 Rust Craftsmanship & Quality Standards (Senior/Principal Guidelines)
+1. **Zero Panic Guarantee**:
+   - NEVER use `.unwrap()` or `.expect()` in non-test production code. Always propagate errors using `Result<T, OperationError>` or `?`.
+2. **Buffer & Memory Efficiency**:
+   - Always accept `&[u8]` for input bytes. Avoid unnecessary deep clones of document objects or stream buffers.
+3. **Pure Core / Async Wrappers Separation**:
+   - `paperpilot-pdf` Core MUST be pure synchronous, deterministic Rust (no async runtimes, no tokio, no networking).
+   - `paperpilot-gateway` and `paperpilot-mcp` MUST integrate with existing `axum` and `tokio` handlers cleanly.
+   - **Strict Zero-Cloud Policy**: 0 bytes sent externally. Never introduce HTTP requests, telemetry, or remote crates into tools.
+4. **Strong Typing & Serde**:
+   - Use strongly typed structs/enums with `#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]`.
+   - Never use raw strings or unstructured `serde_json::Value` when a typed option can be defined.
+5. **Pre-Submission Verification (Mandatory in your container)**:
+   - `cargo check --workspace`
+   - `cargo fmt --check`
+   - `cargo clippy --workspace --all-targets -- -D warnings`
+   - `cargo test -p paperpilot-pdf --lib operations::pdf_dedup_streams -j 2` (Zero-Mock policy: use real synthetic PDF bytes).
+
+Submit the PR against `feature/dev`.

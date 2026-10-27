@@ -40,3 +40,16 @@ Before committing and pushing any feature or fix to `main`, the following verifi
 ## 6. Host Safety & Concurrency Constraint
 - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo clippy` commands. Unbounded compilation (`cargo test` without `-j 2`) will exhaust RAM and freeze the development environment.
 - Never execute destructive git commands: `git reset --hard`, `git clean -fd`, or `git restore .`.
+
+## 7. Mandatory Tool Documentation & Handbook Synchronization
+- Whenever a tool is added, renamed, or modified:
+  1. Add/update its dedicated documentation page at `apps/docs/src/content/docs/reference/tools/<tool_name>.md`.
+  2. Regenerate the master handbook to keep https://docs.usepaperpilot.com/reference/50-tools-handbook/ in sync:
+     ```bash
+     python3 apps/docs/src/content/docs/reference/generate_handbook.py
+     ```
+  3. Ensure the documentation site builds cleanly without broken links:
+     ```bash
+     npm --prefix apps/docs run build
+     ```
+

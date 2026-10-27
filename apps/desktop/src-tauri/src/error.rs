@@ -5,6 +5,7 @@ pub enum DesktopError {
     LockError(String),
     IoError(String),
     NetworkError(String),
+    InvalidInput(String),
     Unknown,
 }
 
@@ -14,6 +15,7 @@ impl std::fmt::Display for DesktopError {
             DesktopError::LockError(msg) => write!(f, "Lock error: {}", msg),
             DesktopError::IoError(msg) => write!(f, "IO error: {}", msg),
             DesktopError::NetworkError(msg) => write!(f, "Network error: {}", msg),
+            DesktopError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             DesktopError::Unknown => write!(f, "Unknown error"),
         }
     }

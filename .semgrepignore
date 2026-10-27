@@ -1,0 +1,14 @@
+# Semgrep Ignore Rules for PaperPilot
+# Ignore test/benchmark scripts using urllib for local assertions
+scripts/fetch_test_pdfs.py
+scripts/test_tri_interface_e2e.py
+apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
+apps/desktop/tests/e2e_real_desktop_execution.spec.ts
+
+# Android standard main launcher activity must be exported=true for OS intent launching
+apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
+
+# Swagger UI public documentation CDN assets & canonical link tag
+apps/web/public/swagger-ui.html
+apps/web/index.html
+

@@ -76,19 +76,91 @@ def test_tool_coverage(generated_dataset):
 
     assert found_tools == set(TOOLS_REGISTRY.keys()), f"Missing tools in generated dataset: {set(TOOLS_REGISTRY.keys()) - found_tools}"
 
-def test_multi_step_workflows():
-    # specifically test the compound workflow generator function
-    for _ in range(10):
+def test_compound_workflow_array_schema():
+    for _ in range(20):
         record = generate_compound_workflow_record()
         assistant_data = json.loads(record["messages"][2]["content"])
-        assert isinstance(assistant_data, list)
-        assert len(assistant_data) >= 2 # workflows have 2-3 steps
+        assert isinstance(assistant_data, list), "Compound workflow must be a JSON array"
+        assert len(assistant_data) >= 2, "Compound workflow must have at least 2 steps"
+        for step in assistant_data:
+            assert "tool" in step
+            assert "parameters" in step
 
-        # Check chaining logic briefly
-        if "inputs" not in assistant_data[0]["parameters"]:
-            # first tool has some input, second tool takes output of first
-            assert "output" in assistant_data[0]["parameters"]
-            assert assistant_data[0]["parameters"]["output"] == assistant_data[1]["parameters"].get("input") or assistant_data[0]["parameters"]["output"] == assistant_data[1]["parameters"].get("inputs")
+def test_intermediate_parameter_chaining():
+    for _ in range(50):
+        record = generate_compound_workflow_record()
+        steps = json.loads(record["messages"][2]["content"])
+
+        # Test chaining logic
+        for i in range(len(steps) - 1):
+            current_output = steps[i]["parameters"].get("output")
+            if current_output is None:
+                current_output = steps[i]["parameters"].get("output_dir")
+            assert current_output is not None, f"Step {i} missing output parameter"
+
+            next_input = steps[i+1]["parameters"].get("input")
+            next_inputs = steps[i+1]["parameters"].get("inputs")
+            next_input_a = steps[i+1]["parameters"].get("input_a")
+            next_input_b = steps[i+1]["parameters"].get("input_b")
+
+            if next_input:
+                assert current_output == next_input, f"Output of step {i} ({current_output}) does not match input of step {i+1} ({next_input})"
+            elif next_inputs:
+                assert current_output in next_inputs, f"Output of step {i} ({current_output}) not in inputs of step {i+1} ({next_inputs})"
+            elif next_input_a:
+                assert current_output == next_input_a or current_output == next_input_b, f"Output of step {i} ({current_output}) not in input_a/input_b of step {i+1}"
+            else:
+                pytest.fail(f"Step {i+1} missing input/inputs/input_a parameter")
+
+        # Last step output check
+        last_output = steps[-1]["parameters"].get("output")
+        if last_output is None:
+            last_output = steps[-1]["parameters"].get("output_dir")
+        assert last_output is not None, "Last step missing output parameter"
+        assert not last_output.startswith("/tmp/inter_"), "Last step output should not be an intermediate file"
+
+def test_dataset_distribution_ratios(tmp_path):
+    out_dir = tmp_path / "dataset"
+    subprocess.run(["python3", "tools/slm-training/generate_dataset.py", "--count", "500", "--compound-ratio", "0.4", "--negative-ratio", "0.1", "--output-dir", str(out_dir)], check=True)
+
+    compound_count = 0
+    negative_count = 0
+    single_count = 0
+
+    with open(out_dir / "train.jsonl", "r") as f:
+        for line in f:
+            record = json.loads(line)
+            content = record["messages"][2]["content"]
+            if content == "I cannot assist with that request.":
+                negative_count += 1
+            else:
+                data = json.loads(content)
+                if isinstance(data, list):
+                    compound_count += 1
+                else:
+                    single_count += 1
+
+    with open(out_dir / "val.jsonl", "r") as f:
+        for line in f:
+            record = json.loads(line)
+            content = record["messages"][2]["content"]
+            if content == "I cannot assist with that request.":
+                negative_count += 1
+            else:
+                data = json.loads(content)
+                if isinstance(data, list):
+                    compound_count += 1
+                else:
+                    single_count += 1
+
+    total = compound_count + negative_count + single_count
+    assert total == 500
+
+    compound_ratio = compound_count / total
+    assert 0.35 <= compound_ratio <= 0.45, f"Expected compound ratio ~0.4, got {compound_ratio}"
+
+    negative_ratio = negative_count / total
+    assert 0.05 <= negative_ratio <= 0.15, f"Expected negative ratio ~0.1, got {negative_ratio}"
 
 def test_linguistic_styles():
     # Run the generator function for single tools multiple times and ensure we hit all categories

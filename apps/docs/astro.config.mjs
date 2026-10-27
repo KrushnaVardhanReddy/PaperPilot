@@ -24,11 +24,11 @@ export default defineConfig({
           autogenerate: { directory: 'embed' },
         },
         {
-          label: 'Master 50+ Tools Reference',
+          label: 'Master Tools Reference',
           items: [
-            { label: '50 Tools Handbook (All-in-One)', slug: 'reference/50-tools-handbook' },
+            { label: 'Tools Handbook (All-in-One)', slug: 'reference/50-tools-handbook' },
             {
-              label: 'All 50 Tools Index',
+              label: 'All Tools Index (70+ Tools)',
               autogenerate: { directory: 'reference/tools' },
             },
           ],

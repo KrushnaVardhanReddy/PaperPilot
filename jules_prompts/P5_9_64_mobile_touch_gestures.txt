@@ -1,0 +1,36 @@
+Hey Jules! Please implement Task 121A: Mobile Touch Gestures, Viewport Panning & Dual-State Zoom Engine (`PdfPreview.svelte`) across PaperPilot.
+
+### CRITICAL STARTING BRANCH INSTRUCTION
+- Target / Base Branch: `feature/dev` (DO NOT base on `main`).
+- Create and work on your own branch off `feature/dev`.
+
+### Requirements & Scope
+Follow `specs/121-mobile-touch-gestures-and-viewport/spec.md` and `specs/121-mobile-touch-gestures-and-viewport/task_121a.md`:
+
+1. **Component Touch Fix & Isolation (`apps/desktop/src/lib/components/ui/PdfPreview.svelte`)**:
+   - Currently, `style="transform: scale({currentScale});"` is placed directly on `.pdf-preview-container`, which erroneously scales the header, titlebar, and back button out of view.
+   - Move the pointer gesture listeners and transform isolation to `.preview-content` (or its child `.thumbnails-grid`), ensuring `.preview-header` remains pinned and unaffected.
+   - Implement **Double-Tap to Zoom / Reset**:
+     - Maintain `lastTapTime` and `lastTapCoords`.
+     - When a single-pointer tap occurs within 300ms of the previous tap:
+       - If `currentScale > 1.2`: smoothly reset `currentScale = 1.0`, `panX = 0`, `panY = 0`.
+       - If `currentScale <= 1.2`: set `currentScale = 2.5` centered around the tapped focal point.
+   - Implement **Dual-Mode 1-Finger Touch Interaction**:
+     - When zoomed in (`currentScale > 1.05`): Single-finger drag pans the document viewport `(panX, panY)` in 2D space, clamped to reasonable bounds so content cannot be panned entirely off screen.
+     - When zoomed out (`currentScale <= 1.05`): Single-finger horizontal drag (>80px threshold) triggers page navigation swipe (`Swiped Left` / `Swiped Right`), with optional subtle haptic feedback `navigator.vibrate?.(10)`.
+   - Implement **Bottom Floating Dock Clearance**:
+     - In `.thumbnails-grid`, add bottom scroll padding: `padding-bottom: calc(90px + env(safe-area-inset-bottom, 16px))` so thumbnails and page action buttons are never obscured by the mobile floating dock.
+
+2. **Automated Vitest Tests (`apps/desktop/src/lib/components/ui/PdfPreviewGestures.test.ts`)**:
+   - Expand the Vitest test file to cover:
+     - Header remains fixed (not transformed by zoom).
+     - Double-tap toggles zoom scale between 1.0x and 2.5x.
+     - Single-finger move while zoomed in updates pan translation coordinates.
+     - Single-finger horizontal swipe while zoomed out triggers navigation.
+   - Verify tests pass cleanly via `pnpm --dir apps/desktop test`.
+
+### Quality & Safety Constraints
+- Only touch the frontend UI files: `apps/desktop/src/lib/components/ui/PdfPreview.svelte` and `apps/desktop/src/lib/components/ui/PdfPreviewGestures.test.ts`.
+- Zero merge conflicts with any ongoing Rust engine tools (no changes to `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, or `paperpilot-wasm`).
+- Run `pnpm --dir apps/desktop test` to ensure all tests pass.
+- Submit the PR targeting `feature/dev`.

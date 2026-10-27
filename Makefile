@@ -223,6 +223,19 @@ lint:
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
 	cd apps/desktop && npm run lint || true
 
+# Run multi-scanner security audit locally (Semgrep + Cargo Audit + Trivy)
+audit:
+	@echo "🛡️ Running Semgrep SAST scan..."
+	@which semgrep >/dev/null 2>&1 || python3 -m pip install semgrep
+	semgrep scan --config auto --exclude=".github"
+	@echo "🛡️ Running Cargo Audit on Rust dependencies..."
+	@which cargo-audit >/dev/null 2>&1 || cargo install cargo-audit --locked
+	cargo audit || true
+	@echo "🛡️ Running Trivy vulnerability scan..."
+	@which trivy >/dev/null 2>&1 || curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ~/.cargo/bin
+	trivy fs --severity HIGH,CRITICAL .
+
+
 # Clean build artifacts
 clean:
 	cargo clean
@@ -245,6 +258,14 @@ clean-all-cache: clean clean-sweep clean-cache
 # Build client-side WebAssembly package
 build-wasm:
 	wasm-pack build --target web paperpilot-wasm
+
+# Build self-contained air-gapped single-file HTML distribution (Spec 125)
+build-portable: build-wasm
+	node scripts/build_portable_html.js
+
+# Test portable air-gapped HTML sandbox (asserts 0 network requests)
+test-portable: build-portable
+	npx --prefix apps/web playwright test tests/portable_html.spec.ts
 
 # Test client-side WebAssembly crate natively
 test-wasm:

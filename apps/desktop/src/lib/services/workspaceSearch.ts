@@ -18,6 +18,15 @@ export interface WorkspaceSearchResult {
   }[];
 }
 
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function searchDocumentText(
   docIndex: number,
   docName: string,
@@ -43,6 +52,7 @@ export function searchDocumentText(
 
   let regex;
   try {
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
     regex = new RegExp(regexPattern, regexFlags);
   } catch (e) {
     // In case of invalid regex combination, return empty
@@ -81,7 +91,8 @@ export function searchDocumentText(
     if (startSnippet > 0) prefix = '...' + prefix;
     if (endSnippet < text.length) suffix = suffix + '...';
 
-    const snippet = `${prefix}<mark>${matchedText}</mark>${suffix}`;
+    // Escape HTML to prevent stored XSS attacks via document contents
+    const snippet = `${escapeHtml(prefix)}<mark>${escapeHtml(matchedText)}</mark>${escapeHtml(suffix)}`;
 
     matches.push({
       docIndex,

@@ -20,7 +20,6 @@ pub fn run(args: ScaffoldArgs) -> Result<()> {
         r#"use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{{PdfDocument, PdfOperation}};
 use serde::{{Deserialize, Serialize}};
-use std::any::Any;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct {name_pascal}Options {{
@@ -36,12 +35,12 @@ pub fn {name_snake}_bytes(
 
 #[derive(Default)]
 pub struct {name_pascal}Operation {{
-    options: {name_pascal}Options,
+    _options: {name_pascal}Options,
 }}
 
 impl {name_pascal}Operation {{
     pub fn new(options: {name_pascal}Options) -> Self {{
-        Self {{ options }}
+        Self {{ _options: options }}
     }}
 }}
 

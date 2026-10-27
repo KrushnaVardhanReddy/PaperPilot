@@ -2,10 +2,15 @@
 
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
-<!-- TODO: replace with a real 10–15s GIF: ask Claude to merge + compress a PDF via MCP -->
+[![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Rust 1.75+](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
+[![MCP Compatible](https://img.shields.io/badge/MCP-100%25_Compatible-purple.svg)](https://modelcontextprotocol.io)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 ![PaperPilot demo](docs/assets/demo.gif)
 
-[**Try it in your browser →**](https://usepaperpilot.com) · [Download](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) · [Roadmap](ROADMAP.md)
+[**Try it in your browser →**](https://usepaperpilot.com) · [Download](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) · [Contributing](CONTRIBUTING.md) · [Roadmap](ROADMAP.md)
 
 PaperPilot is a PDF and document toolkit written in Rust. The same engine runs as:
 
@@ -18,6 +23,10 @@ PaperPilot is a PDF and document toolkit written in Rust. The same engine runs a
 | **Local REST API** | Call it from Python, Node, or n8n at `localhost:7823` |
 
 No Chromium, no C++ runtime, no cloud calls.
+
+**Open-WebUI integration (source builds):** use the local gateway as a
+PDF-only Tika-compatible extraction server. See the
+[Open-WebUI setup guide](docs/integrations/open_webui.md).
 
 ---
 
@@ -86,18 +95,11 @@ Requires Rust 1.75+, Node.js, and pnpm.
 
 ## What it can do today (v0.6)
 
-**Organize:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid
-**Optimize:** compress
-**Extract:** plain text, OCR (pure-Rust PaddleOCR via `rten`)
-**Security:** watermark, validate signatures, remove signatures, PII scan, deep sanitize
-**Office data:** Excel → JSON, Excel → CSV
-
-Coming next (see [ROADMAP.md](ROADMAP.md)):
-
-- **v0.7:** PDF ↔ Markdown / HTML / JSON
-- **v0.8:** PDF → Word / Excel / PowerPoint
-- **v0.9:** encrypt, decrypt, sign, redact, forms, annotations
-- **v1.0:** render, flatten, repair, compare, PDF/A, Bates numbering
+- **Organize & Layout:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, multi-sheet poster tile slicing (`pdf_posterize`)
+- **Optimize & Compress:** lossy compression, stream deduplication, CMYK safety guards
+- **Extract & Ingest:** structured text, detected Markdown tables, native Open-WebUI & Apache Tika ingestion adapter (`/tika/text`, `/tika/json/md`, `/rmeta/text`), pure-Rust OCR (PaddleOCR via `rten`)
+- **Security & Analysis:** watermark, validate signatures, remove signatures, PII scan, deep sanitize, malformed fuzzing & panic-free error handling
+- **Office Data:** Excel → JSON, Excel → CSV
 
 ---
 
@@ -132,22 +134,30 @@ Desktop (Tauri) · CLI · REST (Axum) · MCP (stdio) · WASM (browser / edge)
 <div id="paperpilot-widget"></div>
 ```
 
-## Local REST API
-
+## Local REST API & Document Ingestion
+ 
 ```bash
 paperpilot serve --port 7823
+# Standard PDF Operations (JSON & multipart)
 curl -X POST http://localhost:7823/api/v1/pdf/merge \
   -H "Content-Type: application/json" \
   -d '{"inputs": ["a.pdf", "b.pdf"], "output": "out.pdf"}'
+
+# Open-WebUI & Tika In-Memory Ingestion (sub-5ms)
+curl -X PUT http://localhost:7823/tika/text \
+  -H "Content-Type: application/pdf" \
+  --data-binary @sample.pdf
 ```
 
-Swagger docs at `http://localhost:7823/docs`.
+Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
 ---
 
-## Contributing
+## Contributing & Community
 
 Issues and PRs are welcome. Good first contributions: bug reports with a sample PDF, new tool requests, and docs fixes.
+
+Special thanks to all community members and contributors recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

@@ -135,9 +135,10 @@
 ### 1. In-Flight Tasks (Active Jules Sessions)
 | Task # | Feature Name | Spec / Crate | Jules Session ID / Status |
 |---|---|---|---|
+| **5.9.95** | Open-WebUI / Tika-Compatible PDF Ingestion Adapter | Spec 126 / `paperpilot-gateway` | ✅ Implemented and verified locally (unmerged) on `feat/open-webui-tika-adapter`; 5 core + 21 gateway tests passed ([report](reports/TIKA_INGESTION_ADAPTER_REPORT.md), [integration guide](docs/integrations/open_webui.md)) |
 | **5.9.61** | Digital Signature Verification Engine (`pdf_validate_signatures`) | Spec 095 / `pdf_validate_signatures.rs` | ✅ Merged to `main` (PR #238, commit `a6e68c6`) |
 | **5.3.1**  | Booklet Imposition Engine (`pdf_booklet`) | Spec 096 / `pdf_booklet.rs` | ✅ Completed (10/10 Penta E2E tests passing) |
-| **5.3.2**  | Multi-Page N-Up Imposition Engine (`pdf_nup`) | Spec 097 / `pdf_nup.rs` & `apps/desktop` | ⏳ In-Flight ([`14575779739699636673`](https://jules.google.com/session/14575779739699636673)) |
+| **5.3.2**  | Multi-Page N-Up Imposition Engine (`pdf_nup`) | Spec 097 / `pdf_nup.rs` & `apps/desktop` | ✅ Merged to `main` (PR #241; see `PHASES.md`) |
 | **5.9.80** | Penta-Scaffold UI Automation & Universal Audit Report Visualizer | Spec 100 / `generator.rs` & `apps/desktop` | ✅ Completed (PR #240) |
 | **5.9.79** | Pure-Rust Tool Scaffolding Generator (`penta-scaffold`) | Spec 094 / `tools/penta-scaffold` | ✅ Merged to `main` (commit `5fd9155`) |
 
@@ -149,9 +150,9 @@
 | Task # | Feature Name | Core Functionality | Impact / Market Need |
 |---|---|---|---|
 | **5.9.61** | `pdf_validate_signatures` | PKCS#7 / CMS cryptographic signature & cert chain check | ✅ Completed (PR #238) |
-| **5.3.1**  | `pdf_booklet` | 2-sided booklet signature imposition | ⏳ In-Flight (Session `13309495698920986331`) |
-| **5.3.2**  | `pdf_nup` | Multi-page layout (2, 4, 9, 16 pages per sheet) | Spec 097 Ready |
-| **5.3.3**  | `pdf_scale_pages` | Dimensional scaling (A4 $\leftrightarrow$ Letter) with aspect preservation | Spec 098 Ready |
+| **5.3.1**  | `pdf_booklet` | 2-sided booklet signature imposition | ✅ Completed (10/10 Penta E2E tests; see `PHASES.md`) |
+| **5.3.2**  | `pdf_nup` | Multi-page layout (2, 4, 9, 16 pages per sheet) | ✅ Merged (PR #241) |
+| **5.3.3**  | `pdf_scale_pages` | Dimensional scaling (A4 $\leftrightarrow$ Letter) with aspect preservation | ✅ Completed (PR #243) |
 | **5.3.13** | `pdf_remove_signatures`| Strip `/ByteRange` signature dictionaries for editing | Spec 099 Ready |
 | **5.3.4** | `pdf_stamp` | Coordinate-exact logo/image placement | Corporate Invoicing & Branding |
 | **5.3.8** | `pdf_overlay_underlay` | Digital letterhead & background stamping | Letterhead & Stationary |

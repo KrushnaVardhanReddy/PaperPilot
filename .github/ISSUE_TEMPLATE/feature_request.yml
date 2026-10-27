@@ -1,0 +1,45 @@
+name: "💡 Feature Request"
+description: "Suggest a new PDF tool, agent capability, or surface enhancement"
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make PaperPilot better for your coding agents or daily workflows?
+        We prioritize tools that can run 100% locally in Rust without cloud reliance.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific problem or workflow bottleneck?
+      placeholder: I'm always frustrated when my agent cannot...
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution / Tool Design
+      description: Describe what tool, CLI argument, or MCP function should exist and how it should behave.
+      placeholder: Add `pdf_flatten` to flatten form fields, or add an EPUB exporter...
+    validations:
+      required: true
+  - type: dropdown
+    id: target_surfaces
+    attributes:
+      label: Target Surface(s)
+      description: Where should this capability be exposed?
+      options:
+        - "All Surfaces (Core Rust engine)"
+        - "MCP Server (Coding agents like Claude Code, Codex, Cursor)"
+        - "CLI (Batch and shell automation)"
+        - "Local REST Gateway (API / n8n / Open-WebUI)"
+        - "Browser WASM (Zero-install web)"
+        - "Desktop App (Tauri)"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Considered Alternatives
+      description: Any alternative tools, libraries, or workarounds you currently use (e.g. Poppler, PDFtk, PyMuPDF).

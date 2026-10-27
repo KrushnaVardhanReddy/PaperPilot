@@ -309,6 +309,108 @@
         ],
         "type": "object"
       },
+      "PdfPosterizeJsonRequest": {
+        "properties": {
+          "grid_cols": {
+            "description": "Explicit grid columns (optional)",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "grid_rows": {
+            "description": "Explicit grid rows (optional)",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "include_guides": {
+            "description": "Include corner cut trim marks and tile coordinates (default: true)",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {
+            "description": "Document identifier (file path or URL)",
+            "type": "string"
+          },
+          "output": {
+            "description": "Output document path",
+            "type": "string"
+          },
+          "overlap_pt": {
+            "description": "Overlap margin in points between adjacent tiles (default: 14.17 pt ~= 5mm)",
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scale": {
+            "description": "Scale factor multiplier (default: 1.0)",
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "target_sheet": {
+            "description": "Target paper sheet size: \"a4\", \"letter\", \"legal\", or \"custom\" (default: \"a4\")",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "PdfSplitScannedBookJsonRequest": {
+        "properties": {
+          "gutter_overlap": {
+            "example": 0.0,
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "input": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "reading_direction": {
+            "example": "ltr",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "split_horizontal": {
+            "example": false,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
       "PdfValidateSignaturesJsonRequest": {
         "properties": {
           "baseline": {
@@ -384,6 +486,51 @@
           "input"
         ],
         "type": "object"
+      },
+      "TikaMarkdownMetadata": {
+        "description": "Tika 4 renamed the content key to `tk:content`.",
+        "properties": {
+          "Content-Type": {
+            "type": "string"
+          },
+          "tk:content": {
+            "type": "string"
+          },
+          "xmpTPg:NPages": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tk:content",
+          "Content-Type",
+          "xmpTPg:NPages"
+        ],
+        "type": "object"
+      },
+      "TikaMetadata": {
+        "description": "Tika 3 / recursive-metadata response, consumed by Open-WebUI's Tika loader.",
+        "properties": {
+          "Content-Type": {
+            "type": "string"
+          },
+          "X-TIKA:content": {
+            "type": "string"
+          },
+          "xmpTPg:NPages": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-TIKA:content",
+          "Content-Type",
+          "xmpTPg:NPages"
+        ],
+        "type": "object"
+      },
+      "TikaPdfBody": {
+        "description": "Binary PDF upload schema for Swagger/OpenAPI.",
+        "format": "binary",
+        "type": "string"
       },
       "WatermarkJsonRequest": {
         "properties": {
@@ -979,6 +1126,33 @@
         ]
       }
     },
+    "/api/v1/pdf/merge-alternate": {
+      "post": {
+        "operationId": "pdf_merge_alternate",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Alternating PDF Merge completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Alternating PDF Merge [Interleave pages from two PDF documents.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/nup": {
       "post": {
         "operationId": "pdf_nup",
@@ -1113,6 +1287,44 @@
           }
         },
         "summary": "Scan document for PII and sensitive data [Input: .pdf | Output: JSON report]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/posterize": {
+      "post": {
+        "operationId": "pdf_posterize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfPosterizeJsonRequest"
+              }
+            }
+          },
+          "description": "Multi-Sheet Poster Tile Slicer",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Multi-Sheet Poster Tile Slicer completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Multi-Sheet Poster Tile Slicer [Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -1283,9 +1495,9 @@
         ]
       }
     },
-    "/api/v1/pdf/split-scanned-book": {
+    "/api/v1/pdf/split-by-outline": {
       "post": {
-        "operationId": "pdf_split_scanned_book",
+        "operationId": "pdf_split_by_outline",
         "responses": {
           "200": {
             "content": {
@@ -1295,7 +1507,7 @@
                 }
               }
             },
-            "description": "Split Scanned Book Spine completed"
+            "description": "Split PDF by Outline completed"
           },
           "400": {
             "description": "Invalid request arguments"
@@ -1304,7 +1516,35 @@
             "description": "Execution error"
           }
         },
-        "summary": "Split Scanned Book Spine [Detect center binding gutter spine and split two-up page scans into single pages.] [Input: .pdf | Output: .pdf]",
+        "summary": "Split PDF by Outline [Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy] [Input: .pdf | Output: .zip]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/split-scanned-book": {
+      "post": {
+        "operationId": "pdf_split_scanned_book",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfSplitScannedBookJsonRequest"
+              }
+            }
+          },
+          "description": "JSON request containing file paths and split options",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Split successful"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages. [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -1499,6 +1739,39 @@
         ]
       }
     },
+    "/api/v1/tika/rmeta/text": {
+      "post": {
+        "operationId": "tika_rmeta_api",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TikaMetadata"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Tika-compatible root PDF metadata array"
+          }
+        },
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
     "/api/v1/tools": {
       "get": {
         "operationId": "list_tools",
@@ -1604,12 +1877,155 @@
           "Health"
         ]
       }
+    },
+    "/rmeta/text": {
+      "put": {
+        "operationId": "tika_rmeta",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TikaMetadata"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Root PDF metadata array; attachments are not parsed"
+          }
+        },
+        "summary": "Tika's recursive metadata contract is an array; this adapter returns the root PDF only.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika": {
+      "put": {
+        "operationId": "tika",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Page-ordered text with detected Markdown tables"
+          },
+          "400": {
+            "description": "Empty body"
+          },
+          "413": {
+            "description": "Body exceeds 100 MiB"
+          },
+          "415": {
+            "description": "Only raw PDF uploads are supported"
+          },
+          "422": {
+            "description": "PDF could not be parsed"
+          }
+        },
+        "summary": "Extract a raw PDF as UTF-8 text, or a metadata object with Accept: application/json.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika/json/md": {
+      "put": {
+        "operationId": "tika_markdown",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TikaMarkdownMetadata"
+                }
+              }
+            },
+            "description": "Open-WebUI Tika 4 metadata"
+          }
+        },
+        "summary": "Open-WebUI's Tika 4 loader uses a different route and content key.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika/text": {
+      "put": {
+        "operationId": "tika_text",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TikaMetadata"
+                }
+              }
+            },
+            "description": "Open-WebUI Tika 3 metadata"
+          }
+        },
+        "summary": "Open-WebUI's Tika 3 loader expects an object even without an Accept header.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
     }
   },
   "tags": [
     {
       "description": "Gateway health check and tool status",
       "name": "Health"
+    },
+    {
+      "description": "In-memory PDF extraction for Open-WebUI and Tika-compatible clients",
+      "name": "Document Ingestion"
     },
     {
       "description": "Discovery and capability listing across all 52 tools",
