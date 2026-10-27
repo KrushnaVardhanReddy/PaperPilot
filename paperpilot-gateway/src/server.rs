@@ -153,7 +153,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
-        .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub) )
+        .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub))
         .route(
             "/api/v1/pdf/dedup-streams",
             post(handlers::pdf_dedup_streams),

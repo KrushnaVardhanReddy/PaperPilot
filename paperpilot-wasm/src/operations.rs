@@ -3019,7 +3019,8 @@ pub fn pdf_dedup_streams(input_bytes: &[u8], options_json: &str) -> OperationRes
 }
 
 pub fn pdf_to_epub(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
-    let options: paperpilot_pdf::operations::pdf_to_epub::PdfToEpubOptions = serde_json::from_str(options_json)
-        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    let options: paperpilot_pdf::operations::pdf_to_epub::PdfToEpubOptions =
+        serde_json::from_str(options_json)
+            .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(input_bytes, &options)
 }

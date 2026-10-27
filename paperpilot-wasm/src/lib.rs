@@ -489,7 +489,10 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn pdf_to_epub(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+    pub fn pdf_to_epub(
+        input_bytes: &[u8],
+        options_json: &str,
+    ) -> Result<js_sys::Uint8Array, JsValue> {
         let result = operations::pdf_to_epub(input_bytes, options_json)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
