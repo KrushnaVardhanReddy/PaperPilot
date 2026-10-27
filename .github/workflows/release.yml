@@ -19,8 +19,7 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: write
+permissions: read-all
 
 env:
   CARGO_TERM_COLOR: always
@@ -283,6 +282,8 @@ jobs:
     name: Publish GitHub Release
     needs: [build-release-binaries, build-wasm-package, build-android-apk]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
