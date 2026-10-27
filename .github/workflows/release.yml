@@ -258,14 +258,16 @@ jobs:
           npx tauri android build --target aarch64 --apk -- --no-default-features
 
       - name: Package Android Release APK
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           mkdir -p release_pkgs
           # Copy universal release apk or arm64 apk
           APK_PATH=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
           if [ -n "$APK_PATH" ]; then
-            cp "$APK_PATH" "release_pkgs/paperpilot-android-aarch64-${{ inputs.version }}.apk"
+            cp "$APK_PATH" "release_pkgs/paperpilot-android-aarch64-${INPUT_VERSION}.apk"
             cd release_pkgs
-            shasum -a 256 "paperpilot-android-aarch64-${{ inputs.version }}.apk" > "paperpilot-android-aarch64-${{ inputs.version }}.apk.sha256"
+            shasum -a 256 "paperpilot-android-aarch64-${INPUT_VERSION}.apk" > "paperpilot-android-aarch64-${INPUT_VERSION}.apk.sha256"
             cd ..
           fi
 
