@@ -45,11 +45,14 @@ All Jules tasks that modify or implement Rust code across PaperPilot (`paperpilo
 ---
 
 ### 5. Automated Pre-Submission Verification (Mandatory in Container)
-Before opening the Pull Request, run the following commands in the Jules environment:
-1. `cargo check --workspace` — must compile with zero errors.
+Before opening the Pull Request, run the following verification steps in the Jules environment:
+1. `cargo check -p paperpilot-pdf -p paperpilot-gateway -p paperpilot-mcp -p paperpilot-cli -j 2` — verify targeted crates compile cleanly.
 2. `cargo fmt --check` — ensure code strictly follows Rust formatting standards.
-3. `cargo clippy --workspace --all-targets -- -D warnings` — ensure zero clippy warnings.
+3. `cargo clippy -p <target-crates> --all-targets -- -D warnings` — ensure zero clippy warnings on modified files.
 4. `cargo test -p <target-crate> -j 2` — zero-mock testing using synthesized byte buffers or real disk fixtures.
+5. **Security & Supply Chain Gate (`make audit` or targeted scan)**:
+   - Run `semgrep scan --config auto` (or `make audit`) to verify zero high/critical vulnerabilities or insecure patterns (e.g. no `curl | sh`, no shell injection, no secrets).
+   - If `.github/` workflows or configurations are modified, verify they pass `semgrep scan --config auto .github/` with 0 warnings.
 
 ---
 
