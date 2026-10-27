@@ -30,6 +30,7 @@ You must wire the configured AI provider mode (`OfflineNlp`, `Llamafile`, `Unive
        - Check if local model (`paperpilot-qwen-0.5b-q4_k_m.gguf` or selected model) is downloaded in `~/.local/share/paperpilot/models/`.
        - If model is available and supervisor / port 8080 is reachable, initialize `LlmNlpResolver` pointing to `http://127.0.0.1:8080/v1`.
        - Run with `DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))`.
+       - If no model is downloaded or server is offline, cleanly fall back to `OfflineNlpResolver` (do not panic or error).
      - When `Universal` or `Byok`:
        - Read endpoint URL and API key from OS keyring.
        - Run with `DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))`.
@@ -54,8 +55,15 @@ You must wire the configured AI provider mode (`OfflineNlp`, `Llamafile`, `Unive
 
 ---
 
-## 4. Verification & Testing
-1. Backend check: `cargo check -p desktop` & `cargo test -p paperpilot-ai`
-2. Frontend check: `pnpm --dir apps/desktop check` & `pnpm --dir apps/desktop test`
-3. Clippy check: `cargo clippy -p paperpilot-ai -- -D warnings`
+## 4. Verification & Testing Strategy (Zero Large Model Downloads in CI)
+IMPORTANT: Do NOT download the real ~397MB GGUF model during CI or automated test runs.
+1. **Mock HTTP Server via `wiremock`**:
+   - For testing LLM resolution, simulate the OpenAI-compatible `/v1/chat/completions` endpoint using `wiremock::MockServer` (see patterns in `paperpilot-ai/tests/supervisor_tests.rs`).
+   - Mock a successful JSON tool call response (e.g. `{"name": "pdf_rotate", "arguments": "{\"angle\": 90}"}`).
+2. **Fallback Verification**:
+   - Verify that when no model is downloaded or the endpoint is unreachable, `DynamicRouter` falls back to `OfflineNlpResolver` and returns a valid plan with `resolved_by: "offline"`.
+3. **Execution Commands**:
+   - Backend check: `cargo check -p desktop` & `cargo test -p paperpilot-ai -p desktop -j 2`
+   - Frontend check: `pnpm --dir apps/desktop check` & `pnpm --dir apps/desktop test`
+   - Clippy check: `cargo clippy -p paperpilot-ai -- -D warnings`
 4. Update `phases/phase-04-ai-layer.md` marking Task 4.1.7 / Spec 051 as completed.
