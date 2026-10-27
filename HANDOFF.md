@@ -28,7 +28,7 @@
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
-| **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **Ready for Jules Dispatch**: `jules_prompts/P5_9_98_malformed_fuzzing_harness.txt`<br>Automated adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
+| **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704)<br>Automated adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
 
 ---
 
