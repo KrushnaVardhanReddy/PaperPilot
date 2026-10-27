@@ -25,7 +25,7 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 84D** | `[Spec 084]` | P1 | SLM / AI Pipeline | `feature/dev` | 📋 **Ready for Dispatch to Jules**<br>Prompt: `jules_prompts/P5_9_73_slm_compound_workflows.txt`<br>Compound multi-step dataset expansion, dynamic arbitrary tool chaining (2–5 tools), and parameter piping for visual pipeline generation. |
+| **Task 84D** | `[Spec 084]` | P1 | SLM / AI Pipeline | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 17536454483435898495](https://jules.google.com/session/17536454483435898495)<br>Compound multi-step dataset expansion, dynamic arbitrary tool chaining (2–5 tools), and parameter piping for visual pipeline generation. |
 | **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704)<br>Adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
