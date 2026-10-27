@@ -27,28 +27,32 @@ Make this implementation clean, robust, and fully tested with zero regressions.
 
 ## 3. Detailed Requirements
 
-### A. Compound Workflow Recipes in `templates.py`
-Add at least 15 real-world compound workflow templates covering diverse industry use cases in `COMPOUND_WORKFLOW_TEMPLATES`:
-1. **Legal Production**: `pdf_bates` ➔ `pdf_watermark` ➔ `document_pii_scan`
-2. **Clean & OCR Scanned Document**: `pdf_remove_blank` ➔ `pdf_auto_rotate` ➔ `pdf_ocr`
-3. **Redact & Sanitize**: `pdf_redact` ➔ `pdf_sanitize` ➔ `pdf_linearize`
-4. **Secure Distribution**: `pdf_page_numbers` ➔ `pdf_encrypt`
-5. **Print Preparation**: `pdf_nup` ➔ `pdf_crop` ➔ `pdf_compress`
-6. **Collate & Optimize**: `pdf_merge` ➔ `pdf_compress`
-7. **Document Forensics**: `pdf_validate_signatures` ➔ `pdf_extract_tables` ➔ `pdf_audit_log`
-8. **Digital Book Production**: `pdf_split_scanned_book` ➔ `pdf_auto_rotate` ➔ `pdf_booklet`
-9. **Office Archival**: `office_modernize_legacy` ➔ `pdf_to_markdown` ➔ `pdf_compress`
-10. **Dual-Document Interleaving**: `pdf_merge_alternate` ➔ `pdf_page_numbers`
-11. **Form Processing**: `pdf_flatten_annotations` ➔ `pdf_stamp` ➔ `pdf_encrypt`
-12. **Presentation Export**: `pdf_to_pptx` ➔ `office_extract_text`
-13. **Batch Web Optimization**: `pdf_repair` ➔ `pdf_compress` ➔ `pdf_linearize`
-14. **Bilingual Document Split**: `pdf_split_by_outline` ➔ `pdf_extract_text`
-15. **Visual Comparison & Inversion**: `pdf_compare_visual` ➔ `pdf_invert_colors`
-
-For each workflow, provide varied natural language templates:
-- Formal / direct: *"Step 1: ..., Step 2: ..."*
-- Goal-oriented: *"Prepare this scan for archival: remove blank pages, rotate upright, and compress to {output}."*
-- Terse / developer: *"pii_scan -> redact -> sanitize on {input} output to {output}"*
+### A. Dynamic Arbitrary Tool Sequencing & Curated Recipes in `templates.py` & `generate_dataset.py`
+The model must understand arbitrary multi-step combinations in ANY order requested by the user, not just hardcoded presets!
+1. **Dynamic Arbitrary Tool Chaining Engine**:
+   - Allow the generator to randomly sample **any 2 to 5 compatible tools** from `TOOLS_REGISTRY` (e.g. `[pdf_rotate, pdf_stamp, pdf_compress]`, `[pdf_extract_images, pdf_to_markdown]`, `[pdf_watermark, pdf_page_numbers, pdf_encrypt]`).
+   - Dynamically chain inputs and outputs (`/tmp/inter_1.pdf` ➔ `/tmp/inter_2.pdf` ➔ final output file).
+   - Generate varied conversational connector phrasing:
+     - Sequential: *"First ..., then ..., and finally ... "*
+     - Inverted intent: *"Before saving to {output} and compressing, please rotate it 90 degrees and add a watermark."*
+     - Comma lists: *"Please watermark {input}, Bates stamp it, and scan for PII, outputting to {output}."*
+     - Pipe syntax: *"input.pdf | rotate | compress | encrypt -> output.pdf"*
+2. **Dedicated Curated Industry Recipes** (15 base presets):
+   - Legal: `pdf_bates` ➔ `pdf_watermark` ➔ `document_pii_scan`
+   - Clean Scan: `pdf_remove_blank` ➔ `pdf_auto_rotate` ➔ `pdf_ocr`
+   - Sanitization: `pdf_redact` ➔ `pdf_sanitize` ➔ `pdf_linearize`
+   - Secure Dist: `pdf_page_numbers` ➔ `pdf_encrypt`
+   - Print Prep: `pdf_nup` ➔ `pdf_crop` ➔ `pdf_compress`
+   - Collate: `pdf_merge` ➔ `pdf_compress`
+   - Forensics: `pdf_validate_signatures` ➔ `pdf_extract_tables` ➔ `pdf_audit_log`
+   - Booklet: `pdf_split_scanned_book` ➔ `pdf_auto_rotate` ➔ `pdf_booklet`
+   - Archival: `office_modernize_legacy` ➔ `pdf_to_markdown` ➔ `pdf_compress`
+   - Alternating: `pdf_merge_alternate` ➔ `pdf_page_numbers`
+   - Forms: `pdf_flatten_annotations` ➔ `pdf_stamp` ➔ `pdf_encrypt`
+   - Slides: `pdf_to_pptx` ➔ `office_extract_text`
+   - Web Repair: `pdf_repair` ➔ `pdf_compress` ➔ `pdf_linearize`
+   - Chapters: `pdf_split_by_outline` ➔ `pdf_extract_text`
+   - Visual Diff: `pdf_compare_visual` ➔ `pdf_invert_colors`
 
 ### B. Parameter Chaining Engine in `generate_dataset.py`
 In `generate_compound_workflow_record()`:
