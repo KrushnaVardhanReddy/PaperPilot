@@ -26,5 +26,6 @@ pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
 pub mod pdf_timestamp;
+pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod table;

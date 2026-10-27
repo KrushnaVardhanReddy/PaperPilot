@@ -1,11 +1,11 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 73 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 74 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (73 Tools)
+# PaperPilot Tools Handbook (74 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **73 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **74 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
 ## 1. `document_pii_scan`
 
@@ -1797,7 +1797,45 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format docx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-docx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.docx"}'
 ```
 
-## 65. `pdf_to_html`
+## 65. `pdf_to_epub`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Convert a standard PDF document into an accessible and reflowable EPUB 3.0 file format.
+
+### CLI
+```bash
+N/A
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "call_tool",
+  "params": {
+    "name": "pdf_to_epub",
+    "arguments": {
+      "input_file": "/tmp/book.pdf",
+      "options": {
+        "title": "My Book",
+        "author": "Jane Doe",
+        "language": "en"
+      }
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -X POST https://api.paperpilot.test/v1/pdf/epub \
+  -F "file=@book.pdf" \
+  -F 'options={"title":"My Book","author":"Jane Doe","language":"en"}'
+```
+
+## 66. `pdf_to_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1825,7 +1863,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format html
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"}'
 ```
 
-## 66. `pdf_to_pdf_a`
+## 67. `pdf_to_pdf_a`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1853,7 +1891,7 @@ paperpilot pdf-a --input tests/e2e_fixtures/real/single_page.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pdf-a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf"}'
 ```
 
-## 67. `pdf_to_pptx`
+## 68. `pdf_to_pptx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1881,7 +1919,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format pptx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pptx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.pptx"}'
 ```
 
-## 68. `pdf_to_xlsx`
+## 69. `pdf_to_xlsx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1909,7 +1947,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format xlsx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-xlsx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
-## 69. `pdf_validate`
+## 70. `pdf_validate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1936,7 +1974,7 @@ paperpilot validate --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 70. `pdf_validate_signatures`
+## 71. `pdf_validate_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1971,7 +2009,7 @@ paperpilot pdf-validate-signatures --input signed.pdf --output report.json --bas
 N/A
 ```
 
-## 71. `pdf_watermark`
+## 72. `pdf_watermark`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2000,7 +2038,7 @@ paperpilot watermark --input tests/e2e_fixtures/real/single_page.pdf --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL", "output": "tests/e2e_fixtures/out/penta_e2e/watermarked.pdf"}'
 ```
 
-## 72. `semantic_search`
+## 73. `semantic_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2021,7 +2059,7 @@ N/A
 N/A
 ```
 
-## 73. `workspace_search`
+## 74. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

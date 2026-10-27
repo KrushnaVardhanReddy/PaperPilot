@@ -2103,3 +2103,32 @@ pub struct PdfDedupStreamsJsonRequest {
 pub async fn pdf_dedup_streams(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_dedup_streams".to_string()), req).await
 }
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct PdfToEpubJsonRequest {
+    #[schema(example = "document.pdf")]
+    pub input: String,
+    #[schema(example = "document.epub")]
+    pub output: String,
+    #[schema(example = "Document Title")]
+    pub title: Option<String>,
+    #[schema(example = "Author Name")]
+    pub author: Option<String>,
+    #[schema(example = "en")]
+    pub language: Option<String>,
+}
+
+/// PDF to EPUB 3.0 [Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks] [Input: .pdf | Output: .epub]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/to-epub",
+    request_body(content = PdfToEpubJsonRequest, description = "PDF to EPUB 3.0 conversion parameters", content_type = "application/json"),
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PDF to EPUB 3.0 completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_to_epub(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_epub".to_string()), req).await
+}

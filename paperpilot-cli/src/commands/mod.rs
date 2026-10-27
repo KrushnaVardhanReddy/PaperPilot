@@ -29,6 +29,7 @@ pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
 pub mod pdf_timestamp;
+pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
@@ -472,6 +473,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfDedupStreams { input, output } => {
             pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
         }
+        Commands::PdfToEpub { input, output } => {
+            pdf_to_epub::handle_pdf_to_epub_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -737,6 +741,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_to_epub",
+                    "Preview",
+                    "Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks",
                 ),
                 (
                     "pdf_dedup_streams",

@@ -313,4 +313,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.pdf'
         });
     });
+
+    it('builds args for pdf_to_epub', async () => {
+        const args = await buildOperationArgs('pdf_to_epub', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.epub'
+        });
+    });
 });

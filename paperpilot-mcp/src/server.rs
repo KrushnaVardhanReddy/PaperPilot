@@ -3335,6 +3335,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_dedup_streams.input_schema = Arc::new(schema_pdf_dedup_streams);
         tools.push(tool_pdf_dedup_streams);
+        let mut schema_pdf_to_epub = serde_json::Map::new();
+        schema_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_to_epub = serde_json::Map::new();
+
+        let mut prop_input_pdf_to_epub = serde_json::Map::new();
+        prop_input_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_to_epub.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_to_epub),
+        );
+
+        let mut prop_output_pdf_to_epub = serde_json::Map::new();
+        prop_output_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_to_epub.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_to_epub),
+        );
+
+        schema_pdf_to_epub.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_to_epub),
+        );
+        schema_pdf_to_epub.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_to_epub = Tool::default();
+        tool_pdf_to_epub.name = "pdf_to_epub".into();
+        tool_pdf_to_epub.description = Some(
+            "PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks [Input: .PDF | Output: ..EPUB]".into(),
+        );
+        tool_pdf_to_epub.input_schema = Arc::new(schema_pdf_to_epub);
+        tools.push(tool_pdf_to_epub);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -6509,6 +6555,31 @@ impl PaperPilotMcpServer {
                     data: Some(serde_json::json!({ "output_path": output })),
                     success: true,
                     message: "Lossless Stream Deduplication executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_to_epub" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_to_epub::PdfToEpubOptions::default();
+                let result = paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "PDF to EPUB 3.0 executed successfully".to_string(),
                     output_path: Some(output),
                     diff_detected: None,
                 })

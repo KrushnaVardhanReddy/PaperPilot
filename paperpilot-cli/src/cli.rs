@@ -627,6 +627,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
+    #[command(name = "pdf-to-epub", alias = "to-epub")]
+    PdfToEpub {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]
