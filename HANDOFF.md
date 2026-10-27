@@ -80,8 +80,9 @@ When resuming a new session, follow these steps:
    - **Production Release**: PR #267 merged into `main` (`c487810`).
    - **Active Development Branch**: `feature/dev` (in sync with `main`).
    - **Fine-Tuned SLM Weights**:
-     - LoRA adapter: `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`
-     - Fused model: `tools/slm-training/output/paperpilot-qwen-0.5b-merged/`
+     - **Hugging Face Hub**: [kpakkiragari/PaperPilot-Qwen-0.5B-Instruct](https://huggingface.co/kpakkiragari/PaperPilot-Qwen-0.5B-Instruct) (Public Apache-2.0 release)
+     - Local LoRA adapter: `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`
+     - Local Fused model: `tools/slm-training/output/paperpilot-qwen-0.5b-merged/`
      - Quick test: `tools/slm-training/.venv/bin/python tools/slm-training/infer_local.py`
 
 3. **If Implementing a User Request**:
