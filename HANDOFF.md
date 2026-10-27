@@ -27,14 +27,17 @@
 |---|:---:|:---:|---|---|---|
 | **Task 84D** | `[Spec 084]` | P1 | SLM / AI Pipeline | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 17536454483435898495](https://jules.google.com/session/17536454483435898495)<br>Compound multi-step dataset expansion, dynamic arbitrary tool chaining (2–5 tools), and parameter piping for visual pipeline generation. |
 | **Task 129A** | `[Spec 129]` | P1 | Quality / Fuzzing | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704)<br>Adversarial regression test suite (`malformed_regression.rs`) against corrupted headers, circular page trees, stream bombs, and xref corruption. |
-| **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 
 ---
 
 ## 🏆 Recently Merged & Completed
 
-1. **Modular Phases Architecture Refactor**:
+1. **Task 122A (Lossless Stream Deduplication & CMYK Safety `[Spec 122]`, PR #275)**:
+   - Ported hash-based indirect stream deduplication from `SimonBure/presse` (`pdf_dedup_streams`) collapsing identical embedded images, fonts, and streams across pages into single indirect objects.
+   - Enforced CMYK color-space safety guards in `paperpilot-pdf/src/operations/compress.rs`.
+   - Verified 100% clean compilation, zero Semgrep findings, and 10/10 unmocked tests passing in `penta-interface-e2e`.
+2. **Modular Phases Architecture Refactor**:
    - Split the monolithic ~2,000-line `PHASES.md` into 13 modular documents under `phases/` with a high-level executive dashboard at root `PHASES.md`.
 2. **Task 84 (On-Device Document SLM Fine-Tuning & Local Verification `[Spec 084]`, Task 5.9.73)**:
    - Generated 5,000 ChatML training pairs across 45+ tools with 5 linguistic noise tiers.
