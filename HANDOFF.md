@@ -23,7 +23,6 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 128A** | `[Spec 128]` | P0 | CI / Security | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 9314721983274075613](https://jules.google.com/session/9314721983274075613)<br>Pinning third-party GitHub Actions across `.github/workflows/` to immutable 40-char commit SHAs. |
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
 | **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | 📋 **Backlog / Planned** (`specs/126-...`)<br>Sub-15ms Tika-compatible `/tika/rmeta/text` REST & MCP tool for Open-WebUI integration. |
@@ -34,10 +33,15 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 124A (Mobile Web / Browser Sandbox Responsive Overhaul `[Spec 124]`)**:
+1. **Task 128A (CI Supply Chain Hardening & Action SHA Pinning `[Spec 128]`, PR #274)**:
+   - Pinned all 3rd-party GitHub Actions in `release.yml`, `rust.yml`, and `security.yml` to immutable 40-character commit SHAs.
+   - Replaced unverified `curl | sh` script for `wasm-pack` with `which wasm-pack || cargo install wasm-pack --locked`.
+   - Added `.github/dependabot.yml` tracking `github-actions` updates weekly.
+   - All security gates and CI workflows verified 100% green.
+2. **Task 124A (Mobile Web / Browser Sandbox Responsive Overhaul `[Spec 124]`)**:
    - Upgraded `HeroPlayground.svelte` and `OperationsView.svelte` for small/mobile screens (`< 768px` and `< 480px`).
    - Added horizontal scrollable tool tab bar, minimum 44px touch targets on buttons/dropzones, fluid full-height layouts.
-2. **Task 123A (Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening `[Spec 123]`, PR #271)**:
+3. **Task 123A (Client-Side XSS, Path Traversal, SSRF & Dockerfile Hardening `[Spec 123]`, PR #271)**:
    - Sanitized search snippets in `workspaceSearch.ts` with HTML entity escaping and added test coverage.
    - Configured strict CSP in `tauri.conf.json`.
    - Hardened `pack_commands.rs` against path traversal using alphanumeric regex.
