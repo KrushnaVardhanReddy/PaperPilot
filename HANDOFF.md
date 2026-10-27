@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 27, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Task 84D (SLM Compound Pipeline Chaining) + Task 129A (Fuzzing) + Task 122A (Stream Dedup)
+> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 3.4.11)
 
 ---
 
@@ -18,16 +18,20 @@
   - MCP Tool Count: **78 tools registered and verified** (`paperpilot-mcp`).
   - Desktop Vitest Suite: **112/112 passing tests** (`pnpm --dir apps/desktop test`).
   - Architecture Roadmaps: Modularized into `phases/` directory with master dashboard in `PHASES.md`.
+- **Scope Boundary Policy**: Focus exclusively on **Community (Open-Source)** tasks in this repository. All Enterprise governance (SAML/SSO, SCIM, SIEM, Ed25519 air-gapped licensing) is reserved for the private `PaperPilot-Enterprise` repo.
 
 ---
 
-## 🚀 Active Dispatch & In-Flight Status
+## 🚀 Active Dispatch & Phase 3 & 4 Closure Execution Order
 
-| Task ID | Spec | Priority | Component | Target Branch | Status & Details |
-|---|:---:|:---:|---|---|---|
-| **Feature Freeze** | — | — | All Surfaces | `feature/dev` | 🧊 **Active Feature Freeze**: No new speculative features to be scheduled until incoming user feedback / requests require them. Focus strictly on finishing active SLM pipeline & stabilization. |
-| **Task 127A** | `[Spec 127]` | P1 | Core / Format Conversion | `feat/pdf-to-epub-spec-127` | 🚀 **In Active Development (Jules Session Pending)**: Pure-Rust reflowable EPUB 3.0 generation via semantic paragraph unwrapping, outline chapter splitting, and OCF container packaging. |
-| **Task 10.4** | `[Spec 130]` | P2 | Web WASM / SLM | `feature/dev` | 📋 **Backlog / Planned** (`phases/phase-10-webassembly-wasm.md`)<br>In-browser INT4 ONNX model runtime with WebGPU acceleration and persistent Cache Storage. |
+We are systematically closing out all remaining Community gaps in **Phase 4 (AI Layer)** and **Phase 3 (Desktop & Mobile)** in this exact order:
+
+| Step | Task ID | Phase / Spec | Scope & Description | Target Branch | Status |
+|:---:|---|:---:|---|---|:---:|
+| **1** | **Task 4.5** | Phase 4.5.1 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feat/cli-ask-command-task-4-5` | 📋 **Next Up (Tonight)** |
+| **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten, and write template tokens `{row.name}_{date}.pdf`. | `feat/cli-fill-batch-task-4-7-4` | 📋 Scheduled |
+| **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feat/conditional-pipeline-engine-task-4-7-6` | 📋 Scheduled |
+| **4** | **Task 3.4.11** | Phase 3.4.11 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui` | 📋 Scheduled |
 
 ---
 
