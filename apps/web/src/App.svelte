@@ -7,6 +7,7 @@
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
   import ShareModal from './components/ShareModal.svelte';
   import DownloadBadge from './components/DownloadBadge.svelte';
+  import RoadmapModal from './components/RoadmapModal.svelte';
   import {
     DOWNLOAD_URL,
     DOWNLOAD_LINUX_URL,
@@ -18,6 +19,8 @@
 
   const docsBaseUrl = getDocsBaseUrl();
   const toolsHandbookUrl = getToolsHandbookUrl();
+
+  let showRoadmap = $state(false);
 </script>
 
 <div class="app-container">
@@ -29,6 +32,9 @@
       </div>
 
       <div class="header-actions">
+        <button class="roadmap-btn" onclick={() => showRoadmap = true}>
+          <span class="icon">🗺️</span> Roadmap
+        </button>
         <DownloadBadge />
         <ShareModal />
         <div class="cta-banner">
@@ -58,6 +64,8 @@
       <div class="footer-links">
         <a href="/embed-test" target="_blank" rel="noopener noreferrer">Embed Sandbox</a>
         <span class="separator">•</span>
+        <button class="footer-link-btn" onclick={() => showRoadmap = true}>Roadmap</button>
+        <span class="separator">•</span>
         <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
         <span class="separator">•</span>
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">50+ Tools Handbook</a>
@@ -71,6 +79,8 @@
     </div>
   </footer>
 </div>
+
+<RoadmapModal bind:show={showRoadmap} />
 
 <style>
   :global(body) {
@@ -137,6 +147,25 @@
     display: flex;
     align-items: center;
     gap: 16px;
+  }
+
+  .roadmap-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+  }
+
+  .roadmap-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-primary);
   }
 
   .cta-banner {
@@ -225,6 +254,21 @@
   }
 
   .footer-links a:hover {
+    color: var(--accent-primary);
+  }
+
+  .footer-link-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-link-btn:hover {
     color: var(--accent-primary);
   }
 
