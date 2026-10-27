@@ -1,89 +1,77 @@
 MANDATORY RULES — VIOLATION = REJECTED PR:
-1. NEVER stub, mock, or TODO existing implementation code. Write real, working code only.
+1. NEVER leave stubs or mocks. Replace all `UnsupportedOperation("Not yet implemented")` in `paperpilot-pdf/src/operations/pdf_to_epub.rs` with real, working code only.
 2. Commit message must start with "jules: " prefix.
 3. Use clean module design and idiomatic Rust architecture. No spaghetti code.
 4. NEVER hardcode secrets, API keys, or local paths — always read from environment variables.
-5. UNIT TESTS REQUIRED: For every Rust file you create or modify, you MUST write accompanying unit tests (e.g. `#[cfg(test)]` modules) with high coverage.
+5. UNIT TESTS REQUIRED: Write thorough unmocked unit tests in `#[cfg(test)]` modules inside `paperpilot-pdf/src/operations/pdf_to_epub.rs`.
 6. When asking any questions, YOU MUST prefix your question with the Task Number and Title (e.g., "[P5_3_27: PDF to EPUB 3.0]").
-7. WIKI & DOCS REQUIREMENT: For any newly introduced feature, module, engine, or tool operation, you MUST:
-   - Create or update the relevant documentation in `wiki/` (e.g. `wiki/127-Pdf-To-Epub.md`).
-   - Create or update the user-facing tool reference page at `apps/docs/src/content/docs/reference/tools/pdf_to_epub.md` with frontmatter, concise description, and verified invocation examples for CLI, MCP JSON-RPC, and REST API.
-8. PERIODIC PROGRESS UPDATES: You MUST proactively send a concise progress update message to the session conversation every 10 to 15 minutes or after completing each logical milestone/step (e.g., "Step 2/4 completed: tests passed, now modifying X..."), so the team is never left without visibility into ongoing progress.
+7. WIKI & DOCS REQUIREMENT:
+   - Create documentation in `wiki/127-Pdf-To-Epub.md`.
+   - Create the user-facing tool reference page at `apps/docs/src/content/docs/reference/tools/pdf_to_epub.md` with frontmatter, concise description, and verified invocation examples for CLI, MCP JSON-RPC, and REST API.
+8. PERIODIC PROGRESS UPDATES: You MUST proactively send a concise progress update message to the session conversation every 10 to 15 minutes or after completing each logical milestone/step, so the team is never left without visibility.
 9. UNIT TESTS & WORKSPACE CHECK ONLY: 
-   - For every operation or engine file you implement, write thorough unit tests in `#[cfg(test)]` modules inside that file.
    - Run ONLY your unit tests and compilation check:
      `cargo test -p paperpilot-pdf --lib operations::pdf_to_epub -j 2`
      `cargo check --workspace -j 2`
-   - DO NOT run `penta-interface-e2e` or generate files in `reports/`. Multi-interface E2E testing and report generation are handled during integration review.
-10. NO STRAY ARTIFACTS: NEVER commit temporary files, log files (`*.log`), pid tracking files (`*.txt`), test runner binaries (`test_script`), or files in `reports/`. Keep `git status` clean and stage only your implementation, unit tests, and docs before opening a PR.
+   - DO NOT run `penta-interface-e2e` or generate files in `reports/`.
+10. NO STRAY ARTIFACTS: NEVER commit temporary files, log files (`*.log`), pid tracking files (`*.txt`), test runner binaries, or files in `reports/`. Keep `git status` clean and stage only your implementation, unit tests, and docs before opening a PR.
 
 Project: PaperPilot
 Tech stack:
   - Core: Rust (Cargo)
-  - PDF libraries: lopdf, zip
-  - CLI parser: clap
+  - PDF & Archive libraries: lopdf, zip
+  - CLI: clap
   - MCP: rmcp
   - Desktop: Tauri 2, Svelte 5, TypeScript, Vite
 
-Critical Rules:
-- Rust code must use typed errors (no string panics).
-- Unit tests are required for all operations.
-- Proactively send progress updates in chat every 10-15 minutes.
-- Focus on unit tests (`cargo test -p paperpilot-pdf`) and workspace checks. NEVER run `penta-interface-e2e` or commit files in `reports/`.
-
 ---
 
-Jules Task Prompt: Spec 127 / Task 127A — PDF to EPUB 3.0 Semantic Reflow Engine
+Jules Task Prompt: Spec 127 / Task 127A — Implement Core PDF to EPUB 3.0 Semantic Reflow Engine
 
 Context:
-PaperPilot is an air-gapped, zero-cloud PDF & document intelligence suite written in Rust with Svelte/Vite web and Tauri desktop interfaces.
-Users reading technical PDFs on e-readers (Kindle, Kobo) or mobile phones need reflowable EPUB 3.0 eBooks.
+The 5-surface scaffolding for `pdf_to_epub` has ALREADY been generated and wired into the repository via `penta-scaffold` across CLI, MCP, REST Gateway, WASM, and Desktop.
+Your task is to implement the real core engine in `paperpilot-pdf/src/operations/pdf_to_epub.rs`, remove the placeholder stubs, write unit tests, and add documentation.
 
 Requirements:
-1. Core Operation (`paperpilot-pdf/src/operations/pdf_to_epub.rs`):
-   - Define `PdfToEpubConfig`:
-     - `pub title: Option<String>`
-     - `pub author: Option<String>`
-     - `pub language: Option<String>` (defaults to "en")
-   - Text & Paragraph Extraction:
-     - Read PDF via `lopdf::Document::load_mem(input_bytes)`.
-     - Extract text from pages, unwrap broken lines and soft hyphens (`-\n`), and group into paragraphs `<p>`.
-   - Chapter Segmentation:
-     - Check document outline bookmarks (`/Outlines`). If bookmarks exist, partition pages into named chapters.
-     - Fallback: Split by major font size changes or page boundaries if no outline is present.
-   - EPUB 3.0 OCF Packaging using the Rust `zip` crate:
-     - `mimetype` file MUST be the first entry in the ZIP archive and MUST be stored UNCOMPRESSED (`zip::CompressionMethod::Stored`) with content `application/epub+zip`.
-     - `META-INF/container.xml` pointing to `OEBPS/content.opf`.
-     - `OEBPS/content.opf` with `<metadata>`, `<manifest>`, and `<spine>` listing all XHTML documents in reading order.
-     - `OEBPS/toc.xhtml` (EPUB 3 Navigation Document with `epub:type="toc"`).
-     - `OEBPS/toc.ncx` (EPUB 2 NCX table of contents for backward compatibility).
-     - `OEBPS/styles.css` containing clean typography styles for e-readers.
-     - `OEBPS/chapter_*.xhtml` containing valid XHTML5 markup (`<?xml version="1.0" encoding="utf-8"?>`).
-   - Implement function:
-     `pub fn run_pdf_to_epub_bytes(input_bytes: &[u8], config: &PdfToEpubConfig) -> Result<Vec<u8>, OperationError>`
-   - Export module in `paperpilot-pdf/src/operations/mod.rs`.
+1. Core Implementation (`paperpilot-pdf/src/operations/pdf_to_epub.rs`):
+   - Update `PdfToEpubOptions` struct:
+     ```rust
+     #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+     pub struct PdfToEpubOptions {
+         pub title: Option<String>,
+         pub author: Option<String>,
+         pub language: Option<String>,
+     }
+     ```
+   - In `pub fn pdf_to_epub_bytes(input_bytes: &[u8], options: &PdfToEpubOptions) -> Result<Vec<u8>, PdfError>`:
+     - Load document using `lopdf::Document::load_mem(input_bytes)`. Return `PdfError::InvalidPdf` or appropriate error if corrupted.
+     - Extract text from each page. Unwrap lines and soft hyphens (`-\n`) into continuous paragraphs `<p>`.
+     - Chapter detection:
+       - Check if `/Outlines` dictionary exists in the PDF catalog. If so, traverse bookmarks to detect chapter breaks.
+       - If no outlines, partition into chapters based on major font size headings or group pages into logical chapters.
+     - Build compliant EPUB 3.0 OCF archive in-memory using `zip::ZipWriter::new(std::io::Cursor::new(Vec::new()))`:
+       - `mimetype`: MUST be the first file entry in the ZIP archive, MUST be stored uncompressed with `zip::CompressionMethod::Stored`, containing exact bytes `application/epub+zip` (no newline).
+       - `META-INF/container.xml`: Points to `OEBPS/content.opf`.
+       - `OEBPS/content.opf`: Package file with `<metadata>` (title fallback to "Untitled Document", author, language "en", unique-identifier), `<manifest>` listing all items, and `<spine>` listing reading order.
+       - `OEBPS/toc.xhtml`: EPUB 3 navigation document with `<nav epub:type="toc">`.
+       - `OEBPS/toc.ncx`: EPUB 2 NCX file for backward compatibility.
+       - `OEBPS/styles.css`: Clean, readable CSS typography.
+       - `OEBPS/chapter_*.xhtml`: Valid XHTML5 documents with `<?xml version="1.0" encoding="utf-8"?>`.
+     - Return the finished bytes `Vec<u8>` on success.
 
-2. Multi-Surface Integrations:
-   - CLI (`paperpilot-cli/src/commands/`):
-     - Add `PdfToEpub { input: PathBuf, output: Option<PathBuf>, title: Option<String>, author: Option<String> }`.
-   - MCP (`paperpilot-mcp/src/server.rs`):
-     - Register `pdf_to_epub` tool with parameters `input_path`, `output_path`, `title`, `author`.
-   - REST Gateway (`paperpilot-gateway/src/handlers.rs`):
-     - Add `POST /api/v1/pdf/to-epub` accepting multipart PDF and returning `application/epub+zip`.
-   - Desktop UI (`apps/desktop/src/lib/types/toolList.ts`):
-     - Register `pdf_to_epub` under `category: 'convert'`.
+2. Unit Tests in `paperpilot-pdf/src/operations/pdf_to_epub.rs`:
+   - Write unmocked unit tests in `#[cfg(test)]`:
+     - Test empty/invalid PDF bytes returns Err.
+     - Test valid PDF generates an EPUB buffer:
+       - Magic bytes match `[0x50, 0x4B, 0x03, 0x04]` (ZIP header).
+       - Inspecting with `zip::ZipArchive` reveals `mimetype` as entry index 0, stored uncompressed with text `application/epub+zip`.
+       - `META-INF/container.xml` exists.
+       - `OEBPS/content.opf` exists and contains valid metadata.
+       - `OEBPS/chapter_1.xhtml` exists.
+   - Run: `cargo test -p paperpilot-pdf --lib operations::pdf_to_epub -j 2`
+   - Run: `cargo check --workspace -j 2`
 
-3. Unit Tests & Verification:
-   - In `paperpilot-pdf/src/operations/pdf_to_epub.rs`:
-     - Test that the output starts with ZIP magic bytes (`[0x50, 0x4B, 0x03, 0x04]`).
-     - Test that reading the resulting bytes with `zip::ZipArchive::new(std::io::Cursor::new(&bytes))` succeeds.
-     - Verify that the first file is `mimetype` with `CompressionMethod::Stored` and content `application/epub+zip`.
-     - Verify `META-INF/container.xml` and `OEBPS/content.opf` exist and are non-empty.
-   - Run compilation & tests:
-     `cargo test -p paperpilot-pdf --lib operations::pdf_to_epub -j 2`
-     `cargo check --workspace -j 2`
-
-4. Documentation:
-   - Create `wiki/127-Pdf-To-Epub.md`.
-   - Create `apps/docs/src/content/docs/reference/tools/pdf_to_epub.md`.
+3. Documentation:
+   - Create `wiki/127-Pdf-To-Epub.md` explaining the EPUB 3.0 packaging architecture.
+   - Create `apps/docs/src/content/docs/reference/tools/pdf_to_epub.md` with CLI, MCP, and REST examples.
    - Run `python3 apps/docs/src/content/docs/reference/generate_handbook.py` to keep handbook synchronized.
