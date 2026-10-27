@@ -3,6 +3,7 @@
 ## Metadata
 - **Spec**: [Spec 084: On-Device Document SLM (PaperPilot-Qwen-0.6B)](file:///home/krushna/Project/PaperPilot/specs/084-on-device-document-slm-qwen-finetuning/spec.md)
 - **Phase**: Phase 5.9.73 / Task 84D
+- **Status**: ✅ **Completed & Verified** (PR #277)
 - **Primary Language**: Python 3.10+
 - **Impacted Area**: `tools/slm-training/`
 
