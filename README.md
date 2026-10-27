@@ -148,9 +148,11 @@ Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
 ---
 
-## Contributing
+## Contributing & Community
 
 Issues and PRs are welcome. Good first contributions: bug reports with a sample PDF, new tool requests, and docs fixes.
+
+Special thanks to all community members and contributors recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 
