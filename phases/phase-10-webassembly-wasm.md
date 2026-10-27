@@ -35,6 +35,14 @@
 | 10.3.2 | Playwright WASM E2E | Spin up the web app and run the same Playwright tests as the desktop |
 | 10.3.3 | Bundle size tracking | Fail CI if WASM bundle exceeds 5 MB (keep it fast to load) |
 
+### 10.4 — In-Browser SLM Model Runtime & WebGPU Acceleration `[Spec 130]`
+| # | Task | Notes |
+|---|---|---|
+| 10.4.1 | INT4 ONNX Quantization Pipeline | Export fine-tuned `PaperPilot-Qwen-0.5B` to a compact ~300 MB INT4 ONNX binary optimized for browser WebGPU and WASM SIMD. |
+| 10.4.2 | Persistent Browser Cache Storage (`ModelCacheStorage.ts`) | Streaming download with visual progress bar; stores weights in browser `caches` API so users only download once. |
+| 10.4.3 | WebGPU / WASM Hybrid Inference Engine | Connects `onnxruntime-web` with automatic fallback: WebGPU (sub-50ms) ➔ CPU WASM SIMD. |
+| 10.4.4 | "Try in Web ➔ Power-up in Desktop" Conversion Funnel | Subtle banner and CTA encouraging users needing uncapped file sizes, full directory watching, and Coding Agent (MCP) support to install the Desktop app. |
+
 ---
 
 ## Architecture Improvements — Hexagonal / Ports & Adapters

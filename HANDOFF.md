@@ -25,6 +25,8 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
+| **Feature Freeze** | — | — | All Surfaces | `feature/dev` | 🧊 **Active Feature Freeze**: No new speculative features to be scheduled until incoming user feedback / requests require them. Focus strictly on finishing active SLM pipeline & stabilization. |
+| **Task 10.4** | `[Spec 130]` | P2 | Web WASM / SLM | `feature/dev` | 📋 **Backlog / Planned** (`phases/phase-10-webassembly-wasm.md`)<br>In-browser INT4 ONNX model runtime with WebGPU acceleration and persistent Cache Storage. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 
 ---
