@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools';
 
 export const allTools: ToolDefinition[] = [
+  { id: 'pdf_to_epub', name: 'PDF to EPUB 3.0', inputFormat: 'PDF', outputFormat: '..EPUB', description: 'Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks', icon: '📖', category: 'convert', context: 'pdf', tags: ['pdf_to_epub'], releaseStatus: 'preview' },
   { id: 'pdf_dedup_streams', name: 'Lossless Stream Deduplication', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Lossless hash-based indirect object stream deduplication & CMYK-safe image compression', icon: '📉', category: 'optimize', context: 'pdf', tags: ['pdf_dedup_streams'], releaseStatus: 'preview' },
   { id: 'pdf_posterize', name: 'Multi-Sheet Poster Tile Slicer', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides', icon: '🧩', category: 'organize', context: 'pdf', tags: ['pdf_posterize'], releaseStatus: 'preview' },
   { id: 'pdf_merge_alternate', name: 'Alternating PDF Merge', inputFormat: 'PDF', outputFormat: '.PDF', description: 'Interleave pages from two PDF documents.', icon: '📄', category: 'organize', context: 'pdf', tags: ['pdf_merge_alternate'], releaseStatus: 'preview' },

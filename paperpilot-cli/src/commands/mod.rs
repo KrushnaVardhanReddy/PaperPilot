@@ -36,6 +36,7 @@ pub mod table;
 pub mod validate;
 pub mod watch;
 pub mod workflow;
+pub mod pdf_to_epub;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -472,6 +473,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfDedupStreams { input, output } => {
             pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
         }
+        Commands::PdfToEpub { input, output } => pdf_to_epub::handle_pdf_to_epub_command(input, output),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -737,6 +739,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_to_epub",
+                    "Preview",
+                    "Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks",
                 ),
                 (
                     "pdf_dedup_streams",

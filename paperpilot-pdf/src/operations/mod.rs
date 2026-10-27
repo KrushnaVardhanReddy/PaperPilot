@@ -68,4 +68,5 @@ pub mod pdf_invert_colors;
 pub mod pdf_merge_alternate;
 pub mod pdf_posterize;
 pub mod pdf_split_by_outline;
+pub mod pdf_to_epub;
 pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};

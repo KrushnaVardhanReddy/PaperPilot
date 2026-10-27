@@ -2103,3 +2103,17 @@ pub struct PdfDedupStreamsJsonRequest {
 pub async fn pdf_dedup_streams(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_dedup_streams".to_string()), req).await
 }
+/// PDF to EPUB 3.0 [Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks] [Input: .PDF | Output: ..EPUB]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/to-epub",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PDF to EPUB 3.0 completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_to_epub(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_epub".to_string()), req).await
+}
