@@ -90,18 +90,11 @@ Requires Rust 1.75+, Node.js, and pnpm.
 
 ## What it can do today (v0.6)
 
-**Organize:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid
-**Optimize:** compress
-**Extract:** plain text, OCR (pure-Rust PaddleOCR via `rten`)
-**Security:** watermark, validate signatures, remove signatures, PII scan, deep sanitize
-**Office data:** Excel → JSON, Excel → CSV
-
-Coming next (see [ROADMAP.md](ROADMAP.md)):
-
-- **v0.7:** PDF ↔ Markdown / HTML / JSON
-- **v0.8:** PDF → Word / Excel / PowerPoint
-- **v0.9:** encrypt, decrypt, sign, redact, forms, annotations
-- **v1.0:** render, flatten, repair, compare, PDF/A, Bates numbering
+- **Organize & Layout:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, multi-sheet poster tile slicing (`pdf_posterize`)
+- **Optimize & Compress:** lossy compression, stream deduplication, CMYK safety guards
+- **Extract & Ingest:** structured text, detected Markdown tables, native Open-WebUI & Apache Tika ingestion adapter (`/tika/text`, `/tika/json/md`, `/rmeta/text`), pure-Rust OCR (PaddleOCR via `rten`)
+- **Security & Analysis:** watermark, validate signatures, remove signatures, PII scan, deep sanitize, malformed fuzzing & panic-free error handling
+- **Office Data:** Excel → JSON, Excel → CSV
 
 ---
 
@@ -136,16 +129,22 @@ Desktop (Tauri) · CLI · REST (Axum) · MCP (stdio) · WASM (browser / edge)
 <div id="paperpilot-widget"></div>
 ```
 
-## Local REST API
-
+## Local REST API & Document Ingestion
+ 
 ```bash
 paperpilot serve --port 7823
+# Standard PDF Operations (JSON & multipart)
 curl -X POST http://localhost:7823/api/v1/pdf/merge \
   -H "Content-Type: application/json" \
   -d '{"inputs": ["a.pdf", "b.pdf"], "output": "out.pdf"}'
+
+# Open-WebUI & Tika In-Memory Ingestion (sub-5ms)
+curl -X PUT http://localhost:7823/tika/text \
+  -H "Content-Type: application/pdf" \
+  --data-binary @sample.pdf
 ```
 
-Swagger docs at `http://localhost:7823/docs`.
+Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
 ---
 
