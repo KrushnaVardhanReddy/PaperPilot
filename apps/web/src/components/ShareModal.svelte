@@ -161,7 +161,6 @@
     padding: 1.5rem;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.2);
     display: flex;
-    flex-col: column;
     flex-direction: column;
     gap: 1.15rem;
   }

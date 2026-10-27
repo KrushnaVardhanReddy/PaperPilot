@@ -4,13 +4,14 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 27, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Task 84D (SLM Compound Pipeline Chaining) + Task 129A (Fuzzing) + Task 122A (Stream Dedup)
+> **Active Target:** Task 131A (Public Roadmap, implemented locally for review) + Feature Freeze / Stabilization
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (Clean & synchronized with remote `origin/feature/dev`).
+- **Integration Baseline**: `origin/feature/dev` at `bac7682` (also the fetched `origin/main`).
+- **Local Continuation Branch**: `feat/public-roadmap`; Task 131A implementation is local and unmerged.
 - **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
 - **System Stability & Audits**:
   - `cargo check --workspace -j 2`: **100% Clean**.
@@ -25,7 +26,7 @@
 
 | Task ID | Spec | Priority | Component | Target Branch | Status & Details |
 |---|:---:|:---:|---|---|---|
-| **Task 131A** | `[Spec 131]` | P1 | Web UI / Community | `feature/dev` | 🚀 **Ready for Jules Dispatch**: Prompt in `jules_prompts/P5_9_101_dynamic_public_roadmap.txt`<br>Dynamic public Roadmap Kanban board on `usepaperpilot.com` with auto-sync parser (`scripts/sync_roadmap.ts`) and GitHub Feature Request upvote button. |
+| **Task 131A** | `[Spec 131]` | P1 | Web UI / Community | `feature/dev` | 🔄 **Implemented locally; pending integration** on `feat/public-roadmap`.<br>TypeScript phase parser, build-generated JSON, searchable/filterable roadmap modal and `/roadmap` route, and prefilled GitHub request links. See `reports/DYNAMIC_PUBLIC_ROADMAP_REPORT.md` for verification. Do not dispatch a duplicate cloud implementation. |
 | **Feature Freeze** | — | — | All Surfaces | `feature/dev` | 🧊 **Active Feature Freeze**: No new speculative features to be scheduled until incoming user feedback / requests require them. Focus strictly on finishing active SLM pipeline & stabilization. |
 | **Task 10.4** | `[Spec 130]` | P2 | Web WASM / SLM | `feature/dev` | 📋 **Backlog / Planned** (`phases/phase-10-webassembly-wasm.md`)<br>In-browser INT4 ONNX model runtime with WebGPU acceleration and persistent Cache Storage. |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
@@ -72,6 +73,11 @@
 ## 📋 Resuming Checklist for Next Session
 
 When resuming a new session, follow these steps:
+
+0. **Review the local Task 131A continuation**:
+   - Read `reports/DYNAMIC_PUBLIC_ROADMAP_REPORT.md` and `docs/PUBLIC_ROADMAP.md`.
+   - Run `pnpm --dir apps/web sync-roadmap` after editing phase documents. The production build also regenerates the snapshot automatically.
+   - Preserve the previous Tika/MCP branches and the original untracked `reports/agent-validation/` directory. This continuation targets `feature/dev` and has not been pushed.
 
 1. **Check for New User Issues or Community PRs**:
    - Inspect GitHub Issues (filed via `.github/ISSUE_TEMPLATE/` bug and feature request forms).

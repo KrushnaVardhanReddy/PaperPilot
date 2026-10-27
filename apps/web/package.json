@@ -4,8 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "pnpm exec tsx ../../scripts/sync_roadmap.ts",
     "dev": "vite",
+    "prebuild": "pnpm exec tsx ../../scripts/sync_roadmap.ts",
     "build": "vite build",
+    "sync-roadmap": "pnpm exec tsx ../../scripts/sync_roadmap.ts",
+    "test-roadmap": "pnpm exec tsx --test ../../scripts/sync_roadmap.test.ts",
+    "test-roadmap-ui": "playwright test --config playwright.roadmap.config.ts",
+    "check-roadmap": "tsc -p tsconfig.roadmap.json",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
   },
@@ -18,6 +24,7 @@
     "rollup": "^4.64.0",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vite-plugin-top-level-await": "^1.6.0",

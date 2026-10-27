@@ -70,7 +70,7 @@
 | 5.3.23 | EPUB eBook to PDF Conversion (`epub_to_pdf`) 💡 | **Planned** — Pure-Rust `.epub` container extraction, XHTML/CSS reflow parsing, and chapter-based pagination into printable PDF. |
 | 5.3.24 | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) `[Spec 117]` ✅ | **Completed & Merged into `feature/dev` (PR #268)** — Interleave pages from two documents alternating between odd and even pages (e.g. Doc A p1, Doc B p1, Doc A p2, Doc B p2) with reverse even option for double-sided scanner batch intake (`specs/117-pdf-merge-alternate/spec.md`). |
 | 5.3.25 | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) `[Spec 118]` ✅ | **Completed & Merged (PR #264)** — Automatically traverse `/Outlines` hierarchy tree and split multi-chapter documents at named bookmark destinations into individual chapter PDFs (`specs/118-pdf-split-by-outline/spec.md`). |
-| 5.3.26 | Posterize / Multi-Sheet Tile Print (`pdf_posterize`) `[Spec 119]` 🚀 | **In Progress (Task 119A, Jules Session 14717167755470526744)** — Tile single large pages (A0, A1, A2, architectural blueprints) across standard grid of A4/Letter sheets with printable overlap crop marks (`specs/119-pdf-posterize/spec.md`). |
+| 5.3.26 | Posterize / Multi-Sheet Tile Print (`pdf_posterize`) `[Spec 119]` ✅ | **Completed & Merged (Task 119A, PR #270)** — Tile single large pages (A0, A1, A2, architectural blueprints) across standard grid of A4/Letter sheets with printable overlap crop marks (`specs/119-pdf-posterize/spec.md`). |
 
 ---
 

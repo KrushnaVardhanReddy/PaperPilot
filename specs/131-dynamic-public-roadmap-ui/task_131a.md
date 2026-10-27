@@ -21,3 +21,17 @@ Implement the complete dynamic public roadmap pipeline defined in `specs/131-dyn
 4. **Build Automation**:
    - Update `apps/web/package.json` to run `pnpm tsx ../../scripts/sync_roadmap.ts` on build.
    - Verify `pnpm --dir apps/web build` passes with zero errors.
+
+## Local Implementation / Review Handoff
+
+Implemented on `feat/public-roadmap`, based on `origin/feature/dev` at `bac7682`.
+The implementation is pending reviewed integration and deployment.
+
+- [x] TypeScript parser, source references, deterministic snapshot and build hook.
+- [x] Search/category filters, native dialog, responsive board and GitHub issue form links.
+- [x] Header/footer links and direct `/roadmap` navigation.
+- [x] Parser/data tests and production-browser tests.
+- [ ] Reviewed integration into `feature/dev` and website deployment.
+
+Usage: [PUBLIC_ROADMAP.md](../../docs/PUBLIC_ROADMAP.md).
+Evidence: [validation report](../../reports/DYNAMIC_PUBLIC_ROADMAP_REPORT.md).

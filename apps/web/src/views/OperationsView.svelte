@@ -1471,8 +1471,8 @@ let metadataFile: File | null = $state(null);
                 <button onclick={() => nupFile = null}>✕</button>
             </div>
             <div class="input-group">
-                <label>Grid Option:</label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="control-label" id="nup-grid-label">Grid Option:</span>
+                <div role="group" aria-labelledby="nup-grid-label" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button style="flex: 1; padding: 8px;" class:active={nupGrid === 2} onclick={() => nupGrid = 2}>2 (2x1)</button>
                     <button style="flex: 1; padding: 8px;" class:active={nupGrid === 4} onclick={() => nupGrid = 4}>4 (2x2)</button>
                     <button style="flex: 1; padding: 8px;" class:active={nupGrid === 9} onclick={() => nupGrid = 9}>9 (3x3)</button>
@@ -1480,8 +1480,8 @@ let metadataFile: File | null = $state(null);
                 </div>
             </div>
             <div class="input-group">
-                <label>Ordering:</label>
-                <div style="display: flex; gap: 8px;">
+                <span class="control-label" id="nup-order-label">Ordering:</span>
+                <div role="group" aria-labelledby="nup-order-label" style="display: flex; gap: 8px;">
                     <button style="flex: 1; padding: 8px;" class:active={nupOrdering === 'horizontal'} onclick={() => nupOrdering = 'horizontal'}>Horizontal</button>
                     <button style="flex: 1; padding: 8px;" class:active={nupOrdering === 'vertical'} onclick={() => nupOrdering = 'vertical'}>Vertical</button>
                 </div>
@@ -1504,8 +1504,8 @@ let metadataFile: File | null = $state(null);
                 <button onclick={() => bookletFile = null}>✕</button>
             </div>
             <div class="input-group">
-                <label>Page Format:</label>
-                <div style="display: flex; gap: 8px;">
+                <span class="control-label" id="booklet-format-label">Page Format:</span>
+                <div role="group" aria-labelledby="booklet-format-label" style="display: flex; gap: 8px;">
                     <button style="flex: 1; padding: 8px;" class:active={bookletPageFormat === 'a4'} onclick={() => bookletPageFormat = 'a4'}>A4</button>
                     <button style="flex: 1; padding: 8px;" class:active={bookletPageFormat === 'letter'} onclick={() => bookletPageFormat = 'letter'}>Letter</button>
                 </div>
@@ -1528,8 +1528,8 @@ let metadataFile: File | null = $state(null);
                 <button onclick={() => scalePagesFile = null}>✕</button>
             </div>
             <div class="input-group">
-                <label>Target Format:</label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="control-label" id="scale-format-label">Target Format:</span>
+                <div role="group" aria-labelledby="scale-format-label" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'a4'} onclick={() => scalePagesTarget = 'a4'}>A4</button>
                     <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'letter'} onclick={() => scalePagesTarget = 'letter'}>Letter</button>
                     <button style="flex: 1; padding: 8px;" class:active={scalePagesTarget === 'legal'} onclick={() => scalePagesTarget = 'legal'}>Legal</button>
@@ -1539,8 +1539,8 @@ let metadataFile: File | null = $state(null);
             </div>
             {#if scalePagesTarget === 'percentage'}
                 <div class="input-group">
-                    <label>Scale Percentage: {scalePagesPercentage}%</label>
-                    <input type="range" bind:value={scalePagesPercentage} min="50" max="200" style="width: 100%;" />
+                    <label for="scale-pages-percentage">Scale Percentage: {scalePagesPercentage}%</label>
+                    <input id="scale-pages-percentage" type="range" bind:value={scalePagesPercentage} min="50" max="200" style="width: 100%;" />
                 </div>
             {/if}
             <button class="action-btn" onclick={handleScalePages} disabled={isProcessing}>
@@ -1561,8 +1561,8 @@ let metadataFile: File | null = $state(null);
                 <button onclick={() => autoRotateFile = null}>✕</button>
             </div>
             <div class="input-group">
-                <label>Target Orientation:</label>
-                <div style="display: flex; gap: 8px;">
+                <span class="control-label" id="auto-orientation-label">Target Orientation:</span>
+                <div role="group" aria-labelledby="auto-orientation-label" style="display: flex; gap: 8px;">
                     <button style="flex: 1; padding: 8px;" class:active={autoRotateOrientation === 'portrait'} onclick={() => autoRotateOrientation = 'portrait'}>Portrait</button>
                     <button style="flex: 1; padding: 8px;" class:active={autoRotateOrientation === 'landscape'} onclick={() => autoRotateOrientation = 'landscape'}>Landscape</button>
                 </div>
@@ -1585,8 +1585,8 @@ let metadataFile: File | null = $state(null);
                 <button onclick={() => stampFile = null}>✕</button>
             </div>
             {#if !stampImageFile}
-                <div style="margin-top: 16px;">
-                    <label>Select Stamp Image:</label>
+                <div role="group" aria-labelledby="stamp-image-label" style="margin-top: 16px;">
+                    <span class="control-label" id="stamp-image-label">Select Stamp Image:</span>
                     <DropZone ondrop={(files: File[]) => stampImageFile = files[0]} multiple={false} />
                 </div>
             {:else}
@@ -1595,8 +1595,8 @@ let metadataFile: File | null = $state(null);
                     <button onclick={() => stampImageFile = null}>✕</button>
                 </div>
                 <div class="input-group">
-                    <label>Position:</label>
-                    <select bind:value={stampPosition} style="width: 100%; padding: 8px;">
+                    <label for="stamp-position">Position:</label>
+                    <select id="stamp-position" bind:value={stampPosition} style="width: 100%; padding: 8px;">
                         <option value="top-left">Top Left</option>
                         <option value="center">Center</option>
                         <option value="bottom-right">Bottom Right</option>
@@ -1614,16 +1614,18 @@ let metadataFile: File | null = $state(null);
         <h2>Overlay / Underlay</h2>
         <p>Apply one PDF over or under another PDF.</p>
         {#if !overlayUnderlayFile}
-            <label>Primary PDF:</label>
-            <DropZone ondrop={(files: File[]) => overlayUnderlayFile = files[0]} multiple={false} />
+            <div role="group" aria-labelledby="overlay-primary-label">
+                <span class="control-label" id="overlay-primary-label">Primary PDF:</span>
+                <DropZone ondrop={(files: File[]) => overlayUnderlayFile = files[0]} multiple={false} />
+            </div>
         {:else}
             <div class="selected-file">
                 <span class="file-name">{overlayUnderlayFile.name} (Primary)</span>
                 <button onclick={() => overlayUnderlayFile = null}>✕</button>
             </div>
             {#if !overlayUnderlaySecondaryFile}
-                <div style="margin-top: 16px;">
-                    <label>Secondary PDF:</label>
+                <div role="group" aria-labelledby="overlay-secondary-label" style="margin-top: 16px;">
+                    <span class="control-label" id="overlay-secondary-label">Secondary PDF:</span>
                     <DropZone ondrop={(files: File[]) => overlayUnderlaySecondaryFile = files[0]} multiple={false} />
                 </div>
             {:else}
@@ -1632,8 +1634,8 @@ let metadataFile: File | null = $state(null);
                     <button onclick={() => overlayUnderlaySecondaryFile = null}>✕</button>
                 </div>
                 <div class="input-group">
-                    <label>Mode:</label>
-                    <div style="display: flex; gap: 8px;">
+                    <span class="control-label" id="overlay-mode-label">Mode:</span>
+                    <div role="group" aria-labelledby="overlay-mode-label" style="display: flex; gap: 8px;">
                         <button style="flex: 1; padding: 8px;" class:active={overlayUnderlayMode === 'overlay'} onclick={() => overlayUnderlayMode = 'overlay'}>Overlay (On Top)</button>
                         <button style="flex: 1; padding: 8px;" class:active={overlayUnderlayMode === 'underlay'} onclick={() => overlayUnderlayMode = 'underlay'}>Underlay (Behind)</button>
                     </div>
@@ -1656,8 +1658,8 @@ let metadataFile: File | null = $state(null);
                 <span class="file-name">{validateSignaturesFile.name}</span>
                 <button onclick={() => { validateSignaturesFile = null; validateSignaturesResult = null; }}>✕</button>
             </div>
-            <div style="margin-top: 16px;">
-                <label>Baseline PDF (Optional, for tamper detection):</label>
+            <div role="group" aria-labelledby="signature-baseline-label" style="margin-top: 16px;">
+                <span class="control-label" id="signature-baseline-label">Baseline PDF (Optional, for tamper detection):</span>
                 {#if !validateSignaturesBaselineFile}
                     <DropZone ondrop={(files: File[]) => validateSignaturesBaselineFile = files[0]} multiple={false} />
                 {:else}
@@ -1992,7 +1994,7 @@ let metadataFile: File | null = $state(null);
       gap: 8px;
   }
 
-  .input-group label {
+  .input-group label, .control-label {
       font-size: 0.9rem;
       font-weight: 500;
       color: var(--text-secondary);

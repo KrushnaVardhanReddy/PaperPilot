@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM"],
+    "strict": true
+  },
+  "include": ["../../scripts/sync_roadmap.ts", "../../scripts/sync_roadmap.test.ts", "src/lib/roadmap.ts", "src/constants.ts"]
+}

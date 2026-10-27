@@ -135,6 +135,7 @@
 ### 1. In-Flight Tasks (Active Jules Sessions)
 | Task # | Feature Name | Spec / Crate | Jules Session ID / Status |
 |---|---|---|---|
+| **8.12 / Task 131A** | Dynamic Public Roadmap & Automated Phase Synchronization | Spec 131 / `apps/web` + `scripts/sync_roadmap.ts` | 🔄 Implemented locally; pending integration on `feat/public-roadmap` ([guide](docs/PUBLIC_ROADMAP.md), [report](reports/DYNAMIC_PUBLIC_ROADMAP_REPORT.md)) |
 | **5.9.95** | Open-WebUI / Tika-Compatible PDF Ingestion Adapter | Spec 126 / `paperpilot-gateway` | ✅ Implemented and verified locally (unmerged) on `feat/open-webui-tika-adapter`; 5 core + 21 gateway tests passed ([report](reports/TIKA_INGESTION_ADAPTER_REPORT.md), [integration guide](docs/integrations/open_webui.md)) |
 | **5.9.61** | Digital Signature Verification Engine (`pdf_validate_signatures`) | Spec 095 / `pdf_validate_signatures.rs` | ✅ Merged to `main` (PR #238, commit `a6e68c6`) |
 | **5.3.1**  | Booklet Imposition Engine (`pdf_booklet`) | Spec 096 / `pdf_booklet.rs` | ✅ Completed (10/10 Penta E2E tests passing) |

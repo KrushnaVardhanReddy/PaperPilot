@@ -323,8 +323,8 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.12.1 | Automated Roadmap Parser (`scripts/sync_roadmap.ts`) | Traverses `phases/*.md` in pure TypeScript/Node, extracts milestone statuses, emits `apps/web/public/roadmap.json` during prebuild. |
-| 8.12.2 | Interactive Glassmorphic Kanban (`RoadmapModal.svelte`) | 3-column board: Shipped (with PR badges), In Progress, and Planned / Up Next. |
-| 8.12.3 | Community Upvote / Feature Request Integration | Clicking "Vote / Request" on planned items opens pre-filled GitHub issue templates to preserve Feature Freeze. |
-| 8.12.4 | Header & Footer Navigation Wiring | Add Roadmap button to web app header and footer. |
+| 8.12.1 | Automated Roadmap Parser (`scripts/sync_roadmap.ts`) | Implemented locally; pending integration — pure TypeScript phase parsing, deterministic JSON, prebuild synchronization, and 8 parser/data tests (`specs/131-dynamic-public-roadmap-ui/spec.md`). |
+| 8.12.2 | Interactive Glassmorphic Kanban (`RoadmapModal.svelte`) | Implemented locally; pending integration — 3 columns with PR/spec links, keyword and category filters, accessible native dialog, loading/error/retry states, and responsive layout. |
+| 8.12.3 | Community Upvote / Feature Request Integration | Implemented locally; pending integration — planned cards prefill the GitHub issue form title, problem, and proposed-solution fields. Opening a link does not submit an issue. |
+| 8.12.4 | Header & Footer Navigation Wiring | Implemented locally; pending integration — header/footer links, direct `/roadmap` loading, refresh, and browser back/forward navigation; 7 production-browser tests (`reports/DYNAMIC_PUBLIC_ROADMAP_REPORT.md`). |
 

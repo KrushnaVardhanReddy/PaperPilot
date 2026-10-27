@@ -75,7 +75,7 @@ Crucially, this roadmap must be **100% dynamic and automated**: whenever a featu
 ---
 
 ## Acceptance Criteria
-1. `python3 scripts/sync_roadmap.py` parses all phase documents and generates valid `apps/web/public/roadmap.json`.
+1. `pnpm --dir apps/web sync-roadmap` runs the pure TypeScript parser and generates valid `apps/web/public/roadmap.json` from all phase documents.
 2. `RoadmapModal.svelte` renders all items accurately in their respective columns (`shipped`, `in_progress`, `planned`).
 3. Clicking "Vote / Request" opens GitHub with pre-filled title and problem description matching the selected task.
 4. `pnpm --dir apps/web build` succeeds 100% cleanly with zero TypeScript/Svelte warnings.

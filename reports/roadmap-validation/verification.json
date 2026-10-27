@@ -1,0 +1,19 @@
+{
+  "baseline": "bac7682",
+  "branch": "feat/public-roadmap",
+  "source_files": 13,
+  "milestones": 786,
+  "source_revision": "dfc2262ca7c18642",
+  "status_counts": {
+    "shipped": 402,
+    "in_progress": 8,
+    "planned": 376
+  },
+  "parser_tests_passed": 8,
+  "browser_tests_passed": 7,
+  "svelte_errors": 0,
+  "svelte_warnings": 0,
+  "production_build": "passed",
+  "browser": "installed Chrome via Playwright",
+  "download_badge_test_cache": 1250
+}
