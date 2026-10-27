@@ -85,7 +85,8 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WorkflowRunJsonRequest,
             handlers::PdfValidateSignaturesJsonRequest,
             handlers::PdfPosterizeJsonRequest,
-            handlers::PdfAttachmentsJsonRequest
+            handlers::PdfAttachmentsJsonRequest,
+            handlers::PdfToEpubJsonRequest
         )
     ),
     tags(
