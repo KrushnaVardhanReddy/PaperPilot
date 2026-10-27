@@ -1,0 +1,61 @@
+# Task: [P051_T051A: Multi-Tier AI Agent Supervisor & Dynamic LLM Router Integration]
+
+## 1. Role & Objective
+You are an expert full-stack Rust and Svelte systems engineer working on PaperPilot.
+Your objective is to implement **Task 051A / Phase 4.1.7** (`specs/051-multi-tier-ai-agent-supervisor/spec.md` and `specs/051-multi-tier-ai-agent-supervisor/task_051a.md`).
+
+You must wire the configured AI provider mode (`OfflineNlp`, `Llamafile`, `Universal`, `Byok`) and our on-device fine-tuned model (`PaperPilot-Qwen-0.5B-Instruct` / `paperpilot-qwen-0.5b-q4_k_m.gguf`) into the Desktop natural language resolution pipeline (`resolve_natural_language`), connecting `paperpilot-ai`'s `DynamicRouter`, `LlamafileSupervisor`, and `LlmNlpResolver` with seamless fallback and interactive UI status indicators.
+
+---
+
+## 2. Technical Context & Key Files
+- `specs/051-multi-tier-ai-agent-supervisor/spec.md`: Complete architectural requirements.
+- `specs/051-multi-tier-ai-agent-supervisor/task_051a.md`: Detailed step-by-step checklist.
+- `apps/desktop/src-tauri/src/ai_commands.rs`: Holds `GLOBAL_AI_MODE`, `GLOBAL_UNIVERSAL_ENDPOINT`, OS Keyring access, and model downloader logic.
+- `apps/desktop/src-tauri/src/lib.rs`: Currently hardcodes `OfflineNlpResolver::new()` in `resolve_natural_language`.
+- `paperpilot-ai/src/router.rs` & `paperpilot-ai/src/supervisor.rs`: Contains `DynamicRouter`, `LlmNlpResolver`, and `LlamafileSupervisor`.
+- `apps/desktop/src/lib/components/PdfChatPanel.svelte`: Natural language chat panel where user interacts with the AI.
+- `apps/desktop/src/lib/components/AiSettingsModal.svelte`: Modal for configuring AI provider modes.
+
+---
+
+## 3. Implementation Steps
+
+### Step 1: Desktop Backend Wiring (`apps/desktop/src-tauri/`)
+1. In `apps/desktop/src-tauri/src/ai_commands.rs`:
+   - Implement `resolve_dynamic_query(query: &str, context: &paperpilot_nlp::traits::ResolverContext) -> Result<serde_json::Value, String>`:
+     - Check `GLOBAL_AI_MODE.lock().await`.
+     - When `OfflineNlp`: invoke `paperpilot_nlp::resolver::OfflineNlpResolver::new()`.
+     - When `Llamafile`:
+       - Check if local model (`paperpilot-qwen-0.5b-q4_k_m.gguf` or selected model) is downloaded in `~/.local/share/paperpilot/models/`.
+       - If model is available and supervisor / port 8080 is reachable, initialize `LlmNlpResolver` pointing to `http://127.0.0.1:8080/v1`.
+       - Run with `DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))`.
+     - When `Universal` or `Byok`:
+       - Read endpoint URL and API key from OS keyring.
+       - Run with `DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))`.
+     - Return JSON value containing the plan plus `resolved_by: "llm" | "offline"` and `active_mode`.
+   - Add Tauri command `get_ai_execution_status() -> Result<AiExecutionStatus, String>`.
+
+2. In `apps/desktop/src-tauri/src/lib.rs`:
+   - Update `resolve_natural_language` to call `ai_commands::resolve_dynamic_query`.
+   - Register `get_ai_execution_status` in the Tauri invoke handler.
+   - Hook supervisor cleanup on Tauri window destruction.
+
+### Step 2: Desktop Chat UI Integration (`apps/desktop/src/lib/components/PdfChatPanel.svelte`)
+1. Fetch active AI config (`get_ai_config`) on mount and when `AiSettingsModal` closes.
+2. In the chat header or footer toolbar, display an interactive AI mode pill:
+   - `🔒 Offline Rules` (green)
+   - `⚡ PaperPilot Qwen 0.5B` (purple)
+   - `🌐 Universal LLM` (blue)
+   - `🔑 Cloud BYOK` (orange)
+3. Clicking the pill opens `AiSettingsModal.svelte`.
+4. If a response includes `resolved_by === 'offline'` when in LLM mode, show a subtle badge:
+   - *"Resolved via Offline Rules (Fallback)"*.
+
+---
+
+## 4. Verification & Testing
+1. Backend check: `cargo check -p desktop` & `cargo test -p paperpilot-ai`
+2. Frontend check: `pnpm --dir apps/desktop check` & `pnpm --dir apps/desktop test`
+3. Clippy check: `cargo clippy -p paperpilot-ai -- -D warnings`
+4. Update `phases/phase-04-ai-layer.md` marking Task 4.1.7 / Spec 051 as completed.
