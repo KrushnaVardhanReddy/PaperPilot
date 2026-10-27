@@ -4,6 +4,31 @@
     import { appState } from '$lib/state/app.svelte';
     import ChatCheatSheet from '$lib/components/ChatCheatSheet.svelte';
     import EditableActionCard from './EditableActionCard.svelte';
+    import AiSettingsModal from '$lib/components/settings/AiSettingsModal.svelte';
+    import { onMount } from 'svelte';
+    import type { AiProviderMode } from '$lib/state/aiConfig.svelte';
+
+    interface AiExecutionStatus {
+        active_mode: string;
+        is_ready: boolean;
+        model_name: string | null;
+    }
+
+    let isAiSettingsOpen = $state(false);
+    let aiStatus = $state<AiExecutionStatus>({ active_mode: 'offlinenlp', is_ready: true, model_name: null });
+
+    async function loadAiStatus() {
+        try {
+            aiStatus = await invoke<AiExecutionStatus>('get_ai_execution_status');
+        } catch (e) {
+            console.error('Failed to get AI status', e);
+        }
+    }
+
+    onMount(() => {
+        loadAiStatus();
+    });
+
 
     interface ChatMessage {
         role: 'user' | 'assistant';
@@ -235,6 +260,11 @@
                         {/each}
                     </div>
                 {/if}
+                {#if msg.plan && msg.plan.resolved_by === 'offline' && aiStatus.active_mode !== 'offlinenlp'}
+                    <div class="resolved-by-badge fallback" title="Resolved via Offline Rules (Fallback)">
+                        🛡️ Resolved via Offline Rules (Fallback)
+                    </div>
+                {/if}
                 {#if msg.plan}
                     <EditableActionCard plan={msg.plan} onExecute={executePlan} />
                 {/if}
@@ -287,7 +317,28 @@
         {/if}
     </div>
 
+
+    <div class="ai-status-header">
+        <button class="ai-status-pill {aiStatus.active_mode}" onclick={() => isAiSettingsOpen = true}>
+            {#if aiStatus.active_mode === 'offlinenlp'}
+                <span class="pill-icon">🔒</span> <span class="pill-text">Offline Rules</span>
+            {:else if aiStatus.active_mode === 'llamafile'}
+                <span class="pill-icon">⚡</span> <span class="pill-text">PaperPilot {aiStatus.model_name || 'Qwen 0.5B'}</span>
+            {:else if aiStatus.active_mode === 'universal'}
+                <span class="pill-icon">🌐</span> <span class="pill-text">Universal LLM</span>
+            {:else if aiStatus.active_mode === 'byok'}
+                <span class="pill-icon">🔑</span> <span class="pill-text">Cloud BYOK</span>
+            {/if}
+            {#if !aiStatus.is_ready}
+                <span class="pill-loading" title="Starting model server..."> (starting...)</span>
+            {/if}
+        </button>
+    </div>
+
+    <AiSettingsModal bind:isOpen={isAiSettingsOpen} on:close={() => loadAiStatus()} />
+
     <div class="chat-footer">
+
         <div class="footer-actions">
             <button class="examples-btn" onclick={() => isCheatSheetOpen = true} title="View examples (press ?)">
                 💡 Examples
@@ -623,4 +674,45 @@
         transition: all 0.2s;
     }
     .copy-btn:hover { background: var(--bg-surface); color: var(--text-primary); border-color: var(--accent-primary); }
+
+    .ai-status-header {
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--border-color, #eee);
+        display: flex;
+        justify-content: flex-end;
+    }
+    .ai-status-pill {
+        border: none;
+        border-radius: 12px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.2s, transform 0.1s;
+    }
+    .ai-status-pill:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+    }
+    .ai-status-pill.offlinenlp { background: #e6f4ea; color: #1e8e3e; }
+    .ai-status-pill.llamafile { background: #f3e8ff; color: #7e22ce; }
+    .ai-status-pill.universal { background: #e8f0fe; color: #1a73e8; }
+    .ai-status-pill.byok { background: #fef7e0; color: #f29900; }
+
+    .resolved-by-badge {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 4px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #f1f3f4;
+        display: inline-block;
+    }
+    .resolved-by-badge.fallback {
+        color: #d93025;
+        background: #fce8e6;
+    }
 </style>
