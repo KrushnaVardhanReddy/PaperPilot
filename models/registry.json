@@ -53,6 +53,13 @@
   ],
   "llm_models": [
     {
+      "id": "paperpilot-qwen-0.5b",
+      "name": "PaperPilot Qwen 0.5B (Official)",
+      "description": "Ultra-fast on-device neural assistant fine-tuned for 78+ PaperPilot tools & compound workflows. Zero cloud, sub-50ms.",
+      "size_mb": 988,
+      "download_url": "https://huggingface.co/kpakkiragari/PaperPilot-Qwen-0.5B-Instruct/resolve/main/model.safetensors"
+    },
+    {
       "id": "qwen2.5-coder",
       "name": "Qwen 2.5 Coder 1.5B",
       "description": "Fast & Lightweight local agent reasoning",

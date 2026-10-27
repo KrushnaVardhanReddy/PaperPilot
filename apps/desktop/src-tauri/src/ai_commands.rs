@@ -332,6 +332,15 @@ pub async fn get_available_models() -> Result<Vec<ModelInfo>, String> {
     let mut models = loaded_models.unwrap_or_else(|| {
         vec![
             ModelInfo {
+                id: "paperpilot-qwen-0.5b".to_string(),
+                name: "PaperPilot Qwen 0.5B (Official)".to_string(),
+                description: "Ultra-fast on-device neural assistant fine-tuned for 78+ PaperPilot tools & compound workflows. Zero cloud, sub-50ms.".to_string(),
+                size_mb: 988,
+                download_url: "https://huggingface.co/kpakkiragari/PaperPilot-Qwen-0.5B-Instruct/resolve/main/model.safetensors".to_string(),
+                local_path: None,
+                is_downloaded: false,
+            },
+            ModelInfo {
                 id: "qwen2.5-coder".to_string(),
                 name: "Qwen 2.5 Coder 1.5B".to_string(),
                 description: "Fast & Lightweight".to_string(),
