@@ -27,7 +27,6 @@
 |---|:---:|:---:|---|---|---|
 | **Task 122A** | `[Spec 122]` | P1 | Core / Optimizer | `feature/dev` | 🚀 **In-Flight in Jules**: [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345)<br>Hash-based indirect stream deduplication (`pdf_dedup_streams`) ported from `SimonBure/presse` with CMYK safety. |
 | **Task 125A** | `[Spec 125]` | P1 | Web / Standalone | `feature/dev` | 🎯 **In Local Progress**: `specs/125-...`<br>Air-gapped single-file `paperpilot-portable.html` distribution with inline base64 WASM bundle. |
-| **Task 126A** | `[Spec 126]` | P2 | Gateway / Ingestion | `feature/dev` | ✅ **Implemented and verified locally (unmerged)** on `feat/open-webui-tika-adapter`.<br>In-memory Tika 3/4 upload routes, root metadata arrays, shared Rust extraction runner, 5 core + 21 gateway tests passed, and real HTTP/MCP/custom-Tool smoke checks passed ([report](reports/TIKA_INGESTION_ADAPTER_REPORT.md)). |
 | **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
 | **Task 129A** | `[Spec 129]` | P2 | Quality / Fuzzing | `feature/dev` | 📋 **Backlog / Planned** (`specs/129-...`)<br>Malformed PDF fuzzing harness (circular xrefs, corrupted streams, memory safety). |
 
@@ -35,7 +34,12 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 128A (CI Supply Chain Hardening & Action SHA Pinning `[Spec 128]`, PR #274)**:
+1. **Task 126A (Open-WebUI & Apache Tika Ingestion Adapter `[Spec 126]`, PR #273)**:
+   - Implemented in-memory Open-WebUI Tika 3 (`PUT /tika/text`), Tika 4 (`PUT /tika/json/md`), and root metadata routes in `paperpilot-gateway`.
+   - Shared in-memory `run_extract_text_bytes` engine in `paperpilot-pdf` with Tokio `spawn_blocking` offloading.
+   - Includes Open-WebUI integration guide (`docs/integrations/open_webui.md`) and custom folder tool script.
+   - 5 core tests + 21 gateway tests passing cleanly.
+2. **Task 128A (CI Supply Chain Hardening & Action SHA Pinning `[Spec 128]`, PR #274)**:
    - Pinned all 3rd-party GitHub Actions in `release.yml`, `rust.yml`, and `security.yml` to immutable 40-character commit SHAs.
    - Replaced unverified `curl | sh` script for `wasm-pack` with `which wasm-pack || cargo install wasm-pack --locked`.
    - Added `.github/dependabot.yml` tracking `github-actions` updates weekly.
