@@ -619,6 +619,14 @@ pub enum Commands {
         #[arg(long, default_value = "true")]
         guides: bool,
     },
+    /// Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression
+    #[command(name = "pdf-dedup-streams")]
+    PdfDedupStreams {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Workflow {
         #[command(subcommand)]

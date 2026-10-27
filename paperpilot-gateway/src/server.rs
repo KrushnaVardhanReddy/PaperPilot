@@ -31,6 +31,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_dedup_streams,
         handlers::pdf_posterize,
         handlers::pdf_split_by_outline,
         handlers::pdf_merge_alternate,
@@ -127,6 +128,10 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route(
+            "/api/v1/pdf/dedup-streams",
+            post(handlers::pdf_dedup_streams),
+        )
         .route("/api/v1/pdf/posterize", post(handlers::pdf_posterize))
         .route(
             "/api/v1/pdf/merge-alternate",

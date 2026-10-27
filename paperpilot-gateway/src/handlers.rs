@@ -1891,3 +1891,23 @@ pub struct PdfPosterizeJsonRequest {
 pub async fn pdf_posterize(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_posterize".to_string()), req).await
 }
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct PdfDedupStreamsJsonRequest {
+    // Add specific options here if needed later
+}
+
+/// Lossless Stream Deduplication [Lossless hash-based indirect object stream deduplication & CMYK-safe image compression] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/dedup-streams",
+    request_body(content = PdfDedupStreamsJsonRequest, description = "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Lossless Stream Deduplication completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    ),
+    tag = "PDF Operations"
+)]
+pub async fn pdf_dedup_streams(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_dedup_streams".to_string()), req).await
+}
