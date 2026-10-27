@@ -23,6 +23,7 @@ tools/train-nlp/logs/
 !tools/slm-training/*.py
 tools/slm-training/dataset/
 tools/slm-training/*.jsonl
+tools/slm-training/output/
 __pycache__/
 venv/
 tests/e2e_fixtures/

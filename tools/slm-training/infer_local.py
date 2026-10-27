@@ -50,7 +50,6 @@ def ask(prompt: str, tokenizer, model, device):
         generated_ids = model.generate(
             **inputs,
             max_new_tokens=256,
-            temperature=0.1,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id,
         )
@@ -69,9 +68,9 @@ def main():
         "Please combine /data/contract.pdf and /data/appendix.pdf into /data/final_agreement.pdf",
         "Split /data/quarterly_report.pdf from page 1 to 5 as /data/summary.pdf",
         "Rotate all pages of /data/scanned_form.pdf by 90 degrees and save to /data/upright.pdf",
-        "Add a CONFIDENTIAL watermark across /data/blueprint.pdf with 45 degree angle and 0.5 opacity",
+        "Watermark /data/blueprint.pdf with text CONFIDENTIAL angle 45 opacity 0.5 to /data/watermarked.pdf",
         "Compress /data/large_manual.pdf with recommended quality -> /data/small_manual.pdf",
-        "Extract all plain text and tables from /data/financial_statement.pdf",
+        "Extract plain text from /data/financial_statement.pdf to /data/extracted.txt",
     ]
     
     print("\n" + "=" * 60)

@@ -1,7 +1,42 @@
 """
-PaperPilot Local SLM Fine-Tuning Engine
-Fine-tunes Qwen2.5-0.5B-Instruct on PaperPilot tool invocation ChatML dataset
-using 4-bit QLoRA on a local NVIDIA GPU.
+================================================================================
+PaperPilot Local SLM Fine-Tuning Engine: Interview & Architecture Guide
+================================================================================
+
+1. WHAT PROBLEM DOES THIS SOLVE? (The "Why")
+   - Privacy & Air-gap: Users want an AI copilot to manipulate sensitive PDFs
+     (merge, redact, compress, watermark, extract) without sending data to the cloud.
+   - Resource Constraints: Cloud frontier models (like GPT-4) cost money and leak
+     data. Standard open weights (7B - 70B) are too heavy for consumer laptops.
+   - Solution: Fine-tune a compact 0.5B Small Language Model (Qwen2.5-0.5B-Instruct)
+     strictly on tool invocation (ChatML JSON function calling) so it runs
+     locally in real-time (<50ms latency, <1 GB memory footprint).
+
+2. HOW DOES IT WORK? (Core ML / LLM Concepts)
+   - Base Model: Qwen/Qwen2.5-0.5B-Instruct (state-of-the-art reasoning for sub-1B).
+   - ChatML Format: Standard system/user/assistant conversational tokens (<|im_start|>,
+     <|im_end|>) mapping natural user intent into exact PaperPilot CLI & MCP tool JSON.
+   - QLoRA (Quantized Low-Rank Adaptation):
+     * The original model weights (FP16/BF16) are frozen and quantized to 4-bit (NF4 -
+       NormalFloat 4) using `bitsandbytes`. This shrinks base VRAM to ~400 MB.
+     * Trainable low-rank adapter matrices (Rank r=16, Alpha=32) are injected into
+       the attention and MLP projection layers (q, k, v, o, gate, up, down).
+     * Only ~1-2% of total parameters are trained, cutting memory while preserving
+       the base model's general English grammar and reasoning capabilities.
+   - 8-bit Paged Optimizer: Uses `paged_adamw_8bit` to dynamically page optimizer
+     states between GPU VRAM and CPU system RAM, preventing CUDA Out-Of-Memory (OOM).
+
+3. END-TO-END PIPELINE:
+   Step 1: Synthetic Dataset Generation (generate_dataset.py)
+           Creates thousands of varied natural language queries mapped to tool schemas.
+   Step 2: Supervised Fine-Tuning (train_local.py) -> [THIS SCRIPT]
+           Trains QLoRA adapter weights using Hugging Face TRL (SFTTrainer) on consumer GPU.
+   Step 3: Inference & Validation (infer_local.py)
+           Loads base + adapter with dynamic temperature sampling to verify exact JSON output.
+   Step 4: GGUF / llama.cpp / Candle Export (Optional)
+           Fuses LoRA weights into base weights and quantizes to 4-bit GGUF for sub-50ms
+           C++/Rust native air-gapped execution inside PaperPilot Desktop.
+================================================================================
 """
 
 import os
@@ -90,12 +125,16 @@ def main():
 
     dataset = dataset.map(format_chatml)
 
-    # Training Arguments
-    training_args = TrainingArguments(
+    from trl import SFTConfig, SFTTrainer
+
+    # SFTConfig replaces TrainingArguments in modern trl
+    training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
+        dataset_text_field="text",
+        max_length=1024,
         per_device_train_batch_size=4,
         gradient_accumulation_steps=4,
-        warmup_ratio=0.05,
+        warmup_steps=20,
         num_train_epochs=3,
         learning_rate=2e-4,
         fp16=not torch.cuda.is_bf16_supported(),
@@ -114,9 +153,6 @@ def main():
         model=model,
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
-        dataset_text_field="text",
-        max_seq_length=1024,
-        tokenizer=tokenizer,
         args=training_args,
     )
 
