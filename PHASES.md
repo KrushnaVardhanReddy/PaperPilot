@@ -46,6 +46,8 @@
 ## 🎯 Active Development Focus
 - **Production Milestone**: PR #267 merged into `main` with 78 verified tools, 100% clean security audit, and air-gapped supply chain protections.
 - **On-Device SLM (Task 84D / Spec 084)**: Completed 10,000-sample compound fine-tuning on RTX 4070. Weights fused and verified for multi-step chained parameter generation.
+- **OpenSSF Scorecard Hardening (`Phase 5.9.100` / `Spec 133`)**: In active development on `feat/openssf-scorecard-hardening` — establishing repository `SECURITY.md`, scoping GitHub workflow tokens to `permissions: read-all`, pinning action SHAs, and adding automated Scorecard SARIF workflow.
 - **Active Feature Freeze**: Codebase is feature-frozen. Development will resume strictly based on incoming user issues and community pull requests.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
+

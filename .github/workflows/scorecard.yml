@@ -1,0 +1,42 @@
+name: OpenSSF Scorecard Supply-Chain Security Gate
+
+on:
+  branch_protection_rule:
+  schedule:
+    # Run once a week at 00:00 on Sunday UTC
+    - cron: '0 0 * * 0'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed to upload the results to code-scanning dashboard
+      security-events: write
+      # Needed to publish results and get a badge (see publish_results below)
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard Security Analysis
+        uses: ossf/scorecard-action@f49aabe0b5e4dcc7352480f42f5d022db215f386 # v2.4.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@b6a472f63d85b9c78a3ac5e89422239fc15e9b3c # v3.28.1
+        with:
+          sarif_file: results.sarif
