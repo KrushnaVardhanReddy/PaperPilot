@@ -16,6 +16,7 @@ pub mod pdf_auto_rotate;
 pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
+pub mod pdf_dedup_streams;
 pub mod pdf_invert_colors;
 pub mod pdf_merge_alternate;
 pub mod pdf_nup;
@@ -468,6 +469,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             scale,
             guides,
         ),
+        Commands::PdfDedupStreams { input, output } => {
+            pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -733,6 +737,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_dedup_streams",
+                    "Preview",
+                    "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression",
                 ),
                 (
                     "pdf_posterize",

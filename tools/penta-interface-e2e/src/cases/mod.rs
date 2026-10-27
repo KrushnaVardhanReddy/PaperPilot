@@ -15,6 +15,7 @@ pub mod pdf_auto_rotate;
 pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
+pub mod pdf_dedup_streams;
 pub mod pdf_nup;
 pub mod pdf_overlay_underlay;
 pub mod pdf_posterize;

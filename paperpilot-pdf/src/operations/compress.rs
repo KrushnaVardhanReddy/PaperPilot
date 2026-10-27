@@ -96,6 +96,51 @@ impl PdfOperation for CompressOperation {
                     Err(_) => continue,
                 };
 
+                // Check for CMYK profile guard
+                let mut is_cmyk = false;
+                if let Ok(color_space_obj) = stream.dict.get(b"ColorSpace") {
+                    match color_space_obj {
+                        Object::Name(name) if name == b"DeviceCMYK" => {
+                            is_cmyk = true;
+                        }
+                        Object::Array(arr) if !arr.is_empty() => {
+                            #[allow(clippy::collapsible_if)]
+                            if let Some(Object::Name(name)) = arr.first() {
+                                if name == b"ICCBased" {
+                                    is_cmyk = true;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                if is_cmyk {
+                    // Do not decode/downsample CMYK images to preserve color integrity.
+                    // Just optionally compress with Flate if it's currently uncompressed or larger.
+                    let has_filter = stream.dict.has(b"Filter");
+                    if !has_filter {
+                        let original_len = stream.content.len();
+                        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                        #[allow(clippy::collapsible_if)]
+                        if encoder.write_all(&stream.content).is_ok() {
+                            if let Ok(compressed) = encoder.finish() {
+                                if compressed.len() < original_len {
+                                    stream.content = compressed;
+                                    stream
+                                        .dict
+                                        .set("Filter", Object::Name(b"FlateDecode".to_vec()));
+                                    stream.dict.set(
+                                        "Length",
+                                        Object::Integer(stream.content.len() as i64),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
+
                 // We extract the color_space string into an owned vec so we don't hold the borrow
                 let color_space = stream
                     .dict
@@ -372,6 +417,64 @@ mod tests {
             "Expected at least 30% reduction, got {}%",
             reduction * 100.0
         );
+    }
+
+    #[test]
+    fn test_compress_cmyk_guard() {
+        let mut doc = Document::with_version("1.5");
+        let image_id = doc.new_object_id();
+
+        let mut image_stream_dict = Dictionary::new();
+        image_stream_dict.set("Type", Object::Name(b"XObject".to_vec()));
+        image_stream_dict.set("Subtype", Object::Name(b"Image".to_vec()));
+        image_stream_dict.set("Width", Object::Integer(100));
+        image_stream_dict.set("Height", Object::Integer(100));
+        image_stream_dict.set("ColorSpace", Object::Name(b"DeviceCMYK".to_vec()));
+        image_stream_dict.set("BitsPerComponent", Object::Integer(8));
+
+        // Create a raw CMYK image stream
+        let mut raw_bytes = Vec::with_capacity(100 * 100 * 4);
+        for _ in 0..(100 * 100) {
+            raw_bytes.push(0); // C
+            raw_bytes.push(255); // M
+            raw_bytes.push(255); // Y
+            raw_bytes.push(0); // K
+        }
+
+        let image_stream = Stream::new(image_stream_dict, raw_bytes);
+        doc.objects.insert(image_id, Object::Stream(image_stream));
+
+        let catalog_id = doc.new_object_id();
+        let mut catalog_dict = Dictionary::new();
+        catalog_dict.set("Type", Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("TestRef", Object::Reference(image_id));
+        doc.objects
+            .insert(catalog_id, Object::Dictionary(catalog_dict));
+        doc.trailer.set("Root", Object::Reference(catalog_id));
+
+        let mut lopdf_doc = LopdfDocument {
+            inner: doc,
+            original_bytes: None,
+        };
+        let op = CompressOperation::new(Some("low".to_string()));
+
+        let result = op.execute(&mut lopdf_doc);
+        assert!(result.is_ok());
+
+        // Verify the stream was NOT replaced with a JPEG (DCTDecode)
+        let obj = lopdf_doc.inner.get_object(image_id).unwrap();
+        if let Object::Stream(s) = obj {
+            let filter = s.dict.get(b"Filter");
+            if let Ok(Object::Name(name)) = filter {
+                // If it was flate compressed it's fine, but not DCTDecode
+                assert_ne!(name, b"DCTDecode");
+            }
+            // Ensure color space is still CMYK
+            let cs = s.dict.get(b"ColorSpace").unwrap();
+            assert_eq!(cs, &Object::Name(b"DeviceCMYK".to_vec()));
+        } else {
+            panic!("Object is not a stream");
+        }
     }
 
     #[test]

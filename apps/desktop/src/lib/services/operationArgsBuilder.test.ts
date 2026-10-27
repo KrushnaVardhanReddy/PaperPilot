@@ -305,4 +305,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.pdf'
         });
     });
+
+    it('builds args for pdf_dedup_streams', async () => {
+        const args = await buildOperationArgs('pdf_dedup_streams', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.pdf'
+        });
+    });
 });
