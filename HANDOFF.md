@@ -33,7 +33,16 @@
 
 ## 🏆 Recently Merged & Completed
 
-1. **Task 122A (Lossless Stream Deduplication & CMYK Safety `[Spec 122]`, PR #275)**:
+1. **Task 129A (Automated Malformed PDF Fuzzing & Security Regression Harness `[Spec 129]`, PR #276)**:
+   - Added `paperpilot-pdf/tests/malformed_regression.rs` verifying 5 distinct corruption attack vectors exit cleanly via `Result::Err` with zero panics or memory loops:
+     - Corrupted XRef table offsets & negative indices.
+     - Corrupted `%PDF-` header and random arbitrary byte sequences.
+     - Stream length mismatch and stream length bombs.
+     - Deeply nested dictionary hierarchies (stack overflow protection).
+     - Circular page tree loops (`/Parent` referencing self or cycle).
+   - Added `LopdfDocument::from_bytes(bytes)` in `paperpilot-pdf/src/document.rs` for fast zero-disk-I/O in-memory regression tests.
+   - Verified 100% clean compilation, 5/5 passing regression tests, and zero Semgrep findings (`make audit`).
+2. **Task 122A (Lossless Stream Deduplication & CMYK Safety `[Spec 122]`, PR #275)**:
    - Ported hash-based indirect stream deduplication from `SimonBure/presse` (`pdf_dedup_streams`) collapsing identical embedded images, fonts, and streams across pages into single indirect objects.
    - Enforced CMYK color-space safety guards in `paperpilot-pdf/src/operations/compress.rs`.
    - Verified 100% clean compilation, zero Semgrep findings, and 10/10 unmocked tests passing in `penta-interface-e2e`.
