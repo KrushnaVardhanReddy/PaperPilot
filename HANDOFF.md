@@ -70,30 +70,24 @@
 
 ## 📋 Resuming Checklist for Next Session
 
-Follow this exact sequence to resume work:
+When resuming a new session, follow these steps:
 
-1. **Check Jules In-Flight Sessions & PRs**:
-   - Check **Task 129A** (Fuzzing Harness): [Session 7317970073403118704](https://jules.google.com/session/7317970073403118704).
-   - Check **Task 122A** (Stream Deduplication): [Session 5396882730014124345](https://jules.google.com/session/5396882730014124345).
-   - Check **Task 84D** (Compound SLM Workflow Generation): Prompt ready in `jules_prompts/P5_9_73_slm_compound_workflows.txt`.
-   - Run `git fetch origin` to inspect any new PR branches.
-   - Validate and merge with `-j 2`:
-     ```bash
-     cargo test -p paperpilot-pdf --test malformed_regression -j 2
-     make audit
-     git push origin feature/dev
-     ```
+1. **Check for New User Issues or Community PRs**:
+   - Inspect GitHub Issues (filed via `.github/ISSUE_TEMPLATE/` bug and feature request forms).
+   - Inspect any incoming community PRs against `feature/dev`.
 
-2. **Trigger Retraining on RTX 4070 (Once Task 84D PR Merges)**:
-   - Generate expanded 10,000-sample balanced dataset:
-     ```bash
-     tools/slm-training/.venv/bin/python tools/slm-training/generate_dataset.py --count 10000 --compound-ratio 0.4 --output-dir tools/slm-training/dataset/
-     ```
-   - Kick off local fine-tuning run:
-     ```bash
-     tools/slm-training/.venv/bin/python tools/slm-training/train_local.py
-     ```
-   - Verify multi-step array generation with `infer_local.py`.
+2. **Current Repository & Model State**:
+   - **Production Release**: PR #267 merged into `main` (`c487810`).
+   - **Active Development Branch**: `feature/dev` (in sync with `main`).
+   - **Fine-Tuned SLM Weights**:
+     - LoRA adapter: `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`
+     - Fused model: `tools/slm-training/output/paperpilot-qwen-0.5b-merged/`
+     - Quick test: `tools/slm-training/.venv/bin/python tools/slm-training/infer_local.py`
+
+3. **If Implementing a User Request**:
+   - Follow Rule 7: Always update tool documentation in `apps/docs/src/content/docs/reference/tools/<tool>.md`.
+   - Run `python3 apps/docs/src/content/docs/reference/generate_handbook.py`.
+   - Run verification with memory-safe `-j 2`: `cargo test -p paperpilot-pdf --lib -j 2` and `make audit`.
 
 ---
 

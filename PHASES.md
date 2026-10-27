@@ -44,8 +44,8 @@
 ---
 
 ## 🎯 Active Development Focus
-- **Task 84D (Phase 5.9.73 / 5.9.99)**: Compound workflow dataset generation & visual pipeline editor for on-device Qwen-0.5B SLM.
-- **Task 122A (Phase 5.9.91)**: Lossless indirect stream deduplication & CMYK safety (`SimonBure/presse` port in Jules).
-- **Task 129A (Phase 5.9.98)**: Malformed PDF adversarial regression test suite in Jules (`malformed_regression.rs`).
+- **Production Milestone**: PR #267 merged into `main` with 78 verified tools, 100% clean security audit, and air-gapped supply chain protections.
+- **On-Device SLM (Task 84D / Spec 084)**: Completed 10,000-sample compound fine-tuning on RTX 4070. Weights fused and verified for multi-step chained parameter generation.
+- **Active Feature Freeze**: Codebase is feature-frozen. Development will resume strictly based on incoming user issues and community pull requests.
 
-For session handoff and active Jules dispatch status, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
+For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
