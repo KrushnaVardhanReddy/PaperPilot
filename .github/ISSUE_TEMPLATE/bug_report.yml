@@ -1,0 +1,70 @@
+name: "🐛 Bug Report"
+description: "File a bug report to help us improve PaperPilot"
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! 
+        PaperPilot is committed to 100% local, air-gapped, zero-panic PDF processing.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: What happened when executing this tool or operation?
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface / Interface
+      description: Which PaperPilot surface encountered the issue?
+      options:
+        - "CLI (`paperpilot ...`)"
+        - "MCP Server (`paperpilot-mcp`)"
+        - "Local REST Gateway (`paperpilot-gateway` / port 7823)"
+        - "Browser WASM (usepaperpilot.com / portable HTML)"
+        - "Desktop App (Tauri)"
+        - "Core Rust Crates (`paperpilot-pdf`, `paperpilot-core`)"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the issue.
+      placeholder: |
+        1. Run CLI command: `paperpilot ...` or MCP call: `...`
+        2. Input PDF characteristics (e.g. page count, scanned, CMYK, encrypted):
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Logs / Error Output
+      description: Please copy and paste any relevant terminal output, stack traces, or MCP logs.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: PaperPilot Version / Git Commit
+      description: E.g., `v0.6.0`, commit hash `dab8c4e`, or `paperpilot --version`.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating System & Hardware
+      description: E.g., Ubuntu 24.04 (x86_64), macOS Sonoma 14.5 (Apple Silicon M3), Windows 11.
+    validations:
+      required: true

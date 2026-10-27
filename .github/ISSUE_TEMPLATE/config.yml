@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 Discussions & Community Q&A"
+    url: "https://github.com/KrushnaVardhanReddy/PaperPilot/discussions"
+    about: "Ask questions, share workflows, or discuss agent integrations."
+  - name: "📖 Documentation & Integrations"
+    url: "https://github.com/KrushnaVardhanReddy/PaperPilot/tree/feature/dev/docs"
+    about: "Setup guides for coding agents, Open-WebUI, and local REST API."
