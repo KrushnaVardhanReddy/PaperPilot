@@ -20,7 +20,8 @@ We are deeply grateful to our open-source contributors and the community members
 
 ---
 
-### Community Feature Prompters & UX Feedback (Hacker News)
+### Community Feature Prompters & UX Feedback
+- **[@setop](https://github.com/setop) (GitHub Issue [#266](https://github.com/KrushnaVardhanReddy/PaperPilot/issues/266))**: Reported the distracting webapp motion sickness issue caused by dynamic main pane movement on the web playground, helping us stabilize the hero layout and eliminate jarring viewport displacement.
 - **`mkl` (Hacker News)**: Reported mobile UI layout bug on Firefox for Android where tool parameter upload boxes and dialogs were cramped and required awkward vertical/horizontal scrolling. Prompted **Task 124A / Spec 124** (Overhauled `HeroPlayground.svelte` and `OperationsView.svelte` with fluid drawer layouts and >=44px touch targets).
 - **`spwa4` (Hacker News)**: Prompted **Task 125A / Spec 125** — Requesting a 100% self-contained, air-gapped `paperpilot-portable.html` distribution with inline base64 WASM for defense and regulated legal environments without local web servers.
 - **`Tepix` (Hacker News)**: Prompted **Task 126A / Spec 126** — Requesting an in-memory sub-15ms Apache Tika drop-in replacement for Open-WebUI without JVM or Python runtimes.
