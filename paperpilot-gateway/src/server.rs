@@ -1,7 +1,7 @@
 use crate::{handlers, sse};
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
@@ -11,6 +11,11 @@ use utoipa_swagger_ui::SwaggerUi;
 #[openapi(
     paths(
         handlers::health,
+        handlers::tika,
+        handlers::tika_text,
+        handlers::tika_markdown,
+        handlers::tika_rmeta,
+        handlers::tika_rmeta_api,
         handlers::mcp_exec,
         handlers::merge,
         handlers::split,
@@ -59,6 +64,9 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::HealthResponse,
             handlers::McpExecRequest,
             handlers::ApiResponse,
+            handlers::TikaMetadata,
+            handlers::TikaMarkdownMetadata,
+            handlers::TikaPdfBody,
             handlers::MergeJsonRequest,
             handlers::SplitJsonRequest,
             handlers::CompressJsonRequest,
@@ -80,6 +88,7 @@ use utoipa_swagger_ui::SwaggerUi;
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
+        (name = "Document Ingestion", description = "In-memory PDF extraction for Open-WebUI and Tika-compatible clients"),
         (name = "Tools", description = "Discovery and capability listing across all 52 tools"),
         (name = "MCP", description = "Direct Model Context Protocol execution endpoint for 50+ tools"),
         (name = "PDF Operations", description = "High-performance PDF manipulation endpoints supporting JSON and multipart/form-data"),
@@ -111,6 +120,21 @@ pub async fn build_app() -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/tika", put(handlers::tika))
+        .route("/tika/text", put(handlers::tika_text))
+        .route("/tika/json/md", put(handlers::tika_markdown))
+        .route(
+            "/rmeta/text",
+            put(handlers::tika_rmeta).post(handlers::tika_rmeta),
+        )
+        .route(
+            "/tika/rmeta/text",
+            put(handlers::tika_rmeta).post(handlers::tika_rmeta),
+        )
+        .route(
+            "/api/v1/tika/rmeta/text",
+            post(handlers::tika_rmeta_api).put(handlers::tika_rmeta),
+        )
         .route("/api/v1/tools", get(handlers::list_tools))
         .route("/mcp/sse", get(sse::sse_handler))
         .route("/mcp/messages", post(sse::messages_handler))

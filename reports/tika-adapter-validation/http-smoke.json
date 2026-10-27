@@ -1,0 +1,26 @@
+{
+  "fixture_bytes": 874,
+  "fixture_pages": 2,
+  "http": [
+    "PUT /tika/text: passed",
+    "PUT /tika/json/md: passed",
+    "PUT /rmeta/text: passed",
+    "POST /tika/rmeta/text: passed",
+    "POST /api/v1/tika/rmeta/text: passed",
+    "PUT /api/v1/tika/rmeta/text: passed",
+    "PUT /tika text/plain: passed"
+  ],
+  "mcp_extract_text": "passed via real gateway MCP dispatch",
+  "latency": {
+    "profile": "dev",
+    "warmup": 5,
+    "samples": 20,
+    "median_ms": 2.419,
+    "p95_ms": 3.163,
+    "scope": "two-page synthetic PDF over local HTTP; not a production SLA"
+  },
+  "custom_tool": {
+    "real_upload": "passed",
+    "path_and_extension_rejections": 3
+  }
+}

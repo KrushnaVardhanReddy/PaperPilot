@@ -19,6 +19,10 @@ PaperPilot is a PDF and document toolkit written in Rust. The same engine runs a
 
 No Chromium, no C++ runtime, no cloud calls.
 
+**Open-WebUI integration (source builds):** use the local gateway as a
+PDF-only Tika-compatible extraction server. See the
+[Open-WebUI setup guide](docs/integrations/open_webui.md).
+
 ---
 
 ## Quick start

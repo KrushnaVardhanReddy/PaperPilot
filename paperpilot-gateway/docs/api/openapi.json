@@ -487,6 +487,51 @@
         ],
         "type": "object"
       },
+      "TikaMarkdownMetadata": {
+        "description": "Tika 4 renamed the content key to `tk:content`.",
+        "properties": {
+          "Content-Type": {
+            "type": "string"
+          },
+          "tk:content": {
+            "type": "string"
+          },
+          "xmpTPg:NPages": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tk:content",
+          "Content-Type",
+          "xmpTPg:NPages"
+        ],
+        "type": "object"
+      },
+      "TikaMetadata": {
+        "description": "Tika 3 / recursive-metadata response, consumed by Open-WebUI's Tika loader.",
+        "properties": {
+          "Content-Type": {
+            "type": "string"
+          },
+          "X-TIKA:content": {
+            "type": "string"
+          },
+          "xmpTPg:NPages": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-TIKA:content",
+          "Content-Type",
+          "xmpTPg:NPages"
+        ],
+        "type": "object"
+      },
+      "TikaPdfBody": {
+        "description": "Binary PDF upload schema for Swagger/OpenAPI.",
+        "format": "binary",
+        "type": "string"
+      },
       "WatermarkJsonRequest": {
         "properties": {
           "angle": {
@@ -1694,6 +1739,39 @@
         ]
       }
     },
+    "/api/v1/tika/rmeta/text": {
+      "post": {
+        "operationId": "tika_rmeta_api",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TikaMetadata"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Tika-compatible root PDF metadata array"
+          }
+        },
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
     "/api/v1/tools": {
       "get": {
         "operationId": "list_tools",
@@ -1799,12 +1877,155 @@
           "Health"
         ]
       }
+    },
+    "/rmeta/text": {
+      "put": {
+        "operationId": "tika_rmeta",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TikaMetadata"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Root PDF metadata array; attachments are not parsed"
+          }
+        },
+        "summary": "Tika's recursive metadata contract is an array; this adapter returns the root PDF only.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika": {
+      "put": {
+        "operationId": "tika",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Page-ordered text with detected Markdown tables"
+          },
+          "400": {
+            "description": "Empty body"
+          },
+          "413": {
+            "description": "Body exceeds 100 MiB"
+          },
+          "415": {
+            "description": "Only raw PDF uploads are supported"
+          },
+          "422": {
+            "description": "PDF could not be parsed"
+          }
+        },
+        "summary": "Extract a raw PDF as UTF-8 text, or a metadata object with Accept: application/json.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika/json/md": {
+      "put": {
+        "operationId": "tika_markdown",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TikaMarkdownMetadata"
+                }
+              }
+            },
+            "description": "Open-WebUI Tika 4 metadata"
+          }
+        },
+        "summary": "Open-WebUI's Tika 4 loader uses a different route and content key.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
+    },
+    "/tika/text": {
+      "put": {
+        "operationId": "tika_text",
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "$ref": "#/components/schemas/TikaPdfBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TikaMetadata"
+                }
+              }
+            },
+            "description": "Open-WebUI Tika 3 metadata"
+          }
+        },
+        "summary": "Open-WebUI's Tika 3 loader expects an object even without an Accept header.",
+        "tags": [
+          "Document Ingestion"
+        ]
+      }
     }
   },
   "tags": [
     {
       "description": "Gateway health check and tool status",
       "name": "Health"
+    },
+    {
+      "description": "In-memory PDF extraction for Open-WebUI and Tika-compatible clients",
+      "name": "Document Ingestion"
     },
     {
       "description": "Discovery and capability listing across all 52 tools",
