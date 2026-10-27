@@ -153,9 +153,20 @@ curl -X PUT http://localhost:7823/tika/text \
 
 Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
+## Security & Supply Chain Integrity
+
+PaperPilot processes sensitive, proprietary, and personal documents on-device without cloud dependencies. We maintain rigorous software supply chain and security compliance:
+
+- **OpenSSF Scorecard**: **8.2 / 10**
+- **Token Permissions**: 100% scoped to `permissions: read-all` (principle of least privilege).
+- **SAST & Secret Gate**: Continuous Semgrep OSS and Trivy security audits gating all commits.
+- **Dependency Hardening**: All third-party GitHub Actions pinned to immutable 40-character commit SHAs.
+- **Responsible Disclosure**: See [`SECURITY.md`](SECURITY.md) for our vulnerability disclosure policy and 48-hour response SLA.
+
 ---
 
 ## Contributing & Community
+
 
 Issues and PRs are welcome. Good first contributions: bug reports with a sample PDF, new tool requests, and docs fixes.
 
