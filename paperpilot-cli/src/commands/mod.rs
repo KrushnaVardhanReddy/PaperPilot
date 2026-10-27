@@ -3,6 +3,7 @@
 #![allow(clippy::ptr_arg)]
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
+pub mod ask;
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
@@ -60,6 +61,22 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             Ok(())
         }
         // Group A
+        Commands::Ask {
+            prompt,
+            input,
+            yes,
+            offline,
+            output,
+            dry_run,
+        } => ask::handle_ask(
+            prompt,
+            input.as_deref(),
+            *yes,
+            *offline,
+            output.as_deref(),
+            *dry_run,
+            false, // matches_json, to be fully precise we might need this from cli if it was passed, but the cli definition doesn't have a json flag within the subcommand, so false for now, or check global args. We'll stick to false or modify ask to not need it.
+        ),
         Commands::Merge { input, output } => {
             let resolved: Result<Vec<_>, _> = input.iter().map(|p| resolve_input_path(p)).collect();
             group_a::handle_merge(&resolved?, output)
