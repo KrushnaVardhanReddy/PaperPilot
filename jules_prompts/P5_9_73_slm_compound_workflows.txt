@@ -1,0 +1,83 @@
+# Task: [P84_T84D: Compound Pipeline Recipes, Multi-Step Workflows & Chained SLM Dataset Expansion]
+
+## 1. Role & Objective
+You are an expert Machine Learning, Python, and Systems engineer working on PaperPilot's on-device SLM fine-tuning engine.
+Your objective is to implement **Task 84D / Phase 5.9.73** (`specs/084-on-device-document-slm-qwen-finetuning/task_84d.md`).
+
+You must expand the ChatML synthetic dataset engine in `tools/slm-training/` so that PaperPilot's fine-tuned model can reliably understand and generate complex, multi-step compound workflows (e.g. Legal Discovery: Bates Stamp ➔ Watermark ➔ PII Scan; Scan Cleanup: Blank Page Removal ➔ Auto-Rotate ➔ Compress).
+
+Make this implementation clean, robust, and fully tested with zero regressions.
+
+---
+
+## 2. Technical Context & Impacted Files
+- `tools/slm-training/templates.py`: Expand `COMPOUND_WORKFLOW_TEMPLATES` with at least 15 rich, real-world workflows and multi-tier phrasing.
+- `tools/slm-training/generate_dataset.py`:
+  - Update default dataset ratio: **50% single-tool**, **40% compound multi-step**, **10% negative guardrail refusals**.
+  - Add CLI argument `--compound-ratio` (default `0.4`).
+  - Upgrade `generate_compound_workflow_record()` to properly model parameter chaining (`/tmp/step_1.pdf` ➔ `/tmp/step_2.pdf` ➔ final output file).
+  - Update `SYSTEM_PROMPT`:
+    ```python
+    SYSTEM_PROMPT = "You are PaperPilot's on-device neural assistant. Convert user instructions into strict JSON tool calls. For single operations, emit a single JSON object. For multi-step workflows, emit a JSON array of tool calls chained in execution order."
+    ```
+- `tools/slm-training/infer_local.py`: Align `ask()` prompt with the updated `SYSTEM_PROMPT`.
+- `tools/slm-training/test_dataset_generator.py`: Add comprehensive unit tests covering the new compound templates, array schema output, intermediate parameter chaining, and ratio distribution.
+
+---
+
+## 3. Detailed Requirements
+
+### A. Compound Workflow Recipes in `templates.py`
+Add at least 15 real-world compound workflow templates covering diverse industry use cases in `COMPOUND_WORKFLOW_TEMPLATES`:
+1. **Legal Production**: `pdf_bates` ➔ `pdf_watermark` ➔ `document_pii_scan`
+2. **Clean & OCR Scanned Document**: `pdf_remove_blank` ➔ `pdf_auto_rotate` ➔ `pdf_ocr`
+3. **Redact & Sanitize**: `pdf_redact` ➔ `pdf_sanitize` ➔ `pdf_linearize`
+4. **Secure Distribution**: `pdf_page_numbers` ➔ `pdf_encrypt`
+5. **Print Preparation**: `pdf_nup` ➔ `pdf_crop` ➔ `pdf_compress`
+6. **Collate & Optimize**: `pdf_merge` ➔ `pdf_compress`
+7. **Document Forensics**: `pdf_validate_signatures` ➔ `pdf_extract_tables` ➔ `pdf_audit_log`
+8. **Digital Book Production**: `pdf_split_scanned_book` ➔ `pdf_auto_rotate` ➔ `pdf_booklet`
+9. **Office Archival**: `office_modernize_legacy` ➔ `pdf_to_markdown` ➔ `pdf_compress`
+10. **Dual-Document Interleaving**: `pdf_merge_alternate` ➔ `pdf_page_numbers`
+11. **Form Processing**: `pdf_flatten_annotations` ➔ `pdf_stamp` ➔ `pdf_encrypt`
+12. **Presentation Export**: `pdf_to_pptx` ➔ `office_extract_text`
+13. **Batch Web Optimization**: `pdf_repair` ➔ `pdf_compress` ➔ `pdf_linearize`
+14. **Bilingual Document Split**: `pdf_split_by_outline` ➔ `pdf_extract_text`
+15. **Visual Comparison & Inversion**: `pdf_compare_visual` ➔ `pdf_invert_colors`
+
+For each workflow, provide varied natural language templates:
+- Formal / direct: *"Step 1: ..., Step 2: ..."*
+- Goal-oriented: *"Prepare this scan for archival: remove blank pages, rotate upright, and compress to {output}."*
+- Terse / developer: *"pii_scan -> redact -> sanitize on {input} output to {output}"*
+
+### B. Parameter Chaining Engine in `generate_dataset.py`
+In `generate_compound_workflow_record()`:
+- Correctly wire intermediate files:
+  - Tool 0 takes `main_input` (or `inputs` list for merge) and outputs to `/tmp/inter_1.pdf`.
+  - Tool $i$ takes `/tmp/inter_{i}.pdf` as input and outputs to `/tmp/inter_{i+1}.pdf`.
+  - Final Tool outputs to `main_output`.
+- Extract and retain parameters mentioned in the prompt (passwords, watermark text, rotation angle, Bates prefix).
+- Assistant output must be a strict JSON string representing a Python list: `json.dumps(steps)`.
+
+### C. Distribution & Balancing in `generate_dataset.py`
+- Ratios:
+  - If random < `negative_ratio` (default `0.1`): generate negative refusal.
+  - Elif random < `negative_ratio + compound_ratio` (default `0.1 + 0.4 = 0.5`): generate compound workflow record.
+  - Else: generate single tool record.
+
+### D. Unit Tests in `test_dataset_generator.py`
+Add pytest test functions:
+1. `test_compound_workflow_array_schema()`: Assert generated compound records parse as valid JSON arrays with $\ge 2$ tool dictionaries.
+2. `test_intermediate_parameter_chaining()`: Assert the output of step $N$ matches the input of step $N+1$, and the last step writes to the target output.
+3. `test_dataset_distribution_ratios()`: Generate 500 samples with `--compound-ratio 0.4` and verify compound records make up $40\% \pm 5\%$.
+
+---
+
+## 4. Verification & Clean Code Instructions
+Run the tests locally before submitting your PR:
+```bash
+python3 -m pytest tools/slm-training/test_dataset_generator.py -v
+python3 tools/slm-training/generate_dataset.py --count 50 --output-dir /tmp/test_slm_compound --sample 3
+```
+- Commit message format: `feat(slm): add 15 compound workflow recipes and chained parameter generation (Task 84D)`
+- Branch target: `feature/dev`
