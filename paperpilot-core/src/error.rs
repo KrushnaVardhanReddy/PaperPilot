@@ -2,6 +2,10 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum PdfError {
+    #[error("Condition failed: {0}")]
+    ConditionFailed(String),
+    #[error("Inspection failure: {0}")]
+    InspectionFailure(String),
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("Parse error: {0}")]

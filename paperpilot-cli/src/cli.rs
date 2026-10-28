@@ -751,6 +751,21 @@ pub enum WorkflowSubcommand {
         #[arg(long)]
         recipe: Option<PathBuf>,
     },
+    /// Export a workflow recipe to a file
+    Export {
+        /// ID or name of the preset
+        preset: String,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        /// Output format: json or toml
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
+    /// Import and save a workflow recipe locally
+    Import {
+        /// Path to the recipe file (.ppflow, .json, .toml)
+        path: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]

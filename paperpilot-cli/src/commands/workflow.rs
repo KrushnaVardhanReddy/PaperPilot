@@ -56,6 +56,40 @@ pub fn handle_workflow_command(
             preset,
             recipe,
         }) => run_workflow(input, output, preset.as_deref(), recipe.as_deref()),
+        Some(WorkflowSubcommand::Export { preset, output, format }) => {
+            let wf = resolve_workflow(Some(preset), None)?;
+            let content = if format == "toml" || format == "ppflow" {
+                toml::to_string_pretty(&wf).map_err(|e| PdfError::ParseError(e.to_string()))?
+            } else {
+                serde_json::to_string_pretty(&wf).map_err(|e| PdfError::ParseError(e.to_string()))?
+            };
+
+            if let Some(out_path) = output {
+                fs::write(out_path, content)?;
+                println!("Workflow recipe exported to {}", out_path.display());
+            } else {
+                println!("{}", content);
+            }
+            Ok(())
+        }
+        Some(WorkflowSubcommand::Import { path }) => {
+            let wf = resolve_workflow(None, Some(path))?;
+
+            let mut home_dir = dirs::home_dir().ok_or_else(|| {
+                PdfError::IoError(std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found"))
+            })?;
+            home_dir.push(".paperpilot");
+            home_dir.push("workflows");
+
+            fs::create_dir_all(&home_dir)?;
+
+            let dest = home_dir.join(format!("{}.ppflow", wf.id));
+            let content = toml::to_string_pretty(&wf).map_err(|e| PdfError::ParseError(e.to_string()))?;
+            fs::write(&dest, content)?;
+
+            println!("Workflow '{}' successfully imported and saved to {}", wf.name, dest.display());
+            Ok(())
+        }
         None => {
             // Direct top-level usage
             if let (Some(in_path), Some(out_path)) = (input, output) {
@@ -80,8 +114,15 @@ fn resolve_workflow(preset: Option<&str>, recipe: Option<&Path>) -> OperationRes
             .ok_or_else(|| PdfError::InvalidInput(format!("Preset not found: {}", preset_name)))
     } else if let Some(recipe_path) = recipe {
         let content = fs::read_to_string(recipe_path)?;
-        let wf: SavedWorkflow = serde_json::from_str(&content)
-            .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?;
+        let ext = recipe_path.extension().and_then(|s| s.to_str()).unwrap_or("");
+
+        let wf: SavedWorkflow = if ext == "toml" || ext == "ppflow" {
+            toml::from_str(&content)
+                .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe TOML/PPFLOW: {}", e)))?
+        } else {
+            serde_json::from_str(&content)
+                .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?
+        };
         Ok(wf)
     } else {
         Err(PdfError::InvalidInput(
@@ -100,10 +141,28 @@ fn run_workflow(
     let input_bytes = fs::read(input)?;
     let (out_bytes, report) = run_workflow_bytes(&input_bytes, &wf)?;
     fs::write(output, out_bytes)?;
-    println!(
-        "Workflow '{}' completed successfully in {}ms ({} steps, output: {} bytes)",
-        report.workflow_name, report.duration_ms, report.steps_completed, report.output_bytes_len
-    );
+
+    println!("Execution Receipt for '{}'", report.workflow_name);
+    println!("Status: {:?}", report.status);
+    println!("Steps Total: {}", report.steps_total);
+    println!("Steps Completed: {}", report.steps_completed);
+    println!("Steps Skipped: {}", report.steps_skipped);
+    println!("Steps Stopped: {}", report.steps_stopped);
+    println!("Steps Unreached: {}", report.steps_unreached);
+    println!("Duration: {}ms", report.duration_ms);
+    println!("Output Size: {} bytes", report.output_bytes_len);
+
+    if !report.stages.is_empty() {
+        println!("\nStage Details:");
+        for stage in &report.stages {
+            print!("  [{:?}] {} ({}ms)", stage.status, stage.op, stage.duration_ms);
+            if let Some(reason) = &stage.reason {
+                print!(" - Reason: {}", reason);
+            }
+            println!();
+        }
+    }
+
     Ok(())
 }
 
