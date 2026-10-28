@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -34,6 +34,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
+    #[cfg(feature = "pdf")]
+    FillBatch(FillBatchArgs),
     /// Generate shell completions
     Completions {
         #[arg(value_enum)]
@@ -700,6 +703,30 @@ pub enum Commands {
         #[command(subcommand)]
         command: crate::commands::office::OfficeCommands,
     },
+}
+
+#[derive(Args, Debug)]
+pub struct FillBatchArgs {
+    /// Local AcroForm PDF template (text fields and checkboxes)
+    #[arg(long)]
+    pub template: PathBuf,
+    /// UTF-8 CSV with headers or a JSON array of record objects
+    #[arg(long)]
+    pub data: PathBuf,
+    #[arg(long)]
+    pub output_dir: PathBuf,
+    /// Output filename tokens: {row.column}, {date}, {index}, {index:04}
+    #[arg(long, default_value = "{index:04}.pdf")]
+    pub name_template: String,
+    /// Optional JSON object mapping PDF field names to input column names
+    #[arg(long)]
+    pub field_map: Option<PathBuf>,
+    /// Retain interactive fields instead of flattening their appearances
+    #[arg(long)]
+    pub keep_editable: bool,
+    /// Override the UTC batch date (YYYY-MM-DD), useful for repeatable runs
+    #[arg(long)]
+    pub date: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]

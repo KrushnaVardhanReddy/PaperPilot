@@ -8,6 +8,9 @@ build/
 *.pdf
 !tests/fixtures/*.pdf
 !paperpilot-pdf/tests/fixtures/*.pdf
+!reports/fill-batch-validation/template.pdf
+!reports/fill-batch-validation/filled-flattened.pdf
+!reports/fill-batch-validation/filled-editable.pdf
 pricing_strategy.md
 COMPETITORS.md
 v1_launch_plan.md

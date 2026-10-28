@@ -8,8 +8,8 @@ sidebar:
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### What it does
-**Bakes interactive form fields, signatures, and annotations directly into the page content.**  
-Converts editable form inputs into static vector graphics so they can no longer be edited, moved, or altered.
+**Paints AcroForm widget appearances into page content and removes the interactive form fields.**
+Preserves existing page resources and unrelated annotations. Missing appearances for supported text fields and checkboxes are generated from their values. Hidden widgets are removed without drawing their values. Existing normal appearances, including transformed appearance boxes, retain their placement. This operation does not remove or flatten unrelated annotation types and does not establish signature validity.
 
 ### CLI
 ```bash

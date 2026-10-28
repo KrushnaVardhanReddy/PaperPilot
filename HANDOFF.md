@@ -27,9 +27,19 @@
 We are systematically closing out all remaining Community gaps in **Phase 4 (AI Layer)** and **Phase 3 (Desktop & Mobile)** in this exact order:
 
 | **1** | **Task 4.5** | Phase 4.5.1 / Spec 134 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feature/dev` | ✅ **Completed & Merged (PR #291)** |
-| **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten, and write template tokens `{row.name}_{date}.pdf`. | `feat/cli-fill-batch-task-4-7-4` | 📋 **Next Up** |
+| **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten, and write template tokens `{row.name}_{date}.pdf`. | `feat/cli-fill-batch-task-4-7-4` | ✅ **Implemented locally; pending review** — shared form appearances, CSV/JSON rows, mapping, safe filenames and per-row receipts. See `reports/CLI_FILL_BATCH_REPORT.md`. |
 | **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feat/conditional-pipeline-engine-task-4-7-6` | 📋 Scheduled |
 | **4** | **Task 3.4.11** | Phase 3.4.11 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui` | 📋 Scheduled |
+
+---
+
+## Local Task 4.7.4 validation
+
+- Working branch: `feat/cli-fill-batch-task-4-7-4`, based on `origin/feature/dev` at `51c59fd`. This work is independent of the SLM stabilization PR #292.
+- `paperpilot fill-batch` fills one AcroForm PDF per CSV/JSON record; default outputs have static widget appearances. `--keep-editable`, `--field-map`, `--name-template` and `--date` are supported.
+- A batch continues after row errors, never overwrites existing PDFs/receipts, and returns a nonzero exit code if any row fails. `--json` emits one structured result including the batch receipt.
+- PDF filling, hierarchical/UTF-16 field reading and form flattening share the core implementation in `paperpilot-pdf/src/operations/form_fill.rs`. Existing page resources and unrelated annotations are preserved.
+- Validation and limitations are recorded in [the mail merge report](reports/CLI_FILL_BATCH_REPORT.md). No MCP/REST batch endpoints or desktop batch UI were added; those remain separate tasks.
 
 ---
 

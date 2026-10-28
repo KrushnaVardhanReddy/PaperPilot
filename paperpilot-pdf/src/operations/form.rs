@@ -31,66 +31,8 @@ impl PdfOperation for ReadFormOperation {
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
-
-        let catalog = doc
-            .inner
-            .catalog()
-            .map_err(|_| PdfError::ParseError("Missing Document Catalog".into()))?;
-
-        let acroform_ref = match catalog.get(b"AcroForm") {
-            Ok(Object::Reference(id)) => *id,
-            Ok(Object::Dictionary(_)) => {
-                return Err(PdfError::ParseError(
-                    "Inline AcroForm dict not fully supported".into(),
-                ));
-            }
-            _ => {
-                let mut map = self.extracted_fields.lock().unwrap();
-                *map = Some(HashMap::new());
-                return Ok(());
-            }
-        };
-
-        let acroform = doc
-            .inner
-            .get_dictionary(acroform_ref)
-            .map_err(|_| PdfError::ParseError("Failed to get AcroForm dictionary".into()))?;
-
-        let mut fields_map = HashMap::new();
-
-        if let Ok(Object::Array(fields)) = acroform.get(b"Fields") {
-            for field_obj in fields {
-                if let Object::Reference(field_id) = field_obj {
-                    if let Ok(field_dict) = doc.inner.get_dictionary(*field_id) {
-                        if let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
-                            let name = String::from_utf8_lossy(name_bytes).to_string();
-
-                            let value = if let Ok(v) = field_dict.get(b"V") {
-                                match v {
-                                    Object::String(val_bytes, _) => {
-                                        String::from_utf8_lossy(val_bytes).to_string()
-                                    }
-                                    Object::Name(name_bytes) => {
-                                        String::from_utf8_lossy(name_bytes).to_string()
-                                    }
-                                    _ => "".to_string(),
-                                }
-                            } else if let Ok(Object::Name(as_bytes)) = field_dict.get(b"AS") {
-                                String::from_utf8_lossy(as_bytes).to_string()
-                            } else {
-                                "".to_string()
-                            };
-
-                            fields_map.insert(name, value);
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut map = self.extracted_fields.lock().unwrap();
-        *map = Some(fields_map);
-
+        let fields = super::form_fill::read_fields(&doc.inner)?;
+        *self.extracted_fields.lock().unwrap() = Some(fields);
         Ok(())
     }
 }
@@ -112,78 +54,7 @@ impl PdfOperation for FillFormOperation {
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
-
-        let catalog = doc
-            .inner
-            .catalog()
-            .map_err(|_| PdfError::ParseError("Missing Document Catalog".into()))?;
-
-        let acroform_ref = match catalog.get(b"AcroForm") {
-            Ok(Object::Reference(id)) => *id,
-            _ => {
-                // Gracefully skip filling if AcroForm is missing
-                return Ok(());
-            }
-        };
-
-        let mut field_ids = Vec::new();
-        if let Ok(acroform) = doc.inner.get_dictionary(acroform_ref) {
-            if let Ok(Object::Array(fields)) = acroform.get(b"Fields") {
-                for field_obj in fields {
-                    if let Object::Reference(field_id) = field_obj {
-                        field_ids.push(*field_id);
-                    }
-                }
-            }
-        }
-
-        let mut fields_to_update = Vec::new();
-
-        for field_id in field_ids {
-            if let Ok(field_dict) = doc.inner.get_dictionary(field_id) {
-                if let Ok(Object::String(name_bytes, _)) = field_dict.get(b"T") {
-                    let name = String::from_utf8_lossy(name_bytes).to_string();
-                    if let Some(new_value) = self.values.get(&name) {
-                        fields_to_update.push((field_id, new_value.clone()));
-                    }
-                }
-            }
-        }
-
-        for (field_id, new_value) in fields_to_update {
-            if let Ok(field_dict) = doc
-                .inner
-                .get_object_mut(field_id)
-                .and_then(Object::as_dict_mut)
-            {
-                let is_checkbox = if let Ok(Object::Name(ft)) = field_dict.get(b"FT") {
-                    ft == b"Btn"
-                } else {
-                    false
-                };
-
-                if is_checkbox {
-                    field_dict.set("V", Object::Name(new_value.clone().into_bytes()));
-                    field_dict.set("AS", Object::Name(new_value.clone().into_bytes()));
-                } else {
-                    field_dict.set(
-                        "V",
-                        Object::String(new_value.clone().into_bytes(), StringFormat::Literal),
-                    );
-                }
-            }
-        }
-
-        // Set NeedAppearances to true so the viewer renders the filled values
-        if let Ok(acroform) = doc
-            .inner
-            .get_object_mut(acroform_ref)
-            .and_then(Object::as_dict_mut)
-        {
-            acroform.set("NeedAppearances", Object::Boolean(true));
-        }
-
-        Ok(())
+        super::form_fill::fill_fields(&mut doc.inner, &self.values)
     }
 }
 
@@ -333,12 +204,22 @@ mod tests {
             "Type",
             Object::Name(b"Page".to_vec()),
         )]));
+        doc.get_object_mut(page_id)
+            .unwrap()
+            .as_dict_mut()
+            .unwrap()
+            .set("MediaBox", vec![0.into(), 0.into(), 612.into(), 792.into()]);
 
         let pages_id = doc.add_object(Dictionary::from_iter(vec![
             ("Type", Object::Name(b"Pages".to_vec())),
             ("Kids", Object::Array(vec![Object::Reference(page_id)])),
             ("Count", Object::Integer(1)),
         ]));
+        doc.get_object_mut(page_id)
+            .unwrap()
+            .as_dict_mut()
+            .unwrap()
+            .set("Parent", pages_id);
 
         let catalog_id = doc.add_object(Dictionary::from_iter(vec![
             ("Type", Object::Name(b"Catalog".to_vec())),
@@ -356,6 +237,15 @@ mod tests {
             ),
             ("V", Object::String(b"John".to_vec(), StringFormat::Literal)),
         ]));
+        let field = doc.get_object_mut(field_id).unwrap().as_dict_mut().unwrap();
+        field.set("FT", Object::Name(b"Tx".to_vec()));
+        field.set("Rect", vec![10.into(), 20.into(), 210.into(), 45.into()]);
+        field.set("P", page_id);
+        doc.get_object_mut(page_id)
+            .unwrap()
+            .as_dict_mut()
+            .unwrap()
+            .set("Annots", vec![Object::Reference(field_id)]);
 
         let acroform_id = doc.add_object(Dictionary::from_iter(vec![(
             "Fields",

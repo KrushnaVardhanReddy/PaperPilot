@@ -4,6 +4,8 @@
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
 pub mod ask;
+#[cfg(feature = "pdf")]
+pub mod fill_batch;
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
@@ -53,6 +55,8 @@ fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::Path
 
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
+        #[cfg(feature = "pdf")]
+        Commands::FillBatch(args) => fill_batch::run(args)?.outcome(),
         Commands::Completions { shell } => {
             use clap::CommandFactory;
             let mut app = crate::cli::Cli::command();

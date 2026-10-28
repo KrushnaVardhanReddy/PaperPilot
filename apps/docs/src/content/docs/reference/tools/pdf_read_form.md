@@ -8,12 +8,12 @@ sidebar:
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### What it does
-**Reads and exports all form field names, types, and values from a PDF into JSON.**  
-Dumps all filled AcroForm data (text inputs, checkboxes, dropdowns) for automated data ingestion.
+**Reads and exports form field names and values from a PDF into JSON.**
+Exports AcroForm field names and values, including hierarchical field names and UTF-16 text strings. Checkbox values retain their PDF export state. Cyclic or excessively nested field trees return an error.
 
 ### CLI
 ```bash
-paperpilot form read tests/e2e_fixtures/real/missing.pdf --json
+paperpilot form read tests/e2e_fixtures/real/form.pdf --json
 ```
 
 ### MCP JSON-RPC
