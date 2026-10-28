@@ -378,3 +378,60 @@ jules-submit:
 # Penta-Scaffold Code Generator
 new-tool:
 	cargo run -p penta-scaffold -- --name $(NAME) --title "$(TITLE)" --category $(CATEGORY) --icon "$(ICON)" --input-format $(IN) --output-format $(OUT) --description "$(DESC)"
+
+# ==============================================================================
+# Small Language Model (SLM) Fine-Tuning & Quantization Pipeline
+# ==============================================================================
+.PHONY: slm-data slm-test-data slm-train slm-merge slm-eval slm-quantize slm-push slm-pipeline
+
+SLM_PYTHON ?= tools/slm-training/.venv/bin/python
+SLM_PYTEST ?= tools/slm-training/.venv/bin/pytest
+SLM_DIR ?= tools/slm-training
+SLM_COUNT ?= 10000
+
+# 1. Generate synthetic dataset for single and compound workflows (10,000 samples)
+slm-data:
+	$(SLM_PYTHON) $(SLM_DIR)/generate_dataset.py --count $(SLM_COUNT) --output-dir $(SLM_DIR)/data/
+	cp $(SLM_DIR)/data/*.jsonl $(SLM_DIR)/dataset/
+
+# 2. Run dataset generator integrity unit tests
+slm-test-data:
+	$(SLM_PYTEST) $(SLM_DIR)/test_dataset_generator.py $(SLM_DIR)/test_infer_local.py
+
+# 3. Fine-tune Qwen2.5-0.5B via 4-bit QLoRA on local GPU
+slm-train:
+	$(SLM_PYTHON) $(SLM_DIR)/train_local.py
+
+# 4. Merge fine-tuned LoRA weights into standalone FP16 base model
+slm-merge:
+	$(SLM_PYTHON) $(SLM_DIR)/export_and_merge.py
+
+# 5. Evaluate local model against single/compound tool-calling benchmarks
+slm-eval:
+	$(SLM_PYTHON) $(SLM_DIR)/infer_local.py
+
+# 6. Quantize merged FP16 model to Q4_K_M GGUF format
+slm-quantize:
+	@if [ ! -d "$(SLM_DIR)/llama.cpp" ]; then \
+		echo "Cloning llama.cpp..."; \
+		git clone --depth 1 https://github.com/ggerganov/llama.cpp $(SLM_DIR)/llama.cpp; \
+	fi
+	@if [ ! -f "$(SLM_DIR)/llama.cpp/build/bin/llama-quantize" ]; then \
+		echo "Building llama-quantize..."; \
+		cmake -B $(SLM_DIR)/llama.cpp/build $(SLM_DIR)/llama.cpp -DGGML_CUDA=OFF; \
+		cmake --build $(SLM_DIR)/llama.cpp/build --target llama-quantize -j 4; \
+	fi
+	@echo "Converting HuggingFace model to FP16 GGUF..."
+	$(SLM_PYTHON) $(SLM_DIR)/llama.cpp/convert_hf_to_gguf.py $(SLM_DIR)/output/paperpilot-qwen-0.5b-merged/ --outfile $(SLM_DIR)/output/paperpilot-qwen-0.5b-f16.gguf
+	@echo "Quantizing to Q4_K_M GGUF..."
+	$(SLM_DIR)/llama.cpp/build/bin/llama-quantize $(SLM_DIR)/output/paperpilot-qwen-0.5b-f16.gguf $(SLM_DIR)/output/paperpilot-qwen-0.5b-q4_k_m.gguf Q4_K_M
+	rm -f $(SLM_DIR)/output/paperpilot-qwen-0.5b-f16.gguf
+	@echo "✅ GGUF quantization complete: $(SLM_DIR)/output/paperpilot-qwen-0.5b-q4_k_m.gguf"
+
+# 7. Push both merged model and quantized GGUF to Hugging Face Hub
+slm-push:
+	$(SLM_PYTHON) $(SLM_DIR)/push_to_hf.py $(REPO)
+
+# 8. Full End-to-End SLM Pipeline (Data -> Test -> Train -> Merge -> Quantize -> Eval -> Push)
+slm-pipeline: slm-data slm-test-data slm-train slm-merge slm-quantize slm-eval slm-push
+
