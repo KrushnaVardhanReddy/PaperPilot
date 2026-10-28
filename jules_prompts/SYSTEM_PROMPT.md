@@ -73,3 +73,32 @@ Before opening the Pull Request, run the following verification steps in the Jul
   - Testing verification results (exact commands and pass count).
   - List of modified crates and files.
 
+---
+
+### 8. The "Engine First" Audit Rule (Never Trust Existing Helpers Blindly)
+- When implementing a user-facing tool (CLI/MCP/REST), **DO NOT simply write a thin wrapper around existing helper functions without inspecting them**.
+- Audit the underlying engine implementation in `paperpilot-pdf`:
+  - Does the core function generate valid PDF appearance streams (`/AP`), or does it only set dictionary keys (`/V`)?
+  - Does flattening bake appearance streams into page content, or does it just drop the `/AcroForm` catalog?
+  - Can the operation be batched without re-parsing the document from disk on every iteration (e.g. parse once in RAM and clone per record)?
+- If the core engine function is naive, inadequate, or unsafe, **upgrade the engine in `paperpilot-pdf` first**, then expose it via the CLI/MCP.
+
+---
+
+### 9. Edge-Case, Unicode & Security Matrix
+Every PR that touches documents, input data, or filenames MUST explicitly test and guard against:
+1. **Directory Traversal / Token Injection**: File naming tokens (e.g., `{row.name}`) must be sanitized to prevent directory traversal (`../`).
+2. **Partial Failures & Execution Receipts**: A single malformed record must NOT abort the whole batch. Output a machine-readable execution receipt (`verification.json`) detailing per-item status, duration, error reason, and SHA256 hashes.
+3. **Unicode & Non-ASCII**: Include explicit test cases for UTF-8/UTF-16 text, CJK (Chinese/Japanese/Korean) characters, and quoted multi-line values.
+4. **Scale & Performance**: When adding batch or iterative tools, include a high-volume scale test (e.g., 500–1,000 items) to prove memory stability and efficiency.
+
+---
+
+### 10. Inspectable Evidence Requirement (Reports Directory)
+- Do NOT just write code and unit tests.
+- When introducing a new workflow or major operation, generate inspectable evidence under `reports/<task-name>-validation/`:
+  - `verification.json`: Machine-readable results and timing.
+  - Sample generated PDF output files.
+  - Rendered preview image (PNG) verifying visual layout.
+- Include a summary report in `reports/<TASK_NAME>_REPORT.md` documenting performance, test coverage, and limitations.
+
