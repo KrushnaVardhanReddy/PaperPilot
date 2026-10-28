@@ -424,6 +424,36 @@ pub enum Commands {
         #[command(subcommand)]
         command: FormCommands,
     },
+    /// Fill AcroForm fields in batch from CSV or JSON data
+    FillBatch {
+        /// AcroForm template PDF path
+        #[arg(long)]
+        template: PathBuf,
+
+        /// Data file path (.csv or .json)
+        #[arg(long)]
+        data: PathBuf,
+
+        /// Output directory for generated PDFs
+        #[arg(long)]
+        output_dir: PathBuf,
+
+        /// Filename token pattern (supports {_index}, {_row}, {_date}, {_time}, {<column>})
+        #[arg(long, default_value = "{_index}.pdf")]
+        name_pattern: String,
+
+        /// Flatten (make non-interactive) each filled PDF
+        #[arg(long)]
+        flatten: bool,
+
+        /// Abort the entire batch on first error (default: skip and warn)
+        #[arg(long)]
+        fail_fast: bool,
+
+        /// Print resolved output paths without writing any files
+        #[arg(long)]
+        dry_run: bool,
+    },
     // --- Group D: Conversion ---
     Convert {
         #[arg(long, required = true)]

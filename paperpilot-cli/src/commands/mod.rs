@@ -338,6 +338,23 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         // Group D
 
         // Group E
+        Commands::FillBatch {
+            template,
+            data,
+            output_dir,
+            name_pattern,
+            flatten,
+            fail_fast,
+            dry_run,
+        } => group_e::handle_form_fill_batch(
+            &template,
+            &data,
+            &output_dir,
+            &name_pattern,
+            *flatten,
+            *fail_fast,
+            *dry_run,
+        ),
         Commands::Form { command: form_cmd } => match form_cmd {
             crate::cli::FormCommands::Read { input } => {
                 group_e::handle_form_read(&resolve_input_path(input)?)

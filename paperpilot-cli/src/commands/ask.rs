@@ -284,7 +284,7 @@ pub fn handle_ask(
                 return Err(PdfError::InvalidInput("Sign requires an input file".into()));
             }
             let _out = output_path.unwrap_or_else(|| std::path::PathBuf::from("sign_out.pdf"));
-            return Err(PdfError::InvalidInput("Sign intent via natural language currently lacks certificate path inference. Please use the CLI directly.".into()));
+            Err(PdfError::InvalidInput("Sign intent via natural language currently lacks certificate path inference. Please use the CLI directly.".into()))
         }
         Intent::Flatten => {
             if inputs_paths.is_empty() {
@@ -416,10 +416,10 @@ pub fn handle_ask(
                 ));
             }
             let _out = output_path.unwrap_or_else(|| std::path::PathBuf::from("form_fill_out.pdf"));
-            return Err(PdfError::InvalidInput(
+            Err(PdfError::InvalidInput(
                 "FormFill intent via natural language currently lacks data JSON path inference."
                     .into(),
-            ));
+            ))
         }
         Intent::FormCreate => {
             if inputs_paths.is_empty() {
