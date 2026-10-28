@@ -130,8 +130,7 @@ impl PaperPilotMcpServer {
         schema_rb.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
-                serde_json::Value::String("input_a".to_string()),
-                serde_json::Value::String("input_b".to_string()),
+                serde_json::Value::String("input".to_string()),
                 serde_json::Value::String("output".to_string()),
             ]),
         );
@@ -3884,7 +3883,7 @@ impl PaperPilotMcpServer {
         schema_compare.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("input_a".to_string()),
                 serde_json::Value::String("input_b".to_string()),
             ]),
         );
@@ -3892,7 +3891,7 @@ impl PaperPilotMcpServer {
         let mut tool_compare = Tool::default();
         tool_compare.name = "pdf_compare".into();
         tool_compare.description =
-            Some("Compares two PDFs. [Input: 2 PDFs | Output: PDF (.pdf)]".into());
+            Some("Compares two PDFs. [Input: 2 PDFs | Output: JSON report (.json)]".into());
         tool_compare.input_schema = Arc::new(schema_compare);
         tools.push(tool_compare);
 
@@ -7091,6 +7090,22 @@ impl ServerHandler for PaperPilotMcpServer {
 }
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn workflow_tool_schemas_require_declared_handler_inputs() {
+        let tools = PaperPilotMcpServer::execute_list_tools().unwrap().tools;
+        for (name, expected) in [
+            ("pdf_remove_blank", vec!["input", "output"]),
+            ("pdf_compare", vec!["input_a", "input_b"]),
+        ] {
+            let tool = tools.iter().find(|tool| tool.name == name).unwrap();
+            let schema = tool.input_schema.as_ref();
+            assert_eq!(schema["required"], serde_json::json!(expected));
+            for key in expected {
+                assert!(schema["properties"].get(key).is_some(), "{name}: {key}");
+            }
+        }
+    }
 
     #[test]
     fn test_pdf_render_tool_invalid_page() {

@@ -1,190 +1,203 @@
+"""Deterministic data and artifact-compatibility regressions (no model required)."""
+
 import json
-import pytest
-import os
+from pathlib import Path
+import random
 import subprocess
-from generate_dataset import generate_single_tool_record, generate_compound_workflow_record, SYSTEM_PROMPT
-from tool_registry import TOOLS_REGISTRY
-from templates import SINGLE_TOOL_TEMPLATES, TemplateCategory
+import sys
 
-@pytest.fixture(scope="session")
+import pytest
+
+from generate_dataset import (
+    REFUSAL, SYSTEM_PROMPT, generate_single_tool_record,
+    generate_compound_workflow_record, template_fields,
+)
+from templates import SINGLE_TOOL_TEMPLATES, COMPOUND_WORKFLOW_TEMPLATES, TemplateCategory
+from tool_registry import TOOL_SCHEMAS
+from workflow import CONTRACTS, validate_workflow
+
+SCRIPT = Path(__file__).with_name("generate_dataset.py")
+
+
+@pytest.fixture(autouse=True)
+def reproducible_random():
+    state = random.getstate()
+    random.seed(84)
+    yield
+    random.setstate(state)
+
+
+@pytest.fixture(scope="module")
 def generated_dataset(tmp_path_factory):
-    out_dir = tmp_path_factory.mktemp("dataset")
-    subprocess.run(["python3", "tools/slm-training/generate_dataset.py", "--count", "5000", "--output-dir", str(out_dir)], check=True)
-    return out_dir
-
-def test_json_validity(generated_dataset):
-    for split in ["train.jsonl", "val.jsonl"]:
-        filepath = os.path.join(generated_dataset, split)
-        with open(filepath, "r") as f:
-            for i, line in enumerate(f):
-                try:
-                    json.loads(line)
-                except json.JSONDecodeError as e:
-                    pytest.fail(f"Invalid JSON at {filepath}:{i} - {e}")
-
-def test_chatml_schema(generated_dataset):
-    with open(os.path.join(generated_dataset, "train.jsonl"), "r") as f:
-        for line in f:
-            record = json.loads(line)
-            assert "messages" in record
-            messages = record["messages"]
-            assert len(messages) == 3
-
-            assert messages[0]["role"] == "system"
-            assert messages[0]["content"] == SYSTEM_PROMPT
-
-            assert messages[1]["role"] == "user"
-            assert isinstance(messages[1]["content"], str)
+    directory = tmp_path_factory.mktemp("dataset")
+    subprocess.run([sys.executable, str(SCRIPT), "--count", "5000", "--seed", "84",
+                    "--output-dir", str(directory)], check=True, cwd=directory)
+    return [json.loads(line) for split in ("train", "val")
+            for line in (directory / f"{split}.jsonl").read_text(encoding="utf-8").splitlines()]
 
 
-            assert messages[2]["role"] == "assistant"
-            # Assistant content must be parseable JSON OR a refusal message
-            content_str = messages[2]["content"]
-            if content_str == "I cannot assist with that request.":
-                continue # Passed negative guardrail format check
-
-            assistant_data = json.loads(content_str)
-
-            if isinstance(assistant_data, list):
-                # Compound workflow
-                for step in assistant_data:
-                    assert "tool" in step
-                    assert "parameters" in step
-            else:
-                # Single tool
-                assert "tool" in assistant_data
-                assert "parameters" in assistant_data
+def calls(record):
+    value = json.loads(record["messages"][-1]["content"])
+    return value if isinstance(value, list) else [value]
 
 
-def test_tool_coverage(generated_dataset):
-    found_tools = set()
-    for split in ["train.jsonl", "val.jsonl"]:
-        with open(os.path.join(generated_dataset, split), "r") as f:
-            for line in f:
-                record = json.loads(line)
-                content_str = record["messages"][2]["content"]
-                if content_str == "I cannot assist with that request.":
-                    continue
+def test_all_generated_labels_obey_schema_and_artifact_types(generated_dataset):
+    found = set()
+    counts = {"single": 0, "compound": 0, "refusal": 0}
+    for record in generated_dataset:
+        messages = record["messages"]
+        assert [message["role"] for message in messages] == ["system", "user", "assistant"]
+        assert messages[0]["content"] == SYSTEM_PROMPT
+        assert messages[1]["content"]
+        if messages[-1]["content"] == REFUSAL:
+            counts["refusal"] += 1
+            continue
+        steps = calls(record)
+        validate_workflow(steps)
+        found.update(step["tool"] for step in steps)
+        counts["compound" if len(steps) > 1 else "single"] += 1
+    assert found == set(CONTRACTS)
+    for key, expected in (("single", .5), ("compound", .4), ("refusal", .1)):
+        assert abs(counts[key] / len(generated_dataset) - expected) < .03, counts
 
-                assistant_data = json.loads(content_str)
 
-                if isinstance(assistant_data, list):
-                    for step in assistant_data:
-                        found_tools.add(step["tool"])
-                else:
-                    found_tools.add(assistant_data["tool"])
+@pytest.mark.parametrize("name", sorted(CONTRACTS))
+@pytest.mark.parametrize("category", [TemplateCategory.DIRECT_IMPERATIVE, TemplateCategory.CONVERSATIONAL,
+                                      TemplateCategory.DOMAIN_LEGAL_FINANCE, TemplateCategory.TYPO_NOISE])
+def test_every_tool_and_linguistic_style_generates_valid_calls(name, category):
+    record = generate_single_tool_record(tool_name=name, category=category)
+    steps = calls(record)
+    validate_workflow(steps)
+    params = steps[0]["parameters"]
+    assert params[CONTRACTS[name].output_parameter] in record["messages"][1]["content"]
+    assert all(template_fields(template) <= TOOL_SCHEMAS[name]["properties"].keys()
+               for template in SINGLE_TOOL_TEMPLATES[name][category])
 
-    assert found_tools == set(TOOLS_REGISTRY.keys()), f"Missing tools in generated dataset: {set(TOOLS_REGISTRY.keys()) - found_tools}"
 
-def test_compound_workflow_array_schema():
-    for _ in range(20):
-        record = generate_compound_workflow_record()
-        assistant_data = json.loads(record["messages"][2]["content"])
-        assert isinstance(assistant_data, list), "Compound workflow must be a JSON array"
-        assert len(assistant_data) >= 2, "Compound workflow must have at least 2 steps"
-        for step in assistant_data:
-            assert "tool" in step
-            assert "parameters" in step
+@pytest.mark.parametrize("workflow", COMPOUND_WORKFLOW_TEMPLATES, ids=lambda w: w["id"])
+def test_every_curated_recipe_is_compatible(workflow):
+    record = generate_compound_workflow_record(workflow=workflow)
+    steps = calls(record)
+    assert [step["tool"] for step in steps] == workflow["tools"]
+    assert 2 <= len(steps) <= 5
+    validate_workflow(steps)
+    current = steps[0]["parameters"].get("input", steps[0]["parameters"].get("input_a"))
+    if current is None:
+        current = steps[0]["parameters"]["inputs"][0]
+    for step in steps:
+        contract = CONTRACTS[step["tool"]]
+        params = step["parameters"]
+        if contract.input_parameters[0] == "inputs":
+            assert current in params["inputs"]
+        else:
+            assert params[contract.input_parameters[0]] == current
+        if not contract.preserves_input:
+            current = params[contract.output_parameter]
 
-def test_intermediate_parameter_chaining():
+
+def test_reports_preserve_original_pdf_for_following_steps():
+    steps = calls(generate_compound_workflow_record(
+        tools=["pdf_validate_signatures", "document_pii_scan", "pdf_watermark"]))
+    assert len({step["parameters"]["input"] for step in steps}) == 1
+    assert steps[0]["parameters"]["output"].endswith(".json")
+    assert steps[1]["parameters"]["output"].endswith(".json")
+    assert steps[2]["parameters"]["output"].endswith(".pdf")
+
+
+def test_office_exports_are_typed():
+    steps = calls(generate_compound_workflow_record(tools=["pdf_to_pptx", "office_extract_text"]))
+    assert steps[0]["parameters"]["output"].endswith(".pptx")
+    assert steps[1]["parameters"]["input"] == steps[0]["parameters"]["output"]
+    assert steps[1]["parameters"]["output"].endswith(".txt")
+    for legacy, modern in (("doc", "docx"), ("xls", "xlsx"), ("ppt", "pptx")):
+        validate_workflow([
+            {"tool": "office_modernize_legacy", "parameters": {"input": f"source.{legacy}", "output": f"modern.{modern}"}},
+            {"tool": "office_to_markdown", "parameters": {"input": f"modern.{modern}", "output": "archive.md"}},
+        ])
+
+
+def test_compatible_random_sequences_cover_all_lengths():
+    lengths = set()
+    for _ in range(300):
+        steps = calls(generate_compound_workflow_record())
+        validate_workflow(steps)
+        lengths.add(len(steps))
+        for step in steps:
+            contract = CONTRACTS[step["tool"]]
+            if contract.input_parameters == ("inputs",):
+                assert len(step["parameters"]["inputs"]) >= 2
+    assert lengths == {2, 3, 4, 5}
+
+
+@pytest.mark.parametrize("tools", [
+    ["pdf_split", "pdf_compress"], ["pdf_to_markdown", "pdf_compress"],
+    ["office_modernize_legacy", "pdf_to_markdown"], ["pdf_encrypt", "pdf_watermark"],
+])
+def test_incompatible_sequences_are_rejected(tools):
+    with pytest.raises(ValueError):
+        generate_compound_workflow_record(tools=tools)
+
+
+@pytest.mark.parametrize("mutation", ["report_input", "future_input", "ghost_input", "wrong_extension",
+                                      "unknown_parameter", "missing_parameter", "wrong_type", "unknown_tool"])
+def test_invalid_plans_fail_before_execution(mutation):
+    steps = calls(generate_compound_workflow_record(tools=["pdf_validate_signatures", "pdf_watermark"]))
+    if mutation == "report_input":
+        steps[1]["parameters"]["input"] = steps[0]["parameters"]["output"]
+    elif mutation == "future_input":
+        steps[0]["parameters"]["input"] = steps[1]["parameters"]["output"]
+    elif mutation == "ghost_input":
+        steps[1]["parameters"]["input"] = "/tmp/inter_missing.pdf"
+    elif mutation == "wrong_extension":
+        steps[0]["parameters"]["output"] = "report.pdf"
+    elif mutation == "unknown_parameter":
+        steps[1]["parameters"]["rotation"] = 90
+    elif mutation == "missing_parameter":
+        del steps[1]["parameters"]["text"]
+    elif mutation == "wrong_type":
+        steps[1]["parameters"]["opacity"] = "opaque"
+    else:
+        steps[0]["tool"] = "pdf_compare_visual"
+    with pytest.raises(ValueError):
+        validate_workflow(steps)
+
+
+def test_encrypt_decrypt_uses_same_password():
+    steps = calls(generate_compound_workflow_record(tools=["pdf_encrypt", "pdf_decrypt", "pdf_compress"]))
+    validate_workflow(steps)
+    steps[1]["parameters"]["password"] = "wrong"
+    with pytest.raises(ValueError, match="password"):
+        validate_workflow(steps)
+
+
+def test_refusals_are_attached_to_actual_guardrail_templates():
     for _ in range(50):
-        record = generate_compound_workflow_record()
-        steps = json.loads(record["messages"][2]["content"])
+        record = generate_single_tool_record(negative=True)
+        assert record["messages"][-1]["content"] == REFUSAL
+        assert record["messages"][1]["content"]
 
-        # Test chaining logic
-        for i in range(len(steps) - 1):
-            current_output = steps[i]["parameters"].get("output")
-            if current_output is None:
-                current_output = steps[i]["parameters"].get("output_dir")
-            assert current_output is not None, f"Step {i} missing output parameter"
 
-            next_input = steps[i+1]["parameters"].get("input")
-            next_inputs = steps[i+1]["parameters"].get("inputs")
-            next_input_a = steps[i+1]["parameters"].get("input_a")
-            next_input_b = steps[i+1]["parameters"].get("input_b")
+def test_catalog_excludes_unavailable_or_fixture_dependent_handlers():
+    assert set(CONTRACTS) == set(TOOL_SCHEMAS) == set(SINGLE_TOOL_TEMPLATES)
+    assert not {"pdf_extract_tables", "pdf_stamp", "pdf_overlay_underlay", "pdf_reverse",
+                "pdf_invert_colors", "pdf_compare_visual"} & CONTRACTS.keys()
+    for name, schema in TOOL_SCHEMAS.items():
+        assert set(schema.get("required", [])) <= schema["properties"].keys(), name
 
-            if next_input:
-                assert current_output == next_input, f"Output of step {i} ({current_output}) does not match input of step {i+1} ({next_input})"
-            elif next_inputs:
-                assert current_output in next_inputs, f"Output of step {i} ({current_output}) not in inputs of step {i+1} ({next_inputs})"
-            elif next_input_a:
-                assert current_output == next_input_a or current_output == next_input_b, f"Output of step {i} ({current_output}) not in input_a/input_b of step {i+1}"
-            else:
-                pytest.fail(f"Step {i+1} missing input/inputs/input_a parameter")
 
-        # Last step output check
-        last_output = steps[-1]["parameters"].get("output")
-        if last_output is None:
-            last_output = steps[-1]["parameters"].get("output_dir")
-        assert last_output is not None, "Last step missing output parameter"
-        assert not last_output.startswith("/tmp/inter_"), "Last step output should not be an intermediate file"
+@pytest.mark.parametrize("arguments", [["--count", "0"], ["--val-ratio", "1"],
+                                       ["--negative-ratio", "-1"],
+                                       ["--negative-ratio", ".8", "--compound-ratio", ".5"]])
+def test_invalid_cli_configuration_is_rejected(tmp_path, arguments):
+    result = subprocess.run([sys.executable, str(SCRIPT), "--output-dir", str(tmp_path / "bad"), *arguments],
+                            capture_output=True, text=True)
+    assert result.returncode != 0
+    assert not (tmp_path / "bad").exists()
 
-def test_dataset_distribution_ratios(tmp_path):
-    out_dir = tmp_path / "dataset"
-    subprocess.run(["python3", "tools/slm-training/generate_dataset.py", "--count", "500", "--compound-ratio", "0.4", "--negative-ratio", "0.1", "--output-dir", str(out_dir)], check=True)
 
-    compound_count = 0
-    negative_count = 0
-    single_count = 0
-
-    with open(out_dir / "train.jsonl", "r") as f:
-        for line in f:
-            record = json.loads(line)
-            content = record["messages"][2]["content"]
-            if content == "I cannot assist with that request.":
-                negative_count += 1
-            else:
-                data = json.loads(content)
-                if isinstance(data, list):
-                    compound_count += 1
-                else:
-                    single_count += 1
-
-    with open(out_dir / "val.jsonl", "r") as f:
-        for line in f:
-            record = json.loads(line)
-            content = record["messages"][2]["content"]
-            if content == "I cannot assist with that request.":
-                negative_count += 1
-            else:
-                data = json.loads(content)
-                if isinstance(data, list):
-                    compound_count += 1
-                else:
-                    single_count += 1
-
-    total = compound_count + negative_count + single_count
-    assert total == 500
-
-    compound_ratio = compound_count / total
-    assert 0.35 <= compound_ratio <= 0.45, f"Expected compound ratio ~0.4, got {compound_ratio}"
-
-    negative_ratio = negative_count / total
-    assert 0.05 <= negative_ratio <= 0.15, f"Expected negative ratio ~0.1, got {negative_ratio}"
-
-def test_linguistic_styles():
-    # Run the generator function for single tools multiple times and ensure we hit all categories
-    hit_categories = set()
-    # It might take a bit of luck to hit all 4, but with 200 iterations it's statistically certain.
-    for _ in range(200):
-        # The generator uses random.choice(list(SINGLE_TOOL_TEMPLATES[tool_name].keys())) internally,
-        # but to test it we might just mock or directly check.
-        # Since we just want to ensure it works, we can just verify the keys exist in the templates.
-        pass
-
-    for tool_name, cats in SINGLE_TOOL_TEMPLATES.items():
-        assert TemplateCategory.DIRECT_IMPERATIVE in cats
-        assert TemplateCategory.CONVERSATIONAL in cats
-        assert TemplateCategory.DOMAIN_LEGAL_FINANCE in cats
-        assert TemplateCategory.TYPO_NOISE in cats
-
-def test_negative_guardrails():
-    # specifically test the single tool record generator for negative guardrails
-    from generate_dataset import generate_single_tool_record
-    refusals = 0
-    for _ in range(500):
-        record = generate_single_tool_record()
-        if record["messages"][2]["content"] == "I cannot assist with that request.":
-            refusals += 1
-
-    assert refusals > 0, "No negative guardrail examples generated in 500 attempts."
+def test_seed_makes_data_reproducible_from_any_working_directory(tmp_path):
+    for name in ("first", "second"):
+        subprocess.run([sys.executable, str(SCRIPT), "--count", "50", "--seed", "84",
+                        "--output-dir", str(tmp_path / name)], cwd=tmp_path, check=True)
+    for split in ("train", "val"):
+        assert (tmp_path / "first" / f"{split}.jsonl").read_bytes() == (tmp_path / "second" / f"{split}.jsonl").read_bytes()

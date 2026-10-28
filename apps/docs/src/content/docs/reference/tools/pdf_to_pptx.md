@@ -9,7 +9,7 @@ sidebar:
 
 ### What it does
 **Converts PDF pages into an editable Microsoft PowerPoint presentation (.pptx).**  
-Maps each page into a presentation slide with text boxes and background graphics.
+Exports each PDF page's extracted text into a presentation slide. The PPTX includes the package relationships, presentation manifest, slide relationships, and content types needed by Office readers. Its output can be passed to `office_extract_text` as a real `.pptx` intermediate.
 
 ### CLI
 ```bash

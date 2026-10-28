@@ -1,0 +1,890 @@
+{
+  "document_pii_scan": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "scan_credit_cards": {
+        "type": "boolean"
+      },
+      "scan_emails": {
+        "type": "boolean"
+      },
+      "scan_iban": {
+        "type": "boolean"
+      },
+      "scan_phones": {
+        "type": "boolean"
+      },
+      "scan_ssn": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "office_extract_text": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "office_modernize_legacy": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "office_to_markdown": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_attachments": {
+    "properties": {
+      "action": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "file_data_base64": {
+        "type": "string"
+      },
+      "file_name": {
+        "type": "string"
+      },
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_auto_rotate": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_bates": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "padding": {
+        "description": "Padding length.",
+        "type": "integer"
+      },
+      "prefix": {
+        "description": "Prefix.",
+        "type": "string"
+      },
+      "start_number": {
+        "description": "Start number.",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "input",
+      "output",
+      "start_number",
+      "prefix",
+      "padding"
+    ],
+    "type": "object"
+  },
+  "pdf_booklet": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_compare": {
+    "properties": {
+      "file1": {
+        "type": "string"
+      },
+      "file2": {
+        "type": "string"
+      },
+      "file_a": {
+        "type": "string"
+      },
+      "file_b": {
+        "type": "string"
+      },
+      "input_a": {
+        "description": "First input PDF file path.",
+        "type": "string"
+      },
+      "input_b": {
+        "description": "Second input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output diff file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input_a",
+      "input_b"
+    ],
+    "type": "object"
+  },
+  "pdf_compress": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "quality": {
+        "description": "Compression quality preset (low, medium, high) or integer 1-100",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_crop": {
+    "properties": {
+      "box": {
+        "description": "The crop box in format 'left,bottom,right,top' e.g. '0,0,595,842'.",
+        "type": "string"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "File path for the cropped output.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "box",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_decrypt": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "password": {
+        "description": "The user password.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "password",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_delete_pages": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "File path for the modified output.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "The pages to delete, e.g., '1,3,5-7'.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "pages",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_encrypt": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "password": {
+        "description": "The user password.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "password",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_extract_images": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output_dir": {
+        "description": "The directory where images will be saved.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output_dir"
+    ],
+    "type": "object"
+  },
+  "pdf_extract_pages": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "File path for the extracted output.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "The pages to extract, e.g., '1,3,5-7'.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "pages",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_extract_text": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output text file path.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "Pages to extract text from, e.g., '1,3,5-7' or 'all'.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_flatten": {
+    "properties": {
+      "input": {
+        "description": "Path to the PDF to flatten.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the flattened PDF.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_header_footer": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "position": {
+        "description": "e.g. 'top' or 'bottom'",
+        "type": "string"
+      },
+      "text": {
+        "description": "Text to add.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output",
+      "text",
+      "position"
+    ],
+    "type": "object"
+  },
+  "pdf_images_to_pdf": {
+    "properties": {
+      "inputs": {
+        "description": "List of image paths.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "inputs",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_linearize": {
+    "properties": {
+      "input": {
+        "description": "Path to the PDF to linearize.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the linearized PDF.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_merge": {
+    "properties": {
+      "inputs": {
+        "description": "Array of file paths to merge.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "output": {
+        "description": "File path for the merged output.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "inputs",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_nup": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_ocr": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_page_numbers": {
+    "properties": {
+      "format": {
+        "type": "string"
+      },
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "position": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_redact": {
+    "properties": {
+      "height": {
+        "description": "Height.",
+        "type": "number"
+      },
+      "input": {
+        "description": "Path to the PDF to redact.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the redacted PDF.",
+        "type": "string"
+      },
+      "page": {
+        "description": "Page number to redact (1-based).",
+        "type": "integer"
+      },
+      "width": {
+        "description": "Width.",
+        "type": "number"
+      },
+      "x": {
+        "description": "X coordinate.",
+        "type": "number"
+      },
+      "y": {
+        "description": "Y coordinate.",
+        "type": "number"
+      }
+    },
+    "required": [
+      "input",
+      "output",
+      "page",
+      "x",
+      "y",
+      "width",
+      "height"
+    ],
+    "type": "object"
+  },
+  "pdf_remove_blank": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "sensitivity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_remove_signatures": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_reorder_pages": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "order": {
+        "description": "The new 1-based page order, e.g., '3,2,1'.",
+        "type": "string"
+      },
+      "output": {
+        "description": "File path for the reordered output.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "order",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_repair": {
+    "properties": {
+      "input": {
+        "description": "Path to the PDF to repair.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the repaired PDF.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_rotate": {
+    "properties": {
+      "angle": {
+        "description": "The angle to rotate by, typically 90, 180, or 270.",
+        "type": "number"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "File path for the rotated output.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "The pages to rotate, either 'all' or specific pages like '1,3'.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "pages",
+      "angle",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_sanitize": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "remove_attachments": {
+        "type": "boolean"
+      },
+      "remove_metadata": {
+        "type": "boolean"
+      },
+      "remove_scripts": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_scale_pages": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_split": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output_dir": {
+        "description": "The directory where split pages will be saved.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output_dir"
+    ],
+    "type": "object"
+  },
+  "pdf_stitch_canvas": {
+    "properties": {
+      "direction": {
+        "default": "vertical",
+        "enum": [
+          "vertical",
+          "horizontal"
+        ],
+        "type": "string"
+      },
+      "input": {
+        "type": "string"
+      },
+      "margin_pt": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "output": {
+        "type": "string"
+      },
+      "spacing_pt": {
+        "default": 0.0,
+        "type": "number"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_docx": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_html": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output HTML file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_markdown": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output Markdown file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_pptx": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_xlsx": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_validate_signatures": {
+    "properties": {
+      "baseline": {
+        "description": "Capture and report pre-sign incremental update tamper forensics / baseline integrity",
+        "type": "boolean"
+      },
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_watermark": {
+    "properties": {
+      "angle": {
+        "description": "Angle of the watermark (default 45).",
+        "type": "number"
+      },
+      "color": {
+        "description": "Color of the watermark (e.g. 'gray', 'red').",
+        "type": "string"
+      },
+      "font_size": {
+        "description": "Font size.",
+        "type": "number"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "opacity": {
+        "description": "Opacity of the watermark (0 to 1, default 0.2).",
+        "type": "number"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "text": {
+        "description": "The watermark text to apply.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "text",
+      "output"
+    ],
+    "type": "object"
+  }
+}

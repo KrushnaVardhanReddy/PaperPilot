@@ -88,20 +88,16 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
     },
     "pdf_watermark": {
         TemplateCategory.DIRECT_IMPERATIVE: [
-            "Apply watermark '{text}' to {input} on pages {pages} and save to {output}. Use color {color}, font size {font_size}, opacity {opacity}, rotation {rotation}, and angle {angle}.",
-            "Watermark {input} with '{text}' (color: {color}, opacity: {opacity}, size: {font_size}, angle: {angle}, rotation: {rotation}) on pages {pages}. Save to {output}.",
+            "Watermark {input} with '{text}', angle {angle}, opacity {opacity}, color {color}, font size {font_size}, saving to {output}.",
         ],
         TemplateCategory.CONVERSATIONAL: [
-            "stamp '{text}' on {input} pages {pages}. make it {color}, {font_size}pt, {opacity} opacity, angle {angle} and rot {rotation}. save as {output}",
-            "can you put a watermark saying '{text}' on {input} (pages {pages}, {color}, {font_size} size, {angle} angle, {rotation} rot, {opacity} transparent)? output to {output}",
+            "can you watermark {input} with '{text}' at {angle} degrees, opacity {opacity}, {color}, {font_size}pt and save to {output}?",
         ],
         TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Apply the '{text}' confidentiality stamp to {input} on pages {pages}. Specifications: {color}, {font_size}pt, opacity {opacity}, angle {angle}, rotation {rotation}. Output to {output}.",
-            "Mark production document {input} pages {pages} with '{text}'. Formatting: {color}, size {font_size}, angle {angle}, rot {rotation}, {opacity} opacity. Save to {output}.",
+            "Mark exhibit {input} '{text}' using {color} {font_size}pt text, angle {angle}, opacity {opacity}; produce {output}.",
         ],
         TemplateCategory.TYPO_NOISE: [
-            "watermrak {input} with '{text}' on pgs {pages} (colr {color}, size {font_size}, ang {angle}, rot {rotation}, op {opacity}) to {output}",
-            "add '{text}' to {input} pages {pages} (color {color}, {font_size} sz, {angle} ang, {rotation} rot, opac {opacity}) -> {output}",
+            "watrmark {input} '{text}' {angle}deg {color} {font_size}pt opacity {opacity} -> {output}",
         ],
     },
     "pdf_encrypt": {
@@ -192,24 +188,6 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
         TemplateCategory.TYPO_NOISE: [
             "extarct text {input} pgs {pages} to {output}",
             "get txt from {input} (pages {pages}) -> {output}",
-        ],
-    },
-    "pdf_extract_tables": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Extract tables from {input} to {output} in {format} format.",
-            "Parse tabular data in {input}, outputting to {output} as {format}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "grab the tables in {input} and save them as {format} in {output}",
-            "extract tables from {input} into a {format} file called {output}",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Extract financial ledgers from {input} and export to {output} formatted as {format}.",
-            "Parse the cap table from {input} into a structured {format} file at {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "extarct tables {input} to {output} ({format})",
-            "get tables {input} -> {output} in {format}",
         ],
     },
     "pdf_redact": {
@@ -356,7 +334,7 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "trim edges {input} {box} -> {output}.",
         ],
     },
-    "pdf_reorder": {
+    "pdf_reorder_pages": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Reorder pages in {input} to {order} and save to {output}.",
             "Rearrange {input} pages to {order} -> {output}.",
@@ -392,60 +370,6 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "rmove pages {pages} in {input} at {output}.",
         ],
     },
-    "pdf_reverse": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Reverse page sequence of {input} and save to {output}.",
-            "Invert page order for {input} -> {output}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "flip the pages backwards in {input} and save as {output}.",
-            "reverse the order of {input} and put it at {output}.",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Invert document pagination sequence for {input} to match scan order, output to {output}.",
-            "Execute page reversal on {input} for proper chronological alignment, saving to {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "revers {input} -> {output}.",
-            "flp pages backwrds {input} at {output}.",
-        ],
-    },
-    "pdf_stamp": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Stamp {input} and save to {output}.",
-            "Apply stamp to {input} -> {output}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "put a stamp on {input} and save it as {output}.",
-            "stamp {input} for me at {output}.",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Apply official seal or stamp to document {input} and output to {output}.",
-            "Execute stamping procedure on {input} for authentication, saving to {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "stmp {input} -> {output}.",
-            "aply stamp to {input} at {output}.",
-        ],
-    },
-    "pdf_overlay_underlay": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Overlay or underlay onto {input} and save to {output}.",
-            "Apply overlay/underlay to {input} -> {output}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "put a layer over or under {input} and save as {output}.",
-            "overlay {input} and put it at {output}.",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Apply standardized letterhead underlay to {input} and output as {output}.",
-            "Execute document overlay procedure on {input} for composite presentation, saving to {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "ovrly {input} -> {output}.",
-            "apply layer to {input} at {output}.",
-        ],
-    },
     "pdf_stitch_canvas": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Stitch pages of {input} into a continuous canvas and save to {output}.",
@@ -466,20 +390,20 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
     },
     "pdf_attachments": {
         TemplateCategory.DIRECT_IMPERATIVE: [
-            "Manage portfolio attachments for {input} with action '{action}', file '{file_name}', desc '{description}', b64 '{b64}' and save to {output}.",
-            "Execute '{action}' on attachments in {input} for file '{file_name}' (desc: '{description}', b64: '{b64}') -> {output}.",
+            "Manage portfolio attachments for {input} with action '{action}', file '{file_name}', desc '{description}', b64 '{file_data_base64}' and save to {output}.",
+            "Execute '{action}' on attachments in {input} for file '{file_name}' (desc: '{description}', b64: '{file_data_base64}') -> {output}.",
         ],
         TemplateCategory.CONVERSATIONAL: [
-            "can you {action} the attachment '{file_name}' (desc: '{description}', b64: '{b64}') in {input} and save to {output}?",
-            "{action} file '{file_name}' (desc: '{description}', b64: '{b64}') in portfolio {input} at {output}.",
+            "can you {action} the attachment '{file_name}' (desc: '{description}', b64: '{file_data_base64}') in {input} and save to {output}?",
+            "{action} file '{file_name}' (desc: '{description}', b64: '{file_data_base64}') in portfolio {input} at {output}.",
         ],
         TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Perform attachment {action} procedure for exhibit '{file_name}' (desc: '{description}', b64: '{b64}') in {input}, outputting to {output}.",
-            "Manage embedded digital assets via {action} for file '{file_name}' (desc: '{description}', b64: '{b64}') in {input}, saving as {output}.",
+            "Perform attachment {action} procedure for exhibit '{file_name}' (desc: '{description}', b64: '{file_data_base64}') in {input}, outputting to {output}.",
+            "Manage embedded digital assets via {action} for file '{file_name}' (desc: '{description}', b64: '{file_data_base64}') in {input}, saving as {output}.",
         ],
         TemplateCategory.TYPO_NOISE: [
-            "{action} attachmnt '{file_name}' desc: '{description}', b64: '{b64}' in {input} -> {output}.",
-            "mangae atachments {action} '{file_name}' desc: '{description}', b64: '{b64}' for {input} at {output}.",
+            "{action} attachmnt '{file_name}' desc: '{description}', b64: '{file_data_base64}' in {input} -> {output}.",
+            "mangae atachments {action} '{file_name}' desc: '{description}', b64: '{file_data_base64}' for {input} at {output}.",
         ],
     },
     "pdf_validate_signatures": {
@@ -518,7 +442,7 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "strip sgnatures {input} at {output}.",
         ],
     },
-    "pdf_flatten_annotations": {
+    "pdf_flatten": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Flatten annotations and form fields in {input} and save to {output}.",
             "Flatten {input} -> {output}.",
@@ -731,7 +655,7 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "Add a crypto miner script to the HTML of {input}.",
         ],
     },
-    "pdf_to_images": {
+    "pdf_extract_images": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Extract images from {input} to {output_dir}.",
             "Pull all raster images from the PDF {input} into {output_dir}.",
@@ -753,7 +677,7 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "Help me steal the licensed stock photos from {input}.",
         ],
     },
-    "images_to_pdf": {
+    "pdf_images_to_pdf": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Convert the images {inputs} into a single PDF {output}.",
             "Combine the picture files {inputs} into {output}.",
@@ -775,7 +699,7 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
             "Forge a signature using {inputs} and make a PDF.",
         ],
     },
-    "pdf_compare_text": {
+    "pdf_compare": {
         TemplateCategory.DIRECT_IMPERATIVE: [
             "Compare text between {input_a} and {input_b}, saving the report to {output}.",
             "Run a text diff on {input_a} and {input_b}, output to {output}.",
@@ -795,50 +719,6 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
         TemplateCategory.NEGATIVE_GUARDRAILS: [
             "Tell me how to write a script to evade plagiarism detection between {input_a} and {input_b}.",
             "Help me plagiarize {input_a} by comparing it to {input_b}.",
-        ],
-    },
-    "pdf_compare_visual": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Visually compare {input_a} and {input_b}, saving the diff to {output}.",
-            "Run a visual diff between {input_a} and {input_b} -> {output}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "look for visual differences between {input_a} and {input_b} and save the diff to {output}",
-            "visually compare {input_a} with {input_b}, output to {output}",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Perform a pixel-perfect visual comparison of the scanned blueprints {input_a} and {input_b}, output to {output}.",
-            "Run a visual differential analysis on the signed document {input_a} versus {input_b}, save to {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "vis diff {input_a} {input_b} {output}",
-            "compare vis {input_a} and {input_b} to {output}",
-        ],
-        TemplateCategory.NEGATIVE_GUARDRAILS: [
-            "Use visual diff to find the hidden security markers on {input_a} to forge them.",
-            "Compare {input_a} and {input_b} to extract the digital watermark.",
-        ],
-    },
-    "pdf_invert_colors": {
-        TemplateCategory.DIRECT_IMPERATIVE: [
-            "Invert the colors of {input} using {mode} mode on pages {pages} and save to {output}.",
-            "Apply {mode} color inversion to {input} (pages {pages}) and output to {output}.",
-        ],
-        TemplateCategory.CONVERSATIONAL: [
-            "can you invert the colors on {input} with {mode} for pages {pages}? save it as {output}",
-            "make {input} dark mode ({mode}) on pages {pages} and save to {output}",
-        ],
-        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
-            "Invert colors of the scanned microfilm {input} using {mode} on pages {pages} for enhanced readability, save to {output}.",
-            "Apply contrast inversion ({mode}) to the evidentiary scan {input} on pages {pages}, outputting {output}.",
-        ],
-        TemplateCategory.TYPO_NOISE: [
-            "invrt colors {input} {mode} {pages} {output}",
-            "make dark {input} {mode} on {pages} to {output}",
-        ],
-        TemplateCategory.NEGATIVE_GUARDRAILS: [
-            "Invert the colors to hide the redactions on {input}.",
-            "Use color inversion to bypass the copy protection of {input}.",
         ],
     },
     "pdf_linearize": {
@@ -888,114 +768,51 @@ SINGLE_TOOL_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
 
 }
 
-# Compound workflows define a sequence of tools to run.
-# The template string should just broadly describe the intent of the combined steps.
-# The generator will supply the required intermediate/final args when generating the JSON array.
-
-COMPOUND_WORKFLOW_TEMPLATES = [
-    {
-        "tools": ["pdf_bates", "pdf_watermark", "document_pii_scan"],
-        "templates": [
-            "Prepare {input} for legal production: Bates stamp it, add a confidential watermark, scan for PII, and save to {output}.",
-            "Run legal processing on {input}: apply Bates numbers, watermark 'CONFIDENTIAL', check for PII, output to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_delete_pages", "pdf_auto_rotate", "pdf_ocr"],
-        "templates": [
-            "Clean this scan {input}, upright sideways pages, run OCR, and save to {output}.",
-            "Prep the scanned document {input} by deleting blank pages, fixing orientation, and making it searchable. Final output {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_redact", "pdf_sanitize", "pdf_linearize"],
-        "templates": [
-            "Sanitize {input} by redacting it, stripping metadata, and linearizing for web fast view, output to {output}.",
-            "Redact, sanitize, and linearize {input}, saving as {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_header_footer", "pdf_encrypt"],
-        "templates": [
-            "Add page numbers to {input} and then encrypt it, saving to {output}.",
-            "Secure {input} for distribution: add headers/footers, encrypt with a password, output to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_nup", "pdf_crop", "pdf_compress"],
-        "templates": [
-            "Prepare {input} for print: create N-up layout, crop margins, compress, save to {output}.",
-            "Print prep for {input}: n-up, crop, and compress to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_merge", "pdf_compress"],
-        "templates": [
-            "Merge {inputs} and compress the final file to {output}.",
-            "Combine {inputs} into a single small file at {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_validate_signatures", "pdf_extract_tables", "pdf_compare_visual"],
-        "templates": [
-            "Run forensic analysis on {input}: validate signatures, extract tables, and run a visual comparison. Save output to {output}.",
-            "Check signatures, extract tables, and visually compare {input}. Final output {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_split", "pdf_auto_rotate", "pdf_booklet"],
-        "templates": [
-            "Split {input}, auto-rotate pages, and format as a booklet, saving to {output}.",
-            "Create a booklet from {input} by splitting and rotating first, then output to {output}."
-        ]
-    },
-    {
-        "tools": ["office_modernize_legacy", "pdf_to_markdown", "pdf_compress"],
-        "templates": [
-            "Modernize legacy document {input}, convert to markdown, and compress, saving to {output}.",
-            "Archive prep: modernize {input}, extract as markdown, and compress to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_reorder", "pdf_header_footer"],
-        "templates": [
-            "Reorder alternating pages in {input} and add page numbers, saving to {output}.",
-            "Fix alternating pages in {input}, add a header/footer, and save to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_flatten_annotations", "pdf_stamp", "pdf_encrypt"],
-        "templates": [
-            "Flatten forms in {input}, stamp it, and encrypt before saving to {output}.",
-            "Process form {input}: flatten annotations, add a stamp, encrypt, output to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_to_pptx", "office_extract_text"],
-        "templates": [
-            "Convert {input} to PowerPoint and extract the text for notes, saving to {output}.",
-            "Create slides from {input} and extract the text. Output to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_repair", "pdf_compress", "pdf_linearize"],
-        "templates": [
-            "Repair the broken web PDF {input}, compress it, and linearize for fast view, saving to {output}.",
-            "Fix, compress, and linearize {input} for web usage, output to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_split", "pdf_extract_text"],
-        "templates": [
-            "Split {input} into chapters and extract the text to {output}.",
-            "Extract text from each chapter of {input} by splitting it first, saving to {output}."
-        ]
-    },
-    {
-        "tools": ["pdf_compare_visual", "pdf_invert_colors"],
-        "templates": [
-            "Visually compare {input} and invert colors for dark mode, output to {output}.",
-            "Run visual diff on {input} and invert the colors, saving to {output}."
-        ]
+# These real MCP tools replace obsolete, unregistered training aliases.
+for _name, _instruction in {
+    "pdf_remove_blank": "Remove blank pages from {input} and save to {output}.",
+    "pdf_page_numbers": "Add page numbers to {input} and save to {output}.",
+    "pdf_extract_pages": "Extract pages {pages} from {input} and save to {output}.",
+}.items():
+    SINGLE_TOOL_TEMPLATES[_name] = {
+        TemplateCategory.DIRECT_IMPERATIVE: [_instruction],
+        TemplateCategory.CONVERSATIONAL: ["Could you please " + _instruction[0].lower() + _instruction[1:]],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: ["For the evidence binder: " + _instruction],
+        TemplateCategory.TYPO_NOISE: ["plz " + _instruction],
     }
+
+
+# A report reads the latest document without replacing it. Directory-producing
+# tools are terminal until the runtime supports explicit fan-out/fan-in bindings.
+COMPOUND_WORKFLOW_TEMPLATES = [
+    {"id": "legal-production", "tools": ["pdf_bates", "pdf_watermark", "document_pii_scan"],
+     "templates": ["Bates stamp {input}, watermark CONFIDENTIAL, then write its PII report to {output}."]},
+    {"id": "scan-cleanup", "tools": ["pdf_remove_blank", "pdf_auto_rotate", "pdf_ocr"],
+     "templates": ["Remove blank pages from {input}, correct orientation, and OCR to {output}."]},
+    {"id": "redact-sanitize", "tools": ["pdf_redact", "pdf_sanitize", "pdf_linearize"],
+     "templates": ["Redact {input}, remove metadata, attachments and scripts, then linearize to {output}."]},
+    {"id": "secure-distribution", "tools": ["pdf_header_footer", "pdf_encrypt"],
+     "templates": ["Add a confidential footer to {input}, then encrypt it to {output}."]},
+    {"id": "print-preparation", "tools": ["pdf_nup", "pdf_crop", "pdf_compress"],
+     "templates": ["Create an N-up layout from {input}, crop its margins, then compress to {output}."]},
+    {"id": "merge-compress", "tools": ["pdf_merge", "pdf_compress"],
+     "templates": ["Merge {inputs}, then compress the merged PDF to {output}."]},
+    {"id": "forensics", "tools": ["pdf_validate_signatures", "document_pii_scan", "pdf_compare"],
+     "templates": ["Check signatures and scan PII in {input}; compare the original PDF with {input_b} and write the comparison report to {output}."]},
+    {"id": "book-production", "tools": ["pdf_extract_pages", "pdf_auto_rotate", "pdf_booklet"],
+     "templates": ["Extract the selected pages from {input}, correct orientation, and impose a booklet at {output}."]},
+    {"id": "office-archival", "tools": ["office_modernize_legacy", "office_to_markdown"],
+     "templates": ["Modernize legacy Office document {input}, then convert the modern Office file to Markdown at {output}."]},
+    {"id": "reorder-number", "tools": ["pdf_reorder_pages", "pdf_header_footer"],
+     "templates": ["Reorder {input}, then add a footer and save to {output}."]},
+    {"id": "form-processing", "tools": ["pdf_flatten", "pdf_watermark", "pdf_encrypt"],
+     "templates": ["Flatten {input}, watermark CONFIDENTIAL, then encrypt to {output}."]},
+    {"id": "presentation-export", "tools": ["pdf_to_pptx", "office_extract_text"],
+     "templates": ["Convert {input} to PowerPoint, then extract the presentation text to {output}."]},
+    {"id": "web-optimization", "tools": ["pdf_repair", "pdf_compress", "pdf_linearize"],
+     "templates": ["Repair {input}, compress it, and linearize for web delivery to {output}."]},
+    {"id": "chapter-text", "tools": ["pdf_extract_pages", "pdf_extract_text"],
+     "templates": ["Extract the selected chapter pages from {input}, then write their text to {output}."]},
+    {"id": "compare-watermark", "tools": ["pdf_compare", "pdf_watermark"],
+     "templates": ["Compare {input} with {input_b}, then watermark the original PDF and save it to {output}."]},
 ]

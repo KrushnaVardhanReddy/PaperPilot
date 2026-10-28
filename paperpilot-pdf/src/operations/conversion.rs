@@ -1895,7 +1895,17 @@ impl PdfOperation for PdfToPptxOperation {
             .compression_method(zip::CompressionMethod::Deflated)
             .unix_permissions(0o755);
 
+        let mut slide_ids = String::new();
+        let mut slide_relationships = String::new();
+        let mut slide_content_types = String::new();
         for (i, page_id) in all_pages.iter().enumerate() {
+            slide_ids.push_str(&format!(
+                r#"<p:sldId id="{}" r:id="rId{}"/>"#,
+                256 + i,
+                i + 1
+            ));
+            slide_relationships.push_str(&format!(r#"<Relationship Id="rId{}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide{}.xml"/>"#, i + 1, i + 1));
+            slide_content_types.push_str(&format!(r#"<Override PartName="/ppt/slides/slide{}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>"#, i + 1));
             let slide_name = format!("ppt/slides/slide{}.xml", i + 1);
             zip.start_file(&slide_name, options)
                 .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
@@ -1906,8 +1916,13 @@ impl PdfOperation for PdfToPptxOperation {
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
     <p:cSld>
         <p:spTree>
+            <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+            <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
             <p:sp>
+                <p:nvSpPr><p:cNvPr id="2" name="Page text"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+                <p:spPr><a:xfrm><a:off x="457200" y="457200"/><a:ext cx="8229600" cy="5943600"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
                 <p:txBody>
+                    <a:bodyPr/><a:lstStyle/>
                     <a:p>
                         <a:r>
                             <a:t>{}</a:t>
@@ -1929,12 +1944,43 @@ impl PdfOperation for PdfToPptxOperation {
 
         zip.start_file("[Content_Types].xml", options)
             .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
-        let content_types = r#"<?xml version="1.0" encoding="UTF-8"?>
+        let content_types = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
-</Types>"#;
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+    {slide_content_types}
+</Types>"#
+        );
         zip.write_all(content_types.as_bytes())
             .map_err(|e| PdfError::Other(format!("Failed to write content types: {}", e)))?;
+
+        // OPC readers locate the presentation through the package relationship,
+        // then locate each slide through presentation.xml's relationship IDs.
+        let presentation = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<p:sldIdLst>{slide_ids}</p:sldIdLst><p:sldSz cx="9144000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/>
+</p:presentation>"#
+        );
+        let relationships = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{slide_relationships}</Relationships>"#
+        );
+        for (name, xml) in [
+            (
+                "_rels/.rels",
+                r#"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>"#,
+            ),
+            ("ppt/presentation.xml", presentation.as_str()),
+            ("ppt/_rels/presentation.xml.rels", relationships.as_str()),
+        ] {
+            zip.start_file(name, options)
+                .map_err(|e| PdfError::Other(format!("Failed to start {name}: {e}")))?;
+            zip.write_all(xml.as_bytes())
+                .map_err(|e| PdfError::Other(format!("Failed to write {name}: {e}")))?;
+        }
 
         zip.finish()
             .map_err(|e| PdfError::Other(format!("Failed to finish ZIP file: {}", e)))?;
@@ -2192,6 +2238,26 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+        let mut package = zip::ZipArchive::new(std::fs::File::open(&path).unwrap()).unwrap();
+        for part in [
+            "_rels/.rels",
+            "ppt/presentation.xml",
+            "ppt/_rels/presentation.xml.rels",
+            "ppt/slides/slide1.xml",
+        ] {
+            assert!(package.by_name(part).is_ok(), "Missing OPC part: {part}");
+        }
+        #[cfg(feature = "office")]
+        {
+            let text_path = dir.path().join("presentation.txt");
+            crate::operations::office::OfficeExtractTextOperation::execute(&path, &text_path)
+                .unwrap();
+            assert!(
+                std::fs::read_to_string(text_path)
+                    .unwrap()
+                    .contains("Test Content")
+            );
+        }
     }
 
     #[test]
