@@ -1,0 +1,286 @@
+# Jules Task — Implement `paperpilot fill-batch` (Batch AcroForm Mail Merge)
+
+## Branch
+`feat/cli-fill-batch-task-4-7-4` (already created, based on `feature/dev`)
+
+## Goal
+Add a new `fill-batch` subcommand to the `paperpilot-cli` crate that performs
+CSV/JSON-driven mail merge on AcroForm PDF templates. One output PDF is produced
+per data row, named according to a configurable token pattern.
+
+---
+
+## Context: Existing Infrastructure to Reuse
+
+These already exist — **do not re-implement them**:
+
+1. **`paperpilot_pdf::operations::form::FillFormOperation`**
+   - File: `paperpilot-pdf/src/operations/form.rs`
+   - Takes `HashMap<String, String>` of AcroForm field values, fills them into a
+     `LopdfDocument`.
+
+2. **`paperpilot_pdf::operations::flatten::FlattenOperation`**
+   - File: `paperpilot-pdf/src/operations/flatten.rs`
+   - Removes interactivity from all AcroForm fields (flattens to static content).
+
+3. **Existing single-fill handler**
+   - File: `paperpilot-cli/src/commands/group_e.rs` → `handle_form_fill()`
+   - Use the same pattern (load template → execute op → save) per row.
+
+4. **`LopdfDocument::load(path)` / `doc.save(path)`**
+   - Load a fresh copy of the template for each row to avoid state bleed.
+
+---
+
+## Files to Modify
+
+### 1. `paperpilot-cli/src/cli.rs`
+
+Add a new variant to the `Commands` enum (in the top-level `#[derive(Subcommand)]` enum):
+
+```rust
+/// Fill AcroForm fields in batch from CSV or JSON data
+FillBatch {
+    /// AcroForm template PDF path
+    #[arg(long)]
+    template: PathBuf,
+
+    /// Data file path (.csv or .json)
+    #[arg(long)]
+    data: PathBuf,
+
+    /// Output directory for generated PDFs
+    #[arg(long)]
+    output_dir: PathBuf,
+
+    /// Filename token pattern (supports {_index}, {_row}, {_date}, {_time}, {<column>})
+    #[arg(long, default_value = "{_index}.pdf")]
+    name_pattern: String,
+
+    /// Flatten (make non-interactive) each filled PDF
+    #[arg(long)]
+    flatten: bool,
+
+    /// Abort the entire batch on first error (default: skip and warn)
+    #[arg(long)]
+    fail_fast: bool,
+
+    /// Print resolved output paths without writing any files
+    #[arg(long)]
+    dry_run: bool,
+},
+```
+
+---
+
+### 2. `paperpilot-cli/src/commands/group_e.rs`
+
+Add two items:
+
+**A) Private token resolver:**
+
+```rust
+fn resolve_pattern(pattern: &str, row: &HashMap<String, String>, index: usize) -> String {
+    let now = chrono::Local::now();
+    let date = now.format("%Y%m%d").to_string();
+    let time = now.format("%H%M%S").to_string();
+    let mut result = pattern.to_string();
+    result = result.replace("{_index}", &format!("{:04}", index));
+    result = result.replace("{_row}",   &(index + 1).to_string());
+    result = result.replace("{_date}",  &date);
+    result = result.replace("{_time}",  &time);
+    for (k, v) in row {
+        result = result.replace(&format!("{{{}}}", k), v);
+    }
+    result
+}
+```
+
+**B) Public batch handler:**
+
+```rust
+pub fn handle_form_fill_batch(
+    template: &Path,
+    data: &Path,
+    output_dir: &Path,
+    name_pattern: &str,
+    flatten: bool,
+    fail_fast: bool,
+    dry_run: bool,
+) -> OperationResult<()> {
+    // 1. Parse data file into Vec<HashMap<String, String>>
+    //    - If extension is ".csv": use csv::Reader
+    //    - If extension is ".json": use serde_json::from_str::<Vec<HashMap<String,String>>>
+    //    - Otherwise: return Err(PdfError::InvalidInput("Unsupported data format..."))
+
+    // 2. Create output directory (skip if dry_run)
+    //    fs::create_dir_all(output_dir)?;
+
+    // 3. Iterate rows
+    //    let mut written = 0usize;
+    //    for (index, row) in records.iter().enumerate() {
+    //        let filename = resolve_pattern(name_pattern, row, index);
+    //        let output_path = output_dir.join(&filename);
+    //
+    //        if dry_run {
+    //            println!("[dry-run] would write: {}", output_path.display());
+    //            continue;
+    //        }
+    //
+    //        let result = (|| -> OperationResult<()> {
+    //            let mut doc = LopdfDocument::load(template)?;
+    //            let op = FillFormOperation::new(row.clone());
+    //            op.execute(&mut doc)?;
+    //            if flatten {
+    //                FlattenOperation::new().execute(&mut doc)?;
+    //            }
+    //            doc.save(&output_path)?;
+    //            Ok(())
+    //        })();
+    //
+    //        match result {
+    //            Ok(_) => written += 1,
+    //            Err(e) => {
+    //                if fail_fast {
+    //                    return Err(e);
+    //                }
+    //                eprintln!("[warn] Skipping row {}: {}", index, e);
+    //            }
+    //        }
+    //    }
+
+    // 4. Summary
+    //    if !dry_run {
+    //        println!("Wrote {} file(s) to {}", written, output_dir.display());
+    //    }
+    //    Ok(())
+}
+```
+
+---
+
+### 3. `paperpilot-cli/src/commands/mod.rs`
+
+Add a dispatch arm in the main `match cli.command { ... }` block (look for the `Commands::Form { ... }` arm as a reference for where to insert):
+
+```rust
+Commands::FillBatch {
+    template,
+    data,
+    output_dir,
+    name_pattern,
+    flatten,
+    fail_fast,
+    dry_run,
+} => group_e::handle_form_fill_batch(
+    &template,
+    &data,
+    &output_dir,
+    &name_pattern,
+    flatten,
+    fail_fast,
+    dry_run,
+),
+```
+
+---
+
+### 4. `paperpilot-cli/Cargo.toml`
+
+Verify (and add if absent):
+
+```toml
+[dependencies]
+csv = "1"
+chrono = { version = "0.4", features = ["local-offset"] }
+```
+
+---
+
+### 5. `paperpilot-cli/tests/test_fill_batch.rs` (NEW FILE)
+
+Create a new integration test file with the following 8 tests:
+
+**T1 — CSV batch, 3 rows, default name pattern**
+```rust
+// Write a 3-row CSV to a tempdir
+// Run: paperpilot fill-batch --template <fixture> --data <csv> --output-dir <tempdir>
+// Assert: tempdir contains exactly 3 .pdf files
+```
+
+**T2 — JSON batch, 2 rows**
+```rust
+// Write a 2-record JSON array to a tempdir
+// Run fill-batch with --data <json>
+// Assert: 2 .pdf files exist
+```
+
+**T3 — --flatten**
+```rust
+// Run with --flatten flag
+// Assert: output PDF has no AcroForm /Fields array (fields are flattened)
+// Check with ReadFormOperation or by inspecting the document dict
+```
+
+**T4 — --dry-run**
+```rust
+// Run with --dry-run
+// Assert: zero files written to output-dir
+// Assert: stdout contains the expected resolved filenames
+```
+
+**T5 — Missing column token in pattern**
+```rust
+// Use --name-pattern "{nonexistent}_{_index}.pdf"
+// Assert: no panic; output filename contains literal "{nonexistent}"
+```
+
+**T6 — --fail-fast with bad template**
+```rust
+// Pass a non-existent template path
+// Assert: returns Err
+// Assert: zero files written
+```
+
+**T7 — Custom name pattern with date token**
+```rust
+// Use --name-pattern "{name}_{_date}.pdf"
+// Data row: name = "Alice"
+// Assert: output file is named "Alice_<YYYYMMDD>.pdf"
+```
+
+**T8 — Auto-create output directory**
+```rust
+// Pass --output-dir that does not yet exist
+// Assert: directory created and files written successfully
+```
+
+Use `tempfile::TempDir` for temp directories (already in dev-dependencies).  
+Use the existing AcroForm fixture at `tests/fixtures/` (same one used in `test_form_fill`).
+
+---
+
+## Spec Reference
+
+Full specification: `specs/135-batch-acroform-mail-merge/spec.md`  
+Task checklist:    `specs/135-batch-acroform-mail-merge/task_135a.md`
+
+---
+
+## Acceptance Criteria
+
+1. `cargo build -p paperpilot-cli` — green, no errors.
+2. `cargo test -p paperpilot-cli --test test_fill_batch` — all 8 tests pass.
+3. `cargo clippy -p paperpilot-cli -- -D warnings` — zero warnings.
+4. `cargo fmt -p paperpilot-cli -- --check` — no formatting changes required.
+5. PR targets branch `feat/cli-fill-batch-task-4-7-4` → base `feature/dev`.
+6. PR description references: Spec 135, Task 135A, Phase 4.7.4.
+
+---
+
+## Important Rules
+
+- Do NOT modify any code in `paperpilot-pdf/` — reuse ops as-is.
+- Do NOT add XFA support — AcroForm only.
+- Load the template PDF fresh for every row (do not mutate a shared document across rows).
+- If the `csv` crate is already in `Cargo.toml` with a different version, keep the existing version; do not downgrade.
