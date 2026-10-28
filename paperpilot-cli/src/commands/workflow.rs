@@ -56,6 +56,23 @@ pub fn handle_workflow_command(
             preset,
             recipe,
         }) => run_workflow(input, output, preset.as_deref(), recipe.as_deref()),
+        Some(WorkflowSubcommand::Export { preset, output }) => {
+            let wf = get_preset_by_id(preset.as_str())
+                .ok_or_else(|| PdfError::InvalidInput(format!("Preset not found: {}", preset)))?;
+            let content = if output.extension().and_then(|e| e.to_str()) == Some("toml") || output.extension().and_then(|e| e.to_str()) == Some("ppflow") {
+                toml::to_string_pretty(&wf).map_err(|e| PdfError::ParseError(format!("Failed to serialize TOML: {}", e)))?
+            } else {
+                serde_json::to_string_pretty(&wf).map_err(|e| PdfError::ParseError(format!("Failed to serialize JSON: {}", e)))?
+            };
+            fs::write(output, content)?;
+            println!("Exported workflow '{}' to {:?}", wf.name, output);
+            Ok(())
+        }
+        Some(WorkflowSubcommand::Import { recipe }) => {
+            let wf = resolve_workflow(None, Some(recipe.as_path()))?;
+            println!("Successfully validated workflow recipe: {} ({} steps)", wf.name, wf.steps.len());
+            Ok(())
+        }
         None => {
             // Direct top-level usage
             if let (Some(in_path), Some(out_path)) = (input, output) {
@@ -80,8 +97,11 @@ fn resolve_workflow(preset: Option<&str>, recipe: Option<&Path>) -> OperationRes
             .ok_or_else(|| PdfError::InvalidInput(format!("Preset not found: {}", preset_name)))
     } else if let Some(recipe_path) = recipe {
         let content = fs::read_to_string(recipe_path)?;
-        let wf: SavedWorkflow = serde_json::from_str(&content)
-            .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?;
+        let wf: SavedWorkflow = if recipe_path.extension().and_then(|e| e.to_str()) == Some("toml") || recipe_path.extension().and_then(|e| e.to_str()) == Some("ppflow") {
+            toml::from_str(&content).map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe TOML: {}", e)))?
+        } else {
+            serde_json::from_str(&content).map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?
+        };
         Ok(wf)
     } else {
         Err(PdfError::InvalidInput(
@@ -100,10 +120,23 @@ fn run_workflow(
     let input_bytes = fs::read(input)?;
     let (out_bytes, report) = run_workflow_bytes(&input_bytes, &wf)?;
     fs::write(output, out_bytes)?;
+
+    let status_str = match report.status {
+        paperpilot_core::workflow::WorkflowExecutionStatus::Success => "successfully",
+        paperpilot_core::workflow::WorkflowExecutionStatus::StoppedEarly => "with early stop",
+        paperpilot_core::workflow::WorkflowExecutionStatus::Failed => "with failure",
+    };
+
     println!(
-        "Workflow '{}' completed successfully in {}ms ({} steps, output: {} bytes)",
-        report.workflow_name, report.duration_ms, report.steps_completed, report.output_bytes_len
+        "Workflow '{}' completed {} in {}ms",
+        report.workflow_name, status_str, report.duration_ms
     );
+    println!(
+        "  Steps: {} total, {} completed, {} skipped, {} stopped, {} unreached",
+        report.steps_total, report.steps_completed, report.steps_skipped, report.steps_stopped, report.steps_unreached
+    );
+    println!("  Output size: {} bytes", report.output_bytes_len);
+
     Ok(())
 }
 

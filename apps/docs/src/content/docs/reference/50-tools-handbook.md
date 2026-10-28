@@ -1,11 +1,11 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 76 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 77 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (76 Tools)
+# PaperPilot Tools Handbook (77 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **76 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **77 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
 ## 1. `cli_ask`
 
@@ -490,8 +490,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Compares two PDF documents and highlights visual and textual differences.**  
-Performs side-by-side diffing, identifying added, removed, or shifted text and graphics between document revisions.
+**Compares two PDF documents and writes a JSON difference report.**
+The report includes `diff_detected` and affected page numbers. In a workflow, later PDF operations continue reading the source PDF; the report is a separate artifact.
 
 ### CLI
 ```bash
@@ -503,8 +503,9 @@ paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e
 {
   "name": "pdf_compare",
   "arguments": {
-    "file1": "tests/e2e_fixtures/real/merge_a.pdf",
-    "file2": "tests/e2e_fixtures/real/merge_b.pdf"
+    "input_a": "tests/e2e_fixtures/real/merge_a.pdf",
+    "input_b": "tests/e2e_fixtures/real/merge_b.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/comparison.json"
   }
 }
 ```
@@ -697,6 +698,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/crop -H 'Content-Type: applicat
 
 **Removes password protection and usage restrictions from an unlocked PDF.**  
 Decrypts the document using the known password and outputs an unrestricted PDF that can be opened, printed, and edited freely.
+
+Password-protected files are parsed with the supplied password before export, preserving their catalog, pages, and text. The resulting PDF can be passed to subsequent operations such as `pdf_compress`. An incorrect password returns an error.
 
 ### CLI
 ```bash
@@ -1408,13 +1411,7 @@ paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output 
 
 ### MCP JSON-RPC
 ```json
-{
-  "name": "pdf_remove_blank",
-  "arguments": {
-    "input": "tests/e2e_fixtures/real/multi_page.pdf",
-    "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"
-  }
-}
+N/A
 ```
 
 ### REST API
@@ -1952,7 +1949,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pdf-a -H 'Content-Type: appl
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 **Converts PDF pages into an editable Microsoft PowerPoint presentation (.pptx).**  
-Maps each page into a presentation slide with text boxes and background graphics.
+Exports each PDF page's extracted text into a presentation slide. The PPTX includes the package relationships, presentation manifest, slide relationships, and content types needed by Office readers. Its output can be passed to `office_extract_text` as a real `.pptx` intermediate.
 
 ### CLI
 ```bash
@@ -2115,7 +2112,41 @@ N/A
 N/A
 ```
 
-## 76. `workspace_search`
+## 76. `workflow`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+The Workflow engine allows you to execute a series of PDF operations defined as a JSON or `.ppflow` (TOML) recipe. You can also specify dynamic runtime conditions to control whether individual steps are executed.
+
+### CLI
+```bash
+# Run a built-in preset
+paperpilot workflow run --input document.pdf --output out.pdf --preset preset-clean-scan
+
+# Run a custom recipe file
+paperpilot workflow run --input document.pdf --output out.pdf --recipe my-workflow.ppflow
+
+# View available presets
+paperpilot workflow list
+
+# Inspect a workflow's steps
+paperpilot workflow inspect --preset preset-legal-discovery
+
+# Export a built-in workflow to a file
+paperpilot workflow export --preset preset-redact-protect --output redact.ppflow
+```
+
+### MCP JSON-RPC
+```json
+N/A
+```
+
+### REST API
+```bash
+N/A
+```
+
+## 77. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

@@ -2,6 +2,107 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum NumberComparator {
+    Eq(usize),
+    Gt(usize),
+    Gte(usize),
+    Lt(usize),
+    Lte(usize),
+    Between(usize, usize),
+}
+
+impl NumberComparator {
+    pub fn matches(&self, value: usize) -> bool {
+        match self {
+            Self::Eq(expected) => value == *expected,
+            Self::Gt(threshold) => value > *threshold,
+            Self::Gte(threshold) => value >= *threshold,
+            Self::Lt(threshold) => value < *threshold,
+            Self::Lte(threshold) => value <= *threshold,
+            Self::Between(min, max) => value >= *min && value <= *max,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct StagePredicate {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_scanned: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page_count: Option<NumberComparator>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_size_bytes: Option<NumberComparator>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_contains: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_form_fields: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_encrypted: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_signed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum ConditionExpr {
+    Complex(ComplexCondition),
+    Leaf(StagePredicate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct ComplexCondition {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub all: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub any: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub not: Option<Box<ConditionExpr>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum OnNoMatchAction {
+    #[default]
+    Skip,
+    Stop,
+    Error,
+    CustomError { error: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum StageStatus {
+    Executed,
+    Skipped,
+    Stopped,
+    Failed,
+    Unreached,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowExecutionStatus {
+    Success,
+    StoppedEarly,
+    Failed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct StageExecutionRecord {
+    pub id: String,
+    pub op: String,
+    pub status: StageStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub condition_matched: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub duration_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct WorkflowStep {
     pub id: String,
     #[serde(rename = "operationId", alias = "operation_id")]
@@ -12,6 +113,10 @@ pub struct WorkflowStep {
     pub icon: Option<String>,
     #[serde(default)]
     pub params: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub condition: Option<ConditionExpr>,
+    #[serde(default, rename = "onNoMatch", alias = "on_no_match")]
+    pub on_no_match: OnNoMatchAction,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -33,10 +138,17 @@ pub struct SavedWorkflow {
 pub struct WorkflowExecutionReport {
     pub workflow_id: String,
     pub workflow_name: String,
+    pub status: WorkflowExecutionStatus,
     pub steps_total: usize,
     pub steps_completed: usize,
-    pub output_bytes_len: usize,
+    pub steps_skipped: usize,
+    pub steps_stopped: usize,
+    pub steps_unreached: usize,
+    pub stages: Vec<StageExecutionRecord>,
     pub duration_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    pub output_bytes_len: usize,
 }
 
 pub fn get_default_presets() -> Vec<SavedWorkflow> {
@@ -58,6 +170,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         ("prefix".to_string(), serde_json::json!("CONFIDENTIAL-")),
                         ("start".to_string(), serde_json::json!(1)),
                     ]),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -68,6 +182,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         "text".to_string(),
                         serde_json::json!("CONFIDENTIAL"),
                     )]),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -75,6 +191,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Linearize".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
             ],
             updated_at: "2025-01-01T00:00:00Z".to_string(),
@@ -94,6 +212,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Remove Blank Pages".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -104,6 +224,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         "position".to_string(),
                         serde_json::json!("bottom-right"),
                     )]),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -111,6 +233,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Compress".to_string()),
                     icon: None,
                     params: HashMap::from([("quality".to_string(), serde_json::json!(75))]),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
             ],
             updated_at: "2025-01-01T00:00:00Z".to_string(),
@@ -130,6 +254,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Redact Content".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -137,6 +263,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Flatten Annotations".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -144,6 +272,8 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Encrypt".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    condition: None,
+                    on_no_match: OnNoMatchAction::default(),
                 },
             ],
             updated_at: "2025-01-01T00:00:00Z".to_string(),
