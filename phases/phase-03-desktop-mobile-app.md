@@ -67,8 +67,9 @@
 | 3.4.8 | Extract UI ✅ | Merged (Session 10488084682857299204) |
 | 3.4.9 | Output file picker ✅ | Merged (Session 10488084682857299204) |
 | 3.4.10 | **Visual Pipeline Builder (Basic)** ✅ | Merged |
-| 3.4.11 | **Conditional branching UI** | Add IF/ELSE nodes (e.g. "if scanned → OCR, else extract text directly") to the pipeline canvas |
+| 3.4.11 | **Conditional branching UI `[Spec 138]`** 🚀 | Add IF/ELSE diamond nodes and branching visual connections to `PipelineCanvas.svelte`. In Progress — Jules Session `15126192642974815608` on branch `feat/desktop-conditional-branching-ui-task-3-4-11`. |
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
+| 3.4.13 | **Desktop V2 Workspace UX Refresh `[Spec 140]`** 📋 | Refactor to an integrated 3-pane layout: (1) Left — Library & Automations (recent files, smart SLM categories, watched folders, shared-with-you), (2) Center — Focused document canvas with frosted-glass floating toolbar and status bar, (3) Right — Contextual AI-driven tool dock (recommendations + grouped tools). Replaces the current tab-switching navigation with a unified workspace that keeps the tool dock and document reader side by side at all times. **Blocked by 3.4.11.** |
 
 ---
 
