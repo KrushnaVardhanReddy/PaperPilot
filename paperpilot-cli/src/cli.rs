@@ -639,6 +639,15 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Declarative multi-step document workflow execution
+    Run {
+        /// TOML .ppflow or JSON recipe
+        recipe: PathBuf,
+        /// Local input PDF
+        input: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+    /// List, inspect, or execute a document workflow
     Workflow {
         #[command(subcommand)]
         subcommand: Option<WorkflowSubcommand>,
@@ -655,7 +664,7 @@ pub enum Commands {
         #[arg(long)]
         preset: Option<String>,
 
-        /// Path to custom workflow recipe JSON file
+        /// Path to custom workflow recipe (.ppflow TOML or JSON)
         #[arg(long)]
         recipe: Option<PathBuf>,
     },
@@ -733,14 +742,14 @@ pub struct FillBatchArgs {
 pub enum WorkflowSubcommand {
     /// List all available workflow presets
     List,
-    /// Inspect step sequence of a preset or recipe JSON file
+    /// Inspect stages and conditions of a preset or TOML/JSON recipe
     Inspect {
         #[arg(long)]
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
     },
-    /// Execute workflow preset or recipe JSON against input PDF
+    /// Execute workflow preset or TOML/JSON recipe against input PDF
     Run {
         #[arg(long)]
         input: PathBuf,

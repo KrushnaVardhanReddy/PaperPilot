@@ -4300,7 +4300,7 @@ impl PaperPilotMcpServer {
                 },
                 "recipe": {
                     "type": "string",
-                    "description": "Path to custom workflow recipe JSON file or raw recipe JSON string"
+                    "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML"
                 }
             },
             "required": ["input", "output"]
@@ -4461,6 +4461,12 @@ impl PaperPilotMcpServer {
                 let preset_opt = args.get("preset").and_then(|v| v.as_str());
                 let recipe_opt = args.get("recipe").and_then(|v| v.as_str());
 
+                if preset_opt.is_some() == recipe_opt.is_some() {
+                    return Err(ErrorData::invalid_params(
+                        "Specify exactly one of preset or recipe",
+                        None,
+                    ));
+                }
                 let workflow = if let Some(preset_name) = preset_opt {
                     paperpilot_core::workflow::get_preset_by_id(preset_name).ok_or_else(|| {
                         ErrorData::invalid_params(
@@ -4479,13 +4485,8 @@ impl PaperPilotMcpServer {
                     } else {
                         recipe_str.to_string()
                     };
-                    serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&content)
-                        .map_err(|e| {
-                            ErrorData::invalid_params(
-                                format!("Invalid workflow recipe JSON: {}", e),
-                                None,
-                            )
-                        })?
+                    paperpilot_core::workflow::parse_workflow(&content)
+                        .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?
                 } else {
                     return Err(ErrorData::invalid_params(
                         "Must specify either 'preset' or 'recipe'",
@@ -4497,11 +4498,17 @@ impl PaperPilotMcpServer {
                     ErrorData::invalid_params(format!("Failed to read input PDF: {}", e), None)
                 })?;
 
-                let (out_bytes, report) = paperpilot_pdf::operations::workflow::run_workflow_bytes(
-                    &input_bytes,
-                    &workflow,
-                )
-                .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+                let (out_bytes, report) =
+                    paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
+                        &input_bytes,
+                        &workflow,
+                    )
+                    .map_err(|e| {
+                        ErrorData::internal_error(
+                            e.to_string(),
+                            serde_json::to_value(&e.report).ok(),
+                        )
+                    })?;
 
                 std::fs::write(&output_path, out_bytes).map_err(|e| {
                     ErrorData::internal_error(format!("Failed to write output PDF: {}", e), None)

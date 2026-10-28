@@ -28,8 +28,18 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 
 | **1** | **Task 4.5** | Phase 4.5.1 / Spec 134 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feature/dev` | ✅ **Completed & Merged (PR #291)** |
 | **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten appearances, and write template tokens `{row.name}_{date}.pdf`. | `feature/dev` | ✅ **Completed & Merged (PR #293)** |
-| **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feat/conditional-pipeline-engine-task-4-7-6` | 📋 **Next Up** |
+| **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feat/conditional-pipeline-engine-task-4-7-6` | ✅ **Implemented; pending review** — see `reports/CONDITIONAL_WORKFLOW_REPORT.md`. |
 | **4** | **Task 3.4.11** | Phase 3.4.11 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui` | 📋 Scheduled |
+
+---
+
+## Local Task 4.7.6 / 8.2.3 validation
+
+- Branch: `feat/conditional-pipeline-engine-task-4-7-6`, based on `origin/feature/dev` at `0f26149` after PRs #292 and #293 were merged.
+- Added TOML `.ppflow`/legacy JSON parsing, runtime scan/page-count predicates, no-match handling, stable single-artifact dependencies, and stage-level outcomes in one runner shared by CLI, MCP, REST and WASM.
+- `paperpilot run RECIPE INPUT --output OUTPUT --json` is the CLI shortcut. Failures preserve existing CLI output files and include stage reports. Unsupported operations/parameters now fail explicitly; terminal encryption really executes, and redaction no longer passes through as success.
+- Scope, real-PDF verification and remaining limitations: [conditional workflow report](reports/CONDITIONAL_WORKFLOW_REPORT.md), [Spec 136](specs/136-conditional-workflow-engine/spec.md).
+- After review/merge, continue with Task 3.4.11 desktop conditional branching UI. Triggers, retries, output routing, persisted generic receipts and artifact joins remain separate tasks.
 
 ---
 

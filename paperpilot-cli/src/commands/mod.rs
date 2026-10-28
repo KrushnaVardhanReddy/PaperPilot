@@ -383,19 +383,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(&resolve_input_path(input)?),
-        Commands::Workflow {
-            subcommand,
-            input,
-            output,
-            preset,
-            recipe,
-        } => workflow::handle_workflow_command(
-            subcommand.as_ref(),
-            input.as_ref(),
-            output.as_ref(),
-            preset.as_ref(),
-            recipe.as_ref(),
-        ),
+        Commands::Workflow { .. } | Commands::Run { .. } => workflow::execute(command, false).0,
         Commands::PdfValidateSignatures {
             input,
             output,

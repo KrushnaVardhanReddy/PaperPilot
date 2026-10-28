@@ -62,3 +62,9 @@ wiki/vault/
 # Local Strategy & Security Scan Reports
 pricing_strategy.md
 semgrep_report.json
+
+# Public synthetic evidence for the conditional workflow engine.
+!reports/conditional-workflow-validation/text.pdf
+!reports/conditional-workflow-validation/scan-jpeg.pdf
+!reports/conditional-workflow-validation/text-output.pdf
+!reports/conditional-workflow-validation/scan-jpeg-output.pdf

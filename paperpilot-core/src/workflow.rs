@@ -1,10 +1,46 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+mod recipe;
+pub use recipe::{parse_workflow, workflow_order};
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct WorkflowCondition {
+    pub if_scanned: Option<bool>,
+    pub if_page_count_gt: Option<u32>,
+    pub comparator: Option<PageCountComparator>,
+    pub value: Option<u32>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub enum PageCountComparator {
+    Greater,
+    GreaterOrEqual,
+    Equal,
+    Less,
+    LessOrEqual,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum OnNoMatch {
+    #[default]
+    Skip,
+    ArchiveOriginal,
+    Error,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct WorkflowStep {
     pub id: String,
-    #[serde(rename = "operationId", alias = "operation_id")]
+    #[serde(
+        rename = "operationId",
+        alias = "operation_id",
+        alias = "op",
+        alias = "tool"
+    )]
     pub operation_id: String,
     #[serde(default)]
     pub label: Option<String>,
@@ -12,16 +48,27 @@ pub struct WorkflowStep {
     pub icon: Option<String>,
     #[serde(default)]
     pub params: HashMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition: Option<WorkflowCondition>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub depends_on: Vec<String>,
+    #[serde(default)]
+    pub on_no_match: OnNoMatch,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct SavedWorkflow {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     #[serde(default)]
     pub description: Option<String>,
+    #[serde(alias = "stage", alias = "step")]
     pub steps: Vec<WorkflowStep>,
-    #[serde(rename = "updatedAt", alias = "updated_at")]
+    #[serde(default = "recipe_version")]
+    pub version: String,
+    #[serde(default, rename = "updatedAt", alias = "updated_at")]
     pub updated_at: String,
     #[serde(default, rename = "isPreset", alias = "is_preset")]
     pub is_preset: bool,
@@ -36,6 +83,36 @@ pub struct WorkflowExecutionReport {
     pub steps_total: usize,
     pub steps_completed: usize,
     pub output_bytes_len: usize,
+    pub duration_ms: u64,
+    #[serde(default)]
+    pub steps_skipped: usize,
+    #[serde(default)]
+    pub archived_original: bool,
+    #[serde(default)]
+    pub error: Option<String>,
+    #[serde(default)]
+    pub stages: Vec<WorkflowStageReport>,
+}
+
+fn recipe_version() -> String {
+    "1".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowStageStatus {
+    Completed,
+    Skipped,
+    Failed,
+    NotRun,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowStageReport {
+    pub id: String,
+    pub operation_id: String,
+    pub status: WorkflowStageStatus,
+    pub reason: Option<String>,
     pub duration_ms: u64,
 }
 
@@ -58,6 +135,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         ("prefix".to_string(), serde_json::json!("CONFIDENTIAL-")),
                         ("start".to_string(), serde_json::json!(1)),
                     ]),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -68,6 +146,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         "text".to_string(),
                         serde_json::json!("CONFIDENTIAL"),
                     )]),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -75,8 +154,10 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Linearize".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    ..Default::default()
                 },
             ],
+            version: recipe_version(),
             updated_at: "2025-01-01T00:00:00Z".to_string(),
             is_preset: true,
             team_id: None,
@@ -94,6 +175,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Remove Blank Pages".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -104,6 +186,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                         "position".to_string(),
                         serde_json::json!("bottom-right"),
                     )]),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -111,8 +194,10 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Compress".to_string()),
                     icon: None,
                     params: HashMap::from([("quality".to_string(), serde_json::json!(75))]),
+                    ..Default::default()
                 },
             ],
+            version: recipe_version(),
             updated_at: "2025-01-01T00:00:00Z".to_string(),
             is_preset: true,
             team_id: None,
@@ -130,6 +215,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Redact Content".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-2".to_string(),
@@ -137,6 +223,7 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Flatten Annotations".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    ..Default::default()
                 },
                 WorkflowStep {
                     id: "step-3".to_string(),
@@ -144,8 +231,10 @@ pub fn get_default_presets() -> Vec<SavedWorkflow> {
                     label: Some("Encrypt".to_string()),
                     icon: None,
                     params: HashMap::new(),
+                    ..Default::default()
                 },
             ],
+            version: recipe_version(),
             updated_at: "2025-01-01T00:00:00Z".to_string(),
             is_preset: true,
             team_id: None,

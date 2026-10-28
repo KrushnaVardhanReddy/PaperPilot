@@ -41,6 +41,8 @@ struct CommandResult {
     error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     batch: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workflow: Option<serde_json::Value>,
 }
 
 pub fn run() {
@@ -88,7 +90,13 @@ fn run_impl() {
 
     let cli = Cli::parse();
 
+    let mut workflow = None;
     let (result, batch) = match &cli.command {
+        cli::Commands::Workflow { .. } | cli::Commands::Run { .. } => {
+            let (result, report) = commands::workflow::execute(&cli.command, cli.json);
+            workflow = report;
+            (result, None)
+        }
         #[cfg(feature = "pdf")]
         cli::Commands::FillBatch(args) => match commands::fill_batch::run(args) {
             Ok(receipt) => (
@@ -115,12 +123,14 @@ fn run_impl() {
             operation: op_name,
             error: None,
             batch,
+            workflow,
         },
         Err(e) => CommandResult {
             success: false,
             operation: op_name,
             error: Some(e.to_string()),
             batch,
+            workflow,
         },
     };
 

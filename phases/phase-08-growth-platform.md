@@ -140,9 +140,9 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.2.1 | `.ppflow` pipeline schema | **TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
-| 8.2.2 | CLI pipeline execution | `paperpilot run invoice.ppflow input.pdf` — accepts `.ppflow` (TOML) or `.ppflow.json` (JSON) transparently |
-| 8.2.3 | Conditional branching engine | IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
+| 8.2.1 | `.ppflow` pipeline schema (runtime subset implemented) | Version-1 name/id, stages, params, conditions, single dependencies and no-match behavior are implemented under Spec 136. Trigger/output/retry/secret fields remain planned and are rejected. **Full planned schema: TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
+| 8.2.2 | CLI pipeline execution (implemented, pending review) | `paperpilot run invoice.ppflow input.pdf --output out.pdf` — accepts TOML or JSON and preserves existing `workflow run` syntax; `--json` includes per-stage outcomes. |
+| 8.2.3 | Conditional branching engine `[Spec 136]` | Implemented, pending review: per-stage scan/page-count predicates, complementary tests against a shared dependency, explicit `skip` / `archive_original` / `error`, and detailed outcomes in the shared runner. Desktop paired IF/ELSE nodes remain Task 3.4.11; multi-artifact joins remain separate. |
 | 8.2.4 | Stage retry & error handling | Per-stage `retry = N`, quarantine folder on final failure, optional Slack/webhook failure alert |
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |

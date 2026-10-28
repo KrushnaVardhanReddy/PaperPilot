@@ -1286,9 +1286,12 @@ pub async fn workflow_presets() -> impl IntoResponse {
 )]
 pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> impl IntoResponse {
     if let Some(recipe_val) = payload.recipe {
-        if let Ok(wf) =
-            serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val)
-        {
+        if let Ok(wf) = paperpilot_core::workflow::parse_workflow(
+            &recipe_val
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| recipe_val.to_string()),
+        ) {
             (
                 StatusCode::OK,
                 Json(serde_json::json!({
@@ -1329,6 +1332,13 @@ pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> 
     )
 )]
 pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> impl IntoResponse {
+    if payload.preset.is_some() == payload.recipe.is_some() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"Specify exactly one of preset or recipe"})),
+        )
+            .into_response();
+    }
     let workflow = if let Some(preset_name) = &payload.preset {
         match paperpilot_core::workflow::get_preset_by_id(preset_name) {
             Some(w) => w,
@@ -1341,7 +1351,12 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
             }
         }
     } else if let Some(recipe_val) = payload.recipe {
-        match serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val) {
+        match paperpilot_core::workflow::parse_workflow(
+            &recipe_val
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| recipe_val.to_string()),
+        ) {
             Ok(w) => w,
             Err(e) => {
                 return (
@@ -1371,12 +1386,15 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
     };
 
     let (out_bytes, report) =
-        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&input_bytes, &workflow) {
+        match paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
+            &input_bytes,
+            &workflow,
+        ) {
             Ok(res) => res,
             Err(e) => {
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"status": "error", "error": e.to_string()})),
+                    Json(serde_json::json!({"status": "error", "error": e.to_string(), "report": e.report})),
                 )
                     .into_response();
             }
@@ -1470,7 +1488,7 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
             }
         }
     } else if let Some(r) = recipe_json {
-        match serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&r) {
+        match paperpilot_core::workflow::parse_workflow(&r) {
             Ok(w) => w,
             Err(_) => return (StatusCode::BAD_REQUEST, "Invalid recipe JSON").into_response(),
         }
@@ -1483,9 +1501,16 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
     }
 
     let (out_bytes, report) =
-        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&file_bytes, &workflow) {
+        match paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
+            &file_bytes,
+            &workflow,
+        ) {
             Ok(res) => res,
-            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+            Err(e) => return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"status":"error","error":e.to_string(),"report":e.report})),
+            )
+                .into_response(),
         };
 
     let mut headers = HeaderMap::new();
@@ -1493,6 +1518,10 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
     headers.insert(
         "X-Workflow-Steps-Executed",
         report.steps_completed.to_string().parse().unwrap(),
+    );
+    headers.insert(
+        "X-Workflow-Steps-Skipped",
+        report.steps_skipped.to_string().parse().unwrap(),
     );
     headers.insert(
         "X-Workflow-Duration-Ms",

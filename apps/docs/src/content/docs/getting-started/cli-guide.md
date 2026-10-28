@@ -47,6 +47,20 @@ Existing files are preserved, failed rows do not stop later records, and the
 batch writes `execution_receipt.json`. Any failed row produces a nonzero exit
 code. See the [full command reference](/reference/tools/cli_fill_batch/).
 
+## Conditional Document Recipes
+
+Run a TOML `.ppflow` or existing JSON workflow locally:
+
+```bash
+paperpilot run examples/workflows/conditional-invoice.ppflow invoice.pdf -o processed.pdf --json
+```
+
+Recipes can test scan status and page count before each stage, select dependencies,
+and skip, return the original document, or fail when conditions do not match.
+The JSON result includes per-stage outcomes. See the
+[workflow reference](/reference/tools/document_workflow/) for supported operations,
+schema, OCR requirements and examples.
+
 ## Automated Scripting & Webhooks
 
 Use the `--json` flag to receive structured JSON status output, ideal for parsing in bash scripts, GitHub Actions, or automation pipelines with `jq`:
