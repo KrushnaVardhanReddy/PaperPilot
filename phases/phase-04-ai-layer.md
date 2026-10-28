@@ -356,9 +356,9 @@
 
 | # | Task | Notes |
 |---|---|---|
-| 4.5.1 | `paperpilot ask "..."` command | Sends natural language to configured resolver (offline or LLM), shows plan, confirms, runs |
-| 4.5.2 | Non-interactive mode | `--yes` flag to skip confirmation for scripting |
-| 4.5.3 | `--offline` flag | Force offline NLP even if LLM key is configured |
+| 4.5.1 | `paperpilot ask "..."` command `[Spec 134 / Task 134A]` ✅ | **Completed & Merged (PR #291)** — Subcommand accepting natural language, resolving plan via `OfflineNlpResolver` across 40+ canonical intents, interactive confirmation, and operation dispatch (`specs/134-cli-natural-language-interface/spec.md`). |
+| 4.5.2 | Non-interactive mode (`--yes` / `-y`) ✅ | Completed in PR #291 (`--yes` flag skips confirmation prompt for headless scripts and automation pipelines). |
+| 4.5.3 | `--offline` & `--dry-run` flags ✅ | Completed in PR #291 (`--offline` forces rule-based resolver; `--dry-run` prints parsed plan JSON/table without modifying disk). |
 
 ---
 
