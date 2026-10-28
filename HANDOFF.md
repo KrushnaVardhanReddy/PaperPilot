@@ -35,14 +35,13 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 
 ## 🏆 Recently Merged & Completed
 
-### Local stabilization follow-up (Task 84D; not merged)
+### Local stabilization follow-up (Task 84D; PR #292 Merged)
 
-- Branch: `fix/slm-compound-workflow-validation`, based on `origin/feature/dev` at `51c59fd`.
+- Branch: `hobostay:fix/slm-compound-workflow-validation`, merged into `feature/dev`.
 - Repaired all 15 compound recipes and restricted generation to 42 registered, usable MCP tools with a live-schema snapshot and typed artifact validation. JSON reports preserve their source document; directories are terminal; Office exports retain their actual formats.
 - Real multi-step MCP tests uncovered and fixed two core defects: PPTX export lacked OPC relationships, and decrypting a loaded password-protected PDF could silently lose its pages. Also corrected the `pdf_remove_blank` and `pdf_compare` required-argument schemas.
 - Validation: 223 Python checks including 11 unmocked MCP executions, 10,000 generated/validated labels, and targeted Rust regressions. See [the stabilization report](reports/SLM_COMPOUND_WORKFLOW_VALIDATION_REPORT.md) for exact scope and remaining model evaluation.
-- No model was retrained or republished. The local inference benchmark now checks 6 single requests, 15 workflows and a refusal, and fails on missing weights. Published model accuracy must be re-evaluated after retraining on the corrected data.
-- The Phase 3/4 execution order above remains the upstream plan; this is a separate stabilization branch awaiting review.
+- Next step for SLM: Retrain Qwen model using updated generator/templates (`generate_dataset.py`), export GGUF Q4_K_M, and push to HuggingFace.
 
 ### Previously merged work
 
