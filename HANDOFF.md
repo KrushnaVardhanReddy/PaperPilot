@@ -30,7 +30,7 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 | **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten appearances, and write template tokens `{row.name}_{date}.pdf`. | `feature/dev` | ✅ **Completed & Merged (PR #293)** |
 | **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 / Spec 136 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feature/dev` | ✅ **Completed & Merged** — see `reports/CONDITIONAL_WORKFLOW_REPORT.md`. |
 | **4** | **Task 4.7.10 / 8.2.10** | Phase 4.7.10 / 8.2.10 / Spec 137 | **Advanced Multi-Condition Predicates & Combinators**<br>Recursive boolean combinators (`all`, `any`, `not`), in-flight text content search (`text_contains`), form detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators. | `feature/dev` | ✅ **Completed & Merged (PR #299)** |
-| **5** | **Task 3.4.11** | Phase 3.4.11 / Spec 138 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes, condition inspector sidebar, and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui-task-3-4-11` | 🔄 In Progress (Scheduled for Jules) |
+| **5** | **Task 3.4.11** | Phase 3.4.11 / Spec 138 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes, condition inspector sidebar, and branching visual connections to `PipelineCanvas.svelte`. | `feature/dev` | ✅ **Completed & Merged (PR #301)** |
 
 ---
 
