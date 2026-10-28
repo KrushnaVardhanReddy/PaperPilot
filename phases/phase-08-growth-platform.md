@@ -149,7 +149,7 @@ permissions = { print = true, edit = false }
 | 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
 | 8.2.8 | Per-stage integrity hashing | SHA-256 the file before and after every pipeline stage; mismatch = automatic abort + alert |
 | 8.2.9 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
-| 8.2.10 | Multi-Condition Predicates & Combinators `[Spec 137]` | 📋 **Planned** — Recursive boolean combinators (`all`, `any`, `not`), in-flight text layer matching, form field / signature detection, and file size comparators. |
+| 8.2.10 | Multi-Condition Predicates & Combinators `[Spec 137]` ✅ | **Completed & Merged (PR #299)** — Recursive boolean combinators (`all`, `any`, `not`), in-flight text layer matching, form field / signature detection, and file size comparators. |
 
 ---
 

@@ -398,7 +398,7 @@
 | 4.7.7 | Execution Receipt / Audit Log (batch subset implemented) | Batch fill writes `execution_receipt.json` with job ID, UTC timestamp, template/data/output SHA-256 hashes, operations, duration and per-row errors. Generic recipe receipts remain planned. |
 | 4.7.8 | Desktop UI for Automation | "Automations" tab in desktop app: list configured watchers, enable/disable, view last execution receipt per watcher, manually trigger a recipe against open document. |
 | 4.7.9 | MCP tools for automation | `recipe_run(recipe_toml, input)`, `batch_fill(template, data_json)`, `watcher_start(dir, recipe)`, `watcher_stop(id)` — allows AI agents to orchestrate headless document automation. |
-| 4.7.10 | Advanced Multi-Condition Predicates & Combinators `[Spec 137]` | 📋 **Planned** — Recursive boolean combinators (`all`, `any`, `not`), text content matching (`text_contains`), form field detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators (`file_size_bytes`). |
+| 4.7.10 | Advanced Multi-Condition Predicates & Combinators `[Spec 137]` ✅ | **Completed & Merged (PR #299)** — Recursive boolean combinators (`all`, `any`, `not`), text content matching (`text_contains`), form field detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators (`file_size_bytes`). |
 
 ---
 
