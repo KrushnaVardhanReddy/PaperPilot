@@ -5,6 +5,21 @@ Uploads the merged PaperPilot-Qwen-0.5B model to Hugging Face Hub.
 
 import os
 import sys
+
+# Load repo root .env if present
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+env_file = os.path.join(REPO_ROOT, ".env")
+if os.path.exists(env_file):
+    with open(env_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, val = line.partition("=")
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+
 from huggingface_hub import HfApi, create_repo
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -91,6 +106,18 @@ def push_to_hub(repo_id: str):
         repo_type="model",
         token=token,
     )
+
+    gguf_path = os.path.join(os.path.dirname(MODEL_DIR), "paperpilot-qwen-0.5b-q4_k_m.gguf")
+    if os.path.exists(gguf_path):
+        print(f"📦 Uploading quantized GGUF ({os.path.getsize(gguf_path) // (1024*1024)} MB) to https://huggingface.co/{repo_id}...")
+        api.upload_file(
+            path_or_fileobj=gguf_path,
+            path_in_repo="paperpilot-qwen-0.5b-q4_k_m.gguf",
+            repo_id=repo_id,
+            repo_type="model",
+            token=token,
+        )
+
     print(f"🎉 Model published successfully: https://huggingface.co/{repo_id}")
 
 if __name__ == "__main__":
