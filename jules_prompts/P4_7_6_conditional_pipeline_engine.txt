@@ -39,6 +39,10 @@ Implement runtime condition evaluation (`condition`) and failure routing (`on_no
 3. **CLI & Diagnostics in `paperpilot-cli/src/commands/workflow.rs`**:
    - Ensure `paperpilot workflow run` prints skipped stages and execution receipt cleanly.
    - Support inspect subcommand showing condition expressions.
+   - Add `paperpilot workflow export <PRESET_OR_ID> [--output <PATH>] [--format json|toml]` to dump workflow recipes.
+   - Add `paperpilot workflow import <PATH>` to validate and save recipes to local CLI storage (`~/.paperpilot/workflows/`).
+   - Support multi-format parsing in `resolve_workflow`: auto-detect `.ppflow` / `.toml` (via `toml` crate) and `.json` (via `serde_json`).
+
 
 4. **Comprehensive Test Suite**:
    - Add unit tests in `paperpilot-core/src/workflow.rs` testing serde of simple and complex conditions (TOML and JSON), vacuous truth (`all: []` -> true, `any: []` -> false), unknown field rejection (`#[serde(deny_unknown_fields)]`), and comparator ranges (`min <= max`).

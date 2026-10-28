@@ -22,11 +22,24 @@ This transforms static pipelines into intelligent document automation workflows 
 
 ---
 
-## 2. Complete Contract Specification (YAML / TOML)
+## 2. Complete Contract Specification (YAML / TOML / JSON)
 
-The pipeline specification format supports both **TOML** (`.ppflow`) and **YAML/JSON** (`.ppflow.json` / `SavedWorkflow`) transparently.
+The pipeline specification format supports both **TOML** (`.ppflow`) and **JSON/YAML** (`.ppflow.json` / `SavedWorkflow`) transparently.
+
+### 2.0 Penta-Interface Export & Import Contract
+
+Workflows must be fully portable across all 5 interfaces without data loss or schema divergence:
+
+| Interface | Export Capability | Import Capability | Supported Formats |
+|---|---|---|---|
+| **CLI (`paperpilot-cli`)** | `paperpilot workflow export <ID> --output <FILE> [--format json\|toml]` | `paperpilot workflow import <FILE>` (validates & saves to `~/.paperpilot/workflows/`) | JSON, TOML (`.ppflow`) |
+| **Desktop UI (`apps/desktop`)** | `FlowSelector.svelte` -> Export JSON download | File picker upload -> validates schema & stores in `localStorage['paperpilot_saved_flows']` | JSON (preserves conditions) |
+| **WASM / Embed (`paperpilot-wasm`)** | `workflow_to_json_wasm(workflow)` | `run_workflow_wasm(pdf_bytes, recipe_json_or_toml)` | JSON, TOML |
+| **REST Gateway (`paperpilot-gateway`)** | `GET /api/v1/workflow/presets` / `GET /api/v1/workflow/:id/export` | `POST /api/v1/workflow/run` (body: raw JSON or TOML recipe) | JSON, TOML |
+| **MCP Server (`paperpilot-mcp`)** | In tool responses / schema introspection | `document_workflow` tool parameter `recipe` (JSON object or string) | JSON |
 
 ### 2.1 Simple Conditions Contract (Flat / Implicit AND)
+
 
 ```yaml
 # Simple Contract: Flat key-value map
