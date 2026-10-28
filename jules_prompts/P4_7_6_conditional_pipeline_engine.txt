@@ -22,26 +22,32 @@ Implement runtime condition evaluation (`condition`) and failure routing (`on_no
    - Implement `DocumentInspector` / `evaluate_condition`:
      - `page_count`: uses `doc.get_pages().len()`.
      - `file_size_bytes`: length of input bytes.
-     - `is_scanned`: check if pages 1..3 have 0 non-whitespace extractable text characters.
-     - `text_contains`: case-insensitive substring search on text extracted from initial pages.
-     - `has_form_fields`: check if catalog has `/AcroForm` with `/Fields`.
+     - `is_scanned`: check first 3 pages (or all if <= 5); classified as scanned iff non-whitespace text chars < 10 AND at least one raster image XObject exists. Mixed docs evaluate to false.
+     - `text_contains`: case-insensitive substring search on text extracted from initial pages with whitespace normalized.
+     - `has_form_fields`: check if catalog has `/AcroForm` with non-empty `/Fields`.
      - `is_encrypted`: check trailer for `/Encrypt`.
+     - `is_signed`: check `/AcroForm` fields for `/Sig` or `/ByteRange`.
+     - Error handling: Never convert stream corruption, flate decode errors, or invalid font CMaps into `false`; return `PdfError::InspectionFailure`.
    - Update `run_workflow_bytes` loop:
      - If step has `condition`, evaluate expression against current in-flight bytes.
-     - If false: execute `on_no_match` policy (`Skip`: continue loop and mark stage skipped; `Stop`: break loop and return current bytes; `Error`: return `PdfError::ConditionFailed`).
-     - If true: execute step as normal.
+     - If false: execute `on_no_match` policy:
+       - `Skip`: continue loop and record stage skipped.
+       - `Stop`: break loop, mark subsequent steps as `Unreached`, set report status `StoppedEarly`, return current bytes.
+       - `Error` / `CustomError`: abort pipeline and return `PdfError::ConditionFailed`.
+     - If true: execute step as normal and record stage executed with elapsed time.
 
 3. **CLI & Diagnostics in `paperpilot-cli/src/commands/workflow.rs`**:
-   - Ensure `paperpilot workflow run` prints skipped stages cleanly.
+   - Ensure `paperpilot workflow run` prints skipped stages and execution receipt cleanly.
    - Support inspect subcommand showing condition expressions.
 
 4. **Comprehensive Test Suite**:
-   - Add unit tests in `paperpilot-core/src/workflow.rs` testing serde of simple and complex conditions (TOML and JSON).
+   - Add unit tests in `paperpilot-core/src/workflow.rs` testing serde of simple and complex conditions (TOML and JSON), vacuous truth (`all: []` -> true, `any: []` -> false), unknown field rejection (`#[serde(deny_unknown_fields)]`), and comparator ranges (`min <= max`).
    - Add integration tests in `paperpilot-pdf` testing:
-     - `is_scanned` triggers OCR or skips cleanly.
+     - `is_scanned` triggers OCR or skips cleanly on real digital vs scanned fixtures.
      - `page_count` threshold evaluation (`gt`, `lt`, `between`).
      - `text_contains` match and mismatch.
-     - `on_no_match` policies (`skip`, `stop`, `error`).
+     - `on_no_match` policies (`skip`, `stop` marking unreached stages, `error`).
+     - Explicit failure on corrupt PDF streams (ensuring no silent `false`).
      - Backwards compatibility with preset workflows (`preset-legal-discovery`, `preset-clean-scan`).
 
 ## Verification Checklist
@@ -49,5 +55,7 @@ Implement runtime condition evaluation (`condition`) and failure routing (`on_no
 - Run `cargo test -p paperpilot-core`
 - Run `cargo test -p paperpilot-pdf --lib operations::workflow`
 - Run `cargo test -p paperpilot-cli`
+- Run `graphify-rs build .`
 - Verify `make audit` passes cleanly
 - Commit message: `feat(workflow): add conditional recipe execution engine (.ppflow) (Task 4.7.6 / Spec 136)`
+

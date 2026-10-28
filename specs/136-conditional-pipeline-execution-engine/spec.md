@@ -225,17 +225,21 @@ pub struct StagePredicate {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum ConditionExpr {
-    /// Boolean combinator tree: all, any, not
-    Complex {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        all: Option<Vec<ConditionExpr>>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        any: Option<Vec<ConditionExpr>>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        not: Option<Box<ConditionExpr>>,
-    },
+    /// Complex recursive boolean tree: all, any, not
+    Complex(ComplexCondition),
     /// Direct leaf predicates (flat map)
     Leaf(StagePredicate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct ComplexCondition {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub all: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub any: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub not: Option<Box<ConditionExpr>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -249,7 +253,23 @@ pub enum OnNoMatchAction {
 }
 ```
 
-And `WorkflowStep` in `paperpilot-core/src/workflow.rs` is updated with backward compatibility:
+### 3.1 Strict Validation & Edge Case Rules
+
+To prevent ambiguous configurations and silent failures, the deserializer and semantic validator enforce the following rules:
+
+1. **Vacuous Truth & Identity Elements**:
+   - `all: []` (empty conjunction) evaluates to **`true`** (standard mathematical vacuous truth).
+   - `any: []` (empty disjunction) evaluates to **`false`** (identity element for OR).
+2. **Ambiguous Combinators**:
+   - A single `ComplexCondition` node MUST NOT specify more than one combinator (e.g. specifying both `all` and `any` at the same level is disallowed). Semantic validation returns `ConditionValidationError::AmbiguousCombinator`.
+3. **Numeric Range Boundaries**:
+   - For `NumberComparator::Between(min, max)`, validator enforces `min <= max`. If `min > max` (e.g. `between: [20, 5]`), validation fails with `ConditionValidationError::InvalidRange { min, max }`.
+4. **Unknown Fields**:
+   - All condition structures use `#[serde(deny_unknown_fields)]` to immediately reject typos like `text_contain:` or `page_counts:` at workflow load time.
+
+### 3.2 WorkflowStep Integration & Backward Compatibility
+
+Existing workflows without conditional fields deserialize seamlessly with zero changes:
 
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -275,72 +295,199 @@ pub struct WorkflowStep {
 ## 4. Execution Engine Integration (`paperpilot-pdf`)
 
 ### 4.1 In-Memory Document Inspection (`DocumentInspector`)
-Inspection must be ultra-fast and pure-Rust, leveraging `lopdf::Document::load_mem`:
+
+Inspection operates directly on in-memory buffers via `lopdf::Document::load_mem` without writing temporary files or invoking external subshells:
 
 1. **`page_count`**: Read via `doc.get_pages().len()`.
-2. **`is_scanned`**: Extract text from pages 1..3. If total non-whitespace characters == 0, `is_scanned = true`.
-3. **`file_size_bytes`**: Read via `bytes.len()`.
-4. **`text_contains`**: Case-insensitive substring search on extracted text from pages 1..3.
-5. **`has_form_fields`**: Check if document catalog contains `/AcroForm` with `/Fields` array.
-6. **`is_encrypted`**: Check if trailer contains `/Encrypt`.
-7. **`is_signed`**: Check `/AcroForm` fields for `/Sig` type or `/ByteRange` dictionary.
+2. **`file_size_bytes`**: Read via `bytes.len()`.
+3. **`is_scanned` (Scanned PDF Detection)**:
+   - **Inspection Depth**: First 3 pages (or all pages if total document page count <= 5).
+   - **Classification Rule**: A document is classified as `is_scanned: true` IF AND ONLY IF:
+     1. Total extractable non-whitespace characters across inspected pages is `< 10` (permits stray scan margin noise), AND
+     2. At least one page in the inspected set contains a raster image XObject (`/Subtype /Image`).
+   - **Mixed Documents**: If a document has pages with substantial text (> 10 characters), `is_scanned` evaluates to `false`.
+   - **Blank Documents**: A document with 0 text characters and 0 image XObjects evaluates `is_scanned: false` and emits an audit notice (`is_blank`).
+4. **`text_contains`**:
+   - Case-insensitive substring match against extracted text across inspected pages (1..3).
+   - Whitespace in the query and target text is normalized (collapsed single spaces).
+5. **`has_form_fields`**:
+   - Traverses Document Catalog -> `/AcroForm` -> `/Fields`. Evaluates to `true` if `/Fields` array contains at least 1 object reference.
+6. **`is_encrypted`**:
+   - Checks trailer dictionary for `/Encrypt` object. Evaluates to `true` if present.
+7. **`is_signed`**:
+   - Inspects `/AcroForm` fields for `/Sig` subtype or document-level `/ByteRange` signatures. Evaluates to `true` if a cryptographic signature dictionary is present.
 
-### 4.2 Pipeline Step Execution Loop
+### 4.2 Missing Information & Inspection Error Handling
+
+A condition evaluator must **never silently convert an inspection failure into a `false` result**:
+
+| Inspection Target | Normal Absence (Returns `false`) | Corrupt / Broken Data (Returns `Err(PdfError::InspectionFailure)`) |
+|---|---|---|
+| **Text Extraction (`text_contains`, `is_scanned`)** | Page stream is valid, but contains no text drawing operators (`Tj`, `TJ`). | FlateDecode decompress error, corrupted stream dictionary, unparseable CMap / font encoding table. |
+| **Form Fields (`has_form_fields`)** | Document Catalog has no `/AcroForm` or `/Fields` is empty array. | `/AcroForm` points to non-dictionary object or indirect reference fails to resolve in xref table. |
+| **Signatures (`is_signed`)** | Document has no signature dictionary or `/Sig` field. | `/ByteRange` array is truncated, malformed, or points past EOF. |
+| **Encryption (`is_encrypted`)** | Document trailer contains no `/Encrypt` dictionary. | `/Encrypt` dictionary present but standard security handler fails to initialize. |
+
+When an inspection error occurs, the pipeline halts immediately with:
+```rust
+PdfError::InspectionFailure {
+    stage_id: String,
+    predicate: String,
+    reason: String,
+}
+```
+
+### 4.3 Pipeline Step Execution Loop
+
 In `run_workflow_bytes`:
 
 ```rust
-for step in &workflow.steps {
+for (index, step) in workflow.steps.iter().enumerate() {
     if let Some(condition) = &step.condition {
-        let matched = evaluate_condition_expr(condition, &current_bytes, &inspector)?;
+        let matched = evaluate_condition_expr(condition, &current_bytes, &inspector)
+            .map_err(|e| PdfError::InspectionFailure {
+                stage_id: step.id.clone(),
+                predicate: format!("{:?}", condition),
+                reason: e.to_string(),
+            })?;
+
         if !matched {
             match &step.on_no_match {
                 OnNoMatchAction::Skip => {
-                    report.stage_records.push(StageExecutionRecord {
-                        stage_id: step.id.clone(),
+                    report.stages.push(StageExecutionRecord {
+                        id: step.id.clone(),
+                        op: step.operation_id.clone(),
                         status: StageStatus::Skipped,
+                        condition_matched: Some(false),
                         reason: Some("Condition evaluated to false".to_string()),
+                        duration_ms: 0,
                     });
+                    report.steps_skipped += 1;
                     continue;
                 }
                 OnNoMatchAction::Stop => {
-                    report.stage_records.push(StageExecutionRecord {
-                        stage_id: step.id.clone(),
+                    report.stages.push(StageExecutionRecord {
+                        id: step.id.clone(),
+                        op: step.operation_id.clone(),
                         status: StageStatus::Stopped,
+                        condition_matched: Some(false),
                         reason: Some("Condition evaluated to false; pipeline stopped cleanly".to_string()),
+                        duration_ms: 0,
                     });
+                    report.steps_stopped += 1;
+                    
+                    // Mark all remaining unreached stages
+                    for unreached_step in &workflow.steps[index + 1..] {
+                        report.stages.push(StageExecutionRecord {
+                            id: unreached_step.id.clone(),
+                            op: unreached_step.operation_id.clone(),
+                            status: StageStatus::Unreached,
+                            condition_matched: None,
+                            reason: Some("Previous stage invoked on_no_match: stop".to_string()),
+                            duration_ms: 0,
+                        });
+                        report.steps_unreached += 1;
+                    }
+                    report.status = WorkflowExecutionStatus::StoppedEarly;
                     break;
                 }
                 OnNoMatchAction::Error => {
+                    report.status = WorkflowExecutionStatus::Failed;
                     return Err(PdfError::ConditionFailed(format!(
                         "Stage '{}' condition failed with on_no_match: error",
                         step.id
                     )));
                 }
                 OnNoMatchAction::CustomError { error } => {
+                    report.status = WorkflowExecutionStatus::Failed;
                     return Err(PdfError::ConditionFailed(error.clone()));
                 }
             }
         }
     }
 
+    let start = std::time::Instant::now();
     current_bytes = execute_step_in_memory(&current_bytes, step)?;
-    completed += 1;
+    report.stages.push(StageExecutionRecord {
+        id: step.id.clone(),
+        op: step.operation_id.clone(),
+        status: StageStatus::Executed,
+        condition_matched: step.condition.as_ref().map(|_| true),
+        reason: None,
+        duration_ms: start.elapsed().as_millis() as u64,
+    });
+    report.steps_completed += 1;
 }
 ```
 
 ---
 
-## 5. Execution Receipt & Audit Trail
+## 5. Execution Receipt & Audit Report Contract
 
-Every workflow run outputs an expanded `WorkflowExecutionReport` and optional `execution_receipt.json`:
+Every workflow run produces a structured execution receipt matching this full contract:
+
+### 5.1 Rust Schema (`paperpilot-core::workflow`)
+
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum StageStatus {
+    Executed,
+    Skipped,
+    Stopped,
+    Failed,
+    Unreached,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowExecutionStatus {
+    Success,
+    StoppedEarly,
+    Failed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct StageExecutionRecord {
+    pub id: String,
+    pub op: String,
+    pub status: StageStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub condition_matched: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub duration_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowExecutionReport {
+    pub workflow_id: String,
+    pub workflow_name: String,
+    pub status: WorkflowExecutionStatus,
+    pub steps_total: usize,
+    pub steps_completed: usize,
+    pub steps_skipped: usize,
+    pub steps_stopped: usize,
+    pub steps_unreached: usize,
+    pub stages: Vec<StageExecutionRecord>,
+    pub duration_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+```
+
+### 5.2 JSON Output Example
 
 ```json
 {
   "workflow_id": "smart-invoice-pipeline",
   "workflow_name": "Smart Invoice Ingestion",
+  "status": "stopped_early",
   "steps_total": 4,
-  "steps_completed": 2,
-  "steps_skipped": 2,
+  "steps_completed": 1,
+  "steps_skipped": 1,
+  "steps_stopped": 1,
+  "steps_unreached": 1,
   "stages": [
     {
       "id": "step_ocr",
@@ -348,7 +495,7 @@ Every workflow run outputs an expanded `WorkflowExecutionReport` and optional `e
       "status": "skipped",
       "condition_matched": false,
       "reason": "is_scanned: expected true, got false (found 1,420 chars)",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "id": "step_compress",
@@ -356,6 +503,21 @@ Every workflow run outputs an expanded `WorkflowExecutionReport` and optional `e
       "status": "executed",
       "condition_matched": true,
       "duration_ms": 42
+    },
+    {
+      "id": "step_enforce_invoice",
+      "op": "noop",
+      "status": "stopped",
+      "condition_matched": false,
+      "reason": "text_contains 'TAX INVOICE' not found; on_no_match: stop",
+      "duration_ms": 0
+    },
+    {
+      "id": "step_bates_number",
+      "op": "bates_number",
+      "status": "unreached",
+      "reason": "Previous stage invoked on_no_match: stop",
+      "duration_ms": 0
     }
   ],
   "duration_ms": 45
@@ -364,12 +526,65 @@ Every workflow run outputs an expanded `WorkflowExecutionReport` and optional `e
 
 ---
 
-## 6. Acceptance Criteria
+## 6. Comprehensive Test Matrix
 
-- [ ] `paperpilot-core::workflow` deserializes simple flat conditions and nested `all`/`any`/`not` trees from both JSON and TOML.
-- [ ] Existing workflows without conditions deserialize cleanly with default `None` and run without behavioral regressions.
-- [ ] `is_scanned` accurately differentiates between pure raster/scanned PDFs and digital PDFs with text layers.
-- [ ] `page_count` correctly evaluates `eq`, `gt`, `gte`, `lt`, `lte`, and `between: [min, max]`.
-- [ ] `on_no_match` respects `"skip"`, `"stop"`, and `"error"` (including custom error strings).
-- [ ] Comprehensive unit test suite in `paperpilot-core` and integration test suite in `paperpilot-pdf` using genuine real-world test PDFs.
-- [ ] CLI command `paperpilot workflow run` correctly handles conditional recipes and logs skipped/executed stages.
+Implementation is verified across this complete matrix:
+
+### 6.1 Unit Tests (`paperpilot-core::workflow`)
+
+| Test Name | Condition Input | Expected Behavior |
+|---|---|---|
+| `test_comparator_eq_match` | `page_count: { eq: 5 }`, doc: 5 pages | `true` |
+| `test_comparator_eq_mismatch` | `page_count: { eq: 5 }`, doc: 6 pages | `false` |
+| `test_comparator_gt_boundary` | `page_count: { gt: 10 }`, doc: 10 pages | `false` (boundary is strict) |
+| `test_comparator_gte_boundary` | `page_count: { gte: 10 }`, doc: 10 pages | `true` |
+| `test_comparator_between_valid` | `page_count: { between: [5, 10] }`, doc: 5 & 10 | `true` (inclusive) |
+| `test_comparator_between_invalid_range` | `page_count: { between: [20, 5] }` | Validation error: `min > max` |
+| `test_boolean_empty_all` | `condition: { all: [] }` | `true` (vacuous truth) |
+| `test_boolean_empty_any` | `condition: { any: [] }` | `false` (empty disjunction) |
+| `test_boolean_ambiguous_combinators` | `condition: { all: [...], any: [...] }` | Validation error: `AmbiguousCombinator` |
+| `test_serde_deny_unknown_fields` | `condition: { text_contain: "foo" }` | Deserialization error: unknown field |
+| `test_legacy_workflow_backward_compat` | Step without `condition` / `on_no_match` | Deserializes with `condition: None`, `on_no_match: Skip` |
+| `test_toml_json_serde_parity` | Identical pipeline in TOML and JSON | Yields identical Rust struct representations |
+
+### 6.2 Integration Tests (`paperpilot-pdf::operations::workflow`)
+
+| Test Name | PDF Fixture | Workflow Configuration | Expected Outcome |
+|---|---|---|---|
+| `test_eval_scanned_pdf_true` | `fixtures/scanned_page.pdf` (pure image) | `condition: { is_scanned: true }` | Stage executes |
+| `test_eval_scanned_pdf_false_on_digital` | `fixtures/digital_invoice.pdf` (selectable text) | `condition: { is_scanned: true }`, `on_no_match: skip` | Stage skipped, receipt records skip |
+| `test_eval_mixed_pdf_classification` | `fixtures/mixed_scan_and_text.pdf` | `condition: { is_scanned: true }` | Evaluates `false` (>10 text characters present) |
+| `test_eval_text_contains_case_insensitive` | `fixtures/digital_invoice.pdf` | `condition: { text_contains: "INVOICE" }` (target has "Invoice") | `true`, stage executes |
+| `test_eval_has_form_fields` | `fixtures/acroform_sample.pdf` | `condition: { has_form_fields: true }` | `true` |
+| `test_eval_is_signed` | `fixtures/digitally_signed.pdf` | `condition: { is_signed: true }` | `true` |
+| `test_eval_is_encrypted` | `fixtures/password_protected.pdf` | `condition: { is_encrypted: true }` | `true` |
+| `test_eval_corrupt_pdf_fails_explicitly` | `fixtures/truncated_corrupt.pdf` | Any condition | Returns `Err(PdfError::InspectionFailure)`, does NOT return `false` |
+| `test_routing_stop_pipeline` | `fixtures/sample.pdf` | Step 1 matches, Step 2 fails with `stop`, Step 3 present | Step 1 executed, Step 2 stopped, Step 3 unreached, report status: `stopped_early` |
+| `test_routing_custom_error` | `fixtures/sample.pdf` | Step fails with `{ error: "Custom limit" }` | Pipeline aborts, error string matches |
+| `test_existing_preset_legal_discovery` | `fixtures/contract.pdf` | Built-in `preset-legal-discovery` | Runs identically without regressions |
+
+---
+
+## 7. Acceptance Criteria Checklist
+
+- [ ] **Contract & Parsing**:
+  - [ ] `paperpilot-core::workflow` deserializes simple flat conditions and nested `all`/`any`/`not` trees from both JSON and TOML.
+  - [ ] `#[serde(deny_unknown_fields)]` rejects unknown/mistyped fields.
+  - [ ] Empty `all: []` evaluates to `true`; empty `any: []` evaluates to `false`.
+  - [ ] `between: [min, max]` enforces `min <= max`.
+- [ ] **Backward Compatibility**:
+  - [ ] Existing workflows without conditions deserialize cleanly with default `None` and run without behavioral regressions.
+  - [ ] Built-in presets (`preset-legal-discovery`, `preset-clean-scan`, `preset-web-optimize`) function without changes.
+- [ ] **Document Inspection**:
+  - [ ] `is_scanned` accurately differentiates between pure raster/scanned PDFs and digital PDFs with text layers (using image presence and character thresholds).
+  - [ ] Corrupt or unparseable PDFs return `PdfError::InspectionFailure` instead of evaluating to `false`.
+  - [ ] `page_count` correctly evaluates `eq`, `gt`, `gte`, `lt`, `lte`, and `between: [min, max]`.
+- [ ] **Execution & Routing**:
+  - [ ] `on_no_match` respects `"skip"`, `"stop"`, `"error"`, and `{ error: "<msg>" }`.
+  - [ ] Early `stop` marks subsequent steps as `unreached` and emits `status: stopped_early`.
+- [ ] **Audit Receipt**:
+  - [ ] Output receipt includes comprehensive counts (`steps_total`, `steps_completed`, `steps_skipped`, `steps_stopped`, `steps_unreached`), stage statuses, durations, and skip reasons.
+- [ ] **CLI & Testing**:
+  - [ ] Comprehensive unit test suite in `paperpilot-core` and integration test suite in `paperpilot-pdf`.
+  - [ ] CLI command `paperpilot workflow run` correctly handles conditional recipes and displays execution receipts.
+
