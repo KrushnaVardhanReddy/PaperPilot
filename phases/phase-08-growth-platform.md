@@ -142,7 +142,7 @@ permissions = { print = true, edit = false }
 |---|---|---|
 | 8.2.1 | `.ppflow` pipeline schema | **TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
 | 8.2.2 | CLI pipeline execution | `paperpilot run invoice.ppflow input.pdf` — accepts `.ppflow` (TOML) or `.ppflow.json` (JSON) transparently |
-| 8.2.3 | Conditional branching engine | IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
+| 8.2.3 | Conditional branching engine `[Spec 136 / Task 4.7.6 / 8.2.3]` | 🔄 **In Progress (Dispatched to Jules Session `8335054345506584044`)** — IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
 | 8.2.4 | Stage retry & error handling | Per-stage `retry = N`, quarantine folder on final failure, optional Slack/webhook failure alert |
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
