@@ -1,0 +1,53 @@
+# Task: [Task 4.7.6 / 8.2.3: Conditional Recipe Execution Engine (`.ppflow`)]
+
+## Branch & Location
+- **Branch**: `feat/conditional-pipeline-engine-task-4-7-6`
+- **Specification**: `specs/136-conditional-pipeline-execution-engine/spec.md`
+- **Phase Roadmap**: Phase 4.7.6 (`phases/phase-04-ai-layer.md`) & Phase 8.2.3 (`phases/phase-08-growth-platform.md`)
+
+## Objective
+Implement runtime condition evaluation (`condition`) and failure routing (`on_no_match`) for PaperPilot pipeline workflows (`SavedWorkflow` / `.ppflow`), enabling conditional execution such as `is_scanned`, `page_count`, `file_size_bytes`, `text_contains`, and `has_form_fields`.
+
+## Implementation Details
+
+1. **Data Model in `paperpilot-core/src/workflow.rs`**:
+   - Define `NumberComparator` (`Eq`, `Gt`, `Gte`, `Lt`, `Lte`, `Between(min, max)`).
+   - Define `StagePredicate` (with optional fields: `is_scanned`, `page_count`, `file_size_bytes`, `text_contains`, `has_form_fields`, `is_encrypted`, `is_signed`).
+   - Define `ConditionExpr` enum supporting both flat leaves (`StagePredicate`) and recursive boolean logic (`all`, `any`, `not`).
+   - Define `OnNoMatchAction` enum (`Skip` [default], `Stop`, `Error`, `CustomError { error: String }`).
+   - Update `WorkflowStep` with `condition: Option<ConditionExpr>` and `on_no_match: OnNoMatchAction` with default fallbacks ensuring full backward compatibility with existing saved workflows and presets.
+   - Update `WorkflowExecutionReport` to record stage-level execution status (`executed`, `skipped`, `stopped`).
+
+2. **In-Memory Inspector & Evaluation Engine in `paperpilot-pdf/src/operations/workflow.rs`**:
+   - Implement `DocumentInspector` / `evaluate_condition`:
+     - `page_count`: uses `doc.get_pages().len()`.
+     - `file_size_bytes`: length of input bytes.
+     - `is_scanned`: check if pages 1..3 have 0 non-whitespace extractable text characters.
+     - `text_contains`: case-insensitive substring search on text extracted from initial pages.
+     - `has_form_fields`: check if catalog has `/AcroForm` with `/Fields`.
+     - `is_encrypted`: check trailer for `/Encrypt`.
+   - Update `run_workflow_bytes` loop:
+     - If step has `condition`, evaluate expression against current in-flight bytes.
+     - If false: execute `on_no_match` policy (`Skip`: continue loop and mark stage skipped; `Stop`: break loop and return current bytes; `Error`: return `PdfError::ConditionFailed`).
+     - If true: execute step as normal.
+
+3. **CLI & Diagnostics in `paperpilot-cli/src/commands/workflow.rs`**:
+   - Ensure `paperpilot workflow run` prints skipped stages cleanly.
+   - Support inspect subcommand showing condition expressions.
+
+4. **Comprehensive Test Suite**:
+   - Add unit tests in `paperpilot-core/src/workflow.rs` testing serde of simple and complex conditions (TOML and JSON).
+   - Add integration tests in `paperpilot-pdf` testing:
+     - `is_scanned` triggers OCR or skips cleanly.
+     - `page_count` threshold evaluation (`gt`, `lt`, `between`).
+     - `text_contains` match and mismatch.
+     - `on_no_match` policies (`skip`, `stop`, `error`).
+     - Backwards compatibility with preset workflows (`preset-legal-discovery`, `preset-clean-scan`).
+
+## Verification Checklist
+- Run `cargo check --workspace`
+- Run `cargo test -p paperpilot-core`
+- Run `cargo test -p paperpilot-pdf --lib operations::workflow`
+- Run `cargo test -p paperpilot-cli`
+- Verify `make audit` passes cleanly
+- Commit message: `feat(workflow): add conditional recipe execution engine (.ppflow) (Task 4.7.6 / Spec 136)`
