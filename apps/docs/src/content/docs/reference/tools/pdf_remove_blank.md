@@ -17,6 +17,9 @@ paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output 
 ```
 
 ### MCP JSON-RPC
+
+Required arguments are `input` (one PDF path) and `output` (the resulting PDF path). The optional `sensitivity` argument adjusts blank-page detection.
+
 ```json
 {
   "name": "pdf_remove_blank",

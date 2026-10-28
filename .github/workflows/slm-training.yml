@@ -1,0 +1,47 @@
+name: SLM Workflow Regression
+
+on:
+  pull_request:
+    paths:
+      - 'tools/slm-training/**'
+      - 'paperpilot-mcp/**'
+      - 'paperpilot-pdf/**'
+      - 'Cargo.lock'
+      - '.github/workflows/slm-training.yml'
+  push:
+    branches: [main, feature/dev]
+    paths:
+      - 'tools/slm-training/**'
+      - 'paperpilot-mcp/**'
+      - 'paperpilot-pdf/**'
+      - '.github/workflows/slm-training.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PAPERPILOT_MCP_BIN: ${{ github.workspace }}/target/debug/paperpilot-mcp
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Python validation dependencies
+        run: python3 -m pip install -r tools/slm-training/requirements.txt
+      - name: Check training data and local inference validation
+        run: python3 -m pytest tools/slm-training/test_dataset_generator.py tools/slm-training/test_infer_local.py -q
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - name: Build actual MCP server
+        run: cargo build -p paperpilot-mcp -j 2
+      - name: Verify live training schemas
+        run: python3 tools/slm-training/sync_tool_schemas.py --check --mcp-bin "$PAPERPILOT_MCP_BIN"
+      - name: Run real document workflows
+        run: python3 -m pytest tools/slm-training/test_workflow_mcp.py -q
+      - name: Run core regressions
+        run: |
+          cargo test -p paperpilot-pdf --lib operations::decrypt::tests -j 2
+          cargo test -p paperpilot-pdf --lib operations::conversion::tests::test_pdf_to_pptx -j 2
+          cargo test -p paperpilot-mcp --lib workflow_tool_schemas_require_declared_handler_inputs -j 2
