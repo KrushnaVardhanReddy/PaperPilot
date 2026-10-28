@@ -98,6 +98,18 @@ def test_merge_compress_preserves_pages_and_text(client, tmp_path, sources):
     assert all("PaperPilot contract" in page.extract_text() for page in reader.pages)
 
 
+def test_utf8_paths_round_trip_through_real_mcp(client, tmp_path):
+    directory = tmp_path / "文档 café"
+    directory.mkdir()
+    first, second = directory / "合同.pdf", directory / "附件.pdf"
+    write_pdf(first, 2)
+    write_pdf(second, 1)
+    steps = bind_plan(["pdf_merge", "pdf_compress"], directory, (first, second))
+    reader = PdfReader(execute(client, steps))
+    assert len(reader.pages) == 3
+    assert all("PaperPilot contract" in page.extract_text() for page in reader.pages)
+
+
 def test_watermark_encrypt_preserves_content_and_requires_password(client, tmp_path, sources):
     steps = bind_plan(["pdf_watermark", "pdf_encrypt"], tmp_path, sources)
     output = execute(client, steps)

@@ -19,10 +19,10 @@ class McpClient:
         self.request_id = 0
 
     def __enter__(self):
-        # Training tools require Python 3.10+; explicit UTF-8 keeps stdio portable.
-        self.process = subprocess.Popen(  # nosemgrep: python.lang.compatibility.python36.python36-compatibility-Popen2
+        # Keep pipes binary and handle the UTF-8 MCP protocol explicitly.
+        self.process = subprocess.Popen(
             [self.executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, text=True, encoding="utf-8", bufsize=1,
+            stderr=subprocess.PIPE,
         )
         self.readers = [
             Thread(target=self._read_stdout, daemon=True),
@@ -45,18 +45,18 @@ class McpClient:
         try:
             for line in self.process.stdout:
                 try:
-                    self.messages.put(json.loads(line))
-                except json.JSONDecodeError:
+                    self.messages.put(json.loads(line.decode("utf-8")))
+                except (UnicodeDecodeError, json.JSONDecodeError):
                     self.messages.put(RuntimeError(f"Invalid MCP JSON: {line[:200]}"))
         finally:
             self.messages.put(EOFError("MCP server closed stdout"))
 
     def _read_stderr(self):
         for line in self.process.stderr:
-            self.diagnostics.append(line.rstrip())
+            self.diagnostics.append(line.decode("utf-8", errors="replace").rstrip())
 
     def _send(self, message):
-        self.process.stdin.write(json.dumps(message) + "\n")
+        self.process.stdin.write((json.dumps(message) + "\n").encode("utf-8"))
         self.process.stdin.flush()
 
     def request(self, method, params=None):
