@@ -1,0 +1,75 @@
+[Task 4.7.1 / Spec 139: Headless Hot Folder Watcher Daemon (`paperpilot watch`)]
+
+Objective:
+Implement Spec 139 (`specs/139-hot-folder-watcher-daemon/spec.md`) to turn `paperpilot watch` into a robust, headless document automation daemon in `paperpilot-cli`. Connect it to the unified workflow engine (`paperpilot-pdf::operations::workflow::run_workflow`), add initial directory sweep, sequential debounced queue processing, error quarantine, and JSON audit receipts.
+
+Critical Constraints & Guardrails:
+1. Always compile and test with `-j 2` (`cargo test -p paperpilot-cli -j 2`).
+2. Real Tests Only: Zero mock data. Use real PDF fixtures (`fixtures/` or synthetic Lopdf buffers).
+3. Do NOT break existing CLI commands or the unified runner in `paperpilot-pdf`.
+4. The daemon must NEVER panic or exit on a single corrupted/locked PDF; errors must be caught and routed to quarantine.
+
+---
+
+### Step-by-Step Implementation Instructions
+
+#### Step 1: Update CLI Args in `paperpilot-cli`
+In `paperpilot-cli/src/lib.rs` and `paperpilot-cli/src/cli.rs`:
+- Update `WatchCli` to support:
+  - `-d, --dir <PATH>` or positional directory (support both `--dir` and positional for ergonomics).
+  - `-r, --recipe <PATH>`: `Option<PathBuf>` path to `.ppflow` recipe.
+  - `-o, --output <PATH>`: `Option<PathBuf>` output directory.
+  - `--move-original <PATH>`: `Option<PathBuf>` archive directory for source files.
+  - `--error-dir <PATH>`: `Option<PathBuf>` quarantine directory (default: `<WATCH_DIR>/.error`).
+  - `--settle-delay-ms <U64>`: default `500`.
+  - `--webhook <URL>`: `Option<String>`.
+  - `--once`: bool flag to process existing files and exit (invaluable for integration testing and one-shot batch runs).
+
+#### Step 2: Implement Unified Recipe Execution in `paperpilot-cli/src/commands/watch.rs`
+- Load `.ppflow` TOML or JSON using `paperpilot_core::workflow::WorkflowRecipe::from_str`.
+- Read ingress PDF bytes from disk.
+- Execute workflow using `paperpilot_pdf::operations::workflow::run_workflow(&recipe, &input_bytes, &Default::default())`.
+- If `--recipe` is not provided, support single operation fallback if `--operation` is given, or default to a pass-through / validation check.
+- Write output bytes to `--output` directory with filename `{stem}.pdf`.
+
+#### Step 3: Initial Sweep & Debounced Event Queue
+In `handle_watch`:
+1. **Initial Sweep**:
+   - Before entering the event loop, read `<WATCH_DIR>` entries with `std::fs::read_dir`.
+   - Filter for `.pdf` files (case-insensitive extension).
+   - Ignore subdirectories like `.error/` or `processed/` inside the watch directory to prevent recursive event loops!
+   - Enqueue existing files for immediate sequential processing.
+2. **Debounce Queue**:
+   - On `notify::EventKind::Create` or `Modify`, track `(PathBuf, Instant)` in a `pending_files` map.
+   - Only pop and process when `Instant::now().duration_since(last_seen) >= settle_duration`.
+   - Before reading, verify the file can be opened for reading (file size stable, not exclusively locked by another process).
+
+#### Step 4: Quarantine & Execution Receipts
+- On processing failure:
+  - Create `<WATCH_DIR>/.error/` (or `--error-dir`).
+  - Move the failing PDF into the error folder: `.error/{filename}`.
+  - Write a companion receipt `.error/{stem}_receipt.json` containing:
+    ```json
+    {
+      "timestamp": "2026-10-28T17:00:00Z",
+      "file": "corrupt.pdf",
+      "success": false,
+      "error": "Failed to parse xref table"
+    }
+    ```
+- On success:
+  - If `--move-original` is specified, move the source PDF to that directory.
+  - If `--webhook` is specified, POST the JSON receipt to the webhook URL.
+
+#### Step 5: Integration Tests in `paperpilot-cli/tests/test_watch.rs`
+Add thorough integration tests using `tempfile::TempDir`:
+1. `test_watch_once_initial_sweep`: Place 2 PDFs in watch folder, run `paperpilot watch --dir <DIR> --output <OUT> --recipe <RECIPE> --once`, verify both outputs exist.
+2. `test_watch_quarantine_corrupt_file`: Place an invalid text file with `.pdf` extension, run with `--once`, verify file moves to `.error/` and `.error/*_receipt.json` is generated.
+3. `test_watch_live_event`: Run watcher in async background task, write a PDF into watch folder, assert output is generated within 2 seconds.
+
+---
+
+### Verification Checklist
+- Run `cargo check -p paperpilot-cli -j 2`.
+- Run `cargo test -p paperpilot-cli --test test_watch -j 2`.
+- All tests pass cleanly with zero warnings or regressions.

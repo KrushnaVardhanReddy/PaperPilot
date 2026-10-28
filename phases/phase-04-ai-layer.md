@@ -389,7 +389,7 @@
 
 | # | Task | Notes |
 |---|---|---|
-| 4.7.1 | Hot Folder Watcher daemon | Background service watching a configured directory; triggers a named recipe when a `.pdf` file is created or moved in. Config via `paperpilot watch --dir ~/inbox --recipe ocr-and-compress`. Uses `notify-rs` (cross-platform filesystem events). |
+| 4.7.1 | Hot Folder Watcher daemon `[Spec 139]` 🚀 | Background service watching a configured directory; triggers a named recipe when a `.pdf` file is created or moved in. Config via `paperpilot watch --dir ~/inbox --recipe ocr-and-compress`. Uses `notify-rs` (cross-platform filesystem events), initial directory sweep, debounce queue, error quarantine, and JSON audit receipts. On branch `feat/hot-folder-watcher-task-4-7-1`. |
 | 4.7.2 | Recipe / Pipeline definition format | Simple TOML config file defining ordered steps: `[[step]] tool = "pdf_ocr"`, `[[step]] tool = "pdf_compress"`. Referenced by the watcher and CLI. |
 | 4.7.3 | `paperpilot run-recipe` CLI command | `paperpilot run-recipe --recipe pipeline.toml --input file.pdf --output out/` — headless, exit-code-clean, scriptable. |
 | 4.7.4 | CSV/JSON Bulk Fill (Mail Merge) `[Spec 135 / Task 135A]` ✅ | **Completed & Merged (PR #293)** — `paperpilot fill-batch --template form.pdf --data records.csv --output-dir ./out/` fills independent copies, flattens appearances by default (genuine `/AP` generation for text/checkboxes with CJK & multiline support), single-parse template cloning, field mapping and naming tokens, preserves existing files, and writes per-row execution receipts (`reports/CLI_FILL_BATCH_REPORT.md`). |
