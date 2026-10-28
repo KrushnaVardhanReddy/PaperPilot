@@ -7,6 +7,21 @@
 - [Spec 136: Conditional Workflow Engine](../136-conditional-pipeline-execution-engine/spec.md)
 - [Spec 137: Advanced Multi-Condition Engine](../137-advanced-multi-condition-engine/spec.md)
 - [Spec 135: Batch AcroForm Mail Merge](../135-cli-acroform-batch-mail-merge/spec.md)
+- [Spec 140: Desktop V2 Workspace UX Refresh](../140-desktop-v2-workspace-ux-refresh/spec.md) *(Watched Folders sidebar)*
+
+---
+
+## 0. Interface Coverage Mandate
+
+PaperPilot's **Single Core Runner + 5 Wrappers** rule requires every capability to be exposed across all five interfaces. The Hot Folder Watcher core logic (`WatcherEngine`) must live in `paperpilot-pdf` / `paperpilot-core` and be consumed by thin wrappers:
+
+| Interface | Wrapper | Coverage in this Spec |
+|---|---|---|
+| **CLI** | `paperpilot-cli` — `paperpilot watch --dir … --recipe …` | ✅ Section 3 |
+| **REST Gateway** | `paperpilot-gateway` — `POST /v1/automation/watchers` | ✅ Section 7 |
+| **MCP** | `paperpilot-mcp` — `watcher_start`, `watcher_stop`, `watcher_list`, `recipe_run` | ✅ Section 8 |
+| **Desktop UI** | Watched Folders sidebar in `LibraryPanel.svelte` (Spec 140) | ✅ via Spec 140 |
+| **WASM** | **Exempt** — filesystem watch cannot execute in a browser sandbox | N/A |
 
 ---
 
@@ -114,3 +129,179 @@ flowchart TD
 2. **Resource Constraints**:
    - All tests compile with `-j 2`.
    - Zero mock data.
+
+---
+
+## 7. REST Gateway Interface (`paperpilot-gateway`)
+
+Add automation routes to `paperpilot-gateway/src/handlers.rs` and register them in `server.rs`.
+
+### Endpoints
+
+#### `POST /v1/automation/watchers` — Start a Watcher
+
+**Request body (JSON)**:
+```json
+{
+  "dir": "/home/user/Inbox",
+  "recipe": "/home/user/recipes/ocr_archive.ppflow",
+  "output_dir": "/home/user/Archive",
+  "error_dir": "/home/user/Inbox/.error",
+  "settle_delay_ms": 500,
+  "move_original": "/home/user/Inbox/processed"
+}
+```
+**Response (201 Created)**:
+```json
+{
+  "watcher_id": "watcher_a1b2c3d4",
+  "status": "watching",
+  "dir": "/home/user/Inbox",
+  "recipe": "ocr_archive.ppflow"
+}
+```
+
+#### `GET /v1/automation/watchers` — List Active Watchers
+
+**Response (200 OK)**:
+```json
+{
+  "watchers": [
+    {
+      "watcher_id": "watcher_a1b2c3d4",
+      "status": "watching",
+      "dir": "/home/user/Inbox",
+      "recipe": "ocr_archive.ppflow",
+      "last_processed_file": "invoice_oct.pdf",
+      "last_processed_at": "2026-10-28T17:00:00Z",
+      "total_processed": 42
+    }
+  ]
+}
+```
+
+#### `DELETE /v1/automation/watchers/{watcher_id}` — Stop a Watcher
+
+**Response (204 No Content)** on success.
+
+#### `POST /v1/automation/run` — Run a Recipe Against an Uploaded File
+
+This is the stateless one-shot equivalent — does NOT start a daemon, just runs a recipe on a single file immediately (useful for CI/testing pipelines).
+
+**Request**: `multipart/form-data` with fields:
+- `file`: the input PDF bytes.
+- `recipe`: the `.ppflow` TOML text inline, OR `recipe_path` pointing to a server-local recipe file.
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "output_bytes": "<base64 encoded output PDF>",
+  "receipt": {
+    "job_id": "run_xyz123",
+    "duration_ms": 342,
+    "stages": [
+      { "tool": "pdf_ocr", "success": true, "duration_ms": 280 },
+      { "tool": "pdf_compress", "success": true, "duration_ms": 62 }
+    ]
+  }
+}
+```
+
+### Gateway State: Watcher Registry
+
+Gateway maintains an in-memory `WatcherRegistry` (Tokio `Mutex<HashMap<String, WatcherHandle>>`) mapping `watcher_id → (JoinHandle, CancellationToken)`. This allows:
+- `DELETE` to cleanly cancel the async task via `CancellationToken::cancel()`.
+- `GET` to query running watcher state without filesystem polling.
+
+> ⚠️ **Important**: Watcher registry is in-memory only. It does not persist across gateway restarts. Persistence (SQLite-backed registry) is a future task.
+
+---
+
+## 8. MCP Interface (`paperpilot-mcp`)
+
+Add 4 MCP tools so AI agents can orchestrate document automation. These absorb **Task 4.7.9** into this spec.
+
+### Tool: `watcher_start`
+
+```json
+{
+  "name": "watcher_start",
+  "description": "Start a headless hot folder watcher daemon on a local directory. When a PDF is dropped into the watched directory it automatically runs the specified recipe.",
+  "inputSchema": {
+    "type": "object",
+    "required": ["dir", "recipe"],
+    "properties": {
+      "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
+      "recipe": { "type": "string", "description": "Absolute path to a .ppflow TOML recipe file" },
+      "output_dir": { "type": "string", "description": "Directory to write processed PDFs (optional)" },
+      "settle_delay_ms": { "type": "integer", "default": 500 }
+    }
+  }
+}
+```
+
+**Returns**: `{ watcher_id: string, status: "watching" }`
+
+### Tool: `watcher_stop`
+
+```json
+{
+  "name": "watcher_stop",
+  "description": "Stop a running hot folder watcher by its ID.",
+  "inputSchema": {
+    "type": "object",
+    "required": ["watcher_id"],
+    "properties": {
+      "watcher_id": { "type": "string" }
+    }
+  }
+}
+```
+
+### Tool: `watcher_list`
+
+```json
+{
+  "name": "watcher_list",
+  "description": "List all currently active hot folder watchers with their status and statistics.",
+  "inputSchema": { "type": "object", "properties": {} }
+}
+```
+
+### Tool: `recipe_run`
+
+```json
+{
+  "name": "recipe_run",
+  "description": "Execute a .ppflow recipe against a local PDF file immediately (one-shot, no daemon).",
+  "inputSchema": {
+    "type": "object",
+    "required": ["input", "recipe"],
+    "properties": {
+      "input": { "type": "string", "description": "Absolute path to input PDF" },
+      "recipe": { "type": "string", "description": "Absolute path to .ppflow TOML recipe file" },
+      "output": { "type": "string", "description": "Absolute path for output PDF" }
+    }
+  }
+}
+```
+
+### MCP Shared State
+
+Because the MCP server and the REST gateway share the same process when running in `paperpilot serve` mode, they MUST share the same `WatcherRegistry` instance via `Arc<Mutex<WatcherRegistry>>`injected at server startup.
+
+---
+
+## 9. Updated Verification & Test Plan
+
+### REST Gateway Tests (`paperpilot-gateway/tests/test_automation.rs`)
+- `test_post_watcher_start`: POST valid body, assert `201`, watcher_id returned.
+- `test_get_watcher_list`: Start a watcher, GET list, assert it appears with `status: watching`.
+- `test_delete_watcher_stop`: Start a watcher, DELETE it, assert `204`, watcher no longer in list.
+- `test_post_automation_run`: Upload a real PDF + inline recipe, assert output bytes returned + receipt JSON correct.
+
+### MCP Tests (`paperpilot-mcp/tests/test_automation_tools.rs`)
+- `test_mcp_watcher_start_stop`: Call `watcher_start`, verify tool returns `watcher_id`. Call `watcher_stop`, verify success.
+- `test_mcp_watcher_list`: Start two watchers, call `watcher_list`, assert both appear.
+- `test_mcp_recipe_run`: Call `recipe_run` with real fixture PDF and a 2-step recipe, assert output PDF is written and receipt valid.

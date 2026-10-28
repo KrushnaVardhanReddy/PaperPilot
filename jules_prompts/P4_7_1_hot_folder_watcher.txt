@@ -1,75 +1,235 @@
-[Task 4.7.1 / Spec 139: Headless Hot Folder Watcher Daemon (`paperpilot watch`)]
+[Task 4.7.1 / Spec 139: Headless Hot Folder Watcher Daemon — Full 5-Interface Implementation]
 
 Objective:
-Implement Spec 139 (`specs/139-hot-folder-watcher-daemon/spec.md`) to turn `paperpilot watch` into a robust, headless document automation daemon in `paperpilot-cli`. Connect it to the unified workflow engine (`paperpilot-pdf::operations::workflow::run_workflow`), add initial directory sweep, sequential debounced queue processing, error quarantine, and JSON audit receipts.
+Implement Spec 139 (`specs/139-hot-folder-watcher-daemon/spec.md`) which covers ALL required interface wrappers for the Hot Folder Watcher daemon under PaperPilot's Single Core Runner + 5 Wrappers architecture:
+  1. CLI (`paperpilot-cli`) — fix and complete `paperpilot watch`
+  2. REST Gateway (`paperpilot-gateway`) — new automation endpoints
+  3. MCP (`paperpilot-mcp`) — 4 new tools: `watcher_start`, `watcher_stop`, `watcher_list`, `recipe_run`
+  4. Desktop UI — via Spec 140 (NOT in scope here; skip)
+  5. WASM — Exempt (filesystem watch cannot run in browser sandbox; skip)
 
 Critical Constraints & Guardrails:
-1. Always compile and test with `-j 2` (`cargo test -p paperpilot-cli -j 2`).
-2. Real Tests Only: Zero mock data. Use real PDF fixtures (`fixtures/` or synthetic Lopdf buffers).
-3. Do NOT break existing CLI commands or the unified runner in `paperpilot-pdf`.
-4. The daemon must NEVER panic or exit on a single corrupted/locked PDF; errors must be caught and routed to quarantine.
+1. Always compile and test with `-j 2` (`cargo test -p paperpilot-cli -j 2`, `cargo test -p paperpilot-gateway -j 2`, etc.)
+2. Real Tests Only: Zero mock data. Use real PDF fixtures from `fixtures/` or synthetic Lopdf byte buffers.
+3. Do NOT break existing CLI commands, gateway endpoints, or MCP tools.
+4. The daemon MUST NEVER panic or exit on a corrupted/locked PDF. All errors caught and routed to quarantine.
+5. Shared `WatcherRegistry` (`Arc<Mutex<WatcherRegistry>>`) must be passed to BOTH the gateway router and MCP server at startup so they share state.
 
 ---
 
-### Step-by-Step Implementation Instructions
+### PART 1: CLI — `paperpilot-cli`
 
-#### Step 1: Update CLI Args in `paperpilot-cli`
-In `paperpilot-cli/src/lib.rs` and `paperpilot-cli/src/cli.rs`:
-- Update `WatchCli` to support:
-  - `-d, --dir <PATH>` or positional directory (support both `--dir` and positional for ergonomics).
-  - `-r, --recipe <PATH>`: `Option<PathBuf>` path to `.ppflow` recipe.
-  - `-o, --output <PATH>`: `Option<PathBuf>` output directory.
-  - `--move-original <PATH>`: `Option<PathBuf>` archive directory for source files.
-  - `--error-dir <PATH>`: `Option<PathBuf>` quarantine directory (default: `<WATCH_DIR>/.error`).
-  - `--settle-delay-ms <U64>`: default `500`.
-  - `--webhook <URL>`: `Option<String>`.
-  - `--once`: bool flag to process existing files and exit (invaluable for integration testing and one-shot batch runs).
+#### Step 1: Update `WatchCli` args in `paperpilot-cli/src/lib.rs`
 
-#### Step 2: Implement Unified Recipe Execution in `paperpilot-cli/src/commands/watch.rs`
-- Load `.ppflow` TOML or JSON using `paperpilot_core::workflow::WorkflowRecipe::from_str`.
-- Read ingress PDF bytes from disk.
-- Execute workflow using `paperpilot_pdf::operations::workflow::run_workflow(&recipe, &input_bytes, &Default::default())`.
-- If `--recipe` is not provided, support single operation fallback if `--operation` is given, or default to a pass-through / validation check.
-- Write output bytes to `--output` directory with filename `{stem}.pdf`.
+Update `WatchCli` struct to use named `--dir` flag instead of positional, and add `--error-dir` and `--once`:
 
-#### Step 3: Initial Sweep & Debounced Event Queue
-In `handle_watch`:
-1. **Initial Sweep**:
-   - Before entering the event loop, read `<WATCH_DIR>` entries with `std::fs::read_dir`.
-   - Filter for `.pdf` files (case-insensitive extension).
-   - Ignore subdirectories like `.error/` or `processed/` inside the watch directory to prevent recursive event loops!
-   - Enqueue existing files for immediate sequential processing.
-2. **Debounce Queue**:
-   - On `notify::EventKind::Create` or `Modify`, track `(PathBuf, Instant)` in a `pending_files` map.
-   - Only pop and process when `Instant::now().duration_since(last_seen) >= settle_duration`.
-   - Before reading, verify the file can be opened for reading (file size stable, not exclusively locked by another process).
+```rust
+#[derive(Parser, Debug)]
+#[command(name = "paperpilot watch")]
+pub struct WatchCli {
+    /// Directory to monitor for incoming PDF files
+    #[arg(short = 'd', long)]
+    pub directory: PathBuf,
+
+    /// Path to .ppflow TOML or JSON recipe to execute per file
+    #[arg(short = 'r', long)]
+    pub recipe: Option<PathBuf>,
+
+    /// Output directory for successfully processed PDFs
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+
+    /// Directory to move successfully processed originals (optional)
+    #[arg(long)]
+    pub move_original: Option<PathBuf>,
+
+    /// Directory to quarantine failed files (default: <dir>/.error)
+    #[arg(long)]
+    pub error_dir: Option<PathBuf>,
+
+    /// Milliseconds of filesystem inactivity before a file is considered ready
+    #[arg(long, default_value_t = 500)]
+    pub settle_delay_ms: u64,
+
+    /// Optional webhook URL to POST execution receipt
+    #[arg(long)]
+    pub webhook: Option<String>,
+
+    /// Process existing files and exit (useful for one-shot batch and testing)
+    #[arg(long)]
+    pub once: bool,
+}
+```
+
+#### Step 2: Fix `execute_operation` in `paperpilot-cli/src/commands/watch.rs`
+
+Replace the stub recipe execution with the real unified workflow runner:
+
+```rust
+use paperpilot_core::workflow::WorkflowRecipe;
+use paperpilot_pdf::operations::workflow::run_workflow;
+
+fn execute_recipe(
+    file_path: &Path,
+    recipe_path: &Path,
+    output_dir: &Option<PathBuf>,
+) -> OperationResult<Vec<u8>> {
+    // Load recipe from disk (.ppflow TOML or JSON)
+    let recipe_str = std::fs::read_to_string(recipe_path)
+        .map_err(|e| PdfError::IoError(e))?;
+    let recipe: WorkflowRecipe = WorkflowRecipe::from_str(&recipe_str)
+        .map_err(|e| PdfError::InvalidInput(e.to_string()))?;
+
+    // Read input PDF bytes
+    let input_bytes = std::fs::read(file_path)
+        .map_err(|e| PdfError::IoError(e))?;
+
+    // Execute through unified runner
+    run_workflow(&recipe, &input_bytes, &Default::default())
+}
+```
+
+#### Step 3: Initial Sweep + Debounced Queue in `handle_watch`
+
+Before entering the event loop, read all existing `.pdf` files and enqueue them first. Ignore subdirectories like `.error/`, `processed/`, or the output_dir itself. Process existing files sequentially, then switch to event-driven mode (unless `--once` is set, in which case exit after the initial sweep).
 
 #### Step 4: Quarantine & Execution Receipts
-- On processing failure:
-  - Create `<WATCH_DIR>/.error/` (or `--error-dir`).
-  - Move the failing PDF into the error folder: `.error/{filename}`.
-  - Write a companion receipt `.error/{stem}_receipt.json` containing:
-    ```json
-    {
-      "timestamp": "2026-10-28T17:00:00Z",
-      "file": "corrupt.pdf",
-      "success": false,
-      "error": "Failed to parse xref table"
-    }
-    ```
-- On success:
-  - If `--move-original` is specified, move the source PDF to that directory.
-  - If `--webhook` is specified, POST the JSON receipt to the webhook URL.
 
-#### Step 5: Integration Tests in `paperpilot-cli/tests/test_watch.rs`
-Add thorough integration tests using `tempfile::TempDir`:
-1. `test_watch_once_initial_sweep`: Place 2 PDFs in watch folder, run `paperpilot watch --dir <DIR> --output <OUT> --recipe <RECIPE> --once`, verify both outputs exist.
-2. `test_watch_quarantine_corrupt_file`: Place an invalid text file with `.pdf` extension, run with `--once`, verify file moves to `.error/` and `.error/*_receipt.json` is generated.
-3. `test_watch_live_event`: Run watcher in async background task, write a PDF into watch folder, assert output is generated within 2 seconds.
+On processing failure:
+- Create `<dir>/.error/` (or `--error-dir`).
+- Move the failing PDF into the error folder.
+- Write a companion `{stem}_receipt.json`:
+```json
+{
+  "timestamp": "2026-10-28T17:00:00Z",
+  "file": "corrupt.pdf",
+  "sha256": "abc123...",
+  "success": false,
+  "error": "Failed to parse xref table"
+}
+```
+
+On success, if `--move-original` specified, move source PDF to that dir.
+
+#### Step 5: CLI Integration Tests — `paperpilot-cli/tests/test_watch.rs`
+
+```rust
+// test_watch_once_initial_sweep
+// Place 2 real PDFs in a tempdir, run with --once --recipe <fixture.ppflow> --output <outdir>
+// Assert both output PDFs exist in outdir.
+
+// test_watch_quarantine_corrupt_file  
+// Place a file with .pdf extension containing invalid bytes
+// Run with --once, assert file moved to .error/ and receipt JSON generated
+
+// test_watch_live_event
+// Spawn watcher in background task, copy a PDF into watched dir
+// Assert output generated within 2s, watcher exits cleanly on SIGINT
+```
+
+---
+
+### PART 2: REST Gateway — `paperpilot-gateway`
+
+#### Step 6: Add `WatcherRegistry` to gateway state
+
+In `paperpilot-gateway/src/server.rs`, define:
+
+```rust
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use std::collections::HashMap;
+use tokio_util::sync::CancellationToken;
+
+pub struct WatcherHandle {
+    pub watcher_id: String,
+    pub dir: PathBuf,
+    pub recipe: PathBuf,
+    pub cancel: CancellationToken,
+    pub last_processed_file: Option<String>,
+    pub last_processed_at: Option<String>,
+    pub total_processed: u64,
+}
+
+pub type WatcherRegistry = Arc<Mutex<HashMap<String, WatcherHandle>>>;
+```
+
+Inject into Axum app state: `Arc<WatcherRegistry>`.
+
+#### Step 7: Add 4 automation route handlers in `paperpilot-gateway/src/handlers.rs`
+
+```rust
+// POST /v1/automation/watchers
+// Body: { dir, recipe, output_dir?, error_dir?, settle_delay_ms?, move_original? }
+// Action: Spawn tokio task running handle_watch(), store CancellationToken in registry
+// Response 201: { watcher_id, status: "watching", dir, recipe }
+
+// GET /v1/automation/watchers
+// Action: Read registry, return list of all WatcherHandle summaries
+// Response 200: { watchers: [...] }
+
+// DELETE /v1/automation/watchers/:watcher_id
+// Action: Look up registry, call cancel.cancel(), remove entry
+// Response 204: No content
+
+// POST /v1/automation/run
+// Body: multipart/form-data (file: bytes, recipe: TOML text)
+// Action: Run recipe against uploaded bytes in-memory via run_workflow()
+// Response 200: { success, output_bytes (base64), receipt: { job_id, duration_ms, stages } }
+```
+
+Register routes in `server.rs`:
+```rust
+.route("/v1/automation/watchers", post(start_watcher).get(list_watchers))
+.route("/v1/automation/watchers/:id", delete(stop_watcher))
+.route("/v1/automation/run", post(run_recipe_once))
+```
+
+#### Step 8: Gateway Integration Tests — `paperpilot-gateway/tests/test_automation.rs`
+
+- `test_post_watcher_start`: POST valid body, assert 201, watcher_id returned.
+- `test_get_watcher_list`: Start a watcher, GET list, assert it appears with `status: watching`.
+- `test_delete_watcher_stop`: Start, DELETE, assert 204, no longer in list.
+- `test_post_automation_run`: Upload real fixture PDF + inline compress recipe, assert output bytes returned + receipt stages correct.
+
+---
+
+### PART 3: MCP Tools — `paperpilot-mcp`
+
+#### Step 9: Register 4 new MCP tools
+
+In `paperpilot-mcp/src/` (follow the exact same registration pattern used by existing tools):
+
+**Tool: `watcher_start`**
+- Input: `{ dir: string, recipe: string, output_dir?: string, settle_delay_ms?: integer }`
+- Action: Starts watcher via shared `WatcherRegistry` (same Arc as gateway).
+- Returns: `{ watcher_id: string, status: "watching" }`
+
+**Tool: `watcher_stop`**
+- Input: `{ watcher_id: string }`
+- Action: Cancels the watcher task via `CancellationToken`.
+- Returns: `{ success: true }`
+
+**Tool: `watcher_list`**
+- Input: `{}` (none)
+- Returns: `{ watchers: [{ watcher_id, dir, recipe, status, last_processed_file, total_processed }] }`
+
+**Tool: `recipe_run`**
+- Input: `{ input: string, recipe: string, output: string }`
+- Action: One-shot `run_workflow()` call. No daemon spawned.
+- Returns: `{ success: bool, output: string, receipt: { stages: [...] } }`
+
+#### Step 10: MCP Integration Tests — `paperpilot-mcp/tests/test_automation_tools.rs`
+
+- `test_mcp_watcher_start_stop`: Call `watcher_start`, verify returns `watcher_id`. Call `watcher_stop`, verify success.
+- `test_mcp_watcher_list`: Start two watchers, call `watcher_list`, assert both appear.
+- `test_mcp_recipe_run`: Call `recipe_run` with real fixture PDF and a 2-step recipe TOML, assert output PDF written and receipt has 2 stages.
 
 ---
 
 ### Verification Checklist
-- Run `cargo check -p paperpilot-cli -j 2`.
-- Run `cargo test -p paperpilot-cli --test test_watch -j 2`.
-- All tests pass cleanly with zero warnings or regressions.
+- `cargo check --workspace -j 2` — zero errors.
+- `cargo test -p paperpilot-cli --test test_watch -j 2` — all passing.
+- `cargo test -p paperpilot-gateway --test test_automation -j 2` — all passing.
+- `cargo test -p paperpilot-mcp --test test_automation_tools -j 2` — all passing.
+- No regressions in existing tests across all packages.
