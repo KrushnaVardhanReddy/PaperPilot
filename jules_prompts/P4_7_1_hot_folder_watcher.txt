@@ -113,19 +113,29 @@ On success, if `--move-original` specified, move source PDF to that dir.
 
 #### Step 5: CLI Integration Tests — `paperpilot-cli/tests/test_watch.rs`
 
-```rust
-// test_watch_once_initial_sweep
-// Place 2 real PDFs in a tempdir, run with --once --recipe <fixture.ppflow> --output <outdir>
-// Assert both output PDFs exist in outdir.
+IMPORTANT TEST FIXES FOR TIMEOUT / DEADLOCK PREVENTION:
+1. **Fix CLI Argument Parsing**:
+   Ensure `test_watch.rs` uses the updated CLI arguments: `--dir` instead of positional argument, e.g.:
+   ```rust
+   Command::new(env!("CARGO_BIN_EXE_paperpilot"))
+       .arg("watch")
+       .arg("--dir")
+       .arg(watch_dir.path())
+       ...
+   ```
+2. **Prevent Deadlocks in `execute_operation`**:
+   Execute directly in-process via `run_workflow` or `run_workflow_bytes_detailed`. Never re-invoke `Cli::try_parse_from(["paperpilot", ...])` or recurse into `execute_command`.
+3. **Shutdown Signal & Loop Timeout**:
+   In `handle_watch`, ensure `rx.recv_timeout(Duration::from_millis(100))` is used and `running.load(Ordering::Relaxed)` is checked each loop, so that SIGINT / SIGTERM or `AtomicBool` gracefully breaks the loop without blocking indefinitely.
+4. **Use Real Fixtures (No Mock Data)**:
+   In `test_watch.rs`, replace empty/mock PDF generators with real PDF files from `tests/fixtures/simple.pdf`.
+5. **Clean Child Process Termination**:
+   Ensure the test terminates the spawned child process cleanly (`child.kill()`, `child.wait()`) so child daemons never orphan or hold open file locks.
 
-// test_watch_quarantine_corrupt_file  
-// Place a file with .pdf extension containing invalid bytes
-// Run with --once, assert file moved to .error/ and receipt JSON generated
-
-// test_watch_live_event
-// Spawn watcher in background task, copy a PDF into watched dir
-// Assert output generated within 2s, watcher exits cleanly on SIGINT
-```
+Test cases to cover:
+- `test_watch_once_initial_sweep`: Place 2 real PDFs in a tempdir, run with `--once --recipe <fixture.ppflow> --output <outdir>`. Assert both output PDFs exist in outdir and process exits cleanly with code 0.
+- `test_watch_quarantine_corrupt_file`: Place a `.pdf` file with corrupt byte content. Run with `--once`, assert file moved to `.error/` and `{stem}_receipt.json` generated.
+- `test_watch_live_event`: Spawn daemon in child process or thread, copy a real fixture PDF into watched dir. Assert output file generated within 2s, terminate child process cleanly.
 
 ---
 
