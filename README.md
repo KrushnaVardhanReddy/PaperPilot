@@ -132,7 +132,7 @@ Desktop (Tauri) · CLI · REST (Axum) · MCP (stdio) · WASM (browser / edge)
 ## Embed in your own site
 
 ```html
-<script src="https://cdn.usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
+<script src="https://usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
 <div id="paperpilot-widget"></div>
 ```
 
