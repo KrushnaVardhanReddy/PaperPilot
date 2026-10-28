@@ -665,6 +665,32 @@ pub enum Commands {
         bind: String,
     },
 
+    /// Ask in natural language: execute operations via natural language intent [e.g. "rotate 90 degrees" doc.pdf]
+    Ask {
+        /// Natural language instruction
+        prompt: String,
+
+        /// Optional target input PDF file
+        #[arg(value_name = "INPUT")]
+        input: Option<PathBuf>,
+
+        /// Skip confirmation prompt and execute immediately
+        #[arg(short = 'y', long)]
+        yes: bool,
+
+        /// Force offline NLP resolution only
+        #[arg(long)]
+        offline: bool,
+
+        /// Output path override
+        #[arg(short = 'o', long)]
+        output: Option<PathBuf>,
+
+        /// Parse and output plan without executing
+        #[arg(long)]
+        dry_run: bool,
+    },
+
     /// List all available tools, capabilities, and launch status
     ListTools,
 

@@ -26,9 +26,7 @@
 
 We are systematically closing out all remaining Community gaps in **Phase 4 (AI Layer)** and **Phase 3 (Desktop & Mobile)** in this exact order:
 
-| Step | Task ID | Phase / Spec | Scope & Description | Target Branch | Status |
-|:---:|---|:---:|---|---|:---:|
-| **1** | **Task 4.5** | Phase 4.5.1 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feat/cli-ask-command-task-4-5` | 📋 **Next Up (Tonight)** |
+| **1** | **Task 4.5** | Phase 4.5.1 / Spec 134 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feat/cli-ask-command-task-4-5` | 🚀 **In Progress (Jules Session [`7936196610098049463`](https://jules.google.com/session/7936196610098049463))** |
 | **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten, and write template tokens `{row.name}_{date}.pdf`. | `feat/cli-fill-batch-task-4-7-4` | 📋 Scheduled |
 | **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feat/conditional-pipeline-engine-task-4-7-6` | 📋 Scheduled |
 | **4** | **Task 3.4.11** | Phase 3.4.11 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui` | 📋 Scheduled |
