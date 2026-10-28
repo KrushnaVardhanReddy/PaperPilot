@@ -8,58 +8,424 @@
 ## Objective
 Implement runtime condition evaluation (`condition`) and failure routing (`on_no_match`) for PaperPilot pipeline workflows (`SavedWorkflow` / `.ppflow`), enabling conditional execution such as `is_scanned`, `page_count`, `file_size_bytes`, `text_contains`, and `has_form_fields`.
 
-## Implementation Details
+---
 
-1. **Data Model in `paperpilot-core/src/workflow.rs`**:
-   - Define `NumberComparator` (`Eq`, `Gt`, `Gte`, `Lt`, `Lte`, `Between(min, max)`).
-   - Define `StagePredicate` (with optional fields: `is_scanned`, `page_count`, `file_size_bytes`, `text_contains`, `has_form_fields`, `is_encrypted`, `is_signed`).
-   - Define `ConditionExpr` enum supporting both flat leaves (`StagePredicate`) and recursive boolean logic (`all`, `any`, `not`).
-   - Define `OnNoMatchAction` enum (`Skip` [default], `Stop`, `Error`, `CustomError { error: String }`).
-   - Update `WorkflowStep` with `condition: Option<ConditionExpr>` and `on_no_match: OnNoMatchAction` with default fallbacks ensuring full backward compatibility with existing saved workflows and presets.
-   - Update `WorkflowExecutionReport` to record stage-level execution status (`executed`, `skipped`, `stopped`).
+## Reference Implementations & Concrete Snippets
 
-2. **In-Memory Inspector & Evaluation Engine in `paperpilot-pdf/src/operations/workflow.rs`**:
-   - Implement `DocumentInspector` / `evaluate_condition`:
-     - `page_count`: uses `doc.get_pages().len()`.
-     - `file_size_bytes`: length of input bytes.
-     - `is_scanned`: check first 3 pages (or all if <= 5); classified as scanned iff non-whitespace text chars < 10 AND at least one raster image XObject exists. Mixed docs evaluate to false.
-     - `text_contains`: case-insensitive substring search on text extracted from initial pages with whitespace normalized.
-     - `has_form_fields`: check if catalog has `/AcroForm` with non-empty `/Fields`.
-     - `is_encrypted`: check trailer for `/Encrypt`.
-     - `is_signed`: check `/AcroForm` fields for `/Sig` or `/ByteRange`.
-     - Error handling: Never convert stream corruption, flate decode errors, or invalid font CMaps into `false`; return `PdfError::InspectionFailure`.
-   - Update `run_workflow_bytes` loop:
-     - If step has `condition`, evaluate expression against current in-flight bytes.
-     - If false: execute `on_no_match` policy:
-       - `Skip`: continue loop and record stage skipped.
-       - `Stop`: break loop, mark subsequent steps as `Unreached`, set report status `StoppedEarly`, return current bytes.
-       - `Error` / `CustomError`: abort pipeline and return `PdfError::ConditionFailed`.
-     - If true: execute step as normal and record stage executed with elapsed time.
+### 1. Data Models in `paperpilot-core/src/workflow.rs`
 
-3. **CLI & Diagnostics in `paperpilot-cli/src/commands/workflow.rs`**:
-   - Ensure `paperpilot workflow run` prints skipped stages and execution receipt cleanly.
-   - Support inspect subcommand showing condition expressions.
-   - Add `paperpilot workflow export <PRESET_OR_ID> [--output <PATH>] [--format json|toml]` to dump workflow recipes.
-   - Add `paperpilot workflow import <PATH>` to validate and save recipes to local CLI storage (`~/.paperpilot/workflows/`).
-   - Support multi-format parsing in `resolve_workflow`: auto-detect `.ppflow` / `.toml` (via `toml` crate) and `.json` (via `serde_json`).
+```rust
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum NumberComparator {
+    Eq(usize),
+    Gt(usize),
+    Gte(usize),
+    Lt(usize),
+    Lte(usize),
+    Between(usize, usize),
+}
 
-4. **Comprehensive Test Suite**:
-   - Add unit tests in `paperpilot-core/src/workflow.rs` testing serde of simple and complex conditions (TOML and JSON), vacuous truth (`all: []` -> true, `any: []` -> false), unknown field rejection (`#[serde(deny_unknown_fields)]`), and comparator ranges (`min <= max`).
-   - Add integration tests in `paperpilot-pdf` testing:
-     - `is_scanned` triggers OCR or skips cleanly on real digital vs scanned fixtures.
-     - `page_count` threshold evaluation (`gt`, `lt`, `between`).
-     - `text_contains` match and mismatch.
-     - `on_no_match` policies (`skip`, `stop` marking unreached stages, `error`).
-     - Explicit failure on corrupt PDF streams (ensuring no silent `false`).
-     - Backwards compatibility with preset workflows (`preset-legal-discovery`, `preset-clean-scan`).
+impl NumberComparator {
+    pub fn matches(&self, value: usize) -> bool {
+        match self {
+            Self::Eq(expected) => value == *expected,
+            Self::Gt(threshold) => value > *threshold,
+            Self::Gte(threshold) => value >= *threshold,
+            Self::Lt(threshold) => value < *threshold,
+            Self::Lte(threshold) => value <= *threshold,
+            Self::Between(min, max) => value >= *min && value <= *max,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct StagePredicate {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_scanned: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page_count: Option<NumberComparator>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_size_bytes: Option<NumberComparator>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_contains: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_form_fields: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_encrypted: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_signed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum ConditionExpr {
+    Complex(ComplexCondition),
+    Leaf(StagePredicate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct ComplexCondition {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub all: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub any: Option<Vec<ConditionExpr>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub not: Option<Box<ConditionExpr>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum OnNoMatchAction {
+    #[default]
+    Skip,
+    Stop,
+    Error,
+    CustomError { error: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum StageStatus {
+    Executed,
+    Skipped,
+    Stopped,
+    Failed,
+    Unreached,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowExecutionStatus {
+    Success,
+    StoppedEarly,
+    Failed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct StageExecutionRecord {
+    pub id: String,
+    pub op: String,
+    pub status: StageStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub condition_matched: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub duration_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowExecutionReport {
+    pub workflow_id: String,
+    pub workflow_name: String,
+    pub status: WorkflowExecutionStatus,
+    pub steps_total: usize,
+    pub steps_completed: usize,
+    pub steps_skipped: usize,
+    pub steps_stopped: usize,
+    pub steps_unreached: usize,
+    pub stages: Vec<StageExecutionRecord>,
+    pub duration_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    pub output_bytes_len: usize,
+}
+```
+
+Update `WorkflowStep` with serde defaults so existing workflows deserialize transparently:
+```rust
+#[serde(default)]
+pub condition: Option<ConditionExpr>,
+#[serde(default, rename = "onNoMatch", alias = "on_no_match")]
+pub on_no_match: OnNoMatchAction,
+```
+
+---
+
+### 2. DocumentInspector & Evaluation in `paperpilot-pdf/src/operations/workflow.rs`
+
+Parse `lopdf::Document::load_mem` ONCE per stage inspection:
+
+```rust
+pub struct DocumentInspector<'a> {
+    pub bytes: &'a [u8],
+    pub doc: lopdf::Document,
+}
+
+impl<'a> DocumentInspector<'a> {
+    pub fn new(bytes: &'a [u8]) -> OperationResult<Self> {
+        let doc = lopdf::Document::load_mem(bytes)
+            .map_err(|e| PdfError::ParseError(e.to_string()))?;
+        Ok(Self { bytes, doc })
+    }
+
+    pub fn page_count(&self) -> usize {
+        self.doc.get_pages().len()
+    }
+
+    pub fn file_size_bytes(&self) -> usize {
+        self.bytes.len()
+    }
+
+    pub fn has_form_fields(&self) -> bool {
+        if let Ok(catalog) = self.doc.catalog() {
+            if let Ok(acroform) = catalog.get(b"AcroForm") {
+                if let Ok(dict) = acroform.as_dict() {
+                    if let Ok(fields) = dict.get(b"Fields") {
+                        if let Ok(arr) = fields.as_array() {
+                            return !arr.is_empty();
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn is_encrypted(&self) -> bool {
+        self.doc.trailer.get(b"Encrypt").is_ok()
+    }
+
+    pub fn is_signed(&self) -> bool {
+        if let Ok(catalog) = self.doc.catalog() {
+            if let Ok(acroform) = catalog.get(b"AcroForm") {
+                if let Ok(dict) = acroform.as_dict() {
+                    if let Ok(fields) = dict.get(b"Fields") {
+                        if let Ok(arr) = fields.as_array() {
+                            for f in arr {
+                                if let Ok(f_dict) = self.doc.get_dictionary(f.as_reference().unwrap_or((0, 0))) {
+                                    if let Ok(ft) = f_dict.get(b"FT") {
+                                        if ft.as_name().unwrap_or(b"") == b"Sig" {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn extract_inspected_text(&self) -> OperationResult<String> {
+        // Inspect first 3 pages (or all if <= 5)
+        let page_count = self.page_count();
+        let limit = if page_count <= 5 { page_count } else { 3 };
+        let mut full_text = String::new();
+        for page_num in 1..=limit {
+            if let Ok(text) = self.doc.extract_text(&[page_num as u32]) {
+                full_text.push_str(&text);
+                full_text.push(' ');
+            }
+        }
+        Ok(full_text)
+    }
+
+    pub fn is_scanned(&self) -> OperationResult<bool> {
+        let text = self.extract_inspected_text()?;
+        let non_ws_chars = text.chars().filter(|c| !c.is_whitespace()).count();
+        if non_ws_chars >= 10 {
+            return Ok(false);
+        }
+        // Check for at least one image XObject
+        let pages = self.doc.get_pages();
+        let limit = if pages.len() <= 5 { pages.len() } else { 3 };
+        for (_, page_id) in pages.iter().take(limit) {
+            if let Ok(page_dict) = self.doc.get_dictionary(*page_id) {
+                if let Ok(res) = page_dict.get(b"Resources").and_then(|r| r.as_dict()) {
+                    if let Ok(xobj) = res.get(b"XObject").and_then(|x| x.as_dict()) {
+                        for (_, xo_ref) in xobj.iter() {
+                            if let Ok(xo_dict) = self.doc.get_dictionary(xo_ref.as_reference().unwrap_or((0, 0))) {
+                                if let Ok(sub) = xo_dict.get(b"Subtype") {
+                                    if sub.as_name().unwrap_or(b"") == b"Image" {
+                                        return Ok(true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(false)
+    }
+}
+```
+
+### 3. Recursive Boolean Expression Evaluator
+
+```rust
+pub fn evaluate_condition_expr(
+    expr: &ConditionExpr,
+    inspector: &DocumentInspector,
+) -> OperationResult<bool> {
+    match expr {
+        ConditionExpr::Leaf(pred) => evaluate_stage_predicate(pred, inspector),
+        ConditionExpr::Complex(complex) => {
+            if let Some(all) = &complex.all {
+                // Vacuous truth: all: [] -> true
+                for sub in all {
+                    if !evaluate_condition_expr(sub, inspector)? {
+                        return Ok(false);
+                    }
+                }
+                return Ok(true);
+            }
+            if let Some(any) = &complex.any {
+                // Empty any: [] -> false
+                for sub in any {
+                    if evaluate_condition_expr(sub, inspector)? {
+                        return Ok(true);
+                    }
+                }
+                return Ok(false);
+            }
+            if let Some(not) = &complex.not {
+                return Ok(!evaluate_condition_expr(not, inspector)?);
+            }
+            Ok(true)
+        }
+    }
+}
+
+pub fn evaluate_stage_predicate(
+    pred: &StagePredicate,
+    inspector: &DocumentInspector,
+) -> OperationResult<bool> {
+    if let Some(expected_scanned) = pred.is_scanned {
+        if inspector.is_scanned()? != expected_scanned {
+            return Ok(false);
+        }
+    }
+    if let Some(comp) = &pred.page_count {
+        if !comp.matches(inspector.page_count()) {
+            return Ok(false);
+        }
+    }
+    if let Some(comp) = &pred.file_size_bytes {
+        if !comp.matches(inspector.file_size_bytes()) {
+            return Ok(false);
+        }
+    }
+    if let Some(sub) = &pred.text_contains {
+        let text = inspector.extract_inspected_text()?.to_lowercase();
+        let target = sub.trim().to_lowercase();
+        if !text.contains(&target) {
+            return Ok(false);
+        }
+    }
+    if let Some(expected_forms) = pred.has_form_fields {
+        if inspector.has_form_fields() != expected_forms {
+            return Ok(false);
+        }
+    }
+    if let Some(expected_enc) = pred.is_encrypted {
+        if inspector.is_encrypted() != expected_enc {
+            return Ok(false);
+        }
+    }
+    if let Some(expected_signed) = pred.is_signed {
+        if inspector.is_signed() != expected_signed {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+```
+
+### 4. Pipeline Execution Loop in `run_workflow_bytes`
+
+```rust
+for (index, step) in workflow.steps.iter().enumerate() {
+    if let Some(condition) = &step.condition {
+        let inspector = DocumentInspector::new(&current_bytes)?;
+        let matched = evaluate_condition_expr(condition, &inspector)?;
+        if !matched {
+            match &step.on_no_match {
+                OnNoMatchAction::Skip => {
+                    report.stages.push(StageExecutionRecord {
+                        id: step.id.clone(),
+                        op: step.operation_id.clone(),
+                        status: StageStatus::Skipped,
+                        condition_matched: Some(false),
+                        reason: Some("Condition evaluated to false".to_string()),
+                        duration_ms: 0,
+                    });
+                    report.steps_skipped += 1;
+                    continue;
+                }
+                OnNoMatchAction::Stop => {
+                    report.stages.push(StageExecutionRecord {
+                        id: step.id.clone(),
+                        op: step.operation_id.clone(),
+                        status: StageStatus::Stopped,
+                        condition_matched: Some(false),
+                        reason: Some("Condition evaluated to false; pipeline stopped cleanly".to_string()),
+                        duration_ms: 0,
+                    });
+                    report.steps_stopped += 1;
+                    for unreached_step in &workflow.steps[index + 1..] {
+                        report.stages.push(StageExecutionRecord {
+                            id: unreached_step.id.clone(),
+                            op: unreached_step.operation_id.clone(),
+                            status: StageStatus::Unreached,
+                            condition_matched: None,
+                            reason: Some("Previous stage invoked on_no_match: stop".to_string()),
+                            duration_ms: 0,
+                        });
+                        report.steps_unreached += 1;
+                    }
+                    report.status = WorkflowExecutionStatus::StoppedEarly;
+                    break;
+                }
+                OnNoMatchAction::Error => {
+                    report.status = WorkflowExecutionStatus::Failed;
+                    return Err(PdfError::ConditionFailed(format!(
+                        "Stage '{}' condition failed with on_no_match: error",
+                        step.id
+                    )));
+                }
+                OnNoMatchAction::CustomError { error } => {
+                    report.status = WorkflowExecutionStatus::Failed;
+                    return Err(PdfError::ConditionFailed(error.clone()));
+                }
+            }
+        }
+    }
+
+    let start_step = Instant::now();
+    current_bytes = execute_step_in_memory(&current_bytes, step)?;
+    report.stages.push(StageExecutionRecord {
+        id: step.id.clone(),
+        op: step.operation_id.clone(),
+        status: StageStatus::Executed,
+        condition_matched: step.condition.as_ref().map(|_| true),
+        reason: None,
+        duration_ms: start_step.elapsed().as_millis() as u64,
+    });
+    report.steps_completed += 1;
+}
+```
+
+---
+
+### 5. CLI & Diagnostics in `paperpilot-cli/src/commands/workflow.rs`
+- Add `export` and `import` subcommands.
+- Multi-format parsing: auto-detect `.toml` / `.ppflow` (via `toml`) and `.json` (via `serde_json`).
+- Ensure `paperpilot workflow run` displays skipped and stopped stages in the summary table.
+
+---
 
 ## Verification Checklist
-- Run `cargo check --workspace`
 - Run `cargo test -p paperpilot-core`
 - Run `cargo test -p paperpilot-pdf --lib operations::workflow`
 - Run `cargo test -p paperpilot-cli`
-- Run `graphify-rs build .`
+- Run `cargo check -p paperpilot-core -p paperpilot-pdf -p paperpilot-cli`
 - Verify `make audit` passes cleanly
 - Commit message: `feat(workflow): add conditional recipe execution engine (.ppflow) (Task 4.7.6 / Spec 136)`
-
