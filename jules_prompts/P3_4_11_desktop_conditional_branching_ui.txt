@@ -1,0 +1,79 @@
+[Task 3.4.11 / Spec 138: Desktop Visual Flowchart & Conditional Branching UI]
+
+Objective:
+Implement Spec 138 in `specs/138-desktop-conditional-branching-ui/spec.md`, adding visual conditional decision nodes, step condition badges, condition inspector sidebar, and pipeline state serialization in `apps/desktop`.
+
+Background & Integration:
+- In Spec 136 & 137, we implemented the Rust backend engine supporting conditions (`is_scanned`, `page_count`, `has_form_fields`, `is_signed`, `text_contains`, `file_size_bytes`) and routing (`skip`, `archive_original`, `error`).
+- Now, provide the desktop Svelte 5 frontend so users can visually build and configure conditional workflows without editing JSON/TOML.
+
+Files to Modify & Create:
+1. `apps/desktop/src/lib/state/pipeline.svelte.ts`:
+   - Extend `PipelineStep` to include:
+     ```typescript
+     export interface WorkflowConditionLeaf {
+       if_scanned?: boolean;
+       if_page_count_gt?: number;
+       comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+       value?: number;
+       text_contains?: string;
+       has_form_fields?: boolean;
+       is_signed?: boolean;
+       is_encrypted?: boolean;
+     }
+
+     export type OnNoMatch = 'skip' | 'archive_original' | 'error';
+     ```
+   - In `PipelineStep`, add optional fields: `condition?: WorkflowConditionLeaf`, `depends_on?: string[]`, `on_no_match?: OnNoMatch`.
+   - Add helper methods to `PipelineState`:
+     - `setStepCondition(stepId: string, condition?: WorkflowConditionLeaf, onNoMatch?: OnNoMatch)`
+     - `removeStepCondition(stepId: string)`
+   - Ensure `exportFlowJson()` and `importFlowJson()` correctly preserve `condition`, `depends_on`, and `on_no_match`.
+
+2. `apps/desktop/src/lib/components/pipeline/StepCard.svelte`:
+   - Add condition badge when `step.condition` is defined:
+     ```svelte
+     {#if step.condition}
+       <div class="step-condition-badge" title="Conditional Step">
+         ⚡ {getConditionSummary(step.condition)}
+       </div>
+     {/if}
+     ```
+   - If a step was skipped during execution, render dimmed status:
+     ```svelte
+     {#if isSkipped}
+       <div class="step-skipped-badge">⏭️ Skipped</div>
+     {/if}
+     ```
+   - Add styling: subtle amber/gold glowing border when a step is conditional.
+
+3. `apps/desktop/src/lib/components/pipeline/ConditionInspector.svelte` (Create new component):
+   - Docked panel or popover in `PipelineView.svelte` when a step is selected.
+   - Allows configuring:
+     - Checkbox: "Only if Scanned Document (`if_scanned`)"
+     - Dropdown & Number Input: "Page Count Comparator" (`Greater`, `Less`, `Equal` + value)
+     - Text Input: "Text Contains (`text_contains`)"
+     - Checkbox: "Has Form Fields (`has_form_fields`)"
+     - Checkbox: "Is Digitally Signed (`is_signed`)"
+     - Radio group for On No Match:
+       - `🔘 Skip step (continue pipeline)` [default]
+       - `🔘 Archive original & stop`
+       - `🔘 Fail workflow with error`
+     - Button: "Remove Condition" / "Clear"
+
+4. `apps/desktop/src/lib/components/pipeline/PipelineCanvas.svelte`:
+   - When rendering connectors between steps, if the next step has a condition, render visual indicator on the connector:
+     - `[TRUE ➔]` on forward connection.
+     - Optional helper text or branch label.
+   - Include a button "+ Add Condition" on selected step or within toolbar.
+
+5. Tests:
+   - Add tests in `apps/desktop/src/lib/components/__tests__/PipelineCanvas.test.ts` verifying:
+     - Conditional step renders condition badge.
+     - `setStepCondition` updates the step condition in `pipelineState`.
+     - Flow export JSON includes the condition block.
+   - Run tests: `pnpm --dir apps/desktop test` (or `pnpm -r test`).
+
+Guardrails:
+- Svelte 5 runes syntax (`$state`, `$derived`, `$props`).
+- Preserve dark mode aesthetics, clean glassmorphic design matching existing desktop UI.
