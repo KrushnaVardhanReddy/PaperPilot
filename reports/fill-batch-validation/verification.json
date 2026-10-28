@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Hong_Kong",
+  "task": "4.7.4",
+  "branch": "feat/cli-fill-batch-task-4-7-4",
+  "base": "51c59fd",
+  "tests": {
+    "cli_integration": 10,
+    "core_regression": 6,
+    "existing_form_operations": 3,
+    "existing_flatten_operation": 1,
+    "total_passed": 20,
+    "failures": 0
+  },
+  "scale": {
+    "records": 1000,
+    "produced_pdfs": 1000,
+    "reopened_pdfs": 1000,
+    "receipt_rows": 1000
+  },
+  "independent_readers": {
+    "pypdf": "field values, page content, SHA-256 receipts verified",
+    "PyMuPDF": {
+      "version": "2.0",
+      "render_checks": [
+        {
+          "mode": "flattened",
+          "record": 1,
+          "independently_read_and_rendered": true
+        },
+        {
+          "mode": "flattened",
+          "record": 2,
+          "independently_read_and_rendered": true
+        },
+        {
+          "mode": "editable",
+          "record": 1,
+          "independently_read_and_rendered": true
+        },
+        {
+          "mode": "editable",
+          "record": 2,
+          "independently_read_and_rendered": true
+        }
+      ],
+      "visual_preview_inspected": true
+    }
+  },
+  "documentation": {
+    "generated_pages": 89,
+    "indexed_pages": 88,
+    "handbook_entries": 76,
+    "build": "passed"
+  },
+  "remote_ci_executed": false,
+  "full_workspace_suite_executed": false,
+  "graph_rebuild": {
+    "attempted": true,
+    "completed": false,
+    "reason": "graphify-rs unavailable"
+  },
+  "artifacts": {
+    "filled-editable.pdf": {
+      "sha256": "1c9b8a373b8d6a97dc816bb0148f096f536c98f4bd8adecdf34d01daa1309239",
+      "bytes": 8738
+    },
+    "filled-flattened.pdf": {
+      "sha256": "a0d0e934ae71f29d69bcf9d5eaf56852a75412bb8c1b85e927d3dc77f4adea1c",
+      "bytes": 9491
+    },
+    "preview.png": {
+      "sha256": "3bc8536139c109ec0d9241a26ce4c2170ef7e7c74d34b45f017b8c322b2679b6",
+      "bytes": 17390
+    },
+    "template.pdf": {
+      "sha256": "c4e7317ccda9f364b60b9449de95239e041ac4462e4300032abba23615f5d244",
+      "bytes": 7633
+    }
+  }
+}

@@ -6254,8 +6254,10 @@ version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "base64 0.23.1",
+ "chrono",
  "clap",
  "clap_complete",
+ "csv",
  "env_logger",
  "hex",
  "hmac 0.13.0",
@@ -6264,6 +6266,7 @@ dependencies = [
  "notify",
  "paperpilot-core",
  "paperpilot-gateway",
+ "paperpilot-nlp",
  "paperpilot-pdf",
  "predicates",
  "reqwest 0.12.28",

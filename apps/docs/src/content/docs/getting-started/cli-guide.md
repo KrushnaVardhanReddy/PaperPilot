@@ -32,6 +32,21 @@ paperpilot extract-text --input document.pdf --output document.txt
 cat document.txt | grep -E "Invoice|Total"
 ```
 
+## Batch AcroForm Mail Merge
+
+Generate one PDF for each CSV/JSON record:
+
+```bash
+paperpilot fill-batch --template form.pdf --data records.csv --output-dir ./out \
+  --name-template '{row.name}_{date}_{index:04}.pdf' --json
+```
+
+Outputs are flattened by default. Add `--keep-editable` to retain interactive
+fields or `--field-map mapping.json` to bind column names to PDF field names.
+Existing files are preserved, failed rows do not stop later records, and the
+batch writes `execution_receipt.json`. Any failed row produces a nonzero exit
+code. See the [full command reference](/reference/tools/cli_fill_batch/).
+
 ## Automated Scripting & Webhooks
 
 Use the `--json` flag to receive structured JSON status output, ideal for parsing in bash scripts, GitHub Actions, or automation pipelines with `jq`:

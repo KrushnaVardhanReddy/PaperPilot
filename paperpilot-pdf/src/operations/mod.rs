@@ -16,6 +16,7 @@ pub mod extract_images;
 pub mod extract_text;
 pub mod flatten;
 pub mod form;
+pub mod form_fill;
 pub mod hash;
 pub mod header_footer;
 pub mod images_to_pdf;

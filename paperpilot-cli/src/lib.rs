@@ -39,6 +39,8 @@ struct CommandResult {
     success: bool,
     operation: String,
     error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    batch: Option<serde_json::Value>,
 }
 
 pub fn run() {
@@ -86,9 +88,22 @@ fn run_impl() {
 
     let cli = Cli::parse();
 
-    let result = commands::execute_command(&cli.command);
+    let (result, batch) = match &cli.command {
+        #[cfg(feature = "pdf")]
+        cli::Commands::FillBatch(args) => match commands::fill_batch::run(args) {
+            Ok(receipt) => (
+                receipt.outcome(),
+                Some(serde_json::to_value(receipt).unwrap()),
+            ),
+            Err(error) => (Err(error), None),
+        },
+        _ => (commands::execute_command(&cli.command), None),
+    };
 
     let op_name = format!("{:?}", cli.command)
+        .split('(')
+        .next()
+        .unwrap_or("Unknown")
         .split_whitespace()
         .next()
         .unwrap_or("Unknown")
@@ -99,11 +114,13 @@ fn run_impl() {
             success: true,
             operation: op_name,
             error: None,
+            batch,
         },
         Err(e) => CommandResult {
             success: false,
             operation: op_name,
             error: Some(e.to_string()),
+            batch,
         },
     };
 
@@ -111,6 +128,14 @@ fn run_impl() {
         let json_output = serde_json::to_string(&payload).unwrap();
         println!("{}", json_output);
     } else {
+        if let Some(batch) = &payload.batch {
+            eprintln!(
+                "Batch: {} succeeded, {} failed. Receipt: {}",
+                batch["succeeded"],
+                batch["failed"],
+                batch["receipt_path"].as_str().unwrap_or("")
+            );
+        }
         match &payload.error {
             Some(err) => error!("Operation failed: {}", err),
             None => info!("Operation completed successfully."),
