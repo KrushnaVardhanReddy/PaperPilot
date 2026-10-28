@@ -195,6 +195,80 @@ fn encryption_must_be_terminal_and_legacy_presets_remain_usable() {
 }
 
 #[test]
+fn text_contains_and_has_form_fields_conditions() {
+    // Tests new Leaf properties on the core pdf fixture
+    // Core fixture generates forms for Text + PageKind=Blank (synthetic test hack: use Text with specific words)
+    let wf = recipe(
+        r#"
+[[stage]]
+id='text_match'
+op='rotate'
+condition={ text_contains="Invoice" }
+[stage.params]
+angle=90
+
+[[stage]]
+id='text_miss'
+op='rotate'
+condition={ text_contains="MISSING_WORD" }
+[stage.params]
+angle=180
+
+[[stage]]
+id='form_match'
+op='rotate'
+condition={ has_form_fields=false }
+[stage.params]
+angle=90
+"#,
+    );
+    let (out, r) = run_workflow_bytes(&pdf(&[Text]), &wf).unwrap();
+    assert_eq!(r.steps_completed, 2); // 'text_match' and 'form_match' match
+    assert_eq!(r.steps_skipped, 1);   // 'text_miss' skips
+    assert_eq!(rotation(&out), 180);  // Two 90-degree rotations = 180
+}
+
+#[test]
+fn combinators_any_all_not_and_file_size() {
+    let wf = recipe(
+        r#"
+[[stage]]
+id='complex'
+op='rotate'
+[stage.condition]
+all = [
+    { any = [
+        { text_contains = "NONEXISTENT" },
+        { text_contains = "invoice" }
+    ] },
+    { not = { is_signed = true } },
+    { file_size_bytes = { between = [100, 10000000] } }
+]
+[stage.params]
+angle=270
+"#,
+    );
+    let (out, r) = run_workflow_bytes(&pdf(&[Text]), &wf).unwrap();
+    assert_eq!(r.steps_completed, 1);
+    assert_eq!(rotation(&out), 270);
+
+    let fail_wf = recipe(
+        r#"
+[[stage]]
+id='complex2'
+op='rotate'
+[stage.condition]
+all = [
+    { any = [ { text_contains = "NONEXISTENT" } ] },
+    { not = { is_signed = true } }
+]
+"#,
+    );
+    let (_, r2) = run_workflow_bytes(&pdf(&[Text]), &fail_wf).unwrap();
+    assert_eq!(r2.steps_skipped, 1);
+}
+
+#[test]
 fn cyclic_form_content_fails_inspection_without_recursing_forever() {
     let mut doc = Document::load_mem(&pdf(&[NestedImage])).unwrap();
     let id = *doc

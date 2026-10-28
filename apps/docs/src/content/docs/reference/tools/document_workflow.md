@@ -86,8 +86,14 @@ nonempty; recipes contain 1–256 stages. Unknown schema fields are rejected.
 Conditions inspect the **actual PDF entering that stage**, after earlier changes
 or the explicitly selected dependency. Supplied tests are combined with AND.
 
+Combinators include `all`, `any`, and `not`. If these combinators are used, they expect an array (`all`, `any`) or an object (`not`) enclosing other conditions.
+
 | Field | Meaning |
 | --- | --- |
+| `text_contains = "term"` | Checks if extractable text (up to 16 MiB) matches `term` case-insensitively. |
+| `has_form_fields = true` | Validates presence of an interactive AcroForm. |
+| `is_signed = true` | Validates presence of digital signatures. |
+| `file_size_bytes = { between = [min, max] }` | Matches byte size natively against numerical comparators. |
 | `if_scanned = true` | At least one page paints an image and has no extractable non-whitespace text. |
 | `if_scanned = false` | Inverts that heuristic, enabling a complementary branch. |
 | `if_page_count_gt = 50` | Page count is strictly greater than 50. |

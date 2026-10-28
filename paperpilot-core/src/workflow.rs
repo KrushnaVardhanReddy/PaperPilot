@@ -4,13 +4,66 @@ use std::collections::HashMap;
 mod recipe;
 pub use recipe::{parse_workflow, workflow_order};
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum WorkflowCondition {
+    /// Logical AND: all must be true (vacuous truth: empty vec = true)
+    All { all: Vec<WorkflowCondition> },
+    /// Logical OR: at least one must be true (empty vec = false)
+    Any { any: Vec<WorkflowCondition> },
+    /// Logical NOT: inverts the condition
+    Not { not: Box<WorkflowCondition> },
+    /// Leaf inspection predicate (flat struct)
+    Leaf(LeafCondition),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum NumericOp {
+    Eq,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum NumericComparator {
+    Between { between: [u64; 2] },
+    Comparison {
+        #[serde(default)]
+        eq: Option<u64>,
+        #[serde(default)]
+        gt: Option<u64>,
+        #[serde(default)]
+        gte: Option<u64>,
+        #[serde(default)]
+        lt: Option<u64>,
+        #[serde(default)]
+        lte: Option<u64>,
+    },
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-pub struct WorkflowCondition {
+pub struct LeafCondition {
     pub if_scanned: Option<bool>,
     pub if_page_count_gt: Option<u32>,
     pub comparator: Option<PageCountComparator>,
     pub value: Option<u32>,
+
+    pub text_contains: Option<String>,
+    pub has_form_fields: Option<bool>,
+    pub is_signed: Option<bool>,
+    pub is_encrypted: Option<bool>,
+    pub file_size_bytes: Option<NumericComparator>,
+}
+
+impl Default for WorkflowCondition {
+    fn default() -> Self {
+        WorkflowCondition::Leaf(LeafCondition::default())
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]

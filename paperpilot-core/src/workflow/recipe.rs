@@ -1,5 +1,6 @@
 use super::{OnNoMatch, SavedWorkflow};
 use crate::error::{OperationResult, PdfError};
+use crate::workflow::{NumericComparator, WorkflowCondition};
 use std::collections::{HashMap, HashSet};
 
 /// Parse the version-1 TOML recipe or the existing SavedWorkflow JSON format.
@@ -52,15 +53,7 @@ pub fn workflow_order(workflow: &SavedWorkflow) -> OperationResult<Vec<usize>> {
             )));
         }
         if let Some(c) = &step.condition {
-            if c.if_scanned.is_none() && c.if_page_count_gt.is_none() && c.comparator.is_none() {
-                return Err(invalid(format!("Stage '{}': empty condition", step.id)));
-            }
-            if c.comparator.is_some() != c.value.is_some() {
-                return Err(invalid(format!(
-                    "Stage '{}': comparator and value must be supplied together",
-                    step.id
-                )));
-            }
+            validate_condition(c, step.id.as_str(), &invalid)?;
         } else if step.on_no_match != OnNoMatch::Skip {
             return Err(invalid(format!(
                 "Stage '{}': on_no_match requires a condition",
@@ -93,6 +86,53 @@ pub fn workflow_order(workflow: &SavedWorkflow) -> OperationResult<Vec<usize>> {
         done.insert(next);
     }
     Ok(order)
+}
+
+fn validate_condition(
+    condition: &WorkflowCondition,
+    stage_id: &str,
+    invalid: &impl Fn(String) -> PdfError,
+) -> OperationResult<()> {
+    match condition {
+        WorkflowCondition::All { all } => {
+            for c in all {
+                validate_condition(c, stage_id, invalid)?;
+            }
+        }
+        WorkflowCondition::Any { any } => {
+            for c in any {
+                validate_condition(c, stage_id, invalid)?;
+            }
+        }
+        WorkflowCondition::Not { not } => {
+            validate_condition(not, stage_id, invalid)?;
+        }
+        WorkflowCondition::Leaf(c) => {
+            if c.if_scanned.is_none()
+                && c.if_page_count_gt.is_none()
+                && c.comparator.is_none()
+                && c.text_contains.is_none()
+                && c.has_form_fields.is_none()
+                && c.is_signed.is_none()
+                && c.is_encrypted.is_none()
+                && c.file_size_bytes.is_none()
+            {
+                return Err(invalid(format!("Stage '{}': empty condition", stage_id)));
+            }
+            if c.comparator.is_some() != c.value.is_some() {
+                return Err(invalid(format!(
+                    "Stage '{}': comparator and value must be supplied together",
+                    stage_id
+                )));
+            }
+            if let Some(NumericComparator::Between { between: [min, max] }) = &c.file_size_bytes {
+                if min > max {
+                    return Err(invalid("between: min must be <= max".into()));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

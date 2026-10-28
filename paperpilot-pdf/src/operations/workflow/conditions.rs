@@ -1,6 +1,6 @@
 use lopdf::{Dictionary, Document, Object, ObjectId, content::Content};
 use paperpilot_core::error::{OperationResult, PdfError};
-use paperpilot_core::workflow::{PageCountComparator, WorkflowCondition};
+use paperpilot_core::workflow::{LeafCondition, NumericComparator, PageCountComparator, WorkflowCondition};
 use std::collections::HashSet;
 
 pub(super) fn load_pdf(bytes: &[u8]) -> OperationResult<Document> {
@@ -18,14 +18,64 @@ pub(super) fn evaluate(
     condition: &WorkflowCondition,
 ) -> OperationResult<(bool, String)> {
     let doc = load_pdf(bytes)?;
+    evaluate_node(bytes, &doc, condition)
+}
+
+fn evaluate_node(
+    bytes: &[u8],
+    doc: &Document,
+    condition: &WorkflowCondition,
+) -> OperationResult<(bool, String)> {
+    match condition {
+        WorkflowCondition::All { all } => {
+            if all.is_empty() {
+                return Ok((true, "all: [] (vacuous truth)".into()));
+            }
+            let mut reasons = Vec::new();
+            for (idx, child) in all.iter().enumerate() {
+                let (matched, reason) = evaluate_node(bytes, doc, child)?;
+                reasons.push(format!("all[{idx}]: {reason}"));
+                if !matched {
+                    return Ok((false, reasons.join("; ")));
+                }
+            }
+            Ok((true, reasons.join("; ")))
+        }
+        WorkflowCondition::Any { any } => {
+            if any.is_empty() {
+                return Ok((false, "any: [] (empty disjunction)".into()));
+            }
+            let mut reasons = Vec::new();
+            for (idx, child) in any.iter().enumerate() {
+                let (matched, reason) = evaluate_node(bytes, doc, child)?;
+                reasons.push(format!("any[{idx}]: {reason}"));
+                if matched {
+                    return Ok((true, reasons.join("; ")));
+                }
+            }
+            Ok((false, reasons.join("; ")))
+        }
+        WorkflowCondition::Not { not } => {
+            let (matched, reason) = evaluate_node(bytes, doc, not)?;
+            Ok((!matched, format!("not({reason})")))
+        }
+        WorkflowCondition::Leaf(leaf) => evaluate_leaf(bytes, doc, leaf),
+    }
+}
+
+fn evaluate_leaf(
+    bytes: &[u8],
+    doc: &Document,
+    leaf: &LeafCondition,
+) -> OperationResult<(bool, String)> {
     let count = doc.get_pages().len();
     let mut matches = true;
     let mut reasons = vec![format!("page_count={count}")];
-    if let Some(threshold) = condition.if_page_count_gt {
+    if let Some(threshold) = leaf.if_page_count_gt {
         matches &= count > threshold as usize;
         reasons.push(format!("if_page_count_gt={threshold}"));
     }
-    if let (Some(comparator), Some(value)) = (condition.comparator, condition.value) {
+    if let (Some(comparator), Some(value)) = (leaf.comparator, leaf.value) {
         let value = value as usize;
         matches &= match comparator {
             PageCountComparator::Greater => count > value,
@@ -36,12 +86,107 @@ pub(super) fn evaluate(
         };
         reasons.push(format!("{comparator:?} {value}"));
     }
-    if let Some(expected) = condition.if_scanned {
-        let scanned = is_scanned(&doc)?;
+    if let Some(expected) = leaf.if_scanned {
+        let scanned = is_scanned(doc)?;
         matches &= scanned == expected;
         reasons.push(format!("scanned={scanned}, expected={expected}"));
     }
+
+    if let Some(target) = &leaf.text_contains {
+        let target_lower = target.to_lowercase();
+        let mut found = false;
+        for (number, _) in doc.get_pages() {
+            if let Ok(text) = doc.extract_text_with_limit(&[number], 16 * 1024 * 1024) {
+                if text.to_lowercase().contains(&target_lower) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        matches &= found;
+        reasons.push(format!("text_contains('{target}')={found}"));
+    }
+
+    if let Some(expected) = leaf.has_form_fields {
+        let has_forms = has_acroform_fields(doc)?;
+        matches &= has_forms == expected;
+        reasons.push(format!("has_form_fields={has_forms}, expected={expected}"));
+    }
+
+    if let Some(expected) = leaf.is_signed {
+        let signed = is_digitally_signed(doc)?;
+        matches &= signed == expected;
+        reasons.push(format!("is_signed={signed}, expected={expected}"));
+    }
+
+    if let Some(expected) = leaf.is_encrypted {
+        let encrypted = doc.is_encrypted();
+        matches &= encrypted == expected;
+        reasons.push(format!("is_encrypted={encrypted}, expected={expected}"));
+    }
+
+    if let Some(comparator) = &leaf.file_size_bytes {
+        let size = bytes.len() as u64;
+        let satisfied = match comparator {
+            NumericComparator::Between { between: [min, max] } => size >= *min && size <= *max,
+            NumericComparator::Comparison { eq, gt, gte, lt, lte } => {
+                let mut ok = true;
+                if let Some(v) = eq { ok &= size == *v; }
+                if let Some(v) = gt { ok &= size > *v; }
+                if let Some(v) = gte { ok &= size >= *v; }
+                if let Some(v) = lt { ok &= size < *v; }
+                if let Some(v) = lte { ok &= size <= *v; }
+                ok
+            }
+        };
+        matches &= satisfied;
+        reasons.push(format!("file_size_bytes={size}, satisfied={satisfied}"));
+    }
+
     Ok((matches, reasons.join("; ")))
+}
+
+fn has_acroform_fields(doc: &Document) -> OperationResult<bool> {
+    if let Ok(catalog) = doc.catalog() {
+        if let Ok(acroform) = catalog.get(b"AcroForm") {
+            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
+                if let Ok(fields) = dict.get(b"Fields").and_then(Object::as_array) {
+                    return Ok(!fields.is_empty());
+                }
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn is_digitally_signed(doc: &Document) -> OperationResult<bool> {
+    if let Ok(catalog) = doc.catalog() {
+        if let Ok(acroform) = catalog.get(b"AcroForm") {
+            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
+                if let Ok(sig_flags) = dict.get(b"SigFlags").and_then(Object::as_i64) {
+                    if sig_flags & 1 != 0 || sig_flags & 2 != 0 {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+    }
+    for (_, page_id) in doc.get_pages() {
+        if let Ok(dict) = doc.get_dictionary(page_id) {
+            if let Ok(annots) = dict.get(b"Annots").and_then(Object::as_array) {
+                for annot_ref in annots {
+                    if let Ok((_, annot_obj)) = doc.dereference(annot_ref) {
+                        if let Ok(annot_dict) = annot_obj.as_dict() {
+                            if annot_dict.get(b"FT").and_then(Object::as_name).is_ok_and(|name| name == b"Sig") {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(false)
 }
 
 // Conservative, local heuristic: at least one page paints a raster image and
