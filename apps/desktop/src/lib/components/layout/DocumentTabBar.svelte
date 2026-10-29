@@ -3,6 +3,8 @@
   import { getFileIcon, getMimeType } from '$lib/utils/fileType';
   import { invoke } from '@tauri-apps/api/core';
 
+  let fileInputRef = $state<HTMLInputElement | null>(null);
+
   function openFileObjects(files: File[]) {
     if (files.length === 0) return;
     const targetIndex = appState.documents.length;
@@ -12,7 +14,8 @@
 
   async function handleNewTabClick(e: MouseEvent) {
     if (appState.isMobile) {
-      return; // Use standard label/file input for mobile
+      fileInputRef?.click();
+      return;
     }
     e.preventDefault();
     try {
@@ -73,7 +76,8 @@
     <span>Documents</span>
   </button>
 
-  <label
+  <button
+    type="button"
     class="new-tab-btn"
     id="new-doc-tab-btn"
     title="Open new document"
@@ -82,13 +86,14 @@
   >
     <span class="plus-icon">+</span>
     <span class="btn-text">New</span>
-    <input
-      type="file"
-      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
-      style="display: none;"
-      onchange={handleFileInputChange}
-    />
-  </label>
+  </button>
+  <input
+    bind:this={fileInputRef}
+    type="file"
+    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
+    style="display: none;"
+    onchange={handleFileInputChange}
+  />
 
   <div class="tabs-scroll-container">
     {#each appState.openDocIndices as docIndex (docIndex)}
