@@ -9,6 +9,10 @@
     selected?: boolean;
   }>();
 
+  const isSelected = $derived(
+    selected || pipelineState.selectedStepId === id
+  );
+
   const isRunning = $derived(
     pipelineState.isRunning && pipelineState.steps[pipelineState.currentStepIndex ?? -1]?.id === id
   );
@@ -21,11 +25,13 @@
 
 <div
   class="action-node"
-  class:selected={selected}
+  class:selected={isSelected}
   class:running={isRunning}
   class:completed={isCompleted}
   role="button"
   tabindex="0"
+  onclick={() => pipelineState.selectStep(id)}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') pipelineState.selectStep(id); }}
 >
   <Handle type="target" position={Position.Left} />
 
@@ -48,13 +54,15 @@
 
 <style>
   .action-node {
-    width: 140px;
-    padding: 12px;
+    min-width: 150px;
+    max-width: 220px;
+    width: auto;
+    padding: 12px 14px;
     background: var(--bg-surface, #1e293b);
     border: 1px solid var(--border-color, #334155);
     border-radius: var(--border-radius-md, 8px);
-    cursor: grab;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
     user-select: none;
     position: relative;
     color: var(--text-primary, #f8fafc);

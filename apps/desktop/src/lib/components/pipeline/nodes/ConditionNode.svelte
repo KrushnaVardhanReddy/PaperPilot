@@ -9,13 +9,18 @@
     selected?: boolean;
   }>();
 
+  const isSelected = $derived(
+    selected || pipelineState.selectedStepId === id
+  );
 </script>
 
 <div
   class="condition-node"
-  class:selected={selected}
+  class:selected={isSelected}
   role="button"
   tabindex="0"
+  onclick={() => pipelineState.selectStep(id)}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') pipelineState.selectStep(id); }}
 >
   <Handle type="target" position={Position.Left} />
 
@@ -44,13 +49,15 @@
 
 <style>
   .condition-node {
-    width: 140px;
-    padding: 12px;
+    min-width: 150px;
+    max-width: 220px;
+    width: auto;
+    padding: 12px 14px;
     background: var(--bg-surface, #1e293b);
     border: 1px solid var(--accent-secondary, #eab308); /* Yellow/Orange border for condition */
-    border-radius: 4px;
-    cursor: grab;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    border-radius: var(--border-radius-md, 8px);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
     user-select: none;
     position: relative;
     color: var(--text-primary, #f8fafc);

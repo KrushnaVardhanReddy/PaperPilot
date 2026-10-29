@@ -30,7 +30,8 @@
         id: step.id,
         type: isCondition ? 'condition' : 'action',
         position: step.position || { x: 0, y: 0 },
-        data: step as unknown as Record<string, unknown>
+        data: step as unknown as Record<string, unknown>,
+        selected: pipelineState.selectedStepId === step.id
       });
     });
 
@@ -66,8 +67,9 @@
 
   import { BackgroundVariant } from '@xyflow/svelte';
 
-  function onNodeDragStop(event: any, node: Node) {
-    if (node && node.id !== 'trigger-node') {
+  function onNodeDragStop(arg: any, maybeNode?: Node) {
+    const node = arg?.targetNode ?? arg?.node ?? maybeNode ?? (arg?.id ? arg : null);
+    if (node && node.id !== 'trigger-node' && node.position) {
       pipelineState.updateStepPosition(node.id, { x: node.position.x, y: node.position.y });
     }
   }
@@ -85,7 +87,8 @@
     }
   }
 
-  function onNodeClick(event: any, node: Node) {
+  function onNodeClick(arg: any, maybeNode?: Node) {
+    const node = arg?.node ?? maybeNode ?? (arg?.id ? arg : null);
     if (node && node.id !== 'trigger-node') {
       pipelineState.selectStep(node.id);
     } else {
@@ -105,14 +108,27 @@
     {edges}
     {nodeTypes}
     fitView
+    colorMode="dark"
     onnodedragstop={onNodeDragStop}
     onconnect={onConnect}
     onnodeclick={onNodeClick}
     onpaneclick={onPaneClick}
   >
-    <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-    <Controls />
-    <MiniMap />
+    <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#334155" />
+    <Controls
+      buttonBgColor="#1e293b"
+      buttonBgColorHover="#334155"
+      buttonColor="#f8fafc"
+      buttonColorHover="#60a5fa"
+      buttonBorderColor="#334155"
+    />
+    <MiniMap
+      bgColor="#0f172a"
+      nodeColor="#334155"
+      nodeStrokeColor="#475569"
+      maskColor="rgba(15, 23, 42, 0.75)"
+      maskStrokeColor="#3b82f6"
+    />
   </SvelteFlow>
 </div>
 
@@ -124,9 +140,76 @@
   background: var(--bg-secondary, #0f172a);
   border-bottom: 1px solid var(--border-color, #334155);
   flex-grow: 1;
+  position: relative;
 }
 
-:global(.svelte-flow__node) {
-  /* Ensure nodes don't have default unstyled background */
+:global(.svelte-flow) {
+  --xy-controls-button-background-color: var(--bg-surface, #1e293b);
+  --xy-controls-button-background-color-hover: var(--bg-secondary, #334155);
+  --xy-controls-button-color: var(--text-primary, #f8fafc);
+  --xy-controls-button-color-hover: var(--accent-primary, #60a5fa);
+  --xy-controls-button-border-color: var(--border-color, #334155);
+  --xy-edge-stroke-default: #475569;
+  --xy-edge-stroke-selected-default: #3b82f6;
+  --xy-handle-background-color: #60a5fa;
+  --xy-handle-border-color: #0f172a;
+}
+
+:global(.svelte-flow__controls) {
+  background: var(--bg-surface, #1e293b) !important;
+  border: 1px solid var(--border-color, #334155) !important;
+  border-radius: var(--border-radius-md, 8px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+  overflow: hidden !important;
+}
+
+:global(.svelte-flow__controls-button) {
+  background: var(--bg-surface, #1e293b) !important;
+  border-bottom: 1px solid var(--border-color, #334155) !important;
+  color: var(--text-primary, #f8fafc) !important;
+  fill: var(--text-primary, #f8fafc) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 6px !important;
+  transition: all 0.15s ease !important;
+}
+
+:global(.svelte-flow__controls-button:last-child) {
+  border-bottom: none !important;
+}
+
+:global(.svelte-flow__controls-button:hover) {
+  background: var(--bg-secondary, #334155) !important;
+  color: var(--accent-primary, #60a5fa) !important;
+  fill: var(--accent-primary, #60a5fa) !important;
+}
+
+:global(.svelte-flow__controls-button svg) {
+  width: 14px !important;
+  height: 14px !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:global(.svelte-flow__minimap) {
+  background: var(--bg-surface, #0f172a) !important;
+  border: 1px solid var(--border-color, #334155) !important;
+  border-radius: var(--border-radius-md, 8px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+  overflow: hidden !important;
+}
+
+:global(.svelte-flow__minimap-mask) {
+  fill: rgba(15, 23, 42, 0.75) !important;
+  stroke: var(--accent-primary, #3b82f6) !important;
+  stroke-width: 1.5px !important;
+}
+
+:global(.svelte-flow__minimap-node) {
+  fill: var(--bg-surface-elevated, #334155) !important;
+  stroke: var(--border-color, #475569) !important;
 }
 </style>

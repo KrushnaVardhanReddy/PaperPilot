@@ -196,7 +196,7 @@ export class PipelineState {
   }
 
   selectStep(id: string | null) {
-    this.selectedStepId = this.selectedStepId === id ? null : id;
+    this.selectedStepId = id;
   }
 
   addStep(operationId: OperationId) {
