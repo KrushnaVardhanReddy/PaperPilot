@@ -1,32 +1,36 @@
-# Task: Wave 8 (Analysis, OCR, Spatial Intelligence & Search) Real Unmocked Audit Suite
+# Task: Wave 8 (Analysis, OCR, Spatial Intelligence & Search) Real Unmocked Penta-Interface Audit
 # Target Branch: feat/unmocked-e2e-parallel-waves
 # Priority: HIGH
 
-Hey Jules! We have established real tests for Wave 1, Wave 2, and Wave 4 (refer to `paperpilot-mcp/tests/wave2_mcp_tests.rs`, `paperpilot-mcp/tests/wave4_mcp_tests.rs`, and `wiki/09-Wave-2-Penta-Testing.md`). Now, we need the exact same unmocked real test coverage and documentation for **Wave 8: Analysis, OCR, Spatial Intelligence & Search**.
+Hey Jules! We have established real tests for Wave 1, Wave 2, and Wave 4 (refer to `tests/e2e/test_wave2_penta_interface.rs` and `wiki/09-Wave-2-Penta-Testing.md`). Now, we need the exact same unmocked real test coverage across ALL 5 INTERFACES for **Wave 8: Analysis, OCR, Spatial Intelligence & Search**.
 
 ---
 
 ## STRICT MANDATES FOR JULES (CRITICAL):
 1. **AUDIT & TEST ONLY — DO NOT ATTEMPT TO FIX CODE**:
    - Your sole responsibility is to write and execute the test harness against real fixtures and document the results.
-   - If a tool fails, returns an error, or encounters a defect:
-     - **DO NOT MODIFY** any production code in `paperpilot-pdf`, `paperpilot-core`, or `paperpilot-mcp/src/server.rs`.
+   - If a tool fails on any interface, returns an error, or encounters a defect:
+     - **DO NOT MODIFY** any production code in `paperpilot-pdf`, `paperpilot-core`, `paperpilot-gateway`, or `paperpilot-mcp`.
      - **DO NOT ATTEMPT TO FIX** the underlying business logic.
-     - Simply record the failure, exit code, and error message into the test output and the markdown audit report in `wiki/`. In subsequent sessions, human engineers will address the defects.
+     - Simply record the failure, exit code, and error message into the test output and the markdown audit report in `reports/` and `wiki/`. In subsequent sessions, human engineers will address the defects.
 2. **STRICT FILE OWNERSHIP (ZERO MERGE CONFLICTS)**:
-   You may **ONLY** create and touch these two files:
+   You may **ONLY** create and touch these files:
    ```
-   paperpilot-mcp/tests/wave8_analysis_intelligence_mcp_tests.rs
+   tests/e2e/test_wave8_analysis_intelligence_penta_interface.rs
+   reports/WAVE_8_ANALYSIS_INTELLIGENCE_PENTA_SCORECARD.md
    wiki/38-Wave-8-Analysis-Intelligence-Penta-Testing.md
    ```
-   - **DO NOT touch** `Cargo.toml`, `Makefile`, `paperpilot-mcp/src/server.rs`, or any other crate files.
-3. Commit message MUST start with `jules: ` prefix (e.g. `jules: add Wave 8 analysis and intelligence unmocked audit test suite`).
+   - **DO NOT touch** `Cargo.toml`, `Makefile`, or any crate source files.
+3. Commit message MUST start with `jules: ` prefix (e.g. `jules: add Wave 8 analysis and intelligence penta-interface unmocked audit suite`).
 
 ---
 
 ## Reference Implementation to Follow
-- Read `paperpilot-mcp/tests/wave2_mcp_tests.rs` and `paperpilot-mcp/tests/wave4_mcp_tests.rs` for the in-memory MCP execution pattern.
-- Read `wiki/09-Wave-2-Penta-Testing.md` and `wiki/33-Wave-4-Office-Penta-Testing.md` for the tester documentation pattern.
+- Study `tests/e2e/test_wave2_penta_interface.rs` as the exact blueprint:
+  - CLI: `run_cli(&[...])` testing real `paperpilot` binary.
+  - MCP: `call_mcp_tool(tool_id, payload)` testing in-memory MCP server.
+  - REST API: `run_api(endpoint, payload)` testing live `paperpilot-gateway` HTTP server.
+  - Validates output file existence, non-zero size, and response structures.
 - Real fixtures are located at:
   - `fixtures/Get_Started_With_Smallpdf.pdf`
   - `tests/e2e_fixtures/real/ocr.pdf`
@@ -35,43 +39,46 @@ Hey Jules! We have established real tests for Wave 1, Wave 2, and Wave 4 (refer 
 
 ---
 
-## Step 1: Implement `paperpilot-mcp/tests/wave8_analysis_intelligence_mcp_tests.rs`
-Create `paperpilot-mcp/tests/wave8_analysis_intelligence_mcp_tests.rs`:
-- Use in-memory `PaperPilotMcpServer::new(None).execute_call_tool(params)` to invoke tools with real fixtures and sandboxed output paths using `tempfile::tempdir()`.
-- Test the following Analysis, Extraction & Intelligence tools:
-  1. `pdf_extract_text`: Extract raw text stream from `fixtures/Get_Started_With_Smallpdf.pdf`. Assert non-empty text.
-  2. `pdf_ocr`: Run OCR on scanned document (`ocr.pdf`). Assert text returned.
-  3. `pdf_extract_tables`: Extract structured tabular data from `fixtures/Get_Started_With_Smallpdf.pdf`. Assert table records found.
-  4. `document_pii_scan`: Scan document for PII (SSN, emails, credit cards). Assert structured scan report.
-  5. `pdf_bookmarks`: Read and manipulate PDF outline / bookmarks hierarchy. Assert bookmarks extracted.
-  6. `pdf_bates`: Apply legal Bates numbering to pages. Assert output exists.
-  7. `pdf_header_footer`: Add dynamic header and footer running heads. Assert output exists.
-  8. `pdf_classify_type`: Classify document type (e.g. invoice, contract, form). Assert classification result.
-  9. `pdf_compare`: Compare two PDF documents for visual / content diff. Assert diff generated.
-  10. `pdf_hash`: Compute cryptographic checksums (SHA-256) of document objects. Assert hash returned.
-  11. `pdf_validate`: Validate PDF conformance against ISO standards. Assert validation report.
-  12. `pdf_render`: Render PDF page to PNG image buffer. Assert PNG output exists and starts with PNG magic bytes `\x89PNG`.
-  13. `pdf_rag_chunks`: Chunk document with layout boundaries for AI embeddings. Assert chunk array returned.
-  14. `workspace_search`: Search indexed workspace files for keywords. Assert search results returned.
-  15. `semantic_search`: Perform vector semantic query against indexed documents. Assert semantic hits returned.
+## Step 1: Implement `tests/e2e/test_wave8_analysis_intelligence_penta_interface.rs`
+Create `tests/e2e/test_wave8_analysis_intelligence_penta_interface.rs`:
+Follow `tests/e2e/test_wave2_penta_interface.rs` to audit the 15 Analysis, Extraction & Intelligence tools across interfaces:
+1. `pdf_extract_text`
+2. `pdf_ocr`
+3. `pdf_extract_tables`
+4. `document_pii_scan`
+5. `pdf_bookmarks`
+6. `pdf_bates`
+7. `pdf_header_footer`
+8. `pdf_classify_type`
+9. `pdf_compare`
+10. `pdf_hash`
+11. `pdf_validate`
+12. `pdf_render`
+13. `pdf_rag_chunks`
+14. `workspace_search`
+15. `semantic_search`
 
-- For each tool:
-  - Print execution progress, latency (ms), and output size (e.g. `✓ pdf_extract_tables: 8 tables in 19ms`).
-  - If any tool fails, log `✗ <tool_name>: <error message>` without halting the rest of the audit.
+For each tool, test:
+- **CLI**: Execute command and verify output.
+- **MCP**: Execute tool call and verify response and output file.
+- **API**: Execute HTTP request against gateway and verify response.
+- **WASM & Desktop**: Record status in scorecard.
+
+If any test fails, record `passed = false` and continue so all tools are thoroughly audited without crashing.
 
 ---
 
-## Step 2: Implement `wiki/38-Wave-8-Analysis-Intelligence-Penta-Testing.md`
-Create `wiki/38-Wave-8-Analysis-Intelligence-Penta-Testing.md` documenting:
-- The scope of tools tested.
-- Copy-pasteable CLI commands, MCP JSON-RPC payloads, and REST curl commands.
-- The audit verification results (PASS/FAIL status, observed latency, and notes).
+## Step 2: Generate Reports
+1. **`reports/WAVE_8_ANALYSIS_INTELLIGENCE_PENTA_SCORECARD.md`**:
+   - Table with Tool Name, Interface (CLI, MCP, API, WASM, Desktop), Latency (ms), Output Size (bytes), Status (✅ PASS / ❌ FAIL), and error notes.
+2. **`wiki/38-Wave-8-Analysis-Intelligence-Penta-Testing.md`**:
+   - Living tester documentation with copy-pasteable CLI commands, MCP JSON-RPC payloads, and REST curl commands.
 
 ---
 
 ## Step 3: Verification
 Run:
 ```bash
-cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests -j 2 -- --nocapture
+cargo test --test test_wave8_analysis_intelligence_penta_interface -j 2 -- --nocapture
 ```
-Confirm the test suite compiles and runs cleanly, logging all execution metrics.
+Confirm the audit executes and generates the scorecard.
