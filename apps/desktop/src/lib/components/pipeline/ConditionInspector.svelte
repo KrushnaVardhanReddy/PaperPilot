@@ -198,13 +198,27 @@
   .field-row input[type="text"],
   .field-row input[type="number"],
   .field-row select {
-    padding: 6px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #333);
+    border-radius: var(--border-radius-sm, 4px);
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+    color-scheme: dark;
     font-size: 0.85rem;
     flex: 1;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .field-row select option {
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .field-row input[type="text"]:focus,
+  .field-row input[type="number"]:focus,
+  .field-row select:focus {
+    border-color: var(--accent-color, #6366f1);
   }
 
   .field-row input[type="number"] {
