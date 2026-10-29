@@ -52,7 +52,7 @@ async fn invoke_mcp_tool(
         request.arguments = Some(map);
     }
 
-    match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(response) => {
             if let rmcp::model::CallToolResponse::Complete(result) = response {
                 if let Some(rmcp::model::ContentBlock::Text(text_content)) = result.content.first()

@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 28, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 4.7.10 ➔ 3.4.11 ➔ 4.7.1)
+> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 3.4.11)
 
 ---
 

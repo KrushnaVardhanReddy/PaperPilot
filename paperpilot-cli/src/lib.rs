@@ -7,25 +7,37 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "paperpilot watch")]
 pub struct WatchCli {
+    /// Directory to monitor for incoming PDF files
+    #[arg(short = 'd', long)]
     pub directory: PathBuf,
 
-    #[arg(long)]
+    /// Path to .ppflow TOML or JSON recipe to execute per file
+    #[arg(short = 'r', long)]
+    pub recipe: Option<PathBuf>,
+
+    /// Output directory for successfully processed PDFs
+    #[arg(short = 'o', long)]
     pub output: Option<PathBuf>,
 
+    /// Directory to move successfully processed originals (optional)
     #[arg(long)]
-    pub operation: Option<String>,
+    pub move_original: Option<PathBuf>,
 
+    /// Directory to quarantine failed files (default: <dir>/.error)
     #[arg(long)]
-    pub recipe: Option<String>,
+    pub error_dir: Option<PathBuf>,
 
-    #[arg(long)]
-    pub webhook: Option<String>,
-
+    /// Milliseconds of filesystem inactivity before a file is considered ready
     #[arg(long, default_value_t = 500)]
     pub settle_delay_ms: u64,
 
+    /// Optional webhook URL to POST execution receipt
     #[arg(long)]
-    pub move_original: Option<PathBuf>,
+    pub webhook: Option<String>,
+
+    /// Process existing files and exit (useful for one-shot batch and testing)
+    #[arg(long)]
+    pub once: bool,
 }
 
 use cli::Cli;
@@ -71,14 +83,16 @@ fn run_impl() {
         let watch_cli = WatchCli::parse_from(args);
 
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-        if let Err(e) = rt.block_on(commands::watch::handle_watch(
+        if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch(
             watch_cli.directory,
             watch_cli.output,
-            watch_cli.operation,
             watch_cli.recipe,
             watch_cli.webhook,
             watch_cli.settle_delay_ms,
             watch_cli.move_original,
+            watch_cli.error_dir,
+            watch_cli.once,
+            None,
         )) {
             log::error!("Watch loop error: {}", e);
             std::process::exit(1);

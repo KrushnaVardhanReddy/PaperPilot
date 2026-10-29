@@ -6,13 +6,59 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
-use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
+use crate::server::{WatcherHandle, WatcherRegistry};
+use tokio_util::sync::CancellationToken;
+use paperpilot_core::workflow::{get_preset_by_id, parse_workflow};
+use paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed;
+use base64::Engine;
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct StartWatcherRequest {
+    pub dir: String,
+    pub recipe: String,
+    pub output_dir: Option<String>,
+    pub error_dir: Option<String>,
+    pub settle_delay_ms: Option<u64>,
+    pub move_original: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct StartWatcherResponse {
+    pub watcher_id: String,
+    pub status: String,
+    pub dir: String,
+    pub recipe: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WatcherListResponse {
+    pub watchers: Vec<WatcherSummary>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WatcherSummary {
+    pub watcher_id: String,
+    pub status: String,
+    pub dir: String,
+    pub recipe: String,
+    pub last_processed_file: Option<String>,
+    pub last_processed_at: Option<String>,
+    pub total_processed: u64,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct RunRecipeOnceResponse {
+    pub success: bool,
+    pub output_bytes: String,
+    pub receipt: serde_json::Value,
+}
+
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -369,7 +415,7 @@ pub struct PdfAttachmentsJsonRequest {
     )
 )]
 pub async fn health() -> impl IntoResponse {
-    let tools_count = match PaperPilotMcpServer::execute_list_tools() {
+    let tools_count = match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
         Ok(res) => res.tools.len(),
         Err(_) => 0,
     };
@@ -391,7 +437,7 @@ pub async fn health() -> impl IntoResponse {
     )
 )]
 pub async fn list_tools() -> impl IntoResponse {
-    match PaperPilotMcpServer::execute_list_tools() {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
         Ok(res) => (
             StatusCode::OK,
             Json(serde_json::json!({
@@ -434,7 +480,7 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
         );
     }
 
-    match PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(CallToolResponse::Complete(result)) => (
             StatusCode::OK,
             Json(serde_json::json!({"success": true, "result": result})),
@@ -714,7 +760,7 @@ pub async fn handle_tool(
     request.name = resolved_name.clone().into();
     request.arguments = Some(args.clone());
 
-    match PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(CallToolResponse::Complete(result)) => {
             if resolved_name == "pdf_extract_text"
                 && let Some(output_val) = args.get("output")
@@ -1067,7 +1113,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     request.name = "pdf_render".into();
     request.arguments = Some(args);
 
-    match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(res) => {
             if caller_provided_output.is_some() {
                 // If output was provided, return standard JSON response
@@ -2160,4 +2206,189 @@ pub struct PdfToEpubJsonRequest {
 )]
 pub async fn pdf_to_epub(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_to_epub".to_string()), req).await
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/automation/watchers",
+    tag = "Workflow",
+    request_body(content = StartWatcherRequest, description = "Start a hot folder watcher", content_type = "application/json"),
+    responses(
+        (status = 201, description = "Watcher started", body = StartWatcherResponse),
+        (status = 400, description = "Invalid request arguments")
+    )
+)]
+pub async fn start_watcher(
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+    axum::extract::Json(req): axum::extract::Json<StartWatcherRequest>,
+) -> impl IntoResponse {
+    let watcher_id = format!("watcher_{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+    let cancel = CancellationToken::new();
+    let c = cancel.clone();
+    let dir = std::path::PathBuf::from(req.dir.clone());
+    let recipe = std::path::PathBuf::from(req.recipe.clone());
+
+    let out_dir = req.output_dir.clone().map(std::path::PathBuf::from);
+    let err_dir = req.error_dir.clone().map(std::path::PathBuf::from);
+    let move_dir = req.move_original.clone().map(std::path::PathBuf::from);
+    let settle = req.settle_delay_ms.unwrap_or(500);
+
+    let dir_clone = dir.clone();
+    let recipe_clone = recipe.clone();
+
+    tokio::spawn(async move {
+        let _ = paperpilot_pdf::operations::watch::handle_watch(
+            dir_clone,
+            out_dir,
+            Some(recipe_clone),
+            None,
+            settle,
+            move_dir,
+            err_dir,
+            false,
+            Some(c),
+        ).await;
+    });
+
+    let handle = WatcherHandle {
+        watcher_id: watcher_id.clone(),
+        dir: dir.clone(),
+        recipe: recipe.clone(),
+        cancel: cancel.clone(),
+        child_proc: None,
+        last_processed_file: None,
+        last_processed_at: None,
+        total_processed: 0,
+    };
+
+    registry.lock().await.insert(watcher_id.clone(), handle);
+
+    (
+        axum::http::StatusCode::CREATED,
+        axum::Json(StartWatcherResponse {
+            watcher_id,
+            status: "watching".to_string(),
+            dir: req.dir,
+            recipe: req.recipe,
+        }),
+    )
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/automation/watchers",
+    tag = "Workflow",
+    responses(
+        (status = 200, description = "List of active watchers", body = WatcherListResponse)
+    )
+)]
+pub async fn list_watchers(
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+) -> impl IntoResponse {
+    let map = registry.lock().await;
+    let watchers = map.values().map(|h| WatcherSummary {
+        watcher_id: h.watcher_id.clone(),
+        status: "watching".to_string(),
+        dir: h.dir.to_string_lossy().to_string(),
+        recipe: h.recipe.to_string_lossy().to_string(),
+        last_processed_file: h.last_processed_file.clone(),
+        last_processed_at: h.last_processed_at.clone(),
+        total_processed: h.total_processed,
+    }).collect();
+
+    (axum::http::StatusCode::OK, axum::Json(WatcherListResponse { watchers }))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/v1/automation/watchers/{id}",
+    tag = "Workflow",
+    responses(
+        (status = 204, description = "Watcher stopped"),
+        (status = 404, description = "Watcher not found")
+    )
+)]
+pub async fn stop_watcher(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+) -> impl IntoResponse {
+    let mut map = registry.lock().await;
+    if let Some(mut handle) = map.remove(&id) {
+        handle.cancel.cancel();
+        if let Some(mut c) = handle.child_proc.take() {
+            let _ = c.kill(); let _ = c.wait();
+        }
+        axum::http::StatusCode::NO_CONTENT
+    } else {
+        axum::http::StatusCode::NOT_FOUND
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/automation/run",
+    tag = "Workflow",
+    responses(
+        (status = 200, description = "Recipe run completed", body = RunRecipeOnceResponse),
+        (status = 400, description = "Invalid request arguments")
+    )
+)]
+pub async fn run_recipe_once(
+    mut multipart: axum::extract::Multipart,
+) -> impl IntoResponse {
+    let mut file_bytes = None;
+    let mut recipe_content = None;
+
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap().to_string();
+        if name == "file" {
+            file_bytes = Some(field.bytes().await.unwrap());
+        } else if name == "recipe" {
+            let data = field.bytes().await.unwrap();
+            recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+        }
+    }
+
+    if file_bytes.is_none() || recipe_content.is_none() {
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
+        ).into_response();
+    }
+
+    let bytes = file_bytes.unwrap();
+    let r_content = recipe_content.unwrap();
+
+    let workflow = if r_content.starts_with('{') || r_content.contains("op =") || r_content.contains("version =") {
+        match parse_workflow(&r_content) {
+            Ok(w) => w,
+            Err(e) => return (axum::http::StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({"error": e.to_string()}))).into_response()
+        }
+    } else {
+        match get_preset_by_id(&r_content) {
+            Some(w) => w,
+            None => return (axum::http::StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({"error": format!("Preset not found: {}", r_content)}))).into_response()
+        }
+    };
+
+    match run_workflow_bytes_detailed(&bytes, &workflow) {
+        Ok((out, report)) => {
+            let b64 = base64::prelude::BASE64_STANDARD.encode(&out);
+            let receipt = serde_json::to_value(report).unwrap();
+            (
+                axum::http::StatusCode::OK,
+                axum::Json(RunRecipeOnceResponse {
+                    success: true,
+                    output_bytes: b64,
+                    receipt,
+                })
+            ).into_response()
+        }
+        Err(failure) => {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(serde_json::json!({"error": failure.cause.to_string()}))
+            ).into_response()
+        }
+    }
 }
