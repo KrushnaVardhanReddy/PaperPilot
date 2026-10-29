@@ -1,0 +1,77 @@
+# Task: Wave 5 (Security, Signatures & Forms) Real Unmocked Audit Suite
+# Target Branch: feat/unmocked-e2e-parallel-waves
+# Priority: HIGH
+
+Hey Jules! We have established real tests for Wave 1, Wave 2, and Wave 4 (refer to `paperpilot-mcp/tests/wave2_mcp_tests.rs`, `paperpilot-mcp/tests/wave4_mcp_tests.rs`, and `wiki/09-Wave-2-Penta-Testing.md`). Now, we need the exact same unmocked real test coverage and documentation for **Wave 5: Security, Signatures & Forms**.
+
+---
+
+## STRICT MANDATES FOR JULES (CRITICAL):
+1. **AUDIT & TEST ONLY — DO NOT ATTEMPT TO FIX CODE**:
+   - Your sole responsibility is to write and execute the test harness against real fixtures and document the results.
+   - If a tool fails, returns an error, or encounters a defect:
+     - **DO NOT MODIFY** any production code in `paperpilot-pdf`, `paperpilot-core`, or `paperpilot-mcp/src/server.rs`.
+     - **DO NOT ATTEMPT TO FIX** the underlying business logic.
+     - Simply record the failure, exit code, and error message into the test output and the markdown audit report in `wiki/`. In subsequent sessions, human engineers will address the defects.
+2. **STRICT FILE OWNERSHIP (ZERO MERGE CONFLICTS)**:
+   You may **ONLY** create and touch these two files:
+   ```
+   paperpilot-mcp/tests/wave5_security_forms_mcp_tests.rs
+   wiki/35-Wave-5-Security-Forms-Penta-Testing.md
+   ```
+   - **DO NOT touch** `Cargo.toml`, `Makefile`, `paperpilot-mcp/src/server.rs`, or any other crate files.
+3. Commit message MUST start with `jules: ` prefix (e.g. `jules: add Wave 5 security and forms unmocked audit test suite`).
+
+---
+
+## Reference Implementation to Follow
+- Read `paperpilot-mcp/tests/wave2_mcp_tests.rs` and `paperpilot-mcp/tests/wave4_mcp_tests.rs` for the in-memory MCP execution pattern.
+- Read `wiki/09-Wave-2-Penta-Testing.md` and `wiki/33-Wave-4-Office-Penta-Testing.md` for the tester documentation pattern.
+- Real fixtures are located at:
+  - `fixtures/Get_Started_With_Smallpdf.pdf`
+  - `tests/e2e_fixtures/real/form.pdf`
+  - `tests/e2e_fixtures/real/encrypted.pdf`
+  - `tests/e2e_fixtures/real/single_page.pdf`
+  - `tests/e2e_fixtures/real/img1.png`
+
+---
+
+## Step 1: Implement `paperpilot-mcp/tests/wave5_security_forms_mcp_tests.rs`
+Create `paperpilot-mcp/tests/wave5_security_forms_mcp_tests.rs`:
+- Use in-memory `PaperPilotMcpServer::new(None).execute_call_tool(params)` to invoke tools with real fixtures and sandboxed output paths using `tempfile::tempdir()`.
+- Test the following Security, Signature & Form tools:
+  1. `pdf_watermark`: Watermark `fixtures/Get_Started_With_Smallpdf.pdf` with text `"CONFIDENTIAL"`. Check file creation and `%PDF-` header.
+  2. `pdf_encrypt`: Encrypt `fixtures/Get_Started_With_Smallpdf.pdf` with user password. Check encrypted output exists.
+  3. `pdf_decrypt`: Decrypt the newly encrypted PDF with the password. Check output exists and is readable.
+  4. `pdf_sanitize`: Sanitize `fixtures/Get_Started_With_Smallpdf.pdf`. Check output exists.
+  5. `pdf_redact`: Redact word `"Smallpdf"` from `fixtures/Get_Started_With_Smallpdf.pdf`. Check output exists.
+  6. `pdf_read_form`: Read form field schema from `tests/e2e_fixtures/real/form.pdf`. Check success.
+  7. `pdf_fill_form`: Fill form fields on `tests/e2e_fixtures/real/form.pdf`. Check output exists.
+  8. `pdf_flatten`: Flatten annotations/form fields on `tests/e2e_fixtures/real/form.pdf`. Check output exists.
+  9. `pdf_stamp`: Apply `tests/e2e_fixtures/real/img1.png` stamp onto `fixtures/Get_Started_With_Smallpdf.pdf`. Check output exists.
+  10. `pdf_validate_signatures`: Validate signature structure on `fixtures/Get_Started_With_Smallpdf.pdf`. Check success.
+  11. `pdf_remove_signatures`: Strip certificate signatures from `fixtures/Get_Started_With_Smallpdf.pdf`. Check output exists.
+  12. `pdf_change_permissions`: Update owner/user permissions flags. Check output exists.
+  13. `pdf_create_form_field`: Add a form field to `tests/e2e_fixtures/real/single_page.pdf`. Check output exists.
+  14. `pdf_timestamp`: Add cryptographic timestamp token. Check execution result.
+
+- For each tool:
+  - Print execution progress, latency (ms), and output size (e.g. `✓ pdf_watermark: 73000 bytes in 12ms`).
+  - If any tool fails, log `✗ <tool_name>: <error message>` without halting the rest of the audit.
+
+---
+
+## Step 2: Implement `wiki/35-Wave-5-Security-Forms-Penta-Testing.md`
+Create `wiki/35-Wave-5-Security-Forms-Penta-Testing.md` documenting:
+- The scope of tools tested.
+- Copy-pasteable CLI commands, MCP JSON-RPC payloads, and REST curl commands.
+- The audit verification results (PASS/FAIL status, observed latency, and notes).
+
+---
+
+## Step 3: Verification
+Run:
+```bash
+cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests -j 2 -- --nocapture
+```
+Confirm the test suite compiles and runs cleanly, logging all execution metrics.
