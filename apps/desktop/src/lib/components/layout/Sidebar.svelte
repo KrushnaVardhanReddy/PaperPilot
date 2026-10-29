@@ -3,17 +3,15 @@
 
   const navItems = [
     { id: 'documents', label: 'Documents', icon: '📁' },
-    { id: 'recent', label: 'Recent', icon: '🕒' },
-    { id: 'converter', label: 'Converter', icon: '🔄' },
-    { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
-    { id: 'api', label: 'API & Gateway', icon: '⚡' },
+    { id: 'pipeline', label: 'Pipeline Studio', icon: '🔗' },
+    { id: 'api', label: 'API Gateway', icon: '⚡' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 </script>
 
 <aside class="sidebar collapsed" aria-label="Main navigation">
   <div class="sidebar-header">
-    <div class="brand-icon">P</div>
+    <img src="/favicon.png" alt="PaperPilot" class="brand-icon" />
   </div>
 
   <nav class="sidebar-nav" aria-label="Navigation">
@@ -22,7 +20,13 @@
         <button
           class="nav-item"
           class:active={appState.activeTab === item.id}
-          onclick={() => appState.setActiveTab(item.id)}
+          onclick={() => {
+            if (appState.activeTab === item.id && item.id === 'documents') {
+              appState.toggleContextPanel();
+            } else {
+              appState.setActiveTab(item.id);
+            }
+          }}
           title={item.label}
           id={`nav-${item.id}`}
           aria-label={item.label}
@@ -66,16 +70,10 @@
   }
 
   .brand-icon {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
     width: 24px;
     height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-primary);
     border-radius: 4px;
+    object-fit: contain;
   }
 
   .sidebar-nav {
