@@ -646,6 +646,9 @@ pub enum Commands {
         input: PathBuf,
         #[arg(short, long)]
         output: PathBuf,
+        /// With this template, --output is a directory; existing PDFs are preserved
+        #[arg(long)]
+        name_template: Option<String>,
     },
     /// List, inspect, or execute a document workflow
     Workflow {
@@ -667,6 +670,9 @@ pub enum Commands {
         /// Path to custom workflow recipe (.ppflow TOML or JSON)
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
     // --- Headless Server / Automation Gateway ---
     #[cfg(feature = "daemon")]
@@ -768,6 +774,9 @@ pub enum WorkflowSubcommand {
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
 }
 
@@ -1058,6 +1067,7 @@ mod tests {
                         output,
                         preset,
                         recipe,
+                        ..
                     }),
                 ..
             } => {

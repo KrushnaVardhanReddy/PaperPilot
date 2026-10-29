@@ -20,6 +20,7 @@ use tempfile::NamedTempFile;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartWatcherRequest {
+    pub name_template: Option<String>,
     pub dir: String,
     pub recipe: String,
     pub output_dir: Option<String>,
@@ -1304,6 +1305,8 @@ pub struct WorkflowValidateRequest {
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct WorkflowRunJsonRequest {
+    /// Optional output basename template; output is then a directory.
+    pub name_template: Option<String>,
     pub input: String,
     pub output: String,
     pub preset: Option<String>,
@@ -1429,10 +1432,11 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
     let input = payload.input;
     let output = payload.output;
     match tokio::task::spawn_blocking(move || {
-        paperpilot_pdf::operations::receipts::run_to_path(
+        paperpilot_pdf::operations::receipts::run_to_path_with_naming(
             std::path::Path::new(&input),
             std::path::Path::new(&output),
             &workflow,
+            payload.name_template.as_deref(),
         )
     })
     .await
@@ -1780,6 +1784,7 @@ mod tests {
     #[tokio::test]
     async fn test_workflow_run_json_invalid_preset() {
         let req = WorkflowRunJsonRequest {
+            name_template: None,
             input: "in.pdf".to_string(),
             output: "out.pdf".to_string(),
             preset: Some("bad-preset".to_string()),
@@ -2222,7 +2227,7 @@ pub async fn start_watcher(
         once: false,
     };
     match tokio::task::spawn_blocking(move || {
-        registry.start(id, config, std::sync::Arc::new(|_| {}))
+        registry.start_with_naming(id, config, req.name_template, std::sync::Arc::new(|_| {}))
     })
     .await
     {

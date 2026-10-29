@@ -23,6 +23,34 @@ pub async fn handle_watch(
     once: bool,
     cancel_token: Option<CancellationToken>,
 ) -> OperationResult<()> {
+    handle_watch_with_naming(
+        directory,
+        output,
+        recipe,
+        webhook,
+        settle_delay_ms,
+        move_original,
+        error_dir,
+        once,
+        cancel_token,
+        None,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn handle_watch_with_naming(
+    directory: PathBuf,
+    output: Option<PathBuf>,
+    recipe: Option<PathBuf>,
+    webhook: Option<String>,
+    settle_delay_ms: u64,
+    move_original: Option<PathBuf>,
+    error_dir: Option<PathBuf>,
+    once: bool,
+    cancel_token: Option<CancellationToken>,
+    name_template: Option<String>,
+) -> OperationResult<()> {
     let manager = Arc::new(WatcherManager::default());
     let start_manager = manager.clone();
     let config = WatchConfig {
@@ -63,9 +91,11 @@ pub async fn handle_watch(
             }
         }
     });
-    tokio::task::spawn_blocking(move || start_manager.start("cli".into(), config, sink))
-        .await
-        .map_err(|e| PdfError::Other(e.to_string()))??;
+    tokio::task::spawn_blocking(move || {
+        start_manager.start_with_naming("cli".into(), config, name_template, sink)
+    })
+    .await
+    .map_err(|e| PdfError::Other(e.to_string()))??;
     let token = cancel_token.unwrap_or_default();
     loop {
         let done = manager

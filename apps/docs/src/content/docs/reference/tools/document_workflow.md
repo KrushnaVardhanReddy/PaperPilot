@@ -13,6 +13,8 @@ runtime conditions, explicit dependencies and no-match handling. Execution is
 local; the runner never downloads models, interpolates environment variables,
 or sends document bytes to a service.
 
+File-based CLI/MCP/REST wrappers support opt-in [dynamic output naming](/reference/output-naming/) using input names, UTC dates, hashes, indexes and PDF Info metadata. Set `name_template` and supply an output directory to preserve existing output files.
+
 ### CLI
 
 ```bash
@@ -28,6 +30,8 @@ must be different files. Successful CLI output is published atomically; a
 recipe failure does not replace an existing output. `--json` prints exactly one
 object; its `workflow` field contains the execution report. Failures exit nonzero.
 Inspection lists parameter names without exposing their values.
+
+Optional `--name-template` (CLI) / `name_template` (MCP and REST JSON) uses `output` as a directory and publishes a dynamically named PDF without replacing existing files. Reports expose the actual output path. [Dynamic output naming](/reference/output-naming/) documents input, UTC date, hash, index and PDF Info tokens; for example `{input_stem}-{hash:8}.pdf`.
 
 ### MCP JSON-RPC
 ```json

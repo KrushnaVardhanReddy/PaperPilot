@@ -19,6 +19,10 @@ pub struct WatchCli {
     #[arg(short = 'o', long)]
     pub output: Option<PathBuf>,
 
+    /// Optional output basename template using input, UTC date, hash and index tokens
+    #[arg(long)]
+    pub name_template: Option<String>,
+
     /// Directory to move successfully processed originals (optional)
     #[arg(long)]
     pub move_original: Option<PathBuf>,
@@ -83,7 +87,7 @@ fn run_impl() {
         let watch_cli = WatchCli::parse_from(args);
 
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-        if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch(
+        if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch_with_naming(
             watch_cli.directory,
             watch_cli.output,
             watch_cli.recipe,
@@ -93,6 +97,7 @@ fn run_impl() {
             watch_cli.error_dir,
             watch_cli.once,
             None,
+            watch_cli.name_template,
         )) {
             log::error!("Watch loop error: {}", e);
             std::process::exit(1);

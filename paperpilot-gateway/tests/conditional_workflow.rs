@@ -13,7 +13,7 @@ async fn gateway_json_recipe_reports_conditions_and_returns_real_output() {
     let output = dir.path().join("out.pdf");
     fs::write(&input, pdf(&[Text])).unwrap();
     let r = workflow_run_json(Json(WorkflowRunJsonRequest {
-        input: input.to_string_lossy().into(), output: output.to_string_lossy().into(), preset: None,
+        name_template: None, input: input.to_string_lossy().into(), output: output.to_string_lossy().into(), preset: None,
         recipe: Some(json!({"id":"api","name":"API","steps":[{"id":"skip","operationId":"rotate","condition":{"if_page_count_gt":50}},{"id":"finish","operationId":"watermark","params":{"text":"VERIFIED"}}]})),
     })).await.into_response();
     assert_eq!(r.status(), StatusCode::OK);
@@ -34,7 +34,7 @@ async fn gateway_toml_failure_returns_report_without_overwriting_output() {
     let previous = pdf(&[Image]);
     fs::write(&output, &previous).unwrap();
     let r = workflow_run_json(Json(WorkflowRunJsonRequest {
-        input: input.to_string_lossy().into(), output: output.to_string_lossy().into(), preset: None,
+        name_template: None, input: input.to_string_lossy().into(), output: output.to_string_lossy().into(), preset: None,
         recipe: Some(json!("name='Fail'\n[[stage]]\nid='gate'\nop='rotate'\ncondition={if_page_count_gt=50}\non_no_match='error'")),
     })).await.into_response();
     assert_eq!(r.status(), StatusCode::INTERNAL_SERVER_ERROR);

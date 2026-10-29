@@ -122,6 +122,9 @@ use std::sync::Arc;
 pub type WatcherRegistry = Arc<WatcherManager>;
 pub struct WatcherRegistryAdapter(pub WatcherRegistry);
 impl paperpilot_mcp::server::WatcherRegistryTrait for WatcherRegistryAdapter {
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        self.0.start_with_naming(id, config, name_template, Arc::new(|_| {})).map_err(|e|e.to_string())
+    }
     fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
         self.0
             .start(id, config, Arc::new(|_| {}))

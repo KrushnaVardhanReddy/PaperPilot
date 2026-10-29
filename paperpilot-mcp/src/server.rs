@@ -37,6 +37,10 @@ use paperpilot_pdf::operations::watch::{
 };
 pub trait WatcherRegistryTrait: Send + Sync {
     fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String>;
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        if name_template.is_some() { return Err("This registry does not support custom naming".into()); }
+        self.add_watcher(id, config)
+    }
     fn remove_watcher(&self, id: &str) -> Result<(), String>;
     fn list_watchers(&self) -> Vec<WatchSnapshot>;
 }
@@ -44,6 +48,9 @@ impl WatcherRegistryTrait for WatcherManager {
     fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
         self.start(id, config, Arc::new(|_| {}))
             .map_err(|e| e.to_string())
+    }
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        self.start_with_naming(id, config, name_template, Arc::new(|_| {})).map_err(|e|e.to_string())
     }
     fn remove_watcher(&self, id: &str) -> Result<(), String> {
         self.remove(id).map_err(|e| e.to_string())
@@ -133,6 +140,7 @@ impl PaperPilotMcpServer {
                   "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
                   "recipe": { "type": "string", "description": "Local .ppflow recipe path, preset ID, or serialized workflow" },
                   "output_dir": { "type": "string", "description": "Output directory; defaults to a separate processed subfolder" },
+                  "name_template": { "type": "string", "description": "Output basename template; input, UTC date, SHA-256 and index tokens" },
                   "settle_delay_ms": { "type": "integer", "default": 500, "minimum": 50, "maximum": 60000 }
                 }
             }).as_object().unwrap().clone(),
@@ -176,7 +184,8 @@ impl PaperPilotMcpServer {
                 "properties": {
                   "input": { "type": "string", "description": "Absolute path to input PDF" },
                   "recipe": { "type": "string", "description": "Absolute path to .ppflow TOML recipe file" },
-                  "output": { "type": "string", "description": "Absolute path for output PDF" }
+                  "output": { "type": "string", "description": "Output file, or output directory with name_template" },
+                  "name_template": { "type": "string", "description": "Optional dynamic output basename; requires explicit output directory" }
                 }
             }).as_object().unwrap().clone(),
         ));
@@ -4380,7 +4389,7 @@ impl PaperPilotMcpServer {
             schema_lw.as_object().unwrap().clone(),
         ));
 
-        let schema_dw = serde_json::json!({
+        let mut schema_dw = serde_json::json!({
             "type": "object",
             "properties": {
                 "input": {
@@ -4402,6 +4411,7 @@ impl PaperPilotMcpServer {
             },
             "required": ["input", "output"]
         });
+        schema_dw["properties"]["name_template"] = serde_json::json!({"type":"string","description":"Optional basename template; output is then a directory"});
         tools.push(Tool::new(
             "document_workflow".to_string(),
             "Execute a declarative multi-step document workflow pipeline".to_string(),
@@ -4430,6 +4440,10 @@ impl PaperPilotMcpServer {
                 else { CallToolResult::error(content) };
             return Ok(CallToolResponse::Complete(result));
         }
+
+        let name_template = if matches!(request.name.as_ref(), "watcher_start" | "recipe_run" | "document_workflow" | "pdf_document_workflow") {
+            args.get("name_template").map(|value| value.as_str().ok_or_else(|| ErrorData::invalid_params("name_template must be a string", None))).transpose()?
+        } else { None };
         let get_string = |key: &str| -> Result<String, ErrorData> {
             args.get(key)
                 .and_then(|v| v.as_str())
@@ -4592,7 +4606,7 @@ impl PaperPilotMcpServer {
                         settle_delay_ms: settle,
                     };
                     let snapshot = registry
-                        .add_watcher(id.clone(), config)
+                        .add_named_watcher(id.clone(), config, name_template.map(str::to_owned))
                         .map_err(|e| ErrorData::invalid_params(e, None))?;
                     serde_json::json!({"watcher_id":id,"status":snapshot.status,"watcher":snapshot})
                 }
@@ -4642,7 +4656,8 @@ impl PaperPilotMcpServer {
         if request.name == "recipe_run" {
             let input = get_string("input")?;
             let recipe = get_string("recipe")?;
-            let output = get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf");
+            let output = if name_template.is_some() { get_string("output")? }
+                else { get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf") };
 
             let recipe_str = std::fs::read_to_string(&recipe).unwrap_or(recipe.clone());
             let workflow =
@@ -4656,10 +4671,11 @@ impl PaperPilotMcpServer {
                     })
                 })?;
 
-            let run = paperpilot_pdf::operations::receipts::run_to_path(
+            let run = paperpilot_pdf::operations::receipts::run_to_path_with_naming(
                 std::path::Path::new(&input),
                 std::path::Path::new(&output),
                 &workflow,
+                name_template,
             )
             .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
             run.outcome()
@@ -4670,7 +4686,7 @@ impl PaperPilotMcpServer {
                 ContentBlock::text(
                     serde_json::to_string(&serde_json::json!({
                         "success": true,
-                        "output": output,
+                        "output": run.receipt.output,
                         "receipt": report
                     }))
                     .unwrap(),
@@ -4695,7 +4711,6 @@ impl PaperPilotMcpServer {
             "document_workflow" | "pdf_document_workflow" => {
                 let input_path = get_string("input")?;
                 let output_path = get_string("output")?;
-                ensure_parent_dir(&output_path)?;
 
                 let preset_opt = args.get("preset").and_then(|v| v.as_str());
                 let recipe_opt = args.get("recipe").and_then(|v| v.as_str());
@@ -4733,10 +4748,11 @@ impl PaperPilotMcpServer {
                     ));
                 };
 
-                let run = paperpilot_pdf::operations::receipts::run_to_path(
+                let run = paperpilot_pdf::operations::receipts::run_to_path_with_naming(
                     std::path::Path::new(&input_path),
                     std::path::Path::new(&output_path),
                     &workflow,
+                    name_template,
                 )
                 .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
                 run.outcome().map_err(|e| {
@@ -4746,7 +4762,7 @@ impl PaperPilotMcpServer {
                 Ok(OperationResult {
                     success: true,
                     message: format!("Workflow '{}' executed successfully.", workflow.name),
-                    output_path: Some(output_path),
+                    output_path: run.receipt.output.as_ref().map(|p|p.to_string_lossy().into_owned()),
                     diff_detected: None,
                     data: Some(report_json),
                 })

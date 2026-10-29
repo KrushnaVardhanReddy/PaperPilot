@@ -9,19 +9,21 @@ use std::fs;
 use std::path::Path;
 
 pub fn execute(command: &Commands, json: bool) -> (OperationResult<()>, Option<Value>) {
-    let (subcommand, input, output, preset, recipe) = match command {
+    let (subcommand, input, output, preset, recipe, name_template) = match command {
         Commands::Run {
             recipe,
             input,
             output,
-        } => return run_workflow(input, output, None, Some(recipe), json),
+            name_template,
+        } => return run_workflow(input, output, None, Some(recipe), json, name_template.as_deref()),
         Commands::Workflow {
             subcommand,
             input,
             output,
             preset,
             recipe,
-        } => (subcommand, input, output, preset, recipe),
+            name_template,
+        } => (subcommand, input, output, preset, recipe, name_template),
         _ => {
             return (
                 Err(PdfError::InvalidInput("Not a workflow command".into())),
@@ -69,9 +71,9 @@ pub fn execute(command: &Commands, json: bool) -> (OperationResult<()>, Option<V
                 Err(e) => (Err(e), None),
             }
         }
-        Some(WorkflowSubcommand::Run { input, output, preset, recipe }) => run_workflow(input, output, preset.as_deref(), recipe.as_deref(), json),
+        Some(WorkflowSubcommand::Run { input, output, preset, recipe, name_template }) => run_workflow(input, output, preset.as_deref(), recipe.as_deref(), json, name_template.as_deref()),
         None => match (input, output) {
-            (Some(input), Some(output)) => run_workflow(input, output, preset.as_deref(), recipe.as_deref(), json),
+            (Some(input), Some(output)) => run_workflow(input, output, preset.as_deref(), recipe.as_deref(), json, name_template.as_deref()),
             _ => (Err(PdfError::InvalidInput("Use workflow run --input IN --output OUT --recipe RECIPE, or run RECIPE IN --output OUT".into())), None),
         },
     }
@@ -94,12 +96,13 @@ fn run_workflow(
     preset: Option<&str>,
     recipe: Option<&Path>,
     json: bool,
+    name_template: Option<&str>,
 ) -> (OperationResult<()>, Option<Value>) {
     let wf = match resolve_workflow(preset, recipe) {
         Ok(wf) => wf,
         Err(e) => return (Err(e), None),
     };
-    match receipts::run_to_path(input, output, &wf) {
+    match receipts::run_to_path_with_naming(input, output, &wf, name_template) {
         Ok(run) => {
             if !json {
                 eprintln!("Execution receipt: {}", run.receipt_path.display());

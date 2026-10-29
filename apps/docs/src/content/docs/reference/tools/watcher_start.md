@@ -15,6 +15,8 @@ Watchers live in the owning process. Desktop commands, its local REST gateway, a
 
 Explicit CLI webhooks retain the completion fields `success`, `operation`, `file`, and `error`, adding `output` and `receipt` paths. Delivery has a 30-second timeout; HTTP/network failures are logged separately from PDF processing results.
 
+Optional `name_template` enables [dynamic naming](/reference/output-naming/) from input names, UTC dates, SHA-256, run indexes and PDF Info fields. CLI uses `--name-template`. Receipts reference the final collision-resolved output path.
+
 ### CLI
 
 ```bash
@@ -46,3 +48,7 @@ curl -s -X POST http://127.0.0.1:7823/v1/automation/watchers \
 ```
 
 Returns HTTP 201 after registration, HTTP 400 for invalid configuration. Optional REST fields are `output_dir`, `error_dir`, and `move_original`.
+
+### Dynamic filenames
+
+CLI accepts `--name-template`; MCP and REST accept optional `name_template`, for example `{input_stem}-{date:%Y%m%d}-{hash:8}-{index:04}.pdf`. Templates are validated before registration. Input-specific metadata errors retain the source and write a failure receipt; later files continue. Indexes count attempts within the current watcher run. Existing output files receive numeric collision suffixes, and receipt names track the actual published filename. Explicitly archived originals retain their original names. See [all supported tokens and constraints](/reference/output-naming/).
