@@ -1,29 +1,128 @@
+<script module lang="ts">
+  export type PredicateType = 'scanned' | 'page_count' | 'text_contains' | 'has_form_fields' | 'is_signed';
+
+  export interface UiRule {
+    id: string;
+    type: PredicateType;
+    comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+    numValue?: number;
+    textValue?: string;
+    boolValue?: boolean;
+  }
+</script>
+
 <script lang="ts">
   import { pipelineState } from '$lib/state/pipeline.svelte';
-  import type { WorkflowConditionLeaf, OnNoMatch } from '$lib/state/pipeline.svelte';
+  import type { WorkflowCondition, WorkflowConditionLeaf, OnNoMatch } from '$lib/state/pipeline.svelte';
 
   let selectedStep = $derived(
     pipelineState.selectedStepId ? pipelineState.steps.find(s => s.id === pipelineState.selectedStepId) ?? null : null
   );
 
   let hasCondition = $derived(!!selectedStep?.condition);
-
-  let condition = $derived(selectedStep?.condition ?? {});
   let onNoMatch = $derived(selectedStep?.on_no_match ?? 'skip');
 
-  function updateCondition(updates: Partial<WorkflowConditionLeaf>) {
+  let combinator = $state<'all' | 'any'>('all');
+  let rules = $state<UiRule[]>([]);
+
+  // Parse condition on step selection changes
+  $effect(() => {
+    if (!selectedStep?.condition) {
+      rules = [];
+      combinator = 'all';
+      return;
+    }
+
+    const cond = selectedStep.condition as any;
+    let leaves: WorkflowConditionLeaf[] = [];
+
+    if (cond.all) {
+      combinator = 'all';
+      leaves = cond.all;
+    } else if (cond.any) {
+      combinator = 'any';
+      leaves = cond.any;
+    } else {
+      combinator = 'all';
+      leaves = [cond as WorkflowConditionLeaf];
+    }
+
+    const parsedRules: UiRule[] = [];
+
+    for (const leaf of leaves) {
+      if (leaf.if_scanned) parsedRules.push({ id: crypto.randomUUID(), type: 'scanned' });
+      if (leaf.comparator) parsedRules.push({ id: crypto.randomUUID(), type: 'page_count', comparator: leaf.comparator, numValue: leaf.value });
+      if (leaf.text_contains) parsedRules.push({ id: crypto.randomUUID(), type: 'text_contains', textValue: leaf.text_contains });
+      if (leaf.has_form_fields) parsedRules.push({ id: crypto.randomUUID(), type: 'has_form_fields' });
+      if (leaf.is_signed) parsedRules.push({ id: crypto.randomUUID(), type: 'is_signed' });
+    }
+
+    // De-duplicate if single leaf contained multiple fields (backwards compat)
+    if (leaves.length === 1 && parsedRules.length > 1) {
+       // Single condition with multiple predicates, rules are already extracted
+    }
+
+    rules = parsedRules;
+  });
+
+  function saveChanges() {
     if (!selectedStep) return;
-    const newCondition = { ...condition, ...updates };
-    pipelineState.setStepCondition(selectedStep.id, newCondition, onNoMatch);
+
+    if (rules.length === 0) {
+      pipelineState.setStepCondition(selectedStep.id, undefined, onNoMatch);
+      return;
+    }
+
+    let finalCondition: WorkflowCondition | undefined;
+
+    const leaves = rules.map(rule => {
+      const leaf: WorkflowConditionLeaf = {};
+      if (rule.type === 'scanned') leaf.if_scanned = true;
+      if (rule.type === 'page_count') {
+        leaf.comparator = rule.comparator;
+        leaf.value = rule.numValue;
+      }
+      if (rule.type === 'text_contains') leaf.text_contains = rule.textValue;
+      if (rule.type === 'has_form_fields') leaf.has_form_fields = true;
+      if (rule.type === 'is_signed') leaf.is_signed = true;
+      return leaf;
+    });
+
+    if (leaves.length === 1 && combinator === 'all') {
+      finalCondition = leaves[0] as WorkflowCondition;
+    } else if (combinator === 'all') {
+      finalCondition = { all: leaves as WorkflowCondition[] };
+    } else {
+      finalCondition = { any: leaves as WorkflowCondition[] };
+    }
+
+    pipelineState.setStepCondition(selectedStep.id, finalCondition, onNoMatch);
+  }
+
+  function addRule() {
+    rules = [...rules, { id: crypto.randomUUID(), type: 'scanned' }];
+    saveChanges();
+  }
+
+  function removeRule(id: string) {
+    rules = rules.filter(r => r.id !== id);
+    saveChanges();
+  }
+
+  function updateRule(id: string, updates: Partial<UiRule>) {
+    rules = rules.map(r => r.id === id ? { ...r, ...updates } : r);
+    saveChanges();
   }
 
   function updateOnNoMatch(value: OnNoMatch) {
     if (!selectedStep) return;
-    pipelineState.setStepCondition(selectedStep.id, Object.keys(condition).length > 0 ? condition : undefined, value);
+    const cond = selectedStep.condition;
+    pipelineState.setStepCondition(selectedStep.id, cond ? cond : undefined, value);
   }
 
   function clearCondition() {
     if (!selectedStep) return;
+    rules = [];
     pipelineState.removeStepCondition(selectedStep.id);
   }
 </script>
@@ -38,63 +137,62 @@
     </div>
 
     <div class="condition-fields">
-      <label class="checkbox-label">
-        <input
-          type="checkbox"
-          checked={!!condition.if_scanned}
-          onchange={(e) => updateCondition({ if_scanned: (e.target as HTMLInputElement).checked || undefined })}
-        />
-        Only if Scanned Document
-      </label>
+      {#if rules.length > 0}
+        <div class="combinator-row">
+          <span class="label">Step executes if:</span>
+          <select bind:value={combinator} onchange={saveChanges} class="combinator-select">
+            <option value="all">ALL rules match (AND)</option>
+            <option value="any">ANY rule matches (OR)</option>
+          </select>
+        </div>
+      {/if}
 
-      <div class="field-row">
-        <span class="label">Page Count:</span>
-        <select
-          value={condition.comparator ?? ''}
-          onchange={(e) => updateCondition({ comparator: (e.target as HTMLSelectElement).value as any || undefined })}
-        >
-          <option value="">Any</option>
-          <option value="Greater">Greater</option>
-          <option value="Less">Less</option>
-          <option value="Equal">Equal</option>
-        </select>
-        <input
-          type="number"
-          min="1"
-          placeholder="Value"
-          value={condition.value ?? ''}
-          oninput={(e) => updateCondition({ value: parseInt((e.target as HTMLInputElement).value) || undefined })}
-          disabled={!condition.comparator}
-        />
-      </div>
+      {#each rules as rule, index (rule.id)}
+        <div class="rule-row">
+          <select
+            value={rule.type}
+            onchange={(e) => updateRule(rule.id, { type: (e.target as HTMLSelectElement).value as PredicateType })}
+            class="predicate-select"
+          >
+            <option value="scanned">Only if Scanned Document</option>
+            <option value="page_count">Page Count</option>
+            <option value="text_contains">Text Contains</option>
+            <option value="has_form_fields">Has Form Fields</option>
+            <option value="is_signed">Is Digitally Signed</option>
+          </select>
 
-      <div class="field-row">
-        <span class="label">Text Contains:</span>
-        <input
-          type="text"
-          placeholder="e.g. Confidential"
-          value={condition.text_contains ?? ''}
-          oninput={(e) => updateCondition({ text_contains: (e.target as HTMLInputElement).value || undefined })}
-        />
-      </div>
+          {#if rule.type === 'page_count'}
+            <select
+              value={rule.comparator ?? 'Greater'}
+              onchange={(e) => updateRule(rule.id, { comparator: (e.target as HTMLSelectElement).value as any })}
+            >
+              <option value="Greater">Greater</option>
+              <option value="Less">Less</option>
+              <option value="Equal">Equal</option>
+            </select>
+            <input
+              type="number"
+              min="1"
+              placeholder="Value"
+              value={rule.numValue ?? ''}
+              oninput={(e) => updateRule(rule.id, { numValue: parseInt((e.target as HTMLInputElement).value) || undefined })}
+            />
+          {/if}
 
-      <label class="checkbox-label">
-        <input
-          type="checkbox"
-          checked={!!condition.has_form_fields}
-          onchange={(e) => updateCondition({ has_form_fields: (e.target as HTMLInputElement).checked || undefined })}
-        />
-        Has Form Fields
-      </label>
+          {#if rule.type === 'text_contains'}
+            <input
+              type="text"
+              placeholder="e.g. Confidential"
+              value={rule.textValue ?? ''}
+              oninput={(e) => updateRule(rule.id, { textValue: (e.target as HTMLInputElement).value || undefined })}
+            />
+          {/if}
 
-      <label class="checkbox-label">
-        <input
-          type="checkbox"
-          checked={!!condition.is_signed}
-          onchange={(e) => updateCondition({ is_signed: (e.target as HTMLInputElement).checked || undefined })}
-        />
-        Is Digitally Signed
-      </label>
+          <button class="remove-rule-btn" onclick={() => removeRule(rule.id)} title="Remove Rule">✕</button>
+        </div>
+      {/each}
+
+      <button type="button" class="add-rule-btn" onclick={addRule}>+ Add Rule</button>
 
       <div class="on-no-match-section">
         <div class="section-label">If condition not met:</div>
@@ -223,6 +321,105 @@
 
   .field-row input[type="number"] {
     max-width: 80px;
+  }
+
+  .combinator-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .combinator-row .label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .combinator-select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #333);
+    border-radius: var(--border-radius-sm, 4px);
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+    color-scheme: dark;
+    font-size: 0.85rem;
+    outline: none;
+    flex: 1;
+  }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px dashed var(--border-color);
+  }
+
+  .rule-row select,
+  .rule-row input[type="text"],
+  .rule-row input[type="number"] {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #333);
+    border-radius: var(--border-radius-sm, 4px);
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+    color-scheme: dark;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .rule-row select option {
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .predicate-select {
+    flex: 1;
+  }
+
+  .rule-row input[type="number"] {
+    width: 60px;
+  }
+
+  .rule-row input[type="text"] {
+    flex: 1;
+  }
+
+  .remove-rule-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .remove-rule-btn:hover {
+    color: var(--error-color, #ef4444);
+  }
+
+  .add-rule-btn {
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    color: var(--text-primary);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: center;
+    transition: background 0.15s;
+  }
+
+  .add-rule-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: solid;
   }
 
   .on-no-match-section {

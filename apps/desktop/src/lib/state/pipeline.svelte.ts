@@ -15,7 +15,20 @@ export interface WorkflowConditionLeaf {
   has_form_fields?: boolean;
   is_signed?: boolean;
   is_encrypted?: boolean;
+  file_size_bytes?: {
+    eq?: number;
+    gt?: number;
+    gte?: number;
+    lt?: number;
+    lte?: number;
+  };
 }
+
+export type WorkflowCondition =
+  | { all: WorkflowCondition[] }
+  | { any: WorkflowCondition[] }
+  | { not: WorkflowCondition }
+  | WorkflowConditionLeaf;
 
 export type OnNoMatch = 'skip' | 'archive_original' | 'error';
 
@@ -25,7 +38,7 @@ export interface PipelineStep {
   label: string;        // Human-readable name, e.g. "Compress PDF"
   icon: string;         // emoji or svg name, e.g. "🗜️"
   params: Record<string, unknown>; // operation-specific params
-  condition?: WorkflowConditionLeaf;
+  condition?: WorkflowCondition;
   depends_on?: string[];
   on_no_match?: OnNoMatch;
   status?: 'pending' | 'running' | 'completed' | 'skipped' | 'error';
@@ -211,7 +224,7 @@ export class PipelineState {
     );
   }
 
-  setStepCondition(stepId: string, condition?: WorkflowConditionLeaf, onNoMatch?: OnNoMatch) {
+  setStepCondition(stepId: string, condition?: WorkflowCondition, onNoMatch?: OnNoMatch) {
     this.steps = this.steps.map(s => {
       if (s.id === stepId) {
         return { ...s, condition, on_no_match: onNoMatch };
