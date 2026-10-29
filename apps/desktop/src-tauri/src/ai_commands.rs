@@ -10,6 +10,13 @@ use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 
+use paperpilot_nlp::traits::{NlpResolver, ResolverContext};
+use paperpilot_ai::{UniversalLlmClient, LlmConfig, LlmNlpResolver, DynamicRouter, router::RouterMode};
+use paperpilot_ai::LlamafileSupervisor;
+use std::time::Duration;
+use serde_json::json;
+
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum AiProviderMode {
@@ -31,11 +38,11 @@ pub struct AiSettingsConfig {
 }
 
 lazy_static! {
-    static ref GLOBAL_AI_MODE: Arc<Mutex<AiProviderMode>> =
+    pub static ref GLOBAL_AI_MODE: Arc<Mutex<AiProviderMode>> =
         Arc::new(Mutex::new(AiProviderMode::OfflineNlp));
-    static ref GLOBAL_UNIVERSAL_ENDPOINT: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
-    static ref GLOBAL_BYOK_PROVIDER: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
-    static ref GLOBAL_ACTIVE_MODEL: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    pub static ref GLOBAL_UNIVERSAL_ENDPOINT: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    pub static ref GLOBAL_BYOK_PROVIDER: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    pub static ref GLOBAL_ACTIVE_MODEL: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
 }
 
 fn get_keyring_entry(provider: &str) -> Result<Entry, String> {
@@ -513,4 +520,160 @@ pub async fn cancel_model_download(model_id: String) -> Result<(), String> {
     let mut flags = DOWNLOAD_CANCEL_FLAGS.lock().await;
     flags.insert(model_id, true);
     Ok(())
+}
+
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AiExecutionStatus {
+    pub active_mode: AiProviderMode,
+    pub is_ready: bool,
+    pub model_name: Option<String>,
+}
+
+lazy_static! {
+    pub static ref GLOBAL_LLAMAFILE_SUPERVISOR: Arc<Mutex<Option<LlamafileSupervisor>>> = Arc::new(Mutex::new(None));
+}
+
+#[tauri::command]
+pub async fn get_ai_execution_status() -> Result<AiExecutionStatus, String> {
+    let mode = GLOBAL_AI_MODE.lock().await.clone();
+    let model = GLOBAL_ACTIVE_MODEL.lock().await.clone();
+
+    let is_ready = match mode {
+        AiProviderMode::OfflineNlp => true,
+        AiProviderMode::Llamafile => {
+            let supervisor = GLOBAL_LLAMAFILE_SUPERVISOR.lock().await;
+            if let Some(s) = &*supervisor {
+                s.status().is_running
+            } else {
+                false
+            }
+        },
+        AiProviderMode::Universal | AiProviderMode::Byok => true,
+    };
+
+    Ok(AiExecutionStatus {
+        active_mode: mode,
+        is_ready,
+        model_name: model,
+    })
+}
+
+pub async fn resolve_dynamic_query(
+    query: &str,
+    context: &ResolverContext,
+) -> Result<serde_json::Value, String> {
+    let mode = GLOBAL_AI_MODE.lock().await.clone();
+    let active_model = GLOBAL_ACTIVE_MODEL.lock().await.clone();
+    let universal_endpoint = GLOBAL_UNIVERSAL_ENDPOINT.lock().await.clone();
+    let byok_provider = GLOBAL_BYOK_PROVIDER.lock().await.clone();
+
+    let mut resolved_by = "offline";
+
+    let router = match mode {
+        AiProviderMode::OfflineNlp => {
+            DynamicRouter::new(RouterMode::OfflineOnly)
+        }
+        AiProviderMode::Llamafile => {
+            let mut router_mode = RouterMode::OfflineOnly;
+
+            if let Some(model_id) = &active_model {
+                if let Ok(models) = get_available_models().await {
+                    if let Some(model) = models.into_iter().find(|m| &m.id == model_id) {
+                        if let Some(path) = model.local_path {
+                            let path_buf = std::path::PathBuf::from(path);
+                            if path_buf.exists() {
+                                let mut supervisor_lock = GLOBAL_LLAMAFILE_SUPERVISOR.lock().await;
+                                if supervisor_lock.is_none() {
+                                    let supervisor = LlamafileSupervisor::new(path_buf, 8080);
+                                    let _ = supervisor.start(Duration::from_secs(30)).await;
+                                    *supervisor_lock = Some(supervisor);
+                                }
+
+                                let llm_config = LlmConfig {
+                                    endpoint_url: "http://127.0.0.1:8080/v1".to_string(),
+                                    model: model_id.clone(),
+                                    api_key: None,
+                                    temperature: Some(0.1),
+                                };
+                                let client = UniversalLlmClient::new(llm_config);
+                                let llm_resolver = LlmNlpResolver::new(client);
+                                resolved_by = "llm";
+                                router_mode = RouterMode::LlmWithFallback(llm_resolver);
+                            }
+                        }
+                    }
+                }
+            }
+            DynamicRouter::new(router_mode)
+        }
+        AiProviderMode::Universal => {
+            if let Some(endpoint) = universal_endpoint {
+                let model = active_model.unwrap_or_else(|| "gpt-3.5-turbo".to_string());
+                let llm_config = LlmConfig {
+                    endpoint_url: endpoint,
+                    model,
+                    api_key: None,
+                    temperature: Some(0.1),
+                };
+                let client = UniversalLlmClient::new(llm_config);
+                let llm_resolver = LlmNlpResolver::new(client);
+                resolved_by = "llm";
+                DynamicRouter::new(RouterMode::LlmWithFallback(llm_resolver))
+            } else {
+                DynamicRouter::new(RouterMode::OfflineOnly)
+            }
+        }
+        AiProviderMode::Byok => {
+            let mut router_mode = RouterMode::OfflineOnly;
+            if let Some(provider) = byok_provider {
+                if let Ok(entry) = get_keyring_entry(&provider) {
+                    if let Ok(api_key) = entry.get_password() {
+                        let endpoint = universal_endpoint.unwrap_or_else(|| "https://api.openai.com/v1".to_string());
+                        let model = active_model.unwrap_or_else(|| "gpt-3.5-turbo".to_string());
+                        let llm_config = LlmConfig {
+                            endpoint_url: endpoint,
+                            model,
+                            api_key: Some(api_key),
+                            temperature: Some(0.1),
+                        };
+                        let client = UniversalLlmClient::new(llm_config);
+                        let llm_resolver = LlmNlpResolver::new(client);
+                        resolved_by = "llm";
+                        router_mode = RouterMode::LlmWithFallback(llm_resolver);
+                    }
+                }
+            }
+            DynamicRouter::new(router_mode)
+        }
+    };
+
+    let plan = router.resolve_with_context(query, context).map_err(|e| e.to_string())?;
+
+    let _actual_resolved_by = if resolved_by == "llm" {
+        let offline = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+        if let Ok(offline_plan) = offline.resolve_with_context(query, context) {
+            if plan == offline_plan {
+                "offline"
+            } else {
+                "llm"
+            }
+        } else {
+            "llm"
+        }
+    } else {
+        "offline"
+    };
+
+    // Convert to JSON and add metadata
+    let mut plan_json = serde_json::to_value(&plan).map_err(|e| e.to_string())?;
+
+    if let Some(obj) = plan_json.as_object_mut() {
+        let active_mode_str = serde_json::to_value(&mode).unwrap_or(json!("offlinenlp"));
+        obj.insert("resolved_by".to_string(), json!(_actual_resolved_by));
+        obj.insert("active_mode".to_string(), active_mode_str);
+    }
+
+    Ok(plan_json)
 }

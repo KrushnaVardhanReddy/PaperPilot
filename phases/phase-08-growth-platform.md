@@ -140,15 +140,16 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.2.1 | `.ppflow` pipeline schema | **TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
-| 8.2.2 | CLI pipeline execution | `paperpilot run invoice.ppflow input.pdf` — accepts `.ppflow` (TOML) or `.ppflow.json` (JSON) transparently |
-| 8.2.3 | Conditional branching engine | IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
+| 8.2.1 | `.ppflow` pipeline schema (runtime subset implemented) | Version-1 name/id, stages, params, conditions, single dependencies and no-match behavior are implemented under Spec 136. Trigger/output/retry/secret fields remain planned and are rejected. **Full planned schema: TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
+| 8.2.2 | CLI pipeline execution (`paperpilot run`) ✅ | **Completed & Merged** — `paperpilot run invoice.ppflow input.pdf --output out.pdf` accepts TOML or JSON and preserves existing `workflow run` syntax; `--json` outputs structured stage outcomes and receipts. |
+| 8.2.3 | Conditional branching engine `[Spec 136]` ✅ | **Completed & Merged** — Per-stage scan/page-count predicates, complementary tests against a shared dependency, explicit `skip` / `archive_original` / `error`, and detailed outcomes in the shared runner. Desktop paired IF/ELSE nodes remain Task 3.4.11; multi-artifact joins remain separate. |
 | 8.2.4 | Stage retry & error handling | Per-stage `retry = N`, quarantine folder on final failure, optional Slack/webhook failure alert |
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
 | 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
 | 8.2.8 | Per-stage integrity hashing | SHA-256 the file before and after every pipeline stage; mismatch = automatic abort + alert |
 | 8.2.9 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
+| 8.2.10 | Multi-Condition Predicates & Combinators `[Spec 137]` ✅ | **Completed & Merged (PR #299)** — Recursive boolean combinators (`all`, `any`, `not`), in-flight text layer matching, form field / signature detection, and file size comparators. |
 
 ---
 

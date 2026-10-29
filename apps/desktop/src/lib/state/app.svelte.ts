@@ -1,5 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { safeInvoke } from '$lib/utils/tauri';
+import { safeInvoke, isNativeDesktop, requireInvoke } from '$lib/utils/tauri';
+import { SvelteMap } from 'svelte/reactivity';
+import type { DocumentFacts, InspectionState } from '$lib/utils/documentFilters';
 
 const MAX_OPEN_TABS = 8;
 
@@ -10,9 +12,13 @@ export class AppState {
   isLoading = $state(false);
   theme = $state('dark');
   documents = $state<File[]>([]);
+  inspections = new SvelteMap<File, InspectionState>();
+  private inspectionQueue: File[] = [];
+  private inspectionsRunning = 0;
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
   workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+  isContextPanelOpen = $state(true);
 
   isMobileViewport = $state(false);
   isTauriMobile = $state(false);
@@ -134,7 +140,16 @@ export class AppState {
   }
 
   setActiveTab(tab: string) {
-    this.activeTab = tab;
+    if (this.activeTab === tab) {
+      this.toggleContextPanel();
+    } else {
+      this.activeTab = tab;
+      this.isContextPanelOpen = true;
+    }
+  }
+
+  toggleContextPanel() {
+    this.isContextPanelOpen = !this.isContextPanelOpen;
   }
 
   openTool(tool: any) {
@@ -165,6 +180,12 @@ export class AppState {
   addDocuments(files: File[]) {
     const startIdx = this.documents.length;
     this.documents = [...this.documents, ...files];
+    for (const file of files) {
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        this.inspections.set(file, { status: 'pending' }); this.inspectionQueue.push(file);
+      }
+    }
+    this.pumpInspections();
     // Extract path from the file object (set before addDocuments is called)
     const newPaths = files.map(f => (f as any)._localPath || '');
     console.log('[AppState] addDocuments paths:', newPaths);
@@ -183,6 +204,7 @@ export class AppState {
   }
 
   removeDocument(index: number) {
+    this.inspections.delete(this.documents[index]);
     this.closeTab(index);
     this.openDocIndices = this.openDocIndices.map(i => i > index ? i - 1 : i);
     this.documents = this.documents.filter((_, i) => i !== index);
@@ -192,6 +214,16 @@ export class AppState {
     } else if (this.selectedDocumentIndex !== null && this.selectedDocumentIndex > index) {
       this.selectedDocumentIndex -= 1;
     }
+  }
+
+  clearAllDocuments() {
+    this.documents = [];
+    this.documentPaths = [];
+    this.openDocIndices = [];
+    this.selectedDocumentIndex = null;
+    this.inspections.clear();
+    this.inspectionQueue = [];
+    this.inspectionsRunning = 0;
   }
 
   selectDocument(index: number | null) {
@@ -229,7 +261,46 @@ export class AppState {
     }
   }
 
+  private pumpInspections() {
+    while (this.inspectionsRunning < 2 && this.inspectionQueue.length) {
+      const file = this.inspectionQueue.shift()!;
+      if (!this.documents.includes(file)) continue;
+      if (!isNativeDesktop()) {
+        this.inspections.set(file, { status: 'unavailable', error: 'Document details require the desktop app.' }); continue;
+      }
+      if (file.size > 128 * 1024 * 1024) {
+        this.inspections.set(file, { status: 'unavailable', error: 'Document details support PDFs up to 128 MiB.' }); continue;
+      }
+      this.inspectionsRunning++;
+      const request = this.inspections.get(file);
+      void (async () => {
+        try {
+          const path = (file as File & { _localPath?: string })._localPath;
+          const args = path ? { path } : { bytes: Array.from(new Uint8Array(await file.arrayBuffer())) };
+          const facts = await requireInvoke<DocumentFacts>('inspect_document', args);
+          // Set on the original file object
+          this.inspections.set(file, { status: 'ready', facts });
+          // If the file was replaced in documents array (e.g. by loadFile), also update that new File instance
+          const currentDoc = this.documents.find(d => d.name === file.name && (d as any)._localPath === path);
+          if (currentDoc && currentDoc !== file) {
+            this.inspections.set(currentDoc, { status: 'ready', facts });
+          }
+        } catch (error) {
+          this.inspections.set(file, { status: 'error', error: String(error) });
+          const currentDoc = this.documents.find(d => d.name === file.name);
+          if (currentDoc && currentDoc !== file) {
+            this.inspections.set(currentDoc, { status: 'error', error: String(error) });
+          }
+        } finally { this.inspectionsRunning--; this.pumpInspections(); }
+      })();
+    }
+  }
+
   reorderDocuments(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= this.documents.length || toIndex >= this.documents.length) return;
+    const remap = (index: number) => index === fromIndex ? toIndex :
+      fromIndex < toIndex && index > fromIndex && index <= toIndex ? index - 1 :
+      fromIndex > toIndex && index >= toIndex && index < fromIndex ? index + 1 : index;
     const docs = [...this.documents];
     const [movedItem] = docs.splice(fromIndex, 1);
     docs.splice(toIndex, 0, movedItem);
@@ -239,6 +310,8 @@ export class AppState {
     const [movedPath] = paths.splice(fromIndex, 1);
     paths.splice(toIndex, 0, movedPath);
     this.documentPaths = paths;
+    this.openDocIndices = this.openDocIndices.map(remap);
+    if (this.selectedDocumentIndex !== null) this.selectedDocumentIndex = remap(this.selectedDocumentIndex);
   }
 }
 

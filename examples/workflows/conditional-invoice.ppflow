@@ -1,0 +1,22 @@
+name = "Conditional invoice processing"
+version = "1"
+
+[[stage]]
+id = "ocr-if-needed"
+op = "ocr"
+condition = { if_scanned = true }
+on_no_match = "skip"
+
+[[stage]]
+id = "compress-large"
+op = "compress"
+condition = { if_page_count_gt = 50 }
+[stage.params]
+level = "aggressive"
+
+[[stage]]
+id = "label"
+op = "watermark"
+[stage.params]
+text = "PROCESSED"
+opacity = 0.3

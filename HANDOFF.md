@@ -1,70 +1,62 @@
 # PaperPilot — Session Handoff Guide
-
+ 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 27, 2026 (Asia/Hong_Kong)
+> **Date of Last Update:** October 29, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Task 84D (SLM Compound Pipeline Chaining) + Task 129A (Fuzzing) + Task 122A (Stream Dedup)
+> **Active Target:** Spec 141 (Multi-Rule Condition Builder) & Spec 142 (Watched Folders & Smart Filters) successfully merged into `feature/dev` via PR #305 and PR #306. Active next step is Spec 143 (Universal Document Workspace Migration).
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (Clean & synchronized with remote `origin/feature/dev`).
-- **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
+- **Integration Branch**: `feature/dev` (`d88033d`), incorporating both PR #305 (`dda6861`) and PR #306 (`365f8c0`).
+- **Target Branch Protocol**: Feature branches and reviewed PRs into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
-  - `cargo check --workspace -j 2`: **100% Clean**.
-  - Local security audit (`make audit`): **0 blocking vulnerabilities**.
-  - MCP Tool Count: **78 tools registered and verified** (`paperpilot-mcp`).
-  - Desktop Vitest Suite: **112/112 passing tests** (`pnpm --dir apps/desktop test`).
-  - Architecture Roadmaps: Modularized into `phases/` directory with master dashboard in `PHASES.md`.
+  - Desktop Vitest Suite: **147 passing tests across 24 files** (100% green).
+  - Rust Backend Integration Suites: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
+  - Cargo Workspace: `cargo check --workspace` compiles cleanly with zero errors.
+- **Active Feature Branch**: `feat/desktop-universal-doc-workspace-migration` (Spec 143) executing via Jules session `18342025999379061323`.
 
 ---
 
-## 🚀 Active Dispatch & In-Flight Status
+## Merged Spec 141 & Spec 142 Implementations (PR #305 & PR #306)
 
-| Task ID | Spec | Priority | Component | Target Branch | Status & Details |
-|---|:---:|:---:|---|---|---|
-| **Feature Freeze** | — | — | All Surfaces | `feature/dev` | 🧊 **Active Feature Freeze**: No new speculative features to be scheduled until incoming user feedback / requests require them. Focus strictly on finishing active SLM pipeline & stabilization. |
-| **Task 10.4** | `[Spec 130]` | P2 | Web WASM / SLM | `feature/dev` | 📋 **Backlog / Planned** (`phases/phase-10-webassembly-wasm.md`)<br>In-browser INT4 ONNX model runtime with WebGPU acceleration and persistent Cache Storage. |
-| **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
+- **Spec 141 (PR #305)**: Full recursive multi-rule condition editing (`ALL` / `ANY` combinators, dynamic rule row additions/deletions, backwards-compatible serialization to flat leaves, and `StepCard.svelte` condition badges).
+- **Spec 142 (PR #306)**: 
+  - Settings → Watched Folders uses native filesystem workers and the shared PDF workflow runner (`paperpilot_pdf::operations::watch`).
+  - Desktop, embedded MCP and REST use one local manager.
+  - Smart filters inspect actual PDF page/scan/form/signature facts (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`) with bounded concurrency.
+  - Bounded concurrency, output collision handling, source preservation, and SHA-256 receipts verified by real automated tests.
 
 ---
 
-## 🏆 Recently Merged & Completed
+## 🚀 Active Roadmap & Execution Order
 
-1. **Task 84D (Compound SLM Workflow Recipes & Multi-Step Chaining `[Spec 084]`, PR #277)**:
-   - Added 15 compound multi-step workflow recipes in `tools/slm-training/templates.py` (e.g. Legal Discovery, Contract Redaction, Print Prep Booklet, Form Processing, Archival OCR).
-   - Implemented dynamic parameter piping (`/tmp/inter_*.pdf`) ensuring sequential step outputs chain directly into subsequent tool inputs.
-   - Rebalanced training dataset distribution to 50% single-tool, 40% compound multi-step pipelines, and 10% safety refusals.
-   - Added comprehensive test suite in `tools/slm-training/test_dataset_generator.py` (8/8 tests passing).
-2. **Task 129A (Automated Malformed PDF Fuzzing & Security Regression Harness `[Spec 129]`, PR #276)**:
-   - Added `paperpilot-pdf/tests/malformed_regression.rs` verifying 5 distinct corruption attack vectors exit cleanly via `Result::Err` with zero panics or memory loops:
-     - Corrupted XRef table offsets & negative indices.
-     - Corrupted `%PDF-` header and random arbitrary byte sequences.
-     - Stream length mismatch and stream length bombs.
-     - Deeply nested dictionary hierarchies (stack overflow protection).
-     - Circular page tree loops (`/Parent` referencing self or cycle).
-   - Added `LopdfDocument::from_bytes(bytes)` in `paperpilot-pdf/src/document.rs` for fast zero-disk-I/O in-memory regression tests.
-   - Verified 100% clean compilation, 5/5 passing regression tests, and zero Semgrep findings (`make audit`).
-2. **Task 122A (Lossless Stream Deduplication & CMYK Safety `[Spec 122]`, PR #275)**:
-   - Ported hash-based indirect stream deduplication from `SimonBure/presse` (`pdf_dedup_streams`) collapsing identical embedded images, fonts, and streams across pages into single indirect objects.
-   - Enforced CMYK color-space safety guards in `paperpilot-pdf/src/operations/compress.rs`.
-   - Verified 100% clean compilation, zero Semgrep findings, and 10/10 unmocked tests passing in `penta-interface-e2e`.
-2. **Modular Phases Architecture Refactor**:
-   - Split the monolithic ~2,000-line `PHASES.md` into 13 modular documents under `phases/` with a high-level executive dashboard at root `PHASES.md`.
-2. **Task 84 (On-Device Document SLM Fine-Tuning & Local Verification `[Spec 084]`, Task 5.9.73)**:
-   - Generated 5,000 ChatML training pairs across 45+ tools with 5 linguistic noise tiers.
-   - Fine-tuned `Qwen/Qwen2.5-0.5B-Instruct` using 4-bit QLoRA and `paged_adamw_8bit` on local RTX 4070 (846 steps, loss drop ~2.1 -> 0.47, eval loss 0.496, 90.4% token accuracy).
-   - Saved 17 MB adapter weights to `tools/slm-training/output/paperpilot-qwen-0.5b-lora/` and fused into `output/paperpilot-qwen-0.5b-merged/` via `export_and_merge.py`.
-   - Verified 100% exact JSON tool call generation across single-tool test queries.
-3. **Task 125A (Single-File Offline Self-Contained HTML Sandbox `[Spec 125]`)**:
-   - Packaged standalone `paperpilot-portable.html` embedding the full UI and in-memory base64-encoded WASM engine.
-   - Strict air-gapped CSP (`default-src 'none'`), Playwright verified with 0 network requests.
-4. **Task 126A (Open-WebUI & Apache Tika Ingestion Adapter `[Spec 126]`, PR #273)**:
-   - In-memory Open-WebUI Tika 3 (`PUT /tika/text`), Tika 4 (`PUT /tika/json/md`), and root metadata routes in `paperpilot-gateway`.
-5. **Task 128A (CI Supply Chain Hardening & Action SHA Pinning `[Spec 128]`, PR #274)**:
-   - Pinned all GitHub Actions across workflows to immutable 40-char commit SHAs with automated weekly Dependabot tracking.
+We are systematically closing out all remaining Community gaps in **Phase 4 (AI Layer)** and **Phase 3 (Desktop & Mobile)**:
+
+| # | Task | Scope & Title | Status |
+|:---:|---|---|:---:|
+| **1** | **Task 3.4.14 / Spec 141** | **Desktop Multi-Rule Condition Builder**<br>Compound `ALL` / `ANY` predicates, dynamic rule builder, and backward-compatible serialization. | ✅ **Completed & Merged (PR #305)** |
+| **2** | **Task 4.7.8 / Spec 142** | **Desktop Real Watched Folders Daemon & Document Smart Filters**<br>Pure-Rust Tauri IPC filesystem watcher, `WatchedFoldersPanel.svelte`, and reactive smart filter pills. | ✅ **Completed & Merged (PR #306)** |
+| **3** | **Task 3.4.15 / Spec 143** | **Universal Document Workspace Migration**<br>Consumer-friendly studio with universal drop zone (PDF, Word, Excel, CSV, Markdown), 8 Everyday Actions, and smart format filters. | 🚀 **In Progress** (`feat/desktop-universal-doc-workspace-migration`) |
+| **4** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
+
+---
+
+## 🏆 Recently Merged Milestones
+
+1. **Spec 142 / Task 4.7.8 (Desktop Real Watched Folders & Smart Filters, PR #306)**:
+   - Built pure-Rust Tauri IPC commands (`start_watch_folder`, `stop_watch_folder`, `list_watched_folders`) connected to `paperpilot_pdf::operations::watch`.
+   - Replaced mocked categories with real, reactive document filter pills in `DocumentList.svelte` based on real document inspection (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`).
+   - Added `WatchedFoldersPanel.svelte` inside Settings. Verified with 147 passing Vitest tests and all Rust integration tests (`desktop_automation`, `watcher_lifecycle`).
+2. **Spec 141 / Task 3.4.14 (Desktop Multi-Rule Condition Builder, PR #305)**:
+   - Upgraded `ConditionInspector.svelte` to support recursive AST `ALL (AND)` / `ANY (OR)` logic with dynamic rule additions and removals.
+   - Preserved 100% backward compatibility for single-leaf conditions and saved flows.
+3. **Spec 139 / Task 4.7.1 (Hot Folder Watcher Daemon, PR #304)**:
+   - Implemented cross-interface watcher daemon across CLI, MCP, and REST Gateway with debounce settling and error quarantine.
+4. **Spec 138 / Task 3.4.11 (Desktop Visual Flowchart & Branching UI, PR #301)**:
+   - Added visual condition decision cards and branching badges in `PipelineCanvas.svelte`.
 
 ---
 

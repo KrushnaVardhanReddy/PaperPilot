@@ -2,6 +2,12 @@
 
 > **Architecture Mandate:** 100% Pure-Rust engine, Zero-Python/Zero-C++ runtime, Penta-Interface Parity (Core Engine ➔ CLI ➔ MCP Server ➔ REST Gateway ➔ WASM/Edge).
 
+## Current Community delivery — 2026-10-29
+
+Spec 141 condition-editor compatibility repairs and [Spec 142 desktop watched folders / smart filters](specs/142-desktop-watched-folders-and-smart-filters/spec.md) are implemented on `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`, awaiting review into `feature/dev`. The branch includes the UI-polish base and PR #305. See [validation and limitations](reports/DESKTOP_AUTOMATION_REPORT.md).
+
+Spec 140's V2 workspace remains reverted. Phase 3/4 still have open Community tasks; the phase dashboard no longer labels these phases 100% complete. Filesystem watchers are native-only; PDF workflow operations continue to use the shared core engine.
+
 ---
 
 ## 🎯 Global Architecture & Wave Dependency Flow

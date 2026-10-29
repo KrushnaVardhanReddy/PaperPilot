@@ -2,7 +2,7 @@
   import PipelineCanvas from './PipelineCanvas.svelte';
   import PipelineRunner from './PipelineRunner.svelte';
   import StepConfigPanel from './StepConfigPanel.svelte';
-  import ConditionInspector from './inspector/ConditionInspector.svelte';
+  import ConditionInspector from './ConditionInspector.svelte';
   import FlowSelector from './FlowSelector.svelte';
   import { appState } from '$lib/state/app.svelte';
   import { pipelineState, OPERATION_REGISTRY, type OperationId } from '$lib/state/pipeline.svelte';
@@ -379,5 +379,14 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+  }
+
+  .panels-container {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .panels-container > :global(*) {
+    flex: 1;
   }
 </style>

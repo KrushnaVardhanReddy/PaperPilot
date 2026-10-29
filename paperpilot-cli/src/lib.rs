@@ -7,25 +7,41 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "paperpilot watch")]
 pub struct WatchCli {
+    /// Directory to monitor for incoming PDF files
+    #[arg(short = 'd', long)]
     pub directory: PathBuf,
 
-    #[arg(long)]
+    /// Path to .ppflow TOML or JSON recipe to execute per file
+    #[arg(short = 'r', long)]
+    pub recipe: Option<PathBuf>,
+
+    /// Output directory for successfully processed PDFs
+    #[arg(short = 'o', long)]
     pub output: Option<PathBuf>,
 
+    /// Optional output basename template using input, UTC date, hash and index tokens
     #[arg(long)]
-    pub operation: Option<String>,
+    pub name_template: Option<String>,
 
+    /// Directory to move successfully processed originals (optional)
     #[arg(long)]
-    pub recipe: Option<String>,
+    pub move_original: Option<PathBuf>,
 
+    /// Directory for failure receipts; failed sources stay in place (default: <dir>/.error)
     #[arg(long)]
-    pub webhook: Option<String>,
+    pub error_dir: Option<PathBuf>,
 
+    /// Milliseconds of filesystem inactivity before a file is considered ready
     #[arg(long, default_value_t = 500)]
     pub settle_delay_ms: u64,
 
+    /// Optional webhook URL to POST the completion result and receipt path
     #[arg(long)]
-    pub move_original: Option<PathBuf>,
+    pub webhook: Option<String>,
+
+    /// Process existing files and exit (useful for one-shot batch and testing)
+    #[arg(long)]
+    pub once: bool,
 }
 
 use cli::Cli;
@@ -39,6 +55,10 @@ struct CommandResult {
     success: bool,
     operation: String,
     error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    batch: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workflow: Option<serde_json::Value>,
 }
 
 pub fn run() {
@@ -67,14 +87,17 @@ fn run_impl() {
         let watch_cli = WatchCli::parse_from(args);
 
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-        if let Err(e) = rt.block_on(commands::watch::handle_watch(
+        if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch_with_naming(
             watch_cli.directory,
             watch_cli.output,
-            watch_cli.operation,
             watch_cli.recipe,
             watch_cli.webhook,
             watch_cli.settle_delay_ms,
             watch_cli.move_original,
+            watch_cli.error_dir,
+            watch_cli.once,
+            None,
+            watch_cli.name_template,
         )) {
             log::error!("Watch loop error: {}", e);
             std::process::exit(1);
@@ -86,9 +109,28 @@ fn run_impl() {
 
     let cli = Cli::parse();
 
-    let result = commands::execute_command(&cli.command);
+    let mut workflow = None;
+    let (result, batch) = match &cli.command {
+        cli::Commands::Workflow { .. } | cli::Commands::Run { .. } => {
+            let (result, report) = commands::workflow::execute(&cli.command, cli.json);
+            workflow = report;
+            (result, None)
+        }
+        #[cfg(feature = "pdf")]
+        cli::Commands::FillBatch(args) => match commands::fill_batch::run(args) {
+            Ok(receipt) => (
+                receipt.outcome(),
+                Some(serde_json::to_value(receipt).unwrap()),
+            ),
+            Err(error) => (Err(error), None),
+        },
+        _ => (commands::execute_command(&cli.command), None),
+    };
 
     let op_name = format!("{:?}", cli.command)
+        .split('(')
+        .next()
+        .unwrap_or("Unknown")
         .split_whitespace()
         .next()
         .unwrap_or("Unknown")
@@ -99,11 +141,15 @@ fn run_impl() {
             success: true,
             operation: op_name,
             error: None,
+            batch,
+            workflow,
         },
         Err(e) => CommandResult {
             success: false,
             operation: op_name,
             error: Some(e.to_string()),
+            batch,
+            workflow,
         },
     };
 
@@ -111,6 +157,14 @@ fn run_impl() {
         let json_output = serde_json::to_string(&payload).unwrap();
         println!("{}", json_output);
     } else {
+        if let Some(batch) = &payload.batch {
+            eprintln!(
+                "Batch: {} succeeded, {} failed. Receipt: {}",
+                batch["succeeded"],
+                batch["failed"],
+                batch["receipt_path"].as_str().unwrap_or("")
+            );
+        }
         match &payload.error {
             Some(err) => error!("Operation failed: {}", err),
             None => info!("Operation completed successfully."),

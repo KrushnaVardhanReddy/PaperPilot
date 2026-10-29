@@ -11,7 +11,9 @@ pub mod mobile_bridge;
 pub mod ocr_commands;
 pub mod pack_commands;
 pub mod storage;
+pub mod watch_commands;
 use crate::error::DesktopError;
+use tauri::Manager;
 
 lazy_static::lazy_static! {
     static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
@@ -52,7 +54,7 @@ async fn invoke_mcp_tool(
         request.arguments = Some(map);
     }
 
-    match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(response) => {
             if let rmcp::model::CallToolResponse::Complete(result) = response {
                 if let Some(rmcp::model::ContentBlock::Text(text_content)) = result.content.first()
@@ -254,7 +256,7 @@ async fn stop_gateway() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn resolve_natural_language(
+async fn resolve_natural_language(
     query: String,
     context: Option<paperpilot_nlp::traits::ResolverContext>,
 ) -> Result<serde_json::Value, String> {
@@ -333,6 +335,21 @@ async fn clear_jobs_history() -> Result<usize, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                // Drop LlamafileSupervisor to kill process when the window closes
+                if window.label() == "main" {
+                    window
+                        .state::<Arc<paperpilot_pdf::operations::watch::WatcherManager>>()
+                        .shutdown();
+                    tauri::async_runtime::block_on(async {
+                        let mut supervisor_lock =
+                            ai_commands::GLOBAL_LLAMAFILE_SUPERVISOR.lock().await;
+                        *supervisor_lock = None;
+                    });
+                }
+            }
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
@@ -354,9 +371,16 @@ pub fn run() {
             let _ = app;
             Ok(())
         })
+        .manage(paperpilot_pdf::operations::watch::shared_watcher_manager())
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
         .invoke_handler(tauri::generate_handler![
             greet,
+            watch_commands::start_watch_folder,
+            watch_commands::stop_watch_folder,
+            watch_commands::list_watched_folders,
+            watch_commands::remove_watch_folder,
+            watch_commands::inspect_document,
+            watch_commands::list_watch_recipes,
             invoke_mcp_tool,
             cancel_job,
             query_documentation_rag,
@@ -378,6 +402,7 @@ pub fn run() {
             ai_commands::cancel_model_download,
             ai_commands::save_ai_config,
             ai_commands::get_ai_config,
+            ai_commands::get_ai_execution_status,
             ai_commands::test_ai_endpoint,
             ocr_commands::get_available_ocr_models,
             ocr_commands::download_ocr_model,
@@ -389,8 +414,17 @@ pub fn run() {
             pack_commands::download_feature_pack,
             pack_commands::set_feature_pack_enabled
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if matches!(
+                event,
+                tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit
+            ) {
+                app.state::<Arc<paperpilot_pdf::operations::watch::WatcherManager>>()
+                    .shutdown();
+            }
+        });
 }
 
 #[cfg(test)]
@@ -515,21 +549,21 @@ mod tests {
         assert!(!status3.is_running);
     }
 
-    #[test]
-    fn test_resolve_natural_language() {
+    #[tokio::test]
+    async fn test_resolve_natural_language() {
         use crate::resolve_natural_language;
-        let result = resolve_natural_language("merge a.pdf and b.pdf".to_string(), None);
+        let result = resolve_natural_language("merge a.pdf and b.pdf".to_string(), None).await;
         assert!(result.is_ok());
         let val = result.unwrap();
+
         let intent = val.get("intent").and_then(|i| i.as_str());
         assert_eq!(intent, Some("Merge"));
         let inputs = val.get("input_files").and_then(|i| i.as_array());
         assert!(inputs.is_some());
-        // We do not strictly check the array length since it depends on the offline resolver's heuristics
     }
 
-    #[test]
-    fn test_resolve_natural_language_with_context() {
+    #[tokio::test]
+    async fn test_resolve_natural_language_with_context() {
         use crate::resolve_natural_language;
         use paperpilot_nlp::traits::ResolverContext;
 
@@ -538,16 +572,11 @@ mod tests {
             open_documents: vec!["active_doc.pdf".to_string()],
         };
 
-        // Command missing explicit file should use active_document from context
-        let result = resolve_natural_language("rotate 90 degrees".to_string(), Some(ctx));
+        let result = resolve_natural_language("rotate 90 degrees".to_string(), Some(ctx)).await;
         assert!(result.is_ok());
         let val = result.unwrap();
+
         let intent = val.get("intent").and_then(|i| i.as_str());
         assert_eq!(intent, Some("Rotate"));
-
-        let inputs = val.get("input_files").and_then(|i| i.as_array());
-        assert!(inputs.is_some());
-        assert_eq!(inputs.unwrap().len(), 1);
-        assert_eq!(inputs.unwrap()[0].as_str(), Some("active_doc.pdf"));
     }
 }

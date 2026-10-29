@@ -1,5 +1,12 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import { documentFilters, matchesDocument } from '$lib/utils/documentFilters';
+  import type { DocumentFilter } from '$lib/utils/documentFilters';
+  let activeFilter = $state<DocumentFilter>('all');
+  let counts = $derived(Object.fromEntries(documentFilters.map(f => [f.id, appState.documents.filter(doc => matchesDocument(f.id, appState.inspections.get(doc))).length])));
+  let visible = $derived(appState.documents.map((doc, index) => ({ doc, index })).filter(({ doc }) => matchesDocument(activeFilter, appState.inspections.get(doc))));
+  let pending = $derived([...appState.inspections.values()].filter(s => s.status === 'pending').length);
+  let unavailable = $derived([...appState.inspections.values()].filter(s => s.status === 'error' || s.status === 'unavailable').length);
   import { getFileTypeInfo } from '$lib/utils/fileType';
 
   function formatFileSize(bytes: number): string {
@@ -12,13 +19,31 @@
 </script>
 
 <div class="document-list">
+  <div class="list-header">
+    <div class="filter-pills" role="group" aria-label="Document filters">
+      {#each documentFilters as filter}<button type="button" class:active={activeFilter === filter.id} aria-pressed={activeFilter === filter.id} onclick={() => activeFilter = filter.id}>{filter.label} ({counts[filter.id] ?? 0})</button>{/each}
+    </div>
+    {#if appState.documents.length > 0}
+      <button
+        type="button"
+        class="clear-all-btn"
+        title="Remove all documents"
+        onclick={() => appState.clearAllDocuments()}
+      >
+        Clear All
+      </button>
+    {/if}
+  </div>
+  {#if pending}<p role="status">Inspecting {pending} document{pending === 1 ? '' : 's'}…</p>{/if}
+  {#if unavailable}<p role="status">Details unavailable for {unavailable} document{unavailable === 1 ? '' : 's'}. These remain in All documents.</p>{/if}
   {#if appState.documents.length === 0}
     <div class="empty-state">
       <p>No documents added yet.</p>
     </div>
   {:else}
+    {#if visible.length === 0}<p role="status">No documents match this filter.</p>{/if}
     <div class="list-container">
-      {#each appState.documents as doc, index}
+      {#each visible as { doc, index }}
         {@const fileInfo = getFileTypeInfo(doc.name)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -31,7 +56,7 @@
             <span class="doc-name">{doc.name}</span>
             <div class="doc-meta">
               <span class="doc-size">{formatFileSize(doc.size)}</span>
-              <span class="doc-pages">{fileInfo.isPdf ? ((doc as any).pageCount ? `${(doc as any).pageCount} pages` : 'PDF') : fileInfo.label.split(' ')[0]}</span>
+              <span class="doc-pages">{fileInfo.isPdf ? (appState.inspections.get(doc)?.facts?.pageCount ? `${appState.inspections.get(doc)?.facts?.pageCount} pages` : 'PDF') : fileInfo.label.split(' ')[0]}</span>
             </div>
           </div>
           <button
@@ -58,6 +83,32 @@
 </div>
 
 <style>
+  .list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+  .filter-pills button { border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); border-radius: 20px; padding: 7px 12px; cursor: pointer; }
+  .filter-pills button.active { border-color: var(--accent-primary); background: var(--bg-surface-hover); }
+  .filter-pills button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .clear-all-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .clear-all-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+  }
+
   .document-list {
     width: 100%;
     margin-top: 24px;

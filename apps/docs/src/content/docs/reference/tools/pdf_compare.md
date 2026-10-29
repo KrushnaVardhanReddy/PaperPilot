@@ -8,8 +8,8 @@ sidebar:
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 ### What it does
-**Compares two PDF documents and highlights visual and textual differences.**  
-Performs side-by-side diffing, identifying added, removed, or shifted text and graphics between document revisions.
+**Compares two PDF documents and writes a JSON difference report.**
+The report includes `diff_detected` and affected page numbers. In a workflow, later PDF operations continue reading the source PDF; the report is a separate artifact.
 
 ### CLI
 ```bash
@@ -21,8 +21,9 @@ paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e
 {
   "name": "pdf_compare",
   "arguments": {
-    "file1": "tests/e2e_fixtures/real/merge_a.pdf",
-    "file2": "tests/e2e_fixtures/real/merge_b.pdf"
+    "input_a": "tests/e2e_fixtures/real/merge_a.pdf",
+    "input_b": "tests/e2e_fixtures/real/merge_b.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/comparison.json"
   }
 }
 ```

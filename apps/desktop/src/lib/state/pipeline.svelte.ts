@@ -304,6 +304,25 @@ export class PipelineState {
     });
   }
 
+  setStepCondition(stepId: string, condition?: WorkflowCondition, onNoMatch?: OnNoMatch) {
+    this.steps = this.steps.map(s => {
+      if (s.id === stepId) {
+        return { ...s, condition, on_no_match: onNoMatch };
+      }
+      return s;
+    });
+  }
+
+  removeStepCondition(stepId: string) {
+    this.steps = this.steps.map(s => {
+      if (s.id === stepId) {
+        const { condition, on_no_match, ...rest } = s;
+        return rest;
+      }
+      return s;
+    });
+  }
+
   clearPipeline() {
     this.steps = [];
     this.currentStepIndex = null;

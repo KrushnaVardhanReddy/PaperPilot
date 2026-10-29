@@ -3,7 +3,7 @@
   import { safeInvoke } from '$lib/utils/tauri';
   import { slide } from 'svelte/transition';
 
-  let { isOpen = $bindable(false) } = $props<{ isOpen: boolean }>();
+  let { isOpen = $bindable(false) }: { isOpen: boolean } = $props();
 
   type JobStatus = 'Pending' | 'Running' | 'Completed' | 'Failed';
 

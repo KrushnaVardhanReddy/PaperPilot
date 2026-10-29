@@ -1,13 +1,94 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 73 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 84 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (73 Tools)
+# PaperPilot Tools Handbook (84 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **73 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **84 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
-## 1. `document_pii_scan`
+## 1. `batch_fill`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Fills a local AcroForm PDF once per CSV/JSON record using the same core runner as [CLI fill-batch](/reference/tools/cli_fill_batch/). Text fields and checkboxes are supported. Outputs are flattened by default; `keep_editable: true` retains interactive fields. All inputs stay local.
+
+Supply `template`, `output_dir` and exactly one of `data` (a local `.csv`/`.json` path) or `records` (an inline JSON array). Inline values may be strings, numbers, booleans or null. Nested values fail that row. Optional `field_map` is a local JSON file mapping PDF field names to input column names. Optional `date` overrides the UTC date as `YYYY-MM-DD`.
+
+`name_template` defaults to `{index:04}.pdf`; supported tokens are `{row.column}`, `{date}`, `{index}` and `{index:04}`. Names must be single portable PDF basenames. Existing PDFs and `execution_receipt.json` are never overwritten; use a fresh output folder per batch. Row errors do not discard later records.
+
+### CLI
+```bash
+N/A
+```
+
+### MCP JSON-RPC
+```json
+{"name":"batch_fill","arguments":{"template":"/local/customer-form.pdf","output_dir":"/local/batch-001","records":[{"customer":"Ada"},{"customer":"Grace"}],"name_template":"{index:04}-{row.customer}.pdf"}}
+```
+
+### REST API
+```bash
+curl -X POST http://127.0.0.1:7823/v1/automation/fill-batch \
+  -H 'Content-Type: application/json' \
+  -d '{"template":"/local/customer-form.pdf","output_dir":"/local/batch-002","data":"/local/customers.csv"}'
+```
+
+## 2. `cli_ask`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+The `paperpilot ask` command enables plain English instructions to manipulate PDFs.
+
+### CLI
+```bash
+N/A
+```
+
+### MCP JSON-RPC
+```json
+N/A
+```
+
+### REST API
+```bash
+N/A
+```
+
+## 3. `cli_fill_batch`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+`paperpilot fill-batch` performs local AcroForm mail merge. It parses the template
+once, fills an independent copy for each record, and writes a local
+`execution_receipt.json` with row outcomes, paths, SHA-256 hashes and timings.
+PDF processing uses the same in-memory form engine as the single-document tools. The shared native batch runner also powers [MCP and REST batch_fill](/reference/tools/batch_fill/).
+
+Text fields (including multiline fields) and checkboxes are supported. Values
+are stored using PDF text-string encoding, including UTF-16 for Chinese text.
+Appearances use Helvetica for ASCII and the standard STSong CJK fallback for
+non-ASCII BMP text. Viewers need standard CJK font support; fonts are not
+downloaded or embedded by this command. Non-BMP values, unsupported field types,
+read-only templates and XFA forms are rejected explicitly. Values too long to
+fit at a readable size fail that row instead of being silently clipped.
+
+### CLI
+```bash
+paperpilot fill-batch --template form.pdf --data records.csv --output-dir ./out \
+  --name-template '{row.name}_{date}_{index:04}.pdf' --json
+```
+
+### MCP JSON-RPC
+```json
+N/A
+```
+
+### REST API
+```bash
+N/A
+```
+
+## 4. `document_pii_scan`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -35,7 +116,46 @@ paperpilot pii-scan --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/document-pii-scan -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pii_report.json"}'
 ```
 
-## 2. `excel_to_csv`
+## 5. `document_workflow`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Runs a version-1 recipe through one shared in-memory PDF engine. Existing JSON
+`SavedWorkflow` files and presets remain accepted. TOML `.ppflow` recipes add
+runtime conditions, explicit dependencies and no-match handling. Execution is
+local; the runner never downloads models, interpolates environment variables,
+or sends document bytes to a service.
+
+File-based CLI/MCP/REST wrappers support opt-in [dynamic output naming](/reference/output-naming/) using input names, UTC dates, hashes, indexes and PDF Info metadata. Set `name_template` and supply an output directory to preserve existing output files.
+
+### CLI
+```bash
+paperpilot run examples/workflows/conditional-invoice.ppflow invoice.pdf -o processed.pdf --json
+paperpilot workflow run --recipe invoice.ppflow --input invoice.pdf --output processed.pdf --json
+paperpilot workflow inspect --recipe invoice.ppflow --json
+paperpilot workflow list --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "document_workflow",
+  "arguments": {
+    "input": "invoice.pdf",
+    "output": "processed.pdf",
+    "recipe": "examples/workflows/conditional-invoice.ppflow"
+  }
+}
+```
+
+### REST API
+```bash
+curl -X POST http://127.0.0.1:7823/api/v1/workflow/run-json \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"invoice.pdf","output":"processed.pdf","recipe":{"name":"Conditional invoice","steps":[{"id":"large","operationId":"pdf_compress","condition":{"if_page_count_gt":50},"params":{"quality":"medium"}}]}}'
+```
+
+## 6. `excel_to_csv`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -63,7 +183,7 @@ paperpilot office excel-to-csv --input tests/e2e_fixtures/real/test.xlsx --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-csv -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/table.csv"}'
 ```
 
-## 3. `excel_to_json`
+## 7. `excel_to_json`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -90,7 +210,53 @@ paperpilot office excel-to-json --input tests/e2e_fixtures/real/test.xlsx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-json -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx"}'
 ```
 
-## 4. `json_to_pdf`
+## 8. `execution_receipt_get`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Reads one receipt by its exact filename (`receipt_id`) in an explicitly selected directory. Returns normalized outcome, hashes, duration and failed-stage metadata plus the source record in `details`. Paths outside that directory, receipt symlinks and unsupported schemas are rejected. No missing metadata is invented for older batch/watcher receipts.
+
+### CLI
+```bash
+paperpilot workflow history --directory ./out/.paperpilot-receipts --id run-JOB_ID.json --json
+```
+
+### MCP JSON-RPC
+```json
+{"name":"execution_receipt_get","arguments":{"directory":"/local/out/.paperpilot-receipts","receipt_id":"run-JOB_ID.json"}}
+```
+
+### REST API
+```bash
+curl -G http://127.0.0.1:7823/v1/automation/receipts/run-JOB_ID.json --data-urlencode 'directory=/local/out/.paperpilot-receipts'
+```
+
+## 9. `execution_receipt_list`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Lists normalized receipt summaries from an explicitly selected local directory, most recently stored first. The default limit is 50; valid limits are 1–1000. Details are fetched separately. No process registry or running-state cache is used, so completed records remain queryable after restart.
+
+File-based CLI recipes, MCP `recipe_run` / `document_workflow`, and REST JSON workflows save version-1 receipts to `OUTPUT_PARENT/.paperpilot-receipts/run-*.json`. Records contain job ID, UTC timestamps, duration, actual input/output SHA-256 hashes, outcome and stage report. Raw recipes and PDF bytes are not stored. Failed executions retain the prior output and record the failed stage; a failed output write is never a successful publication. Invalid recipes rejected before execution are not recorded. History storage errors fail explicitly.
+
+The same query reads existing watcher `*.receipt.json` and batch `execution_receipt.json` files in their existing directories. Missing legacy metadata stays null; source files are not migrated or rewritten. Corrupt recognized receipts return an error. Symlink receipts and files larger than 16 MiB are rejected. List responses omit full details to bound memory use.
+
+### CLI
+```bash
+paperpilot workflow history --directory ./out/.paperpilot-receipts --limit 50 --json
+```
+
+### MCP JSON-RPC
+```json
+{"name":"execution_receipt_list","arguments":{"directory":"/local/out/.paperpilot-receipts","limit":50}}
+```
+
+### REST API
+```bash
+curl -G http://127.0.0.1:7823/v1/automation/receipts --data-urlencode 'directory=/local/out/.paperpilot-receipts' --data 'limit=50'
+```
+
+## 10. `json_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -112,7 +278,7 @@ N/A
 N/A
 ```
 
-## 5. `office_extract_text`
+## 11. `office_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -140,7 +306,7 @@ paperpilot office extract-text --input tests/e2e_fixtures/real/test.xlsx --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/out.txt"}'
 ```
 
-## 6. `office_modernize_legacy`
+## 12. `office_modernize_legacy`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -168,7 +334,7 @@ paperpilot office modernize --input tests/e2e_fixtures/real/test.xls --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-modernize-legacy -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xls", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
-## 7. `office_to_markdown`
+## 13. `office_to_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -196,7 +362,7 @@ paperpilot office to-markdown --input tests/e2e_fixtures/real/test.xlsx --output
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-to-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/doc.md"}'
 ```
 
-## 8. `pdf_annotate`
+## 14. `pdf_annotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -225,7 +391,7 @@ paperpilot annotate --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "annotations": [], "output": "tests/e2e_fixtures/out/penta_e2e/annotated.pdf"}'
 ```
 
-## 9. `pdf_attachments`
+## 15. `pdf_attachments`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -246,7 +412,7 @@ N/A
 N/A
 ```
 
-## 10. `pdf_auto_rotate`
+## 16. `pdf_auto_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -269,7 +435,7 @@ curl -X POST http://localhost:8080/tools/pdf_auto_rotate \
   -d '{"file_path": "input.pdf", "output_path": "output.pdf", "target_orientation": "portrait"}'
 ```
 
-## 11. `pdf_bates`
+## 17. `pdf_bates`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -299,7 +465,7 @@ paperpilot bates --input tests/e2e_fixtures/real/single_page.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "prefix": "CONF-", "start": 1, "output": "tests/e2e_fixtures/out/penta_e2e/bates.pdf"}'
 ```
 
-## 12. `pdf_booklet`
+## 18. `pdf_booklet`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -327,7 +493,7 @@ paperpilot booklet --input tests/e2e_fixtures/real/multi_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/booklet -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/booklet.pdf"}'
 ```
 
-## 13. `pdf_bookmarks`
+## 19. `pdf_bookmarks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -354,7 +520,7 @@ paperpilot bookmarks --input tests/e2e_fixtures/real/multi_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf"}'
 ```
 
-## 14. `pdf_burst`
+## 20. `pdf_burst`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -384,7 +550,7 @@ paperpilot burst --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/burst"}'
 ```
 
-## 15. `pdf_change_permissions`
+## 21. `pdf_change_permissions`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -405,7 +571,7 @@ N/A
 N/A
 ```
 
-## 16. `pdf_classify_type`
+## 22. `pdf_classify_type`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -432,12 +598,12 @@ paperpilot classify --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 17. `pdf_compare`
+## 23. `pdf_compare`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Compares two PDF documents and highlights visual and textual differences.**  
-Performs side-by-side diffing, identifying added, removed, or shifted text and graphics between document revisions.
+**Compares two PDF documents and writes a JSON difference report.**
+The report includes `diff_detected` and affected page numbers. In a workflow, later PDF operations continue reading the source PDF; the report is a separate artifact.
 
 ### CLI
 ```bash
@@ -449,8 +615,9 @@ paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e
 {
   "name": "pdf_compare",
   "arguments": {
-    "file1": "tests/e2e_fixtures/real/merge_a.pdf",
-    "file2": "tests/e2e_fixtures/real/merge_b.pdf"
+    "input_a": "tests/e2e_fixtures/real/merge_a.pdf",
+    "input_b": "tests/e2e_fixtures/real/merge_b.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/comparison.json"
   }
 }
 ```
@@ -460,7 +627,7 @@ paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_b.pdf"}'
 ```
 
-## 18. `pdf_compress`
+## 24. `pdf_compress`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -489,7 +656,7 @@ paperpilot compress --input tests/e2e_fixtures/real/single_page.pdf --quality me
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "medium", "output": "tests/e2e_fixtures/out/penta_e2e/compressed.pdf"}'
 ```
 
-## 19. `pdf_convert_excel`
+## 25. `pdf_convert_excel`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -517,7 +684,7 @@ paperpilot convert --input tests/e2e_fixtures/real/test.csv --format pdf --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.csv", "output": "tests/e2e_fixtures/out/penta_e2e/out_csv.pdf"}'
 ```
 
-## 20. `pdf_convert_html`
+## 26. `pdf_convert_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -545,7 +712,7 @@ paperpilot convert --input tests/e2e_fixtures/real/test.html --format pdf --outp
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/out_html.pdf"}'
 ```
 
-## 21. `pdf_convert_markdown`
+## 27. `pdf_convert_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -573,7 +740,7 @@ paperpilot convert --input tests/e2e_fixtures/real/test.md --format pdf --output
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.md", "output": "tests/e2e_fixtures/out/penta_e2e/out_md.pdf"}'
 ```
 
-## 22. `pdf_create_form_field`
+## 28. `pdf_create_form_field`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -608,7 +775,7 @@ paperpilot form add-field tests/e2e_fixtures/real/single_page.pdf --name signatu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/create-form-field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "name": "f1", "rect": [0,0,10,10], "output": "tests/e2e_fixtures/out/penta_e2e/added_field.pdf"}'
 ```
 
-## 23. `pdf_crop`
+## 29. `pdf_crop`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -637,12 +804,14 @@ paperpilot crop --input tests/e2e_fixtures/real/single_page.pdf --rect 10,10,200
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "box": "10,10,200,200", "output": "tests/e2e_fixtures/out/penta_e2e/cropped.pdf"}'
 ```
 
-## 24. `pdf_decrypt`
+## 30. `pdf_decrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 **Removes password protection and usage restrictions from an unlocked PDF.**  
 Decrypts the document using the known password and outputs an unrestricted PDF that can be opened, printed, and edited freely.
+
+Password-protected files are parsed with the supplied password before export, preserving their catalog, pages, and text. The resulting PDF can be passed to subsequent operations such as `pdf_compress`. An incorrect password returns an error.
 
 ### CLI
 ```bash
@@ -666,7 +835,7 @@ paperpilot decrypt --input tests/e2e_fixtures/real/encrypted.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/decrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/decrypted.pdf"}'
 ```
 
-## 25. `pdf_dedup_streams`
+## 31. `pdf_dedup_streams`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -687,7 +856,7 @@ N/A
 N/A
 ```
 
-## 26. `pdf_delete_pages`
+## 32. `pdf_delete_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -716,7 +885,7 @@ paperpilot delete --input tests/e2e_fixtures/real/multi_page.pdf --pages 2,4 --o
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/delete-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/deleted.pdf", "pages": "2,4"}'
 ```
 
-## 27. `pdf_encrypt`
+## 33. `pdf_encrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -745,7 +914,7 @@ paperpilot encrypt --input tests/e2e_fixtures/real/single_page.pdf --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/encrypted.pdf"}'
 ```
 
-## 28. `pdf_extract_images`
+## 34. `pdf_extract_images`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -773,7 +942,7 @@ paperpilot extract-images --input tests/e2e_fixtures/real/single_page.pdf --outp
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/images"}'
 ```
 
-## 29. `pdf_extract_pages`
+## 35. `pdf_extract_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -802,7 +971,7 @@ paperpilot extract --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/extracted.pdf", "pages": "1,3"}'
 ```
 
-## 30. `pdf_extract_text`
+## 36. `pdf_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -829,12 +998,14 @@ paperpilot extract-text --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 31. `pdf_fill_form`
+## 37. `pdf_fill_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 **Fills interactive PDF AcroForm fields automatically from a JSON key-value map.**  
-Populates text boxes, radio buttons, and checkboxes programmatically without opening a manual PDF editor.
+Populates text fields and checkboxes, including fully qualified hierarchical names and UTF-16 PDF values. Regenerates widget appearances so filled text is visible before and after form flattening. Radio buttons, pushbuttons and other unsupported field types return an error.
+
+For CSV/JSON mail merge across many records, use [`paperpilot fill-batch`](/reference/tools/cli_fill_batch/).
 
 ### CLI
 ```bash
@@ -858,12 +1029,12 @@ paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/fill-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "data": {}, "output": "tests/e2e_fixtures/out/penta_e2e/filled.pdf"}'
 ```
 
-## 32. `pdf_flatten`
+## 38. `pdf_flatten`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Bakes interactive form fields, signatures, and annotations directly into the page content.**  
-Converts editable form inputs into static vector graphics so they can no longer be edited, moved, or altered.
+**Paints AcroForm widget appearances into page content and removes the interactive form fields.**
+Preserves existing page resources and unrelated annotations. Missing appearances for supported text fields and checkboxes are generated from their values. Hidden widgets are removed without drawing their values. Existing normal appearances, including transformed appearance boxes, retain their placement. This operation does not remove or flatten unrelated annotation types and does not establish signature validity.
 
 ### CLI
 ```bash
@@ -886,7 +1057,7 @@ paperpilot flatten --input tests/e2e_fixtures/form.pdf --output tests/e2e_fixtur
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/flattened.pdf"}'
 ```
 
-## 33. `pdf_hash`
+## 39. `pdf_hash`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -913,7 +1084,7 @@ paperpilot hash --input tests/e2e_fixtures/real/missing.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 34. `pdf_header_footer`
+## 40. `pdf_header_footer`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -942,7 +1113,7 @@ paperpilot header-footer --input tests/e2e_fixtures/real/single_page.pdf --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/header-footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "text": "Confidential", "output": "tests/e2e_fixtures/out/penta_e2e/header.pdf"}'
 ```
 
-## 35. `pdf_images_to_pdf`
+## 41. `pdf_images_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -972,7 +1143,7 @@ paperpilot images-to-pdf --images tests/e2e_fixtures/real/test.png --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-pdf -H 'Content-Type: application/json' -d '{"images": ["tests/e2e_fixtures/real/test.png"], "output": "tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf"}'
 ```
 
-## 36. `pdf_invert_colors`
+## 42. `pdf_invert_colors`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -993,7 +1164,7 @@ N/A
 N/A
 ```
 
-## 37. `pdf_linearize`
+## 43. `pdf_linearize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1021,7 +1192,7 @@ paperpilot linearize --input tests/e2e_fixtures/real/single_page.pdf --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/linearized.pdf"}'
 ```
 
-## 38. `pdf_merge`
+## 44. `pdf_merge`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1052,7 +1223,7 @@ paperpilot merge --input tests/e2e_fixtures/real/merge_a.pdf tests/e2e_fixtures/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/merge_mcp_simple.pdf"}'
 ```
 
-## 39. `pdf_merge_alternate`
+## 45. `pdf_merge_alternate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1073,7 +1244,7 @@ N/A
 N/A
 ```
 
-## 40. `pdf_metadata`
+## 46. `pdf_metadata`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1100,7 +1271,7 @@ paperpilot metadata --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/metadata -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 41. `pdf_nup`
+## 47. `pdf_nup`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1128,7 +1299,7 @@ paperpilot nup --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e2e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/nup -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/nup.pdf"}'
 ```
 
-## 42. `pdf_ocr`
+## 48. `pdf_ocr`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1156,7 +1327,7 @@ paperpilot ocr --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/ocr.pdf"}'
 ```
 
-## 43. `pdf_overlay_underlay`
+## 49. `pdf_overlay_underlay`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1177,7 +1348,7 @@ N/A
 N/A
 ```
 
-## 44. `pdf_page_numbers`
+## 50. `pdf_page_numbers`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1205,7 +1376,7 @@ paperpilot page-numbers --input tests/e2e_fixtures/real/single_page.pdf --output
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/page-numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/numbers.pdf"}'
 ```
 
-## 45. `pdf_posterize`
+## 51. `pdf_posterize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1249,7 +1420,7 @@ curl -X POST http://localhost:8080/api/v1/pdf/posterize \\
   }'
 ```
 
-## 46. `pdf_rag_chunks`
+## 52. `pdf_rag_chunks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1276,16 +1447,16 @@ paperpilot rag-chunks --input tests/e2e_fixtures/real/single_page.pdf
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rag-chunks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 47. `pdf_read_form`
+## 53. `pdf_read_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Reads and exports all form field names, types, and values from a PDF into JSON.**  
-Dumps all filled AcroForm data (text inputs, checkboxes, dropdowns) for automated data ingestion.
+**Reads and exports form field names and values from a PDF into JSON.**
+Exports AcroForm field names and values, including hierarchical field names and UTF-16 text strings. Checkbox values retain their PDF export state. Cyclic or excessively nested field trees return an error.
 
 ### CLI
 ```bash
-paperpilot form read tests/e2e_fixtures/real/missing.pdf --json
+paperpilot form read tests/e2e_fixtures/real/form.pdf --json
 ```
 
 ### MCP JSON-RPC
@@ -1303,7 +1474,7 @@ paperpilot form read tests/e2e_fixtures/real/missing.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/read-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf"}'
 ```
 
-## 48. `pdf_redact`
+## 54. `pdf_redact`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1338,7 +1509,7 @@ paperpilot redact --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "page": 1, "rect": [50, 50, 200, 50], "output": "tests/e2e_fixtures/out/penta_e2e/redacted.pdf"}'
 ```
 
-## 49. `pdf_remove_blank`
+## 55. `pdf_remove_blank`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1352,13 +1523,7 @@ paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output 
 
 ### MCP JSON-RPC
 ```json
-{
-  "name": "pdf_remove_blank",
-  "arguments": {
-    "input": "tests/e2e_fixtures/real/multi_page.pdf",
-    "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"
-  }
-}
+N/A
 ```
 
 ### REST API
@@ -1366,7 +1531,7 @@ paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output 
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/remove-blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"}'
 ```
 
-## 50. `pdf_remove_signatures`
+## 56. `pdf_remove_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1394,7 +1559,7 @@ paperpilot pdf-remove-signatures --input tests/e2e_fixtures/real/single_page.pdf
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/remove-signatures -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/stripped.pdf"}'
 ```
 
-## 51. `pdf_render`
+## 57. `pdf_render`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1422,7 +1587,7 @@ paperpilot render --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/rendered.png"}'
 ```
 
-## 52. `pdf_reorder_pages`
+## 58. `pdf_reorder_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1451,7 +1616,7 @@ paperpilot reorder --input tests/e2e_fixtures/real/multi_page.pdf --order 2,1,3,
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/reorder-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "2,1,3,4,5", "output": "tests/e2e_fixtures/out/penta_e2e/reordered.pdf"}'
 ```
 
-## 53. `pdf_repair`
+## 59. `pdf_repair`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1479,7 +1644,7 @@ paperpilot repair --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/repaired.pdf"}'
 ```
 
-## 54. `pdf_rotate`
+## 60. `pdf_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1509,7 +1674,7 @@ paperpilot rotate --input tests/e2e_fixtures/real/single_page.pdf --degrees 90 -
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "pages": "1", "output": "tests/e2e_fixtures/out/penta_e2e/rotated.pdf"}'
 ```
 
-## 55. `pdf_sanitize`
+## 61. `pdf_sanitize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1537,7 +1702,7 @@ paperpilot sanitize --input tests/e2e_fixtures/real/multi_page.pdf --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/sanitize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/sanitized.pdf"}'
 ```
 
-## 56. `pdf_scale_pages`
+## 62. `pdf_scale_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1571,7 +1736,7 @@ paperpilot pdf-scale-pages --input tests/e2e_fixtures/real/single_page.pdf --out
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/scale-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/scaled.pdf"}'
 ```
 
-## 57. `pdf_search`
+## 63. `pdf_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1599,7 +1764,7 @@ paperpilot search --input tests/e2e_fixtures/real/single_page.pdf --query test -
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "query": "test"}'
 ```
 
-## 58. `pdf_sign`
+## 64. `pdf_sign`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1627,7 +1792,7 @@ paperpilot sign --input tests/e2e_fixtures/real/single_page.pdf --output tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/signed.pdf"}'
 ```
 
-## 59. `pdf_split`
+## 65. `pdf_split`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1656,7 +1821,7 @@ paperpilot split --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --ou
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/pdf_split_simple", "pages": "1,3"}'
 ```
 
-## 60. `pdf_split_by_outline`
+## 66. `pdf_split_by_outline`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1684,7 +1849,7 @@ curl -X POST http://localhost:7823/api/v1/pdf/split-by-outline \
   }'
 ```
 
-## 61. `pdf_split_scanned_book`
+## 67. `pdf_split_scanned_book`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1719,7 +1884,7 @@ N/A
 N/A
 ```
 
-## 62. `pdf_stamp`
+## 68. `pdf_stamp`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1743,7 +1908,7 @@ curl -X POST http://localhost:8080/api/v1/pdf/stamp \
   -o output.pdf
 ```
 
-## 63. `pdf_stitch_canvas`
+## 69. `pdf_stitch_canvas`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1769,7 +1934,7 @@ curl -X POST http://localhost:8000/api/v1/pdf/stitch-canvas \
   -F "spacing_pt=5"
 ```
 
-## 64. `pdf_to_docx`
+## 70. `pdf_to_docx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1797,7 +1962,45 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format docx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-docx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.docx"}'
 ```
 
-## 65. `pdf_to_html`
+## 71. `pdf_to_epub`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Convert a standard PDF document into an accessible and reflowable EPUB 3.0 file format.
+
+### CLI
+```bash
+N/A
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "call_tool",
+  "params": {
+    "name": "pdf_to_epub",
+    "arguments": {
+      "input_file": "/tmp/book.pdf",
+      "options": {
+        "title": "My Book",
+        "author": "Jane Doe",
+        "language": "en"
+      }
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -X POST https://api.paperpilot.test/v1/pdf/epub \
+  -F "file=@book.pdf" \
+  -F 'options={"title":"My Book","author":"Jane Doe","language":"en"}'
+```
+
+## 72. `pdf_to_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1825,7 +2028,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format html
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"}'
 ```
 
-## 66. `pdf_to_pdf_a`
+## 73. `pdf_to_pdf_a`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1853,12 +2056,12 @@ paperpilot pdf-a --input tests/e2e_fixtures/real/single_page.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pdf-a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf"}'
 ```
 
-## 67. `pdf_to_pptx`
+## 74. `pdf_to_pptx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
 **Converts PDF pages into an editable Microsoft PowerPoint presentation (.pptx).**  
-Maps each page into a presentation slide with text boxes and background graphics.
+Exports each PDF page's extracted text into a presentation slide. The PPTX includes the package relationships, presentation manifest, slide relationships, and content types needed by Office readers. Its output can be passed to `office_extract_text` as a real `.pptx` intermediate.
 
 ### CLI
 ```bash
@@ -1881,7 +2084,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format pptx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pptx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.pptx"}'
 ```
 
-## 68. `pdf_to_xlsx`
+## 75. `pdf_to_xlsx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1909,7 +2112,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format xlsx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-xlsx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
-## 69. `pdf_validate`
+## 76. `pdf_validate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1936,7 +2139,7 @@ paperpilot validate --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 70. `pdf_validate_signatures`
+## 77. `pdf_validate_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1971,7 +2174,7 @@ paperpilot pdf-validate-signatures --input signed.pdf --output report.json --bas
 N/A
 ```
 
-## 71. `pdf_watermark`
+## 78. `pdf_watermark`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2000,7 +2203,30 @@ paperpilot watermark --input tests/e2e_fixtures/real/single_page.pdf --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL", "output": "tests/e2e_fixtures/out/penta_e2e/watermarked.pdf"}'
 ```
 
-## 72. `semantic_search`
+## 79. `recipe_run`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Runs a validated local TOML/JSON recipe or preset against a local PDF. Uses the same workflow engine as all other wrappers and writes a durable terminal receipt beside the output in `.paperpilot-receipts`. MCP success keeps the legacy `receipt` stage-report shape and adds `job_id` / `receipt_path`. Execution failures include the report and saved receipt location in error data. Existing output is preserved on execution failure. Same-input/output paths are rejected.
+
+Optional `name_template` enables [dynamic output naming](/reference/output-naming/) from actual input names, UTC dates, hashes, indexes and PDF metadata; `output` then specifies a directory, and named outputs never replace existing files.
+
+### CLI
+```bash
+paperpilot run flow.ppflow input.pdf --output out/result.pdf --json
+```
+
+### MCP JSON-RPC
+```json
+{"name":"recipe_run","arguments":{"input":"/local/input.pdf","recipe":"preset-legal-discovery","output":"/local/out/result.pdf"}}
+```
+
+### REST API
+```bash
+curl -X POST http://127.0.0.1:7823/api/v1/workflow/run-json -H 'Content-Type: application/json' -d '{"input":"/local/input.pdf","output":"/local/out/result.pdf","preset":"preset-legal-discovery"}'
+```
+
+## 80. `semantic_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2021,7 +2247,99 @@ N/A
 N/A
 ```
 
-## 73. `workspace_search`
+## 81. `watcher_list`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Lists runtime entries from the shared local manager with `watcher_id`, `status`, `dir`, `recipe`, `last_processed_file`, `last_processed_at`, `total_processed`, `succeeded`, `failed`, `last_error`, `last_output`, and `last_receipt`. Output/receipt paths remain available when the desktop panel is reopened. `total_processed` counts successes plus failures, rather than successful writes alone.
+
+Statuses are `watching`, `stopping`, `stopped`, or `error`. A per-file processing failure increments `failed` while watching continues; fatal filesystem errors end the worker with `error`. Persisted desktop preferences are never reported as active runtime entries. Desktop-stopped watchers remain listed until removal, while MCP/REST stop removes the entry.
+
+### CLI
+```bash
+# The CLI watcher runs in its own process and logs events in its terminal.
+# Use MCP/REST to list workers belonging to their server process.
+```
+
+### MCP JSON-RPC
+```json
+{ "name": "watcher_list", "arguments": {} }
+```
+
+### REST API
+```bash
+curl -s http://127.0.0.1:7823/v1/automation/watchers
+```
+
+## 82. `watcher_start`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Registers an operating-system folder watcher, processes existing and arriving PDFs with the shared workflow engine, and reports actual progress. Invalid paths and unsupported recipes fail before a watcher is reported as running.
+
+The recipe accepts a preset ID, a local TOML/JSON `.ppflow` path, or serialized workflow content. Outputs default to `INPUT/processed`, failure receipts to `INPUT/.error`. Input and output folders must differ. Sources stay in place unless the CLI/REST caller explicitly requests `move_original`. Existing files are never overwritten; collisions receive a numeric suffix. Watching is nonrecursive. Each start sweeps existing files again.
+
+`settle_delay_ms` defaults to 500 and accepts 50–60000. The worker waits for a stable file size and ignores unchanged duplicate events during that run. A processing or write failure increments `failed`, emits an error, and retains the source; later PDFs can still succeed. Success receipts contain input/output SHA-256 hashes and the workflow report. Failure receipts contain the error and input hash; `.error` stores receipts, not relocated PDFs.
+
+Watchers live in the owning process. Desktop commands, its local REST gateway, and its MCP endpoint share one manager; separate processes have separate managers. Saved desktop configurations require an explicit start after relaunch. No network request is made unless a CLI caller supplies `--webhook`.
+
+Explicit CLI webhooks retain the completion fields `success`, `operation`, `file`, and `error`, adding `output` and `receipt` paths. Delivery has a 30-second timeout; HTTP/network failures are logged separately from PDF processing results.
+
+Optional `name_template` enables [dynamic naming](/reference/output-naming/) from input names, UTC dates, SHA-256, run indexes and PDF Info fields. CLI uses `--name-template`. Receipts reference the final collision-resolved output path.
+
+### CLI
+```bash
+paperpilot watch --directory /local/inbox --recipe preset-legal-discovery --settle-delay-ms 500
+# Add --once to process existing PDFs and exit; any failed file yields a nonzero exit code.
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_start",
+  "arguments": {
+    "dir": "/local/inbox",
+    "recipe": "preset-legal-discovery",
+    "settle_delay_ms": 500
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/v1/automation/watchers \
+  -H 'Content-Type: application/json' \
+  -d '{"dir":"/local/inbox","recipe":"preset-legal-discovery","settle_delay_ms":500}'
+```
+
+## 83. `watcher_stop`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Cancels a real watcher, waits for any in-flight PDF operation and worker thread to finish, then removes its registry entry. After success no further files are processed by that watcher. Unknown IDs return an error.
+
+The desktop Stop action retains the stopped configuration and final statistics so it can be restarted. Desktop Remove and MCP/REST stop remove the runtime entry. Removing from another local interface is reflected in the desktop panel by its local status refresh. These APIs apply to watchers in the same process.
+
+### CLI
+```bash
+# Press Ctrl+C in the terminal running `paperpilot watch` to stop it gracefully.
+# `paperpilot watch --once ...` stops automatically after the initial sweep.
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_stop",
+  "arguments": { "watcher_id": "WATCHER_ID_FROM_START" }
+}
+```
+
+### REST API
+```bash
+curl -i -X DELETE http://127.0.0.1:7823/v1/automation/watchers/WATCHER_ID_FROM_START
+```
+
+## 84. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

@@ -127,7 +127,7 @@
     onnodeclick={onNodeClick}
     onpaneclick={onPaneClick}
   >
-    <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#334155" />
+    <Background variant={BackgroundVariant.Dots} gap={16} size={1} patternColor="#334155" />
     <Panel position="top-right">
       <AutoLayoutButton />
     </Panel>

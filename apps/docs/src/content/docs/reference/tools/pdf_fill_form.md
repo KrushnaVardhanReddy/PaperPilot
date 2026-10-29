@@ -9,7 +9,9 @@ sidebar:
 
 ### What it does
 **Fills interactive PDF AcroForm fields automatically from a JSON key-value map.**  
-Populates text boxes, radio buttons, and checkboxes programmatically without opening a manual PDF editor.
+Populates text fields and checkboxes, including fully qualified hierarchical names and UTF-16 PDF values. Regenerates widget appearances so filled text is visible before and after form flattening. Radio buttons, pushbuttons and other unsupported field types return an error.
+
+For CSV/JSON mail merge across many records, use [`paperpilot fill-batch`](/reference/tools/cli_fill_batch/).
 
 ### CLI
 ```bash

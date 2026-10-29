@@ -3,6 +3,9 @@
 #![allow(clippy::ptr_arg)]
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
+pub mod ask;
+#[cfg(feature = "pdf")]
+pub mod fill_batch;
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
@@ -29,12 +32,12 @@ pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
 pub mod pdf_timestamp;
+pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
 pub mod table;
 pub mod validate;
-pub mod watch;
 pub mod workflow;
 
 use crate::cli::Commands;
@@ -51,6 +54,8 @@ fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::Path
 
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
+        #[cfg(feature = "pdf")]
+        Commands::FillBatch(args) => fill_batch::run(args)?.outcome(),
         Commands::Completions { shell } => {
             use clap::CommandFactory;
             let mut app = crate::cli::Cli::command();
@@ -59,6 +64,22 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             Ok(())
         }
         // Group A
+        Commands::Ask {
+            prompt,
+            input,
+            yes,
+            offline,
+            output,
+            dry_run,
+        } => ask::handle_ask(
+            prompt,
+            input.as_deref(),
+            *yes,
+            *offline,
+            output.as_deref(),
+            *dry_run,
+            false, // matches_json, to be fully precise we might need this from cli if it was passed, but the cli definition doesn't have a json flag within the subcommand, so false for now, or check global args. We'll stick to false or modify ask to not need it.
+        ),
         Commands::Merge { input, output } => {
             let resolved: Result<Vec<_>, _> = input.iter().map(|p| resolve_input_path(p)).collect();
             group_a::handle_merge(&resolved?, output)
@@ -361,19 +382,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             inline_css.as_deref(),
         ),
         Commands::Classify { input } => group_d::handle_classify(&resolve_input_path(input)?),
-        Commands::Workflow {
-            subcommand,
-            input,
-            output,
-            preset,
-            recipe,
-        } => workflow::handle_workflow_command(
-            subcommand.as_ref(),
-            input.as_ref(),
-            output.as_ref(),
-            preset.as_ref(),
-            recipe.as_ref(),
-        ),
+        Commands::Workflow { .. } | Commands::Run { .. } => workflow::execute(command, false).0,
         Commands::PdfValidateSignatures {
             input,
             output,
@@ -471,6 +480,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         ),
         Commands::PdfDedupStreams { input, output } => {
             pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
+        }
+        Commands::PdfToEpub { input, output } => {
+            pdf_to_epub::handle_pdf_to_epub_command(input, output)
         }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
@@ -737,6 +749,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_to_epub",
+                    "Preview",
+                    "Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks",
                 ),
                 (
                     "pdf_dedup_streams",

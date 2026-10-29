@@ -1,0 +1,70 @@
+# Task: [P134_T134A: CLI Natural Language Interface (`paperpilot ask`)]
+
+## Branch & Location
+- **Branch**: `feat/cli-ask-command-task-4-5`
+- **Specification**: `specs/134-cli-natural-language-interface/spec.md`
+- **Task**: `specs/134-cli-natural-language-interface/task_134a.md`
+
+## Objective
+Implement the `paperpilot ask` CLI subcommand to enable natural language PDF manipulation directly from the command line, closing Phase 4.5.1 of the roadmap.
+
+## Implementation Details
+
+1. **Dependency in `paperpilot-cli/Cargo.toml`**:
+   Add `paperpilot-nlp`:
+   ```toml
+   paperpilot-nlp = { path = "../paperpilot-nlp" }
+   ```
+
+2. **CLI Definition in `paperpilot-cli/src/cli.rs`**:
+   Add `Ask` variant to `Commands`:
+   ```rust
+   /// Natural language command: execute PDF operations by describing intent in plain text
+   Ask {
+       /// Natural language instruction (e.g. "rotate 90 degrees", "compress aggressively")
+       prompt: String,
+
+       /// Target input PDF document
+       #[arg(value_name = "INPUT")]
+       input: Option<PathBuf>,
+
+       /// Run without interactive confirmation prompt
+       #[arg(short = 'y', long)]
+       yes: bool,
+
+       /// Force offline NLP resolution (bypassing remote LLMs)
+       #[arg(long)]
+       offline: bool,
+
+       /// Override output destination
+       #[arg(short = 'o', long)]
+       output: Option<PathBuf>,
+
+       /// Parse and display plan without modifying files
+       #[arg(long)]
+       dry_run: bool,
+   },
+   ```
+
+3. **Handler in `paperpilot-cli/src/commands/ask.rs`**:
+   - Use `paperpilot_nlp::resolver::OfflineNlpResolver` and `paperpilot_nlp::traits::ResolverContext`.
+   - If input file is specified, bind it into `context.active_document`.
+   - Call `resolver.resolve_with_context(&prompt, &context)`.
+   - Support `--dry-run`: print formatted plan summary (or JSON if `--json` is enabled).
+   - If not `--yes` and running interactively, prompt user `Execute this plan? [Y/n]`.
+   - **Exhaustive Intent Dispatching**: The dispatcher must support all 40+ canonical intents defined in `paperpilot_nlp::intent::Intent` by routing them to their existing handlers in `paperpilot_cli::commands::*` (e.g. `group_a`, `group_b`, `group_c`, `sanitize`, `pii`, `workflow`, etc.).
+     - Common examples: `Rotate`, `Compress`, `Merge`, `Split`, `Watermark`, `Crop`, `Delete`, `Reorder`, `Burst`, `ExtractText`, `ExtractImages`, `Ocr`, `Bates`, `Flatten`, `Linearize`, `Repair`, `Redact`, `PdfA`, `Encrypt`, `Decrypt`, etc.
+     - For any intent not yet wired to a headless CLI handler, return a clean `PdfError::UnsupportedOperation` error with an informative message.
+   - Handle errors gracefully, emitting friendly diagnostics when intent is ambiguous.
+
+4. **Integration Test Suite**:
+   Create `paperpilot-cli/tests/test_ask.rs`:
+   - Test `--dry-run` output contains interpreted intent.
+   - Test `--yes` runs operation end-to-end and creates output PDF.
+   - Test error handling on unsupported/ambiguous queries.
+
+## Verification Checklist
+- Run `cargo check -p paperpilot-cli`
+- Run `cargo test -p paperpilot-cli --test test_ask`
+- Verify `make audit` passes cleanly
+- Commit message: `feat(cli): add natural language 'ask' subcommand (Task 134A)`

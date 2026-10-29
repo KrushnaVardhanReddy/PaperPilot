@@ -21,7 +21,7 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
     }
     match expected_ext {
         "pdf" => Ok(content.starts_with(b"%PDF")),
-        "xlsx" | "docx" => Ok(content.starts_with(b"PK")),
+        "xlsx" | "docx" | "epub" => Ok(content.starts_with(b"PK")),
         "md" => {
             let s = String::from_utf8_lossy(&content);
             Ok(s.contains('|') || s.contains('#'))
@@ -477,6 +477,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_DEDUP_STREAMS_REPORT.md",
             )?;
 
+            let res_pdf_to_epub = cases::pdf_to_epub::run_pdf_to_epub_suite().await?;
+            println!("PDF to EPUB 3.0 finished: {} tests", res_pdf_to_epub.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (PDF to EPUB 3.0)",
+                &res_pdf_to_epub,
+                "reports/PENTA_INTERFACE_E2E_PDF_TO_EPUB_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -484,6 +492,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_to_epub);
             all.extend(res_pdf_dedup_streams);
             all.extend(res_pdf_posterize);
             all.extend(res_pdf_split_by_outline);

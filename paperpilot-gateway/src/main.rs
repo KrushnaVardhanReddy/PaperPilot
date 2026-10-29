@@ -16,5 +16,10 @@ async fn main() -> std::io::Result<()> {
 
     let bind = env::var("BIND").unwrap_or_else(|_| "127.0.0.1".to_string());
 
-    paperpilot_gateway::server::start(port, &bind, std::future::pending()).await
+    let result = paperpilot_gateway::server::start(port, &bind, async {
+        let _ = tokio::signal::ctrl_c().await;
+    })
+    .await;
+    paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
+    result
 }

@@ -4,24 +4,12 @@
   import { rankToolsByContext } from '$lib/services/toolRegistry';
 
 
-  async function safeInvoke(cmd: string, args?: any): Promise<any> {
-    try {
-      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-        const { invoke } = await import('@tauri-apps/api/core');
-        return await invoke(cmd, args);
-      }
-    } catch (e) {
-      console.warn(`[Tauri Mock] ${cmd} called in browser environment:`, args);
-    }
-    // Return success mock for UI testing
-    return { success: true };
-  }
+  import { requireInvoke as safeInvoke } from '$lib/utils/tauri';
 
   import { appState } from '$lib/state/app.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';
   import DocumentList from '$lib/components/ui/DocumentList.svelte';
   import PdfViewer from '$lib/components/PdfViewer.svelte';
-  import PdfToolbar from '$lib/components/PdfToolbar.svelte';
   import PdfThumbnails from '$lib/components/PdfThumbnails.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
@@ -29,14 +17,14 @@
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
   import type { Annotation } from '$lib/api/pdf';
   import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
-  import ViewerRightPanel from '$lib/components/layout/ViewerRightPanel.svelte';
-  import StatusBar from '$lib/components/layout/StatusBar.svelte';
-  import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
+  import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
+
+  let drawerMode = $state<'auto' | 'files' | 'pages'>('auto');
 
   import { onMount } from 'svelte';
   onMount(() => {
@@ -50,7 +38,12 @@
       appState.toggleDiffView();
     }).then(fn => unlistenMenuToggleDiff = fn).catch(() => {});
 
-    // Key bindings
+    // Key bindings & viewer actions
+    const handleZoomIn = () => { scale = Math.min(Math.round((scale + 0.2) * 10) / 10, 5.0); };
+    const handleZoomOut = () => { scale = Math.max(Math.round((scale - 0.2) * 10) / 10, 0.2); };
+
+    window.addEventListener('paperpilot:zoom-in', handleZoomIn);
+    window.addEventListener('paperpilot:zoom-out', handleZoomOut);
     window.addEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
     window.addEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
     window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
@@ -59,6 +52,8 @@
 
     return () => {
       if (unlistenMenuToggleDiff) unlistenMenuToggleDiff();
+      window.removeEventListener('paperpilot:zoom-in', handleZoomIn);
+      window.removeEventListener('paperpilot:zoom-out', handleZoomOut);
       window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
       window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
       window.removeEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
@@ -255,6 +250,8 @@
       const blob = new Blob([new Uint8Array(bytes)], { type: file.type || 'application/pdf' });
       const newFile = new File([blob], file.name, { type: file.type || 'application/pdf' });
       (newFile as any)._localPath = path;
+      const oldInsp = appState.inspections.get(file);
+      if (oldInsp) appState.inspections.set(newFile, oldInsp);
       appState.documents[idx] = newFile;
       appState.documentPaths[idx] = path;
       appState.documents = [...appState.documents];
@@ -294,6 +291,7 @@
   let pdfDoc: any = $state(null);
   let pageNum = $state(1);
   let scale = $state(1.2);
+  let isOperationsDrawerOpen = $state(false);
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
   let formValues = $state<Record<string, any>>({});
   let hasFormFields = $state(false);
@@ -332,6 +330,11 @@
                 (newFile as any)._localPath = path;
                 (newFile as any)._isLoaded = true;
 
+                const oldFile = appState.documents[activeIndex];
+                const oldInspection = appState.inspections.get(oldFile);
+                if (oldInspection) {
+                  appState.inspections.set(newFile, oldInspection);
+                }
                 appState.documents[activeIndex] = newFile;
                 objectUrl = URL.createObjectURL(newFile);
                 currentFileUrl = objectUrl;
@@ -383,166 +386,122 @@
     e.preventDefault();
     appState.toggleDiffView();
   }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+    e.preventDefault();
+    appState.toggleContextPanel();
+  }
 }} />
 
-<div class="page-container">
+<div class="page-container three-column-layout">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
     <div class="workspace-wrapper">
       <DocumentTabBar />
-
       <div class="workspace-body">
-        {#if appState.showDiffView}
-          <PdfVisualDiff onClose={() => appState.showDiffView = false} />
-        {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
-          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
-          <SpreadsheetViewer file={selectedDoc} />
-        {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
-          <div class="viewer-wrapper">
-            <div class="viewer-content">
-            <PdfThumbnails {pdfDoc} bind:pageNum />
-
-            <div class="viewer-main">
-              <div class="toolbars-container">
-                <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
+        <!-- COLUMN 2: Contextual Drawer -->
+        {#if appState.isContextPanelOpen}
+          <div class="context-drawer">
+            <div class="context-drawer-header">
+              <div class="drawer-mode-tabs">
+                <button
+                  class="drawer-tab-btn"
+                  class:active={drawerMode === 'files' || (drawerMode === 'auto' && appState.selectedDocumentIndex === null)}
+                  onclick={() => drawerMode = 'files'}
+                  title="Document Library"
+                >
+                  📁 Files
+                </button>
+                <button
+                  class="drawer-tab-btn"
+                  class:active={drawerMode === 'pages' || (drawerMode === 'auto' && appState.selectedDocumentIndex !== null)}
+                  disabled={appState.selectedDocumentIndex === null || !isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+                  onclick={() => drawerMode = 'pages'}
+                  title="Page Thumbnails"
+                >
+                  📑 Pages
+                </button>
               </div>
-              {#if hasFormFields}
-                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
-              {/if}
-              <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
-                <PdfViewer
-                  fileUrl={currentFileUrl}
-                  bind:pdfDoc
-                  bind:pageNum
-                  bind:scale
-                  activeTool={activeTool}
-                  bind:annotations
-                />
-                <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
-              </div>
+              <button class="collapse-btn" title="Collapse Drawer" onclick={() => appState.toggleContextPanel()}>
+                ‹
+              </button>
             </div>
 
-            <ViewerRightPanel
-              bind:annotations
-              {pdfDoc}
-              onJumpToPage={(p: number) => pageNum = p}
-            />
-          </div>
-            <StatusBar
-              {pageNum}
-              {numPages}
-              {scale}
-              fileName={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
-                : ''}
-              fileSize={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
-                : 0}
-            />
-          </div>
-        {:else}
-          <div class="documents-layout">
-            <div class="documents-view">
-              <header class="view-header">
-                <h2>Workspace</h2>
-                <p>
-                  {#if appState.documents.length === 0}
-                    Drop PDF or Office files to get started
-                  {:else}
-                    {appState.documents.length} document{appState.documents.length === 1 ? '' : 's'} loaded
-                  {/if}
-                </p>
-              </header>
-
-              <div class="studio-hub-layout">
-                <div class="status-pills">
-                  <span class="status-pill">🔒 100% On-Device & Private</span>
-                  <span class="status-pill">Port 7823 REST Gateway</span>
-                  <span class="status-pill">Runtime: Offline NLP / Local Llamafile</span>
-                </div>
-                <DropZone ondrop={handleFilesDropped} />
-
-                {#if appState.documents.length > 0}
-                  <DocumentList />
-                {/if}
-
-                <GlobalCommandBar />
-
-                <!-- Studio Hub Operations Grid -->
-                <div class="studio-operations-grid">
-                   {#if appState.documents.length > 0 && ranked.recommended.length > 0}
-                     <div class="studio-category">
-                        <h3>⚡ Recommended</h3>
-                        <div class="studio-cards">
-                           {#each ranked.recommended as tool}
-                             <button class="studio-card" onclick={() => {
-                                appState.openTool(tool);
-                                const panel = document.querySelector('.operations-panel-wrapper');
-                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                             }}>
-                                <div class="studio-card-icon">{tool.icon}</div>
-                                <div class="studio-card-content">
-                                   <h4>
-                                      {tool.title}
-                                      {#if appState.documents.length >= 2}
-                                        {#if tool.rule?.minDocuments === 2}
-                                          <span class="smart-badge-studio">Multi-File Action</span>
-                                        {:else if tool.rule?.isBatchable}
-                                          <span class="smart-badge-studio">Batch Action</span>
-                                        {/if}
-                                      {/if}
-                                   </h4>
-                                   {#if tool.inputFormat && tool.outputFormat}
-                                     <span class="format-pill">
-                                       <span class="fmt-in">{tool.inputFormat}</span>
-                                       <span class="fmt-arrow">➔</span>
-                                       <span class="fmt-out">{tool.outputFormat}</span>
-                                     </span>
-                                   {/if}
-                                   <p>{tool.description}</p>
-                                </div>
-                             </button>
-                           {/each}
-                        </div>
-                     </div>
-                   {/if}
-
-                   {#each allCategories.filter(c => c.id !== 'all') as cat}
-                     <div class="studio-category">
-                        <h3>{cat.icon} {cat.title}</h3>
-                        <div class="studio-cards">
-                           {#each allTools.filter(t => t.category === cat.id) as tool}
-                             <button class="studio-card" onclick={() => {
-                                appState.openTool(tool);
-                                const panel = document.querySelector('.operations-panel-wrapper');
-                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                             }}>
-                                <div class="studio-card-icon">{tool.icon}</div>
-                                <div class="studio-card-content">
-                                   <h4>{tool.title}</h4>
-                                   {#if tool.inputFormat && tool.outputFormat}
-                                     <span class="format-pill">
-                                       <span class="fmt-in">{tool.inputFormat}</span>
-                                       <span class="fmt-arrow">➔</span>
-                                       <span class="fmt-out">{tool.outputFormat}</span>
-                                     </span>
-                                   {/if}
-                                   <p>{tool.description}</p>
-                                </div>
-                             </button>
-                           {/each}
-                        </div>
-                     </div>
-                   {/each}
-                </div>
+            {#if drawerMode === 'files' || (drawerMode === 'auto' && appState.selectedDocumentIndex === null)}
+              <div class="drawer-library">
+                <DocumentList />
               </div>
-            </div>
-            {#if !appState.isMobile}
-              <div class="operations-panel-wrapper layout-studio">
-                <OperationsPanel />
+            {:else if isPdfFile(appState.documents[appState.selectedDocumentIndex ?? 0]?.name ?? '')}
+              <div class="drawer-thumbnails">
+                <PdfThumbnails {pdfDoc} bind:pageNum />
               </div>
             {/if}
           </div>
         {/if}
+
+        <!-- COLUMN 3: Main Stage Hero Canvas -->
+        <div class="main-stage">
+          {#if appState.showDiffView}
+            <PdfVisualDiff onClose={() => appState.showDiffView = false} />
+          {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+            <SpreadsheetViewer file={selectedDoc} />
+          {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            <div class="viewer-wrapper">
+              <div class="viewer-main">
+                <div class="pdf-wrapper">
+                  <PdfViewer
+                    fileUrl={currentFileUrl}
+                    bind:pdfDoc
+                    bind:pageNum
+                    bind:scale
+                    activeTool={activeTool}
+                    bind:annotations
+                  />
+                  <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
+                </div>
+              </div>
+
+              <!-- Floating Action Pill -->
+              <div class="floating-action-pill">
+                <button title="Zoom Out" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'))}>🔍 -</button>
+                <button title="Zoom In" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'))}>🔍 +</button>
+                <div class="divider"></div>
+                <button title="Rotate 90°" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page: pageNum, angle: 90 } }))}>↻</button>
+                <div class="divider"></div>
+                <button title="Sign / Annotate" onclick={() => activeTool = (activeTool === 'sign' ? 'none' : 'sign')}>✍</button>
+                <div class="divider"></div>
+                <button title="Tool Settings" class:active={isOperationsDrawerOpen} onclick={() => isOperationsDrawerOpen = !isOperationsDrawerOpen}>⚙️ Tools</button>
+              </div>
+            </div>
+          {:else}
+            <!-- Empty state / Dropzone when no document is active -->
+            <div class="empty-stage">
+              <div class="documents-view">
+                <header class="view-header">
+                  <h2>Workspace</h2>
+                  <p>
+                    {#if appState.documents.length === 0}
+                      Drop PDF or Office files to get started
+                    {:else}
+                      Select a document from the library
+                    {/if}
+                  </p>
+                </header>
+                <DropZone ondrop={handleFilesDropped} />
+              </div>
+            </div>
+          {/if}
+        </div>
+
+        <!-- SLIDE-OUT RIGHT DRAWER -->
+        <div class="right-drawer" class:open={isOperationsDrawerOpen}>
+          <div class="right-drawer-header">
+            <h3>Tools & Actions</h3>
+            <button class="close-btn" onclick={() => isOperationsDrawerOpen = false} title="Close tools">✕</button>
+          </div>
+          <div class="right-drawer-content">
+            <OperationsPanel embedded={true} />
+          </div>
+        </div>
       </div>
     </div>
   {:else if appState.activeTab === 'settings'}
@@ -596,6 +555,185 @@
     flex: 1;
     overflow: hidden;
     position: relative;
+  }
+
+  .context-drawer {
+    width: 260px;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+  .context-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+  }
+  .drawer-mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-primary);
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .drawer-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .drawer-tab-btn:hover:not(:disabled) {
+    color: var(--text-primary);
+  }
+  .drawer-tab-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .drawer-tab-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .collapse-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .collapse-btn:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  .drawer-library, .drawer-thumbnails {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .main-stage {
+    flex: 1;
+    position: relative;
+    background-color: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .empty-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 24px;
+  }
+
+  .floating-action-pill {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 4px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+  }
+
+  .floating-action-pill button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    margin: 0 4px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .floating-action-pill button:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .floating-action-pill button.active {
+    color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 8px;
+  }
+
+  .right-drawer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 360px;
+    background-color: var(--bg-surface);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+  }
+  .right-drawer.open {
+    transform: translateX(0);
+  }
+  .right-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .right-drawer-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .right-drawer-header .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .right-drawer-header .close-btn:hover {
+    color: var(--text-primary);
+  }
+  .right-drawer-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
   }
 
   .documents-layout {
@@ -658,6 +796,21 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+    position: relative;
+  }
+
+  .pdf-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+    min-width: 0;
   }
 
   .toolbars-container {

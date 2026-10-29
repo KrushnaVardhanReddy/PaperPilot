@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -34,6 +34,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
+    #[cfg(feature = "pdf")]
+    FillBatch(FillBatchArgs),
     /// Generate shell completions
     Completions {
         #[arg(value_enum)]
@@ -627,7 +630,27 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
+    #[command(name = "pdf-to-epub", alias = "to-epub")]
+    PdfToEpub {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
+    Run {
+        /// TOML .ppflow or JSON recipe
+        recipe: PathBuf,
+        /// Local input PDF
+        input: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+        /// With this template, --output is a directory; existing PDFs are preserved
+        #[arg(long)]
+        name_template: Option<String>,
+    },
+    /// List, inspect, or execute a document workflow
     Workflow {
         #[command(subcommand)]
         subcommand: Option<WorkflowSubcommand>,
@@ -644,9 +667,12 @@ pub enum Commands {
         #[arg(long)]
         preset: Option<String>,
 
-        /// Path to custom workflow recipe JSON file
+        /// Path to custom workflow recipe (.ppflow TOML or JSON)
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
     // --- Headless Server / Automation Gateway ---
     #[cfg(feature = "daemon")]
@@ -655,6 +681,32 @@ pub enum Commands {
         port: u16,
         #[arg(long, default_value = "127.0.0.1")]
         bind: String,
+    },
+
+    /// Ask in natural language: execute operations via natural language intent [e.g. "rotate 90 degrees" doc.pdf]
+    Ask {
+        /// Natural language instruction
+        prompt: String,
+
+        /// Optional target input PDF file
+        #[arg(value_name = "INPUT")]
+        input: Option<PathBuf>,
+
+        /// Skip confirmation prompt and execute immediately
+        #[arg(short = 'y', long)]
+        yes: bool,
+
+        /// Force offline NLP resolution only
+        #[arg(long)]
+        offline: bool,
+
+        /// Output path override
+        #[arg(short = 'o', long)]
+        output: Option<PathBuf>,
+
+        /// Parse and output plan without executing
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// List all available tools, capabilities, and launch status
@@ -668,18 +720,51 @@ pub enum Commands {
     },
 }
 
+#[derive(Args, Debug)]
+pub struct FillBatchArgs {
+    /// Local AcroForm PDF template (text fields and checkboxes)
+    #[arg(long)]
+    pub template: PathBuf,
+    /// UTF-8 CSV with headers or a JSON array of record objects
+    #[arg(long)]
+    pub data: PathBuf,
+    #[arg(long)]
+    pub output_dir: PathBuf,
+    /// Output filename tokens: {row.column}, {date}, {index}, {index:04}
+    #[arg(long, default_value = "{index:04}.pdf")]
+    pub name_template: String,
+    /// Optional JSON object mapping PDF field names to input column names
+    #[arg(long)]
+    pub field_map: Option<PathBuf>,
+    /// Retain interactive fields instead of flattening their appearances
+    #[arg(long)]
+    pub keep_editable: bool,
+    /// Override the UTC batch date (YYYY-MM-DD), useful for repeatable runs
+    #[arg(long)]
+    pub date: Option<String>,
+}
+
 #[derive(Subcommand, Debug)]
 pub enum WorkflowSubcommand {
+    /// Query durable workflow, watcher or batch receipts from a local directory
+    History {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+    },
     /// List all available workflow presets
     List,
-    /// Inspect step sequence of a preset or recipe JSON file
+    /// Inspect stages and conditions of a preset or TOML/JSON recipe
     Inspect {
         #[arg(long)]
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
     },
-    /// Execute workflow preset or recipe JSON against input PDF
+    /// Execute workflow preset or TOML/JSON recipe against input PDF
     Run {
         #[arg(long)]
         input: PathBuf,
@@ -689,6 +774,9 @@ pub enum WorkflowSubcommand {
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
 }
 
@@ -979,6 +1067,7 @@ mod tests {
                         output,
                         preset,
                         recipe,
+                        ..
                     }),
                 ..
             } => {

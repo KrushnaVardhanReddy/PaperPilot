@@ -1,7 +1,7 @@
 use crate::{handlers, sse};
 use axum::{
     Router,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
@@ -36,6 +36,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_to_epub,
         handlers::pdf_dedup_streams,
         handlers::pdf_posterize,
         handlers::pdf_split_by_outline,
@@ -56,7 +57,11 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::pdf_validate_signatures,
         handlers::workflow_presets,
         handlers::workflow_validate,
-        handlers::workflow_run_json
+        handlers::workflow_run_json,
+        handlers::start_watcher,
+        handlers::list_watchers,
+        handlers::stop_watcher,
+        handlers::run_recipe_once
     ),
     components(
         schemas(
@@ -84,7 +89,13 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WorkflowRunJsonRequest,
             handlers::PdfValidateSignaturesJsonRequest,
             handlers::PdfPosterizeJsonRequest,
-            handlers::PdfAttachmentsJsonRequest
+            handlers::PdfAttachmentsJsonRequest,
+            handlers::PdfToEpubJsonRequest,
+            handlers::StartWatcherRequest,
+            handlers::StartWatcherResponse,
+            handlers::WatcherListResponse,
+            handlers::WatcherSummary,
+            handlers::RunRecipeOnceResponse
         )
     ),
     tags(
@@ -104,7 +115,30 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 pub struct ApiDoc;
 
-pub async fn build_app() -> Router {
+use paperpilot_pdf::operations::watch::{
+    WatchConfig, WatchSnapshot, WatcherManager, shared_watcher_manager,
+};
+use std::sync::Arc;
+pub type WatcherRegistry = Arc<WatcherManager>;
+pub struct WatcherRegistryAdapter(pub WatcherRegistry);
+impl paperpilot_mcp::server::WatcherRegistryTrait for WatcherRegistryAdapter {
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        self.0.start_with_naming(id, config, name_template, Arc::new(|_| {})).map_err(|e|e.to_string())
+    }
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
+        self.0
+            .start(id, config, Arc::new(|_| {}))
+            .map_err(|e| e.to_string())
+    }
+    fn remove_watcher(&self, id: &str) -> Result<(), String> {
+        self.0.remove(id).map_err(|e| e.to_string())
+    }
+    fn list_watchers(&self) -> Vec<WatchSnapshot> {
+        self.0.list()
+    }
+}
+
+pub async fn build_app(registry: WatcherRegistry) -> Router {
     // Restrict CORS: Allow only trusted local origins (Tauri desktop client, Vite dev server, localhost)
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::AllowOrigin::predicate(|origin, _| {
@@ -152,6 +186,7 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub))
         .route(
             "/api/v1/pdf/dedup-streams",
             post(handlers::pdf_dedup_streams),
@@ -234,8 +269,24 @@ pub async fn build_app() -> Router {
             post(handlers::workflow_run_json),
         )
         .route("/api/v1/workflow/run", post(handlers::workflow_run))
+        .route(
+            "/v1/automation/watchers",
+            post(handlers::start_watcher).get(handlers::list_watchers),
+        )
+        .route(
+            "/v1/automation/watchers/{id}",
+            delete(handlers::stop_watcher),
+        )
+        .route("/v1/automation/fill-batch", post(crate::batch_routes::fill))
+        .route("/v1/automation/run", post(handlers::run_recipe_once))
+        .route("/v1/automation/receipts", get(crate::receipt_routes::list))
+        .route(
+            "/v1/automation/receipts/{id}",
+            get(crate::receipt_routes::get),
+        )
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
+        .with_state(registry)
 }
 
 pub async fn start(
@@ -243,7 +294,8 @@ pub async fn start(
     bind: &str,
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> std::io::Result<()> {
-    let app = build_app().await;
+    let registry: WatcherRegistry = shared_watcher_manager();
+    let app = build_app(registry).await;
     let addr = format!("{}:{}", bind, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("Starting gateway server on {}", addr);

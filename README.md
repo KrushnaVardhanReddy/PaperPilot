@@ -3,6 +3,8 @@
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/KrushnaVardhanReddy/PaperPilot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/KrushnaVardhanReddy/PaperPilot)
+[![Security Policy](https://img.shields.io/badge/Security-Policy_Enforced-brightgreen.svg)](SECURITY.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Rust 1.75+](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 [![MCP Compatible](https://img.shields.io/badge/MCP-100%25_Compatible-purple.svg)](https://modelcontextprotocol.io)
@@ -130,7 +132,7 @@ Desktop (Tauri) · CLI · REST (Axum) · MCP (stdio) · WASM (browser / edge)
 ## Embed in your own site
 
 ```html
-<script src="https://cdn.usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
+<script src="https://usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
 <div id="paperpilot-widget"></div>
 ```
 
@@ -151,9 +153,20 @@ curl -X PUT http://localhost:7823/tika/text \
 
 Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
+## Security & Supply Chain Integrity
+
+PaperPilot processes sensitive, proprietary, and personal documents on-device without cloud dependencies. We maintain rigorous software supply chain and security compliance:
+
+- **OpenSSF Scorecard**: **8.2 / 10**
+- **Token Permissions**: 100% scoped to `permissions: read-all` (principle of least privilege).
+- **SAST & Secret Gate**: Continuous Semgrep OSS and Trivy security audits gating all commits.
+- **Dependency Hardening**: All third-party GitHub Actions pinned to immutable 40-character commit SHAs.
+- **Responsible Disclosure**: See [`SECURITY.md`](SECURITY.md) for our vulnerability disclosure policy and 48-hour response SLA.
+
 ---
 
 ## Contributing & Community
+
 
 Issues and PRs are welcome. Good first contributions: bug reports with a sample PDF, new tool requests, and docs fixes.
 

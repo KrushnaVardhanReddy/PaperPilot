@@ -53,7 +53,7 @@ async fn main() {
                 && let Ok(tool_params) =
                     serde_json::from_value::<CallToolRequestParams>(params.clone())
             {
-                match PaperPilotMcpServer::execute_call_tool(tool_params) {
+                match PaperPilotMcpServer::new(None).execute_call_tool(tool_params) {
                     Ok(CallToolResponse::Complete(res)) => {
                         let content = res
                             .content
@@ -73,28 +73,33 @@ async fn main() {
                                 "result": parsed
                             })
                         );
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(0);
                     }
                     Ok(_) => {
                         eprintln!("Tool call returned unexpected response type");
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(1);
                     }
                     Err(e) => {
                         eprintln!("Tool call error: {:?}", e);
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(1);
                     }
                 }
             }
         }
+        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
         std::process::exit(1);
     }
 
     // Let rmcp read stdin from the very first byte. Peeking here can consume
     // initialize (or part of it), breaking clients that send immediately.
-    let server_impl = PaperPilotMcpServer::new();
+    let server_impl = PaperPilotMcpServer::new(None);
     let transport = rmcp::transport::stdio();
     let running_service = rmcp::serve_server(server_impl, transport).await.unwrap();
     if let Err(e) = running_service.waiting().await {
         eprintln!("PAPERPILOT MCP QUIT: {:?}", e);
     }
+    paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
 }

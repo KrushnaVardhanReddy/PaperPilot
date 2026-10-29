@@ -1796,66 +1796,15 @@ pub fn workflow_presets() -> String {
     serde_json::to_string(&presets).unwrap_or_default()
 }
 
-fn execute_step_wasm(
-    bytes: &[u8],
-    step: &paperpilot_core::workflow::WorkflowStep,
-) -> OperationResult<Vec<u8>> {
-    match step.operation_id.as_str() {
-        "pdf_watermark" | "watermark" => {
-            let text = step
-                .params
-                .get("text")
-                .and_then(|v| v.as_str())
-                .unwrap_or("CONFIDENTIAL");
-            watermark(bytes, text, Some(45.0), Some(0.2))
-        }
-        "pdf_compress" | "compress" => {
-            let quality = step.params.get("quality").and_then(|v| {
-                v.as_str()
-                    .map(|s| s.to_string())
-                    .or_else(|| v.as_i64().map(|n| n.to_string()))
-            });
-            compress(bytes, quality.as_deref())
-        }
-        "pdf_flatten" | "flatten" => flatten(bytes),
-        "pdf_page_numbers" | "page_numbers" => {
-            let pos = step
-                .params
-                .get("position")
-                .and_then(|v| v.as_str())
-                .unwrap_or("bottom-right");
-            page_numbers(bytes, "Page {n} of {total}", pos)
-        }
-        "pdf_rotate" | "rotate" => {
-            let angle = step
-                .params
-                .get("angle")
-                .and_then(|v| v.as_i64())
-                .unwrap_or(90) as u16;
-            rotate(bytes, angle, "all")
-        }
-        "pdf_sanitize" | "sanitize" => {
-            let options_str =
-                serde_json::to_string(&step.params).unwrap_or_else(|_| "{}".to_string());
-            sanitize(bytes, &options_str)
-        }
-        _ => Ok(bytes.to_vec()),
-    }
-}
-
+/// Uses the same parser and conditional runner as native interfaces.
 pub fn workflow(input_bytes: &[u8], recipe_json: &str) -> OperationResult<Vec<u8>> {
     let workflow = if let Some(preset) = paperpilot_core::workflow::get_preset_by_id(recipe_json) {
         preset
     } else {
-        serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(recipe_json)
-            .map_err(|e| PdfError::ParseError(format!("Invalid workflow recipe JSON: {}", e)))?
+        paperpilot_core::workflow::parse_workflow(recipe_json)?
     };
-
-    let mut current = input_bytes.to_vec();
-    for step in &workflow.steps {
-        current = execute_step_wasm(&current, step)?;
-    }
-    Ok(current)
+    paperpilot_pdf::operations::workflow::run_workflow_bytes(input_bytes, &workflow)
+        .map(|(bytes, _)| bytes)
 }
 
 pub fn pdf_to_docx(input_bytes: &[u8]) -> OperationResult<Vec<u8>> {
@@ -3016,4 +2965,11 @@ pub fn pdf_dedup_streams(input_bytes: &[u8], options_json: &str) -> OperationRes
         serde_json::from_str(options_json)
             .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_dedup_streams::pdf_dedup_streams_bytes(input_bytes, &options)
+}
+
+pub fn pdf_to_epub(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_to_epub::PdfToEpubOptions =
+        serde_json::from_str(options_json)
+            .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(input_bytes, &options)
 }

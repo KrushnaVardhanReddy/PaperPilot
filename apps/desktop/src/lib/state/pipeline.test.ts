@@ -126,4 +126,35 @@ describe('PipelineState Persistence & Presets', () => {
     // Verify it was loaded
     expect(state.activeFlowId).toBe(importedFlow.id);
   });
+
+  it('setStepCondition updates the step condition', () => {
+    state.initStorage();
+    state.steps = [
+      { id: 's1', operationId: 'pdf_compress', label: 'C', icon: 'i', params: {} }
+    ];
+
+    state.setStepCondition('s1', { if_scanned: true }, 'skip');
+    expect(state.steps[0].condition).toEqual({ if_scanned: true });
+    expect(state.steps[0].on_no_match).toBe('skip');
+
+    state.removeStepCondition('s1');
+    expect(state.steps[0].condition).toBeUndefined();
+    expect(state.steps[0].on_no_match).toBeUndefined();
+  });
+
+  it('exportFlowJson includes condition block', () => {
+    state.initStorage();
+    state.steps = [
+      { id: 's1', operationId: 'pdf_compress', label: 'C', icon: 'i', params: {}, condition: { if_scanned: true }, on_no_match: 'skip' }
+    ];
+
+    const myFlow = state.saveCurrentFlow('Condition Test');
+    const jsonStr = state.exportFlowJson(myFlow.id);
+    const parsed = JSON.parse(jsonStr);
+
+    expect(parsed.steps[0].condition).toBeDefined();
+    expect(parsed.steps[0].condition.if_scanned).toBe(true);
+    expect(parsed.steps[0].on_no_match).toBe('skip');
+  });
+
 });

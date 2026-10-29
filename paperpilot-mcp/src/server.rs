@@ -32,15 +32,61 @@ use std::sync::Arc;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 
+use paperpilot_pdf::operations::watch::{
+    WatchConfig, WatchSnapshot, WatcherManager, shared_watcher_manager,
+};
+pub trait WatcherRegistryTrait: Send + Sync {
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String>;
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        if name_template.is_some() { return Err("This registry does not support custom naming".into()); }
+        self.add_watcher(id, config)
+    }
+    fn remove_watcher(&self, id: &str) -> Result<(), String>;
+    fn list_watchers(&self) -> Vec<WatchSnapshot>;
+}
+impl WatcherRegistryTrait for WatcherManager {
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
+        self.start(id, config, Arc::new(|_| {}))
+            .map_err(|e| e.to_string())
+    }
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        self.start_with_naming(id, config, name_template, Arc::new(|_| {})).map_err(|e|e.to_string())
+    }
+    fn remove_watcher(&self, id: &str) -> Result<(), String> {
+        self.remove(id).map_err(|e| e.to_string())
+    }
+    fn list_watchers(&self) -> Vec<WatchSnapshot> {
+        self.list()
+    }
+}
+
 #[derive(Clone, Default)]
-pub struct PaperPilotMcpServer;
+pub struct PaperPilotMcpServer {
+    pub watcher_registry: Option<std::sync::Arc<dyn WatcherRegistryTrait>>,
+}
 
 impl PaperPilotMcpServer {
-    pub fn new() -> Self {
-        Self
+    pub fn new(registry: Option<std::sync::Arc<dyn WatcherRegistryTrait>>) -> Self {
+        Self {
+            watcher_registry: registry,
+        }
     }
-    pub fn execute_list_tools() -> Result<ListToolsResult, ErrorData> {
+    pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
         let mut tools = Vec::new();
+
+        tools.push(Tool::new("batch_fill".to_string(),
+            "Fill a local AcroForm PDF from a CSV/JSON path or inline JSON records; returns per-row results and a persisted receipt. Flattens by default and never overwrites outputs.".to_string(),
+            serde_json::json!({"type":"object", "additionalProperties":false,
+                "required":["template","output_dir"],
+                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
+                "properties": {
+                    "template":{"type":"string"}, "output_dir":{"type":"string"},
+                    "data":{"type":"string","description":"Local .csv or .json data path"},
+                    "records":{"type":"array","items":{"type":"object"}},
+                    "name_template":{"type":"string","default":"{index:04}.pdf"},
+                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
+                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
+                }}).as_object().unwrap().clone()));
 
         let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
             let schema = serde_json::json!({
@@ -84,6 +130,66 @@ impl PaperPilotMcpServer {
             "json_to_pdf",
             "Synthesizes a publication-ready PDF document from structured JSON text and embedded images",
         );
+        tools.push(Tool::new(
+            "watcher_start".to_string(),
+            "Start a headless hot folder watcher daemon on a local directory. When a PDF is dropped into the watched directory it automatically runs the specified recipe.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["dir", "recipe"],
+                "properties": {
+                  "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
+                  "recipe": { "type": "string", "description": "Local .ppflow recipe path, preset ID, or serialized workflow" },
+                  "output_dir": { "type": "string", "description": "Output directory; defaults to a separate processed subfolder" },
+                  "name_template": { "type": "string", "description": "Output basename template; input, UTC date, SHA-256 and index tokens" },
+                  "settle_delay_ms": { "type": "integer", "default": 500, "minimum": 50, "maximum": 60000 }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+        tools.push(Tool::new(
+            "watcher_stop".to_string(),
+            "Stop a running hot folder watcher by its ID.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["watcher_id"],
+                "properties": {
+                  "watcher_id": { "type": "string" }
+                }
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        ));
+        tools.push(Tool::new(
+            "watcher_list".to_string(),
+            "List all currently active hot folder watchers with their status and statistics."
+                .to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": [],
+                "properties": {}
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        ));
+        for name in ["execution_receipt_list", "execution_receipt_get"] {
+            tools.push(Tool::new(name, "Query durable local workflow, batch or watcher execution receipts; no PDF contents or recipe parameters are stored", serde_json::json!({"type":"object","properties":{"directory":{"type":"string"},"receipt_id":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":1000,"default":50}},"required":if name.ends_with("_get") {vec!["directory","receipt_id"]} else {vec!["directory"]}}).as_object().unwrap().clone()));
+        }
+        tools.push(Tool::new(
+            "recipe_run".to_string(),
+            "Execute a .ppflow recipe against a local PDF file immediately (one-shot, no daemon).".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["input", "recipe"],
+                "properties": {
+                  "input": { "type": "string", "description": "Absolute path to input PDF" },
+                  "recipe": { "type": "string", "description": "Absolute path to .ppflow TOML recipe file" },
+                  "output": { "type": "string", "description": "Output file, or output directory with name_template" },
+                  "name_template": { "type": "string", "description": "Optional dynamic output basename; requires explicit output directory" }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+
         add_styled_tool(
             &mut tools,
             "pdf_convert_markdown",
@@ -130,8 +236,7 @@ impl PaperPilotMcpServer {
         schema_rb.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
-                serde_json::Value::String("input_a".to_string()),
-                serde_json::Value::String("input_b".to_string()),
+                serde_json::Value::String("input".to_string()),
                 serde_json::Value::String("output".to_string()),
             ]),
         );
@@ -3335,6 +3440,52 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_dedup_streams.input_schema = Arc::new(schema_pdf_dedup_streams);
         tools.push(tool_pdf_dedup_streams);
+        let mut schema_pdf_to_epub = serde_json::Map::new();
+        schema_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_to_epub = serde_json::Map::new();
+
+        let mut prop_input_pdf_to_epub = serde_json::Map::new();
+        prop_input_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_to_epub.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_to_epub),
+        );
+
+        let mut prop_output_pdf_to_epub = serde_json::Map::new();
+        prop_output_pdf_to_epub.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_to_epub.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_to_epub),
+        );
+
+        schema_pdf_to_epub.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_to_epub),
+        );
+        schema_pdf_to_epub.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("output".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_to_epub = Tool::default();
+        tool_pdf_to_epub.name = "pdf_to_epub".into();
+        tool_pdf_to_epub.description = Some(
+            "PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks [Input: .PDF | Output: ..EPUB]".into(),
+        );
+        tool_pdf_to_epub.input_schema = Arc::new(schema_pdf_to_epub);
+        tools.push(tool_pdf_to_epub);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -3838,7 +3989,7 @@ impl PaperPilotMcpServer {
         schema_compare.insert(
             "required".to_string(),
             serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
+                serde_json::Value::String("input_a".to_string()),
                 serde_json::Value::String("input_b".to_string()),
             ]),
         );
@@ -3846,7 +3997,7 @@ impl PaperPilotMcpServer {
         let mut tool_compare = Tool::default();
         tool_compare.name = "pdf_compare".into();
         tool_compare.description =
-            Some("Compares two PDFs. [Input: 2 PDFs | Output: PDF (.pdf)]".into());
+            Some("Compares two PDFs. [Input: 2 PDFs | Output: JSON report (.json)]".into());
         tool_compare.input_schema = Arc::new(schema_compare);
         tools.push(tool_compare);
 
@@ -4238,7 +4389,7 @@ impl PaperPilotMcpServer {
             schema_lw.as_object().unwrap().clone(),
         ));
 
-        let schema_dw = serde_json::json!({
+        let mut schema_dw = serde_json::json!({
             "type": "object",
             "properties": {
                 "input": {
@@ -4255,11 +4406,12 @@ impl PaperPilotMcpServer {
                 },
                 "recipe": {
                     "type": "string",
-                    "description": "Path to custom workflow recipe JSON file or raw recipe JSON string"
+                    "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML"
                 }
             },
             "required": ["input", "output"]
         });
+        schema_dw["properties"]["name_template"] = serde_json::json!({"type":"string","description":"Optional basename template; output is then a directory"});
         tools.push(Tool::new(
             "document_workflow".to_string(),
             "Execute a declarative multi-step document workflow pipeline".to_string(),
@@ -4273,9 +4425,25 @@ impl PaperPilotMcpServer {
     }
 
     pub fn execute_call_tool(
+        &self,
         request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
         let args = request.arguments.clone().unwrap_or_default();
+        if request.name == "batch_fill" {
+            let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
+                serde_json::from_value(serde_json::Value::Object(args.clone()))
+                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            let receipt = input.execute().map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            let content = vec![ContentBlock::text(serde_json::to_string(&receipt)
+                .map_err(|e| ErrorData::internal_error(e.to_string(), None))?)];
+            let result = if receipt.success { CallToolResult::success(content) }
+                else { CallToolResult::error(content) };
+            return Ok(CallToolResponse::Complete(result));
+        }
+
+        let name_template = if matches!(request.name.as_ref(), "watcher_start" | "recipe_run" | "document_workflow" | "pdf_document_workflow") {
+            args.get("name_template").map(|value| value.as_str().ok_or_else(|| ErrorData::invalid_params("name_template must be a string", None))).transpose()?
+        } else { None };
         let get_string = |key: &str| -> Result<String, ErrorData> {
             args.get(key)
                 .and_then(|v| v.as_str())
@@ -4394,6 +4562,138 @@ impl PaperPilotMcpServer {
             Ok(pages)
         };
 
+        if matches!(
+            request.name.as_ref(),
+            "watcher_start" | "watcher_stop" | "watcher_list"
+        ) {
+            let default_registry = shared_watcher_manager();
+            let registry = self
+                .watcher_registry
+                .as_deref()
+                .unwrap_or(default_registry.as_ref());
+            let response = match request.name.as_ref() {
+                "watcher_start" => {
+                    let id = format!("watcher_{}", uuid::Uuid::new_v4().simple());
+                    let settle = args
+                        .get("settle_delay_ms")
+                        .map(|v| {
+                            v.as_u64().ok_or_else(|| {
+                                ErrorData::invalid_params(
+                                    "settle_delay_ms must be an integer",
+                                    None,
+                                )
+                            })
+                        })
+                        .transpose()?
+                        .unwrap_or(500);
+                    let output_dir = match args.get("output_dir") {
+                        None | Some(serde_json::Value::Null) => None,
+                        Some(serde_json::Value::String(path)) => Some(PathBuf::from(path)),
+                        _ => {
+                            return Err(ErrorData::invalid_params(
+                                "output_dir must be a path string",
+                                None,
+                            ));
+                        }
+                    };
+                    let config = WatchConfig {
+                        directory: get_string("dir")?.into(),
+                        recipe: get_string("recipe")?,
+                        output_dir,
+                        error_dir: None,
+                        move_original: None,
+                        once: false,
+                        settle_delay_ms: settle,
+                    };
+                    let snapshot = registry
+                        .add_named_watcher(id.clone(), config, name_template.map(str::to_owned))
+                        .map_err(|e| ErrorData::invalid_params(e, None))?;
+                    serde_json::json!({"watcher_id":id,"status":snapshot.status,"watcher":snapshot})
+                }
+                "watcher_stop" => {
+                    registry
+                        .remove_watcher(&get_string("watcher_id")?)
+                        .map_err(|e| ErrorData::invalid_params(e, None))?;
+                    serde_json::json!({"success":true})
+                }
+                _ => {
+                    serde_json::json!({"watchers":registry.list_watchers().into_iter().map(|s| serde_json::json!({"watcher_id":s.id,"status":s.status,"dir":s.directory,"recipe":s.recipe_name,"succeeded":s.succeeded,"failed":s.failed,"total_processed":s.succeeded+s.failed,"last_processed_file":s.last_processed_file,"last_processed_at":s.last_processed_at,"last_error":s.last_error,"last_output":s.last_output,"last_receipt":s.last_receipt})).collect::<Vec<_>>()})
+                }
+            };
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(response.to_string()),
+            ])));
+        }
+
+        if matches!(
+            request.name.as_ref(),
+            "execution_receipt_list" | "execution_receipt_get"
+        ) {
+            let dir = PathBuf::from(get_string("directory")?);
+            let result = if request.name.ends_with("_get") {
+                paperpilot_pdf::operations::receipts::get(&dir, &get_string("receipt_id")?)
+                    .map(|v| serde_json::json!(v))
+            } else {
+                let limit = args
+                    .get("limit")
+                    .map(|v| {
+                        v.as_u64().ok_or_else(|| {
+                            ErrorData::invalid_params("limit must be an integer", None)
+                        })
+                    })
+                    .transpose()?
+                    .unwrap_or(50);
+                let limit = usize::try_from(limit)
+                    .map_err(|_| ErrorData::invalid_params("limit out of range", None))?;
+                paperpilot_pdf::operations::receipts::list(&dir, limit)
+                    .map(|v| serde_json::json!(v))
+            }
+            .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(result.to_string()),
+            ])));
+        }
+        if request.name == "recipe_run" {
+            let input = get_string("input")?;
+            let recipe = get_string("recipe")?;
+            let output = if name_template.is_some() { get_string("output")? }
+                else { get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf") };
+
+            let recipe_str = std::fs::read_to_string(&recipe).unwrap_or(recipe.clone());
+            let workflow =
+                paperpilot_core::workflow::parse_workflow(&recipe_str).or_else(|_| {
+                    paperpilot_core::workflow::get_preset_by_id(&recipe_str).ok_or_else(|| {
+                        ErrorData::new(
+                            rmcp::model::ErrorCode(400),
+                            String::from("Preset not found"),
+                            None,
+                        )
+                    })
+                })?;
+
+            let run = paperpilot_pdf::operations::receipts::run_to_path_with_naming(
+                std::path::Path::new(&input),
+                std::path::Path::new(&output),
+                &workflow,
+                name_template,
+            )
+            .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+            run.outcome()
+                .map_err(|e| ErrorData::internal_error(e.to_string(), Some(run.report_json())))?;
+            let report = run.report_json();
+
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(
+                    serde_json::to_string(&serde_json::json!({
+                        "success": true,
+                        "output": run.receipt.output,
+                        "receipt": report
+                    }))
+                    .unwrap(),
+                ),
+            ])));
+        }
+
         let result = match request.name.as_ref() {
             "list_workflows" => {
                 let presets = paperpilot_core::workflow::get_default_presets();
@@ -4411,11 +4711,16 @@ impl PaperPilotMcpServer {
             "document_workflow" | "pdf_document_workflow" => {
                 let input_path = get_string("input")?;
                 let output_path = get_string("output")?;
-                ensure_parent_dir(&output_path)?;
 
                 let preset_opt = args.get("preset").and_then(|v| v.as_str());
                 let recipe_opt = args.get("recipe").and_then(|v| v.as_str());
 
+                if preset_opt.is_some() == recipe_opt.is_some() {
+                    return Err(ErrorData::invalid_params(
+                        "Specify exactly one of preset or recipe",
+                        None,
+                    ));
+                }
                 let workflow = if let Some(preset_name) = preset_opt {
                     paperpilot_core::workflow::get_preset_by_id(preset_name).ok_or_else(|| {
                         ErrorData::invalid_params(
@@ -4434,13 +4739,8 @@ impl PaperPilotMcpServer {
                     } else {
                         recipe_str.to_string()
                     };
-                    serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&content)
-                        .map_err(|e| {
-                            ErrorData::invalid_params(
-                                format!("Invalid workflow recipe JSON: {}", e),
-                                None,
-                            )
-                        })?
+                    paperpilot_core::workflow::parse_workflow(&content)
+                        .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?
                 } else {
                     return Err(ErrorData::invalid_params(
                         "Must specify either 'preset' or 'recipe'",
@@ -4448,28 +4748,21 @@ impl PaperPilotMcpServer {
                     ));
                 };
 
-                let input_bytes = std::fs::read(&input_path).map_err(|e| {
-                    ErrorData::invalid_params(format!("Failed to read input PDF: {}", e), None)
-                })?;
-
-                let (out_bytes, report) = paperpilot_pdf::operations::workflow::run_workflow_bytes(
-                    &input_bytes,
+                let run = paperpilot_pdf::operations::receipts::run_to_path_with_naming(
+                    std::path::Path::new(&input_path),
+                    std::path::Path::new(&output_path),
                     &workflow,
+                    name_template,
                 )
                 .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-
-                std::fs::write(&output_path, out_bytes).map_err(|e| {
-                    ErrorData::internal_error(format!("Failed to write output PDF: {}", e), None)
+                run.outcome().map_err(|e| {
+                    ErrorData::internal_error(e.to_string(), Some(run.report_json()))
                 })?;
-
-                let report_json = serde_json::to_value(&report).map_err(|e| {
-                    ErrorData::internal_error(format!("Failed to serialize report: {}", e), None)
-                })?;
-
+                let report_json = run.report_json();
                 Ok(OperationResult {
                     success: true,
-                    message: format!("Workflow '{}' executed successfully.", report.workflow_name),
-                    output_path: Some(output_path),
+                    message: format!("Workflow '{}' executed successfully.", workflow.name),
+                    output_path: run.receipt.output.as_ref().map(|p|p.to_string_lossy().into_owned()),
                     diff_detected: None,
                     data: Some(report_json),
                 })
@@ -6513,6 +6806,31 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_to_epub" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_to_epub::PdfToEpubOptions::default();
+                let result = paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "PDF to EPUB 3.0 executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -7006,7 +7324,7 @@ impl ServerHandler for PaperPilotMcpServer {
         _request: Option<rmcp::model::PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, rmcp::ErrorData>> + MaybeSendFuture + '_ {
-        async move { Self::execute_list_tools() }
+        async move { self.execute_list_tools() }
     }
 
     fn call_tool(
@@ -7015,11 +7333,30 @@ impl ServerHandler for PaperPilotMcpServer {
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<CallToolResponse, rmcp::ErrorData>> + MaybeSendFuture + '_
     {
-        async move { Self::execute_call_tool(request) }
+        async move { self.execute_call_tool(request) }
     }
 }
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn workflow_tool_schemas_require_declared_handler_inputs() {
+        let tools = PaperPilotMcpServer::new(None)
+            .execute_list_tools()
+            .unwrap()
+            .tools;
+        for (name, expected) in [
+            ("pdf_remove_blank", vec!["input", "output"]),
+            ("pdf_compare", vec!["input_a", "input_b"]),
+        ] {
+            let tool = tools.iter().find(|tool| tool.name == name).unwrap();
+            let schema = tool.input_schema.as_ref();
+            assert_eq!(schema["required"], serde_json::json!(expected));
+            for key in expected {
+                assert!(schema["properties"].get(key).is_some(), "{name}: {key}");
+            }
+        }
+    }
 
     #[test]
     fn test_pdf_render_tool_invalid_page() {
@@ -7037,7 +7374,7 @@ mod tests {
         args.insert("page".to_string(), serde_json::json!(999));
         req.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(req);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(req);
         assert!(
             res.is_err()
                 || (res.is_ok()
@@ -7052,15 +7389,17 @@ mod tests {
 
     #[test]
     fn test_execute_list_tools() {
-        let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 79);
+        let res = PaperPilotMcpServer::new(None).execute_list_tools().unwrap();
+        assert_eq!(res.tools.len(), 84);
     }
 
     #[test]
     fn test_mcp_list_workflows() {
         let mut request = CallToolRequestParams::default();
         request.name = "list_workflows".into();
-        let res = PaperPilotMcpServer::execute_call_tool(request).unwrap();
+        let res = PaperPilotMcpServer::new(None)
+            .execute_call_tool(request)
+            .unwrap();
         if let rmcp::model::CallToolResponse::Complete(complete) = res {
             let block = complete.content.first().unwrap();
             if let rmcp::model::ContentBlock::Text(tb) = block {
@@ -7083,7 +7422,7 @@ mod tests {
             serde_json::json!("preset-legal-discovery"),
         );
         request.arguments = Some(args);
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7092,7 +7431,7 @@ mod tests {
         let mut request = CallToolRequestParams::default();
         request.name = "unknown_tool".into();
         request.arguments = None;
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7115,7 +7454,7 @@ mod tests {
         request.arguments = Some(args);
 
         // It will fail execution because dummy files don't exist, but it should successfully route
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err()); // Due to file not found, meaning it correctly hit the logic
     }
 
@@ -7134,7 +7473,7 @@ mod tests {
         request.name = "pdf_split".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err()); // Due to file not found
     }
 
@@ -7153,7 +7492,7 @@ mod tests {
         request.name = "pdf_extract_text".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7172,7 +7511,7 @@ mod tests {
         request.name = "pdf_metadata".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7195,7 +7534,7 @@ mod tests {
         request.name = "pdf_extract_pages".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
         if let Err(e) = res {
             assert_eq!(e.code, rmcp::model::ErrorCode(-32602)); // invalid params
@@ -7217,7 +7556,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7234,7 +7573,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7254,7 +7593,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7271,7 +7610,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7287,7 +7626,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7303,7 +7642,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 }
@@ -7354,7 +7693,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
 
         if output_path.exists() {
@@ -7378,7 +7717,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
     }
 
@@ -7403,7 +7742,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         let _ = result;
 
         if output_path.exists() {
@@ -7436,7 +7775,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
 
         if output_path.exists() {

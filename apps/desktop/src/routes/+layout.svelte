@@ -64,6 +64,10 @@
           window.dispatchEvent(new CustomEvent('paperpilot:save-annotations'));
         });
 
+        let unlistenCloseAll = await listen('menu-close-all', () => {
+          appState.clearAllDocuments();
+        });
+
         unlistenSettings = await listen('menu-settings', () => {
           appState.setActiveTab('settings');
         });

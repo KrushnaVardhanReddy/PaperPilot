@@ -1,10 +1,11 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import WatchedFoldersPanel from './WatchedFoldersPanel.svelte';
   import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
   import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
-  type SettingsCategory = 'ai' | 'packs' | 'ocr' | 'general' | 'developer';
+  type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer';
   let activeCategory = $state<SettingsCategory>('ai');
 
   let outputDir = $state('');
@@ -15,6 +16,7 @@
   }
 
   const categories = [
+    { id: 'automations' as const, label: 'Watched Folders', icon: '📁', description: 'Local document automations' },
     { id: 'ai' as const, label: 'AI Engine & Models', icon: '🤖', description: 'Local LLMs, runners & BYOK' },
     { id: 'packs' as const, label: 'Feature Packs', icon: '📦', description: 'Modular extensions & plugins' },
     { id: 'ocr' as const, label: 'OCR & Vision Models', icon: '👁️', description: 'On-device recognition engines' },
@@ -61,7 +63,9 @@
 
   <!-- Right Full-Width Settings Canvas -->
   <main class="settings-main-canvas">
-    {#if activeCategory === 'ai'}
+    {#if activeCategory === 'automations'}
+      <WatchedFoldersPanel />
+    {:else if activeCategory === 'ai'}
       <div class="category-section active-section">
         <div class="section-title-wrap">
           <div class="icon-bubble">🤖</div>

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { pipelineState } from '$lib/state/pipeline.svelte';
 import PipelineCanvas from '../pipeline/PipelineCanvas.svelte';
 
@@ -9,7 +9,7 @@ describe('PipelineCanvas', () => {
     // Mock matchMedia for SvelteFlow
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
-      value: vi.fn().mockImplementation(query => ({
+      value: vi.fn().mockImplementation((query: string) => ({
         matches: false,
         media: query,
         onchange: null,
@@ -98,4 +98,19 @@ describe('PipelineCanvas', () => {
     expect(pipelineState.steps[0].position?.x).toBe(320); // 60 + 1 * 260
     expect(pipelineState.steps[1].position?.x).toBe(580); // 60 + 2 * 260
   });
+
+  it('renders condition badge when condition is present', async () => {
+    pipelineState.addStep('pdf_compress');
+    pipelineState.addStep('pdf_watermark');
+
+    // add condition to second step
+    const step2 = pipelineState.steps[1];
+    pipelineState.setStepCondition(step2.id, { if_scanned: true }, 'skip');
+
+    render(PipelineCanvas);
+
+    // Check for node condition badge
+    expect(screen.getByText(/IF: is scanned/)).toBeTruthy();
+  });
+
 });

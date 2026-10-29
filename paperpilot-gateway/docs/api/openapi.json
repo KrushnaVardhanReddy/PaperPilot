@@ -278,6 +278,9 @@
         ],
         "type": "object"
       },
+      "PdfDedupStreamsJsonRequest": {
+        "type": "object"
+      },
       "PdfInvertColorsJsonRequest": {
         "properties": {
           "input": {
@@ -401,6 +404,44 @@
             "example": false,
             "type": [
               "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      },
+      "PdfToEpubJsonRequest": {
+        "properties": {
+          "author": {
+            "example": "Author Name",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input": {
+            "example": "document.pdf",
+            "type": "string"
+          },
+          "language": {
+            "example": "en",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output": {
+            "example": "document.epub",
+            "type": "string"
+          },
+          "title": {
+            "example": "Document Title",
+            "type": [
+              "string",
               "null"
             ]
           }
@@ -968,6 +1009,44 @@
           }
         },
         "summary": "Convert a PDF to/from another format (docx, images, html, xlsx, etc.) [Input: .pdf | Output: .docx/.png/.html/.xlsx]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/dedup-streams": {
+      "post": {
+        "operationId": "pdf_dedup_streams",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfDedupStreamsJsonRequest"
+              }
+            }
+          },
+          "description": "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Lossless Stream Deduplication completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Lossless Stream Deduplication [Lossless hash-based indirect object stream deduplication & CMYK-safe image compression] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
@@ -1626,6 +1705,44 @@
           }
         },
         "summary": "Cryptographic Timestamp TSA [Apply RFC 3161 cryptographically verified TSA timestamp tokens.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/to-epub": {
+      "post": {
+        "operationId": "pdf_to_epub",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfToEpubJsonRequest"
+              }
+            }
+          },
+          "description": "PDF to EPUB 3.0 conversion parameters",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "PDF to EPUB 3.0 completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "PDF to EPUB 3.0 [Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks] [Input: .pdf | Output: .epub]",
         "tags": [
           "PDF Operations"
         ]
