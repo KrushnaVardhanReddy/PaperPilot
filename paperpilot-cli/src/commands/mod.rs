@@ -38,7 +38,6 @@ pub mod pii;
 pub mod sanitize;
 pub mod table;
 pub mod validate;
-pub mod watch;
 pub mod workflow;
 
 use crate::cli::Commands;

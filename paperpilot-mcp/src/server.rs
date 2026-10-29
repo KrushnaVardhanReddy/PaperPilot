@@ -32,14 +32,22 @@ use std::sync::Arc;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 
+pub trait WatcherRegistryTrait: Send + Sync {
+    fn add_watcher(&self, id: String, dir: String, recipe: String, child: Option<std::process::Child>);
+    fn remove_watcher(&self, id: &str) -> bool;
+    fn list_watchers(&self) -> Vec<serde_json::Value>;
+}
+
 #[derive(Clone, Default)]
-pub struct PaperPilotMcpServer;
+pub struct PaperPilotMcpServer {
+    pub watcher_registry: Option<std::sync::Arc<dyn WatcherRegistryTrait>>,
+}
 
 impl PaperPilotMcpServer {
-    pub fn new() -> Self {
-        Self
+    pub fn new(registry: Option<std::sync::Arc<dyn WatcherRegistryTrait>>) -> Self {
+        Self { watcher_registry: registry }
     }
-    pub fn execute_list_tools() -> Result<ListToolsResult, ErrorData> {
+    pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
         let mut tools = Vec::new();
 
         let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
@@ -84,6 +92,54 @@ impl PaperPilotMcpServer {
             "json_to_pdf",
             "Synthesizes a publication-ready PDF document from structured JSON text and embedded images",
         );
+        tools.push(Tool::new(
+            "watcher_start".to_string(),
+            "Start a headless hot folder watcher daemon on a local directory. When a PDF is dropped into the watched directory it automatically runs the specified recipe.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["dir", "recipe"],
+                "properties": {
+                  "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
+                  "recipe": { "type": "string", "description": "Absolute path to a .ppflow TOML recipe file" },
+                  "output_dir": { "type": "string", "description": "Directory to write processed PDFs (optional)" },
+                  "settle_delay_ms": { "type": "integer", "default": 500 }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+        tools.push(Tool::new(
+            "watcher_stop".to_string(),
+            "Stop a running hot folder watcher by its ID.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["watcher_id"],
+                "properties": {
+                  "watcher_id": { "type": "string" }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+        tools.push(Tool::new(
+            "watcher_list".to_string(),
+            "List all currently active hot folder watchers with their status and statistics.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": [],
+                "properties": {}
+            }).as_object().unwrap().clone(),
+        ));
+        tools.push(Tool::new(
+            "recipe_run".to_string(),
+            "Execute a .ppflow recipe against a local PDF file immediately (one-shot, no daemon).".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["input", "recipe"],
+                "properties": {
+                  "input": { "type": "string", "description": "Absolute path to input PDF" },
+                  "recipe": { "type": "string", "description": "Absolute path to .ppflow TOML recipe file" },
+                  "output": { "type": "string", "description": "Absolute path for output PDF" }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+
         add_styled_tool(
             &mut tools,
             "pdf_convert_markdown",
@@ -4318,6 +4374,7 @@ impl PaperPilotMcpServer {
     }
 
     pub fn execute_call_tool(
+        &self,
         request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
         let args = request.arguments.clone().unwrap_or_default();
@@ -4438,6 +4495,73 @@ impl PaperPilotMcpServer {
             }
             Ok(pages)
         };
+
+
+        if request.name == "watcher_start" {
+            let dir = get_string("dir")?;
+            let recipe = get_string("recipe")?;
+            let id = format!("watcher_{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+
+            if let Some(reg) = &self.watcher_registry {
+                reg.add_watcher(id.clone(), dir.clone(), recipe.clone(), None);
+            }
+
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(serde_json::to_string(&serde_json::json!({
+                    "watcher_id": id,
+                    "status": "watching",
+                })).unwrap())
+            ])));
+        }
+
+        if request.name == "watcher_stop" {
+            let id = get_string("watcher_id")?;
+            let success = if let Some(reg) = &self.watcher_registry {
+                reg.remove_watcher(&id)
+            } else { false };
+
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(serde_json::to_string(&serde_json::json!({
+                    "success": success
+                })).unwrap())
+            ])));
+        }
+
+        if request.name == "watcher_list" {
+            let watchers = if let Some(reg) = &self.watcher_registry {
+                reg.list_watchers()
+            } else { vec![] };
+
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(serde_json::to_string(&serde_json::json!({
+                    "watchers": watchers
+                })).unwrap())
+            ])));
+        }
+
+        if request.name == "recipe_run" {
+            let input = get_string("input")?;
+            let recipe = get_string("recipe")?;
+            let output = get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf");
+
+            let bytes = std::fs::read(&input).map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
+            let recipe_str = std::fs::read_to_string(&recipe).unwrap_or(recipe.clone());
+            let workflow = paperpilot_core::workflow::parse_workflow(&recipe_str)
+                .or_else(|_| paperpilot_core::workflow::get_preset_by_id(&recipe_str).ok_or_else(|| ErrorData::new(rmcp::model::ErrorCode(400), String::from("Preset not found"), None)))?;
+
+            let (out_bytes, report) = paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(&bytes, &workflow)
+                .map_err(|f| ErrorData::new(rmcp::model::ErrorCode(500), f.cause.to_string(), None))?;
+
+            std::fs::write(&output, out_bytes).map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
+
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(serde_json::to_string(&serde_json::json!({
+                    "success": true,
+                    "output": output,
+                    "receipt": report
+                })).unwrap())
+            ])));
+        }
 
         let result = match request.name.as_ref() {
             "list_workflows" => {
@@ -7083,7 +7207,7 @@ impl ServerHandler for PaperPilotMcpServer {
         _request: Option<rmcp::model::PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, rmcp::ErrorData>> + MaybeSendFuture + '_ {
-        async move { Self::execute_list_tools() }
+        async move { self.execute_list_tools() }
     }
 
     fn call_tool(
@@ -7092,7 +7216,7 @@ impl ServerHandler for PaperPilotMcpServer {
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<CallToolResponse, rmcp::ErrorData>> + MaybeSendFuture + '_
     {
-        async move { Self::execute_call_tool(request) }
+        async move { self.execute_call_tool(request) }
     }
 }
 #[cfg(test)]
@@ -7100,7 +7224,7 @@ mod tests {
 
     #[test]
     fn workflow_tool_schemas_require_declared_handler_inputs() {
-        let tools = PaperPilotMcpServer::execute_list_tools().unwrap().tools;
+        let tools = PaperPilotMcpServer::new(None).execute_list_tools().unwrap().tools;
         for (name, expected) in [
             ("pdf_remove_blank", vec!["input", "output"]),
             ("pdf_compare", vec!["input_a", "input_b"]),
@@ -7130,7 +7254,7 @@ mod tests {
         args.insert("page".to_string(), serde_json::json!(999));
         req.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(req);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(req);
         assert!(
             res.is_err()
                 || (res.is_ok()
@@ -7145,15 +7269,15 @@ mod tests {
 
     #[test]
     fn test_execute_list_tools() {
-        let res = PaperPilotMcpServer::execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 79);
+        let res = PaperPilotMcpServer::new(None).execute_list_tools().unwrap();
+        assert_eq!(res.tools.len(), 84);
     }
 
     #[test]
     fn test_mcp_list_workflows() {
         let mut request = CallToolRequestParams::default();
         request.name = "list_workflows".into();
-        let res = PaperPilotMcpServer::execute_call_tool(request).unwrap();
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request).unwrap();
         if let rmcp::model::CallToolResponse::Complete(complete) = res {
             let block = complete.content.first().unwrap();
             if let rmcp::model::ContentBlock::Text(tb) = block {
@@ -7176,7 +7300,7 @@ mod tests {
             serde_json::json!("preset-legal-discovery"),
         );
         request.arguments = Some(args);
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7185,7 +7309,7 @@ mod tests {
         let mut request = CallToolRequestParams::default();
         request.name = "unknown_tool".into();
         request.arguments = None;
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7208,7 +7332,7 @@ mod tests {
         request.arguments = Some(args);
 
         // It will fail execution because dummy files don't exist, but it should successfully route
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err()); // Due to file not found, meaning it correctly hit the logic
     }
 
@@ -7227,7 +7351,7 @@ mod tests {
         request.name = "pdf_split".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err()); // Due to file not found
     }
 
@@ -7246,7 +7370,7 @@ mod tests {
         request.name = "pdf_extract_text".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7265,7 +7389,7 @@ mod tests {
         request.name = "pdf_metadata".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
     }
 
@@ -7288,7 +7412,7 @@ mod tests {
         request.name = "pdf_extract_pages".into();
         request.arguments = Some(args);
 
-        let res = PaperPilotMcpServer::execute_call_tool(request);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
         if let Err(e) = res {
             assert_eq!(e.code, rmcp::model::ErrorCode(-32602)); // invalid params
@@ -7310,7 +7434,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7327,7 +7451,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7347,7 +7471,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7364,7 +7488,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7380,7 +7504,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 
@@ -7396,7 +7520,7 @@ mod tests {
             .unwrap()
             .clone(),
         );
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
     }
 }
@@ -7447,7 +7571,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
 
         if output_path.exists() {
@@ -7471,7 +7595,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
     }
 
@@ -7496,7 +7620,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         let _ = result;
 
         if output_path.exists() {
@@ -7529,7 +7653,7 @@ mod tests_added {
             .clone(),
         );
 
-        let result = PaperPilotMcpServer::execute_call_tool(request);
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
 
         if output_path.exists() {

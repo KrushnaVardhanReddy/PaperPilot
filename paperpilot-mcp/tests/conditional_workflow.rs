@@ -21,7 +21,7 @@ fn mcp_executes_toml_recipe_and_reports_skipped_stage() {
     let output = dir.path().join("out.pdf");
     fs::write(&input, pdf(&[Text])).unwrap();
     let recipe = "name='MCP'\n[[stage]]\nid='scan'\nop='ocr'\ncondition={if_scanned=true}\n[[stage]]\nid='rotate'\nop='rotate'";
-    let result = PaperPilotMcpServer::execute_call_tool(request(
+    let result = PaperPilotMcpServer::new(None).execute_call_tool(request(
         json!({"input":input,"output":output,"recipe":recipe}),
     ))
     .unwrap();
@@ -48,7 +48,7 @@ fn mcp_failure_has_report_and_preserves_existing_output() {
     let original = pdf(&[Image]);
     fs::write(&output, &original).unwrap();
     let recipe = "name='MCP failure'\n[[stage]]\nid='bad'\nop='redact'";
-    let error = PaperPilotMcpServer::execute_call_tool(request(
+    let error = PaperPilotMcpServer::new(None).execute_call_tool(request(
         json!({"input":input,"output":output,"recipe":recipe}),
     ))
     .unwrap_err();
