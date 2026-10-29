@@ -34,6 +34,7 @@
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
+  import UniversalHomeDashboard from '$lib/components/workspace/UniversalHomeDashboard.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
   import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
@@ -388,162 +389,95 @@
 <div class="page-container">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
     <div class="workspace-wrapper">
-      <DocumentTabBar />
+        {#if appState.documents.length > 0}
+          <DocumentTabBar />
+        {/if}
 
       <div class="workspace-body">
-        {#if appState.showDiffView}
-          <PdfVisualDiff onClose={() => appState.showDiffView = false} />
-        {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
-          {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
-          <SpreadsheetViewer file={selectedDoc} />
-        {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
-          <div class="viewer-wrapper">
-            <div class="viewer-content">
-            <PdfThumbnails {pdfDoc} bind:pageNum />
-
-            <div class="viewer-main">
-              <div class="toolbars-container">
-                <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
-              </div>
-              {#if hasFormFields}
-                <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
-              {/if}
-              <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
-                <PdfViewer
-                  fileUrl={currentFileUrl}
-                  bind:pdfDoc
-                  bind:pageNum
-                  bind:scale
-                  activeTool={activeTool}
-                  bind:annotations
-                />
-                <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
-              </div>
-            </div>
-
-            <ViewerRightPanel
-              bind:annotations
-              {pdfDoc}
-              onJumpToPage={(p: number) => pageNum = p}
-            />
-          </div>
-            <StatusBar
-              {pageNum}
-              {numPages}
-              {scale}
-              fileName={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
-                : ''}
-              fileSize={appState.selectedDocumentIndex !== null
-                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
-                : 0}
-            />
-          </div>
-        {:else}
-          <div class="documents-layout">
+          {#if appState.documents.length === 0}
             <div class="documents-view">
-              <header class="view-header">
-                <h2>Workspace</h2>
-                <p>
-                  {#if appState.documents.length === 0}
-                    Drop PDF or Office files to get started
-                  {:else}
-                    {appState.documents.length} document{appState.documents.length === 1 ? '' : 's'} loaded
-                  {/if}
-                </p>
-              </header>
+              <UniversalHomeDashboard />
+          </div>
+          {:else if appState.selectedDocumentIndex !== null}
+          <div class="documents-layout">
+              <div class="viewer-wrapper">
+                 {#if appState.showDiffView}
+                   <PdfVisualDiff onClose={() => appState.showDiffView = false} />
+                 {:else}
+                   {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+                   <div class="viewer-content">
+                     <div class="viewer-main" style="position: relative;">
+                        {#if isSpreadsheetFile(selectedDoc.name)}
+                          <SpreadsheetViewer file={selectedDoc} />
+                        {:else if isPdfFile(selectedDoc.name)}
+                          <div class="toolbars-container">
+                            <PdfToolbar bind:pageNum {numPages} bind:scale bind:activeTool />
+                        </div>
+                          {#if hasFormFields}
+                            <div style="padding: 10px; text-align: center; background: var(--bg-surface);"><button class="save-form-btn" onclick={handleSaveForm} style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Form</button></div>
+                          {/if}
+                          <div class="pdf-wrapper" style="position: relative; flex: 1; overflow: hidden;">
+                            <PdfViewer
+                              fileUrl={currentFileUrl}
+                              bind:pdfDoc
+                              bind:pageNum
+                              bind:scale
+                              activeTool={activeTool}
+                              bind:annotations
+                            />
+                            <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
+                        </div>
+                        {:else}
+                          <div class="unsupported-viewer">
+                            <p>No preview available for this file type.</p>
+                          </div>
+                        {/if}
 
-              <div class="studio-hub-layout">
-                <div class="status-pills">
-                  <span class="status-pill">🔒 100% On-Device & Private</span>
-                  <span class="status-pill">Port 7823 REST Gateway</span>
-                  <span class="status-pill">Runtime: Offline NLP / Local Llamafile</span>
-                </div>
-                <DropZone ondrop={handleFilesDropped} />
-
-                {#if appState.documents.length > 0}
-                  <DocumentList />
-                {/if}
-
-                <GlobalCommandBar />
-
-                <!-- Studio Hub Operations Grid -->
-                <div class="studio-operations-grid">
-                   {#if appState.documents.length > 0 && ranked.recommended.length > 0}
-                     <div class="studio-category">
-                        <h3>⚡ Recommended</h3>
-                        <div class="studio-cards">
-                           {#each ranked.recommended as tool}
-                             <button class="studio-card" onclick={() => {
-                                appState.openTool(tool);
-                                const panel = document.querySelector('.operations-panel-wrapper');
-                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                             }}>
-                                <div class="studio-card-icon">{tool.icon}</div>
-                                <div class="studio-card-content">
-                                   <h4>
-                                      {tool.title}
-                                      {#if appState.documents.length >= 2}
-                                        {#if tool.rule?.minDocuments === 2}
-                                          <span class="smart-badge-studio">Multi-File Action</span>
-                                        {:else if tool.rule?.isBatchable}
-                                          <span class="smart-badge-studio">Batch Action</span>
-                                        {/if}
-                                      {/if}
-                                   </h4>
-                                   {#if tool.inputFormat && tool.outputFormat}
-                                     <span class="format-pill">
-                                       <span class="fmt-in">{tool.inputFormat}</span>
-                                       <span class="fmt-arrow">➔</span>
-                                       <span class="fmt-out">{tool.outputFormat}</span>
-                                     </span>
-                                   {/if}
-                                   <p>{tool.description}</p>
-                                </div>
-                             </button>
-                           {/each}
+                        <!-- Floating Action Pill -->
+                        <div class="floating-action-pill">
+                          {#if isPdfFile(selectedDoc.name)}
+                             <button onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'))}>🔍 Zoom</button>
+                             <button onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page: pageNum, angle: 90 } }))}>↻ Rotate</button>
+                             <button onclick={() => appState.openTool(allTools.find(t => t.id === 'pdf_sign'))}>✍ Sign</button>
+                          {/if}
+                          <button class="more-actions-btn" onclick={() => {
+                              const toggleBtn = document.getElementById('operations-panel-toggle');
+                              if (toggleBtn) toggleBtn.click();
+                          }}>⚙️ More Actions</button>
                         </div>
                      </div>
-                   {/if}
-
-                   {#each allCategories.filter(c => c.id !== 'all') as cat}
-                     <div class="studio-category">
-                        <h3>{cat.icon} {cat.title}</h3>
-                        <div class="studio-cards">
-                           {#each allTools.filter(t => t.category === cat.id) as tool}
-                             <button class="studio-card" onclick={() => {
-                                appState.openTool(tool);
-                                const panel = document.querySelector('.operations-panel-wrapper');
-                                if (panel) panel.scrollIntoView({ behavior: 'smooth' });
-                             }}>
-                                <div class="studio-card-icon">{tool.icon}</div>
-                                <div class="studio-card-content">
-                                   <h4>{tool.title}</h4>
-                                   {#if tool.inputFormat && tool.outputFormat}
-                                     <span class="format-pill">
-                                       <span class="fmt-in">{tool.inputFormat}</span>
-                                       <span class="fmt-arrow">➔</span>
-                                       <span class="fmt-out">{tool.outputFormat}</span>
-                                     </span>
-                                   {/if}
-                                   <p>{tool.description}</p>
-                                </div>
-                             </button>
-                           {/each}
-                        </div>
-                     </div>
-                   {/each}
-                </div>
-              </div>
+                     {#if isPdfFile(selectedDoc.name)}
+                        <ViewerRightPanel
+                          bind:annotations
+                          {pdfDoc}
+                          onJumpToPage={(p: number) => pageNum = p}
+                        />
+                     {/if}
+                   </div>
+                 {/if}
             </div>
+          </div>
+
             {#if !appState.isMobile}
               <div class="operations-panel-wrapper layout-studio">
                 <OperationsPanel />
               </div>
             {/if}
-          </div>
         {/if}
       </div>
+        {#if appState.documents.length > 0 && appState.selectedDocumentIndex !== null}
+           <StatusBar
+             {pageNum}
+             {numPages}
+             {scale}
+             fileName={appState.selectedDocumentIndex !== null
+               ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+               : ''}
+             fileSize={appState.selectedDocumentIndex !== null
+               ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+               : 0}
+           />
+        {/if}
     </div>
   {:else if appState.activeTab === 'settings'}
     <div class="content-area full-width">
@@ -693,6 +627,57 @@
   .operations-panel-wrapper {
     display: flex;
     flex-shrink: 0;
+  }
+
+  .floating-action-pill {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: rgba(30, 30, 36, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 8px 12px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+  }
+
+  .floating-action-pill button {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .floating-action-pill button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .floating-action-pill .more-actions-btn {
+    background: var(--accent-primary);
+    color: white;
+  }
+
+  .floating-action-pill .more-actions-btn:hover {
+    background: #4b55c6;
+  }
+
+  .unsupported-viewer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 1rem;
   }
 
   .studio-operations-grid {

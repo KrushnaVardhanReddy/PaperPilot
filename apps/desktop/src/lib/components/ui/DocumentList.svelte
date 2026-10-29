@@ -9,6 +9,28 @@
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
+
+  let formatCounts = $derived({
+    all: appState.documents.length,
+    pdf: appState.documents.filter(d => getFileTypeInfo(d.name).isPdf).length,
+    sheets: appState.documents.filter(d => getFileTypeInfo(d.name).category === 'spreadsheet').length,
+    word: appState.documents.filter(d => getFileTypeInfo(d.name).category === 'document').length,
+    scanned: appState.documents.filter(d => !!(d as any).isScanned).length,
+  });
+
+  let activeFilter = $state('all');
+
+  let filteredDocuments = $derived(() => {
+    if (activeFilter === 'all') return appState.documents;
+    return appState.documents.filter(d => {
+      const info = getFileTypeInfo(d.name);
+      if (activeFilter === 'pdf') return info.isPdf;
+      if (activeFilter === 'sheets') return info.category === 'spreadsheet';
+      if (activeFilter === 'word') return info.category === 'document';
+      if (activeFilter === 'scanned') return !!(d as any).isScanned;
+      return false;
+    });
+  });
 </script>
 
 <div class="document-list">
@@ -17,8 +39,35 @@
       <p>No documents added yet.</p>
     </div>
   {:else}
+    <div class="filter-pills">
+      <button class="pill {activeFilter === 'all' ? 'active' : ''}" onclick={() => activeFilter = 'all'}>
+        All ({formatCounts.all})
+      </button>
+      {#if formatCounts.pdf > 0}
+        <button class="pill {activeFilter === 'pdf' ? 'active' : ''}" onclick={() => activeFilter = 'pdf'}>
+          📄 PDF ({formatCounts.pdf})
+        </button>
+      {/if}
+      {#if formatCounts.sheets > 0}
+        <button class="pill {activeFilter === 'sheets' ? 'active' : ''}" onclick={() => activeFilter = 'sheets'}>
+          📊 Sheets ({formatCounts.sheets})
+        </button>
+      {/if}
+      {#if formatCounts.word > 0}
+        <button class="pill {activeFilter === 'word' ? 'active' : ''}" onclick={() => activeFilter = 'word'}>
+          📝 Docs ({formatCounts.word})
+        </button>
+      {/if}
+      {#if formatCounts.scanned > 0}
+        <button class="pill {activeFilter === 'scanned' ? 'active' : ''}" onclick={() => activeFilter = 'scanned'}>
+          📷 Scanned ({formatCounts.scanned})
+        </button>
+      {/if}
+    </div>
+
     <div class="list-container">
-      {#each appState.documents as doc, index}
+      {#each filteredDocuments() as doc}
+        {@const index = appState.documents.indexOf(doc)}
         {@const fileInfo = getFileTypeInfo(doc.name)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -64,6 +113,37 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+
+  .pill.active {
+    background: rgba(94, 106, 210, 0.2);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
   }
 
   .empty-state {

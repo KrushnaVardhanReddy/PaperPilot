@@ -2,6 +2,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { emit } from '@tauri-apps/api/event';
   import { onMount } from 'svelte';
+  import { appState } from '$lib/state/app.svelte';
 
   let activeMenu: string | null = $state(null);
 
@@ -10,7 +11,21 @@
       if (!(e.target as Element).closest('.menu-item')) activeMenu = null;
     };
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+
+    // Global Cmd+K / Ctrl+K listener for the global command bar
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        // Fire custom event to open the command palette
+        window.dispatchEvent(new CustomEvent('open-command-palette'));
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   });
 
   function toggleMenu(menu: string, e: MouseEvent) {
@@ -21,6 +36,10 @@
   async function triggerEvent(eventName: string) {
     activeMenu = null;
     await emit(eventName);
+  }
+
+  function handleSearchClick() {
+     window.dispatchEvent(new CustomEvent('open-command-palette'));
   }
 </script>
 
@@ -80,6 +99,30 @@
     </div>
   </div>
 
+  <div class="titlebar-center" data-tauri-drag-region>
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+      <button
+        class="mode-btn {appState.activeTab === 'documents' ? 'active' : ''}"
+        onclick={() => appState.setActiveTab('documents')}
+      >
+        📄 Document Studio
+      </button>
+      <button
+        class="mode-btn {appState.activeTab === 'pipeline' ? 'active' : ''}"
+        onclick={() => appState.setActiveTab('pipeline')}
+      >
+        🔗 Automations
+      </button>
+    </div>
+
+    <!-- Global Search -->
+    <button class="global-search-bar" onclick={handleSearchClick}>
+      <span class="search-icon">🔍</span>
+      <span class="search-text">Search 75 tools or documents (Ctrl+K)...</span>
+    </button>
+  </div>
+
   <div class="window-controls">
     <button class="control-btn" aria-label="Minimize window" onclick={() => getCurrentWindow().minimize()}>
       <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="4" width="8" height="1" fill="currentColor"/></svg>
@@ -105,12 +148,80 @@
     user-select: none;
     flex-shrink: 0;
     font-size: 13px;
+    position: relative;
   }
 
   .titlebar-menus {
     display: flex;
     align-items: center;
     padding-left: 8px;
+    flex: 1;
+  }
+
+  .titlebar-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .mode-switcher {
+    display: flex;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .mode-btn.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .global-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 12px;
+    height: 26px;
+    width: 300px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .global-search-bar:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+  }
+
+  .search-text {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .brand {
@@ -202,13 +313,9 @@
   .window-controls {
     display: flex;
     height: 38px;
-    margin-left: auto;
-    flex-shrink: 0;
+    flex: 1;
+    justify-content: flex-end;
     z-index: 9999;
-    position: fixed;
-    right: 0;
-    top: 0;
-    background: var(--bg-secondary);
   }
 
   .control-btn {
@@ -230,6 +337,12 @@
   .control-btn.close:hover {
     background-color: #E81123;
     color: white;
+  }
+
+  @media (max-width: 1000px) {
+    .titlebar-center {
+      display: none;
+    }
   }
 
   @media (max-width: 768px) {
