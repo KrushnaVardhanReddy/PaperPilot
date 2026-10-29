@@ -740,6 +740,15 @@ pub struct FillBatchArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum WorkflowSubcommand {
+    /// Query durable workflow, watcher or batch receipts from a local directory
+    History {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+    },
     /// List all available workflow presets
     List,
     /// Inspect stages and conditions of a preset or TOML/JSON recipe

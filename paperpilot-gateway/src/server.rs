@@ -275,6 +275,11 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
             delete(handlers::stop_watcher),
         )
         .route("/v1/automation/run", post(handlers::run_recipe_once))
+        .route("/v1/automation/receipts", get(crate::receipt_routes::list))
+        .route(
+            "/v1/automation/receipts/{id}",
+            get(crate::receipt_routes::get),
+        )
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
         .with_state(registry)

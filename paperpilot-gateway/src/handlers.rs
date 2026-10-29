@@ -1426,54 +1426,36 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
             .into_response();
     };
 
-    let input_bytes = match std::fs::read(&payload.input) {
-        Ok(b) => b,
-        Err(e) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({"status": "error", "error": format!("Read input failed: {}", e)})),
-            )
-                .into_response();
-        }
-    };
-
-    let (out_bytes, report) =
-        match paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
-            &input_bytes,
+    let input = payload.input;
+    let output = payload.output;
+    match tokio::task::spawn_blocking(move || {
+        paperpilot_pdf::operations::receipts::run_to_path(
+            std::path::Path::new(&input),
+            std::path::Path::new(&output),
             &workflow,
-        ) {
-            Ok(res) => res,
-            Err(e) => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"status": "error", "error": e.to_string(), "report": e.report})),
-                )
-                    .into_response();
-            }
-        };
-
-    if let Some(parent) = std::path::Path::new(&payload.output).parent()
-        && !parent.as_os_str().is_empty()
-    {
-        let _ = std::fs::create_dir_all(parent);
-    }
-
-    if let Err(e) = std::fs::write(&payload.output, out_bytes) {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"status": "error", "error": format!("Write output failed: {}", e)})),
         )
-            .into_response();
+    })
+    .await
+    {
+        Ok(Ok(run)) => {
+            let status = if run.receipt.success {
+                StatusCode::OK
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (status, Json(serde_json::json!({"status":if run.receipt.success {"success"} else {"error"}, "error":run.receipt.error, "report":run.report_json(), "receipt_path":run.receipt_path}))).into_response()
+        }
+        Ok(Err(e)) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
     }
-
-    (
-        StatusCode::OK,
-        Json(serde_json::json!({
-            "status": "success",
-            "report": report
-        })),
-    )
-        .into_response()
 }
 
 pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
