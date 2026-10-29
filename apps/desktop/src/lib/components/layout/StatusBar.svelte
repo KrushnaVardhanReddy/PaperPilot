@@ -1,51 +1,79 @@
 <script lang="ts">
-  import { appState } from '$lib/state/app.svelte';
-
   let {
-    activeTool = null,
-    onTabChange = () => {},
-    layoutMode = 'studio',
-    onLayoutChange = () => {}
+    pageNum = 1,
+    numPages = 0,
+    scale = 1.2,
+    fileName = '',
+    fileSize = 0
+  }: {
+    pageNum: number;
+    numPages: number;
+    scale: number;
+    fileName: string;
+    fileSize: number;
   } = $props();
 
-  let openDocsCount = $derived(appState.openDocIndices.length);
-  let activeDoc = $derived(appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null);
+  function formatSize(bytes: number): string {
+    if (!bytes || bytes === 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
-  let pdfType = 'PDF/A-2b';
-  let sizeStr = $derived(activeDoc ? (activeDoc.size / 1024 / 1024).toFixed(2) + ' MB' : '0 MB');
-  let isEncrypted = false;
-  let modDate = $derived(activeDoc && activeDoc.lastModified ? new Date(activeDoc.lastModified).toLocaleDateString() : 'N/A');
+  let zoomPercent = $derived(Math.round(scale * 100));
+  let sizeStr = $derived(formatSize(fileSize));
 </script>
 
-<div class="statusbar" aria-label="Status Bar">
-  <div class="left">
-    <span>Ready</span>
-    {#if openDocsCount > 0}
-      <span class="divider">|</span>
-      <span>{openDocsCount} document{openDocsCount !== 1 ? 's' : ''} open</span>
-    {/if}
-  </div>
+{#if numPages > 0}
+<div class="status-bar" role="status" aria-label="Document status">
+  {#if fileName}
+    <span class="status-item status-filename" title={fileName}>{fileName}</span>
+    <span class="status-sep" aria-hidden="true">·</span>
+  {/if}
 
-  <div class="right">
-    {#if activeDoc}
-      <span class="metadata-item" title="Standard">{pdfType}</span>
-      <span class="divider">|</span>
-      <span class="metadata-item" title="Size">{sizeStr}</span>
-      <span class="divider">|</span>
-      <span class="metadata-item" title="Security">{isEncrypted ? '🔐 Encrypted' : '🔓 Unsecured'}</span>
-      <span class="divider">|</span>
-      <span class="metadata-item" title="Modified">{modDate}</span>
-    {:else}
-      <span>{appState.workspaceLayout} layout</span>
-      <span class="divider">|</span>
-      <span>v1.0.0</span>
-    {/if}
-  </div>
+  <span class="status-item" id="status-page">
+    Page {pageNum} of {numPages}
+  </span>
+
+  <span class="status-sep" aria-hidden="true">·</span>
+
+  <span class="status-item" id="status-zoom">{zoomPercent}%</span>
+
+  {#if sizeStr}
+    <span class="status-sep" aria-hidden="true">·</span>
+    <span class="status-item" id="status-size">{sizeStr}</span>
+  {/if}
 </div>
+{/if}
 
 <style>
-  .statusbar { height: 24px; background-color: var(--accent-primary, #5E6AD2); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 0.75rem; z-index: 100; }
-  .left, .right { display: flex; align-items: center; gap: 8px; }
-  .divider { opacity: 0.5; }
-  .metadata-item { font-variant-numeric: tabular-nums; }
+  .status-bar {
+    height: 24px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .status-item {
+    white-space: nowrap;
+  }
+
+  .status-filename {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+  }
+
+  .status-sep {
+    opacity: 0.35;
+    font-size: 10px;
+  }
 </style>

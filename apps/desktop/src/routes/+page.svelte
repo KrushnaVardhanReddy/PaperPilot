@@ -1,16 +1,4 @@
 <script lang="ts">
-
-  // V2 Layout components
-  import FloatingToolbar from '$lib/components/layout/FloatingToolbar.svelte';
-  import MobileFloatingActionPill from '$lib/components/layout/MobileFloatingActionPill.svelte';
-  import ToolDock from '$lib/components/layout/ToolDock.svelte';
-  import ToolsBottomSheet from '$lib/components/layout/ToolsBottomSheet.svelte';
-
-  let isMobileSheetOpen = $state(false);
-  function toggleMobileSheet() {
-    isMobileSheetOpen = !isMobileSheetOpen;
-  }
-
   import type { ToolDefinition } from '$lib/types/tools';
   import { allTools, allCategories } from '$lib/types/toolList';
   import { rankToolsByContext } from '$lib/services/toolRegistry';
@@ -399,21 +387,10 @@
 
 <div class="page-container">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
-    {#if appState.isMobile}
-      <div class="mobile-compact-app-bar">
-        <button class="icon-btn" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:toggle-drawer'))}>☰</button>
-        <span class="page-pill">{pageNum} / {numPages}</span>
-        <button class="icon-btn">📤</button>
-      </div>
-    {/if}
-    <div class="workspace-wrapper v2-workspace-wrapper">
+    <div class="workspace-wrapper">
       <DocumentTabBar />
 
-      <div class="workspace-body v2-workspace-body">
-        <div class="canvas-area v2-canvas-area">
-        {#if !appState.isMobile && appState.documents.length > 0}
-          <FloatingToolbar {pageNum} {numPages} {scale} />
-        {/if}
+      <div class="workspace-body">
         {#if appState.showDiffView}
           <PdfVisualDiff onClose={() => appState.showDiffView = false} />
         {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
@@ -450,15 +427,16 @@
               onJumpToPage={(p: number) => pageNum = p}
             />
           </div>
-          {#if appState.isMobile && appState.documents.length > 0}
-            <MobileFloatingActionPill onOpenSheet={toggleMobileSheet} isScrolled={false} />
-            <ToolsBottomSheet isOpen={isMobileSheetOpen} />
-          {/if}
             <StatusBar
-              activeTool={activeTool}
-              onTabChange={(t: string) => appState.activeTab = t}
-              layoutMode={appState.workspaceLayout}
-              onLayoutChange={(m: any) => appState.setWorkspaceLayout(m)}
+              {pageNum}
+              {numPages}
+              {scale}
+              fileName={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.name ?? '')
+                : ''}
+              fileSize={appState.selectedDocumentIndex !== null
+                ? (appState.documents[appState.selectedDocumentIndex]?.size ?? 0)
+                : 0}
             />
           </div>
         {:else}
@@ -565,12 +543,8 @@
             {/if}
           </div>
         {/if}
-        </div> <!-- end canvas-area -->
-        {#if !appState.isMobile}
-          <ToolDock />
-        {/if}
-      </div> <!-- end workspace-body -->
-    </div> <!-- end workspace-wrapper -->
+      </div>
+    </div>
   {:else if appState.activeTab === 'settings'}
     <div class="content-area full-width">
       <SettingsPanel />
@@ -590,15 +564,7 @@
   <OperationsPanel />
 {/if}
 
-
 <style>
-  .mobile-compact-app-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); z-index: 50; }
-  .mobile-compact-app-bar .icon-btn { background: transparent; border: none; color: var(--text-primary); font-size: 1.25rem; }
-  .mobile-compact-app-bar .page-pill { font-size: 0.85rem; background: var(--surface-2); padding: 4px 12px; border-radius: 20px; color: var(--text-primary); }
-  .v2-workspace-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
-  .v2-workspace-body { display: flex; flex-direction: row; flex: 1; position: relative; overflow: hidden; }
-  .v2-canvas-area { flex: 1; display: flex; flex-direction: column; position: relative; background: var(--canvas-bg, #F9F7F5); box-shadow: inset var(--canvas-shadow, 0 8px 40px rgba(0,0,0,0.35)); overflow: hidden; }
-
   .page-container {
     display: flex;
     width: 100%;

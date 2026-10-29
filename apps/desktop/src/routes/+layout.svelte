@@ -1,7 +1,6 @@
 <script lang="ts">
   import '../app.css';
   import Sidebar from '$lib/components/layout/Sidebar.svelte';
-  import LibraryPanel from '$lib/components/layout/LibraryPanel.svelte';
   import BottomNav from '$lib/components/layout/BottomNav.svelte';
   import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
   import Titlebar from '$lib/components/layout/Titlebar.svelte';
@@ -123,13 +122,7 @@
 <div class="app-container">
   <Titlebar />
   <div class="main-wrapper">
-    {#if !appState.isMobile}
-      <Sidebar />
-      <LibraryPanel />
-    {/if}
-    {#if appState.isMobile}
-      <LibraryPanel />
-    {/if}
+    <Sidebar />
     <main class="main-content">
       {@render children()}
     </main>

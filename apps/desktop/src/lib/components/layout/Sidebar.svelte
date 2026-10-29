@@ -3,6 +3,29 @@
   import { appState } from '$lib/state/app.svelte';
   import { jobsState } from '$lib/state/jobs.svelte';
 
+  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+  import CancelButton from '$lib/components/ui/CancelButton.svelte';
+
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  let manualCollapsed = $state(false);
+  let isCollapsed = $derived(manualCollapsed || windowWidth < 900);
+
+  onMount(() => {
+    // Restore persisted collapse state
+    const stored = localStorage.getItem('sidebar-collapsed');
+    if (stored === 'true') manualCollapsed = true;
+
+    function handleResize() {
+      windowWidth = window.innerWidth;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
+
+  $effect(() => {
+    localStorage.setItem('sidebar-collapsed', String(manualCollapsed));
+  });
+
   const navItems = [
     { id: 'documents', label: 'Documents', icon: '📄' },
     { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
@@ -11,9 +34,9 @@
   ];
 </script>
 
-<aside class="sidebar collapsed" aria-label="Main navigation">
+<aside class="sidebar" class:collapsed={isCollapsed} aria-label="Main navigation">
   <div class="sidebar-header">
-    <div class="brand-icon">P</div>
+    <h1 class="brand-title">PaperPilot</h1>
   </div>
 
   <nav class="sidebar-nav" aria-label="Navigation">
@@ -23,39 +46,270 @@
           class="nav-item"
           class:active={appState.activeTab === item.id}
           onclick={() => appState.setActiveTab(item.id)}
-          title={item.label}
+          title={isCollapsed ? item.label : undefined}
           id={`nav-${item.id}`}
+          aria-label={item.label}
+          aria-current={appState.activeTab === item.id ? 'page' : undefined}
         >
-          <span class="icon">{item.icon}</span>
+          <span class="nav-icon" aria-hidden="true">{item.icon}</span>
+          <span class="nav-label">{item.label}</span>
         </button>
       {/if}
     {/each}
   </nav>
 
-  <div class="sidebar-footer">
-    {#if jobsState.jobs.filter(j => j.status === 'running').length > 0}
-      <div class="job-indicator" title="{jobsState.jobs.filter(j => j.status === 'running').length} jobs active">
-        <span class="pulse-dot"></span>
-        <span class="job-count">{jobsState.jobs.filter(j => j.status === 'running').length}</span>
+  <div class="sidebar-jobs">
+    <h4>Recent Jobs</h4>
+    {#if jobsState.jobs.length === 0}
+      <p class="no-jobs">No recent jobs</p>
+    {:else}
+      <div class="jobs-list">
+        {#each jobsState.jobs.slice(-5).reverse() as job (job.id)}
+          <div class="job-item-container">
+            <div class="job-item">
+              <span class="job-status" class:success={job.status === 'success'} class:error={job.status === 'error'} class:running={job.status === 'running'} class:cancelled={job.status === 'cancelled'}>
+                {#if job.status === 'success'}✅{/if}
+                {#if job.status === 'error'}❌{/if}
+                {#if job.status === 'running'}⏳{/if}
+                {#if job.status === 'cancelled'}🚫{/if}
+              </span>
+              <span class="job-name">{job.toolName}</span>
+              {#if job.status === 'running'}
+                <div class="cancel-container">
+                  <CancelButton jobId={job.id} onCancelled={() => jobsState.updateJobStatus(job.id, 'cancelled', 'Cancelled by user')} />
+                </div>
+              {/if}
+            </div>
+            {#if job.status === 'running'}
+              <ProgressBar
+                jobName={job.toolName}
+                percent={job.progress ?? 0}
+                currentPage={job.currentPage}
+                totalPages={job.totalPages}
+                visible={true}
+              />
+            {/if}
+          </div>
+        {/each}
       </div>
     {/if}
-    <div class="version-label" title="v1.0.0">v1</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button
+      class="collapse-btn"
+      id="sidebar-collapse-toggle"
+      onclick={() => manualCollapsed = !manualCollapsed}
+      title={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-label={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+    >
+      {manualCollapsed ? '›' : '‹'}
+    </button>
+    <div class="theme-toggle">
+      <button
+        class="theme-btn"
+        onclick={() => appState.setTheme(appState.theme === 'dark' ? 'light' : 'dark')}
+      >
+        {appState.theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+      </button>
+    </div>
   </div>
 </aside>
 
 <style>
-  .sidebar { width: var(--layout-sidebar-width, 56px); height: 100%; background-color: var(--surface-0, #0d0d0f); border-right: 1px solid var(--border-color, #2D313C); display: flex; flex-direction: column; align-items: center; padding-top: 16px; padding-bottom: 16px; z-index: 50; flex-shrink: 0; }
-  .sidebar-header { margin-bottom: 32px; }
-  .brand-icon { width: 32px; height: 32px; background: var(--accent-primary, #5E6AD2); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
-  .sidebar-nav { display: flex; flex-direction: column; gap: 16px; width: 100%; align-items: center; flex: 1; }
-  .nav-item { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: var(--text-secondary, #A1A7B3); transition: all 0.2s; }
-  .nav-item:hover { background-color: var(--surface-2, #1c1c1f); color: var(--text-primary, #FFFFFF); }
-  .nav-item.active { background-color: var(--surface-3, #242428); color: var(--accent-primary, #5E6AD2); }
-  .icon { font-size: 1.25rem; }
-  .sidebar-footer { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .job-indicator { display: flex; align-items: center; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 12px; }
-  .pulse-dot { width: 6px; height: 6px; background: var(--watching-green, #22c55e); border-radius: 50%; animation: pulse 2s infinite; }
-  .job-count { font-size: 0.65rem; color: var(--text-primary); }
-  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
-  .version-label { font-size: 0.6rem; color: var(--text-muted, #6B7280); font-weight: bold; }
+  .sidebar {
+    width: 260px;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: width 0.25s ease;
+  }
+
+  /* Collapsed state: 48px icon rail */
+  .sidebar.collapsed {
+    width: 48px;
+  }
+
+  /* Hide text elements when collapsed */
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .brand-title,
+  .sidebar.collapsed .sidebar-jobs {
+    display: none;
+  }
+
+  /* Hide theme toggle entirely when collapsed */
+  .sidebar.collapsed .theme-btn {
+    display: none;
+  }
+
+  /* Center icons when collapsed */
+  .sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .sidebar.collapsed .nav-icon {
+    margin-right: 0;
+  }
+
+  /* Collapse toggle button */
+  .collapse-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .collapse-btn:hover {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  .sidebar-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .brand-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .nav-item:hover {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  .nav-item.active {
+    background-color: var(--accent-primary);
+    color: #ffffff;
+  }
+
+  .nav-icon {
+    margin-right: 12px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .theme-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all var(--transition-fast);
+  }
+
+  .theme-btn:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
+
+  .sidebar-jobs {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .sidebar-jobs h4 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .no-jobs {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+
+  .job-status {
+    margin-right: 8px;
+    font-size: 0.8rem;
+  }
+
+  .job-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .job-item-container {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+  }
+
+  .job-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+  }
+
+  .cancel-container {
+    margin-left: auto;
+  }
+
+  .job-status.running {
+    color: var(--accent-primary);
+  }
+
+  .job-status.cancelled {
+    color: var(--text-muted);
+  }
+
 </style>
