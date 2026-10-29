@@ -5,12 +5,44 @@ export type OperationId =
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
   | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers' | 'pdf_sanitize' | 'document_pii_scan';
 
+export interface WorkflowConditionLeaf {
+  if_scanned?: boolean;
+  if_page_count_gt?: number;
+  comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+  value?: number;
+  text_contains?: string;
+  has_form_fields?: boolean;
+  is_signed?: boolean;
+  is_encrypted?: boolean;
+  file_size_bytes?: {
+    between?: [number, number];
+    eq?: number;
+    gt?: number;
+    gte?: number;
+    lt?: number;
+    lte?: number;
+  };
+}
+
+export type WorkflowCondition =
+  | { all: WorkflowCondition[] }
+  | { any: WorkflowCondition[] }
+  | { not: WorkflowCondition }
+  | WorkflowConditionLeaf;
+
+export type OnNoMatch = 'skip' | 'archive_original' | 'error';
+
 export interface PipelineStep {
   id: string;           // crypto.randomUUID()
   operationId: OperationId;
   label: string;        // Human-readable name, e.g. "Compress PDF"
   icon: string;         // emoji or svg name, e.g. "🗜️"
   params: Record<string, unknown>; // operation-specific params
+  condition?: WorkflowCondition;
+  depends_on?: string[];
+  on_no_match?: OnNoMatch;
+  status?: 'pending' | 'running' | 'completed' | 'skipped' | 'error';
+  position?: { x: number; y: number };
 }
 
 export interface SavedPipeline {
@@ -61,6 +93,12 @@ export class PipelineState {
 
     // deep clone steps to prevent reference mutations
     this.steps = JSON.parse(JSON.stringify(flow.steps));
+    // Apply fallback positions if not present
+    this.steps.forEach((step, index) => {
+      if (!step.position) {
+        step.position = { x: 100 + index * 320, y: 200 };
+      }
+    });
     this.activeFlowId = flowId;
     this.selectedStepId = null;
     return true;
@@ -170,7 +208,8 @@ export class PipelineState {
       operationId,
       label: def.label,
       icon: def.icon,
-      params: { ...def.defaultParams }
+      params: { ...def.defaultParams },
+      position: { x: 100 + this.steps.length * 320, y: 200 }
     }];
     this.selectedStepId = newId;
   }
@@ -190,6 +229,18 @@ export class PipelineState {
   updateStepParam(id: string, paramKey: string, value: unknown) {
     this.steps = this.steps.map(s =>
       s.id === id ? { ...s, params: { ...s.params, [paramKey]: value } } : s
+    );
+  }
+
+  updateStepPosition(id: string, position: { x: number; y: number }) {
+    this.steps = this.steps.map(s =>
+      s.id === id ? { ...s, position } : s
+    );
+  }
+
+  updateDependsOn(id: string, depends_on: string[]) {
+    this.steps = this.steps.map(s =>
+      s.id === id ? { ...s, depends_on } : s
     );
   }
 
@@ -447,21 +498,24 @@ export const DEFAULT_PRESETS: SavedPipeline[] = [
         operationId: 'pdf_bates',
         label: 'Bates Numbering',
         icon: '#️⃣',
-        params: { input: '__input__', output: '__output__', prefix: 'CASE-2026-', start: 1 }
+        params: { input: '__input__', output: '__output__', prefix: 'CASE-2026-', start: 1 },
+        position: { x: 100, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_watermark',
         label: 'Watermark',
         icon: '💧',
-        params: { input: '__input__', output: '__output__', text: 'CONFIDENTIAL', opacity: 0.3, font_size: 48 }
+        params: { input: '__input__', output: '__output__', text: 'CONFIDENTIAL', opacity: 0.3, font_size: 48 },
+        position: { x: 420, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_linearize',
         label: 'Linearize',
         icon: '⚡',
-        params: { input: '__input__', output: '__output__' }
+        params: { input: '__input__', output: '__output__' },
+        position: { x: 740, y: 200 }
       }
     ]
   },
@@ -477,21 +531,24 @@ export const DEFAULT_PRESETS: SavedPipeline[] = [
         operationId: 'pdf_remove_blank',
         label: 'Remove Blank Pages',
         icon: '🧽',
-        params: { input: '__input__', output: '__output__', sensitivity: 95 }
+        params: { input: '__input__', output: '__output__', sensitivity: 95 },
+        position: { x: 100, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_page_numbers',
         label: 'Page Numbers',
         icon: '🔢',
-        params: { input: '__input__', output: '__output__', format: 'Page {n} of {total}', position: 'bottom-center' }
+        params: { input: '__input__', output: '__output__', format: 'Page {n} of {total}', position: 'bottom-center' },
+        position: { x: 420, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_compress',
         label: 'Compress',
         icon: '🗜️',
-        params: { input: '__input__', output: '__output__', level: 'medium', mode: 'medium' }
+        params: { input: '__input__', output: '__output__', level: 'medium', mode: 'medium' },
+        position: { x: 740, y: 200 }
       }
     ]
   },
@@ -507,21 +564,24 @@ export const DEFAULT_PRESETS: SavedPipeline[] = [
         operationId: 'pdf_redact',
         label: 'Redact',
         icon: '⬛',
-        params: { input: '__input__', output: '__output__', terms: '', words: 'SSN, confidential, invoice' }
+        params: { input: '__input__', output: '__output__', terms: '', words: 'SSN, confidential, invoice' },
+        position: { x: 100, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_flatten',
         label: 'Flatten',
         icon: '📄',
-        params: { input: '__input__', output: '__output__' }
+        params: { input: '__input__', output: '__output__' },
+        position: { x: 420, y: 200 }
       },
       {
         id: crypto.randomUUID(),
         operationId: 'pdf_encrypt',
         label: 'Encrypt',
         icon: '🔒',
-        params: { input: '__input__', output: '__output__', password: '', user_password: 'changeme' }
+        params: { input: '__input__', output: '__output__', password: '', user_password: 'changeme' },
+        position: { x: 740, y: 200 }
       }
     ]
   }

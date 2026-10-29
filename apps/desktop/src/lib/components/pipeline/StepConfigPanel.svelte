@@ -14,8 +14,7 @@
 {#if selectedStep && schema.length > 0}
   <div class="config-panel" id="step-config-panel">
     <div class="config-header">
-      <span>{selectedStep.icon} Configure: {selectedStep.label}</span>
-      <button onclick={() => pipelineState.selectStep(null)}>×</button>
+      <span>{selectedStep.icon} {selectedStep.label}</span>
     </div>
     <div class="config-fields">
       {#each schema as field}
@@ -67,11 +66,7 @@
 
 <style>
   .config-panel {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    padding: 16px;
-    margin-top: 16px;
+    /* Removed padding, margin, border as it's now inside the inspector drawer */
   }
 
   .config-header {
@@ -79,26 +74,15 @@
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     color: var(--text-primary);
-  }
-
-  .config-header button {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.2rem;
-    cursor: pointer;
-  }
-
-  .config-header button:hover {
-    color: var(--text-primary);
+    font-size: 1.05rem;
   }
 
   .config-fields {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
   }
 
   .field-group {

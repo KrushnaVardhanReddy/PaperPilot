@@ -1,113 +1,132 @@
 <script lang="ts">
-  import { pipelineState, OPERATION_REGISTRY } from '$lib/state/pipeline.svelte';
-  import StepCard from './StepCard.svelte';
-  import StepPicker from './StepPicker.svelte';
+  import { SvelteFlow, Background, Controls, MiniMap, type Node, type Edge, type Connection } from '@xyflow/svelte';
+  import '@xyflow/svelte/dist/style.css';
+  import { pipelineState } from '$lib/state/pipeline.svelte';
+  import ActionNode from './nodes/ActionNode.svelte';
+  import ConditionNode from './nodes/ConditionNode.svelte';
+  import TriggerNode from './nodes/TriggerNode.svelte';
 
-  let showPicker = $state(false);
-  let dragFromIndex = $state<number | null>(null);
+  const nodeTypes = {
+    action: ActionNode,
+    condition: ConditionNode,
+    trigger: TriggerNode
+  };
 
-  function handleDragStart(event: DragEvent, index: number) {
-    dragFromIndex = index;
-    event.dataTransfer!.effectAllowed = 'move';
-  }
+  // Create derived nodes and edges from pipelineState.steps
+  let nodes = $derived.by(() => {
+    const svelteNodes: Node[] = [];
 
-  function handleDragOver(event: DragEvent, index: number) {
-    event.preventDefault();
-    event.dataTransfer!.dropEffect = 'move';
-  }
+    // Add Trigger Node if we have steps (or even if we don't)
+    svelteNodes.push({
+      id: 'trigger-node',
+      type: 'trigger',
+      position: { x: 50, y: 200 },
+      data: { label: 'Input Document', icon: '📄' }
+    });
 
-  function handleDrop(event: DragEvent, toIndex: number) {
-    event.preventDefault();
-    if (dragFromIndex !== null && dragFromIndex !== toIndex) {
-      pipelineState.moveStep(dragFromIndex, toIndex);
+    pipelineState.steps.forEach((step) => {
+      const isCondition = !!step.condition;
+      svelteNodes.push({
+        id: step.id,
+        type: isCondition ? 'condition' : 'action',
+        position: step.position || { x: 0, y: 0 },
+        data: step as unknown as Record<string, unknown>
+      });
+    });
+
+    return svelteNodes;
+  });
+
+  let edges = $derived.by(() => {
+    const svelteEdges: Edge[] = [];
+    const steps = pipelineState.steps;
+
+    steps.forEach((step, index) => {
+      if (step.depends_on && step.depends_on.length > 0) {
+        step.depends_on.forEach((depId) => {
+          svelteEdges.push({
+            id: `e-${depId}-${step.id}`,
+            source: depId,
+            target: step.id
+          });
+        });
+      } else {
+        // Fallback: connect to previous node, or trigger if it's the first step
+        const sourceId = index === 0 ? 'trigger-node' : steps[index - 1].id;
+        svelteEdges.push({
+          id: `e-${sourceId}-${step.id}`,
+          source: sourceId,
+          target: step.id
+        });
+      }
+    });
+
+    return svelteEdges;
+  });
+
+  import { BackgroundVariant } from '@xyflow/svelte';
+
+  function onNodeDragStop(event: any, node: Node) {
+    if (node && node.id !== 'trigger-node') {
+      pipelineState.updateStepPosition(node.id, { x: node.position.x, y: node.position.y });
     }
-    dragFromIndex = null;
   }
 
-  function handleDragEnd() {
-    dragFromIndex = null;
+  function onConnect(connection: Connection) {
+    if (!connection.source || !connection.target) return;
+    if (connection.source === 'trigger-node') return; // Don't track trigger in depends_on
+
+    const targetStep = pipelineState.steps.find(s => s.id === connection.target);
+    if (targetStep) {
+      const currentDeps = targetStep.depends_on || [];
+      if (!currentDeps.includes(connection.source)) {
+        pipelineState.updateDependsOn(targetStep.id, [...currentDeps, connection.source]);
+      }
+    }
   }
+
+  function onNodeClick(event: any, node: Node) {
+    if (node && node.id !== 'trigger-node') {
+      pipelineState.selectStep(node.id);
+    } else {
+      pipelineState.selectStep(null);
+    }
+  }
+
+  function onPaneClick() {
+    pipelineState.selectStep(null);
+  }
+
 </script>
 
-<div class="pipeline-canvas" id="pipeline-canvas">
-  <div class="canvas-scroll-wrapper">
-    {#each pipelineState.steps as step, i (step.id)}
-      <div
-        class="step-wrapper"
-        role="listitem"
-        draggable="true"
-        ondragstart={(e) => handleDragStart(e, i)}
-        ondragover={(e) => handleDragOver(e, i)}
-        ondrop={(e) => handleDrop(e, i)}
-        ondragend={handleDragEnd}
-        class:drag-over={dragFromIndex !== null && dragFromIndex !== i}
-      >
-        <StepCard {step} index={i} isRunning={pipelineState.currentStepIndex === i} />
-      </div>
-
-      {#if i < pipelineState.steps.length - 1}
-        <div class="connector" aria-hidden="true">→</div>
-      {/if}
-    {/each}
-
-    <button
-      class="add-step-btn"
-      id="add-pipeline-step-btn"
-      onclick={() => showPicker = true}
-    >
-      + Add Step
-    </button>
-  </div>
+<div class="pipeline-canvas-container" id="pipeline-canvas">
+  <SvelteFlow
+    {nodes}
+    {edges}
+    {nodeTypes}
+    fitView
+    onnodedragstop={onNodeDragStop}
+    onconnect={onConnect}
+    onnodeclick={onNodeClick}
+    onpaneclick={onPaneClick}
+  >
+    <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+    <Controls />
+    <MiniMap />
+  </SvelteFlow>
 </div>
 
-{#if showPicker}
-  <StepPicker onclose={() => showPicker = false} />
-{/if}
-
 <style>
-.pipeline-canvas {
+.pipeline-canvas-container {
   width: 100%;
-  padding: 24px 32px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  min-height: 140px;
+  height: 100%;
+  min-height: 400px;
+  background: var(--bg-secondary, #0f172a);
+  border-bottom: 1px solid var(--border-color, #334155);
+  flex-grow: 1;
 }
 
-.canvas-scroll-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: thin;
-}
-
-.connector {
-  font-size: 1.4rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.add-step-btn {
-  flex-shrink: 0;
-  padding: 10px 18px;
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius-md);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.add-step-btn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.step-wrapper.drag-over {
-  opacity: 0.5;
+:global(.svelte-flow__node) {
+  /* Ensure nodes don't have default unstyled background */
 }
 </style>
