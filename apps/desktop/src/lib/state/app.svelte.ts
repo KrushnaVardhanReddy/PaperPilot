@@ -18,6 +18,7 @@ export class AppState {
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
   workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+  isContextPanelOpen = $state(true);
 
   isMobileViewport = $state(false);
   isTauriMobile = $state(false);
@@ -139,7 +140,16 @@ export class AppState {
   }
 
   setActiveTab(tab: string) {
-    this.activeTab = tab;
+    if (this.activeTab === tab) {
+      this.toggleContextPanel();
+    } else {
+      this.activeTab = tab;
+      this.isContextPanelOpen = true;
+    }
+  }
+
+  toggleContextPanel() {
+    this.isContextPanelOpen = !this.isContextPanelOpen;
   }
 
   openTool(tool: any) {
@@ -206,6 +216,16 @@ export class AppState {
     }
   }
 
+  clearAllDocuments() {
+    this.documents = [];
+    this.documentPaths = [];
+    this.openDocIndices = [];
+    this.selectedDocumentIndex = null;
+    this.inspections.clear();
+    this.inspectionQueue = [];
+    this.inspectionsRunning = 0;
+  }
+
   selectDocument(index: number | null) {
     if (index === null) {
       this.selectedDocumentIndex = null;
@@ -258,9 +278,19 @@ export class AppState {
           const path = (file as File & { _localPath?: string })._localPath;
           const args = path ? { path } : { bytes: Array.from(new Uint8Array(await file.arrayBuffer())) };
           const facts = await requireInvoke<DocumentFacts>('inspect_document', args);
-          if (this.inspections.get(file) === request) this.inspections.set(file, { status: 'ready', facts });
+          // Set on the original file object
+          this.inspections.set(file, { status: 'ready', facts });
+          // If the file was replaced in documents array (e.g. by loadFile), also update that new File instance
+          const currentDoc = this.documents.find(d => d.name === file.name && (d as any)._localPath === path);
+          if (currentDoc && currentDoc !== file) {
+            this.inspections.set(currentDoc, { status: 'ready', facts });
+          }
         } catch (error) {
-          if (this.inspections.get(file) === request) this.inspections.set(file, { status: 'error', error: String(error) });
+          this.inspections.set(file, { status: 'error', error: String(error) });
+          const currentDoc = this.documents.find(d => d.name === file.name);
+          if (currentDoc && currentDoc !== file) {
+            this.inspections.set(currentDoc, { status: 'error', error: String(error) });
+          }
         } finally { this.inspectionsRunning--; this.pumpInspections(); }
       })();
     }

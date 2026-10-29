@@ -37,6 +37,7 @@
         <div class="dropdown">
           <button onclick={() => triggerEvent('menu-open-file')}>Open <span class="shortcut">Ctrl+O</span></button>
           <button onclick={() => triggerEvent('menu-save-annotations')}>Save Annotations <span class="shortcut">Ctrl+S</span></button>
+          <button onclick={() => triggerEvent('menu-close-all')}>Close All Documents</button>
           <hr />
           <button onclick={() => triggerEvent('menu-settings')}>Settings <span class="shortcut">Ctrl+,</span></button>
           <hr />

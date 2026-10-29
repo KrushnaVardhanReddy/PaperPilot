@@ -1,6 +1,9 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
-  import { getFileIcon } from '$lib/utils/fileType';
+  import { getFileIcon, getMimeType } from '$lib/utils/fileType';
+  import { invoke } from '@tauri-apps/api/core';
+
+  let fileInputRef = $state<HTMLInputElement | null>(null);
 
   function openFileObjects(files: File[]) {
     if (files.length === 0) return;
@@ -9,10 +12,50 @@
     appState.selectDocument(targetIndex);
   }
 
+  async function handleNewTabClick(e: MouseEvent) {
+    if (appState.isMobile) {
+      fileInputRef?.click();
+      return;
+    }
+    e.preventDefault();
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: true,
+        filters: [
+          { name: 'All Supported Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'csv'] },
+          { name: 'PDF Documents', extensions: ['pdf'] },
+          { name: 'Office Documents', extensions: ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'] }
+        ]
+      });
+      if (!selected) return;
+      const paths = Array.isArray(selected) ? selected : [selected];
+      const filesArray: File[] = [];
+      for (const path of paths) {
+        const meta = await invoke<{ name: string; size_bytes: number; path: string }>('get_file_metadata', { path });
+        const mime = getMimeType(meta.name);
+        const blob = new Blob([], { type: mime });
+        const file = new File([blob], meta.name, { type: mime });
+        Object.defineProperty(file, 'size', { value: meta.size_bytes, writable: false });
+        (file as any)._localPath = meta.path;
+        (file as any)._isLoaded = false;
+        filesArray.push(file);
+      }
+      openFileObjects(filesArray);
+    } catch (err) {
+      console.warn('Native open dialog failed in DocumentTabBar, falling back to input:', err);
+    }
+  }
+
   function handleFileInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      openFileObjects(Array.from(target.files));
+      const filesArray = Array.from(target.files).map(f => {
+        (f as any)._localPath = (f as any).path || f.name;
+        (f as any)._isLoaded = f.size > 0;
+        return f;
+      });
+      openFileObjects(filesArray);
       target.value = '';
     }
   }
@@ -33,21 +76,24 @@
     <span>Documents</span>
   </button>
 
-  <label
+  <button
+    type="button"
     class="new-tab-btn"
     id="new-doc-tab-btn"
     title="Open new document"
     aria-label="Open new document"
+    onclick={handleNewTabClick}
   >
     <span class="plus-icon">+</span>
     <span class="btn-text">New</span>
-    <input
-      type="file"
-      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
-      style="display: none;"
-      onchange={handleFileInputChange}
-    />
-  </label>
+  </button>
+  <input
+    bind:this={fileInputRef}
+    type="file"
+    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
+    style="display: none;"
+    onchange={handleFileInputChange}
+  />
 
   <div class="tabs-scroll-container">
     {#each appState.openDocIndices as docIndex (docIndex)}
@@ -91,8 +137,6 @@
     border-bottom: 1px solid var(--border-color, #2a2a35);
     height: 38px;
     padding: 0 8px;
-    /* Add padding-right so tabs don't overlap with the fixed window controls (46px * 3 = 138px) */
-    padding-right: 146px;
     gap: 4px;
     user-select: none;
     flex-shrink: 0;

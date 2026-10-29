@@ -1,0 +1,79 @@
+[Task 3.4.16 / Spec 144: Desktop Three-Column Pro Workspace Architecture]
+
+Objective:
+Implement Spec 144 (`specs/144-desktop-three-column-workspace/spec.md`) and Task 3.4.16 in `apps/desktop`.
+Refactor the desktop application into a modern, pro-grade 3-column architecture (Activity Rail -> Contextual Drawer -> Main Stage Hero Canvas) inspired by VS Code, Finder, and Apple Pages.
+
+🚨 CRITICAL MANDATES & ANTI-MOCKING DIRECTIVES:
+1. NO MOCKING: Absolutely zero hardcoded document arrays, fake counts, or dummy action cards.
+   - If you have ANY questions about how a state variable or data flow works, ASK in the session conversation BEFORE implementing. Do NOT mock or fabricate UI data.
+2. PRESERVE ALL 75+ TOOLS:
+   - All tools in `OperationsPanel.svelte` must remain completely accessible and functional.
+3. PRESERVE MULTI-FORMAT VIEWERS:
+   - `PdfViewer.svelte` for `.pdf` files.
+   - `SpreadsheetViewer.svelte` for `.xlsx`, `.csv`, `.tsv` files.
+   - `PdfVisualDiff.svelte` for visual diffing.
+   - `PipelineCanvas.svelte` for visual DAG pipeline workflows.
+4. SVELTE 5 RUNES & DARK THEME:
+   - Use `$state`, `$derived`, and `$props`.
+   - Adhere to the established high-contrast dark theme variables (`--bg-surface`, `--text-primary`, `--border-color`, `color-scheme: dark`).
+5. TEST INTEGRITY: All 147 Vitest tests in `apps/desktop` must continue to pass cleanly via `pnpm --dir apps/desktop test`.
+
+---
+
+### Step-by-Step Implementation Details
+
+#### Step 1: Slim Activity Rail in `apps/desktop/src/lib/components/layout/Sidebar.svelte`
+- Slim down the sidebar into an activity bar ~48px wide:
+  - Vertical icon buttons:
+    - 📁 **Library / Files** (`id: 'documents'`)
+    - 🔗 **Pipeline Studio** (`id: 'pipeline'`)
+    - ⚡ **API Gateway** (`id: 'api'`)
+    - ⚙️ **Settings** (`id: 'settings'`)
+  - Tooltips on hover, active glowing pill on selected tab.
+  - Clicking the currently active tab toggles Column 2 (Contextual Drawer) open or closed.
+
+---
+
+#### Step 2: Contextual Column 2 in `apps/desktop/src/routes/+page.svelte`
+- Column 2 (~240px wide, collapsible) is placed between the Activity Rail and the Main Stage:
+  - **State A (Library Mode)**:
+    - When `selectedDocumentIndex === null`: renders `DocumentList.svelte` with the real smart format filter pills (`All`, `Scanned`, `Signed`, `Forms`, `Multi-Page`).
+    - Selecting a document opens it in Column 3 and switches Column 2 into State B.
+  - **State B (Thumbnails Mode)**:
+    - When a PDF document is active (`selectedDocumentIndex !== null` and `isPdfFile`): renders `PdfThumbnails.svelte` with page numbers and reordering capabilities.
+    - Clicking a thumbnail jumps to that page (`pageNum = p`).
+  - Collapse button at the top header of Column 2 (`‹` icon, or `Ctrl + B`) to collapse it and expand Column 3 to maximum width.
+
+---
+
+#### Step 3: Main Stage Hero Canvas in `apps/desktop/src/routes/+page.svelte`
+- Column 3 occupies 75%–85% of screen width with dark-neutral canvas:
+  - If a spreadsheet is selected (`isSpreadsheetFile`): renders `<SpreadsheetViewer file={selectedDoc} />`.
+  - If a PDF is selected (`isPdfFile`): renders `<PdfViewer ... />` and `<PdfFormLayer ... />`.
+  - If diff view is active: renders `<PdfVisualDiff ... />`.
+- **Floating Action Pill** (centered at the bottom of the canvas):
+  - Sleek frosted glass pill with icons:
+    - `🔍 Zoom In/Out` (dispatches `paperpilot:zoom-in` / `paperpilot:zoom-out`)
+    - `↻ Rotate 90°` (dispatches `paperpilot:rotate-single-page`)
+    - `✍ Sign / Annotate` (activates annotation toolbar)
+    - `⚙️ More Tools` (toggles the right-hand slide-out drawer)
+
+---
+
+#### Step 4: Slide-Out Operations Drawer for `OperationsPanel.svelte`
+- Wrap `OperationsPanel.svelte` inside an expandable slide-out drawer on the right edge:
+  - Hidden by default to provide distraction-free reading space.
+  - Opens smoothly when clicking "More Tools" or selecting a tool.
+  - Features a prominent close button (`✕`) at the top right to dismiss it.
+  - Contains all 75 tool parameters and run buttons.
+
+---
+
+#### Step 5: Verification & Tests
+1. Run desktop test suite:
+   ```bash
+   pnpm --dir apps/desktop test
+   ```
+2. Verify all 147 tests pass.
+3. Ensure zero unclosed HTML/CSS declarations in Vite and zero mock data.
