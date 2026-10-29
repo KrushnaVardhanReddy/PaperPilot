@@ -2,6 +2,7 @@
   import PipelineCanvas from './PipelineCanvas.svelte';
   import PipelineRunner from './PipelineRunner.svelte';
   import StepConfigPanel from './StepConfigPanel.svelte';
+  import ConditionInspector from './ConditionInspector.svelte';
   import FlowSelector from './FlowSelector.svelte';
   import { appState } from '$lib/state/app.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';
@@ -32,7 +33,10 @@
 
   <PipelineCanvas />
 
-  <StepConfigPanel />
+  <div class="panels-container">
+    <StepConfigPanel />
+    <ConditionInspector />
+  </div>
 
   <PipelineRunner />
 </div>
@@ -73,5 +77,14 @@
   .input-filename {
     font-weight: 600;
     color: var(--text-primary);
+  }
+
+  .panels-container {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .panels-container > :global(*) {
+    flex: 1;
   }
 </style>

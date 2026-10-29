@@ -151,23 +151,91 @@ PAGE FORMATTING
 
 ---
 
-## 5. Svelte Component Map
+## 5. Responsive & Mobile Architecture (Tauri 2.0 iOS & Android)
+
+The V2 workspace adapts smoothly across three viewport classes using reactive breakpoint tracking (`appState.isMobile` and CSS media queries):
+
+```
+┌────────────────────────────────────────────────────────┐
+│              DESKTOP (>= 1024px)                       │
+│  [Nav Rail: 56px] [Library: 240px] [Canvas] [Dock: 260px] │
+└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│              TABLET (768px – 1023px)                   │
+│  [Nav Rail: 56px] [Canvas] [Collapsible Tool Dock]     │
+│  (Library slides out as a drawer via toolbar button)   │
+└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│              MOBILE (< 768px)                          │
+│  [Top Compact App Bar: Title, Page Pill, Share]        │
+│  [Center Document Canvas with Pinch-to-Zoom Gestures]  │
+│  [✨ Floating AI Action Pill / FAB]                    │
+│  [Frosted-Glass BottomNav: Docs, Scan 📷, Tools, Set]  │
+└────────────────────────────────────────────────────────┘
+```
+
+### 5.1 Mobile Layout Adaptations
+
+1. **Left Library Panel ➔ Slide-Over Drawer**:
+   - On mobile, the 240px library panel is hidden by default to keep the document viewer front and center.
+   - Accessible via the **"Documents"** tab on `BottomNav` or a top left `☰` drawer toggle.
+   - Smooth CSS transform slide-in (`transform: translateX(0)`) with backdrop overlay (`rgba(0,0,0,0.6)`), closing on outside click or swipe-left gesture.
+
+2. **Center Canvas ➔ Clean Full-Screen Viewer**:
+   - The desktop multi-item floating toolbar collapses into an ergonomic **Compact Top Action Bar**:
+     - Left: Back `←` or menu `☰` toggle.
+     - Center: Page pill `[ 2 / 7 ]` (tapping opens page thumbnail sheet).
+     - Right: Share/Export `📤` and overflow `···`.
+   - Desktop zoom buttons (`[−] 87% [+]`) are hidden on touch screens; touch zoom is handled via native **pinch-to-zoom gestures** (`PdfPreviewGestures.svelte`).
+
+3. **Floating AI Recommendation Pill / FAB (Floating Action Button)**:
+   - When a document is loaded, a **frosted-glass Floating Action Pill** floats 80px above the bottom edge (just above the `BottomNav`), centered horizontally:
+     ```
+     ┌──────────────────────────────────────────────────┐
+     │  ✨ AI Suggestion: Redact PII (Contract)   [Apply]│
+     └──────────────────────────────────────────────────┘
+     ```
+   - If multiple recommendations exist, it cycles with subtle micro-animations or features a small indicator badge (`+2 more`).
+   - Tapping the pill opens the **Tools Bottom Sheet** focused directly on the recommended actions.
+   - If the user scrolls down through the PDF, the pill smoothly collapses into a circular **Floating Action Button (FAB)** with a glowing pulse icon `✨` to minimize screen obstruction.
+
+4. **Right Tool Dock ➔ Bottom Sheet Drawer**:
+   - On mobile, the right 260px dock transforms into a swipeable **Bottom Sheet Drawer** (`transform: translateY(0)`).
+   - Tapping the **"Tools"** tab on `BottomNav` or tapping the floating action pill slides up the drawer from the bottom.
+   - Features:
+     - Drag handle pill at the top for intuitive swipe-down dismissal.
+     - **Top Carousel:** Horizontal scrollable chips of instant AI recommendations (`[⚡ Redact PII] [✍️ Sign] [📑 OCR] [🗜️ Compress]`).
+     - **Grouped Tool Accordions:** Signing, Security, Conversion, Page Formatting.
+     - Sticky bottom engine badge: `🛡 Local Engine ACTIVE · 0 Cloud Bytes`.
+     - Full Apple HIG & Android Material 3 compliance: **48×48px minimum touch targets**.
+
+5. **Camera & Physical Document Scanner**:
+   - Preserves the prominent center **Scan `📷` button** in `BottomNav`, which invokes `CameraScannerModal.svelte` for edge-detected physical document capture, immediately rendering into the V2 canvas.
+
+6. **Safe Area Insets**:
+   - Respects `env(safe-area-inset-top)` for iPhone Dynamic Island / notch and `env(safe-area-inset-bottom)` for iOS home indicator and Android navigation bars.
+
+---
+
+## 6. Svelte Component Map
 
 | New / Modified File | Change |
 |---|---|
-| `src/routes/+layout.svelte` | Add `<LibraryPanel>` component alongside `<Sidebar>` |
-| `src/routes/+page.svelte` | Restructure outer layout from tab-switch to 3-column flex row; keep Pipeline/API tabs as alternate full-screen views |
+| `src/routes/+layout.svelte` | Add `<LibraryPanel>` component alongside `<Sidebar>`; handle mobile breakpoint reactivity |
+| `src/routes/+page.svelte` | Restructure outer layout from tab-switch to 3-column flex row on desktop; load compact mobile viewer + drawer when `appState.isMobile` is true |
 | `src/lib/components/layout/Sidebar.svelte` | Refactor to icon-only nav rail (collapsed to 56px); navigation icons for Documents, Pipeline, API, Settings |
-| `src/lib/components/layout/LibraryPanel.svelte` | **NEW** — Left 240px panel with Recent, Smart Categories, Watched Folders, Shared sections |
-| `src/lib/components/layout/ToolDock.svelte` | **NEW** — Right 260px contextual tool dock with AI Recommendations + grouped tool rows |
+| `src/lib/components/layout/LibraryPanel.svelte` | **NEW** — Left 240px panel (desktop) / slide-over drawer (mobile) with Recent, Smart Categories, Watched Folders, Shared sections |
+| `src/lib/components/layout/ToolDock.svelte` | **NEW** — Right 260px contextual tool dock (desktop) with AI Recommendations + grouped tool rows |
+| `src/lib/components/layout/ToolsBottomSheet.svelte` | **NEW** — Mobile swipeable bottom sheet drawer rendering AI recommendations carousel + grouped tools |
 | `src/lib/components/layout/FloatingToolbar.svelte` | **NEW** — Frosted-glass pill toolbar for center viewer |
+| `src/lib/components/layout/MobileFloatingActionPill.svelte` | **NEW** — Frosted-glass floating suggestion pill / FAB for mobile AI next-best-action |
 | `src/lib/components/layout/StatusBar.svelte` | **MODIFY** — Add document metadata (PDF/A type, size, encryption, modified date) |
 | `src/lib/state/library.svelte.ts` | **NEW** — Reactive state for smart categories, watched folders list, recent files |
 | `src/lib/services/watchedFolders.ts` | **NEW** — IPC bridge to `paperpilot watch` daemon status (requires Task 4.7.1) |
 
 ---
 
-## 6. State Management
+## 7. State Management
 
 New `library.svelte.ts` store:
 ```typescript
@@ -183,7 +251,7 @@ interface LibraryState {
 
 ---
 
-## 7. CSS Design Tokens (additions to `app.css`)
+## 8. CSS Design Tokens (additions to `app.css`)
 
 ```css
 /* V2 Layout */
@@ -208,18 +276,20 @@ interface LibraryState {
 
 ---
 
-## 8. Verification & Test Plan
+## 9. Verification & Test Plan
 
-1. **Visual Regression**: Playwright screenshot comparison of 3-pane layout at 1280×800, 1440×900, 1920×1080.
-2. **Watched Folders UI**: Mock `get_watch_status` IPC, verify `Watching` badge appears; simulate `error` status, verify badge turns red.
-3. **AI Recommendations**: Feed a contract PDF, verify at least one of `Redact PII`, `Validate Signature`, or `Extract Tables` appears in recommendations.
-4. **Tool Invocation from Dock**: Click `Compress` in dock, verify `invoke_mcp_tool` called with correct args and progress appears inline.
-5. **Status Bar**: Verify page count, file size, and encryption status render correctly for a known fixture PDF.
-6. **All existing Vitest tests (`pnpm --dir apps/desktop test`) remain 112/112 passing.**
+1. **Visual Regression**: Playwright screenshot comparison of 3-pane layout at 1280×800, 1440×900, 1920×1080, and mobile at 390×844.
+2. **Mobile Drawer & Bottom Sheet**: Verify slide-over library drawer and swipeable tool bottom sheet open/close on mobile touch/click.
+3. **Floating AI Suggestion Pill / FAB**: Verify pill renders with next-best-action, collapses to circular FAB on scroll, and opens bottom sheet on tap.
+4. **Watched Folders UI**: Mock `get_watch_status` IPC, verify `Watching` badge appears; simulate `error` status, verify badge turns red.
+5. **AI Recommendations**: Feed a contract PDF, verify at least one of `Redact PII`, `Validate Signature`, or `Extract Tables` appears in recommendations.
+6. **Tool Invocation from Dock**: Click `Compress` in dock, verify `invoke_mcp_tool` called with correct args and progress appears inline.
+7. **Status Bar**: Verify page count, file size, and encryption status render correctly for a known fixture PDF.
+8. **All existing Vitest tests (`pnpm --dir apps/desktop test`) remain 117/117 passing.**
 
 ---
 
-## 9. Open Questions
+## 10. Open Questions
 
 1. Should the left library panel be **resizable** (drag handle) or fixed-width? Recommendation: Fixed for V1, resizable in a follow-up.
 2. Should Smart Categories be **editable** (user can rename/delete categories)? Recommendation: Read-only SLM-generated for V1.

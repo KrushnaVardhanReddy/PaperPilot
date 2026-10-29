@@ -5,12 +5,30 @@ export type OperationId =
   | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
   | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers' | 'pdf_sanitize' | 'document_pii_scan';
 
+
+export interface WorkflowConditionLeaf {
+  if_scanned?: boolean;
+  if_page_count_gt?: number;
+  comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+  value?: number;
+  text_contains?: string;
+  has_form_fields?: boolean;
+  is_signed?: boolean;
+  is_encrypted?: boolean;
+}
+
+export type OnNoMatch = 'skip' | 'archive_original' | 'error';
+
 export interface PipelineStep {
   id: string;           // crypto.randomUUID()
   operationId: OperationId;
   label: string;        // Human-readable name, e.g. "Compress PDF"
   icon: string;         // emoji or svg name, e.g. "🗜️"
   params: Record<string, unknown>; // operation-specific params
+  condition?: WorkflowConditionLeaf;
+  depends_on?: string[];
+  on_no_match?: OnNoMatch;
+  status?: 'pending' | 'running' | 'completed' | 'skipped' | 'error';
 }
 
 export interface SavedPipeline {
@@ -191,6 +209,25 @@ export class PipelineState {
     this.steps = this.steps.map(s =>
       s.id === id ? { ...s, params: { ...s.params, [paramKey]: value } } : s
     );
+  }
+
+  setStepCondition(stepId: string, condition?: WorkflowConditionLeaf, onNoMatch?: OnNoMatch) {
+    this.steps = this.steps.map(s => {
+      if (s.id === stepId) {
+        return { ...s, condition, on_no_match: onNoMatch };
+      }
+      return s;
+    });
+  }
+
+  removeStepCondition(stepId: string) {
+    this.steps = this.steps.map(s => {
+      if (s.id === stepId) {
+        const { condition, on_no_match, ...rest } = s;
+        return rest;
+      }
+      return s;
+    });
   }
 
   clearPipeline() {

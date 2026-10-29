@@ -29,3 +29,22 @@ export interface SavedPipeline {
   steps: PipelineStep[];
 }
 ```
+
+## Conditional Branching UI
+
+PaperPilot supports multi-conditional workflow nodes via the visual desktop interface. Users can open the 'Condition Inspector' when an operation step is selected, allowing them to visually build rules to evaluate the document prior to executing that step.
+
+### Supported Conditions
+- **Only if Scanned Document:** Checks if the document is purely a scanned image PDF via OCR heuristic.
+- **Page Count:** Comparator (`Greater`, `Less`, `Equal`) and numeric value.
+- **Text Contains:** Simple sub-string matching logic.
+- **Has Form Fields:** Checks the AcroForm dictionary for presence of fields.
+- **Is Digitally Signed:** Evaluates the presence of an active signature block.
+
+### Branching Behavior (On No Match)
+When a condition evaluates to false, the step can route the document into three possible behaviors:
+1. **Skip:** The default. Bypasses the operation and proceeds to the next step.
+2. **Archive Original & Stop:** Preserves the incoming version of the file in the workspace history and terminates the flow.
+3. **Fail Workflow:** Throws a validation error and aborts the entire execution batch.
+
+This visual mapping automatically synchronizes with the `WorkflowConditionLeaf` schema representation, storing the definitions directly within the saved `.json` or `.toml` pipeline profiles.

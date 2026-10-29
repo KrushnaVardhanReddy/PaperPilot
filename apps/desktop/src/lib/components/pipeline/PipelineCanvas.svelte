@@ -46,7 +46,12 @@
       </div>
 
       {#if i < pipelineState.steps.length - 1}
-        <div class="connector" aria-hidden="true">→</div>
+        <div class="connector-wrapper">
+          <div class="connector" aria-hidden="true">→</div>
+          {#if pipelineState.steps[i + 1]?.condition}
+            <div class="connector-condition-badge">[TRUE ➔]</div>
+          {/if}
+        </div>
       {/if}
     {/each}
 
@@ -82,6 +87,19 @@
   scrollbar-width: thin;
 }
 
+.connector-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.connector-condition-badge {
+  font-size: 0.6rem;
+  color: var(--warning-color, #f59e0b);
+  font-weight: 600;
+  white-space: nowrap;
+}
 .connector {
   font-size: 1.4rem;
   color: var(--text-muted);

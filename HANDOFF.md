@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 28, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 4.7.10 ➔ 3.4.11 ➔ 4.7.1)
+> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 3.4.11)
 
 ---
 
@@ -30,8 +30,9 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 | **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten appearances, and write template tokens `{row.name}_{date}.pdf`. | `feature/dev` | ✅ **Completed & Merged (PR #293)** |
 | **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 / Spec 136 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feature/dev` | ✅ **Completed & Merged** — see `reports/CONDITIONAL_WORKFLOW_REPORT.md`. |
 | **4** | **Task 4.7.10 / 8.2.10** | Phase 4.7.10 / 8.2.10 / Spec 137 | **Advanced Multi-Condition Predicates & Combinators**<br>Recursive boolean combinators (`all`, `any`, `not`), in-flight text content search (`text_contains`), form detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators. | `feature/dev` | ✅ **Completed & Merged (PR #299)** |
-| **5** | **Task 3.4.11** | Phase 3.4.11 / Spec 138 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes and branching visual connections to `PipelineCanvas.svelte`. | `feat/desktop-conditional-branching-ui-task-3-4-11` | 🚀 **In Progress (Jules Session 15126192642974815608)** |
-| **6** | **Task 4.7.1** | Phase 4.7.1 / Spec 139 | **Headless Hot Folder Watcher Daemon (`paperpilot watch`)**<br>Headless daemon watching ingress directory, debounce settling, initial sweep, `.ppflow` execution, error quarantine, and JSON audit receipts. | `feat/hot-folder-watcher-task-4-7-1` | 🚀 **In Progress (Jules Session 4593366651974550790)** |
+| **5** | **Task 3.4.11** | Phase 3.4.11 / Spec 138 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes, condition inspector sidebar, and branching visual connections to `PipelineCanvas.svelte`. | `feature/dev` | ✅ **Completed & Merged (PR #301)** |
+| **6** | **Task 4.7.1** | Phase 4.7.1 / Spec 139 | **Headless Hot Folder Watcher Daemon (`paperpilot watch`)**<br>Full 5-interface coverage: CLI daemon, REST Gateway (`POST /v1/automation/watchers`, `GET`, `DELETE`, `POST /v1/automation/run`), and MCP tools (`watcher_start`, `watcher_stop`, `watcher_list`, `recipe_run`). | `feat/hot-folder-watcher-task-4-7-1` | 🚀 **In Progress (Jules Session 6485140125152566545)** |
+| **7** | **Task 3.4.13** | Phase 3.4.13 / Spec 140 | **Desktop V2 Workspace UX Refresh (Desktop + Mobile)**<br>3-pane layout (Library, Document Canvas with Floating Toolbar, Tool Dock) + mobile responsive slide drawer, swipeable bottom sheet, and floating suggestion pill / FAB. | `feature/dev` | ✅ **Completed & Merged (PR #302 & #303)** |
 
 ---
 
