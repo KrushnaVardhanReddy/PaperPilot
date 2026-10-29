@@ -10,10 +10,6 @@
 </script>
 
 <aside class="sidebar collapsed" aria-label="Main navigation">
-  <div class="sidebar-header">
-    <img src="/favicon.png" alt="PaperPilot" class="brand-icon" />
-  </div>
-
   <nav class="sidebar-nav" aria-label="Navigation">
     {#each navItems as item (item.id)}
       {#if item.id !== 'api' || appState.developerMode}
@@ -62,23 +58,9 @@
     z-index: 10;
   }
 
-  .sidebar-header {
-    padding: 16px 0;
-    display: flex;
-    justify-content: center;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .brand-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    object-fit: contain;
-  }
-
   .sidebar-nav {
     flex: 1;
-    padding: 20px 0;
+    padding: 12px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
