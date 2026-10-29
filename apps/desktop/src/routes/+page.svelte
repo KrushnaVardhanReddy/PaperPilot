@@ -35,7 +35,12 @@
       appState.toggleDiffView();
     }).then(fn => unlistenMenuToggleDiff = fn).catch(() => {});
 
-    // Key bindings
+    // Key bindings & viewer actions
+    const handleZoomIn = () => { scale = Math.min(Math.round((scale + 0.2) * 10) / 10, 5.0); };
+    const handleZoomOut = () => { scale = Math.max(Math.round((scale - 0.2) * 10) / 10, 0.2); };
+
+    window.addEventListener('paperpilot:zoom-in', handleZoomIn);
+    window.addEventListener('paperpilot:zoom-out', handleZoomOut);
     window.addEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
     window.addEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
     window.addEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
@@ -44,6 +49,8 @@
 
     return () => {
       if (unlistenMenuToggleDiff) unlistenMenuToggleDiff();
+      window.removeEventListener('paperpilot:zoom-in', handleZoomIn);
+      window.removeEventListener('paperpilot:zoom-out', handleZoomOut);
       window.removeEventListener('paperpilot:rotate-single-page', handleRotatePage as unknown as EventListener);
       window.removeEventListener('paperpilot:delete-single-page', handleDeletePage as unknown as EventListener);
       window.removeEventListener('paperpilot:reorder-page', handleReorderPage as unknown as EventListener);
@@ -458,11 +465,11 @@
         <!-- SLIDE-OUT RIGHT DRAWER -->
         <div class="right-drawer" class:open={isOperationsDrawerOpen}>
           <div class="right-drawer-header">
-            <h3>Operations Inspector</h3>
-            <button class="close-btn" onclick={() => isOperationsDrawerOpen = false}>✕</button>
+            <h3>Tools & Actions</h3>
+            <button class="close-btn" onclick={() => isOperationsDrawerOpen = false} title="Close tools">✕</button>
           </div>
           <div class="right-drawer-content">
-            <OperationsPanel />
+            <OperationsPanel embedded={true} />
           </div>
         </div>
       </div>
@@ -621,7 +628,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 320px;
+    width: 360px;
     background-color: var(--bg-surface);
     border-left: 1px solid var(--border-color);
     box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
@@ -638,12 +645,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--border-color);
   }
   .right-drawer-header h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text-primary);
   }
   .right-drawer-header .close-btn {
@@ -659,8 +667,10 @@
   }
   .right-drawer-content {
     flex: 1;
-    overflow-y: auto;
-    padding: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
   }
 
   .documents-layout {

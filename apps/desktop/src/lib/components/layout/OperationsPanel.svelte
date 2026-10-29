@@ -17,6 +17,7 @@ import type { SnippetTarget } from '$lib/utils/snippetGenerator';
 import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
 import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
+  let { embedded = false } = $props<{ embedded?: boolean }>();
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
@@ -26,8 +27,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let isDragging = $state(false);
 
   onMount(() => {
-    const stored = localStorage.getItem('operations-panel-collapsed');
-    if (stored === 'true') isCollapsed = true;
+    if (!embedded) {
+      const stored = localStorage.getItem('operations-panel-collapsed');
+      if (stored === 'true') isCollapsed = true;
+    }
 
     const storedWidth = localStorage.getItem('operations-panel-width');
     if (storedWidth) {
@@ -39,7 +42,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   });
 
   $effect(() => {
-    localStorage.setItem('operations-panel-collapsed', String(isCollapsed));
+    if (!embedded) {
+      localStorage.setItem('operations-panel-collapsed', String(isCollapsed));
+    }
   });
 
   $effect(() => {
@@ -760,13 +765,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
 <div
   class="operations-panel"
-  class:collapsed={isCollapsed && !appState.isMobile}
+  class:embedded={embedded}
+  class:collapsed={!embedded && isCollapsed && !appState.isMobile}
   class:dragging={isDragging && !appState.isMobile}
   class:mobile-bottom-sheet={appState.isMobile}
   id="operations-panel"
-  style={!appState.isMobile && !isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
+  style={!embedded && !appState.isMobile && !isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
 >
-  {#if !isCollapsed}
+  {#if !isCollapsed && !embedded}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="resize-handle"
@@ -777,17 +783,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     ></div>
   {/if}
 
-  <button
-    class="collapse-toggle"
-    id="operations-panel-toggle"
-    onclick={() => isCollapsed = !isCollapsed}
-    title={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
-    aria-label={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
-  >
-    {isCollapsed ? '‹' : '›'}
-  </button>
+  {#if !embedded}
+    <button
+      class="collapse-toggle"
+      id="operations-panel-toggle"
+      onclick={() => isCollapsed = !isCollapsed}
+      title={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
+      aria-label={isCollapsed ? 'Expand tools panel' : 'Collapse tools panel'}
+    >
+      {isCollapsed ? '‹' : '›'}
+    </button>
+  {/if}
 
-  {#if !isCollapsed || appState.isMobile}
+  {#if embedded || !isCollapsed || appState.isMobile}
   {#if activeTool}
     <!-- INSPECTOR MODE FOR ACTIVE TOOL -->
     <div class="inspector-header">
@@ -1497,6 +1505,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     overflow: hidden;
     position: relative;
     transition: width 0.2s ease, min-width 0.2s ease;
+  }
+
+  .operations-panel.embedded {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-left: none;
+    background-color: transparent;
   }
 
   .operations-panel.collapsed {
