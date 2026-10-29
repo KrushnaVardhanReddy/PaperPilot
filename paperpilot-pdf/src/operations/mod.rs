@@ -1,3 +1,4 @@
+pub mod batch_fill;
 pub mod annotate;
 pub mod bates;
 pub mod bookmarks;

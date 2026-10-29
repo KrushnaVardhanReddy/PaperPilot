@@ -10,7 +10,7 @@ sidebar:
 `paperpilot fill-batch` performs local AcroForm mail merge. It parses the template
 once, fills an independent copy for each record, and writes a local
 `execution_receipt.json` with row outcomes, paths, SHA-256 hashes and timings.
-PDF processing uses the same in-memory form engine as the single-document tools.
+PDF processing uses the same in-memory form engine as the single-document tools. The shared native batch runner also powers [MCP and REST batch_fill](/reference/tools/batch_fill/).
 
 Text fields (including multiline fields) and checkboxes are supported. Values
 are stored using PDF text-string encoding, including UTF-16 for Chinese text.
