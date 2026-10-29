@@ -73,19 +73,23 @@ async fn main() {
                                 "result": parsed
                             })
                         );
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(0);
                     }
                     Ok(_) => {
                         eprintln!("Tool call returned unexpected response type");
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(1);
                     }
                     Err(e) => {
                         eprintln!("Tool call error: {:?}", e);
+                        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
                         std::process::exit(1);
                     }
                 }
             }
         }
+        paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
         std::process::exit(1);
     }
 
@@ -97,4 +101,5 @@ async fn main() {
     if let Err(e) = running_service.waiting().await {
         eprintln!("PAPERPILOT MCP QUIT: {:?}", e);
     }
+    paperpilot_pdf::operations::watch::shared_watcher_manager().shutdown();
 }

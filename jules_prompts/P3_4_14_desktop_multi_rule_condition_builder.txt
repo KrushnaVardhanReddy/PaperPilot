@@ -1,0 +1,143 @@
+[Task 3.4.14 / Spec 141: Desktop Multi-Rule Condition Builder (ALL / ANY Combinators)]
+
+Objective:
+Implement Spec 141 (`specs/141-desktop-multi-rule-condition-builder/spec.md`) and Task 3.4.14 in `apps/desktop`.
+Upgrade the step condition inspector in the Pipeline Studio to support multi-rule compound predicates with `ALL (AND)` and `ANY (OR)` combinators, dynamic rule row additions/deletions, and backward-compatible serialization with `paperpilot-pdf` runtime engine.
+
+Critical Guardrails & Guidelines:
+1. Svelte 5 runes syntax (`$state`, `$derived`, `$props`). Do not revert to Svelte 4 store conventions.
+2. Styling & Contrast: All `<select>`, `<option>`, `<input>`, and button controls MUST follow dark theme aesthetics (`background-color: var(--bg-surface, #1e1e24)`, `color: var(--text-primary, #ffffff)`, `color-scheme: dark`, `border: 1px solid var(--border-color, #2a2a35)`). Never allow native unstyled white backgrounds.
+3. 100% Backward Compatibility: Single-condition flows and existing `localStorage['paperpilot_saved_flows']` must continue to load, edit, and serialize cleanly.
+4. Clean Tests: All 117 tests in `apps/desktop` must continue to pass cleanly via `pnpm --dir apps/desktop test`.
+
+---
+
+### Step-by-Step Implementation Details
+
+#### Step 1: Update State Model in `apps/desktop/src/lib/state/pipeline.svelte.ts`
+1. Expand condition types:
+```typescript
+export interface WorkflowConditionLeaf {
+  if_scanned?: boolean;
+  if_page_count_gt?: number;
+  comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+  value?: number;
+  text_contains?: string;
+  has_form_fields?: boolean;
+  is_signed?: boolean;
+  is_encrypted?: boolean;
+  file_size_bytes?: {
+    eq?: number;
+    gt?: number;
+    gte?: number;
+    lt?: number;
+    lte?: number;
+  };
+}
+
+export type WorkflowCondition =
+  | { all: WorkflowCondition[] }
+  | { any: WorkflowCondition[] }
+  | { not: WorkflowCondition }
+  | WorkflowConditionLeaf;
+```
+
+2. In `PipelineStep`:
+```typescript
+export interface PipelineStep {
+  id: string;
+  operationId: OperationId;
+  label: string;
+  icon: string;
+  params: Record<string, unknown>;
+  condition?: WorkflowCondition;
+  depends_on?: string[];
+  on_no_match?: OnNoMatch;
+  status?: 'pending' | 'running' | 'completed' | 'skipped' | 'error';
+}
+```
+
+3. Update `setStepCondition` in `PipelineState`:
+```typescript
+setStepCondition(stepId: string, condition?: WorkflowCondition, onNoMatch?: OnNoMatch) {
+  const step = this.steps.find(s => s.id === stepId);
+  if (!step) return;
+  step.condition = condition;
+  if (onNoMatch) {
+    step.on_no_match = onNoMatch;
+  }
+}
+```
+
+---
+
+#### Step 2: Implement Multi-Rule UI in `apps/desktop/src/lib/components/pipeline/ConditionInspector.svelte`
+1. Add an editable UI rule data structure:
+```typescript
+export type PredicateType = 'scanned' | 'page_count' | 'text_contains' | 'has_form_fields' | 'is_signed';
+
+export interface UiRule {
+  id: string;
+  type: PredicateType;
+  comparator?: 'Greater' | 'GreaterOrEqual' | 'Equal' | 'Less' | 'LessOrEqual';
+  numValue?: number;
+  textValue?: string;
+  boolValue?: boolean;
+}
+```
+
+2. Normalization & Serialization helpers:
+- When a step is selected, parse `step.condition`:
+  - If `{ all: items }`: combinator = `'all'`, rules = parsed items.
+  - If `{ any: items }`: combinator = `'any'`, rules = parsed items.
+  - If flat leaf: combinator = `'all'`, rules = single parsed item.
+- When saving:
+  - If rules list is empty: condition is `undefined`.
+  - If 1 rule and combinator is `'all'`: can serialize as flat leaf `{ if_scanned: ... }` for maximum backward compatibility.
+  - If multiple rules with combinator `'all'`: serialize as `{ all: [leaf1, leaf2, ...] }`.
+  - If rules with combinator `'any'`: serialize as `{ any: [leaf1, leaf2, ...] }`.
+
+3. Template Structure:
+- **Combinator Header**:
+  ```svelte
+  <div class="combinator-row">
+    <span class="label">Step executes if:</span>
+    <select bind:value={combinator} onchange={saveChanges} class="combinator-select">
+      <option value="all">ALL rules match (AND)</option>
+      <option value="any">ANY rule matches (OR)</option>
+    </select>
+  </div>
+  ```
+- **Rules List (`{#each rules as rule, index (rule.id)}`)**:
+  - Predicate selector `<select>`:
+    - `Only if Scanned Document`
+    - `Page Count` (shows comparator dropdown + number input)
+    - `Text Contains` (shows text input)
+    - `Has Form Fields`
+    - `Is Digitally Signed`
+  - Remove rule button `<button class="remove-rule-btn" onclick={() => removeRule(rule.id)}>✕</button>`.
+- **Add Rule Button**:
+  - `<button type="button" class="add-rule-btn" onclick={addRule}>+ Add Rule</button>`.
+- **On No Match Section**:
+  - Radio options (`Skip step`, `Archive original & stop`, `Fail workflow with error`).
+
+---
+
+#### Step 3: Update `StepCard.svelte` Condition Badge
+In `apps/desktop/src/lib/components/pipeline/StepCard.svelte`, format the summary string cleanly:
+- If `all` with multiple rules: `⚡ ALL (N rules)`
+- If `any` with multiple rules: `⚡ ANY (N rules)`
+- If single condition: `⚡ Scanned` or `⚡ Pages > 5`
+
+---
+
+#### Step 4: Tests & Verification
+1. Add tests in `apps/desktop/src/lib/components/__tests__/PipelineCanvas.test.ts` (or create a dedicated `ConditionInspector.test.ts`):
+   - Tests configuring multi-rule conditions with `all` and `any`.
+   - Tests rule addition and removal.
+   - Tests saving and loading multi-rule workflows.
+2. Run test command:
+   ```bash
+   pnpm --dir apps/desktop test
+   ```
+   Ensure all test files pass with 0 errors.

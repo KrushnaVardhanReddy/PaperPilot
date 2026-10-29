@@ -1,6 +1,8 @@
 use lopdf::{Dictionary, Document, Object, ObjectId, content::Content};
 use paperpilot_core::error::{OperationResult, PdfError};
-use paperpilot_core::workflow::{LeafCondition, NumericComparator, PageCountComparator, WorkflowCondition};
+use paperpilot_core::workflow::{
+    LeafCondition, NumericComparator, PageCountComparator, WorkflowCondition,
+};
 use std::collections::HashSet;
 
 pub(super) fn load_pdf(bytes: &[u8]) -> OperationResult<Document> {
@@ -128,14 +130,32 @@ fn evaluate_leaf(
     if let Some(comparator) = &leaf.file_size_bytes {
         let size = bytes.len() as u64;
         let satisfied = match comparator {
-            NumericComparator::Between { between: [min, max] } => size >= *min && size <= *max,
-            NumericComparator::Comparison { eq, gt, gte, lt, lte } => {
+            NumericComparator::Between {
+                between: [min, max],
+            } => size >= *min && size <= *max,
+            NumericComparator::Comparison {
+                eq,
+                gt,
+                gte,
+                lt,
+                lte,
+            } => {
                 let mut ok = true;
-                if let Some(v) = eq { ok &= size == *v; }
-                if let Some(v) = gt { ok &= size > *v; }
-                if let Some(v) = gte { ok &= size >= *v; }
-                if let Some(v) = lt { ok &= size < *v; }
-                if let Some(v) = lte { ok &= size <= *v; }
+                if let Some(v) = eq {
+                    ok &= size == *v;
+                }
+                if let Some(v) = gt {
+                    ok &= size > *v;
+                }
+                if let Some(v) = gte {
+                    ok &= size >= *v;
+                }
+                if let Some(v) = lt {
+                    ok &= size < *v;
+                }
+                if let Some(v) = lte {
+                    ok &= size <= *v;
+                }
                 ok
             }
         };
@@ -147,52 +167,16 @@ fn evaluate_leaf(
 }
 
 fn has_acroform_fields(doc: &Document) -> OperationResult<bool> {
-    if let Ok(catalog) = doc.catalog() {
-        if let Ok(acroform) = catalog.get(b"AcroForm") {
-            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
-                if let Ok(fields) = dict.get(b"Fields").and_then(Object::as_array) {
-                    return Ok(!fields.is_empty());
-                }
-            }
-        }
-    }
-    Ok(false)
+    crate::operations::document_inspection::has_form_fields(doc)
 }
-
 fn is_digitally_signed(doc: &Document) -> OperationResult<bool> {
-    if let Ok(catalog) = doc.catalog() {
-        if let Ok(acroform) = catalog.get(b"AcroForm") {
-            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
-                if let Ok(sig_flags) = dict.get(b"SigFlags").and_then(Object::as_i64) {
-                    if sig_flags & 1 != 0 || sig_flags & 2 != 0 {
-                        return Ok(true);
-                    }
-                }
-            }
-        }
-    }
-    for (_, page_id) in doc.get_pages() {
-        if let Ok(dict) = doc.get_dictionary(page_id) {
-            if let Ok(annots) = dict.get(b"Annots").and_then(Object::as_array) {
-                for annot_ref in annots {
-                    if let Ok((_, annot_obj)) = doc.dereference(annot_ref) {
-                        if let Ok(annot_dict) = annot_obj.as_dict() {
-                            if annot_dict.get(b"FT").and_then(Object::as_name).is_ok_and(|name| name == b"Sig") {
-                                return Ok(true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    Ok(false)
+    crate::operations::document_inspection::has_signature(doc)
 }
 
 // Conservative, local heuristic: at least one page paints a raster image and
 // has no extractable non-whitespace text. Blank/vector-only pages are not scans.
 // A mixed document counts as scanned if any page needs OCR. This is not a model.
-fn is_scanned(doc: &Document) -> OperationResult<bool> {
+pub(super) fn is_scanned(doc: &Document) -> OperationResult<bool> {
     for (number, page) in doc.get_pages() {
         let text = doc
             .extract_text_with_limit(&[number], 16 * 1024 * 1024)

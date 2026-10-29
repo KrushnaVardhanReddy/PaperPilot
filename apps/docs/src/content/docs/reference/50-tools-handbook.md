@@ -1,11 +1,11 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 77 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 80 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (77 Tools)
+# PaperPilot Tools Handbook (80 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **77 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **80 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
 ## 1. `cli_ask`
 
@@ -2149,7 +2149,97 @@ N/A
 N/A
 ```
 
-## 77. `workspace_search`
+## 77. `watcher_list`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Lists runtime entries from the shared local manager with `watcher_id`, `status`, `dir`, `recipe`, `last_processed_file`, `last_processed_at`, `total_processed`, `succeeded`, `failed`, `last_error`, `last_output`, and `last_receipt`. Output/receipt paths remain available when the desktop panel is reopened. `total_processed` counts successes plus failures, rather than successful writes alone.
+
+Statuses are `watching`, `stopping`, `stopped`, or `error`. A per-file processing failure increments `failed` while watching continues; fatal filesystem errors end the worker with `error`. Persisted desktop preferences are never reported as active runtime entries. Desktop-stopped watchers remain listed until removal, while MCP/REST stop removes the entry.
+
+### CLI
+```bash
+# The CLI watcher runs in its own process and logs events in its terminal.
+# Use MCP/REST to list workers belonging to their server process.
+```
+
+### MCP JSON-RPC
+```json
+{ "name": "watcher_list", "arguments": {} }
+```
+
+### REST API
+```bash
+curl -s http://127.0.0.1:7823/v1/automation/watchers
+```
+
+## 78. `watcher_start`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Registers an operating-system folder watcher, processes existing and arriving PDFs with the shared workflow engine, and reports actual progress. Invalid paths and unsupported recipes fail before a watcher is reported as running.
+
+The recipe accepts a preset ID, a local TOML/JSON `.ppflow` path, or serialized workflow content. Outputs default to `INPUT/processed`, failure receipts to `INPUT/.error`. Input and output folders must differ. Sources stay in place unless the CLI/REST caller explicitly requests `move_original`. Existing files are never overwritten; collisions receive a numeric suffix. Watching is nonrecursive. Each start sweeps existing files again.
+
+`settle_delay_ms` defaults to 500 and accepts 50–60000. The worker waits for a stable file size and ignores unchanged duplicate events during that run. A processing or write failure increments `failed`, emits an error, and retains the source; later PDFs can still succeed. Success receipts contain input/output SHA-256 hashes and the workflow report. Failure receipts contain the error and input hash; `.error` stores receipts, not relocated PDFs.
+
+Watchers live in the owning process. Desktop commands, its local REST gateway, and its MCP endpoint share one manager; separate processes have separate managers. Saved desktop configurations require an explicit start after relaunch. No network request is made unless a CLI caller supplies `--webhook`.
+
+Explicit CLI webhooks retain the completion fields `success`, `operation`, `file`, and `error`, adding `output` and `receipt` paths. Delivery has a 30-second timeout; HTTP/network failures are logged separately from PDF processing results.
+
+### CLI
+```bash
+paperpilot watch --directory /local/inbox --recipe preset-legal-discovery --settle-delay-ms 500
+# Add --once to process existing PDFs and exit; any failed file yields a nonzero exit code.
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_start",
+  "arguments": {
+    "dir": "/local/inbox",
+    "recipe": "preset-legal-discovery",
+    "settle_delay_ms": 500
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/v1/automation/watchers \
+  -H 'Content-Type: application/json' \
+  -d '{"dir":"/local/inbox","recipe":"preset-legal-discovery","settle_delay_ms":500}'
+```
+
+## 79. `watcher_stop`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+Cancels a real watcher, waits for any in-flight PDF operation and worker thread to finish, then removes its registry entry. After success no further files are processed by that watcher. Unknown IDs return an error.
+
+The desktop Stop action retains the stopped configuration and final statistics so it can be restarted. Desktop Remove and MCP/REST stop remove the runtime entry. Removing from another local interface is reflected in the desktop panel by its local status refresh. These APIs apply to watchers in the same process.
+
+### CLI
+```bash
+# Press Ctrl+C in the terminal running `paperpilot watch` to stop it gracefully.
+# `paperpilot watch --once ...` stops automatically after the initial sweep.
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_stop",
+  "arguments": { "watcher_id": "WATCHER_ID_FROM_START" }
+}
+```
+
+### REST API
+```bash
+curl -i -X DELETE http://127.0.0.1:7823/v1/automation/watchers/WATCHER_ID_FROM_START
+```
+
+## 80. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

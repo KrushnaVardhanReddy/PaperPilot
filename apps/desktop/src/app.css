@@ -108,6 +108,25 @@ a:hover {
   color: var(--accent-hover);
 }
 
+/* Global Form Elements Contrast & Appearance */
+select, input, textarea {
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color-scheme: dark;
+}
+
+:root.light select,
+:root.light input,
+:root.light textarea {
+  color-scheme: light;
+}
+
+select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
 .app-container {
   display: flex;
   flex-direction: column;

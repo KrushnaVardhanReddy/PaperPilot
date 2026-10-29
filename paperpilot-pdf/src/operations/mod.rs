@@ -10,6 +10,7 @@ pub mod conversion;
 pub mod crop;
 pub mod decrypt;
 pub mod delete;
+pub mod document_inspection;
 pub mod encrypt;
 pub mod extract;
 pub mod extract_images;

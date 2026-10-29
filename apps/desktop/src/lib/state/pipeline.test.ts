@@ -134,7 +134,7 @@ describe('PipelineState Persistence & Presets', () => {
     ];
 
     state.setStepCondition('s1', { if_scanned: true }, 'skip');
-    expect(state.steps[0].condition?.if_scanned).toBe(true);
+    expect(state.steps[0].condition).toEqual({ if_scanned: true });
     expect(state.steps[0].on_no_match).toBe('skip');
 
     state.removeStepCondition('s1');

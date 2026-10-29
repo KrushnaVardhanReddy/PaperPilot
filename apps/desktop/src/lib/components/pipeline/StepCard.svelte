@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PipelineStep, WorkflowConditionLeaf } from '$lib/state/pipeline.svelte';
+  import type { PipelineStep, WorkflowCondition, WorkflowConditionLeaf } from '$lib/state/pipeline.svelte';
   import { pipelineState } from '$lib/state/pipeline.svelte';
 
   let { step, index, isRunning } = $props<{
@@ -8,18 +8,8 @@
     isRunning: boolean;
   }>();
 
-  function getConditionSummary(cond: WorkflowConditionLeaf): string {
-    const parts = [];
-    if (cond.if_scanned) parts.push('Scanned');
-    if (cond.if_page_count_gt !== undefined) parts.push(`Pages > ${cond.if_page_count_gt}`);
-    if (cond.comparator && cond.value !== undefined) parts.push(`Pages ${cond.comparator} ${cond.value}`);
-    if (cond.text_contains) parts.push(`Contains "${cond.text_contains}"`);
-    if (cond.has_form_fields) parts.push('Has Forms');
-    if (cond.is_signed) parts.push('Signed');
-    if (cond.is_encrypted) parts.push('Encrypted');
+  import { conditionSummary as getConditionSummary } from '$lib/utils/workflowConditions';
 
-    return parts.length > 0 ? parts.join(', ') : 'Custom';
-  }
 </script>
 
 <div

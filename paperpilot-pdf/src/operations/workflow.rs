@@ -9,6 +9,39 @@ use web_time::Instant;
 mod conditions;
 mod dispatch;
 
+pub(super) fn inspect_scanned(doc: &lopdf::Document) -> OperationResult<bool> {
+    conditions::is_scanned(doc)
+}
+
+/// Validate a stored recipe before starting an unattended watcher.
+pub fn validate_workflow_definition(workflow: &SavedWorkflow) -> OperationResult<()> {
+    workflow_order(workflow)?;
+    for (index, step) in workflow.steps.iter().enumerate() {
+        validate_stage(workflow, index, step)?;
+    }
+    Ok(())
+}
+
+fn validate_stage(
+    workflow: &SavedWorkflow,
+    index: usize,
+    step: &paperpilot_core::workflow::WorkflowStep,
+) -> OperationResult<()> {
+    dispatch::validate_step(step)?;
+    if matches!(step.operation_id.as_str(), "encrypt" | "pdf_encrypt")
+        && (index + 1 != workflow.steps.len()
+            || workflow
+                .steps
+                .iter()
+                .any(|other| other.depends_on.contains(&step.id)))
+    {
+        return Err(PdfError::InvalidInput(
+            "Encryption must be the final declared workflow stage with no dependent stages".into(),
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Debug)]
 pub struct WorkflowFailure {
     pub report: WorkflowExecutionReport,
@@ -83,19 +116,7 @@ pub fn run_workflow_bytes_detailed(
         for (index, step) in workflow.steps.iter().enumerate() {
             active = Some(index);
             active_started = Instant::now();
-            dispatch::validate_step(step)?;
-            if matches!(step.operation_id.as_str(), "encrypt" | "pdf_encrypt")
-                && (index + 1 != workflow.steps.len()
-                    || workflow
-                        .steps
-                        .iter()
-                        .any(|other| other.depends_on.contains(&step.id)))
-            {
-                return Err(PdfError::InvalidInput(
-                    "Encryption must be the final declared workflow stage with no dependent stages"
-                        .into(),
-                ));
-            }
+            validate_stage(workflow, index, step)?;
         }
         active = None;
         let doc = conditions::load_pdf(input_bytes)?;

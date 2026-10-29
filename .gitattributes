@@ -1,2 +1,3 @@
 # Keep synthetic PDF evidence byte-identical across Windows and Unix checkouts.
 reports/conditional-workflow-validation/*.pdf binary
+apps/desktop/tests/fixtures/automation/*.pdf binary

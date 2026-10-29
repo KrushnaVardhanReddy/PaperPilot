@@ -1847,6 +1847,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     background-position: right 10px center;
     background-size: 14px;
     padding-right: 30px;
+    color-scheme: dark;
+  }
+
+  select.form-input option {
+    background-color: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
   }
 
   .range-input {

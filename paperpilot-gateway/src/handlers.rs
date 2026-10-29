@@ -1,22 +1,22 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
+use crate::server::WatcherRegistry;
 use axum::{
     body::Bytes,
     extract::Path,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
+use base64::Engine;
+use paperpilot_core::workflow::{get_preset_by_id, parse_workflow};
+use paperpilot_pdf::operations::watch::WatchConfig;
+use paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed;
 use rmcp::model::{CallToolRequestParams, CallToolResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
-use crate::server::{WatcherHandle, WatcherRegistry};
-use tokio_util::sync::CancellationToken;
-use paperpilot_core::workflow::{get_preset_by_id, parse_workflow};
-use paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed;
-use base64::Engine;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartWatcherRequest {
@@ -50,6 +50,11 @@ pub struct WatcherSummary {
     pub last_processed_file: Option<String>,
     pub last_processed_at: Option<String>,
     pub total_processed: u64,
+    pub succeeded: u64,
+    pub failed: u64,
+    pub last_error: Option<String>,
+    pub last_output: Option<String>,
+    pub last_receipt: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -415,10 +420,11 @@ pub struct PdfAttachmentsJsonRequest {
     )
 )]
 pub async fn health() -> impl IntoResponse {
-    let tools_count = match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
-        Ok(res) => res.tools.len(),
-        Err(_) => 0,
-    };
+    let tools_count =
+        match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
+            Ok(res) => res.tools.len(),
+            Err(_) => 0,
+        };
     let resp = HealthResponse {
         status: "ok".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -2222,56 +2228,47 @@ pub async fn start_watcher(
     axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
     axum::extract::Json(req): axum::extract::Json<StartWatcherRequest>,
 ) -> impl IntoResponse {
-    let watcher_id = format!("watcher_{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
-    let cancel = CancellationToken::new();
-    let c = cancel.clone();
-    let dir = std::path::PathBuf::from(req.dir.clone());
-    let recipe = std::path::PathBuf::from(req.recipe.clone());
-
-    let out_dir = req.output_dir.clone().map(std::path::PathBuf::from);
-    let err_dir = req.error_dir.clone().map(std::path::PathBuf::from);
-    let move_dir = req.move_original.clone().map(std::path::PathBuf::from);
-    let settle = req.settle_delay_ms.unwrap_or(500);
-
-    let dir_clone = dir.clone();
-    let recipe_clone = recipe.clone();
-
-    tokio::spawn(async move {
-        let _ = paperpilot_pdf::operations::watch::handle_watch(
-            dir_clone,
-            out_dir,
-            Some(recipe_clone),
-            None,
-            settle,
-            move_dir,
-            err_dir,
-            false,
-            Some(c),
-        ).await;
-    });
-
-    let handle = WatcherHandle {
-        watcher_id: watcher_id.clone(),
-        dir: dir.clone(),
-        recipe: recipe.clone(),
-        cancel: cancel.clone(),
-        child_proc: None,
-        last_processed_file: None,
-        last_processed_at: None,
-        total_processed: 0,
+    let watcher_id = format!("watcher_{}", uuid::Uuid::new_v4().simple());
+    let id = watcher_id.clone();
+    let config = WatchConfig {
+        directory: req.dir.into(),
+        recipe: req.recipe,
+        output_dir: req.output_dir.map(Into::into),
+        error_dir: req.error_dir.map(Into::into),
+        move_original: req.move_original.map(Into::into),
+        settle_delay_ms: req.settle_delay_ms.unwrap_or(500),
+        once: false,
     };
-
-    registry.lock().await.insert(watcher_id.clone(), handle);
-
-    (
-        axum::http::StatusCode::CREATED,
-        axum::Json(StartWatcherResponse {
-            watcher_id,
-            status: "watching".to_string(),
-            dir: req.dir,
-            recipe: req.recipe,
-        }),
-    )
+    match tokio::task::spawn_blocking(move || {
+        registry.start(id, config, std::sync::Arc::new(|_| {}))
+    })
+    .await
+    {
+        Ok(Ok(snapshot)) => (
+            StatusCode::CREATED,
+            Json(StartWatcherResponse {
+                watcher_id,
+                status: serde_json::to_value(snapshot.status)
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .into(),
+                dir: snapshot.directory.to_string_lossy().into(),
+                recipe: snapshot.recipe_name,
+            }),
+        )
+            .into_response(),
+        Ok(Err(e)) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": e.to_string()})),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
+    }
 }
 
 #[utoipa::path(
@@ -2285,18 +2282,29 @@ pub async fn start_watcher(
 pub async fn list_watchers(
     axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
 ) -> impl IntoResponse {
-    let map = registry.lock().await;
-    let watchers = map.values().map(|h| WatcherSummary {
-        watcher_id: h.watcher_id.clone(),
-        status: "watching".to_string(),
-        dir: h.dir.to_string_lossy().to_string(),
-        recipe: h.recipe.to_string_lossy().to_string(),
-        last_processed_file: h.last_processed_file.clone(),
-        last_processed_at: h.last_processed_at.clone(),
-        total_processed: h.total_processed,
-    }).collect();
-
-    (axum::http::StatusCode::OK, axum::Json(WatcherListResponse { watchers }))
+    let watchers = registry
+        .list()
+        .into_iter()
+        .map(|h| WatcherSummary {
+            watcher_id: h.id,
+            status: serde_json::to_value(h.status)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .into(),
+            dir: h.directory.to_string_lossy().into(),
+            recipe: h.recipe_name,
+            last_processed_file: h.last_processed_file.map(|p| p.to_string_lossy().into()),
+            last_processed_at: h.last_processed_at,
+            total_processed: h.succeeded + h.failed,
+            succeeded: h.succeeded,
+            failed: h.failed,
+            last_error: h.last_error,
+            last_output: h.last_output.map(|p| p.to_string_lossy().into()),
+            last_receipt: h.last_receipt.map(|p| p.to_string_lossy().into()),
+        })
+        .collect();
+    (StatusCode::OK, Json(WatcherListResponse { watchers }))
 }
 
 #[utoipa::path(
@@ -2312,15 +2320,10 @@ pub async fn stop_watcher(
     axum::extract::Path(id): axum::extract::Path<String>,
     axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
 ) -> impl IntoResponse {
-    let mut map = registry.lock().await;
-    if let Some(mut handle) = map.remove(&id) {
-        handle.cancel.cancel();
-        if let Some(mut c) = handle.child_proc.take() {
-            let _ = c.kill(); let _ = c.wait();
-        }
-        axum::http::StatusCode::NO_CONTENT
-    } else {
-        axum::http::StatusCode::NOT_FOUND
+    match tokio::task::spawn_blocking(move || registry.remove(&id)).await {
+        Ok(Ok(())) => StatusCode::NO_CONTENT,
+        Ok(Err(_)) => StatusCode::NOT_FOUND,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
 
@@ -2333,9 +2336,7 @@ pub async fn stop_watcher(
         (status = 400, description = "Invalid request arguments")
     )
 )]
-pub async fn run_recipe_once(
-    mut multipart: axum::extract::Multipart,
-) -> impl IntoResponse {
+pub async fn run_recipe_once(mut multipart: axum::extract::Multipart) -> impl IntoResponse {
     let mut file_bytes = None;
     let mut recipe_content = None;
 
@@ -2353,23 +2354,40 @@ pub async fn run_recipe_once(
         return (
             axum::http::StatusCode::BAD_REQUEST,
             axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
-        ).into_response();
+        )
+            .into_response();
     }
 
     let bytes = file_bytes.unwrap();
     let r_content = recipe_content.unwrap();
 
-    let workflow = if r_content.starts_with('{') || r_content.contains("op =") || r_content.contains("version =") {
-        match parse_workflow(&r_content) {
-            Ok(w) => w,
-            Err(e) => return (axum::http::StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({"error": e.to_string()}))).into_response()
-        }
-    } else {
-        match get_preset_by_id(&r_content) {
-            Some(w) => w,
-            None => return (axum::http::StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({"error": format!("Preset not found: {}", r_content)}))).into_response()
-        }
-    };
+    let workflow =
+        if r_content.starts_with('{')
+            || r_content.contains("op =")
+            || r_content.contains("version =")
+        {
+            match parse_workflow(&r_content) {
+                Ok(w) => w,
+                Err(e) => {
+                    return (
+                        axum::http::StatusCode::BAD_REQUEST,
+                        axum::Json(serde_json::json!({"error": e.to_string()})),
+                    )
+                        .into_response();
+                }
+            }
+        } else {
+            match get_preset_by_id(&r_content) {
+                Some(w) => w,
+                None => return (
+                    axum::http::StatusCode::BAD_REQUEST,
+                    axum::Json(
+                        serde_json::json!({"error": format!("Preset not found: {}", r_content)}),
+                    ),
+                )
+                    .into_response(),
+            }
+        };
 
     match run_workflow_bytes_detailed(&bytes, &workflow) {
         Ok((out, report)) => {
@@ -2381,14 +2399,14 @@ pub async fn run_recipe_once(
                     success: true,
                     output_bytes: b64,
                     receipt,
-                })
-            ).into_response()
+                }),
+            )
+                .into_response()
         }
-        Err(failure) => {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(serde_json::json!({"error": failure.cause.to_string()}))
-            ).into_response()
-        }
+        Err(failure) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            axum::Json(serde_json::json!({"error": failure.cause.to_string()})),
+        )
+            .into_response(),
     }
 }

@@ -114,12 +114,17 @@
 
   .field-group input,
   .field-group select {
-    padding: 8px;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background-color: var(--surface-2, #1c1c1f);
+    color: var(--text-primary, #ffffff);
     font-size: 0.9rem;
+  }
+
+  .field-group select option {
+    background-color: var(--surface-2, #1c1c1f);
+    color: var(--text-primary, #ffffff);
   }
 
   .field-group input:focus,
