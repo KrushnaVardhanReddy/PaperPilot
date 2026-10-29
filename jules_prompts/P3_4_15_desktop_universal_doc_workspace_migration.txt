@@ -1,0 +1,90 @@
+[Task 3.4.15 / Spec 143: Universal Document Workspace & Consumer-Friendly Studio Migration]
+
+Objective:
+Implement Spec 143 (`specs/143-desktop-universal-doc-workspace-migration/spec.md`) and Task 3.4.15 in `apps/desktop`.
+Migrate the desktop UI from an administrative PDF-only form into a modern, consumer-friendly Universal Document Workspace (PDF, Word, Excel, CSV, Markdown) connected directly to real data stores (`appState.documents`, `pipelineState`, `OperationsPanel.svelte`).
+
+🚨 CRITICAL MANDATE — ZERO MOCKING:
+1. Do NOT create mocked shells, static dummy folder arrays, or hardcoded document counts.
+2. All document lists, format filters, and page counts MUST be dynamically computed from `appState.documents` and `appState.documentPaths`.
+3. All 75+ tools in `OperationsPanel.svelte` MUST remain accessible and fully functional.
+4. Existing viewers (`PdfViewer.svelte` for PDFs, `SpreadsheetViewer.svelte` for XLSX/CSV, `PdfVisualDiff.svelte`) MUST be preserved and rendered dynamically based on `fileType.ts`.
+5. Strictly use Svelte 5 runes syntax (`$state`, `$derived`, `$props`). Enforce dark theme CSS variables (`--bg-surface`, `--text-primary`, `--border-color`, `color-scheme: dark`). Never introduce unstyled light backgrounds.
+
+---
+
+### Step-by-Step Implementation Details
+
+#### Step 1: Create Universal Home Dashboard in `apps/desktop/src/lib/components/workspace/UniversalHomeDashboard.svelte`
+1. Rendered when no document is open (`appState.documents.length === 0`):
+   - Welcoming header: "PaperPilot: Universal Document OS"
+   - Subtitle: "Open, convert, or automate any document — pure Rust, 100% private on your machine."
+   - Large, inviting drop zone supporting all formats:
+     - Accepts `.pdf`, `.docx`, `.xlsx`, `.xls`, `.csv`, `.tsv`, `.pptx`, `.md`, `.txt`, `.png`, `.jpg`.
+     - Calls native file picker or handles drag & drop to append files to `appState.addDocuments()`.
+   - Grid of 8 Everyday Universal Action Cards:
+     1. 🗜️ **Smart Compress** (Make PDF/Word smaller)
+     2. 🔄 **Universal Convert** (Word ⇄ PDF ⇄ Excel ⇄ Markdown)
+     3. ✍️ **Sign & Protect** (Sign agreements, add password)
+     4. 📑 **Merge & Combine** (Join documents together)
+     5. 📷 **AI OCR & Scan** (Extract text from images/scans)
+     6. 📊 **Spreadsheets & Data** (Inspect & clean CSV/XLSX)
+     7. 🛡️ **Redact & Sanitize** (Black out sensitive text, remove metadata)
+     8. 🤖 **Automate Pipeline** (Switch to visual DAG workflow builder)
+   - Clicking an action card prompts file selection and pre-selects the corresponding tool in `appState.activeTool`.
+
+---
+
+#### Step 2: Real Smart Format Filter Pills in `apps/desktop/src/lib/components/ui/DocumentList.svelte`
+1. Use `getFileTypeInfo` from `$lib/utils/fileType` to dynamically derive format counts from `appState.documents`:
+   ```typescript
+   let formatCounts = $derived({
+     all: appState.documents.length,
+     pdf: appState.documents.filter(d => getFileTypeInfo(d.name).isPdf).length,
+     sheets: appState.documents.filter(d => getFileTypeInfo(d.name).category === 'spreadsheet').length,
+     word: appState.documents.filter(d => getFileTypeInfo(d.name).category === 'document').length,
+     scanned: appState.documents.filter(d => !!(d as any).isScanned).length,
+   });
+   ```
+2. Render horizontal filter pills above the document list:
+   - `All (${formatCounts.all})`
+   - `📄 PDF (${formatCounts.pdf})`
+   - `📊 Sheets (${formatCounts.sheets})`
+   - `📝 Docs (${formatCounts.word})`
+   - `📷 Scanned (${formatCounts.scanned})`
+3. Reactively filter the rendered items so users can isolate file types without mock data.
+
+---
+
+#### Step 3: Top Header Mode Switcher & Global Search Bar in `apps/desktop/src/lib/components/layout/Titlebar.svelte` or `Sidebar.svelte`
+1. Provide a slim, modern mode switcher:
+   - `[ 📄 Document Studio ]` (Viewer + Tool Operations)
+   - `[ 🔗 Automations ]` (Pipeline DAG Canvas + Watched Folders)
+2. Add a prominent search input:
+   - Placeholder: `Search 75 tools or documents (Ctrl+K)...`
+   - Clicking it or pressing `Ctrl + K` / `Cmd + K` opens `GlobalCommandBar.svelte` or `CommandPalette.svelte`.
+   - Users can type any tool name (e.g., "compress", "rotate", "ocr", "excel") to trigger it instantly.
+
+---
+
+#### Step 4: Contextual Active Document Canvas & Floating Action Pill in `+page.svelte`
+1. In `apps/desktop/src/routes/+page.svelte`:
+   - If `appState.documents.length === 0`, render `UniversalHomeDashboard.svelte`.
+   - If a document is selected:
+     - If it's a spreadsheet (`isSpreadsheetFile(doc.name)`), render `<SpreadsheetViewer file={selectedDoc} />`.
+     - If it's a PDF (`isPdfFile(doc.name)`), render `<PdfViewer ... />`.
+     - If diff view is active, render `<PdfVisualDiff ... />`.
+2. Add a floating frosted-glass action pill at the bottom center of the document viewer:
+   - For PDFs: `[ 🔍 Zoom ] [ ↻ Rotate ] [ ✂ Crop ] [ ✍ Sign ] [ ⚙️ More Actions ]`.
+   - Clicking "More Actions" toggles the right-hand `OperationsPanel.svelte` drawer.
+3. Provide a collapsible button (`✕` / `‹›`) on the right `OperationsPanel.svelte` so users can expand or collapse the tool parameters for focused document reading.
+
+---
+
+#### Step 5: Tests & Verification
+1. Run desktop test suite:
+   ```bash
+   pnpm --dir apps/desktop test
+   ```
+2. Verify all 117 tests pass cleanly.
+3. Ensure zero build errors and zero unclosed HTML/CSS declarations in Vite.
