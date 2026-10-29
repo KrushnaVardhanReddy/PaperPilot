@@ -274,6 +274,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
             "/v1/automation/watchers/{id}",
             delete(handlers::stop_watcher),
         )
+        .route("/v1/automation/fill-batch", post(crate::batch_routes::fill))
         .route("/v1/automation/run", post(handlers::run_recipe_once))
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)

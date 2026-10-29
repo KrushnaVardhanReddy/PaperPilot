@@ -67,6 +67,20 @@ impl PaperPilotMcpServer {
     pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
         let mut tools = Vec::new();
 
+        tools.push(Tool::new("batch_fill".to_string(),
+            "Fill a local AcroForm PDF from a CSV/JSON path or inline JSON records; returns per-row results and a persisted receipt. Flattens by default and never overwrites outputs.".to_string(),
+            serde_json::json!({"type":"object", "additionalProperties":false,
+                "required":["template","output_dir"],
+                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
+                "properties": {
+                    "template":{"type":"string"}, "output_dir":{"type":"string"},
+                    "data":{"type":"string","description":"Local .csv or .json data path"},
+                    "records":{"type":"array","items":{"type":"object"}},
+                    "name_template":{"type":"string","default":"{index:04}.pdf"},
+                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
+                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
+                }}).as_object().unwrap().clone()));
+
         let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
             let schema = serde_json::json!({
                 "type": "object",
@@ -4402,6 +4416,17 @@ impl PaperPilotMcpServer {
         request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
         let args = request.arguments.clone().unwrap_or_default();
+        if request.name == "batch_fill" {
+            let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
+                serde_json::from_value(serde_json::Value::Object(args.clone()))
+                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            let receipt = input.execute().map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            let content = vec![ContentBlock::text(serde_json::to_string(&receipt)
+                .map_err(|e| ErrorData::internal_error(e.to_string(), None))?)];
+            let result = if receipt.success { CallToolResult::success(content) }
+                else { CallToolResult::error(content) };
+            return Ok(CallToolResponse::Complete(result));
+        }
         let get_string = |key: &str| -> Result<String, ErrorData> {
             args.get(key)
                 .and_then(|v| v.as_str())
