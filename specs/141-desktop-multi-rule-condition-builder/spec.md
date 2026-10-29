@@ -3,12 +3,16 @@
 ## Metadata
 - **Spec Number**: 141
 - **Phase**: Phase 3.4.14 / Task 3.4.14
-- **Status**: 📋 Ready for Implementation
+- **Status**: Implemented (initial UI in PR #305); compatibility repairs awaiting integration review
 - **Target Branch**: `feat/desktop-multi-rule-condition-builder-task-3-4-14`
 - **Impacted Apps & Packages**: `apps/desktop` (`apps/desktop/src/lib/components/pipeline/*`, `apps/desktop/src/lib/state/pipeline.svelte.ts`)
 - **Associated Specs & Phase Docs**: Spec 137 (`specs/137-advanced-multi-condition-engine/spec.md`), Spec 138 (`specs/138-desktop-conditional-branching-ui/spec.md`)
 
 ---
+
+## Implementation update (2026-10-29)
+
+The recursive editor now preserves `false`, legacy page thresholds including zero, `NOT`, nested `ALL`/`ANY`, encryption and all byte-size comparators/ranges. Opening a saved rule never rewrites it; edits are validated and saved only by **Apply conditions**. Unsupported saved fields are retained and require explicit replacement. Step-card summaries use the same condition model. Tests cover actual pipeline state and serialization; see `reports/DESKTOP_AUTOMATION_REPORT.md`.
 
 ## 1. Overview & Objective
 

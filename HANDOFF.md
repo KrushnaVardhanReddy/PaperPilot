@@ -2,23 +2,32 @@
 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 28, 2026 (Asia/Hong_Kong)
+> **Date of Last Update:** October 29, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Phase 3 & Phase 4 Community Completion Sequence (Tasks 4.5 ➔ 4.7.4 ➔ 4.7.6 ➔ 3.4.11)
+> **Active Target:** Review Spec 141 compatibility repairs and Spec 142 desktop watched folders / smart filters. Spec 140 V2 workspace remains reverted.
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (Clean & synchronized with remote `origin/feature/dev`).
-- **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
+- **Integration Branch**: `feature/dev`; current work is on `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`, based on `origin/fix/current-ui-polish` (`dda6861`, including PR #305). Target integration baseline was `0069d48`.
+- **Target Branch Protocol**: Feature branches and reviewed PRs into `feature/dev`; never push directly to `feature/dev` or `main`.
 - **System Stability & Audits**:
-  - `cargo check --workspace -j 2`: **100% Clean**.
-  - Local security audit (`make audit`): **0 blocking vulnerabilities**.
-  - MCP Tool Count: **78 tools registered and verified** (`paperpilot-mcp`).
-  - Desktop Vitest Suite: **112/112 passing tests** (`pnpm --dir apps/desktop test`).
+  - Current scoped verification and environment limits: [desktop automation report](reports/DESKTOP_AUTOMATION_REPORT.md). Prior full-workspace/audit results are historical, not a fresh assertion for this branch.
+  - Desktop Vitest Suite: **147 passing tests across 24 files** at this update.
   - Architecture Roadmaps: Modularized into `phases/` directory with master dashboard in `PHASES.md`.
 - **Scope Boundary Policy**: Focus exclusively on **Community (Open-Source)** tasks in this repository. All Enterprise governance (SAML/SSO, SCIM, SIEM, Ed25519 air-gapped licensing) is reserved for the private `PaperPilot-Enterprise` repo.
+
+---
+
+## Local Spec 141 / 142 implementation (awaiting integration review)
+
+- Complete recursive condition editing with explicit Apply; retain false/zero/legacy/NOT/size/encryption conditions and unknown saved fields without destructive normalization.
+- Settings → Watched Folders uses native filesystem workers and the shared PDF workflow runner. Desktop, embedded MCP and REST use one local manager. CLI uses the same worker implementation in its own process.
+- Watcher progress, failures, stop/join, output collision handling, source preservation, and SHA-256 receipts come from actual processing. Preferences do not auto-start workers or persist raw recipes/runtime counters.
+- Smart filters inspect actual PDF page/scan/form/signature facts with bounded concurrency; encrypted/malformed/unsupported documents remain unclassified. Filled signature presence does not imply certificate trust.
+- Initial PR #305 was merged into `fix/current-ui-polish`, not `feature/dev`; this branch includes that base. Spec 140's V2 layout was reverted by `54db3f2` and its leftover watcher placeholder removed by `3dfa989`; do not mark it complete or restore it accidentally.
+- After integration, continue with an explicitly scoped Community gap from the phase documents. Generic scheduling, retries and broader trigger configuration remain open.
 
 ---
 
@@ -29,7 +38,7 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 | **1** | **Task 4.5** | Phase 4.5.1 / Spec 134 | **CLI Natural Language Interface (`paperpilot ask "..."`)**<br>Connect natural language command parsing (`paperpilot-nlp` resolver) to CLI with `--yes` and `--offline` flags. | `feature/dev` | ✅ **Completed & Merged (PR #291)** |
 | **2** | **Task 4.7.4** | Phase 4.7.4 | **Batch AcroForm Mail Merge (`paperpilot fill-batch`)**<br>Iterate CSV/JSON records, batch fill AcroForm fields, flatten appearances, and write template tokens `{row.name}_{date}.pdf`. | `feature/dev` | ✅ **Completed & Merged (PR #293)** |
 | **3** | **Task 4.7.6 / 8.2.3** | Phase 4.7.6 / 8.2.3 / Spec 136 | **Conditional Recipe Execution Engine (`.ppflow`)**<br>Evaluate runtime conditions (`if_scanned`, `if_page_count_gt`, `on_no_match`) before executing pipeline steps. | `feature/dev` | ✅ **Completed & Merged** — see `reports/CONDITIONAL_WORKFLOW_REPORT.md`. |
-| **4** | **Task 4.7.10 / 8.2.10** | Phase 4.7.10 / 8.2.10 / Spec 137 | **Advanced Multi-Condition Predicates & Combinators**<br>Recursive boolean combinators (`all`, `any`, `not`), in-flight text content search (`text_contains`), form detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators. | `feature/dev` | ✅ **Completed & Merged (PR #299)** |
+| **4** | **Task 4.7.10 / 8.2.10** | Phase 4.7.10 / 8.2.10 / Spec 137 | **Advanced Multi-Condition Predicates & Combinators**<br>Recursive boolean combinators (`all`, `any`, `not`), in-flight text content search (`text_contains`), form detection (`has_form_fields`), signature checks (`is_signed`), and byte size comparators. | `feature/dev` | ✅ **Integrated (`def589d`)**; original PR #299 closed without merging |
 | **5** | **Task 3.4.11** | Phase 3.4.11 / Spec 138 | **Desktop Visual Flowchart & Conditional Branching UI**<br>Add IF/ELSE condition decision nodes, condition inspector sidebar, and branching visual connections to `PipelineCanvas.svelte`. | `feature/dev` | ✅ **Completed & Merged (PR #301)** |
 | **6** | **Task 4.7.1** | Phase 4.7.1 / Spec 139 | **Headless Hot Folder Watcher Daemon (`paperpilot watch`)**<br>Full 5-interface coverage: CLI daemon, REST Gateway (`POST /v1/automation/watchers`, `GET`, `DELETE`, `POST /v1/automation/run`), and MCP tools (`watcher_start`, `watcher_stop`, `watcher_list`, `recipe_run`). | `feature/dev` | ✅ **Completed & Merged (PR #304)** |
 | **7** | **Task 3.4.13** | Phase 3.4.13 / Spec 140 | **Desktop V2 Workspace UX Refresh (Desktop + Mobile)**<br>3-pane layout (Library, Document Canvas with Floating Toolbar, Tool Dock) + mobile responsive slide drawer, swipeable bottom sheet, and floating suggestion pill / FAB. | `feature/dev` | 🔄 **Reverted & Queued for Jules Re-delegation** (Reverted partial merge; preparing comprehensive clean-data prompt). |

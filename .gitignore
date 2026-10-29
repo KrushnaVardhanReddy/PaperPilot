@@ -68,3 +68,6 @@ semgrep_report.json
 !reports/conditional-workflow-validation/scan-jpeg.pdf
 !reports/conditional-workflow-validation/text-output.pdf
 !reports/conditional-workflow-validation/scan-jpeg-output.pdf
+
+# Complete synthetic PDFs for desktop native automation and smart-filter tests.
+!apps/desktop/tests/fixtures/automation/*.pdf

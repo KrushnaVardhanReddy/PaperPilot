@@ -29,8 +29,8 @@
 |:---:|---|:---:|---|:---:|
 | **01** | **Rust Core Engine** | ✅ **100% Done** | 45+ pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
 | **02** | **MCP Server** | ✅ **100% Done** | 78+ MCP tools registered for Claude Desktop, Cursor, OpenCode | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | ✅ **100% Done** | Tauri 2.0 desktop + responsive touch mobile layout | [phase-03-desktop-mobile-app.md](file:///home/krushna/Project/PaperPilot/phases/phase-03-desktop-mobile-app.md) |
-| **04** | **AI Layer & Workflows** | ✅ **100% Done** | Natural language routing, action cards, declarative pipelines | [phase-04-ai-layer.md](file:///home/krushna/Project/PaperPilot/phases/phase-04-ai-layer.md) |
+| **03** | **Desktop + Mobile App** | 🚀 **In Progress** | Spec 140 V2 reverted; Spec 141 compatibility repairs awaiting review | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **04** | **AI Layer & Workflows** | 🚀 **In Progress** | Spec 142 watched folders / smart filters awaiting review; wider automation gaps remain | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | 🚀 **In Progress (92%)** | Pure-Rust OCR (`ocrs`), on-device Qwen-0.5B SLM, visual pipeline generator | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
 | **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
 | **07** | **Managed Cloud Gateway** | 📋 **Planned (P2)** | Multi-tenant REST gateway, Cloudflare Edge workers, usage metering | [phase-07-managed-cloud.md](file:///home/krushna/Project/PaperPilot/phases/phase-07-managed-cloud.md) |
@@ -44,6 +44,7 @@
 ---
 
 ## 🎯 Active Development Focus
+- **2026-10-29 Community delivery**: Spec 141 condition compatibility and Spec 142 real desktop watched folders / smart filters are implemented on a feature branch, awaiting integration review. See [validation](reports/DESKTOP_AUTOMATION_REPORT.md) and [handoff](HANDOFF.md). V2 workspace is reverted; Phase 3/4 are not fully closed.
 - **Production Milestone**: PR #267 merged into `main` with 78 verified tools, 100% clean security audit, and air-gapped supply chain protections.
 - **On-Device SLM (Task 84D / Spec 084)**: Completed 10,000-sample compound fine-tuning on RTX 4070. Weights fused and verified for multi-step chained parameter generation.
 - **OpenSSF Scorecard Hardening (`Phase 5.9.100` / `Spec 133`)**: In active development on `feat/openssf-scorecard-hardening` — establishing repository `SECURITY.md`, scoping GitHub workflow tokens to `permissions: read-all`, pinning action SHAs, and adding automated Scorecard SARIF workflow.

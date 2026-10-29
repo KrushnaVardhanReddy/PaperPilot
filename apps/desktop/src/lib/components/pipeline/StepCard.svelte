@@ -8,28 +8,8 @@
     isRunning: boolean;
   }>();
 
-  function getConditionSummary(cond: WorkflowCondition): string {
-    const c = cond as any;
-    if (c.all && c.all.length > 1) {
-      return `ALL (${c.all.length} rules)`;
-    }
-    if (c.any && c.any.length > 1) {
-      return `ANY (${c.any.length} rules)`;
-    }
+  import { conditionSummary as getConditionSummary } from '$lib/utils/workflowConditions';
 
-    const leaf = (c.all ? c.all[0] : (c.any ? c.any[0] : c)) as WorkflowConditionLeaf;
-
-    const parts = [];
-    if (leaf.if_scanned) parts.push('Scanned');
-    if (leaf.if_page_count_gt !== undefined) parts.push(`Pages > ${leaf.if_page_count_gt}`);
-    if (leaf.comparator && leaf.value !== undefined) parts.push(`Pages ${leaf.comparator} ${leaf.value}`);
-    if (leaf.text_contains) parts.push(`Contains "${leaf.text_contains}"`);
-    if (leaf.has_form_fields) parts.push('Has Forms');
-    if (leaf.is_signed) parts.push('Signed');
-    if (leaf.is_encrypted) parts.push('Encrypted');
-
-    return parts.length > 0 ? parts.join(', ') : 'Custom';
-  }
 </script>
 
 <div

@@ -23,7 +23,7 @@ pub struct WatchCli {
     #[arg(long)]
     pub move_original: Option<PathBuf>,
 
-    /// Directory to quarantine failed files (default: <dir>/.error)
+    /// Directory for failure receipts; failed sources stay in place (default: <dir>/.error)
     #[arg(long)]
     pub error_dir: Option<PathBuf>,
 
@@ -31,7 +31,7 @@ pub struct WatchCli {
     #[arg(long, default_value_t = 500)]
     pub settle_delay_ms: u64,
 
-    /// Optional webhook URL to POST execution receipt
+    /// Optional webhook URL to POST the completion result and receipt path
     #[arg(long)]
     pub webhook: Option<String>,
 

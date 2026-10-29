@@ -11,7 +11,9 @@ pub mod mobile_bridge;
 pub mod ocr_commands;
 pub mod pack_commands;
 pub mod storage;
+pub mod watch_commands;
 use crate::error::DesktopError;
+use tauri::Manager;
 
 lazy_static::lazy_static! {
     static ref CANCEL_FLAGS: Arc<Mutex<HashMap<String, bool>>> =
@@ -337,8 +339,12 @@ pub fn run() {
             if let tauri::WindowEvent::Destroyed = event {
                 // Drop LlamafileSupervisor to kill process when the window closes
                 if window.label() == "main" {
+                    window
+                        .state::<Arc<paperpilot_pdf::operations::watch::WatcherManager>>()
+                        .shutdown();
                     tauri::async_runtime::block_on(async {
-                        let mut supervisor_lock = ai_commands::GLOBAL_LLAMAFILE_SUPERVISOR.lock().await;
+                        let mut supervisor_lock =
+                            ai_commands::GLOBAL_LLAMAFILE_SUPERVISOR.lock().await;
                         *supervisor_lock = None;
                     });
                 }
@@ -365,9 +371,16 @@ pub fn run() {
             let _ = app;
             Ok(())
         })
+        .manage(paperpilot_pdf::operations::watch::shared_watcher_manager())
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
         .invoke_handler(tauri::generate_handler![
             greet,
+            watch_commands::start_watch_folder,
+            watch_commands::stop_watch_folder,
+            watch_commands::list_watched_folders,
+            watch_commands::remove_watch_folder,
+            watch_commands::inspect_document,
+            watch_commands::list_watch_recipes,
             invoke_mcp_tool,
             cancel_job,
             query_documentation_rag,
@@ -401,8 +414,17 @@ pub fn run() {
             pack_commands::download_feature_pack,
             pack_commands::set_feature_pack_enabled
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if matches!(
+                event,
+                tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit
+            ) {
+                app.state::<Arc<paperpilot_pdf::operations::watch::WatcherManager>>()
+                    .shutdown();
+            }
+        });
 }
 
 #[cfg(test)]

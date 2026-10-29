@@ -4,18 +4,7 @@
   import { rankToolsByContext } from '$lib/services/toolRegistry';
 
 
-  async function safeInvoke(cmd: string, args?: any): Promise<any> {
-    try {
-      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-        const { invoke } = await import('@tauri-apps/api/core');
-        return await invoke(cmd, args);
-      }
-    } catch (e) {
-      console.warn(`[Tauri Mock] ${cmd} called in browser environment:`, args);
-    }
-    // Return success mock for UI testing
-    return { success: true };
-  }
+  import { requireInvoke as safeInvoke } from '$lib/utils/tauri';
 
   import { appState } from '$lib/state/app.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';

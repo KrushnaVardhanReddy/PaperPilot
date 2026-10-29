@@ -16,6 +16,7 @@ export interface WorkflowConditionLeaf {
   is_signed?: boolean;
   is_encrypted?: boolean;
   file_size_bytes?: {
+    between?: [number, number];
     eq?: number;
     gt?: number;
     gte?: number;

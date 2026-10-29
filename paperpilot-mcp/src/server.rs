@@ -32,10 +32,25 @@ use std::sync::Arc;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use paperpilot_pdf::document::LopdfDocument;
 
+use paperpilot_pdf::operations::watch::{
+    WatchConfig, WatchSnapshot, WatcherManager, shared_watcher_manager,
+};
 pub trait WatcherRegistryTrait: Send + Sync {
-    fn add_watcher(&self, id: String, dir: String, recipe: String, child: Option<std::process::Child>);
-    fn remove_watcher(&self, id: &str) -> bool;
-    fn list_watchers(&self) -> Vec<serde_json::Value>;
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String>;
+    fn remove_watcher(&self, id: &str) -> Result<(), String>;
+    fn list_watchers(&self) -> Vec<WatchSnapshot>;
+}
+impl WatcherRegistryTrait for WatcherManager {
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
+        self.start(id, config, Arc::new(|_| {}))
+            .map_err(|e| e.to_string())
+    }
+    fn remove_watcher(&self, id: &str) -> Result<(), String> {
+        self.remove(id).map_err(|e| e.to_string())
+    }
+    fn list_watchers(&self) -> Vec<WatchSnapshot> {
+        self.list()
+    }
 }
 
 #[derive(Clone, Default)]
@@ -45,7 +60,9 @@ pub struct PaperPilotMcpServer {
 
 impl PaperPilotMcpServer {
     pub fn new(registry: Option<std::sync::Arc<dyn WatcherRegistryTrait>>) -> Self {
-        Self { watcher_registry: registry }
+        Self {
+            watcher_registry: registry,
+        }
     }
     pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
         let mut tools = Vec::new();
@@ -100,9 +117,9 @@ impl PaperPilotMcpServer {
                 "required": ["dir", "recipe"],
                 "properties": {
                   "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
-                  "recipe": { "type": "string", "description": "Absolute path to a .ppflow TOML recipe file" },
-                  "output_dir": { "type": "string", "description": "Directory to write processed PDFs (optional)" },
-                  "settle_delay_ms": { "type": "integer", "default": 500 }
+                  "recipe": { "type": "string", "description": "Local .ppflow recipe path, preset ID, or serialized workflow" },
+                  "output_dir": { "type": "string", "description": "Output directory; defaults to a separate processed subfolder" },
+                  "settle_delay_ms": { "type": "integer", "default": 500, "minimum": 50, "maximum": 60000 }
                 }
             }).as_object().unwrap().clone(),
         ));
@@ -115,16 +132,23 @@ impl PaperPilotMcpServer {
                 "properties": {
                   "watcher_id": { "type": "string" }
                 }
-            }).as_object().unwrap().clone(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
         ));
         tools.push(Tool::new(
             "watcher_list".to_string(),
-            "List all currently active hot folder watchers with their status and statistics.".to_string(),
+            "List all currently active hot folder watchers with their status and statistics."
+                .to_string(),
             serde_json::json!({
                 "type": "object",
                 "required": [],
                 "properties": {}
-            }).as_object().unwrap().clone(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
         ));
         tools.push(Tool::new(
             "recipe_run".to_string(),
@@ -4496,46 +4520,66 @@ impl PaperPilotMcpServer {
             Ok(pages)
         };
 
-
-        if request.name == "watcher_start" {
-            let dir = get_string("dir")?;
-            let recipe = get_string("recipe")?;
-            let id = format!("watcher_{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
-
-            if let Some(reg) = &self.watcher_registry {
-                reg.add_watcher(id.clone(), dir.clone(), recipe.clone(), None);
-            }
-
+        if matches!(
+            request.name.as_ref(),
+            "watcher_start" | "watcher_stop" | "watcher_list"
+        ) {
+            let default_registry = shared_watcher_manager();
+            let registry = self
+                .watcher_registry
+                .as_deref()
+                .unwrap_or(default_registry.as_ref());
+            let response = match request.name.as_ref() {
+                "watcher_start" => {
+                    let id = format!("watcher_{}", uuid::Uuid::new_v4().simple());
+                    let settle = args
+                        .get("settle_delay_ms")
+                        .map(|v| {
+                            v.as_u64().ok_or_else(|| {
+                                ErrorData::invalid_params(
+                                    "settle_delay_ms must be an integer",
+                                    None,
+                                )
+                            })
+                        })
+                        .transpose()?
+                        .unwrap_or(500);
+                    let output_dir = match args.get("output_dir") {
+                        None | Some(serde_json::Value::Null) => None,
+                        Some(serde_json::Value::String(path)) => Some(PathBuf::from(path)),
+                        _ => {
+                            return Err(ErrorData::invalid_params(
+                                "output_dir must be a path string",
+                                None,
+                            ));
+                        }
+                    };
+                    let config = WatchConfig {
+                        directory: get_string("dir")?.into(),
+                        recipe: get_string("recipe")?,
+                        output_dir,
+                        error_dir: None,
+                        move_original: None,
+                        once: false,
+                        settle_delay_ms: settle,
+                    };
+                    let snapshot = registry
+                        .add_watcher(id.clone(), config)
+                        .map_err(|e| ErrorData::invalid_params(e, None))?;
+                    serde_json::json!({"watcher_id":id,"status":snapshot.status,"watcher":snapshot})
+                }
+                "watcher_stop" => {
+                    registry
+                        .remove_watcher(&get_string("watcher_id")?)
+                        .map_err(|e| ErrorData::invalid_params(e, None))?;
+                    serde_json::json!({"success":true})
+                }
+                _ => {
+                    serde_json::json!({"watchers":registry.list_watchers().into_iter().map(|s| serde_json::json!({"watcher_id":s.id,"status":s.status,"dir":s.directory,"recipe":s.recipe_name,"succeeded":s.succeeded,"failed":s.failed,"total_processed":s.succeeded+s.failed,"last_processed_file":s.last_processed_file,"last_processed_at":s.last_processed_at,"last_error":s.last_error,"last_output":s.last_output,"last_receipt":s.last_receipt})).collect::<Vec<_>>()})
+                }
+            };
             return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
-                ContentBlock::text(serde_json::to_string(&serde_json::json!({
-                    "watcher_id": id,
-                    "status": "watching",
-                })).unwrap())
-            ])));
-        }
-
-        if request.name == "watcher_stop" {
-            let id = get_string("watcher_id")?;
-            let success = if let Some(reg) = &self.watcher_registry {
-                reg.remove_watcher(&id)
-            } else { false };
-
-            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
-                ContentBlock::text(serde_json::to_string(&serde_json::json!({
-                    "success": success
-                })).unwrap())
-            ])));
-        }
-
-        if request.name == "watcher_list" {
-            let watchers = if let Some(reg) = &self.watcher_registry {
-                reg.list_watchers()
-            } else { vec![] };
-
-            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
-                ContentBlock::text(serde_json::to_string(&serde_json::json!({
-                    "watchers": watchers
-                })).unwrap())
+                ContentBlock::text(response.to_string()),
             ])));
         }
 
@@ -4544,22 +4588,40 @@ impl PaperPilotMcpServer {
             let recipe = get_string("recipe")?;
             let output = get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf");
 
-            let bytes = std::fs::read(&input).map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
+            let bytes = std::fs::read(&input)
+                .map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
             let recipe_str = std::fs::read_to_string(&recipe).unwrap_or(recipe.clone());
-            let workflow = paperpilot_core::workflow::parse_workflow(&recipe_str)
-                .or_else(|_| paperpilot_core::workflow::get_preset_by_id(&recipe_str).ok_or_else(|| ErrorData::new(rmcp::model::ErrorCode(400), String::from("Preset not found"), None)))?;
+            let workflow =
+                paperpilot_core::workflow::parse_workflow(&recipe_str).or_else(|_| {
+                    paperpilot_core::workflow::get_preset_by_id(&recipe_str).ok_or_else(|| {
+                        ErrorData::new(
+                            rmcp::model::ErrorCode(400),
+                            String::from("Preset not found"),
+                            None,
+                        )
+                    })
+                })?;
 
-            let (out_bytes, report) = paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(&bytes, &workflow)
-                .map_err(|f| ErrorData::new(rmcp::model::ErrorCode(500), f.cause.to_string(), None))?;
+            let (out_bytes, report) =
+                paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
+                    &bytes, &workflow,
+                )
+                .map_err(|f| {
+                    ErrorData::new(rmcp::model::ErrorCode(500), f.cause.to_string(), None)
+                })?;
 
-            std::fs::write(&output, out_bytes).map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
+            std::fs::write(&output, out_bytes)
+                .map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
 
             return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
-                ContentBlock::text(serde_json::to_string(&serde_json::json!({
-                    "success": true,
-                    "output": output,
-                    "receipt": report
-                })).unwrap())
+                ContentBlock::text(
+                    serde_json::to_string(&serde_json::json!({
+                        "success": true,
+                        "output": output,
+                        "receipt": report
+                    }))
+                    .unwrap(),
+                ),
             ])));
         }
 
@@ -7224,7 +7286,10 @@ mod tests {
 
     #[test]
     fn workflow_tool_schemas_require_declared_handler_inputs() {
-        let tools = PaperPilotMcpServer::new(None).execute_list_tools().unwrap().tools;
+        let tools = PaperPilotMcpServer::new(None)
+            .execute_list_tools()
+            .unwrap()
+            .tools;
         for (name, expected) in [
             ("pdf_remove_blank", vec!["input", "output"]),
             ("pdf_compare", vec!["input_a", "input_b"]),
@@ -7277,7 +7342,9 @@ mod tests {
     fn test_mcp_list_workflows() {
         let mut request = CallToolRequestParams::default();
         request.name = "list_workflows".into();
-        let res = PaperPilotMcpServer::new(None).execute_call_tool(request).unwrap();
+        let res = PaperPilotMcpServer::new(None)
+            .execute_call_tool(request)
+            .unwrap();
         if let rmcp::model::CallToolResponse::Complete(complete) = res {
             let block = complete.content.first().unwrap();
             if let rmcp::model::ContentBlock::Text(tb) = block {

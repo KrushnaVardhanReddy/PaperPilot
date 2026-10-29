@@ -1,7 +1,7 @@
 use crate::{handlers, sse};
 use axum::{
     Router,
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
@@ -115,59 +115,23 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 pub struct ApiDoc;
 
-
-use std::collections::HashMap;
+use paperpilot_pdf::operations::watch::{
+    WatchConfig, WatchSnapshot, WatcherManager, shared_watcher_manager,
+};
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio_util::sync::CancellationToken;
-
-pub struct WatcherHandle {
-    pub watcher_id: String,
-    pub dir: std::path::PathBuf,
-    pub recipe: std::path::PathBuf,
-    pub cancel: CancellationToken,
-    pub child_proc: Option<std::process::Child>,
-    pub last_processed_file: Option<String>,
-    pub last_processed_at: Option<String>,
-    pub total_processed: u64,
-}
-
-pub type WatcherRegistry = Arc<Mutex<HashMap<String, WatcherHandle>>>;
-
+pub type WatcherRegistry = Arc<WatcherManager>;
 pub struct WatcherRegistryAdapter(pub WatcherRegistry);
-
 impl paperpilot_mcp::server::WatcherRegistryTrait for WatcherRegistryAdapter {
-    fn add_watcher(&self, id: String, dir: String, recipe: String, child: Option<std::process::Child>) {
-        let handle = WatcherHandle {
-            watcher_id: id.clone(),
-            dir: std::path::PathBuf::from(dir),
-            recipe: std::path::PathBuf::from(recipe),
-            cancel: tokio_util::sync::CancellationToken::new(),
-            child_proc: child,
-            last_processed_file: None,
-            last_processed_at: None,
-            total_processed: 0,
-        };
-        let map = self.0.clone();
-        tokio::spawn(async move {
-            map.lock().await.insert(id, handle);
-        });
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
+        self.0
+            .start(id, config, Arc::new(|_| {}))
+            .map_err(|e| e.to_string())
     }
-
-    fn remove_watcher(&self, id: &str) -> bool {
-        let map = self.0.clone();
-        let id_cloned = id.to_string();
-        tokio::spawn(async move {
-            if let Some(mut handle) = map.lock().await.remove(&id_cloned) {
-                handle.cancel.cancel();
-                if let Some(mut c) = handle.child_proc.take() { let _ = c.kill(); let _ = c.wait(); }
-            }
-        });
-        true
+    fn remove_watcher(&self, id: &str) -> Result<(), String> {
+        self.0.remove(id).map_err(|e| e.to_string())
     }
-
-    fn list_watchers(&self) -> Vec<serde_json::Value> {
-        vec![] // Sync trait stub for now
+    fn list_watchers(&self) -> Vec<WatchSnapshot> {
+        self.0.list()
     }
 }
 
@@ -302,8 +266,14 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
             post(handlers::workflow_run_json),
         )
         .route("/api/v1/workflow/run", post(handlers::workflow_run))
-        .route("/v1/automation/watchers", post(handlers::start_watcher).get(handlers::list_watchers))
-        .route("/v1/automation/watchers/{id}", delete(handlers::stop_watcher))
+        .route(
+            "/v1/automation/watchers",
+            post(handlers::start_watcher).get(handlers::list_watchers),
+        )
+        .route(
+            "/v1/automation/watchers/{id}",
+            delete(handlers::stop_watcher),
+        )
         .route("/v1/automation/run", post(handlers::run_recipe_once))
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
@@ -315,7 +285,7 @@ pub async fn start(
     bind: &str,
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> std::io::Result<()> {
-    let registry: WatcherRegistry = Arc::new(Mutex::new(HashMap::new()));
+    let registry: WatcherRegistry = shared_watcher_manager();
     let app = build_app(registry).await;
     let addr = format!("{}:{}", bind, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

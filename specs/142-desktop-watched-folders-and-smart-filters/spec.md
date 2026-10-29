@@ -1,165 +1,70 @@
-# Spec 142: Desktop Real Watched Folders Daemon & Document Smart Filter Tabs
+# Spec 142: Desktop Real Watched Folders & Document Smart Filters
 
 ## Metadata
-- **Spec Number**: 142
-- **Phase**: Phase 4.7.8 (Desktop Automation & Document Intelligence)
-- **Status**: 📋 Ready for Implementation
-- **Target Branch**: `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`
-- **Impacted Crates & Packages**:
-  - `apps/desktop/src-tauri` (`apps/desktop/src-tauri/src/watch_commands.rs`, `apps/desktop/src-tauri/src/lib.rs`)
-  - `apps/desktop/src` (`apps/desktop/src/lib/components/layout/*`, `apps/desktop/src/lib/components/ui/DocumentList.svelte`, `apps/desktop/src/lib/state/app.svelte.ts`)
-- **Parent Specs**:
-  - [Spec 139: Headless Hot Folder Watcher Daemon](../139-hot-folder-watcher-daemon/spec.md)
-  - [Spec 136: Conditional Workflow Engine](../136-conditional-pipeline-execution-engine/spec.md)
 
----
+- **Phase**: Task 4.7.8
+- **Status**: Implemented on feature branch; awaiting integration review
+- **Branch**: `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`
+- **Date**: 2026-10-29
+- **Parents**: [Spec 139](../139-hot-folder-watcher-daemon/spec.md), [Spec 136](../136-conditional-workflow-engine/spec.md)
 
-## 1. Overview & Objective
+## Objective
 
-In Spec 139, the hot folder watcher daemon (`paperpilot watch`) was implemented in `paperpilot_pdf::operations::watch` and exposed to the CLI.
-However, in the desktop app:
-1. **Watched Folders** were missing entirely from the GUI (only mocked in a discontinued V2 PR without Tauri IPC wiring).
-2. **"Smart Categories"** were previously hardcoded mock badges instead of real dynamic document filters.
+Replace discontinued placeholder watcher/category UI with real native folder automation and reactive filters over locally inspected PDFs. Keep the existing desktop workspace layout; Spec 140's V2 redesign remains reverted.
 
-**Task 4.7.8 / Spec 142 delivers genuine, connected implementations of both features:**
-1. **Real Watched Folders Daemon in Desktop**:
-   - Expose Tauri commands to register, start, stop, and inspect filesystem watch folders running against active `.ppflow` workflows.
-   - Provide an **"Automations / Watched Folders"** view in the desktop GUI (accessible from the sidebar or settings drawer) allowing users to pick a local folder, select a pipeline preset, and toggle background watching.
-   - Emits Tauri events (`watch:file_processed`, `watch:error`) so the GUI updates in real time when incoming PDFs are ingested.
-2. **Real Document Smart Filter Pills (replacing mock categories)**:
-   - Provide a dynamic filter strip directly above `DocumentList.svelte`:
-     - `All Documents` (count of all loaded files)
-     - `Scanned` (filtered by `isScanned === true`)
-     - `Digitally Signed` (filtered by `isSigned === true`)
-     - `Form Fields` (filtered by `hasFormFields === true`)
-     - `Multi-Page` (filtered by `pageCount > 1`)
-   - Filtering is reactive against real loaded documents in `appState.documents`.
+## Shared native runtime
 
----
+`paperpilot-pdf/src/operations/watch/manager.rs` owns filesystem registration, file settling, workflow execution, output publication, counters, receipts, and cancellation. CLI, desktop, MCP, and REST call this same implementation. Desktop and its embedded endpoints share a process-wide `Arc<WatcherManager>`; independent processes do not share state.
 
-## 2. Technical Architecture & Tauri IPC
+- Validate recipes, directories, settle delays and conflicting watcher paths before returning success.
+- Sweep existing PDFs on every start; then process nonrecursive create/modify events once the size is stable. Ignore unchanged duplicate events during a run.
+- Default outputs to `INPUT/processed` and failure receipts to `INPUT/.error`. Never overwrite source/output/receipt files. Failures retain the source and are counted separately from successes.
+- Success receipts include input/output SHA-256 and the workflow report. Failure receipts include the actual error and input hash. Error directories contain receipts; PDFs are not silently moved there.
+- Stop waits for current processing and joins the worker; remove stops before deleting the entry. Restart creates a new `run_id`. Main-window/app exit cancels and joins active workers.
+- Webhooks are explicit CLI opt-ins. No telemetry, cloud processing, or automatic workflow uploads are added.
 
-### 2.1 Tauri Commands (`apps/desktop/src-tauri/src/watch_commands.rs`)
+## Tauri commands and events
 
-```rust
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use tokio::sync::oneshot;
+Implemented in `apps/desktop/src-tauri/src/watch_commands.rs`, registered in `lib.rs`:
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WatchedFolderConfig {
-    pub id: String,
-    pub path: String,
-    pub recipe_id_or_path: String,
-    pub output_dir: Option<String>,
-    pub is_active: bool,
-}
+| Command | Contract |
+|---|---|
+| `start_watch_folder(id, config)` | Returns a real `WatchSnapshot` after OS registration; config contains directory, recipe, optional output and settle delay. |
+| `stop_watch_folder(folder_id)` | Returns the joined worker's final snapshot. |
+| `list_watched_folders()` | Returns actual runtime entries, including stopped/error entries until removed. |
+| `remove_watch_folder(folder_id)` | Stops/joins and removes the runtime entry. |
+| `list_watch_recipes()` | Lists only presets accepted by shared workflow preflight. |
+| `inspect_document(path, bytes)` | Accepts exactly one local path or byte buffer, up to 128 MiB. Runs inspection off the UI thread. |
 
-lazy_static::lazy_static! {
-    static ref WATCHER_HANDLES: Arc<Mutex<HashMap<String, oneshot::Sender<()>>>> =
-        Arc::new(Mutex::new(HashMap::new()));
-    static ref WATCHED_FOLDERS: Arc<Mutex<Vec<WatchedFolderConfig>>> =
-        Arc::new(Mutex::new(Vec::new()));
-}
+Events `watch:file_processed`, `watch:error`, and `watch:status` carry a snapshot and optional source/output/receipt/error. The frontend merges events by run and progress and refreshes the local runtime list every 1.5 seconds to reflect changes through embedded MCP/REST. It rejects stale responses that would erase newer user actions.
 
-#[tauri::command]
-pub async fn start_watch_folder(
-    app_handle: tauri::AppHandle,
-    config: WatchedFolderConfig,
-) -> Result<(), String> {
-    // Spawns paperpilot_pdf::operations::watch::handle_watch with cancellation channel
-    // Emits "watcher-event" to app_handle when files are processed
-    Ok(())
-}
+## Desktop behavior
 
-#[tauri::command]
-pub fn stop_watch_folder(folder_id: String) -> Result<(), String> {
-    // Sends shutdown signal to oneshot channel
-    Ok(())
-}
+Settings → **Watched Folders** provides input/output directory pickers, validated presets, saved workflows, and local TOML/JSON `.ppflow` files. Users explicitly add, start, stop, and remove watchers. The panel shows real status, success/failure totals, last file/time/error, output, and receipt. Users can open the output as a document and inspect the JSON receipt. Existing pipeline controls provide manual workflow execution against loaded documents.
 
-#[tauri::command]
-pub fn list_watched_folders() -> Result<Vec<WatchedFolderConfig>, String> {
-    let folders = WATCHED_FOLDERS.lock().unwrap();
-    Ok(folders.clone())
-}
-```
+`watchers.svelte.ts` persists versioned folder preferences only: ID, path, recipe reference, optional output directory. Running flags, counters and serialized recipe content are not persisted. Restoring preferences never auto-starts a daemon. Missing workflows, corrupt storage, absent native IPC and OS errors are visible failures. Browser/mobile filesystem controls are disabled.
 
-### 2.2 Svelte State Model (`apps/desktop/src/lib/state/watchers.svelte.ts`)
+## Smart filters
 
-```typescript
-export interface WatchedFolder {
-  id: string;
-  path: string;
-  recipeName: string;
-  outputDir?: string;
-  isActive: boolean;
-  lastProcessedFile?: string;
-  lastProcessedAt?: string;
-}
+`document_inspection.rs` supplies the same scan/form/signature facts used by workflow conditions. Metadata is keyed by the actual `File`, inspected with at most two concurrent requests, and discarded on removal. Viewing, filtering and reordering retain original file identity and selection.
 
-export class WatchersState {
-  folders = $state<WatchedFolder[]>([]);
-  
-  async loadFolders() { ... }
-  async addFolder(path: string, recipeName: string, outputDir?: string) { ... }
-  async toggleFolder(id: string) { ... }
-  async removeFolder(id: string) { ... }
-}
+| Filter | Actual rule |
+|---|---|
+| All documents | All loaded files, including non-PDFs and unavailable inspection results |
+| Scanned | Image content drawn on a page with no extractable text, using the existing shared heuristic |
+| Signed | A populated signature with nonempty byte ranges and contents; flags/empty signature widgets do not qualify |
+| Form fields | Nonempty actual AcroForm field tree |
+| Multi-page | Actual page count greater than one |
 
-export const watchersState = new WatchersState();
-```
+Signature presence is not a certificate-trust/cryptographic-validity verdict. Encrypted PDFs without a password expose encryption/size while other facts remain unknown; malformed PDFs report an error. Unknown facts never enter a specialized category. Metadata is native desktop functionality; browser documents remain in All with a clear unavailable notice.
 
----
+## Acceptance and evidence
 
-## 3. UI Component Specifications
+- [x] Real registered start/stop/list/remove and application-exit cleanup
+- [x] Persistent configuration with explicit starts and truthful lifecycle status
+- [x] Folder/workflow/output controls, progress, errors, output and receipt viewing
+- [x] Real PDF metadata, reactive counts, filtered open/remove and reorder behavior
+- [x] Synthetic scan, text, form, multi-page, unsigned and genuinely CMS-signed PDF fixtures
+- [x] Native filesystem/metadata tests and UI condition/filter/lifecycle tests
 
-### 3.1 Watched Folders Management Panel (`apps/desktop/src/lib/components/layout/WatchedFoldersPanel.svelte`)
-- Placed in Sidebar navigation under `Automations` (`🤖`) or within `SettingsPanel.svelte`.
-- Renders:
-  - Header: "Watched Folders (Hot Folders)" with status pill (e.g. `🟢 2 Running`).
-  - List of watched folders showing:
-    - Folder path (`~/Downloads/Scans`).
-    - Assigned workflow (`Auto-OCR & Compress`).
-    - Active toggle switch (Start / Stop daemon).
-    - Delete button (`✕`).
-  - "+ Add Folder Watcher" button opening folder selector and recipe dropdown.
-
-### 3.2 Dynamic Smart Filters Strip (`DocumentList.svelte`)
-- Above the document items:
-  ```svelte
-  <div class="filter-pills">
-    {#each filters as f}
-      <button
-        class="filter-pill"
-        class:active={activeFilter === f.id}
-        onclick={() => activeFilter = f.id}
-      >
-        {f.label} ({f.count})
-      </button>
-    {/each}
-  </div>
-  ```
-- Dynamically counts and filters:
-  - `All` (`appState.documents.length`)
-  - `Scanned` (count of documents where `doc.isScanned === true`)
-  - `Signed` (count of documents where `doc.isSigned === true`)
-  - `Forms` (count of documents where `doc.hasFormFields === true`)
-  - `Multi-Page` (count of documents where `doc.pageCount > 1`)
-
----
-
-## 4. Acceptance Criteria Checklist
-
-- [ ] Backend & Tauri IPC:
-  - `start_watch_folder`, `stop_watch_folder`, `list_watched_folders` registered in `desktop_lib::run()`.
-  - Watcher gracefully routes processed documents to output directory.
-- [ ] Desktop State & UI:
-  - `WatchedFoldersPanel.svelte` lets users pick folder, assign pipeline flow, and toggle active state.
-  - `watchersState` persists watched folder configurations in `localStorage`.
-  - `DocumentList.svelte` displays dynamic Smart Filter pills that update reactively as documents are added or removed.
-- [ ] Tests & Dark Mode:
-  - Unit tests verifying filter pill counts and active filter filtering.
-  - Tests for watcher state serialization.
-  - All 117+ tests pass cleanly via `pnpm --dir apps/desktop test`.
+Exact commands, results and environment limits are recorded in [the validation report](../../reports/DESKTOP_AUTOMATION_REPORT.md). This spec does not implement generic scheduling, webhook triggers, retry policies or the reverted V2 workspace.

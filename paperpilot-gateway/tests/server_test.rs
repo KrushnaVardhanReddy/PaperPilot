@@ -2,7 +2,12 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use paperpilot_gateway::server::build_app;
+async fn build_app() -> axum::Router {
+    paperpilot_gateway::server::build_app(std::sync::Arc::new(
+        paperpilot_pdf::operations::watch::WatcherManager::default(),
+    ))
+    .await
+}
 use serde_json::Value;
 use tower::ServiceExt;
 

@@ -69,7 +69,8 @@
 | 3.4.10 | **Visual Pipeline Builder (Basic)** ✅ | Merged |
 | 3.4.11 | **Conditional branching UI `[Spec 138]`** ✅ | Merged (PR #301 / Jules 15126192642974815608) |
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
-| 3.4.13 | **Desktop V2 Workspace UX Refresh** ✅ | Merged (PR #302 & #303 / Spec 140) — 3-pane layout, floating toolbar, tool dock, mobile drawers |
+| 3.4.13 | **Desktop V2 Workspace UX Refresh `[Spec 140]`** | Reverted by `54db3f2`; leftover watcher placeholder removed by `3dfa989`. Await a separately reviewed redesign. |
+| 3.4.14 | **Multi-rule condition editor `[Spec 141]`** | Initial UI in PR #305 on `fix/current-ui-polish`; recursive NOT/ALL/ANY, false/zero/legacy/size preservation and explicit Apply repaired on the Spec 142 branch, awaiting integration review. See `reports/DESKTOP_AUTOMATION_REPORT.md`. |
 
 ---
 
