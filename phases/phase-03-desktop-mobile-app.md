@@ -69,7 +69,7 @@
 | 3.4.10 | **Visual Pipeline Builder (Basic)** ✅ | Merged |
 | 3.4.11 | **Conditional branching UI `[Spec 138]`** ✅ | Merged (PR #301 / Jules 15126192642974815608) |
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
-| 3.4.13 | **Desktop V2 Workspace UX Refresh `[Spec 140]`** 📋 | Refactor to an integrated 3-pane layout: (1) Left — Library & Automations, (2) Center — Focused document canvas with frosted-glass floating toolbar, (3) Right — Contextual AI-driven tool dock. **Unblocked by 3.4.11.** |
+| 3.4.13 | **Desktop V2 Workspace UX Refresh** ✅ | Merged (PR #302 & #303 / Spec 140) — 3-pane layout, floating toolbar, tool dock, mobile drawers |
 
 ---
 
