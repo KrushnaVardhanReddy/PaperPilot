@@ -59,7 +59,7 @@ Before opening the Pull Request, run the following verification steps in the Jul
 ### 6. Documentation & Tools Handbook Synchronization
 - Whenever a tool is implemented, extended, or modified:
   1. Ensure its reference doc exists or is updated under `apps/docs/src/content/docs/reference/tools/<tool_name>.md` with CLI, MCP JSON-RPC, and REST API snippets.
-  2. Run the handbook generator to update `50-tools-handbook.md`:
+  2. Run the handbook generator to update `tools-handbook.md`:
      ```bash
      python3 apps/docs/src/content/docs/reference/generate_handbook.py
      ```

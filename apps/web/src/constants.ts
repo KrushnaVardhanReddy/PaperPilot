@@ -23,7 +23,7 @@ export const getDocsBaseUrl = (): string => {
 };
 
 export const getToolsHandbookUrl = (): string => {
-  return `${getDocsBaseUrl()}/reference/50-tools-handbook/`;
+  return `${getDocsBaseUrl()}/reference/tools-handbook/`;
 };
 
 // Feature Flags

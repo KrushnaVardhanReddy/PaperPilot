@@ -26,9 +26,9 @@ export default defineConfig({
         {
           label: 'Master Tools Reference',
           items: [
-            { label: 'Tools Handbook (All-in-One)', slug: 'reference/50-tools-handbook' },
+            { label: 'Tools Handbook (All-in-One)', slug: 'reference/tools-handbook' },
             {
-              label: 'All Tools Index (70+ Tools)',
+              label: 'All Tools Index (89 Tools)',
               autogenerate: { directory: 'reference/tools' },
             },
           ],
