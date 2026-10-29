@@ -51,6 +51,7 @@ pub mod redact;
 pub mod render;
 pub mod reorder;
 pub mod receipts;
+pub mod output_naming;
 pub mod repair;
 pub mod rotate;
 pub mod sanitize;

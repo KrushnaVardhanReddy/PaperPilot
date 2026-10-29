@@ -1,3 +1,4 @@
+use crate::operations::output_naming::OutputNameTemplate;
 use crate::operations::workflow::{run_workflow_bytes_detailed, validate_workflow_definition};
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use paperpilot_core::error::{OperationResult, PdfError};
@@ -96,6 +97,19 @@ impl WatcherManager {
         config: WatchConfig,
         sink: EventSink,
     ) -> OperationResult<WatchSnapshot> {
+        self.start_with_naming(id, config, None, sink)
+    }
+    pub fn start_with_naming(
+        &self,
+        id: String,
+        config: WatchConfig,
+        name_template: Option<String>,
+        sink: EventSink,
+    ) -> OperationResult<WatchSnapshot> {
+        let naming = name_template
+            .as_deref()
+            .map(OutputNameTemplate::parse)
+            .transpose()?;
         if id.is_empty()
             || id.len() > 80
             || !id
@@ -104,7 +118,7 @@ impl WatcherManager {
         {
             return Err(invalid("Invalid watcher ID"));
         }
-        let prepared = PreparedWatch::new(config)?;
+        let prepared = PreparedWatch::new(config, naming)?;
         let mut entries = lock(&self.entries);
         if self.shutting_down.load(Ordering::SeqCst) {
             return Err(invalid("Watchers are shutting down"));
@@ -281,6 +295,7 @@ pub fn resolve_watch_recipe(source: &str) -> OperationResult<SavedWorkflow> {
 }
 
 struct PreparedWatch {
+    naming: Option<OutputNameTemplate>,
     config: WatchConfig,
     directory: PathBuf,
     output: PathBuf,
@@ -289,7 +304,7 @@ struct PreparedWatch {
     workflow: SavedWorkflow,
 }
 impl PreparedWatch {
-    fn new(config: WatchConfig) -> OperationResult<Self> {
+    fn new(config: WatchConfig, naming: Option<OutputNameTemplate>) -> OperationResult<Self> {
         if !(50..=60000).contains(&config.settle_delay_ms) {
             return Err(invalid(
                 "Settle delay must be between 50 and 60000 milliseconds",
@@ -329,6 +344,7 @@ impl PreparedWatch {
             ));
         }
         Ok(Self {
+            naming,
             config,
             directory,
             output,
@@ -460,24 +476,35 @@ impl PreparedWatch {
         let mut output = None;
         let mut receipt = None;
         let result = (|| -> OperationResult<()> {
-            let (result, report) =
-                run_workflow_bytes_detailed(bytes, &self.workflow).map_err(|f| f.cause)?;
-            let name = path
+            let original_name = path
                 .file_name()
                 .ok_or_else(|| invalid("Missing file name"))?
                 .to_string_lossy();
+            let index = {
+                let s = lock(snapshot);
+                s.succeeded + s.failed + 1
+            };
+            let name = match &self.naming {
+                Some(template) => template.render_pdf(path, bytes, chrono::Utc::now(), index)?,
+                None => original_name.to_string(),
+            };
+            let (result, report) =
+                run_workflow_bytes_detailed(bytes, &self.workflow).map_err(|f| f.cause)?;
             let out = publish(&self.output, &name, &result)?;
             output = Some(out.clone());
             let audit = serde_json::json!({ "timestamp": chrono::Utc::now().to_rfc3339(), "file": path, "sha256": hash, "output": out, "output_sha256": sha256(&result), "success":true, "report": report });
             if let Some(archive) = &self.move_to {
                 // Copy without replacement before removing the original; a failed
                 // archive never destroys the source or overwrites an earlier file.
-                publish(archive, &name, bytes)?;
+                publish(archive, &original_name, bytes)?;
                 std::fs::remove_file(path)?;
             }
             receipt = Some(publish(
                 &self.output,
-                &format!("{name}.receipt.json"),
+                &format!(
+                    "{}.receipt.json",
+                    out.file_name().unwrap().to_string_lossy()
+                ),
                 &serde_json::to_vec_pretty(&audit).map_err(|e| PdfError::Other(e.to_string()))?,
             )?);
             Ok(())

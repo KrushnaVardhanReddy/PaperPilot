@@ -99,6 +99,8 @@ runtime conditions, explicit dependencies and no-match handling. Execution is
 local; the runner never downloads models, interpolates environment variables,
 or sends document bytes to a service.
 
+File-based CLI/MCP/REST wrappers support opt-in [dynamic output naming](/reference/output-naming/) using input names, UTC dates, hashes, indexes and PDF Info metadata. Set `name_template` and supply an output directory to preserve existing output files.
+
 ### CLI
 ```bash
 paperpilot run examples/workflows/conditional-invoice.ppflow invoice.pdf -o processed.pdf --json
@@ -2180,6 +2182,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: app
 
 Runs a validated local TOML/JSON recipe or preset against a local PDF. Uses the same workflow engine as all other wrappers and writes a durable terminal receipt beside the output in `.paperpilot-receipts`. MCP success keeps the legacy `receipt` stage-report shape and adds `job_id` / `receipt_path`. Execution failures include the report and saved receipt location in error data. Existing output is preserved on execution failure. Same-input/output paths are rejected.
 
+Optional `name_template` enables [dynamic output naming](/reference/output-naming/) from actual input names, UTC dates, hashes, indexes and PDF metadata; `output` then specifies a directory, and named outputs never replace existing files.
+
 ### CLI
 ```bash
 paperpilot run flow.ppflow input.pdf --output out/result.pdf --json
@@ -2253,6 +2257,8 @@ The recipe accepts a preset ID, a local TOML/JSON `.ppflow` path, or serialized 
 Watchers live in the owning process. Desktop commands, its local REST gateway, and its MCP endpoint share one manager; separate processes have separate managers. Saved desktop configurations require an explicit start after relaunch. No network request is made unless a CLI caller supplies `--webhook`.
 
 Explicit CLI webhooks retain the completion fields `success`, `operation`, `file`, and `error`, adding `output` and `receipt` paths. Delivery has a 30-second timeout; HTTP/network failures are logged separately from PDF processing results.
+
+Optional `name_template` enables [dynamic naming](/reference/output-naming/) from input names, UTC dates, SHA-256, run indexes and PDF Info fields. CLI uses `--name-template`. Receipts reference the final collision-resolved output path.
 
 ### CLI
 ```bash

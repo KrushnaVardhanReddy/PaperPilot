@@ -68,6 +68,7 @@ impl RecordedRun {
             .as_ref()
             .map(|r| json!(r))
             .unwrap_or_else(|| json!({}));
+        value["output"] = json!(self.receipt.output);
         value["job_id"] = json!(self.receipt.job_id);
         value["receipt_path"] = json!(self.receipt_path);
         value
@@ -80,6 +81,33 @@ pub fn run_to_path(
     input: &Path,
     output: &Path,
     workflow: &SavedWorkflow,
+) -> OperationResult<RecordedRun> {
+    run_prepared(input, output, workflow, None, false)
+}
+
+/// With an opt-in template, output is a directory. Input bytes are read once,
+/// named by their real digest, executed and published without replacement.
+pub fn run_to_path_with_naming(
+    input: &Path,
+    output: &Path,
+    workflow: &SavedWorkflow,
+    template: Option<&str>,
+) -> OperationResult<RecordedRun> {
+    let Some(pattern) = template else {
+        return run_to_path(input, output, workflow);
+    };
+    let template = super::output_naming::OutputNameTemplate::parse(pattern)?;
+    let bytes = fs::read(input)?;
+    let name = template.render_pdf(input, &bytes, chrono::Utc::now(), 1)?;
+    run_prepared(input, &output.join(name), workflow, Some(bytes), true)
+}
+
+fn run_prepared(
+    input: &Path,
+    output: &Path,
+    workflow: &SavedWorkflow,
+    prepared: Option<Vec<u8>>,
+    no_clobber: bool,
 ) -> OperationResult<RecordedRun> {
     let parent = output
         .parent()
@@ -118,7 +146,10 @@ pub fn run_to_path(
         report: None,
     };
     let result = (|| -> OperationResult<()> {
-        let bytes = fs::read(input)?;
+        let bytes = match prepared {
+            Some(bytes) => bytes,
+            None => fs::read(input)?,
+        };
         record.input_sha256 = Some(hash(&bytes));
         if output.exists() && input.canonicalize()? == output.canonicalize()? {
             return Err(invalid("Input and output must be different files"));
@@ -132,8 +163,12 @@ pub fn run_to_path(
         let mut temp = tempfile::NamedTempFile::new_in(parent)?;
         temp.write_all(&bytes)?;
         temp.as_file().sync_all()?;
-        temp.persist(output)
-            .map_err(|e| PdfError::IoError(e.error))?;
+        if no_clobber {
+            temp.persist_noclobber(output)
+        } else {
+            temp.persist(output)
+        }
+        .map_err(|e| PdfError::IoError(e.error))?;
         record.output = Some(output.into());
         record.output_sha256 = Some(hash(&bytes));
         Ok(())
