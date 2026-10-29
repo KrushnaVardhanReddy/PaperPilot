@@ -173,8 +173,11 @@ text PDFs, but matching OCR stages require a native OCR-enabled build.
 Reports contain total/completed/skipped counts, output byte length, elapsed time,
 `archived_original`, an optional error and per-stage `completed`, `skipped`,
 `failed` or `not_run` statuses with reasons and timings. Output length is zero
-on engine failure. CLI `--json` is a machine-readable result; generic persistent
-recipe audit receipts remain a separate task.
+on engine failure. File-based CLI/MCP/REST JSON runs now persist terminal receipts
+in `OUTPUT_PARENT/.paperpilot-receipts`, adding `job_id` and `receipt_path` to the
+existing report shape. Query them after restart with `execution_receipt_list` and
+`execution_receipt_get`. Byte-only and multipart runners retain their existing
+filesystem-free behavior.
 
 Folder/schedule/webhook triggers, `[output]` routing, retries, secret interpolation,
 multi-artifact joins and desktop IF/ELSE editing are separate tasks. Their schema

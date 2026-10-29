@@ -150,6 +150,9 @@ impl PaperPilotMcpServer {
             .unwrap()
             .clone(),
         ));
+        for name in ["execution_receipt_list", "execution_receipt_get"] {
+            tools.push(Tool::new(name, "Query durable local workflow, batch or watcher execution receipts; no PDF contents or recipe parameters are stored", serde_json::json!({"type":"object","properties":{"directory":{"type":"string"},"receipt_id":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":1000,"default":50}},"required":if name.ends_with("_get") {vec!["directory","receipt_id"]} else {vec!["directory"]}}).as_object().unwrap().clone()));
+        }
         tools.push(Tool::new(
             "recipe_run".to_string(),
             "Execute a .ppflow recipe against a local PDF file immediately (one-shot, no daemon).".to_string(),
@@ -4583,13 +4586,39 @@ impl PaperPilotMcpServer {
             ])));
         }
 
+        if matches!(
+            request.name.as_ref(),
+            "execution_receipt_list" | "execution_receipt_get"
+        ) {
+            let dir = PathBuf::from(get_string("directory")?);
+            let result = if request.name.ends_with("_get") {
+                paperpilot_pdf::operations::receipts::get(&dir, &get_string("receipt_id")?)
+                    .map(|v| serde_json::json!(v))
+            } else {
+                let limit = args
+                    .get("limit")
+                    .map(|v| {
+                        v.as_u64().ok_or_else(|| {
+                            ErrorData::invalid_params("limit must be an integer", None)
+                        })
+                    })
+                    .transpose()?
+                    .unwrap_or(50);
+                let limit = usize::try_from(limit)
+                    .map_err(|_| ErrorData::invalid_params("limit out of range", None))?;
+                paperpilot_pdf::operations::receipts::list(&dir, limit)
+                    .map(|v| serde_json::json!(v))
+            }
+            .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
+            return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
+                ContentBlock::text(result.to_string()),
+            ])));
+        }
         if request.name == "recipe_run" {
             let input = get_string("input")?;
             let recipe = get_string("recipe")?;
             let output = get_string("output").unwrap_or_else(|_| input.clone() + "_processed.pdf");
 
-            let bytes = std::fs::read(&input)
-                .map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
             let recipe_str = std::fs::read_to_string(&recipe).unwrap_or(recipe.clone());
             let workflow =
                 paperpilot_core::workflow::parse_workflow(&recipe_str).or_else(|_| {
@@ -4602,16 +4631,15 @@ impl PaperPilotMcpServer {
                     })
                 })?;
 
-            let (out_bytes, report) =
-                paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
-                    &bytes, &workflow,
-                )
-                .map_err(|f| {
-                    ErrorData::new(rmcp::model::ErrorCode(500), f.cause.to_string(), None)
-                })?;
-
-            std::fs::write(&output, out_bytes)
-                .map_err(|e| ErrorData::new(rmcp::model::ErrorCode(500), e.to_string(), None))?;
+            let run = paperpilot_pdf::operations::receipts::run_to_path(
+                std::path::Path::new(&input),
+                std::path::Path::new(&output),
+                &workflow,
+            )
+            .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+            run.outcome()
+                .map_err(|e| ErrorData::internal_error(e.to_string(), Some(run.report_json())))?;
+            let report = run.report_json();
 
             return Ok(CallToolResponse::Complete(CallToolResult::success(vec![
                 ContentBlock::text(
@@ -4680,33 +4708,19 @@ impl PaperPilotMcpServer {
                     ));
                 };
 
-                let input_bytes = std::fs::read(&input_path).map_err(|e| {
-                    ErrorData::invalid_params(format!("Failed to read input PDF: {}", e), None)
+                let run = paperpilot_pdf::operations::receipts::run_to_path(
+                    std::path::Path::new(&input_path),
+                    std::path::Path::new(&output_path),
+                    &workflow,
+                )
+                .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+                run.outcome().map_err(|e| {
+                    ErrorData::internal_error(e.to_string(), Some(run.report_json()))
                 })?;
-
-                let (out_bytes, report) =
-                    paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
-                        &input_bytes,
-                        &workflow,
-                    )
-                    .map_err(|e| {
-                        ErrorData::internal_error(
-                            e.to_string(),
-                            serde_json::to_value(&e.report).ok(),
-                        )
-                    })?;
-
-                std::fs::write(&output_path, out_bytes).map_err(|e| {
-                    ErrorData::internal_error(format!("Failed to write output PDF: {}", e), None)
-                })?;
-
-                let report_json = serde_json::to_value(&report).map_err(|e| {
-                    ErrorData::internal_error(format!("Failed to serialize report: {}", e), None)
-                })?;
-
+                let report_json = run.report_json();
                 Ok(OperationResult {
                     success: true,
-                    message: format!("Workflow '{}' executed successfully.", report.workflow_name),
+                    message: format!("Workflow '{}' executed successfully.", workflow.name),
                     output_path: Some(output_path),
                     diff_detected: None,
                     data: Some(report_json),

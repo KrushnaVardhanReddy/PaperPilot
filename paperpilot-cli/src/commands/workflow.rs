@@ -3,10 +3,9 @@ use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::workflow::{
     SavedWorkflow, get_default_presets, get_preset_by_id, parse_workflow,
 };
-use paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed;
+use paperpilot_pdf::operations::receipts;
 use serde_json::Value;
 use std::fs;
-use std::io::Write;
 use std::path::Path;
 
 pub fn execute(command: &Commands, json: bool) -> (OperationResult<()>, Option<Value>) {
@@ -31,6 +30,16 @@ pub fn execute(command: &Commands, json: bool) -> (OperationResult<()>, Option<V
         }
     };
     match subcommand {
+        Some(WorkflowSubcommand::History { directory, id, limit }) => {
+            let result = match id {
+                Some(id) => receipts::get(directory, id).map(|v| serde_json::json!(v)),
+                None => receipts::list(directory, *limit).map(|v| serde_json::json!(v)),
+            };
+            match result {
+                Ok(value) => { if !json { println!("{}", serde_json::to_string_pretty(&value).unwrap()); } (Ok(()), Some(value)) },
+                Err(error) => (Err(error), None),
+            }
+        }
         Some(WorkflowSubcommand::List) => {
             let presets = get_default_presets();
             if !json {
@@ -86,52 +95,18 @@ fn run_workflow(
     recipe: Option<&Path>,
     json: bool,
 ) -> (OperationResult<()>, Option<Value>) {
-    let prepared = (|| {
-        let wf = resolve_workflow(preset, recipe)?;
-        if output.exists() && fs::canonicalize(input)? == fs::canonicalize(output)? {
-            return Err(PdfError::InvalidInput(
-                "Input and output must be different files".into(),
-            ));
-        }
-        Ok((wf, fs::read(input)?))
-    })();
-    let (wf, bytes) = match prepared {
-        Ok(value) => value,
-        Err(error) => return (Err(error), None),
+    let wf = match resolve_workflow(preset, recipe) {
+        Ok(wf) => wf,
+        Err(e) => return (Err(e), None),
     };
-    match run_workflow_bytes_detailed(&bytes, &wf) {
-        Ok((out, mut report)) => {
-            let result = (|| -> OperationResult<()> {
-                let parent = output
-                    .parent()
-                    .filter(|p| !p.as_os_str().is_empty())
-                    .unwrap_or(Path::new("."));
-                let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
-                temporary.write_all(&out)?;
-                temporary
-                    .persist(output)
-                    .map_err(|e| PdfError::IoError(e.error))?;
-                Ok(())
-            })();
-            if let Err(error) = &result {
-                report.error = Some(error.to_string());
-                report.output_bytes_len = 0;
-            }
+    match receipts::run_to_path(input, output, &wf) {
+        Ok(run) => {
             if !json {
-                eprintln!(
-                    "Workflow '{}': {} completed, {} skipped, archive_original={}",
-                    report.workflow_name,
-                    report.steps_completed,
-                    report.steps_skipped,
-                    report.archived_original
-                );
+                eprintln!("Execution receipt: {}", run.receipt_path.display());
             }
-            (result, Some(serde_json::to_value(report).unwrap()))
+            (run.outcome(), Some(run.report_json()))
         }
-        Err(failure) => (
-            Err(failure.cause),
-            Some(serde_json::to_value(failure.report).unwrap()),
-        ),
+        Err(error) => (Err(error), None),
     }
 }
 
