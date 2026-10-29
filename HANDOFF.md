@@ -1,33 +1,33 @@
 # PaperPilot — Session Handoff Guide
-
+ 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 29, 2026 (Asia/Hong_Kong)
 >
-> **Active Target:** Review Spec 141 compatibility repairs and Spec 142 desktop watched folders / smart filters. Spec 140 V2 workspace remains reverted.
+> **Active Target:** Spec 141 (Multi-Rule Condition Builder) & Spec 142 (Watched Folders & Smart Filters) successfully merged into `feature/dev` via PR #305 and PR #306. Active next step is Spec 143 (Universal Document Workspace Migration).
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev`; current work is on `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`, based on `origin/fix/current-ui-polish` (`dda6861`, including PR #305). Target integration baseline was `0069d48`.
-- **Target Branch Protocol**: Feature branches and reviewed PRs into `feature/dev`; never push directly to `feature/dev` or `main`.
+- **Integration Branch**: `feature/dev` (`d88033d`), incorporating both PR #305 (`dda6861`) and PR #306 (`365f8c0`).
+- **Target Branch Protocol**: Feature branches and reviewed PRs into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
-  - Current scoped verification and environment limits: [desktop automation report](reports/DESKTOP_AUTOMATION_REPORT.md). Prior full-workspace/audit results are historical, not a fresh assertion for this branch.
-  - Desktop Vitest Suite: **147 passing tests across 24 files** at this update.
-  - Architecture Roadmaps: Modularized into `phases/` directory with master dashboard in `PHASES.md`.
-- **Scope Boundary Policy**: Focus exclusively on **Community (Open-Source)** tasks in this repository. All Enterprise governance (SAML/SSO, SCIM, SIEM, Ed25519 air-gapped licensing) is reserved for the private `PaperPilot-Enterprise` repo.
+  - Desktop Vitest Suite: **147 passing tests across 24 files** (100% green).
+  - Rust Backend Integration Suites: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
+  - Cargo Workspace: `cargo check --workspace` compiles cleanly with zero errors.
+- **Active Feature Branch**: `feat/desktop-universal-doc-workspace-migration` (Spec 143) executing via Jules session `18342025999379061323`.
 
 ---
 
-## Local Spec 141 / 142 implementation (awaiting integration review)
+## Merged Spec 141 & Spec 142 Implementations (PR #305 & PR #306)
 
-- Complete recursive condition editing with explicit Apply; retain false/zero/legacy/NOT/size/encryption conditions and unknown saved fields without destructive normalization.
-- Settings → Watched Folders uses native filesystem workers and the shared PDF workflow runner. Desktop, embedded MCP and REST use one local manager. CLI uses the same worker implementation in its own process.
-- Watcher progress, failures, stop/join, output collision handling, source preservation, and SHA-256 receipts come from actual processing. Preferences do not auto-start workers or persist raw recipes/runtime counters.
-- Smart filters inspect actual PDF page/scan/form/signature facts with bounded concurrency; encrypted/malformed/unsupported documents remain unclassified. Filled signature presence does not imply certificate trust.
-- Initial PR #305 was merged into `fix/current-ui-polish`, not `feature/dev`; this branch includes that base. Spec 140's V2 layout was reverted by `54db3f2` and its leftover watcher placeholder removed by `3dfa989`; do not mark it complete or restore it accidentally.
-- After integration, continue with an explicitly scoped Community gap from the phase documents. Generic scheduling, retries and broader trigger configuration remain open.
+- **Spec 141 (PR #305)**: Full recursive multi-rule condition editing (`ALL` / `ANY` combinators, dynamic rule row additions/deletions, backwards-compatible serialization to flat leaves, and `StepCard.svelte` condition badges).
+- **Spec 142 (PR #306)**: 
+  - Settings → Watched Folders uses native filesystem workers and the shared PDF workflow runner (`paperpilot_pdf::operations::watch`).
+  - Desktop, embedded MCP and REST use one local manager.
+  - Smart filters inspect actual PDF page/scan/form/signature facts (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`) with bounded concurrency.
+  - Bounded concurrency, output collision handling, source preservation, and SHA-256 receipts verified by real automated tests.
 
 ---
 
