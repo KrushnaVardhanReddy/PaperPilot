@@ -29,11 +29,12 @@ fn test_watch_folder_daemon() {
     // Spawn the daemon
     let mut child = Command::new(env!("CARGO_BIN_EXE_paperpilot"))
         .arg("watch")
+        .arg("--directory")
         .arg(watch_dir.path())
         .arg("--output")
         .arg(out_dir.path())
-        .arg("--operation")
-        .arg("compress")
+        .arg("--recipe")
+        .arg("preset-clean-scan")
         .arg("--settle-delay-ms")
         .arg("100")
         .spawn()
@@ -43,7 +44,29 @@ fn test_watch_folder_daemon() {
     std::thread::sleep(Duration::from_millis(500));
 
     let mock_pdf_path = watch_dir.path().join("test_input.pdf");
-    create_mock_pdf(&mock_pdf_path);
+    let mut doc = lopdf::Document::with_version("1.4");
+    let pages_id = doc.new_object_id();
+    let catalog_id = doc.new_object_id();
+    let page_id = doc.new_object_id();
+
+    let mut page_dict = lopdf::Dictionary::new();
+    page_dict.set("Type", lopdf::Object::Name(b"Page".to_vec()));
+    page_dict.set("Parent", lopdf::Object::Reference(pages_id));
+    page_dict.set("MediaBox", lopdf::Object::Array(vec![0.into(), 0.into(), 612.into(), 792.into()]));
+    doc.objects.insert(page_id, lopdf::Object::Dictionary(page_dict));
+
+    let mut pages_dict = lopdf::Dictionary::new();
+    pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
+    pages_dict.set("Kids", lopdf::Object::Array(vec![lopdf::Object::Reference(page_id)]));
+    pages_dict.set("Count", lopdf::Object::Integer(1));
+    doc.objects.insert(pages_id, lopdf::Object::Dictionary(pages_dict));
+
+    let mut catalog_dict = lopdf::Dictionary::new();
+    catalog_dict.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
+    catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
+    doc.objects.insert(catalog_id, lopdf::Object::Dictionary(catalog_dict));
+    doc.trailer.set("Root", lopdf::Object::Reference(catalog_id));
+    doc.save(&mock_pdf_path).unwrap();
 
     // Wait for debounce and processing
     std::thread::sleep(Duration::from_millis(3000));
