@@ -250,6 +250,8 @@
       const blob = new Blob([new Uint8Array(bytes)], { type: file.type || 'application/pdf' });
       const newFile = new File([blob], file.name, { type: file.type || 'application/pdf' });
       (newFile as any)._localPath = path;
+      const oldInsp = appState.inspections.get(file);
+      if (oldInsp) appState.inspections.set(newFile, oldInsp);
       appState.documents[idx] = newFile;
       appState.documentPaths[idx] = path;
       appState.documents = [...appState.documents];
@@ -328,6 +330,11 @@
                 (newFile as any)._localPath = path;
                 (newFile as any)._isLoaded = true;
 
+                const oldFile = appState.documents[activeIndex];
+                const oldInspection = appState.inspections.get(oldFile);
+                if (oldInspection) {
+                  appState.inspections.set(newFile, oldInspection);
+                }
                 appState.documents[activeIndex] = newFile;
                 objectUrl = URL.createObjectURL(newFile);
                 currentFileUrl = objectUrl;
@@ -789,6 +796,21 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+    position: relative;
+  }
+
+  .pdf-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+    min-width: 0;
   }
 
   .toolbars-container {

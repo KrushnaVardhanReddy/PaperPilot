@@ -202,10 +202,13 @@
   .viewer-container {
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     overflow: auto;
     background-color: var(--bg-secondary, #f3f4f6);
     padding: 2rem;
     flex: 1;
+    min-height: 0;
+    min-width: 0;
   }
 
   .page-container {
@@ -215,11 +218,13 @@
     /* Ensure the container sizes tightly around the canvas */
     display: inline-block;
     height: fit-content;
+    flex-shrink: 0;
+    margin: auto;
   }
 
   canvas {
-    max-width: 100%; /* Ensure canvas doesn't break layout unexpectedly */
-    object-fit: contain;
+    display: block;
+    max-width: none;
   }
 
   .search-highlights-layer {
