@@ -564,26 +564,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border-color);
-    gap: 8px;
+    gap: 12px;
   }
   .drawer-mode-tabs {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     background: var(--bg-primary);
-    padding: 2px;
-    border-radius: 6px;
+    padding: 4px;
+    border-radius: 8px;
   }
   .drawer-tab-btn {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 5px 12px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
   }
