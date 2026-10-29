@@ -18,6 +18,7 @@ export class AppState {
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
   workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+  isContextPanelOpen = $state(true);
 
   isMobileViewport = $state(false);
   isTauriMobile = $state(false);
@@ -139,7 +140,16 @@ export class AppState {
   }
 
   setActiveTab(tab: string) {
-    this.activeTab = tab;
+    if (this.activeTab === tab) {
+      this.toggleContextPanel();
+    } else {
+      this.activeTab = tab;
+      this.isContextPanelOpen = true;
+    }
+  }
+
+  toggleContextPanel() {
+    this.isContextPanelOpen = !this.isContextPanelOpen;
   }
 
   openTool(tool: any) {
