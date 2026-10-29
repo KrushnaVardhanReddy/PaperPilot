@@ -1,45 +1,34 @@
 ---
-title: Validate Signatures
-description: Cryptographically verify digital signatures, certificate chains, and pre-sign baseline integrity.
+title: "pdf_validate_signatures"
+description: "Reference, CLI, MCP, and REST API commands for pdf_validate_signatures."
+sidebar:
+  order: 57
 ---
 
-# Validate Signatures
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Cryptographically verify digital signatures, certificate chains, and document integrity. Supports dual-layer audit by checking against a baseline document for pre-signature structural/semantic alterations (Spec 101).
-
-## Interface Invocations
+### What it does
+**Cryptographically verifies digital signatures, certificate chains, and document integrity.**  
+Supports dual-layer audit by checking certificate validity and verifying against a baseline document for pre-signature alterations.
 
 ### CLI
 ```bash
-paperpilot pdf-validate-signatures --input signed.pdf --output report.json
-# With baseline verification
 paperpilot pdf-validate-signatures --input signed.pdf --output report.json --baseline original.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": "1",
-  "method": "callTool",
-  "params": {
-    "name": "pdf_validate_signatures",
-    "arguments": {
-      "input": "signed.pdf",
-      "output": "report.json",
-      "baseline": true
-    }
+  "name": "pdf_validate_signatures",
+  "arguments": {
+    "input": "signed.pdf",
+    "output": "report.json",
+    "baseline": "original.pdf"
   }
 }
 ```
 
-### Gateway REST API
+### REST API
 ```bash
-curl -X POST http://localhost:7823/api/v1/pdf/validate-signatures \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "input": "signed.pdf",
-    "output": "report.json",
-    "baseline": true
-  }'
+curl -X POST http://localhost:7823/api/v1/pdf/validate-signatures -H "Content-Type: application/json" -d '{"input": "signed.pdf", "output": "report.json", "baseline": "original.pdf"}'
 ```

@@ -1,20 +1,33 @@
 ---
-title: Semantic Search Tool
-description: Searches document chunks using semantic similarity (Cosine similarity).
+title: "semantic_search"
+description: "Reference, CLI, MCP, and REST API commands for semantic_search."
+sidebar:
+  order: 58
 ---
 
-# Semantic Search Tool
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The semantic search tool queries the `paperpilot-storage` vector store database using cosine similarity to rank chunks.
+### What it does
+**Searches document chunks using semantic cosine vector similarity.**  
+Queries the embedded `paperpilot-storage` vector store database to retrieve relevant passage chunks based on conceptual meaning rather than exact keyword matches.
 
-## CLI Usage
+### CLI
+```bash
+paperpilot search --query "quarterly revenue trends" --dir ./docs --json
+```
 
-Currently, semantic search is implemented natively in `paperpilot-storage` and is accessible internally via the `StorageEngine` API. E2E CLI exposure is handled in respective workflow tasks.
+### MCP JSON-RPC
+```json
+{
+  "name": "semantic_search",
+  "arguments": {
+    "query": "quarterly revenue trends",
+    "limit": 5
+  }
+}
+```
 
-## MCP JSON-RPC
-
-Provides internal endpoints via MCP for tool calling (integration pending in dependent layers).
-
-## REST API
-
-Internal `StorageEngine::search_chunks` serves as the backbone for HTTP endpoints.
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/search/semantic -H "Content-Type: application/json" -d '{"query": "quarterly revenue trends", "limit": 5}'
+```

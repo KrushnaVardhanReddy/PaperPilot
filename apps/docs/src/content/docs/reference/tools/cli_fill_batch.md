@@ -90,11 +90,21 @@ new run. No partial temporary PDFs remain after handled row failures.
 
 ### MCP JSON-RPC
 
-This is a CLI automation command. A dedicated MCP batch endpoint is planned
-separately in Task 4.7.9. Existing single-document `pdf_fill_form` and
-`pdf_flatten` tools share its core form implementation.
+```json
+{
+  "name": "batch_fill",
+  "arguments": {
+    "template": "/local/customer-form.pdf",
+    "output_dir": "/local/batch-001",
+    "data": "/local/customers.csv"
+  }
+}
+```
 
 ### REST API
 
-Use the CLI for batch mail merge. Existing single-document form endpoints remain
-available; this task does not add a batch REST endpoint.
+```bash
+curl -X POST http://127.0.0.1:7823/v1/automation/fill-batch \
+  -H 'Content-Type: application/json' \
+  -d '{"template":"/local/customer-form.pdf","output_dir":"/local/batch-001","data":"/local/customers.csv"}'
+```

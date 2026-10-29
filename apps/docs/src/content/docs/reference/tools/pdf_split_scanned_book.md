@@ -43,16 +43,9 @@ paperpilot pdf-split-scanned-book \
 }
 ```
 
-### REST Gateway
-```http
-POST /api/v1/pdf/split-scanned-book
-Content-Type: application/json
-
-{
-  "input": "scan_spread.pdf",
-  "output": "split_pages.pdf",
-  "reading_direction": "ltr",
-  "gutter_overlap": 5.0,
-  "split_horizontal": false
-}
+### REST API
+```bash
+curl -X POST http://localhost:7823/api/v1/pdf/split-scanned-book \
+  -H "Content-Type: application/json" \
+  -d '{"input": "scan_spread.pdf", "output": "split_pages.pdf", "reading_direction": "ltr", "gutter_overlap": 5.0, "split_horizontal": false}'
 ```
