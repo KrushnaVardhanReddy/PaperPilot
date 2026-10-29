@@ -13,15 +13,21 @@ Takes layout, styled text blocks, and embedded base64 images from JSON and compi
 
 ### CLI
 ```bash
-paperpilot process --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/out/penta_e2e/out.pdf --json
+paperpilot convert --input document.json --format pdf --output document.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
-
+{
+  "name": "json_to_pdf",
+  "arguments": {
+    "input": "document.json",
+    "output": "document.pdf"
+  }
+}
 ```
 
 ### REST API
 ```bash
-
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/from-json -H "Content-Type: application/json" -d '{"input": "document.json", "output": "document.pdf"}'
 ```

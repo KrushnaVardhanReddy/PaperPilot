@@ -1,17 +1,17 @@
 ---
-title: Modify PDF Permissions (pdf_change_permissions)
-description: Configure user and owner permissions for printing, copying, and modification.
+title: "pdf_change_permissions"
+description: "Reference, CLI, MCP, and REST API commands for pdf_change_permissions."
+sidebar:
+  order: 54
 ---
 
-# Modify PDF Permissions
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Configure user and owner permissions for printing, copying, and modification according to the ISO 32000-1 specification. This tool enables granular control over user rights across document viewing platforms.
+### What it does
+**Configures user and owner permissions for printing, copying, and modification.**  
+Enables granular control over user rights across PDF readers according to ISO 32000-1 specification encryption dictionaries.
 
-## Overview
-
-The `pdf_change_permissions` tool utilizes `lopdf`'s standard security handler (`EncryptionVersion::V2`) to recalculate keys and set the correct encryption dictionary `/P` bitmask to revoke or grant document permissions.
-
-## Parameters
+### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -26,44 +26,25 @@ The `pdf_change_permissions` tool utilizes `lopdf`'s standard security handler (
 | `owner_password` | `String` | No | Configure owner password. |
 | `user_password` | `String` | No | Configure user password. |
 
-## CLI Invocation
-
+### CLI
 ```bash
-paperpilot pdf-change-permissions \
-    --input document.pdf \
-    --output restricted.pdf \
-    --allow-printing false \
-    --allow-copying false
+paperpilot pdf-change-permissions --input document.pdf --output restricted.pdf --allow-printing false --allow-copying false
 ```
 
-## MCP JSON-RPC Invocation
-
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "execute_tool",
-  "params": {
-    "tool": "pdf_change_permissions",
-    "arguments": {
-      "input": "document.pdf",
-      "output": "restricted.pdf",
-      "allow_printing": false,
-      "allow_copying": false
-    }
-  }
-}
-```
-
-## REST API Invocation
-
-```bash
-curl -X POST http://localhost:7823/api/v1/pdf/change-permissions \
-  -H "Content-Type: application/json" \
-  -d '{
+  "name": "pdf_change_permissions",
+  "arguments": {
     "input": "document.pdf",
     "output": "restricted.pdf",
     "allow_printing": false,
     "allow_copying": false
-  }'
+  }
+}
+```
+
+### REST API
+```bash
+curl -X POST http://localhost:7823/api/v1/pdf/change-permissions -H "Content-Type: application/json" -d '{"input": "document.pdf", "output": "restricted.pdf", "allow_printing": false, "allow_copying": false}'
 ```

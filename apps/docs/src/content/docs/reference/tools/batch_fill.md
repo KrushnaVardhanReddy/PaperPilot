@@ -9,7 +9,11 @@ Fills a local AcroForm PDF once per CSV/JSON record using the same core runner a
 
 Supply `template`, `output_dir` and exactly one of `data` (a local `.csv`/`.json` path) or `records` (an inline JSON array). Inline values may be strings, numbers, booleans or null. Nested values fail that row. Optional `field_map` is a local JSON file mapping PDF field names to input column names. Optional `date` overrides the UTC date as `YYYY-MM-DD`.
 
-`name_template` defaults to `{index:04}.pdf`; supported tokens are `{row.column}`, `{date}`, `{index}` and `{index:04}`. Names must be single portable PDF basenames. Existing PDFs and `execution_receipt.json` are never overwritten; use a fresh output folder per batch. Row errors do not discard later records.
+### CLI
+
+```bash
+paperpilot fill-batch --template /local/customer-form.pdf --data /local/customers.csv --output-dir /local/batch-001
+```
 
 ### MCP JSON-RPC
 
