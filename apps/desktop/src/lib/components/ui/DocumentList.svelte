@@ -19,8 +19,20 @@
 </script>
 
 <div class="document-list">
-  <div class="filter-pills" role="group" aria-label="Document filters">
-    {#each documentFilters as filter}<button type="button" class:active={activeFilter === filter.id} aria-pressed={activeFilter === filter.id} onclick={() => activeFilter = filter.id}>{filter.label} ({counts[filter.id] ?? 0})</button>{/each}
+  <div class="list-header">
+    <div class="filter-pills" role="group" aria-label="Document filters">
+      {#each documentFilters as filter}<button type="button" class:active={activeFilter === filter.id} aria-pressed={activeFilter === filter.id} onclick={() => activeFilter = filter.id}>{filter.label} ({counts[filter.id] ?? 0})</button>{/each}
+    </div>
+    {#if appState.documents.length > 0}
+      <button
+        type="button"
+        class="clear-all-btn"
+        title="Remove all documents"
+        onclick={() => appState.clearAllDocuments()}
+      >
+        Clear All
+      </button>
+    {/if}
   </div>
   {#if pending}<p role="status">Inspecting {pending} document{pending === 1 ? '' : 's'}…</p>{/if}
   {#if unavailable}<p role="status">Details unavailable for {unavailable} document{unavailable === 1 ? '' : 's'}. These remain in All documents.</p>{/if}
@@ -71,10 +83,31 @@
 </div>
 
 <style>
+  .list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
   .filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
   .filter-pills button { border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); border-radius: 20px; padding: 7px 12px; cursor: pointer; }
   .filter-pills button.active { border-color: var(--accent-primary); background: var(--bg-surface-hover); }
   .filter-pills button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .clear-all-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .clear-all-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+  }
 
   .document-list {
     width: 100%;

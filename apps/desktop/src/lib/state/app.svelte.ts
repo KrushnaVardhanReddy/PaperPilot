@@ -216,6 +216,16 @@ export class AppState {
     }
   }
 
+  clearAllDocuments() {
+    this.documents = [];
+    this.documentPaths = [];
+    this.openDocIndices = [];
+    this.selectedDocumentIndex = null;
+    this.inspections.clear();
+    this.inspectionQueue = [];
+    this.inspectionsRunning = 0;
+  }
+
   selectDocument(index: number | null) {
     if (index === null) {
       this.selectedDocumentIndex = null;
