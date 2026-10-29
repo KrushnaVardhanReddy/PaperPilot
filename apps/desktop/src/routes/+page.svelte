@@ -20,8 +20,11 @@
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
+  import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
+
+  let drawerMode = $state<'auto' | 'files' | 'pages'>('auto');
 
   import { onMount } from 'svelte';
   onMount(() => {
@@ -385,21 +388,41 @@
 <div class="page-container three-column-layout">
   {#if appState.activeTab === 'home' || appState.activeTab === 'documents'}
     <div class="workspace-wrapper">
+      <DocumentTabBar />
       <div class="workspace-body">
         <!-- COLUMN 2: Contextual Drawer -->
         {#if appState.isContextPanelOpen}
           <div class="context-drawer">
             <div class="context-drawer-header">
+              <div class="drawer-mode-tabs">
+                <button
+                  class="drawer-tab-btn"
+                  class:active={drawerMode === 'files' || (drawerMode === 'auto' && appState.selectedDocumentIndex === null)}
+                  onclick={() => drawerMode = 'files'}
+                  title="Document Library"
+                >
+                  📁 Files
+                </button>
+                <button
+                  class="drawer-tab-btn"
+                  class:active={drawerMode === 'pages' || (drawerMode === 'auto' && appState.selectedDocumentIndex !== null)}
+                  disabled={appState.selectedDocumentIndex === null || !isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+                  onclick={() => drawerMode = 'pages'}
+                  title="Page Thumbnails"
+                >
+                  📑 Pages
+                </button>
+              </div>
               <button class="collapse-btn" title="Collapse Drawer" onclick={() => appState.toggleContextPanel()}>
                 ‹
               </button>
             </div>
 
-            {#if appState.selectedDocumentIndex === null}
+            {#if drawerMode === 'files' || (drawerMode === 'auto' && appState.selectedDocumentIndex === null)}
               <div class="drawer-library">
                 <DocumentList />
               </div>
-            {:else if isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {:else if isPdfFile(appState.documents[appState.selectedDocumentIndex ?? 0]?.name ?? '')}
               <div class="drawer-thumbnails">
                 <PdfThumbnails {pdfDoc} bind:pageNum />
               </div>
@@ -539,9 +562,42 @@
   }
   .context-drawer-header {
     display: flex;
-    justify-content: flex-end;
-    padding: 8px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
     border-bottom: 1px solid var(--border-color);
+    gap: 8px;
+  }
+  .drawer-mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-primary);
+    padding: 2px;
+    border-radius: 6px;
+  }
+  .drawer-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .drawer-tab-btn:hover:not(:disabled) {
+    color: var(--text-primary);
+  }
+  .drawer-tab-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .drawer-tab-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
   .collapse-btn {
     background: transparent;
