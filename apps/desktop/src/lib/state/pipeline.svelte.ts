@@ -244,6 +244,66 @@ export class PipelineState {
     );
   }
 
+  autoLayout() {
+    if (this.steps.length === 0) return;
+
+    // Calculate depth for each step based on dependencies
+    const depths = new Map<string, number>();
+
+    const getDepth = (stepId: string, visited = new Set<string>()): number => {
+      if (depths.has(stepId)) return depths.get(stepId)!;
+      if (visited.has(stepId)) return 1;
+      visited.add(stepId);
+
+      const step = this.steps.find(s => s.id === stepId);
+      if (!step || !step.depends_on || step.depends_on.length === 0) {
+        const idx = this.steps.findIndex(s => s.id === stepId);
+        const depth = idx >= 0 ? idx + 1 : 1;
+        depths.set(stepId, depth);
+        return depth;
+      }
+
+      let maxDepDepth = 0;
+      for (const depId of step.depends_on) {
+        if (depId === 'trigger-node') {
+          maxDepDepth = Math.max(maxDepDepth, 0);
+        } else {
+          maxDepDepth = Math.max(maxDepDepth, getDepth(depId, visited));
+        }
+      }
+
+      const depth = maxDepDepth + 1;
+      depths.set(stepId, depth);
+      return depth;
+    };
+
+    this.steps.forEach(s => getDepth(s.id));
+
+    // Group steps by column depth
+    const columns = new Map<number, PipelineStep[]>();
+    this.steps.forEach(s => {
+      const d = depths.get(s.id) ?? 1;
+      if (!columns.has(d)) columns.set(d, []);
+      columns.get(d)!.push(s);
+    });
+
+    // Assign positions: column x = 60 + depth * 260; vertically centered around y = 200
+    this.steps = this.steps.map(step => {
+      const d = depths.get(step.id) ?? 1;
+      const colSteps = columns.get(d) ?? [step];
+      const indexInCol = colSteps.findIndex(s => s.id === step.id);
+      const totalInCol = colSteps.length;
+
+      const x = 60 + d * 260;
+      const y = 200 + (indexInCol - (totalInCol - 1) / 2) * 110;
+
+      return {
+        ...step,
+        position: { x, y }
+      };
+    });
+  }
+
   clearPipeline() {
     this.steps = [];
     this.currentStepIndex = null;

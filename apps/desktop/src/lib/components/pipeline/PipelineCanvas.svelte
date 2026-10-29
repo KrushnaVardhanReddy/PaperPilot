@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { SvelteFlow, Background, Controls, MiniMap, type Node, type Edge, type Connection } from '@xyflow/svelte';
+  import { SvelteFlow, Background, Controls, MiniMap, Panel, type Node, type Edge, type Connection } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { pipelineState } from '$lib/state/pipeline.svelte';
+  import { appState } from '$lib/state/app.svelte';
   import ActionNode from './nodes/ActionNode.svelte';
   import ConditionNode from './nodes/ConditionNode.svelte';
   import TriggerNode from './nodes/TriggerNode.svelte';
+  import AutoLayoutButton from './AutoLayoutButton.svelte';
 
   const nodeTypes = {
     action: ActionNode,
@@ -16,16 +18,27 @@
   let nodes = $derived.by(() => {
     const svelteNodes: Node[] = [];
 
-    // Add Trigger Node if we have steps (or even if we don't)
+    // Add Trigger Node reflecting loaded documents
+    const docCount = appState.documents.length;
     svelteNodes.push({
       id: 'trigger-node',
       type: 'trigger',
       position: { x: 50, y: 200 },
-      data: { label: 'Input Document', icon: '📄' }
+      data: {
+        label: docCount === 0
+          ? 'No Documents'
+          : docCount === 1
+            ? appState.documents[0].name
+            : `${docCount} Documents (Batch)`,
+        count: docCount,
+        icon: docCount > 1 ? '📚' : '📄'
+      }
     });
 
     pipelineState.steps.forEach((step) => {
-      const isCondition = !!step.condition;
+      // Keep action tools as 'action' nodes (with condition badge).
+      // Only render as 'condition' if it's an explicit flow-control condition block.
+      const isCondition = (step as any).type === 'condition';
       svelteNodes.push({
         id: step.id,
         type: isCondition ? 'condition' : 'action',
@@ -115,6 +128,9 @@
     onpaneclick={onPaneClick}
   >
     <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#334155" />
+    <Panel position="top-right">
+      <AutoLayoutButton />
+    </Panel>
     <Controls
       buttonBgColor="#1e293b"
       buttonBgColorHover="#334155"

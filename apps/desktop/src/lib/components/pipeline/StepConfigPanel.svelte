@@ -44,7 +44,9 @@
                 }}
               >
                 {#each (field.options ?? []) as opt}
-                  <option value={String(opt)}>{opt}</option>
+                  <option value={String(opt)}>
+                    {opt}{field.key === 'angle' ? '°' : ''}
+                  </option>
                 {/each}
               </select>
             {:else if field.type === 'number' || field.type === 'range'}
@@ -144,8 +146,7 @@
     color: var(--text-secondary, #cbd5e1);
   }
 
-  .field-group input,
-  .field-group select {
+  .field-group input {
     padding: 8px 12px;
     border: 1px solid var(--border-color, #334155);
     border-radius: var(--border-radius-sm, 6px);
@@ -153,6 +154,30 @@
     color: var(--text-primary, #f8fafc);
     font-size: 0.9rem;
     transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .field-group select {
+    padding: 8px 12px;
+    padding-right: 2.25rem;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: var(--border-radius-sm, 6px);
+    background-color: var(--bg-secondary, #1e293b);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    color: var(--text-primary, #f8fafc);
+    font-size: 0.9rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .field-group select option {
+    background-color: var(--bg-surface, #0f172a);
+    color: var(--text-primary, #f8fafc);
+    padding: 6px 10px;
   }
 
   .field-group input:focus,

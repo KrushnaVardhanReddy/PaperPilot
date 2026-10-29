@@ -18,14 +18,9 @@
     pipelineState.setRunning(true);
     pipelineState.setLastError(null);
 
-    const originalName = appState.documents[0].name.replace(/\.pdf$/i, '');
-    const initialPath = appState.documentPaths[0] || appState.documents[0].name;
-    const docDir = initialPath.includes('/') ? initialPath.substring(0, initialPath.lastIndexOf('/')) : '';
-    console.log('[PipelineRunner] documentPaths:', appState.documentPaths);
-    console.log('[PipelineRunner] initialPath:', initialPath);
-    console.log('[PipelineRunner] docDir:', docDir);
-
-    let workingFiles: string[] = [initialPath];
+    // Initial working files from all loaded documents in appState
+    let workingFiles: string[] = appState.documents.map((d, idx) => appState.documentPaths[idx] || d.name);
+    console.log('[PipelineRunner] Initial working files:', workingFiles);
 
     try {
       for (let i = 0; i < pipelineState.steps.length; i++) {
@@ -33,40 +28,34 @@
         pipelineState.setCurrentStepIndex(i);
 
         const nextWorkingFiles: string[] = [];
+        const takesAllInputs = Object.values(step.params).includes('__all_inputs__');
 
-        // Execute step for every file currently in the pipeline (supports fan-out from split)
-        for (let fileIdx = 0; fileIdx < workingFiles.length; fileIdx++) {
-          const currentInput = workingFiles[fileIdx];
-          const fileSuffix = workingFiles.length > 1 ? `_part${fileIdx + 1}` : '';
-
-          const fileName = `${originalName}${fileSuffix}_step${i + 1}_${step.operationId}.pdf`;
-          const dirName = `${originalName}${fileSuffix}_step${i + 1}_${step.operationId}_dir`;
+        if (takesAllInputs) {
+          // Multi-file aggregation operation (e.g. Merge PDFs into single output)
+          const firstPath = workingFiles[0] || 'document.pdf';
+          const docDir = firstPath.includes('/') ? firstPath.substring(0, firstPath.lastIndexOf('/')) : '';
+          const fileName = `merged_step${i + 1}_${step.operationId}.pdf`;
           const outputPath = docDir ? `${docDir}/${fileName}` : fileName;
-          const outputDir = docDir ? `${docDir}/${dirName}` : dirName;
 
-          // Build args: replace __input__ and __output__ tokens
           const args: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(step.params)) {
-            if (v === '__input__') args[k] = currentInput;
+            if (v === '__all_inputs__') args[k] = workingFiles;
+            else if (v === '__input__') args[k] = workingFiles[0];
             else if (v === '__output__') args[k] = outputPath;
-            else if (v === '__output_dir__') args[k] = outputDir;
-            else if (v === '__all_inputs__') args[k] = appState.documents.map((d, idx) => appState.documentPaths[idx] || d.name);
             else args[k] = v;
           }
 
-          const label = workingFiles.length > 1 
-            ? `Pipeline step ${i + 1} (${fileIdx + 1}/${workingFiles.length})` 
-            : `Pipeline step ${i + 1}`;
+          const label = `Pipeline step ${i + 1} (${step.label} on ${workingFiles.length} files)`;
           const jobId = jobsState.addJob(step.operationId, 'running', label);
 
           const result = await invoke('invoke_mcp_tool', {
             toolName: step.operationId,
             arguments: args
-          }) as { 
-            success: boolean; 
-            message: string; 
-            output_path?: string; 
-            data?: { files?: string[] } 
+          }) as {
+            success: boolean;
+            message: string;
+            output_path?: string;
+            data?: { files?: string[] };
           };
 
           if (!result.success) {
@@ -77,16 +66,66 @@
           }
 
           jobsState.updateJobStatus(jobId, 'success', result.message);
+          nextWorkingFiles.push(result.output_path ?? outputPath);
+        } else {
+          // Batch execution: run this step across all files currently in the pipeline
+          for (let fileIdx = 0; fileIdx < workingFiles.length; fileIdx++) {
+            const currentInput = workingFiles[fileIdx];
+            const docDir = currentInput.includes('/') ? currentInput.substring(0, currentInput.lastIndexOf('/')) : '';
+            const baseName = currentInput.includes('/')
+              ? currentInput.substring(currentInput.lastIndexOf('/') + 1).replace(/\.pdf$/i, '')
+              : currentInput.replace(/\.pdf$/i, '');
 
-          if (result.data?.files && Array.isArray(result.data.files) && result.data.files.length > 0) {
-            // Fan-out: add all generated split files to next pipeline stage
-            nextWorkingFiles.push(...result.data.files);
-          } else {
-            const resolved = result.output_path ?? outputPath;
-            if (resolved.endsWith('_dir')) {
-              nextWorkingFiles.push(`${resolved}/split_1.pdf`);
+            const fileSuffix = workingFiles.length > 1 && baseName === 'part' ? `_${fileIdx + 1}` : '';
+            const fileName = `${baseName}${fileSuffix}_step${i + 1}_${step.operationId}.pdf`;
+            const dirName = `${baseName}${fileSuffix}_step${i + 1}_${step.operationId}_dir`;
+            const outputPath = docDir ? `${docDir}/${fileName}` : fileName;
+            const outputDir = docDir ? `${docDir}/${dirName}` : dirName;
+
+            // Build args: replace __input__ and __output__ tokens
+            const args: Record<string, unknown> = {};
+            for (const [k, v] of Object.entries(step.params)) {
+              if (v === '__input__') args[k] = currentInput;
+              else if (v === '__output__') args[k] = outputPath;
+              else if (v === '__output_dir__') args[k] = outputDir;
+              else if (v === '__all_inputs__') args[k] = workingFiles;
+              else args[k] = v;
+            }
+
+            const label = workingFiles.length > 1
+              ? `Step ${i + 1}: ${step.label} (${fileIdx + 1}/${workingFiles.length})`
+              : `Step ${i + 1}: ${step.label}`;
+            const jobId = jobsState.addJob(step.operationId, 'running', label);
+
+            const result = await invoke('invoke_mcp_tool', {
+              toolName: step.operationId,
+              arguments: args
+            }) as {
+              success: boolean;
+              message: string;
+              output_path?: string;
+              data?: { files?: string[] };
+            };
+
+            if (!result.success) {
+              jobsState.updateJobStatus(jobId, 'error', result.message);
+              pipelineState.setLastError(`Step ${i + 1} (${step.label}) failed on ${baseName}: ${result.message}`);
+              toastState.error(`Pipeline failed at step ${i + 1}: ${step.label}`);
+              return;
+            }
+
+            jobsState.updateJobStatus(jobId, 'success', result.message);
+
+            if (result.data?.files && Array.isArray(result.data.files) && result.data.files.length > 0) {
+              // Fan-out: add all generated split files to next pipeline stage
+              nextWorkingFiles.push(...result.data.files);
             } else {
-              nextWorkingFiles.push(resolved);
+              const resolved = result.output_path ?? outputPath;
+              if (resolved.endsWith('_dir')) {
+                nextWorkingFiles.push(`${resolved}/split_1.pdf`);
+              } else {
+                nextWorkingFiles.push(resolved);
+              }
             }
           }
         }
@@ -94,8 +133,8 @@
         workingFiles = nextWorkingFiles;
       }
 
-      const finalSummary = workingFiles.length === 1 
-        ? workingFiles[0] 
+      const finalSummary = workingFiles.length === 1
+        ? workingFiles[0]
         : `${workingFiles.length} files generated (${workingFiles[0]}, ...)`;
       pipelineState.setLastSuccessOutput(finalSummary);
       toastState.success(`Pipeline complete! Output: ${finalSummary}`);
@@ -140,7 +179,13 @@
       onclick={runPipeline}
       disabled={pipelineState.isRunning || pipelineState.steps.length === 0}
     >
-      {pipelineState.isRunning ? 'Running…' : `▶ Run Pipeline (${pipelineState.steps.length} steps)`}
+      {#if pipelineState.isRunning}
+        Running…
+      {:else if appState.documents.length > 1}
+        ▶ Run Pipeline ({pipelineState.steps.length} steps · {appState.documents.length} files)
+      {:else}
+        ▶ Run Pipeline ({pipelineState.steps.length} steps)
+      {/if}
     </button>
   </div>
 </div>

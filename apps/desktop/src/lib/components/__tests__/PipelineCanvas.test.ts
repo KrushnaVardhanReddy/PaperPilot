@@ -79,4 +79,23 @@ describe('PipelineCanvas', () => {
     const { container } = render(StepConfigPanel);
     expect(container.querySelector('.no-params-card')).toBeTruthy();
   });
+
+  it('keeps action tool identity when execution condition is set', () => {
+    pipelineState.addStep('pdf_rotate');
+    const step = pipelineState.steps[0];
+    pipelineState.steps[0].condition = { if_page_count_gt: 2 };
+
+    const { container } = render(PipelineCanvas);
+    expect(pipelineState.steps[0].operationId).toBe('pdf_rotate');
+    expect(container.querySelector('.pipeline-canvas-container')).toBeTruthy();
+  });
+
+  it('organizes node positions sequentially on autoLayout', () => {
+    pipelineState.addStep('pdf_rotate');
+    pipelineState.addStep('pdf_compress');
+    pipelineState.autoLayout();
+
+    expect(pipelineState.steps[0].position?.x).toBe(320); // 60 + 1 * 260
+    expect(pipelineState.steps[1].position?.x).toBe(580); // 60 + 2 * 260
+  });
 });

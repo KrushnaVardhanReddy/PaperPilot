@@ -21,6 +21,20 @@
     pipelineState.currentStepIndex !== null &&
     pipelineState.steps.findIndex(s => s.id === id) < pipelineState.currentStepIndex
   );
+
+  const conditionSummary = $derived.by(() => {
+    if (!data.condition) return null;
+    const cond = data.condition as Record<string, any>;
+    const parts: string[] = [];
+    if (cond.if_page_count_gt !== undefined && cond.if_page_count_gt !== null && cond.if_page_count_gt !== '') {
+      parts.push(`pages > ${cond.if_page_count_gt}`);
+    }
+    if (cond.if_scanned) parts.push('is scanned');
+    if (cond.is_signed) parts.push('is signed');
+    if (cond.is_encrypted) parts.push('is encrypted');
+    if (cond.text_contains) parts.push(`contains "${cond.text_contains}"`);
+    return parts.length > 0 ? parts.join(', ') : null;
+  });
 </script>
 
 <div
@@ -28,6 +42,7 @@
   class:selected={isSelected}
   class:running={isRunning}
   class:completed={isCompleted}
+  class:has-condition={!!conditionSummary}
   role="button"
   tabindex="0"
   onclick={() => pipelineState.selectStep(id)}
@@ -45,6 +60,14 @@
       disabled={pipelineState.isRunning}
     >×</button>
   </div>
+
+  {#if conditionSummary}
+    <div class="step-condition-badge" title={`Execution Rule: ${conditionSummary}`}>
+      <span class="cond-icon">⚡</span>
+      <span class="cond-text">IF: {conditionSummary}</span>
+    </div>
+  {/if}
+
   {#if isRunning}
     <div class="step-running-indicator" aria-label="Running">⏳</div>
   {/if}
@@ -130,6 +153,42 @@
     top: -10px;
     right: -10px;
     font-size: 1rem;
+  }
+
+  .action-node.has-condition {
+    border-color: rgba(234, 179, 8, 0.55);
+  }
+
+  .action-node.has-condition:hover {
+    border-color: #facc15;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.25);
+  }
+
+  .step-condition-badge {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.35);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.72rem;
+    color: #fef08a;
+    font-weight: 500;
+  }
+
+  .step-condition-badge .cond-icon {
+    font-size: 0.75rem;
+    color: #facc15;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .step-condition-badge .cond-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   @keyframes pulse {

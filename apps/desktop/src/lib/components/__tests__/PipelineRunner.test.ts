@@ -25,4 +25,16 @@ describe('PipelineRunner', () => {
     render(PipelineRunner);
     expect(screen.getByText(/2 steps/)).toBeTruthy();
   });
+
+  it('shows multi-file count in Run button when multiple documents are loaded', () => {
+    pipelineState.addStep('pdf_compress');
+    pipelineState.addStep('pdf_watermark');
+    const f1 = new File(['1'], 'doc1.pdf', { type: 'application/pdf' });
+    const f2 = new File(['2'], 'doc2.pdf', { type: 'application/pdf' });
+    const f3 = new File(['3'], 'doc3.pdf', { type: 'application/pdf' });
+    appState.addDocuments([f1, f2, f3]);
+
+    render(PipelineRunner);
+    expect(screen.getByText(/2 steps · 3 files/)).toBeTruthy();
+  });
 });

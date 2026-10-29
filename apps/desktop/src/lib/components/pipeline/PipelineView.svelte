@@ -7,9 +7,47 @@
   import { appState } from '$lib/state/app.svelte';
   import { pipelineState, OPERATION_REGISTRY, type OperationId } from '$lib/state/pipeline.svelte';
   import DropZone from '$lib/components/ui/DropZone.svelte';
+  import PipelineDocumentsBadge from './PipelineDocumentsBadge.svelte';
+  import { toastState } from '$lib/state/toast.svelte';
+
+  let isCanvasDragging = $state(false);
 
   function handleFilesDropped(files: File[]) {
     appState.addDocuments(files);
+  }
+
+  function handleCanvasDragEnter(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer?.types?.includes('Files')) {
+      isCanvasDragging = true;
+    }
+  }
+
+  function handleCanvasDragLeave(e: DragEvent) {
+    e.preventDefault();
+    const currentTarget = e.currentTarget as HTMLElement;
+    if (!currentTarget.contains(e.relatedTarget as Node)) {
+      isCanvasDragging = false;
+    }
+  }
+
+  function handleCanvasDragOver(e: DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleCanvasDrop(e: DragEvent) {
+    e.preventDefault();
+    isCanvasDragging = false;
+
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      const filesArray = Array.from(e.dataTransfer.files).map(f => {
+        (f as any)._localPath = (f as any).path || f.name;
+        (f as any)._isLoaded = f.size > 0;
+        return f;
+      });
+      appState.addDocuments(filesArray);
+      toastState.success(`Added ${filesArray.length} document${filesArray.length > 1 ? 's' : ''} to pipeline`);
+    }
   }
 
   function addStep(opId: string) {
@@ -61,7 +99,15 @@
     </div>
 
     <!-- Center Canvas -->
-    <div class="canvas-area">
+    <div
+      class="canvas-area"
+      ondragenter={handleCanvasDragEnter}
+      ondragover={handleCanvasDragOver}
+      ondragleave={handleCanvasDragLeave}
+      ondrop={handleCanvasDrop}
+      role="region"
+      aria-label="Pipeline canvas"
+    >
       {#if appState.documents.length === 0}
         <div class="dropzone-overlay">
           <div class="dropzone-container">
@@ -69,8 +115,15 @@
           </div>
         </div>
       {:else}
-        <div class="pipeline-input-badge">
-          <span>📄 {appState.documents[0].name}</span>
+        <PipelineDocumentsBadge />
+      {/if}
+
+      {#if isCanvasDragging}
+        <div class="canvas-drag-overlay">
+          <div class="drag-hint-card">
+            <span class="drag-icon">📥</span>
+            <span>Drop PDF files to add to pipeline</span>
+          </div>
         </div>
       {/if}
 
@@ -233,6 +286,38 @@
     z-index: 10;
     width: 400px;
     pointer-events: auto;
+  }
+
+  .canvas-drag-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border: 2px dashed var(--accent-primary, #3b82f6);
+  }
+
+  .drag-hint-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-surface, #1e293b);
+    padding: 24px 36px;
+    border-radius: var(--border-radius-lg, 12px);
+    border: 1px solid var(--accent-primary, #3b82f6);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color: var(--text-primary, #f8fafc);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .drag-icon {
+    font-size: 2.5rem;
   }
 
   .pipeline-input-badge {
