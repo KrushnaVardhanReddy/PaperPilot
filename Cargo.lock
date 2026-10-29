@@ -6377,6 +6377,7 @@ dependencies = [
 name = "paperpilot-mcp"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "image",
  "lazy_static",
@@ -6384,6 +6385,7 @@ dependencies = [
  "paperpilot-core",
  "paperpilot-pdf",
  "pdfium-render",
+ "reqwest 0.13.5",
  "rmcp",
  "schemars 1.2.2",
  "serde",
