@@ -2,6 +2,8 @@ use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::path::PathBuf;
 use std::sync::Mutex;
+use std::fs::File;
+use std::io::Write;
 use tempfile::NamedTempFile;
 
 pub struct RenderOperation {
@@ -113,7 +115,10 @@ impl PdfOperation for RenderOperation {
                 } else {
                     out_path.clone()
                 };
-                std::fs::write(&current_out_path, &png_bytes).map_err(PdfError::IoError)?;
+
+                let mut file = File::create(&current_out_path).map_err(PdfError::IoError)?;
+                file.write_all(&png_bytes).map_err(PdfError::IoError)?;
+                file.sync_all().map_err(PdfError::IoError)?;
             }
 
             out_images.push(png_bytes);
@@ -209,5 +214,29 @@ mod tests {
         let png_bytes = &images[0];
         assert!(png_bytes.len() > 4);
         assert_eq!(&png_bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]);
+    }
+
+    #[test]
+    fn test_render_operation_with_flush() {
+        let temp_dir = tempdir().unwrap();
+        let doc_path = temp_dir.path().join("doc.pdf");
+        create_test_pdf(&doc_path, "Flush Test");
+
+        let mut doc = LopdfDocument::load(&doc_path).unwrap();
+        let out_path = temp_dir.path().join("out.png");
+
+        let mut op = RenderOperation::new();
+        op.output_path = Some(out_path.clone());
+
+        let result = op.execute(&mut doc);
+        assert!(result.is_ok());
+
+        // Read the file from disk to ensure it was properly flushed and written
+        let file_meta = std::fs::metadata(&out_path).unwrap();
+        assert!(file_meta.len() > 0);
+
+        let disk_bytes = std::fs::read(&out_path).unwrap();
+        assert!(disk_bytes.len() > 4);
+        assert_eq!(&disk_bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]);
     }
 }
