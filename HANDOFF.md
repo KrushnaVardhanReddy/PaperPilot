@@ -2,61 +2,63 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 29, 2026 (Asia/Hong_Kong)
+> **Date of Last Update:** October 30, 2026
 >
-> **Active Target:** Spec 141 (Multi-Rule Condition Builder) & Spec 142 (Watched Folders & Smart Filters) successfully merged into `feature/dev` via PR #305 and PR #306. Active next step is Spec 143 (Universal Document Workspace Migration).
+> **Active Target:** Spec 145 (Penta-Interface Audit Remediation Waves 1–8) and 4-Person Manual Desktop Testing Matrix (89 tools) merged into `feature/dev`. WASM compilation hardened (mio eliminated). Active next step is 4-Person Manual QA Execution and GitHub Actions Release verification.
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (`d88033d`), incorporating both PR #305 (`dda6861`) and PR #306 (`365f8c0`).
-- **Target Branch Protocol**: Feature branches and reviewed PRs into `feature/dev`; never push directly to `main`.
+- **Integration Branch**: `feature/dev` (`6cdebe6`), synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
+- **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
-  - Desktop Vitest Suite: **147 passing tests across 24 files** (100% green).
-  - Rust Backend Integration Suites: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
-  - Cargo Workspace: `cargo check --workspace` compiles cleanly with zero errors.
-- **Active Feature Branch**: `feat/desktop-universal-doc-workspace-migration` (Spec 143) executing via Jules session `18342025999379061323`.
-
----
-
-## Merged Spec 141 & Spec 142 Implementations (PR #305 & PR #306)
-
-- **Spec 141 (PR #305)**: Full recursive multi-rule condition editing (`ALL` / `ANY` combinators, dynamic rule row additions/deletions, backwards-compatible serialization to flat leaves, and `StepCard.svelte` condition badges).
-- **Spec 142 (PR #306)**: 
-  - Settings → Watched Folders uses native filesystem workers and the shared PDF workflow runner (`paperpilot_pdf::operations::watch`).
-  - Desktop, embedded MCP and REST use one local manager.
-  - Smart filters inspect actual PDF page/scan/form/signature facts (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`) with bounded concurrency.
-  - Bounded concurrency, output collision handling, source preservation, and SHA-256 receipts verified by real automated tests.
-
----
-
-## 🚀 Active Roadmap & Execution Order
-
-We are systematically closing out all remaining Community gaps in **Phase 4 (AI Layer)** and **Phase 3 (Desktop & Mobile)**:
-
-| # | Task | Scope & Title | Status |
-|:---:|---|---|:---:|
-| **1** | **Task 3.4.14 / Spec 141** | **Desktop Multi-Rule Condition Builder**<br>Compound `ALL` / `ANY` predicates, dynamic rule builder, and backward-compatible serialization. | ✅ **Completed & Merged (PR #305)** |
-| **2** | **Task 4.7.8 / Spec 142** | **Desktop Real Watched Folders Daemon & Document Smart Filters**<br>Pure-Rust Tauri IPC filesystem watcher, `WatchedFoldersPanel.svelte`, and reactive smart filter pills. | ✅ **Completed & Merged (PR #306)** |
-| **3** | **Task 3.4.15 / Spec 143** | **Universal Document Workspace Migration**<br>Consumer-friendly studio with universal drop zone (PDF, Word, Excel, CSV, Markdown), 8 Everyday Actions, and smart format filters. | 🚀 **In Progress** (`feat/desktop-universal-doc-workspace-migration`) |
-| **4** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
+  - **Penta-Interface E2E Audits (Waves 1–8)**: **100% Green** across unmocked real PDF suites (`make test-waves-all`).
+  - **WebAssembly Engine (`paperpilot-wasm`)**: Compiles cleanly with zero native networking or `mio` dependencies; 29/29 tests pass (`cargo test -p paperpilot-wasm -j 4`).
+  - **Desktop Vitest Suite**: **147 passing tests across 24 files** (100% green).
+  - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
+  - **Cargo Workspace**: `cargo check --workspace` compiles cleanly with zero errors.
+- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 89 platform tools across 4 tester assignments.
 
 ---
 
 ## 🏆 Recently Merged Milestones
 
-1. **Spec 142 / Task 4.7.8 (Desktop Real Watched Folders & Smart Filters, PR #306)**:
-   - Built pure-Rust Tauri IPC commands (`start_watch_folder`, `stop_watch_folder`, `list_watched_folders`) connected to `paperpilot_pdf::operations::watch`.
-   - Replaced mocked categories with real, reactive document filter pills in `DocumentList.svelte` based on real document inspection (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`).
-   - Added `WatchedFoldersPanel.svelte` inside Settings. Verified with 147 passing Vitest tests and all Rust integration tests (`desktop_automation`, `watcher_lifecycle`).
-2. **Spec 141 / Task 3.4.14 (Desktop Multi-Rule Condition Builder, PR #305)**:
-   - Upgraded `ConditionInspector.svelte` to support recursive AST `ALL (AND)` / `ANY (OR)` logic with dynamic rule additions and removals.
-   - Preserved 100% backward compatibility for single-leaf conditions and saved flows.
-3. **Spec 139 / Task 4.7.1 (Hot Folder Watcher Daemon, PR #304)**:
-   - Implemented cross-interface watcher daemon across CLI, MCP, and REST Gateway with debounce settling and error quarantine.
-4. **Spec 138 / Task 3.4.11 (Desktop Visual Flowchart & Branching UI, PR #301)**:
-   - Added visual condition decision cards and branching badges in `PipelineCanvas.svelte`.
+1. **Spec 145 / Penta-Interface Remediation (Waves 1–8 Unmocked Audits)**:
+   - Fixed all 142 audit discrepancies across the 5 surfaces (CLI, MCP, Gateway, WASM, Desktop).
+   - **Session 1 (PR #322)**: Expanded and normalized MCP tool registry to 88 tools with full parameter aliasing.
+   - **Session 2 (PR #319)**: Aligned CLI subcommands and multi-input flags across Waves 5–8.
+   - **Session 3 (PR #321)**: Implemented missing REST gateway routes and unified error code mappings.
+   - **Session 4 (PR #318)**: Hardened PDF engine edge-cases for CBZ extraction, outline splitting, and render flush.
+   - **Session 5 (Commit `f1a4772`)**: Added OCR model packaging and search fallback routines in `paperpilot-nlp`.
+2. **Spec 145 / 4-Person Desktop UI Manual Testing Matrix**:
+   - Authored complete test guides in [`qa/manual_desktop_testing/`](qa/manual_desktop_testing/) covering 89 platform tools:
+     - [Tester 1: Page Operations](qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) (22 tools)
+     - [Tester 2: Conversions & Export](qa/manual_desktop_testing/TESTER_2_CONVERSIONS.md) (22 tools)
+     - [Tester 3: Security, Forms & Protection](qa/manual_desktop_testing/TESTER_3_SECURITY_FORMS.md) (23 tools)
+     - [Tester 4: AI, Search & Intelligence](qa/manual_desktop_testing/TESTER_4_AI_ANALYSIS.md) (22 tools)
+3. **WASM & CI Build Hardening**:
+   - Gated `reqwest` in `paperpilot-core` and native watcher/network dependencies in `paperpilot-pdf` behind `[target.'cfg(not(target_arch = "wasm32"))'.dependencies]`.
+   - Eliminated `mio` compile errors on target `wasm32-unknown-unknown`.
+   - Standardized all GitHub Actions workflows (`release.yml`, `conditional-workflow.yml`, `fill-batch.yml`, `security.yml`, `slm-training.yml`) to official `@v4` and `@v2` tags.
+4. **Spec 142 / Task 4.7.8 (Desktop Real Watched Folders & Smart Filters, PR #306)**:
+   - Built pure-Rust Tauri IPC commands connected to `paperpilot_pdf::operations::watch`.
+   - Added reactive document filter pills in `DocumentList.svelte` inspecting real PDF facts.
+5. **Spec 141 / Task 3.4.14 (Desktop Multi-Rule Condition Builder, PR #305)**:
+   - Upgraded `ConditionInspector.svelte` with recursive AST `ALL (AND)` / `ANY (OR)` logic.
+
+---
+
+## 🚀 Active Roadmap & Execution Order
+
+| # | Task | Scope & Title | Status |
+|:---:|---|---|:---:|
+| **1** | **Spec 145 Remediation** | **Penta-Interface 100% Green E2E Audit**<br>Eliminated all 142 failure points across Waves 1–8. | ✅ **Completed & Merged** |
+| **2** | **Spec 145 Manual Matrix** | **4-Person Manual Desktop QA Guides**<br>Structured step-by-step matrix for all 89 platform tools in `qa/manual_desktop_testing/`. | ✅ **Completed & Merged** |
+| **3** | **WASM & CI Hardening** | **Zero-Network WASM Build & Workflow Tag Fixes**<br>Gated native dependencies, verified `wasm-pack build`, modernized workflow actions. | ✅ **Completed & Merged** |
+| **4** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
+| **5** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
+| **6** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
 
 ---
 
@@ -64,23 +66,21 @@ We are systematically closing out all remaining Community gaps in **Phase 4 (AI 
 
 When resuming a new session, follow these steps:
 
-1. **Check for New User Issues or Community PRs**:
-   - Inspect GitHub Issues (filed via `.github/ISSUE_TEMPLATE/` bug and feature request forms).
-   - Inspect any incoming community PRs against `feature/dev`.
+1. **Verify Branch Alignment**:
+   - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
+   - Ensure `feat/desktop-ui-manual-testing-matrix-4p` remains synchronized with `feature/dev`.
 
-2. **Current Repository & Model State**:
-   - **Production Release**: PR #267 merged into `main` (`c487810`).
-   - **Active Development Branch**: `feature/dev` (in sync with `main`).
-   - **Fine-Tuned SLM Weights**:
-     - **Hugging Face Hub**: [kpakkiragari/PaperPilot-Qwen-0.5B-Instruct](https://huggingface.co/kpakkiragari/PaperPilot-Qwen-0.5B-Instruct) (Public Apache-2.0 release)
-     - Local LoRA adapter: `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`
-     - Local Fused model: `tools/slm-training/output/paperpilot-qwen-0.5b-merged/`
-     - Quick test: `tools/slm-training/.venv/bin/python tools/slm-training/infer_local.py`
+2. **Run Memory-Safe Audits**:
+   - Run memory-safe compilation: `cargo check -p paperpilot-pdf -j 4`.
+   - Run WASM check: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`.
+   - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`.
 
-3. **If Implementing a User Request**:
-   - Follow Rule 7: Always update tool documentation in `apps/docs/src/content/docs/reference/tools/<tool>.md`.
-   - Run `python3 apps/docs/src/content/docs/reference/generate_handbook.py`.
-   - Run verification with memory-safe `-j 2`: `cargo test -p paperpilot-pdf --lib -j 2` and `make audit`.
+3. **Desktop Manual Testing Coordination**:
+   - Review [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md).
+   - If bugs are reported by testers, locate the exact tool ID in the appropriate tester guide, create a reproduction test in `tests/`, and remediate in `paperpilot-pdf` first before updating wrappers.
+
+4. **GitHub Actions Trigger**:
+   - When triggering GitHub Actions release workflows, always trigger a **brand new workflow run** via `workflow_dispatch` on `feature/dev` (never "Re-run failed jobs" from older commits).
 
 ---
 
@@ -88,13 +88,12 @@ When resuming a new session, follow these steps:
 
 > ⚠️ **CRITICAL**: PaperPilot is a live, trending open-source product on Hacker News. All development must preserve production stability.
 
-1. **System Resource Constraint (`-j 2` is MANDATORY on local machine):**
-   - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 2`).
-   - Unbounded cargo compilations will freeze the host machine.
+1. **System Resource Constraint (`-j 4` is MANDATORY on local machine):**
+   - **ALWAYS** pass `-j 4` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 4`).
+   - Unbounded cargo compilations will exhaust memory and freeze the host machine.
 
-2. **Feature Branch Protocol (No Direct Pushes to `feature/dev` or `main`):**
-   - All development, bug fixes, and experiments must occur on dedicated feature branches (e.g. `feat/...`, `fix/...`).
-   - Never push directly to `feature/dev` or `main`. Code is merged into `feature/dev` only after review and complete local test verification.
+2. **Feature Branch Protocol (No Direct Pushes to `main`):**
+   - All development, bug fixes, and experiments must occur on dedicated feature branches or reviewed into `feature/dev`. Never push directly to `main`.
 
 3. **The Single Core Runner + 5 Wrappers Architecture Pattern:**
    - Every tool operation MUST have exactly **ONE** core in-memory engine implementation in `paperpilot-pdf`:
@@ -106,32 +105,40 @@ When resuming a new session, follow these steps:
 4. **Zero-Mock Policy on Tests:**
    - Test fixtures must be real disk fixtures or synthesized byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`). Never mock PDF bytes or operation responses.
 
-5. **Zero-Cloud & Absolute Privacy Guarantee:**
-   - 0 bytes uploaded to external servers. Never introduce unexpected analytics beacons, telemetry, or external network requests into Core, CLI, MCP, Desktop, or WASM.
+5. **WASM Isolation Guarantee:**
+   - Never add OS-specific filesystem watchers or native network sockets (`mio`, `tokio/net`, `notify`) to `paperpilot-core` or common dependencies of `paperpilot-wasm`.
 
-6. **Local Git Hygiene:**
-   - Model weights (`tools/slm-training/output/`), `pricing_strategy.md`, and security scanner reports must remain untracked / ignored (`.gitignore`).
+6. **Knowledge Graph Maintenance:**
+   - After modifying project code files, run `/home/krushna/.cargo/bin/graphify-rs build` to keep the knowledge graph synchronized.
 
 ---
 
 ## 🛠️ Quick Command Reference
 
 ```bash
-# 1. Dev Server (Web Portal)
-cd apps/web && npm run dev
+# 1. WASM Build & Tests (Memory-Safe)
+wasm-pack build --target web --release paperpilot-wasm -- --jobs 4
+cargo test -p paperpilot-wasm -j 4
 
-# 2. Rust Unit Tests (Always use -j 2)
-cargo test -p paperpilot-pdf --lib -j 2
-cargo test -p paperpilot-mcp --lib -j 2
-cargo test -p paperpilot-gateway -j 2
-cargo test -p paperpilot-cli -j 2
+# 2. Rust Unit Tests (Always use -j 4)
+cargo test -p paperpilot-pdf --lib -j 4
+cargo test -p paperpilot-mcp --lib -j 4
+cargo test -p paperpilot-gateway -j 4
+cargo test -p paperpilot-cli -j 4
 
-# 3. Desktop Vitest Tests
+# 3. Penta-Interface E2E Audit Suites
+make test-wave1
+make test-wave2
+make test-wave3
+make test-wave4
+make test-wave5
+make test-wave6
+make test-wave7
+make test-wave8
+
+# 4. Desktop Vitest Tests
 pnpm --dir apps/desktop test
 
-# 4. Local Security Audit Scan
-make audit
-
 # 5. Knowledge Graph Refresh
-graphify update .
+/home/krushna/.cargo/bin/graphify-rs build
 ```
