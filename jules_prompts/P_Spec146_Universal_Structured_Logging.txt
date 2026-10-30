@@ -1,7 +1,12 @@
-[Task / Spec 146: Universal Leveled & Structured Logging Engine]
+[Task / Spec 146: Universal Leveled & Structured Logging Engine with Deep Debugging & Dual Error Handling]
 
 Objective:
-Implement Spec 146 (`specs/146-universal-structured-logging/spec.md`) to provide production-grade, leveled, and structured logging across `paperpilot-gateway`, `paperpilot-cli`, and `paperpilot-mcp`. Support `LOG_FORMAT=json|compact|pretty|text` and dynamic log levels via `RUST_LOG` / CLI flags.
+Implement Spec 146 (`specs/146-universal-structured-logging/spec.md`) and Task 146 (`specs/146-universal-structured-logging/task.md`) across `paperpilot-gateway`, `paperpilot-cli`, `paperpilot-mcp`, and `paperpilot-pdf`.
+Provide:
+1. Multi-format logging: `LOG_FORMAT=json|compact|pretty|text` and dynamic log levels via `RUST_LOG` and CLI flags.
+2. The Dual Error Model: Log root cause and error chain on the server (`tracing::error!`), while returning a clean, safe structured error with matching `request_id` to the caller.
+3. Deep `DEBUG` visibility: Emits clear chronological timelines of inputs, parameters, and step transitions.
+4. Stdio isolation: 100% stderr routing for CLI and MCP to protect binary output and JSON-RPC wire frames.
 
 ---
 
@@ -10,36 +15,43 @@ Implement Spec 146 (`specs/146-universal-structured-logging/spec.md`) to provide
 1. **System Resource Constraint**:
    ALWAYS run all cargo tests and builds with memory-safe `-j 4` (e.g. `cargo test -p paperpilot-gateway -j 4`).
 
-2. **MCP Stdio Isolation (Zero Tolerance)**:
+2. **The Dual Error Paradigm**:
+   Never discard or quietly wrap an error without emitting `tracing::error!` with the root cause and error source chain (`err.source()`). Always correlate with `request_id`.
+
+3. **MCP Stdio Protocol Protection**:
    In `paperpilot-mcp`, the MCP server uses `stdout` strictly for JSON-RPC messages. Under NO circumstances should application logs be written to `stdout`. All `tracing_subscriber` writers in `paperpilot-mcp` MUST be directed explicitly to `std::io::stderr`.
 
-3. **Zero PII & Secret Redaction**:
+4. **Zero PII & Secret Redaction**:
    Never log raw document contents, decrypted text, or user passwords in log statements or JSON attributes. If passwords are provided in tool inputs, redact to `password="[REDACTED]"`.
 
-4. **Zero-Mock Policy on Tests**:
-   Write real integration tests verifying that stdout/stderr outputs actually contain valid NDJSON when `LOG_FORMAT=json` is set, and parse them with `serde_json::Value`.
+5. **Zero-Mock Policy on Tests**:
+   Write real integration tests verifying that stderr outputs contain valid NDJSON when `LOG_FORMAT=json` is set, and parse them with `serde_json::Value`.
 
 ---
 
 ### Step-by-Step Implementation Details:
 
-#### Step 1: Axum HTTP Tracing Middleware in `paperpilot-gateway`
-1. In `paperpilot-gateway/Cargo.toml`, ensure `tracing-subscriber` has features `["env-filter", "json"]`.
+#### Step 1: Axum HTTP Tracing Middleware & Request Correlation in `paperpilot-gateway`
+1. Ensure `paperpilot-gateway/Cargo.toml` includes:
+   ```toml
+   tracing = "0.1.44"
+   tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+   ```
 2. In `paperpilot-gateway/src/main.rs`:
    - Inspect `LOG_FORMAT` environment variable (`json`, `compact`, `pretty`, `text`). Default to `text`.
    - Configure `tracing_subscriber::fmt()` with `.with_env_filter(...)` and appropriate formatter (`.json()`, `.compact()`, `.pretty()`, or standard).
 3. In `paperpilot-gateway/src/server.rs`:
-   - Add an Axum tracing middleware layer (`tower_http::trace::TraceLayer` or custom middleware) that emits an `INFO` span on every HTTP request completion:
-     - `http.method`: request HTTP method (GET, POST, etc.)
-     - `http.route`: request path (e.g. `/api/v1/tools/pdf_compress`)
-     - `http.status_code`: response status code integer (200, 400, 500)
-     - `duration_ms`: latency elapsed in floating-point milliseconds
-     - `client.ip`: client IP address if available
-   - Ensure errors (status >= 500) emit at `tracing::error!` level and client errors (400–499) emit at `tracing::warn!` level.
+   - Add Axum middleware that captures or generates a UUID v4 `request_id` (supporting incoming `X-Request-ID`).
+   - Create a tracing span containing `request_id`, `http.method`, `http.route`, and `client.ip`.
+   - On request start, emit `tracing::debug!(request_id, tool_id, content_len, "Incoming request started")`.
+   - On request completion, emit `tracing::info!(request_id, status_code, duration_ms, "Request completed")`.
+   - On handler failure:
+     - Emit `tracing::error!(request_id, tool_id, error = %err, error_source = ?err.source(), "Handler returned error")`.
+     - Return HTTP JSON error body: `{"error": "...", "code": "...", "request_id": "..."}` and header `X-Request-ID`.
 
 ---
 
-#### Step 2: Global Log Flags in `paperpilot-cli`
+#### Step 2: Global Log Flags & Stderr Channeling in `paperpilot-cli`
 1. In `paperpilot-cli/src/cli.rs`:
    - Add optional global flags to the root `Cli` struct:
      - `--log-format <text|json|compact|pretty>` (default: `text` or read from `LOG_FORMAT`)
@@ -47,11 +59,13 @@ Implement Spec 146 (`specs/146-universal-structured-logging/spec.md`) to provide
 2. In `paperpilot-cli/src/main.rs`:
    - Initialize `tracing_subscriber` before executing any subcommand.
    - Configure writer explicitly to `std::io::stderr` using `.with_writer(std::io::stderr)`.
+   - On subcommand dispatch, emit `tracing::debug!(subcommand = %name, "Dispatching CLI subcommand")`.
+   - On error, emit `tracing::error!(error = %err, "CLI execution failed")` before exiting with code.
    - Ensure stdout remains 100% clean for raw binary streams (e.g. `paperpilot merge ... > out.pdf`) and structured `--json` command outputs.
 
 ---
 
-#### Step 3: MCP Stdio Protection in `paperpilot-mcp`
+#### Step 3: MCP Protocol Stdio Isolation in `paperpilot-mcp`
 1. In `paperpilot-mcp/src/main.rs`:
    - Ensure `tracing_subscriber` is initialized targeting `std::io::stderr`:
      ```rust
@@ -60,16 +74,32 @@ Implement Spec 146 (`specs/146-universal-structured-logging/spec.md`) to provide
          .with_env_filter(...)
          .init();
      ```
+   - On tool dispatch: `tracing::debug!(tool = %call.name, "Executing MCP agent tool")`.
+   - On tool failure: `tracing::error!(tool = %call.name, error = %err, "MCP agent tool failed")`.
    - Verify that running `paperpilot-mcp` emits JSON-RPC envelopes strictly on `stdout`.
 
 ---
 
-#### Step 4: Automated Verification & Test Suite
+#### Step 4: Core Engine Operation Diagnostics in `paperpilot-pdf`
+1. In `paperpilot-pdf/src/operations/`:
+   - Add `tracing::debug!` spans to core operations:
+     - `pdf_compress`: input bytes, output bytes, compression ratio.
+     - `ocr`: detected images count, language target, inference latency.
+     - `pdf_decrypt`: detected cipher/filter, key length (password redacted).
+     - `merge`: input files count, combined page count.
+   - Add `tracing::warn!` for auto-repaired or fallback operations (e.g. malformed xref reconstruction).
+
+---
+
+#### Step 5: Automated Verification & Test Suite
 1. Create `paperpilot-gateway/tests/test_logging.rs`:
-   - Test that starting the gateway or making a request with `LOG_FORMAT=json` emits valid JSON containing `http.method`, `http.route`, and `http.status_code`.
+   - Test that starting the gateway and making requests with `LOG_FORMAT=json` emits valid NDJSON lines containing `request_id`, `http.method`, `http.route`, and `http.status_code`.
+   - Test that failed requests emit `tracing::error!` on stderr/logs and return `request_id` in response headers and JSON body.
 2. Create `paperpilot-cli/tests/test_logging.rs`:
    - Execute CLI with `--log-format json` and verify stderr contains valid parseable JSON while stdout receives the operation output.
+   - Verify that `--log-level debug` emits detailed diagnostic steps.
 3. Run verification suite:
    - `cargo test -p paperpilot-gateway -j 4`
    - `cargo test -p paperpilot-cli -j 4`
    - `cargo test -p paperpilot-mcp -j 4`
+   - `cargo check --workspace -j 4`
