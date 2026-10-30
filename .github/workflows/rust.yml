@@ -13,15 +13,15 @@ jobs:
     name: Lint & Format (Linux)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - name: Rust Cache
-        uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: swatinem/rust-cache@v2
 
       - name: Install Linux GUI Dependencies
         run: |
@@ -43,13 +43,13 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Rust Cache
-        uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: swatinem/rust-cache@v2
 
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
@@ -85,7 +85,7 @@ jobs:
           cp target/debug/desktop.exe dist-bin/ 2>/dev/null || true
 
       - name: Upload Test Binaries
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb99ba841c # v4.6.1
+        uses: actions/upload-artifact@v4
         with:
           name: paperpilot-${{ matrix.os }}
           path: dist-bin/*
