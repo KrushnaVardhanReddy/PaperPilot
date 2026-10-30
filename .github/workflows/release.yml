@@ -177,6 +177,8 @@ jobs:
           which wasm-pack || cargo install wasm-pack --locked
 
       - name: Build WASM Package
+        env:
+          CARGO_BUILD_JOBS: 4
         run: |
           wasm-pack build --target web --release paperpilot-wasm
 

@@ -32,8 +32,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
       - name: Batch CLI and 1,000 real PDF outputs
         run: cargo test -p paperpilot-cli --test test_fill_batch -j 2 -- --test-threads=2
       - name: Shared form engine regressions

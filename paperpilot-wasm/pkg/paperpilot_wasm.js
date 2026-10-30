@@ -1,29 +1,6 @@
 /* @ts-self-types="./paperpilot_wasm.d.ts" */
 
 /**
- * Chroma subsampling format
- * @enum {0 | 1 | 2 | 3}
- */
-export const ChromaSampling = Object.freeze({
-    /**
-     * Both vertically and horizontally subsampled.
-     */
-    Cs420: 0, "0": "Cs420",
-    /**
-     * Horizontally subsampled.
-     */
-    Cs422: 1, "1": "Cs422",
-    /**
-     * Not subsampled.
-     */
-    Cs444: 2, "2": "Cs444",
-    /**
-     * Monochrome.
-     */
-    Cs400: 3, "3": "Cs400",
-});
-
-/**
  * A line of text that has been detected, but not recognized.
  *
  * This contains information about the location of the text, but not the
@@ -1220,6 +1197,30 @@ export class WasmPdfEngine {
     }
     /**
      * @param {Uint8Array} input_bytes
+     * @param {string} options_json
+     * @returns {Uint8Array}
+     */
+    static pdf_dedup_streams(input_bytes, options_json) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passArray8ToWasm0(input_bytes, wasm.__wbindgen_export3);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
+            const len1 = WASM_VECTOR_LEN;
+            wasm.wasmpdfengine_pdf_dedup_streams(retptr, ptr0, len0, ptr1, len1);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * @param {Uint8Array} input_bytes
      * @returns {string}
      */
     static pdf_hash(input_bytes) {
@@ -1279,6 +1280,28 @@ export class WasmPdfEngine {
         }
     }
     /**
+     * @param {Array<any>} buffers
+     * @param {string} options_json
+     * @returns {Uint8Array}
+     */
+    static pdf_merge_alternate(buffers, options_json) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.wasmpdfengine_pdf_merge_alternate(retptr, addHeapObject(buffers), ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * @param {Uint8Array} input_bytes
      * @param {string} options_json
      * @returns {Uint8Array}
@@ -1315,6 +1338,30 @@ export class WasmPdfEngine {
             const ptr1 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
             const len1 = WASM_VECTOR_LEN;
             wasm.wasmpdfengine_pdf_overlay_underlay(retptr, ptr0, len0, ptr1, len1);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * @param {Uint8Array} input_bytes
+     * @param {string} options_json
+     * @returns {Uint8Array}
+     */
+    static pdf_posterize(input_bytes, options_json) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passArray8ToWasm0(input_bytes, wasm.__wbindgen_export3);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
+            const len1 = WASM_VECTOR_LEN;
+            wasm.wasmpdfengine_pdf_posterize(retptr, ptr0, len0, ptr1, len1);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -1504,6 +1551,30 @@ export class WasmPdfEngine {
             const ptr0 = passArray8ToWasm0(input_bytes, wasm.__wbindgen_export3);
             const len0 = WASM_VECTOR_LEN;
             wasm.wasmpdfengine_pdf_to_docx(retptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * @param {Uint8Array} input_bytes
+     * @param {string} options_json
+     * @returns {Uint8Array}
+     */
+    static pdf_to_epub(input_bytes, options_json) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passArray8ToWasm0(input_bytes, wasm.__wbindgen_export3);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
+            const len1 = WASM_VECTOR_LEN;
+            wasm.wasmpdfengine_pdf_to_epub(retptr, ptr0, len0, ptr1, len1);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -1803,6 +1874,10 @@ if (Symbol.dispose) WasmPdfEngine.prototype[Symbol.dispose] = WasmPdfEngine.prot
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
+        __wbg___wbindgen_is_undefined_8865fb403f8fe9d8: function(arg0) {
+            const ret = getObject(arg0) === undefined;
+            return ret;
+        },
         __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
@@ -1853,6 +1928,14 @@ function __wbg_get_imports() {
             const ret = new Uint8Array(arg0 >>> 0);
             return addHeapObject(ret);
         },
+        __wbg_now_e7c6795a7f81e10f: function(arg0) {
+            const ret = getObject(arg0).now();
+            return ret;
+        },
+        __wbg_performance_3fcf6e32a7e1ed0a: function(arg0) {
+            const ret = getObject(arg0).performance;
+            return addHeapObject(ret);
+        },
         __wbg_prototypesetcall_bc27214492979395: function(arg0, arg1, arg2) {
             Uint8Array.prototype.set.call(getArrayU8FromWasm0(arg0, arg1), getObject(arg2));
         },
@@ -1866,6 +1949,22 @@ function __wbg_get_imports() {
         },
         __wbg_set_575d3ddb70fe831d: function(arg0, arg1, arg2) {
             getObject(arg0).set(getArrayU8FromWasm0(arg1, arg2));
+        },
+        __wbg_static_accessor_GLOBAL_266715b9d96ba635: function() {
+            const ret = typeof global === 'undefined' ? null : global;
+            return isLikeNone(ret) ? 0 : addHeapObject(ret);
+        },
+        __wbg_static_accessor_GLOBAL_THIS_10fb7dc1ae063179: function() {
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
+            return isLikeNone(ret) ? 0 : addHeapObject(ret);
+        },
+        __wbg_static_accessor_SELF_0b583911f537483a: function() {
+            const ret = typeof self === 'undefined' ? null : self;
+            return isLikeNone(ret) ? 0 : addHeapObject(ret);
+        },
+        __wbg_static_accessor_WINDOW_d7f903d1508cbdc4: function() {
+            const ret = typeof window === 'undefined' ? null : window;
+            return isLikeNone(ret) ? 0 : addHeapObject(ret);
         },
         __wbg_textline_new: function(arg0) {
             const ret = TextLine.__wrap(arg0);
@@ -1883,6 +1982,10 @@ function __wbg_get_imports() {
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
             // Cast intrinsic for `Ref(String) -> Externref`.
             const ret = getStringFromWasm0(arg0, arg1);
+            return addHeapObject(ret);
+        },
+        __wbindgen_object_clone_ref: function(arg0) {
+            const ret = getObject(arg0);
             return addHeapObject(ret);
         },
         __wbindgen_object_drop_ref: function(arg0) {

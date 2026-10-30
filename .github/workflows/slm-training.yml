@@ -32,8 +32,8 @@ jobs:
         run: python3 -m pip install -r tools/slm-training/requirements.txt
       - name: Check training data and local inference validation
         run: python3 -m pytest tools/slm-training/test_dataset_generator.py tools/slm-training/test_infer_local.py -q
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
       - name: Build actual MCP server
         run: cargo build -p paperpilot-mcp -j 2
       - name: Verify live training schemas
