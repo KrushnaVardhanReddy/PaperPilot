@@ -18,18 +18,19 @@ Implement Spec 146 across `paperpilot-gateway`, `paperpilot-cli`, `paperpilot-mc
 
 - [ ] **Subtask 2: CLI Global Flags & Stderr Routing (`paperpilot-cli`)**
   - [ ] Add `--log-format <text|json|compact|pretty>` and `--log-level <trace|debug|info|warn|error>` flags to root `Cli` struct in `paperpilot-cli/src/cli.rs`.
-  - [ ] Initialize `tracing_subscriber` in `paperpilot-cli/src/main.rs` directed explicitly to `std::io::stderr`.
+  - [ ] Initialize `tracing_subscriber` in `paperpilot-cli/src/lib.rs` directed explicitly to `std::io::stderr`.
+  - [ ] 🚨 **CRITICAL CLI GUARD**: In `paperpilot-cli/src/lib.rs`, do NOT run `Cli::parse()` before checking `if args.len() > 1 && args[1] == "watch"`. The hot-folder daemon intercepts raw `watch` arguments. Calling `Cli::parse()` first causes Clap to reject `watch` and breaks `test_dynamic_naming`.
   - [ ] Emit `tracing::debug!` on subcommand dispatch with arguments (passwords redacted).
   - [ ] Emit `tracing::error!` on subcommand failure before returning exit code.
   - [ ] Verify stdout receives purely valid operation binary bytes or structured `--json` payload without log pollution.
 
 - [ ] **Subtask 3: MCP Protocol Stdio Isolation (`paperpilot-mcp`)**
-  - [ ] Ensure `tracing_subscriber` in `paperpilot-mcp/src/main.rs` routes strictly to `std::io::stderr`.
-  - [ ] Emit `tracing::debug!` when tool calls are dispatched and `tracing::error!` when tools return an error.
-  - [ ] Verify stdout contains only valid JSON-RPC envelopes.
+  - [ ] Actually modify `paperpilot-mcp/src/main.rs` to initialize `tracing_subscriber` routing strictly to `std::io::stderr`. (Do not just add dependencies to Cargo.toml!).
+  - [ ] In `paperpilot-mcp/src/server.rs` (`execute_call_tool`), emit `tracing::debug!` when tool calls are dispatched and `tracing::error!` when tools return an error.
+  - [ ] Verify stdout contains exclusively valid JSON-RPC envelopes.
 
 - [ ] **Subtask 4: Core Engine Operation Tracing (`paperpilot-pdf`)**
-  - [ ] Add `tracing::debug!` spans to core operations (`pdf_compress`, `pdf_ocr`, `pdf_merge`, `pdf_decrypt`).
+  - [ ] Actually modify `paperpilot-pdf/src/operations/` (`compress.rs`, `ocr.rs`, `merge.rs`, `decrypt.rs`) to add `tracing::debug!` spans and metrics. (Do not just add dependencies to Cargo.toml!).
   - [ ] Ensure password parameters are redacted (`password="[REDACTED]"`).
   - [ ] Emit `tracing::warn!` on recoverable edge cases (e.g. malformed xref auto-repair).
 
