@@ -3,8 +3,8 @@
 ## Metadata
 - **Spec Number**: 144
 - **Phase**: Phase 3.4.16 / Phase 10.6
-- **Status**: 📋 In Development
-- **Target Branch**: `feat/desktop-three-column-workspace-task-3-4-16`
+- **Status**: 📋 Active / Dispatched to Jules
+- **Target Branch**: `feature/dev`
 - **Impacted Apps & Packages**: `apps/desktop` (`apps/desktop/src/routes/+page.svelte`, `apps/desktop/src/lib/components/layout/*`, `apps/desktop/src/lib/state/app.svelte.ts`)
 - **Parent Baseline**: `feature/dev` (commit `db9b8f4` with Spec 141 and Spec 142 merged)
 

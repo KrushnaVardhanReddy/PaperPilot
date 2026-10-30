@@ -4,6 +4,8 @@ Objective:
 Implement Spec 144 (`specs/144-desktop-three-column-workspace/spec.md`) and Task 3.4.16 in `apps/desktop`.
 Refactor the desktop application into a modern, pro-grade 3-column architecture (Activity Rail -> Contextual Drawer -> Main Stage Hero Canvas) inspired by VS Code, Finder, and Apple Pages.
 
+Base & Target Branch: `feature/dev` (create and work on your own branch off `feature/dev`, and target your PR against `feature/dev`).
+
 🚨 CRITICAL MANDATES & ANTI-MOCKING DIRECTIVES:
 1. NO MOCKING: Absolutely zero hardcoded document arrays, fake counts, or dummy action cards.
    - If you have ANY questions about how a state variable or data flow works, ASK in the session conversation BEFORE implementing. Do NOT mock or fabricate UI data.
