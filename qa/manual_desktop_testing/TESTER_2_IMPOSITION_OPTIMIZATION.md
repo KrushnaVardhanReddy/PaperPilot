@@ -1,199 +1,229 @@
-# Manual Desktop UI Testing Guide: Tester 2 (Imposition, Optimization & Rendering)
+# Manual Desktop UI Testing Guide: Tester 2 (22 Optimization, Security & Cryptography Tools)
 
 **Assigned Tester:** Tester 2  
-**Total Tools Assigned:** 13 Tools  
-**Domain:** File Size Optimization, Document Imposition, Printing Layouts, Stream Deduplication & Visual Rendering
+**Total Tools Assigned:** 22 Tools  
+**Domain:** File Size Compression, Integrity Repair, Cryptographic Security, Digital Signatures & Pixel Diffing
 
 ---
 
-## Tool 1: Compress PDF (`compress`)
-- **Category in UI:** `Quick Actions` / `Optimize & Repair`
-- **UI Access:** Operations Dock > **Optimize** > **Compress PDF** (or top toolbar compression pill).
-- **Sample File:** An image-heavy PDF (e.g., > 1 MB).
+### Tool 23: `pdf_compress` — Compress PDF File Size
+- **UI Access:** Operations Dock > **Optimize** > **Compress PDF**.
+- **Test File:** High-resolution image PDF (> 2 MB).
 - **Manual Steps:**
-  1. Open the document in the Desktop Viewer.
-  2. Open the Compress tool. Select a quality preset: **Screen (72 DPI)**, **eBook (150 DPI)**, or **Print (300 DPI)**.
-  3. Toggle **Remove unused objects**.
-  4. Click **Compress PDF** and save the file.
-- **Visual Acceptance Criteria:**
-  - [ ] Toast shows compression statistics (e.g. *"Saved 42% (2.1 MB → 1.2 MB)"*).
-  - [ ] Compressed PDF opens cleanly in viewer without blurriness or corruption.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Select preset: **eBook (150 DPI)**. Click **Compress PDF**.
+- **Expected Result:** Toast reports percentage saved (e.g. *Saved 38%*). Output file opens cleanly.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 2: Repair PDF (`repair`)
-- **Category in UI:** `Optimize & Repair`
-- **UI Access:** Operations Dock > **Optimize** > **Repair PDF**.
-- **Sample File:** Any corrupted, truncated, or unindexed PDF.
-- **Manual Steps:**
-  1. Select or drag the damaged PDF into the Repair tool dialog.
-  2. Click **Rebuild XREF & Streams**.
-  3. Select output file location.
-- **Visual Acceptance Criteria:**
-  - [ ] Broken cross-reference tables and corrupt stream dictionaries are rebuilt.
-  - [ ] Document opens successfully in the viewer.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 3: Fast Web View / Linearize (`linearize`)
-- **Category in UI:** `Optimize & Repair`
-- **UI Access:** Operations Dock > **Optimize** > **Fast Web View (Linearize)**.
-- **Sample File:** Multi-page PDF.
-- **Manual Steps:**
-  1. Open PDF and click **Linearize Document**.
-  2. Save the output PDF.
-- **Visual Acceptance Criteria:**
-  - [ ] File size remains compact and document loads page 1 instantly without waiting for whole-file download.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 4: Lossless Stream Deduplication (`pdf_dedup_streams`)
-- **Category in UI:** `Optimize & Repair`
+### Tool 24: `pdf_dedup_streams` — Lossless Stream Deduplication
 - **UI Access:** Operations Dock > **Optimize** > **Lossless Stream Deduplication**.
-- **Sample File:** Document containing duplicated logos, repeated background headers, or fonts across many pages.
+- **Test File:** Document with repeated company logos, background headers, or fonts.
 - **Manual Steps:**
   1. Click **Deduplicate Streams**.
-  2. Wait for hash-based duplicate stream identification.
-- **Visual Acceptance Criteria:**
-  - [ ] Identical image streams and embedded font instances are consolidated into single indirect objects.
-  - [ ] Zero visual quality loss while reducing byte size.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+- **Expected Result:** Redundant image/font objects are merged into single indirect references; zero visual quality loss.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 5: Scale Page Dimensions (`pdf_scale_pages`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Scale Page Dimensions**.
-- **Sample File:** Any letter or A4 document.
+### Tool 25: `pdf_linearize` — Fast Web View (Linearize)
+- **UI Access:** Operations Dock > **Optimize** > **Fast Web View (Linearize)**.
+- **Test File:** Multi-page PDF.
 - **Manual Steps:**
-  1. Select target scale mode: **Standard Size** (e.g. A4 to US Letter, or Letter to A3) or **Percentage** (e.g. 80%).
-  2. Toggle **Scale Content to Fit MediaBox**.
-  3. Click **Scale Pages**.
-- **Visual Acceptance Criteria:**
-  - [ ] Canvas dimensions adjust to the newly chosen standard format.
-  - [ ] Page aspect ratio and text positioning scale proportionally without clipping.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Linearize Document**.
+- **Expected Result:** Output PDF is optimized for progressive byte-range downloads.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 6: N-Up Page Imposition (`pdf_nup`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **N-Up Page Imposition**.
-- **Sample File:** Multi-page document (4 to 8 pages).
+### Tool 26: `pdf_repair` — Rebuild Damaged PDF Syntax
+- **UI Access:** Operations Dock > **Optimize** > **Repair PDF**.
+- **Test File:** Truncated or corrupted PDF file.
 - **Manual Steps:**
-  1. Choose layout grid: **2-Up (1x2)**, **4-Up (2x2)**, or **9-Up (3x3)**.
-  2. Toggle **Draw Border Around Pages** and set spacing margin (e.g., 5 pt).
-  3. Click **Impose Pages**.
-- **Visual Acceptance Criteria:**
-  - [ ] 4 source pages are tiled cleanly onto a single composite sheet.
-  - [ ] Sheet orientation adjusts appropriately (e.g., landscape for 2-up).
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Drag damaged file into tool. Click **Rebuild XREF Tables**.
+- **Expected Result:** Corrupted dictionaries are reconstructed; document successfully renders.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 7: Booklet Imposition (`pdf_booklet`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Booklet Imposition**.
-- **Sample File:** 8-page document (or any multiple of 4).
-- **Manual Steps:**
-  1. Select booklet binding type: **Saddle Stitch (Fold in Center)**.
-  2. Select sheet size: **Letter Landscape** or **A4 Landscape**.
-  3. Click **Generate Booklet**.
-- **Visual Acceptance Criteria:**
-  - [ ] Page order rearranges into folding pairs (e.g., Sheet 1 contains Page 8 and Page 1; Sheet 2 contains Page 2 and Page 7).
-  - [ ] Printing duplex and folding in half creates a sequentially ordered book.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 8: Multi-Sheet Poster Tile Slicer (`pdf_posterize`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Multi-Sheet Poster Tile Slicer**.
-- **Sample File:** Single large page or architectural blueprint.
-- **Manual Steps:**
-  1. Choose target sheet size: **Letter** or **A4**.
-  2. Set overlap margin: **0.5 inches** (with cut guides enabled).
-  3. Set grid dimension: **2x2 Sheets** (4 pages total) or **3x3 Sheets**.
-  4. Click **Slice into Poster Tiles**.
-- **Visual Acceptance Criteria:**
-  - [ ] Output PDF contains a multi-page grid corresponding to the poster pieces.
-  - [ ] Overlap margins show dashed cut lines for physical tape assembly.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 9: Stitch Continuous Canvas (`pdf_stitch_canvas`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Stitch Continuous Canvas**.
-- **Sample File:** Multi-page document (3 pages).
-- **Manual Steps:**
-  1. Select stitching direction: **Vertical (Scroll roll)** or **Horizontal (Panoramic)**.
-  2. Set gap spacing: **0 pt**.
-  3. Click **Stitch into Single Canvas**.
-- **Visual Acceptance Criteria:**
-  - [ ] All pages merge into a single, seamless, continuous tall or wide canvas page.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 10: Invert Colors / Dark Mode (`pdf_invert_colors`)
-- **Category in UI:** `Edit & Markup` / `Optimize & Repair`
+### Tool 27: `pdf_invert_colors` — High-Contrast Dark Mode
 - **UI Access:** Operations Dock > **Edit** > **Invert Colors (Dark Mode)**, or bottom status bar theme switch.
-- **Sample File:** Standard white-background PDF with black text.
+- **Test File:** Standard black-on-white document.
 - **Manual Steps:**
-  1. Select mode: **High-Contrast Dark Mode** or **Full Color Inversion**.
-  2. Click **Invert Document Colors**.
-- **Visual Acceptance Criteria:**
-  - [ ] White page backgrounds become deep black/charcoal.
-  - [ ] Black text inverts to crisp white/light gray for comfortable nighttime reading.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Select **High-Contrast Dark Mode**. Click **Invert Colors**.
+- **Expected Result:** White backgrounds become dark charcoal; black text inverts to clear white.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 11: PDF Portfolio Attachments (`pdf_attachments`)
-- **Category in UI:** `Page Management` / `Security & Privacy`
-- **UI Access:** Operations Dock > **Pages** > **PDF Portfolio Attachments**, or left sidebar paperclip icon.
-- **Sample File:** Any PDF.
-- **Manual Steps:**
-  1. Open Attachments panel.
-  2. Click **Add Attachment** and choose a file (e.g. `notes.txt` or an image).
-  3. Verify attachment displays in list with file size.
-  4. Click **Extract All** or download icon.
-- **Visual Acceptance Criteria:**
-  - [ ] Embedded files are listed in the portfolio drawer.
-  - [ ] Extracted files match the exact original byte contents.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 12: Compare Documents / Pixel Diff Slider (`compare`)
-- **Category in UI:** `Quick Actions` / `Page Management`
-- **UI Access:** Operations Dock > **Quick** > **Compare PDFs** (or top menu *Tools > Visual Pixel Diff*).
-- **Sample File:** Two slightly different versions of a PDF (e.g. revision v1 and revision v2).
-- **Manual Steps:**
-  1. Open Doc A in Tab 1 and Doc B in Tab 2.
-  2. Launch **Compare PDFs**.
-  3. Drag the interactive split slider left and right across the canvas.
-  4. Toggle **Highlight Additions / Deletions (Red/Green)**.
-- **Visual Acceptance Criteria:**
-  - [ ] Interactive split curtain reveals changes between the two documents in real time.
-  - [ ] Modified text or repositioned graphics highlight in contrasting colors.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 13: Render Page to Image (`render`)
-- **Category in UI:** `Convert & Export`
+### Tool 28: `pdf_render` — High-DPI Page Rasterization to PNG
 - **UI Access:** Operations Dock > **Convert** > **Render Page** (or right-click canvas > *Export as PNG*).
-- **Sample File:** Any PDF page.
+- **Test File:** Any PDF page.
 - **Manual Steps:**
-  1. Choose resolution: **72 DPI**, **150 DPI**, or **300 DPI (High-Res Print)**.
-  2. Select page number (e.g. Page 1).
-  3. Click **Render & Export PNG**.
-- **Visual Acceptance Criteria:**
-  - [ ] Save dialog appears and writes a valid `.png` file.
-  - [ ] Opening the image confirms high-resolution rasterization with sharp text and vector curves.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Set DPI: `300 DPI`. Select Page 1. Click **Render & Save PNG**.
+- **Expected Result:** High-resolution `.png` file is created on disk with valid PNG header bytes.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 29: `pdf_compare` — Visual Pixel Diff Slider
+- **UI Access:** Operations Dock > **Quick** > **Compare PDFs** (or *Tools > Visual Pixel Diff*).
+- **Test File:** Two document revisions (v1 and v2).
+- **Manual Steps:**
+  1. Open Doc 1 in Tab 1, Doc 2 in Tab 2.
+  2. Launch **Compare PDFs**. Drag the interactive center split curtain.
+  3. Toggle **Color-Coded Highlights**.
+- **Expected Result:** Real-time visual comparison reveals differences between revisions with color highlights.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 30: `pdf_encrypt` — Protect Document with AES-256 Password
+- **UI Access:** Operations Dock > **Security** > **Encrypt with Password**.
+- **Test File:** `tests/fixtures/simple.pdf`.
+- **Manual Steps:**
+  1. Enter User Password: `pass123`. Click **Encrypt & Save**.
+  2. Reopen the saved document in PaperPilot.
+- **Expected Result:** Unlock password modal appears blocking canvas. Entering `pass123` unlocks the document.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 31: `pdf_decrypt` — Remove Password Restrictions
+- **UI Access:** Operations Dock > **Security** > **Remove Password**.
+- **Test File:** Encrypted document (unlocked in viewer).
+- **Manual Steps:**
+  1. Click **Remove Password**. Enter current password to confirm.
+- **Expected Result:** Document re-saves unencrypted; subsequent opens require no password.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 32: `pdf_sanitize` — Deep Enterprise Sanitization
+- **UI Access:** Operations Dock > **Security** > **Sanitize Document**.
+- **Test File:** Document with links, JavaScript, and metadata.
+- **Manual Steps:**
+  1. Check **Strip JavaScript**, **Remove Private Data**, **Clean Metadata**. Click **Sanitize**.
+- **Expected Result:** Potentially malicious code and tracking dictionaries are stripped without breaking layout.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 33: `pdf_metadata` — Inspect & Clean Metadata
+- **UI Access:** Operations Dock > **Security** > **Edit / Sanitize Metadata** (or *File > Properties*).
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Change Title to: `Verified Release 2026`. Click **Save Metadata**.
+- **Expected Result:** Window title bar reflects the new title; creator and producer info update accordingly.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 34: `pdf_change_permissions` — Configure PDF Permissions
+- **UI Access:** Operations Dock > **Security** > **Modify PDF Permissions**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Disable **Content Copying**. Enable **Form Filling**. Set owner password. Click **Apply**.
+- **Expected Result:** Permissions enforce restrictions in compliant PDF viewers.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 35: `pdf_timestamp` — RFC 3161 TSA Timestamping
+- **UI Access:** Operations Dock > **Security** > **Cryptographic Timestamp TSA**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Apply Timestamp Token**.
+- **Expected Result:** A cryptographically verified TSA timestamp is embedded into the document signature dictionary.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 36: `pdf_sign` — Digital Certificate & Visual Pen Signing
+- **UI Access:** Operations Dock > **Security** > **Sign Document** (or toolbar Pen tool).
+- **Test File:** Any contract or agreement PDF.
+- **Manual Steps:**
+  1. Draw visual signature or attach `.p12` digital certificate. Place signature on page 1.
+  2. Click **Apply Signature**.
+- **Expected Result:** Signature badge appears on page with certificate signer metadata.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 37: `pdf_validate_signatures` — Verify Signatures & Cert Chains
+- **UI Access:** Operations Dock > **Security** > **Validate Digital Signatures**.
+- **Test File:** Signed PDF document.
+- **Manual Steps:**
+  1. Open signed document. Click **Validate Signatures**.
+- **Expected Result:** Drawer shows verification badge: **Valid Signature**, signer identity, and document integrity confirmation.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 38: `pdf_remove_signatures` — Strip Digital Signatures
+- **UI Access:** Operations Dock > **Security** > **Remove Digital Signatures**.
+- **Test File:** Signed PDF document.
+- **Manual Steps:**
+  1. Click **Strip Digital Signatures**.
+- **Expected Result:** Signature fields and locks are removed, unlocking the document for modification.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 39: `pdf_hash` — Cryptographic Checksums
+- **UI Access:** Operations Dock > **Security** > **Generate Hash**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Generate Hash**.
+- **Expected Result:** Drawer displays SHA-256 and MD5 checksum strings with a one-click copy button.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 40: `pdf_validate` — PDF Conformance & Syntax Validation
+- **UI Access:** Operations Dock > **Security** > **Validate PDF**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Run Conformance Validation**.
+- **Expected Result:** Reports validation status (e.g. *Structure Valid, PDF 1.7 compliant, 0 fatal errors*).
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 41: `document_pii_scan` — Detect SSNs, Credit Cards & PII
+- **UI Access:** Operations Dock > **Security** > **PII Scanner**.
+- **Test File:** Document containing mock PII (e.g., SSN `123-45-6789`, email `user@example.com`).
+- **Manual Steps:**
+  1. Click **Scan Document for PII**.
+- **Expected Result:** Drawer lists detected sensitive entities with page numbers and confidence scores.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 42: `pdf_overlay_underlay` — Overlay & Underlay Stationary
+- **UI Access:** Operations Dock > **Edit** > **Overlay & Underlay Stationary**.
+- **Test File:** Content PDF and a separate letterhead template PDF.
+- **Manual Steps:**
+  1. Select letterhead PDF. Select **Underlay (Background)**. Click **Apply**.
+- **Expected Result:** Letterhead artwork renders behind the document text across pages.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 43: `pdf_stamp` — Stamp Coordinate-Exact Images, Logos & Badges
+- **UI Access:** Operations Dock > **Edit** > **Stamp Image & Logo**.
+- **Test File:** Any PDF + a sample PNG badge.
+- **Manual Steps:**
+  1. Choose image. Set coordinates `X: 450, Y: 700`. Click **Place Stamp**.
+- **Expected Result:** Badge renders at the exact designated position.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 44: `pdf_flatten` — Bake Annotations & Forms Permanently
+- **UI Access:** Operations Dock > **Edit** > **Flatten Annotations**.
+- **Test File:** Document containing fillable fields or annotations.
+- **Manual Steps:**
+  1. Click **Flatten Document**.
+- **Expected Result:** Form inputs and sticky notes become non-interactive visual graphic elements on the page.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`

@@ -1,206 +1,235 @@
-# Manual Desktop UI Testing Guide: Tester 1 (Page Operations & Assembly)
+# Manual Desktop UI Testing Guide: Tester 1 (22 Page Operations & Assembly Tools)
 
 **Assigned Tester:** Tester 1  
-**Total Tools Assigned:** 13 Tools  
-**Domain:** Core Page Operations, Imposition Splitting, Reordering, and Alignment
+**Total Tools Assigned:** 22 Tools  
+**Domain:** Document Assembly, Page Reordering, Splitting, Imposition & Portfolio Management
 
 ---
 
-## Tool 1: Merge Documents (`merge`)
-- **Category in UI:** `Quick Actions` / `Page Management`
-- **UI Access:** 
-  1. Open Operations Dock (`🛠️` right sidebar icon).
-  2. Select category **Pages** or search `Merge`.
-  3. Alternatively, open 2 or more PDF files into separate tabs, then click the **Merge Tabs** button on the tab bar.
-- **Sample File:** Open `tests/fixtures/simple.pdf` in Tab 1, and any other PDF in Tab 2 (or drop 2 files into the merge file list).
+### Tool 01: `pdf_merge` — Merge Documents (Combine Tabs)
+- **UI Access:** Operations Dock > **Pages** > **Merge Documents** (or click *Merge Open Tabs* on top tab bar).
+- **Test File:** Open `tests/fixtures/simple.pdf` in Tab 1, and any second PDF in Tab 2.
 - **Manual Steps:**
-  1. In the Merge tool panel, verify both open documents or files appear in the merge queue.
-  2. Reorder files in the queue using drag-and-drop or the `↑` / `↓` buttons.
-  3. Click **Merge Documents**.
-  4. When prompted, choose the destination file path (e.g., `merged_output.pdf`).
-- **Visual Acceptance Criteria:**
-  - [ ] A success toast notification appears: *"Merged documents successfully"*.
-  - [ ] A new tab opens with the combined document, or the saved file exists on disk.
-  - [ ] Verify total page count equals the sum of the input documents.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Open the Merge tool. Verify all open documents appear in the file list.
+  2. Use drag-and-drop to adjust order.
+  3. Click **Merge Documents** and save as `merged_test.pdf`.
+- **Expected Result:** Combined document opens or is written to disk; total page count matches sum of inputs.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 2: Split PDF (`split`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Split PDF** (or right-click thumbnail > *Split Document*).
-- **Sample File:** Open a multi-page PDF (e.g. 5+ pages).
-- **Manual Steps:**
-  1. In the Split tool panel, review split modes: **By Range** (e.g., `1-2, 3-5`), **Every N Pages**, or **Fixed Sets**.
-  2. Enter range `1-2, 3-4`.
-  3. Click **Split PDF** and select an output folder.
-- **Visual Acceptance Criteria:**
-  - [ ] The output folder opens or contains `split_1.pdf` (pages 1-2) and `split_2.pdf` (pages 3-4).
-  - [ ] Opening both output files confirms exact page partitions without blank pages.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 3: Rotate Document (`rotate`)
-- **Category in UI:** `Quick Actions` / `Page Management`
-- **UI Access:** 
-  1. Operations Dock > **Pages** > **Rotate Document**.
-  2. Or click the Rotate icon on the top viewer toolbar (`🔄`).
-  3. Or right-click a thumbnail and click *Rotate Clockwise (90°)*.
-- **Sample File:** `tests/fixtures/simple.pdf` (or any single/multi-page PDF).
-- **Manual Steps:**
-  1. Select angle: **90°**, **180°**, or **270°**.
-  2. Select page scope: **All Pages**, **Current Page**, or custom (e.g., `1, 3`).
-  3. Click **Apply Rotation**.
-- **Visual Acceptance Criteria:**
-  - [ ] The main canvas immediately re-renders with the rotated orientation.
-  - [ ] The thumbnail in the left sidebar updates to reflect the new angle.
-  - [ ] Saving the file preserves the rotation when reopened.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 4: Delete Pages (`delete_pages`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Delete Pages**, or select thumbnail and press `Delete` key.
-- **Sample File:** Multi-page PDF (at least 3 pages).
-- **Manual Steps:**
-  1. In the tool panel, enter page numbers to delete (e.g., `2`).
-  2. Alternatively, select page 2 in the thumbnail rail, right-click, and choose **Delete Page**.
-  3. Confirm the deletion prompt if a modal appears.
-- **Visual Acceptance Criteria:**
-  - [ ] Page 2 is removed from the thumbnail rail and main viewer.
-  - [ ] Total page count decreases by the number of deleted pages.
-  - [ ] Remaining page numbers adjust sequentially.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 5: Reorder Pages (`reorder_pages`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Thumbnail sidebar (drag-and-drop) or Operations Dock > **Pages** > **Reorder Pages**.
-- **Sample File:** Multi-page document (pages 1, 2, 3, 4).
-- **Manual Steps:**
-  1. In the thumbnail sidebar, click and drag Page 3 above Page 1.
-  2. Or in the tool panel, enter order: `3, 1, 2, 4` and click **Reorder**.
-- **Visual Acceptance Criteria:**
-  - [ ] The thumbnails re-index instantly with the new order.
-  - [ ] Scrolling the main canvas shows the reordered pages.
-  - [ ] File saves with the exact new page sequence.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 6: Extract Pages (`extract_pages`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Extract PDF Pages**, or right-click thumbnail > *Extract*.
-- **Sample File:** Multi-page document.
-- **Manual Steps:**
-  1. Specify page range to extract (e.g., `2-3`).
-  2. Choose whether to **Open in new tab** or **Save to file**.
-  3. Click **Extract Pages**.
-- **Visual Acceptance Criteria:**
-  - [ ] A new document is generated containing strictly pages 2 and 3.
-  - [ ] Original document remains open and unmodified.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 7: Burst PDF (`burst`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Burst PDF**.
-- **Sample File:** Any 3+ page PDF.
-- **Manual Steps:**
-  1. Click **Burst PDF**.
-  2. Select output folder when prompted.
-- **Visual Acceptance Criteria:**
-  - [ ] Each page is saved as an individual PDF: `page_001.pdf`, `page_002.pdf`, `page_003.pdf`.
-  - [ ] Success notification shows total number of single-page files created.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 8: Crop Pages (`crop`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Crop Pages**, or toolbar crop selection tool.
-- **Sample File:** Any single page PDF.
-- **Manual Steps:**
-  1. In the viewer, drag a rectangular crop box over the active page.
-  2. Check coordinates in the Crop tool panel (`X`, `Y`, `Width`, `Height`).
-  3. Click **Apply Crop**.
-- **Visual Acceptance Criteria:**
-  - [ ] The page boundaries shrink to the chosen rectangle.
-  - [ ] Margins outside the bounding box are trimmed.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 9: Remove Blank Pages (`remove_blank`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Remove Blank Pages**.
-- **Sample File:** A document containing at least one blank page.
-- **Manual Steps:**
-  1. Set sensitivity slider (default 95%).
-  2. Click **Remove Blank Pages**.
-- **Visual Acceptance Criteria:**
-  - [ ] Toast reports: *"Removed N blank pages"*.
-  - [ ] Only pages with text/graphics remain; blank pages are purged.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 10: Alternating PDF Merge (`pdf_merge_alternate`)
-- **Category in UI:** `Page Management`
+### Tool 02: `pdf_merge_alternate` — Alternating PDF Merge
 - **UI Access:** Operations Dock > **Pages** > **Alternating PDF Merge**.
-- **Sample File:** Two 2-page documents (Doc A: pages A1, A2; Doc B: pages B1, B2).
+- **Test File:** Two 2-page documents (Doc A: A1, A2; Doc B: B1, B2).
 - **Manual Steps:**
   1. Select Doc A as Primary and Doc B as Alternate.
-  2. Toggle **Reverse order for Doc B** (useful for duplex-scanned backsides).
+  2. Toggle **Reverse order for Doc B** (e.g. for duplex backside scans).
   3. Click **Interleave Pages**.
-- **Visual Acceptance Criteria:**
-  - [ ] The output document orders pages: A1, B1, A2, B2 (or A1, B2, A2, B1 if reversed).
-  - [ ] Visual page content alternates predictably.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+- **Expected Result:** Pages are interleaved: A1, B1, A2, B2.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 11: Split by Document Outline (`pdf_split_by_outline`)
-- **Category in UI:** `Page Management`
+### Tool 03: `pdf_split` — Split PDF by Range or Count
+- **UI Access:** Operations Dock > **Pages** > **Split PDF** (or right-click thumbnail > *Split*).
+- **Test File:** Multi-page PDF (5+ pages).
+- **Manual Steps:**
+  1. Enter range: `1-2, 3-5`.
+  2. Click **Split PDF** and choose destination directory.
+- **Expected Result:** Output folder contains `split_1.pdf` (2 pages) and `split_2.pdf` (3 pages).
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 04: `pdf_split_by_outline` — Split by Outline Bookmarks / TOC
 - **UI Access:** Operations Dock > **Pages** > **Split by Document Outline**.
-- **Sample File:** Document with Bookmarks/TOC (`fixtures/test_bookmarks.pdf` or any document outline).
+- **Test File:** `tests/fixtures/test_bookmarks.pdf` (or any PDF with bookmarks).
 - **Manual Steps:**
-  1. Click **Split by Outline**.
-  2. Select maximum outline depth (e.g., Level 1).
-  3. Click **Execute Split**.
-- **Visual Acceptance Criteria:**
-  - [ ] A ZIP archive or output directory is created with chapter files named according to bookmarks (e.g. `01_Chapter 1.pdf`, `02_Chapter 2.pdf`).
-  - [ ] For documents without bookmarks, gracefully falls back to single-page split without errors.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Set outline level to `1`.
+  2. Click **Split by Outline**.
+- **Expected Result:** Produces chapter PDFs named after TOC titles (`01_Chapter 1.pdf`, etc.) packed in a ZIP or folder. Falls back cleanly to 1-page split if bookmarks are absent.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 12: Split Scanned Book Spine (`pdf_split_scanned_book`)
-- **Category in UI:** `Page Management`
+### Tool 05: `pdf_split_scanned_book` — Split Scanned Book Spine
 - **UI Access:** Operations Dock > **Pages** > **Split Scanned Book Spine**.
-- **Sample File:** A 2-up landscape scanned book page.
+- **Test File:** Landscape document with 2-up book page scans.
 - **Manual Steps:**
-  1. Select split orientation: **Vertical (Left/Right)** or **Horizontal (Top/Bottom)**.
-  2. Choose reading order: **Left-to-Right** or **Right-to-Left (Manga/Hebrew)**.
+  1. Select **Vertical Split** along center gutter.
+  2. Select reading order: **Left to Right**.
   3. Click **Split Book Spine**.
-- **Visual Acceptance Criteria:**
-  - [ ] Each landscape two-page spread is cut down the middle into two separate portrait pages.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+- **Expected Result:** Two-page spreads are split into clean single portrait pages.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 13: Auto Upright Orientation (`pdf_auto_rotate`)
-- **Category in UI:** `Page Management`
-- **UI Access:** Operations Dock > **Pages** > **Auto Upright Orientation**.
-- **Sample File:** Document containing upside-down or sideways pages.
+### Tool 06: `pdf_burst` — Burst Document into Single Pages
+- **UI Access:** Operations Dock > **Pages** > **Burst PDF**.
+- **Test File:** Any 3+ page PDF.
 - **Manual Steps:**
-  1. Click **Detect & Upright Pages**.
-  2. Observe progress indicator while text baseline detection runs.
-- **Visual Acceptance Criteria:**
-  - [ ] Sideways and inverted pages automatically rotate to upright reading orientation.
-  - [ ] Already upright pages remain untouched.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Burst PDF** and pick output directory.
+- **Expected Result:** Creates `page_001.pdf`, `page_002.pdf`, `page_003.pdf`.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 07: `pdf_crop` — Crop Page Bounding Boxes
+- **UI Access:** Operations Dock > **Pages** > **Crop Pages** (or toolbar Crop tool).
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Drag crop rectangle on the canvas.
+  2. Verify bounding coordinates populate. Click **Apply Crop**.
+- **Expected Result:** Canvas re-renders immediately showing trimmed margins.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 08: `pdf_delete_pages` — Delete Specific Pages
+- **UI Access:** Operations Dock > **Pages** > **Delete Pages** (or select thumbnail + press `Delete`).
+- **Test File:** 5-page PDF.
+- **Manual Steps:**
+  1. Enter `2, 4` in Delete Pages input. Click **Delete**.
+- **Expected Result:** Pages 2 and 4 are removed; remaining 3 pages re-index.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 09: `pdf_extract_pages` — Extract Page Range to New PDF
+- **UI Access:** Operations Dock > **Pages** > **Extract PDF Pages** (or right-click thumbnail > *Extract*).
+- **Test File:** 5-page PDF.
+- **Manual Steps:**
+  1. Enter `2-3`. Click **Extract Pages**.
+- **Expected Result:** New document opens containing only pages 2 and 3. Original file remains intact.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 10: `pdf_reorder_pages` — Drag-and-Drop Page Reordering
+- **UI Access:** Left thumbnail sidebar rail.
+- **Test File:** 4-page PDF.
+- **Manual Steps:**
+  1. Click and drag thumbnail Page 4 above Page 1.
+- **Expected Result:** Page order updates instantly to 4, 1, 2, 3 in both thumbnail rail and canvas.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 11: `pdf_rotate` — Rotate Pages
+- **UI Access:** Operations Dock > **Pages** > **Rotate Document** (or toolbar `🔄` button).
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Select `90° Clockwise`, page scope: `All`. Click **Apply Rotation**.
+- **Expected Result:** Canvas and thumbnail preview rotate 90° clockwise.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 12: `pdf_auto_rotate` — Auto Upright Orientation
+- **UI Access:** Operations Dock > **Pages** > **Auto Upright Orientation**.
+- **Test File:** PDF containing inverted or sideways pages.
+- **Manual Steps:**
+  1. Click **Auto Upright Pages**.
+- **Expected Result:** Sideways text is heuristically rotated upright; correctly oriented pages are untouched.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 13: `pdf_remove_blank` — Remove Blank Pages
+- **UI Access:** Operations Dock > **Pages** > **Remove Blank Pages**.
+- **Test File:** PDF containing at least one empty white page.
+- **Manual Steps:**
+  1. Set sensitivity to 95%. Click **Remove Blank Pages**.
+- **Expected Result:** Blank page is excised; toast announces count of removed pages.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 14: `pdf_scale_pages` — Scale Page Dimensions
+- **UI Access:** Operations Dock > **Pages** > **Scale Page Dimensions**.
+- **Test File:** Letter or A4 PDF.
+- **Manual Steps:**
+  1. Choose target size: `A3` (or scale percentage: `150%`). Click **Scale**.
+- **Expected Result:** MediaBox dimensions expand proportionally; vector content stays sharp.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 15: `pdf_nup` — N-Up Page Imposition
+- **UI Access:** Operations Dock > **Pages** > **N-Up Page Imposition**.
+- **Test File:** 4-page or 8-page document.
+- **Manual Steps:**
+  1. Select `4-Up (2x2 Grid)`. Toggle **Draw Border Lines**. Click **Impose Pages**.
+- **Expected Result:** 4 consecutive pages are tiled onto a single composite sheet.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 16: `pdf_booklet` — Booklet Imposition
+- **UI Access:** Operations Dock > **Pages** > **Booklet Imposition**.
+- **Test File:** 8-page document.
+- **Manual Steps:**
+  1. Select `Saddle-Stitch Folding Booklet`. Click **Generate Booklet**.
+- **Expected Result:** Sheets are paired for center-fold printing (e.g. Sheet 1 has p8 & p1).
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 17: `pdf_posterize` — Multi-Sheet Poster Slicer
+- **UI Access:** Operations Dock > **Pages** > **Multi-Sheet Poster Tile Slicer**.
+- **Test File:** Large single-page diagram or photo.
+- **Manual Steps:**
+  1. Set grid: `2x2 Sheets`, overlap: `0.5 in`. Click **Slice Poster**.
+- **Expected Result:** Outputs 4 printable pages with dashed cut/alignment guides.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 18: `pdf_stitch_canvas` — Stitch Continuous Canvas
+- **UI Access:** Operations Dock > **Pages** > **Stitch Continuous Canvas**.
+- **Test File:** 3-page document.
+- **Manual Steps:**
+  1. Choose `Vertical Scroll Stitch`. Click **Stitch Pages**.
+- **Expected Result:** All 3 pages merge into one tall continuous canvas.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 19: `pdf_bookmarks` — Extract / Inspect Bookmarks
+- **UI Access:** Left sidebar Outline/Bookmark tab (`📑`).
+- **Test File:** `tests/fixtures/test_bookmarks.pdf`.
+- **Manual Steps:**
+  1. Open Bookmarks sidebar. Click on a chapter item.
+- **Expected Result:** Viewer instantly jumps to the bookmarked destination page.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 20: `pdf_attachments` — PDF Portfolio Attachments
+- **UI Access:** Operations Dock > **Pages** > **PDF Portfolio Attachments** (or sidebar paperclip icon).
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Add Attachment** and attach any text file or image.
+  2. Click **Download / Extract Attachment**.
+- **Expected Result:** Embedded file is listed and can be extracted byte-for-byte.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 21: `pdf_images_to_pdf` — Combine Images into PDF
+- **UI Access:** Operations Dock > **Convert** > **Images to PDF**.
+- **Test File:** 2 or more PNG/JPG files.
+- **Manual Steps:**
+  1. Drop image files into the queue. Set orientation: **Auto**. Click **Create PDF**.
+- **Expected Result:** Generates a multi-page PDF where each page embeds an image with full resolution.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 22: `img_to_pdf` — Image to PDF Single/Multi Synthesis
+- **UI Access:** Command Palette (`Ctrl+K`) > `img_to_pdf`.
+- **Test File:** Any `.png` or `.jpg`.
+- **Manual Steps:**
+  1. Select single image file and click **Convert**.
+- **Expected Result:** Produces a 1-page PDF exactly matching the image dimensions.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`

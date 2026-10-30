@@ -1,223 +1,241 @@
-# Manual Desktop UI Testing Guide: Tester 4 (Conversions, Office & AI Intelligence)
+# Manual Desktop UI Testing Guide: Tester 4 (23 Office Conversions, AI Intelligence & Workflow Tools)
 
 **Assigned Tester:** Tester 4  
-**Total Core Tools Assigned:** 13 Core Tools (+ Multi-Format Conversion & AI Additions)  
-**Domain:** Document Markup, Watermarking, Office Conversions, Comic Packaging & AI Search
+**Total Tools Assigned:** 23 Tools  
+**Domain:** Office OpenXML Conversions, Multimodal Layout Extraction, Neural OCR, Workspace Search & Workflow Recipes
 
 ---
 
-## Tool 1: Add Watermark (`watermark`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Add Watermark** (or toolbar Watermark icon).
-- **Sample File:** Any PDF document.
+### Tool 67: `pdf_to_docx` — Convert PDF into Microsoft Word (.docx)
+- **UI Access:** Operations Dock > **Quick** / **Convert** > **PDF to Word (DOCX)**.
+- **Test File:** Multi-page PDF with headings and body text.
 - **Manual Steps:**
-  1. Enter watermark text: `CONFIDENTIAL - DO NOT COPY`.
-  2. Adjust parameters:
-     - Opacity slider: `25%`
-     - Rotation: `Diagonal (45°)`
-     - Color: `Red` or `Dark Gray`
-     - Layer: `Foreground` or `Background`
-  3. Click **Apply Watermark**.
-- **Visual Acceptance Criteria:**
-  - [ ] Semi-transparent watermark text renders across all pages.
-  - [ ] Page text remains clearly legible through the watermark.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Export as Word (DOCX)**. Choose output location.
+- **Expected Result:** Generates valid `.docx` OpenXML file with structured paragraphs and headings.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 2: Bates Numbering (`bates`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Bates Numbering**.
-- **Sample File:** Multi-page legal document.
-- **Manual Steps:**
-  1. Configure Bates template:
-     - Prefix: `CASE-2026-`
-     - Start Number: `1`
-     - Digits / Zero-padding: `6` (e.g. `000001`)
-     - Suffix: `-CONF`
-     - Position: **Bottom Right**
-  2. Click **Apply Bates Stamps**.
-- **Visual Acceptance Criteria:**
-  - [ ] Each page features sequential Bates stamping: `CASE-2026-000001-CONF`, `CASE-2026-000002-CONF`.
-  - [ ] Stamps do not obscure underlying page content.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 3: Add Page Numbers (`page_numbers`)
-- **Category in UI:** `Page Management` / `Edit & Markup`
-- **UI Access:** Operations Dock > **Pages** > **Add Page Numbers**.
-- **Sample File:** Multi-page document.
-- **Manual Steps:**
-  1. Select format: **Page {n} of {total}** or **Simple {n}**.
-  2. Select position: **Bottom Center**.
-  3. Set font size: `10 pt`.
-  4. Click **Apply Page Numbers**.
-- **Visual Acceptance Criteria:**
-  - [ ] Sequential page numbering appears centered at the bottom of every page (e.g., *Page 1 of 5*).
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 4: Header & Footer (`header_footer`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Header & Footer**.
-- **Sample File:** Any PDF.
-- **Manual Steps:**
-  1. Enter Header Left text: `Quarterly Financial Report`.
-  2. Enter Header Right text: `Q3 2026`.
-  3. Enter Footer Center text: `PaperPilot Enterprise Documentation`.
-  4. Set top margin: `36 pt`; bottom margin: `36 pt`.
-  5. Click **Apply Header & Footer**.
-- **Visual Acceptance Criteria:**
-  - [ ] Margins and aligned text appear consistently on all designated pages.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 5: Add Annotations (`annotate`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Top Annotation Toolbar (Highlighter, Pen, Text Note, Rectangle, Arrow).
-- **Sample File:** Any PDF.
-- **Manual Steps:**
-  1. Select the **Highlighter tool** (`🖍️`) and drag across a sentence.
-  2. Select the **Sticky Note tool** (`💬`), click on the page, and type: `"Review this section carefully"`.
-  3. Draw a red rectangle box around an image.
-  4. Save the document.
-- **Visual Acceptance Criteria:**
-  - [ ] Highlighting, notes, and shapes render with crisp vector lines.
-  - [ ] Notes expand when clicked to display author comments.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 6: Flatten Annotations (`flatten`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Flatten Annotations**.
-- **Sample File:** Document with annotations, form fields, or signatures.
-- **Manual Steps:**
-  1. Click **Flatten Document**.
-- **Visual Acceptance Criteria:**
-  - [ ] Interactive form inputs, notes, and drawings are baked directly into the static page graphics layer.
-  - [ ] Form fields can no longer be edited or selected individually.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 7: Stamp Image & Logo (`pdf_stamp`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Stamp Image & Logo**.
-- **Sample File:** Any PDF and a sample PNG logo (`tests/fixtures/` or desktop image).
-- **Manual Steps:**
-  1. Choose an image file (`.png`, `.jpg`, `.svg`).
-  2. Set coordinates: `X: 400`, `Y: 50`, `Width: 120`, `Height: 40`.
-  3. Select target page: `Page 1`.
-  4. Click **Place Stamp**.
-- **Visual Acceptance Criteria:**
-  - [ ] Image/logo renders crisply at the designated coordinates.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 8: Overlay & Underlay Stationary (`pdf_overlay_underlay`)
-- **Category in UI:** `Edit & Markup`
-- **UI Access:** Operations Dock > **Edit** > **Overlay & Underlay Stationary**.
-- **Sample File:** A target document and a letterhead template PDF.
-- **Manual Steps:**
-  1. Select stationary document.
-  2. Choose placement mode: **Underlay (Background template)** or **Overlay (Foreground stamp)**.
-  3. Click **Apply Stationary**.
-- **Visual Acceptance Criteria:**
-  - [ ] Background letterhead graphics appear behind text across all pages.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 9: PDF to Word DOCX (`pdf_to_docx`)
-- **Category in UI:** `Convert & Export`
-- **UI Access:** Operations Dock > **Convert** > **PDF to Word (DOCX)**.
-- **Sample File:** Text-based document with headings and paragraphs.
-- **Manual Steps:**
-  1. Click **Export as Word (DOCX)**.
-  2. Select output file name.
-- **Visual Acceptance Criteria:**
-  - [ ] Creates a valid OpenXML `.docx` file (PK zip header).
-  - [ ] Opening the file in LibreOffice/Word verifies paragraphs, headings, and bold styling are preserved.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
-
----
-
-## Tool 10: PDF to Excel XLSX (`pdf_to_xlsx`)
-- **Category in UI:** `Convert & Export`
+### Tool 68: `pdf_to_xlsx` — Extract Tabular Layout into Microsoft Excel (.xlsx)
 - **UI Access:** Operations Dock > **Convert** > **PDF to Excel (XLSX)**.
-- **Sample File:** Document containing data tables or financial figures.
+- **Test File:** PDF containing tables or numerical figures.
 - **Manual Steps:**
-  1. Click **Extract Tables to Excel**.
-  2. Select output location.
-- **Visual Acceptance Criteria:**
-  - [ ] Produces a valid `.xlsx` spreadsheet.
-  - [ ] Numbers and column headers populate into distinct spreadsheet cells.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Extract to Excel (.xlsx)**.
+- **Expected Result:** Generates valid `.xlsx` workbook; tables are converted into clean spreadsheet rows and columns.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 11: PDF to PowerPoint PPTX (`pdf_to_pptx`)
-- **Category in UI:** `Convert & Export`
+### Tool 69: `pdf_to_pptx` — Export PDF Pages into Presentation Slides (.pptx)
 - **UI Access:** Operations Dock > **Convert** > **PDF to PowerPoint (PPTX)**.
-- **Sample File:** Landscape presentation slide PDF.
+- **Test File:** Landscape presentation slide PDF.
 - **Manual Steps:**
-  1. Click **Export as PPTX**.
-- **Visual Acceptance Criteria:**
-  - [ ] Generates `.pptx` presentation file where each PDF page becomes a presentation slide.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Export as PPTX Slides**.
+- **Expected Result:** Generates `.pptx` presentation file where each page becomes a presentation slide.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 12: PDF to HTML5 (`pdf_to_html`)
-- **Category in UI:** `Convert & Export`
+### Tool 70: `pdf_to_html` — Export PDF as Responsive Styled HTML5 Web Page
 - **UI Access:** Operations Dock > **Convert** > **PDF to HTML**.
-- **Sample File:** Any multi-paragraph PDF.
+- **Test File:** Any PDF document.
 - **Manual Steps:**
-  1. Click **Convert to HTML**.
-- **Visual Acceptance Criteria:**
-  - [ ] Generates an HTML5 document with CSS styling.
-  - [ ] Opening in a browser displays readable, responsive text matching the document layout.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Convert to HTML5**.
+- **Expected Result:** Generates clean HTML5 markup with embedded CSS styling matching page fonts and colors.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## Tool 13: PDF to Markdown (`pdf_to_markdown`)
-- **Category in UI:** `Convert & Export`
-- **UI Access:** Operations Dock > **Convert** > **PDF to Markdown** (or LLM Export button).
-- **Sample File:** Document with headings, lists, and tables.
+### Tool 71: `pdf_to_markdown` — Clean LLM-Ready Markdown Extraction
+- **UI Access:** Operations Dock > **Convert** > **PDF to Markdown** (or LLM Export icon).
+- **Test File:** Multi-page document with headings, bullet lists, and tables.
 - **Manual Steps:**
-  1. Click **Convert to Markdown**.
-  2. View preview drawer or save to `.md`.
-- **Visual Acceptance Criteria:**
-  - [ ] Outputs clean GitHub-flavored markdown with `# Headings`, `- Lists`, and `| Tables |`.
-  - [ ] Ready for copy-pasting into LLMs or documentation.
-- **Status:** `[ ] PASS` | `[ ] FAIL` | **Notes:** `____________________`
+  1. Click **Extract Markdown**. Review text in editor drawer.
+- **Expected Result:** Produces formatted Markdown (`# Heading`, `- Bullet`, `| Table |`) suitable for LLM prompts.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## 🌟 Bonus: Packaging & AI Intelligence Tools
+### Tool 72: `pdf_to_json` — Multimodal JSON Layout with Bounding Boxes
+- **UI Access:** Operations Dock > **Convert** > **PDF to JSON**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Extract Multimodal JSON**.
+- **Expected Result:** Output JSON document contains hierarchical page objects, font metadata, text spans, and bounding coordinates `[x, y, w, h]`.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
-### Tool 14: Comic Book Archive (`pdf_comic_archive`)
-- **UI Access:** Operations Dock > **Convert** > **Comic Archive Conversion**.
-- **Steps:** Click Convert to CBZ. Output file has `.cbz` extension containing sequentially numbered PNG frames (`page_001.png`, `page_002.png`).
-- **Status:** `[ ] PASS` | `[ ] FAIL`
+---
 
-### Tool 15: OCR Text Recognition (`ocr`)
+### Tool 73: `pdf_extract_text` — Fast Plain Text Dumper (.txt)
+- **UI Access:** Operations Dock > **Convert** > **PDF to Plain Text**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Click **Extract Plain Text**.
+- **Expected Result:** Fast text extraction outputs raw document text without binary garbage.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 74: `pdf_extract_tables` — High-Precision Table Matrix Extractor
+- **UI Access:** Operations Dock > **AI** > **Extract Tables**.
+- **Test File:** Financial statement or invoice PDF.
+- **Manual Steps:**
+  1. Format: **CSV** or **JSON Matrix**. Click **Extract Tables**.
+- **Expected Result:** Table borders and cell coordinates are detected; exported as structured CSV/JSON.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 75: `pdf_ocr` — Neural Optical Character Recognition on Scanned Pages
 - **UI Access:** Operations Dock > **AI** > **OCR Text Recognition**.
-- **Steps:** Open scanned PDF. Click Run OCR. Text is extracted from image into selectable text layer or `.txt` file.
-- **Status:** `[ ] PASS` | `[ ] FAIL`
+- **Test File:** Scanned bitmap document (e.g. `tests/fixtures/scanned_doc.pdf`).
+- **Manual Steps:**
+  1. Select language: **English** (default). Click **Run OCR**.
+- **Expected Result:** Scanned page images are processed; text becomes selectable or exports to `.txt`. Gracefully handles missing weights with informative notice.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
-### Tool 16: PII Scanner (`document_pii_scan`)
-- **UI Access:** Operations Dock > **Security** > **PII Scanner**.
-- **Steps:** Click Scan for PII. Inspect list of detected SSNs, credit cards, or email addresses with page locations.
-- **Status:** `[ ] PASS` | `[ ] FAIL`
+---
 
-### Tool 17: Workspace Multi-Doc Search (`workspace_search`)
+### Tool 76: `office_to_markdown` — Convert Word/Excel/PowerPoint to Markdown
+- **UI Access:** Operations Dock > **Convert** > **Convert Office to Markdown**.
+- **Test File:** Sample `.docx`, `.xlsx`, or `.pptx` file.
+- **Manual Steps:**
+  1. Drop Office file into converter. Click **Convert to Markdown**.
+- **Expected Result:** Extracts document body into structured Markdown syntax.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 77: `office_extract_text` — Extract Raw Text from Office Documents
+- **UI Access:** Operations Dock > **Convert** > **Office to Plain Text**.
+- **Test File:** Sample `.docx` or `.xlsx`.
+- **Manual Steps:**
+  1. Drop file. Click **Extract Text**.
+- **Expected Result:** Fast raw text extraction from OpenXML document packages.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 78: `office_modernize_legacy` — Upgrade Legacy .doc/.xls/.ppt
+- **UI Access:** Operations Dock > **Convert** > **Modernize Legacy Office**.
+- **Test File:** Older binary Office file (`.doc`, `.xls`, or `.ppt`).
+- **Manual Steps:**
+  1. Drop binary file. Click **Upgrade to Modern Office Format**.
+- **Expected Result:** Converts older binary format to modern standard `.docx`, `.xlsx`, or `.pptx`.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 79: `excel_to_json` — Convert Spreadsheet Sheets into JSON Objects
+- **UI Access:** Operations Dock > **Convert** > **Excel to JSON**.
+- **Test File:** `test.xlsx` (or any spreadsheet).
+- **Manual Steps:**
+  1. Load spreadsheet. Click **Convert to JSON**.
+- **Expected Result:** Outputs JSON array where each object represents a table row with column headers as keys.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 80: `excel_to_csv` — Export Spreadsheet Sheets to RFC 4180 CSV
+- **UI Access:** Operations Dock > **Convert** > **Excel to CSV**.
+- **Test File:** `test.xlsx`.
+- **Manual Steps:**
+  1. Load spreadsheet. Click **Export CSV**.
+- **Expected Result:** Generates standard RFC 4180 comma-delimited text file.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 81: `pdf_search` — Real-Time Text Search and Highlighting in Viewer
+- **UI Access:** Canvas Search Bar (`Ctrl+F` or `Cmd+F`).
+- **Test File:** Multi-page document.
+- **Manual Steps:**
+  1. Press `Ctrl+F`. Type: `Page`.
+  2. Press `Enter` to cycle through matches using Next (`↓`) and Prev (`↑`).
+- **Expected Result:** Search occurrences highlight on canvas in yellow; viewer scrolls automatically to active match.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 82: `workspace_search` — Recursive Multi-Format Workspace Search
 - **UI Access:** Operations Dock > **AI** > **Workspace Search**.
-- **Steps:** Enter query keyword and select project directory. Results list matching documents and page numbers without errors.
-- **Status:** `[ ] PASS` | `[ ] FAIL`
+- **Test File:** A folder containing multiple `.pdf`, `.docx`, `.xlsx`, and `.md` files.
+- **Manual Steps:**
+  1. Select target directory. Query: `report`. Click **Search Workspace**.
+- **Expected Result:** Recursively scans directory and returns matched documents with page numbers without directory errors.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 83: `semantic_search` — Vector Semantic Retrieval Across Chunks
+- **UI Access:** Command Palette (`Ctrl+K`) > `semantic_search`.
+- **Test File:** Any multi-paragraph PDF document.
+- **Manual Steps:**
+  1. Query: `financial obligations and liabilities`. Limit: `5`. Click **Execute Search**.
+- **Expected Result:** Returns semantically related text excerpts ranked by similarity score.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 84: `pdf_classify_type` — Document Type & Category Classifier
+- **UI Access:** Operations Dock > **AI** > **Classify Document**.
+- **Test File:** Invoice, contract, or academic paper PDF.
+- **Manual Steps:**
+  1. Click **Classify Document Type**.
+- **Expected Result:** Drawer shows classification result (e.g. `Category: Invoice/Financial`, `Confidence: 0.94`).
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 85: `pdf_rag_chunks` — Semantic Chunk Generator for RAG LLM Pipelines
+- **UI Access:** Command Palette (`Ctrl+K`) > `pdf_rag_chunks`.
+- **Test File:** Any multi-page document.
+- **Manual Steps:**
+  1. Set chunk size: `500 tokens`, overlap: `50 tokens`. Click **Generate Chunks**.
+- **Expected Result:** Generates JSON list of text chunks with page indices and section headers.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 86: `document_workflow` — Declarative Recipe Workflow Runner (.ppflow)
+- **UI Access:** Visual Pipeline Builder tab (`⚡ Pipeline` top nav button).
+- **Test File:** Any input document.
+- **Manual Steps:**
+  1. Open Visual Pipeline Canvas. Connect `Rotate(90)` → `Watermark("Confidential")` → `Compress`.
+  2. Click **Run Pipeline**.
+- **Expected Result:** Multi-step pipeline executes sequentially with real-time step progress animations and produces final output.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 87: `recipe_run` — Instant Pipeline Execution of Multi-Step Tools
+- **UI Access:** Visual Pipeline Builder > **Execute Recipe**.
+- **Test File:** Any PDF.
+- **Manual Steps:**
+  1. Load a pre-saved recipe (`.json` or `.ppflow`). Click **Execute Recipe**.
+- **Expected Result:** Recipe runs and displays execution audit log with success checkmarks on each node.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 88: `cli_ask` — Natural Language AI Assistant for Document Tasks
+- **UI Access:** Operations Dock AI Chat Panel (`🤖`).
+- **Test File:** Any open document.
+- **Manual Steps:**
+  1. Type in chat: `"Rotate this document 90 degrees and add confidential watermark"`.
+  2. Review resolved plan. Click **Execute Plan**.
+- **Expected Result:** Offline NLP resolver maps query to `Rotate` and `Watermark` operations and applies them to the document.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 89: `watcher_start` / `watcher_stop` — Hot-Folder Watcher Daemon Automation
+- **UI Access:** Operations Dock > **Automation** > **Folder Watchers**.
+- **Test File:** A temporary folder (e.g. `tests/watch_in`).
+- **Manual Steps:**
+  1. Set Watch Directory: `tests/watch_in`. Set Output Directory: `tests/watch_out`. Assign Recipe: `Compress`.
+  2. Click **Start Watcher**.
+  3. Drop a test PDF into `tests/watch_in`.
+  4. Verify the processed file appears in `tests/watch_out`. Click **Stop Watcher**.
+- **Expected Result:** Background daemon automatically processes arriving files and stops when requested.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
