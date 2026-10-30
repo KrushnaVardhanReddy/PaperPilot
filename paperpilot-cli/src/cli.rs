@@ -11,6 +11,14 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
 
+    /// Output format for logs: text, json, compact, or pretty
+    #[arg(global = true, long)]
+    pub log_format: Option<String>,
+
+    /// Log level verbosity: trace, debug, info, warn, error
+    #[arg(global = true, long)]
+    pub log_level: Option<String>,
+
     /// Output result as JSON
     #[arg(global = true, long)]
     pub json: bool,

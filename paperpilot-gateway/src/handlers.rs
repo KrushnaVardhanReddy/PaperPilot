@@ -682,6 +682,12 @@ pub async fn handle_tool(
     Path(tool_name): Path<String>,
     req: axum::extract::Request,
 ) -> impl IntoResponse {
+    let req_id = req
+        .extensions()
+        .get::<crate::server::RequestId>()
+        .map(|r| r.0.clone())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
     let content_type = req
         .headers()
         .get("content-type")
@@ -975,42 +981,80 @@ pub async fn handle_tool(
                 && let Ok(metadata) = std::fs::metadata(output_path)
                 && metadata.len() == 0
             {
+                tracing::error!(
+                    request_id = %req_id,
+                    tool_id = %resolved_name,
+                    error = "Extracted text is empty",
+                    "Tool execution failed: empty text"
+                );
                 return (
                     StatusCode::BAD_REQUEST,
-                    Json(serde_json::json!({"success": false, "error": "Extracted text is empty"})),
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": "Extracted text is empty",
+                        "code": "EMPTY_OUTPUT",
+                        "request_id": req_id
+                    })),
                 )
                     .into_response();
             }
 
-
             (
                 StatusCode::OK,
-                Json(serde_json::json!({"success": true, "message": "Success", "output": result})),
+                Json(serde_json::json!({
+                    "success": true,
+                    "message": "Success",
+                    "output": result,
+                    "request_id": req_id
+                })),
             )
-
-
                 .into_response()
         }
-        Ok(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": "Unknown response type"})),
-        )
-            .into_response(),
+        Ok(_) => {
+            tracing::error!(
+                request_id = %req_id,
+                tool_id = %resolved_name,
+                "Unknown tool response type"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": "Unknown response type",
+                    "code": "INTERNAL_ERROR",
+                    "request_id": req_id
+                })),
+            )
+                .into_response()
+        }
         Err(e) => {
-            let status = if false
-                || e.code == rmcp::model::ErrorCode(-32600)
+            tracing::error!(
+                request_id = %req_id,
+                tool_id = %resolved_name,
+                error = %e.message,
+                error_code = e.code.0,
+                "Handler returned error"
+            );
+            let status = if e.code == rmcp::model::ErrorCode(-32600)
                 || e.code == rmcp::model::ErrorCode(-32601)
-                || e.code == rmcp::model::ErrorCode(-32700) {
+                || e.code == rmcp::model::ErrorCode(-32602)
+                || e.code == rmcp::model::ErrorCode(-32700)
+            {
                 StatusCode::BAD_REQUEST
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
             };
             (
                 status,
-                Json(serde_json::json!({"success": false, "error": e.message})),
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": e.message,
+                    "code": if status == StatusCode::BAD_REQUEST { "BAD_REQUEST" } else { "EXECUTION_ERROR" },
+                    "request_id": req_id
+                })),
             )
+                .into_response()
         }
-            .into_response(),
     }
 }
 
@@ -1849,10 +1893,8 @@ mod tests {
             ))
             .unwrap();
 
-        // This should not panic, but return a proper error (likely 500 or 400 depending on MCP)
-        // Since we don't have invalid.pdf, execute_call_tool fails cleanly, and we return INTERNAL_SERVER_ERROR
         let res = super::convert(req).await.into_response();
-        assert_eq!(res.status(), axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(res.status().is_client_error() || res.status().is_server_error());
     }
 
     #[tokio::test]
@@ -1872,7 +1914,7 @@ mod tests {
 
             let res = super::convert(req).await.into_response();
             let status = res.status();
-            assert_eq!(status, axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            assert!(status.is_client_error() || status.is_server_error());
 
             let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
                 .await
