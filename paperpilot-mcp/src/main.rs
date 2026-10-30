@@ -23,6 +23,46 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    // Spec 146: MCP Protocol Stdio Isolation in paperpilot-mcp
+    // Under NO circumstances should application logs be written to stdout.
+    // All tracing_subscriber writers in paperpilot-mcp MUST be directed explicitly to std::io::stderr.
+    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&log_level));
+    let log_format = std::env::var("LOG_FORMAT")
+        .unwrap_or_else(|_| "text".to_string())
+        .to_lowercase();
+
+    match log_format.as_str() {
+        "json" => {
+            let _ = tracing_subscriber::fmt()
+                .json()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "compact" => {
+            let _ = tracing_subscriber::fmt()
+                .compact()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "pretty" => {
+            let _ = tracing_subscriber::fmt()
+                .pretty()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        _ => {
+            let _ = tracing_subscriber::fmt()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+    }
+
     let args = Args::parse();
 
     if let Some(client) = args.client_config {

@@ -4457,6 +4457,8 @@ impl PaperPilotMcpServer {
         &self,
         request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
+        tracing::debug!(tool = %request.name, "Executing MCP agent tool");
+        let tool_name = request.name.clone();
         let args = request.arguments.clone().unwrap_or_default();
         if request.name == "batch_fill" {
             let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
@@ -7451,7 +7453,10 @@ impl PaperPilotMcpServer {
             Ok(res) => Ok(CallToolResponse::Complete(CallToolResult::success(vec![
                 ContentBlock::text(serde_json::to_string(&res).unwrap()),
             ]))),
-            Err(e) => Err(e),
+            Err(e) => {
+                tracing::error!(tool = %tool_name, error = %e.message, "MCP agent tool failed");
+                Err(e)
+            }
         }
     }
 }

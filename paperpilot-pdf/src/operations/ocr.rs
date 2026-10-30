@@ -75,7 +75,9 @@ pub fn find_model(file_name: &str) -> Option<PathBuf> {
 
 impl PdfOperation for OcrOperationImpl {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        let start_instant = std::time::Instant::now();
         let mut executed_ocr = false;
+        let mut detected_images_count = 0;
         // Collect words with their vertical coordinate for later sorting and line-breaking
         let mut words_collected: Vec<(f32, f32, f32, String)> = Vec::new(); // (pdf_y, pdf_x, font_size, text)
 
@@ -212,6 +214,7 @@ impl PdfOperation for OcrOperationImpl {
                         }
                     }
 
+                    detected_images_count += loaded_strips.len();
                     // Check if we have image(s) to process
                     if !loaded_strips.is_empty() {
                         // Stitch all vertical strips into one full-page canvas.
@@ -522,6 +525,15 @@ impl PdfOperation for OcrOperationImpl {
         if !current_line.is_empty() {
             lines.push(current_line.join(" "));
         }
+
+        let latency_ms = start_instant.elapsed().as_millis();
+        tracing::debug!(
+            target: "paperpilot_pdf::ocr",
+            detected_images_count = detected_images_count,
+            language_target = ?self.language.as_deref().unwrap_or("auto"),
+            inference_latency_ms = latency_ms,
+            "pdf_ocr execution finished"
+        );
 
         let full_text = lines.join("\n\n");
         if let Ok(mut lock) = self.extracted_text.lock() {

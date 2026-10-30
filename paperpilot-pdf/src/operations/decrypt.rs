@@ -22,6 +22,25 @@ impl PdfOperation for DecryptOperation {
                 PdfError::UnsupportedOperation("Document is not a LopdfDocument".to_string())
             })?;
 
+        let cipher_filter = lopdf_doc
+            .inner
+            .trailer
+            .get(b"Encrypt")
+            .ok()
+            .and_then(|obj| lopdf_doc.inner.get_object(obj.as_reference().unwrap_or((0, 0))).ok())
+            .and_then(|obj| obj.as_dict().ok())
+            .and_then(|d| d.get(b"Filter").ok())
+            .and_then(|f| f.as_name().ok())
+            .map(|n| String::from_utf8_lossy(n).to_string())
+            .unwrap_or_else(|| "Standard".to_string());
+
+        tracing::debug!(
+            target: "paperpilot_pdf::decrypt",
+            detected_cipher = %cipher_filter,
+            password = "[REDACTED]",
+            "Executing pdf_decrypt"
+        );
+
         let password = self.password.as_deref().unwrap_or("");
         // lopdf 0.45 leaves a password-protected file only partially parsed
         // when loaded without its password. Decrypting that object table alone

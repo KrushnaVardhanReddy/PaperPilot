@@ -78,21 +78,17 @@ pub fn run() {
     }
 }
 
-fn run_impl() {
-    let cli = Cli::parse();
-
-    let log_level = cli
-        .log_level
-        .clone()
+pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
+    let log_level = cli_level
+        .map(|s| s.to_string())
         .or_else(|| std::env::var("RUST_LOG").ok())
         .unwrap_or_else(|| "info".to_string());
 
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&log_level));
 
-    let log_format = cli
-        .log_format
-        .clone()
+    let log_format = cli_format
+        .map(|s| s.to_string())
         .or_else(|| std::env::var("LOG_FORMAT").ok())
         .unwrap_or_else(|| "text".to_string())
         .to_lowercase();
@@ -126,9 +122,12 @@ fn run_impl() {
                 .try_init();
         }
     }
+}
 
+fn run_impl() {
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && args[1] == "watch" {
+        init_logging(None, None);
         args.remove(1);
         let watch_cli = WatchCli::parse_from(args);
 
@@ -150,6 +149,9 @@ fn run_impl() {
         }
         std::process::exit(0);
     }
+
+    let cli = Cli::parse();
+    init_logging(cli.log_format.as_deref(), cli.log_level.as_deref());
 
     let _ = env_logger::try_init();
 
