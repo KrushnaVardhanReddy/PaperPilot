@@ -76,4 +76,5 @@ pub mod pdf_split_by_outline;
 pub mod pdf_to_epub;
 pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod watch;
