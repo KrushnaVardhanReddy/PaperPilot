@@ -58,8 +58,9 @@
 | **3** | **WASM & CI Hardening** | **Zero-Network WASM Build & Workflow Tag Fixes**<br>Gated native dependencies, verified `wasm-pack build`, modernized workflow actions. | ✅ **Completed & Merged** |
 | **4** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
 | **5** | **Spec 146 Structured Logging** | **Universal Leveled & Structured Logging Engine**<br>Jules session `8020624792143228383` dispatched on `feature/dev`. | 🚀 **In Progress (Jules)** |
-| **6** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
-| **7** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
+| **6** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Jules session `1717391513087506803` dispatched on `feature/dev`. | 🚀 **In Progress (Jules)** |
+| **7** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
+| **8** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
 
 ---
 
