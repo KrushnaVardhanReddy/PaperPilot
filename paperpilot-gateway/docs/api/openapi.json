@@ -86,6 +86,9 @@
         ],
         "type": "object"
       },
+      "DocumentPiiScanJsonRequest": {
+        "type": "object"
+      },
       "ExcelToCsvRequest": {
         "properties": {
           "input": {
@@ -108,6 +111,9 @@
           "input",
           "output"
         ],
+        "type": "object"
+      },
+      "ExcelToJsonJsonRequest": {
         "type": "object"
       },
       "ExcelToJsonRequest": {
@@ -190,6 +196,9 @@
         "required": [
           "input"
         ],
+        "type": "object"
+      },
+      "JsonToPdfJsonRequest": {
         "type": "object"
       },
       "McpExecRequest": {
@@ -278,7 +287,67 @@
         ],
         "type": "object"
       },
+      "PdfAutoRotateJsonRequest": {
+        "type": "object"
+      },
+      "PdfBatesJsonRequest": {
+        "type": "object"
+      },
+      "PdfBookletJsonRequest": {
+        "type": "object"
+      },
+      "PdfBookmarksJsonRequest": {
+        "type": "object"
+      },
+      "PdfChangePermissionsJsonRequest": {
+        "type": "object"
+      },
+      "PdfClassifyTypeJsonRequest": {
+        "type": "object"
+      },
+      "PdfComicArchiveJsonRequest": {
+        "type": "object"
+      },
+      "PdfCompareJsonRequest": {
+        "type": "object"
+      },
+      "PdfCreateFormFieldJsonRequest": {
+        "type": "object"
+      },
+      "PdfCropJsonRequest": {
+        "type": "object"
+      },
+      "PdfDecryptJsonRequest": {
+        "type": "object"
+      },
       "PdfDedupStreamsJsonRequest": {
+        "type": "object"
+      },
+      "PdfDeletePagesJsonRequest": {
+        "type": "object"
+      },
+      "PdfEncryptJsonRequest": {
+        "type": "object"
+      },
+      "PdfExtractPagesJsonRequest": {
+        "type": "object"
+      },
+      "PdfExtractTablesJsonRequest": {
+        "type": "object"
+      },
+      "PdfExtractTextJsonRequest": {
+        "type": "object"
+      },
+      "PdfFillFormJsonRequest": {
+        "type": "object"
+      },
+      "PdfFlattenJsonRequest": {
+        "type": "object"
+      },
+      "PdfHashJsonRequest": {
+        "type": "object"
+      },
+      "PdfHeaderFooterJsonRequest": {
         "type": "object"
       },
       "PdfInvertColorsJsonRequest": {
@@ -310,6 +379,21 @@
           "input",
           "output"
         ],
+        "type": "object"
+      },
+      "PdfLinearizeJsonRequest": {
+        "type": "object"
+      },
+      "PdfMergeAlternateJsonRequest": {
+        "type": "object"
+      },
+      "PdfMergeJsonRequest": {
+        "type": "object"
+      },
+      "PdfNupJsonRequest": {
+        "type": "object"
+      },
+      "PdfOcrJsonRequest": {
         "type": "object"
       },
       "PdfPosterizeJsonRequest": {
@@ -377,6 +461,42 @@
         ],
         "type": "object"
       },
+      "PdfRagChunksJsonRequest": {
+        "type": "object"
+      },
+      "PdfReadFormJsonRequest": {
+        "type": "object"
+      },
+      "PdfRedactJsonRequest": {
+        "type": "object"
+      },
+      "PdfRemoveSignaturesJsonRequest": {
+        "type": "object"
+      },
+      "PdfRenderJsonRequest": {
+        "type": "object"
+      },
+      "PdfReorderPagesJsonRequest": {
+        "type": "object"
+      },
+      "PdfRepairJsonRequest": {
+        "type": "object"
+      },
+      "PdfRotateJsonRequest": {
+        "type": "object"
+      },
+      "PdfSanitizeJsonRequest": {
+        "type": "object"
+      },
+      "PdfScalePagesJsonRequest": {
+        "type": "object"
+      },
+      "PdfSplitByOutlineJsonRequest": {
+        "type": "object"
+      },
+      "PdfSplitJsonRequest": {
+        "type": "object"
+      },
       "PdfSplitScannedBookJsonRequest": {
         "properties": {
           "gutter_overlap": {
@@ -412,6 +532,15 @@
           "input",
           "output"
         ],
+        "type": "object"
+      },
+      "PdfStampJsonRequest": {
+        "type": "object"
+      },
+      "PdfStitchCanvasJsonRequest": {
+        "type": "object"
+      },
+      "PdfTimestampJsonRequest": {
         "type": "object"
       },
       "PdfToEpubJsonRequest": {
@@ -450,6 +579,21 @@
           "input",
           "output"
         ],
+        "type": "object"
+      },
+      "PdfToHtmlJsonRequest": {
+        "type": "object"
+      },
+      "PdfToJsonJsonRequest": {
+        "type": "object"
+      },
+      "PdfToMarkdownJsonRequest": {
+        "type": "object"
+      },
+      "PdfToPdfAJsonRequest": {
+        "type": "object"
+      },
+      "PdfValidateJsonRequest": {
         "type": "object"
       },
       "PdfValidateSignaturesJsonRequest": {
@@ -502,6 +646,26 @@
         ],
         "type": "object"
       },
+      "RunRecipeOnceResponse": {
+        "properties": {
+          "output_bytes": {
+            "type": "string"
+          },
+          "receipt": {},
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "output_bytes",
+          "receipt"
+        ],
+        "type": "object"
+      },
+      "SemanticSearchJsonRequest": {
+        "type": "object"
+      },
       "SplitJsonRequest": {
         "properties": {
           "input": {
@@ -525,6 +689,76 @@
         },
         "required": [
           "input"
+        ],
+        "type": "object"
+      },
+      "StartWatcherRequest": {
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "error_dir": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "move_original": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name_template": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_dir": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipe": {
+            "type": "string"
+          },
+          "settle_delay_ms": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "dir",
+          "recipe"
+        ],
+        "type": "object"
+      },
+      "StartWatcherResponse": {
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "recipe": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "watcher_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "watcher_id",
+          "status",
+          "dir",
+          "recipe"
         ],
         "type": "object"
       },
@@ -572,6 +806,91 @@
         "description": "Binary PDF upload schema for Swagger/OpenAPI.",
         "format": "binary",
         "type": "string"
+      },
+      "WatcherListResponse": {
+        "properties": {
+          "watchers": {
+            "items": {
+              "$ref": "#/components/schemas/WatcherSummary"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "watchers"
+        ],
+        "type": "object"
+      },
+      "WatcherSummary": {
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "failed": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "last_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_output": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_processed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_processed_file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_receipt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipe": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "succeeded": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total_processed": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "watcher_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "watcher_id",
+          "status",
+          "dir",
+          "recipe",
+          "total_processed",
+          "succeeded",
+          "failed"
+        ],
+        "type": "object"
       },
       "WatermarkJsonRequest": {
         "properties": {
@@ -633,6 +952,13 @@
           "input": {
             "type": "string"
           },
+          "name_template": {
+            "description": "Optional output basename template; output is then a directory.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "output": {
             "type": "string"
           },
@@ -662,6 +988,9 @@
         "required": [
           "recipe"
         ],
+        "type": "object"
+      },
+      "WorkspaceSearchJsonRequest": {
         "type": "object"
       }
     }
@@ -2131,6 +2460,107 @@
         "summary": "Open-WebUI's Tika 3 loader expects an object even without an Accept header.",
         "tags": [
           "Document Ingestion"
+        ]
+      }
+    },
+    "/v1/automation/run": {
+      "post": {
+        "operationId": "run_recipe_once",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunRecipeOnceResponse"
+                }
+              }
+            },
+            "description": "Recipe run completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          }
+        },
+        "tags": [
+          "Workflow"
+        ]
+      }
+    },
+    "/v1/automation/watchers": {
+      "get": {
+        "operationId": "list_watchers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatcherListResponse"
+                }
+              }
+            },
+            "description": "List of active watchers"
+          }
+        },
+        "tags": [
+          "Workflow"
+        ]
+      },
+      "post": {
+        "operationId": "start_watcher",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWatcherRequest"
+              }
+            }
+          },
+          "description": "Start a hot folder watcher",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartWatcherResponse"
+                }
+              }
+            },
+            "description": "Watcher started"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          }
+        },
+        "tags": [
+          "Workflow"
+        ]
+      }
+    },
+    "/v1/automation/watchers/{id}": {
+      "delete": {
+        "operationId": "stop_watcher",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Watcher stopped"
+          },
+          "404": {
+            "description": "Watcher not found"
+          }
+        },
+        "tags": [
+          "Workflow"
         ]
       }
     }

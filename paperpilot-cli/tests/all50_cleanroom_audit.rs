@@ -229,7 +229,7 @@ fn test_all50_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "extract",
+                "extract-pages",
                 "--input",
                 input.to_str().unwrap(),
                 "--pages",
@@ -274,7 +274,7 @@ fn test_all50_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "delete",
+                "delete-pages",
                 "--input",
                 input.to_str().unwrap(),
                 "--pages",
@@ -319,7 +319,7 @@ fn test_all50_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "reorder",
+                "reorder-pages",
                 "--input",
                 input.to_str().unwrap(),
                 "--order",
@@ -590,7 +590,7 @@ fn test_all50_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "repair",
+                "pdf-repair",
                 "--input",
                 input.to_str().unwrap(),
                 "--output",
@@ -633,7 +633,7 @@ fn test_all50_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "linearize",
+                "pdf-linearize",
                 "--input",
                 input.to_str().unwrap(),
                 "--output",
@@ -1588,7 +1588,7 @@ fn test_all50_audit() {
             &cli_path,
             &[
                 "form",
-                "fill",
+                "fill-form",
                 input.to_str().unwrap(),
                 "--data",
                 "{}",
