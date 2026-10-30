@@ -6418,6 +6418,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "tokenizers",
+ "walkdir",
  "zstd 0.13.3",
 ]
 
