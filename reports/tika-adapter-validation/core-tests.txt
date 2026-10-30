@@ -1,8 +1,0 @@
-     Running unittests src\lib.rs (D:\building\.paperpilot-tools\target\debug\deps\paperpilot_pdf-3f3c056684a72f75.exe)
-running 5 tests
-test operations::extract_text::tests::test_extract_text_all_pages ... ok
-test operations::extract_text::tests::test_extract_text_specific_pages ... ok
-test operations::extract_text::tests::test_extract_text_bytes_rejects_corrupt_pdf ... ok
-test operations::extract_text::tests::test_extract_text_bytes_requires_unlocked_pdf ... ok
-test operations::extract_text::tests::test_extract_text_bytes_page_selection_and_legacy_parity ... ok
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 168 filtered out; finished in 0.02s
