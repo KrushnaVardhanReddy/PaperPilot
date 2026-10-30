@@ -149,3 +149,17 @@
 | 5.8.5 | Local Embedding & Vector Export (`pdf_embed`) | Offline document vectorization via pure-Rust embedding crates (`candle` / `fastembed-rs`) generating 384/768-dim float arrays locally on CPU/WASM |
 | 5.8.6 | Tri-Interface & Python SDK Bindings (`paperpilot-py` via PyO3) | Expose fast Rust document parsers across CLI, MCP, REST Gateway, and a lightweight zero-dependency Python wheel (`pip install paperpilot`) to easily capture Python AI engineers |
 
+---
+
+### 5.9 — Penta-Interface Audit Remediation: 100% Green E2E Suite `[Spec 145]`
+
+> Remediation of all parameter schemas, missing tool registrations, CLI flags, and route handlers surfaced by the unmocked Penta-Interface E2E audits across Waves 5, 6, 7, and 8.
+
+| # | Task | Scope & Objectives | Status |
+|---|---|---|:---:|
+| 5.9.1 | Session 1: MCP Server Registry & Schema Corrections | Register `pdf_extract_tables` and `semantic_search`; fix schemas for `pdf_extract_text`, `pdf_rag_chunks`, `pdf_bates`, `pdf_merge`, `pdf_reorder_pages`, `pdf_encrypt`, `pdf_fill_form`, `pdf_redact` in `paperpilot-mcp` | 🚀 Active |
+| 5.9.2 | Session 2: CLI Subcommand Flag Normalization & Parity | Align clap CLI arguments and subcommands in `paperpilot-cli` for multi-inputs, formatting flags, and tool parameters | 🚀 Active |
+| 5.9.3 | Session 3: REST Gateway Route & Schema Parity | Route missing Wave 7 conversion and Wave 8 intelligence endpoints in `paperpilot-gateway`; align payload structures | 🚀 Active |
+| 5.9.4 | Session 4: PDF Engine Edge-Cases & Formatting | Fix CBZ comic book archive generation, bookmark hierarchy fallback in `pdf_split_by_outline`, and render disk flushing in `paperpilot-pdf` | 🚀 Active |
+| 5.9.5 | Session 5: OCR Model Packaging & Search Fallback | Add automatic model pack check / test fallback in `pdf_ocr` and recursive directory walking in `workspace_search` in `paperpilot-nlp` | 🚀 Active |
+

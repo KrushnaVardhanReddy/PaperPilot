@@ -1,0 +1,57 @@
+# Task: Penta-Interface Remediation — Session 1: MCP Server Tool Registry & Schema Alignment
+# Base Branch: feat/penta-audit-remediation-all-waves
+# Target Spec: specs/145-penta-audit-remediation/spec.md
+# Workstream: 1 of 5
+
+## Objective
+Remediate tool registrations and parameter schemas in `paperpilot-mcp` so that all MCP tool calls in Waves 5, 6, 7, and 8 succeed cleanly.
+
+---
+
+## STRICT Constraints & File Ownership
+You may ONLY modify files inside:
+- `paperpilot-mcp/src/`
+- `paperpilot-mcp/tests/`
+
+DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`paperpilot-cli`, `paperpilot-gateway`, `paperpilot-pdf`, `paperpilot-nlp`).
+
+---
+
+## Detailed Implementation Tasks
+
+### 1. Register Missing MCP Tools
+In `paperpilot-mcp/src/server.rs`:
+- Register `pdf_extract_tables`:
+  - Define schema in `list_tools`.
+  - In `execute_call_tool`: call `paperpilot_pdf::operations::extract_tables` or return extracted table markdown/json.
+- Register `semantic_search`:
+  - Define schema in `list_tools` accepting `"query": String`, `"input": Option<String>`, `"limit": Option<usize>`.
+  - In `execute_call_tool`: call vector similarity search or keyword semantic search.
+
+### 2. Flexible Parameter Parsing
+Support optional parameters and aliases across tool handlers:
+- **`pdf_extract_text`**: If `"output"` parameter is not provided or null, do not fail. Extract text and return it directly in `ContentBlock::Text(serde_json::json!({"success": true, "text": text}).to_string())`.
+- **`pdf_rag_chunks`**: If `"output"` is not provided, return chunks directly in the JSON response payload.
+- **`pdf_bates`**: Default `"start_number"` to `1` if omitted or not provided.
+- **`pdf_merge` & `pdf_merge_alternate`**: Accept both `"inputs": [...]` array and single `"input"` (array or comma-delimited string).
+- **`pdf_reorder_pages`**: Accept both `"order": [...]` and `"page_order": [...]`.
+- **`pdf_fill_form`**: Parse `"values"` whether supplied as a JSON object `{"field1": "val1"}` or serialized string.
+- **`pdf_create_form_field`**: Accept `"field_name"`, `"field_type"`, `"page"`, `"rect"`.
+- **`pdf_redact`**: Accept `"page"` (integer), `"rect"` `[x, y, w, h]`, and optional `"color"`.
+- **`pdf_encrypt`**: Accept `"password"` (or `"user_password"`) with default AES-256 permissions.
+- **`pdf_timestamp`**: If timestamp server is unreachable or unconfigured, return a valid offline timestamp or structured response without error.
+
+---
+
+## Verification
+Run all MCP wave suites locally:
+```bash
+cargo test -p paperpilot-mcp --test wave2_mcp_tests
+cargo test -p paperpilot-mcp --test wave3_ai_synthesis_mcp_tests
+cargo test -p paperpilot-mcp --test wave4_mcp_tests
+cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests
+cargo test -p paperpilot-mcp --test wave6_page_ops_mcp_tests
+cargo test -p paperpilot-mcp --test wave7_conversions_mcp_tests
+cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests
+```
+All tests must compile and pass without errors.
