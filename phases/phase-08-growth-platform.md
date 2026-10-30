@@ -316,3 +316,18 @@ permissions = { print = true, edit = false }
 | 8.11.9 | Round-trip annotation merge UI | Desktop UI for reviewing a scanned-back document: side-by-side view of original `.ppdoc` vs. inbound scan; detected handwritten annotations shown as a new `annotation` layer; one-click "Accept all" merges annotations into the canonical document. |
 | 8.11.10 | E2E Physical Ingestion tests | Automated tests: spin up a mock eSCL HTTP client, POST a test TIFF scan, verify PaperPilot produces a valid `.ppdoc` with OCR text and DjVu compression applied. Print-with-return-address: embed watermark, simulate scan (Gaussian blur + noise filter to simulate print/scan degradation), verify fingerprint is recovered and doc_id decoded correctly. (No Mocking of the compression or OCR pipeline.) |
 
+---
+
+### 8.12 — Universal Observability, Structured Logging & Dual Error Engine `[Spec 146]`
+
+**Goal:** Production-grade observability, telemetry, and debugging across all surfaces without leaking sensitive customer PII or breaking stdio protocols.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.12.1 | Multi-Format Logging (`LOG_FORMAT`) | Support `json` (NDJSON), `compact`, `pretty`, and `text` with dynamic level filtering via `RUST_LOG` and CLI flags (`specs/146-universal-structured-logging/spec.md`) |
+| 8.12.2 | The Dual Error Model | Log full root causes and error chains internally on server (`tracing::error!`), while returning safe structured error responses with `request_id` to clients |
+| 8.12.3 | Gateway Request Tracing & Correlation | Axum middleware capturing `http.method`, `http.route`, `http.status_code`, `duration_ms`, `client.ip`, and propagating `request_id` |
+| 8.12.4 | Stdio Isolation & Privacy Guardrails | Strict `stderr` routing for CLI and MCP (protecting binary stdout and JSON-RPC wire frames); redaction of passwords and raw document text buffers |
+| 8.12.5 | Deep Operation Tracing | Granular `tracing::debug!` and `tracing::trace!` spans across core operations in `paperpilot-pdf` |
+| 8.12.6 | Automated Test Suite | Unmocked verification in `tests/test_logging.rs` for NDJSON parsing and flag validation |
+
