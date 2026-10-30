@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -15,6 +15,10 @@ all: format lint test-all build
 # Build the Rust workspace (debug)
 build:
 	cargo build --workspace
+
+# Build the paperpilot CLI binary (required for unmocked CLI tests)
+build-cli:
+	cargo build --bin paperpilot
 
 # Build and run the standalone desktop application
 run: build-release
@@ -185,6 +189,47 @@ test-cleanroom-top12:
 # Run Clean-Room Audit for All 50 Tools
 test-cleanroom-all50:
 	cargo test --test all50_cleanroom_audit -j 2
+
+# Penta-Interface Unmocked E2E Audits (Waves 1 through 8)
+.PHONY: test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
+
+# Wave 1 Core Launch Suite (Top 12 Tools) E2E Tests
+test-wave1: build-cli
+	cargo test --test top12_cleanroom_audit -j 2 -- --nocapture
+
+# Wave 2 Penta E2E Tests
+test-wave2: build-cli
+	cargo test -p paperpilot-mcp --test wave2_mcp_tests -- --nocapture
+
+# Wave 3 AI & Document Synthesis Penta E2E Tests
+test-wave3: build-cli
+	cargo test -p paperpilot-mcp --test wave3_ai_synthesis_mcp_tests -- --nocapture
+
+# Wave 4 Office Penta E2E Tests
+test-wave4: build-cli
+	cargo test -p paperpilot-mcp --test wave4_mcp_tests -- --nocapture
+
+# Wave 5 Security, Signatures & Forms Penta E2E Tests
+test-wave5: build-cli
+	cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests -- --nocapture
+
+# Wave 6 Page Operations & Imposition Penta E2E Tests
+test-wave6: build-cli
+	cargo test -p paperpilot-mcp --test wave6_page_ops_mcp_tests -- --nocapture
+
+# Wave 7 Conversions & Packaging Penta E2E Tests
+test-wave7: build-cli
+	cargo test -p paperpilot-mcp --test wave7_conversions_mcp_tests -- --nocapture
+
+# Wave 8 Analysis, OCR & Search Penta E2E Tests
+test-wave8: build-cli
+	cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests -- --nocapture
+
+# Run newly audited parallel waves (Waves 5, 6, 7, 8)
+test-waves: test-wave5 test-wave6 test-wave7 test-wave8
+
+# Run all Penta E2E waves sequentially across the entire suite (Waves 1 through 8)
+test-waves-all: test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8
 
 .PHONY: test-conformance
 test-conformance:

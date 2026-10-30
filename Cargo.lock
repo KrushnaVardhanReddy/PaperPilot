@@ -6383,6 +6383,7 @@ dependencies = [
  "lazy_static",
  "lopdf 0.45.0",
  "paperpilot-core",
+ "paperpilot-nlp",
  "paperpilot-pdf",
  "pdfium-render",
  "reqwest 0.13.5",
