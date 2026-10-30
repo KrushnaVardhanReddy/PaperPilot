@@ -3,7 +3,7 @@
 ## pdf_merge - PASS
 - **Input**: `merge_a.pdf, merge_b.pdf` (1074 bytes)
 - **Output**: `merged.pdf` (957 bytes)
-- **Latency**: 15 ms
+- **Latency**: 14 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Exact page count == 2 passed
@@ -11,7 +11,7 @@
 ## pdf_split - PASS
 - **Input**: `multi_page.pdf` (1409 bytes)
 - **Output**: `split_dir/` (1046 bytes)
-- **Latency**: 10 ms
+- **Latency**: 15 ms
 - **Validation Checks**:
   - Check 1: Directory contains split_1.pdf, split_2.pdf, split_3.pdf
   - Check 2: split_1 (2p), split_2 (2p), split_3 (1p) passed
@@ -19,7 +19,7 @@
 ## pdf_rotate - PASS
 - **Input**: `single_page.pdf` (539 bytes)
 - **Output**: `rotated.pdf` (553 bytes)
-- **Latency**: 10 ms
+- **Latency**: 18 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Rotate attribute == 90 passed
@@ -27,7 +27,7 @@
 ## pdf_delete_pages - PASS
 - **Input**: `multi_page.pdf` (1409 bytes)
 - **Output**: `deleted.pdf` (966 bytes)
-- **Latency**: 15 ms
+- **Latency**: 14 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Exact page count == 3 passed
@@ -35,7 +35,7 @@
 ## pdf_reorder_pages - PASS
 - **Input**: `multi_page.pdf` (1409 bytes)
 - **Output**: `reordered.pdf` (1414 bytes)
-- **Latency**: 23 ms
+- **Latency**: 14 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Exact page count 5; page 1 text contains 'Page 5' passed
@@ -43,7 +43,7 @@
 ## pdf_compress - PASS
 - **Input**: `large_doc.pdf` (4737 bytes)
 - **Output**: `compressed.pdf` (4742 bytes)
-- **Latency**: 32 ms
+- **Latency**: 27 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Output file size <= original size and opens without syntax corruption passed
@@ -51,7 +51,7 @@
 ## pdf_watermark - PASS
 - **Input**: `single_page.pdf` (539 bytes)
 - **Output**: `watermarked.pdf` (887 bytes)
-- **Latency**: 18 ms
+- **Latency**: 20 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Content stream contains 'CONFIDENTIAL' passed
@@ -59,7 +59,7 @@
 ## pdf_ocr - PASS
 - **Input**: `single_page.pdf` (539 bytes)
 - **Output**: `ocr.txt` (0 bytes)
-- **Latency**: 16 ms
+- **Latency**: 23 ms
 - **Validation Checks**:
   - Check 2: Command failed, assumed missing model error passed
 
@@ -74,7 +74,7 @@
 ## pdf_to_docx - PASS
 - **Input**: `single_page.pdf` (539 bytes)
 - **Output**: `converted.docx` (18364 bytes)
-- **Latency**: 24 ms
+- **Latency**: 31 ms
 - **Validation Checks**:
   - Check 1: File > 0 bytes passed
   - Check 2: Valid OpenXML ZIP archive (PK\x03\x04) passed
@@ -82,7 +82,7 @@
 ## excel_to_json - PASS
 - **Input**: `test.xlsx` (5488 bytes)
 - **Output**: `converted.json` (129 bytes)
-- **Latency**: 9 ms
+- **Latency**: 10 ms
 - **Validation Checks**:
   - Check 1: File exists and > 0 bytes passed
   - Check 2: Parses as valid JSON containing rows passed
