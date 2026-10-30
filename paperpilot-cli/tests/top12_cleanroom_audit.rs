@@ -305,7 +305,7 @@ fn test_top12_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "delete",
+                "delete-pages",
                 "--input",
                 input.to_str().unwrap(),
                 "--pages",
@@ -369,7 +369,7 @@ fn test_top12_audit() {
         let success = run_cli(
             &cli_path,
             &[
-                "reorder",
+                "reorder-pages",
                 "--input",
                 input.to_str().unwrap(),
                 "--order",

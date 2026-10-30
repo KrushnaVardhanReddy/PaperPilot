@@ -61,6 +61,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "extract-pages")]
     Extract {
         #[arg(long)]
         input: PathBuf,
@@ -69,6 +70,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "delete-pages")]
     Delete {
         #[arg(long)]
         input: PathBuf,
@@ -77,6 +79,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "reorder-pages")]
     Reorder {
         #[arg(long)]
         input: PathBuf,
@@ -141,6 +144,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "pdf-repair")]
     Repair {
         #[arg(long)]
         input: PathBuf,
@@ -148,6 +152,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Fast Web View: Optimize PDF for fast web viewing [Input: .pdf | Output: .pdf]
+    #[command(name = "pdf-linearize")]
     Linearize {
         #[arg(long)]
         input: PathBuf,
@@ -267,6 +272,7 @@ pub enum Commands {
     },
     /// Convert to PDF/A: Archive-ready PDF format conversion [Input: .pdf | Output: .pdf]
     /// Invert PDF colors or apply dark mode
+    #[command(name = "pdf-invert-colors")]
     InvertColors {
         #[arg(long)]
         input: PathBuf,
@@ -401,6 +407,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "classify-type")]
     Classify {
         #[arg(long)]
         input: PathBuf,
@@ -638,6 +645,49 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "pdf-to-html")]
+    PdfToHtml {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-markdown")]
+    PdfToMarkdown {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-json")]
+    PdfToJson {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "json-to-pdf")]
+    JsonToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "rag-chunks")]
+    RagChunks {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    #[command(name = "workspace-search")]
+    WorkspaceSearch {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    #[command(name = "semantic-search")]
+    SemanticSearch {
+        #[arg(long)]
+        input: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe
@@ -782,9 +832,11 @@ pub enum WorkflowSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum FormCommands {
+    #[command(name = "read-form")]
     Read {
         input: PathBuf,
     },
+    #[command(name = "fill-form")]
     Fill {
         input: PathBuf,
         #[arg(long)]
@@ -792,6 +844,7 @@ pub enum FormCommands {
         #[arg(short, long)]
         output: PathBuf,
     },
+    #[command(name = "create-form-field")]
     AddField {
         input: PathBuf,
         #[arg(long)]
