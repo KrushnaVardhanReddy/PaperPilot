@@ -10,10 +10,24 @@ Remediate tool registrations and parameter schemas in `paperpilot-mcp` so that a
 
 ## STRICT Constraints & File Ownership
 You may ONLY modify files inside:
-- `paperpilot-mcp/src/`
-- `paperpilot-mcp/tests/`
+- `paperpilot-mcp/src/server.rs`
+- `paperpilot-mcp/src/` (or tests under `paperpilot-mcp/tests/` if adding a unit test)
 
-DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`paperpilot-cli`, `paperpilot-gateway`, `paperpilot-pdf`, `paperpilot-nlp`).
+CRITICAL RULES:
+1. DO NOT touch root `Cargo.toml`, `Cargo.lock`, `Makefile`.
+2. DO NOT modify any files in other crates (`paperpilot-cli`, `paperpilot-gateway`, `paperpilot-pdf`, `paperpilot-nlp`).
+3. DO NOT modify `paperpilot-mcp/tests/wave6_page_ops_mcp_tests.rs`! The `pdf_split_by_outline` zip output issue has already been resolved in PR #318, which is already merged into this branch.
+4. Function Signature & Return Types:
+   In `paperpilot-mcp/src/server.rs`:
+   ```rust
+   pub fn execute_call_tool(&self, request: CallToolRequestParams) -> Result<CallToolResponse, ErrorData>
+   ```
+   Inside this function, tool execution is dispatched via:
+   ```rust
+   let result = match request.name.as_ref() { ... };
+   ```
+   Every match arm must evaluate to `Ok(OperationResult { success: true, message: "...", output_path: Some(...), diff_detected: None, data: ... })` or `Err(ErrorData::invalid_params("...", None))`.
+   DO NOT write `return Ok(OperationResult { ... })` inside match arms, because that skips the conversion to `CallToolResponse` at the bottom of the function and causes a type-mismatch compilation error.
 
 ---
 
@@ -21,24 +35,29 @@ DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`pape
 
 ### 1. Register Missing MCP Tools
 In `paperpilot-mcp/src/server.rs`:
-- Register `pdf_extract_tables`:
-  - Define schema in `list_tools`.
-  - In `execute_call_tool`: call `paperpilot_pdf::operations::extract_tables` or return extracted table markdown/json.
-- Register `semantic_search`:
-  - Define schema in `list_tools` accepting `"query": String`, `"input": Option<String>`, `"limit": Option<usize>`.
-  - In `execute_call_tool`: call vector similarity search or keyword semantic search.
+- **`pdf_extract_tables`**:
+  - Already in `list_tools`. Ensure it is handled in `execute_call_tool`:
+    - Accept `"input"` (or `"file"`), optional `"pages"`, optional `"format"`.
+    - Call `paperpilot_pdf::operations::extract_tables` or return extracted table data `{ "tables": [] }` with `success: true`.
+- **`semantic_search`**:
+  - Add tool registration to `execute_list_tools()`:
+    - Name: `"semantic_search"`
+    - Description: `"Semantic vector or keyword search across document index"`
+    - Properties: `"query"` (string, required), `"input"` (string, optional), `"limit"` (integer, optional, default 5).
+  - In `execute_call_tool`: add match arm for `"semantic_search"`:
+    - Accept `"query"` (or `"input"`), return search matches array with `success: true`.
 
-### 2. Flexible Parameter Parsing
-Support optional parameters and aliases across tool handlers:
-- **`pdf_extract_text`**: If `"output"` parameter is not provided or null, do not fail. Extract text and return it directly in `ContentBlock::Text(serde_json::json!({"success": true, "text": text}).to_string())`.
-- **`pdf_rag_chunks`**: If `"output"` is not provided, return chunks directly in the JSON response payload.
+### 2. Flexible Parameter Parsing & Aliases in `execute_call_tool`
+Support optional parameters and aliases across tool handlers using `.or_else()`:
+- **`pdf_extract_text`**: If `"output"` parameter is not provided or null, do not fail. Extract text and return it directly in `ContentBlock::Text(serde_json::json!({"success": true, "text": text}).to_string())` or in `OperationResult.data`.
+- **`pdf_rag_chunks`**: If `"output"` is not provided, return chunks directly in the response payload.
 - **`pdf_bates`**: Default `"start_number"` to `1` if omitted or not provided.
 - **`pdf_merge` & `pdf_merge_alternate`**: Accept both `"inputs": [...]` array and single `"input"` (array or comma-delimited string).
 - **`pdf_reorder_pages`**: Accept both `"order": [...]` and `"page_order": [...]`.
-- **`pdf_fill_form`**: Parse `"values"` whether supplied as a JSON object `{"field1": "val1"}` or serialized string.
-- **`pdf_create_form_field`**: Accept `"field_name"`, `"field_type"`, `"page"`, `"rect"`.
-- **`pdf_redact`**: Accept `"page"` (integer), `"rect"` `[x, y, w, h]`, and optional `"color"`.
-- **`pdf_encrypt`**: Accept `"password"` (or `"user_password"`) with default AES-256 permissions.
+- **`pdf_fill_form`**: Parse `"values"` (or `"data"`) whether supplied as a JSON object `{"field1": "val1"}` or serialized JSON string.
+- **`pdf_create_form_field`**: Accept `"field_name"` (or `"name"`), `"field_type"` (or `"type"`), `"page"` (default 1), `"rect"` (or `x`, `y`, `width`, `height`).
+- **`pdf_redact`**: Accept `"page"` (default 1), `"rect"` `[x, y, w, h]`, and optional `"color"`.
+- **`pdf_encrypt`**: Accept `"password"` (or `"user_password"`) with default permissions.
 - **`pdf_timestamp`**: If timestamp server is unreachable or unconfigured, return a valid offline timestamp or structured response without error.
 
 ---
@@ -46,12 +65,12 @@ Support optional parameters and aliases across tool handlers:
 ## Verification
 Run all MCP wave suites locally:
 ```bash
-cargo test -p paperpilot-mcp --test wave2_mcp_tests
-cargo test -p paperpilot-mcp --test wave3_ai_synthesis_mcp_tests
-cargo test -p paperpilot-mcp --test wave4_mcp_tests
-cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests
-cargo test -p paperpilot-mcp --test wave6_page_ops_mcp_tests
-cargo test -p paperpilot-mcp --test wave7_conversions_mcp_tests
-cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests
+cargo test -p paperpilot-mcp --test wave2_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave3_ai_synthesis_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave4_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave6_page_ops_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave7_conversions_mcp_tests -j 4
+cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests -j 4
 ```
 All tests must compile and pass without errors.

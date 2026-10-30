@@ -10,24 +10,33 @@ Mount and harmonize all REST API routes and JSON request/response schemas in `pa
 
 ## STRICT Constraints & File Ownership
 You may ONLY modify files inside:
+- `paperpilot-gateway/src/routes/handlers.rs`
+- `paperpilot-gateway/src/server.rs`
 - `paperpilot-gateway/src/`
-- `paperpilot-gateway/tests/`
 
-DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`paperpilot-cli`, `paperpilot-mcp`, `paperpilot-pdf`, `paperpilot-nlp`).
+CRITICAL RULES:
+1. DO NOT touch root `Cargo.toml`, `Cargo.lock`, `Makefile`.
+2. DO NOT modify any files in other crates (`paperpilot-cli`, `paperpilot-mcp`, `paperpilot-pdf`, `paperpilot-nlp`).
+3. DO NOT break or modify assertions in `paperpilot-gateway/tests/server_test.rs`!
+4. Status Code Clarification:
+   - Return HTTP 400 Bad Request ONLY for client request validation errors (e.g. malformed JSON, completely missing required fields when validation fails).
+   - For tool execution errors or missing files, return the response expected by `server_test.rs` (e.g., HTTP 500 or HTTP 400 as asserted in `server_test.rs`).
+   - Run `cargo test -p paperpilot-gateway -j 4` to verify existing tests pass.
 
 ---
 
 ## Detailed Implementation Tasks
 
 ### 1. Route Mounting & Endpoint Coverage
-In `paperpilot-gateway/src/routes/` and router definitions:
+In `paperpilot-gateway/src/server.rs`:
 Ensure all endpoints under `/api/v1/pdf/tools/{tool_name}` (and `/api/v1/pdf/{tool_name}`) are actively mounted for:
 - **Wave 5**: `pdf_watermark`, `pdf_encrypt`, `pdf_decrypt`, `pdf_sanitize`, `pdf_redact`, `pdf_read_form`, `pdf_fill_form`, `pdf_flatten`, `pdf_stamp`, `pdf_validate_signatures`, `pdf_remove_signatures`, `pdf_change_permissions`, `pdf_create_form_field`, `pdf_timestamp`, `pdf_bates`.
 - **Wave 6**: `pdf_merge`, `pdf_merge_alternate`, `pdf_split`, `pdf_split_by_outline`, `pdf_split_scanned_book`, `pdf_rotate`, `pdf_auto_rotate`, `pdf_crop`, `pdf_scale_pages`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_extract_pages`, `pdf_nup`, `pdf_booklet`, `pdf_posterize`, `pdf_stitch_canvas`.
 - **Wave 7**: `pdf_to_html`, `pdf_to_markdown`, `pdf_to_json`, `json_to_pdf`, `pdf_to_epub`, `pdf_to_pdf_a`, `pdf_comic_archive`, `excel_to_json`, `excel_to_csv`, `pdf_dedup_streams`, `pdf_invert_colors`, `pdf_linearize`, `pdf_repair`.
 - **Wave 8**: `pdf_extract_text`, `pdf_ocr`, `pdf_extract_tables`, `document_pii_scan`, `pdf_bookmarks`, `pdf_header_footer`, `pdf_classify_type`, `pdf_compare`, `pdf_hash`, `pdf_validate`, `pdf_render`, `pdf_rag_chunks`, `workspace_search`, `semantic_search`.
 
-### 2. Request Payload Alignment
+### 2. Request Payload Alignment in `handlers.rs`
+In `paperpilot-gateway/src/routes/handlers.rs`:
 - `pdf_encrypt`: Accept both `"password"` and `"user_password"`.
 - `pdf_redact`: Accept `"page"` as optional with default `1`, plus `"rect"`.
 - `pdf_fill_form`: Accept `"values"` as JSON object or key-value map.
@@ -38,14 +47,14 @@ Ensure all endpoints under `/api/v1/pdf/tools/{tool_name}` (and `/api/v1/pdf/{to
 ### 3. Response Standardization
 - When an operation succeeds, return HTTP 200 with JSON payload:
   `{ "success": true, "message": "...", "output": "..." }`
-- When an operation encounters a client error, return HTTP 400 with:
+- When client payload validation fails, return HTTP 400 with:
   `{ "success": false, "error": "Human readable message" }`
 
 ---
 
 ## Verification
-Run gateway tests:
+Run gateway tests locally:
 ```bash
-cargo test -p paperpilot-gateway
+cargo test -p paperpilot-gateway -j 4
 ```
-Ensure all route tests pass cleanly without panics.
+Ensure all route tests and handler tests pass cleanly.
