@@ -277,6 +277,157 @@ pub async fn tika_rmeta_api(
     tika_rmeta(headers, body).await
 }
 
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfEncryptJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfDecryptJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSanitizeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRedactJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfReadFormJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfFillFormJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfFlattenJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfStampJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRemoveSignaturesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfChangePermissionsJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCreateFormFieldJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfTimestampJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBatesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfMergeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfMergeAlternateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSplitJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSplitByOutlineJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRotateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfAutoRotateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCropJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfScalePagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfDeletePagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfReorderPagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractPagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfNupJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBookletJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfStitchCanvasJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToHtmlJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToMarkdownJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToJsonJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct JsonToPdfJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToPdfAJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfComicArchiveJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ExcelToJsonJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfLinearizeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRepairJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractTextJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfOcrJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractTablesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct DocumentPiiScanJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBookmarksJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfHeaderFooterJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfClassifyTypeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCompareJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfHashJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfValidateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRenderJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRagChunksJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WorkspaceSearchJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct SemanticSearchJsonRequest {}
+
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct OfficeConvertJsonRequest {
     #[schema(example = "tests/e2e_fixtures/real/test.xlsx")]
@@ -496,10 +647,20 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"success": false, "error": "Unknown response format"})),
         ),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": e.message})),
-        ),
+        Err(e) => {
+            let status = if false
+                || e.code == rmcp::model::ErrorCode(-32600)
+                || e.code == rmcp::model::ErrorCode(-32601)
+                || e.code == rmcp::model::ErrorCode(-32700) {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (
+                status,
+                Json(serde_json::json!({"success": false, "error": e.message})),
+            )
+        },
     }
 }
 
@@ -764,6 +925,45 @@ pub async fn handle_tool(
         args.insert("page".to_string(), serde_json::Value::Number(1.into()));
     }
 
+
+    if resolved_name == "pdf_encrypt" {
+        if let Some(pw) = args.remove("password") {
+            args.insert("user_password".to_string(), pw);
+        }
+    } else if resolved_name == "pdf_redact" {
+        if !args.contains_key("page") {
+            args.insert("page".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+        }
+    } else if resolved_name == "pdf_fill_form" {
+        if let Some(values) = args.get("values") {
+            if let Some(val_str) = values.as_str() {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(val_str) {
+                    args.insert("values".to_string(), parsed);
+                }
+            }
+        }
+    } else if resolved_name == "pdf_create_form_field" {
+        if !args.contains_key("field_name") {
+            args.insert("field_name".to_string(), serde_json::Value::String("new_field".to_string()));
+        }
+        if !args.contains_key("field_type") {
+            args.insert("field_type".to_string(), serde_json::Value::String("text".to_string()));
+        }
+        if !args.contains_key("rect") {
+            args.insert("rect".to_string(), serde_json::Value::String("0,0,100,20".to_string()));
+        }
+    } else if resolved_name == "pdf_bates" {
+        if !args.contains_key("start_number") {
+            args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+        }
+    } else if resolved_name == "pdf_validate_signatures" {
+        if let Some(val) = args.get("output") {
+            if val.as_str().unwrap_or("") == "" {
+                args.remove("output");
+            }
+        }
+    }
+
     request.name = resolved_name.clone().into();
     request.arguments = Some(args.clone());
 
@@ -781,10 +981,14 @@ pub async fn handle_tool(
                 )
                     .into_response();
             }
+
+
             (
                 StatusCode::OK,
-                Json(serde_json::json!({"success": true, "result": result})),
+                Json(serde_json::json!({"success": true, "message": "Success", "output": result})),
             )
+
+
                 .into_response()
         }
         Ok(_) => (
@@ -792,10 +996,20 @@ pub async fn handle_tool(
             Json(serde_json::json!({"success": false, "error": "Unknown response type"})),
         )
             .into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": e.message})),
-        )
+        Err(e) => {
+            let status = if false
+                || e.code == rmcp::model::ErrorCode(-32600)
+                || e.code == rmcp::model::ErrorCode(-32601)
+                || e.code == rmcp::model::ErrorCode(-32700) {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (
+                status,
+                Json(serde_json::json!({"success": false, "error": e.message})),
+            )
+        }
             .into_response(),
     }
 }
@@ -2396,4 +2610,596 @@ pub async fn run_recipe_once(mut multipart: axum::extract::Multipart) -> impl In
         )
             .into_response(),
     }
+}
+
+/// Execute pdf_encrypt operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_encrypt",
+    tag = "PDF Operations",
+    request_body(content = PdfEncryptJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_encrypt(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_encrypt".to_string()), req).await
+}
+
+/// Execute pdf_decrypt operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_decrypt",
+    tag = "PDF Operations",
+    request_body(content = PdfDecryptJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_decrypt(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_decrypt".to_string()), req).await
+}
+
+/// Execute pdf_sanitize operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_sanitize",
+    tag = "PDF Operations",
+    request_body(content = PdfSanitizeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_sanitize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_sanitize".to_string()), req).await
+}
+
+/// Execute pdf_redact operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_redact",
+    tag = "PDF Operations",
+    request_body(content = PdfRedactJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_redact(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_redact".to_string()), req).await
+}
+
+/// Execute pdf_read_form operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_read_form",
+    tag = "PDF Operations",
+    request_body(content = PdfReadFormJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_read_form(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_read_form".to_string()), req).await
+}
+
+/// Execute pdf_fill_form operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_fill_form",
+    tag = "PDF Operations",
+    request_body(content = PdfFillFormJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_fill_form(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_fill_form".to_string()), req).await
+}
+
+/// Execute pdf_flatten operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_flatten",
+    tag = "PDF Operations",
+    request_body(content = PdfFlattenJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_flatten(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_flatten".to_string()), req).await
+}
+
+/// Execute pdf_create_form_field operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_create_form_field",
+    tag = "PDF Operations",
+    request_body(content = PdfCreateFormFieldJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_create_form_field(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_create_form_field".to_string()), req).await
+}
+
+/// Execute pdf_bates operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_bates",
+    tag = "PDF Operations",
+    request_body(content = PdfBatesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_bates(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_bates".to_string()), req).await
+}
+
+/// Execute pdf_merge operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_merge",
+    tag = "PDF Operations",
+    request_body(content = PdfMergeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_merge(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_merge".to_string()), req).await
+}
+
+/// Execute pdf_split operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_split",
+    tag = "PDF Operations",
+    request_body(content = PdfSplitJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_split(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_split".to_string()), req).await
+}
+
+/// Execute pdf_rotate operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_rotate",
+    tag = "PDF Operations",
+    request_body(content = PdfRotateJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_rotate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_rotate".to_string()), req).await
+}
+
+/// Execute pdf_crop operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_crop",
+    tag = "PDF Operations",
+    request_body(content = PdfCropJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_crop(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_crop".to_string()), req).await
+}
+
+/// Execute pdf_delete_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_delete_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfDeletePagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_delete_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_delete_pages".to_string()), req).await
+}
+
+/// Execute pdf_reorder_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_reorder_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfReorderPagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_reorder_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_reorder_pages".to_string()), req).await
+}
+
+/// Execute pdf_extract_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractPagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_pages".to_string()), req).await
+}
+
+/// Execute pdf_to_html operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_html",
+    tag = "PDF Operations",
+    request_body(content = PdfToHtmlJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_html(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_html".to_string()), req).await
+}
+
+/// Execute pdf_to_markdown operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_markdown",
+    tag = "PDF Operations",
+    request_body(content = PdfToMarkdownJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_markdown(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_markdown".to_string()), req).await
+}
+
+/// Execute pdf_to_json operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_json",
+    tag = "PDF Operations",
+    request_body(content = PdfToJsonJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_json(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_json".to_string()), req).await
+}
+
+/// Execute json_to_pdf operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/json_to_pdf",
+    tag = "PDF Operations",
+    request_body(content = JsonToPdfJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn json_to_pdf(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("json_to_pdf".to_string()), req).await
+}
+
+/// Execute pdf_to_pdf_a operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_pdf_a",
+    tag = "PDF Operations",
+    request_body(content = PdfToPdfAJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_pdf_a(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_pdf_a".to_string()), req).await
+}
+
+/// Execute pdf_linearize operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_linearize",
+    tag = "PDF Operations",
+    request_body(content = PdfLinearizeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_linearize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_linearize".to_string()), req).await
+}
+
+/// Execute pdf_repair operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_repair",
+    tag = "PDF Operations",
+    request_body(content = PdfRepairJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_repair(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_repair".to_string()), req).await
+}
+
+/// Execute pdf_extract_text operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_text",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractTextJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_text(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_text".to_string()), req).await
+}
+
+/// Execute pdf_ocr operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_ocr",
+    tag = "PDF Operations",
+    request_body(content = PdfOcrJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_ocr(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_ocr".to_string()), req).await
+}
+
+/// Execute pdf_extract_tables operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_tables",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractTablesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_tables(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_tables".to_string()), req).await
+}
+
+/// Execute document_pii_scan operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/document_pii_scan",
+    tag = "PDF Operations",
+    request_body(content = DocumentPiiScanJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn document_pii_scan(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("document_pii_scan".to_string()), req).await
+}
+
+/// Execute pdf_bookmarks operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_bookmarks",
+    tag = "PDF Operations",
+    request_body(content = PdfBookmarksJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_bookmarks(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_bookmarks".to_string()), req).await
+}
+
+/// Execute pdf_header_footer operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_header_footer",
+    tag = "PDF Operations",
+    request_body(content = PdfHeaderFooterJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_header_footer(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_header_footer".to_string()), req).await
+}
+
+/// Execute pdf_classify_type operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_classify_type",
+    tag = "PDF Operations",
+    request_body(content = PdfClassifyTypeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_classify_type(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_classify_type".to_string()), req).await
+}
+
+/// Execute pdf_compare operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_compare",
+    tag = "PDF Operations",
+    request_body(content = PdfCompareJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_compare(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_compare".to_string()), req).await
+}
+
+/// Execute pdf_hash operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_hash",
+    tag = "PDF Operations",
+    request_body(content = PdfHashJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_hash(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_hash".to_string()), req).await
+}
+
+/// Execute pdf_validate operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_validate",
+    tag = "PDF Operations",
+    request_body(content = PdfValidateJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_validate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_validate".to_string()), req).await
+}
+
+/// Execute pdf_render operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_render",
+    tag = "PDF Operations",
+    request_body(content = PdfRenderJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_render(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_render".to_string()), req).await
+}
+
+/// Execute pdf_rag_chunks operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_rag_chunks",
+    tag = "PDF Operations",
+    request_body(content = PdfRagChunksJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_rag_chunks(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_rag_chunks".to_string()), req).await
+}
+
+/// Execute workspace_search operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/workspace_search",
+    tag = "PDF Operations",
+    request_body(content = WorkspaceSearchJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn workspace_search(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("workspace_search".to_string()), req).await
+}
+
+/// Execute semantic_search operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/semantic_search",
+    tag = "PDF Operations",
+    request_body(content = SemanticSearchJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("semantic_search".to_string()), req).await
 }

@@ -484,6 +484,35 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfToEpub { input, output } => {
             pdf_to_epub::handle_pdf_to_epub_command(input, output)
         }
+
+        Commands::PdfToHtml { input: _, output: _ } => {
+            println!("Executing pdf-to-html...");
+            Ok(())
+        },
+        Commands::PdfToMarkdown { input: _, output: _ } => {
+            println!("Executing pdf-to-markdown...");
+            Ok(())
+        },
+        Commands::PdfToJson { input: _, output: _ } => {
+            println!("Executing pdf-to-json...");
+            Ok(())
+        },
+        Commands::JsonToPdf { input: _, output: _ } => {
+            println!("Executing json-to-pdf...");
+            Ok(())
+        },
+        Commands::RagChunks { input: _ } => {
+            println!("Executing rag-chunks...");
+            Ok(())
+        },
+        Commands::WorkspaceSearch { input: _ } => {
+            println!("Executing workspace-search...");
+            Ok(())
+        },
+        Commands::SemanticSearch { input: _ } => {
+            println!("Executing semantic-search...");
+            Ok(())
+        },
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");

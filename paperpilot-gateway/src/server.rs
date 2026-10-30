@@ -96,7 +96,57 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WatcherListResponse,
             handlers::WatcherSummary,
             handlers::RunRecipeOnceResponse
-        )
+        ,
+            handlers::PdfEncryptJsonRequest,
+            handlers::PdfDecryptJsonRequest,
+            handlers::PdfSanitizeJsonRequest,
+            handlers::PdfRedactJsonRequest,
+            handlers::PdfReadFormJsonRequest,
+            handlers::PdfFillFormJsonRequest,
+            handlers::PdfFlattenJsonRequest,
+            handlers::PdfStampJsonRequest,
+            handlers::PdfRemoveSignaturesJsonRequest,
+            handlers::PdfChangePermissionsJsonRequest,
+            handlers::PdfCreateFormFieldJsonRequest,
+            handlers::PdfTimestampJsonRequest,
+            handlers::PdfBatesJsonRequest,
+            handlers::PdfMergeJsonRequest,
+            handlers::PdfMergeAlternateJsonRequest,
+            handlers::PdfSplitJsonRequest,
+            handlers::PdfSplitByOutlineJsonRequest,
+            handlers::PdfRotateJsonRequest,
+            handlers::PdfAutoRotateJsonRequest,
+            handlers::PdfCropJsonRequest,
+            handlers::PdfScalePagesJsonRequest,
+            handlers::PdfDeletePagesJsonRequest,
+            handlers::PdfReorderPagesJsonRequest,
+            handlers::PdfExtractPagesJsonRequest,
+            handlers::PdfNupJsonRequest,
+            handlers::PdfBookletJsonRequest,
+            handlers::PdfStitchCanvasJsonRequest,
+            handlers::PdfToHtmlJsonRequest,
+            handlers::PdfToMarkdownJsonRequest,
+            handlers::PdfToJsonJsonRequest,
+            handlers::JsonToPdfJsonRequest,
+            handlers::PdfToPdfAJsonRequest,
+            handlers::PdfComicArchiveJsonRequest,
+            handlers::ExcelToJsonJsonRequest,
+            handlers::PdfLinearizeJsonRequest,
+            handlers::PdfRepairJsonRequest,
+            handlers::PdfExtractTextJsonRequest,
+            handlers::PdfOcrJsonRequest,
+            handlers::PdfExtractTablesJsonRequest,
+            handlers::DocumentPiiScanJsonRequest,
+            handlers::PdfBookmarksJsonRequest,
+            handlers::PdfHeaderFooterJsonRequest,
+            handlers::PdfClassifyTypeJsonRequest,
+            handlers::PdfCompareJsonRequest,
+            handlers::PdfHashJsonRequest,
+            handlers::PdfValidateJsonRequest,
+            handlers::PdfRenderJsonRequest,
+            handlers::PdfRagChunksJsonRequest,
+            handlers::WorkspaceSearchJsonRequest,
+            handlers::SemanticSearchJsonRequest)
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
@@ -284,6 +334,66 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
             "/v1/automation/receipts/{id}",
             get(crate::receipt_routes::get),
         )
+
+        .route("/api/v1/pdf/pdf_encrypt", post(handlers::pdf_encrypt))
+        .route("/api/v1/pdf/pdf_decrypt", post(handlers::pdf_decrypt))
+        .route("/api/v1/pdf/pdf_sanitize", post(handlers::pdf_sanitize))
+        .route("/api/v1/pdf/pdf_redact", post(handlers::pdf_redact))
+        .route("/api/v1/pdf/pdf_read_form", post(handlers::pdf_read_form))
+        .route("/api/v1/pdf/pdf_fill_form", post(handlers::pdf_fill_form))
+        .route("/api/v1/pdf/pdf_flatten", post(handlers::pdf_flatten))
+        .route("/api/v1/pdf/pdf_stamp", post(handlers::pdf_stamp))
+        .route("/api/v1/pdf/pdf_validate_signatures", post(handlers::pdf_validate_signatures))
+        .route("/api/v1/pdf/pdf_remove_signatures", post(handlers::pdf_remove_signatures))
+        .route("/api/v1/pdf/pdf_change_permissions", post(handlers::pdf_change_permissions))
+        .route("/api/v1/pdf/pdf_create_form_field", post(handlers::pdf_create_form_field))
+        .route("/api/v1/pdf/pdf_timestamp", post(handlers::pdf_timestamp))
+        .route("/api/v1/pdf/pdf_bates", post(handlers::pdf_bates))
+        .route("/api/v1/pdf/pdf_merge", post(handlers::pdf_merge))
+        .route("/api/v1/pdf/pdf_merge_alternate", post(handlers::pdf_merge_alternate))
+        .route("/api/v1/pdf/pdf_split", post(handlers::pdf_split))
+        .route("/api/v1/pdf/pdf_split_by_outline", post(handlers::pdf_split_by_outline))
+        .route("/api/v1/pdf/pdf_split_scanned_book", post(handlers::pdf_split_scanned_book))
+        .route("/api/v1/pdf/pdf_rotate", post(handlers::pdf_rotate))
+        .route("/api/v1/pdf/pdf_auto_rotate", post(handlers::pdf_auto_rotate))
+        .route("/api/v1/pdf/pdf_crop", post(handlers::pdf_crop))
+        .route("/api/v1/pdf/pdf_scale_pages", post(handlers::pdf_scale_pages))
+        .route("/api/v1/pdf/pdf_delete_pages", post(handlers::pdf_delete_pages))
+        .route("/api/v1/pdf/pdf_reorder_pages", post(handlers::pdf_reorder_pages))
+        .route("/api/v1/pdf/pdf_extract_pages", post(handlers::pdf_extract_pages))
+        .route("/api/v1/pdf/pdf_nup", post(handlers::pdf_nup))
+        .route("/api/v1/pdf/pdf_booklet", post(handlers::pdf_booklet))
+        .route("/api/v1/pdf/pdf_posterize", post(handlers::pdf_posterize))
+        .route("/api/v1/pdf/pdf_stitch_canvas", post(handlers::pdf_stitch_canvas))
+        .route("/api/v1/pdf/pdf_to_html", post(handlers::pdf_to_html))
+        .route("/api/v1/pdf/pdf_to_markdown", post(handlers::pdf_to_markdown))
+        .route("/api/v1/pdf/pdf_to_json", post(handlers::pdf_to_json))
+        .route("/api/v1/pdf/json_to_pdf", post(handlers::json_to_pdf))
+        .route("/api/v1/pdf/pdf_to_epub", post(handlers::pdf_to_epub))
+        .route("/api/v1/pdf/pdf_to_pdf_a", post(handlers::pdf_to_pdf_a))
+        .route("/api/v1/pdf/pdf_comic_archive", post(handlers::pdf_comic_archive))
+        .route("/api/v1/pdf/excel_to_json", post(handlers::excel_to_json))
+        .route("/api/v1/pdf/excel_to_csv", post(handlers::excel_to_csv))
+        .route("/api/v1/pdf/pdf_dedup_streams", post(handlers::pdf_dedup_streams))
+        .route("/api/v1/pdf/pdf_invert_colors", post(handlers::pdf_invert_colors))
+        .route("/api/v1/pdf/pdf_linearize", post(handlers::pdf_linearize))
+        .route("/api/v1/pdf/pdf_repair", post(handlers::pdf_repair))
+        .route("/api/v1/pdf/pdf_extract_text", post(handlers::pdf_extract_text))
+        .route("/api/v1/pdf/pdf_ocr", post(handlers::pdf_ocr))
+        .route("/api/v1/pdf/pdf_extract_tables", post(handlers::pdf_extract_tables))
+        .route("/api/v1/pdf/document_pii_scan", post(handlers::document_pii_scan))
+        .route("/api/v1/pdf/pdf_bookmarks", post(handlers::pdf_bookmarks))
+        .route("/api/v1/pdf/pdf_header_footer", post(handlers::pdf_header_footer))
+        .route("/api/v1/pdf/pdf_classify_type", post(handlers::pdf_classify_type))
+        .route("/api/v1/pdf/pdf_compare", post(handlers::pdf_compare))
+        .route("/api/v1/pdf/pdf_hash", post(handlers::pdf_hash))
+        .route("/api/v1/pdf/pdf_validate", post(handlers::pdf_validate))
+        .route("/api/v1/pdf/pdf_render", post(handlers::pdf_render))
+        .route("/api/v1/pdf/pdf_rag_chunks", post(handlers::pdf_rag_chunks))
+
+        .route("/api/v1/search/semantic_search", post(handlers::semantic_search))
+
+        .route("/api/v1/pdf/pdf_watermark", post(handlers::watermark))
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
         .with_state(registry)

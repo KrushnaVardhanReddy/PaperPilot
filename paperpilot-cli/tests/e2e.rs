@@ -135,7 +135,7 @@ fn test_form_commands() {
     let added_field_path = dir.path().join("added_field.pdf");
 
     cmd.arg("form")
-        .arg("add-field")
+        .arg("create-form-field")
         .arg(&pdf_path)
         .arg("--name")
         .arg("TestField")
@@ -150,7 +150,7 @@ fn test_form_commands() {
 
     let mut cmd2 = Command::cargo_bin("paperpilot-cli").unwrap();
     cmd2.arg("form")
-        .arg("read")
+        .arg("read-form")
         .arg(&added_field_path)
         .assert()
         .success()
@@ -162,7 +162,7 @@ fn test_form_commands() {
     let filled_path = dir.path().join("filled.pdf");
     let mut cmd3 = Command::cargo_bin("paperpilot-cli").unwrap();
     cmd3.arg("form")
-        .arg("fill")
+        .arg("fill-form")
         .arg(&added_field_path)
         .arg("--data")
         .arg(&data_path)
