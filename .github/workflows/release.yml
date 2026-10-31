@@ -280,9 +280,97 @@ jobs:
             release_pkgs/*
           if-no-files-found: error
 
+  build-desktop-gui:
+    name: Build Desktop GUI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact_name: desktop-linux
+            bundles: "appimage,deb"
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: desktop-windows
+            bundles: "nsis,msi"
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: desktop-macos
+            bundles: "dmg"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: desktop-${{ matrix.target }}
+
+      - name: Install Linux GUI Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
+
+      - name: Set up Node.js & pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: 'apps/desktop/pnpm-lock.yaml'
+
+      - name: Install Desktop Dependencies
+        run: |
+          cd apps/desktop
+          pnpm install --no-frozen-lockfile || npm install
+
+      - name: Build Desktop GUI Bundle
+        shell: bash
+        env:
+          CARGO_BUILD_JOBS: 4
+        run: |
+          cd apps/desktop
+          rm -f pnpm-workspace.yaml
+          npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+
+      - name: Package Desktop GUI Artifacts
+        shell: bash
+        run: |
+          mkdir -p release_pkgs
+          find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.exe" -o -name "*.msi" -o -name "*.dmg" \) -exec cp {} release_pkgs/ \; 2>/dev/null || true
+          find apps/desktop/src-tauri/target/release/bundle/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.exe" -o -name "*.msi" -o -name "*.dmg" \) -exec cp {} release_pkgs/ \; 2>/dev/null || true
+
+          cd release_pkgs
+          for f in *; do
+            if [ -f "$f" ]; then
+              shasum -a 256 "$f" > "${f}.sha256" || sha256sum "$f" > "${f}.sha256"
+            fi
+          done
+          cd ..
+
+      - name: Upload Desktop GUI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.artifact_name }}
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
   publish-github-release:
     name: Publish GitHub Release
-    needs: [build-release-binaries, build-wasm-package, build-android-apk]
+    needs: [build-release-binaries, build-desktop-gui, build-wasm-package, build-android-apk]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -311,14 +399,21 @@ jobs:
           body: |
             ## PaperPilot Release ${{ inputs.version }}
 
-            ### Included Release Binaries & Packages
-            - `paperpilot` (CLI Engine with 50+ PDF & document tools)
-            - `paperpilot-gateway` (HTTP/REST Microservice API)
-            - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
-            - `paperpilot-all` (All-in-one desktop suite)
-            - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
-            - `paperpilot-wasm-universal` (Client-side WebAssembly package for browser & edge runtimes)
+            ### Included Release Binaries & GUI Installers
+            - **Desktop GUI Applications**:
+              - Linux: `PaperPilot.AppImage` (standalone portable) and `.deb` (Ubuntu/Debian installer)
+              - Windows: `.msi` and `.exe` (NSIS setup installer)
+              - macOS: `.dmg` (Apple Silicon disk image installer)
+            - **CLI & Backend Microservices**:
+              - `paperpilot` (CLI Engine with 50+ PDF & document tools)
+              - `paperpilot-gateway` (HTTP/REST Microservice API)
+              - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
+              - `paperpilot-all-*.tar.gz` (Complete bundle of CLI, Gateway, and MCP servers)
+            - **Mobile & Web Runtimes**:
+              - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
+              - `paperpilot-wasm-universal.tar.gz` (Universal WebAssembly engine for browsers & edge runtimes)
 
             ### Checksums
-            SHA-256 checksums are attached alongside each `.tar.gz`, `.zip`, and `.apk` artifact.
+            SHA-256 checksums are attached alongside each installer, binary package, and APK artifact.
+
 
