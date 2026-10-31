@@ -1,0 +1,161 @@
+[Task / Spec 149: Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine]
+
+Objective:
+Implement Spec 149 (`specs/149-zero-trace-per-request-logging-suppression/spec.md`) and Task 149 (`specs/149-zero-trace-per-request-logging-suppression/task.md`) across `paperpilot-gateway`, `paperpilot-cli`, and `paperpilot-mcp`.
+Provide:
+1. Dynamic per-request zero-trace log suppression on the REST API Gateway via headers (`X-Zero-Trace: true`, `X-Log-Level: off`) and query parameters (`?zero_trace=true`, `?log_level=off`).
+2. Response verification header `X-Zero-Trace-Enforced: true` proving compliance.
+3. Extension-based log suppression in gateway handlers so sensitive file names/metadata are not logged to stdout/stderr when zero-trace is enabled.
+4. CLI zero-trace verification (`--log-level off` and `NO_LOG=1` emitting exactly 0 bytes on stderr).
+5. MCP tool argument `_zero_trace: true` / `log_level: "off"` suppressing tool diagnostic logs on stderr.
+6. Comprehensive automated test suites in `paperpilot-gateway/tests/test_zero_trace.rs` and `paperpilot-cli/tests/test_zero_trace.rs`.
+
+---
+
+### 🚨 Critical Guardrails & Production Rules:
+
+1. **System Resource Constraint**:
+   ALWAYS run all cargo tests and builds with memory-safe `-j 4` (e.g. `cargo test -p paperpilot-gateway -j 4`).
+
+2. **Zero Metadata Leakage in Zero-Trace Mode**:
+   When `X-Zero-Trace: true` or `X-Log-Level: off` is present, the server MUST NOT emit any `tracing::info!`, `tracing::debug!`, or `tracing::error!` containing document names, routes, IP addresses, or payload bytes.
+
+3. **Client Error Body Preservation**:
+   Zero-trace suppresses SERVER logs. It MUST NOT break client error responses. When an error occurs in zero-trace mode, the client must still receive a valid HTTP status code and standard error JSON (`{"success": false, "error": "...", "code": "...", "request_id": "..."}`).
+
+4. **Response Header Contract**:
+   Whenever zero-trace is enforced, the gateway MUST attach the response header:
+   `X-Zero-Trace-Enforced: true`
+
+5. **🚨 CRITICAL CLI 'watch' SUBCOMMAND GUARD**:
+   In `paperpilot-cli/src/lib.rs`, do NOT execute `let cli = Cli::parse();` before checking `if args.len() > 1 && args[1] == "watch"`.
+   The hot-folder watcher daemon intercepts raw `args[1] == "watch"` directly. If you call `Cli::parse()` first, Clap terminates with `error: unrecognized subcommand 'watch'`.
+
+6. **Target Branch Protocol**:
+   Work on branch `feat/149-zero-trace-per-request-logging-suppression`. Ensure all tests compile and pass before finalizing.
+
+---
+
+### Step-by-Step Implementation Details:
+
+#### Step 1: Gateway Request Tracing Middleware in `paperpilot-gateway/src/server.rs`
+
+1. Define a marker struct for request extensions:
+   ```rust
+   #[derive(Clone, Copy, Debug)]
+   pub struct ZeroTrace(pub bool);
+   ```
+
+2. In `async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Response`:
+   - Inspect incoming headers:
+     ```rust
+     let header_zero_trace = req.headers().contains_key("x-zero-trace")
+         || req.headers()
+             .get("x-log-level")
+             .and_then(|v| v.to_str().ok())
+             .map(|s| s.eq_ignore_ascii_case("off"))
+             .unwrap_or(false);
+     ```
+   - Inspect query parameters:
+     ```rust
+     let query_zero_trace = req.uri().query()
+         .map(|q| q.contains("zero_trace=true") || q.contains("log_level=off"))
+         .unwrap_or(false);
+
+     let is_zero_trace = header_zero_trace || query_zero_trace;
+     req.extensions_mut().insert(ZeroTrace(is_zero_trace));
+     ```
+   - **If `is_zero_trace` is true**:
+     - Do NOT enter any tracing span.
+     - Do NOT emit `tracing::debug!("Incoming request started")` or `tracing::info!("Request completed")`.
+     - Execute `let mut response = next.run(req).await;`
+     - Attach confirmation response header:
+       ```rust
+       response.headers_mut().insert(
+           axum::http::HeaderName::from_static("x-zero-trace-enforced"),
+           axum::http::HeaderValue::from_static("true"),
+       );
+       return response;
+       ```
+   - **If `is_zero_trace` is false**:
+     - Retain the standard Spec 146 behavior: enter span with `request_id`, emit debug on start, and emit info on request completed with latency and status code.
+
+---
+
+#### Step 2: Gateway Handler Log Suppression in `paperpilot-gateway/src/handlers.rs`
+
+1. In handler error paths where `tracing::error!` is emitted:
+   - Check request extension `req.extensions().get::<ZeroTrace>()`.
+   - If `Some(ZeroTrace(true))`: Skip logging error details to server stdout/stderr.
+   - If `None` or `Some(ZeroTrace(false))`: Emit `tracing::error!` as normal.
+2. Client response still returns standard structured error:
+   `{"success": false, "error": "...", "code": "...", "request_id": req_id}` with appropriate HTTP status code (e.g. 400 or 500).
+
+---
+
+#### Step 3: CLI Zero-Trace & NO_LOG Support in `paperpilot-cli/src/lib.rs`
+
+1. In `pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>)`:
+   - Check for `NO_LOG` environment variable:
+     ```rust
+     let no_log_env = std::env::var("NO_LOG")
+         .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+         .unwrap_or(false);
+     ```
+   - If `no_log_env` is true or `cli_level == Some("off")` or `std::env::var("RUST_LOG").as_deref() == Ok("off")`:
+     - Set `EnvFilter::new("off")` or skip initializing tracing subscriber.
+2. Verify that running `paperpilot --log-level off <subcommand>` produces exactly `0` bytes on `stderr`.
+
+---
+
+#### Step 4: MCP Protocol Zero-Trace Argument in `paperpilot-mcp/src/server.rs`
+
+1. In `execute_call_tool`:
+   - Inspect tool input arguments for optional fields:
+     - `_zero_trace: true` (boolean)
+     - `log_level: "off"` (string)
+   - If either is present:
+     - Suppress emitting `tracing::debug!("Executing tool: ...")` and `tracing::error!("Tool execution error: ...")` to stderr during that tool invocation.
+   - Maintain JSON-RPC envelope integrity on stdout.
+
+---
+
+#### Step 5: Automated Test Suite
+
+1. **Gateway Tests (`paperpilot-gateway/tests/test_zero_trace.rs`)**:
+   - `test_gateway_x_zero_trace_header`:
+     - Send `POST /api/v1/pdf/convert` or `POST /api/v1/pdf/merge` with `X-Zero-Trace: true`.
+     - Assert status code is 200 (or expected success).
+     - Assert header `X-Zero-Trace-Enforced: true` is present on the response.
+   - `test_gateway_x_log_level_off_header`:
+     - Send request with `X-Log-Level: off`.
+     - Assert `X-Zero-Trace-Enforced: true` is present.
+   - `test_gateway_query_param_zero_trace`:
+     - Send `GET /health?zero_trace=true` or `GET /health?log_level=off`.
+     - Assert `X-Zero-Trace-Enforced: true` is present on the response.
+   - `test_gateway_normal_request_retains_logging`:
+     - Send standard request without zero-trace headers.
+     - Assert `X-Zero-Trace-Enforced` header is NOT present.
+     - Assert standard `X-Request-ID` is present.
+
+2. **CLI Tests (`paperpilot-cli/tests/test_zero_trace.rs`)**:
+   - `test_cli_log_level_off_emits_zero_stderr`:
+     - Execute `cargo run -p paperpilot-cli -- --log-level off convert --input tests/e2e_fixtures/real/single_page.pdf --format docx --output /tmp/cli_zero_trace.docx`.
+     - Assert command exits with code 0.
+     - Assert `output.stderr.is_empty()`.
+   - `test_cli_no_log_env_emits_zero_stderr`:
+     - Execute command with environment variable `NO_LOG=1`.
+     - Assert `output.stderr.is_empty()`.
+
+---
+
+### Verification Commands:
+Before submitting the PR, execute the following commands in order and ensure all pass:
+```bash
+cargo check --workspace -j 4
+cargo test -p paperpilot-gateway --test test_zero_trace -j 4
+cargo test -p paperpilot-cli --test test_zero_trace -j 4
+cargo test -p paperpilot-gateway -j 4
+cargo test -p paperpilot-cli -j 4
+cargo test -p paperpilot-mcp -j 4
+```
