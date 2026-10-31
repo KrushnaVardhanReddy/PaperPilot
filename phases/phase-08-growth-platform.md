@@ -331,3 +331,28 @@ permissions = { print = true, edit = false }
 | 8.12.5 | Deep Operation Tracing | Granular `tracing::debug!` and `tracing::trace!` spans across core operations in `paperpilot-pdf` |
 | 8.12.6 | Automated Test Suite | Unmocked verification in `tests/test_logging.rs` for NDJSON parsing and flag validation |
 
+---
+
+### 8.13 — Automated OWASP ZAP API Dynamic Security Gate `[Spec 147]`
+
+**Goal:** Automated dynamic application security testing (DAST) in CI running against PaperPilot Gateway endpoints using OpenAPI definitions.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.13.1 | OpenAPI Export Tooling | Generate static `openapi.json` from `ApiDoc::openapi()` during build or via CLI/test (`specs/147-owasp-zap-api-security-scan/spec.md`) |
+| 8.13.2 | OWASP ZAP API Scan Workflow | Automated GitHub Actions workflow (`.github/workflows/zap.yml`) running `zaproxy/action-api-scan` against live gateway endpoints |
+| 8.13.3 | Vulnerability Baseline & Rules | Configure custom ZAP rule thresholds (`zap-rules.tsv`) ignoring benign static assets and enforcing strict zero-tolerance on injection and auth headers |
+| 8.13.4 | SARIF Upload & Security Dashboard | Upload scan findings directly to GitHub Security Advisory tab |
+
+---
+
+### 8.14 — OpenVAS / Greenbone Community Container Hardening Suite `[Spec 148]`
+
+**Goal:** Turnkey infrastructure and network vulnerability scanner for deployed Docker containers and enterprise servers.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.14.1 | Greenbone Community Compose Scaffold | Docker Compose recipe (`docker/greenbone-scan/docker-compose.yml`) hosting Greenbone GCE containers with free vulnerability feeds (`specs/148-greenbone-openvas-container-hardening/spec.md`) |
+| 8.14.2 | Automated Container Target Runner | Shell script (`scripts/run_greenbone_scan.sh`) targeting local or remote `paperpilot-gateway` container instances |
+| 8.14.3 | Executive PDF/HTML Audit Exporter | Automated headless extraction of ISO 27001 / SOC 2 compliance reports via `gvm-cli` |
+

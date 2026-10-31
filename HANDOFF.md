@@ -61,6 +61,8 @@
 | **6** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
 | **7** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
 | **8** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
+| **9** | **Spec 147 / Task 8.13** | **Automated OWASP ZAP API Dynamic Security Scan**<br>DAST CI scanning against OpenAPI endpoints (`.github/workflows/zap.yml`) with SARIF output. | ✅ **Completed & Integrated** |
+| **10** | **Spec 148 / Task 8.14** | **OpenVAS / Greenbone Container Hardening Suite**<br>Dockerized vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports. | 📋 **Planned** |
 
 ---
 
