@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://docs.usepaperpilot.com',
@@ -40,5 +41,6 @@ export default defineConfig({
       ],
       customCss: [],
     }),
+    sitemap(),
   ],
 });
