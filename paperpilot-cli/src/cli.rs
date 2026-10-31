@@ -45,6 +45,9 @@ pub enum Commands {
     /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
     #[cfg(feature = "pdf")]
     FillBatch(FillBatchArgs),
+    /// Launch the PaperPilot Graphical Desktop UI
+    #[command(alias = "gui")]
+    Ui,
     /// Generate shell completions
     Completions {
         #[arg(value_enum)]

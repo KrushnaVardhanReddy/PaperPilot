@@ -177,6 +177,35 @@ fn run_impl() {
         std::process::exit(0);
     }
 
+    let is_ui = args.len() > 1 && (args[1] == "ui" || args[1] == "gui");
+    if is_ui {
+        let exe_path = std::env::current_exe().unwrap_or_default();
+        let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let candidates = [
+            exe_dir.join("PaperPilot"),
+            exe_dir.join("PaperPilot.AppImage"),
+            exe_dir.join("PaperPilot.exe"),
+            exe_dir.join("desktop"),
+            exe_dir.join("desktop.exe"),
+        ];
+        for candidate in &candidates {
+            if candidate.exists() {
+                println!("Launching PaperPilot Desktop GUI: {:?}", candidate);
+                let mut cmd = std::process::Command::new(candidate);
+                match cmd.spawn() {
+                    Ok(_) => std::process::exit(0),
+                    Err(e) => {
+                        eprintln!("Failed to launch {:?}: {}", candidate, e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        eprintln!("PaperPilot Desktop GUI executable not found in {:?}", exe_dir);
+        eprintln!("To launch desktop UI in development mode, run: 'cd apps/desktop && pnpm tauri dev'");
+        std::process::exit(1);
+    }
+
     let cli = Cli::parse();
     init_logging(cli.log_format.as_deref(), cli.log_level.as_deref());
 

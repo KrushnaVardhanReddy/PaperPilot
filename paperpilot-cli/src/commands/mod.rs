@@ -897,5 +897,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             .map_err(paperpilot_core::error::PdfError::IoError)?;
             Ok(())
         }
+
+        Commands::Ui => Ok(()),
     }
 }
