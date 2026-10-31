@@ -57,7 +57,7 @@
 | **2** | **Spec 145 Manual Matrix** | **4-Person Manual Desktop QA Guides**<br>Structured step-by-step matrix for all 89 platform tools in `qa/manual_desktop_testing/`. | ✅ **Completed & Merged** |
 | **3** | **WASM & CI Hardening** | **Zero-Network WASM Build & Workflow Tag Fixes**<br>Gated native dependencies, verified `wasm-pack build`, modernized workflow actions. | ✅ **Completed & Merged** |
 | **4** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
-| **5** | **Spec 146 Structured Logging** | **Universal Leveled & Structured Logging Engine**<br>Jules session `430350285513267084` dispatched on `feature/dev` (superseding `8020624792143228383`). | 🚀 **In Progress (Jules)** |
+| **5** | **Spec 146 Structured Logging** | **Universal Leveled & Structured Logging Engine**<br>Multi-format NDJSON/text/compact/pretty, request_id correlation, dual error logging (PR #323). | ✅ **Completed & Merged** |
 | **6** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
 | **7** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
 | **8** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |

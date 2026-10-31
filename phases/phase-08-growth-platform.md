@@ -318,7 +318,7 @@ permissions = { print = true, edit = false }
 
 ---
 
-### 8.12 — Universal Observability, Structured Logging & Dual Error Engine `[Spec 146]`
+### 8.12 — Universal Observability, Structured Logging & Dual Error Engine `[Spec 146]` ✅ **Merged (PR #323)**
 
 **Goal:** Production-grade observability, telemetry, and debugging across all surfaces without leaking sensitive customer PII or breaking stdio protocols.
 

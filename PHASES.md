@@ -48,7 +48,7 @@
 - **4-Person Manual Desktop Testing Matrix (Spec 145)**: 89 platform tools divided across 4 tester profiles (`qa/manual_desktop_testing/`) covering Page Operations, Conversions, Security/Forms, and AI/Analysis.
 - **WASM & CI Hardening**: Fixed target dependency leakages in `paperpilot-core` and `paperpilot-pdf` to eliminate `mio` and native socket dependencies on `wasm32-unknown-unknown`. Validated with clean `wasm-pack build` and 29 passing WASM tests.
 - **CI Action Modernization**: Standardized all GitHub Actions workflows to official `@v4` and `@v2` tags, resolving runner resolution errors.
-- **Universal Structured Logging & Observability (Spec 146 / Task 8.12)**: Dispatched Jules session `8020624792143228383` on `feature/dev` to implement multi-format logging (`json`, `compact`, `pretty`, `text`), request correlation with `request_id`, the dual error logging model, and strict stdio isolation.
+- **Universal Structured Logging & Observability (Spec 146 / Task 8.12)**: ✅ **Merged (PR #323)**. Multi-format logging (`json`, `compact`, `pretty`, `text`), request correlation with `request_id`, the dual error logging model, and strict stdio isolation verified across CLI, Gateway, MCP, and Core PDF.
 - **Active Feature Freeze**: Codebase is feature-frozen. Development proceeds strictly for QA execution, release validation, and community feedback.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
