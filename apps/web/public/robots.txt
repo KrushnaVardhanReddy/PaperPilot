@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://usepaperpilot.com/sitemap.xml
+Sitemap: https://docs.usepaperpilot.com/sitemap-index.xml

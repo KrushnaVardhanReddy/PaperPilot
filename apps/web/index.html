@@ -9,37 +9,37 @@
     <title>PaperPilot — 100% Private Client-Side PDF & Document Tools (No Upload)</title>
     <meta
       name="description"
-      content="100% private, client-side PDF and document processing powered by pure-Rust WebAssembly. Files never leave your browser. Merge, split, compress, OCR, convert to Word/Excel, validate signatures, and edit securely."
+      content="100% private, client-side PDF and document processing powered by pure-Rust WebAssembly. Zero uploads, zero telemetry. The fast, lightweight alternative to Stirling PDF and iLovePDF."
     />
     <meta
       name="keywords"
-      content="free pdf tools, private pdf tools, local pdf, client-side wasm pdf, merge pdf, compress pdf, split pdf, pdf to word, pdf to excel, pdf ocr, sign pdf, redact pdf, invert pdf dark mode, bates numbering, offline pdf editor"
+      content="stirling pdf alternative, ilovepdf alternative, smallpdf alternative, private pdf tools, local pdf, client-side wasm pdf, pure rust pdf, merge pdf, compress pdf, split pdf, pdf to word, pdf to excel, pdf ocr, sign pdf, redact pdf, invert pdf dark mode, bates numbering, offline pdf editor"
     />
     <meta name="author" content="PaperPilot" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
     <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="canonical" href="https://paperpilot.app/" />
+    <link rel="canonical" href="https://usepaperpilot.com/" />
 
     <!-- Open Graph / Facebook / LinkedIn -->
     <meta property="og:site_name" content="PaperPilot" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://paperpilot.app/" />
-    <meta property="og:title" content="PaperPilot — 100% Private Client-Side PDF Tools" />
+    <meta property="og:url" content="https://usepaperpilot.com/" />
+    <meta property="og:title" content="PaperPilot — 100% Private Client-Side PDF Tools in Pure Rust" />
     <meta
       property="og:description"
-      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser."
+      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser. Fast alternative to Stirling PDF."
     />
-    <meta property="og:image" content="https://paperpilot.app/og-image.png" />
+    <meta property="og:image" content="https://usepaperpilot.com/logo.png" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PaperPilot — 100% Private Client-Side PDF Tools" />
+    <meta name="twitter:title" content="PaperPilot — 100% Private Client-Side PDF Tools in Pure Rust" />
     <meta
       name="twitter:description"
-      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser."
+      content="Zero uploads, zero telemetry. Pure-Rust WebAssembly document processing engine directly inside your browser. Fast alternative to Stirling PDF."
     />
-    <meta name="twitter:image" content="https://paperpilot.app/og-image.png" />
+    <meta name="twitter:image" content="https://usepaperpilot.com/logo.png" />
 
     <!-- Schema.org WebApplication & Tool ItemList Structured Data -->
     <script type="application/ld+json">
@@ -48,17 +48,17 @@
         "@graph": [
           {
             "@type": "WebSite",
-            "@id": "https://paperpilot.app/#website",
-            "url": "https://paperpilot.app/",
+            "@id": "https://usepaperpilot.com/#website",
+            "url": "https://usepaperpilot.com/",
             "name": "PaperPilot",
             "description": "Privacy-first pure-Rust WebAssembly document manipulation and intelligence suite.",
             "inLanguage": "en"
           },
           {
             "@type": ["SoftwareApplication", "WebApplication"],
-            "@id": "https://paperpilot.app/#application",
+            "@id": "https://usepaperpilot.com/#application",
             "name": "PaperPilot Web Studio",
-            "url": "https://paperpilot.app/",
+            "url": "https://usepaperpilot.com/",
             "applicationCategory": "UtilitiesApplication",
             "operatingSystem": "Web, macOS, Windows, Linux, Android, iOS",
             "browserRequirements": "Requires WebAssembly and modern browser with HTML5 support",
@@ -70,6 +70,7 @@
             "featureList": [
               "100% Client-Side In-Browser Execution",
               "Zero File Uploads & Zero Server Data Storage",
+              "Modern Rust Alternative to Stirling PDF & iLovePDF",
               "PDF Merge, Split, Burst, and Reorder",
               "Pure-Rust High-Fidelity Compression",
               "OCR with Selectable Text Injection",
@@ -82,7 +83,7 @@
           },
           {
             "@type": "ItemList",
-            "@id": "https://paperpilot.app/#tools-catalog",
+            "@id": "https://usepaperpilot.com/#tools-catalog",
             "name": "PaperPilot Client-Side Tool Suite",
             "itemListElement": [
               {
@@ -140,7 +141,86 @@
     </script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- Semantic SEO Pre-Rendered Fallback (Googlebot Crawler Indexing) -->
+      <header style="padding: 2rem; max-width: 1200px; margin: 0 auto; font-family: system-ui, sans-serif;">
+        <h1>PaperPilot — 100% Private Client-Side PDF Tools in Pure Rust</h1>
+        <p><strong>Zero file uploads. Zero telemetry. 100% on-device WebAssembly execution.</strong></p>
+      </header>
+
+      <main style="padding: 2rem; max-width: 1200px; margin: 0 auto; font-family: system-ui, sans-serif;">
+        <section>
+          <h2>The Modern Pure-Rust Alternative to Stirling PDF & iLovePDF</h2>
+          <p>
+            Unlike server-heavy Java alternatives (like Stirling PDF) that require 1–2 GB Docker containers, or closed cloud converters (like iLovePDF and Smallpdf) that upload your sensitive documents to remote servers, PaperPilot runs 100% on-device inside your browser using compiled WebAssembly. Your files never touch a remote server.
+          </p>
+
+          <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; margin: 1.5rem 0;">
+            <thead>
+              <tr style="background-color: #2e2e3e; color: #ffffff;">
+                <th>Capability</th>
+                <th>PaperPilot (WASM & Rust)</th>
+                <th>Stirling PDF</th>
+                <th>iLovePDF / Smallpdf</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Processing Model</strong></td>
+                <td>100% Client-Side In-Browser (WASM)</td>
+                <td>Self-Hosted Server (Java / Docker)</td>
+                <td>Third-Party Cloud Servers</td>
+              </tr>
+              <tr>
+                <td><strong>Document Privacy</strong></td>
+                <td>Files Never Leave Your Device</td>
+                <td>Sent to Self-Hosted Server</td>
+                <td>Uploaded to External Cloud</td>
+              </tr>
+              <tr>
+                <td><strong>Server RAM / Footprint</strong></td>
+                <td>0 MB (Zero Server Cost)</td>
+                <td>1 GB – 2 GB JVM Footprint</td>
+                <td>Unknown (Cloud SaaS)</td>
+              </tr>
+              <tr>
+                <td><strong>Interfaces</strong></td>
+                <td>Web, Desktop (Tauri), CLI, REST API, MCP</td>
+                <td>Web UI only</td>
+                <td>Web UI & Paid API</td>
+              </tr>
+              <tr>
+                <td><strong>Speed & Memory Safety</strong></td>
+                <td>Blazing Pure Rust Performance</td>
+                <td>Java Garbage Collection Spikes</td>
+                <td>Rate-Limited Cloud Uploads</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Core PDF & Document Operations</h2>
+          <ul>
+            <li><strong>PDF Organization:</strong> Merge PDF, Split by Range, Burst Single Pages, Reorder Pages, Rotate, Crop, and Delete Pages.</li>
+            <li><strong>Optimization & Repair:</strong> Pure-Rust Flate Stream Compression, Deduplicate Font Streams, Fast Web View (Linearize), Rebuild Damaged XREF Tables.</li>
+            <li><strong>Document Conversions:</strong> PDF to Word (.docx), PDF to Excel (.xlsx), PDF to PowerPoint (.pptx), PDF to Markdown, PDF to HTML5.</li>
+            <li><strong>Security & Privacy:</strong> Vector Redaction, Deep Sanitization, Password Encryption (AES-256), Digital Signatures (PKCS#7), PII Scanner.</li>
+            <li><strong>AI & Layout Intelligence:</strong> Neural OCR Text Recognition, Multimodal JSON Layout Extraction, Table Matrix Extractor, Vector Semantic Search.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Documentation & Developer Ecosystem</h2>
+          <p>
+            Explore our developer guides and documentation:
+            <a href="https://docs.usepaperpilot.com/">Documentation Portal</a> |
+            <a href="https://docs.usepaperpilot.com/reference/tools-handbook/">89 Tools Master Handbook</a> |
+            <a href="https://github.com/KrushnaVardhanReddy/PaperPilot">Open-Source GitHub Repository</a>
+          </p>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
