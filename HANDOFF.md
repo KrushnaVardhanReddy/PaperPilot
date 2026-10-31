@@ -63,7 +63,7 @@
 | **8** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
 | **9** | **Spec 147 / Task 8.13** | **Automated OWASP ZAP API Dynamic Security Scan**<br>DAST CI scanning against OpenAPI endpoints (`.github/workflows/zap.yml`) with SARIF output. | ✅ **Completed & Integrated** |
 | **10** | **Spec 148 / Task 8.14** | **OpenVAS / Greenbone Container Hardening Suite**<br>Dockerized vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports. | 📋 **Planned** |
-| **11** | **Spec 149 / Task 8.15** | **Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine**<br>Client-controlled `X-Log-Level: off`, `X-Zero-Trace: true`, query params, and `X-Zero-Trace-Enforced: true` compliance verification. | 🚀 **In Progress** (Jules `18287415074186074343` on `feat/149-zero-trace-per-request-logging-suppression`) |
+| **11** | **Spec 149 / Task 8.15** | **Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine**<br>Client-controlled `X-Log-Level: off`, `X-Zero-Trace: true`, query params, and `X-Zero-Trace-Enforced: true` compliance verification. | ✅ **Completed & Merged** |
 
 ---
 

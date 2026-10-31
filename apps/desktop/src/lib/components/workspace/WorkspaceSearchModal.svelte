@@ -42,9 +42,13 @@
   async function extractOfficeText(filePath: string): Promise<string> {
     const tempOut = filePath + '_temp_extract.txt';
     try {
+        let toolArgs: any = { input: filePath, output: tempOut };
+        if (appState.zeroTrace) {
+            toolArgs._zero_trace = true;
+        }
         await safeInvoke('invoke_mcp_tool', {
             tool_name: 'office_extract_text',
-            arguments: { input: filePath, output: tempOut }
+            arguments: toolArgs
         });
         const bytes = await safeInvoke('read_file_bytes', { path: tempOut });
         if (bytes) {

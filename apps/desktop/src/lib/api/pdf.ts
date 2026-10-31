@@ -18,12 +18,16 @@ export async function saveAnnotations(filePath: string, outputPath: string, anno
 }
 
 export async function savePdfForm(inputPath: string, outputPath: string, values: Record<string, string>): Promise<any> {
+    let toolArgs: any = {
+        input: inputPath,
+        output: outputPath,
+        values
+    };
+    if ((window as any).__appState?.zeroTrace) {
+        toolArgs._zero_trace = true;
+    }
     return await invoke('invoke_mcp_tool', {
         toolName: 'pdf_fill_form',
-        arguments: {
-            input: inputPath,
-            output: outputPath,
-            values
-        }
+        arguments: toolArgs
     });
 }

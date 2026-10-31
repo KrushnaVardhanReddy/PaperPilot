@@ -46,9 +46,20 @@ async fn invoke_mcp_tool(
 ) -> Result<serde_json::Value, String> {
     let mut request = CallToolRequestParams::default();
     let cwd = std::env::current_dir().unwrap_or_default();
-    println!(">>> Invoking MCP tool: {}", tool_name);
-    println!(">>> CWD: {}", cwd.display());
-    println!(">>> Arguments: {}", arguments);
+    
+    let is_zero_trace = if let serde_json::Value::Object(ref map) = arguments {
+        map.get("_zero_trace").and_then(|v| v.as_bool()).unwrap_or(false)
+            || map.get("log_level").and_then(|v| v.as_str()).map(|s| s.eq_ignore_ascii_case("off")).unwrap_or(false)
+    } else {
+        false
+    };
+    
+    if !is_zero_trace {
+        println!(">>> Invoking MCP tool: {}", tool_name);
+        println!(">>> CWD: {}", cwd.display());
+        println!(">>> Arguments: {}", arguments);
+    }
+    
     request.name = tool_name.into();
     if let serde_json::Value::Object(map) = arguments {
         request.arguments = Some(map);

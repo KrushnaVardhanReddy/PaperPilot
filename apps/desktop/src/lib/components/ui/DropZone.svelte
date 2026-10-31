@@ -159,7 +159,11 @@
         filename = res.name || filename;
         bytes = new Uint8Array(res.bytes);
       } else {
-        const res = await fetch(targetUrl);
+        let options: RequestInit = {};
+        if (appState.zeroTrace) {
+          options.headers = { 'X-Zero-Trace': 'true' };
+        }
+        const res = await fetch(targetUrl, options);
         if (!res.ok) {
           throw new Error(`HTTP Error: ${res.status}`);
         }

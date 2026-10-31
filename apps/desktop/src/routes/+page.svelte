@@ -82,7 +82,8 @@
           input: path,
           pages: String(e.detail.page),
           angle: angle,
-          output: path
+          output: path,
+          _zero_trace: appState.zeroTrace
         }
       });
       await refreshCurrentDocument();
@@ -108,7 +109,8 @@
         arguments: {
           input: path,
           pages: String(e.detail.page),
-          output: path
+          output: path,
+          _zero_trace: appState.zeroTrace
         }
       });
       await refreshCurrentDocument();
@@ -149,7 +151,8 @@
         arguments: {
           input: path,
           order: pages.join(','),
-          output: path
+          output: path,
+          _zero_trace: appState.zeroTrace
         }
       });
       await refreshCurrentDocument();
@@ -180,7 +183,8 @@
         arguments: {
           input: path,
           order: pages.join(','),
-          output: path
+          output: path,
+          _zero_trace: appState.zeroTrace
         }
       });
       await refreshCurrentDocument();
@@ -225,7 +229,8 @@
         arguments: {
           input: path,
           pages: String(e.detail.page),
-          output: outputPath
+          output: outputPath,
+          _zero_trace: appState.zeroTrace
         }
       });
       toastState.success(`Page ${e.detail.page} extracted to ${outputPath}`);

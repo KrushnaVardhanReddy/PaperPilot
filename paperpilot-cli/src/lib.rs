@@ -79,13 +79,31 @@ pub fn run() {
 }
 
 pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
-    let log_level = cli_level
-        .map(|s| s.to_string())
-        .or_else(|| std::env::var("RUST_LOG").ok())
-        .unwrap_or_else(|| "info".to_string());
+    let no_log_env = std::env::var("NO_LOG")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+
+    let is_zero_trace = no_log_env || cli_level == Some("off") || std::env::var("RUST_LOG").as_deref() == Ok("off");
+
+    let log_level = if is_zero_trace {
+        "off".to_string()
+    } else {
+        cli_level
+            .map(|s| s.to_string())
+            .or_else(|| std::env::var("RUST_LOG").ok())
+            .unwrap_or_else(|| "info".to_string())
+    };
 
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&log_level));
+
+    if is_zero_trace {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(std::io::sink)
+            .with_env_filter(env_filter)
+            .try_init();
+        return;
+    }
 
     let log_format = cli_format
         .map(|s| s.to_string())
@@ -126,10 +144,15 @@ pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
 
 fn run_impl() {
     let mut args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 && args[1] == "watch" {
-        init_logging(None, None);
-        args.remove(1);
-        let watch_cli = WatchCli::parse_from(args);
+    let is_log_level_off = args.iter().position(|a| a == "--log-level").and_then(|idx| args.get(idx + 1)).map_or(false, |l| l == "off");
+    
+    let is_watch = args.len() > 1 && args[1] == "watch" || args.len() > 3 && args[3] == "watch";
+    if is_watch {
+        init_logging(None, if is_log_level_off { Some("off") } else { None });
+        args.retain(|a| a != "watch" && a != "--log-level" && a != "off");
+        let mut new_args = vec![args[0].clone()];
+        new_args.extend_from_slice(&args[1..]);
+        let watch_cli = WatchCli::parse_from(new_args);
 
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
         if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch_with_naming(
@@ -144,7 +167,11 @@ fn run_impl() {
             None,
             watch_cli.name_template,
         )) {
-            tracing::error!(error = %e, "Watch loop failed");
+            let no_log_env = std::env::var("NO_LOG").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
+            let is_zero_trace = no_log_env || is_log_level_off || std::env::var("RUST_LOG").as_deref() == Ok("off");
+            if !is_zero_trace {
+                tracing::error!(error = %e, "Watch loop failed");
+            }
             std::process::exit(1);
         }
         std::process::exit(0);

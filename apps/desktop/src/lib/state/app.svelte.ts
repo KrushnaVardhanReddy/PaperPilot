@@ -36,6 +36,9 @@ export class AppState {
   gatewayRunning = $state(false);
   gatewayPort = $state(7823);
 
+  // Privacy
+  zeroTrace = $state(false);
+
   // Onboarding & Portable Mode
   onboardingCompleted = $state(false);
   isPortableMode = $state(false);

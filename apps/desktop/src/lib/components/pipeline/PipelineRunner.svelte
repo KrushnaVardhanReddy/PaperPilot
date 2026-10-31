@@ -48,6 +48,9 @@
           const label = `Pipeline step ${i + 1} (${step.label} on ${workingFiles.length} files)`;
           const jobId = jobsState.addJob(step.operationId, 'running', label);
 
+          if (appState.zeroTrace) {
+            args._zero_trace = true;
+          }
           const result = await invoke('invoke_mcp_tool', {
             toolName: step.operationId,
             arguments: args
@@ -97,6 +100,9 @@
               : `Step ${i + 1}: ${step.label}`;
             const jobId = jobsState.addJob(step.operationId, 'running', label);
 
+            if (appState.zeroTrace) {
+              args._zero_trace = true;
+            }
             const result = await invoke('invoke_mcp_tool', {
               toolName: step.operationId,
               arguments: args

@@ -129,7 +129,11 @@
     isChecking = true;
     const start = performance.now();
     try {
-      const res = await fetch(`${baseUrl}/health`);
+      let options: RequestInit = {};
+      if (appState.zeroTrace) {
+        options.headers = { 'X-Zero-Trace': 'true' };
+      }
+      const res = await fetch(`${baseUrl}/health`, options);
       if (res.ok) {
         status = 'Online';
       } else {
@@ -213,6 +217,10 @@
           } else {
             options.body = JSON.stringify(getExamplePayload(ep));
           }
+       }
+
+       if (appState.zeroTrace) {
+           options.headers = { ...options.headers, 'X-Zero-Trace': 'true' };
        }
 
        const res = await fetch(url, options);

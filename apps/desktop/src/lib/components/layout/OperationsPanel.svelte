@@ -460,6 +460,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
                    dataBase64: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(result))))
                };
             } else {
+                if (appState.zeroTrace) {
+                  args._zero_trace = true;
+                }
                 result = await invoke('invoke_mcp_tool', { toolName, arguments: args });
             }
 

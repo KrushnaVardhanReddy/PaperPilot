@@ -193,10 +193,14 @@ use axum::{
     middleware::{self, Next},
     response::Response,
 };
+use axum::http::{HeaderName, HeaderValue};
 use std::time::Instant;
 
 #[derive(Clone)]
 pub struct RequestId(pub String);
+
+#[derive(Clone, Copy, Debug)]
+pub struct ZeroTrace(pub bool);
 
 async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Response {
     let req_id = req
@@ -207,6 +211,20 @@ async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Resp
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
     req.extensions_mut().insert(RequestId(req_id.clone()));
+
+    let header_zero_trace = req.headers().contains_key("x-zero-trace")
+        || req.headers()
+            .get("x-log-level")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.eq_ignore_ascii_case("off"))
+            .unwrap_or(false);
+
+    let query_zero_trace = req.uri().query()
+        .map(|q| q.contains("zero_trace=true") || q.contains("log_level=off"))
+        .unwrap_or(false);
+
+    let is_zero_trace = header_zero_trace || query_zero_trace;
+    req.extensions_mut().insert(ZeroTrace(is_zero_trace));
 
     let method = req.method().to_string();
     let uri = req.uri().to_string();
@@ -226,7 +244,9 @@ async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Resp
     );
 
     let start_time = Instant::now();
-    let response = {
+    let response = if is_zero_trace {
+        next.run(req).await
+    } else {
         let _guard = span.enter();
         tracing::debug!(
             request_id = %req_id,
@@ -240,19 +260,28 @@ async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Resp
     let duration_ms = start_time.elapsed().as_secs_f64() * 1000.0;
     let status_code = response.status().as_u16();
 
-    let _guard = span.enter();
-    tracing::info!(
-        request_id = %req_id,
-        http.method = %method,
-        http.route = %uri,
-        http.status_code = status_code,
-        duration_ms = %duration_ms,
-        "Request completed"
-    );
+    if !is_zero_trace {
+        let _guard = span.enter();
+        tracing::info!(
+            request_id = %req_id,
+            http.method = %method,
+            http.route = %uri,
+            http.status_code = status_code,
+            duration_ms = %duration_ms,
+            "Request completed"
+        );
+    }
 
     let mut response = response;
-    if let Ok(hdr_val) = axum::http::HeaderValue::from_str(&req_id) {
-        response.headers_mut().insert("X-Request-ID", hdr_val);
+    if is_zero_trace {
+        response.headers_mut().insert(
+            HeaderName::from_static("x-zero-trace-enforced"),
+            HeaderValue::from_static("true"),
+        );
+    } else {
+        if let Ok(hdr_val) = HeaderValue::from_str(&req_id) {
+            response.headers_mut().insert("X-Request-ID", hdr_val);
+        }
     }
 
     response

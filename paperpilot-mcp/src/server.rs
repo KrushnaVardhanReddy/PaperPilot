@@ -4457,9 +4457,13 @@ impl PaperPilotMcpServer {
         &self,
         request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
-        tracing::debug!(tool = %request.name, "Executing MCP agent tool");
-        let tool_name = request.name.clone();
         let args = request.arguments.clone().unwrap_or_default();
+        let is_zero_trace = args.get("_zero_trace").and_then(|v| v.as_bool()).unwrap_or(false)
+            || args.get("log_level").and_then(|v| v.as_str()).map(|s| s.eq_ignore_ascii_case("off")).unwrap_or(false);
+        if !is_zero_trace {
+            tracing::debug!(tool = %request.name, "Executing MCP agent tool");
+        }
+        let tool_name = request.name.clone();
         if request.name == "batch_fill" {
             let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
                 serde_json::from_value(serde_json::Value::Object(args.clone()))
@@ -7454,7 +7458,9 @@ impl PaperPilotMcpServer {
                 ContentBlock::text(serde_json::to_string(&res).unwrap()),
             ]))),
             Err(e) => {
-                tracing::error!(tool = %tool_name, error = %e.message, "MCP agent tool failed");
+                if !is_zero_trace {
+                    tracing::error!(tool = %tool_name, error = %e.message, "MCP agent tool failed");
+                }
                 Err(e)
             }
         }

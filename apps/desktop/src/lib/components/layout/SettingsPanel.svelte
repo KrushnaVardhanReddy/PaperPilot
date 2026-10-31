@@ -5,7 +5,7 @@
   import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
-  type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer';
+  type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer' | 'privacy';
   let activeCategory = $state<SettingsCategory>('ai');
 
   let outputDir = $state('');
@@ -21,6 +21,7 @@
     { id: 'packs' as const, label: 'Feature Packs', icon: '📦', description: 'Modular extensions & plugins' },
     { id: 'ocr' as const, label: 'OCR & Vision Models', icon: '👁️', description: 'On-device recognition engines' },
     { id: 'general' as const, label: 'General & Storage', icon: '⚙️', description: 'Paths, files & interface' },
+    { id: 'privacy' as const, label: 'Privacy & Security', icon: '🔒', description: 'Zero-Trace & Security' },
     { id: 'developer' as const, label: 'Developer & Gateway', icon: '💻', description: 'REST API, Swagger & Port 7823' },
   ];
 </script>
@@ -333,6 +334,37 @@
               <button class="btn secondary" onclick={handleBrowse}>Browse</button>
             </div>
             <p class="help-text">Leave blank to default to each document's source folder.</p>
+          </div>
+        </div>
+      </div>
+
+    {:else if activeCategory === 'privacy'}
+      <div class="category-section active-section">
+        <div class="section-title-wrap">
+          <div class="icon-bubble">🔒</div>
+          <div>
+            <h3>Privacy & Security</h3>
+            <p class="section-subtitle">Control privacy, zero-trace logs, and application security.</p>
+          </div>
+        </div>
+
+        <div class="setting-group" id="setting-group-privacy-mode">
+          <div class="setting-item toggle-item dev-toggle-row">
+            <div class="setting-info">
+              <label for="privacy-mode-toggle" class="dev-toggle-label">Zero-Trace Processing</label>
+              <p class="help-text">
+                When enabled, logs will skip request URLs, IP addresses, document names, and payload bytes across PaperPilot interfaces (append X-Zero-Trace: true).
+              </p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                id="privacy-mode-toggle"
+                checked={appState.zeroTrace}
+                onchange={(e) => appState.zeroTrace = e.currentTarget.checked}
+              />
+              <span class="slider round"></span>
+            </label>
           </div>
         </div>
       </div>

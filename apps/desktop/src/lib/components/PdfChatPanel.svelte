@@ -169,6 +169,9 @@
             }
 
             toastState.info(`Executing ${intent}...`);
+            if (appState.zeroTrace) {
+                args._zero_trace = true;
+            }
             const result = await invoke('invoke_mcp_tool', {
                 toolName,
                 arguments: args
