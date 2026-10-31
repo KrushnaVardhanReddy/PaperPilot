@@ -1,14 +1,12 @@
-[Task / Spec 149: Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine]
+[Task / Spec 149: Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine (Penta-Interface)]
 
 Objective:
-Implement Spec 149 (`specs/149-zero-trace-per-request-logging-suppression/spec.md`) and Task 149 (`specs/149-zero-trace-per-request-logging-suppression/task.md`) across `paperpilot-gateway`, `paperpilot-cli`, and `paperpilot-mcp`.
-Provide:
-1. Dynamic per-request zero-trace log suppression on the REST API Gateway via headers (`X-Zero-Trace: true`, `X-Log-Level: off`) and query parameters (`?zero_trace=true`, `?log_level=off`).
-2. Response verification header `X-Zero-Trace-Enforced: true` proving compliance.
-3. Extension-based log suppression in gateway handlers so sensitive file names/metadata are not logged to stdout/stderr when zero-trace is enabled.
-4. CLI zero-trace verification (`--log-level off` and `NO_LOG=1` emitting exactly 0 bytes on stderr).
-5. MCP tool argument `_zero_trace: true` / `log_level: "off"` suppressing tool diagnostic logs on stderr.
-6. Comprehensive automated test suites in `paperpilot-gateway/tests/test_zero_trace.rs` and `paperpilot-cli/tests/test_zero_trace.rs`.
+Implement Spec 149 (`specs/149-zero-trace-per-request-logging-suppression/spec.md`) and Task 149 (`specs/149-zero-trace-per-request-logging-suppression/task.md`) across ALL 5 PaperPilot interfaces:
+1. 💻 CLI (`paperpilot-cli`): Support `--log-level off` and `NO_LOG=1` emitting exactly 0 bytes on stderr.
+2. 🌐 REST API Gateway & Edge (`paperpilot-gateway` & `apps/edge`): Per-request zero-trace via headers (`X-Zero-Trace: true`, `X-Log-Level: off`) and query params (`?zero_trace=true`, `?log_level=off`). Return compliance header `X-Zero-Trace-Enforced: true`.
+3. 🤖 MCP (`paperpilot-mcp`): Support `_zero_trace: true` and `log_level: "off"` tool argument suppressing stderr logging.
+4. ⚡ WASM Web (`apps/desktop/src/lib/wasm/index.ts`): Accept optional `{ zeroTrace: true }` in JS bindings to suppress browser console traces.
+5. 🖥️ Desktop UI (`apps/desktop`): Add "Zero-Trace Processing" toggle in Settings > Privacy, appending `X-Zero-Trace: true` to background sidecar calls.
 
 ---
 
@@ -120,7 +118,18 @@ Provide:
 
 ---
 
-#### Step 5: Automated Test Suite
+#### Step 5: WASM & Desktop UI Zero-Trace Integration
+
+1. In `apps/desktop/src/lib/wasm/index.ts`:
+   - Accept optional `{ zeroTrace?: boolean }` in method options.
+   - Suppress `console.debug` / timing logs when `zeroTrace: true`.
+2. In `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`:
+   - Add "Zero-Trace Processing" toggle in Privacy & Security settings.
+   - When toggled, automatically append `X-Zero-Trace: true` to all background sidecar HTTP calls.
+
+---
+
+#### Step 6: Automated Test Suite
 
 1. **Gateway Tests (`paperpilot-gateway/tests/test_zero_trace.rs`)**:
    - `test_gateway_x_zero_trace_header`:
@@ -146,6 +155,10 @@ Provide:
    - `test_cli_no_log_env_emits_zero_stderr`:
      - Execute command with environment variable `NO_LOG=1`.
      - Assert `output.stderr.is_empty()`.
+
+3. **MCP Tests (`paperpilot-mcp/tests/test_zero_trace.rs`)**:
+   - `test_mcp_zero_trace_argument_suppresses_stderr`:
+     - Call tool with `_zero_trace: true` and assert clean execution.
 
 ---
 

@@ -1,46 +1,66 @@
-# Task 149: Implement Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine
+# Task 149: Implement Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine (Penta-Interface)
 
 ## Overview
-Implement Spec 149 across `paperpilot-gateway`, `apps/edge`, `paperpilot-cli`, and `paperpilot-mcp`. Enable per-request log suppression (`X-Log-Level: off`, `X-Zero-Trace: true`, `?log_level=off`, `--log-level off`), return the confirmation header `X-Zero-Trace-Enforced: true`, and ensure zero metadata leakage to log sinks.
+Implement Spec 149 across all 5 PaperPilot interfaces: `paperpilot-gateway` (REST), `apps/edge` (Cloudflare Workers), `paperpilot-cli` (CLI), `paperpilot-mcp` (MCP), `paperpilot-wasm` (WASM), and `apps/desktop` (Desktop UI). Enable per-request log suppression, return the compliance confirmation header `X-Zero-Trace-Enforced: true`, and guarantee zero document metadata leakage to log sinks.
 
 ---
 
 ## Subtasks & Checklist
 
-- [ ] **Subtask 1: Gateway Request Tracing Middleware Suppression (`paperpilot-gateway`)**
-  - [ ] In `paperpilot-gateway/src/server.rs` (`request_id_and_tracing_middleware`):
+- [ ] **Subtask 1: Gateway Request Tracing Middleware & Header Contract (`paperpilot-gateway`)**
+  - [ ] Define `ZeroTrace(pub bool)` marker in `paperpilot-gateway/src/server.rs`.
+  - [ ] In `request_id_and_tracing_middleware`:
     - Parse incoming headers for `x-log-level` and `x-zero-trace`.
-    - Check query parameters for `log_level=off` and `zero_trace=true`.
+    - Parse query string for `log_level=off` and `zero_trace=true`.
     - If zero-trace is enabled:
+      - Skip creating request `tracing::info_span!`.
       - Skip emitting `tracing::debug!("Incoming request started")`.
       - Skip emitting `tracing::info!("Request completed")`.
-      - Attach response header `X-Zero-Trace-Enforced: true`.
-    - If a specific level is requested (e.g. `x-log-level: debug`), configure a request-scoped span filter.
-  - [ ] Ensure handler errors in zero-trace mode still return clean client HTTP errors with `request_id`, but suppress logging sensitive document metadata to server logs.
+      - Attach outbound response header `X-Zero-Trace-Enforced: true`.
+  - [ ] In `paperpilot-gateway/src/handlers.rs`:
+    - Check `req.extensions().get::<ZeroTrace>()`.
+    - If `ZeroTrace(true)`, suppress emitting document file names, sizes, or error stack traces to server logs.
+    - Return standard client HTTP error JSON (`{"success": false, "error": "...", "code": "...", "request_id": "..."}`).
 
 - [ ] **Subtask 2: Cloudflare Edge Zero-Trace Implementation (`apps/edge`)**
-  - [ ] In the edge worker request handler:
-    - Inspect request headers for `X-Zero-Trace: true` or `X-Log-Level: off`.
-    - Wrap console logging statements to skip output when zero-trace is active.
+  - [ ] In the edge worker request pipeline:
+    - Inspect incoming request headers for `X-Zero-Trace: true` or `X-Log-Level: off`.
+    - Suppress `console.log`, `console.info`, and analytics engine events containing document metadata.
     - Attach `X-Zero-Trace-Enforced: true` to the outbound Response.
 
 - [ ] **Subtask 3: CLI Environment & Flag Verification (`paperpilot-cli`)**
-  - [ ] Add support for `NO_LOG=1` environment variable alongside `RUST_LOG=off`.
-  - [ ] Ensure that running with `--log-level off` guarantees strict 0-byte output on `stderr`.
+  - [ ] In `paperpilot-cli/src/lib.rs`:
+    - Support `NO_LOG=1` environment variable alongside `RUST_LOG=off`.
+    - 🚨 **CRITICAL GUARD**: Keep `args.len() > 1 && args[1] == "watch"` check BEFORE calling `Cli::parse()`.
+    - Ensure `--log-level off` guarantees exactly 0 bytes written to `stderr`.
 
 - [ ] **Subtask 4: MCP Protocol Zero-Trace Parameter (`paperpilot-mcp`)**
-  - [ ] Add optional `_zero_trace` / `_log_level` parameter to tool dispatch handler in `paperpilot-mcp/src/server.rs`.
-  - [ ] Suppress stderr diagnostic logging during tool execution when `_zero_trace` is true.
+  - [ ] In `paperpilot-mcp/src/server.rs` (`execute_call_tool`):
+    - Parse tool call input parameters for `_zero_trace: true` or `log_level: "off"`.
+    - When present, suppress diagnostic `tracing::debug!` and `tracing::error!` output to `stderr`.
+    - Preserve clean JSON-RPC envelopes on `stdout`.
 
-- [ ] **Subtask 5: Comprehensive Automated Test Suite**
-  - [ ] Add tests in `paperpilot-gateway/tests/test_zero_trace.rs`:
-    - Send request with `X-Zero-Trace: true`, verify status 200, verify header `X-Zero-Trace-Enforced: true`, and assert no logs emitted.
-    - Send request with `X-Log-Level: off`, verify same zero-trace behavior.
-    - Send request with query param `?zero_trace=true`, verify zero-trace behavior.
-    - Send normal request (without headers), verify normal `tracing::info!` logging is retained.
-  - [ ] Add CLI test in `paperpilot-cli/tests/test_zero_trace.rs`:
-    - Test `paperpilot --log-level off` emits 0 bytes on stderr.
-    - Test `NO_LOG=1 paperpilot ...` emits 0 bytes on stderr.
-  - [ ] Run `cargo test -p paperpilot-gateway -j 4`.
-  - [ ] Run `cargo test -p paperpilot-cli -j 4`.
-  - [ ] Run `cargo test -p paperpilot-mcp -j 4`.
+- [ ] **Subtask 5: Client-Side WASM & Desktop UI Integration (`paperpilot-wasm` & `apps/desktop`)**
+  - [ ] In `apps/desktop/src/lib/wasm/index.ts`:
+    - Accept optional `{ zeroTrace?: boolean }` parameter on WASM engine methods.
+    - Suppress browser console debug/info logs when `zeroTrace: true`.
+  - [ ] In `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`:
+    - Add "Zero-Trace Processing" toggle in Privacy & Security settings.
+    - When toggled, automatically append `X-Zero-Trace: true` to all background sidecar HTTP calls.
+
+- [ ] **Subtask 6: Comprehensive Automated Test Suite**
+  - [ ] Add `paperpilot-gateway/tests/test_zero_trace.rs`:
+    - `test_gateway_x_zero_trace_header`
+    - `test_gateway_x_log_level_off_header`
+    - `test_gateway_query_param_zero_trace`
+    - `test_gateway_normal_request_retains_logging`
+  - [ ] Add `paperpilot-cli/tests/test_zero_trace.rs`:
+    - `test_cli_log_level_off_emits_zero_stderr`
+    - `test_cli_no_log_env_emits_zero_stderr`
+  - [ ] Add `paperpilot-mcp/tests/test_zero_trace.rs`:
+    - `test_mcp_zero_trace_argument_suppresses_stderr`
+  - [ ] Verify test suite:
+    - `cargo test -p paperpilot-gateway --test test_zero_trace -j 4`
+    - `cargo test -p paperpilot-cli --test test_zero_trace -j 4`
+    - `cargo test -p paperpilot-mcp -j 4`
+    - `cargo test -p paperpilot-gateway -j 4`
