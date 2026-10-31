@@ -32,9 +32,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            artifact_name: paperpilot-linux-x86_64
+            artifact_name: paperpilot-linux-x86_64-gnu
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-musl
+            artifact_name: paperpilot-linux-x86_64-musl
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: paperpilot-windows-x86_64
@@ -55,11 +58,11 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      - name: Install Linux GUI Dependencies
+      - name: Install Linux Build & GUI Dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev musl-tools
 
       - name: Build Optimized Release Binaries
         run: |
@@ -151,7 +154,7 @@ jobs:
       - name: Upload Platform Package Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-assets-${{ matrix.os }}
+          name: release-assets-${{ matrix.artifact_name }}
           path: |
             release_pkgs/*
           if-no-files-found: error
