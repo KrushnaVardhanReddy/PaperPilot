@@ -19,6 +19,7 @@ html-escape = "0.2.15"
 image = { version = "0.25.6", features = ["jpeg", "png"] }
 log = "0.4.34"
 lopdf = "0.45.0"
+tracing = "0.1.44"
 ocrs = { version = "0.10.4", optional = true }
 office_oxide = { version = "=0.1.9", optional = true }
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }

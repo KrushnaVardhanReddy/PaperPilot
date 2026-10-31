@@ -69,10 +69,17 @@ async fn test_mcp_exec_tool() {
 async fn test_multipart_and_json_endpoints() {
     let app = build_app().await;
 
+    // Create a real temp input PDF
+    let temp_input = tempfile::NamedTempFile::new().unwrap();
+    let pdf_bytes = ingestion_pdf();
+    std::fs::write(temp_input.path(), &pdf_bytes).unwrap();
+
+    let temp_output = tempfile::NamedTempFile::new().unwrap();
+
     // Test JSON Endpoint on a multipart route
     let payload = serde_json::json!({
-        "input": "tests/e2e_fixtures/secret_999.pdf",
-        "output": "/tmp/test.pdf",
+        "input": temp_input.path().to_string_lossy().to_string(),
+        "output": temp_output.path().to_string_lossy().to_string(),
         "password": "test"
     });
 
@@ -85,8 +92,7 @@ async fn test_multipart_and_json_endpoints() {
 
     let response = app.oneshot(request).await.unwrap();
 
-    // Just check the parsing didn't fail with BAD_REQUEST
-    assert_ne!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]

@@ -188,6 +188,76 @@ impl paperpilot_mcp::server::WatcherRegistryTrait for WatcherRegistryAdapter {
     }
 }
 
+use axum::{
+    extract::Request,
+    middleware::{self, Next},
+    response::Response,
+};
+use std::time::Instant;
+
+#[derive(Clone)]
+pub struct RequestId(pub String);
+
+async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Response {
+    let req_id = req
+        .headers()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    req.extensions_mut().insert(RequestId(req_id.clone()));
+
+    let method = req.method().to_string();
+    let uri = req.uri().to_string();
+    let client_ip = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("127.0.0.1")
+        .to_string();
+
+    let span = tracing::info_span!(
+        "http_request",
+        request_id = %req_id,
+        http.method = %method,
+        http.route = %uri,
+        client.ip = %client_ip
+    );
+
+    let start_time = Instant::now();
+    let response = {
+        let _guard = span.enter();
+        tracing::debug!(
+            request_id = %req_id,
+            http.method = %method,
+            http.route = %uri,
+            "Incoming request started"
+        );
+        next.run(req).await
+    };
+
+    let duration_ms = start_time.elapsed().as_secs_f64() * 1000.0;
+    let status_code = response.status().as_u16();
+
+    let _guard = span.enter();
+    tracing::info!(
+        request_id = %req_id,
+        http.method = %method,
+        http.route = %uri,
+        http.status_code = status_code,
+        duration_ms = %duration_ms,
+        "Request completed"
+    );
+
+    let mut response = response;
+    if let Ok(hdr_val) = axum::http::HeaderValue::from_str(&req_id) {
+        response.headers_mut().insert("X-Request-ID", hdr_val);
+    }
+
+    response
+}
+
 pub async fn build_app(registry: WatcherRegistry) -> Router {
     // Restrict CORS: Allow only trusted local origins (Tauri desktop client, Vite dev server, localhost)
     let cors = CorsLayer::new()
@@ -396,6 +466,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/pdf_watermark", post(handlers::watermark))
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
+        .layer(middleware::from_fn(request_id_and_tracing_middleware))
         .with_state(registry)
 }
 

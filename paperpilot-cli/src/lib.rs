@@ -78,11 +78,56 @@ pub fn run() {
     }
 }
 
-fn run_impl() {
-    let _ = env_logger::try_init();
+pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
+    let log_level = cli_level
+        .map(|s| s.to_string())
+        .or_else(|| std::env::var("RUST_LOG").ok())
+        .unwrap_or_else(|| "info".to_string());
 
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&log_level));
+
+    let log_format = cli_format
+        .map(|s| s.to_string())
+        .or_else(|| std::env::var("LOG_FORMAT").ok())
+        .unwrap_or_else(|| "text".to_string())
+        .to_lowercase();
+
+    match log_format.as_str() {
+        "json" => {
+            let _ = tracing_subscriber::fmt()
+                .json()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "compact" => {
+            let _ = tracing_subscriber::fmt()
+                .compact()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "pretty" => {
+            let _ = tracing_subscriber::fmt()
+                .pretty()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        _ => {
+            let _ = tracing_subscriber::fmt()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+    }
+}
+
+fn run_impl() {
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && args[1] == "watch" {
+        init_logging(None, None);
         args.remove(1);
         let watch_cli = WatchCli::parse_from(args);
 
@@ -99,15 +144,16 @@ fn run_impl() {
             None,
             watch_cli.name_template,
         )) {
-            log::error!("Watch loop error: {}", e);
+            tracing::error!(error = %e, "Watch loop failed");
             std::process::exit(1);
         }
         std::process::exit(0);
     }
 
-    let _ = env_logger::try_init();
-
     let cli = Cli::parse();
+    init_logging(cli.log_format.as_deref(), cli.log_level.as_deref());
+
+    let _ = env_logger::try_init();
 
     let mut workflow = None;
     let (result, batch) = match &cli.command {
@@ -136,21 +182,26 @@ fn run_impl() {
         .unwrap_or("Unknown")
         .to_string();
 
+    tracing::debug!(subcommand = %op_name, "Dispatching CLI subcommand");
+
     let payload = match result {
         Ok(_) => CommandResult {
             success: true,
-            operation: op_name,
+            operation: op_name.clone(),
             error: None,
             batch,
             workflow,
         },
-        Err(e) => CommandResult {
-            success: false,
-            operation: op_name,
-            error: Some(e.to_string()),
-            batch,
-            workflow,
-        },
+        Err(e) => {
+            tracing::error!(subcommand = %op_name, error = %e, "CLI execution failed");
+            CommandResult {
+                success: false,
+                operation: op_name.clone(),
+                error: Some(e.to_string()),
+                batch,
+                workflow,
+            }
+        }
     };
 
     if cli.json {
