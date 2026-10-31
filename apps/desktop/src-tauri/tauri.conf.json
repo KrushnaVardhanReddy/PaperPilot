@@ -25,7 +25,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' tauri:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: blob: data:; connect-src 'self' http://localhost:* ws://localhost:*;",
+      "csp": "default-src 'self' tauri: http://tauri.localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: tauri: http://tauri.localhost; style-src 'self' 'unsafe-inline'; img-src 'self' asset: blob: data: tauri: http://tauri.localhost; connect-src 'self' blob: data: tauri: http://tauri.localhost http://localhost:* ws://localhost:*; worker-src 'self' blob: tauri: http://tauri.localhost;",
       "assetProtocol": {
         "enable": true,
         "scope": [

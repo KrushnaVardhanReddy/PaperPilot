@@ -7,7 +7,14 @@
 
   // Reuse Vite worker import trick if PDF.js is used
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+  if (typeof window !== 'undefined') {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
+    } catch {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    }
+  }
 
   export let isOpen = false;
 
@@ -27,7 +34,18 @@
   let searchTimeout: ReturnType<typeof setTimeout>;
 
   async function extractPdfText(fileUrl: string): Promise<string> {
-    const loadingTask = pdfjsLib.getDocument({ url: fileUrl });
+    let loadingTask;
+    if (fileUrl.startsWith('blob:')) {
+      try {
+        const res = await fetch(fileUrl);
+        const buf = await res.arrayBuffer();
+        loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buf) });
+      } catch {
+        loadingTask = pdfjsLib.getDocument({ url: fileUrl });
+      }
+    } else {
+      loadingTask = pdfjsLib.getDocument({ url: fileUrl });
+    }
     const pdf = await loadingTask.promise;
     let fullText = '';
     for (let i = 1; i <= pdf.numPages; i++) {

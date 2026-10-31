@@ -450,11 +450,13 @@
             {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <SpreadsheetViewer file={selectedDoc} />
           {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <div class="viewer-wrapper">
               <div class="viewer-main">
                 <div class="pdf-wrapper">
                   <PdfViewer
                     fileUrl={currentFileUrl}
+                    file={selectedDoc}
                     bind:pdfDoc
                     bind:pageNum
                     bind:scale

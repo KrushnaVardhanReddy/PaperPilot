@@ -8,10 +8,17 @@
   import PdfSearchBar from './PdfSearchBar.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  if (typeof window !== 'undefined') {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
+    } catch {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    }
+  }
 
   let {
     fileUrl = '',
+    file = null as File | Blob | null,
     pdfDoc = $bindable(null),
     pageNum = $bindable(1),
     scale = $bindable(1.2),
@@ -22,14 +29,36 @@
   let canvas: HTMLCanvasElement;
   let isRendering = false; // Not a $state to prevent infinite loops in effects
 
-  async function loadDocument(url: string) {
-    if (!url) return;
+  async function loadDocument(url: string, fileObj?: File | Blob | null) {
+    if (!url && !fileObj) {
+      pdfDoc = null;
+      return;
+    }
     try {
-      const loadingTask = pdfjsLib.getDocument({ url });
-      pdfDoc = await loadingTask.promise;
-      pageNum = 1;
+      let loadingTask;
+      if (fileObj && typeof (fileObj as any).arrayBuffer === 'function') {
+        const buffer = await fileObj.arrayBuffer();
+        loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+      } else if (url && url.startsWith('blob:')) {
+        try {
+          const res = await fetch(url);
+          const buffer = await res.arrayBuffer();
+          loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+        } catch (fetchErr) {
+          console.warn("fetch blob failed, falling back to url", fetchErr);
+          loadingTask = pdfjsLib.getDocument({ url });
+        }
+      } else if (url) {
+        loadingTask = pdfjsLib.getDocument({ url });
+      }
+
+      if (loadingTask) {
+        pdfDoc = await loadingTask.promise;
+        pageNum = 1;
+      }
     } catch (err) {
       console.error("Error loading PDF:", err);
+      pdfDoc = null;
     }
   }
 
@@ -72,10 +101,12 @@
     }
   }
 
-  // Reactively load document when fileUrl changes
+  // Reactively load document when file or fileUrl changes
   $effect(() => {
-    if (fileUrl) {
-      loadDocument(fileUrl);
+    if (file || fileUrl) {
+      loadDocument(fileUrl, file);
+    } else {
+      pdfDoc = null;
     }
   });
 

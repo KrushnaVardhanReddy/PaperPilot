@@ -51,7 +51,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.target }}, wasm32-unknown-unknown
 
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
@@ -75,6 +75,11 @@ jobs:
           node-version: 22
           cache: 'pnpm'
           cache-dependency-path: 'apps/desktop/pnpm-lock.yaml'
+
+      - name: Build WASM Package Dependency for Desktop
+        run: |
+          which wasm-pack || cargo install wasm-pack --locked
+          wasm-pack build --target web --release paperpilot-wasm
 
       - name: Install Desktop Frontend Dependencies
         run: |

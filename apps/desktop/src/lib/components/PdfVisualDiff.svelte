@@ -4,7 +4,13 @@
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import { appState } from '$lib/state/app.svelte';
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  if (typeof window !== 'undefined') {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
+    } catch {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    }
+  }
 
   let {
     onClose
