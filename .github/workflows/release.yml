@@ -43,7 +43,7 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: paperpilot-macos-aarch64
-            bundles: "dmg"
+            bundles: "app,dmg"
 
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +94,24 @@ jobs:
         run: |
           cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
 
+      - name: Ad-Hoc Code Sign macOS Bundles & Binaries
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          TARGET_DIR="target/${{ matrix.target }}/release"
+          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
+          SIGN_ID="${APPLE_SIGNING_IDENTITY:--}"
+          for bin in paperpilot paperpilot-cli paperpilot-gateway paperpilot-mcp; do
+            if [ -f "${TARGET_DIR}/${bin}" ]; then
+              xattr -cr "${TARGET_DIR}/${bin}" || true
+              codesign --force --sign "$SIGN_ID" "${TARGET_DIR}/${bin}" || true
+            fi
+          done
+          find target/ -type d -name "*.app" -path "*/bundle/*" | while read -r app_bundle; do
+            xattr -cr "$app_bundle" || true
+            codesign --force --deep --sign "$SIGN_ID" "$app_bundle" || true
+          done
+
       - name: Package Release Assets (Linux / macOS)
         if: runner.os != 'Windows'
         shell: bash
@@ -129,6 +147,11 @@ jobs:
           cp "${TARGET_DIR}/paperpilot-gateway" staging_all/ 2>/dev/null || true
           cp "${TARGET_DIR}/paperpilot-mcp" staging_all/ 2>/dev/null || true
           find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
+          if [ "${RUNNER_OS}" = "macOS" ]; then
+            find target/ -type d -name "*.app" -path "*/bundle/*" -exec cp -R {} staging_all/ \; 2>/dev/null || true
+            printf "#!/bin/bash\nset -e\nDIR=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\"\nxattr -cr \"\$DIR\" 2>/dev/null || true\nif [ -d \"/Applications/PaperPilot.app\" ]; then\n  xattr -cr \"/Applications/PaperPilot.app\" 2>/dev/null || true\n  codesign --force --deep --sign - \"/Applications/PaperPilot.app\" 2>/dev/null || true\nfi\necho \"macOS Gatekeeper quarantine cleared for PaperPilot.\"\n" > staging_all/macos-unquarantine.command
+            chmod +x staging_all/macos-unquarantine.command 2>/dev/null || true
+          fi
           cp apps/desktop/src-tauri/icons/icon.png staging_all/PaperPilot.png 2>/dev/null || true
           printf "[Desktop Entry]\nName=PaperPilot\nComment=Fast, privacy-first PDF manipulation toolkit\nExec=./paperpilot ui\nIcon=PaperPilot\nTerminal=false\nType=Application\nCategories=Office;Utility;\n" > staging_all/PaperPilot.desktop
           chmod +x staging_all/PaperPilot.desktop 2>/dev/null || true
@@ -367,6 +390,13 @@ jobs:
             - **Mobile & Web Runtimes**:
               - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
               - `paperpilot-wasm-universal.tar.gz` (Universal WebAssembly engine for browsers & edge runtimes)
+
+            ### macOS First-Launch Note (Gatekeeper)
+            Because the open-source build uses ad-hoc code signing, macOS Gatekeeper may show *"PaperPilot Not Opened"* on first download. Run this in Terminal after moving `PaperPilot.app` to `/Applications`:
+            ```bash
+            sudo xattr -rd com.apple.quarantine /Applications/PaperPilot.app
+            ```
+            Or click **Done**, open **System Settings > Privacy & Security**, scroll down, and click **Open Anyway**.
 
             ### Checksums
             SHA-256 checksums are attached alongside each installer, binary package, and APK artifact.

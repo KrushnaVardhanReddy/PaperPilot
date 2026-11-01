@@ -39,6 +39,7 @@
     "targets": [
       "deb",
       "appimage",
+      "app",
       "dmg",
       "nsis",
       "msi"
@@ -66,6 +67,8 @@
       }
     },
     "macOS": {
+      "signingIdentity": "-",
+      "hardenedRuntime": true,
       "dmg": {
         "background": null,
         "windowPosition": {
