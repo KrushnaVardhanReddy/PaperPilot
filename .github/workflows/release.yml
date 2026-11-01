@@ -130,16 +130,7 @@ jobs:
           cp "${TARGET_DIR}/paperpilot-mcp" staging_all/ 2>/dev/null || true
           find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
           cp apps/desktop/src-tauri/icons/icon.png staging_all/PaperPilot.png 2>/dev/null || true
-          cat << 'EOF' > staging_all/PaperPilot.desktop
-[Desktop Entry]
-Name=PaperPilot
-Comment=Fast, privacy-first PDF manipulation toolkit
-Exec=./paperpilot ui
-Icon=PaperPilot
-Terminal=false
-Type=Application
-Categories=Office;Utility;
-EOF
+          printf "[Desktop Entry]\nName=PaperPilot\nComment=Fast, privacy-first PDF manipulation toolkit\nExec=./paperpilot ui\nIcon=PaperPilot\nTerminal=false\nType=Application\nCategories=Office;Utility;\n" > staging_all/PaperPilot.desktop
           chmod +x staging_all/PaperPilot.desktop 2>/dev/null || true
           cp README.md staging_all/ || true
           tar -czvf "release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_all .
