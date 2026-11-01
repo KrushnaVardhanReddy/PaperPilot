@@ -44,13 +44,10 @@
 ---
 
 ## 🎯 Active Development Focus
-- **Penta-Interface Remediation (Spec 145)**: Waves 1–8 unmocked end-to-end audits are 100% green across CLI, MCP (88 registered tools), REST Gateway, WASM, and Desktop. All 5 remediation workstreams (MCP schemas, CLI flags, REST endpoints, PDF engine edge-cases, OCR fallbacks) merged into `feature/dev`.
-- **4-Person Manual Desktop Testing Matrix (Spec 145)**: 89 platform tools divided across 4 tester profiles (`qa/manual_desktop_testing/`) covering Page Operations, Conversions, Security/Forms, and AI/Analysis.
-- **WASM & CI Hardening**: Fixed target dependency leakages in `paperpilot-core` and `paperpilot-pdf` to eliminate `mio` and native socket dependencies on `wasm32-unknown-unknown`. Validated with clean `wasm-pack build` and 29 passing WASM tests.
-- **CI Action Modernization**: Standardized all GitHub Actions workflows to official `@v4` and `@v2` tags, resolving runner resolution errors.
-- **Automated OWASP ZAP API Security Gate (Spec 147 / Task 8.13)**: Dynamic application security testing (DAST) workflow running in GitHub Actions against OpenAPI endpoints with SARIF reporting.
-- **OpenVAS / Greenbone Container Hardening Suite (Spec 148 / Task 8.14)**: Infrastructure and container vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports.
-- **Active Feature Freeze**: Codebase is feature-frozen. Development proceeds strictly for QA execution, release validation, and community feedback.
+- **Hexagonal DatabasePort Architecture (Spec 150)**: Decoupled database domain models into `paperpilot-core::storage` and introduced `pub trait DatabasePort: Send + Sync` (PR #324). Implemented on `paperpilot-storage` with embedded libSQL, enabling `PaperPilot-Enterprise` to implement PostgreSQL/Supabase without upstream code changes.
+- **Production Desktop & Release Packaging Hardening**: Fixed production WebKitGTK PDF blank canvas failure by passing raw `Uint8Array` buffers and updating Tauri CSP. Resolved desktop window/dock icon configuration (`#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`) and added `PaperPilot.desktop` launcher to release archives.
+- **WASM & CI Runner Stability**: Gated native dependencies for zero-network WASM compilation, modernized GitHub Actions workflows to `@v4`/`@v2`, and resolved macOS runner clang target incompatibility.
+- **Active QA & Release Execution**: 4-Person Manual QA Execution (`qa/manual_desktop_testing/`) across 89 tools, and GitHub Actions Release verification on `feature/dev`.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 

@@ -2,20 +2,21 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 30, 2026
+> **Date of Last Update:** November 1, 2026
 >
-> **Active Target:** Spec 145 (Penta-Interface Audit Remediation Waves 1–8) and 4-Person Manual Desktop Testing Matrix (89 tools) merged into `feature/dev`. WASM compilation hardened (mio eliminated). Active next step is 4-Person Manual QA Execution and GitHub Actions Release verification.
+> **Active Target:** Spec 150 (Hexagonal DatabasePort for Enterprise) merged. Production PDF rendering & desktop dock icon fixes verified. Active next step is GitHub Actions Release verification on `feature/dev` and 4-Person Manual QA Execution.
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (`6cdebe6`), synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
+- **Integration Branch**: `feature/dev` (`cfbe0b2`), synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
 - **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
+  - **Hexagonal Storage Engine**: `paperpilot-core::storage::DatabasePort` established; `paperpilot-storage` 8/8 tests pass (`cargo test -p paperpilot-storage -j 4`).
   - **Penta-Interface E2E Audits (Waves 1–8)**: **100% Green** across unmocked real PDF suites (`make test-waves-all`).
   - **WebAssembly Engine (`paperpilot-wasm`)**: Compiles cleanly with zero native networking or `mio` dependencies; 29/29 tests pass (`cargo test -p paperpilot-wasm -j 4`).
-  - **Desktop Vitest Suite**: **147 passing tests across 24 files** (100% green).
+  - **Desktop Vitest Suite**: **153 passing tests across 24 files** (100% green).
   - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
   - **Cargo Workspace**: `cargo check --workspace` compiles cleanly with zero errors.
 - **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 89 platform tools across 4 tester assignments.
@@ -24,28 +25,22 @@
 
 ## 🏆 Recently Merged Milestones
 
-1. **Spec 145 / Penta-Interface Remediation (Waves 1–8 Unmocked Audits)**:
-   - Fixed all 142 audit discrepancies across the 5 surfaces (CLI, MCP, Gateway, WASM, Desktop).
-   - **Session 1 (PR #322)**: Expanded and normalized MCP tool registry to 88 tools with full parameter aliasing.
-   - **Session 2 (PR #319)**: Aligned CLI subcommands and multi-input flags across Waves 5–8.
-   - **Session 3 (PR #321)**: Implemented missing REST gateway routes and unified error code mappings.
-   - **Session 4 (PR #318)**: Hardened PDF engine edge-cases for CBZ extraction, outline splitting, and render flush.
-   - **Session 5 (Commit `f1a4772`)**: Added OCR model packaging and search fallback routines in `paperpilot-nlp`.
-2. **Spec 145 / 4-Person Desktop UI Manual Testing Matrix**:
-   - Authored complete test guides in [`qa/manual_desktop_testing/`](qa/manual_desktop_testing/) covering 89 platform tools:
-     - [Tester 1: Page Operations](qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) (22 tools)
-     - [Tester 2: Conversions & Export](qa/manual_desktop_testing/TESTER_2_CONVERSIONS.md) (22 tools)
-     - [Tester 3: Security, Forms & Protection](qa/manual_desktop_testing/TESTER_3_SECURITY_FORMS.md) (23 tools)
-     - [Tester 4: AI, Search & Intelligence](qa/manual_desktop_testing/TESTER_4_AI_ANALYSIS.md) (22 tools)
-3. **WASM & CI Build Hardening**:
-   - Gated `reqwest` in `paperpilot-core` and native watcher/network dependencies in `paperpilot-pdf` behind `[target.'cfg(not(target_arch = "wasm32"))'.dependencies]`.
-   - Eliminated `mio` compile errors on target `wasm32-unknown-unknown`.
-   - Standardized all GitHub Actions workflows (`release.yml`, `conditional-workflow.yml`, `fill-batch.yml`, `security.yml`, `slm-training.yml`) to official `@v4` and `@v2` tags.
-4. **Spec 142 / Task 4.7.8 (Desktop Real Watched Folders & Smart Filters, PR #306)**:
-   - Built pure-Rust Tauri IPC commands connected to `paperpilot_pdf::operations::watch`.
-   - Added reactive document filter pills in `DocumentList.svelte` inspecting real PDF facts.
-5. **Spec 141 / Task 3.4.14 (Desktop Multi-Rule Condition Builder, PR #305)**:
-   - Upgraded `ConditionInspector.svelte` with recursive AST `ALL (AND)` / `ANY (OR)` logic.
+1. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
+   - Decoupled database domain models (`JobRecord`, `NewJob`, `JobStatus`, `AuditEvent`, `DocumentChunkRecord`, `VectorSearchResult`, `StorageError`) into `paperpilot-core::storage`.
+   - Introduced `pub trait DatabasePort: Send + Sync` in `paperpilot-core::ports`.
+   - Implemented `DatabasePort for StorageEngine` in `paperpilot-storage` with backward-compatible re-exports, enabling `PaperPilot-Enterprise` to plug in PostgreSQL/Supabase.
+2. **Desktop Production PDF Rendering & Dock Icon Fix**:
+   - Fixed production PDF viewer blank canvas/empty thumbnails on WebKitGTK Linux by passing raw `Uint8Array` binary buffers and expanding Tauri CSP `worker-src`.
+   - Fixed desktop dock & tray icon compilation by replacing invalid `#[cfg(desktop)]` with `#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`.
+   - Added high-res `PaperPilot.png` and `PaperPilot.desktop` launcher to release staging.
+3. **CI & macOS Runner Hardening**:
+   - Resolved macOS Xcode `clang` failure by eliminating unnecessary `wasm32-unknown-unknown` compilation from platform release matrix.
+   - Standardized release workflow YAML syntax for `workflow_dispatch`.
+4. **Spec 149 / Task 8.15 (Zero-Trace Logging Suppression)**:
+   - Client-controlled `X-Log-Level: off`, `X-Zero-Trace: true`, and `X-Zero-Trace-Enforced: true` verification across CLI, MCP, and Gateway.
+5. **Spec 146 & Spec 147 (Structured Logging & OWASP ZAP API Security)**:
+   - Multi-format NDJSON/text/compact logging engine with correlation IDs.
+   - DAST CI scanning against OpenAPI endpoints with SARIF output.
 
 ---
 
@@ -53,17 +48,11 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Spec 145 Remediation** | **Penta-Interface 100% Green E2E Audit**<br>Eliminated all 142 failure points across Waves 1–8. | ✅ **Completed & Merged** |
-| **2** | **Spec 145 Manual Matrix** | **4-Person Manual Desktop QA Guides**<br>Structured step-by-step matrix for all 89 platform tools in `qa/manual_desktop_testing/`. | ✅ **Completed & Merged** |
-| **3** | **WASM & CI Hardening** | **Zero-Network WASM Build & Workflow Tag Fixes**<br>Gated native dependencies, verified `wasm-pack build`, modernized workflow actions. | ✅ **Completed & Merged** |
-| **4** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
-| **5** | **Spec 146 Structured Logging** | **Universal Leveled & Structured Logging Engine**<br>Multi-format NDJSON/text/compact/pretty, request_id correlation, dual error logging (PR #323). | ✅ **Completed & Merged** |
-| **6** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
-| **7** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
-| **8** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
-| **9** | **Spec 147 / Task 8.13** | **Automated OWASP ZAP API Dynamic Security Scan**<br>DAST CI scanning against OpenAPI endpoints (`.github/workflows/zap.yml`) with SARIF output. | ✅ **Completed & Integrated** |
-| **10** | **Spec 148 / Task 8.14** | **OpenVAS / Greenbone Container Hardening Suite**<br>Dockerized vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports. | 📋 **Planned** |
-| **11** | **Spec 149 / Task 8.15** | **Universal Per-Request Zero-Trace & Dynamic Logging Suppression Engine**<br>Client-controlled `X-Log-Level: off`, `X-Zero-Trace: true`, query params, and `X-Zero-Trace-Enforced: true` compliance verification. | ✅ **Completed & Merged** |
+| **1** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
+| **2** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
+| **3** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
+| **4** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
+| **5** | **Spec 148 / Task 8.14** | **OpenVAS / Greenbone Container Hardening Suite**<br>Dockerized vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports. | 📋 **Planned** |
 
 ---
 
