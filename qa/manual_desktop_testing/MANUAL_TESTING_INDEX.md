@@ -1,18 +1,17 @@
-# PaperPilot Desktop UI Manual Testing Master Matrix (All 89 Tools)
+# PaperPilot Desktop UI Manual Testing Master Matrix (All 90 Tools — 3 Testers × 30 Tools)
 
-Welcome to the **Complete PaperPilot Desktop UI Manual Testing Campaign**. This testing suite covers the complete platform catalog of **89 tools and features** (across core PDF operations, layout imposition, cryptography, AcroForms, multi-format synthesis, office modernization, AI intelligence, and document workflow automation), divided across **4 testers** (~22 tools each).
+Welcome to the **Complete PaperPilot Desktop UI Manual Testing Campaign**. This testing suite covers the complete platform catalog of **90 tools and features** (across core PDF operations, layout imposition, optimization, cryptography, AcroForms, multi-format synthesis, office modernization, AI intelligence, and document workflow automation), divided evenly across **3 testers (30 tools each)**.
 
 ---
 
 ## 📋 Campaign Allocation Overview
 
-| Tester | Test Guide File | Primary Domain | Tool Count | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tester 1** | [TESTER_1_PAGE_OPERATIONS.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) | Page Operations, Merging, Splitting & Imposition | 22 Tools | `[ ] In Progress` |
-| **Tester 2** | [TESTER_2_IMPOSITION_OPTIMIZATION.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_2_IMPOSITION_OPTIMIZATION.md) | Optimization, Rendering, Security & Cryptography | 22 Tools | `[ ] In Progress` |
-| **Tester 3** | [TESTER_3_SECURITY_FORMS.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_3_SECURITY_FORMS.md) | Forms, Batch Automation, Markup & Document Synthesis | 22 Tools | `[ ] In Progress` |
-| **Tester 4** | [TESTER_4_CONVERSIONS_INTELLIGENCE.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_4_CONVERSIONS_INTELLIGENCE.md) | Office Conversions, AI Intelligence & Workflows | 23 Tools | `[ ] In Progress` |
-| **TOTAL** | **4 Testers** | **Full System Coverage** | **89 Tools** | `[ ] 0 / 89 Verified` |
+| Tester | Test Guide File | Primary Domain | Tool Range | Tool Count | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Tester 1** | [TESTER_1_PAGE_OPERATIONS.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) | Page Operations, Merging, Splitting, Imposition, Optimization & Rendering | Tools 01–30 | **30 Tools** | `[ ] In Progress` |
+| **Tester 2** | [TESTER_2_SECURITY_FORMS.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_2_SECURITY_FORMS.md) | Security, Cryptography, AcroForms, Batch Automation, Markup & Synthesis | Tools 31–60 | **30 Tools** | `[ ] In Progress` |
+| **Tester 3** | [TESTER_3_CONVERSIONS_INTELLIGENCE.md](file:///home/krushna/Project/PaperPilot/qa/manual_desktop_testing/TESTER_3_CONVERSIONS_INTELLIGENCE.md) | Office Conversions, Archival Formats, AI Intelligence, Search & Workflows | Tools 61–90 | **30 Tools** | `[ ] In Progress` |
+| **TOTAL** | **3 Testers** | **Full System Coverage** | **Tools 01–90** | **90 Tools** | `[ ] 0 / 90 Verified` |
 
 ---
 
@@ -27,12 +26,14 @@ npm run tauri dev
 *Note: Ensure memory footprint remains normal. Close heavy background tabs if necessary.*
 
 ### 2. Test Fixtures Directory
-Input documents are available in the workspace:
-- `tests/fixtures/simple.pdf` (Clean 1-page sample document)
-- `tests/fixtures/multipage.pdf` or `tests/e2e_fixtures/real/multi_page.pdf` (5-page document)
-- `tests/fixtures/sample_form.pdf` (Interactive AcroForm with text/checkbox fields)
-- `tests/fixtures/sample.docx`, `test.xlsx`, `test.html`, `test.md` (Multi-format inputs)
-- `tests/fixtures/test_bookmarks.pdf` (TOC Outline Bookmarks)
+Real input documents are available in the workspace under `tests/e2e_fixtures/real/` and `tests/fixtures/`:
+- `tests/e2e_fixtures/real/single_page.pdf` & `tests/fixtures/simple.pdf` (Clean 1-page sample documents)
+- `tests/e2e_fixtures/real/multi_page.pdf` (5-page document)
+- `tests/e2e_fixtures/real/form.pdf` & `tests/e2e_fixtures/real/form_data.json` (Interactive AcroForm + JSON data)
+- `tests/e2e_fixtures/real/converted.docx`, `test.xls`, `test.xlsx`, `test.csv`, `test.html`, `test.md`, `json_doc.json` (Multi-format inputs)
+- `tests/e2e_fixtures/real/sample_photo.png`, `img1.png`, `img2.png`, `image_doc.pdf` (Image & embedded-image inputs)
+
+Each tester guide includes a **One-Liner Fixture Setup Command** that copies that tester's exact required files to `~/Desktop/testerX_fixtures/`.
 
 ### 3. How to Find Tools in Desktop UI
 - **Operations Dock (Right Drawer)**: Click `🛠️` on the right sidebar rail. Browse category pills: **All**, **Pages**, **Edit**, **Optimize**, **Security**, **Convert**, **AI**.
@@ -42,9 +43,9 @@ Input documents are available in the workspace:
 
 ---
 
-## 📊 Complete 89-Tool Sign-Off Scorecard
+## 📊 Complete 90-Tool Sign-Off Scorecard
 
-### Tester 1: Page Operations, Merging & Imposition (22 Tools)
+### Tester 1: Page Operations, Imposition, Optimization & Rendering (30 Tools: 01–30)
 - [ ] 01. `pdf_merge` — Merge Documents (Combine Tabs)
 - [ ] 02. `pdf_merge_alternate` — Alternating PDF Merge (Interleave Pages)
 - [ ] 03. `pdf_split` — Split PDF by Range or Count
@@ -67,8 +68,6 @@ Input documents are available in the workspace:
 - [ ] 20. `pdf_attachments` — PDF Portfolio Attachments Inspector/Extractor
 - [ ] 21. `pdf_images_to_pdf` — Combine Images into PDF
 - [ ] 22. `img_to_pdf` — Image to PDF Single/Multi Synthesis
-
-### Tester 2: Optimization, Security & Cryptography (22 Tools)
 - [ ] 23. `pdf_compress` — Lossy & Lossless File Size Reduction
 - [ ] 24. `pdf_dedup_streams` — Lossless Hash-Based Indirect Stream Deduplication
 - [ ] 25. `pdf_linearize` — Fast Web View Stream Optimization
@@ -77,6 +76,8 @@ Input documents are available in the workspace:
 - [ ] 28. `pdf_render` — High-DPI Page Rasterization to PNG/JPEG
 - [ ] 29. `pdf_compare` — Visual Pixel Diff Slider & Change Highlighting
 - [ ] 30. `pdf_encrypt` — Protect Document with AES-256 Password
+
+### Tester 2: Security, Cryptography, AcroForms, Batch, Markup & Synthesis (30 Tools: 31–60)
 - [ ] 31. `pdf_decrypt` — Remove Password Restrictions
 - [ ] 32. `pdf_sanitize` — Deep Enterprise Sanitization (Strip JS & Private Data)
 - [ ] 33. `pdf_metadata` — Inspect & Clean Author/Title/Producer Metadata
@@ -91,8 +92,6 @@ Input documents are available in the workspace:
 - [ ] 42. `pdf_overlay_underlay` — Apply Letterheads & Stationary Behind/Over Pages
 - [ ] 43. `pdf_stamp` — Stamp Coordinate-Exact Images, Logos & Badges
 - [ ] 44. `pdf_flatten` — Bake Annotations & Forms Permanently into Graphics
-
-### Tester 3: Forms, Batch Automation, Markup & Document Synthesis (22 Tools)
 - [ ] 45. `pdf_read_form` — Extract AcroForm Field Values to JSON
 - [ ] 46. `pdf_fill_form` — Populate AcroForms from JSON or Direct Typing
 - [ ] 47. `pdf_create_form_field` — Interactive Form Field Builder (Text, Checkbox)
@@ -109,14 +108,14 @@ Input documents are available in the workspace:
 - [ ] 58. `html_to_pdf` — Convert HTML Code/URL into Formatted PDF
 - [ ] 59. `pdf_convert_html` — Convert Ingested HTML Strings to PDF
 - [ ] 60. `pdf_convert_markdown` — Parse and Style Raw Markdown to PDF
+
+### Tester 3: Office Conversions, Archival Formats, AI Intelligence & Workflows (30 Tools: 61–90)
 - [ ] 61. `pdf_convert_excel` — Render Raw Spreadsheets to Paginated PDF
 - [ ] 62. `pdf_comic_archive` — Package PDF Pages into Comic Archive (.cbz/.cbr)
 - [ ] 63. `pdf_to_epub` — Convert Fixed Layout PDF into Reflowable EPUB 3.0
 - [ ] 64. `pdf_to_pdf_a` — Archive-Ready PDF/A ISO 19005 Conformance
 - [ ] 65. `extract_images` — Extract and Export All Embedded Raster Images
 - [ ] 66. `pdf_extract_images` — Filtered Image Extractor with DPI Scaling
-
-### Tester 4: Office Conversions, AI Intelligence & Workflows (23 Tools)
 - [ ] 67. `pdf_to_docx` — Convert PDF into Microsoft Word (.docx)
 - [ ] 68. `pdf_to_xlsx` — Extract Tabular Layout into Microsoft Excel (.xlsx)
 - [ ] 69. `pdf_to_pptx` — Export PDF Pages into Presentation Slides (.pptx)
@@ -139,4 +138,5 @@ Input documents are available in the workspace:
 - [ ] 86. `document_workflow` — Declarative Recipe Workflow Runner (.ppflow)
 - [ ] 87. `recipe_run` — Instant Pipeline Execution of Multi-Step Tools
 - [ ] 88. `cli_ask` — Natural Language AI Assistant for Document Tasks
-- [ ] 89. `watcher_start` / `watcher_stop` — Hot-Folder Watcher Daemon Automation
+- [ ] 89. `watcher_start` — Start Hot-Folder Watcher Daemon Automation
+- [ ] 90. `watcher_stop` — Stop Hot-Folder Watcher Daemon & Verify Graceful Teardown

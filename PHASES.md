@@ -29,7 +29,7 @@
 |:---:|---|:---:|---|:---:|
 | **01** | **Rust Core Engine** | ✅ **100% Done** | 45+ pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
 | **02** | **MCP Server** | ✅ **100% Done** | 88 MCP tools registered, parameter-aligned, and validated across Waves 1–8 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | 🚀 **In Progress (95%)** | Spec 141 multi-rule, Spec 142 watched folders, and 4-person QA testing matrix (89 tools) ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **03** | **Desktop + Mobile App** | 🚀 **In Progress (95%)** | Spec 141 multi-rule, Spec 142 watched folders, and 3-person QA testing matrix (90 tools, 30 each) ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
 | **04** | **AI Layer & Workflows** | 🚀 **In Progress (95%)** | Spec 136/137/139/142 watched folders & conditional pipelines merged; Waves 1–8 unmocked E2E pass | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | ✅ **100% Done** | Pure-Rust OCR (`ocrs`/`rusto-rs`), on-device Qwen-0.5B SLM, visual pipeline generator | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
 | **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
@@ -45,7 +45,7 @@
 
 ## 🎯 Active Development Focus
 - **Penta-Interface Remediation (Spec 145)**: Waves 1–8 unmocked end-to-end audits are 100% green across CLI, MCP (88 registered tools), REST Gateway, WASM, and Desktop. All 5 remediation workstreams (MCP schemas, CLI flags, REST endpoints, PDF engine edge-cases, OCR fallbacks) merged into `feature/dev`.
-- **4-Person Manual Desktop Testing Matrix (Spec 145)**: 89 platform tools divided across 4 tester profiles (`qa/manual_desktop_testing/`) covering Page Operations, Conversions, Security/Forms, and AI/Analysis.
+- **3-Person Manual Desktop Testing Matrix (Spec 145)**: 90 platform tools divided evenly across 3 tester profiles (`qa/manual_desktop_testing/`, 30 tools each) covering Page Operations, Security/Forms, and Office Conversions/AI.
 - **WASM & CI Hardening**: Fixed target dependency leakages in `paperpilot-core` and `paperpilot-pdf` to eliminate `mio` and native socket dependencies on `wasm32-unknown-unknown`. Validated with clean `wasm-pack build` and 29 passing WASM tests.
 - **CI Action Modernization**: Standardized all GitHub Actions workflows to official `@v4` and `@v2` tags, resolving runner resolution errors.
 - **Automated OWASP ZAP API Security Gate (Spec 147 / Task 8.13)**: Dynamic application security testing (DAST) workflow running in GitHub Actions against OpenAPI endpoints with SARIF reporting.

@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** October 30, 2026
 >
-> **Active Target:** Spec 145 (Penta-Interface Audit Remediation Waves 1–8) and 4-Person Manual Desktop Testing Matrix (89 tools) merged into `feature/dev`. WASM compilation hardened (mio eliminated). Active next step is 4-Person Manual QA Execution and GitHub Actions Release verification.
+> **Active Target:** Spec 145 (Penta-Interface Audit Remediation Waves 1–8) and 3-Person Manual Desktop Testing Matrix (90 tools, 30 each) merged into `feature/dev`. WASM compilation hardened (mio eliminated). Active next step is 3-Person Manual QA Execution and GitHub Actions Release verification.
 
 ---
 
@@ -18,7 +18,7 @@
   - **Desktop Vitest Suite**: **147 passing tests across 24 files** (100% green).
   - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
   - **Cargo Workspace**: `cargo check --workspace` compiles cleanly with zero errors.
-- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 89 platform tools across 4 tester assignments.
+- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 90 platform tools across 3 tester assignments (30 tools each).
 
 ---
 
@@ -31,12 +31,11 @@
    - **Session 3 (PR #321)**: Implemented missing REST gateway routes and unified error code mappings.
    - **Session 4 (PR #318)**: Hardened PDF engine edge-cases for CBZ extraction, outline splitting, and render flush.
    - **Session 5 (Commit `f1a4772`)**: Added OCR model packaging and search fallback routines in `paperpilot-nlp`.
-2. **Spec 145 / 4-Person Desktop UI Manual Testing Matrix**:
-   - Authored complete test guides in [`qa/manual_desktop_testing/`](qa/manual_desktop_testing/) covering 89 platform tools:
-     - [Tester 1: Page Operations](qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) (22 tools)
-     - [Tester 2: Conversions & Export](qa/manual_desktop_testing/TESTER_2_CONVERSIONS.md) (22 tools)
-     - [Tester 3: Security, Forms & Protection](qa/manual_desktop_testing/TESTER_3_SECURITY_FORMS.md) (23 tools)
-     - [Tester 4: AI, Search & Intelligence](qa/manual_desktop_testing/TESTER_4_AI_ANALYSIS.md) (22 tools)
+2. **Spec 145 / 3-Person Desktop UI Manual Testing Matrix (30 Tools Each)**:
+   - Authored complete test guides in [`qa/manual_desktop_testing/`](qa/manual_desktop_testing/) covering 90 platform tools:
+     - [Tester 1: Page Operations, Imposition & Optimization](qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md) (30 tools: 01–30)
+     - [Tester 2: Security, Cryptography, AcroForms & Synthesis](qa/manual_desktop_testing/TESTER_2_SECURITY_FORMS.md) (30 tools: 31–60)
+     - [Tester 3: Office Conversions, AI Intelligence & Workflows](qa/manual_desktop_testing/TESTER_3_CONVERSIONS_INTELLIGENCE.md) (30 tools: 61–90)
 3. **WASM & CI Build Hardening**:
    - Gated `reqwest` in `paperpilot-core` and native watcher/network dependencies in `paperpilot-pdf` behind `[target.'cfg(not(target_arch = "wasm32"))'.dependencies]`.
    - Eliminated `mio` compile errors on target `wasm32-unknown-unknown`.
@@ -54,9 +53,9 @@
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
 | **1** | **Spec 145 Remediation** | **Penta-Interface 100% Green E2E Audit**<br>Eliminated all 142 failure points across Waves 1–8. | ✅ **Completed & Merged** |
-| **2** | **Spec 145 Manual Matrix** | **4-Person Manual Desktop QA Guides**<br>Structured step-by-step matrix for all 89 platform tools in `qa/manual_desktop_testing/`. | ✅ **Completed & Merged** |
+| **2** | **Spec 145 Manual Matrix** | **3-Person Manual Desktop QA Guides (30 Tools Each)**<br>Structured step-by-step matrix for all 90 platform tools in `qa/manual_desktop_testing/`. | ✅ **Completed & Merged** |
 | **3** | **WASM & CI Hardening** | **Zero-Network WASM Build & Workflow Tag Fixes**<br>Gated native dependencies, verified `wasm-pack build`, modernized workflow actions. | ✅ **Completed & Merged** |
-| **4** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
+| **4** | **Manual QA Execution** | **3-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
 | **5** | **Spec 146 Structured Logging** | **Universal Leveled & Structured Logging Engine**<br>Multi-format NDJSON/text/compact/pretty, request_id correlation, dual error logging (PR #323). | ✅ **Completed & Merged** |
 | **6** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
 | **7** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger fresh release workflow on `feature/dev` to generate Windows, macOS, Linux, Android, and WASM bundles. | 🚀 **Ready for Trigger** |
