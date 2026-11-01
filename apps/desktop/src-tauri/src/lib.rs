@@ -364,7 +364,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            #[cfg(desktop)]
+            #[cfg(all(not(target_os = "android"), not(target_os = "ios")))]
             {
                 use tauri::Manager;
                 let icon_bytes = include_bytes!("../icons/icon.png");
