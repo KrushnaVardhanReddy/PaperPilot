@@ -1,3 +1,5 @@
+pub use crate::storage::DatabasePort;
+
 use crate::error::OperationResult;
 use std::path::Path;
 
