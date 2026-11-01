@@ -1,0 +1,60 @@
+# Spec 150: Hexagonal Storage Port Architecture (DatabasePort)
+
+## Context & Objectives
+You are refactoring the PaperPilot storage architecture to follow strict **Hexagonal Architecture (Ports and Adapters)**.
+Currently, `paperpilot-storage` directly exposes a concrete `StorageEngine` struct with embedded `libsql::Connection`.
+We need to decouple this so that downstream consumers (such as `PaperPilot-Enterprise` or cloud multi-tenant deployments) can swap libSQL for PostgreSQL or Supabase without modifying upstream code.
+
+## Implementation Steps
+
+### 1. Define `DatabasePort` in `paperpilot-core`
+In `paperpilot-core/Cargo.toml`, ensure `async-trait = "0.1"` is available.
+Create `paperpilot-core/src/storage.rs`:
+1. Define storage domain models (or move them here so they are shared across crates):
+   - `JobStatus` (`Pending`, `Running`, `Completed`, `Failed`)
+   - `JobRecord` (`id`, `operation`, `status`, `input_path`, `output_path`, `parameters_json`, `error_message`, `progress_percentage`, `callback_url`, `created_at`, `updated_at`)
+   - `NewJob` (`operation`, `input_path`, `output_path`, `parameters_json`, `callback_url`)
+   - `AuditEvent` (`id`, `event_type`, `tool_id`, `actor`, `payload_hash`, `details_json`, `timestamp`)
+   - `DocumentChunkRecord` (`id`, `document_hash`, `chunk_index`, `page_number`, `text_content`, `embedding`, `created_at`)
+   - `VectorSearchResult` (`chunk_id`, `document_hash`, `chunk_index`, `page_number`, `text_content`, `similarity_score`)
+   - `StorageError` enum with `NotFound(String)`, `Serialization(String)`, `Backend(String)`, etc.
+2. Define `pub trait DatabasePort: Send + Sync`:
+   ```rust
+   #[async_trait::async_trait]
+   pub trait DatabasePort: Send + Sync {
+       async fn create_job(&self, job: NewJob) -> Result<String, StorageError>;
+       async fn get_job(&self, id: &str) -> Result<Option<JobRecord>, StorageError>;
+       async fn update_job_status(&self, id: &str, status: JobStatus, progress: u8, output: Option<&str>, error: Option<&str>) -> Result<(), StorageError>;
+       async fn list_jobs(&self, limit: usize) -> Result<Vec<JobRecord>, StorageError>;
+       
+       async fn store_document_chunks(&self, chunks: &[DocumentChunkRecord]) -> Result<(), StorageError>;
+       async fn search_similar_chunks(&self, query_embedding: &[f32], limit: usize, min_similarity: f32) -> Result<Vec<VectorSearchResult>, StorageError>;
+       async fn delete_document_chunks(&self, document_hash: &str) -> Result<usize, StorageError>;
+
+       async fn append_audit_log(&self, event: AuditEvent) -> Result<(), StorageError>;
+       async fn list_audit_logs(&self, limit: usize) -> Result<Vec<AuditEvent>, StorageError>;
+   }
+   ```
+3. Expose `pub mod storage;` in `paperpilot-core/src/lib.rs` and re-export `pub use storage::DatabasePort;` in `paperpilot-core/src/ports.rs`.
+
+### 2. Implement `DatabasePort` for `StorageEngine` in `paperpilot-storage`
+In `paperpilot-storage`:
+1. Update `paperpilot-storage/src/lib.rs`:
+   - Import `paperpilot_core::storage::{DatabasePort, JobRecord, NewJob, JobStatus, AuditEvent, DocumentChunkRecord, VectorSearchResult, StorageError}`.
+   - Implement `DatabasePort for StorageEngine`.
+   - Keep the existing `open_local` and `open_in_memory` constructors.
+   - Forward the existing libSQL operations to satisfy `DatabasePort`.
+2. For backwards compatibility, re-export domain models from `paperpilot_core::storage`.
+
+### 3. Update Callers
+In `apps/desktop/src-tauri/src/storage.rs`:
+- Update `GLOBAL_STORAGE` and helper functions to work cleanly with `StorageEngine` implementing `DatabasePort`.
+- Allow consumers to access `Arc<dyn DatabasePort>`.
+
+### 4. Verification & Testing
+1. Run `cargo test -p paperpilot-storage -j 4`. All in-memory unit tests must pass.
+2. Run `cargo check --workspace -j 4`. Ensure zero compilation errors across all workspace crates.
+
+Follow standard conventions:
+- Use memory-safe cargo jobs (`-j 4`).
+- Commit clean, focused git changes with message: `feat(core): introduce DatabasePort hexagonal storage trait and implement for StorageEngine`.

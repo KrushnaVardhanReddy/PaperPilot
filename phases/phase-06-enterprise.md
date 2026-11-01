@@ -59,6 +59,7 @@
 | 6.4.3 | Kubernetes manifests | Helm chart or plain manifests |
 | 6.4.4 | Air-gapped deployment guide | No external network dependencies |
 | 6.4.5 | Upgrade / migration tooling | Safe schema migrations, zero-downtime updates |
+| 6.4.6 | Hexagonal DatabasePort (Spec 150) | Decouple `paperpilot-storage` behind `paperpilot-core::storage::DatabasePort` for PostgreSQL/Supabase enterprise swappability |
 
 ---
 
