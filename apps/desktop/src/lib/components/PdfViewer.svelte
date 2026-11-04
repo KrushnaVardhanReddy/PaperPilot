@@ -29,9 +29,42 @@
   let canvas: HTMLCanvasElement;
   let isRendering = false; // Not a $state to prevent infinite loops in effects
 
+  // Password prompt state
+  let showPasswordModal = $state(false);
+  let passwordInput = $state('');
+  let passwordError = $state('');
+  let passwordCallback: ((password: string) => void) | null = null;
+  let passwordInputEl: HTMLInputElement | null = $state(null);
+
+  function handlePasswordSubmit(e?: Event) {
+    if (e) e.preventDefault();
+    if (!passwordCallback) return;
+    const pwd = passwordInput;
+    passwordError = '';
+    passwordCallback(pwd);
+  }
+
+  function handlePasswordCancel() {
+    showPasswordModal = false;
+    passwordInput = '';
+    passwordError = '';
+    if (passwordCallback) {
+      // Pass an empty string or trigger cancellation
+      passwordCallback('');
+      passwordCallback = null;
+    }
+  }
+
+  $effect(() => {
+    if (showPasswordModal && passwordInputEl) {
+      setTimeout(() => passwordInputEl?.focus(), 50);
+    }
+  });
+
   async function loadDocument(url: string, fileObj?: File | Blob | null) {
     if (!url && !fileObj) {
       pdfDoc = null;
+      showPasswordModal = false;
       return;
     }
     try {
@@ -53,12 +86,32 @@
       }
 
       if (loadingTask) {
+        loadingTask.onPassword = (updatePassword: (password: string) => void, reason: number) => {
+          passwordCallback = updatePassword;
+          showPasswordModal = true;
+          if (reason === (pdfjsLib.PasswordResponses?.INCORRECT_PASSWORD ?? 2)) {
+            passwordError = 'Incorrect password. Please try again.';
+          } else {
+            passwordError = '';
+          }
+        };
+
         pdfDoc = await loadingTask.promise;
+        showPasswordModal = false;
+        passwordInput = '';
+        passwordError = '';
+        passwordCallback = null;
         pageNum = 1;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error loading PDF:", err);
-      pdfDoc = null;
+      if (err?.name === 'PasswordException') {
+        showPasswordModal = true;
+        passwordError = 'This document is protected with a password.';
+      } else {
+        pdfDoc = null;
+        showPasswordModal = false;
+      }
     }
   }
 
@@ -186,6 +239,42 @@
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="pdf-viewer-wrapper">
+  {#if showPasswordModal}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="password-modal-backdrop" onclick={(e) => { if (e.target === e.currentTarget) handlePasswordCancel(); }}>
+      <div class="password-modal-card" role="dialog" aria-modal="true" aria-labelledby="pwd-title">
+        <div class="password-modal-header">
+          <div class="lock-icon-badge">🔒</div>
+          <div>
+            <h3 id="pwd-title">Password Required</h3>
+            <p class="pwd-subtitle">This document is encrypted. Enter password to view.</p>
+          </div>
+        </div>
+        <form onsubmit={handlePasswordSubmit}>
+          <div class="input-group">
+            <input
+              bind:this={passwordInputEl}
+              type="password"
+              class="password-input"
+              class:has-error={!!passwordError}
+              bind:value={passwordInput}
+              placeholder="Enter password..."
+              autocomplete="current-password"
+            />
+            {#if passwordError}
+              <p class="error-msg">{passwordError}</p>
+            {/if}
+          </div>
+          <div class="password-modal-actions">
+            <button type="button" class="btn-cancel" onclick={handlePasswordCancel}>Cancel</button>
+            <button type="submit" class="btn-unlock" disabled={!passwordInput.trim()}>Unlock Document</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {/if}
+
   <PdfSearchBar {pdfDoc} bind:pageNum bind:searchHighlights />
   <div class="viewer-container">
     {#if citationHighlight && citationHighlight.page === pageNum && !citationHighlight.bbox}
@@ -322,5 +411,137 @@
     15% { opacity: 1; transform: translate(-50%, 0); }
     85% { opacity: 1; transform: translate(-50%, 0); }
     100% { opacity: 0; transform: translate(-50%, -10px); }
+  }
+
+  /* Password Modal Styling */
+  .password-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1.5rem;
+  }
+
+  .password-modal-card {
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .password-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .lock-icon-badge {
+    font-size: 1.75rem;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .password-modal-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .pwd-subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted, #9ca3af);
+  }
+
+  .input-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .password-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #374151);
+    background: var(--bg-input, #111827);
+    color: var(--text-primary, #ffffff);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .password-input:focus {
+    border-color: var(--accent-primary, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  }
+
+  .password-input.has-error {
+    border-color: #ef4444;
+  }
+
+  .error-msg {
+    margin: 0.4rem 0 0;
+    color: #ef4444;
+    font-size: 0.8rem;
+  }
+
+  .password-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  .btn-cancel {
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #374151);
+    background: transparent;
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .btn-unlock {
+    padding: 0.55rem 1.25rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent-primary, #6366f1);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .btn-unlock:hover:not(:disabled) {
+    background: #4f46e5;
+  }
+
+  .btn-unlock:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>

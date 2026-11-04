@@ -764,6 +764,60 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       appState.reorderDocuments(index, index + 1);
     }
   }
+
+  async function handleBrowseOutputPath() {
+    if (!activeTool) return;
+    try {
+      const isFolderOutput = activeTool.id === 'split' || activeTool.id === 'burst' || activeTool.id === 'extract_images';
+      if (isFolderOutput) {
+        const { open } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          directory: true,
+          multiple: false,
+          defaultPath: customOutputPath || undefined,
+          title: `Select ${activeTool.title} Output Folder`
+        });
+        if (selected && typeof selected === 'string') {
+          customOutputPath = selected;
+        }
+      } else {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        // Determine file extensions based on active tool
+        const toolId = activeTool.id.startsWith('pdf_') ? activeTool.id : `pdf_${activeTool.id}`;
+        let filters = [{ name: 'PDF Document', extensions: ['pdf'] }];
+        if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(toolId)) {
+          filters = [{ name: 'Text File', extensions: ['txt'] }];
+        } else if (['pdf_to_json', 'excel_to_json'].includes(toolId)) {
+          filters = [{ name: 'JSON Document', extensions: ['json'] }];
+        } else if (['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
+          filters = [{ name: 'Markdown File', extensions: ['md'] }];
+        } else if (['pdf_to_html', 'excel_to_html'].includes(toolId)) {
+          filters = [{ name: 'HTML Document', extensions: ['html'] }];
+        } else if (['pdf_to_docx'].includes(toolId)) {
+          filters = [{ name: 'Word Document', extensions: ['docx'] }];
+        } else if (['pdf_to_xlsx'].includes(toolId)) {
+          filters = [{ name: 'Excel Spreadsheet', extensions: ['xlsx'] }];
+        } else if (['excel_to_csv'].includes(toolId)) {
+          filters = [{ name: 'CSV File', extensions: ['csv'] }];
+        } else if (['pdf_comic_archive'].includes(toolId)) {
+          filters = [{ name: 'Comic Book Archive', extensions: ['cbz'] }];
+        } else if (['pdf_to_epub'].includes(toolId)) {
+          filters = [{ name: 'EPUB E-Book', extensions: ['epub'] }];
+        }
+
+        const selected = await save({
+          defaultPath: customOutputPath || undefined,
+          title: `Save ${activeTool.title} Output As`,
+          filters
+        });
+        if (selected) {
+          customOutputPath = selected;
+        }
+      }
+    } catch (err) {
+      console.warn('File save dialog error:', err);
+    }
+  }
 </script>
 
 <div
@@ -1232,6 +1286,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               placeholder={activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder path...' : 'Output file path...'}
               title="Edit the output path"
             />
+            <button
+              type="button"
+              class="output-browse-btn"
+              title={activeTool.id === 'split' || activeTool.id === 'burst' ? 'Browse destination folder' : 'Browse destination file'}
+              onclick={handleBrowseOutputPath}
+            >
+              📁 Browse
+            </button>
           </div>
         </div>
       {/if}
@@ -2038,6 +2100,28 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
   .output-path-input:focus {
     color: var(--text-primary, #ffffff);
+  }
+
+  .output-browse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted, #9ca3af);
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  .output-browse-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-surface-active, rgba(255, 255, 255, 0.1));
+    border-color: var(--accent-primary, #5e6ad2);
   }
 
   .smart-badge {
