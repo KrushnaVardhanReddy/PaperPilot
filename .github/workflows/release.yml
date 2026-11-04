@@ -178,29 +178,42 @@ jobs:
           # 1. Desktop GUI installer bundles (.exe, .msi)
           find target/ -type f \( -name "*.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} release_pkgs/ \; 2>/dev/null || true
 
-          # 2. CLI standalone zip
+          # 2. Desktop GUI Standalone Portable Zip (.zip with PaperPilot GUI .exe + resources)
+          mkdir -p staging_portable_gui
+          GUI_EXE=$(find target/ -type f -name "PaperPilot.exe" ! -path "*/bundle/*" | head -n 1)
+          [ -n "$GUI_EXE" ] || GUI_EXE="${TARGET_DIR}/PaperPilot.exe"
+          if [ -f "$GUI_EXE" ]; then
+            cp "$GUI_EXE" staging_portable_gui/
+          fi
+          cp README.md staging_portable_gui/ || true
+          (cd staging_portable_gui && 7z a "../release_pkgs/PaperPilot-windows-portable-x86_64.zip" *)
+
+          # 3. CLI standalone zip
           mkdir -p staging_cli
           cp "${TARGET_DIR}/paperpilot.exe" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_cli/paperpilot.exe 2>/dev/null || true
           cp README.md staging_cli/ || true
           (cd staging_cli && 7z a "../release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.zip" *)
 
-          # 3. MCP standalone zip
+          # 4. MCP standalone zip
           mkdir -p staging_mcp
           cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_mcp/ 2>/dev/null || true
           cp README.md staging_mcp/ || true
           (cd staging_mcp && 7z a "../release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.zip" *)
 
-          # 4. Gateway standalone zip
+          # 5. Gateway standalone zip
           mkdir -p staging_gateway
           cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_gateway/ 2>/dev/null || true
           cp README.md staging_gateway/ || true
           (cd staging_gateway && 7z a "../release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
 
-          # 5. All-in-One Suite (GUI app + CLI + Gateway + MCP)
+          # 6. All-in-One Suite (GUI app + CLI + Gateway + MCP)
           mkdir -p staging_all
           cp "${TARGET_DIR}/paperpilot.exe" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_all/paperpilot.exe 2>/dev/null || true
           cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_all/ 2>/dev/null || true
           cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_all/ 2>/dev/null || true
+          if [ -f "$GUI_EXE" ]; then
+            cp "$GUI_EXE" staging_all/
+          fi
           find target/ -type f \( -name "*.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
           cp README.md staging_all/ || true
           (cd staging_all && 7z a "../release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
@@ -380,7 +393,7 @@ jobs:
             ### Included Release Binaries & GUI Installers
             - **Desktop GUI Applications**:
               - Linux: `PaperPilot.AppImage` (standalone portable) and `.deb` (Ubuntu/Debian installer)
-              - Windows: `.msi` and `.exe` (NSIS setup installer)
+              - Windows: `PaperPilot-windows-portable-x86_64.zip` (standalone portable - no install needed), `.exe` (NSIS setup installer), and `.msi`
               - macOS: `.dmg` (Apple Silicon disk image installer)
             - **CLI & Backend Microservices**:
               - `paperpilot` (CLI Engine with 50+ PDF & document tools)
@@ -390,6 +403,13 @@ jobs:
             - **Mobile & Web Runtimes**:
               - `paperpilot-android-*.apk` (Native Android Mobile App with Touch UI & Camera Scanner)
               - `paperpilot-wasm-universal.tar.gz` (Universal WebAssembly engine for browsers & edge runtimes)
+
+            ### Windows SmartScreen Note ("Windows protected your PC")
+            Because the open-source build does not yet have an expensive EV/OV Code Signing certificate, Windows Defender SmartScreen may display:
+            *"Windows protected your PC — Microsoft Defender SmartScreen prevented an unrecognized app from starting"*.
+            - Click **More info**.
+            - Click **Run anyway**.
+            - Or download `PaperPilot-windows-portable-x86_64.zip`, extract it to any folder, and run `PaperPilot.exe` directly without running an installer!
 
             ### macOS First-Launch Note (Gatekeeper)
             Because the open-source build uses ad-hoc code signing, macOS Gatekeeper may show *"PaperPilot Not Opened"* on first download. Run this in Terminal after moving `PaperPilot.app` to `/Applications`:
