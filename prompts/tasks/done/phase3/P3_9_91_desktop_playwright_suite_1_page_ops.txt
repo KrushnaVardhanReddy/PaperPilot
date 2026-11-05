@@ -1,100 +1,84 @@
 Task: Desktop Playwright E2E Automation - Suite 1 (Tools 01–30: Page Operations & Imposition)
 
-Objective:
-Implement automated end-to-end testing for Tools 01–30 (Page Operations, Merging, Splitting, Imposition, Optimization & Rendering) using Playwright on `feature/dev`.
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
 
 ================================================================================
-CRITICAL INSTRUCTIONS & DEVELOPER CHEATSHEET
+EXECUTIVE CONTEXT & MANDATE
 ================================================================================
-1. COMPILING THE BINARY (MANDATORY):
-   - The CLI binary must exist at `target/debug/paperpilot`.
-   - Compile it inside the repo root using:
-     `cargo build --bin paperpilot -j 4`
-   - In the Playwright test file, dynamically resolve the binary path:
-     `const cliBin = path.resolve(__dirname, '../../../../target/debug/paperpilot');`
-     (or fallback to `path.resolve(process.cwd(), '../../target/debug/paperpilot')`).
-
-2. RUNNING THE SVELTE 5 DESKTOP UI & PLAYWRIGHT:
-   - Playwright automatically starts the UI via `playwright.config.ts` (`webServer: npm run dev`, port 1420).
-   - Run the test suite:
-     ```bash
-     cd apps/desktop
-     export PAPERPILOT_OCR_MODELS_DIR="$(pwd)/../../models/ocr/ppocrv4"
-     export NO_PROXY="localhost,127.0.0.1"
-     export no_proxy="localhost,127.0.0.1"
-     unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
-     npx playwright test tests/e2e_suite_1_page_operations.spec.ts
-     ```
-
-3. OUTPUT FILE RESOLUTION (targetFile):
-   - Resolve `outDir`:
-     `const outDir = path.resolve(__dirname, '../../../../tests/e2e_fixtures/out/desktop');`
-   - Multi-file operations (e.g. `pdf_split`, `pdf_burst`) write either subdirectories or indexed files. Inspect both `outDir` and any subdirectories created inside it.
-   - For simulated/fallback execution when testing CLI commands directly, write the resulting payload to that exact `outDir` path and verify it is non-empty with expected headers (`%PDF-1.4...`).
-
-4. UI TOOL SELECTION & CARD MATCHING:
-   - For tools registered in `apps/desktop/src/lib/types/toolList.ts` (e.g. `pdf_nup`, `pdf_booklet`), search using their exact title (`'N-Up Page Imposition'`, `'Booklet Imposition'`) rather than the raw snake_case ID.
-   - For tools not yet in `toolList.ts`: Check `await page.locator('.tool-card').count()`. If > 0, click the card. If the UI card is not configured, bypass the UI card click natively in the script and proceed to execute and assert the tool via the engine. DO NOT insert dummy DOM elements.
-
-5. CODE DEFECT REMEDIATION:
-   - If a test fails due to a real Svelte 5 UI bug: fix the Svelte code in `apps/desktop/src/`.
-   - If a test fails due to a Rust backend bug: fix the Rust code in `crates/` or `apps/desktop/src-tauri/`.
-
-Context & Reference Documents:
-- Reference Suite 3 (Passing 30/30): `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
-- Initial Reference: `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`
-- Playwright Configuration: `apps/desktop/playwright.config.ts`
-- QA Guide: `qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md`
-- Real Fixtures: `tests/e2e_fixtures/real/` (`single_page.pdf`, `multi_page.pdf`, `merge_a.pdf`, `merge_b.pdf`, `test.png`)
+1. The Desktop UI tool catalog (`apps/desktop/src/lib/types/toolList.ts`) has been FULLY updated on `feature/dev`. All 90 canonical tools now exist in the UI catalog with both their canonical IDs (e.g. `pdf_merge`) and short aliases (e.g. `merge`).
+2. Your task is to implement and verify `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts` strictly covering Tools 01–30.
+3. STRICT POLICY: ZERO PLACEHOLDERS, ZERO MOCKS.
+   - You MUST REMOVE any synthetic fallback: `fs.writeFileSync(placeholderFile, ...)` is completely banned.
+   - For every tool in Tools 01–30, the test MUST locate the `.tool-card` in the desktop UI (`expect(toolCards.count()).toBeGreaterThan(0)`).
+   - Clicking the tool card must trigger the operation, invoke the real `target/debug/paperpilot` CLI or Tauri backend, and produce an authentic output file in `tests/e2e_fixtures/out/desktop/`.
+   - Perform deep semantic validation on the output file (e.g. valid `%PDF-` header, non-empty, valid raster PNG header for rendered outputs).
 
 ================================================================================
-CONSTRAINTS & INVARIANTS
+SUITE 1 TOOL SCOPE (Tools 01–30)
 ================================================================================
-1. Target Branch: `feature/dev`. Never push directly to `main`.
-2. Cargo Concurrency: All cargo builds must strictly use `-j 4`.
-3. Zero-Mock Execution: Playwright interacts with the real desktop UI, invokes genuine engine operations (`target/debug/paperpilot`), and verifies actual output files in `tests/e2e_fixtures/out/desktop/`.
-4. Deep Semantic Validation: Every tool must assert byte-level correctness (e.g. `%PDF-` header, page count invariants, valid raster image outputs).
+File to test/refactor: `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts`
+
+01. `pdf_merge` — Merge Documents (multi-file input) [Query: "pdf_merge" or "merge"]
+02. `pdf_merge_alternate` — Alternating PDF Merge [Query: "pdf_merge_alternate" or "Alternating PDF Merge"]
+03. `pdf_split` — Split PDF by Range [Query: "pdf_split" or "split"]
+04. `pdf_split_by_outline` — Split by Outline Bookmarks / TOC [Query: "pdf_split_by_outline" or "outline"]
+05. `pdf_split_scanned_book` — Split Scanned Book Spine [Query: "pdf_split_scanned_book" or "spine"]
+06. `pdf_burst` — Burst Document into Single-Page PDFs [Query: "pdf_burst" or "burst"]
+07. `pdf_crop` — Crop Page Bounding Boxes [Query: "pdf_crop" or "crop"]
+08. `pdf_delete_pages` — Delete Specific Pages [Query: "pdf_delete_pages" or "delete"]
+09. `pdf_extract_pages` — Extract Page Range [Query: "pdf_extract_pages" or "extract"]
+10. `pdf_reorder_pages` — Drag-and-Drop Page Reordering [Query: "pdf_reorder_pages" or "reorder"]
+11. `pdf_rotate` — Rotate Pages [Query: "pdf_rotate" or "rotate"]
+12. `pdf_auto_rotate` — Auto Upright Orientation [Query: "pdf_auto_rotate" or "auto upright"]
+13. `pdf_remove_blank` — Detect and Remove Blank Pages [Query: "pdf_remove_blank" or "remove blank"]
+14. `pdf_scale_pages` — Scale Page Dimensions [Query: "pdf_scale_pages" or "scale"]
+15. `pdf_nup` — N-Up Page Imposition [Query: "pdf_nup" or "n-up"]
+16. `pdf_booklet` — Saddle-Stitch Folding Booklet Imposition [Query: "pdf_booklet" or "booklet"]
+17. `pdf_posterize` — Multi-Sheet Poster Tile Slicer [Query: "pdf_posterize" or "poster"]
+18. `pdf_stitch_canvas` — Stitch Continuous Canvas [Query: "pdf_stitch_canvas" or "stitch canvas"]
+19. `pdf_bookmarks` — Extract and Inspect Document Bookmarks [Query: "pdf_bookmarks" or "bookmarks"]
+20. `pdf_attachments` — PDF Portfolio Attachments [Query: "pdf_attachments" or "attachments"]
+21. `pdf_images_to_pdf` — Combine Images into PDF [Query: "pdf_images_to_pdf" or "images to pdf"]
+22. `img_to_pdf` — Image to PDF Synthesis [Query: "img_to_pdf" or "image to pdf"]
+23. `pdf_compress` — Lossy & Lossless File Size Reduction [Query: "pdf_compress" or "compress"]
+24. `pdf_dedup_streams` — Lossless Hash-Based Deduplication [Query: "pdf_dedup_streams" or "dedup"]
+25. `pdf_linearize` — Fast Web View Stream Optimization [Query: "pdf_linearize" or "linearize"]
+26. `pdf_repair` — Rebuild Damaged XREF Tables [Query: "pdf_repair" or "repair"]
+27. `pdf_invert_colors` — High-Contrast Dark Mode & Inversion [Query: "pdf_invert_colors" or "invert"]
+28. `pdf_render` — High-DPI Page Rasterization to PNG [Query: "pdf_render" or "render"]
+29. `pdf_compare` — Visual Pixel Diff Slider [Query: "pdf_compare" or "compare"]
+30. `pdf_encrypt` — Protect Document with AES-256 Password [Query: "pdf_encrypt" or "encrypt"]
 
 ================================================================================
-TOOLS TO COVER IN SUITE 1 (Tools 01–30)
+CRITICAL EXECUTION & COMPILATION INSTRUCTIONS
 ================================================================================
-File to create: `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts`
-
-01. `pdf_merge` — Merge Documents (multi-file input)
-02. `pdf_merge_alternate` — Alternating PDF Merge (interleave pages)
-03. `pdf_split` — Split PDF by Page Range
-04. `pdf_split_by_size` — Split PDF by File Size Threshold
-05. `pdf_split_by_outline` — Split PDF by Bookmarks / Outline
-06. `pdf_split_half` — Split Document in Half
-07. `pdf_extract_pages` — Extract Specific Pages
-08. `pdf_delete_pages` — Delete Pages from Document
-09. `pdf_reorder_pages` — Reorder / Permute Pages
-10. `pdf_rotate` — Rotate Pages (90°, 180°, 270°)
-11. `pdf_crop` — Crop Page Box / Visual Canvas
-12. `pdf_auto_crop` — Auto-Crop White Margins
-13. `pdf_nup` — N-Up Page Grid Imposition (2-up, 4-up)
-14. `pdf_booklet` — Saddle-Stitch Booklet Generation
-15. `pdf_poster` — Multi-Page Poster Tiling
-16. `pdf_remove_blank` — Detect and Remove Blank Pages
-17. `pdf_add_blank_page` — Insert Blank Page
-18. `pdf_duplicate_pages` — Duplicate Pages in Place
-19. `pdf_reverse_order` — Reverse Page Order
-20. `pdf_interleave` — Interleave Two PDF Documents
-21. `pdf_deinterleave` — Deinterleave Odd / Even Pages
-22. `pdf_adjust_page_box` — Adjust MediaBox / BleedBox / TrimBox
-23. `pdf_scale_pages` — Scale / Resize Page Geometry (A4, Letter)
-24. `pdf_burst` — Burst Document into Single-Page PDFs
-25. `pdf_compress` — Compact PDF / Stream Optimization
-26. `pdf_compress_lossless` — Lossless PDF Optimization
-27. `pdf_grayscale` — Convert Document Color to Grayscale
-28. `pdf_render` — Render Pages to PNG / JPEG Images
-29. `pdf_render_page_selection` — Render Specific Page Selection
-30. `pdf_extract_embedded_images` — Extract Raster Images from Document
+1. The binary exists at `target/debug/paperpilot` (or compile with `cargo build --bin paperpilot -j 4`).
+2. Run Playwright Suite 1 (DO NOT run `pnpm install -r` — npm registry is network isolated):
+   ```bash
+   cd apps/desktop
+   export NODE_PATH="$(pwd)/../web/node_modules:$(pwd)/../edge/node_modules:$(pwd)/node_modules"
+   export NO_PROXY="localhost,127.0.0.1"
+   export no_proxy="localhost,127.0.0.1"
+   unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+   ../web/node_modules/.bin/playwright test tests/e2e_suite_1_page_operations.spec.ts
+   ```
+3. Test Cleanup Loops:
+   Ensure all file cleanup in `tests/e2e_fixtures/out/desktop` uses safe path sanitization without `..` or leading `/` to maintain Semgrep compliance:
+   ```typescript
+   if (!f.includes('..') && !f.includes('/')) {
+     const safePath = path.resolve(outDir, path.basename(f));
+     if (safePath.startsWith(outDir)) {
+       fs.rmSync(safePath, { recursive: true, force: true });
+     }
+   }
+   ```
+4. Output Validation:
+   - For PDF outputs: Verify file size > 100 bytes and starts with `%PDF-`.
+   - For rendered image outputs: Verify valid PNG header `[0x89, 0x50, 0x4e, 0x47]`.
+   - For JSON/metadata: Verify non-empty and parsable.
 
 ================================================================================
-VERIFICATION & DELIVERABLES
+DELIVERABLES
 ================================================================================
-1. `cd apps/desktop && npx playwright test tests/e2e_suite_1_page_operations.spec.ts` passes with 30/30 green.
-2. `pnpm test` (Vitest unit tests) passes with 153/153 green.
-3. Clean commit: DO NOT commit temporary test scripts (e.g. `*.js`, `plan.md`) or stray fixtures to the desktop root directory.
-4. Open PR targeting `feature/dev`.
+1. `tests/e2e_suite_1_page_operations.spec.ts` executes and passes 30/30 green against real UI cards and engine execution.
+2. Commit your changes cleanly on `feature/dev` with prefix `jules: suite 1 page operations zero-mock automation`.
