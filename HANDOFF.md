@@ -2,9 +2,10 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** November 1, 2026
+> **Date of Last Update:** November 5, 2026
 >
-> **Active Target:** Spec 150 (Hexagonal DatabasePort for Enterprise) merged. Production PDF rendering & desktop dock icon fixes verified. Active next step is GitHub Actions Release verification on `feature/dev` and 4-Person Manual QA Execution.
+> **Active Target:** 90-Tool Playwright Automation delegated to Jules. Svelte 5 reactivity runtime bugfixes merged. Playwright zero-mock desktop execution established on `feature/dev` (commit `0a4e20e` & `3568b61`). Full specifications, tasks, and prompt prepared in `qa/`.
+
 
 ---
 
@@ -48,11 +49,11 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
-| **2** | **Manual QA Execution** | **4-Person Desktop Testing Execution**<br>Execute manual test matrices across Testers 1–4 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 🚀 **Active / In Progress** |
-| **3** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
-| **4** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
-| **5** | **Spec 148 / Task 8.14** | **OpenVAS / Greenbone Container Hardening Suite**<br>Dockerized vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports. | 📋 **Planned** |
+| **1** | **Automated Desktop E2E (90 Tools)** | **Playwright E2E 90-Tool Automation**<br>Delegated to Jules to execute across 3 modular suites using `qa/playwright_e2e_specification.md` and `qa/playwright_e2e_tasks.md`. | 🚀 **Active / Delegated to Jules** |
+| **2** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
+| **3** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
+| **4** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
+| **5** | **Phase 5.9.100 / Spec 133** | **OpenSSF Scorecard Supply Chain Hardening**<br>Pin GitHub Actions SHAs, establish `SECURITY.md`, and configure Scorecard SARIF workflow. | 📋 **Queued** (`feat/openssf-scorecard-hardening`) |
 
 ---
 
@@ -60,20 +61,29 @@
 
 When resuming a new session, follow these steps:
 
-1. **Verify Branch Alignment**:
-   - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
-   - Ensure `feat/desktop-ui-manual-testing-matrix-4p` remains synchronized with `feature/dev`.
+1. **Playwright 90-Tool Automation Execution (Jules Hand-off)**:
+   - Provide Jules with the delegation prompt in [`qa/jules_playwright_90_tools_prompt.md`](qa/jules_playwright_90_tools_prompt.md).
+   - Ensure Jules references [`qa/playwright_e2e_specification.md`](qa/playwright_e2e_specification.md) and tracks tasks in [`qa/playwright_e2e_tasks.md`](qa/playwright_e2e_tasks.md).
+   - Monitor the 3 modular test suites:
+     - `e2e_suite_1_page_operations.spec.ts` (Tools 01–30)
+     - `e2e_suite_2_security_forms.spec.ts` (Tools 31–60)
+     - `e2e_suite_3_conversions_ai.spec.ts` (Tools 61–90)
+   - Ensure the consolidated report is saved to `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`.
 
-2. **Run Memory-Safe Audits**:
+2. **Verify Branch Alignment**:
+   - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
+
+3. **Run Memory-Safe Audits**:
    - Run memory-safe compilation: `cargo check -p paperpilot-pdf -j 4`.
    - Run WASM check: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`.
    - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`.
+   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test` (confirm 153/153 pass).
 
-3. **Desktop Manual Testing Coordination**:
+4. **Desktop Manual Testing Coordination (Post-Automation)**:
    - Review [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md).
    - If bugs are reported by testers, locate the exact tool ID in the appropriate tester guide, create a reproduction test in `tests/`, and remediate in `paperpilot-pdf` first before updating wrappers.
 
-4. **GitHub Actions Trigger**:
+5. **GitHub Actions Trigger**:
    - When triggering GitHub Actions release workflows, always trigger a **brand new workflow run** via `workflow_dispatch` on `feature/dev` (never "Re-run failed jobs" from older commits).
 
 ---
