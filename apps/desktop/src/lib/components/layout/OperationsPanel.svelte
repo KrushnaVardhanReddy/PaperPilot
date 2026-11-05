@@ -135,9 +135,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     async function checkOcrStatus() {
     try {
       const models = await invoke<{id: string, is_downloaded: boolean}[]>('get_available_ocr_models');
-      const tinyModel = models.find(m => m.id === 'ppocrv6-tiny');
-      if (tinyModel) {
-        isOcrDownloaded = tinyModel.is_downloaded;
+      if (Array.isArray(models)) {
+        const tinyModel = models.find(m => m.id === 'ppocrv6-tiny');
+        if (tinyModel) {
+          isOcrDownloaded = tinyModel.is_downloaded;
+        }
       }
     } catch (e) {
       console.warn('Failed to check OCR status:', e);
@@ -184,7 +186,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
   // Filter tools based on search query
   let activePackIds = $derived(
-    appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
+    Array.isArray(appState.featurePacks)
+      ? appState.featurePacks.filter((p: any) => p && p.is_enabled).map((p: any) => p.id)
+      : []
   );
 
   let ranked = $derived(

@@ -28,7 +28,7 @@
   <div class="titlebar-menus" data-tauri-drag-region>
     <div class="brand" data-tauri-drag-region>
       <img src="/favicon.png" alt="PaperPilot" class="brand-icon" />
-      <span>PaperPilot</span>
+      <span class="brand-title">PaperPilot</span>
     </div>
 
     <div class="menu-item" class:active={activeMenu === 'file'}>

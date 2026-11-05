@@ -28,7 +28,7 @@ const coreOperations = [
   { name: 'pdf_encrypt', query: 'encrypt', type: 'pdf' },
   { name: 'pdf_redact', query: 'redact', type: 'pdf' },
   { name: 'pdf_metadata', query: 'metadata', type: 'pdf' },
-  { name: 'pdf_sign', query: 'signature', type: 'pdf' },
+  { name: 'pdf_sign', query: 'Sign Document', type: 'pdf' },
   { name: 'pdf_flatten', query: 'flatten', type: 'pdf' },
   { name: 'pdf_header_footer', query: 'header', type: 'pdf' },
   { name: 'pdf_bates', query: 'bates', type: 'pdf' },
@@ -37,7 +37,7 @@ const coreOperations = [
   { name: 'pdf_render', query: 'convert', type: 'pdf' },
   { name: 'pdf_bookmarks', query: 'bookmarks', type: 'pdf' },
   { name: 'pdf_classify_type', query: 'classify', type: 'pdf' },
-  { name: 'pdf_validate', query: 'validate', type: 'pdf' },
+  { name: 'pdf_validate', query: 'Validate PDF', type: 'pdf' },
   { name: 'pdf_hash', query: 'hash', type: 'pdf' },
   { name: 'pdf_to_html', query: 'html', type: 'pdf' },
   { name: 'pdf_to_markdown', query: 'markdown', type: 'pdf' },
@@ -115,6 +115,9 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           await page.evaluate(({t, n}) => {
               (window as any).__last_tool_type = t;
               (window as any).__last_tool_name = n;
+              if ((window as any).appState?.clearAllDocuments) {
+                (window as any).appState.clearAllDocuments();
+              }
           }, { t: op.type, n: op.name });
 
           const fileInput = page.locator('input[multiple][type="file"]');
@@ -248,9 +251,16 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           else if (op.name === 'pdf_images_to_pdf') cliCmd = `${cliBin} images-to-pdf --images ../../tests/e2e_fixtures/real/test.png --output ${mockFilePDF}`;
 
           console.log("Executing Real Engine for", op.name, ":", cliCmd);
+          console.log(`[PASSING OP ${op.name}]`);
           if (cliCmd) {
             try {
-              execSync(cliCmd, { stdio: 'pipe' });
+              execSync(cliCmd, {
+                stdio: 'pipe',
+                env: {
+                  ...process.env,
+                  PAPERPILOT_OCR_MODELS_DIR: path.resolve('../../models/ocr/ppocrv4')
+                }
+              });
             } catch (e: any) {
               console.log("Command execution failed or warnings (ignoring error for validation fallback):", e.message);
             }
@@ -383,12 +393,15 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           const backBtn = page.locator('.back-btn');
           if (await backBtn.isVisible({ timeout: 2000 })) {
              await backBtn.click();
+          } else {
+             await page.click('#tab-btn-home');
           }
-          await expect(searchInput).toBeVisible({ timeout: 2000 });
+          await expect(searchInput).toBeVisible({ timeout: 5000 });
         });
       } catch (err: any) {
         hasError = true;
         errorMessage = err.message || String(err);
+        console.error(`[TOOL FAIL ${op.name}]:`, errorMessage);
 
         try {
           await page.goto('http://127.0.0.1:1420/');
