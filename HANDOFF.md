@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** November 5, 2026
 >
-> **Active Target:** Suite 1 (Tools 01–30: Page Operations & Imposition) Zero-Mock Playwright E2E triggered with Jules (Active Session: [25193966459956384](https://jules.google.com/session/25193966459956384)). UI catalog (all 90 tools) completed on `feature/dev`. Semgrep security compliance verified.
+> **Active Target:** Desktop 90-Tool Playwright Automation & Multi-Agent Delegation (Local Gemini CLI / `agy` via `make gemini-run` / `scripts/gemini_pair.sh` and Cloud Jules session `25193966459956384`). UI catalog (all 90 tools) completed on `feature/dev`. Spec 151 Deep Semantic Validation established.
 
 ---
 
@@ -47,7 +47,7 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Playwright Suite 1 (Tools 01–30: Page Operations & Imposition)** | **Suite 1 Zero-Mock Automation**<br>Active Jules Session [25193966459956384](https://jules.google.com/session/25193966459956384) (`prompts/tasks/done/phase3/P3_9_91_desktop_playwright_suite_1_page_ops.txt`). Ensure all 30 page operation and imposition tools find genuine `.tool-card`s in the updated UI catalog, eliminate all `placeholderFile` fallbacks, and verify genuine engine execution. | 🚀 **In Flight (Jules Session 25193966459956384)** |
+| **1** | **Playwright Suite 1 (Tools 01–30: Page Operations & Imposition)** | **Suite 1 Zero-Mock Automation**<br>Dual-Engine Delegation: Local Gemini CLI pair programmer (`make gemini-run FILE=...` or `scripts/gemini_pair.sh`) and Jules Session [25193966459956384](https://jules.google.com/session/25193966459956384). Ensure all 30 page operation and imposition tools find genuine `.tool-card`s in the updated UI catalog, eliminate all `placeholderFile` fallbacks, and verify genuine engine execution. | 🚀 **In Flight (Dual Engine: Local Gemini CLI + Jules)** |
 | **2** | **Spec 151 Deep Semantic E2E Validation** | **Next-Level Autonomous QA Architecture**<br>Specifications and tasks documented in [`qa/playwright_deep_semantic_validation_spec.md`](qa/playwright_deep_semantic_validation_spec.md) and [`qa/playwright_deep_semantic_validation_tasks.md`](qa/playwright_deep_semantic_validation_tasks.md). Deep content assertions (text extraction, page arithmetic, form values, Office cell checks, cryptographic signature inspection) with ephemeral UUID sandboxes. | 📋 **Queued (Post Initial Pass)** |
 | **3** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
 | **4** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
