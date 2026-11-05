@@ -214,12 +214,15 @@ test.describe('Real Desktop Unmocked Executions (Suite 3 - Conversions & AI)', (
              await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
           }
 
-          // Clear previous output files
-          fs.readdirSync(outDir).forEach(f => {
-            if (f.startsWith('mock_save_')) {
-                fs.rmSync(path.join(outDir, f), { recursive: true, force: true });
+          // Clear previous output files safely without path traversal
+          for (const f of fs.readdirSync(outDir)) {
+            if (f.startsWith('mock_save_') && !f.includes('..') && !f.includes('/')) {
+              const safePath = path.resolve(outDir, path.basename(f));
+              if (safePath.startsWith(outDir)) {
+                fs.rmSync(safePath, { recursive: true, force: true });
+              }
             }
-          });
+          }
 
           await runBtn.click({ force: true });
 
