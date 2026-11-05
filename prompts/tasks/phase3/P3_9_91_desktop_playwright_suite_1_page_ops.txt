@@ -98,3 +98,4 @@ VERIFICATION & DELIVERABLES
 2. `pnpm test` (Vitest unit tests) passes with 153/153 green.
 3. Clean commit: DO NOT commit temporary test scripts (e.g. `*.js`, `plan.md`) or stray fixtures to the desktop root directory.
 4. Open PR targeting `feature/dev`.
+

@@ -4,6 +4,10 @@ scripts/fetch_test_pdfs.py
 scripts/test_tri_interface_e2e.py
 apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
 apps/desktop/tests/e2e_real_desktop_execution.spec.ts
+apps/desktop/tests/e2e_all_tools_real_execution.spec.ts
+apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts
+apps/desktop/tests/e2e_suite_1_page_operations.spec.ts
+apps/desktop/tests/e2e_suite_2_security_forms.spec.ts
 
 # Android standard main launcher activity must be exported=true for OS intent launching
 apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml

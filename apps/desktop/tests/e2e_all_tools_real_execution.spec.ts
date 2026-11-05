@@ -179,12 +179,15 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
              await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
           }
 
-          // Clear previous files, handle dirs
-          fs.readdirSync(outDir).forEach(f => {
-            if (f.startsWith('mock_save_')) {
-                fs.rmSync(path.join(outDir, f), { recursive: true, force: true });
+          // Clear previous files safely without path traversal
+          for (const f of fs.readdirSync(outDir)) {
+            if (f.startsWith('mock_save_') && !f.includes('..') && !f.includes('/')) {
+              const safePath = path.resolve(outDir, path.basename(f));
+              if (safePath.startsWith(outDir)) {
+                fs.rmSync(safePath, { recursive: true, force: true });
+              }
             }
-          });
+          }
 
           await runBtn.click({ force: true });
 
