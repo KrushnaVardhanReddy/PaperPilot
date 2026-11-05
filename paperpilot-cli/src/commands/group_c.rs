@@ -57,17 +57,18 @@ pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> Opera
         std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
     }
     let mut doc = LopdfDocument::load(input)?;
-    // RenderOperation delegates to ExtractTextOperation internally.
-    // Access the text directly here so we can write to the output path.
-    // This is the promised follow-up: CLI writes the output file.
-    let text_op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
-    text_op.execute(&mut doc)?;
-    let text_lock = text_op.extracted_text.lock().unwrap();
-    let content = text_lock
-        .as_ref()
-        .map(|pages| pages.join("\n"))
-        .unwrap_or_default();
-    std::fs::write(output, content.as_bytes()).map_err(paperpilot_core::error::PdfError::IoError)
+    let op = paperpilot_pdf::operations::render::RenderOperation {
+        page: Some(1),
+        dpi: 150.0,
+        output_path: Some(output.to_path_buf()),
+        rendered_images: std::sync::Mutex::new(Vec::new()),
+    };
+    op.execute(&mut doc)?;
+    let images = op.rendered_images.lock().map_err(|_| paperpilot_core::error::PdfError::Other("Mutex poisoned".to_string()))?;
+    if let Some(first_img) = images.first() {
+        std::fs::write(output, first_img).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
+    Ok(())
 }
 
 pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> OperationResult<()> {

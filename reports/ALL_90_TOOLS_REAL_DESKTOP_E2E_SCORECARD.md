@@ -168,3 +168,89 @@
 | `pdf_bookmarks` | ✅ PASS | 1091.16 |  |
 | `pdf_set_bookmarks` | ✅ PASS | 1077.09 |  |
 | `pdf_hash` | ✅ PASS | 1095.75 |  |
+
+
+# Real Execution Suite 1 Tools 01-30 Desktop Operations E2E Scorecard
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+
+## Operations Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Error Notes |
+|-----------|--------|---------------------------|-------------|
+| `pdf_merge` | ✅ PASS | 3211.24 |  |
+| `pdf_merge_alternate` | ✅ PASS | 1234.66 |  |
+| `pdf_split` | ✅ PASS | 1092.57 |  |
+| `pdf_split_by_size` | ✅ PASS | 1130.64 |  |
+| `pdf_split_by_outline` | ✅ PASS | 500.86 |  |
+| `pdf_split_half` | ✅ PASS | 1092.52 |  |
+| `pdf_extract_pages` | ✅ PASS | 1069.13 |  |
+| `pdf_delete_pages` | ✅ PASS | 1097.78 |  |
+| `pdf_reorder_pages` | ✅ PASS | 1090.52 |  |
+| `pdf_rotate` | ✅ PASS | 1127.31 |  |
+| `pdf_crop` | ✅ PASS | 1145.55 |  |
+| `pdf_auto_crop` | ✅ PASS | 1174.18 |  |
+| `pdf_nup` | ✅ PASS | 1062.93 |  |
+| `pdf_booklet` | ✅ PASS | 1085.15 |  |
+| `pdf_poster` | ✅ PASS | 1201.23 |  |
+| `pdf_remove_blank` | ✅ PASS | 1141.25 |  |
+| `pdf_add_blank_page` | ✅ PASS | 1107.63 |  |
+| `pdf_duplicate_pages` | ✅ PASS | 540.82 |  |
+| `pdf_reverse_order` | ✅ PASS | 502.39 |  |
+| `pdf_interleave` | ✅ PASS | 1146.16 |  |
+| `pdf_deinterleave` | ✅ PASS | 1106.67 |  |
+| `pdf_adjust_page_box` | ✅ PASS | 1103.41 |  |
+| `pdf_scale_pages` | ✅ PASS | 1144.58 |  |
+| `pdf_burst` | ✅ PASS | 1142.95 |  |
+| `pdf_compress` | ✅ PASS | 1092.65 |  |
+| `pdf_compress_lossless` | ✅ PASS | 1097.01 |  |
+| `pdf_grayscale` | ✅ PASS | 517.04 |  |
+| `pdf_render` | ✅ PASS | 1140.65 |  |
+| `pdf_render_page_selection` | ✅ PASS | 1078.36 |  |
+| `pdf_extract_embedded_images` | ✅ PASS | 1161.89 |  |
+
+
+# Real Execution Suite 1 Tools 01-30 Desktop Operations E2E Scorecard
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+
+## Operations Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Error Notes |
+|-----------|--------|---------------------------|-------------|
+| `pdf_merge` | ✅ PASS | 2995.79 |  |
+| `pdf_merge_alternate` | ✅ PASS | 1066.09 |  |
+| `pdf_split` | ✅ PASS | 964.45 |  |
+| `pdf_split_by_outline` | ✅ PASS | 930.68 |  |
+| `pdf_split_scanned_book` | ✅ PASS | 969.30 |  |
+| `pdf_burst` | ✅ PASS | 979.00 |  |
+| `pdf_crop` | ✅ PASS | 982.58 |  |
+| `pdf_delete_pages` | ✅ PASS | 1004.43 |  |
+| `pdf_extract_pages` | ✅ PASS | 957.61 |  |
+| `pdf_reorder_pages` | ✅ PASS | 975.94 |  |
+| `pdf_rotate` | ✅ PASS | 965.90 |  |
+| `pdf_auto_rotate` | ✅ PASS | 946.72 |  |
+| `pdf_remove_blank` | ✅ PASS | 934.35 |  |
+| `pdf_scale_pages` | ✅ PASS | 915.70 |  |
+| `pdf_nup` | ✅ PASS | 957.52 |  |
+| `pdf_booklet` | ✅ PASS | 924.54 |  |
+| `pdf_posterize` | ✅ PASS | 949.42 |  |
+| `pdf_stitch_canvas` | ✅ PASS | 923.91 |  |
+| `pdf_bookmarks` | ✅ PASS | 937.70 |  |
+| `pdf_attachments` | ✅ PASS | 954.28 |  |
+| `pdf_images_to_pdf` | ✅ PASS | 985.07 |  |
+| `img_to_pdf` | ✅ PASS | 971.76 |  |
+| `pdf_compress` | ✅ PASS | 898.34 |  |
+| `pdf_dedup_streams` | ✅ PASS | 933.97 |  |
+| `pdf_linearize` | ✅ PASS | 915.87 |  |
+| `pdf_repair` | ✅ PASS | 929.31 |  |
+| `pdf_invert_colors` | ✅ PASS | 900.19 |  |
+| `pdf_render` | ✅ PASS | 1337.49 |  |
+| `pdf_compare` | ✅ PASS | 1012.01 |  |
+| `pdf_encrypt` | ✅ PASS | 1026.37 |  |
