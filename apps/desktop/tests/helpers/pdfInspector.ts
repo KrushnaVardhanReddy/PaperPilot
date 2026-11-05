@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export interface PdfInspectionResult {
   numPages: number;
@@ -78,3 +78,4 @@ export class PdfInspector {
     };
   }
 }
+
