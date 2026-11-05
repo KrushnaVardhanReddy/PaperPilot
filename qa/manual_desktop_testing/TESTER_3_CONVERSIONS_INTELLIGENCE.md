@@ -3,7 +3,7 @@
 **Assigned Tester:** Tester 3  
 **Total Tools Assigned:** 30 Tools (Tools 61 to 90)  
 **Domain:** Office OpenXML Conversions, Archival Formats (EPUB/CBZ/PDF-A), Embedded Image Extraction, Multimodal Layout Extraction, Neural OCR, Workspace Search & Workflow Recipes  
-**Target Branch:** `feature/dev` / `feat/desktop-ui-manual-testing-matrix-4p`
+**Target Branch:** `feature/dev`
 
 ---
 

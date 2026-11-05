@@ -100,3 +100,8 @@ pub(crate) mod tests {
         assert!(engine.is_ok());
     }
 }
+
+pub async fn get_database_port() -> Result<std::sync::Arc<dyn paperpilot_core::storage::DatabasePort>, String> {
+    let engine = get_storage_engine().await?;
+    Ok(std::sync::Arc::new(engine))
+}

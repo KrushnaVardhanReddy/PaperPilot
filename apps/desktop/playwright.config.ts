@@ -14,12 +14,26 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--proxy-bypass-list=<-loopback>'],
+        },
+      },
     },
   ],
   webServer: {
     command: 'npm run dev',
+    cwd: './',
     url: 'http://localhost:1420',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
+    env: {
+      NO_PROXY: 'localhost,127.0.0.1',
+      no_proxy: 'localhost,127.0.0.1',
+      HTTP_PROXY: '',
+      HTTPS_PROXY: '',
+      http_proxy: '',
+      https_proxy: '',
+    },
   },
 });

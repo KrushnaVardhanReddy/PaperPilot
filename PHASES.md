@@ -29,10 +29,10 @@
 |:---:|---|:---:|---|:---:|
 | **01** | **Rust Core Engine** | ✅ **100% Done** | 45+ pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
 | **02** | **MCP Server** | ✅ **100% Done** | 88 MCP tools registered, parameter-aligned, and validated across Waves 1–8 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | 🚀 **In Progress (95%)** | Spec 141 multi-rule, Spec 142 watched folders, and 3-person QA testing matrix (90 tools, 30 each) ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **03** | **Desktop + Mobile App** | 🚀 **In Progress (96%)** | Svelte 5 runtime bugfixes merged; 90-tool Playwright automation spec, tasks, and prompt prepared for Jules; 3-tester manual matrix ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
 | **04** | **AI Layer & Workflows** | 🚀 **In Progress (95%)** | Spec 136/137/139/142 watched folders & conditional pipelines merged; Waves 1–8 unmocked E2E pass | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | ✅ **100% Done** | Pure-Rust OCR (`ocrs`/`rusto-rs`), on-device Qwen-0.5B SLM, visual pipeline generator | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
-| **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
+| **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs, Spec 150 Hexagonal DatabasePort | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
 | **07** | **Managed Cloud Gateway** | 📋 **Planned (P2)** | Multi-tenant REST gateway, Cloudflare Edge workers, usage metering | [phase-07-managed-cloud.md](file:///home/krushna/Project/PaperPilot/phases/phase-07-managed-cloud.md) |
 | **08** | **Growth & Security** | 🚀 **In Progress (94%)** | Supply chain action tag standardization, OpenSSF scorecard hardening, Semgrep audit | [phase-08-growth-platform.md](file:///home/krushna/Project/PaperPilot/phases/phase-08-growth-platform.md) |
 | **09** | **Advanced Editing** | ✅ **100% Done** | Form filling, digital signatures, flattening, visual annotations | [phase-09-advanced-editing.md](file:///home/krushna/Project/PaperPilot/phases/phase-09-advanced-editing.md) |
@@ -44,13 +44,10 @@
 ---
 
 ## 🎯 Active Development Focus
-- **Penta-Interface Remediation (Spec 145)**: Waves 1–8 unmocked end-to-end audits are 100% green across CLI, MCP (88 registered tools), REST Gateway, WASM, and Desktop. All 5 remediation workstreams (MCP schemas, CLI flags, REST endpoints, PDF engine edge-cases, OCR fallbacks) merged into `feature/dev`.
-- **3-Person Manual Desktop Testing Matrix (Spec 145)**: 90 platform tools divided evenly across 3 tester profiles (`qa/manual_desktop_testing/`, 30 tools each) covering Page Operations, Security/Forms, and Office Conversions/AI.
-- **WASM & CI Hardening**: Fixed target dependency leakages in `paperpilot-core` and `paperpilot-pdf` to eliminate `mio` and native socket dependencies on `wasm32-unknown-unknown`. Validated with clean `wasm-pack build` and 29 passing WASM tests.
-- **CI Action Modernization**: Standardized all GitHub Actions workflows to official `@v4` and `@v2` tags, resolving runner resolution errors.
-- **Automated OWASP ZAP API Security Gate (Spec 147 / Task 8.13)**: Dynamic application security testing (DAST) workflow running in GitHub Actions against OpenAPI endpoints with SARIF reporting.
-- **OpenVAS / Greenbone Container Hardening Suite (Spec 148 / Task 8.14)**: Infrastructure and container vulnerability scanner recipe with automated ISO 27001 / SOC 2 compliance reports.
-- **Active Feature Freeze**: Codebase is feature-frozen. Development proceeds strictly for QA execution, release validation, and community feedback.
+- **Hexagonal DatabasePort Architecture (Spec 150)**: Decoupled database domain models into `paperpilot-core::storage` and introduced `pub trait DatabasePort: Send + Sync` (PR #324). Implemented on `paperpilot-storage` with embedded libSQL, enabling `PaperPilot-Enterprise` to implement PostgreSQL/Supabase without upstream code changes.
+- **Production Desktop & Release Packaging Hardening**: Fixed production WebKitGTK PDF blank canvas failure by passing raw `Uint8Array` buffers and updating Tauri CSP. Resolved desktop window/dock icon configuration (`#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`) and added `PaperPilot.desktop` launcher to release archives.
+- **WASM & CI Runner Stability**: Gated native dependencies for zero-network WASM compilation, modernized GitHub Actions workflows to `@v4`/`@v2`, and resolved macOS runner clang target incompatibility.
+- **Active QA & Release Execution**: 90-Tool Playwright Automation delegated to Jules (`qa/playwright_e2e_specification.md`, `qa/playwright_e2e_tasks.md`, `qa/jules_playwright_90_tools_prompt.md`), followed by 3-Tester Manual QA Sign-Off (`qa/manual_desktop_testing/`), and GitHub Actions Release verification on `feature/dev`.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 

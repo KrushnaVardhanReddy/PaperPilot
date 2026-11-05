@@ -3,7 +3,7 @@
 **Assigned Tester:** Tester 2  
 **Total Tools Assigned:** 30 Tools (Tools 31 to 60)  
 **Domain:** Cryptographic Security, Digital Signatures, PII Scanning, AcroForms, CSV Batch Form Engine, Watermarking, Bates Numbering, True Redaction & Document Synthesis  
-**Target Branch:** `feature/dev` / `feat/desktop-ui-manual-testing-matrix-4p`
+**Target Branch:** `feature/dev`
 
 ---
 
@@ -90,7 +90,7 @@ cp tests/e2e_fixtures/real/test.html ~/Desktop/tester2_fixtures/
 - **Manual Steps:**
   1. Disable **Content Copying**. Enable **Form Filling**. Set owner password. Click **Apply**.
 - **Expected Result:** Permissions bitmask updates and enforces restrictions in compliant PDF viewers.
-- **Sign-off:** `[ ] PASS` | `[ x ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -100,7 +100,7 @@ cp tests/e2e_fixtures/real/test.html ~/Desktop/tester2_fixtures/
 - **Manual Steps:**
   1. Click **Apply Timestamp Token**.
 - **Expected Result:** A cryptographically verified TSA timestamp token is embedded into the document signature dictionary.
-- **Sign-off:** `[ ] PASS` | `[ x ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -111,7 +111,7 @@ cp tests/e2e_fixtures/real/test.html ~/Desktop/tester2_fixtures/
   1. Draw visual signature or select certificate signing mode. Place signature on Page 1.
   2. Click **Apply Signature**.
 - **Expected Result:** Signature appearance and cryptographic dictionary are embedded on Page 1.
-- **Sign-off:** `[ ] PASS` | `[ x ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -121,7 +121,7 @@ cp tests/e2e_fixtures/real/test.html ~/Desktop/tester2_fixtures/
 - **Manual Steps:**
   1. Open `signed.pdf`. Click **Validate Signatures**.
 - **Expected Result:** Drawer shows verification report with signature status, signer identity, and integrity check.
-- **Sign-off:** `[ ] PASS` | `[ x ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -131,7 +131,7 @@ cp tests/e2e_fixtures/real/test.html ~/Desktop/tester2_fixtures/
 - **Manual Steps:**
   1. Open `signed.pdf`. Click **Strip Digital Signatures**.
 - **Expected Result:** Signature fields and cryptographic locks are removed, unlocking the document for editing.
-- **Sign-off:** `[ ] PASS` | `[ x ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 

@@ -3,7 +3,7 @@
 **Assigned Tester:** Tester 1  
 **Total Tools Assigned:** 30 Tools (Tools 01 to 30)  
 **Domain:** Document Assembly, Page Reordering, Splitting, Imposition, Portfolio Management, Optimization, Rendering & Password Encryption  
-**Target Branch:** `feature/dev` / `feat/desktop-ui-manual-testing-matrix-4p`
+**Target Branch:** `feature/dev`
 
 ---
 

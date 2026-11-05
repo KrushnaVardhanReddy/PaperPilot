@@ -16,6 +16,9 @@
   let { children } = $props();
 
   onMount(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).appState = appState;
+    }
     let unlisten: () => void;
     let unlistenSave: () => void;
     let unlistenSettings: () => void;

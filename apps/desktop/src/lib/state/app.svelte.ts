@@ -99,10 +99,11 @@ export class AppState {
 
   async fetchFeaturePacks() {
     try {
-      const packs: any[] = await safeInvoke('get_feature_packs') || [];
-      this.featurePacks = packs;
+      const packs: any = await safeInvoke('get_feature_packs');
+      this.featurePacks = Array.isArray(packs) ? packs : [];
     } catch (err) {
       console.warn('Failed to fetch feature packs:', err);
+      this.featurePacks = [];
     }
   }
 
