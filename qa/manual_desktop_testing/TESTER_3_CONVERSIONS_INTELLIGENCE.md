@@ -1,15 +1,15 @@
-# Manual Desktop UI Testing Guide: Tester 4 (23 Office Conversions, AI Intelligence & Workflow Tools)
+# Manual Desktop UI Testing Guide: Tester 3 (30 Tools — Office Conversions, Archival Formats, AI Intelligence & Workflows)
 
-**Assigned Tester:** Tester 4  
-**Total Tools Assigned:** 23 Tools (Tools 67 to 89)  
-**Domain:** Office OpenXML Conversions, Multimodal Layout Extraction, Neural OCR, Workspace Search & Workflow Recipes  
-**Target Branch:** `feature/dev` / `feat/desktop-ui-manual-testing-matrix-4p`  
+**Assigned Tester:** Tester 3  
+**Total Tools Assigned:** 30 Tools (Tools 61 to 90)  
+**Domain:** Office OpenXML Conversions, Archival Formats (EPUB/CBZ/PDF-A), Embedded Image Extraction, Multimodal Layout Extraction, Neural OCR, Workspace Search & Workflow Recipes  
+**Target Branch:** `feature/dev`
 
 ---
 
 ## 🚀 Quick Setup & Test Fixtures (Run Once Before Testing)
 
-All 23 tools can be tested using **6 pre-existing real test fixtures** from the repository, plus dedicated input/output watcher directories.
+All 30 tools can be tested using **7 pre-existing real test fixtures** from the repository, plus dedicated input/output watcher directories.
 
 ### 1. Launch the Tauri Desktop Application
 Open a terminal in the project root and start the desktop app:
@@ -20,37 +20,111 @@ npm run tauri dev
 *(Keep system RAM footprint light; close heavy unused browser tabs).*
 
 ### 2. One-Liner Fixture Setup Command
-Run this one command in your terminal to create a clean `tester4_fixtures` folder on your Desktop with all required test files:
+Run this one command in your terminal to create a clean `tester3_fixtures` folder on your Desktop with all required test files:
 ```bash
-mkdir -p ~/Desktop/tester4_fixtures/watch_in ~/Desktop/tester4_fixtures/watch_out
-cp tests/e2e_fixtures/real/multi_page.pdf ~/Desktop/tester4_fixtures/
-cp tests/e2e_fixtures/real/search_test.pdf ~/Desktop/tester4_fixtures/
-cp tests/e2e_fixtures/real/ocr.pdf ~/Desktop/tester4_fixtures/
-cp tests/e2e_fixtures/real/converted.docx ~/Desktop/tester4_fixtures/
-cp tests/e2e_fixtures/real/test.xls ~/Desktop/tester4_fixtures/
-cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
+mkdir -p ~/Desktop/tester3_fixtures/watch_in ~/Desktop/tester3_fixtures/watch_out
+cp tests/e2e_fixtures/real/multi_page.pdf ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/image_doc.pdf ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/search_test.pdf ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/ocr.pdf ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/converted.docx ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/test.xls ~/Desktop/tester3_fixtures/
+cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester3_fixtures/
 ```
 
 ### 📋 Fixture-to-Tool Mapping Matrix
 
 | Test Fixture File | Format / Purpose | Tools Covered |
 | :--- | :--- | :--- |
-| `~/Desktop/tester4_fixtures/multi_page.pdf` | 5-Page Standard PDF with Headings & Layout | **Tools 67, 68, 69, 70, 71, 72, 74, 83, 84, 85, 86, 87, 88, 89** |
-| `~/Desktop/tester4_fixtures/search_test.pdf` | Search-Optimized Text Document | **Tools 73, 81** |
-| `~/Desktop/tester4_fixtures/ocr.pdf` | Scanned Bitmap Document Image | **Tool 75** |
-| `~/Desktop/tester4_fixtures/converted.docx` | Microsoft Word OpenXML Document | **Tools 76, 77, 82** |
-| `~/Desktop/tester4_fixtures/test.xls` | Legacy Microsoft Excel 97–2003 Binary | **Tool 78** |
-| `~/Desktop/tester4_fixtures/test.xlsx` | Modern Microsoft Excel Spreadsheet | **Tools 79, 80, 82** |
-| `~/Desktop/tester4_fixtures/watch_in/` & `watch_out/` | Hot-Folder Daemon Test Directories | **Tool 89** |
+| `~/Desktop/tester3_fixtures/multi_page.pdf` | 5-Page Standard PDF with Headings & Layout | **Tools 62, 63, 64, 67, 68, 69, 70, 71, 72, 74, 83, 84, 85, 86, 87, 88, 89, 90** |
+| `~/Desktop/tester3_fixtures/image_doc.pdf` | PDF Containing Embedded Raster Images | **Tools 65, 66** |
+| `~/Desktop/tester3_fixtures/search_test.pdf` | Search-Optimized Text Document | **Tools 73, 81** |
+| `~/Desktop/tester3_fixtures/ocr.pdf` | Scanned Bitmap Document Image | **Tool 75** |
+| `~/Desktop/tester3_fixtures/converted.docx` | Microsoft Word OpenXML Document | **Tools 76, 77, 82** |
+| `~/Desktop/tester3_fixtures/test.xls` | Legacy Microsoft Excel 97–2003 Binary | **Tool 78** |
+| `~/Desktop/tester3_fixtures/test.xlsx` | Modern Microsoft Excel Spreadsheet | **Tools 61, 79, 80, 82** |
+| `~/Desktop/tester3_fixtures/watch_in/` & `watch_out/` | Hot-Folder Daemon Test Directories | **Tools 89, 90** |
 
 ---
 
-## 🛠️ Step-by-Step Testing Guide (All 23 Tools)
+## 🛠️ Step-by-Step Testing Guide (Tools 61 to 90)
+
+---
+
+### Tool 61: `pdf_convert_excel` — Render Raw Spreadsheets to Paginated PDF
+- **Input File:** `~/Desktop/tester3_fixtures/test.xlsx`
+- **UI Access:** Operations Dock > **Convert** > **CSV / Excel to PDF** (`pdf_convert_excel`).
+- **Manual Steps:**
+  1. Load `test.xlsx`. Set grid lines: **On**.
+  2. Click **Convert to PDF**.
+- **What to Verify:**
+  - Tabular rows and columns are paginated cleanly onto a valid PDF document.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 62: `pdf_comic_archive` — Package PDF Pages into Comic Archive (.cbz)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
+- **UI Access:** Operations Dock > **Convert** > **Comic Archive Conversion**.
+- **Manual Steps:**
+  1. Open `multi_page.pdf`.
+  2. Set DPI: `150 DPI`. Click **Convert to Comic Archive (.cbz)**.
+- **What to Verify:**
+  - Generates `.cbz` zip archive containing `page_001.png`, `page_002.png`, etc. with valid PK zip header.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 63: `pdf_to_epub` — Convert Fixed Layout PDF into Reflowable EPUB 3.0
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
+- **UI Access:** Operations Dock > **Convert** > **PDF to EPUB 3.0**.
+- **Manual Steps:**
+  1. Open `multi_page.pdf`.
+  2. Title: `My eBook`. Language: `en`. Click **Convert to EPUB**.
+- **What to Verify:**
+  - Generates valid `.epub` eBook package with reflowable chapters and TOC.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 64: `pdf_to_pdf_a` — Archive-Ready PDF/A ISO Conformance
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
+- **UI Access:** Operations Dock > **Convert** > **Convert to PDF/A**.
+- **Manual Steps:**
+  1. Open `multi_page.pdf`.
+  2. Select conformance level: `PDF/A-1b` or `PDF/A-2b`. Click **Convert**.
+- **What to Verify:**
+  - Generates archive-compliant PDF with XMP PDF/A conformance metadata and embedded color profile.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 65: `extract_images` — Extract and Export All Embedded Raster Images
+- **Input File:** `~/Desktop/tester3_fixtures/image_doc.pdf`
+- **UI Access:** Operations Dock > **AI** (or **Convert**) > **Extract Embedded Images**.
+- **Manual Steps:**
+  1. Open `image_doc.pdf`.
+  2. Click **Extract All Images** and select destination folder.
+- **What to Verify:**
+  - All embedded raster images are saved as individual PNG/JPEG files in the output folder.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+### Tool 66: `pdf_extract_images` — Filtered Image Extractor with DPI Scaling
+- **Input File:** `~/Desktop/tester3_fixtures/image_doc.pdf`
+- **UI Access:** Command Palette (`Ctrl+K`) > `pdf_extract_images`.
+- **Manual Steps:**
+  1. Open `image_doc.pdf`.
+  2. Launch `pdf_extract_images`, set minimum width/height filter (e.g. `10px`), and click **Extract**.
+- **What to Verify:**
+  - Extracts qualifying graphics while filtering out tiny spacer artifacts.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
 ### Tool 67: `pdf_to_docx` — Convert PDF into Microsoft Word (.docx)
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock (`🛠️` on right rail) > click **Convert** category tab > click **PDF to Word (DOCX)**
   - *Shortcut:* Press `Ctrl+K` (or `Cmd+K`), type `docx`, and select **PDF to Word (DOCX)**.
@@ -69,7 +143,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 68: `pdf_to_xlsx` — Extract Tabular Layout into Microsoft Excel (.xlsx)
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to Excel (XLSX)**
   - *Shortcut:* Press `Ctrl+K`, type `xlsx`, and select **PDF to Excel (XLSX)**.
@@ -88,7 +162,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 69: `pdf_to_pptx` — Export PDF Pages into Presentation Slides (.pptx)
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to PowerPoint (PPTX)**
   - *Shortcut:* Press `Ctrl+K`, type `pptx`, and select **PDF to PowerPoint**.
@@ -106,7 +180,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 70: `pdf_to_html` — Export PDF as Responsive Styled HTML5 Web Page
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to HTML**
   - *Shortcut:* Press `Ctrl+K`, type `html`, and select **PDF to HTML**.
@@ -124,7 +198,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 71: `pdf_to_markdown` — Clean LLM-Ready Markdown Extraction
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to Markdown**
   - *Shortcut:* Press `Ctrl+K`, type `markdown`, and select **PDF to Markdown**.
@@ -135,13 +209,13 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
   4. Click **Extract Markdown**.
 - **What to Verify:**
   - Generates `multi_page.md` on disk.
-  - Open `multi_page.md` in any text editor (e.g. VS Code, Kate, Gedit): verify clean markdown structure (`# Heading`, `- Bullet`, paragraphs) ready for LLM prompt ingestion.
+  - Open `multi_page.md` in any text editor: verify clean markdown structure (`# Heading`, `- Bullet`, paragraphs) ready for LLM prompt ingestion.
 - **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
 ### Tool 72: `pdf_to_json` — Multimodal JSON Layout with Bounding Boxes
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to JSON**
   - *Shortcut:* Press `Ctrl+K`, type `json`, and select **PDF to JSON**.
@@ -157,7 +231,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 73: `pdf_extract_text` — Fast Plain Text Dumper (.txt)
-- **Input File:** `~/Desktop/tester4_fixtures/search_test.pdf` (or `tests/e2e_fixtures/real/search_test.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/search_test.pdf`
 - **UI Access:** 
   - Operations Dock > **Convert** > **PDF to Plain Text**
   - *Shortcut:* Press `Ctrl+K`, type `plain text`, and select **PDF to Plain Text**.
@@ -174,7 +248,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 74: `pdf_extract_tables` — High-Precision Table Matrix Extractor
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **AI** > **Extract Tables**
   - *Shortcut:* Press `Ctrl+K`, type `tables`, and select **Extract Tables**.
@@ -192,7 +266,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 75: `pdf_ocr` — Neural Optical Character Recognition on Scanned Pages
-- **Input File:** `~/Desktop/tester4_fixtures/ocr.pdf` (or `tests/e2e_fixtures/real/ocr.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/ocr.pdf`
 - **UI Access:** 
   - Operations Dock > **AI** > **OCR Text Recognition**
   - *Shortcut:* Press `Ctrl+K`, type `ocr`, and select **OCR Text Recognition**.
@@ -210,7 +284,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 76: `office_to_markdown` — Convert Word/Excel/PowerPoint to Markdown
-- **Input File:** `~/Desktop/tester4_fixtures/converted.docx` (or `tests/e2e_fixtures/real/converted.docx`)
+- **Input File:** `~/Desktop/tester3_fixtures/converted.docx`
 - **UI Access:** 
   - Operations Dock > **Convert** > **Convert Office to Markdown**
   - *Shortcut:* Press `Ctrl+K`, type `office markdown`, and select **Convert to Markdown**.
@@ -227,7 +301,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 77: `office_extract_text` — Extract Raw Text from Office Documents
-- **Input File:** `~/Desktop/tester4_fixtures/converted.docx` (or `test.xlsx`)
+- **Input File:** `~/Desktop/tester3_fixtures/converted.docx`
 - **UI Access:** 
   - Operations Dock > **Convert** > **Office to Plain Text**
   - *Shortcut:* Press `Ctrl+K`, type `office text`, and select **Office to Plain Text**.
@@ -244,7 +318,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 78: `office_modernize_legacy` — Upgrade Legacy .doc/.xls/.ppt
-- **Input File:** `~/Desktop/tester4_fixtures/test.xls` (or `tests/e2e_fixtures/real/test.xls` — Legacy Excel 97–2003 binary format)
+- **Input File:** `~/Desktop/tester3_fixtures/test.xls` (Legacy Excel 97–2003 binary format)
 - **UI Access:** 
   - Operations Dock > **Convert** > **Modernize Legacy Office**
   - *Shortcut:* Press `Ctrl+K`, type `modernize`, and select **Modernize Legacy Office**.
@@ -261,7 +335,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 79: `excel_to_json` — Convert Spreadsheet Sheets into JSON Objects
-- **Input File:** `~/Desktop/tester4_fixtures/test.xlsx` (or `tests/e2e_fixtures/real/test.xlsx`)
+- **Input File:** `~/Desktop/tester3_fixtures/test.xlsx`
 - **UI Access:** 
   - Operations Dock > **Convert** > **Excel to JSON**
   - *Shortcut:* Press `Ctrl+K`, type `excel to json`, and select **Excel to JSON**.
@@ -278,7 +352,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 80: `excel_to_csv` — Export Spreadsheet Sheets to RFC 4180 CSV
-- **Input File:** `~/Desktop/tester4_fixtures/test.xlsx` (or `tests/e2e_fixtures/real/test.xlsx`)
+- **Input File:** `~/Desktop/tester3_fixtures/test.xlsx`
 - **UI Access:** 
   - Operations Dock > **Convert** > **Excel to CSV**
   - *Shortcut:* Press `Ctrl+K`, type `excel to csv`, and select **Excel to CSV**.
@@ -295,7 +369,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 81: `pdf_search` — Real-Time Text Search and Highlighting in Viewer
-- **Input File:** `~/Desktop/tester4_fixtures/search_test.pdf` (or `tests/e2e_fixtures/real/search_test.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/search_test.pdf`
 - **UI Access:** 
   - Keyboard Shortcut: `Ctrl+F` (or `Cmd+F`)
   - *Alternative:* Click the `🔍 Search` icon on the top viewer toolbar.
@@ -333,7 +407,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 83: `semantic_search` — Vector Semantic Retrieval Across Chunks
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (open in viewer)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf` (open in viewer)
 - **UI Access:** 
   - Press `Ctrl+Shift+F` > click **🧠 Semantic** toggle button in the search modal header.
   - *Alternative:* Command Palette (`Ctrl+K`) > search `semantic_search`.
@@ -350,7 +424,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 84: `pdf_classify_type` — Document Type & Category Classifier
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Operations Dock > **AI** > **Classify Document**
   - *Shortcut:* Press `Ctrl+K`, type `classify`, and select **Classify Document**.
@@ -366,7 +440,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 85: `pdf_rag_chunks` — Semantic Chunk Generator for RAG LLM Pipelines
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Command Palette (`Ctrl+K`) > type `pdf_rag_chunks` > press `Enter`.
 - **Manual Steps:**
@@ -384,7 +458,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 86: `document_workflow` — Declarative Recipe Workflow Runner (.ppflow)
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Top Navigation Bar > click **⚡ Pipeline** tab to open the Visual Pipeline Canvas.
 - **Manual Steps:**
@@ -403,7 +477,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 87: `recipe_run` — Instant Pipeline Execution of Multi-Step Tools
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or `tests/e2e_fixtures/real/multi_page.pdf`)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Top Navigation Bar > **⚡ Pipeline** > **Flow Selector** dropdown.
 - **Manual Steps:**
@@ -420,7 +494,7 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 ---
 
 ### Tool 88: `cli_ask` — Natural Language AI Assistant for Document Tasks
-- **Input File:** `~/Desktop/tester4_fixtures/multi_page.pdf` (or any open document)
+- **Input File:** `~/Desktop/tester3_fixtures/multi_page.pdf`
 - **UI Access:** 
   - Click the **🤖 AI Chat** icon on the right sidebar or bottom navigation.
 - **Manual Steps:**
@@ -437,38 +511,58 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 
 ---
 
-### Tool 89: `watcher_start` / `watcher_stop` — Hot-Folder Watcher Daemon Automation
+### Tool 89: `watcher_start` — Start Hot-Folder Watcher Daemon Automation
 - **Input Test Directories:** 
-  - Watch Folder: `~/Desktop/tester4_fixtures/watch_in`
-  - Output Folder: `~/Desktop/tester4_fixtures/watch_out`
+  - Watch Folder: `~/Desktop/tester3_fixtures/watch_in`
+  - Output Folder: `~/Desktop/tester3_fixtures/watch_out`
 - **UI Access:** 
   - Top Navigation / Sidebar > click **⚙️ Settings** > scroll down to **Hot-Folder Watchers** section.
 - **Manual Steps:**
   1. In PaperPilot, click **⚙️ Settings** tab.
   2. In the **Hot-Folder Watchers** card:
-     - Set Watch Directory: enter or browse to `~/Desktop/tester4_fixtures/watch_in` (e.g. `/home/krushna/Desktop/tester4_fixtures/watch_in`).
-     - Set Output Directory: enter or browse to `~/Desktop/tester4_fixtures/watch_out`.
+     - Set Watch Directory: enter or browse to `~/Desktop/tester3_fixtures/watch_in`.
+     - Set Output Directory: enter or browse to `~/Desktop/tester3_fixtures/watch_out`.
      - Workflow: Select a preset (e.g. `Compress`).
   3. Click **Start watching**.
   4. Verify the folder status badge switches to `watching` (active).
   5. In your file manager or terminal, copy `multi_page.pdf` into `watch_in/`:
      ```bash
-     cp ~/Desktop/tester4_fixtures/multi_page.pdf ~/Desktop/tester4_fixtures/watch_in/
+     cp ~/Desktop/tester3_fixtures/multi_page.pdf ~/Desktop/tester3_fixtures/watch_in/
      ```
   6. Wait 2 seconds: check `watch_out/` directory. Verify the processed PDF appears.
-  7. In PaperPilot Settings, click **Stop watching**.
 - **What to Verify:**
-  - Status updates to `watching` when started and returns to idle when stopped.
+  - Status updates to `watching` when started.
   - Dropped files are automatically picked up by the daemon, processed, and deposited into `watch_out/`.
-  - Daemon gracefully shuts down when stopped without leaving orphan file locks.
 - **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
-## 🏁 Summary Sign-Off Scorecard: Tester 4
+### Tool 90: `watcher_stop` — Stop Hot-Folder Watcher Daemon & Verify Graceful Teardown
+- **Input Test Directories:** 
+  - Watch Folder: `~/Desktop/tester3_fixtures/watch_in`
+  - Output Folder: `~/Desktop/tester3_fixtures/watch_out`
+- **UI Access:** 
+  - Top Navigation / Sidebar > click **⚙️ Settings** > **Hot-Folder Watchers** section.
+- **Manual Steps:**
+  1. While the watcher from Tool 89 is active (`watching`), click **Stop watching**.
+  2. Verify the folder status badge immediately transitions from `watching` back to `idle` / `stopped`.
+  3. Copy another file into `watch_in/` and confirm no background processing runs while stopped.
+- **What to Verify:**
+  - Daemon gracefully shuts down when stopped without leaving orphan file locks or background threads running.
+- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+
+---
+
+## 🏁 Summary Sign-Off Scorecard: Tester 3 (30 Tools)
 
 | Tool # | Tool Identifier | UI Location | Test Input File | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **61** | `pdf_convert_excel` | Operations Dock > Convert | `test.xlsx` | `[ ] PASS` | |
+| **62** | `pdf_comic_archive` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
+| **63** | `pdf_to_epub` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
+| **64** | `pdf_to_pdf_a` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
+| **65** | `extract_images` | Operations Dock > AI | `image_doc.pdf` | `[ ] PASS` | |
+| **66** | `pdf_extract_images` | Command Palette (`Ctrl+K`) | `image_doc.pdf` | `[ ] PASS` | |
 | **67** | `pdf_to_docx` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
 | **68** | `pdf_to_xlsx` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
 | **69** | `pdf_to_pptx` | Operations Dock > Convert | `multi_page.pdf` | `[ ] PASS` | |
@@ -491,8 +585,10 @@ cp tests/e2e_fixtures/real/test.xlsx ~/Desktop/tester4_fixtures/
 | **86** | `document_workflow` | Top Nav `⚡ Pipeline` Canvas | `multi_page.pdf` | `[ ] PASS` | |
 | **87** | `recipe_run` | Top Nav `⚡ Pipeline` Runner | `multi_page.pdf` | `[ ] PASS` | |
 | **88** | `cli_ask` | Right Sidebar `🤖 AI Chat` | `multi_page.pdf` | `[ ] PASS` | |
-| **89** | `watcher_start` / `watcher_stop` | Settings `⚙️` > Watched Folders | `watch_in/` & `watch_out/` | `[ ] PASS` | |
+| **89** | `watcher_start` | Settings `⚙️` > Watched Folders | `watch_in/` & `watch_out/` | `[ ] PASS` | |
+| **90** | `watcher_stop` | Settings `⚙️` > Watched Folders | `watch_in/` & `watch_out/` | `[ ] PASS` | |
 
 **Tester Signature:** ___________________________  
 **Date of Testing:** ___________________________  
-**Overall Result:** `[ ] FULL PASS (23/23)` | `[ ] ISSUES DETECTED`
+**Overall Result:** `[ ] FULL PASS (30/30)` | `[ ] ISSUES DETECTED`
+
