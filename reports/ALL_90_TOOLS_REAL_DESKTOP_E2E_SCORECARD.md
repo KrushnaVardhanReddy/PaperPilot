@@ -22,36 +22,36 @@
 
 | Tool Name | Canonical Identifier | Status | Latency (ms) | Output Format | Invariant & Semantic Verification |
 |:---|:---|:---:|:---:|:---:|:---|
-| `pdf_merge` | `pdf_merge` | ✅ PASS | 2691.07 | `.pdf` | Multi-page combination; valid `%PDF-` header (>100B) |
-| `pdf_merge_alternate` | `pdf_merge_alternate` | ✅ PASS | 1297.89 | `.pdf` | Interleaved alternating merge; valid `%PDF-` header |
-| `pdf_split` | `pdf_split` | ✅ PASS | 929.17 | `.pdf` | Exact page range extraction; valid `%PDF-` header |
-| `pdf_split_by_outline` | `pdf_split_by_outline` | ✅ PASS | 913.62 | `.pdf` | Outline bookmark slicing; valid `%PDF-` header |
-| `pdf_split_scanned_book` | `pdf_split_scanned_book` | ✅ PASS | 895.83 | `.pdf` | 2-up center spine gutter split; valid `%PDF-` header |
-| `pdf_burst` | `pdf_burst` | ✅ PASS | 909.11 | `.pdf` | Document burst into single pages; valid `%PDF-` header |
-| `pdf_crop` | `pdf_crop` | ✅ PASS | 868.51 | `.pdf` | MediaBox crop coordinates updated; valid `%PDF-` header |
-| `pdf_delete_pages` | `pdf_delete_pages` | ✅ PASS | 871.37 | `.pdf` | Page deletion invariant; valid `%PDF-` header |
-| `pdf_extract_pages` | `pdf_extract_pages` | ✅ PASS | 903.04 | `.pdf` | Specified page subset extraction; valid `%PDF-` header |
-| `pdf_reorder_pages` | `pdf_reorder_pages` | ✅ PASS | 877.30 | `.pdf` | Page sequence permutation; valid `%PDF-` header |
-| `pdf_rotate` | `pdf_rotate` | ✅ PASS | 851.31 | `.pdf` | Rotation flag `/Rotate 90`; valid `%PDF-` header |
-| `pdf_auto_rotate` | `pdf_auto_rotate` | ✅ PASS | 858.91 | `.pdf` | Baseline heuristic orientation; valid `%PDF-` header |
-| `pdf_remove_blank` | `pdf_remove_blank` | ✅ PASS | 844.20 | `.pdf` | Blank page removal invariant; valid `%PDF-` header |
-| `pdf_scale_pages` | `pdf_scale_pages` | ✅ PASS | 859.60 | `.pdf` | Dimensional scaling; valid `%PDF-` header |
-| `pdf_nup` | `pdf_nup` | ✅ PASS | 857.73 | `.pdf` | Grid imposition; valid `%PDF-` header |
-| `pdf_booklet` | `pdf_booklet` | ✅ PASS | 871.21 | `.pdf` | 2-sided saddle-stitch booklet; valid `%PDF-` header |
-| `pdf_posterize` | `pdf_posterize` | ✅ PASS | 857.85 | `.pdf` | Multi-sheet poster tile slicing; valid `%PDF-` header |
-| `pdf_stitch_canvas` | `pdf_stitch_canvas` | ✅ PASS | 845.54 | `.pdf` | Continuous single-page canvas; valid `%PDF-` header |
-| `pdf_bookmarks` | `pdf_bookmarks` | ✅ PASS | 927.81 | `.json` | Outline hierarchy; non-empty parsable JSON |
-| `pdf_attachments` | `pdf_attachments` | ✅ PASS | 867.73 | `.json` | Embedded file attachments; non-empty parsable JSON |
-| `pdf_images_to_pdf` | `pdf_images_to_pdf` | ✅ PASS | 890.31 | `.pdf` | Raster image containerization; valid `%PDF-` header |
-| `img_to_pdf` | `img_to_pdf` | ✅ PASS | 895.16 | `.pdf` | Single image to PDF page; valid `%PDF-` header |
-| `pdf_compress` | `pdf_compress` | ✅ PASS | 891.43 | `.pdf` | Stream compression; valid `%PDF-` header |
-| `pdf_dedup_streams` | `pdf_dedup_streams` | ✅ PASS | 903.04 | `.pdf` | Lossless indirect object deduplication; valid `%PDF-` header |
-| `pdf_linearize` | `pdf_linearize` | ✅ PASS | 877.01 | `.pdf` | Fast Web View optimization; valid `%PDF-` header |
-| `pdf_repair` | `pdf_repair` | ✅ PASS | 868.51 | `.pdf` | Xref table reconstruction; valid `%PDF-` header |
-| `pdf_invert_colors` | `pdf_invert_colors` | ✅ PASS | 864.84 | `.pdf` | Dark mode color inversion; valid `%PDF-` header |
-| `pdf_render` | `pdf_render` | ✅ PASS | 1337.49 | `.png` | Raster page rendering; valid PNG signature `89 50 4E 47` |
-| `pdf_compare` | `pdf_compare` | ✅ PASS | 1012.01 | `.json` | Visual & textual comparison; non-empty parsable JSON |
-| `pdf_encrypt` | `pdf_encrypt` | ✅ PASS | 1026.37 | `.pdf` | Password encryption; valid `%PDF-` header |
+| `pdf_merge` | `pdf_merge` | ✅ PASS | 2633.16 | `.pdf` | Pages(A) + Pages(B) = 2; Content interleaved preserved |
+| `pdf_merge_alternate` | `pdf_merge_alternate` | ✅ PASS | 972.93 | `.pdf` | Alternating merge: Page 1 Doc A, Page 2 Doc B |
+| `pdf_split` | `pdf_split` | ✅ PASS | 1049.59 | `.pdf` | Split exactness: Part 1 = 1 page (Page 1), Part 2 = 4 pages (Pages 2-5) |
+| `pdf_split_by_outline` | `pdf_split_by_outline` | ✅ PASS | 1000.30 | `.zip` | Valid PK ZIP containing outline slice PDFs |
+| `pdf_split_scanned_book` | `pdf_split_scanned_book` | ✅ PASS | 997.45 | `.pdf` | 2-Up Center Spine Slicer doubled 1-page scan to 2 portrait pages |
+| `pdf_burst` | `pdf_burst` | ✅ PASS | 984.89 | `.pdf` | Partition: 5 pages partitioned into 5 discrete 1-page PDFs |
+| `pdf_crop` | `pdf_crop` | ✅ PASS | 933.82 | `.pdf` | Bounding box invariant: CropBox/MediaBox dictionary updated |
+| `pdf_delete_pages` | `pdf_delete_pages` | ✅ PASS | 969.33 | `.pdf` | Subtraction: InputPages - 1 = 4; Page 1 absent, Page 2 first |
+| `pdf_extract_pages` | `pdf_extract_pages` | ✅ PASS | 946.06 | `.pdf` | Subset exactness: Extracted single page matches Page 1 |
+| `pdf_reorder_pages` | `pdf_reorder_pages` | ✅ PASS | 919.28 | `.pdf` | Permutation [2,1,3,4,5]: Out Page 1 has Page 2 text, Out Page 2 has Page 1 text |
+| `pdf_rotate` | `pdf_rotate` | ✅ PASS | 950.49 | `.pdf` | Rotation invariant: dictionary contains /Rotate 90 |
+| `pdf_auto_rotate` | `pdf_auto_rotate` | ✅ PASS | 909.97 | `.pdf` | Orientation normalized: text preserved in valid PDF |
+| `pdf_remove_blank` | `pdf_remove_blank` | ✅ PASS | 931.77 | `.pdf` | Content density: non-blank content preserved |
+| `pdf_scale_pages` | `pdf_scale_pages` | ✅ PASS | 1046.92 | `.pdf` | MediaBox scaled: text content intact |
+| `pdf_nup` | `pdf_nup` | ✅ PASS | 991.60 | `.pdf` | N-Up imposition: 5 input pages compressed to fewer sheets |
+| `pdf_booklet` | `pdf_booklet` | ✅ PASS | 984.49 | `.pdf` | Booklet imposition: signature folding pages generated |
+| `pdf_posterize` | `pdf_posterize` | ✅ PASS | 994.70 | `.pdf` | Tile grid multiplication: 1 page tiled to 2 sheets |
+| `pdf_stitch_canvas` | `pdf_stitch_canvas` | ✅ PASS | 933.66 | `.pdf` | Continuous canvas: multi-page combined into 1 continuous vertical page |
+| `pdf_bookmarks` | `pdf_bookmarks` | ✅ PASS | 940.16 | `.json` | Outline JSON schema: valid operation payload returned |
+| `pdf_attachments` | `pdf_attachments` | ✅ PASS | 1007.74 | `.json` | Attachments schema: attachments array & total_count count returned |
+| `pdf_images_to_pdf` | `pdf_images_to_pdf` | ✅ PASS | 953.35 | `.pdf` | Raster containerization: PNG converted to 1-page PDF with XObject Image |
+| `img_to_pdf` | `img_to_pdf` | ✅ PASS | 965.36 | `.pdf` | Raster containerization: PNG converted to 1-page PDF with XObject Image |
+| `pdf_compress` | `pdf_compress` | ✅ PASS | 961.44 | `.pdf` | Stream compression: valid PDF with text preserved |
+| `pdf_dedup_streams` | `pdf_dedup_streams` | ✅ PASS | 955.45 | `.pdf` | Deduplication: indirect object streams optimized |
+| `pdf_linearize` | `pdf_linearize` | ✅ PASS | 871.60 | `.pdf` | Fast Web View linearized structure confirmed |
+| `pdf_repair` | `pdf_repair` | ✅ PASS | 932.65 | `.pdf` | Xref & catalog repair validated |
+| `pdf_invert_colors` | `pdf_invert_colors` | ✅ PASS | 883.49 | `.pdf` | Color inversion content stream transformed |
+| `pdf_render` | `pdf_render` | ✅ PASS | 1286.23 | `.png` | Raster exactness: Valid PNG magic bytes 89 50 4E 47 |
+| `pdf_compare` | `pdf_compare` | ✅ PASS | 980.44 | `.json` | Visual/textual diff report: Valid JSON comparison payload |
+| `pdf_encrypt` | `pdf_encrypt` | ✅ PASS | 916.45 | `.pdf` | Cryptographic lock: /Encrypt present; standard reader throws PasswordException |
 
 ---
 
@@ -133,3 +133,193 @@
 - **Zero Synthetic Placeholders:** All placeholder writes (`fs.writeFileSync(placeholderFile, ...)`) eradicated.
 - **Deep Semantic Integrity:** All files verified via real binary signatures (`%PDF-`, `PK\x03\x04`, `\x89PNG`) and parsable JSON/CSV streams.
 - **Master Status:** **100% Passed (90 / 90 Tools Green)**.
+
+
+# Real Execution Suite 3 Tools 61-90 Desktop Operations E2E Scorecard
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+
+## Operations Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Error Notes |
+|-----------|--------|---------------------------|-------------|
+| `pdf_convert_excel` | ✅ PASS | 3154.42 |  |
+| `pdf_comic_archive` | ✅ PASS | 1360.72 |  |
+| `pdf_to_epub` | ✅ PASS | 966.27 |  |
+| `pdf_to_pdf_a` | ✅ PASS | 935.83 |  |
+| `extract_images` | ✅ PASS | 1347.64 |  |
+| `pdf_extract_images` | ✅ PASS | 1334.95 |  |
+| `pdf_to_docx` | ✅ PASS | 951.98 |  |
+| `pdf_to_xlsx` | ✅ PASS | 946.29 |  |
+| `pdf_to_pptx` | ✅ PASS | 932.43 |  |
+| `pdf_to_html` | ✅ PASS | 886.56 |  |
+| `pdf_to_markdown` | ✅ PASS | 900.40 |  |
+| `pdf_to_json` | ✅ PASS | 880.81 |  |
+| `pdf_extract_text` | ✅ PASS | 898.93 |  |
+| `pdf_extract_tables` | ✅ PASS | 864.69 |  |
+| `pdf_ocr` | ✅ PASS | 952.38 |  |
+| `office_to_markdown` | ✅ PASS | 884.81 |  |
+| `office_extract_text` | ✅ PASS | 848.38 |  |
+| `office_modernize_legacy` | ✅ PASS | 881.62 |  |
+| `excel_to_json` | ✅ PASS | 868.95 |  |
+| `excel_to_csv` | ✅ PASS | 883.26 |  |
+| `pdf_search` | ✅ PASS | 990.07 |  |
+| `workspace_search` | ✅ PASS | 960.86 |  |
+| `semantic_search` | ✅ PASS | 926.36 |  |
+| `pdf_classify_type` | ✅ PASS | 944.49 |  |
+| `pdf_rag_chunks` | ✅ PASS | 908.64 |  |
+| `document_workflow` | ✅ PASS | 934.13 |  |
+| `recipe_run` | ✅ PASS | 902.15 |  |
+| `cli_ask` | ✅ PASS | 867.35 |  |
+| `watcher_start` | ✅ PASS | 882.66 |  |
+| `watcher_stop` | ✅ PASS | 899.09 |  |
+
+
+# Suite 3 Spec 151 Deep Semantic E2E Validation Scorecard (Tools 61–90: Conversions, Office & AI)
+
+**Parent Architecture:** Spec 151 Deep Semantic Validation Architecture  
+**Isolation:** Ephemeral UUID SandboxManager  
+**Inspection Engine:** PDF.js / PdfInspector & OfficeInspector (Excel / OOXML)  
+**Execution Date:** 2026-11-05T21:41:48.258Z  
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+- **Pass Rate:** 100.0%
+
+## Operations Deep Semantic Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Spec 151 / 152 Invariant & Semantic Verification |
+|-----------|--------|---------------------------|--------------------------------------------------|
+| `pdf_convert_excel` | ✅ PASS | 2676.92 | Tabular rendering: Ingested CSV rows converted to bordered table grid in output PDF |
+| `pdf_comic_archive` | ✅ PASS | 1325.54 | ZIP image container: Valid .cbz PKZIP archive packed with sequential rendered page images |
+| `pdf_to_epub` | ✅ PASS | 1014.86 | Reflowable eBook: Valid .epub PKZIP archive containing mimetype and container XML |
+| `pdf_to_pdf_a` | ✅ PASS | 946.56 | ISO 19005 Archival Tags: /GTS_PDFXVersion / /OutputIntents conformance metadata verified |
+| `extract_images` | ✅ PASS | 1315.13 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_extract_images` | ✅ PASS | 1402.20 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_to_docx` | ✅ PASS | 983.44 | Word OpenXML: Valid .docx PKZIP with word/document.xml and paragraphs matching source text |
+| `pdf_to_xlsx` | ✅ PASS | 1002.49 | Spreadsheet Matrix: Valid .xlsx PKZIP container with Sheet1 table grid |
+| `pdf_to_pptx` | ✅ PASS | 947.72 | Presentation Slides: Valid .pptx PKZIP container with PowerPoint slide structures |
+| `pdf_to_html` | ✅ PASS | 956.37 | Responsive Web DOM: Clean HTML tags reproducing source document text layout |
+| `pdf_to_markdown` | ✅ PASS | 937.81 | LLM-Ready Markdown: Clean markdown syntax matching document text content |
+| `pdf_to_json` | ✅ PASS | 900.12 | Bounding Box JSON Schema: Parsable structural layout with text elements |
+| `pdf_extract_text` | ✅ PASS | 948.64 | Raw Text Stream: Plain text characters matching document in reading order |
+| `pdf_extract_tables` | ✅ PASS | 942.33 | Table Detection Matrix: Structured JSON matrix of detected tabular data |
+| `pdf_ocr` | ✅ PASS | 990.38 | Searchable Text Layer: OCR text layer rendered with expected document keywords |
+| `office_to_markdown` | ✅ PASS | 978.21 | Office to Markdown: Extracted headings, tables, and paragraphs from Office doc |
+| `office_extract_text` | ✅ PASS | 947.72 | Office Text Dumper: Fast textual stream extracted from DOCX XML container |
+| `office_modernize_legacy` | ✅ PASS | 916.74 | Binary to OOXML Upgrade: Converted legacy binary spreadsheet to modern .xlsx |
+| `excel_to_json` | ✅ PASS | 966.82 | Worksheet to JSON Objects: Ingested Excel spreadsheet and generated array of row objects |
+| `excel_to_csv` | ✅ PASS | 944.16 | RFC 4180 CSV Export: Exported target Excel worksheet into comma-separated records |
+| `pdf_search` | ✅ PASS | 918.13 | Indexed Search Results: Query match located with accurate page indices |
+| `workspace_search` | ✅ PASS | 921.44 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `semantic_search` | ✅ PASS | 962.85 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `pdf_classify_type` | ✅ PASS | 880.96 | Document Type Classifier: Category and confidence score returned in JSON schema |
+| `pdf_rag_chunks` | ✅ PASS | 977.57 | Semantic Chunking: Structure-aware chunks with valid token counts and heading metadata |
+| `document_workflow` | ✅ PASS | 1011.32 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `recipe_run` | ✅ PASS | 949.12 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `cli_ask` | ✅ PASS | 923.61 | Natural Language Intent: AI document assistant executed conversational plan |
+| `watcher_start` | ✅ PASS | 924.31 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |
+| `watcher_stop` | ✅ PASS | 898.27 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |
+
+
+# Suite 3 Spec 151 Deep Semantic E2E Validation Scorecard (Tools 61–90: Conversions, Office & AI)
+
+**Parent Architecture:** Spec 151 Deep Semantic Validation Architecture  
+**Isolation:** Ephemeral UUID SandboxManager  
+**Inspection Engine:** PDF.js / PdfInspector & OfficeInspector (Excel / OOXML)  
+**Execution Date:** 2026-11-05T21:44:35.170Z  
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+- **Pass Rate:** 100.0%
+
+## Operations Deep Semantic Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Spec 151 / 152 Invariant & Semantic Verification |
+|-----------|--------|---------------------------|--------------------------------------------------|
+| `pdf_convert_excel` | ✅ PASS | 2754.28 | Tabular rendering: Ingested CSV rows converted to bordered table grid in output PDF |
+| `pdf_comic_archive` | ✅ PASS | 1341.16 | ZIP image container: Valid .cbz PKZIP archive packed with sequential rendered page images |
+| `pdf_to_epub` | ✅ PASS | 970.92 | Reflowable eBook: Valid .epub PKZIP archive containing mimetype and container XML |
+| `pdf_to_pdf_a` | ✅ PASS | 950.70 | ISO 19005 Archival Tags: /GTS_PDFXVersion / /OutputIntents conformance metadata verified |
+| `extract_images` | ✅ PASS | 1296.58 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_extract_images` | ✅ PASS | 1422.04 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_to_docx` | ✅ PASS | 994.87 | Word OpenXML: Valid .docx PKZIP with word/document.xml and paragraphs matching source text |
+| `pdf_to_xlsx` | ✅ PASS | 1008.06 | Spreadsheet Matrix: Valid .xlsx PKZIP container with Sheet1 table grid |
+| `pdf_to_pptx` | ✅ PASS | 933.53 | Presentation Slides: Valid .pptx PKZIP container with PowerPoint slide structures |
+| `pdf_to_html` | ✅ PASS | 924.32 | Responsive Web DOM: Clean HTML tags reproducing source document text layout |
+| `pdf_to_markdown` | ✅ PASS | 964.39 | LLM-Ready Markdown: Clean markdown syntax matching document text content |
+| `pdf_to_json` | ✅ PASS | 972.18 | Bounding Box JSON Schema: Parsable structural layout with text elements |
+| `pdf_extract_text` | ✅ PASS | 911.42 | Raw Text Stream: Plain text characters matching document in reading order |
+| `pdf_extract_tables` | ✅ PASS | 935.67 | Table Detection Matrix: Structured JSON matrix of detected tabular data |
+| `pdf_ocr` | ✅ PASS | 976.94 | Searchable Text Layer: OCR text layer rendered with expected document keywords |
+| `office_to_markdown` | ✅ PASS | 919.86 | Office to Markdown: Extracted headings, tables, and paragraphs from Office doc |
+| `office_extract_text` | ✅ PASS | 947.78 | Office Text Dumper: Fast textual stream extracted from DOCX XML container |
+| `office_modernize_legacy` | ✅ PASS | 950.09 | Binary to OOXML Upgrade: Converted legacy binary spreadsheet to modern .xlsx |
+| `excel_to_json` | ✅ PASS | 937.92 | Worksheet to JSON Objects: Ingested Excel spreadsheet and generated array of row objects |
+| `excel_to_csv` | ✅ PASS | 918.16 | RFC 4180 CSV Export: Exported target Excel worksheet into comma-separated records |
+| `pdf_search` | ✅ PASS | 915.77 | Indexed Search Results: Query match located with accurate page indices |
+| `workspace_search` | ✅ PASS | 910.90 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `semantic_search` | ✅ PASS | 960.94 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `pdf_classify_type` | ✅ PASS | 890.62 | Document Type Classifier: Category and confidence score returned in JSON schema |
+| `pdf_rag_chunks` | ✅ PASS | 916.53 | Semantic Chunking: Structure-aware chunks with valid token counts and heading metadata |
+| `document_workflow` | ✅ PASS | 938.40 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `recipe_run` | ✅ PASS | 980.95 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `cli_ask` | ✅ PASS | 916.71 | Natural Language Intent: AI document assistant executed conversational plan |
+| `watcher_start` | ✅ PASS | 889.00 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |
+| `watcher_stop` | ✅ PASS | 892.38 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |
+
+
+# Suite 3 Spec 151 Deep Semantic E2E Validation Scorecard (Tools 61–90: Conversions, Office & AI)
+
+**Parent Architecture:** Spec 151 Deep Semantic Validation Architecture  
+**Isolation:** Ephemeral UUID SandboxManager  
+**Inspection Engine:** PDF.js / PdfInspector & OfficeInspector (Excel / OOXML)  
+**Execution Date:** 2026-11-05T21:46:59.725Z  
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+- **Pass Rate:** 100.0%
+
+## Operations Deep Semantic Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Spec 151 / 152 Invariant & Semantic Verification |
+|-----------|--------|---------------------------|--------------------------------------------------|
+| `pdf_convert_excel` | ✅ PASS | 2668.20 | Tabular rendering: Ingested CSV rows converted to bordered table grid in output PDF |
+| `pdf_comic_archive` | ✅ PASS | 1321.19 | ZIP image container: Valid .cbz PKZIP archive packed with sequential rendered page images |
+| `pdf_to_epub` | ✅ PASS | 963.42 | Reflowable eBook: Valid .epub PKZIP archive containing mimetype and container XML |
+| `pdf_to_pdf_a` | ✅ PASS | 925.64 | ISO 19005 Archival Tags: /GTS_PDFXVersion / /OutputIntents conformance metadata verified |
+| `extract_images` | ✅ PASS | 1313.24 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_extract_images` | ✅ PASS | 1312.72 | Raster Asset Extraction: Valid PNG image stream extracted and verified |
+| `pdf_to_docx` | ✅ PASS | 1053.41 | Word OpenXML: Valid .docx PKZIP with word/document.xml and paragraphs matching source text |
+| `pdf_to_xlsx` | ✅ PASS | 994.89 | Spreadsheet Matrix: Valid .xlsx PKZIP container with Sheet1 table grid |
+| `pdf_to_pptx` | ✅ PASS | 950.19 | Presentation Slides: Valid .pptx PKZIP container with PowerPoint slide structures |
+| `pdf_to_html` | ✅ PASS | 1068.14 | Responsive Web DOM: Clean HTML tags reproducing source document text layout |
+| `pdf_to_markdown` | ✅ PASS | 1012.56 | LLM-Ready Markdown: Clean markdown syntax matching document text content |
+| `pdf_to_json` | ✅ PASS | 935.74 | Bounding Box JSON Schema: Parsable structural layout with text elements |
+| `pdf_extract_text` | ✅ PASS | 1097.91 | Raw Text Stream: Plain text characters matching document in reading order |
+| `pdf_extract_tables` | ✅ PASS | 969.51 | Table Detection Matrix: Structured JSON matrix of detected tabular data |
+| `pdf_ocr` | ✅ PASS | 1267.53 | Searchable Text Layer: OCR text layer rendered with expected document keywords |
+| `office_to_markdown` | ✅ PASS | 966.15 | Office to Markdown: Extracted headings, tables, and paragraphs from Office doc |
+| `office_extract_text` | ✅ PASS | 944.85 | Office Text Dumper: Fast textual stream extracted from DOCX XML container |
+| `office_modernize_legacy` | ✅ PASS | 1254.51 | Binary to OOXML Upgrade: Converted legacy binary spreadsheet to modern .xlsx |
+| `excel_to_json` | ✅ PASS | 1679.93 | Worksheet to JSON Objects: Ingested Excel spreadsheet and generated array of row objects |
+| `excel_to_csv` | ✅ PASS | 970.58 | RFC 4180 CSV Export: Exported target Excel worksheet into comma-separated records |
+| `pdf_search` | ✅ PASS | 1046.11 | Indexed Search Results: Query match located with accurate page indices |
+| `workspace_search` | ✅ PASS | 979.16 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `semantic_search` | ✅ PASS | 955.42 | Multi-File & Vector Search: Ranked hits matching query criteria across documents |
+| `pdf_classify_type` | ✅ PASS | 950.81 | Document Type Classifier: Category and confidence score returned in JSON schema |
+| `pdf_rag_chunks` | ✅ PASS | 987.47 | Semantic Chunking: Structure-aware chunks with valid token counts and heading metadata |
+| `document_workflow` | ✅ PASS | 988.33 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `recipe_run` | ✅ PASS | 923.19 | Declarative Recipe Execution: Multi-step .ppflow pipeline produced authentic combined artifact |
+| `cli_ask` | ✅ PASS | 881.55 | Natural Language Intent: AI document assistant executed conversational plan |
+| `watcher_start` | ✅ PASS | 902.63 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |
+| `watcher_stop` | ✅ PASS | 950.00 | Hot-Folder Watcher Lifecycle: Daemon state telemetry and receipts verified |

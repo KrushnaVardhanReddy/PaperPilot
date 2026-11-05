@@ -7,6 +7,7 @@ export interface PdfInspectionResult {
   allText: string;
   hasText: (query: string) => boolean;
   lacksText: (query: string) => boolean;
+  formFields?: Record<string, any>;
   metadata?: any;
 }
 
@@ -31,6 +32,7 @@ export class PdfInspector {
     const doc = await loadingTask.promise;
     const numPages = doc.numPages;
     const textByPage: string[] = [];
+    const formFields: Record<string, any> = {};
 
     for (let i = 1; i <= numPages; i++) {
       const page = await doc.getPage(i);
@@ -39,6 +41,15 @@ export class PdfInspector {
         .map((item: any) => item.str || '')
         .join(' ');
       textByPage.push(pageText);
+
+      try {
+        const annotations = await page.getAnnotations();
+        for (const annot of annotations) {
+          if (annot.fieldName) {
+            formFields[annot.fieldName] = annot.fieldValue ?? '';
+          }
+        }
+      } catch (e) {}
     }
 
     const allText = textByPage.join('\n');
@@ -53,6 +64,7 @@ export class PdfInspector {
       allText,
       hasText: (query: string) => allText.toLowerCase().includes(query.toLowerCase()),
       lacksText: (query: string) => !allText.toLowerCase().includes(query.toLowerCase()),
+      formFields,
       metadata
     };
   }
@@ -65,6 +77,9 @@ export class PdfInspector {
     hasDictionary: (dictName: string) => boolean;
     isEncrypted: boolean;
     isSigned: boolean;
+    hasToken: (token: string) => boolean;
+    rawContent: string;
+    buffer: Buffer;
   } {
     const buffer = fs.readFileSync(filePath);
     const content = buffer.toString('latin1');
@@ -74,7 +89,10 @@ export class PdfInspector {
       isPdf,
       hasDictionary: (dictName: string) => content.includes(`/${dictName}`),
       isEncrypted: content.includes('/Encrypt'),
-      isSigned: content.includes('/Sig') || content.includes('/ByteRange')
+      isSigned: content.includes('/Sig') || content.includes('/ByteRange'),
+      hasToken: (token: string) => content.includes(token),
+      rawContent: content,
+      buffer
     };
   }
 }

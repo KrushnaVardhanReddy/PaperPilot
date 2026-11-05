@@ -507,8 +507,14 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 None,
             )
         },
-        Commands::RagChunks { input: _ } => {
-            println!("Executing rag-chunks...");
+        Commands::RagChunks { input } => {
+            let resolved = resolve_input_path(input)?;
+            let mut doc = paperpilot_pdf::document::LopdfDocument::load(&resolved)?;
+            let op = paperpilot_pdf::operations::rag_chunks::PdfRagChunksOperation::new();
+            use paperpilot_core::traits::PdfOperation;
+            op.execute(&mut doc)?;
+            let chunks = op.chunks.lock().unwrap().clone();
+            println!("{}", serde_json::to_string_pretty(&chunks).unwrap_or_default());
             Ok(())
         },
         Commands::WorkspaceSearch { input: _ } => {

@@ -1,5 +1,7 @@
 import * as fs from 'fs';
-import * as XLSX from 'xlsx';
+import * as xlsxModule from 'xlsx';
+
+const XLSX = (xlsxModule as any).default ?? xlsxModule;
 
 /**
  * Deep Office & tabular document validator.
