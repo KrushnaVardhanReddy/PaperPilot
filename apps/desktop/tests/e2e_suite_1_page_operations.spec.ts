@@ -55,7 +55,7 @@ test.beforeEach(async ({ page }) => {
         }
         if (cmd === 'plugin:dialog|open') {
            if ((window as any).__last_tool_name === 'pdf_merge' || (window as any).__last_tool_name === 'pdf_merge_alternate' || (window as any).__last_tool_name === 'pdf_interleave') {
-               return ['../../tests/e2e_fixtures/real/merge_a.pdf', '../../tests/e2e_fixtures/real/merge_b.pdf'];
+               return ['../../tests/e2e_fixtures/real/page_1.pdf', '../../tests/e2e_fixtures/real/page_2.pdf'];
            }
            return ['../../tests/e2e_fixtures/real/multi_page.pdf'];
         }
@@ -111,8 +111,8 @@ test.describe('Real Desktop Unmocked Executions (Suite 1 - Page Operations & Imp
           const fileInput = page.locator('input[multiple][type="file"]');
           if (op.name === 'pdf_merge' || op.name === 'pdf_merge_alternate' || op.name === 'pdf_interleave') {
              await fileInput.setInputFiles([
-               path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/merge_a.pdf'),
-               path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/merge_b.pdf')
+               path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/page_1.pdf'),
+               path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/page_2.pdf')
              ]);
           } else {
              await fileInput.setInputFiles([path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/multi_page.pdf')]);

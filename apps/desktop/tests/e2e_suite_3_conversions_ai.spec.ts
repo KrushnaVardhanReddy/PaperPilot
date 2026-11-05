@@ -3,45 +3,36 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const tools61_90 = [
-  // Conversions (61-69)
+  { name: 'pdf_convert_excel', query: 'excel', type: 'pdf' },
+  { name: 'pdf_comic_archive', query: 'comic', type: 'pdf' },
+  { name: 'pdf_to_epub', query: 'epub', type: 'pdf' },
+  { name: 'pdf_to_pdf_a', query: 'pdf/a', type: 'pdf' },
+  { name: 'extract_images', query: 'extract embedded', type: 'pdf' },
+  { name: 'pdf_extract_images', query: 'filtered', type: 'pdf' },
   { name: 'pdf_to_docx', query: 'docx', type: 'pdf' },
-  { name: 'pdf_to_pptx', query: 'pptx', type: 'pdf' },
   { name: 'pdf_to_xlsx', query: 'xlsx', type: 'pdf' },
+  { name: 'pdf_to_pptx', query: 'pptx', type: 'pdf' },
   { name: 'pdf_to_html', query: 'html', type: 'pdf' },
   { name: 'pdf_to_markdown', query: 'markdown', type: 'pdf' },
-  { name: 'pdf_to_txt', query: 'extract text', type: 'pdf' },
   { name: 'pdf_to_json', query: 'to json', type: 'pdf' },
-  { name: 'pdf_to_csv', query: 'to csv', type: 'pdf' },
-  { name: 'pdf_to_pdf_a', query: 'pdf/a', type: 'pdf' },
-
-  // Back to PDF (70-76)
-  { name: 'docx_to_pdf', query: 'to pdf', type: 'office' },
-  { name: 'pptx_to_pdf', query: 'to pdf', type: 'office' },
-  { name: 'xlsx_to_pdf', query: 'to pdf', type: 'excel' },
-  { name: 'html_to_pdf', query: 'to pdf', type: 'html' },
-  { name: 'markdown_to_pdf', query: 'to pdf', type: 'markdown' },
-  { name: 'txt_to_pdf', query: 'to pdf', type: 'txt' },
-  { name: 'images_to_pdf', query: 'images', type: 'pdf' },
-
-  // Office Utilities (77-81)
-  { name: 'excel_to_json', query: 'excel to json', type: 'excel' },
-  { name: 'excel_to_csv', query: 'excel to csv', type: 'excel' },
-  { name: 'office_to_markdown', query: 'to markdown', type: 'excel' },
-  { name: 'office_extract_text', query: 'extract text', type: 'excel' },
-  { name: 'office_modernize_legacy', query: 'modernize', type: 'excel' },
-
-  // AI & Validation (82-88)
+  { name: 'pdf_extract_text', query: 'plain text', type: 'pdf' },
+  { name: 'pdf_extract_tables', query: 'tables', type: 'pdf' },
   { name: 'pdf_ocr', query: 'ocr', type: 'pdf' },
-  { name: 'pdf_extract_text', query: 'extract text', type: 'pdf' },
+  { name: 'office_to_markdown', query: 'convert to markdown', type: 'office' },
+  { name: 'office_extract_text', query: 'office to plain', type: 'office' },
+  { name: 'office_modernize_legacy', query: 'modernize', type: 'office' },
+  { name: 'excel_to_json', query: 'excel to json', type: 'office' },
+  { name: 'excel_to_csv', query: 'excel to csv', type: 'office' },
   { name: 'pdf_search', query: 'search', type: 'pdf' },
+  { name: 'workspace_search', query: 'workspace directory', type: 'ai' },
+  { name: 'semantic_search', query: 'semantic vector', type: 'ai' },
   { name: 'pdf_classify_type', query: 'classify', type: 'pdf' },
-  { name: 'pdf_rag_chunks', query: 'extract text', type: 'pdf' },
-  { name: 'pdf_compare', query: 'compare', type: 'pdf' },
-  { name: 'pdf_validate', query: 'Validate PDF', type: 'pdf' },
-
-  // Pipelines (89-90)
-  { name: 'pdf_pipeline_builder', query: 'pipeline', type: 'pipeline' },
-  { name: 'pdf_watch_folder', query: 'watch folder', type: 'settings' }
+  { name: 'pdf_rag_chunks', query: 'rag pipeline', type: 'ai' },
+  { name: 'document_workflow', query: 'workflow runner', type: 'ai' },
+  { name: 'recipe_run', query: 'instant pipeline', type: 'ai' },
+  { name: 'cli_ask', query: 'ai document assistant', type: 'ai' },
+  { name: 'watcher_start', query: 'start hot-folder', type: 'optimize' },
+  { name: 'watcher_stop', query: 'stop hot-folder', type: 'optimize' }
 ];
 
 test.beforeEach(async ({ page }) => {

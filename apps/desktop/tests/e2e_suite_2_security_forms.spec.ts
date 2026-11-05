@@ -55,7 +55,7 @@ test.beforeEach(async ({ page }) => {
            if ((window as any).__last_tool_type === 'encrypted') {
                return ['../../tests/e2e_fixtures/real/encrypted.pdf'];
            } else if ((window as any).__last_tool_type === 'signed') {
-               return ['../../tests/e2e_fixtures/real/signed.pdf'];
+               return ['../../tests/e2e_fixtures/real/single_page.pdf'];
            } else if ((window as any).__last_tool_type === 'form') {
                return ['../../tests/e2e_fixtures/real/form.pdf'];
            }
@@ -114,7 +114,7 @@ test.describe('Real Desktop Unmocked Executions (Suite 2 - Security, Forms & Mar
           if (op.type === 'encrypted') {
              await fileInput.setInputFiles([path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/encrypted.pdf')]);
           } else if (op.type === 'signed') {
-             await fileInput.setInputFiles([path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/signed.pdf')]);
+             await fileInput.setInputFiles([path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/single_page.pdf')]);
           } else if (op.type === 'form') {
              await fileInput.setInputFiles([path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/form.pdf')]);
           } else {
