@@ -180,3 +180,4 @@ Each tool test must verify file output against the following invariants:
    - `pdf_search`: Output contains query matches array with line coordinates.
 5. **Office Formats**:
    - `.docx`, `.xlsx`, `.pptx`: Validates ZIP signature bytes `PK\x03\x04` at offset 0.
+

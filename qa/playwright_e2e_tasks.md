@@ -65,3 +65,4 @@
 - [ ] Write consolidated markdown report to `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`.
 - [ ] Run Vitest suite: `pnpm test` (verify 153/153 tests pass).
 - [ ] Ensure all code changes are staged and committed cleanly on `feature/dev`.
+

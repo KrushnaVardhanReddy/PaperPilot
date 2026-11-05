@@ -68,3 +68,4 @@ Please automate the end-to-end testing for all 90 PaperPilot Desktop Tools using
    - Vitest component tests intact: `pnpm test` (153/153 passing).
    - Commit cleanly to `feature/dev`.
 ```
+
