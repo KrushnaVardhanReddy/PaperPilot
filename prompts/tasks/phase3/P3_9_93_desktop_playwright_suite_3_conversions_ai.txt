@@ -1,88 +1,84 @@
-Task: Desktop Playwright E2E Automation - Suite 3 (Tools 61–90: Conversions, Modernization & AI)
+Task: Desktop Playwright E2E Automation - Suite 3 (Tools 61–90: Conversions, Office Modernization, AI & Pipelines)
 
-Objective:
-Implement automated end-to-end testing for Tools 61–90 (Office & Web Conversions, Office Modernize, OCR, Semantic Search, Type Classification, Pipelines & Watch Folders) using Playwright on `feature/dev`.
-
-CRITICAL INSTRUCTION - CODE DEFECT REMEDIATION:
-If any test fails due to a bug in the code:
-1. Svelte 5 Desktop UI issue (e.g. missing reactive guards, broken form binding, bad query selector, missing element ID): FIX THE SVELTE/TYPESCRIPT CODE DIRECTLY under `apps/desktop/src/`.
-2. Rust Backend/Engine issue (e.g. missing CLI argument, serialization failure, panic): FIX THE RUST CODE under `crates/` or `apps/desktop/src-tauri/`.
-Do NOT disable tests or use fake mocks to bypass real bugs. We want working code and green tests.
-
-Context & Reference Documents:
-- Full Technical Specification: `qa/playwright_e2e_specification.md`
-- Task Breakdown: `qa/playwright_e2e_tasks.md`
-- Working Reference Spec: `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`
-- Playwright Configuration: `apps/desktop/playwright.config.ts`
-- Tester 3 Step-by-Step QA Guide: `qa/manual_desktop_testing/TESTER_3_CONVERSIONS_INTELLIGENCE.md`
-- Real Fixtures: `tests/e2e_fixtures/real/` (`single_page.pdf`, `test.xlsx`, `test.xls`, `test.csv`, `test.png`)
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
 
 ================================================================================
-CONSTRAINTS & INVARIANTS
+EXECUTIVE CONTEXT & MANDATE
 ================================================================================
-1. Target Branch: `feature/dev`. Never push directly to `main`.
-2. Cargo Concurrency: All cargo builds must strictly use `-j 4`.
-3. Zero-Mock Execution: Playwright interacts with the real desktop UI, invokes genuine engine operations (`target/debug/paperpilot`), and verifies actual output files written to `tests/e2e_fixtures/out/desktop/`.
-4. Deep Semantic Validation: Every tool must assert byte-level correctness (e.g. Office `PK\x03\x04` ZIP magic headers, JSON schemas for RAG/tables, non-empty OCR text).
-5. Environment Settings:
-   - `export PAPERPILOT_OCR_MODELS_DIR="$(pwd)/../../models/ocr/ppocrv4"`
-   - `export NO_PROXY="localhost,127.0.0.1"`
-   - `export no_proxy="localhost,127.0.0.1"`
-   - Unset `HTTP_PROXY`, `HTTPS_PROXY`, `http_proxy`, `https_proxy`.
+1. Suite 1 (Tools 01–30) and Suite 2 (Tools 31–60) are passing green with real CLI engine execution!
+2. Your task is to implement and verify `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts` strictly covering Tools 61–90.
+3. STRICT POLICY: ZERO PLACEHOLDERS, ZERO MOCKS.
+   - You MUST REMOVE any synthetic fallback: `fs.writeFileSync(placeholderFile, ...)` is completely banned.
+   - For every tool in Tools 61–90, the test MUST locate the `.tool-card` in the desktop UI (`expect(toolCards.count()).toBeGreaterThan(0)`).
+   - Use the proven `executeRealCli` via `page.exposeFunction()` pattern to invoke the real `target/debug/paperpilot` CLI binary or Tauri backend.
+   - Every operation must generate an authentic output file in `tests/e2e_fixtures/out/desktop/` with deep semantic validation (valid `%PDF-` header, non-empty JSON/CSV report, office doc format, or checksum data).
 
 ================================================================================
-TOOLS TO COVER IN SUITE 3 (Tools 61–90)
+SUITE 3 TOOL SCOPE (Tools 61–90)
 ================================================================================
-File to create: `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
+File to test/refactor: `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
 
-61. `pdf_to_docx` — Export PDF to Microsoft Word (.docx)
-62. `pdf_to_pptx` — Export PDF to Microsoft PowerPoint (.pptx)
-63. `pdf_to_xlsx` — Export PDF to Microsoft Excel (.xlsx)
-64. `pdf_to_html` — Convert PDF to Responsive HTML
-65. `pdf_to_markdown` — Export PDF to Markdown Text
-66. `pdf_to_txt` — Extract Plain Text (.txt)
-67. `pdf_to_json` — Extract Document AST to Structured JSON
-68. `pdf_to_csv` — Extract Tabular Data to CSV
-69. `pdf_to_pdf_a` — Archive PDF/A Compliance Conversion
-70. `docx_to_pdf` — Compile Word Document to PDF
-71. `pptx_to_pdf` — Compile Presentation to PDF
-72. `xlsx_to_pdf` — Compile Spreadsheet to PDF
-73. `html_to_pdf` — Render HTML Document to PDF
-74. `markdown_to_pdf` — Compile Markdown to Formatted PDF
-75. `txt_to_pdf` — Convert Raw Text to PDF
-76. `images_to_pdf` — Synthesize Multi-Image Collection into PDF
-77. `excel_to_json` — Convert Spreadsheet Worksheets to JSON
-78. `excel_to_csv` — Export Spreadsheet Worksheets to CSV
-79. `office_to_markdown` — Extract Office Tables to Markdown
-80. `office_extract_text` — Extract Raw Text from Office Files
-81. `office_modernize_legacy` — Convert Legacy Office (.xls, .doc) to OpenXML
-82. `pdf_ocr` — On-Device Neural OCR Text Layer Injection
-83. `pdf_extract_text` — High-Fidelity Text Extraction
-84. `pdf_search` — Regex and Keyword Document Search
-85. `pdf_classify_type` — Classify Document (Invoice, Contract, Form, Academic)
-86. `pdf_rag_chunks` — Split PDF into Semantic RAG Vector Embeddings
-87. `pdf_compare` — Visual & Semantic Document Diffing
-88. `pdf_validate` — Structural ISO 32000 Conformance Validation
-89. `pdf_pipeline_builder` — Visual Multi-Step Node Automation Pipeline
-90. `pdf_watch_folder` — Automated Hot-Folder Document Ingestion
-
-================================================================================
-TEST PATTERN PER TOOL
-================================================================================
-Follow the tested lifecycle from `e2e_all_tools_real_execution.spec.ts`:
-1. Workspace Reset: `await page.evaluate(() => (window as any).appState?.clearAllDocuments())` and `await page.click('#tab-btn-home')`.
-2. Stage input files: `await fileInput.setInputFiles([path.resolve('../../tests/e2e_fixtures/real/<fixture>')])`.
-3. Set context tab: `#context-btn-pdf` or `#context-btn-office`.
-4. Select tool: Focus `#tool-search-input`, type exact name (e.g. `'Modernize Legacy'`, `'OCR Document'`), click `.tool-card`.
-5. Enter parameters: Fill inputs (e.g. format, search keyword, OCR language).
-6. Execute: Click `.run-btn`, wait for `.toast`.
-7. Assert: Check ZIP signature `PK\x03\x04` for Office outputs, validate JSON structure, or verify search matches array.
-8. Reset UI: Click `.back-btn` or `#tab-btn-home`.
+61. `pdf_to_docx` — Convert PDF to editable Word DOCX
+62. `pdf_to_pptx` — Convert PDF slides to PowerPoint PPTX
+63. `pdf_to_xlsx` — Extract tabular structures into Excel spreadsheets
+64. `pdf_to_html` — Convert PDF layout into HTML document
+65. `pdf_to_markdown` — Export structured Markdown from PDF
+66. `pdf_to_txt` — Pure text extraction
+67. `pdf_to_json` — Extract full PDF content into structured JSON
+68. `pdf_to_csv` — Extract PDF tables to CSV format
+69. `pdf_to_pdf_a` — Standardized Archival PDF/A Conversion
+70. `docx_to_pdf` — Render DOCX into PDF document
+71. `pptx_to_pdf` — Convert PPTX presentation to PDF
+72. `xlsx_to_pdf` — Export Excel spreadsheet to PDF
+73. `html_to_pdf` — Render HTML document to PDF
+74. `markdown_to_pdf` — Render Markdown document to PDF
+75. `txt_to_pdf` — Flow plain text document into PDF pages
+76. `images_to_pdf` — Combine image assets (PNG, JPEG, TIFF) into PDF
+77. `excel_to_json` — Parse Excel spreadsheets into structured JSON
+78. `excel_to_csv` — Convert Excel spreadsheets to CSV records
+79. `office_to_markdown` — Convert Office documents to Markdown
+80. `office_extract_text` — Extract raw textual streams from Office docs
+81. `office_modernize_legacy` — Modernize legacy binary formats (.doc, .xls, .ppt) to OOXML
+82. `pdf_ocr` — Optical Character Recognition on scanned pages
+83. `pdf_extract_text` — Targeted page text extraction
+84. `pdf_search` — High-speed indexed regex and full-text keyword search
+85. `pdf_classify_type` — Document classification (invoice, receipt, contract, form, report)
+86. `pdf_rag_chunks` — Split documents into context-preserving semantic chunks
+87. `pdf_compare` — Semantic and visual diff comparison between two PDF versions
+88. `pdf_validate` — Structural ISO 32000-1 PDF validation
+89. `pdf_pipeline_builder` — Multi-step visual macro pipeline workflow
+90. `pdf_watch_folder` — Automated background hot folder monitoring engine
 
 ================================================================================
-VERIFICATION & DELIVERABLES
+CRITICAL EXECUTION & COMPILATION INSTRUCTIONS
 ================================================================================
-1. `cd apps/desktop && npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts` passes with 30/30 green.
-2. `pnpm test` (Vitest unit tests) passes with 153/153 green.
-3. If UI/backend bugs were uncovered during testing, commit the code fixes directly.
-4. Commit cleanly to `feature/dev`.
+1. The binary exists at `target/debug/paperpilot` (or compile with `cargo build --bin paperpilot -j 4`).
+2. Run Playwright Suite 3:
+   ```bash
+   cd apps/desktop
+   export PATH="/home/krushna/.nvm/versions/node/v26.12.1/bin:$PATH"
+   export NODE_PATH="$(pwd)/../web/node_modules:$(pwd)/../edge/node_modules:$(pwd)/node_modules"
+   export NO_PROXY="localhost,127.0.0.1"
+   export no_proxy="localhost,127.0.0.1"
+   unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+   ../web/node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts
+   ```
+3. Test Cleanup Loops:
+   Ensure all file cleanup in `tests/e2e_fixtures/out/desktop` uses safe path sanitization without `..` or leading `/` to maintain Semgrep compliance:
+   ```typescript
+   if (!f.includes('..') && !f.includes('/')) {
+     const safePath = path.resolve(outDir, path.basename(f));
+     if (safePath.startsWith(outDir)) {
+       fs.rmSync(safePath, { recursive: true, force: true });
+     }
+   }
+   ```
+4. Output Validation:
+   - For PDF outputs: Verify file size > 100 bytes and starts with `%PDF-`.
+   - For JSON/CSV/Office reports: Verify non-empty and parsable.
+
+================================================================================
+DELIVERABLES
+================================================================================
+1. `tests/e2e_suite_3_conversions_ai.spec.ts` executes and passes 30/30 green against real UI cards and engine execution.
+2. Commit your changes cleanly on `feature/dev` with prefix `jules: suite 3 conversions and ai zero-mock automation`.
