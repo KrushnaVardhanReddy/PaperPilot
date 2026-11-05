@@ -2,6 +2,7 @@ mod api;
 mod cli;
 mod env;
 mod fs;
+mod local_agent;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -11,6 +12,8 @@ fn submit_file(
     filepath: &Path,
     label: Option<&str>,
     branch: &str,
+    agent: &str,
+    interactive: bool,
     dry_run: bool,
     api_key: Option<&str>,
 ) -> Result<()> {
@@ -23,14 +26,23 @@ fn submit_file(
 
     let name = label.unwrap_or_else(|| filepath.file_name().unwrap().to_str().unwrap());
 
+    // Check target agent engine
+    if agent == "gemini" || agent == "agy" || agent == "local" {
+        local_agent::run_local_agent(&prompt_content, name, interactive, dry_run)?;
+        if !dry_run {
+            fs::archive_prompt(filepath)?;
+        }
+        return Ok(());
+    }
+
     if dry_run {
-        println!("[⏸️  DRY RUN] Would submit: {}", name);
+        println!("[⏸️  DRY RUN] Would submit to Jules: {}", name);
         let payload = api::build_payload(&prompt_content, branch);
         println!("{}", serde_json::to_string_pretty(&payload).unwrap());
         return Ok(());
     }
 
-    let key = api_key.context("API key required for submission")?;
+    let key = api_key.context("API key required for Jules cloud submission")?;
 
     match api::submit_prompt(key, &prompt_content, name, branch) {
         Ok(_) => {
@@ -64,7 +76,9 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let api_key = if !args.dry_run {
+    let is_local_agent = args.agent == "gemini" || args.agent == "agy" || args.agent == "local";
+
+    let api_key = if !args.dry_run && !is_local_agent {
         Some(env::get_jules_api_key()?)
     } else {
         None
@@ -75,6 +89,8 @@ fn main() -> Result<()> {
             Path::new(&filepath),
             None,
             &args.branch,
+            &args.agent,
+            args.interactive,
             args.dry_run,
             api_key.as_deref(),
         )?;
@@ -87,6 +103,8 @@ fn main() -> Result<()> {
             &filepath,
             Some(&task_id),
             &args.branch,
+            &args.agent,
+            args.interactive,
             args.dry_run,
             api_key.as_deref(),
         )?;
@@ -113,6 +131,8 @@ fn main() -> Result<()> {
                 &filepath,
                 Some(label),
                 &args.branch,
+                &args.agent,
+                args.interactive,
                 args.dry_run,
                 api_key.as_deref(),
             )?;
@@ -125,3 +145,4 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+

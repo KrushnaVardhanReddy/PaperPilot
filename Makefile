@@ -394,12 +394,12 @@ docker-shell:
 	docker compose exec paperpilot bash || docker exec -it paperpilot bash
 
 # ==============================================================================
-# Cloud Agent Delegation Targets (Jules Dispatcher)
+# Agent Delegation Targets (Jules Cloud & Local Gemini CLI Dispatchers)
 # ==============================================================================
-.PHONY: jules-list jules-dry-run jules-submit
+.PHONY: jules-list jules-dry-run jules-submit gemini-list gemini-dry-run gemini-run gemini-pair
 
-# List all pending prompt files available for Jules delegation
-jules-list:
+# List all pending prompt files available for agent delegation
+jules-list gemini-list:
 	./scripts/jules_submit.sh --list
 
 # Test and preview the JSON payload sent to the Jules cloud API without dispatching
@@ -419,6 +419,31 @@ jules-submit:
 		exit 1; \
 	fi
 	./scripts/jules_submit.sh --file $(FILE)
+
+# Preview prompt execution for local Gemini CLI pair programmer
+gemini-dry-run:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-dry-run FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE) --dry-run
+
+# Run local Gemini CLI autonomously on the specified prompt
+gemini-run:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-run FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE)
+
+# Launch interactive pair programming session with Gemini CLI
+gemini-pair:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-pair FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE) --interactive
+
 
 # Penta-Scaffold Code Generator
 new-tool:

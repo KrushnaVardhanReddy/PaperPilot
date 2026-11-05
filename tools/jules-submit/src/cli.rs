@@ -26,4 +26,13 @@ pub struct Cli {
     /// Format payload and display target without making network call
     #[arg(long)]
     pub dry_run: bool,
+
+    /// Target agent engine ('jules' for remote cloud session, 'gemini' / 'agy' for local pair programmer)
+    #[arg(long, default_value = "jules")]
+    pub agent: String,
+
+    /// Interactive mode for local agent (launches agy in interactive pair programming session)
+    #[arg(long)]
+    pub interactive: bool,
 }
+
