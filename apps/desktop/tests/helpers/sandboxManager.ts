@@ -22,7 +22,12 @@ export class SandboxManager {
    */
   public allocate(prefix: string = 'test'): string {
     const uuid = crypto.randomUUID();
-    const sandboxPath = path.resolve(this.baseDir, `${prefix}_${uuid}`);
+    const safePrefix = path.basename(prefix).replace(/[^a-zA-Z0-9_-]/g, '');
+    const dirName = `${safePrefix || 'test'}_${uuid}`;
+    const sandboxPath = path.resolve(this.baseDir, dirName);
+    if (!sandboxPath.startsWith(this.baseDir)) {
+      throw new Error(`Security Error: Sandbox path escaped base directory: ${sandboxPath}`);
+    }
     fs.mkdirSync(sandboxPath, { recursive: true });
     this.activeSandboxes.add(sandboxPath);
     return sandboxPath;
