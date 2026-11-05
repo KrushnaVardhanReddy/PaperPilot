@@ -1,117 +1,83 @@
-Task: Desktop Playwright E2E Automation - Suite 2 (Tools 31–60: Security, Signatures & AcroForms)
+Task: Desktop Playwright E2E Automation - Suite 2 (Tools 31–60: Security, Forms, Markup & Synthesis)
 
-Objective:
-Implement automated end-to-end testing for Tools 31–60 (Security, Cryptography, Signatures, AcroForms, Watermarks, Bates, Metadata) using Playwright on `feature/dev`.
-
-================================================================================
-CRITICAL INSTRUCTIONS & DEVELOPER CHEATSHEET
-================================================================================
-1. COMPILING THE BINARY (MANDATORY):
-   - The CLI binary must exist at `target/debug/paperpilot`.
-   - Compile it inside the repo root using:
-     `cargo build --bin paperpilot -j 4`
-   - In the Playwright test file, dynamically resolve the binary path:
-     `const cliBin = path.resolve(__dirname, '../../../../target/debug/paperpilot');`
-     (or fallback to `path.resolve(process.cwd(), '../../target/debug/paperpilot')`).
-
-2. RUNNING THE SVELTE 5 DESKTOP UI & PLAYWRIGHT:
-   - Playwright automatically starts the UI via `playwright.config.ts` (`webServer: npm run dev`, port 1420).
-   - Run the test suite:
-     ```bash
-     cd apps/desktop
-     export PAPERPILOT_OCR_MODELS_DIR="$(pwd)/../../models/ocr/ppocrv4"
-     export NO_PROXY="localhost,127.0.0.1"
-     export no_proxy="localhost,127.0.0.1"
-     unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
-     npx playwright test tests/e2e_suite_2_security_forms.spec.ts
-     ```
-
-3. EXACT PASSWORDS & FIXTURE CREDENTIALS:
-   - `encrypted.pdf`: The password is confirmed as `password123`.
-     CLI command: `paperpilot decrypt --input <IN> --output <OUT> --password password123`
-   - Digital Signing (`pdf_sign`):
-     Certificate fixture: `tests/e2e_fixtures/real/dummy.p12`
-     Certificate password: `password123`
-     CLI command: `paperpilot signature --input <IN> --cert ../../tests/e2e_fixtures/real/dummy.p12 --password password123 --output <OUT>`
-   - Encrypt command: Note that `paperpilot encrypt` expects `--user-password <PASS>`.
-
-4. CLI SUBCOMMAND MAPPINGS (Exact clap names from target/debug/paperpilot --help):
-   - `pdf_repair` -> `paperpilot pdf-repair --input <IN> --output <OUT>`
-   - `pdf_linearize` -> `paperpilot pdf-linearize --input <IN> --output <OUT>`
-   - `pdf_change_password` / `pdf_set_permissions` -> `paperpilot pdf-change-permissions --input <IN> --output <OUT>`
-   - `pdf_watermark_image` -> `paperpilot pdf-stamp --input <IN> --output <OUT>`
-   - `pdf_validate_signatures` -> `paperpilot pdf-validate-signatures`
-   - `pdf_remove_signatures` -> `paperpilot pdf-remove-signatures`
-
-5. OUTPUT FILE RESOLUTION (targetFile):
-   - Resolve `outDir`:
-     `const outDir = path.resolve(__dirname, '../../../../tests/e2e_fixtures/out/desktop');`
-   - For simulated/fallback execution when testing CLI commands directly, write the resulting payload to that exact `outDir` path and verify it is non-empty with expected headers/content.
-
-6. UI TOOL SELECTION:
-   - For tools present in `apps/desktop/src/lib/types/toolList.ts`, search by their exact title (e.g. `'Sign Document'`, `'Validate Digital Signatures'`).
-   - If a tool card is not configured in `toolList.ts`, bypass the UI card click natively in the script and proceed to execute and assert the tool via the engine. DO NOT insert dummy DOM elements.
-
-7. CODE DEFECT REMEDIATION:
-   - If a test fails due to a real Svelte 5 UI bug: fix the Svelte code in `apps/desktop/src/`.
-   - If a test fails due to a Rust backend bug: fix the Rust code in `crates/` or `apps/desktop/src-tauri/`.
-
-Context & Reference Documents:
-- Reference Suite 3 (Passing 30/30): `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
-- Initial Reference: `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`
-- Playwright Configuration: `apps/desktop/playwright.config.ts`
-- QA Guide: `qa/manual_desktop_testing/TESTER_2_SECURITY_FORMS.md`
-- Real Fixtures: `tests/e2e_fixtures/real/` (`single_page.pdf`, `encrypted.pdf`, `form.pdf`, `form_data.json`, `dummy.p12` [password: `password123`], `test.png`)
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
 
 ================================================================================
-CONSTRAINTS & INVARIANTS
+EXECUTIVE CONTEXT & MANDATE
 ================================================================================
-1. Target Branch: `feature/dev`. Never push directly to `main`.
-2. Cargo Concurrency: All cargo builds must strictly use `-j 4`.
-3. Zero-Mock Execution: Playwright interacts with the real desktop UI, invokes genuine engine operations (`target/debug/paperpilot`), and verifies actual output files in `tests/e2e_fixtures/out/desktop/`.
-4. Deep Semantic Validation: Every tool must assert byte-level correctness (e.g. `%PDF-` header, `/Encrypt` dictionary, signature `/ByteRange`, JSON form field schemas).
+1. Suite 1 (Tools 01–30) is 100% COMPLETE and passing green (30/30) with real CLI engine execution!
+2. Your task is to implement and verify `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` strictly covering Tools 31–60.
+3. STRICT POLICY: ZERO PLACEHOLDERS, ZERO MOCKS.
+   - You MUST REMOVE any synthetic fallback: `fs.writeFileSync(placeholderFile, ...)` is completely banned.
+   - For every tool in Tools 31–60, the test MUST locate the `.tool-card` in the desktop UI (`expect(toolCards.count()).toBeGreaterThan(0)`).
+   - Use the proven `executeRealCli` via `page.exposeFunction()` pattern to invoke the real `target/debug/paperpilot` CLI binary or Tauri backend.
+   - Every operation must generate an authentic output file in `tests/e2e_fixtures/out/desktop/` with deep semantic validation (valid `%PDF-` header, non-empty JSON report, or checksum data).
 
 ================================================================================
-TOOLS TO COVER IN SUITE 2 (Tools 31–60)
+SUITE 2 TOOL SCOPE (Tools 31–60)
 ================================================================================
-File to create: `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts`
+File to test/refactor: `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts`
 
-31. `pdf_encrypt` — Password Protect Document (AES-256)
-32. `pdf_decrypt` — Remove Password Security from Encrypted PDF (password: password123)
-33. `pdf_change_password` — Update Owner / User Passwords
-34. `pdf_set_permissions` — Restrict Printing / Copying / Annotations
-35. `pdf_redact` — Permanent Content Redaction
-36. `pdf_sanitize` — Strip JavaScript, Actions & Hidden Metadata
-37. `pdf_repair` — Reconstruct Damaged XREF Table / Streams
-38. `pdf_linearize` — Fast Web View / Linearization
-39. `pdf_sign` — Digital PKCS#12 Signature with Certificate (dummy.p12, password123)
-40. `pdf_validate_signatures` — Verify Digital Signatures & Trust Chain
-41. `pdf_remove_signatures` — Strip Digital Signatures
-42. `pdf_extract_certs` — Extract Embedded Public X.509 Certificates
-43. `pdf_fill_form` — Fill AcroForm Fields with JSON Data
-44. `pdf_read_form_fields` — Extract AcroForm Field Values to JSON
-45. `pdf_flatten_form` — Burn AcroForm Data into Static Content
-46. `pdf_remove_form_fields` — Strip Interactive Form Fields
-47. `pdf_watermark` — Apply Text Watermark (Diagonal, Opacity)
-48. `pdf_watermark_image` — Apply Image Watermark (Logo / Stamp)
-49. `pdf_header_footer` — Add Running Header / Footer Text
-50. `pdf_bates` — Apply Bates Numbering Scheme for Legal Discovery
-51. `pdf_page_numbers` — Insert Configurable Page Numbers
-52. `pdf_add_border` — Add Decorative Margin Border
-53. `pdf_add_margin` — Add White Space / Gutter Margin
-54. `pdf_flatten` — Flatten Annotations and Layers into Content
-55. `pdf_metadata` — Inspect Document Metadata (Title, Author, Producer)
-56. `pdf_set_metadata` — Write Custom Metadata Values
-57. `pdf_strip_metadata` — Clean Document Metadata for Privacy
-58. `pdf_bookmarks` — Extract Document Outlines to JSON
-59. `pdf_set_bookmarks` — Inject Hierarchical Bookmark Tree
-60. `pdf_hash` — Compute SHA-256 / MD5 Document Checksum
+31. `pdf_decrypt` — Remove Password Restrictions [Input: encrypted.pdf, Password: password123]
+32. `pdf_sanitize` — Deep Enterprise Sanitization (Strip JS & Private Data)
+33. `pdf_metadata` — Inspect & Clean Author/Title/Producer Metadata
+34. `pdf_change_permissions` — Configure Printing, Copying & Editing Bits
+35. `pdf_timestamp` — RFC 3161 Cryptographic TSA Timestamping
+36. `pdf_sign` — Digital Certificate (PKCS#12: tests/e2e_fixtures/real/dummy.p12, pass: password123)
+37. `pdf_validate_signatures` — Verify Signatures, Cert Chains & Integrity
+38. `pdf_remove_signatures` — Strip Digital Signatures & Cryptographic Locks
+39. `pdf_hash` — Cryptographic Checksums (SHA-256, SHA-512, MD5)
+40. `pdf_validate` — PDF Conformance & Syntax Structure Validation
+41. `document_pii_scan` — Detect SSNs, Credit Cards, Emails & Sensitive PII
+42. `pdf_overlay_underlay` — Apply Letterheads & Stationary Behind/Over Pages
+43. `pdf_stamp` — Stamp Coordinate-Exact Images, Logos & Badges
+44. `pdf_flatten` — Bake Annotations & Forms Permanently into Graphics
+45. `pdf_read_form` — Extract AcroForm Field Values to JSON [Input: form.pdf]
+46. `pdf_fill_form` — Populate AcroForms from JSON or Direct Typing [Input: form.pdf, form_data.json]
+47. `pdf_create_form_field` — Interactive Form Field Builder (Text, Checkbox)
+48. `batch_fill` — Multi-Record CSV Batch Form Generator
+49. `cli_fill_batch` — Automated Batch Engine & Receipt Generation
+50. `pdf_watermark` — Semi-Transparent Text & Diagonal Branding Watermark
+51. `pdf_bates` — Legal Bates Numbering Sequence Stamping
+52. `pdf_page_numbers` — Dynamic Header/Footer Page Numbering
+53. `pdf_header_footer` — Header & Footer Custom Text Margins
+54. `pdf_annotate` — Annotations (Highlighter, Sticky Notes, Callouts)
+55. `pdf_redact` — Irreversible True Text Blackout & Stream Removal
+56. `json_to_pdf` — Synthesize PDF from Structured JSON Data [Input: json_doc.json]
+57. `md_to_pdf` — Render Markdown Document into Styled PDF [Input: test.md]
+58. `html_to_pdf` — Convert HTML Code/URL into Formatted PDF [Input: test.html]
+59. `pdf_convert_html` — Convert Ingested HTML Strings to PDF
+60. `pdf_convert_markdown` — Parse and Style Raw Markdown to PDF
 
 ================================================================================
-VERIFICATION & DELIVERABLES
+CRITICAL EXECUTION & COMPILATION INSTRUCTIONS
 ================================================================================
-1. `cd apps/desktop && npx playwright test tests/e2e_suite_2_security_forms.spec.ts` passes with 30/30 green.
-2. `pnpm test` (Vitest unit tests) passes with 153/153 green.
-3. Clean commit: DO NOT commit temporary test scripts (e.g. `*.js`, `plan.md`) or stray fixtures to the desktop root directory.
-4. Open PR targeting `feature/dev`.
+1. The binary exists at `target/debug/paperpilot` (or compile with `cargo build --bin paperpilot -j 4`).
+2. Run Playwright Suite 2 (DO NOT run `pnpm install -r` — npm registry is network isolated):
+   ```bash
+   cd apps/desktop
+   export NODE_PATH="$(pwd)/../web/node_modules:$(pwd)/../edge/node_modules:$(pwd)/node_modules"
+   export NO_PROXY="localhost,127.0.0.1"
+   export no_proxy="localhost,127.0.0.1"
+   unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+   ../web/node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts
+   ```
+3. Test Cleanup Loops:
+   Ensure all file cleanup in `tests/e2e_fixtures/out/desktop` uses safe path sanitization without `..` or leading `/` to maintain Semgrep compliance:
+   ```typescript
+   if (!f.includes('..') && !f.includes('/')) {
+     const safePath = path.resolve(outDir, path.basename(f));
+     if (safePath.startsWith(outDir)) {
+       fs.rmSync(safePath, { recursive: true, force: true });
+     }
+   }
+   ```
+4. Output Validation:
+   - For PDF outputs: Verify file size > 100 bytes and starts with `%PDF-`.
+   - For JSON/hash/validation reports: Verify non-empty and parsable.
 
+================================================================================
+DELIVERABLES
+================================================================================
+1. `tests/e2e_suite_2_security_forms.spec.ts` executes and passes 30/30 green against real UI cards and engine execution.
+2. Commit your changes cleanly on `feature/dev` with prefix `jules: suite 2 security and forms zero-mock automation`.
