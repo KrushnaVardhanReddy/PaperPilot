@@ -4,14 +4,13 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** November 5, 2026
 >
-> **Active Target:** 90-Tool Playwright Automation delegated to Jules. Svelte 5 reactivity runtime bugfixes merged. Playwright zero-mock desktop execution established on `feature/dev` (commit `0a4e20e` & `3568b61`). Full specifications, tasks, and prompt prepared in `qa/`.
-
+> **Active Target:** Desktop 90-Tool UI Catalog Completeness & Zero-Mock Playwright E2E Automation delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Clean zero-placeholder suites on `feature/dev` (commit `26b4fa5`). Semgrep security compliance verified.
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (`cfbe0b2`), synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
+- **Integration Branch**: `feature/dev` (`26b4fa5`), synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
 - **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
   - **Hexagonal Storage Engine**: `paperpilot-core::storage::DatabasePort` established; `paperpilot-storage` 8/8 tests pass (`cargo test -p paperpilot-storage -j 4`).
@@ -20,28 +19,27 @@
   - **Desktop Vitest Suite**: **153 passing tests across 24 files** (100% green).
   - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
   - **Cargo Workspace**: `cargo check --workspace` compiles cleanly with zero errors.
-- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 89 platform tools across 4 tester assignments.
+- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 90 platform tools across 3 tester assignments.
 
 ---
 
 ## 🏆 Recently Merged Milestones
 
-1. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
+1. **Clean Zero-Mock 90-Tool Playwright Suites & Semgrep Sanitization (Commit `26b4fa5` & `2baad4e`)**:
+   - Resolved Semgrep path traversal blocking findings on `fs.rmSync` cleanup loops in all test specs.
+   - Updated test cleanup loops to require strict path isolation and basename checks.
+   - Aligned `encrypted.pdf` password with `password123`.
+2. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
    - Decoupled database domain models (`JobRecord`, `NewJob`, `JobStatus`, `AuditEvent`, `DocumentChunkRecord`, `VectorSearchResult`, `StorageError`) into `paperpilot-core::storage`.
    - Introduced `pub trait DatabasePort: Send + Sync` in `paperpilot-core::ports`.
    - Implemented `DatabasePort for StorageEngine` in `paperpilot-storage` with backward-compatible re-exports, enabling `PaperPilot-Enterprise` to plug in PostgreSQL/Supabase.
-2. **Desktop Production PDF Rendering & Dock Icon Fix**:
+3. **Desktop Production PDF Rendering & Dock Icon Fix**:
    - Fixed production PDF viewer blank canvas/empty thumbnails on WebKitGTK Linux by passing raw `Uint8Array` binary buffers and expanding Tauri CSP `worker-src`.
    - Fixed desktop dock & tray icon compilation by replacing invalid `#[cfg(desktop)]` with `#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`.
    - Added high-res `PaperPilot.png` and `PaperPilot.desktop` launcher to release staging.
-3. **CI & macOS Runner Hardening**:
+4. **CI & macOS Runner Hardening**:
    - Resolved macOS Xcode `clang` failure by eliminating unnecessary `wasm32-unknown-unknown` compilation from platform release matrix.
    - Standardized release workflow YAML syntax for `workflow_dispatch`.
-4. **Spec 149 / Task 8.15 (Zero-Trace Logging Suppression)**:
-   - Client-controlled `X-Log-Level: off`, `X-Zero-Trace: true`, and `X-Zero-Trace-Enforced: true` verification across CLI, MCP, and Gateway.
-5. **Spec 146 & Spec 147 (Structured Logging & OWASP ZAP API Security)**:
-   - Multi-format NDJSON/text/compact logging engine with correlation IDs.
-   - DAST CI scanning against OpenAPI endpoints with SARIF output.
 
 ---
 
@@ -49,7 +47,7 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Automated Desktop E2E (90 Tools)** | **Playwright E2E 90-Tool Automation**<br>Delegated to Jules to execute across 3 modular suites using `qa/playwright_e2e_specification.md` and `qa/playwright_e2e_tasks.md`. | 🚀 **Active / Delegated to Jules** |
+| **1** | **Desktop 90-Tool UI Catalog & Zero-Mock Playwright E2E** | **Desktop UI Tool Completeness & Unmocked E2E**<br>Delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Register all 90 tools in `apps/desktop/src/lib/types/toolList.ts` (14 missing tools + 36 canonical aliases), eliminate all `placeholderFile` test fallbacks, and verify genuine engine execution. | 🚀 **Active / Delegated to Jules** |
 | **2** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
 | **3** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
 | **4** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
@@ -61,14 +59,15 @@
 
 When resuming a new session, follow these steps:
 
-1. **Playwright 90-Tool Automation Execution (Jules Hand-off)**:
-   - Provide Jules with the delegation prompt in [`qa/jules_playwright_90_tools_prompt.md`](qa/jules_playwright_90_tools_prompt.md).
-   - Ensure Jules references [`qa/playwright_e2e_specification.md`](qa/playwright_e2e_specification.md) and tracks tasks in [`qa/playwright_e2e_tasks.md`](qa/playwright_e2e_tasks.md).
-   - Monitor the 3 modular test suites:
+1. **Jules Delegation for 90-Tool Catalog & Playwright Automation**:
+   - Ensure Jules processes [`prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`](prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt).
+   - Verify that all 14 missing tools are added to `apps/desktop/src/lib/types/toolList.ts`.
+   - Verify that all 36 short-ID tools have canonical aliases in `toolList.ts`.
+   - Verify that Playwright suites in `apps/desktop/tests/` have zero synthetic placeholder files (`fs.writeFileSync(placeholderFile, ...)` removed).
+   - Verify that the 3 suites pass against genuine desktop UI and real engine outputs:
      - `e2e_suite_1_page_operations.spec.ts` (Tools 01–30)
      - `e2e_suite_2_security_forms.spec.ts` (Tools 31–60)
      - `e2e_suite_3_conversions_ai.spec.ts` (Tools 61–90)
-   - Ensure the consolidated report is saved to `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`.
 
 2. **Verify Branch Alignment**:
    - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
@@ -77,7 +76,7 @@ When resuming a new session, follow these steps:
    - Run memory-safe compilation: `cargo check -p paperpilot-pdf -j 4`.
    - Run WASM check: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`.
    - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`.
-   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test` (confirm 153/153 pass).
+   - Run desktop Vitest component tests: `NODE_PATH=../edge/node_modules ../edge/node_modules/.bin/vitest run --dir apps/desktop/src`.
 
 4. **Desktop Manual Testing Coordination (Post-Automation)**:
    - Review [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md).

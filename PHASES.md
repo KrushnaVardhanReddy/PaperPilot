@@ -29,7 +29,7 @@
 |:---:|---|:---:|---|:---:|
 | **01** | **Rust Core Engine** | ✅ **100% Done** | 45+ pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
 | **02** | **MCP Server** | ✅ **100% Done** | 88 MCP tools registered, parameter-aligned, and validated across Waves 1–8 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | 🚀 **In Progress (96%)** | Svelte 5 runtime bugfixes merged; 90-tool Playwright automation spec, tasks, and prompt prepared for Jules; 3-tester manual matrix ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **03** | **Desktop + Mobile App** | 🚀 **In Progress (97%)** | 90-tool UI catalog expansion and zero-mock Playwright E2E automation delegated to Jules (`P3_9_94`); 3-tester manual matrix ready | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
 | **04** | **AI Layer & Workflows** | 🚀 **In Progress (95%)** | Spec 136/137/139/142 watched folders & conditional pipelines merged; Waves 1–8 unmocked E2E pass | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | ✅ **100% Done** | Pure-Rust OCR (`ocrs`/`rusto-rs`), on-device Qwen-0.5B SLM, visual pipeline generator | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
 | **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs, Spec 150 Hexagonal DatabasePort | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
@@ -47,7 +47,7 @@
 - **Hexagonal DatabasePort Architecture (Spec 150)**: Decoupled database domain models into `paperpilot-core::storage` and introduced `pub trait DatabasePort: Send + Sync` (PR #324). Implemented on `paperpilot-storage` with embedded libSQL, enabling `PaperPilot-Enterprise` to implement PostgreSQL/Supabase without upstream code changes.
 - **Production Desktop & Release Packaging Hardening**: Fixed production WebKitGTK PDF blank canvas failure by passing raw `Uint8Array` buffers and updating Tauri CSP. Resolved desktop window/dock icon configuration (`#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`) and added `PaperPilot.desktop` launcher to release archives.
 - **WASM & CI Runner Stability**: Gated native dependencies for zero-network WASM compilation, modernized GitHub Actions workflows to `@v4`/`@v2`, and resolved macOS runner clang target incompatibility.
-- **Active QA & Release Execution**: 90-Tool Playwright Automation delegated to Jules (`qa/playwright_e2e_specification.md`, `qa/playwright_e2e_tasks.md`, `qa/jules_playwright_90_tools_prompt.md`), followed by 3-Tester Manual QA Sign-Off (`qa/manual_desktop_testing/`), and GitHub Actions Release verification on `feature/dev`.
+- **Active QA & Release Execution**: 90-Tool Desktop UI Catalog expansion and Zero-Mock Playwright E2E Automation delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Covers all 90 tools with canonical/short IDs and genuine engine assertions, followed by 3-Tester Manual QA Sign-Off (`qa/manual_desktop_testing/`), and GitHub Actions Release verification on `feature/dev`.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 
