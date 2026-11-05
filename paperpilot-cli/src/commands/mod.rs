@@ -497,9 +497,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             println!("Executing pdf-to-json...");
             Ok(())
         },
-        Commands::JsonToPdf { input: _, output: _ } => {
-            println!("Executing json-to-pdf...");
-            Ok(())
+        Commands::JsonToPdf { input, output } => {
+            group_d::handle_convert(
+                "json_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                None,
+                None,
+                None,
+            )
         },
         Commands::RagChunks { input: _ } => {
             println!("Executing rag-chunks...");

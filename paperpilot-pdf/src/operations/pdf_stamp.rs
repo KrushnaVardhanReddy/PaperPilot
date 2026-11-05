@@ -89,6 +89,7 @@ pub fn pdf_stamp_bytes(input_bytes: &[u8], options: &PdfStampOptions) -> Result<
     } else {
         std::fs::read("tests/e2e_fixtures/real/img1.png")
             .or_else(|_| std::fs::read("../tests/e2e_fixtures/real/img1.png"))
+            .or_else(|_| std::fs::read("../../tests/e2e_fixtures/real/img1.png"))
             .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?
     };
 

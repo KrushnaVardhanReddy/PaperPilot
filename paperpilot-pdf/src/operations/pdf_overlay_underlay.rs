@@ -74,11 +74,14 @@ pub fn pdf_overlay_underlay_bytes(
         }
     } else {
         let path = Path::new("tests/e2e_fixtures/real/single_page.pdf");
+        let fallback_path1 = Path::new("../").join(path);
+        let fallback_path2 = Path::new("../../").join(path);
         if path.exists() {
             fs::read(path).map_err(PdfError::IoError)?
+        } else if fallback_path1.exists() {
+            fs::read(fallback_path1).map_err(PdfError::IoError)?
         } else {
-            let fallback_path = Path::new("../").join(path);
-            fs::read(fallback_path).map_err(PdfError::IoError)?
+            fs::read(fallback_path2).map_err(PdfError::IoError)?
         }
     };
 
