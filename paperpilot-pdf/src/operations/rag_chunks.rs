@@ -9,6 +9,8 @@ pub struct RagChunk {
     pub page: u32,
     pub section_title: String,
     pub content: String,
+    #[serde(default)]
+    pub token_count: usize,
 }
 
 pub struct PdfRagChunksOperation {
@@ -62,10 +64,18 @@ impl PdfOperation for PdfRagChunksOperation {
                 for line in lines {
                     if line.starts_with("#") {
                         if !current_content.trim().is_empty() {
+                            let text = current_content.trim().to_string();
+                            let token_count = text.split_whitespace().count().max(1);
+                            let title = if current_section.is_empty() {
+                                format!("Page {}", i + 1)
+                            } else {
+                                current_section.clone()
+                            };
                             all_chunks.push(RagChunk {
                                 page: (i + 1) as u32,
-                                section_title: current_section.clone(),
-                                content: current_content.trim().to_string(),
+                                section_title: title,
+                                content: text,
+                                token_count,
                             });
                         }
                         current_section = line.trim_start_matches('#').trim().to_string();
@@ -77,10 +87,18 @@ impl PdfOperation for PdfRagChunksOperation {
                 }
 
                 if !current_content.trim().is_empty() {
+                    let text = current_content.trim().to_string();
+                    let token_count = text.split_whitespace().count().max(1);
+                    let title = if current_section.is_empty() {
+                        format!("Page {}", i + 1)
+                    } else {
+                        current_section.clone()
+                    };
                     all_chunks.push(RagChunk {
                         page: (i + 1) as u32,
-                        section_title: current_section.clone(),
-                        content: current_content.trim().to_string(),
+                        section_title: title,
+                        content: text,
+                        token_count,
                     });
                 }
             }
