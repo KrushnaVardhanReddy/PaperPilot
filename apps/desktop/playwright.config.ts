@@ -26,7 +26,7 @@ export default defineConfig({
     command: 'npm run dev',
     cwd: './',
     url: 'http://localhost:1420',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     env: {
       NO_PROXY: 'localhost,127.0.0.1',
       no_proxy: 'localhost,127.0.0.1',

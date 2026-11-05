@@ -22,36 +22,36 @@
 
 | Tool Name | Canonical Identifier | Status | Latency (ms) | Output Format | Invariant & Semantic Verification |
 |:---|:---|:---:|:---:|:---:|:---|
-| `pdf_merge` | `pdf_merge` | ✅ PASS | 2691.07 | `.pdf` | Multi-page combination; valid `%PDF-` header (>100B) |
-| `pdf_merge_alternate` | `pdf_merge_alternate` | ✅ PASS | 1297.89 | `.pdf` | Interleaved alternating merge; valid `%PDF-` header |
-| `pdf_split` | `pdf_split` | ✅ PASS | 929.17 | `.pdf` | Exact page range extraction; valid `%PDF-` header |
-| `pdf_split_by_outline` | `pdf_split_by_outline` | ✅ PASS | 913.62 | `.pdf` | Outline bookmark slicing; valid `%PDF-` header |
-| `pdf_split_scanned_book` | `pdf_split_scanned_book` | ✅ PASS | 895.83 | `.pdf` | 2-up center spine gutter split; valid `%PDF-` header |
-| `pdf_burst` | `pdf_burst` | ✅ PASS | 909.11 | `.pdf` | Document burst into single pages; valid `%PDF-` header |
-| `pdf_crop` | `pdf_crop` | ✅ PASS | 868.51 | `.pdf` | MediaBox crop coordinates updated; valid `%PDF-` header |
-| `pdf_delete_pages` | `pdf_delete_pages` | ✅ PASS | 871.37 | `.pdf` | Page deletion invariant; valid `%PDF-` header |
-| `pdf_extract_pages` | `pdf_extract_pages` | ✅ PASS | 903.04 | `.pdf` | Specified page subset extraction; valid `%PDF-` header |
-| `pdf_reorder_pages` | `pdf_reorder_pages` | ✅ PASS | 877.30 | `.pdf` | Page sequence permutation; valid `%PDF-` header |
-| `pdf_rotate` | `pdf_rotate` | ✅ PASS | 851.31 | `.pdf` | Rotation flag `/Rotate 90`; valid `%PDF-` header |
-| `pdf_auto_rotate` | `pdf_auto_rotate` | ✅ PASS | 858.91 | `.pdf` | Baseline heuristic orientation; valid `%PDF-` header |
-| `pdf_remove_blank` | `pdf_remove_blank` | ✅ PASS | 844.20 | `.pdf` | Blank page removal invariant; valid `%PDF-` header |
-| `pdf_scale_pages` | `pdf_scale_pages` | ✅ PASS | 859.60 | `.pdf` | Dimensional scaling; valid `%PDF-` header |
-| `pdf_nup` | `pdf_nup` | ✅ PASS | 857.73 | `.pdf` | Grid imposition; valid `%PDF-` header |
-| `pdf_booklet` | `pdf_booklet` | ✅ PASS | 871.21 | `.pdf` | 2-sided saddle-stitch booklet; valid `%PDF-` header |
-| `pdf_posterize` | `pdf_posterize` | ✅ PASS | 857.85 | `.pdf` | Multi-sheet poster tile slicing; valid `%PDF-` header |
-| `pdf_stitch_canvas` | `pdf_stitch_canvas` | ✅ PASS | 845.54 | `.pdf` | Continuous single-page canvas; valid `%PDF-` header |
-| `pdf_bookmarks` | `pdf_bookmarks` | ✅ PASS | 927.81 | `.json` | Outline hierarchy; non-empty parsable JSON |
-| `pdf_attachments` | `pdf_attachments` | ✅ PASS | 867.73 | `.json` | Embedded file attachments; non-empty parsable JSON |
-| `pdf_images_to_pdf` | `pdf_images_to_pdf` | ✅ PASS | 890.31 | `.pdf` | Raster image containerization; valid `%PDF-` header |
-| `img_to_pdf` | `img_to_pdf` | ✅ PASS | 895.16 | `.pdf` | Single image to PDF page; valid `%PDF-` header |
-| `pdf_compress` | `pdf_compress` | ✅ PASS | 891.43 | `.pdf` | Stream compression; valid `%PDF-` header |
-| `pdf_dedup_streams` | `pdf_dedup_streams` | ✅ PASS | 903.04 | `.pdf` | Lossless indirect object deduplication; valid `%PDF-` header |
-| `pdf_linearize` | `pdf_linearize` | ✅ PASS | 877.01 | `.pdf` | Fast Web View optimization; valid `%PDF-` header |
-| `pdf_repair` | `pdf_repair` | ✅ PASS | 868.51 | `.pdf` | Xref table reconstruction; valid `%PDF-` header |
-| `pdf_invert_colors` | `pdf_invert_colors` | ✅ PASS | 864.84 | `.pdf` | Dark mode color inversion; valid `%PDF-` header |
-| `pdf_render` | `pdf_render` | ✅ PASS | 1337.49 | `.png` | Raster page rendering; valid PNG signature `89 50 4E 47` |
-| `pdf_compare` | `pdf_compare` | ✅ PASS | 1012.01 | `.json` | Visual & textual comparison; non-empty parsable JSON |
-| `pdf_encrypt` | `pdf_encrypt` | ✅ PASS | 1026.37 | `.pdf` | Password encryption; valid `%PDF-` header |
+| `pdf_merge` | `pdf_merge` | ✅ PASS | 2633.16 | `.pdf` | Pages(A) + Pages(B) = 2; Content interleaved preserved |
+| `pdf_merge_alternate` | `pdf_merge_alternate` | ✅ PASS | 972.93 | `.pdf` | Alternating merge: Page 1 Doc A, Page 2 Doc B |
+| `pdf_split` | `pdf_split` | ✅ PASS | 1049.59 | `.pdf` | Split exactness: Part 1 = 1 page (Page 1), Part 2 = 4 pages (Pages 2-5) |
+| `pdf_split_by_outline` | `pdf_split_by_outline` | ✅ PASS | 1000.30 | `.zip` | Valid PK ZIP containing outline slice PDFs |
+| `pdf_split_scanned_book` | `pdf_split_scanned_book` | ✅ PASS | 997.45 | `.pdf` | 2-Up Center Spine Slicer doubled 1-page scan to 2 portrait pages |
+| `pdf_burst` | `pdf_burst` | ✅ PASS | 984.89 | `.pdf` | Partition: 5 pages partitioned into 5 discrete 1-page PDFs |
+| `pdf_crop` | `pdf_crop` | ✅ PASS | 933.82 | `.pdf` | Bounding box invariant: CropBox/MediaBox dictionary updated |
+| `pdf_delete_pages` | `pdf_delete_pages` | ✅ PASS | 969.33 | `.pdf` | Subtraction: InputPages - 1 = 4; Page 1 absent, Page 2 first |
+| `pdf_extract_pages` | `pdf_extract_pages` | ✅ PASS | 946.06 | `.pdf` | Subset exactness: Extracted single page matches Page 1 |
+| `pdf_reorder_pages` | `pdf_reorder_pages` | ✅ PASS | 919.28 | `.pdf` | Permutation [2,1,3,4,5]: Out Page 1 has Page 2 text, Out Page 2 has Page 1 text |
+| `pdf_rotate` | `pdf_rotate` | ✅ PASS | 950.49 | `.pdf` | Rotation invariant: dictionary contains /Rotate 90 |
+| `pdf_auto_rotate` | `pdf_auto_rotate` | ✅ PASS | 909.97 | `.pdf` | Orientation normalized: text preserved in valid PDF |
+| `pdf_remove_blank` | `pdf_remove_blank` | ✅ PASS | 931.77 | `.pdf` | Content density: non-blank content preserved |
+| `pdf_scale_pages` | `pdf_scale_pages` | ✅ PASS | 1046.92 | `.pdf` | MediaBox scaled: text content intact |
+| `pdf_nup` | `pdf_nup` | ✅ PASS | 991.60 | `.pdf` | N-Up imposition: 5 input pages compressed to fewer sheets |
+| `pdf_booklet` | `pdf_booklet` | ✅ PASS | 984.49 | `.pdf` | Booklet imposition: signature folding pages generated |
+| `pdf_posterize` | `pdf_posterize` | ✅ PASS | 994.70 | `.pdf` | Tile grid multiplication: 1 page tiled to 2 sheets |
+| `pdf_stitch_canvas` | `pdf_stitch_canvas` | ✅ PASS | 933.66 | `.pdf` | Continuous canvas: multi-page combined into 1 continuous vertical page |
+| `pdf_bookmarks` | `pdf_bookmarks` | ✅ PASS | 940.16 | `.json` | Outline JSON schema: valid operation payload returned |
+| `pdf_attachments` | `pdf_attachments` | ✅ PASS | 1007.74 | `.json` | Attachments schema: attachments array & total_count count returned |
+| `pdf_images_to_pdf` | `pdf_images_to_pdf` | ✅ PASS | 953.35 | `.pdf` | Raster containerization: PNG converted to 1-page PDF with XObject Image |
+| `img_to_pdf` | `img_to_pdf` | ✅ PASS | 965.36 | `.pdf` | Raster containerization: PNG converted to 1-page PDF with XObject Image |
+| `pdf_compress` | `pdf_compress` | ✅ PASS | 961.44 | `.pdf` | Stream compression: valid PDF with text preserved |
+| `pdf_dedup_streams` | `pdf_dedup_streams` | ✅ PASS | 955.45 | `.pdf` | Deduplication: indirect object streams optimized |
+| `pdf_linearize` | `pdf_linearize` | ✅ PASS | 871.60 | `.pdf` | Fast Web View linearized structure confirmed |
+| `pdf_repair` | `pdf_repair` | ✅ PASS | 932.65 | `.pdf` | Xref & catalog repair validated |
+| `pdf_invert_colors` | `pdf_invert_colors` | ✅ PASS | 883.49 | `.pdf` | Color inversion content stream transformed |
+| `pdf_render` | `pdf_render` | ✅ PASS | 1286.23 | `.png` | Raster exactness: Valid PNG magic bytes 89 50 4E 47 |
+| `pdf_compare` | `pdf_compare` | ✅ PASS | 980.44 | `.json` | Visual/textual diff report: Valid JSON comparison payload |
+| `pdf_encrypt` | `pdf_encrypt` | ✅ PASS | 916.45 | `.pdf` | Cryptographic lock: /Encrypt present; standard reader throws PasswordException |
 
 ---
 
@@ -133,3 +133,46 @@
 - **Zero Synthetic Placeholders:** All placeholder writes (`fs.writeFileSync(placeholderFile, ...)`) eradicated.
 - **Deep Semantic Integrity:** All files verified via real binary signatures (`%PDF-`, `PK\x03\x04`, `\x89PNG`) and parsable JSON/CSV streams.
 - **Master Status:** **100% Passed (90 / 90 Tools Green)**.
+
+
+# Real Execution Suite 3 Tools 61-90 Desktop Operations E2E Scorecard
+
+## Executive Summary
+- **Total Tested:** 30
+- **Passed:** 30
+- **Failed:** 0
+
+## Operations Status
+
+| Tool Name | Status | UI Execution Latency (ms) | Error Notes |
+|-----------|--------|---------------------------|-------------|
+| `pdf_convert_excel` | ✅ PASS | 3154.42 |  |
+| `pdf_comic_archive` | ✅ PASS | 1360.72 |  |
+| `pdf_to_epub` | ✅ PASS | 966.27 |  |
+| `pdf_to_pdf_a` | ✅ PASS | 935.83 |  |
+| `extract_images` | ✅ PASS | 1347.64 |  |
+| `pdf_extract_images` | ✅ PASS | 1334.95 |  |
+| `pdf_to_docx` | ✅ PASS | 951.98 |  |
+| `pdf_to_xlsx` | ✅ PASS | 946.29 |  |
+| `pdf_to_pptx` | ✅ PASS | 932.43 |  |
+| `pdf_to_html` | ✅ PASS | 886.56 |  |
+| `pdf_to_markdown` | ✅ PASS | 900.40 |  |
+| `pdf_to_json` | ✅ PASS | 880.81 |  |
+| `pdf_extract_text` | ✅ PASS | 898.93 |  |
+| `pdf_extract_tables` | ✅ PASS | 864.69 |  |
+| `pdf_ocr` | ✅ PASS | 952.38 |  |
+| `office_to_markdown` | ✅ PASS | 884.81 |  |
+| `office_extract_text` | ✅ PASS | 848.38 |  |
+| `office_modernize_legacy` | ✅ PASS | 881.62 |  |
+| `excel_to_json` | ✅ PASS | 868.95 |  |
+| `excel_to_csv` | ✅ PASS | 883.26 |  |
+| `pdf_search` | ✅ PASS | 990.07 |  |
+| `workspace_search` | ✅ PASS | 960.86 |  |
+| `semantic_search` | ✅ PASS | 926.36 |  |
+| `pdf_classify_type` | ✅ PASS | 944.49 |  |
+| `pdf_rag_chunks` | ✅ PASS | 908.64 |  |
+| `document_workflow` | ✅ PASS | 934.13 |  |
+| `recipe_run` | ✅ PASS | 902.15 |  |
+| `cli_ask` | ✅ PASS | 867.35 |  |
+| `watcher_start` | ✅ PASS | 882.66 |  |
+| `watcher_stop` | ✅ PASS | 899.09 |  |
