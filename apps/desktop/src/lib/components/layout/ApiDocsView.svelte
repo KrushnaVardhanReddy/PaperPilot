@@ -1,5 +1,6 @@
 <script lang="ts">
   import openapiSpec from '../../../../../../docs/api/openapi.json';
+  import { appState } from '$lib/state/app.svelte';
 
   let baseUrl = $state('http://127.0.0.1:7823');
   let searchQuery = $state('');
