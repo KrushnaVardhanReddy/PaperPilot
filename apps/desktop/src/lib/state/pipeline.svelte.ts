@@ -1,9 +1,95 @@
 // Type definitions
 export type OperationId =
-  | 'pdf_compress' | 'pdf_rotate' | 'pdf_watermark' | 'pdf_crop' | 'pdf_merge'
-  | 'pdf_split' | 'pdf_extract_pages' | 'pdf_encrypt' | 'pdf_decrypt' | 'pdf_metadata'
-  | 'pdf_redact' | 'pdf_repair' | 'pdf_linearize' | 'pdf_flatten'
-  | 'pdf_header_footer' | 'pdf_bates' | 'pdf_ocr' | 'pdf_sign' | 'pdf_remove_blank' | 'pdf_page_numbers' | 'pdf_sanitize' | 'document_pii_scan';
+  | 'batch_fill'
+  | 'cli_ask'
+  | 'cli_fill_batch'
+  | 'document_pii_scan'
+  | 'document_workflow'
+  | 'excel_to_csv'
+  | 'excel_to_json'
+  | 'extract_images'
+  | 'html_to_pdf'
+  | 'img_to_pdf'
+  | 'json_to_pdf'
+  | 'md_to_pdf'
+  | 'office_extract_text'
+  | 'office_modernize_legacy'
+  | 'office_to_markdown'
+  | 'pdf_annotate'
+  | 'pdf_attachments'
+  | 'pdf_auto_rotate'
+  | 'pdf_bates'
+  | 'pdf_booklet'
+  | 'pdf_bookmarks'
+  | 'pdf_burst'
+  | 'pdf_change_permissions'
+  | 'pdf_classify_type'
+  | 'pdf_comic_archive'
+  | 'pdf_compare'
+  | 'pdf_compress'
+  | 'pdf_convert_excel'
+  | 'pdf_convert_html'
+  | 'pdf_convert_markdown'
+  | 'pdf_create_form_field'
+  | 'pdf_crop'
+  | 'pdf_decrypt'
+  | 'pdf_dedup_streams'
+  | 'pdf_delete_pages'
+  | 'pdf_encrypt'
+  | 'pdf_extract_images'
+  | 'pdf_extract_pages'
+  | 'pdf_extract_tables'
+  | 'pdf_extract_text'
+  | 'pdf_fill_form'
+  | 'pdf_flatten'
+  | 'pdf_hash'
+  | 'pdf_header_footer'
+  | 'pdf_images_to_pdf'
+  | 'pdf_invert_colors'
+  | 'pdf_linearize'
+  | 'pdf_merge'
+  | 'pdf_merge_alternate'
+  | 'pdf_metadata'
+  | 'pdf_nup'
+  | 'pdf_ocr'
+  | 'pdf_overlay_underlay'
+  | 'pdf_page_numbers'
+  | 'pdf_posterize'
+  | 'pdf_rag_chunks'
+  | 'pdf_read_form'
+  | 'pdf_redact'
+  | 'pdf_remove_blank'
+  | 'pdf_remove_signatures'
+  | 'pdf_render'
+  | 'pdf_reorder_pages'
+  | 'pdf_repair'
+  | 'pdf_rotate'
+  | 'pdf_sanitize'
+  | 'pdf_scale_pages'
+  | 'pdf_search'
+  | 'pdf_sign'
+  | 'pdf_split'
+  | 'pdf_split_by_outline'
+  | 'pdf_split_scanned_book'
+  | 'pdf_stamp'
+  | 'pdf_stitch_canvas'
+  | 'pdf_timestamp'
+  | 'pdf_to_docx'
+  | 'pdf_to_epub'
+  | 'pdf_to_html'
+  | 'pdf_to_json'
+  | 'pdf_to_markdown'
+  | 'pdf_to_pdf_a'
+  | 'pdf_to_pptx'
+  | 'pdf_to_xlsx'
+  | 'pdf_validate'
+  | 'pdf_validate_signatures'
+  | 'pdf_watermark'
+  | 'recipe_run'
+  | 'semantic_search'
+  | 'watcher_start'
+  | 'watcher_stop'
+  | 'workspace_search';
 
 export interface WorkflowConditionLeaf {
   if_scanned?: boolean;
@@ -561,7 +647,483 @@ export const OPERATION_REGISTRY: Record<OperationId, {
       { key: 'format', label: 'Format String', type: 'text', placeholder: 'e.g. Page {n} of {total}' },
       { key: 'position', label: 'Position', type: 'select', options: ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] }
     ]
-  }
+  },
+  batch_fill: {
+    label: "Batch Form Fill",
+    icon: "\ud83d\udcd1",
+    description: "Batch populate interactive AcroForm PDF templates from CSV or JSON tabular data",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  cli_ask: {
+    label: "AI Document Assistant",
+    icon: "\ud83e\udd16",
+    description: "Natural language interactive assistant for conversational document queries and edits",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  cli_fill_batch: {
+    label: "Automated Batch Engine",
+    icon: "\u2699\ufe0f",
+    description: "High-speed automated CLI AcroForm generation with execution receipt audit trails",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  document_workflow: {
+    label: "Document Workflow Runner",
+    icon: "\u26a1",
+    description: "Execute declarative multi-step document transformation pipelines and workflows",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  excel_to_csv: {
+    label: "Excel to CSV",
+    icon: "\ud83d\udcd1",
+    description: "Export spreadsheet sheet to standard RFC 4180 CSV",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  excel_to_json: {
+    label: "Excel to JSON",
+    icon: "\ud83d\udcca",
+    description: "Convert spreadsheet sheets into structured JSON data",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  extract_images: {
+    label: "Extract Embedded Images",
+    icon: "\ud83d\uddbc\ufe0f",
+    description: "Save all images found inside the document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  html_to_pdf: {
+    label: "HTML to PDF",
+    icon: "\ud83c\udf10",
+    description: "Convert HTML string to styled PDF",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  img_to_pdf: {
+    label: "Images to PDF",
+    icon: "\ud83d\uddbc\ufe0f",
+    description: "Combine multiple images into a PDF",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  json_to_pdf: {
+    label: "JSON to PDF",
+    icon: "\u26a1",
+    description: "Synthesize PDF from structured JSON text and embedded images",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  md_to_pdf: {
+    label: "Markdown to PDF",
+    icon: "\ud83d\udcdd",
+    description: "Convert markdown text to PDF",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  office_extract_text: {
+    label: "Office to Plain Text",
+    icon: "\ud83d\udcc4",
+    description: "Extract all raw text from Office documents into plain text",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  office_modernize_legacy: {
+    label: "Modernize Legacy Office",
+    icon: "\ud83d\udd04",
+    description: "Upgrade .doc/.xls/.ppt to modern .docx/.xlsx/.pptx format",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  office_to_markdown: {
+    label: "Convert to Markdown",
+    icon: "\ud83d\udcd1",
+    description: "Convert Word, Excel, or PowerPoint to clean Markdown text",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_annotate: {
+    label: "Add Annotations",
+    icon: "\u270f\ufe0f",
+    description: "Programmatically add annotations",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_attachments: {
+    label: "PDF Portfolio Attachments",
+    icon: "\ud83d\udcce",
+    description: "Inspect, extract, or embed file attachments into PDF portfolios.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_auto_rotate: {
+    label: "Auto Upright Orientation",
+    icon: "\ud83d\udd04",
+    description: "Heuristically detect text baseline and rotation angle to automatically upright pages.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_booklet: {
+    label: "Booklet Imposition",
+    icon: "\ud83d\udcd6",
+    description: "Reorder and impose pages for 2-sided folding booklet printing.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_bookmarks: {
+    label: "Extract Bookmarks",
+    icon: "\ud83d\udd16",
+    description: "Read document outline and bookmarks",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_burst: {
+    label: "Burst PDF",
+    icon: "\ud83d\udca5",
+    description: "Split document into single pages",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_change_permissions: {
+    label: "Modify PDF Permissions",
+    icon: "\ud83d\udee1\ufe0f",
+    description: "Configure user and owner permissions for printing, copying, and modification.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_classify_type: {
+    label: "Classify Document",
+    icon: "\ud83c\udff7\ufe0f",
+    description: "AI classification of document type",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_comic_archive: {
+    label: "Comic Archive Conversion",
+    icon: "\ud83d\udcda",
+    description: "Convert between PDF documents and comic book archive formats (CBZ/CBR).",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_compare: {
+    label: "Compare Documents",
+    icon: "\ud83d\udd0d",
+    description: "Side-by-side comparison between two open tabs",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_convert_excel: {
+    label: "CSV to PDF",
+    icon: "\ud83d\udcc4",
+    description: "Convert tabular data to PDF",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_convert_html: {
+    label: "HTML to PDF Direct",
+    icon: "\ud83c\udf10",
+    description: "Convert ingested HTML strings or web pages directly into styled PDF documents",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_convert_markdown: {
+    label: "Markdown to PDF Direct",
+    icon: "\ud83d\udcdd",
+    description: "Parse, style, and compile raw Markdown syntax into publication-quality PDFs",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_create_form_field: {
+    label: "Add Form Field",
+    icon: "\u2795",
+    description: "Create new interactive form fields",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_dedup_streams: {
+    label: "Lossless Stream Deduplication",
+    icon: "\ud83d\udcc9",
+    description: "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_delete_pages: {
+    label: "Delete Pages",
+    icon: "\ud83d\uddd1\ufe0f",
+    description: "Remove specific pages from the document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_extract_images: {
+    label: "Extract Embedded Images",
+    icon: "\ud83d\uddbc\ufe0f",
+    description: "Save all images found inside the document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_extract_tables: {
+    label: "Extract Tables",
+    icon: "\ud83d\udcca",
+    description: "Extract tables as JSON matrices or CSV",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_extract_text: {
+    label: "PDF to Plain Text",
+    icon: "\ud83d\udcc4",
+    description: "Extract all raw textual content to a .txt file",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_fill_form: {
+    label: "Fill Form Data",
+    icon: "\u270d\ufe0f",
+    description: "Fill PDF form fields automatically",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_hash: {
+    label: "Generate Hash",
+    icon: "#\ufe0f\u20e3",
+    description: "Calculate document checksums",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_images_to_pdf: {
+    label: "Images to PDF",
+    icon: "\ud83d\uddbc\ufe0f",
+    description: "Combine multiple raster images (PNG, JPEG) into a multi-page PDF document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_invert_colors: {
+    label: "Invert Colors (Dark Mode)",
+    icon: "\ud83c\udf13",
+    description: "High-contrast dark mode transformation and color inversion for reading accessibility",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_merge_alternate: {
+    label: "Alternating PDF Merge",
+    icon: "\ud83d\udcc4",
+    description: "Interleave pages from two PDF documents.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_nup: {
+    label: "N-Up Page Imposition",
+    icon: "\ud83d\udcd1",
+    description: "Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_overlay_underlay: {
+    label: "Overlay & Underlay Stationary",
+    icon: "\ud83d\udcd1",
+    description: "Apply letterheads, watermarked stationary, and templates as background or foreground.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_posterize: {
+    label: "Multi-Sheet Poster Tile Slicer",
+    icon: "\ud83e\udde9",
+    description: "Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_rag_chunks: {
+    label: "RAG Pipeline Chunks",
+    icon: "\ud83e\udde9",
+    description: "Extract structure-aware semantic text chunks optimized for LLM RAG vector indexing",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_read_form: {
+    label: "Read Form Data",
+    icon: "\ud83d\udccb",
+    description: "Extract data from PDF forms",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_remove_signatures: {
+    label: "Remove Digital Signatures",
+    icon: "\ud83d\udd13",
+    description: "Strip digital signature fields, cryptographic locks, and widget annotations.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_render: {
+    label: "Render Page",
+    icon: "\ud83d\uddbc\ufe0f",
+    description: "Render page to image format",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_reorder_pages: {
+    label: "Reorder Pages",
+    icon: "\ud83d\udd01",
+    description: "Change the order of pages in the document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_scale_pages: {
+    label: "Scale Page Dimensions",
+    icon: "\ud83d\udcd0",
+    description: "Scale page dimensions between standard formats or percentages.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_search: {
+    label: "Search Text",
+    icon: "\ud83d\udd0d",
+    description: "Search for text across the document",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_split_by_outline: {
+    label: "Split by Document Outline",
+    icon: "\ud83d\udcd1",
+    description: "Split a PDF into separate section files according to its outline bookmarks.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_split_scanned_book: {
+    label: "Split Scanned Book Spine",
+    icon: "\ud83d\udcd6",
+    description: "Detect center binding gutter spine and split two-up page scans into single pages.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_stamp: {
+    label: "Stamp Image & Logo",
+    icon: "\ud83c\udff7\ufe0f",
+    description: "Place coordinate-exact images, logos, and badges onto PDF pages.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_stitch_canvas: {
+    label: "Stitch Continuous Canvas",
+    icon: "\ud83d\udcdc",
+    description: "Combine multiple pages vertically or horizontally into a continuous single-page canvas.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_timestamp: {
+    label: "Cryptographic Timestamp TSA",
+    icon: "\u23f1\ufe0f",
+    description: "Apply RFC 3161 cryptographically verified TSA timestamp tokens.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_docx: {
+    label: "PDF to Word (DOCX)",
+    icon: "\ud83d\udcdd",
+    description: "Export document as editable Microsoft Word file",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_epub: {
+    label: "PDF to EPUB 3.0",
+    icon: "\ud83d\udcd6",
+    description: "Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_html: {
+    label: "PDF to HTML",
+    icon: "\ud83c\udf10",
+    description: "Export document as responsive, styled HTML5 web page",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_json: {
+    label: "PDF to JSON",
+    icon: "\u26a1",
+    description: "Multimodal layout & text JSON extraction with bounding boxes",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_markdown: {
+    label: "PDF to Markdown",
+    icon: "\ud83d\udcd1",
+    description: "Convert clean layout into LLM-ready markdown text",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_pdf_a: {
+    label: "Convert to PDF/A",
+    icon: "\ud83c\udfdb\ufe0f",
+    description: "Archive-ready PDF format conversion",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_pptx: {
+    label: "PDF to PowerPoint",
+    icon: "\ud83d\udcca",
+    description: "Export document as PPTX presentation",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_to_xlsx: {
+    label: "PDF to Excel (XLSX)",
+    icon: "\ud83d\udcca",
+    description: "Extract tabular data into spreadsheets",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_validate: {
+    label: "Validate PDF",
+    icon: "\u2705",
+    description: "Verify document structure and standards",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_validate_signatures: {
+    label: "Validate Digital Signatures",
+    icon: "\ud83d\udd0f",
+    description: "Cryptographically verify digital signatures, certificate chains, and document integrity.",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  recipe_run: {
+    label: "Instant Pipeline Recipe",
+    icon: "\ud83d\udcdc",
+    description: "Run pre-configured automated PDF manipulation recipes on open documents",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  semantic_search: {
+    label: "Semantic Vector Search",
+    icon: "\ud83e\udde0",
+    description: "Deep neural vector semantic retrieval and passage matching across document chunks",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  watcher_start: {
+    label: "Start Hot-Folder Watcher",
+    icon: "\ud83d\udc41\ufe0f",
+    description: "Launch autonomous background hot-folder file watcher daemon with automated rules",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  watcher_stop: {
+    label: "Stop Hot-Folder Watcher",
+    icon: "\u23f9\ufe0f",
+    description: "Gracefully shut down running hot-folder file watcher automation daemons",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  workspace_search: {
+    label: "Workspace Directory Search",
+    icon: "\ud83d\udcc1",
+    description: "Recursive multi-format document directory search with content snippet previews",
+    defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
 };
 
 export const DEFAULT_PRESETS: SavedPipeline[] = [
