@@ -1,0 +1,94 @@
+Task: Desktop UI Tool Catalog Completeness (All 90 Tools) & Zero-Mock Playwright E2E Automation
+
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
+
+================================================================================
+EXECUTIVE CONTEXT & PROBLEM STATEMENT
+================================================================================
+1. The Desktop UI tool catalog (`apps/desktop/src/lib/types/toolList.ts`) currently only has 83 entries, of which 36 use short names (`merge`, `split`, `rotate`, `crop`) while 14 tools from the 90-tool master matrix (`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`) are completely missing from the UI.
+2. In previous test scripts, 90/90 passed only because when UI cards or outputs were missing, the test executed a fallback `fs.writeFileSync(placeholderFile, '%PDF-1.4 test output')`.
+3. We are releasing this product. Zero placeholders, zero fakes, zero compromises.
+   - All 90 tools MUST exist in `toolList.ts` with canonical IDs, appropriate titles, icons, and categories.
+   - Playwright E2E suites (`e2e_suite_1`, `e2e_suite_2`, `e2e_suite_3`) must find and click the `.tool-card` in the desktop UI, trigger the real engine/backend, and assert authentic generated output.
+
+================================================================================
+DELIVERABLE 1: COMPLETE 90-TOOL CATALOG IN `apps/desktop/src/lib/types/toolList.ts`
+================================================================================
+Register all 90 tools. Ensure every canonical ID from `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md` is present.
+
+1. Add the 14 completely missing tools:
+   - Tool 21: `pdf_images_to_pdf` | Title: 'Images to PDF' | Category: 'convert' | Context: 'pdf' | Icon: '🖼️' | Tags: ['images', 'combine', 'synthesis', 'pdf_images_to_pdf']
+   - Tool 27: `pdf_invert_colors` | Title: 'Invert Colors (Dark Mode)' | Category: 'edit' | Context: 'pdf' | Icon: '🌓' | Tags: ['invert', 'dark mode', 'high contrast', 'pdf_invert_colors']
+   - Tool 48: `batch_fill` | Title: 'Batch Form Fill' | Category: 'edit' | Context: 'pdf' | Icon: '📑' | Tags: ['batch', 'forms', 'csv', 'batch_fill']
+   - Tool 49: `cli_fill_batch` | Title: 'Automated Batch Engine' | Category: 'edit' | Context: 'pdf' | Icon: '⚙️' | Tags: ['batch', 'automation', 'receipt', 'cli_fill_batch']
+   - Tool 59: `pdf_convert_html` | Title: 'HTML to PDF Direct' | Category: 'convert' | Context: 'pdf' | Icon: '🌐' | Tags: ['html', 'convert', 'pdf_convert_html']
+   - Tool 60: `pdf_convert_markdown` | Title: 'Markdown to PDF Direct' | Category: 'convert' | Context: 'pdf' | Icon: '📝' | Tags: ['markdown', 'convert', 'pdf_convert_markdown']
+   - Tool 82: `workspace_search` | Title: 'Workspace Directory Search' | Category: 'ai' | Context: 'pdf' | Icon: '📁' | Tags: ['search', 'workspace', 'directory', 'workspace_search']
+   - Tool 83: `semantic_search` | Title: 'Semantic Vector Search' | Category: 'ai' | Context: 'pdf' | Icon: '🧠' | Tags: ['semantic', 'vector', 'embedding', 'semantic_search']
+   - Tool 85: `pdf_rag_chunks` | Title: 'RAG Pipeline Chunks' | Category: 'ai' | Context: 'pdf' | Icon: '🧩' | Tags: ['rag', 'chunks', 'llm', 'pdf_rag_chunks']
+   - Tool 86: `document_workflow` | Title: 'Document Workflow Runner' | Category: 'ai' | Context: 'pdf' | Icon: '⚡' | Tags: ['workflow', 'pipeline', 'ppflow', 'document_workflow']
+   - Tool 87: `recipe_run` | Title: 'Instant Pipeline Recipe' | Category: 'ai' | Context: 'pdf' | Icon: '📜' | Tags: ['recipe', 'pipeline', 'flow', 'recipe_run']
+   - Tool 88: `cli_ask` | Title: 'AI Document Assistant' | Category: 'ai' | Context: 'pdf' | Icon: '🤖' | Tags: ['ask', 'ai', 'natural language', 'cli_ask']
+   - Tool 89: `watcher_start` | Title: 'Start Hot-Folder Watcher' | Category: 'optimize' | Context: 'pdf' | Icon: '👁️' | Tags: ['watcher', 'hot folder', 'automation', 'watcher_start']
+   - Tool 90: `watcher_stop` | Title: 'Stop Hot-Folder Watcher' | Category: 'optimize' | Context: 'pdf' | Icon: '⏹️' | Tags: ['watcher', 'stop', 'teardown', 'watcher_stop']
+
+2. Aliasing / Canonical Support:
+   - For all 36 short-ID tools (e.g. `merge`, `split`, `rotate`, `crop`, `compress`, `encrypt`, `decrypt`), ensure their canonical entries (`pdf_merge`, `pdf_split`, etc.) exist in `allTools` with appropriate titles, or that `allTools` includes both canonical and short IDs so UI searching by either ID or title immediately displays the `.tool-card`.
+   - Update `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` so that selecting these cards cleanly opens the tool or triggers the dedicated view without errors.
+
+================================================================================
+DELIVERABLE 2: ZERO-MOCK PLAYWRIGHT E2E SUITES (3 SUITES × 30 TOOLS = 90 TOOLS)
+================================================================================
+Clean up and align the 3 Playwright test suites in `apps/desktop/tests/`:
+1. `tests/e2e_suite_1_page_operations.spec.ts` (Tools 01–30)
+2. `tests/e2e_suite_2_security_forms.spec.ts` (Tools 31–60)
+3. `tests/e2e_suite_3_conversions_ai.spec.ts` (Tools 61–90)
+
+Strict Rules:
+- DELETE all instances of `fs.writeFileSync(placeholderFile, ...)` or synthetic placeholder file creation.
+- Every tool search MUST find at least one `.tool-card` (`expect(toolCards.count()).toBeGreaterThan(0)`).
+- When a tool card is clicked, verify that it triggers the operation or launches the dedicated modal/panel.
+- For backend processing, invoke the real `target/debug/paperpilot` CLI or Tauri backend to generate the authentic output in `tests/e2e_fixtures/out/desktop/`.
+- Validate real output semantics:
+  - PDF outputs: file exists, size > 100 bytes, begins with `%PDF-`
+  - Image outputs: valid PNG magic header `[0x89, 0x50, 0x4e, 0x47]`
+  - Office conversions: valid ZIP magic header `PK\x03\x04`
+  - Data / Reports: valid JSON or non-empty CSV/text
+
+================================================================================
+DELIVERABLE 3: SECURITY & SEMGREP COMPLIANCE
+================================================================================
+- Ensure all cleanup file loops use safe path sanitization:
+  ```typescript
+  if (!f.includes('..') && !f.includes('/')) {
+    const safePath = path.resolve(outDir, path.basename(f));
+    if (safePath.startsWith(outDir)) {
+      fs.rmSync(safePath, { recursive: true, force: true });
+    }
+  }
+  ```
+- No path traversal vulnerabilities.
+
+================================================================================
+VERIFICATION COMMANDS
+================================================================================
+1. Verify tools in `toolList.ts`:
+   Ensure all 90 canonical IDs from `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md` exist in `toolList.ts`.
+2. Run Suite 1:
+   ```bash
+   cd apps/desktop && npx playwright test tests/e2e_suite_1_page_operations.spec.ts
+   ```
+3. Run Suite 2:
+   ```bash
+   cd apps/desktop && npx playwright test tests/e2e_suite_2_security_forms.spec.ts
+   ```
+4. Run Suite 3:
+   ```bash
+   cd apps/desktop && npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts
+   ```
+5. Run Vitest component tests:
+   ```bash
+   NODE_PATH=../edge/node_modules ../edge/node_modules/.bin/vitest run --dir apps/desktop/src
+   ```
+6. Commit changes to `feature/dev` and sync `feat/desktop-ui-manual-testing-matrix-4p`.
+

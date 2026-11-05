@@ -71,6 +71,7 @@
 | 3.4.12 | **Pipeline trigger config** | Choose trigger: manual, watch folder, webhook, or schedule |
 | 3.4.13 | **Desktop V2 Workspace UX Refresh `[Spec 140]`** | Reverted by `54db3f2`; leftover watcher placeholder removed by `3dfa989`. Await a separately reviewed redesign. |
 | 3.4.14 | **Multi-rule condition editor `[Spec 141]`** | Initial UI in PR #305 on `fix/current-ui-polish`; recursive NOT/ALL/ANY, false/zero/legacy/size preservation and explicit Apply repaired on the Spec 142 branch, awaiting integration review. See `reports/DESKTOP_AUTOMATION_REPORT.md`. |
+| 3.4.15 | **90-Tool UI Catalog & Zero-Mock Playwright Automation** 🚀 | Active handoff: delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Catalog completeness (all 90 tools with canonical/short IDs) and genuine E2E test execution with zero placeholders across Suites 1, 2, and 3. |
 
 ---
 
