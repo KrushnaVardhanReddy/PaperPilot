@@ -4,7 +4,7 @@
 > Start any new agent or human session by reading this document.  
 > **Date of Last Update:** November 5, 2026
 >
-> **Active Target:** Desktop 90-Tool UI Catalog Completeness & Zero-Mock Playwright E2E Automation delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Clean zero-placeholder suites on `feature/dev` (commit `26b4fa5`). Semgrep security compliance verified.
+> **Active Target:** Desktop 90-Tool UI Catalog Completeness & Zero-Mock Playwright E2E Automation triggered with Jules (Active Session: [7732955390016446928](https://jules.google.com/session/7732955390016446928)). Clean zero-placeholder suites on `feature/dev`. Semgrep security compliance verified.
 
 ---
 
@@ -47,7 +47,7 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Desktop 90-Tool UI Catalog & Zero-Mock Playwright E2E** | **Desktop UI Tool Completeness & Unmocked E2E**<br>Delegated to Jules via `prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`. Register all 90 tools in `apps/desktop/src/lib/types/toolList.ts` (14 missing tools + 36 canonical aliases), eliminate all `placeholderFile` test fallbacks, and verify genuine engine execution. | 🚀 **Active / Delegated to Jules** |
+| **1** | **Desktop 90-Tool UI Catalog & Zero-Mock Playwright E2E** | **Desktop UI Tool Completeness & Unmocked E2E**<br>Active Jules Session [7732955390016446928](https://jules.google.com/session/7732955390016446928) (`prompts/tasks/done/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`). Register all 90 tools in `apps/desktop/src/lib/types/toolList.ts` (14 missing tools + 36 canonical aliases), eliminate all `placeholderFile` test fallbacks, and verify genuine engine execution. | 🚀 **In Flight (Jules Session 7732955390016446928)** |
 | **2** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
 | **3** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
 | **4** | **Spec 144 Three-Column Workspace** | **Desktop Three-Column Pro Workspace (Task 3.4.16)**<br>Multi-pane pro layout for document list, canvas, and operations dock. | 📋 **Backlog** |
