@@ -85,6 +85,9 @@ test.beforeEach(async ({ page }) => {
            return ['../../tests/e2e_fixtures/real/multi_page.pdf'];
         }
         if (cmd === 'invoke_mcp_tool') {
+           if (args && args.toolName && args.toolName.startsWith('pdf_pdf_')) {
+             throw new Error(`IPC Error: Invalid double-prefixed toolName: ${args.toolName}`);
+           }
            if (args && args.arguments && args.arguments.output) {
              const out = args.arguments.output;
              (window as any).__last_tool_output = out;

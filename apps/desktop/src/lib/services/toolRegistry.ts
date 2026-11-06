@@ -1,23 +1,53 @@
+// Explicit mappings for tools with unconventional IDs or legacy names
+const TOOL_NAME_ALIASES: Record<string, string> = {
+  md_to_pdf: 'pdf_convert_markdown',
+  html_to_pdf: 'pdf_convert_html',
+  img_to_pdf: 'pdf_images_to_pdf',
+  cli_fill_batch: 'batch_fill',
+  cli_ask: 'workspace_search',
+  document_pii_scan: 'pdf_document_pii_scan',
+};
+
+// Known MCP tool names that don't take a 'pdf_' prefix
+const UNPREFIXED_TOOLS = new Set([
+  'batch_fill',
+  'recipe_run',
+  'document_workflow',
+  'list_workflows',
+  'watcher_start',
+  'watcher_stop',
+  'watcher_list',
+  'semantic_search',
+  'workspace_search',
+  'excel_to_json',
+  'excel_to_csv',
+  'office_to_markdown',
+  'office_extract_text',
+  'office_modernize_legacy',
+  'json_to_pdf'
+]);
+
 export function resolveToolName(toolId: string): string {
-    if (toolId === 'md_to_pdf') return 'pdf_convert_markdown';
-    if (toolId === 'html_to_pdf') return 'pdf_convert_html';
-    if (toolId === 'img_to_pdf') return 'pdf_images_to_pdf';
-    if (toolId === 'json_to_pdf') return 'json_to_pdf';
+  if (TOOL_NAME_ALIASES[toolId]) {
+    return TOOL_NAME_ALIASES[toolId];
+  }
 
-    // Forms and conversions mapping
-    if (['create_form_field', 'fill_form', 'read_form'].includes(toolId)) {
-        return `pdf_${toolId}`;
-    }
+  if (UNPREFIXED_TOOLS.has(toolId)) {
+    return toolId;
+  }
 
-    if ([
-        'pdf_to_docx', 'pdf_to_xlsx', 'pdf_to_pptx', 'pdf_to_pdf_a', 'pdf_to_markdown', 'pdf_to_html', 'pdf_to_json',
-        'pdf_convert_excel', 'office_modernize_legacy', 'office_to_markdown', 'office_extract_text',
-        'excel_to_json', 'excel_to_csv'
-    ].includes(toolId)) {
-        return toolId;
-    }
+  // If the tool ID already starts with standard namespace prefixes, keep it as is
+  if (
+    toolId.startsWith('pdf_') ||
+    toolId.startsWith('office_') ||
+    toolId.startsWith('excel_') ||
+    toolId.startsWith('json_')
+  ) {
+    return toolId;
+  }
 
-    return `pdf_${toolId}`;
+  // Short canonical alias (e.g. 'merge' -> 'pdf_merge', 'sign' -> 'pdf_sign')
+  return `pdf_${toolId}`;
 }
 
 import type { ToolDefinition } from '../types/tools';
