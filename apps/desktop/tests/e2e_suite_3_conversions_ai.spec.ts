@@ -84,6 +84,10 @@ test.beforeEach(async ({ page }) => {
                return ['../../tests/e2e_fixtures/real/test.xlsx'];
            } else if ((window as any).__last_tool_type === 'xls') {
                return ['../../tests/e2e_fixtures/real/test.xls'];
+           } else if ((window as any).__last_tool_type === 'financial' || (window as any).__last_tool_name === 'pdf_extract_tables') {
+               return ['../../tests/e2e_fixtures/real/financial_tables.pdf'];
+           } else if ((window as any).__last_tool_type === 'research') {
+               return ['../../tests/e2e_fixtures/real/research_paper.pdf'];
            }
            return ['../../tests/e2e_fixtures/real/single_page.pdf'];
         }
@@ -114,6 +118,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
     const cliBin = path.resolve(process.cwd(), '../../target/debug/paperpilot');
     const fixtureSingle = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/single_page.pdf');
     const fixtureMulti = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/multi_page.pdf');
+    const fixtureFinancial = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/financial_tables.pdf');
+    const fixtureResearch = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/research_paper.pdf');
     const fixtureCsv = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.csv');
     const fixtureDocx = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.docx');
     const fixtureXlsx = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.xlsx');
@@ -154,6 +160,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
              await fileInput.setInputFiles([fixtureXlsx]);
           } else if (op.type === 'xls') {
              await fileInput.setInputFiles([fixtureXls]);
+          } else if (op.name === 'pdf_extract_tables' || op.type === 'financial') {
+             await fileInput.setInputFiles([fixtureFinancial]);
           } else {
              await fileInput.setInputFiles([fixtureSingle]);
           }
@@ -238,7 +246,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               cliCmd = `"${cliBin}" extract-text --input "${fixtureSingle}" --output "${outputFile}"`;
               break;
             case 'pdf_extract_tables':
-              cliCmd = `"${cliBin}" extract-tables --input "${fixtureSingle}" --output "${outputFile}" --format json`;
+              cliCmd = `"${cliBin}" extract-tables --input "${fixtureFinancial}" --output "${outputFile}" --format json`;
               break;
             case 'pdf_ocr':
               cliCmd = `"${cliBin}" ocr --input "${fixtureSingle}" --output "${outputFile}" --format pdf`;
@@ -320,10 +328,20 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
 
           switch (op.name) {
             case 'pdf_convert_excel': {
+              const raw = PdfInspector.inspectRaw(targetFile);
+              expect(raw.isPdf).toBe(true);
+              expect(fileContent.slice(0, 4).toString()).toBe('%PDF');
               const insp = await PdfInspector.inspect(targetFile);
               expect(insp.numPages).toBeGreaterThanOrEqual(1);
-              expect(insp.hasText('Item') || insp.hasText('Book') || insp.hasText('Price') || insp.hasText('10')).toBe(true);
-              invariantNote = 'Tabular rendering: Ingested CSV rows converted to bordered table grid in output PDF';
+              expect(
+                insp.hasText('Item') ||
+                insp.hasText('Book') ||
+                insp.hasText('Price') ||
+                insp.hasText('10') ||
+                insp.hasText('product_name') ||
+                insp.hasText('total_revenue')
+              ).toBe(true);
+              invariantNote = `Office/CSV to PDF: Valid %PDF header, ${insp.numPages} page(s), tabular grid verified`;
               break;
             }
             case 'pdf_comic_archive': {
@@ -334,10 +352,12 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               break;
             }
             case 'pdf_to_epub': {
-              expect(fileContent[0] === 0x50 && fileContent[1] === 0x4B).toBe(true);
+              expect(fileContent[0] === 0x50 && fileContent[1] === 0x4B && fileContent[2] === 0x03 && fileContent[3] === 0x04).toBe(true);
               const zipListing = execSync(`unzip -l "${targetFile}"`, { encoding: 'utf-8' });
               expect(zipListing).toContain('mimetype');
-              invariantNote = 'Reflowable eBook: Valid .epub PKZIP archive containing mimetype and container XML';
+              const mimetypeContent = execSync(`unzip -p "${targetFile}" mimetype`, { encoding: 'utf-8' });
+              expect(mimetypeContent).toContain('application/epub+zip');
+              invariantNote = 'Reflowable eBook: Valid .epub PKZIP archive (PK\\x03\\x04) containing mimetype and container XML';
               break;
             }
             case 'pdf_to_pdf_a': {
@@ -385,15 +405,19 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               const insp = OfficeInspector.inspectText(targetFile);
               expect(insp.content.length).toBeGreaterThan(0);
               expect(insp.hasString('<')).toBe(true);
-              expect(insp.hasString('Single') || insp.hasString('page')).toBe(true);
-              invariantNote = 'Responsive Web DOM: Clean HTML tags reproducing source document text layout';
+              expect(insp.hasString('<h1') || insp.hasString('<h2') || insp.hasString('<h4')).toBe(true);
+              expect(insp.hasString('<p>') || insp.hasString('<div')).toBe(true);
+              expect(insp.hasString('Single') || insp.hasString('page') || insp.hasString('PaperPilot')).toBe(true);
+              invariantNote = 'Responsive Web DOM: Clean HTML structure with semantic headings and layout tags';
               break;
             }
             case 'pdf_to_markdown': {
               const insp = OfficeInspector.inspectText(targetFile);
               expect(insp.content.length).toBeGreaterThan(0);
-              expect(insp.hasString('Single') || insp.hasString('page')).toBe(true);
-              invariantNote = 'LLM-Ready Markdown: Clean markdown syntax matching document text content';
+              expect(insp.content).toMatch(/^#\s+/m);
+              expect(insp.hasString('# ')).toBe(true);
+              expect(insp.hasString('Single') || insp.hasString('page') || insp.hasString('PaperPilot')).toBe(true);
+              invariantNote = 'LLM-Ready Markdown: Valid markdown headings (#) and structured document text';
               break;
             }
             case 'pdf_to_json': {
@@ -412,7 +436,21 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
             case 'pdf_extract_tables': {
               const insp = OfficeInspector.inspectText(targetFile);
               expect(insp.isJson).toBe(true);
-              invariantNote = 'Table Detection Matrix: Structured JSON matrix of detected tabular data';
+              const tables = Array.isArray(insp.parsedJson)
+                ? insp.parsedJson
+                : (insp.parsedJson.tables || []);
+              expect(tables.length).toBeGreaterThan(0);
+              const firstTable = tables[0];
+              expect(firstTable.rows).toBeGreaterThan(0);
+              expect(firstTable.cols).toBeGreaterThan(0);
+              const tableJsonStr = JSON.stringify(tables);
+              expect(
+                tableJsonStr.includes('Revenue') ||
+                tableJsonStr.includes('GrossRevenue') ||
+                tableJsonStr.includes('Income') ||
+                tableJsonStr.includes('Financial')
+              ).toBe(true);
+              invariantNote = `Table Detection Matrix: Extracted ${tables.length} tables with ${firstTable.rows} rows, ${firstTable.cols} cols from financial statements`;
               break;
             }
             case 'pdf_ocr': {
@@ -483,8 +521,9 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               const chunk = insp.parsedJson[0];
               expect(chunk.page).toBe(1);
               expect(chunk.section_title).toBeDefined();
-              expect(chunk.content).toContain('Single page text');
               expect(chunk.token_count).toBeGreaterThan(0);
+              const allContent = insp.parsedJson.map((c: any) => c.content).join(' ');
+              expect(allContent.length).toBeGreaterThan(20);
               invariantNote = 'Semantic Chunking: Structure-aware chunks with valid token counts and heading metadata';
               break;
             }

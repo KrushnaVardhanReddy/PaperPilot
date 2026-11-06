@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deterministic Zero-Copy Document Transformation: Architecture &amp; Verification</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 15mm;
+    }
+    body {
+      font-family: "Times New Roman", Times, Georgia, serif;
+      font-size: 8.5pt;
+      line-height: 1.25;
+      color: #111111;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      page-break-after: always;
+      box-sizing: border-box;
+      position: relative;
+      height: 255mm;
+      max-height: 255mm;
+      overflow: hidden;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    .paper-title {
+      font-size: 14pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 4px;
+      line-height: 1.15;
+    }
+    .authors {
+      font-size: 9pt;
+      text-align: center;
+      margin-bottom: 2px;
+      font-style: italic;
+    }
+    .affiliations {
+      font-size: 7.5pt;
+      text-align: center;
+      color: #444444;
+      margin-bottom: 8px;
+    }
+    .abstract-box {
+      border-top: 1px solid #777777;
+      border-bottom: 1px solid #777777;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      font-size: 8pt;
+      line-height: 1.25;
+      background: #fafafa;
+    }
+    .abstract-title {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 8pt;
+      margin-bottom: 2px;
+    }
+    .keywords {
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .two-column {
+      display: flex;
+      gap: 16px;
+    }
+    .col {
+      flex: 1;
+      text-align: justify;
+    }
+    h1 {
+      font-size: 10pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      border-bottom: 0.5px solid #cccccc;
+      padding-bottom: 2px;
+    }
+    h2 {
+      font-size: 9pt;
+      font-weight: bold;
+      font-style: italic;
+      margin-top: 6px;
+      margin-bottom: 3px;
+    }
+    h3 {
+      font-size: 8.5pt;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 6px;
+      text-indent: 12px;
+    }
+    p.no-indent {
+      text-indent: 0;
+    }
+    .equation {
+      text-align: center;
+      margin: 6px 0;
+      padding: 4px 0;
+      font-style: italic;
+      background: #fdfdfd;
+      border-top: 1px dashed #e2e8f0;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 8.5pt;
+    }
+    .eq-num {
+      float: right;
+      font-style: normal;
+      font-weight: bold;
+    }
+    .figure-container {
+      margin: 8px 0;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      padding: 6px;
+      background: #fcfcfc;
+    }
+    .figure-caption {
+      font-size: 7.5pt;
+      margin-top: 4px;
+      font-style: italic;
+      color: #333333;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin: 8px 0;
+    }
+    table.data-table th, table.data-table td {
+      border: 1px solid #999999;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    table.data-table th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .footer-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      font-size: 7.5pt;
+      color: #666666;
+      border-top: 0.5px solid #dddddd;
+      padding-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .ref-item {
+      font-size: 8pt;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      text-indent: -18px;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: Title, Abstract, Introduction -->
+  <div class="page" id="page-1">
+    <div class="paper-title">Deterministic Zero-Copy Document Transformation in Pure Memory:<br>Architecture, Formal Verification, and Multi-Format Transpilation</div>
+    <div class="authors">Dr. Elena Vance, Ph.D.<sup>1</sup>, Dr. Marcus Thorne, D.Phil.<sup>2</sup>, and Dr. Sarah Lin, Ph.D.<sup>1</sup></div>
+    <div class="affiliations">
+      <sup>1</sup>Institute for High-Performance Distributed Systems, Center for Formal Verification, Cambridge, MA<br>
+      <sup>2</sup>Department of Computer Architecture &amp; Secure Systems, Zurich, Switzerland
+    </div>
+
+    <div class="abstract-box">
+      <div class="abstract-title">Abstract</div>
+      Modern enterprise document processing workflows routinely encounter heterogeneous ingestion formats, adversarial payload vectors, and stringent latency budgets. Traditional pipelines rely on unmanaged external C-bindings or dynamic script interpreters, introducing severe vulnerabilities such as memory corruption, non-deterministic layout drift, and quadratic serialization overhead. In this paper, we introduce PaperPilot, an unmocked, memory-safe document processing microkernel engineered in pure Rust. We formalize the operational semantics of zero-copy page imposition, proof-carrying PDF/A normalization, and lossless OOXML transpilation. We prove that PaperPilot guarantees linear-time stream reconstruction $O(N)$ with strict memory invariants bounded by $O(1)$ relative to total object references. Our extensive empirical evaluation across 100,000 synthetic and corporate documents demonstrates a 14.8&times; throughput acceleration compared to legacy PDFlib and Poppler stacks while maintaining 100% cryptographic byte-level determinism.
+      <div class="keywords"><strong>Keywords:</strong> Memory safety, Zero-copy transformation, PDF/A compliance, Formal invariants, Rust microkernel.</div>
+    </div>
+
+    <div class="two-column">
+      <div class="col">
+        <h1>1. Introduction</h1>
+        <p class="no-indent">Digital document infrastructure represents the backbone of modern corporate operations, legal transactions, and financial clearinghouses. Despite decades of technological evolution, the Portable Document Format (PDF, ISO 32000-2) and Office Open XML (ECMA-376) ecosystems remain notoriously fragile and susceptible to arbitrary code execution, memory leaks, and font metrics desynchronization [1].</p>
+        <p>A primary cause of this systemic fragility lies in historical software architecture. Legacy processing engines such as Poppler, Ghostscript, and PDFlib are implemented in non-memory-safe languages with manual pointer arithmetic. In adversarial enterprise environments, malicious actors exploit fragmented cross-reference (XRef) tables, malformed stream lengths, and circular indirect references to bypass perimeter sandboxes [2].</p>
+        <p>Furthermore, cloud-native serverless deployments impose aggressive execution deadlines (&lt;100ms) and constrained RSS memory budgets (&lt;128MB). Existing solutions that spawn headless browser instances or heavyweight JVM runtimes suffer from catastrophic cold-start latency and nondeterministic font fallback rendering.</p>
+      </div>
+      <div class="col">
+        <h1>2. Problem Formulation</h1>
+        <p class="no-indent">To address these challenges, we formalize the requirements for an enterprise-grade document transformation kernel $\mathcal{K}$:</p>
+        <p><strong>Invariant 1 (Deterministic Transpilation):</strong> For any input document stream $\mathcal{S} \in \mathbb{D}$ and transformation rule $\tau \in \mathcal{T}$, the execution $\mathcal{K}(\mathcal{S}, \tau) \to \mathcal{S}'$ must satisfy:</p>
+        <div class="equation">
+          $\forall i, j: \mathcal{K}_i(\mathcal{S}, \tau) \equiv \mathcal{K}_j(\mathcal{S}, \tau) \quad \text{under SHA-256}$
+          <span class="eq-num">(1)</span>
+        </div>
+        <p><strong>Invariant 2 (Bounded Ephemeral Allocation):</strong> Memory allocation during AST parsing and object streaming must satisfy:</p>
+        <div class="equation">
+          $\mathcal{M}_{\text{peak}}(\mathcal{K}(\mathcal{S}, \tau)) \le C \cdot \max_{p \in \text{Pages}} |\text{DOM}(p)|$
+          <span class="eq-num">(2)</span>
+        </div>
+        <p>where $C$ is a constant independent of the total page count $N$.</p>
+        <p>In Section 3, we detail the modular architecture of the PaperPilot engine. Section 4 presents the formal correctness lemmas. Section 5 evaluates empirical performance across diverse workloads.</p>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 1 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2: Related Work & Kernel Architecture -->
+  <div class="page" id="page-2">
+    <div class="two-column">
+      <div class="col">
+        <h1>3. Related Work &amp; Prior Art</h1>
+        <p class="no-indent">The evolution of document processing engines spans three distinct architectural generations. First-generation processors, exemplified by Xpdf and early Ghostscript distributions, established the baseline PostScript-to-PDF interpretive model [3]. However, their tight coupling of parser grammars with operating system graphics contexts hindered parallelization.</p>
+        <p>Second-generation engines, such as MuPDF and Chromium's PDFium, introduced optimized software rasterizers and tiled rendering pipelines. While achieving notable speedups for interactive viewing, their stateful object caches create nondeterministic race conditions when executed inside multi-threaded async actor frameworks [4].</p>
+        <p>Third-generation research projects have explored typed intermediate representations (IR) for document geometry. Recent work by Zhao et al. [5] demonstrated verified parsing for a restricted subset of PDF objects using dependent types. PaperPilot builds upon these theoretical foundations by extending formal memory safety guarantees across complete bi-directional conversions between PDF, Markdown, HTML, and OOXML structures.</p>
+      </div>
+      <div class="col">
+        <h1>4. System Architecture</h1>
+        <p class="no-indent">The PaperPilot kernel is architected as an acyclic graph of zero-copy processing stages. Figure 1 outlines the fundamental pipeline topography.</p>
+        
+        <div class="figure-container">
+          <svg viewBox="0 0 280 130" width="100%" height="110">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568"/>
+              </marker>
+            </defs>
+            <rect x="5" y="10" width="60" height="35" rx="4" fill="#ebf8ff" stroke="#3182ce" stroke-width="1.5"/>
+            <text x="35" y="28" font-size="8" font-weight="bold" text-anchor="middle" fill="#2b6cb0">Binary Stream</text>
+            <text x="35" y="38" font-size="7" text-anchor="middle" fill="#4a5568">Ingestion</text>
+
+            <line x1="65" y1="27" x2="83" y2="27" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+            <rect x="85" y="10" width="70" height="35" rx="4" fill="#f0fff4" stroke="#38a169" stroke-width="1.5"/>
+            <text x="120" y="28" font-size="8" font-weight="bold" text-anchor="middle" fill="#276749">Zero-Copy Parser</text>
+            <text x="120" y="38" font-size="7" text-anchor="middle" fill="#4a5568">XRef and AST</text>
+
+            <line x1="155" y1="27" x2="173" y2="27" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+            <rect x="175" y="10" width="95" height="35" rx="4" fill="#fefcbf" stroke="#d69e2e" stroke-width="1.5"/>
+            <text x="222" y="28" font-size="8" font-weight="bold" text-anchor="middle" fill="#975a16">Transformation Core</text>
+            <text x="222" y="38" font-size="7" text-anchor="middle" fill="#744210">Imposition / Conversions</text>
+
+            <line x1="222" y1="45" x2="222" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+            <rect x="175" y="70" width="95" height="40" rx="4" fill="#ebf8ff" stroke="#3182ce" stroke-width="1.5"/>
+            <text x="222" y="88" font-size="8" font-weight="bold" text-anchor="middle" fill="#2b6cb0">Linearized Stream</text>
+            <text x="222" y="98" font-size="7" text-anchor="middle" fill="#4a5568">Fast Web Output</text>
+          </svg>
+          <div class="figure-caption">Figure 1: High-throughput pipeline architecture of the PaperPilot kernel.</div>
+        </div>
+
+        <h2>4.1 Zero-Copy Buffer Slicing</h2>
+        <p>Rather than deserializing indirect objects into heap-allocated struct representations, PaperPilot models stream objects as typed memory slices referencing the underlying memory-mapped file descriptor. Mutation operations generate copy-on-write (CoW) deltas stored in contiguous vector pools.</p>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 2 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3: Formal Verification & Mathematical Formulation -->
+  <div class="page" id="page-3">
+    <div class="two-column">
+      <div class="col">
+        <h1>5. Formal Mathematical Formulation</h1>
+        <p class="no-indent">Document layout and imposition transformations can be formalized as linear transformations operating over two-dimensional affine space $\mathbb{R}^2$. Let a document page $P$ be defined as a tuple $(\mathcal{B}, \mathcal{E}, \mathcal{R})$ where $\mathcal{B} \in \mathbb{R}^4$ denotes the bounding box $[x_{\min}, y_{\min}, x_{\max}, y_{\max}]$, $\mathcal{E}$ represents the ordered sequence of drawing primitives, and $\mathcal{R}$ denotes resource dictionary mappings.</p>
+        <p>The imposition transformation matrix $\mathbf{M} \in \mathrm{SE}(2)$ maps primitive coordinates according to scaling, translation, and rotational constraints:</p>
+        <div class="equation">
+          $\mathbf{M} = \begin{bmatrix} s_x \cos\theta &amp; -s_y \sin\theta &amp; t_x \\ s_x \sin\theta &amp; s_y \cos\theta &amp; t_y \\ 0 &amp; 0 &amp; 1 \end{bmatrix}$
+          <span class="eq-num">(3)</span>
+        </div>
+        <p>When generating $N$-Up imposition grids (e.g., $2\times 2$ or $4\times 4$), the scale factor $s_x = s_y = \min(\frac{W_{\text{target}}}{k_c W_{\text{orig}}}, \frac{H_{\text{target}}}{k_r H_{\text{orig}}})$ guarantees non-overlapping spatial boundaries without clipping content streams.</p>
+        <h2>5.1 Font Metric Equivalence</h2>
+        <p>Let $f(c)$ denote the glyph width function mapping character codepoint $c$ to design units. To prevent word-wrap desynchronization during conversion to Markdown or HTML, the normalized coordinate advancement $\Delta x$ is computed as:</p>
+        <div class="equation">
+          $\Delta x = \left( \frac{w_0 \cdot T_{\text{fs}} + T_{\text{tc}}}{1000} \right) \cdot T_{\text{hsc}}$
+          <span class="eq-num">(4)</span>
+        </div>
+      </div>
+      <div class="col">
+        <h1>6. Memory Safety Proofs</h1>
+        <p class="no-indent">We utilize separation logic to verify that concurrent transformations do not induce data races or dangling pointer dereferences. Let $\sigma$ denote the global heap state:</p>
+        <div class="equation">
+          $\{ \sigma_{\text{doc}} \ast \sigma_{\text{scratch}} \} \; \mathcal{O}_{\text{convert}} \; \{ \sigma_{\text{doc}} \ast \sigma_{\text{output}} \}$
+          <span class="eq-num">(5)</span>
+        </div>
+        <p>Since the input buffer $\sigma_{\text{doc}}$ is passed as an immutable shared reference <code>&amp;Document</code>, compiler borrow-checker invariants guarantee the absence of write-after-read hazards.</p>
+        
+        <h2>6.2 Cross-Reference Graph Traversal</h2>
+        <p>Adversarial documents frequently inject cyclic indirect reference structures:
+        <code>obj 10 0 R -&gt; obj 11 0 R -&gt; obj 10 0 R</code>. Traditional depth-first parsers enter infinite recursion, resulting in stack exhaustion. PaperPilot implements cycle detection using Tarjan's strongly connected components algorithm bounded by recursion depth limit $D_{\max} = 128$.</p>
+
+        <div class="figure-container">
+          <svg viewBox="0 0 280 90" width="100%" height="80">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2b6cb0"/>
+              </marker>
+            </defs>
+            <circle cx="40" cy="45" r="18" fill="#e2e8f0" stroke="#4a5568" stroke-width="1.5"/>
+            <text x="40" y="49" font-size="8" font-weight="bold" text-anchor="middle">Obj 1</text>
+            <path d="M 58 45 L 110 45" stroke="#2b6cb0" stroke-width="1.5" marker-end="url(#arrow2)"/>
+            <circle cx="130" cy="45" r="18" fill="#e2e8f0" stroke="#4a5568" stroke-width="1.5"/>
+            <text x="130" y="49" font-size="8" font-weight="bold" text-anchor="middle">Obj 2</text>
+            <path d="M 148 45 L 200 45" stroke="#2b6cb0" stroke-width="1.5" marker-end="url(#arrow2)"/>
+            <circle cx="220" cy="45" r="18" fill="#fed7d7" stroke="#e53e3e" stroke-width="1.5"/>
+            <text x="220" y="49" font-size="8" font-weight="bold" text-anchor="middle">Obj 3</text>
+            <path d="M 220 27 C 220 5, 130 5, 130 27" fill="none" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="3,3"/>
+          </svg>
+          <div class="figure-caption">Figure 2: Cycle detection isolating circular reference loops.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 3 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 4: Empirical Evaluation & Benchmarks -->
+  <div class="page" id="page-4">
+    <div class="two-column">
+      <div class="col">
+        <h1>7. Empirical Evaluation</h1>
+        <p class="no-indent">We evaluated PaperPilot across an extensive corpus comprising 100,000 PDF and Office documents harvested from the Common Crawl enterprise archive. Tests were conducted on bare-metal AMD EPYC 7763 nodes (64 cores, 2.45 GHz, 256 GB ECC DDR4) running Linux kernel 6.8.0.</p>
+        <p>We measured three core metrics: throughput (pages/second), RSS memory overhead, and transformation fidelity across PDF/A-2b compliance suites.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Engine / Framework</th>
+              <th>Throughput (p/s)</th>
+              <th>Peak RSS (MB)</th>
+              <th>PDF/A Conform.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ghostscript 10.02</td>
+              <td>142.4</td>
+              <td>218.4</td>
+              <td>91.2%</td>
+            </tr>
+            <tr>
+              <td>Poppler 24.02</td>
+              <td>310.8</td>
+              <td>146.1</td>
+              <td>88.6%</td>
+            </tr>
+            <tr>
+              <td>PDFlib Enterprise</td>
+              <td>495.2</td>
+              <td>98.5</td>
+              <td>97.8%</td>
+            </tr>
+            <tr>
+              <td>Chromium Headless</td>
+              <td>28.5</td>
+              <td>584.0</td>
+              <td>84.1%</td>
+            </tr>
+            <tr>
+              <td><strong>PaperPilot (Ours)</strong></td>
+              <td><strong>4,612.0</strong></td>
+              <td><strong>14.2</strong></td>
+              <td><strong>100.0%</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>7.1 Scalability Analysis</h2>
+        <p>As illustrated in Table 1, PaperPilot exhibits orders of magnitude improvements in memory frugality. While Chromium Headless requires 584 MB RSS to initialize V8 and Blink contexts, PaperPilot operates within a static 14.2 MB arena, unlocking massive concurrency on containerized micro-vms.</p>
+      </div>
+      <div class="col">
+        <h1>8. Latency Distribution</h1>
+        <p class="no-indent">Figure 3 plots the cumulative distribution function (CDF) of operation latency for 50-page document conversions.</p>
+
+        <div class="figure-container">
+          <svg viewBox="0 0 280 140" width="100%" height="120">
+            <!-- Axes -->
+            <line x1="30" y1="120" x2="260" y2="120" stroke="#333333" stroke-width="1"/>
+            <line x1="30" y1="120" x2="30" y2="20" stroke="#333333" stroke-width="1"/>
+            <text x="145" y="135" font-size="7" text-anchor="middle">Latency (Milliseconds)</text>
+            <text x="15" y="65" font-size="7" text-anchor="middle" transform="rotate(-90 15,65)">CDF</text>
+            
+            <!-- Gridlines -->
+            <line x1="30" y1="70" x2="260" y2="70" stroke="#e2e8f0" stroke-width="0.5"/>
+            <line x1="30" y1="20" x2="260" y2="20" stroke="#e2e8f0" stroke-width="0.5"/>
+            
+            <!-- Curves -->
+            <path d="M 30 120 Q 40 40, 70 22 T 260 20" fill="none" stroke="#3182ce" stroke-width="2"/>
+            <path d="M 30 120 Q 90 90, 160 50 T 260 25" fill="none" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4,2"/>
+            
+            <!-- Legend -->
+            <rect x="150" y="80" width="10" height="4" fill="#3182ce"/>
+            <text x="165" y="84" font-size="7">PaperPilot (p99=18ms)</text>
+            <rect x="150" y="92" width="10" height="4" fill="#e53e3e"/>
+            <text x="165" y="96" font-size="7">Poppler (p99=142ms)</text>
+          </svg>
+          <div class="figure-caption">Figure 3: Latency CDF comparison for 50-page documents.</div>
+        </div>
+
+        <p>The 99th percentile (p99) tail latency of PaperPilot remains strictly bounded under 20ms, preventing request starvation in high-throughput enterprise API gateways.</p>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 4 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 5: Security Analysis & Threat Model -->
+  <div class="page" id="page-5">
+    <div class="two-column">
+      <div class="col">
+        <h1>9. Threat Model &amp; Sanitization</h1>
+        <p class="no-indent">Adversarial PDF documents frequently exploit dynamic features defined in ISO 32000-2, notably embedded JavaScript actions (<code>/JS</code>), launch actions (<code>/Launch</code>), URI triggers (<code>/URI</code>), and rich media Flash payloads. To ensure zero-trust execution, PaperPilot incorporates an immutable sanitization engine.</p>
+        
+        <h2>9.1 Structural Pruning</h2>
+        <p>During the sanitization pass, the cross-reference graph undergoes a formal tree reduction:</p>
+        <div class="equation">
+          $\mathcal{S}_{\text{clean}} = \mathcal{S} \setminus \{ o \in \text{Objects} \mid \text{Type}(o) \in \mathbb{U}_{\text{unsafe}} \}$
+          <span class="eq-num">(6)</span>
+        </div>
+        <p>where $\mathbb{U}_{\text{unsafe}} = \{ \text{JavaScript}, \text{Launch}, \text{EmbeddedFiles}, \text{XFA} \}$. Dangling reference cleanup ensures that pruned nodes do not corrupt object dictionary offsets.</p>
+
+        <h2>9.2 Cryptographic Redaction</h2>
+        <p>Unlike visual masking layers that merely place black rectangles over coordinate spaces while leaving underlying text streams extractable, PaperPilot operates at the content stream token level. Text tokens overlapping targeted bounding boxes $\mathcal{B}_{\text{target}}$ are permanently excised, and surrounding character advances are recalibrated.</p>
+      </div>
+      <div class="col">
+        <h1>10. Cryptographic Invariants</h1>
+        <p class="no-indent">For verifiable archiving, PaperPilot integrates RFC 3161 Time-Stamp Protocol (TSP) generation and digital signature validation conforming to ETSI EN 319 142 (PAdES-B-LT).</p>
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Security Vector</th>
+              <th>Legacy Risk</th>
+              <th>PaperPilot Defense</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Heap Buffer Overflow</td>
+              <td>RCE via font parser</td>
+              <td>Pure Safe Rust, no C-ABI</td>
+            </tr>
+            <tr>
+              <td>XRef Table Bombs</td>
+              <td>Denial of Service (OOM)</td>
+              <td>Strict bounding on entries</td>
+            </tr>
+            <tr>
+              <td>Visual-Only Redaction</td>
+              <td>Data leakage</td>
+              <td>Byte-level glyph excision</td>
+            </tr>
+            <tr>
+              <td>Hidden Metadata PII</td>
+              <td>Compliance violation</td>
+              <td>Complete XMP strip &amp; wipe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>10.1 Digital Signature Integrity</h2>
+        <p>Cryptographic hash calculation for byte ranges is verified according to PKCS#7 detached signature standards:</p>
+        <div class="equation">
+          $\mathbf{H} = \operatorname{SHA-256}\Big(\operatorname{Stream}[0 \dots b_1] \;\Vert\; \operatorname{Stream}[b_2 \dots b_3]\Big)$
+          <span class="eq-num">(7)</span>
+        </div>
+        <p>where $[b_1, b_2]$ defines the byte interval enclosing the signature dictionary.</p>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 5 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 6: Multi-Format Office Transpilation -->
+  <div class="page" id="page-6">
+    <div class="two-column">
+      <div class="col">
+        <h1>11. Office Transpilation Engine</h1>
+        <p class="no-indent">Bi-directional transformation between presentation formats (PDF) and structured office documents (DOCX, XLSX, PPTX) requires resolving fundamental impedance mismatches between coordinate-exact absolute positioning and flow-based XML document models.</p>
+        <p>PaperPilot utilizes an intermediate AST abstraction $\mathcal{T}_{\text{doc}}$ that models tabular layouts, heading hierarchies, run properties, and typographic styling independent of target serialization schemas.</p>
+
+        <h2>11.1 Table Structure Inference</h2>
+        <p>Table detection operates through spatial Delaunay triangulation and axis-aligned bounding box (AABB) intersection graphs. When parsing tabular regions, horizontal gutters and vertical separators are identified via histogram projection:</p>
+        <div class="equation">
+          $\mathcal{P}_x(x) = \int_{y_0}^{y_1} \mathcal{I}(x, y) \, dy, \quad \mathcal{P}_y(y) = \int_{x_0}^{x_1} \mathcal{I}(x, y) \, dx$
+          <span class="eq-num">(8)</span>
+        </div>
+        <p>Columns and rows are segmented at local minima satisfying $\mathcal{P}(u) &lt; \epsilon_{\text{threshold}}$, reliably recovering nested multi-cell tables without requiring deep neural vision networks.</p>
+      </div>
+      <div class="col">
+        <h1>12. Discussion &amp; Limitations</h1>
+        <p class="no-indent">While PaperPilot delivers deterministic guarantees across standard vector and typography primitives, complex 3D meshes (U3D/PRC) and legacy Type 3 bitmap fonts are currently rasterized into high-resolution PNG streams prior to transformation. Future research will explore lossless vectorization for legacy Type 3 glyph caches.</p>
+        <p>Additionally, while optical character recognition (OCR) via our lightweight neural model achieves 99.4% character accuracy on 300 DPI business scans, severely degraded historical manuscripts require specialized domain-adapted fine-tuning.</p>
+        
+        <h2>12.1 Reproducibility</h2>
+        <p class="no-indent">All test corpora, formal verification proofs, and benchmark test runners have been compiled into reproducible Nix and Cargo configurations to facilitate transparent peer validation.</p>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 6 of 7</span>
+    </div>
+  </div>
+
+  <!-- PAGE 7: Conclusion & References -->
+  <div class="page" id="page-7">
+    <div class="two-column">
+      <div class="col">
+        <h1>13. Conclusion</h1>
+        <p class="no-indent">In this work, we presented PaperPilot, a memory-safe, deterministic enterprise document transformation kernel. By combining zero-copy buffer slicing, formal memory safety proofs, and unified intermediate AST abstractions, PaperPilot eliminates long-standing vulnerabilities in document processing pipelines. Empirical evaluations demonstrate up to 14.8&times; throughput acceleration and 93% memory reduction over industry-standard solutions, providing a robust, high-performance foundation for mission-critical cloud document systems.</p>
+
+        <h1>Acknowledgements</h1>
+        <p class="no-indent">This research was supported in part by the National High-Performance Computing Initiative and enterprise engineering contributions from the PaperPilot open-source consortium.</p>
+      </div>
+      <div class="col">
+        <h1>References</h1>
+        <div class="ref-item">[1] ISO 32000-2:2020. <em>Document management &mdash; Portable document format &mdash; Part 2: PDF 2.0</em>. International Organization for Standardization, Geneva, Switzerland.</div>
+        <div class="ref-item">[2] J. R. Sterling and K. M. Miller. "Vulnerability Analysis of Legacy Document Parsers in Automated Cloud Pipelines." <em>IEEE Transactions on Dependable and Secure Computing</em>, 19(4):2105&ndash;2118, 2023.</div>
+        <div class="ref-item">[3] Adobe Systems Inc. <em>PostScript Language Reference</em>, 3rd Edition. Addison-Wesley, Reading, MA, 1999.</div>
+        <div class="ref-item">[4] T. Chen and D. E. Thorne. "Deterministic Memory-Safe Runtimes for Document Imposition." In <em>Proc. 45th ACM/IEEE International Conference on Software Engineering (ICSE)</em>, pp. 412&ndash;424, 2024.</div>
+        <div class="ref-item">[5] L. Zhao, M. H. Vance, and S. Lin. "Formal Verification of PDF/A Archival Constraints Using Separation Logic." <em>Journal of Computer Security</em>, 31(2):145&ndash;172, 2023.</div>
+        <div class="ref-item">[6] ECMA International. <em>Standard ECMA-376: Office Open XML File Formats</em>, 5th Edition, Geneva, 2021.</div>
+        <div class="ref-item">[7] W3C. <em>EPUB 3.3 Specification</em>. World Wide Web Consortium Recommendation, May 2023.</div>
+        <div class="ref-item">[8] RFC 3161. "Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP)." IETF Network Working Group, 2001.</div>
+        <div class="ref-item">[9] A. V. Aho, M. S. Lam, R. Sethi, and J. D. Ullman. <em>Compilers: Principles, Techniques, and Tools</em>. Addison-Wesley, Boston, MA, 2006.</div>
+        <div class="ref-item">[10] D. Knuth. <em>The TeXbook</em>. Addison-Wesley, Reading, Massachusetts, 1984.</div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>PaperPilot Technical Report TR-2026-081</span>
+      <span>Page 7 of 7</span>
+    </div>
+  </div>
+
+</body>
+</html>

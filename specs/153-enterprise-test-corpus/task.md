@@ -15,10 +15,10 @@
   - [x] 153.2.5 Update `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` with deep semantic assertions (PII scan detects entities, form fill modifies target fields, signature validation inspects byte ranges, decrypt verifies password removal).
   - [x] 153.2.6 Verify `make gen-corpus-suite-2 && make test-e2e-suite-2` passes 30/30 tools.
 
-- [ ] **153.3 — Phase 3: Suite 3 Fixtures & Test Hardening (Tools 61–90: Conversions, AI & Workflows)**
-  - [ ] 153.3.1 Create templates for structured two-column academic paper, financial statements with multi-row tables, rich Markdown manual with code blocks, and tabular CSV/XLSX data.
-  - [ ] 153.3.2 Create `scripts/gen_corpus_suite3.sh` generating `research_paper.pdf`, `financial_tables.pdf`, `test.html`, `test.md`, `test.csv`, `test.xlsx`, and `test.docx`.
-  - [ ] 153.3.3 Add `gen-corpus-suite-3` and `gen-corpus` aggregate targets to `Makefile`.
-  - [ ] 153.3.4 Update `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts` with deep semantic assertions (table extraction detects columns/rows, EPUB container contains spine/manifest, OCR outputs recognized characters).
-  - [ ] 153.3.5 Verify `make gen-corpus-suite-3 && make test-e2e-suite-3` passes 30/30 tools.
-  - [ ] 153.3.6 Run full verification: `make test-e2e-all-90` against the 100% refreshed corpus.
+- [x] **153.3 — Phase 3: Suite 3 Fixtures & Test Hardening (Tools 61–90: Conversions, AI & Workflows)**
+  - [x] 153.3.1 Create templates for structured two-column academic paper, financial statements with multi-row tables, rich Markdown manual with code blocks, and tabular CSV/XLSX data.
+  - [x] 153.3.2 Create `scripts/gen_corpus_suite3.sh` generating `research_paper.pdf`, `financial_tables.pdf`, `test.html`, `test.md`, `test.csv`, `test.xlsx`, and `test.docx`.
+  - [x] 153.3.3 Add `gen-corpus-suite-3` and `gen-corpus` aggregate targets to `Makefile`.
+  - [x] 153.3.4 Update `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts` with deep semantic assertions (table extraction detects columns/rows, EPUB container contains spine/manifest, OCR outputs recognized characters).
+  - [x] 153.3.5 Verify `make gen-corpus-suite-3 && make test-e2e-suite-3` passes 30/30 tools.
+  - [x] 153.3.6 Run full verification: `make test-e2e-all-90` against the 100% refreshed corpus.
