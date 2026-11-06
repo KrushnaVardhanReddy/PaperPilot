@@ -180,15 +180,25 @@ test-e2e-all-90: build-cli test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3
 
 # Run Suite 1: Tools 01-30 (Page Operations & Imposition)
 test-e2e-suite-1: build-cli
-	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_1_page_operations.spec.ts
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_1_page_operations.spec.ts $(ARGS)
 
 # Run Suite 2: Tools 31-60 (Security, Cryptography & Forms)
 test-e2e-suite-2: build-cli
-	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_2_security_forms.spec.ts
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_2_security_forms.spec.ts $(ARGS)
 
 # Run Suite 3: Tools 61-90 (Conversions, Intelligence & Workflows)
 test-e2e-suite-3: build-cli
-	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts $(ARGS)
+
+# Run Playwright with visible headed browser (slowed down for visual observation)
+test-e2e-suite-1-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 npx playwright test tests/e2e_suite_1_page_operations.spec.ts --headed
+
+test-e2e-suite-2-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 npx playwright test tests/e2e_suite_2_security_forms.spec.ts --headed
+
+test-e2e-suite-3-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts --headed
 
 # Run Playwright in UI mode to manually step through and test every feature/button
 test-e2e-ui:
