@@ -115,7 +115,7 @@ Today, this $1.5B+ enterprise tooling market is dominated by Python-based librar
 
 ## 5. Strategic Roadmap Items Supporting This Market
 
-To solidify our position as the dominant AI document ingestion layer, the following tasks in [PHASES.md](file:///home/krushna/Project/PaperPilot/PHASES.md) and [ROADMAP.md](file:///home/krushna/Project/PaperPilot/ROADMAP.md) should be prioritized:
+To solidify our position as the dominant AI document ingestion layer, the following tasks in [PHASES.md](../../PHASES.md) and [ROADMAP.md](../../ROADMAP.md) should be prioritized:
 
 | Task # | Milestone | Strategic Value |
 |---|---|---|

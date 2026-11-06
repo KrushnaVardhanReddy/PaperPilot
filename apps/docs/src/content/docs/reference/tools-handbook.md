@@ -652,28 +652,37 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Converts between PDF documents and comic book archive formats (CBZ/CBR).**  
-Packs and unpacks sequential comic illustration pages losslessly between PDF and standard digital comic reader containers.
+Converts a PDF document into a Comic Book Archive (.cbz) format. This tool extracts every page in the PDF and renders it into a PNG image, archiving all the output images sequentially into a standard Zip format compatible with comic book readers.
 
 ### CLI
 ```bash
-paperpilot pdf-comic-archive --input comic.cbz --output comic.pdf
+paperpilot-cli pdf pdf_comic_archive --input document.pdf --output comic.cbz --dpi 150
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "name": "pdf_comic_archive",
-  "arguments": {
-    "input": "comic.cbz",
-    "output": "comic.pdf"
-  }
+  "jsonrpc": "2.0",
+  "method": "call_tool",
+  "params": {
+    "name": "pdf_comic_archive",
+    "arguments": {
+      "input": "base64_encoded_pdf_string",
+      "dpi": 150.0
+    }
+  },
+  "id": 1
 }
 ```
 
 ### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/comic-archive -H 'Content-Type: application/json' -d '{"input": "comic.cbz", "output": "comic.pdf"}'
+curl -X POST http://localhost:8080/api/v1/tools/pdf_comic_archive \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "base64_encoded_pdf_string",
+    "dpi": 150.0
+  }'
 ```
 
 ## 24. `pdf_compare`
