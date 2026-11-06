@@ -1,0 +1,97 @@
+================================================================================
+GEMINI-CLI EXECUTION PROMPT: SPEC 152 INTERACTIVE SIGNATURE & STAMP MODAL
+================================================================================
+
+Task Target: Implement Spec 152 (`specs/152-interactive-signature-stamp-modal/spec.md`)
+Target Branch: `feat/interactive-signature-stamp-modal`
+Mandatory Constraints:
+- Use `-j 4` for any cargo compilation.
+- Do NOT push directly to `main` (merge into `feature/dev`).
+- Do NOT use placeholder mocks or synthetic hacks; ensure genuine UI components and authentic engine interaction.
+
+--------------------------------------------------------------------------------
+CONTEXT & USER PROBLEM
+--------------------------------------------------------------------------------
+In the PaperPilot Desktop viewer, the bottom floating action pill features a "Sign / Annotate" (✍) button (`apps/desktop/src/routes/+page.svelte:477`).
+Currently, clicking this button merely toggles an internal state `activeTool = 'sign'`, but fails to prompt the user to type their name/initials, draw a signature, or click on the page to place it.
+
+Users require an authentic DocuSign / macOS Preview signature experience:
+1. Clicking ✍ opens a Signature Modal allowing them to:
+   - Type their name/initials in stylized cursive script fonts.
+   - Draw their signature on a canvas pad with a stylus/mouse.
+   - Upload a signature image.
+2. Clicking "Adopt & Sign" arms the signature.
+3. Clicking anywhere on the PDF page places the signature at that exact position.
+4. The user can drag, resize, and delete the placed signature.
+5. An "Apply Signature" button bakes the signature into the document using `pdf_stamp`.
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP IMPLEMENTATION INSTRUCTIONS
+--------------------------------------------------------------------------------
+
+### Step 1: Create Signature Modal & Components (`apps/desktop/src/lib/components/signature/`)
+1. Create `SignatureModal.svelte`:
+   - Modal dialog with tabs: "Type", "Draw", "Upload".
+   - **Type Tab**:
+     - Text input for Full Name and Initials.
+     - 4 script font styles (e.g. using web fonts or SVG cursive paths: Caveat, Dancing Script, Sacramento, Cedarville Cursive).
+     - Color selector: Black (`#000000`), Blue (`#1e40af`), Dark Slate (`#334155`).
+   - **Draw Tab**:
+     - HTML5 canvas signature pad with smooth stroke interpolation.
+     - "Clear" button to reset canvas.
+   - **Upload Tab**:
+     - Drag-and-drop / file picker for PNG/JPG.
+   - "Adopt and Place" button that converts the signature to a high-resolution transparent PNG data URL and emits the signature object.
+   - Caches saved signatures to `localStorage.getItem('paperpilot:saved_signatures')`.
+
+2. Create `SignatureStampLayer.svelte`:
+   - Overlays the `PdfViewer.svelte` canvas.
+   - In "placement mode", displays a ghost preview under the mouse cursor.
+   - On click, deposits the stamp with:
+     ```ts
+     interface PlacedStamp {
+       id: string;
+       page: number;
+       x: number; // PDF points
+       y: number; // PDF points
+       width: number;
+       height: number;
+       dataUrl: string;
+     }
+     ```
+   - Render interactive resize handles on corners, drag handle, and delete `✕` button.
+
+### Step 2: Wire Floating Action Pill in `apps/desktop/src/routes/+page.svelte`
+1. When user clicks the `✍ Sign / Annotate` button:
+   - If no signature is cached/armed, open `SignatureModal`.
+   - If a signature exists, show a dropdown/popover:
+     - `✍ Place Signature`
+     - `📝 Place Initials`
+     - `✏️ Freehand Pen`
+     - `➕ Create New Signature...`
+2. Integrate `SignatureStampLayer` into `PdfViewer.svelte` right above `PdfAnnotationLayer`.
+
+### Step 3: Implement Signature Baking with `pdf_stamp` Engine
+1. When stamps are placed, display a floating notification / bar:
+   - "Signature placed on Page X — [Apply to Document] [Cancel]"
+2. When "Apply to Document" is clicked:
+   - Send the stamp image and coordinates to `pdf_stamp` via Tauri IPC (`invoke_mcp_tool` / CLI).
+   - Reload document with baked signature.
+
+### Step 4: Verification & Automated Tests
+1. Unit tests:
+   - Add `apps/desktop/src/lib/components/signature/SignatureModal.test.ts` testing font preview generation and canvas clearing.
+2. Playwright E2E:
+   - Add test case verifying clicking `✍ Sign / Annotate` opens the modal, creates a signature, and stamps it onto the document.
+3. Run tests:
+   - `make test-e2e-suite-2`
+   - `cd apps/desktop && pnpm test`
+
+--------------------------------------------------------------------------------
+DELIVERABLES
+--------------------------------------------------------------------------------
+- Clean code in `apps/desktop/src/lib/components/signature/`
+- Full wiring into `PdfViewer.svelte` and `+page.svelte`
+- Passing unit and Playwright E2E tests
+- Commit on `feat/interactive-signature-stamp-modal`
+================================================================================
