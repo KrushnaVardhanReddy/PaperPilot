@@ -10,7 +10,31 @@ describe('Tool Registry Ranking Engine', () => {
         const recommendedIds = result.recommended.map(t => t.id);
         expect(recommendedIds).toContain('excel_to_json');
         expect(recommendedIds).toContain('excel_to_csv');
+        expect(recommendedIds).toContain('pdf_convert_excel');
+        expect(recommendedIds).toContain('pdf_extract_tables');
         // Does not recommend merge (minDocuments: 2) or basic PDF tools if not PDF
+    });
+
+    it('prioritizes office conversions for Word documents', () => {
+        const fakeFile = { name: 'report.docx', size: 1024 } as unknown as File;
+        const result = rankToolsByContext(allTools, [fakeFile], ['office']);
+
+        const recommendedIds = result.recommended.map(t => t.id);
+        expect(recommendedIds).toContain('office_to_markdown');
+        expect(recommendedIds).toContain('office_extract_text');
+        expect(recommendedIds).toContain('office_modernize_legacy');
+    });
+
+    it('prioritizes markdown and html conversions for Text/Web documents', () => {
+        const mdFile = { name: 'notes.md', size: 1024 } as unknown as File;
+        const resultMd = rankToolsByContext(allTools, [mdFile], ['core']);
+        expect(resultMd.recommended.map(t => t.id)).toContain('md_to_pdf');
+        expect(resultMd.recommended.map(t => t.id)).toContain('html_to_pdf');
+
+        const htmlFile = { name: 'index.html', size: 1024 } as unknown as File;
+        const resultHtml = rankToolsByContext(allTools, [htmlFile], ['core']);
+        expect(resultHtml.recommended.map(t => t.id)).toContain('md_to_pdf');
+        expect(resultHtml.recommended.map(t => t.id)).toContain('html_to_pdf');
     });
 
     it('prioritizes page management and core conversions for single PDF', () => {
@@ -28,6 +52,12 @@ describe('Tool Registry Ranking Engine', () => {
         expect(recommendedIds).toContain('ocr');
         expect(recommendedIds).toContain('pdf_to_docx');
         expect(recommendedIds).toContain('extract_text');
+        expect(recommendedIds).toContain('pdf_to_epub');
+        expect(recommendedIds).toContain('document_pii_scan');
+        expect(recommendedIds).toContain('sign');
+        expect(recommendedIds).toContain('pdf_stamp');
+        expect(recommendedIds).toContain('pdf_extract_tables');
+        expect(recommendedIds).toContain('pdf_rag_chunks');
 
         // Merge should NOT be recommended for single PDF
         expect(recommendedIds).not.toContain('merge');
@@ -40,6 +70,7 @@ describe('Tool Registry Ranking Engine', () => {
 
         const recommendedIds = result.recommended.map(t => t.id);
         expect(recommendedIds).toContain('merge');
+        expect(recommendedIds).toContain('pdf_merge_alternate');
         expect(recommendedIds).toContain('compare');
         expect(recommendedIds).toContain('compress');
         expect(recommendedIds).toContain('ocr');

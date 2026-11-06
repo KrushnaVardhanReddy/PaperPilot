@@ -29,13 +29,13 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     lowerError.includes('owner password')
   ) {
     return {
-      headline: 'Protected Document',
-      actionHint: 'Please provide the correct password to unlock and process this PDF.',
+      headline: 'Protected PDF Document',
+      actionHint: 'Protected PDF: Enter the document open password in the security panel or decrypt tool to unlock editing.',
       technicalDetails: errorString
     };
   }
 
-  // 2. Corrupted PDF
+  // 2. Corrupted PDF / Damaged Cross-Reference Table
   if (
     lowerError.includes('xref') ||
     lowerError.includes('cross-reference') ||
@@ -47,13 +47,13 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     lowerError.includes('unexpected token')
   ) {
     return {
-      headline: 'Unable to Read PDF',
-      actionHint: "The document structure appears damaged. Try using the 'Repair' tool first.",
+      headline: 'Damaged Cross-Reference Table',
+      actionHint: "The document cross-reference table or syntax appears corrupted. Try using the 'Repair' tool first to reconstruct the PDF syntax.",
       technicalDetails: errorString
     };
   }
 
-  // 3. Invalid Page Range
+  // 3. Invalid Page Range / Out-of-Bounds
   if (
     lowerError.includes('out of bounds') ||
     lowerError.includes('page count') ||
@@ -62,8 +62,8 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     lowerError.includes('cannot produce 0-page')
   ) {
     return {
-      headline: 'Invalid Page Range',
-      actionHint: 'Please verify that the selected page numbers exist in this document.',
+      headline: 'Out-of-Bounds Page Range',
+      actionHint: 'The requested page numbers exceed the document page count. Step 1: Check document page count in viewer. Step 2: Enter valid page ranges (e.g. 1-5, 8).',
       technicalDetails: errorString
     };
   }
@@ -77,12 +77,12 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
   ) {
     return {
       headline: 'File Not Found',
-      actionHint: 'The specified file could not be found. Please re-select the document.',
+      actionHint: 'The specified file could not be found. Step 1: Verify the file exists on disk. Step 2: Re-select the document in the workspace.',
       technicalDetails: errorString
     };
   }
 
-  // 5. File In Use / Permissions
+  // 5. File In Use / Locked / Permissions
   if (
     lowerError.includes('permission denied') ||
     lowerError.includes('in use') ||
@@ -91,13 +91,26 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     lowerError.includes('access is denied')
   ) {
     return {
-      headline: 'File Is Busy or Inaccessible',
-      actionHint: 'Please close the document in other applications and try again.',
+      headline: 'File Locked or Inaccessible',
+      actionHint: 'The document file is locked by another program or operating system permission is denied. Step 1: Close other PDF viewers/editors. Step 2: Retry the operation.',
       technicalDetails: errorString
     };
   }
 
-  // 6. Limit / Timeout
+  // 6. Complex Font Encodings
+  if (
+    lowerError.includes('cid') ||
+    lowerError.includes('font') ||
+    lowerError.includes('encoding')
+  ) {
+    return {
+      headline: 'Complex Font Encodings',
+      actionHint: 'This document uses non-standard embedded CID fonts; try running OCR or Flatten Annotations first.',
+      technicalDetails: errorString
+    };
+  }
+
+  // 7. Limit / Timeout
   if (
     lowerError.includes('too large') ||
     lowerError.includes('memory limit') ||
@@ -111,7 +124,7 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     };
   }
 
-  // 7. Empty Operation
+  // 8. Empty Operation
   if (
     lowerError.includes('cannot merge 0 files') ||
     lowerError.includes('empty array') ||
@@ -125,7 +138,7 @@ export function formatUserFriendlyError(rawError: unknown, operationTitle?: stri
     };
   }
 
-  // 8. Fallback
+  // 9. Fallback
   return {
     headline: `${operationTitle || 'Operation'} could not be completed`,
     actionHint: 'An unexpected issue occurred. Please check the document and retry.',

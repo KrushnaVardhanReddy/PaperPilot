@@ -16,7 +16,7 @@
   });
 
   let dropTitle = $derived(() =>
-    fileContext === 'none' ? 'Drop files here' : 'Add more files'
+    fileContext === 'none' ? 'Open or Drag & Drop Documents' : 'Add more files'
   );
 
   function getMimeType(name: string): string {
@@ -208,14 +208,42 @@
   <div class="drop-content">
     <div class="icon" aria-hidden="true">{dropIcon()}</div>
     <h3 class="title">{dropTitle()}</h3>
-    <p class="subtitle">PDF, Office, Markdown, HTML, JSON · or click to browse</p>
+
+    <div class="privacy-badge" title="Zero cloud dependencies — 100% private local execution">
+      <span class="privacy-badge-icon">🔒</span>
+      <span class="privacy-badge-text">100% Offline &amp; Private: Documents never leave your computer</span>
+    </div>
+
+    <p class="subtitle">Fast, privacy-first document transformation. All processing occurs locally on your machine with zero cloud uploads.</p>
+
+    <div class="format-pills" aria-label="Supported file formats">
+      <span class="format-pill">.pdf</span>
+      <span class="format-pill">.docx</span>
+      <span class="format-pill">.xlsx</span>
+      <span class="format-pill">.md</span>
+      <span class="format-pill">.html</span>
+      <span class="format-pill">.json</span>
+      <span class="format-pill">.csv</span>
+    </div>
 
     <div class="actions">
-      <button type="button" class="browse-btn" onclick={handleBrowseClick}>
-        Browse Files
+      <button
+        type="button"
+        class="browse-btn"
+        onclick={handleBrowseClick}
+        title="Select documents from your computer (.pdf, .docx, .xlsx, .md, .html, .json, .csv)"
+        aria-label="Browse files on computer"
+      >
+        📁 Browse Files
       </button>
       {#if !showUrlInput}
-        <button type="button" class="url-btn" onclick={() => showUrlInput = true}>
+        <button
+          type="button"
+          class="url-btn"
+          onclick={() => showUrlInput = true}
+          title="Fetch a document securely from a direct web URL directly into local memory"
+          aria-label="Import document from URL"
+        >
           🔗 Import from URL
         </button>
       {/if}
@@ -301,16 +329,64 @@
   }
 
   .title {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     color: var(--text-primary);
     margin-bottom: 8px;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 9999px;
+    color: #10b981;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .privacy-badge-icon {
+    font-size: 0.85rem;
   }
 
   .subtitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+
+  .format-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    max-width: 440px;
+  }
+
+  .format-pill {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    border-radius: 6px;
+    background: var(--bg-surface-elevated, #27272a);
+    color: var(--text-secondary, #a1a1aa);
+    border: 1px solid var(--border-color, #3f3f46);
+    text-transform: lowercase;
+    transition: all 0.15s ease;
+  }
+
+  .format-pill:hover {
+    border-color: var(--accent-primary, #6366f1);
+    color: var(--text-primary, #ffffff);
   }
 
   .actions {

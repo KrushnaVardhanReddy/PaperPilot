@@ -67,6 +67,11 @@ export function rankToolsByContext(
   const available: ToolDefinition[] = [];
   const packLocked: { tool: ToolDefinition; missingPack: string }[] = [];
 
+  const hasWord = documents.some(f => {
+      const name = f.name.toLowerCase();
+      return name.endsWith('.docx') || name.endsWith('.doc');
+  });
+
   const hasExcel = documents.some(f => {
       const name = f.name.toLowerCase();
       return name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv');
@@ -75,6 +80,7 @@ export function rankToolsByContext(
   const hasJson = documents.some(f => f.name.toLowerCase().endsWith('.json'));
   const hasMarkdown = documents.some(f => f.name.toLowerCase().endsWith('.md') || f.name.toLowerCase().endsWith('.markdown'));
   const hasHtml = documents.some(f => f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.htm'));
+  const hasTextWeb = hasMarkdown || hasHtml;
 
   const allPdf = documents.length > 0 && documents.every(f => f.name.toLowerCase().endsWith('.pdf'));
 
@@ -87,44 +93,73 @@ export function rankToolsByContext(
         isRecommended = true;
         contextMatches = true;
       }
+    } else if (hasWord) {
+      if (['office_to_markdown', 'office_extract_text', 'office_modernize_legacy'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasExcel) {
+      if (['excel_to_json', 'excel_to_csv', 'pdf_convert_excel', 'pdf_extract_tables'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasTextWeb) {
+      if (['md_to_pdf', 'html_to_pdf', 'pdf_convert_markdown', 'pdf_convert_html'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
     } else if (hasJson) {
       if (['json_to_pdf'].includes(tool.id)) {
         isRecommended = true;
         contextMatches = true;
       }
-    } else if (hasMarkdown) {
-      if (['md_to_pdf'].includes(tool.id)) {
-        isRecommended = true;
-        contextMatches = true;
-      }
-    } else if (hasHtml) {
-      if (['html_to_pdf'].includes(tool.id)) {
-        isRecommended = true;
-        contextMatches = true;
-      }
-    } else if (hasExcel) {
-      if (['excel_to_json', 'excel_to_csv'].includes(tool.id)) {
-        isRecommended = true;
-        contextMatches = true;
-      }
     } else if (allPdf) {
       if (documents.length >= 2) {
-        if (['merge', 'compare'].includes(tool.id) || ['compress', 'ocr', 'pdf_to_docx', 'rotate'].includes(tool.id)) {
+        if ([
+          'pdf_merge',
+          'merge',
+          'pdf_merge_alternate',
+          'pdf_compare',
+          'compare',
+          'compress',
+          'pdf_compress',
+          'ocr',
+          'pdf_ocr',
+          'pdf_to_docx',
+          'rotate',
+          'pdf_rotate'
+        ].includes(tool.id)) {
           isRecommended = true;
           contextMatches = true;
         }
       } else if (documents.length === 1) {
         if ([
           'compress',
+          'pdf_compress',
           'split',
+          'pdf_split',
           'rotate',
+          'pdf_rotate',
           'delete_pages',
+          'pdf_delete_pages',
           'extract_pages',
+          'pdf_extract_pages',
           'reorder_pages',
+          'pdf_reorder_pages',
           'ocr',
+          'pdf_ocr',
           'pdf_to_docx',
           'watermark',
-          'extract_text'
+          'pdf_watermark',
+          'extract_text',
+          'pdf_extract_text',
+          'pdf_to_epub',
+          'document_pii_scan',
+          'pdf_sign',
+          'sign',
+          'pdf_stamp',
+          'pdf_extract_tables',
+          'pdf_rag_chunks'
         ].includes(tool.id)) {
           isRecommended = true;
           contextMatches = true;

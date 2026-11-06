@@ -18,5 +18,9 @@ export interface ToolDefinition {
   outputFormat: string;
   rule?: ToolConditionRule;
   releaseStatus?: 'v0.5-core' | 'v0.6-core' | 'preview';
+  detailedDescription?: string;
+  inputHelp?: string;
+  outputHelp?: string;
+  securityNote?: string;
 }
 
