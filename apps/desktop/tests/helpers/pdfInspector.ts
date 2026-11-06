@@ -9,6 +9,7 @@ export interface PdfInspectionResult {
   lacksText: (query: string) => boolean;
   formFields?: Record<string, any>;
   metadata?: any;
+  pageDimensions?: Array<{ width: number; height: number }>;
 }
 
 /**
@@ -32,10 +33,13 @@ export class PdfInspector {
     const doc = await loadingTask.promise;
     const numPages = doc.numPages;
     const textByPage: string[] = [];
+    const pageDimensions: Array<{ width: number; height: number }> = [];
     const formFields: Record<string, any> = {};
 
     for (let i = 1; i <= numPages; i++) {
       const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale: 1.0 });
+      pageDimensions.push({ width: viewport.width, height: viewport.height });
       const textContent = await page.getTextContent();
       const pageText = textContent.items
         .map((item: any) => item.str || '')
@@ -65,7 +69,8 @@ export class PdfInspector {
       hasText: (query: string) => allText.toLowerCase().includes(query.toLowerCase()),
       lacksText: (query: string) => !allText.toLowerCase().includes(query.toLowerCase()),
       formFields,
-      metadata
+      metadata,
+      pageDimensions
     };
   }
 

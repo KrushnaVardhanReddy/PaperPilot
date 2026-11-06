@@ -44,6 +44,7 @@ update_*.py
 !tools/slm-training/*.py
 !docs/integrations/open_webui_tool.py
 *.sh
+!scripts/gen_corpus_suite1.sh
 run_tests.sh
 parse_test.rs
 apps/desktop/src-tauri/gen/android/.gradle/

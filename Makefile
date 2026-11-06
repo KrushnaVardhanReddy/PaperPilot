@@ -1,4 +1,4 @@
-.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 gen-corpus-suite-1 test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -180,6 +180,10 @@ test-e2e:
 
 # Run all 90 tools zero-mock deep semantic E2E test suites (Suites 1, 2, and 3)
 test-e2e-all-90: build-cli test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3
+
+# Generate high-fidelity test corpus for Suite 1
+gen-corpus-suite-1: build-cli
+	@bash scripts/gen_corpus_suite1.sh
 
 # Run Suite 1: Tools 01-30 (Page Operations & Imposition)
 test-e2e-suite-1: build-cli
