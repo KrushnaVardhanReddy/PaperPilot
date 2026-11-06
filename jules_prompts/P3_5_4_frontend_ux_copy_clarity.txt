@@ -15,7 +15,15 @@ In this task, you will:
    - Improve the initial empty-state typography and layout.
    - Add a prominent title ("Open or Drag & Drop Documents"), a clear offline privacy badge ("100% Offline & Private: Documents never leave your computer"), and visual pills for supported file types (`.pdf`, `.docx`, `.xlsx`, `.md`, `.html`, `.json`, `.csv`).
    - Improve "Browse Files" and "Import from URL" button tooltips and labels.
-4. Enhance `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+4. Update `rankToolsByContext()` in `apps/desktop/src/lib/services/toolRegistry.ts`:
+   - Expand recommended tools based on loaded file extensions:
+     - Word (`.docx`, `.doc`): `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`.
+     - Spreadsheets (`.xlsx`, `.xls`, `.csv`): `excel_to_json`, `excel_to_csv`, `pdf_convert_excel`, `pdf_extract_tables`.
+     - Text/Web (`.md`, `.html`): `md_to_pdf`, `html_to_pdf`.
+     - Single PDF: Add modern tools to recommended list (`pdf_to_docx`, `pdf_to_epub`, `document_pii_scan`, `pdf_sign`, `pdf_stamp`, `pdf_extract_tables`, `pdf_rag_chunks`).
+     - Multiple PDFs: `pdf_merge`, `pdf_merge_alternate`, `pdf_compare`.
+   - Update `apps/desktop/src/lib/services/toolRegistryRanking.test.ts` to verify the new recommendations.
+5. Enhance `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
    - Add field-level caption hints below parameter inputs (e.g. explain rotation angle options, format of page range strings like `1-5, 8`, password requirements).
    - Show input and output format badges prominently on the tool execution card.
    - Show a warning callout for destructive/irreversible tools (`pdf_redact`, `pdf_delete_pages`).

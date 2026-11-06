@@ -13,9 +13,18 @@
   - [ ] 156.3.2 Add warning banners on destructive operations (`pdf_redact`: "Permanent redaction cannot be undone", `pdf_delete_pages`: "Selected pages will be permanently excised").
   - [ ] 156.3.3 Display input & output format pills prominently on the selected tool header.
 
-- [ ] **156.4 — Actionable Error Formatting & Feedback**
-  - [ ] 156.4.1 Expand `errorFormatter.ts` with actionable guidance for password, encryption, font encoding, page bounds, and permission failures.
-  - [ ] 156.4.2 Ensure `errorFormatter.test.ts` passes with full coverage.
+- [ ] **156.4 — Dynamic Context-Aware Recommended Tab by File Type**
+  - [ ] 156.4.1 Update `rankToolsByContext()` in `apps/desktop/src/lib/services/toolRegistry.ts`:
+    - Word docs (`.docx`, `.doc`): Recommend `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`.
+    - Spreadsheets (`.xlsx`, `.xls`, `.csv`): Recommend `excel_to_json`, `excel_to_csv`, `pdf_convert_excel`, `pdf_extract_tables`.
+    - Web/Docs (`.md`, `.html`): Recommend `md_to_pdf`, `html_to_pdf`.
+    - Single PDF: Recommend modern tools based on document traits (Signature & Stamp `pdf_sign`, `pdf_stamp`, Conversions `pdf_to_docx`, `pdf_to_epub`, `pdf_extract_tables`, Security `document_pii_scan`, `pdf_redact`, AI `pdf_rag_chunks`).
+    - Multiple PDFs: Recommend `pdf_merge`, `pdf_merge_alternate`, `pdf_compare`.
+  - [ ] 156.4.2 Update `toolRegistryRanking.test.ts` to assert that modern tools appear in the recommended list for each file type.
 
-- [ ] **156.5 — Playwright Verification**
-  - [ ] 156.5.1 Run `make test-e2e-all-90` to guarantee zero test regressions across all 90 tools.
+- [ ] **156.5 — Actionable Error Formatting & Feedback**
+  - [ ] 156.5.1 Expand `errorFormatter.ts` with actionable guidance for password, encryption, font encoding, page bounds, and permission failures.
+  - [ ] 156.5.2 Ensure `errorFormatter.test.ts` passes with full coverage.
+
+- [ ] **156.6 — Playwright Verification**
+  - [ ] 156.6.1 Run `make test-e2e-all-90` to guarantee zero test regressions across all 90 tools.

@@ -43,9 +43,29 @@ Upgrade every tool definition with:
 
 ---
 
+### 2.4 Dynamic Context-Aware Recommended Tab (`apps/desktop/src/lib/services/toolRegistry.ts`)
+Currently, `rankToolsByContext()` only recommends basic legacy tools (`compress`, `split`, `rotate`, `ocr`). It does not recommend modern Wave 2–5 additions based on the loaded document types:
+- **For Word / Office Documents (`.docx`, `.doc`)**:
+  - Dynamically recommend: `office_to_markdown`, `office_extract_text`, `office_modernize_legacy`.
+- **For Spreadsheets (`.xlsx`, `.xls`, `.csv`)**:
+  - Dynamically recommend: `excel_to_json`, `excel_to_csv`, `pdf_convert_excel`, `pdf_extract_tables`.
+- **For Markdown & HTML (`.md`, `.html`)**:
+  - Dynamically recommend: `md_to_pdf`, `html_to_pdf`.
+- **For Single PDF**:
+  - Enrich recommendations with newly added high-value tools:
+    - *Forms/Sign*: `pdf_sign`, `pdf_read_form`, `pdf_fill_form`, `pdf_stamp`.
+    - *Conversions*: `pdf_to_docx`, `pdf_to_epub`, `pdf_to_markdown`, `pdf_extract_tables`.
+    - *Security/Privacy*: `document_pii_scan`, `pdf_redact`, `pdf_sanitize`.
+    - *AI/Search*: `pdf_rag_chunks`, `semantic_search`.
+- **For Multiple PDFs (2+)**:
+  - Dynamically recommend: `pdf_merge`, `pdf_merge_alternate`, `pdf_compare`.
+
+---
+
 ## 3. Deliverables & Scope
 1. Update `apps/desktop/src/lib/types/toolList.ts` with descriptive copy and tooltips.
-2. Polish `DropZone.svelte` with format badges, privacy assurances, and clear instructions.
-3. Polish `OperationsPanel.svelte` with field-level helper hints and input/output expectations.
-4. Enhance `errorFormatter.ts` with expanded guidance.
-5. Verify Playwright test suite passes cleanly with updated DOM selectors and text assertions.
+2. Upgrade `apps/desktop/src/lib/services/toolRegistry.ts` (`rankToolsByContext`) to recommend modern tools based on file extensions.
+3. Polish `DropZone.svelte` with format badges, privacy assurances, and clear instructions.
+4. Polish `OperationsPanel.svelte` with field-level helper hints and input/output expectations.
+5. Enhance `errorFormatter.ts` with expanded guidance.
+6. Verify Playwright test suite passes cleanly with updated DOM selectors and text assertions.
