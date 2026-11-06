@@ -67,6 +67,10 @@ export function rankToolsByContext(
   const available: ToolDefinition[] = [];
   const packLocked: { tool: ToolDefinition; missingPack: string }[] = [];
 
+  // Track seen canonical names to prevent duplicate logical tools
+  const seenRecommended = new Set<string>();
+  const seenAvailable = new Set<string>();
+
   const hasWord = documents.some(f => {
       const name = f.name.toLowerCase();
       return name.endsWith('.docx') || name.endsWith('.doc');
@@ -122,12 +126,9 @@ export function rankToolsByContext(
           'pdf_compare',
           'compare',
           'compress',
-          'pdf_compress',
           'ocr',
-          'pdf_ocr',
           'pdf_to_docx',
-          'rotate',
-          'pdf_rotate'
+          'rotate'
         ].includes(tool.id)) {
           isRecommended = true;
           contextMatches = true;
@@ -135,24 +136,15 @@ export function rankToolsByContext(
       } else if (documents.length === 1) {
         if ([
           'compress',
-          'pdf_compress',
           'split',
-          'pdf_split',
           'rotate',
-          'pdf_rotate',
           'delete_pages',
-          'pdf_delete_pages',
           'extract_pages',
-          'pdf_extract_pages',
           'reorder_pages',
-          'pdf_reorder_pages',
           'ocr',
-          'pdf_ocr',
           'pdf_to_docx',
           'watermark',
-          'pdf_watermark',
           'extract_text',
-          'pdf_extract_text',
           'pdf_to_epub',
           'document_pii_scan',
           'pdf_sign',
@@ -175,20 +167,24 @@ export function rankToolsByContext(
        continue;
     }
 
+    const canonicalId = resolveToolName(tool.id);
+
     if (isRecommended) {
-      // Avoid duplicates
-      if (!recommended.find(t => t.id === tool.id)) {
-         recommended.push(tool);
+      // Deduplicate by canonical name (e.g. 'split' and 'pdf_split' are the same tool)
+      if (!seenRecommended.has(canonicalId)) {
+        seenRecommended.add(canonicalId);
+        recommended.push(tool);
       }
     } else {
-      if (!available.find(t => t.id === tool.id) && !recommended.find(t => t.id === tool.id)) {
-         available.push(tool);
+      if (!seenAvailable.has(canonicalId) && !seenRecommended.has(canonicalId)) {
+        seenAvailable.add(canonicalId);
+        available.push(tool);
       }
     }
   }
 
-  // Ensure available doesn't contain recommended
-  const filteredAvailable = available.filter(t => !recommended.find(rt => rt.id === t.id));
+  // Final guard: strip any available entry whose canonical id is already recommended
+  const filteredAvailable = available.filter(t => !seenRecommended.has(resolveToolName(t.id)));
 
   return {
     recommended,

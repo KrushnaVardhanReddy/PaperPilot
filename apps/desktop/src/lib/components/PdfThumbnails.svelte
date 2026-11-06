@@ -6,9 +6,19 @@
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
   let isRendering = false;
   let canvases: Record<number, HTMLCanvasElement> = {};
+  let thumbnailWrappers: Record<number, HTMLElement> = {};
+  let thumbnailsContainer = $state<HTMLElement | null>(null);
   let draggedPage = $state<number | null>(null);
   let dragOverPage = $state<number | null>(null);
   let dragInsertPosition = $state<'top' | 'bottom' | null>(null);
+
+  // Confirmation dialog state
+  let confirmDialog = $state<{
+    visible: boolean;
+    action: 'delete' | 'rotate' | null;
+    page: number | null;
+    angle?: number;
+  }>({ visible: false, action: null, page: null });
 
   let contextMenu = $state({
     visible: false,
@@ -89,6 +99,44 @@
       renderThumbnails();
     }
   });
+
+  // Keep thumbnail in view when pageNum changes from outside
+  $effect(() => {
+    if (pageNum && thumbnailWrappers[pageNum]) {
+      thumbnailWrappers[pageNum].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+
+  // Track scrolling in thumbnail container to navigate pageNum
+  let scrollTimeout: any = null;
+  function handleContainerScroll() {
+    if (!thumbnailsContainer || numPages === 0) return;
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const containerRect = thumbnailsContainer?.getBoundingClientRect();
+      if (!containerRect) return;
+      const centerY = containerRect.top + containerRect.height / 2;
+
+      let closestPage = pageNum;
+      let minDistance = Infinity;
+
+      for (let p = 1; p <= numPages; p++) {
+        const el = thumbnailWrappers[p];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const itemCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(itemCenter - centerY);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestPage = p;
+        }
+      }
+
+      if (closestPage !== pageNum) {
+        pageNum = closestPage;
+      }
+    }, 120);
+  }
 
   function selectPage(page: number) {
     pageNum = page;
