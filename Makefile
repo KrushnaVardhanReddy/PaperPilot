@@ -464,29 +464,41 @@ jules-submit:
 	fi
 	./scripts/jules_submit.sh --file $(FILE)
 
+# Optional SYSTEM_PROMPT flag support (SYSTEM_PROMPT=1 or SYSTEM=1 or SYSTEM=0)
+SYSTEM_FLAG :=
+ifeq ($(SYSTEM_PROMPT),1)
+  SYSTEM_FLAG := --system-prompt
+else ifeq ($(SYSTEM),1)
+  SYSTEM_FLAG := --system-prompt
+else ifeq ($(SYSTEM_PROMPT),0)
+  SYSTEM_FLAG := --no-system-prompt
+else ifeq ($(SYSTEM),0)
+  SYSTEM_FLAG := --no-system-prompt
+endif
+
 # Preview prompt execution for local Gemini CLI pair programmer
 gemini-dry-run:
 	@if [ -z "$(FILE)" ]; then \
-		echo "Usage: make gemini-dry-run FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		echo "Usage: make gemini-dry-run FILE=<prompt-file>.txt [SYSTEM=1]"; \
 		exit 1; \
 	fi
-	./scripts/gemini_pair.sh --file $(FILE) --dry-run
+	./scripts/gemini_pair.sh --file $(FILE) --dry-run $(SYSTEM_FLAG) $(EXTRA_ARGS)
 
 # Run local Gemini CLI autonomously on the specified prompt
 gemini-run:
 	@if [ -z "$(FILE)" ]; then \
-		echo "Usage: make gemini-run FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		echo "Usage: make gemini-run FILE=<prompt-file>.txt [SYSTEM=1]"; \
 		exit 1; \
 	fi
-	./scripts/gemini_pair.sh --file $(FILE)
+	./scripts/gemini_pair.sh --file $(FILE) $(SYSTEM_FLAG) $(EXTRA_ARGS)
 
 # Launch interactive pair programming session with Gemini CLI
 gemini-pair:
 	@if [ -z "$(FILE)" ]; then \
-		echo "Usage: make gemini-pair FILE=prompts/tasks/.../<prompt-file>.txt"; \
+		echo "Usage: make gemini-pair FILE=<prompt-file>.txt [SYSTEM=1]"; \
 		exit 1; \
 	fi
-	./scripts/gemini_pair.sh --file $(FILE) --interactive
+	./scripts/gemini_pair.sh --file $(FILE) --interactive $(SYSTEM_FLAG) $(EXTRA_ARGS)
 
 
 # Penta-Scaffold Code Generator
