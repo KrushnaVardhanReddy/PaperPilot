@@ -25,8 +25,8 @@
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
-            <td class="highlight-col text-success">~30–95ms</td>
-            <td class="text-warning">Network/Queue Dependent</td>
+            <td class="highlight-col text-success">~15–35ms (Native Engine) / &lt;1.1s (Full UI &amp; IPC)</td>
+            <td class="text-warning">Network/Queue Dependent (2–15s)</td>
           </tr>
           <tr>
             <td class="feature-name">C++ Security Vulnerabilities</td>
