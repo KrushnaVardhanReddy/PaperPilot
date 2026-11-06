@@ -1,52 +1,31 @@
 ---
-title: "Stitch Continuous Canvas"
-description: "Combine multiple pages vertically or horizontally into a continuous single-page canvas."
+title: "pdf_stitch_canvas"
+description: "Reference, CLI, MCP, and REST API commands for pdf_stitch_canvas."
 ---
 
-# Stitch Continuous Canvas
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Combine multiple pages of a PDF document into a single continuous canvas, either vertically or horizontally.
-
-This is useful for creating scrolling viewports, endless-scroll web assets, or panoramic print documents.
-
-## Options
-
-- **direction** (`string`): The direction to stitch the pages. Can be `vertical` or `horizontal`. (Default: `vertical`)
-- **margin_pt** (`number`): The margin around the outer edge of the combined canvas in points. (Default: `0.0`)
-- **spacing_pt** (`number`): The spacing between the pages in points. (Default: `0.0`)
-
-## Examples
+### What it does
+**Stitches multiple PDF pages into a single continuous canvas.**
 
 ### CLI
 ```bash
-paperpilot pdf-stitch-canvas --input input.pdf --output stitched.pdf --direction horizontal --margin 10 --spacing 5
+paperpilot pdf-stitch-canvas --input input.pdf --output stitched.pdf --direction horizontal
 ```
 
-### MCP (JSON-RPC)
+### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_stitch_canvas",
-    "arguments": {
-      "input": "input.pdf",
-      "output": "stitched.pdf",
-      "direction": "vertical",
-      "margin_pt": 20,
-      "spacing_pt": 0
-    }
-  },
-  "id": 1
+  "name": "pdf_stitch_canvas",
+  "arguments": {
+    "input": "input.pdf",
+    "output": "stitched.pdf",
+    "direction": "horizontal"
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8000/api/v1/pdf/stitch-canvas \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@input.pdf" \
-  -F "direction=vertical" \
-  -F "margin_pt=10" \
-  -F "spacing_pt=5"
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/stitch-canvas -H 'Content-Type: application/json' -d '{"input": "input.pdf", "output": "stitched.pdf", "direction": "horizontal"}'
 ```

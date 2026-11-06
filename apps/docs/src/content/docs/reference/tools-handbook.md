@@ -448,32 +448,27 @@ curl -X POST "http://127.0.0.1:7823/api/v1/pdf/attachments?action=extract&file_n
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The `pdf_auto_rotate` tool automatically detects and corrects the orientation of pages in a PDF document based on their physical dimensions. It rotates landscape-oriented pages to portrait or vice versa, ensuring consistent page orientations throughout the document.
+**Automatically detects and corrects page orientations based on dimensions.**
 
 ### CLI
 ```bash
-paperpilot pdf-auto-rotate input.pdf output.pdf --target-orientation portrait
+paperpilot pdf-auto-rotate --input input.pdf --output output.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "pdf_auto_rotate",
-  "params": {
-    "file_path": "input.pdf",
-    "output_path": "output.pdf",
-    "target_orientation": "portrait"
+  "name": "pdf_auto_rotate",
+  "arguments": {
+    "input": "input.pdf",
+    "output": "output.pdf"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8080/tools/pdf_auto_rotate \
-  -H "Content-Type: application/json" \
-  -d '{"file_path": "input.pdf", "output_path": "output.pdf", "target_orientation": "portrait"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/auto-rotate -H 'Content-Type: application/json' -d '{"input": "input.pdf", "output": "output.pdf"}'
 ```
 
 ## 17. `pdf_bates`
@@ -652,37 +647,27 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type:
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Converts a PDF document into a Comic Book Archive (.cbz) format. This tool extracts every page in the PDF and renders it into a PNG image, archiving all the output images sequentially into a standard Zip format compatible with comic book readers.
+**Converts a PDF document into a Comic Book Archive (.cbz).**
 
 ### CLI
 ```bash
-paperpilot-cli pdf pdf_comic_archive --input document.pdf --output comic.cbz --dpi 150
+paperpilot pdf-comic-archive --input document.pdf --output comic.cbz
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_comic_archive",
-    "arguments": {
-      "input": "base64_encoded_pdf_string",
-      "dpi": 150.0
-    }
-  },
-  "id": 1
+  "name": "pdf_comic_archive",
+  "arguments": {
+    "input": "document.pdf",
+    "output": "comic.cbz"
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8080/api/v1/tools/pdf_comic_archive \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "base64_encoded_pdf_string",
-    "dpi": 150.0
-  }'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/comic-archive -H 'Content-Type: application/json' -d '{"input": "document.pdf", "output": "comic.cbz"}'
 ```
 
 ## 24. `pdf_compare`
@@ -926,35 +911,27 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/decrypt -H 'Content-Type: appli
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The `pdf_dedup_streams` tool performs a lossless object stream deduplication pass on the PDF document. It leverages cryptographic hashing (SHA-256) to identify byte-identical streams across the entire document structure, ensuring zero false positives. Duplicate streams are merged into a single canonical indirect object, reducing file size significantly without sacrificing any data.
+**Losslessly deduplicates identical streams using SHA-256 hashing.**
 
 ### CLI
 ```bash
-paperpilot dedup-streams input.pdf -o deduped_output.pdf
+paperpilot pdf-dedup-streams --input document.pdf --output deduped.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": "1",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_dedup_streams",
-    "arguments": {
-      "input": "<base64_encoded_pdf_bytes>"
-    }
+  "name": "pdf_dedup_streams",
+  "arguments": {
+    "input": "document.pdf",
+    "output": "deduped.pdf"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:3000/api/v1/pdf/dedup-streams \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "<base64_encoded_pdf_bytes>"
-  }'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/dedup-streams -H 'Content-Type: application/json' -d '{"input": "document.pdf", "output": "deduped.pdf"}'
 ```
 
 ## 33. `pdf_delete_pages`
@@ -1366,45 +1343,28 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: applica
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The `pdf_merge_alternate` tool allows you to interleave pages from two different PDF documents. This is a critical operation for manual duplex scanning, where you might have one PDF containing all the front pages and another PDF containing the back pages.
+**Alternates pages from two input PDFs (e.g., front and back scan passes).**
 
 ### CLI
 ```bash
-paperpilot pdf-merge-alternate \
-  --input-a front_pages.pdf \
-  --input-b back_pages.pdf \
-  --output merged.pdf
+paperpilot pdf-merge-alternate --input-a front.pdf --input-b back.pdf --output merged.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_merge_alternate",
-    "arguments": {
-      "input_a": "/path/to/front.pdf",
-      "input_b": "/path/to/back.pdf",
-      "output": "/path/to/merged.pdf",
-      "reverse_b": true
-    }
+  "name": "pdf_merge_alternate",
+  "arguments": {
+    "input_a": "front.pdf",
+    "input_b": "back.pdf",
+    "output": "merged.pdf"
   }
 }
 ```
 
 ### REST API
 ```bash
-{
-  "input_a": "/path/to/front.pdf",
-  "input_b": "/path/to/back.pdf",
-  "output": "/path/to/merged.pdf",
-  "step": 1,
-  "step_b": 1,
-  "reverse_a": false,
-  "reverse_b": true
-}
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge-alternate -H 'Content-Type: application/json' -d '{"input_a": "front.pdf", "input_b": "back.pdf", "output": "merged.pdf"}'
 ```
 
 ## 48. `pdf_metadata`
@@ -1553,44 +1513,27 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/page-numbers -H 'Content-Type: 
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The `pdf_posterize` tool takes a single-page or multi-page PDF with large dimensions and tiles each page across a grid of smaller standard sheets (e.g., 2x2, 3x3, or auto-calculated). It allows you to print oversized documents (like maps, schematics, or posters) on standard home or office printers.
+**Tiles oversized PDF pages across a grid of printable sheets with overlap margins.**
 
 ### CLI
 ```bash
-paperpilot-cli pdf-posterize --input large-map.pdf --output poster-tiles.pdf --target-sheet a4 --overlap 15 --scale 1.5
+paperpilot pdf-posterize --input large-map.pdf --output poster-tiles.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_posterize",
-    "arguments": {
-      "input": "/path/to/large-map.pdf",
-      "output": "/path/to/poster-tiles.pdf",
-      "target_sheet": "a4",
-      "overlap_pt": 15.0,
-      "scale": 1.5,
-      "include_guides": true
-    }
-  },
-  "id": 1
+  "name": "pdf_posterize",
+  "arguments": {
+    "input": "large-map.pdf",
+    "output": "poster-tiles.pdf"
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8080/api/v1/pdf/posterize \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "input": "/path/to/large-map.pdf",
-    "output": "/path/to/poster-tiles.pdf",
-    "target_sheet": "a4",
-    "overlap_pt": 15.0,
-    "scale": 1.5
-  }'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/posterize -H 'Content-Type: application/json' -d '{"input": "large-map.pdf", "output": "poster-tiles.pdf"}'
 ```
 
 ## 54. `pdf_rag_chunks`
@@ -2004,165 +1947,110 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: applica
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-The `pdf_split_by_outline` tool automatically extracts sections of a PDF document based on its internal Bookmark (`/Outlines`) structure. This is particularly useful for textbooks or technical manuals where you want a single file split into multiple chapter PDFs.
+**Split PDF by outline bookmarks into separate chapters.**
 
 ### CLI
 ```bash
-paperpilot pdf-split-by-outline --input my-book.pdf --output output.zip --max-depth 1
+paperpilot pdf-split-by-outline --input book.pdf --output output.zip --max-depth 1
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_split_by_outline",
-    "arguments": {
-      "input": "my-book.pdf",
-      "output": "output.zip",
-      "max_depth": 1,
-      "sanitize_names": true
-    }
-  },
-  "id": 1
+  "name": "pdf_split_by_outline",
+  "arguments": {
+    "input": "book.pdf",
+    "output": "output.zip",
+    "max_depth": 1
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:7823/api/v1/pdf/split-by-outline \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "my-book.pdf",
-    "output": "output.zip",
-    "max_depth": 1,
-    "sanitize_names": true
-  }'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split-by-outline -H 'Content-Type: application/json' -d '{"input": "book.pdf", "output": "output.zip", "max_depth": 1}'
 ```
 
 ## 69. `pdf_split_scanned_book`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Detect center binding gutter spine and split two-up page scans into single pages without modifying underlying vector streams, avoiding rasterization blur.
+**Detects center binding gutter spine and splits two-up page spreads.**
 
 ### CLI
 ```bash
-paperpilot pdf-split-scanned-book \
-    --input scan_spread.pdf \
-    --output split_pages.pdf \
-    --reading-direction ltr \
-    --gutter-overlap 5.0 \
-    --split-horizontal
+paperpilot pdf-split-scanned-book --input scan_spread.pdf --output split_pages.pdf
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "pdf_split_scanned_book",
-    "arguments": {
-      "input": "scan_spread.pdf",
-      "output": "split_pages.pdf",
-      "reading_direction": "ltr",
-      "gutter_overlap": 5.0,
-      "split_horizontal": false
-    }
+  "name": "pdf_split_scanned_book",
+  "arguments": {
+    "input": "scan_spread.pdf",
+    "output": "split_pages.pdf"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:7823/api/v1/pdf/split-scanned-book \
-  -H "Content-Type: application/json" \
-  -d '{"input": "scan_spread.pdf", "output": "split_pages.pdf", "reading_direction": "ltr", "gutter_overlap": 5.0, "split_horizontal": false}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split-scanned-book -H 'Content-Type: application/json' -d '{"input": "scan_spread.pdf", "output": "split_pages.pdf"}'
 ```
 
 ## 70. `pdf_stamp`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Places an image (such as a logo, signature, or watermark) onto specified pages of a PDF document at specific coordinates, with optional transparency.
+**Places an image stamp or logo onto specified PDF pages with optional opacity.**
 
 ### CLI
 ```bash
-penta pdf-stamp input.pdf output.pdf --image-path stamp.png --x 100 --y 100 --width 200 --height 50 --opacity 0.5 --pages all
+paperpilot pdf-stamp --input input.pdf --output output.pdf --image-path stamp.png
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_stamp",
-    "arguments": {
-      "file_path": "/path/to/input.pdf",
-      "output_path": "/path/to/output.pdf",
-      "image_path": "stamp.png",
-      "x": 100.0,
-      "y": 100.0,
-      "width": 200.0,
-      "height": 50.0,
-      "opacity": 0.5,
-      "pages": "all"
-    }
+  "name": "pdf_stamp",
+  "arguments": {
+    "input": "input.pdf",
+    "output": "output.pdf"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8080/api/v1/pdf/stamp \
-  -F "file=@input.pdf" \
-  -F 'options={"image_path":"stamp.png","x":100.0,"y":100.0,"width":200.0,"height":50.0,"opacity":0.5,"pages":"all"}' \
-  -o output.pdf
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/stamp -H 'Content-Type: application/json' -d '{"input": "input.pdf", "output": "output.pdf"}'
 ```
 
 ## 71. `pdf_stitch_canvas`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Combine multiple pages of a PDF document into a single continuous canvas, either vertically or horizontally.
+**Stitches multiple PDF pages into a single continuous canvas.**
 
 ### CLI
 ```bash
-paperpilot pdf-stitch-canvas --input input.pdf --output stitched.pdf --direction horizontal --margin 10 --spacing 5
+paperpilot pdf-stitch-canvas --input input.pdf --output stitched.pdf --direction horizontal
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_stitch_canvas",
-    "arguments": {
-      "input": "input.pdf",
-      "output": "stitched.pdf",
-      "direction": "vertical",
-      "margin_pt": 20,
-      "spacing_pt": 0
-    }
-  },
-  "id": 1
+  "name": "pdf_stitch_canvas",
+  "arguments": {
+    "input": "input.pdf",
+    "output": "stitched.pdf",
+    "direction": "horizontal"
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST http://localhost:8000/api/v1/pdf/stitch-canvas \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@input.pdf" \
-  -F "direction=vertical" \
-  -F "margin_pt=10" \
-  -F "spacing_pt=5"
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/stitch-canvas -H 'Content-Type: application/json' -d '{"input": "input.pdf", "output": "stitched.pdf", "direction": "horizontal"}'
 ```
 
 ## 72. `pdf_timestamp`
@@ -2225,38 +2113,27 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-docx -H 'Content-Type: appli
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-Convert a standard PDF document into an accessible and reflowable EPUB 3.0 file format.
+**Converts PDF documents into reflowable EPUB 3.0 ebooks.**
 
 ### CLI
 ```bash
-paperpilot pdf-to-epub --input input.pdf --output book.epub --title "My Book" --author "Jane Doe" --language "en"
+paperpilot pdf-to-epub --input input.pdf --output book.epub
 ```
 
 ### MCP JSON-RPC
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "call_tool",
-  "params": {
-    "name": "pdf_to_epub",
-    "arguments": {
-      "input_file": "/tmp/book.pdf",
-      "options": {
-        "title": "My Book",
-        "author": "Jane Doe",
-        "language": "en"
-      }
-    }
-  },
-  "id": 1
+  "name": "pdf_to_epub",
+  "arguments": {
+    "input": "input.pdf",
+    "output": "book.epub"
+  }
 }
 ```
 
 ### REST API
 ```bash
-curl -X POST https://api.paperpilot.test/v1/pdf/epub \
-  -F "file=@book.pdf" \
-  -F 'options={"title":"My Book","author":"Jane Doe","language":"en"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-epub -H 'Content-Type: application/json' -d '{"input": "input.pdf", "output": "book.epub"}'
 ```
 
 ## 75. `pdf_to_html`
