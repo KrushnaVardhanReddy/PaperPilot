@@ -1,0 +1,17 @@
+# Litestream configuration for PaperPilot persistent database
+# Automatically replicates /data/paperpilot.db to S3 / Cloudflare R2 / MinIO in real-time
+
+dbs:
+  - path: /data/paperpilot.db
+    replicas:
+      # S3 / Cloudflare R2 / MinIO Bucket Replica
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: ${LITESTREAM_PATH:-paperpilot-db}
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: ${LITESTREAM_REGION:-auto}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        sync-interval: 1s
+        retention: 72h
+        snapshot-interval: 24h
