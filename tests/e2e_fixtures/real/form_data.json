@@ -1,1 +1,6 @@
-{"TestText": "New Value", "TestCheckbox": "Off"}
+{
+  "FullName": "Jane Doe",
+  "Email": "jane.doe@enterprise.corp",
+  "AgreedToTerms": "Yes",
+  "AccountType": "Enterprise"
+}

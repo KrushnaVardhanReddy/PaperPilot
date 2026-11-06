@@ -50,7 +50,9 @@ export class PdfInspector {
         const annotations = await page.getAnnotations();
         for (const annot of annotations) {
           if (annot.fieldName) {
-            formFields[annot.fieldName] = annot.fieldValue ?? '';
+            formFields[annot.fieldName] = Array.isArray(annot.fieldValue) && annot.fieldValue.length === 1
+              ? annot.fieldValue[0]
+              : (annot.fieldValue ?? '');
           }
         }
       } catch (e) {}

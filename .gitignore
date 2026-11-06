@@ -45,6 +45,7 @@ update_*.py
 !docs/integrations/open_webui_tool.py
 *.sh
 !scripts/gen_corpus_suite1.sh
+!scripts/gen_corpus_suite2.sh
 run_tests.sh
 parse_test.rs
 apps/desktop/src-tauri/gen/android/.gradle/

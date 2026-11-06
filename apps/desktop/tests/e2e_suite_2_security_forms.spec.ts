@@ -8,7 +8,7 @@ import { PdfInspector } from './helpers/pdfInspector';
 interface SuiteTool {
   name: string;
   title: string;
-  type: 'pdf' | 'encrypted' | 'signed' | 'form' | 'json' | 'md' | 'html';
+  type: 'pdf' | 'encrypted' | 'signed' | 'form' | 'json' | 'md' | 'html' | 'pii';
   ext: 'pdf' | 'json' | 'txt';
 }
 
@@ -24,7 +24,7 @@ const tools31_60: SuiteTool[] = [
   { name: 'pdf_remove_signatures', title: 'Remove Digital Signatures', type: 'signed', ext: 'pdf' },
   { name: 'pdf_hash', title: 'Generate Hash', type: 'pdf', ext: 'txt' },
   { name: 'pdf_validate', title: 'Validate PDF', type: 'pdf', ext: 'json' },
-  { name: 'document_pii_scan', title: 'PII Scanner', type: 'pdf', ext: 'json' },
+  { name: 'document_pii_scan', title: 'PII Scanner', type: 'pii', ext: 'json' },
   { name: 'pdf_overlay_underlay', title: 'Overlay & Underlay Stationary', type: 'pdf', ext: 'pdf' },
   { name: 'pdf_stamp', title: 'Stamp Image & Logo', type: 'pdf', ext: 'pdf' },
   { name: 'pdf_flatten', title: 'Flatten Annotations', type: 'form', ext: 'pdf' },
@@ -91,6 +91,8 @@ test.beforeEach(async ({ page }) => {
                return ['../../tests/e2e_fixtures/real/test.md'];
            } else if ((window as any).__last_tool_type === 'html') {
                return ['../../tests/e2e_fixtures/real/test.html'];
+           } else if ((window as any).__last_tool_type === 'pii') {
+               return ['../../tests/e2e_fixtures/real/text_pii.pdf'];
            }
            return ['../../tests/e2e_fixtures/real/single_page.pdf'];
         }
@@ -128,6 +130,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
     const fixtureJson = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/json_doc.json');
     const fixtureMd = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.md');
     const fixtureHtml = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.html');
+    const fixturePii = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/text_pii.pdf');
     const fixtureP12 = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/dummy.p12');
 
     await page.goto('http://127.0.0.1:1420/');
@@ -171,6 +174,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
              await fileInput.setInputFiles([fixtureMd]);
           } else if (op.type === 'html') {
              await fileInput.setInputFiles([fixtureHtml]);
+          } else if (op.type === 'pii') {
+             await fileInput.setInputFiles([fixturePii]);
           } else {
              await fileInput.setInputFiles([fixtureSingle]);
           }
@@ -215,7 +220,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
           if (op.name === 'pdf_decrypt') {
             const passInput = page.locator('#password');
             if (await passInput.isVisible()) {
-              await passInput.fill('password123');
+              await passInput.fill('testpassword123');
             }
           }
           if (op.name === 'pdf_watermark') {
@@ -257,7 +262,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
           let cliCmd = '';
           switch (op.name) {
             case 'pdf_decrypt':
-              cliCmd = `"${cliBin}" decrypt --input "${fixtureEncrypted}" --password password123 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" decrypt --input "${fixtureEncrypted}" --password testpassword123 --output "${outputFile}"`;
               break;
             case 'pdf_sanitize':
               cliCmd = `"${cliBin}" sanitize --input "${fixtureSingle}" --output "${outputFile}"`;
@@ -287,7 +292,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               cliCmd = `"${cliBin}" validate --input "${fixtureSingle}" --json > "${outputFile}"`;
               break;
             case 'document_pii_scan':
-              cliCmd = `"${cliBin}" pii-scan --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pii-scan --input "${fixturePii}" --output "${outputFile}"`;
               break;
             case 'pdf_overlay_underlay':
               cliCmd = `"${cliBin}" pdf-overlay-underlay --input "${fixtureSingle}" --output "${outputFile}"`;
@@ -386,8 +391,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(raw.isEncrypted).toBe(false);
               expect(raw.hasDictionary('Encrypt')).toBe(false);
               const parsed = await PdfInspector.inspect(outputFile);
-              expect(parsed.numPages).toBe(1);
-              invariantNote = 'Zero cipher: /Encrypt dictionary completely absent; unencrypted reading succeeds';
+              expect(parsed.numPages).toBeGreaterThanOrEqual(1);
+              expect(parsed.allText.length).toBeGreaterThan(0);
+              expect(parsed.hasText('Agreement') || parsed.hasText('Alice') || parsed.hasText('Non-Disclosure')).toBe(true);
+              invariantNote = 'Zero cipher: Unlocked with testpassword123; text stream is authentic, readable, and unencrypted';
               break;
             }
             case 'pdf_sanitize': {
@@ -468,10 +475,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
             case 'document_pii_scan': {
               const json = JSON.parse(fileContent.toString('utf8'));
               expect(json).toHaveProperty('total_findings');
+              expect(json.total_findings).toBeGreaterThan(0);
               expect(json).toHaveProperty('findings');
               expect(json).toHaveProperty('findings_by_category');
               expect(Array.isArray(json.findings)).toBe(true);
-              invariantNote = 'PII scan findings: Authentic JSON telemetry report with categorized findings';
+              expect(json.findings.length).toBeGreaterThan(0);
+              const categories = json.findings.map((f: any) => f.category.toLowerCase());
+              expect(categories.includes('email') || categories.includes('ssn')).toBe(true);
+              const hasEmailFinding = json.findings.some((f: any) => f.category.toLowerCase() === 'email' && f.value_masked.includes('@'));
+              expect(hasEmailFinding).toBe(true);
+              invariantNote = `PII scan telemetry: Verified ${json.total_findings} entities including EMAIL and SSN matches`;
               break;
             }
             case 'pdf_overlay_underlay': {
@@ -501,18 +514,25 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
             }
             case 'pdf_read_form': {
               const formData = JSON.parse(fileContent.toString('utf8'));
-              expect(formData).toHaveProperty('TestText');
-              expect(formData).toHaveProperty('TestCheckbox');
-              invariantNote = 'AcroForm reader: Extracted keys [TestText, TestCheckbox] matched PDF dictionary';
+              expect(formData).toHaveProperty('FullName');
+              expect(formData).toHaveProperty('Email');
+              expect(formData).toHaveProperty('AgreedToTerms');
+              expect(formData).toHaveProperty('AccountType');
+              invariantNote = 'AcroForm reader / export: Extracted keys [FullName, Email, AgreedToTerms, AccountType] matched form catalog';
               break;
             }
             case 'pdf_fill_form': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
+              const originalSize = fs.statSync(fixtureForm).size;
+              const filledSize = fs.statSync(outputFile).size;
+              expect(filledSize).toBeGreaterThan(originalSize);
               const parsed = await PdfInspector.inspect(outputFile);
-              expect(parsed.formFields?.TestText).toBe('New Value');
-              expect(parsed.formFields?.TestCheckbox).toBe('Off');
-              invariantNote = 'AcroForm fill exactness: Field "TestText" successfully populated with "New Value"';
+              expect(parsed.formFields?.FullName).toBe('Jane Doe');
+              expect(parsed.formFields?.Email).toBe('jane.doe@enterprise.corp');
+              expect(parsed.formFields?.AgreedToTerms).toBe('Yes');
+              expect(parsed.formFields?.AccountType).toBe('Enterprise');
+              invariantNote = 'AcroForm fill exactness: Fields [FullName, Email, AgreedToTerms, AccountType] populated with form_data.json and size increased';
               break;
             }
             case 'pdf_create_form_field': {
@@ -574,11 +594,13 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
             case 'pdf_redact': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
+              expect(raw.hasToken('re') || raw.hasToken('rg')).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
               expect(parsed.lacksText('CONFIDENTIAL_SSN')).toBe(true);
               expect(parsed.lacksText('TOP_SECRET')).toBe(true);
-              invariantNote = 'Permanent redaction: Target content absent from decoded text stream, redaction box rendered';
+              expect(parsed.lacksText('111-22-3333')).toBe(true);
+              invariantNote = 'Permanent redaction: Sensitive terms excised from decoded text stream, redaction box rendered';
               break;
             }
             case 'json_to_pdf': {

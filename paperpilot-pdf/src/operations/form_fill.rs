@@ -181,7 +181,7 @@ impl FormFillTemplate {
         }
         for field in &fields {
             if field.flags & 1 != 0
-                || !matches!(field.kind.as_slice(), b"Tx" | b"Btn")
+                || !matches!(field.kind.as_slice(), b"Tx" | b"Btn" | b"Ch")
                 || (field.kind == b"Btn" && field.flags & ((1 << 15) | (1 << 16)) != 0)
             {
                 return Err(invalid(format!(
@@ -275,7 +275,7 @@ fn fill_fields_impl(
         if field.flags & 1 != 0 && !allow_readonly {
             return Err(invalid(format!("Field {} is read-only", field.name)));
         }
-        if !matches!(field.kind.as_slice(), b"Tx" | b"Btn")
+        if !matches!(field.kind.as_slice(), b"Tx" | b"Btn" | b"Ch")
             || (field.kind == b"Btn" && field.flags & ((1 << 15) | (1 << 16)) != 0)
         {
             return Err(invalid(format!("Unsupported field type: {}", field.name)));

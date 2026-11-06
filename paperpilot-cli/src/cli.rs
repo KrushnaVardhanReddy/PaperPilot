@@ -174,7 +174,7 @@ pub enum Commands {
     Encrypt {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, visible_alias = "password", alias = "password")]
         user_password: Option<String>,
         #[arg(long)]
         owner_password: Option<String>,

@@ -7,13 +7,13 @@
   - [x] 153.1.4 Update `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts` with deep domain invariant assertions (exact page count arithmetic on merge/split/burst, dimension checks on crop/scale, pixel assertions on render).
   - [x] 153.1.5 Verify `make gen-corpus-suite-1 && make test-e2e-suite-1` passes 30/30 tools.
 
-- [ ] **153.2 — Phase 2: Suite 2 Fixtures & Test Hardening (Tools 31–60: Security, Forms & Metadata)**
-  - [ ] 153.2.1 Create PII document HTML template with real names, emails, SSNs, credit card numbers, and legal confidentiality notices (`tests/fixtures_templates/suite2/pii_agreement.html`).
-  - [ ] 153.2.2 Create programmatic AcroForm generator (via base64 or Rust lopdf script) producing a valid 8-field AcroForm PDF (`form.pdf`) containing text inputs, checkboxes, and radio buttons.
-  - [ ] 153.2.3 Create `scripts/gen_corpus_suite2.sh` generating `text_pii.pdf`, `encrypted.pdf` (password-protected), `signed.pdf` (digitally signed), `form.pdf`, `form_data.json`, and `batch_data.csv`.
-  - [ ] 153.2.4 Add `gen-corpus-suite-2` target to `Makefile`.
-  - [ ] 153.2.5 Update `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` with deep semantic assertions (PII scan detects entities, form fill modifies target fields, signature validation inspects byte ranges, decrypt verifies password removal).
-  - [ ] 153.2.6 Verify `make gen-corpus-suite-2 && make test-e2e-suite-2` passes 30/30 tools.
+- [x] **153.2 — Phase 2: Suite 2 Fixtures & Test Hardening (Tools 31–60: Security, Forms & Metadata)**
+  - [x] 153.2.1 Create PII document HTML template with real names, emails, SSNs, credit card numbers, and legal confidentiality notices (`tests/fixtures_templates/suite2/pii_agreement.html`).
+  - [x] 153.2.2 Create programmatic AcroForm generator (via base64 or Rust lopdf script) producing a valid 8-field AcroForm PDF (`form.pdf`) containing text inputs, checkboxes, and radio buttons.
+  - [x] 153.2.3 Create `scripts/gen_corpus_suite2.sh` generating `text_pii.pdf`, `encrypted.pdf` (password-protected), `signed.pdf` (digitally signed), `form.pdf`, `form_data.json`, and `batch_data.csv`.
+  - [x] 153.2.4 Add `gen-corpus-suite-2` target to `Makefile`.
+  - [x] 153.2.5 Update `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` with deep semantic assertions (PII scan detects entities, form fill modifies target fields, signature validation inspects byte ranges, decrypt verifies password removal).
+  - [x] 153.2.6 Verify `make gen-corpus-suite-2 && make test-e2e-suite-2` passes 30/30 tools.
 
 - [ ] **153.3 — Phase 3: Suite 3 Fixtures & Test Hardening (Tools 61–90: Conversions, AI & Workflows)**
   - [ ] 153.3.1 Create templates for structured two-column academic paper, financial statements with multi-row tables, rich Markdown manual with code blocks, and tabular CSV/XLSX data.
