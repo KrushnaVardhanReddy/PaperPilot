@@ -11,7 +11,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'PaperPilot Documentation',
-      description: 'Official guides, 50+ tool reference, embed widget, and developer API for PaperPilot.',
+      description: 'Official guides, 89+ tool reference, embed widget, and developer API for PaperPilot.',
       social: {
         github: 'https://github.com/KrushnaVardhanReddy/PaperPilot',
       },
