@@ -886,7 +886,40 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     </div>
 
     <div class="inspector-content">
+      <div class="tool-format-badges" data-testid="tool-format-badges">
+        <span class="format-badge input-badge" title="Input document requirements">
+          <span class="badge-label">Input</span>
+          <span class="badge-value">{activeTool.inputFormat}</span>
+        </span>
+        <span class="badge-arrow" aria-hidden="true">→</span>
+        <span class="format-badge output-badge" title="Generated artifact format">
+          <span class="badge-label">Output</span>
+          <span class="badge-value">{activeTool.outputFormat}</span>
+        </span>
+      </div>
+
       <p class="tool-desc">{activeTool.description}</p>
+      {#if activeTool.detailedDescription}
+        <p class="tool-detailed-desc">{activeTool.detailedDescription}</p>
+      {/if}
+
+      {#if activeTool.id === 'delete_pages' || activeTool.id === 'pdf_delete_pages' || activeTool.id === 'redact' || activeTool.id === 'pdf_redact'}
+        <div class="destructive-warning-callout" role="alert" data-testid="destructive-warning">
+          <div class="warning-callout-header">
+            <span class="warning-callout-icon">⚠️</span>
+            <span class="warning-callout-title">
+              {activeTool.id.includes('redact') ? 'Irreversible Content Excision' : 'Destructive Page Removal'}
+            </span>
+          </div>
+          <p class="warning-callout-text">
+            {#if activeTool.id.includes('redact')}
+              Permanent excision: underlying text glyphs, font operators, and vector paths will be permanently purged from the PDF stream and cannot be recovered.
+            {:else}
+              Permanent removal: selected pages will be omitted from the generated PDF output. Your original source file remains safe and untouched on disk.
+            {/if}
+          </p>
+        </div>
+      {/if}
 
       {#if activeTool.id === 'merge'}
         <div class="operation-config">
@@ -911,18 +944,21 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         <div class="operation-config">
           <label for="splitPoints" class="section-desc">Split Page Ranges (comma separated):</label>
           <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 1-3, 4-8" />
+          <span class="field-hint">Specify discrete pages or intervals (e.g. 1-3, 5, 8-10) to generate separate output files.</span>
         </div>
-      {:else if activeTool.id === 'delete_pages'}
+      {:else if activeTool.id === 'delete_pages' || activeTool.id === 'pdf_delete_pages'}
         <div class="operation-config">
           <label for="deletePages" class="section-desc">Pages to Delete (comma separated or ranges):</label>
           <input id="deletePages" type="text" class="form-input" bind:value={deletePages} placeholder="e.g. 1, 3, 5-7" />
+          <span class="field-hint">Specify 1-based page numbers or ranges to permanently remove (e.g. 1, 3, 5-7).</span>
         </div>
-      {:else if activeTool.id === 'extract_pages'}
+      {:else if activeTool.id === 'extract_pages' || activeTool.id === 'pdf_extract_pages'}
         <div class="operation-config">
           <label for="extractPages" class="section-desc">Pages to Extract (comma separated or ranges):</label>
           <input id="extractPages" type="text" class="form-input" bind:value={extractPages} placeholder="e.g. 1-3, 5" />
+          <span class="field-hint">Specify discrete pages or intervals (e.g. 1-3, 5) to isolate into a new document.</span>
         </div>
-      {:else if activeTool.id === 'compress'}
+      {:else if activeTool.id === 'compress' || activeTool.id === 'pdf_compress'}
         <div class="operation-config">
           <label for="compressQuality" class="section-desc">Image Quality: {compressQuality}%</label>
           <input id="compressQuality" type="range" min="10" max="100" bind:value={compressQuality} class="range-input" />
@@ -930,6 +966,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <span>Smaller file</span>
             <span>Higher quality</span>
           </div>
+          <span class="field-hint">Higher quality retains fine detail at larger file sizes; 80% is recommended for standard printing (300 DPI).</span>
         </div>
       {:else if activeTool.id === 'rotate' || activeTool.id === 'pdf_rotate'}
         <div class="operation-config">
@@ -939,6 +976,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="180">180° Flip</option>
             <option value="270">270° Counter-Clockwise</option>
           </select>
+          <span class="field-hint">Rotate clockwise in 90° increments (90°, 180°, 270°).</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="rotatePages" class="section-desc">Pages to Rotate (Optional):</label>
@@ -949,14 +987,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             bind:value={rotatePages}
             placeholder="e.g. 1, 3, 5-10 (leave empty for all)"
           />
-          <div class="range-labels" style="margin-top: 4px;">
-            <span style="font-size: 0.72rem; color: #94a3b8;">Empty = All pages</span>
-          </div>
+          <span class="field-hint">Specify discrete pages or intervals (e.g. 1, 3, 5-10), or leave empty for all pages.</span>
         </div>
-      {:else if activeTool.id === 'watermark'}
+      {:else if activeTool.id === 'watermark' || activeTool.id === 'pdf_watermark'}
         <div class="operation-config">
           <label for="watermarkText" class="section-desc">Watermark Text:</label>
           <input id="watermarkText" type="text" class="form-input" bind:value={watermarkText} placeholder="e.g. CONFIDENTIAL" />
+          <span class="field-hint">Text stamped across pages (e.g. CONFIDENTIAL, DRAFT, INTERNAL ONLY).</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="watermarkOrientation" class="section-desc">Orientation:</label>
@@ -977,12 +1014,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="blue">Blue</option>
           </select>
         </div>
-      {:else if activeTool.id === 'remove_blank'}
+      {:else if activeTool.id === 'remove_blank' || activeTool.id === 'pdf_remove_blank'}
         <div class="operation-config">
           <label for="blankSensitivity" class="section-desc">Sensitivity (0-100): {blankSensitivity}%</label>
           <input id="blankSensitivity" type="range" min="0" max="100" bind:value={blankSensitivity} class="range-input" />
+          <span class="field-hint">Higher sensitivity removes pages with even minimal or faint ink traces.</span>
         </div>
-      {:else if activeTool.id === 'page_numbers'}
+      {:else if activeTool.id === 'page_numbers' || activeTool.id === 'pdf_page_numbers'}
         <div class="operation-config">
           <label for="pageNumberPos" class="section-desc">Position:</label>
           <select id="pageNumberPos" bind:value={pageNumberPos} class="form-input">
@@ -995,8 +1033,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         <div class="operation-config" style="margin-top: 10px;">
           <label for="pageNumberFormat" class="section-desc">Format:</label>
           <input id="pageNumberFormat" type="text" class="form-input" bind:value={pageNumberFormat} placeholder={'Page {n} of {total}'} />
+          <span class="field-hint">Dynamic template placeholders: &#123;n&#125; for current page, &#123;total&#125; for total page count.</span>
         </div>
-      {:else if activeTool.id === 'md_to_pdf' || activeTool.id === 'html_to_pdf'}
+      {:else if activeTool.id === 'md_to_pdf' || activeTool.id === 'html_to_pdf' || activeTool.id === 'pdf_convert_markdown' || activeTool.id === 'pdf_convert_html'}
         <div class="operation-config">
           <label for="convertPreset" class="section-desc">Style Preset:</label>
           <select id="convertPreset" bind:value={convertPreset} class="form-input">
@@ -1004,54 +1043,65 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="corporate">Corporate</option>
             <option value="minimalist">Minimalist</option>
           </select>
+          <span class="field-hint">Applies typography, margins, and header styles tailored to the selected publication preset.</span>
         </div>
       {:else if activeTool.id === 'json_to_pdf'}
         <div class="operation-config">
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
             Synthesize a publication-grade PDF from structured JSON text pages and inline base64 / file-path images. Click <strong>Run</strong> to select your JSON file.
           </p>
+          <span class="field-hint">JSON schema must define pages, typography, and optional embedded image assets.</span>
         </div>
-      {:else if activeTool.id === 'encrypt' || activeTool.id === 'decrypt'}
+      {:else if activeTool.id === 'encrypt' || activeTool.id === 'pdf_encrypt' || activeTool.id === 'decrypt' || activeTool.id === 'pdf_decrypt'}
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
           <input id="passwordField" type="password" class="form-input" bind:value={password} placeholder="Enter document password" />
+          <span class="field-hint">Used to encrypt output with 256-bit AES encryption (or unlock protected documents).</span>
         </div>
-      {:else if activeTool.id === 'bates'}
+      {:else if activeTool.id === 'bates' || activeTool.id === 'pdf_bates'}
         <div class="operation-config">
           <label for="batesPrefix" class="section-desc">Prefix:</label>
           <input id="batesPrefix" type="text" class="form-input" bind:value={batesPrefix} placeholder="e.g. CONF-" />
+          <span class="field-hint">Leading alphanumeric prefix for legal discovery tracking (e.g. CONF-).</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="batesStart" class="section-desc">Start Number:</label>
           <input id="batesStart" type="number" class="form-input" bind:value={batesStart} min="1" />
+          <span class="field-hint">Initial sequential integer index for numbering.</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="batesPadding" class="section-desc">Padding:</label>
           <input id="batesPadding" type="number" class="form-input" bind:value={batesPadding} min="1" />
+          <span class="field-hint">Total digit count with zero padding (e.g. 6 produces 000001).</span>
         </div>
-      {:else if activeTool.id === 'reorder_pages'}
+      {:else if activeTool.id === 'reorder_pages' || activeTool.id === 'pdf_reorder_pages'}
         <div class="operation-config">
           <label for="reorderList" class="section-desc">Order Permutation (comma separated):</label>
           <input id="reorderList" type="text" class="form-input" bind:value={reorderList} placeholder="e.g. 2,1,3,4,5" />
+          <span class="field-hint">Specify full 1-based page order (e.g. 2,1,3,4,5 to swap the first two pages).</span>
         </div>
-      {:else if activeTool.id === 'crop'}
+      {:else if activeTool.id === 'crop' || activeTool.id === 'pdf_crop'}
         <div class="operation-config">
           <label for="cropBox" class="section-desc">Crop Box (x,y,w,h):</label>
           <input id="cropBox" type="text" class="form-input" bind:value={cropBox} placeholder="e.g. 10,10,200,200" />
+          <span class="field-hint">Specify boundaries as x,y,width,height in points (72 points = 1 inch).</span>
         </div>
-      {:else if activeTool.id === 'sign'}
+      {:else if activeTool.id === 'sign' || activeTool.id === 'pdf_sign'}
         <div class="operation-config">
           <label for="signCertPath" class="section-desc">Certificate Path:</label>
           <input id="signCertPath" type="text" class="form-input" bind:value={signCertPath} placeholder="Path to .p12 cert" />
+          <span class="field-hint">Select an RFC 3161 PKCS#12 (.p12 / .pfx) cryptographic certificate file.</span>
         </div>
-      {:else if activeTool.id === 'header_footer'}
+      {:else if activeTool.id === 'header_footer' || activeTool.id === 'pdf_header_footer'}
         <div class="operation-config">
           <label for="headerText" class="section-desc">Header Text:</label>
           <input id="headerText" type="text" class="form-input" bind:value={headerText} placeholder="e.g. Confidential" />
+          <span class="field-hint">Text placed at top margin across all pages.</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="footerText" class="section-desc">Footer Text:</label>
           <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
+          <span class="field-hint">Text placed at bottom margin across all pages.</span>
         </div>
             {:else if activeTool.id === 'ocr'}
         <div class="operation-config">
@@ -1250,6 +1300,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
             Interactive comparison tool to visually inspect differences, slide between document revisions, or generate pixel discrepancy maps between two open PDFs.
           </p>
+        </div>
+      {:else if activeTool.id === 'redact' || activeTool.id === 'pdf_redact'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Permanently redacts matching sensitive patterns, text glyphs, and rectangular zones from the document stream.
+          </p>
+          <span class="field-hint">Redacted text is permanently stripped and cannot be recovered from the output file.</span>
         </div>
       {:else}
         <div class="operation-config">
@@ -1904,6 +1961,100 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     font-size: 12px;
     color: var(--text-secondary, #9ca3af);
     line-height: 1.4;
+  }
+
+  .tool-format-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .format-badge.input-badge {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+  }
+
+  .format-badge.output-badge {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+  }
+
+  .badge-label {
+    text-transform: uppercase;
+    font-size: 9px;
+    font-weight: 700;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-value {
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+  }
+
+  .badge-arrow {
+    color: var(--text-muted, #71717a);
+    font-size: 12px;
+  }
+
+  .tool-detailed-desc {
+    font-size: 11.5px;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.45;
+  }
+
+  .destructive-warning-callout {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--border-radius-md, 6px);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .warning-callout-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .warning-callout-icon {
+    font-size: 14px;
+  }
+
+  .warning-callout-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f87171;
+  }
+
+  .warning-callout-text {
+    font-size: 11px;
+    color: #fca5a5;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .field-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted, #94a3b8);
+    margin-top: 4px;
+    line-height: 1.35;
   }
 
   .section-desc {

@@ -5,37 +5,43 @@ describe('formatUserFriendlyError', () => {
   it('formats Password / Encryption errors', () => {
     const error = new Error('PDF is encrypted with user password');
     const result = formatUserFriendlyError(error);
-    expect(result.headline).toBe('Protected Document');
-    expect(result.actionHint).toBe('Please provide the correct password to unlock and process this PDF.');
+    expect(result.headline).toBe('Protected PDF Document');
+    expect(result.actionHint).toBe('Protected PDF: Enter the document open password in the security panel or decrypt tool to unlock editing.');
     expect(result.technicalDetails).toBe('PDF is encrypted with user password');
   });
 
   it('formats Corrupted PDF errors', () => {
     const result = formatUserFriendlyError('lopdf: cross-reference table missing offset 0x4f2');
-    expect(result.headline).toBe('Unable to Read PDF');
-    expect(result.actionHint).toBe("The document structure appears damaged. Try using the 'Repair' tool first.");
+    expect(result.headline).toBe('Damaged Cross-Reference Table');
+    expect(result.actionHint).toBe("The document cross-reference table or syntax appears corrupted. Try using the 'Repair' tool first to reconstruct the PDF syntax.");
     expect(result.technicalDetails).toBe('lopdf: cross-reference table missing offset 0x4f2');
   });
 
   it('formats Invalid Page Range errors', () => {
     const result = formatUserFriendlyError({ message: 'Page count is 1, but requested page 2' });
-    expect(result.headline).toBe('Invalid Page Range');
-    expect(result.actionHint).toBe('Please verify that the selected page numbers exist in this document.');
+    expect(result.headline).toBe('Out-of-Bounds Page Range');
+    expect(result.actionHint).toBe('The requested page numbers exceed the document page count. Step 1: Check document page count in viewer. Step 2: Enter valid page ranges (e.g. 1-5, 8).');
     expect(result.technicalDetails).toContain('requested page 2'); // check that JSON.stringify handles it
   });
 
   it('formats Missing Input / Not Found errors', () => {
     const result = formatUserFriendlyError('File not found: document.pdf');
     expect(result.headline).toBe('File Not Found');
-    expect(result.actionHint).toBe('The specified file could not be found. Please re-select the document.');
+    expect(result.actionHint).toBe('The specified file could not be found. Step 1: Verify the file exists on disk. Step 2: Re-select the document in the workspace.');
     expect(result.technicalDetails).toBe('File not found: document.pdf');
   });
 
   it('formats File In Use / Permissions errors', () => {
     const result = formatUserFriendlyError('Permission denied (os error 13)');
-    expect(result.headline).toBe('File Is Busy or Inaccessible');
-    expect(result.actionHint).toBe('Please close the document in other applications and try again.');
+    expect(result.headline).toBe('File Locked or Inaccessible');
+    expect(result.actionHint).toBe('The document file is locked by another program or operating system permission is denied. Step 1: Close other PDF viewers/editors. Step 2: Retry the operation.');
     expect(result.technicalDetails).toBe('Permission denied (os error 13)');
+  });
+
+  it('formats Complex Font Encodings errors', () => {
+    const result = formatUserFriendlyError('Failed to parse non-standard CID font stream');
+    expect(result.headline).toBe('Complex Font Encodings');
+    expect(result.actionHint).toBe('This document uses non-standard embedded CID fonts; try running OCR or Flatten Annotations first.');
   });
 
   it('formats Limit / Timeout errors', () => {
