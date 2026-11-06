@@ -17,6 +17,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
+          slowMo: process.env.PW_SLOWMO ? parseInt(process.env.PW_SLOWMO, 10) : undefined,
           args: ['--proxy-bypass-list=<-loopback>'],
         },
       },

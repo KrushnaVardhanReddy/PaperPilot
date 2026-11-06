@@ -1,4 +1,4 @@
-.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -7,6 +7,9 @@ ifeq ($(OS),Windows_NT)
   else ifneq ($(wildcard $(LOCALAPPDATA)/Programs/Git/bin/sh.exe),)
     export PATH := $(LOCALAPPDATA)/Programs/Git/usr/bin;$(LOCALAPPDATA)/Programs/Git/bin;$(PATH)
   endif
+else
+  # Ensure Node.js and local node_modules binaries are found on Linux/macOS
+  export PATH := $(HOME)/.nvm/versions/node/v26.12.1/bin:$(HOME)/.cargo/bin:$(PATH)
 endif
 
 # Default target
@@ -18,7 +21,7 @@ build:
 
 # Build the paperpilot CLI binary (required for unmocked CLI tests)
 build-cli:
-	cargo build --bin paperpilot
+	cargo build --bin paperpilot -j 4
 
 # Build and run the standalone desktop application
 run: build-release
@@ -174,6 +177,31 @@ test-frontend:
 # Run the end-to-end Playwright tests for the frontend/Tauri app
 test-e2e:
 	cd apps/desktop && npx playwright test
+
+# Run all 90 tools zero-mock deep semantic E2E test suites (Suites 1, 2, and 3)
+test-e2e-all-90: build-cli test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3
+
+# Run Suite 1: Tools 01-30 (Page Operations & Imposition)
+test-e2e-suite-1: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_1_page_operations.spec.ts $(ARGS)
+
+# Run Suite 2: Tools 31-60 (Security, Cryptography & Forms)
+test-e2e-suite-2: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts $(ARGS)
+
+# Run Suite 3: Tools 61-90 (Conversions, Intelligence & Workflows)
+test-e2e-suite-3: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts $(ARGS)
+
+# Run Playwright with visible headed browser (slowed down for visual observation)
+test-e2e-suite-1-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_1_page_operations.spec.ts --headed
+
+test-e2e-suite-2-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts --headed
+
+test-e2e-suite-3-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts --headed
 
 # Run Playwright in UI mode to manually step through and test every feature/button
 test-e2e-ui:

@@ -4455,8 +4455,13 @@ impl PaperPilotMcpServer {
 
     pub fn execute_call_tool(
         &self,
-        request: CallToolRequestParams,
+        mut request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
+        // Strip duplicate pdf_ prefix or normalize aliases for robust tool invocation
+        if request.name.starts_with("pdf_pdf_") {
+            request.name = request.name["pdf_".len()..].to_string().into();
+        }
+
         let args = request.arguments.clone().unwrap_or_default();
         let is_zero_trace = args.get("_zero_trace").and_then(|v| v.as_bool()).unwrap_or(false)
             || args.get("log_level").and_then(|v| v.as_str()).map(|s| s.eq_ignore_ascii_case("off")).unwrap_or(false);
@@ -7591,6 +7596,32 @@ mod tests {
         request.arguments = None;
         let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_strips_duplicate_pdf_prefix() {
+        let mut request = CallToolRequestParams::default();
+        // Even if called with "pdf_pdf_merge", it normalizes to "pdf_merge"
+        request.name = "pdf_pdf_merge".into();
+        let mut args = serde_json::Map::new();
+        args.insert(
+            "inputs".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("dummy1.pdf".to_string()),
+                serde_json::Value::String("dummy2.pdf".to_string()),
+            ]),
+        );
+        args.insert(
+            "output".to_string(),
+            serde_json::Value::String("out.pdf".to_string()),
+        );
+        request.arguments = Some(args);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
+        // It reaches pdf_merge handler (which fails on non-existent files rather than "Unknown tool")
+        match res {
+            Err(e) => assert_ne!(e.message, "Unknown tool"),
+            Ok(_) => {}
+        }
     }
 
     #[test]
