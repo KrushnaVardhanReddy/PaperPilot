@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enterprise Technical Specification - Part 2</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1a202c;
+      line-height: 1.5;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      page-break-after: always;
+      box-sizing: border-box;
+      min-height: 90%;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    .header {
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title-doc {
+      font-size: 18pt;
+      font-weight: bold;
+      color: #2b6cb0;
+    }
+    .doc-meta {
+      font-size: 9pt;
+      color: #718096;
+      text-align: right;
+    }
+    h1 {
+      font-size: 16pt;
+      color: #2d3748;
+      margin-top: 0;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #3182ce;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+    ul, ol {
+      margin-top: 5px;
+      margin-bottom: 15px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .callout {
+      background: #f7fafc;
+      border-left: 4px solid #4a5568;
+      padding: 12px 16px;
+      margin: 15px 0;
+      font-size: 10pt;
+    }
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      margin-top: 30px;
+      font-size: 9pt;
+      color: #a0aec0;
+      display: flex;
+      justify-content: space-between;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 9.5pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e0;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th {
+      background: #edf2f7;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .sig-grid {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .sig-box {
+      width: 45%;
+      border-top: 1px solid #718096;
+      padding-top: 8px;
+      font-size: 9.5pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: CHAPTER 5 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 2)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-B &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 5: API Endpoints & Protocol Reference</h1>
+    <p><strong>Tracking Identifier:</strong> MERGE_PAGE_BBB</p>
+    <p>
+      Document Part 2 serves as the formal appendix and certification record.
+      This chapter details programmatic interfaces exposed by the CLI engine and local Tauri IPC handlers.
+    </p>
+    <h2>5.1 Standard IPC RPC Methods</h2>
+    <ul>
+      <li><code>pdf_merge(inputs: Vec&lt;Path&gt;, output: Path) -&gt; Result</code></li>
+      <li><code>pdf_split(input: Path, points: Vec&lt;u32&gt;, output_dir: Path) -&gt; Result</code></li>
+      <li><code>pdf_burst(input: Path, output_dir: Path) -&gt; Result</code></li>
+      <li><code>pdf_crop(input: Path, rect: [f32; 4], output: Path) -&gt; Result</code></li>
+    </ul>
+    <div class="callout">
+      <strong>Interface Stability:</strong> All methods follow semantic versioning guarantees.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 2</span>
+      <span>Page 1 of 3 (Document Page 5)</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2: CHAPTER 6 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 2)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-B &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 6: Verification Protocols & Compliance Matrix</h1>
+    <p>
+      Comprehensive quality assurance is validated via zero-mock end-to-end suites.
+      The following matrix maps automated test coverage against international document processing standards.
+    </p>
+    <h2>6.1 Standards Compliance Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Standard Specification</th>
+          <th>Requirement Code</th>
+          <th>Verification Engine</th>
+          <th>Pass Criteria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ISO 32000-1 (PDF 1.7)</td>
+          <td>CORE-COMP-01</td>
+          <td>PdfInspector &amp; Lopdf</td>
+          <td>Byte-level AST match</td>
+        </tr>
+        <tr>
+          <td>ISO 32000-2 (PDF 2.0)</td>
+          <td>CORE-COMP-02</td>
+          <td>Fulgur &amp; PDF Oxide</td>
+          <td>Stream header validity</td>
+        </tr>
+        <tr>
+          <td>ISO 14289-1 (PDF/UA)</td>
+          <td>ACC-UA-01</td>
+          <td>Semantic Outline Walker</td>
+          <td>Tagged tree hierarchy</td>
+        </tr>
+        <tr>
+          <td>ISO 19005 (PDF/A Archival)</td>
+          <td>ARCH-A1-03</td>
+          <td>VeraPDF Validator</td>
+          <td>Font embedding integrity</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>Audit Notice:</strong> Annual ISO re-certification audit scheduled for Q4 2026.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 2</span>
+      <span>Page 2 of 3 (Document Page 6)</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3: CHAPTER 7 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 2)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-B &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 7: Stakeholder Sign-Off & Approvals</h1>
+    <p>
+      The undersigned engineering leadership and architecture board representatives hereby certify that
+      the specifications outlined across Chapters 1 through 7 satisfy enterprise production requirements.
+    </p>
+    <h2>7.1 Formal Approval Signatures</h2>
+    <div class="sig-grid">
+      <div class="sig-box">
+        <strong>Chief Systems Architect:</strong><br/>
+        Dr. Marcus Vance, Ph.D.<br/>
+        <em>Signature: /s/ M. Vance</em><br/>
+        Date: November 6, 2026
+      </div>
+      <div class="sig-box">
+        <strong>Head of Quality Engineering:</strong><br/>
+        Elena Rostova, VP QA<br/>
+        <em>Signature: /s/ E. Rostova</em><br/>
+        Date: November 6, 2026
+      </div>
+    </div>
+    <div class="sig-grid">
+      <div class="sig-box">
+        <strong>Security &amp; Cryptography Lead:</strong><br/>
+        T. K. Chen, CISSP<br/>
+        <em>Signature: /s/ T. K. Chen</em><br/>
+        Date: November 6, 2026
+      </div>
+      <div class="sig-box">
+        <strong>Enterprise Release Director:</strong><br/>
+        Sarah Jenkins, PMP<br/>
+        <em>Signature: /s/ S. Jenkins</em><br/>
+        Date: November 6, 2026
+      </div>
+    </div>
+    <div class="callout" style="margin-top: 25px;">
+      <strong>Conclusion of Document B:</strong> All appendices and signatures verified.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 2</span>
+      <span>Page 3 of 3 (Document Page 7)</span>
+    </div>
+  </div>
+
+</body>
+</html>

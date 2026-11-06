@@ -1,0 +1,11 @@
+id,product_name,category,unit_price,quantity,total_revenue
+1,Item Book,Office Supplies,10.00,5,50.00
+2,PaperPilot Enterprise License,Software,1250.00,2,2500.00
+3,Dedicated Cloud Storage 1TB,Cloud Infrastructure,120.00,12,1440.00
+4,High-Performance Scanner Pro,Hardware,499.00,4,1996.00
+5,Cryptographic Hardware Security Module,Security,850.00,3,2550.00
+6,24/7 Premium Mission-Critical SLA,Professional Services,300.00,6,1800.00
+7,Annual Audit Compliance Extension,Software,650.00,2,1300.00
+8,Thermal Barcode Label Printer,Hardware,175.00,5,875.00
+9,Developer API Gateway Seat,Software,85.00,10,850.00
+10,Air-Gapped Cold Storage Unit,Hardware,1200.00,1,1200.00
