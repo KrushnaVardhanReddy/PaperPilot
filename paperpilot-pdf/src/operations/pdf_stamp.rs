@@ -83,8 +83,13 @@ pub fn pdf_stamp_bytes(input_bytes: &[u8], options: &PdfStampOptions) -> Result<
             .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?
     } else if let Some(ref data) = options.image_data {
         use base64::Engine;
+        let clean = if let Some(idx) = data.find(',') {
+            &data[idx + 1..]
+        } else {
+            data.as_str()
+        };
         base64::engine::general_purpose::STANDARD
-            .decode(data)
+            .decode(clean.trim())
             .map_err(|e| PdfError::ParseError(format!("Base64 Error: {}", e)))?
     } else {
         std::fs::read("tests/e2e_fixtures/real/img1.png")
@@ -99,20 +104,30 @@ pub fn pdf_stamp_bytes(input_bytes: &[u8], options: &PdfStampOptions) -> Result<
     let h = img.height();
 
     // Convert image to raw bytes suitable for PDF /XObject
-    let (color_space, bits_per_component, raw_img_data) = match img.color() {
-        image::ColorType::Rgb8 => (b"DeviceRGB".to_vec(), 8, img.into_rgb8().into_raw()),
+    let (color_space, bits_per_component, raw_img_data, smask_data) = match img.color() {
+        image::ColorType::Rgb8 => (b"DeviceRGB".to_vec(), 8, img.into_rgb8().into_raw(), None),
         image::ColorType::Rgba8 => {
-            // For simplicity, converting RGBA to RGB for standard image
-            // Alpha could be supported with SMask, but simple DeviceRGB is used.
-            let rgb_img = img.into_rgb8();
-            (b"DeviceRGB".to_vec(), 8, rgb_img.into_raw())
+            let rgba = img.to_rgba8();
+            let mut rgb_data = Vec::with_capacity((w * h * 3) as usize);
+            let mut alpha_data = Vec::with_capacity((w * h) as usize);
+            let mut has_transparency = false;
+            for pixel in rgba.pixels() {
+                rgb_data.push(pixel[0]);
+                rgb_data.push(pixel[1]);
+                rgb_data.push(pixel[2]);
+                alpha_data.push(pixel[3]);
+                if pixel[3] < 255 {
+                    has_transparency = true;
+                }
+            }
+            if has_transparency {
+                (b"DeviceRGB".to_vec(), 8, rgb_data, Some(alpha_data))
+            } else {
+                (b"DeviceRGB".to_vec(), 8, rgb_data, None)
+            }
         }
-        image::ColorType::L8 => (b"DeviceGray".to_vec(), 8, img.into_luma8().into_raw()),
-        _ => {
-            // Fallback: convert everything to RGB
-            let rgb_img = img.into_rgb8();
-            (b"DeviceRGB".to_vec(), 8, rgb_img.into_raw())
-        }
+        image::ColorType::L8 => (b"DeviceGray".to_vec(), 8, img.into_luma8().into_raw(), None),
+        _ => (b"DeviceRGB".to_vec(), 8, img.into_rgb8().into_raw(), None),
     };
 
     let mut img_dict = Dictionary::new();
@@ -124,8 +139,31 @@ pub fn pdf_stamp_bytes(input_bytes: &[u8], options: &PdfStampOptions) -> Result<
     img_dict.set("BitsPerComponent", Object::Integer(bits_per_component));
     img_dict.set("Filter", Object::Name(b"FlateDecode".to_vec())); // Compress it
 
-    // Compress stream data
     use std::io::Write;
+    if let Some(alpha_bytes) = smask_data {
+        let mut smask_encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        smask_encoder
+            .write_all(&alpha_bytes)
+            .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
+        let comp_alpha = smask_encoder
+            .finish()
+            .map_err(|e| PdfError::IoError(std::io::Error::other(e.to_string())))?;
+
+        let mut smask_dict = Dictionary::new();
+        smask_dict.set("Type", Object::Name(b"XObject".to_vec()));
+        smask_dict.set("Subtype", Object::Name(b"Image".to_vec()));
+        smask_dict.set("Width", Object::Integer(w as i64));
+        smask_dict.set("Height", Object::Integer(h as i64));
+        smask_dict.set("ColorSpace", Object::Name(b"DeviceGray".to_vec()));
+        smask_dict.set("BitsPerComponent", Object::Integer(8));
+        smask_dict.set("Filter", Object::Name(b"FlateDecode".to_vec()));
+
+        let smask_stream = Stream::new(smask_dict, comp_alpha);
+        let smask_id = doc.add_object(smask_stream);
+        img_dict.set("SMask", Object::Reference(smask_id));
+    }
+
+    // Compress stream data
     let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
     encoder
         .write_all(&raw_img_data)

@@ -6525,7 +6525,34 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
+                if let Some(p) = args.get("image_path").and_then(|v| v.as_str()) {
+                    options.image_path = Some(p.to_string());
+                }
+                if let Some(d) = args.get("image_data").and_then(|v| v.as_str()) {
+                    options.image_data = Some(d.to_string());
+                }
+                if let Some(x) = args.get("x").and_then(|v| v.as_f64()) {
+                    options.x = x as f32;
+                }
+                if let Some(y) = args.get("y").and_then(|v| v.as_f64()) {
+                    options.y = y as f32;
+                }
+                if let Some(w) = args.get("width").and_then(|v| v.as_f64()) {
+                    options.width = w as f32;
+                }
+                if let Some(h) = args.get("height").and_then(|v| v.as_f64()) {
+                    options.height = h as f32;
+                }
+                if let Some(op) = args.get("opacity").and_then(|v| v.as_f64()) {
+                    options.opacity = op as f32;
+                }
+                if let Some(pages) = args.get("pages").and_then(|v| v.as_str()) {
+                    options.pages = pages.to_string();
+                } else if let Some(page) = args.get("page").and_then(|v| v.as_i64()) {
+                    options.pages = page.to_string();
+                }
+
                 let result =
                     paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(&input_bytes, &options)
                         .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;

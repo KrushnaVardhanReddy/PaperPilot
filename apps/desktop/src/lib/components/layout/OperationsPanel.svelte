@@ -907,7 +907,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             </div>
           {/if}
         </div>
-      {:else if activeTool.id === 'split'}
+      {:else if activeTool.id === 'split' || activeTool.id === 'pdf_split'}
         <div class="operation-config">
           <label for="splitPoints" class="section-desc">Split Page Ranges (comma separated):</label>
           <input id="splitPoints" type="text" class="form-input" bind:value={splitPoints} placeholder="e.g. 1-3, 4-8" />
@@ -931,7 +931,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <span>Higher quality</span>
           </div>
         </div>
-      {:else if activeTool.id === 'rotate'}
+      {:else if activeTool.id === 'rotate' || activeTool.id === 'pdf_rotate'}
         <div class="operation-config">
           <label for="rotateAngle" class="section-desc">Rotation Angle:</label>
           <select id="rotateAngle" bind:value={rotateAngle} class="form-input">
