@@ -1,0 +1,34 @@
+# Prompt P3_5_4: Desktop Frontend UI Polish, Descriptive Copy & Actionable Guidance
+
+## Context & Objectives
+A recent review of PaperPilot noted that while backend performance and tool execution are excellent, the frontend microcopy and UI text are terse and abrupt. Users are not given enough context regarding what inputs tools accept, what options mean, or what outputs are produced.
+
+In this task, you will:
+1. Enrich `ToolDefinition` in `apps/desktop/src/lib/types/tools.ts` with:
+   - `detailedDescription?: string`
+   - `inputHelp?: string`
+   - `outputHelp?: string`
+   - `securityNote?: string`
+2. Update `apps/desktop/src/lib/types/toolList.ts`:
+   - Replace terse 3-5 word descriptions across all core and preview tools with clear, descriptive explanations detailing the specific operation, required input format, and output artifact.
+3. Enhance `apps/desktop/src/lib/components/ui/DropZone.svelte`:
+   - Improve the initial empty-state typography and layout.
+   - Add a prominent title ("Open or Drag & Drop Documents"), a clear offline privacy badge ("100% Offline & Private: Documents never leave your computer"), and visual pills for supported file types (`.pdf`, `.docx`, `.xlsx`, `.md`, `.html`, `.json`, `.csv`).
+   - Improve "Browse Files" and "Import from URL" button tooltips and labels.
+4. Enhance `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+   - Add field-level caption hints below parameter inputs (e.g. explain rotation angle options, format of page range strings like `1-5, 8`, password requirements).
+   - Show input and output format badges prominently on the tool execution card.
+   - Show a warning callout for destructive/irreversible tools (`pdf_redact`, `pdf_delete_pages`).
+5. Enhance `apps/desktop/src/lib/utils/errorFormatter.ts`:
+   - Refine error headlines and step-by-step action hints for protected PDFs, damaged cross-reference tables, out-of-bounds page ranges, and locked files.
+6. Verify and test:
+   - Run `cd apps/desktop && npm run test`
+   - Run `make test-e2e-all-90` to ensure zero regressions across all 90 tools.
+
+---
+
+## Technical Standards & Verification
+- Follow `jules_prompts/SYSTEM_PROMPT.md` and UI conventions.
+- Svelte 5 runes (`$state`, `$derived`, `$props`) must be preserved.
+- Do not break existing DOM data-testid or role attributes required by Playwright test suites.
+- Verify with `make test-e2e-suite-1 && make test-e2e-suite-2 && make test-e2e-suite-3`.
