@@ -321,13 +321,15 @@ mod tests {
             .or_else(|_| std::fs::read("../tests/e2e_fixtures/real/sample_photo_doc.pdf"))
             .unwrap();
 
-        let mut options = PdfStampOptions::default();
-        options.x = 100.0;
-        options.y = 100.0;
-        options.width = 200.0;
-        options.height = 100.0;
-        options.opacity = 0.5;
-        options.image_path = Some("tests/e2e_fixtures/img1.png".to_string());
+        let options = PdfStampOptions {
+            x: 100.0,
+            y: 100.0,
+            width: 200.0,
+            height: 100.0,
+            opacity: 0.5,
+            image_path: Some("tests/e2e_fixtures/img1.png".to_string()),
+            ..Default::default()
+        };
 
         let result = pdf_stamp_bytes(&bytes, &options).unwrap();
         assert!(result.starts_with(b"%PDF"));

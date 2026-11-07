@@ -482,8 +482,10 @@ mod tests {
 
     #[test]
     fn test_pdf_attachments_list_empty() {
-        let mut options = PdfAttachmentsOptions::default();
-        options.action = "list".to_string();
+        let options = PdfAttachmentsOptions {
+            action: "list".to_string(),
+            ..Default::default()
+        };
         let bytes = create_blank_pdf();
         let result = pdf_attachments_bytes(&bytes, &options).unwrap();
         let report: AttachmentsReport = serde_json::from_slice(&result).unwrap();

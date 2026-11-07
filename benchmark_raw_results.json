@@ -1,0 +1,1052 @@
+{
+  "pdf_merge": {
+    "cli": {
+      "latencies": [
+        33.746385000085866
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        292.5790359995517
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        62.806558000374935
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_split": {
+    "cli": {
+      "latencies": [
+        26.05265599959239
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        21.736253000199213
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.636565999542654
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_extract_pages": {
+    "cli": {
+      "latencies": [
+        24.608245999843348
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.054734999575885
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        7.579748000352993
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_delete_pages": {
+    "cli": {
+      "latencies": [
+        30.76686799977324
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.924695000554493
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.815252000298642
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_reorder_pages": {
+    "cli": {
+      "latencies": [
+        29.860710999855655
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.430473999818787
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.376156999976956
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_rotate": {
+    "cli": {
+      "latencies": [
+        23.492013999202754
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.018037999558146
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.783771000300476
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_crop": {
+    "cli": {
+      "latencies": [
+        23.25862399993639
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.606326000030094
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.629328999726567
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_burst": {
+    "cli": {
+      "latencies": [
+        25.580358999832242
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        27.436726000814815
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.969824000407243
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_remove_blank": {
+    "cli": {
+      "latencies": [
+        27.444090000244614
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.877501999872038
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        5.581591000009212
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_compress": {
+    "cli": {
+      "latencies": [
+        29.559762000644696
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.27500300007523
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.2188259998947615
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_repair": {
+    "cli": {
+      "latencies": [
+        30.906976000551367
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.440191000488994
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.492099000344751
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_linearize": {
+    "cli": {
+      "latencies": [
+        24.418164999588043
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        27.042693999646872
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        5.050670999480644
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_encrypt": {
+    "cli": {
+      "latencies": [
+        25.647543999184563
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.00015000046551
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.054154999219463
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_decrypt": {
+    "cli": {
+      "latencies": [
+        26.583711999592197
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        27.469866000501497
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        8.355610000762681
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_watermark": {
+    "cli": {
+      "latencies": [
+        23.291556000003766
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        30.95296799983771
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.6415270007855725
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_redact": {
+    "cli": {
+      "latencies": [
+        26.300710999748844
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        24.373512999773084
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.3761649994848995
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_metadata": {
+    "cli": {
+      "latencies": [
+        22.79480500055797
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.63196400063316
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.169080000792746
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_sign": {
+    "cli": {
+      "latencies": [
+        22.878931000377634
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.611409999924945
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.265913999915938
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_flatten": {
+    "cli": {
+      "latencies": [
+        23.18839100007608
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.754182999349723
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.304461999709019
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_pdf_a": {
+    "cli": {
+      "latencies": [
+        22.487418000309845
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.680114999777288
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.245381000146153
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_header_footer": {
+    "cli": {
+      "latencies": [
+        23.26771300067776
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.630580999342783
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.543446000752738
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_bates": {
+    "cli": {
+      "latencies": [
+        33.4068579995801
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.88259100016876
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.817832999833627
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_page_numbers": {
+    "cli": {
+      "latencies": [
+        27.92500400028075
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.71620400036045
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.839100000026519
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_extract_text": {
+    "cli": {
+      "latencies": [
+        60.15094099984708
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.80603300014627
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        30.22693899947626
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_extract_images": {
+    "cli": {
+      "latencies": [
+        24.518057000022964
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        21.31070300038118
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.575552999995125
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_search": {
+    "cli": {
+      "latencies": [
+        23.25934300006338
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.021080999664264
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.532917999313213
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_render": {
+    "cli": {
+      "latencies": [
+        49.03173699949548
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.070541000677622
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        5.845490999490721
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_compare": {
+    "cli": {
+      "latencies": [
+        52.96180500045011
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.89102300012746
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        10.713910999584186
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_ocr": {
+    "cli": {
+      "latencies": [
+        102.25707300014619
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.719529999747465
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        60.683873999551
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_bookmarks": {
+    "cli": {
+      "latencies": [
+        25.300278999566217
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.979298999714956
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        5.580080999607162
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_images_to_pdf": {
+    "cli": {
+      "latencies": [
+        26.10105100029614
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.16595199963922
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        7.1063469995351625
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_annotate": {
+    "cli": {
+      "latencies": [
+        20.468998000069405
+      ],
+      "pass": false
+    },
+    "mcp": {
+      "latencies": [
+        19.500751000123273
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.579243999614846
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_classify_type": {
+    "cli": {
+      "latencies": [
+        26.661888000489853
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.861575000504672
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        7.722635999925842
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_validate": {
+    "cli": {
+      "latencies": [
+        23.144628000409284
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.289812999886635
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.101769999579119
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_hash": {
+    "cli": {
+      "latencies": [
+        20.65221799966821
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.351666000147816
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.05552100053319
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_read_form": {
+    "cli": {
+      "latencies": [
+        23.46818599926337
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.677650999256002
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.98005699935311
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_fill_form": {
+    "cli": {
+      "latencies": [
+        23.61707000000024
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.861536999793316
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.3429519992059795
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_create_form_field": {
+    "cli": {
+      "latencies": [
+        23.58371199989051
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.393024999772024
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.119340000215743
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_docx": {
+    "cli": {
+      "latencies": [
+        53.54058200009604
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.39784400019562
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        8.48069600033341
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_xlsx": {
+    "cli": {
+      "latencies": [
+        40.9452189996955
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.382360000236076
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        19.631793000371545
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_pptx": {
+    "cli": {
+      "latencies": [
+        24.762256000030902
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.411366999520396
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        5.5519540001114365
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_convert_html": {
+    "cli": {
+      "latencies": [
+        102.42407499936235
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.796872999904735
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        56.13391899987619
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_convert_markdown": {
+    "cli": {
+      "latencies": [
+        77.19072300005791
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.900917000086338
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        53.695743000389484
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_convert_excel": {
+    "cli": {
+      "latencies": [
+        81.28145599948766
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.290363000436628
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        57.45241000022361
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_html": {
+    "cli": {
+      "latencies": [
+        28.969705999770667
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.686180000462628
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.461258999777783
+      ],
+      "pass": false
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_markdown": {
+    "cli": {
+      "latencies": [
+        60.3809629992611
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.590215000083845
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.1267759995898814
+      ],
+      "pass": false
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_to_json": {
+    "cli": {
+      "latencies": [
+        23.191347999272693
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.796896000822017
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        4.551620999336592
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "json_to_pdf": {
+    "cli": {
+      "latencies": [
+        22.397943000214582
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        20.092387999284256
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.3021600002030027
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_info": {
+    "cli": {
+      "latencies": [
+        23.461307000616216
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        18.756031000521034
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        3.6604329998226603
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  },
+  "pdf_rag_chunks": {
+    "cli": {
+      "latencies": [
+        48.40560499997082
+      ],
+      "pass": true
+    },
+    "mcp": {
+      "latencies": [
+        19.97313599986228
+      ],
+      "pass": false
+    },
+    "api": {
+      "latencies": [
+        6.486625000434287
+      ],
+      "pass": true
+    },
+    "category": "Uncategorized"
+  }
+}
