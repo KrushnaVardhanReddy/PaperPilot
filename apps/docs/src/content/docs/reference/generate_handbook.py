@@ -31,7 +31,7 @@ def extract_description(content):
 
 def generate_handbook():
     tools_dir = 'apps/docs/src/content/docs/reference/tools'
-    output_path = 'apps/docs/src/content/docs/reference/50-tools-handbook.md'
+    output_path = 'apps/docs/src/content/docs/reference/tools-handbook.md'
     tool_files = sorted(glob.glob(os.path.join(tools_dir, '*.md')))
 
     print(f"Discovered {len(tool_files)} tool documents in {tools_dir}")

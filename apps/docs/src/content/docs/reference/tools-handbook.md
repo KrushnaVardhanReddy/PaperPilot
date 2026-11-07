@@ -1,13 +1,104 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 73 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 89 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (73 Tools)
+# PaperPilot Tools Handbook (89 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **73 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **89 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
-## 1. `document_pii_scan`
+## 1. `batch_fill`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Batch fill PDF forms.**
+This tool takes a fillable PDF form and a CSV or JSON dataset, mapping columns/keys to form fields to generate multiple filled PDF documents.
+
+### CLI
+```bash
+paperpilot form batch-fill --template form.pdf --data dataset.csv --output-dir out/
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "batch_fill",
+  "arguments": {
+    "template": "form.pdf",
+    "data": "dataset.csv",
+    "output_dir": "out/"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/batch-fill \
+  -H 'Content-Type: application/json' \
+  -d '{"template": "form.pdf", "data": "dataset.csv", "output_dir": "out/"}'
+```
+
+## 2. `cli_ask`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Search and ask questions across the workspace.**
+This tool allows searching and querying the local file workspace using semantic search and local AI.
+
+### CLI
+```bash
+paperpilot ask "What is in my workspace?"
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "cli_ask",
+  "arguments": {
+    "query": "What is in my workspace?"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/workspace/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "What is in my workspace?"}'
+```
+
+## 3. `cli_fill_batch`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Batch fill PDF forms.**
+This tool takes a fillable PDF form and a CSV or JSON dataset, mapping columns/keys to form fields to generate multiple filled PDF documents.
+
+### CLI
+```bash
+paperpilot form batch-fill --template form.pdf --data dataset.csv --output-dir out/
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "cli_fill_batch",
+  "arguments": {
+    "template": "form.pdf",
+    "data": "dataset.csv",
+    "output_dir": "out/"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/batch-fill \
+  -H 'Content-Type: application/json' \
+  -d '{"template": "form.pdf", "data": "dataset.csv", "output_dir": "out/"}'
+```
+
+## 4. `document_pii_scan`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -35,7 +126,38 @@ paperpilot pii-scan --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/document-pii-scan -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pii_report.json"}'
 ```
 
-## 2. `excel_to_csv`
+## 5. `document_workflow`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Run automated pipelines on documents.**
+This tool executes a configured document workflow pipeline on a set of input files, producing processed artifacts and execution receipts.
+
+### CLI
+```bash
+paperpilot workflow run --config pipeline.json --input input_dir --output output_dir
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "document_workflow",
+  "arguments": {
+    "config": "pipeline.json",
+    "input": "input_dir",
+    "output": "output_dir"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/automation/workflows/run \
+  -H 'Content-Type: application/json' \
+  -d '{"config": "pipeline.json", "input": "input_dir", "output": "output_dir"}'
+```
+
+## 6. `excel_to_csv`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -63,7 +185,7 @@ paperpilot office excel-to-csv --input tests/e2e_fixtures/real/test.xlsx --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-csv -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/table.csv"}'
 ```
 
-## 3. `excel_to_json`
+## 7. `excel_to_json`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -90,7 +212,63 @@ paperpilot office excel-to-json --input tests/e2e_fixtures/real/test.xlsx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/excel-to-json -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx"}'
 ```
 
-## 4. `json_to_pdf`
+## 8. `execution_receipt_get`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Retrieve workflow run receipts.**
+This tool fetches a specific JSON execution receipt for an automated workflow run by its ID.
+
+### CLI
+```bash
+paperpilot workflow history --directory .penta_runs --id run-JOB_ID.json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "execution_receipt_get",
+  "arguments": {
+    "receipt_id": "run-JOB_ID.json",
+    "directory": ".penta_runs"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X GET http://127.0.0.1:7823/api/v1/automation/receipts/run-JOB_ID.json
+```
+
+## 9. `execution_receipt_list`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**List workflow run receipts.**
+This tool lists JSON execution receipts for automated workflow runs in the current workspace.
+
+### CLI
+```bash
+paperpilot workflow history --directory .penta_runs --limit 50
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "execution_receipt_list",
+  "arguments": {
+    "limit": 50,
+    "directory": ".penta_runs"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X GET http://127.0.0.1:7823/api/v1/automation/receipts?limit=50
+```
+
+## 10. `json_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -112,7 +290,7 @@ N/A
 N/A
 ```
 
-## 5. `office_extract_text`
+## 11. `office_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -140,7 +318,7 @@ paperpilot office extract-text --input tests/e2e_fixtures/real/test.xlsx --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/out.txt"}'
 ```
 
-## 6. `office_modernize_legacy`
+## 12. `office_modernize_legacy`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -168,7 +346,7 @@ paperpilot office modernize --input tests/e2e_fixtures/real/test.xls --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-modernize-legacy -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xls", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
-## 7. `office_to_markdown`
+## 13. `office_to_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -196,7 +374,7 @@ paperpilot office to-markdown --input tests/e2e_fixtures/real/test.xlsx --output
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/office-to-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.xlsx", "output": "tests/e2e_fixtures/out/penta_e2e/doc.md"}'
 ```
 
-## 8. `pdf_annotate`
+## 14. `pdf_annotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -225,7 +403,7 @@ paperpilot annotate --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/annotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "annotations": [], "output": "tests/e2e_fixtures/out/penta_e2e/annotated.pdf"}'
 ```
 
-## 9. `pdf_attachments`
+## 15. `pdf_attachments`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -246,7 +424,7 @@ N/A
 N/A
 ```
 
-## 10. `pdf_auto_rotate`
+## 16. `pdf_auto_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -269,7 +447,7 @@ curl -X POST http://localhost:8080/tools/pdf_auto_rotate \
   -d '{"file_path": "input.pdf", "output_path": "output.pdf", "target_orientation": "portrait"}'
 ```
 
-## 11. `pdf_bates`
+## 17. `pdf_bates`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -299,7 +477,7 @@ paperpilot bates --input tests/e2e_fixtures/real/single_page.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bates -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "prefix": "CONF-", "start": 1, "output": "tests/e2e_fixtures/out/penta_e2e/bates.pdf"}'
 ```
 
-## 12. `pdf_booklet`
+## 18. `pdf_booklet`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -327,7 +505,7 @@ paperpilot booklet --input tests/e2e_fixtures/real/multi_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/booklet -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/booklet.pdf"}'
 ```
 
-## 13. `pdf_bookmarks`
+## 19. `pdf_bookmarks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -354,7 +532,7 @@ paperpilot bookmarks --input tests/e2e_fixtures/real/multi_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/bookmarks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf"}'
 ```
 
-## 14. `pdf_burst`
+## 20. `pdf_burst`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -384,7 +562,7 @@ paperpilot burst --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/burst"}'
 ```
 
-## 15. `pdf_change_permissions`
+## 21. `pdf_change_permissions`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -405,7 +583,7 @@ N/A
 N/A
 ```
 
-## 16. `pdf_classify_type`
+## 22. `pdf_classify_type`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -432,7 +610,37 @@ paperpilot classify --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/classify-type -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 17. `pdf_compare`
+## 23. `pdf_comic_archive`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Convert PDFs to Comic Archives.**
+This tool converts a standard PDF document containing images into a comic book archive format (CBZ or CBR).
+
+### CLI
+```bash
+paperpilot convert --format cbr --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_comic_archive_result.cbr
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_comic_archive",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_comic_archive_result.cbr"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/comic-archive \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_comic_archive_result.cbr"}'
+```
+
+## 24. `pdf_compare`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -460,7 +668,7 @@ paperpilot compare --input tests/e2e_fixtures/real/merge_a.pdf --input-b tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compare -H 'Content-Type: application/json' -d '{"file1": "tests/e2e_fixtures/real/merge_a.pdf", "file2": "tests/e2e_fixtures/real/merge_b.pdf"}'
 ```
 
-## 18. `pdf_compress`
+## 25. `pdf_compress`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -489,7 +697,7 @@ paperpilot compress --input tests/e2e_fixtures/real/single_page.pdf --quality me
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/compress -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "quality": "medium", "output": "tests/e2e_fixtures/out/penta_e2e/compressed.pdf"}'
 ```
 
-## 19. `pdf_convert_excel`
+## 26. `pdf_convert_excel`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -517,16 +725,16 @@ paperpilot convert --input tests/e2e_fixtures/real/test.csv --format pdf --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-excel -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.csv", "output": "tests/e2e_fixtures/out/penta_e2e/out_csv.pdf"}'
 ```
 
-## 20. `pdf_convert_html`
+## 27. `pdf_convert_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Converts PDF documents into responsive, semantic HTML5 web pages.**  
-Translates layout, headings, paragraphs, and embedded graphics into clean HTML and CSS suitable for browser viewing.
+**Convert PDFs to HTML.**
+This tool extracts text and layout from a PDF document and converts it into HTML format.
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/real/test.html --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_html.pdf --json
+paperpilot convert --format html --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_to_html_result.html
 ```
 
 ### MCP JSON-RPC
@@ -534,27 +742,29 @@ paperpilot convert --input tests/e2e_fixtures/real/test.html --format pdf --outp
 {
   "name": "pdf_convert_html",
   "arguments": {
-    "input": "tests/e2e_fixtures/real/test.html",
-    "output": "tests/e2e_fixtures/out/penta_e2e/out_html.pdf"
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_html_result.html"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.html", "output": "tests/e2e_fixtures/out/penta_e2e/out_html.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-html \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_html_result.html"}'
 ```
 
-## 21. `pdf_convert_markdown`
+## 28. `pdf_convert_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
-**Extracts PDF document structure into clean, LLM-ready Markdown.**  
-Preserves section titles, bullet points, code blocks, and tables while discarding complex layout noise for AI pipelines.
+**Convert PDFs to Markdown.**
+This tool extracts text and semantic formatting from a PDF document and converts it into standard Markdown format.
 
 ### CLI
 ```bash
-paperpilot convert --input tests/e2e_fixtures/real/test.md --format pdf --output tests/e2e_fixtures/out/penta_e2e/out_md.pdf --json
+paperpilot convert --format markdown --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md
 ```
 
 ### MCP JSON-RPC
@@ -562,18 +772,20 @@ paperpilot convert --input tests/e2e_fixtures/real/test.md --format pdf --output
 {
   "name": "pdf_convert_markdown",
   "arguments": {
-    "input": "tests/e2e_fixtures/real/test.md",
-    "output": "tests/e2e_fixtures/out/penta_e2e/out_md.pdf"
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md"
   }
 }
 ```
 
 ### REST API
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/convert-markdown -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/test.md", "output": "tests/e2e_fixtures/out/penta_e2e/out_md.pdf"}'
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-markdown \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md"}'
 ```
 
-## 22. `pdf_create_form_field`
+## 29. `pdf_create_form_field`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -608,7 +820,7 @@ paperpilot form add-field tests/e2e_fixtures/real/single_page.pdf --name signatu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/create-form-field -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "name": "f1", "rect": [0,0,10,10], "output": "tests/e2e_fixtures/out/penta_e2e/added_field.pdf"}'
 ```
 
-## 23. `pdf_crop`
+## 30. `pdf_crop`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -637,7 +849,7 @@ paperpilot crop --input tests/e2e_fixtures/real/single_page.pdf --rect 10,10,200
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/crop -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "box": "10,10,200,200", "output": "tests/e2e_fixtures/out/penta_e2e/cropped.pdf"}'
 ```
 
-## 24. `pdf_decrypt`
+## 31. `pdf_decrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -666,7 +878,7 @@ paperpilot decrypt --input tests/e2e_fixtures/real/encrypted.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/decrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/decrypted.pdf"}'
 ```
 
-## 25. `pdf_dedup_streams`
+## 32. `pdf_dedup_streams`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -687,7 +899,7 @@ N/A
 N/A
 ```
 
-## 26. `pdf_delete_pages`
+## 33. `pdf_delete_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -716,7 +928,7 @@ paperpilot delete --input tests/e2e_fixtures/real/multi_page.pdf --pages 2,4 --o
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/delete-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/deleted.pdf", "pages": "2,4"}'
 ```
 
-## 27. `pdf_encrypt`
+## 34. `pdf_encrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -745,7 +957,7 @@ paperpilot encrypt --input tests/e2e_fixtures/real/single_page.pdf --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/encrypt -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "password": "testpass", "output": "tests/e2e_fixtures/out/penta_e2e/encrypted.pdf"}'
 ```
 
-## 28. `pdf_extract_images`
+## 35. `pdf_extract_images`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -773,7 +985,7 @@ paperpilot extract-images --input tests/e2e_fixtures/real/single_page.pdf --outp
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-images -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/images"}'
 ```
 
-## 29. `pdf_extract_pages`
+## 36. `pdf_extract_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -802,7 +1014,41 @@ paperpilot extract --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/extracted.pdf", "pages": "1,3"}'
 ```
 
-## 30. `pdf_extract_text`
+## 37. `pdf_extract_tables`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Extract tables from PDFs.**
+This tool detects and extracts tabular data structures from PDF documents into structured formats like CSV or JSON.
+
+### CLI
+```bash
+paperpilot extract-tables --format json --pages all --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_extract_tables_result.json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_extract_tables",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_extract_tables_result.json",
+    "format": "json",
+    "pages": "all"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-tables \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_extract_tables_result.json",
+    "format": "json",
+    "pages": "all"}'
+```
+
+## 38. `pdf_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -829,7 +1075,7 @@ paperpilot extract-text --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/extract-text -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 31. `pdf_fill_form`
+## 39. `pdf_fill_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -858,7 +1104,7 @@ paperpilot form fill tests/e2e_fixtures/form.pdf --data tests/e2e_fixtures/form_
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/fill-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "data": {}, "output": "tests/e2e_fixtures/out/penta_e2e/filled.pdf"}'
 ```
 
-## 32. `pdf_flatten`
+## 40. `pdf_flatten`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -886,7 +1132,7 @@ paperpilot flatten --input tests/e2e_fixtures/form.pdf --output tests/e2e_fixtur
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/flatten -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/flattened.pdf"}'
 ```
 
-## 33. `pdf_hash`
+## 41. `pdf_hash`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -913,7 +1159,7 @@ paperpilot hash --input tests/e2e_fixtures/real/missing.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/hash -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 34. `pdf_header_footer`
+## 42. `pdf_header_footer`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -942,7 +1188,7 @@ paperpilot header-footer --input tests/e2e_fixtures/real/single_page.pdf --outpu
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/header-footer -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "text": "Confidential", "output": "tests/e2e_fixtures/out/penta_e2e/header.pdf"}'
 ```
 
-## 35. `pdf_images_to_pdf`
+## 43. `pdf_images_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -972,7 +1218,7 @@ paperpilot images-to-pdf --images tests/e2e_fixtures/real/test.png --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-pdf -H 'Content-Type: application/json' -d '{"images": ["tests/e2e_fixtures/real/test.png"], "output": "tests/e2e_fixtures/out/penta_e2e/img2pdf.pdf"}'
 ```
 
-## 36. `pdf_invert_colors`
+## 44. `pdf_invert_colors`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -993,7 +1239,7 @@ N/A
 N/A
 ```
 
-## 37. `pdf_linearize`
+## 45. `pdf_linearize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1021,7 +1267,7 @@ paperpilot linearize --input tests/e2e_fixtures/real/single_page.pdf --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/linearize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/linearized.pdf"}'
 ```
 
-## 38. `pdf_merge`
+## 46. `pdf_merge`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1052,7 +1298,7 @@ paperpilot merge --input tests/e2e_fixtures/real/merge_a.pdf tests/e2e_fixtures/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/merge -H 'Content-Type: application/json' -d '{"inputs": ["tests/e2e_fixtures/real/merge_a.pdf", "tests/e2e_fixtures/real/merge_b.pdf"], "output": "tests/e2e_fixtures/out/penta_e2e/merge_mcp_simple.pdf"}'
 ```
 
-## 39. `pdf_merge_alternate`
+## 47. `pdf_merge_alternate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1073,7 +1319,7 @@ N/A
 N/A
 ```
 
-## 40. `pdf_metadata`
+## 48. `pdf_metadata`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1100,7 +1346,7 @@ paperpilot metadata --input tests/e2e_fixtures/real/single_page.pdf --output tes
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/metadata -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 41. `pdf_nup`
+## 49. `pdf_nup`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1128,7 +1374,7 @@ paperpilot nup --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e2e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/nup -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/nup.pdf"}'
 ```
 
-## 42. `pdf_ocr`
+## 50. `pdf_ocr`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1156,7 +1402,7 @@ paperpilot ocr --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/ocr -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/ocr.pdf"}'
 ```
 
-## 43. `pdf_overlay_underlay`
+## 51. `pdf_overlay_underlay`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1177,7 +1423,7 @@ N/A
 N/A
 ```
 
-## 44. `pdf_page_numbers`
+## 52. `pdf_page_numbers`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1205,7 +1451,7 @@ paperpilot page-numbers --input tests/e2e_fixtures/real/single_page.pdf --output
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/page-numbers -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/numbers.pdf"}'
 ```
 
-## 45. `pdf_posterize`
+## 53. `pdf_posterize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1249,7 +1495,7 @@ curl -X POST http://localhost:8080/api/v1/pdf/posterize \\
   }'
 ```
 
-## 46. `pdf_rag_chunks`
+## 54. `pdf_rag_chunks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1276,7 +1522,7 @@ paperpilot rag-chunks --input tests/e2e_fixtures/real/single_page.pdf
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rag-chunks -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 47. `pdf_read_form`
+## 55. `pdf_read_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1303,7 +1549,7 @@ paperpilot form read tests/e2e_fixtures/real/missing.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/read-form -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/form.pdf"}'
 ```
 
-## 48. `pdf_redact`
+## 56. `pdf_redact`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1338,7 +1584,7 @@ paperpilot redact --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/redact -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "page": 1, "rect": [50, 50, 200, 50], "output": "tests/e2e_fixtures/out/penta_e2e/redacted.pdf"}'
 ```
 
-## 49. `pdf_remove_blank`
+## 57. `pdf_remove_blank`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1366,7 +1612,7 @@ paperpilot remove-blank --input tests/e2e_fixtures/real/multi_page.pdf --output 
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/remove-blank -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/noblank.pdf"}'
 ```
 
-## 50. `pdf_remove_signatures`
+## 58. `pdf_remove_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1394,7 +1640,7 @@ paperpilot pdf-remove-signatures --input tests/e2e_fixtures/real/single_page.pdf
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/remove-signatures -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/stripped.pdf"}'
 ```
 
-## 51. `pdf_render`
+## 59. `pdf_render`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1422,7 +1668,7 @@ paperpilot render --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/render -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/rendered.png"}'
 ```
 
-## 52. `pdf_reorder_pages`
+## 60. `pdf_reorder_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1451,7 +1697,7 @@ paperpilot reorder --input tests/e2e_fixtures/real/multi_page.pdf --order 2,1,3,
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/reorder-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "order": "2,1,3,4,5", "output": "tests/e2e_fixtures/out/penta_e2e/reordered.pdf"}'
 ```
 
-## 53. `pdf_repair`
+## 61. `pdf_repair`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1479,7 +1725,7 @@ paperpilot repair --input tests/e2e_fixtures/real/single_page.pdf --output tests
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/repair -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/repaired.pdf"}'
 ```
 
-## 54. `pdf_rotate`
+## 62. `pdf_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1509,7 +1755,7 @@ paperpilot rotate --input tests/e2e_fixtures/real/single_page.pdf --degrees 90 -
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/rotate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "angle": 90, "pages": "1", "output": "tests/e2e_fixtures/out/penta_e2e/rotated.pdf"}'
 ```
 
-## 55. `pdf_sanitize`
+## 63. `pdf_sanitize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1537,7 +1783,7 @@ paperpilot sanitize --input tests/e2e_fixtures/real/multi_page.pdf --output test
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/sanitize -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/sanitized.pdf"}'
 ```
 
-## 56. `pdf_scale_pages`
+## 64. `pdf_scale_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1571,7 +1817,7 @@ paperpilot pdf-scale-pages --input tests/e2e_fixtures/real/single_page.pdf --out
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/scale-pages -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/scaled.pdf"}'
 ```
 
-## 57. `pdf_search`
+## 65. `pdf_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1599,7 +1845,7 @@ paperpilot search --input tests/e2e_fixtures/real/single_page.pdf --query test -
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/search -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "query": "test"}'
 ```
 
-## 58. `pdf_sign`
+## 66. `pdf_sign`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1627,7 +1873,7 @@ paperpilot sign --input tests/e2e_fixtures/real/single_page.pdf --output tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/sign -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/signed.pdf"}'
 ```
 
-## 59. `pdf_split`
+## 67. `pdf_split`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1656,7 +1902,7 @@ paperpilot split --input tests/e2e_fixtures/real/multi_page.pdf --pages 1,3 --ou
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/split -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/pdf_split_simple", "pages": "1,3"}'
 ```
 
-## 60. `pdf_split_by_outline`
+## 68. `pdf_split_by_outline`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1684,7 +1930,7 @@ curl -X POST http://localhost:7823/api/v1/pdf/split-by-outline \
   }'
 ```
 
-## 61. `pdf_split_scanned_book`
+## 69. `pdf_split_scanned_book`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1719,7 +1965,7 @@ N/A
 N/A
 ```
 
-## 62. `pdf_stamp`
+## 70. `pdf_stamp`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1743,7 +1989,7 @@ curl -X POST http://localhost:8080/api/v1/pdf/stamp \
   -o output.pdf
 ```
 
-## 63. `pdf_stitch_canvas`
+## 71. `pdf_stitch_canvas`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1769,7 +2015,38 @@ curl -X POST http://localhost:8000/api/v1/pdf/stitch-canvas \
   -F "spacing_pt=5"
 ```
 
-## 64. `pdf_to_docx`
+## 72. `pdf_timestamp`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Cryptographically timestamp PDFs.**
+This tool applies an RFC 3161 Time-Stamp Protocol token to a PDF document to cryptographically verify its time of existence.
+
+### CLI
+```bash
+paperpilot security timestamp --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_timestamp_result.pdf --tsa-url http://tsa.example.com
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_timestamp",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_timestamp_result.pdf",
+    "tsa_url": "http://tsa.example.com"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/timestamp \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_timestamp_result.pdf", "tsa_url": "http://tsa.example.com"}'
+```
+
+## 73. `pdf_to_docx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1797,7 +2074,37 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format docx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-docx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.docx"}'
 ```
 
-## 65. `pdf_to_html`
+## 74. `pdf_to_epub`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Convert PDFs to EPUB.**
+This tool extracts text and semantic formatting from a PDF document and converts it into a reflowable EPUB eBook format.
+
+### CLI
+```bash
+paperpilot convert --format epub --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_to_epub_result.epub
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_to_epub",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_epub_result.epub"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-epub \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_epub_result.epub"}'
+```
+
+## 75. `pdf_to_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1825,7 +2132,67 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format html
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-html -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/doc.html"}'
 ```
 
-## 66. `pdf_to_pdf_a`
+## 76. `pdf_to_json`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Convert PDFs to structured JSON.**
+This tool extracts the text, layout, and structure of a PDF document and serializes it into a JSON format for data processing.
+
+### CLI
+```bash
+paperpilot convert --format json --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_to_json_result.json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_to_json",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_json_result.json"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-json \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_json_result.json"}'
+```
+
+## 77. `pdf_to_markdown`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Convert PDFs to Markdown.**
+This tool extracts text and semantic formatting from a PDF document and converts it into standard Markdown format.
+
+### CLI
+```bash
+paperpilot convert --format markdown --input tests/e2e_fixtures/real/test.pdf --output tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "pdf_to_markdown",
+  "arguments": {
+    "input": "tests/e2e_fixtures/real/test.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-markdown \
+  -H 'Content-Type: application/json' \
+  -d '{"input": "tests/e2e_fixtures/real/test.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_to_markdown_result.md"}'
+```
+
+## 78. `pdf_to_pdf_a`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1853,7 +2220,7 @@ paperpilot pdf-a --input tests/e2e_fixtures/real/single_page.pdf --output tests/
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pdf-a -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/pdf_a.pdf"}'
 ```
 
-## 67. `pdf_to_pptx`
+## 79. `pdf_to_pptx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1881,7 +2248,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format pptx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-pptx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.pptx"}'
 ```
 
-## 68. `pdf_to_xlsx`
+## 80. `pdf_to_xlsx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1909,7 +2276,7 @@ paperpilot convert --input tests/e2e_fixtures/real/single_page.pdf --format xlsx
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-xlsx -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/out.xlsx"}'
 ```
 
-## 69. `pdf_validate`
+## 81. `pdf_validate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1936,7 +2303,7 @@ paperpilot validate --input tests/e2e_fixtures/real/single_page.pdf --json
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/validate -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf"}'
 ```
 
-## 70. `pdf_validate_signatures`
+## 82. `pdf_validate_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1971,7 +2338,7 @@ paperpilot pdf-validate-signatures --input signed.pdf --output report.json --bas
 N/A
 ```
 
-## 71. `pdf_watermark`
+## 83. `pdf_watermark`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2000,7 +2367,38 @@ paperpilot watermark --input tests/e2e_fixtures/real/single_page.pdf --output te
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/watermark -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "text": "CONFIDENTIAL", "output": "tests/e2e_fixtures/out/penta_e2e/watermarked.pdf"}'
 ```
 
-## 72. `semantic_search`
+## 84. `recipe_run`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Execute a predefined sequence of operations.**
+This tool runs a chain of PDF, Office, or automation operations as specified in a JSON recipe file.
+
+### CLI
+```bash
+paperpilot recipe run --config my_recipe.json --input in/ --output out/
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "recipe_run",
+  "arguments": {
+    "config": "my_recipe.json",
+    "input": "in/",
+    "output": "out/"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/automation/recipes/run \
+  -H 'Content-Type: application/json' \
+  -d '{"config": "my_recipe.json", "input": "in/", "output": "out/"}'
+```
+
+## 85. `semantic_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2021,7 +2419,89 @@ N/A
 N/A
 ```
 
-## 73. `workspace_search`
+## 86. `watcher_list`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**List configured directory watchers.**
+This tool lists the active directory watchers configured to automatically trigger workflows when new files arrive.
+
+### CLI
+```bash
+paperpilot watch list
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_list",
+  "arguments": {}
+}
+```
+
+### REST API
+```bash
+curl -s -X GET http://127.0.0.1:7823/api/v1/automation/watchers
+```
+
+## 87. `watcher_start`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Start a directory watcher daemon.**
+This tool starts a background watcher process on a specific directory, executing workflows automatically when files match predefined criteria.
+
+### CLI
+```bash
+paperpilot watch start --directory input/ --workflow ingest.json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_start",
+  "arguments": {
+    "directory": "input/",
+    "workflow": "ingest.json"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/automation/watchers/start \
+  -H 'Content-Type: application/json' \
+  -d '{"directory": "input/", "workflow": "ingest.json"}'
+```
+
+## 88. `watcher_stop`
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Stop an active directory watcher daemon.**
+This tool safely halts an active directory watcher, completing any in-progress workflows before terminating.
+
+### CLI
+```bash
+paperpilot watch stop --id watcher-123
+```
+
+### MCP JSON-RPC
+```json
+{
+  "name": "watcher_stop",
+  "arguments": {
+    "id": "watcher-123"
+  }
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/automation/watchers/watcher-123/stop
+```
+
+## 89. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
