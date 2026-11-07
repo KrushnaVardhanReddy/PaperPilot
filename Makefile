@@ -308,8 +308,15 @@ test-penta-conversions:
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
 
+
+# Run comprehensive 89-tool benchmark suite and update SYSTEM_BENCHMARK_REPORT.md
+.PHONY: benchmark bench-system
+benchmark bench-system:
+	python3 scripts/run_system_benchmark.py
+
 # Run Phase 5.9.6: High-Throughput & Concurrency Performance Benchmark
 bench-penta-e2e:
+	cargo build --bin paperpilot-mcp --bin paperpilot-cli
 	cargo run -p penta-interface-e2e -- --group bench
 
 

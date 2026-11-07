@@ -277,7 +277,7 @@ mod tests {
                     .dict
                     .get(b"Type")
                     .and_then(|t| t.as_name())
-                    .map_or(false, |name| name == b"XRef");
+                    .is_ok_and(|name| name == b"XRef");
                 if !is_xref {
                     _data_streams += 1;
                 }
