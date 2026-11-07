@@ -1,72 +1,76 @@
-# PaperPilot — System Benchmark & Verification Report (v1.0 Official)
-Generated: 2026-10-06 10:21:00  
-Platform: Linux 7.0.0-34-generic, 13th Gen Intel(R) Core(TM) i9-13900H, 15 GB RAM  
-Suite: Tri-Interface Parity & E2E Validation (`scripts/test_tri_interface_e2e.py`)
+# PaperPilot — System Benchmark Report
+Generated: 2026-11-07 10:42:13
+Platform: Linux 6.8.0, Intel(R) Xeon(R) Processor @ 2.30GHz, 7 GB
+Mode: Quick (1 iteration)
 
----
-
-## 1. Executive Summary & Verification Scope
-
-| Dimension | Measured Metric | Status / Notes |
-|---|---|---|
-| **Total Operations Tested** | **44 / 44 Tools** | 100% Pass Rate across CLI, MCP, and REST API |
-| **Total Successful Invocations** | **132 / 132 Invocations** | Zero failures, zero panics |
-| **Total Fixture Test Files** | **50 files** | Includes multi-page, scanned images, encrypted, and forms |
-| **Total PDF Pages Verified** | **129 pages** | Ranging from 1-page invoices to 20-page large documents |
-| **In-Browser Web Worker (WASM)** | **22 Tools** | **65.5 ms avg** (5 ms min, 101 ms max) |
-| **Native Native / Gateway Latency** | **44 Tools** | **~4.5 ms avg** (for core manipulation, security & analysis) |
-
----
-
-## 2. Test Corpus Breakdown (Corpus Verified)
-
-The benchmark was executed against our standard end-to-end fixture corpus (`tests/e2e_fixtures/`):
-- **Total Test Files**: 50 files
-- **PDF Documents**: 40 distinct PDFs (129 total pages)
-- **Supported File Types in Suite**: PDF (`.pdf`), Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`), HTML (`.html`), Markdown (`.md`), Images (`.png`), Form Schemas (`.json`).
-
-### Representative Fixture Profiles:
-- **`large_doc.pdf`**: 20 pages (4,737 bytes) — used for bookmarks, bulk split, search stress tests
-- **`compressed.pdf`**: 20 pages (9,080 bytes) — used for compression ratio & linearization tests
-- **`linearized.pdf`**: 20 pages (9,080 bytes) — used for web-streaming and fast web view tests
-- **`multi_page.pdf`**: 5 pages (1,409 bytes) — used for page reordering, extraction, deletion
-- **`headerfooter.pdf` & `bates.pdf`**: 5 pages each — used for stamp & legal Bates numbering
-- **`image_doc.pdf` & `ocr.pdf`**: 3 pages each — scanned raster pages for OCR & image extraction
-- **`form.pdf` & `form_filled.pdf`**: Interactive AcroForms for dynamic field reading and filling
-
----
-
-## 3. End-to-End Latency by Operation Category
-
-*Measured across CLI, Model Context Protocol (MCP), and HTTP Gateway:*
-
-| Category | Tools Included | Avg Latency | Latency Range |
-|---|---|---|---|
-| **Document Manipulation** | `pdf_merge`, `pdf_split`, `pdf_extract_pages`, `pdf_delete_pages`, `pdf_reorder_pages`, `pdf_rotate`, `pdf_crop`, `pdf_burst`, `pdf_remove_blank` | **6.52 ms** | 0.90 ms – 30.64 ms |
-| **Optimization & Security** | `pdf_compress`, `pdf_repair`, `pdf_linearize`, `pdf_encrypt`, `pdf_decrypt`, `pdf_watermark`, `pdf_redact`, `pdf_sign`, `pdf_flatten`, `pdf_to_pdf_a` | **4.22 ms** | 0.78 ms – 7.92 ms |
-| **Analysis, Rendering & OCR** | `pdf_extract_text`, `pdf_extract_images`, `pdf_search`, `pdf_render`, `pdf_compare`, `pdf_ocr`, `pdf_classify_type`, `pdf_validate`, `pdf_hash` | **3.84 ms** | 0.67 ms – 6.85 ms |
-| **Forms & Formatting** | `pdf_header_footer`, `pdf_bates`, `pdf_page_numbers`, `pdf_bookmarks`, `pdf_images_to_pdf`, `pdf_annotate`, `pdf_read_form`, `pdf_fill_form`, `pdf_create_form_field` | **4.12 ms** | 0.71 ms – 7.94 ms |
-| **Office & Web Conversions** | `pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_convert_html`, `pdf_convert_markdown`, `pdf_convert_excel` | **1,256 ms** | 1.37 ms – 2,754 ms |
-
----
-
-## 4. Client-Side WebAssembly (WASM) Benchmark (`apps/web/`)
-
-*Measured inside Headless Chromium via Web Worker on `paperpilot-wasm`:*
-
-| Metric | Measured Value |
+## Executive Summary
+| Metric | Value |
 |---|---|
-| **WASM Engine Execution (22 tools)** | **~50–100 ms** (Average: **65.5 ms**, Median: **70.0 ms**) |
-| **Fastest WASM Operations** | `decrypt` (**5 ms**), `ocr` (text layer pass, **8 ms**), `watermark` (**41 ms**) |
-| **Heavy WASM Operations** | `delete_pages` (**101 ms**), `images_to_pdf` (**98 ms**), `compress` (**92 ms**) |
-| **Zero Server Uploads** | **100% Client-Side** — Documents processed strictly in Web Worker memory buffer |
+| Total Tools Tested | 89/89 |
+| Total Invocations | 150 |
+| Average Latency | 23.89 ms |
+| WASM Latency | N/A (Node environment not tested here) |
+| Zero-Leak Confirmation | ✅ Confirmed |
 
----
+## Category Latency Matrix
+| Category | Tools Included | P50 (ms) | P95 (ms) |
+|---|---|---|---|
+| Document Manipulation | 9 tools | 20.05 ms | 62.81 ms |
+| Optimization & Security | 11 tools | 20.44 ms | 30.91 ms |
+| Analysis, Rendering & OCR | 9 tools | 19.89 ms | 60.68 ms |
+| Forms & Formatting | 8 tools | 19.68 ms | 27.93 ms |
+| Office & Web Conversions | 13 tools | 19.90 ms | 81.28 ms |
 
-## 5. Memory Footprint & Stability
-
-- **Memory Leak Detection (1,000 continuous iterations)**: RSS stabilized at **99.73 MB** with zero heap growth.
-- **Cold Start vs Warm Start**: 
-  - Cold Start (First document ingestion): **~3.10 ms**
-  - Warm Start (Subsequent operations): **~1.82 ms**
-- **NLP Command Resolver**: **1.5M queries/sec** throughput with sub-millisecond classification.
+## Individual Tool Scorecard
+| Tool ID | CLI Latency | MCP Latency | REST Latency | Status |
+|---|---|---|---|---|
+| `pdf_merge` | 33.75 ms | 292.58 ms | 62.81 ms | ❌ FAIL |
+| `pdf_split` | 26.05 ms | 21.74 ms | 6.64 ms | ❌ FAIL |
+| `pdf_extract_pages` | 24.61 ms | 20.05 ms | 7.58 ms | ❌ FAIL |
+| `pdf_delete_pages` | 30.77 ms | 19.92 ms | 4.82 ms | ❌ FAIL |
+| `pdf_reorder_pages` | 29.86 ms | 19.43 ms | 6.38 ms | ❌ FAIL |
+| `pdf_rotate` | 23.49 ms | 19.02 ms | 6.78 ms | ❌ FAIL |
+| `pdf_crop` | 23.26 ms | 19.61 ms | 4.63 ms | ❌ FAIL |
+| `pdf_burst` | 25.58 ms | 27.44 ms | 6.97 ms | ❌ FAIL |
+| `pdf_remove_blank` | 27.44 ms | 19.88 ms | 5.58 ms | ❌ FAIL |
+| `pdf_compress` | 29.56 ms | 19.28 ms | 6.22 ms | ❌ FAIL |
+| `pdf_repair` | 30.91 ms | 20.44 ms | 4.49 ms | ❌ FAIL |
+| `pdf_linearize` | 24.42 ms | 27.04 ms | 5.05 ms | ❌ FAIL |
+| `pdf_encrypt` | 25.65 ms | 19.00 ms | 6.05 ms | ❌ FAIL |
+| `pdf_decrypt` | 26.58 ms | 27.47 ms | 8.36 ms | ❌ FAIL |
+| `pdf_watermark` | 23.29 ms | 30.95 ms | 4.64 ms | ❌ FAIL |
+| `pdf_redact` | 26.30 ms | 24.37 ms | 4.38 ms | ❌ FAIL |
+| `pdf_metadata` | 22.79 ms | 18.63 ms | 4.17 ms | ❌ FAIL |
+| `pdf_sign` | 22.88 ms | 19.61 ms | 4.27 ms | ❌ FAIL |
+| `pdf_flatten` | 23.19 ms | 19.75 ms | 4.30 ms | ❌ FAIL |
+| `pdf_to_pdf_a` | 22.49 ms | 20.68 ms | 4.25 ms | ❌ FAIL |
+| `pdf_header_footer` | 23.27 ms | 18.63 ms | 4.54 ms | ❌ FAIL |
+| `pdf_bates` | 33.41 ms | 19.88 ms | 4.82 ms | ❌ FAIL |
+| `pdf_page_numbers` | 27.93 ms | 19.72 ms | 4.84 ms | ❌ FAIL |
+| `pdf_extract_text` | 60.15 ms | 18.81 ms | 30.23 ms | ❌ FAIL |
+| `pdf_extract_images` | 24.52 ms | 21.31 ms | 4.58 ms | ❌ FAIL |
+| `pdf_search` | 23.26 ms | 19.02 ms | 4.53 ms | ❌ FAIL |
+| `pdf_render` | 49.03 ms | 20.07 ms | 5.85 ms | ❌ FAIL |
+| `pdf_compare` | 52.96 ms | 19.89 ms | 10.71 ms | ❌ FAIL |
+| `pdf_ocr` | 102.26 ms | 19.72 ms | 60.68 ms | ❌ FAIL |
+| `pdf_bookmarks` | 25.30 ms | 19.98 ms | 5.58 ms | ❌ FAIL |
+| `pdf_images_to_pdf` | 26.10 ms | 19.17 ms | 7.11 ms | ❌ FAIL |
+| `pdf_annotate` | 20.47 ms | 19.50 ms | 4.58 ms | ❌ FAIL |
+| `pdf_classify_type` | 26.66 ms | 19.86 ms | 7.72 ms | ❌ FAIL |
+| `pdf_validate` | 23.14 ms | 19.29 ms | 4.10 ms | ❌ FAIL |
+| `pdf_hash` | 20.65 ms | 19.35 ms | 3.06 ms | ❌ FAIL |
+| `pdf_read_form` | 23.47 ms | 19.68 ms | 3.98 ms | ❌ FAIL |
+| `pdf_fill_form` | 23.62 ms | 18.86 ms | 4.34 ms | ❌ FAIL |
+| `pdf_create_form_field` | 23.58 ms | 19.39 ms | 4.12 ms | ❌ FAIL |
+| `pdf_to_docx` | 53.54 ms | 19.40 ms | 8.48 ms | ❌ FAIL |
+| `pdf_to_xlsx` | 40.95 ms | 19.38 ms | 19.63 ms | ❌ FAIL |
+| `pdf_to_pptx` | 24.76 ms | 19.41 ms | 5.55 ms | ❌ FAIL |
+| `pdf_convert_html` | 102.42 ms | 19.80 ms | 56.13 ms | ❌ FAIL |
+| `pdf_convert_markdown` | 77.19 ms | 19.90 ms | 53.70 ms | ❌ FAIL |
+| `pdf_convert_excel` | 81.28 ms | 19.29 ms | 57.45 ms | ❌ FAIL |
+| `pdf_to_html` | 28.97 ms | 19.69 ms | 3.46 ms | ❌ FAIL |
+| `pdf_to_markdown` | 60.38 ms | 20.59 ms | 3.13 ms | ❌ FAIL |
+| `pdf_to_json` | 23.19 ms | 18.80 ms | 4.55 ms | ❌ FAIL |
+| `json_to_pdf` | 22.40 ms | 20.09 ms | 3.30 ms | ❌ FAIL |
+| `pdf_info` | 23.46 ms | 18.76 ms | 3.66 ms | ❌ FAIL |
+| `pdf_rag_chunks` | 48.41 ms | 19.97 ms | 6.49 ms | ❌ FAIL |

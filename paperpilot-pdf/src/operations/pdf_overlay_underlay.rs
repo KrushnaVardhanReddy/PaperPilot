@@ -382,6 +382,7 @@ mod tests {
 
         // ensure we have a valid pdf to work with for the test
         if !input_bytes.is_empty() {
+            #[allow(clippy::collapsible_if)]
             if let Ok(result) = pdf_overlay_underlay_bytes(&input_bytes, &options) {
                 assert!(result.starts_with(b"%PDF"));
 

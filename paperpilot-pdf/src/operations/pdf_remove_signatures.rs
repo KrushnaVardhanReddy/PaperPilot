@@ -368,11 +368,11 @@ mod tests {
                 if let Ok(lopdf::Object::Array(fields)) = dict.get(b"Fields") {
                     assert!(fields.is_empty());
                 } else {
-                    assert!(false, "Fields not an array or missing");
+                    panic!("Fields not an array or missing");
                 }
             }
         } else if acroform.is_ok() {
-            assert!(false, "AcroForm should be a reference or removed");
+            panic!("AcroForm should be a reference or removed");
         }
 
         let pages = out_doc.get_pages();
