@@ -10,7 +10,7 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-100%25_Compatible-purple.svg)](https://modelcontextprotocol.io)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-![PaperPilot demo](docs/assets/demo.gif)
+![PaperPilot demo](docs/assets/gifs/demo_01_ask_natural_language.gif)
 
 [**Try it in your browser →**](https://usepaperpilot.com) · [Download](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) · [Contributing](CONTRIBUTING.md) · [Roadmap](ROADMAP.md)
 

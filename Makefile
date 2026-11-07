@@ -368,6 +368,11 @@ check-wasm:
 test-tri-e2e:
 	python3 scripts/test_tri_interface_e2e.py
 
+# Generate Marketing GIFs (Terminal Simulation via Playwright + FFmpeg)
+.PHONY: generate-gifs
+generate-gifs:
+	node scripts/gif_generators/capture.js
+
 # ==============================================================================
 # Pure-Rust Penta-Interface E2E Real Semantic Assertions Suite (Spec 031)
 # ==============================================================================
