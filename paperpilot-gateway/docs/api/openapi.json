@@ -278,6 +278,9 @@
         ],
         "type": "object"
       },
+      "PdfDedupStreamsJsonRequest": {
+        "type": "object"
+      },
       "PdfInvertColorsJsonRequest": {
         "properties": {
           "input": {
@@ -968,6 +971,44 @@
           }
         },
         "summary": "Convert a PDF to/from another format (docx, images, html, xlsx, etc.) [Input: .pdf | Output: .docx/.png/.html/.xlsx]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/dedup-streams": {
+      "post": {
+        "operationId": "pdf_dedup_streams",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfDedupStreamsJsonRequest"
+              }
+            }
+          },
+          "description": "Lossless hash-based indirect object stream deduplication & CMYK-safe image compression",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Lossless Stream Deduplication completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Lossless Stream Deduplication [Lossless hash-based indirect object stream deduplication & CMYK-safe image compression] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]
