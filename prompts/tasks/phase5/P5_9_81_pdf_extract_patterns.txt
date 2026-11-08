@@ -56,9 +56,10 @@ Run the `penta-scaffold` command to auto-generate the base stubs across all pack
    - `execution_time_ms: f64`
 3. Load the PDF with `lopdf::Document::load_mem`.
 4. Iterate over pages, extract text with `doc.extract_text(&[page_num])`.
-5. For each keyword: find matches, extract context snippet ($\pm \text{context\_len}$ chars), append to `findings`.
-6. For each regex pattern: compile with `regex::RegexBuilder::new(re_str).case_insensitive(!case_sensitive).build()`, find captures/matches, extract context snippet, append to `findings`.
-7. Write unit tests in `pdf_extract_patterns.rs` testing keyword matching, regex matching, case sensitivity, and empty inputs.
+5. **CRITICAL REQUIREMENT - EXTRACT ALL OCCURRENCES**:
+   - For each keyword: use `find_iter` (or substring search loop) to find **EVERY match on the page (not just the 1st)**, extract surrounding context snippet ($\pm \text{context\_len}$ chars), and append each match to `findings`.
+   - For each regex pattern: compile with `regex::RegexBuilder::new(re_str).case_insensitive(!case_sensitive).build()`, use `find_iter` / `captures_iter` to find **EVERY match on the page (not just the 1st)**, extract surrounding context snippet, and append each match to `findings`.
+6. Write unit tests in `pdf_extract_patterns.rs` testing multiple keyword occurrences on single and multiple pages, multiple regex matches, case sensitivity, and empty inputs.
 
 ### Step 3: Implement CLI Command (`paperpilot-cli`)
 1. In `paperpilot-cli/src/cli.rs`, add arguments to `PdfExtractPatterns`:

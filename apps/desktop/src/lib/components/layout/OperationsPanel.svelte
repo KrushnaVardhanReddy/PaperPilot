@@ -130,6 +130,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let footerText = $state('');
   let ocrOutputFormat = $state<'pdf' | 'txt' | 'clipboard'>('pdf');
 
+  // Pattern & Keyword Extraction parameter states
+  let extractPatternsKeywords = $state('');
+  let extractPatternsRegex = $state('');
+  let extractPatternsCaseSensitive = $state(false);
+  let extractPatternsContextLen = $state(30);
+
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
     async function checkOcrStatus() {
@@ -419,7 +425,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             action: attachmentAction,
             file_name: attachmentFileName,
             description: attachmentDescription,
-            file_data_base64: attachmentBase64
+            file_data_base64: attachmentBase64,
+            extractPatternsKeywords,
+            extractPatternsRegex,
+            extractPatternsCaseSensitive,
+            extractPatternsContextLen
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -567,7 +577,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           action: attachmentAction,
           file_name: attachmentFileName,
           description: attachmentDescription,
-          file_data_base64: attachmentBase64
+          file_data_base64: attachmentBase64,
+          extractPatternsKeywords,
+          extractPatternsRegex,
+          extractPatternsCaseSensitive,
+          extractPatternsContextLen
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1013,6 +1027,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="red">Red Alert</option>
             <option value="blue">Blue</option>
           </select>
+        </div>
+      {:else if activeTool.id === 'pdf_extract_patterns'}
+        <div class="operation-config">
+          <label for="extractPatternsKeywords" class="section-desc">Keywords (comma-separated):</label>
+          <input id="extractPatternsKeywords" type="text" class="form-input" bind:value={extractPatternsKeywords} placeholder="e.g. Confidential, NDA, Urgent" />
+          <span class="field-hint">Extracts all occurrences across all pages.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="extractPatternsRegex" class="section-desc">Custom Regex (label=regex per line or comma):</label>
+          <textarea id="extractPatternsRegex" class="form-input" style="height: 60px; font-family: monospace; font-size: 11px;" bind:value={extractPatternsRegex} placeholder={"ssn=\\d{3}-\\d{2}-\\d{4}\nemail=[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"}></textarea>
+          <span class="field-hint">Captures all matching instances with page numbers and text snippets.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <label for="extractPatternsCase" class="section-desc" style="margin-bottom: 0;">Case Sensitive:</label>
+          <input id="extractPatternsCase" type="checkbox" bind:checked={extractPatternsCaseSensitive} />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="extractPatternsContextLen" class="section-desc">Context Length: {extractPatternsContextLen} chars</label>
+          <input id="extractPatternsContextLen" type="range" min="10" max="100" bind:value={extractPatternsContextLen} class="range-input" />
         </div>
       {:else if activeTool.id === 'remove_blank' || activeTool.id === 'pdf_remove_blank'}
         <div class="operation-config">

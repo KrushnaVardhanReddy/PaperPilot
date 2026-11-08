@@ -699,6 +699,26 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
     },
+    /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
+    #[command(name = "pdf-extract-patterns")]
+    PdfExtractPatterns {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        /// Keywords to match
+        #[arg(long, value_delimiter = ',')]
+        keywords: Option<Vec<String>>,
+        /// Regex patterns formatted as label=regex (e.g. ssn=\d{3}-\d{2}-\d{4})
+        #[arg(long = "pattern", value_name = "LABEL=REGEX")]
+        patterns: Option<Vec<String>>,
+        /// Perform case-sensitive matching (default: false)
+        #[arg(long)]
+        case_sensitive: bool,
+        /// Context length in characters before and after match (default: 30)
+        #[arg(long)]
+        context_len: Option<usize>,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe

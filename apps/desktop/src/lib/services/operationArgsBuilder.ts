@@ -50,6 +50,10 @@ export interface OperationContext {
     nupMargin?: number;
     nupSpacing?: number;
     nupDrawBorders?: boolean;
+    extractPatternsKeywords?: string;
+    extractPatternsRegex?: string;
+    extractPatternsCaseSensitive?: boolean;
+    extractPatternsContextLen?: number;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -620,6 +624,37 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.epub`)
             };
             break;
+        case 'pdf_extract_patterns': {
+            const keywords = (context.extractPatternsKeywords || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            const patterns: Record<string, string> = {};
+            if (context.extractPatternsRegex) {
+                const lines = context.extractPatternsRegex.split(/[\n,]+/);
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+                    const eqIdx = trimmed.indexOf('=');
+                    if (eqIdx !== -1) {
+                        const key = trimmed.slice(0, eqIdx).trim();
+                        const val = trimmed.slice(eqIdx + 1).trim();
+                        if (key && val) patterns[key] = val;
+                    }
+                }
+            }
+
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_extract_report.json`),
+                keywords,
+                patterns,
+                case_sensitive: context.extractPatternsCaseSensitive || false,
+                context_len: context.extractPatternsContextLen ?? 30
+            };
+            break;
+        }
         default:
             args = {
                 input: docPath,
