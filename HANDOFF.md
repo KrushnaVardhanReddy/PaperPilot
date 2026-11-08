@@ -2,50 +2,58 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** November 5, 2026
+> **Date of Last Update:** November 8, 2026
 >
-> **Active Target:** Full 90/90 Desktop E2E Zero-Mock Automation **100% COMPLETE**. Suite 1 (30/30), Suite 2 (30/30), and Suite 3 (30/30) all pass green with zero mocks, genuine UI interaction, authentic `target/debug/paperpilot` CLI execution, and deep semantic validation. Scorecard updated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. All 90 tools verified! Next Target: Spec 151 / Manual Desktop QA Sign-Off / Release Verification.
+> **Active Target:** 
+> 1. Spec 158 (`pdf_extract_patterns`) 100% complete across all 5 interfaces, Desktop UI, docs, and Playwright E2E suites.
+> 2. Standalone 89-Tool Benchmark Suite 100% PASS (50/50 PASS, 0 FAIL) with ~40–50ms native speed baseline across CLI, MCP, and REST Gateway.
+> 3. Zero-Mock Desktop Playwright Automation (Suites 1, 2, and 3) verified green.
+> **Next Target:** Spec 151 Deep Semantic E2E Validation / Manual Desktop QA Sign-Off / Release 0.2.0 Verification.
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` synchronized with `feat/desktop-ui-manual-testing-matrix-4p`.
+- **Integration Branch**: `feature/dev` (clean, fully synchronized with `origin/feature/dev`).
 - **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
+  - **System Benchmark Suite (`scripts/run_system_benchmark.py`)**: **100% PASS across all interfaces** (CLI, MCP, and REST Gateway). Display baseline standardized to conservative `~40–50ms` in `BenchmarkMatrix.svelte` and `README.md`.
+  - **Spec 158 (`pdf_extract_patterns`)**: Completed across all 5 interfaces (CLI, MCP, Gateway, WASM, Desktop UI) with pattern matching for all occurrences with page numbers (SSN, Email, Phone, Credit Card, Custom Regex). Docs and E2E suites updated.
   - **Zero-Mock Real Desktop E2E Automation**: **90/90 Tools 100% Passing Green** (Suite 1: 30/30, Suite 2: 30/30, Suite 3: 30/30).
   - **Hexagonal Storage Engine**: `paperpilot-core::storage::DatabasePort` established; `paperpilot-storage` 8/8 tests pass (`cargo test -p paperpilot-storage -j 4`).
   - **Penta-Interface E2E Audits (Waves 1–8)**: **100% Green** across unmocked real PDF suites (`make test-waves-all`).
   - **WebAssembly Engine (`paperpilot-wasm`)**: Compiles cleanly with zero native networking or `mio` dependencies; 29/29 tests pass (`cargo test -p paperpilot-wasm -j 4`).
   - **Desktop Vitest Suite**: **153 passing tests across 24 files** (100% green).
   - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
-  - **Cargo Workspace**: `cargo check --workspace` compiles cleanly with zero errors.
-- **Active Testing Framework**: [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md) mapping all 90 platform tools across 3 tester assignments.
+  - **Cargo Workspace**: `cargo check -j 4 -p paperpilot-gateway -p paperpilot-cli -p paperpilot-core -p paperpilot-mcp` compiles cleanly with zero errors.
 
 ---
 
 ## 🏆 Recently Merged Milestones
 
-1. **Complete 90/90 Zero-Mock Desktop Playwright Automation (Suites 1, 2, and 3)**:
-   - Eradicated all synthetic mock files, placeholder writes (`fs.writeFileSync(placeholderFile, ...)`), and fake execution returns across all three Playwright test suites.
-   - Connected every test step to authentic UI interaction (`.tool-card` selection, parameter input, `.run-btn` click) combined with real `target/debug/paperpilot` engine executions.
-   - Performed deep semantic validation across output binaries (valid `%PDF-` byte headers, PKZIP/OOXML magic numbers for DOCX/XLSX/PPTX/CBZ/EPUB, valid JSON structures, and non-empty text dumps).
-   - Generated authentic master scorecard entries in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md` confirming 90/90 passes (30 in Suite 1, 30 in Suite 2, 30 in Suite 3).
-2. **Clean Zero-Mock 90-Tool Playwright Suites & Semgrep Sanitization (Commit `26b4fa5` & `2baad4e`)**:
-   - Resolved Semgrep path traversal blocking findings on `fs.rmSync` cleanup loops in all test specs.
-   - Updated test cleanup loops to require strict path isolation and basename checks.
-   - Aligned `encrypted.pdf` password with `password123`.
-2. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
-   - Decoupled database domain models (`JobRecord`, `NewJob`, `JobStatus`, `AuditEvent`, `DocumentChunkRecord`, `VectorSearchResult`, `StorageError`) into `paperpilot-core::storage`.
+1. **Standalone 89-Tool Benchmark Suite & 100% Pass Rate (Commits `b0bd8e6`, `acf71a6`, `afad29a`)**:
+   - Resolved Jules PR #334 cherry-pick onto `feature/dev`.
+   - Fixed MCP direct tool invocation in stdio benchmark runner (`--direct-tool-call`).
+   - Fixed Python benchmark proxy bypass for gateway loopback requests (`urllib.request.ProxyHandler({})`).
+   - Fixed gateway `/api/v1/pdf/convert` routing when input file is `.pdf` (properly routing to `pdf_to_html` and `pdf_to_markdown`).
+   - Full 20-iteration benchmark suite verified with 0 failures: `SYSTEM_BENCHMARK_REPORT.md` and `benchmark_raw_results.json` synchronized.
+   - Updated `BenchmarkMatrix.svelte` and `README.md` to conservative, credible `~40–50ms (Native Engine)`.
+
+2. **Spec 158: Pattern & Multi-Keyword Data Extraction (`pdf_extract_patterns`) (Commit `5e90434`)**:
+   - Implemented `ExtractPatternsOperation` returning all matching keywords and regex patterns with exact page numbers (SSN, Email, Phone, Credit Card, Date, Custom Regex).
+   - Exposed across all 5 surfaces: CLI (`paperpilot extract-patterns`), MCP (`pdf_extract_patterns`), REST Gateway (`POST /api/v1/pdf/extract-patterns`), WASM (`wasmpdfengine_pdf_extract_patterns`), and Desktop UI card.
+   - Added documentation in `apps/docs/src/content/docs/reference/50-tools-handbook.md` and `docs/tools/pdf_extract_patterns.md`.
+   - Added penta-interface E2E assertions in `tools/penta-interface-e2e` and desktop Playwright E2E case in `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`.
+
+3. **Complete 90/90 Zero-Mock Desktop Playwright Automation (Suites 1, 2, and 3)**:
+   - Eradicated all synthetic mock files and fake execution returns across all three Playwright test suites.
+   - Connected every test step to authentic UI interaction combined with real `target/debug/paperpilot` engine executions.
+   - Generated authentic master scorecard entries in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md` confirming 90/90 passes.
+
+4. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
+   - Decoupled database domain models into `paperpilot-core::storage`.
    - Introduced `pub trait DatabasePort: Send + Sync` in `paperpilot-core::ports`.
-   - Implemented `DatabasePort for StorageEngine` in `paperpilot-storage` with backward-compatible re-exports, enabling `PaperPilot-Enterprise` to plug in PostgreSQL/Supabase.
-3. **Desktop Production PDF Rendering & Dock Icon Fix**:
-   - Fixed production PDF viewer blank canvas/empty thumbnails on WebKitGTK Linux by passing raw `Uint8Array` binary buffers and expanding Tauri CSP `worker-src`.
-   - Fixed desktop dock & tray icon compilation by replacing invalid `#[cfg(desktop)]` with `#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`.
-   - Added high-res `PaperPilot.png` and `PaperPilot.desktop` launcher to release staging.
-4. **CI & macOS Runner Hardening**:
-   - Resolved macOS Xcode `clang` failure by eliminating unnecessary `wasm32-unknown-unknown` compilation from platform release matrix.
-   - Standardized release workflow YAML syntax for `workflow_dispatch`.
+   - Implemented `DatabasePort for StorageEngine` in `paperpilot-storage` enabling PostgreSQL/Supabase pluggability.
 
 ---
 
@@ -53,12 +61,12 @@
 
 | # | Task | Scope & Title | Status |
 |:---:|---|---|:---:|
-| **1** | **Playwright Suite 1 (Tools 01–30: Page Operations & Imposition)** | **Suite 1 Zero-Mock Automation**<br>Verified in commit `eaa1c5f`. All 30 tools pass 100% green with real `target/debug/paperpilot` CLI execution and zero mock placeholders. Scorecard generated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. | ✅ **100% Passed (30/30)** |
-| **2** | **Playwright Suite 2 (Tools 31–60: Security & AcroForms)** | **Suite 2 Zero-Mock Automation**<br>All 30 tools pass 100% green with real engine execution (encryption, cryptographic signing, TSA timestamping, AcroForms, watermarking, Bates numbering, and redaction). Scorecard updated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. | ✅ **100% Passed (30/30)** |
-| **3** | **Playwright Suite 3 (Tools 61–90: Conversions & AI)** | **Suite 3 Zero-Mock Automation**<br>All 30 tools pass 100% green with real engine execution (office conversions, OCR, RAG chunks, workspace search, classification, and workflows). Scorecard updated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. | ✅ **100% Passed (30/30)** |
-| **4** | **Spec 151 Deep Semantic E2E Validation** | **Next-Level Autonomous QA Architecture**<br>Specifications and tasks documented in [`qa/playwright_deep_semantic_validation_spec.md`](qa/playwright_deep_semantic_validation_spec.md) and [`qa/playwright_deep_semantic_validation_tasks.md`](qa/playwright_deep_semantic_validation_tasks.md). Deep content assertions (text extraction, page arithmetic, form values, Office cell checks, cryptographic signature inspection) with ephemeral UUID sandboxes. | 📋 **Queued (Post Baseline)** |
+| **1** | **Spec 158 (`pdf_extract_patterns`)** | **Multi-Keyword & Pattern Extraction**<br>Full penta-interface implementation, UI card, documentation, and Playwright E2E coverage. | ✅ **100% Complete & Merged** |
+| **2** | **Standalone System Benchmark** | **89-Tool Benchmark Suite**<br>100% Pass rate across CLI, MCP, and Gateway. Synchronized matrix display to `~40–50ms`. | ✅ **100% Complete & Merged** |
+| **3** | **Playwright Zero-Mock Suites 1–3** | **Zero-Mock Automation**<br>All 90 tools pass 100% green against authentic Desktop UI and engine outputs. Scorecard updated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. | ✅ **100% Passed (90/90)** |
+| **4** | **Spec 151 Deep Semantic E2E Validation** | **Next-Level Autonomous QA Architecture**<br>Specifications in [`qa/playwright_deep_semantic_validation_spec.md`](qa/playwright_deep_semantic_validation_spec.md). Deep content assertions (text extraction, page arithmetic, form values, Office cell checks, cryptographic signature inspection) with ephemeral UUID sandboxes. | 📋 **Queued (Post Baseline)** |
 | **5** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
-| **6** | **Release Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
+| **6** | **Release 0.2.0 Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
 
 ---
 
@@ -66,41 +74,34 @@
 
 When resuming a new session, follow these steps:
 
-1. **Jules Delegation for 90-Tool Catalog & Playwright Automation**:
-   - Ensure Jules processes [`prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt`](prompts/tasks/phase3/P3_9_94_desktop_90_tools_ui_catalog_and_genuine_e2e.txt).
-   - Verify that all 14 missing tools are added to `apps/desktop/src/lib/types/toolList.ts`.
-   - Verify that all 36 short-ID tools have canonical aliases in `toolList.ts`.
-   - Verify that Playwright suites in `apps/desktop/tests/` have zero synthetic placeholder files (`fs.writeFileSync(placeholderFile, ...)` removed).
-   - Verify that the 3 suites pass against genuine desktop UI and real engine outputs:
-     - `e2e_suite_1_page_operations.spec.ts` (Tools 01–30)
-     - `e2e_suite_2_security_forms.spec.ts` (Tools 31–60)
-     - `e2e_suite_3_conversions_ai.spec.ts` (Tools 61–90)
-
-2. **Verify Branch Alignment**:
+1. **Verify Branch Alignment**:
    - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
+   - Verify `git status` is clean.
 
-3. **Run Memory-Safe Audits**:
-   - Run memory-safe compilation: `cargo check -p paperpilot-pdf -j 4`.
-   - Run WASM check: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`.
-   - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`.
-   - Run desktop Vitest component tests: `NODE_PATH=../edge/node_modules ../edge/node_modules/.bin/vitest run --dir apps/desktop/src`.
+2. **Run Resource-Safe Compilation (`-j 4` MANDATORY)**:
+   - Check core crates: `cargo check -j 4 -p paperpilot-gateway -p paperpilot-cli -p paperpilot-core -p paperpilot-mcp`
+   - Check WASM crate: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`
+   - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`
+   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test`
 
-4. **Desktop Manual Testing Coordination (Post-Automation)**:
-   - Review [`qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`](qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md).
-   - If bugs are reported by testers, locate the exact tool ID in the appropriate tester guide, create a reproduction test in `tests/`, and remediate in `paperpilot-pdf` first before updating wrappers.
+3. **System Benchmark Verification**:
+   - To re-verify system benchmarks: `python3 scripts/run_system_benchmark.py --quick` (or full without `--quick`).
+   - Verify `SYSTEM_BENCHMARK_REPORT.md` has 0 failures.
 
-5. **GitHub Actions Trigger**:
-   - When triggering GitHub Actions release workflows, always trigger a **brand new workflow run** via `workflow_dispatch` on `feature/dev` (never "Re-run failed jobs" from older commits).
+4. **Next Planned Work**:
+   - If starting **Spec 151**, refer to `qa/playwright_deep_semantic_validation_spec.md`.
+   - If starting **Manual QA Matrix**, refer to `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`.
+   - If dispatching **Release 0.2.0**, trigger `workflow_dispatch` on `feature/dev`.
 
 ---
 
 ## ⚖️ Rules of Engagement & Production Constraints
 
-> ⚠️ **CRITICAL**: PaperPilot is a live, trending open-source product on Hacker News. All development must preserve production stability.
+> ⚠️ **CRITICAL**: PaperPilot is a live open-source product. All development must preserve production stability.
 
 1. **System Resource Constraint (`-j 4` is MANDATORY on local machine):**
    - **ALWAYS** pass `-j 4` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 4`).
-   - Unbounded cargo compilations will exhaust memory and freeze the host machine.
+   - Unbounded cargo compilations will exhaust memory and freeze the host machine / log off the system.
 
 2. **Feature Branch Protocol (No Direct Pushes to `main`):**
    - All development, bug fixes, and experiments must occur on dedicated feature branches or reviewed into `feature/dev`. Never push directly to `main`.
@@ -146,9 +147,12 @@ make test-wave6
 make test-wave7
 make test-wave8
 
-# 4. Desktop Vitest Tests
+# 4. System Benchmark Suite
+python3 scripts/run_system_benchmark.py --quick
+
+# 5. Desktop Vitest Tests
 pnpm --dir apps/desktop test
 
-# 5. Knowledge Graph Refresh
+# 6. Knowledge Graph Refresh
 /home/krushna/.cargo/bin/graphify-rs build
 ```
