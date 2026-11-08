@@ -69,7 +69,9 @@ def test_every_tool_and_linguistic_style_generates_valid_calls(name, category):
     steps = calls(record)
     validate_workflow(steps)
     params = steps[0]["parameters"]
-    assert params[CONTRACTS[name].output_parameter] in record["messages"][1]["content"]
+    output_param = CONTRACTS[name].output_parameter
+    if output_param:
+        assert params[output_param] in record["messages"][1]["content"]
     assert all(template_fields(template) <= TOOL_SCHEMAS[name]["properties"].keys()
                for template in SINGLE_TOOL_TEMPLATES[name][category])
 
@@ -179,8 +181,7 @@ def test_refusals_are_attached_to_actual_guardrail_templates():
 
 def test_catalog_excludes_unavailable_or_fixture_dependent_handlers():
     assert set(CONTRACTS) == set(TOOL_SCHEMAS) == set(SINGLE_TOOL_TEMPLATES)
-    assert not {"pdf_extract_tables", "pdf_stamp", "pdf_overlay_underlay", "pdf_reverse",
-                "pdf_invert_colors", "pdf_compare_visual"} & CONTRACTS.keys()
+    assert not {"pdf_reverse", "pdf_invert_colors", "pdf_compare_visual"} & CONTRACTS.keys()
     for name, schema in TOOL_SCHEMAS.items():
         assert set(schema.get("required", [])) <= schema["properties"].keys(), name
 

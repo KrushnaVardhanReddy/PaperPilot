@@ -30,6 +30,15 @@ def generate_random_param(param_type, param_name):
         "order": "2,1", "position": "bottom", "format": "{page}",
         "action": "add", "file_name": "note.txt", "description": "Review note",
         "file_data_base64": base64.b64encode(b"PaperPilot review note").decode(),
+        # Form field, annotation & batch parameters
+        "field_name": "signature_box", "field_type": "text",
+        "annotations": [{"type": "highlight", "page": 1, "rect": [50, 50, 200, 70]}],
+        "values": {"full_name": "Jane Doe", "date": "2026-11-08"},
+        "recipe": "/recipes/legal_clean.ppflow", "sheet": "Sheet1",
+        "title": "Document Title", "author": "Legal Dept",
+        "format": "json", "target_sheet": "a4",
+        "grid_cols": 2, "grid_rows": 2, "overlap_pt": 15, "scale": 1.0,
+        "direction": "vertical", "margin_pt": 0, "spacing_pt": 0,
     }
     if param_name in values:
         return values[param_name]
@@ -39,6 +48,8 @@ def generate_random_param(param_type, param_name):
         return 1
     if param_type == "array":
         return []
+    if param_type == "object":
+        return {"key": "value"}
     return random_string()
 
 
@@ -49,6 +60,10 @@ OPTIONAL_PARAMETERS = {
     "pdf_sanitize": ("remove_metadata", "remove_attachments", "remove_scripts"),
     "document_pii_scan": ("scan_ssn", "scan_credit_cards", "scan_emails", "scan_phones", "scan_iban"),
     "pdf_attachments": ("action", "file_name", "file_data_base64", "description"),
+    "pdf_extract_tables": ("format",),
+    "excel_to_json": ("has_headers", "sheet"),
+    "pdf_metadata": ("title", "author"),
+    "batch_fill": ("data",),
 }
 
 
@@ -57,8 +72,13 @@ def template_fields(template):
 
 
 def format_prompt(template, params):
-    return template.format(**{key: ", ".join(value) if isinstance(value, list) else str(value)
-                              for key, value in params.items()})
+    formatted = {}
+    for key, value in params.items():
+        if isinstance(value, list):
+            formatted[key] = ", ".join(str(item) for item in value)
+        else:
+            formatted[key] = str(value)
+    return template.format(**formatted)
 
 
 def _parameters(name, fields=()):
@@ -119,16 +139,17 @@ def generate_single_tool_record(tool_name=None, category=None, negative=None):
     contract = CONTRACTS[name]
     params = _parameters(name, template_fields(template))
     for key in contract.input_parameters:
-        kind = contract.input_kinds[0]
+        kind = contract.input_kinds[0] if contract.input_kinds else "pdf"
         params[key] = ([artifact_path(f"/data/input_{i}", kind) for i in (1, 2)] if key == "inputs"
                        else artifact_path(f"/data/{key}_{random_string(4)}", kind))
-    params[contract.output_parameter] = artifact_path("/data/result_" + random_string(4), output_kind(name, params))
+    if contract.output_parameter:
+        params[contract.output_parameter] = artifact_path("/data/result_" + random_string(4), output_kind(name, params))
     step = {"tool": name, "parameters": params}
     validate_workflow([step])
     prompt = format_prompt(template, params)
     if category == TemplateCategory.NEGATIVE_GUARDRAILS:
         return _record(prompt, REFUSAL)
-    if params[contract.output_parameter] not in prompt:
+    if contract.output_parameter and params[contract.output_parameter] not in prompt:
         prompt += f" Save the result to {params[contract.output_parameter]}."
     return _record(prompt + _settings([step]), json.dumps(step))
 
@@ -136,16 +157,16 @@ def generate_single_tool_record(tool_name=None, category=None, negative=None):
 def _dynamic_tools():
     length = random.randint(2, 5)
     first = random.choice([
-        name for name, contract in CONTRACTS.items() if not contract.terminal
+        name for name, contract in CONTRACTS.items() if not contract.terminal and contract.output_parameter
         and (contract.preserves_input or any(contract.output_kind in next_contract.input_kinds
                                              for next_contract in CONTRACTS.values()))
     ])
     tools = [first]
-    kind = CONTRACTS[first].input_kinds[0]
+    kind = CONTRACTS[first].input_kinds[0] if CONTRACTS[first].input_kinds else "pdf"
     for index in range(length):
         if index:
             choices = [name for name, contract in CONTRACTS.items()
-                       if name not in tools and kind in contract.input_kinds
+                       if name not in tools and contract.output_parameter and kind in contract.input_kinds
                        and (not contract.terminal or index == length - 1)]
             if not choices:
                 break

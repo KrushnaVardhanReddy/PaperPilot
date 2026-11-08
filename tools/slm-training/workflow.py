@@ -27,27 +27,63 @@ _PDF_TO_PDF = (
     "pdf_stitch_canvas", "pdf_attachments",
     "pdf_remove_signatures", "pdf_flatten", "pdf_header_footer", "pdf_linearize",
     "pdf_repair", "pdf_extract_pages", "pdf_remove_blank", "pdf_page_numbers",
+    # Additional Wave 2-5 PDF-to-PDF operations
+    "pdf_annotate", "pdf_bookmarks", "pdf_change_permissions", "pdf_create_form_field",
+    "pdf_dedup_streams", "pdf_fill_form", "pdf_metadata", "pdf_overlay_underlay",
+    "pdf_posterize", "pdf_sign", "pdf_split_scanned_book", "pdf_stamp",
+    "pdf_timestamp", "pdf_to_pdf_a", "recipe_run", "document_workflow",
 )
 CONTRACTS = {name: ArtifactContract() for name in _PDF_TO_PDF}
 CONTRACTS.update({
     "pdf_merge": ArtifactContract(input_parameters=("inputs",)),
+    "pdf_merge_alternate": ArtifactContract(input_parameters=("input_a", "input_b")),
     "pdf_split": ArtifactContract(output_kind="directory", output_parameter="output_dir", terminal=True),
+    "pdf_burst": ArtifactContract(output_kind="directory", output_parameter="output_dir", terminal=True),
     "pdf_extract_images": ArtifactContract(output_kind="directory", output_parameter="output_dir", terminal=True),
+    "batch_fill": ArtifactContract(input_parameters=("template",), output_kind="directory", output_parameter="output_dir", terminal=True),
+    "watcher_start": ArtifactContract(input_parameters=("dir",), output_kind="directory", output_parameter="output_dir", terminal=True),
     "pdf_images_to_pdf": ArtifactContract(input_kinds=("png", "jpg"), input_parameters=("inputs",)),
+    "pdf_render": ArtifactContract(output_kind="png", terminal=True),
+    "pdf_comic_archive": ArtifactContract(output_kind="cbr"),
+    "pdf_split_by_outline": ArtifactContract(output_kind="zip"),
     "pdf_encrypt": ArtifactContract(output_kind="encrypted_pdf"),
     "pdf_decrypt": ArtifactContract(input_kinds=("encrypted_pdf",)),
     "pdf_extract_text": ArtifactContract(output_kind="txt", preserves_input=True),
     "pdf_validate_signatures": ArtifactContract(output_kind="json", preserves_input=True),
     "document_pii_scan": ArtifactContract(output_kind="json", preserves_input=True),
     "pdf_compare": ArtifactContract(output_kind="json", input_parameters=("input_a", "input_b"), preserves_input=True),
+    "pdf_extract_tables": ArtifactContract(output_kind="json", preserves_input=True),
+    "pdf_rag_chunks": ArtifactContract(output_kind="json", preserves_input=True),
     "pdf_to_docx": ArtifactContract(output_kind="docx"),
     "pdf_to_xlsx": ArtifactContract(output_kind="xlsx"),
     "pdf_to_pptx": ArtifactContract(output_kind="pptx"),
     "pdf_to_markdown": ArtifactContract(output_kind="md"),
     "pdf_to_html": ArtifactContract(output_kind="html"),
+    "pdf_to_epub": ArtifactContract(output_kind="epub"),
+    "pdf_to_json": ArtifactContract(output_kind="json"),
+    "excel_to_csv": ArtifactContract(input_kinds=("xlsx", "xls"), output_kind="csv"),
+    "excel_to_json": ArtifactContract(input_kinds=("xlsx", "xls"), output_kind="json"),
+    "json_to_pdf": ArtifactContract(input_kinds=("json",), output_kind="pdf"),
+    "pdf_convert_excel": ArtifactContract(input_kinds=("xlsx", "xls", "csv"), output_kind="pdf"),
+    "pdf_convert_html": ArtifactContract(input_kinds=("html", "htm"), output_kind="pdf"),
+    "pdf_convert_markdown": ArtifactContract(input_kinds=("md", "markdown"), output_kind="pdf"),
     "office_to_markdown": ArtifactContract(input_kinds=("docx", "xlsx", "pptx"), output_kind="md"),
     "office_extract_text": ArtifactContract(input_kinds=("docx", "xlsx", "pptx"), output_kind="txt", preserves_input=True),
     "office_modernize_legacy": ArtifactContract(input_kinds=("doc", "xls", "ppt"), output_kind="docx"),
+    # Non-mutating inspection / query / daemon tools
+    "pdf_search": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "pdf_info": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "pdf_validate": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "pdf_hash": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "pdf_read_form": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "pdf_classify_type": ArtifactContract(output_kind="json", output_parameter="", preserves_input=True),
+    "semantic_search": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
+    "workspace_search": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
+    "list_workflows": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
+    "execution_receipt_get": ArtifactContract(input_parameters=("directory",), output_kind="json", output_parameter=""),
+    "execution_receipt_list": ArtifactContract(input_parameters=("directory",), output_kind="json", output_parameter=""),
+    "watcher_list": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
+    "watcher_stop": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
 })
 
 
@@ -94,12 +130,13 @@ def validate_workflow(steps, schemas=None):
         if errors:
             raise ValueError(f"{name}: {errors[0].message}")
         contract = CONTRACTS[name]
-        output = params.get(contract.output_parameter)
-        if not isinstance(output, str) or not output:
-            raise ValueError(f"{name}: missing artifact output")
-        if output in planned_outputs:
-            raise ValueError(f"Duplicate output path: {output}")
-        planned_outputs.add(output)
+        if contract.output_parameter:
+            output = params.get(contract.output_parameter)
+            if not isinstance(output, str) or not output:
+                raise ValueError(f"{name}: missing artifact output")
+            if output in planned_outputs:
+                raise ValueError(f"Duplicate output path: {output}")
+            planned_outputs.add(output)
 
     password_by_path = {}
     for index, step in enumerate(steps):
@@ -125,13 +162,14 @@ def validate_workflow(steps, schemas=None):
                 if name == "pdf_decrypt" and path in password_by_path:
                     if params["password"] != password_by_path[path]:
                         raise ValueError("Decryption password differs from preceding encryption")
-        output = params[contract.output_parameter]
-        kind = output_kind(name, params)
-        if kind != "directory" and path_kind(output) != ("pdf" if kind == "encrypted_pdf" else kind):
-            raise ValueError(f"{name}: output extension does not match {kind}")
-        if kind == "directory" and PurePosixPath(output).suffix:
-            raise ValueError(f"{name}: output_dir must name a directory, not a file")
-        produced[output] = kind
-        if name == "pdf_encrypt":
-            password_by_path[output] = params["password"]
+        if contract.output_parameter:
+            output = params[contract.output_parameter]
+            kind = output_kind(name, params)
+            if kind != "directory" and path_kind(output) != ("pdf" if kind == "encrypted_pdf" else kind):
+                raise ValueError(f"{name}: output extension does not match {kind}")
+            if kind == "directory" and PurePosixPath(output).suffix:
+                raise ValueError(f"{name}: output_dir must name a directory, not a file")
+            produced[output] = kind
+            if name == "pdf_encrypt":
+                password_by_path[output] = params["password"]
     return produced
