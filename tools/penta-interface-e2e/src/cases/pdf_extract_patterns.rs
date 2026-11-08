@@ -21,7 +21,7 @@ pub async fn run_pdf_extract_patterns_suite() -> anyhow::Result<Vec<TestExecutio
 
     // 1. CLI Tests
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
-        let out_path = out_dir.join(format!("{}_cli_{}.pdf", tool, tier as u8));
+        let out_path = out_dir.join(format!("{}_cli_{}.json", tool, tier as u8));
         
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
@@ -30,18 +30,20 @@ pub async fn run_pdf_extract_patterns_suite() -> anyhow::Result<Vec<TestExecutio
         
         let out_path_str = out_path.to_str().unwrap().to_string();
         let args: Vec<&str> = vec![
-            "extract-patterns",
+            "pdf-extract-patterns",
             "--input",
             &actual_input,
             "--output",
             &out_path_str,
+            "--keywords",
+            "Single,Page",
         ];
 
         let (success, out_msg, latency) = CliRunner::run(&args).await?;
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "json").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {
@@ -63,7 +65,7 @@ pub async fn run_pdf_extract_patterns_suite() -> anyhow::Result<Vec<TestExecutio
 
     // 2. MCP Parity Checks
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
-        let out_path = out_dir.join(format!("{}_mcp_{}.pdf", tool, tier as u8));
+        let out_path = out_dir.join(format!("{}_mcp_{}.json", tool, tier as u8));
         
         let mut actual_input = single_page.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {
@@ -72,7 +74,8 @@ pub async fn run_pdf_extract_patterns_suite() -> anyhow::Result<Vec<TestExecutio
 
         let mcp_args = json!({
             "input": actual_input,
-            "output": out_path.to_str().unwrap()
+            "output": out_path.to_str().unwrap(),
+            "keywords": ["Single", "Page"]
         });
 
         let (success, resp, latency) = McpRunner::call_tool(tool, mcp_args).await?;
@@ -80,7 +83,7 @@ pub async fn run_pdf_extract_patterns_suite() -> anyhow::Result<Vec<TestExecutio
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "json").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {

@@ -28,6 +28,7 @@ const tools61_90 = [
   { name: 'office_modernize_legacy', title: 'Modernize Legacy Office', type: 'xls', ext: 'xlsx' },
   { name: 'excel_to_json', title: 'Excel to JSON', type: 'xlsx', ext: 'json' },
   { name: 'excel_to_csv', title: 'Excel to CSV', type: 'xlsx', ext: 'csv' },
+  { name: 'pdf_extract_patterns', title: 'Extract Keywords & Patterns', type: 'pdf', ext: 'json' },
   { name: 'pdf_search', title: 'Search Text', type: 'pdf', ext: 'txt' },
   { name: 'workspace_search', title: 'Workspace Directory Search', type: 'pdf', ext: 'txt' },
   { name: 'semantic_search', title: 'Semantic Vector Search', type: 'pdf', ext: 'txt' },
@@ -247,6 +248,9 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               break;
             case 'pdf_extract_tables':
               cliCmd = `"${cliBin}" extract-tables --input "${fixtureFinancial}" --output "${outputFile}" --format json`;
+              break;
+            case 'pdf_extract_patterns':
+              cliCmd = `"${cliBin}" pdf-extract-patterns --input "${fixtureSingle}" --output "${outputFile}" --keywords "Single,Page"`;
               break;
             case 'pdf_ocr':
               cliCmd = `"${cliBin}" ocr --input "${fixtureSingle}" --output "${outputFile}" --format pdf`;
@@ -489,6 +493,15 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               expect(insp.hasString('ColA,ColB,ColC')).toBe(true);
               expect(insp.hasString('Value1,42,43')).toBe(true);
               invariantNote = 'RFC 4180 CSV Export: Exported target Excel worksheet into comma-separated records';
+              break;
+            }
+            case 'pdf_extract_patterns': {
+              const insp = OfficeInspector.inspectText(targetFile);
+              expect(insp.isJson).toBe(true);
+              expect(insp.parsedJson).toBeDefined();
+              expect(typeof insp.parsedJson.total_matches).toBe('number');
+              expect(Array.isArray(insp.parsedJson.findings)).toBe(true);
+              invariantNote = 'Pattern Extraction Report: Valid JSON payload capturing occurrences, snippets, and page mappings';
               break;
             }
             case 'pdf_search': {
