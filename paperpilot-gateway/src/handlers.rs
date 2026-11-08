@@ -906,8 +906,28 @@ pub async fn handle_tool(
                     "docx" => "pdf_to_docx".to_string(),
                     "xlsx" => "pdf_to_xlsx".to_string(),
                     "pptx" => "pdf_to_pptx".to_string(),
-                    "html" => "pdf_convert_html".to_string(),
-                    "markdown" => "pdf_convert_markdown".to_string(),
+                    "html" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_html".to_string()
+                        } else {
+                            "pdf_convert_html".to_string()
+                        }
+                    }
+                    "markdown" | "md" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_markdown".to_string()
+                        } else {
+                            "pdf_convert_markdown".to_string()
+                        }
+                    }
                     "excel" | "csv" => "pdf_convert_excel".to_string(),
                     "pdf" => {
                         let has_json_ext = args

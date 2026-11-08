@@ -12,6 +12,11 @@ import urllib.error
 import math
 import copy
 
+# Bypass proxy for localhost / 127.0.0.1
+proxy_handler = urllib.request.ProxyHandler({})
+opener = urllib.request.build_opener(proxy_handler)
+urllib.request.install_opener(opener)
+
 GATEWAY_URL = "http://127.0.0.1:7823"
 CLI_BIN = "./target/debug/paperpilot "
 
@@ -178,8 +183,8 @@ def run_benchmarks(tools_definitions, quick=False):
         if cli_args_raw:
             cli_args = recursive_format_path(cli_args_raw, out_dir)
             if isinstance(cli_args, list):
-                # Just building simple command string for benchmarking overhead
-                cmd = CLI_BIN + " ".join([f'"{x}"' if ' ' in x else x for x in cli_args]) + " --json"
+                import shlex
+                cmd = CLI_BIN + " ".join([shlex.quote(str(x)) for x in cli_args]) + " --json"
             else:
                 cmd = CLI_BIN + cli_args + " --json"
 
@@ -202,13 +207,24 @@ def run_benchmarks(tools_definitions, quick=False):
                 },
                 "id": 1
             }
-            cmd = "./target/debug/paperpilot-mcp"
+            cmd = "./target/debug/paperpilot-mcp --direct-tool-call"
             input_json = json.dumps(payload) + "\n"
 
             for i in range(iterations):
                 succ, stdout, stderr, lat = run_command(cmd, input_data=input_json)
                 tool_results["mcp"]["latencies"].append(lat)
-                if not succ or "error" in stdout.lower():
+                # Check for jsonrpc error or isError in result
+                is_err = not succ
+                try:
+                    resp_obj = json.loads(stdout.strip())
+                    if "error" in resp_obj or (resp_obj.get("result", {}).get("isError", False)):
+                        is_err = True
+                    elif resp_obj.get("result", {}).get("success") is False:
+                        is_err = True
+                except Exception:
+                    if not succ or "error" in stdout.lower():
+                        is_err = True
+                if is_err:
                      tool_results["mcp"]["pass"] = False
 
         # API
