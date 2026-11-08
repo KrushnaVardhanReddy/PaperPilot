@@ -3245,3 +3245,17 @@ pub async fn workspace_search(req: axum::extract::Request) -> impl IntoResponse 
 pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("semantic_search".to_string()), req).await
 }
+/// Extract Keywords & Patterns [Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]] [Input: .pdf | Output: .json]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/extract-patterns",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Extract Keywords & Patterns completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_extract_patterns(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_patterns".to_string()), req).await
+}

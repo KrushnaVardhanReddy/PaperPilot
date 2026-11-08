@@ -29,3 +29,4 @@ pub mod pdf_timestamp;
 pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod table;
+pub mod pdf_extract_patterns;

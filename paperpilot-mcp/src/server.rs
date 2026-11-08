@@ -3515,6 +3515,77 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_to_epub.input_schema = Arc::new(schema_pdf_to_epub);
         tools.push(tool_pdf_to_epub);
+        let mut schema_pdf_extract_patterns = serde_json::Map::new();
+        schema_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_extract_patterns = serde_json::Map::new();
+
+        let mut prop_input_pdf_extract_patterns = serde_json::Map::new();
+        prop_input_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_extract_patterns.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_extract_patterns),
+        );
+
+        let mut prop_output_pdf_extract_patterns = serde_json::Map::new();
+        prop_output_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_extract_patterns.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_extract_patterns),
+        );
+
+        let mut prop_keywords = serde_json::Map::new();
+        prop_keywords.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+        let mut kw_items = serde_json::Map::new();
+        kw_items.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_keywords.insert("items".to_string(), serde_json::Value::Object(kw_items));
+        prop_keywords.insert("description".to_string(), serde_json::Value::String("Array of keywords to search for across all pages".to_string()));
+        props_pdf_extract_patterns.insert("keywords".to_string(), serde_json::Value::Object(prop_keywords));
+
+        let mut prop_patterns = serde_json::Map::new();
+        prop_patterns.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut pat_additional = serde_json::Map::new();
+        pat_additional.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_patterns.insert("additionalProperties".to_string(), serde_json::Value::Object(pat_additional));
+        prop_patterns.insert("description".to_string(), serde_json::Value::String("Key-value map of pattern label to regex string (e.g. {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"})".to_string()));
+        props_pdf_extract_patterns.insert("patterns".to_string(), serde_json::Value::Object(prop_patterns));
+
+        let mut prop_case = serde_json::Map::new();
+        prop_case.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        prop_case.insert("description".to_string(), serde_json::Value::String("Whether matching should be case-sensitive (default: false)".to_string()));
+        props_pdf_extract_patterns.insert("case_sensitive".to_string(), serde_json::Value::Object(prop_case));
+
+        let mut prop_ctx = serde_json::Map::new();
+        prop_ctx.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        prop_ctx.insert("description".to_string(), serde_json::Value::String("Context characters around match (default: 30)".to_string()));
+        props_pdf_extract_patterns.insert("context_len".to_string(), serde_json::Value::Object(prop_ctx));
+
+        schema_pdf_extract_patterns.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_extract_patterns),
+        );
+        schema_pdf_extract_patterns.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_extract_patterns = Tool::default();
+        tool_pdf_extract_patterns.name = "pdf_extract_patterns".into();
+        tool_pdf_extract_patterns.description = Some(
+            "Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]".into(),
+        );
+        tool_pdf_extract_patterns.input_schema = Arc::new(schema_pdf_extract_patterns);
+        tools.push(tool_pdf_extract_patterns);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -7013,6 +7084,74 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF to EPUB 3.0 executed successfully".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_extract_patterns" => {
+                let input = get_string("input")?;
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                }
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                let keywords: Vec<String> = args
+                    .get("keywords")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+
+                let mut patterns = std::collections::HashMap::new();
+                if let Some(obj) = args.get("patterns").and_then(|v| v.as_object()) {
+                    for (k, v) in obj {
+                        if let Some(pat_str) = v.as_str() {
+                            patterns.insert(k.clone(), pat_str.to_string());
+                        }
+                    }
+                }
+
+                let case_sensitive = args
+                    .get("case_sensitive")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                let context_len = args
+                    .get("context_len")
+                    .and_then(|v| v.as_u64())
+                    .map(|n| n as usize)
+                    .unwrap_or(30);
+
+                let options = paperpilot_pdf::operations::pdf_extract_patterns::PdfExtractPatternsOptions {
+                    keywords,
+                    patterns,
+                    case_sensitive,
+                    context_len,
+                };
+
+                let report = paperpilot_pdf::operations::pdf_extract_patterns::extract_patterns(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                let report_json = serde_json::to_value(&report)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                if let Some(ref out) = output {
+                    let result_bytes = serde_json::to_vec_pretty(&report)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                    std::fs::write(out, result_bytes)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
+
+                Ok(OperationResult {
+                    data: Some(report_json),
+                    success: true,
+                    message: "Extract Keywords & Patterns executed successfully".to_string(),
+                    output_path: output,
                     diff_detected: None,
                 })
             }

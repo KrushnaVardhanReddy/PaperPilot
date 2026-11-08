@@ -321,4 +321,12 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.epub'
         });
     });
+
+    it('builds args for pdf_extract_patterns', async () => {
+        const args = await buildOperationArgs('pdf_extract_patterns', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.json'
+        });
+    });
 });

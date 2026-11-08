@@ -2973,3 +2973,9 @@ pub fn pdf_to_epub(input_bytes: &[u8], options_json: &str) -> OperationResult<Ve
             .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(input_bytes, &options)
 }
+
+pub fn pdf_extract_patterns(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_extract_patterns::PdfExtractPatternsOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_extract_patterns::pdf_extract_patterns_bytes(input_bytes, &options)
+}
