@@ -1,0 +1,111 @@
+# Task: [P158_T158A: Implement Pattern & Multi-Keyword Extraction (pdf_extract_patterns) Across Penta-Interface and Desktop UI]
+
+## 1. Role & Objective
+You are an expert full-stack Rust, Systems, and Svelte engineer working on PaperPilot.
+Your objective is to implement **Task 158A / Spec 158** (`specs/158-pattern-multi-keyword-data-extraction/spec.md` and `task_158a.md`).
+You will scaffold and implement `pdf_extract_patterns`, allowing users to extract matches for custom keyword lists and arbitrary regex patterns across all 5 PaperPilot interfaces (Rust Core, CLI, MCP Server, REST Gateway, and Desktop UI).
+
+---
+
+## 2. Technical Context & Key Files
+- `specs/158-pattern-multi-keyword-data-extraction/spec.md`: Architectural specification.
+- `specs/158-pattern-multi-keyword-data-extraction/task_158a.md`: Task checklist.
+- `tools/penta-scaffold`: Scaffolding generator.
+  Run initial scaffolding:
+  ```bash
+  cargo run -p penta-scaffold -- \
+    --name pdf_extract_patterns \
+    --title "Extract Keywords & Patterns" \
+    --category intelligence \
+    --icon "🔍" \
+    --input-format pdf \
+    --output-format json \
+    --description "Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]"
+  ```
+- `paperpilot-pdf/src/operations/pii.rs`: Reference implementation for document text scanning and context snippet extraction.
+- `apps/desktop/src/lib/types/toolList.ts`: Canonical tool registry in Desktop UI.
+- `apps/desktop/src/lib/components/operations/DynamicActionControls.svelte`: Dynamic parameter form in UI.
+
+---
+
+## 3. Step-by-Step Implementation Guide
+
+### Step 1: Run Penta-Scaffold
+Run the `penta-scaffold` command to auto-generate the base stubs across all packages.
+
+### Step 2: Implement Core Rust Engine (`paperpilot-pdf/src/operations/pdf_extract_patterns.rs`)
+1. Define `PdfExtractPatternsOptions`:
+   ```rust
+   #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+   pub struct PdfExtractPatternsOptions {
+       #[serde(default)]
+       pub keywords: Vec<String>,
+       #[serde(default)]
+       pub patterns: HashMap<String, String>, // label -> regex string
+       #[serde(default)]
+       pub case_sensitive: bool,
+       #[serde(default = "default_context_len")]
+       pub context_len: usize,
+   }
+   fn default_context_len() -> usize { 30 }
+   ```
+2. Define `PatternFinding` and `PatternExtractionReport`:
+   - `total_matches: usize`
+   - `matches_by_label: HashMap<String, usize>`
+   - `findings: Vec<PatternFinding>`
+   - `execution_time_ms: f64`
+3. Load the PDF with `lopdf::Document::load_mem`.
+4. Iterate over pages, extract text with `doc.extract_text(&[page_num])`.
+5. For each keyword: find matches, extract context snippet ($\pm \text{context\_len}$ chars), append to `findings`.
+6. For each regex pattern: compile with `regex::RegexBuilder::new(re_str).case_insensitive(!case_sensitive).build()`, find captures/matches, extract context snippet, append to `findings`.
+7. Write unit tests in `pdf_extract_patterns.rs` testing keyword matching, regex matching, case sensitivity, and empty inputs.
+
+### Step 3: Implement CLI Command (`paperpilot-cli`)
+1. In `paperpilot-cli/src/cli.rs`, add arguments to `PdfExtractPatterns`:
+   - `input: PathBuf`
+   - `output: Option<PathBuf>`
+   - `--keywords: Vec<String>`
+   - `--patterns: Vec<String>` (parsed as `KEY=REGEX`)
+   - `--case-sensitive: bool`
+   - `--context-len: Option<usize>`
+2. In `paperpilot-cli/src/commands/pdf_extract_patterns.rs`:
+   - Parse options, invoke `pdf_extract_patterns_bytes`, write to `output` or print JSON report to stdout.
+
+### Step 4: Implement MCP Tool (`paperpilot-mcp`)
+1. In `paperpilot-mcp/src/server.rs`:
+   - Register tool schema for `pdf_extract_patterns` with properties:
+     - `input`: string (required)
+     - `output`: string (optional destination path for JSON report)
+     - `keywords`: array of strings
+     - `patterns`: object (string -> string)
+     - `case_sensitive`: boolean
+     - `context_len`: integer
+   - In `execute_call_tool`:
+     - Parse arguments, invoke `pdf_extract_patterns_bytes`.
+     - If `output` is provided, save JSON report to disk.
+     - Return `OperationResult` with `data: Some(report_json)`.
+
+### Step 5: Implement Gateway REST Endpoint (`paperpilot-gateway`)
+1. Wire `/api/v1/pdf-extract-patterns` handler accepting multipart PDF file and query/form options.
+2. Return JSON report.
+
+### Step 6: Desktop & Web UI Integration (`apps/desktop` and `apps/web`)
+1. In `apps/desktop/src/lib/types/toolList.ts`:
+   - Ensure `pdf_extract_patterns` is in `allTools` under `category: 'intelligence'`, with `icon: '🔍'`, `outputFormat: 'json'`.
+2. In `apps/desktop/src/lib/components/operations/DynamicActionControls.svelte`:
+   - Add parameter controls for `pdf_extract_patterns`:
+     - Keyword list input (tags / comma separated)
+     - Custom regex pattern input
+     - Context length slider (10 to 100)
+3. In `apps/desktop/src/lib/services/toolRegistry.ts`:
+   - Ensure arguments builder sets `keywords` and `patterns`.
+
+---
+
+## 4. Verification & Testing
+1. Rust tests: `cargo test -p paperpilot-pdf operations::pdf_extract_patterns`
+2. CLI check: `cargo run -p paperpilot-cli -- pdf-extract-patterns --help`
+3. MCP check: `cargo check -p paperpilot-mcp`
+4. Gateway check: `cargo check -p paperpilot-gateway`
+5. Desktop UI check: `pnpm --dir apps/desktop check && pnpm --dir apps/desktop test`
+6. Clean clippy: `cargo clippy --workspace -- -D warnings`
