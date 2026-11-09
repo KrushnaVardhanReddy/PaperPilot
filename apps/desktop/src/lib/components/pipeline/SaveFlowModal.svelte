@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="preview-section">
-                    <label class="input-label">Step Sequence Preview</label>
+                    <span class="input-label">Step Sequence Preview</span>
                     <div class="step-badges">
                         {#each pipelineState.steps as step, i}
                             <span class="step-badge">[{i + 1}] {step.icon} {step.label}</span>
