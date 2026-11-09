@@ -298,10 +298,7 @@
   let pdfDoc: any = $state(null);
   let pageNum = $state(1);
   let scale = $state(1.2);
-  let isOperationsDrawerOpen = $derived.by({
-    get: () => appState.isOperationsDrawerOpen,
-    set: (val: boolean) => { appState.isOperationsDrawerOpen = val; }
-  });
+  let isOperationsDrawerOpen = $derived(appState.isOperationsDrawerOpen);
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
   let formValues = $state<Record<string, any>>({});
   let hasFormFields = $state(false);
@@ -728,7 +725,7 @@
                     ✍
                   </button>
                   <div class="divider"></div>
-                  <button title="Tool Settings" class:active={isOperationsDrawerOpen} onclick={() => isOperationsDrawerOpen = !isOperationsDrawerOpen}>⚙️ Tools</button>
+                  <button title="Tool Settings" class:active={isOperationsDrawerOpen} onclick={() => appState.toggleOperationsDrawer()}>⚙️ Tools</button>
                 </div>
               </div>
             </div>
@@ -756,7 +753,7 @@
         <div class="right-drawer" class:open={isOperationsDrawerOpen}>
           <div class="right-drawer-header">
             <h3>Tools & Actions</h3>
-            <button class="close-btn" onclick={() => isOperationsDrawerOpen = false} title="Close tools">✕</button>
+            <button class="close-btn" onclick={() => appState.toggleOperationsDrawer(false)} title="Close tools">✕</button>
           </div>
           <div class="right-drawer-content">
             <OperationsPanel embedded={true} />
