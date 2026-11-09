@@ -119,6 +119,8 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let sample_pdf = workspace_root.join("fixtures/Get_Started_With_Smallpdf.pdf").to_string_lossy().to_string();
     let sample_pdf2 = workspace_root.join("tests/e2e_fixtures/real/merge_a.pdf").to_string_lossy().to_string();
     let sample_pdf3 = workspace_root.join("tests/e2e_fixtures/real/merge_b.pdf").to_string_lossy().to_string();
+    let sample_multi_page = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
+    let sample_two_up_book = workspace_root.join("tests/e2e_fixtures/real/two_up_book.pdf").to_string_lossy().to_string();
     let _sample_pdf_photo = workspace_root.join("tests/e2e_fixtures/real/sample_photo_doc.pdf").to_string_lossy().to_string();
 
     let tools = [
@@ -253,32 +255,32 @@ async fn test_wave6_penta_interface() -> Result<()> {
     // 2. pdf_merge_alternate
     let tool_id = "pdf_merge_alternate";
     let out_file = out_dir.join("merge_alt.pdf");
-    test_cli!(tool_id, &["pdf-merge-alternate", "--input-a", &sample_pdf2, "--input-b", &sample_pdf3, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input_a": sample_pdf2, "input_b": sample_pdf3, "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["pdf-merge-alternate", "--input-a", &sample_pdf2, "--input-b", &sample_pdf3, "--reverse-b", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input_a": sample_pdf2, "input_b": sample_pdf3, "reverse_b": true, "output": out_file.to_str().unwrap()}), out_file);
 
     // 3. pdf_split
     let tool_id = "pdf_split";
     let out_dir_split = out_dir.join("split");
     fs::create_dir_all(&out_dir_split).unwrap();
-    test_cli!(tool_id, &["split", "--input", &sample_pdf, "--every", "1", "--output", out_dir_split.to_str().unwrap(), "--json"], out_dir_split);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "every": 1, "output_dir": out_dir_split.to_str().unwrap()}), out_dir_split);
+    test_cli!(tool_id, &["split", "--input", &sample_multi_page, "--pages", "1-2, 3-5", "--output", out_dir_split.to_str().unwrap(), "--json"], out_dir_split);
+    test_mcp_api!(tool_id, json!({"input": sample_multi_page, "ranges": "1-2, 3-5", "output_dir": out_dir_split.to_str().unwrap()}), out_dir_split);
 
     // 4. pdf_split_by_outline
     let tool_id = "pdf_split_by_outline";
     let out_file = out_dir.join("split_outline.zip");
-    test_cli!(tool_id, &["pdf-split-by-outline", "--input", &sample_pdf, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    let (success, resp, latency) = call_mcp_tool(tool_id, json!({"input": sample_pdf, "output": out_file.to_str().unwrap()}))?;
+    test_cli!(tool_id, &["pdf-split-by-outline", "--input", &sample_multi_page, "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    let (success, resp, latency) = call_mcp_tool(tool_id, json!({"input": sample_multi_page, "output": out_file.to_str().unwrap()}))?;
     results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: if success && out_file.exists() { fs::metadata(&out_file).unwrap().len() as usize } else { 0 }, passed: success, actual_result: resp.to_string() });
     let _ = fs::remove_file(&out_file);
-    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), json!({"input": sample_pdf, "output": out_file.to_str().unwrap()})).await.unwrap_or((false, json!({}), 0.0));
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), json!({"input": sample_multi_page, "output": out_file.to_str().unwrap()})).await.unwrap_or((false, json!({}), 0.0));
     results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: if success && out_file.exists() { fs::metadata(&out_file).unwrap().len() as usize } else { 0 }, passed: success, actual_result: resp.to_string() });
     let _ = fs::remove_file(&out_file);
 
     // 5. pdf_split_scanned_book
     let tool_id = "pdf_split_scanned_book";
     let out_file = out_dir.join("split_scanned.pdf");
-    test_cli!(tool_id, &["pdf-split-scanned-book", "--input", &sample_pdf, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["pdf-split-scanned-book", "--input", &sample_two_up_book, "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_two_up_book, "output": out_file.to_str().unwrap()}), out_file);
 
     // 6. pdf_rotate
     let tool_id = "pdf_rotate";

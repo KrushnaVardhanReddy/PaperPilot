@@ -54,6 +54,11 @@ export interface OperationContext {
     extractPatternsRegex?: string;
     extractPatternsCaseSensitive?: boolean;
     extractPatternsContextLen?: number;
+    mergeAlternateDocA?: string;
+    mergeAlternateDocB?: string;
+    mergeAlternateReverseB?: boolean;
+    mergeAlternateStep?: number;
+    mergeAlternateStepB?: number;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -599,15 +604,18 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'pdf_merge_alternate': {
-            const inputA = appState.documentPaths[0] || docPath;
-            const inputB = appState.documentPaths[1] || (appState.documentPaths.length > 1 ? appState.documentPaths[1] : docPath);
+            const inputA = context.mergeAlternateDocA || appState.documentPaths[0] || docPath;
+            const inputB = context.mergeAlternateDocB || (appState.documentPaths.length > 1 ? appState.documentPaths[1] : docPath);
+            const reverseB = context.mergeAlternateReverseB !== undefined ? context.mergeAlternateReverseB : true;
+            const step = context.mergeAlternateStep !== undefined ? context.mergeAlternateStep : 1;
+            const stepB = context.mergeAlternateStepB !== undefined ? context.mergeAlternateStepB : 1;
             args = {
                 input_a: inputA,
                 input_b: inputB,
                 reverse_a: false,
-                reverse_b: true,
-                step: 1,
-                step_b: 1,
+                reverse_b: reverseB,
+                step,
+                step_b: stepB,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_interleaved.pdf`)
             };
             break;

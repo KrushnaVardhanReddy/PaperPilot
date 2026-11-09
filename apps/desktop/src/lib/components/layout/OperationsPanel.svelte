@@ -135,6 +135,23 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let extractPatternsCaseSensitive = $state(false);
   let extractPatternsContextLen = $state(30);
 
+  // Alternating Merge parameter states
+  let mergeAlternateDocA = $state('');
+  let mergeAlternateDocB = $state('');
+  let mergeAlternateReverseB = $state(true);
+  let mergeAlternateStep = $state(1);
+  let mergeAlternateStepB = $state(1);
+
+  // Initialize or synchronize mergeAlternate inputs when documents change
+  $effect(() => {
+    if (appState.documentPaths.length > 0 && !mergeAlternateDocA) {
+      mergeAlternateDocA = appState.documentPaths[0];
+    }
+    if (appState.documentPaths.length > 1 && !mergeAlternateDocB) {
+      mergeAlternateDocB = appState.documentPaths[1];
+    }
+  });
+
   let toolContext = $state<'pdf' | 'office' | 'ai'>('pdf');
 
     async function checkOcrStatus() {
@@ -451,7 +468,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             extractPatternsKeywords,
             extractPatternsRegex,
             extractPatternsCaseSensitive,
-            extractPatternsContextLen
+            extractPatternsContextLen,
+            mergeAlternateDocA,
+            mergeAlternateDocB,
+            mergeAlternateReverseB,
+            mergeAlternateStep,
+            mergeAlternateStepB
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -603,7 +625,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           extractPatternsKeywords,
           extractPatternsRegex,
           extractPatternsCaseSensitive,
-          extractPatternsContextLen
+          extractPatternsContextLen,
+          mergeAlternateDocA,
+          mergeAlternateDocB,
+          mergeAlternateReverseB,
+          mergeAlternateStep,
+          mergeAlternateStepB
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -973,6 +1000,36 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               {/each}
             </div>
           {/if}
+        </div>
+      {:else if activeTool.id === 'pdf_merge_alternate'}
+        <div class="operation-config">
+          <label for="mergeAlternateDocA" class="section-desc">Document A (Front Pages):</label>
+          <select id="mergeAlternateDocA" bind:value={mergeAlternateDocA} class="form-input" style="margin-bottom: 12px;">
+            {#if appState.documents.length === 0}
+              <option value="">No documents loaded</option>
+            {:else}
+              {#each appState.documents as doc, i}
+                <option value={appState.documentPaths[i] || doc.name}>{doc.name} ({appState.documentPaths[i] || doc.name})</option>
+              {/each}
+            {/if}
+          </select>
+
+          <label for="mergeAlternateDocB" class="section-desc">Document B (Back Pages):</label>
+          <select id="mergeAlternateDocB" bind:value={mergeAlternateDocB} class="form-input" style="margin-bottom: 12px;">
+            {#if appState.documents.length === 0}
+              <option value="">No documents loaded</option>
+            {:else}
+              {#each appState.documents as doc, i}
+                <option value={appState.documentPaths[i] || doc.name}>{doc.name} ({appState.documentPaths[i] || doc.name})</option>
+              {/each}
+            {/if}
+          </select>
+
+          <label class="toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
+            <input id="mergeAlternateReverseB" type="checkbox" bind:checked={mergeAlternateReverseB} />
+            <span class="section-desc" style="margin: 0;">Reverse Doc B (Duplex Backside)</span>
+          </label>
+          <span class="field-hint">Collate odd pages from Doc A and even pages from Doc B. If Doc B was scanned in reverse stack order, keep reversed checked.</span>
         </div>
       {:else if activeTool.id === 'split' || activeTool.id === 'pdf_split'}
         <div class="operation-config">

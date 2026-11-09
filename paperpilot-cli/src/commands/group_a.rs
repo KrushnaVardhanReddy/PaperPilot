@@ -34,8 +34,24 @@ pub fn handle_split(
             total_pages,
         )
     } else {
+        let mut pts = Vec::new();
+        for part in pages.split(',') {
+            let part = part.trim();
+            if let Some((_start, end)) = part.split_once('-') {
+                if let Ok(end_num) = end.trim().parse::<u32>() {
+                    if !pts.contains(&end_num) {
+                        pts.push(end_num);
+                    }
+                }
+            } else if let Ok(pt) = part.parse::<u32>() {
+                if !pts.contains(&pt) {
+                    pts.push(pt);
+                }
+            }
+        }
+        pts.sort_unstable();
         paperpilot_pdf::operations::split::SplitOperation {
-            split_points: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+            split_points: pts,
             output_dir: output.to_path_buf(),
         }
     };

@@ -114,6 +114,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
     const fixtureMulti = path.join(fixtureDir, 'multi_page.pdf');
     const fixtureMergeA = path.join(fixtureDir, 'merge_a.pdf');
     const fixtureMergeB = path.join(fixtureDir, 'merge_b.pdf');
+    const fixtureTwoUpBook = path.join(fixtureDir, 'two_up_book.pdf');
     const fixturePng = path.join(fixtureDir, 'test.png');
 
     await page.goto('http://127.0.0.1:1420/');
@@ -152,6 +153,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
              ]);
           } else if (op.type === 'image') {
              await fileInput.setInputFiles([fixturePng]);
+          } else if (op.name === 'pdf_split_scanned_book') {
+             await fileInput.setInputFiles([fixtureTwoUpBook]);
           } else {
              await fileInput.setInputFiles([fixtureMulti]);
           }
@@ -190,7 +193,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
           if (op.name === 'pdf_split') {
             const splitInput = page.locator('#splitPoints');
             if (await splitInput.isVisible()) {
-              await splitInput.fill('1');
+              await splitInput.fill('1-2, 3-5');
             }
           }
           if (op.name === 'pdf_delete_pages') {
@@ -253,16 +256,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" merge --input "${fixtureMergeA}" --input "${fixtureMergeB}" --output "${outputFile}"`;
               break;
             case 'pdf_merge_alternate':
-              cliCmd = `"${cliBin}" pdf-merge-alternate --input-a "${fixtureMergeA}" --input-b "${fixtureMergeB}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-merge-alternate --input-a "${fixtureMergeA}" --input-b "${fixtureMergeB}" --reverse-b --output "${outputFile}"`;
               break;
             case 'pdf_split':
-              cliCmd = `"${cliBin}" split --input "${fixtureMulti}" --pages 1 --output "${opSandbox}"`;
+              cliCmd = `"${cliBin}" split --input "${fixtureMulti}" --pages "1-2, 3-5" --output "${opSandbox}"`;
               break;
             case 'pdf_split_by_outline':
               cliCmd = `"${cliBin}" pdf-split-by-outline --input "${fixtureMulti}" --output "${outputFile}"`;
               break;
             case 'pdf_split_scanned_book':
-              cliCmd = `"${cliBin}" pdf-split-scanned-book --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-split-scanned-book --input "${fixtureTwoUpBook}" --output "${outputFile}"`;
               break;
             case 'pdf_burst':
               cliCmd = `"${cliBin}" burst --input "${fixtureMulti}" --output "${opSandbox}"`;
@@ -358,10 +361,13 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               const expectedPages = docA.numPages + docB.numPages;
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(expectedPages);
-              expect(res.textByPage[0]).toContain('MERGE_PAGE_AAA');
-              expect(res.textByPage[docA.numPages]).toContain('MERGE_PAGE_BBB');
+              expect(res.numPages).toBe(4);
+              expect(res.textByPage[0]).toContain('MERGE_A_P1');
+              expect(res.textByPage[1]).toContain('MERGE_A_P2');
+              expect(res.textByPage[2]).toContain('MERGE_B_P1');
+              expect(res.textByPage[3]).toContain('MERGE_B_P2');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = `Pages(A) [${docA.numPages}] + Pages(B) [${docB.numPages}] = ${res.numPages}; Content interleaved preserved`;
+              invariantNote = `Pages(A) [${docA.numPages}] + Pages(B) [${docB.numPages}] = ${res.numPages}; Total 4 pages [A1, A2, B1, B2] preserved`;
               break;
             }
             case 'pdf_merge_alternate': {
@@ -370,28 +376,33 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               const expectedPages = docA.numPages + docB.numPages;
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(expectedPages);
-              expect(res.textByPage[0]).toContain('MERGE_PAGE_AAA');
-              expect(res.textByPage[1]).toContain('MERGE_PAGE_BBB');
+              expect(res.numPages).toBe(4);
+              expect(res.textByPage[0]).toContain('MERGE_A_P1');
+              expect(res.textByPage[1]).toContain('MERGE_B_P2');
+              expect(res.textByPage[2]).toContain('MERGE_A_P2');
+              expect(res.textByPage[3]).toContain('MERGE_B_P1');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = `Alternating merge: Page 1 Doc A, Page 2 Doc B, total combined ${res.numPages} pages`;
+              invariantNote = `Alternating merge with reverse B: 4 pages interleaved in sequence [A1, B2, A2, B1]`;
               break;
             }
             case 'pdf_split': {
-              const sourceRes = await PdfInspector.inspect(fixtureMulti);
               const splitPart1 = path.join(opSandbox, 'split_1.pdf');
               const splitPart2 = path.join(opSandbox, 'split_2.pdf');
               expect(fs.existsSync(splitPart1)).toBe(true);
               expect(fs.existsSync(splitPart2)).toBe(true);
 
               const r1 = await PdfInspector.inspect(splitPart1);
-              expect(r1.numPages).toBe(1);
-              expect(r1.textByPage[0]).toContain('Page 1');
+              expect(r1.numPages).toBe(2);
+              expect(r1.textByPage[0]).toContain('PAGE_1');
+              expect(r1.textByPage[1]).toContain('PAGE_2');
 
               const r2 = await PdfInspector.inspect(splitPart2);
-              expect(r2.numPages).toBe(sourceRes.numPages - 1);
-              expect(r2.textByPage[0]).toContain('Page 2');
-              expect(r1.numPages + r2.numPages).toBe(sourceRes.numPages);
-              invariantNote = `Split exactness: Part 1 = 1 page (Page 1), Part 2 = ${r2.numPages} pages (Pages 2-${sourceRes.numPages})`;
+              expect(r2.numPages).toBe(3);
+              expect(r2.textByPage[0]).toContain('PAGE_3');
+              expect(r2.textByPage[1]).toContain('PAGE_4');
+              expect(r2.textByPage[2]).toContain('PAGE_5');
+              expect(r1.numPages + r2.numPages).toBe(5);
+              invariantNote = `Split exactness: Part 1 = 2 pages (PAGE_1, PAGE_2), Part 2 = 3 pages (PAGE_3, PAGE_4, PAGE_5)`;
               break;
             }
             case 'pdf_split_by_outline': {
@@ -401,14 +412,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               expect(buf[0]).toBe(0x50);
               expect(buf[1]).toBe(0x4b); // PK ZIP
               expect(buf.toString('latin1')).toContain('.pdf');
-              invariantNote = 'Valid PK ZIP containing outline slice PDFs';
+              invariantNote = 'Valid PK ZIP containing outline TOC chapter slice PDFs';
               break;
             }
             case 'pdf_split_scanned_book': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(2); // 1-page 2-up scan doubled to 2 portrait pages
+              expect(res.textByPage[0]).toContain('LEFT_PAGE_CONTENT');
+              expect(res.textByPage[1]).toContain('RIGHT_PAGE_CONTENT');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = '2-Up Center Spine Slicer doubled 1-page scan to 2 portrait pages';
+              invariantNote = '2-Up Center Spine Slicer bisected landscape sheet into 2 portrait pages (left & right)';
               break;
             }
             case 'pdf_burst': {

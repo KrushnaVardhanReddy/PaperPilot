@@ -293,8 +293,13 @@ describe('operationArgsBuilder', () => {
     it('builds args for pdf_merge_alternate', async () => {
         const args = await buildOperationArgs('pdf_merge_alternate', defaultContext);
         expect(args).toEqual({
-            input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            input_a: '/docs/test.pdf',
+            input_b: '/docs/test.pdf',
+            reverse_a: false,
+            reverse_b: true,
+            step: 1,
+            step_b: 1,
+            output: '/docs/test_interleaved.pdf'
         });
     });
 
