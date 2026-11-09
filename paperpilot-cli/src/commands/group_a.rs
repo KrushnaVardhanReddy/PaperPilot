@@ -58,14 +58,53 @@ pub fn handle_split(
     op.execute(&mut doc)
 }
 
+pub fn parse_page_indices(pages_str: &str, total_pages: Option<u32>) -> Vec<u32> {
+    if pages_str.trim().eq_ignore_ascii_case("all") {
+        if let Some(total) = total_pages {
+            return (1..=total).collect();
+        }
+    }
+    let mut result = Vec::new();
+    for part in pages_str.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            if let (Ok(start), Ok(end)) = (start_str.trim().parse::<u32>(), end_str.trim().parse::<u32>()) {
+                if start <= end {
+                    for p in start..=end {
+                        if !result.contains(&p) {
+                            result.push(p);
+                        }
+                    }
+                }
+            }
+        } else if let Ok(p) = part.parse::<u32>() {
+            if !result.contains(&p) {
+                result.push(p);
+            }
+        }
+    }
+    result
+}
+
+pub fn parse_page_order(order_str: &str) -> Vec<u32> {
+    order_str
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u32>().ok())
+        .collect()
+}
+
 pub fn handle_extract(
     input: &std::path::Path,
     pages: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::extract::ExtractPagesOperation {
-        page_indices: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+        page_indices: parse_page_indices(pages, total_pages),
     };
     op.execute(&mut doc)?;
     doc.save(output)
@@ -77,8 +116,9 @@ pub fn handle_delete(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::delete::DeletePagesOperation {
-        page_indices: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+        page_indices: parse_page_indices(pages, total_pages),
     };
     op.execute(&mut doc)?;
     doc.save(output)
@@ -91,7 +131,7 @@ pub fn handle_reorder(
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::reorder::ReorderPagesOperation {
-        new_order: order.split(',').filter_map(|s| s.parse().ok()).collect(),
+        new_order: parse_page_order(order),
     };
     op.execute(&mut doc)?;
     doc.save(output)

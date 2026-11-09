@@ -340,19 +340,33 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         customOutputPath = ''; // handled by native dialog
         break;
       case 'split':
+      case 'pdf_split':
         customOutputPath = getOutputPath(`${base}_split`);
         break;
       case 'burst':
+      case 'pdf_burst':
         customOutputPath = getOutputPath(`${base}_burst`);
         break;
-      case 'compress':      customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
-      case 'rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
-      case 'watermark':     customOutputPath = getOutputPath(`${base}_watermarked.pdf`); break;
-      case 'encrypt':       customOutputPath = getOutputPath(`${base}_encrypted.pdf`);   break;
-      case 'decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
-      case 'metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
-      case 'extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
-      case 'delete_pages':  customOutputPath = getOutputPath(`${base}_deleted.pdf`);    break;
+      case 'compress':
+      case 'pdf_compress':  customOutputPath = getOutputPath(`${base}_compressed.pdf`);  break;
+      case 'rotate':
+      case 'pdf_rotate':        customOutputPath = getOutputPath(`${base}_rotated.pdf`);     break;
+      case 'crop':
+      case 'pdf_crop':          customOutputPath = getOutputPath(`${base}_cropped.pdf`);     break;
+      case 'reorder_pages':
+      case 'pdf_reorder_pages': customOutputPath = getOutputPath(`${base}_reordered.pdf`);   break;
+      case 'watermark':
+      case 'pdf_watermark':     customOutputPath = getOutputPath(`${base}_watermarked.pdf`); break;
+      case 'encrypt':
+      case 'pdf_encrypt':       customOutputPath = getOutputPath(`${base}_encrypted.pdf`);   break;
+      case 'decrypt':
+      case 'pdf_decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
+      case 'metadata':
+      case 'pdf_metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
+      case 'extract_pages':
+      case 'pdf_extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
+      case 'delete_pages':
+      case 'pdf_delete_pages':  customOutputPath = getOutputPath(`${base}_deleted.pdf`);    break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
         if (ocrOutputFormat === 'txt') {
@@ -833,7 +847,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   async function handleBrowseOutputPath() {
     if (!activeTool) return;
     try {
-      const isFolderOutput = activeTool.id === 'split' || activeTool.id === 'burst' || activeTool.id === 'extract_images';
+      const isFolderOutput = activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' || activeTool.id === 'extract_images';
       if (isFolderOutput) {
         const { open } = await import('@tauri-apps/plugin-dialog');
         const selected = await open({
@@ -1399,7 +1413,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Heuristically inspects dimensions and reading baselines to automatically rotate sideways or upside-down pages into upright orientation.
           </p>
         </div>
-      {:else if activeTool.id === 'burst'}
+      {:else if activeTool.id === 'burst' || activeTool.id === 'pdf_burst'}
         <div class="operation-config">
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
             Bursts every single page into an individual standalone PDF file saved into an output directory.
@@ -1446,7 +1460,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
-            {activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder:' : 'Output file:'}
+            {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}
           </label>
           <div class="output-path-row">
             <input
@@ -1454,13 +1468,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               type="text"
               class="form-input output-path-input"
               bind:value={customOutputPath}
-              placeholder={activeTool.id === 'split' || activeTool.id === 'burst' ? 'Output folder path...' : 'Output file path...'}
+              placeholder={activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder path...' : 'Output file path...'}
               title="Edit the output path"
             />
             <button
               type="button"
               class="output-browse-btn"
-              title={activeTool.id === 'split' || activeTool.id === 'burst' ? 'Browse destination folder' : 'Browse destination file'}
+              title={activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Browse destination folder' : 'Browse destination file'}
               onclick={handleBrowseOutputPath}
             >
               📁 Browse

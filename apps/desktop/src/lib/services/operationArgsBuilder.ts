@@ -270,6 +270,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'delete_pages':
+        case 'pdf_delete_pages':
             args = {
                 input: docPath,
                 pages: deletePages || '1',
@@ -277,6 +278,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'reorder_pages':
+        case 'pdf_reorder_pages':
             args = {
                 input: docPath,
                 order: reorderList || '1',
@@ -284,12 +286,14 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'burst':
+        case 'pdf_burst':
             args = {
                 input: docPath,
                 output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_burst`)
             };
             break;
         case 'crop':
+        case 'pdf_crop':
             args = {
                 input: docPath,
                 box: cropBox || '0,0,100,100',
@@ -410,6 +414,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'extract_pages':
+        case 'pdf_extract_pages':
             args = {
                 input: docPath,
                 pages: extractPages || '1',

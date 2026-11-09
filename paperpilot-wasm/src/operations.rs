@@ -697,6 +697,7 @@ pub fn crop(
     for (_, page_id) in doc.get_pages() {
         if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(page_id) {
             dict.set("CropBox", lopdf::Object::Array(crop_box_array.clone()));
+            dict.set("MediaBox", lopdf::Object::Array(crop_box_array.clone()));
         }
     }
 

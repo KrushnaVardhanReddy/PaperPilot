@@ -120,6 +120,7 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let sample_pdf2 = workspace_root.join("tests/e2e_fixtures/real/merge_a.pdf").to_string_lossy().to_string();
     let sample_pdf3 = workspace_root.join("tests/e2e_fixtures/real/merge_b.pdf").to_string_lossy().to_string();
     let sample_multi_page = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
+    let sample_single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
     let sample_two_up_book = workspace_root.join("tests/e2e_fixtures/real/two_up_book.pdf").to_string_lossy().to_string();
     let _sample_pdf_photo = workspace_root.join("tests/e2e_fixtures/real/sample_photo_doc.pdf").to_string_lossy().to_string();
 
@@ -297,8 +298,8 @@ async fn test_wave6_penta_interface() -> Result<()> {
     // 8. pdf_crop
     let tool_id = "pdf_crop";
     let out_file = out_dir.join("crop.pdf");
-    test_cli!(tool_id, &["crop", "--input", &sample_pdf, "--rect", "0,0,100,100", "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "box": "0,0,100,100", "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["crop", "--input", &sample_single_page, "--rect", "50,50,400,400", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_single_page, "box": "50,50,400,400", "output": out_file.to_str().unwrap()}), out_file);
 
     // 9. pdf_scale_pages
     let tool_id = "pdf_scale_pages";
@@ -309,20 +310,20 @@ async fn test_wave6_penta_interface() -> Result<()> {
     // 10. pdf_delete_pages
     let tool_id = "pdf_delete_pages";
     let out_file = out_dir.join("delete.pdf");
-    test_cli!(tool_id, &["delete", "--input", &sample_pdf, "--pages", "1", "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "pages": "1", "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["delete", "--input", &sample_multi_page, "--pages", "2, 4", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_multi_page, "pages": "2, 4", "output": out_file.to_str().unwrap()}), out_file);
 
     // 11. pdf_reorder_pages
     let tool_id = "pdf_reorder_pages";
     let out_file = out_dir.join("reorder.pdf");
-    test_cli!(tool_id, &["reorder", "--input", &sample_pdf, "--order", "2,1", "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "order": "2,1", "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["reorder", "--input", &sample_multi_page, "--order", "4,1,2,3,5", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_multi_page, "order": "4,1,2,3,5", "output": out_file.to_str().unwrap()}), out_file);
 
     // 12. pdf_extract_pages
     let tool_id = "pdf_extract_pages";
     let out_file = out_dir.join("extract_pages.pdf");
-    test_cli!(tool_id, &["extract", "--input", &sample_pdf, "--pages", "1", "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "pages": "1", "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["extract", "--input", &sample_multi_page, "--pages", "2-3", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_multi_page, "pages": "2-3", "output": out_file.to_str().unwrap()}), out_file);
 
     // 13. pdf_nup
     let tool_id = "pdf_nup";

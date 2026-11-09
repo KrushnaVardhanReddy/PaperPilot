@@ -199,25 +199,25 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
           if (op.name === 'pdf_delete_pages') {
             const deleteInput = page.locator('#deletePages');
             if (await deleteInput.isVisible()) {
-              await deleteInput.fill('1');
+              await deleteInput.fill('2, 4');
             }
           }
           if (op.name === 'pdf_extract_pages') {
             const extractInput = page.locator('#extractPages');
             if (await extractInput.isVisible()) {
-              await extractInput.fill('1');
+              await extractInput.fill('2-3');
             }
           }
           if (op.name === 'pdf_reorder_pages') {
             const reorderInput = page.locator('#reorderList');
             if (await reorderInput.isVisible()) {
-              await reorderInput.fill('2,1,3,4,5,6,7,8');
+              await reorderInput.fill('4,1,2,3,5');
             }
           }
           if (op.name === 'pdf_crop') {
             const cropInput = page.locator('#cropBox');
             if (await cropInput.isVisible()) {
-              await cropInput.fill('0,0,100,100');
+              await cropInput.fill('50,50,400,400');
             }
           }
           if (op.name === 'pdf_rotate') {
@@ -271,16 +271,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" burst --input "${fixtureMulti}" --output "${opSandbox}"`;
               break;
             case 'pdf_crop':
-              cliCmd = `"${cliBin}" crop --input "${fixtureSingle}" --rect 0,0,100,100 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" crop --input "${fixtureSingle}" --rect 50,50,400,400 --output "${outputFile}"`;
               break;
             case 'pdf_delete_pages':
-              cliCmd = `"${cliBin}" delete-pages --input "${fixtureMulti}" --pages 1 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" delete-pages --input "${fixtureMulti}" --pages "2, 4" --output "${outputFile}"`;
               break;
             case 'pdf_extract_pages':
-              cliCmd = `"${cliBin}" extract-pages --input "${fixtureMulti}" --pages 1 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" extract-pages --input "${fixtureMulti}" --pages "2-3" --output "${outputFile}"`;
               break;
             case 'pdf_reorder_pages':
-              cliCmd = `"${cliBin}" reorder-pages --input "${fixtureMulti}" --order 2,1,3,4,5,6,7,8 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" reorder-pages --input "${fixtureMulti}" --order "4,1,2,3,5" --output "${outputFile}"`;
               break;
             case 'pdf_rotate':
               cliCmd = `"${cliBin}" rotate --input "${fixtureSingle}" --degrees 90 --output "${outputFile}"`;
@@ -425,17 +425,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               break;
             }
             case 'pdf_burst': {
-              const sourceRes = await PdfInspector.inspect(fixtureMulti);
               const burstFiles = fs.readdirSync(opSandbox).filter(f => f.startsWith('page_') && f.endsWith('.pdf'));
-              expect(burstFiles.length).toBe(sourceRes.numPages);
-              for (let i = 1; i <= sourceRes.numPages; i++) {
+              expect(burstFiles.length).toBe(5);
+              for (let i = 1; i <= 5; i++) {
                 const burstPagePath = path.join(opSandbox, `page_${i}.pdf`);
                 expect(fs.existsSync(burstPagePath)).toBe(true);
                 const r = await PdfInspector.inspect(burstPagePath);
                 expect(r.numPages).toBe(1);
-                expect(r.textByPage[0]).toContain(`Page ${i}`);
+                expect(r.textByPage[0]).toContain(`PAGE_${i}`);
               }
-              invariantNote = `Partition: ${sourceRes.numPages} pages partitioned into ${sourceRes.numPages} discrete 1-page PDFs`;
+              invariantNote = 'Partition: 5 pages partitioned into 5 discrete 1-page PDFs (page_1.pdf through page_5.pdf)';
               break;
             }
             case 'pdf_crop': {
@@ -443,40 +442,44 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               expect(res.numPages).toBe(1);
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
-              expect(raw.hasDictionary('CropBox') || raw.hasDictionary('MediaBox')).toBe(true);
+              expect(raw.hasDictionary('CropBox') && raw.hasDictionary('MediaBox')).toBe(true);
               expect(res.pageDimensions).toBeDefined();
-              expect(res.pageDimensions![0].width).toBeCloseTo(100, 0);
-              expect(res.pageDimensions![0].height).toBeCloseTo(100, 0);
+              expect(res.pageDimensions![0].width).toBeCloseTo(350, 0);
+              expect(res.pageDimensions![0].height).toBeCloseTo(350, 0);
               const aspectRatio = res.pageDimensions![0].width / res.pageDimensions![0].height;
               expect(aspectRatio).toBeCloseTo(1.0, 2);
-              invariantNote = 'Bounding box invariant: CropBox 100x100 verified (1:1 square aspect ratio)';
+              invariantNote = 'Bounding box invariant: CropBox/MediaBox 350x350 (400-50) verified with 1:1 aspect ratio';
               break;
             }
             case 'pdf_delete_pages': {
-              const sourceRes = await PdfInspector.inspect(fixtureMulti);
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(sourceRes.numPages - 1); // original_pages - deleted_pages_count (8 - 1 = 7)
-              expect(res.textByPage[0]).not.toContain('Page 1');
-              expect(res.textByPage[0]).toContain('Page 2');
+              expect(res.numPages).toBe(3); // 5 - 2 = 3
+              expect(res.textByPage[0]).toContain('PAGE_1');
+              expect(res.textByPage[1]).toContain('PAGE_3');
+              expect(res.textByPage[2]).toContain('PAGE_5');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = `Subtraction: original_pages (${sourceRes.numPages}) - 1 = ${res.numPages}; Page 1 absent, Page 2 first`;
+              invariantNote = 'Deletion invariant: Exactly 3 pages remain (PAGE_1, PAGE_3, PAGE_5; pages 2 and 4 removed)';
               break;
             }
             case 'pdf_extract_pages': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(1); // exact extracted count
-              expect(res.textByPage[0]).toContain('Page 1');
+              expect(res.numPages).toBe(2); // exact extracted count (pages 2-3)
+              expect(res.textByPage[0]).toContain('PAGE_2');
+              expect(res.textByPage[1]).toContain('PAGE_3');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Subset exactness: Extracted single page matches Page 1 (count = 1)';
+              invariantNote = 'Extraction invariant: 2-page document containing PAGE_2 and PAGE_3';
               break;
             }
             case 'pdf_reorder_pages': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(8);
-              expect(res.textByPage[0]).toContain('Page 2');
-              expect(res.textByPage[1]).toContain('Page 1');
+              expect(res.numPages).toBe(5);
+              expect(res.textByPage[0]).toContain('PAGE_4');
+              expect(res.textByPage[1]).toContain('PAGE_1');
+              expect(res.textByPage[2]).toContain('PAGE_2');
+              expect(res.textByPage[3]).toContain('PAGE_3');
+              expect(res.textByPage[4]).toContain('PAGE_5');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Permutation [2,1,3,4,5,6,7,8]: Out Page 1 has Page 2 text, Out Page 2 has Page 1 text';
+              invariantNote = 'Permutation [4,1,2,3,5]: Page 1 contains PAGE_4 and Page 2 contains PAGE_1';
               break;
             }
             case 'pdf_rotate': {
