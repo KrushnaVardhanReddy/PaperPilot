@@ -2,20 +2,31 @@
 
 ## Context & Objective
 We are aligning all 30 tools assigned to **Tester 1** in `qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md`.
-For each tool, Gemini-CLI must:
-1. **Fix any underlying UI/Desktop/ArgBuilder bug** in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte` or `operationArgsBuilder.ts` (e.g., missing input selectors, unhandled parameters, or wrong output paths).
-2. **Standardize the Real Input Fixture** in `tests/e2e_fixtures/real/` with known deterministic text and structure.
-3. **Update Playwright Desktop E2E** in `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts` to execute through the UI using that fixture and perform deep semantic assertions on the output.
-4. **Update Rust E2E Harness** in `tests/e2e/test_wave6_penta_interface.rs` to execute CLI and MCP using the exact same fixture file and assert identical invariants on the output PDF.
-5. **Always compile and test with `-j 4`**:
-   ```bash
-   cargo check --workspace -j 4
-   pnpm --filter @paperpilot/desktop test:e2e:suite1
-   ```
 
 ---
 
-## 6 Batch Prompts (5 Tools Per Session)
+## ⭐️ Phase 0: Prerequisite Fixture Generation (Run FIRST before any session)
+
+> **Why this comes first:** Generating and standardizing all ground-truth fixtures upfront eliminates duplicate compilation delays and ensures every subsequent session has deterministic files ready to use immediately.
+
+### Dedicated Session 0: Generate All Standardized Fixtures (`tests/e2e_fixtures/real/`)
+Generate or verify the following deterministic test fixtures in `tests/e2e_fixtures/real/` and copy them to `~/Desktop/tester1_fixtures/`:
+1. `merge_a.pdf`: 2 pages containing explicit header/body text `MERGE_A_PAGE_1` and `MERGE_A_PAGE_2`.
+2. `merge_b.pdf`: 2 pages containing explicit header/body text `MERGE_B_PAGE_1` and `MERGE_B_PAGE_2`.
+3. `multi_page.pdf`: 5 pages (`PAGE_1` through `PAGE_5`), with standard PDF outline TOC bookmarks (`Chapter 1`, `Chapter 2`).
+4. `single_page.pdf`: Standard Letter format (612x792 pt) with clean text `SINGLE_PAGE_CONTENT`.
+5. `with_blank_pages.pdf`: 4 pages total — pages 1 & 3 contain content, pages 2 & 4 are pure white blank.
+6. `rotated_landscape.pdf`: 1 landscape page with sideways rotation for auto-upright verification.
+7. `two_up_book.pdf`: 1 wide landscape sheet with 2 side-by-side pages for book spine splitting.
+8. `sample_photo_doc.pdf`: Multi-page document embedding high-resolution raster images (~3.8 MB) for compression testing.
+9. `large_doc.pdf`: Document with duplicate embedded image streams for stream deduplication testing.
+10. `malformed.pdf`: Document with deliberately corrupt cross-reference trailer table for syntax repair testing.
+11. `img1.png` & `img2.png`: Two valid raster PNG images for image-to-PDF conversion tests.
+12. `data.csv`: A sample CSV file for attachment and portfolio testing.
+
+---
+
+## 6 Tool-Execution Sessions (5 Tools Per Session)
 
 ### Session 1: Tools 01–05 (Document Assembly & Splitting)
 - **Tool 01 (`pdf_merge`)**:
