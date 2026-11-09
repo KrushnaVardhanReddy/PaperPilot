@@ -14,7 +14,6 @@ import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
 import { onMount } from 'svelte';
 import type { SnippetTarget } from '$lib/utils/snippetGenerator';
-import ExportCodeModal from '../pipeline/ExportCodeModal.svelte';
 import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
   let { embedded = false } = $props<{ embedded?: boolean }>();
@@ -748,8 +747,6 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     }
   }
 
-  let isExportCodeModalOpen = $state(false);
-
   let currentSnippetTarget = $derived.by(() => {
     if (!activeTool) return null;
     const docIndex = appState.selectedDocumentIndex ?? 0;
@@ -907,7 +904,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       <button
         class="code-export-btn"
         id="btn-tool-export-code"
-        onclick={() => isExportCodeModalOpen = true}
+        onclick={() => appState.openExportCode(currentSnippetTarget)}
         title="Export operation as cURL, CLI, MCP prompt, or Embed JS"
       >
         &lt;/&gt; Code / API
@@ -1648,12 +1645,6 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   {/if}
   {/if}
 </div>
-
-<ExportCodeModal
-  isOpen={isExportCodeModalOpen}
-  target={currentSnippetTarget}
-  onClose={() => isExportCodeModalOpen = false}
-/>
 
 <style>
   .code-export-btn {

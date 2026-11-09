@@ -30,6 +30,11 @@ export class AppState {
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
+  isOperationsDrawerOpen = $state(false);
+
+  // Global Export Code Modal state
+  exportCodeModalOpen = $state(false);
+  exportCodeTarget = $state<any | null>(null);
 
   // Developer Mode
   developerMode = $state(false);
@@ -171,6 +176,20 @@ export class AppState {
 
   toggleDiffView(show?: boolean) {
     this.showDiffView = typeof show === 'boolean' ? show : !this.showDiffView;
+  }
+
+  toggleOperationsDrawer(show?: boolean) {
+    this.isOperationsDrawerOpen = typeof show === 'boolean' ? show : !this.isOperationsDrawerOpen;
+  }
+
+  openExportCode(target: any = null) {
+    this.exportCodeTarget = target;
+    this.exportCodeModalOpen = true;
+  }
+
+  closeExportCode() {
+    this.exportCodeModalOpen = false;
+    this.exportCodeTarget = null;
   }
 
   setLoading(loading: boolean) {

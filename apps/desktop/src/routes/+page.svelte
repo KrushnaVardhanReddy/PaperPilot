@@ -298,7 +298,10 @@
   let pdfDoc: any = $state(null);
   let pageNum = $state(1);
   let scale = $state(1.2);
-  let isOperationsDrawerOpen = $state(false);
+  let isOperationsDrawerOpen = $derived.by({
+    get: () => appState.isOperationsDrawerOpen,
+    set: (val: boolean) => { appState.isOperationsDrawerOpen = val; }
+  });
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
   let formValues = $state<Record<string, any>>({});
   let hasFormFields = $state(false);

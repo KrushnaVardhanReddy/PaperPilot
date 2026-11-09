@@ -2,6 +2,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { emit } from '@tauri-apps/api/event';
   import { onMount } from 'svelte';
+  import { appState } from '$lib/state/app.svelte';
 
   let activeMenu: string | null = $state(null);
 
@@ -82,6 +83,33 @@
   </div>
 
   <div class="window-controls">
+    <button
+      class="control-btn action-control-btn"
+      class:active={appState.isOperationsDrawerOpen}
+      aria-label="Toggle Tools Drawer"
+      title="Tools & Actions (Toggle)"
+      onclick={() => {
+        if (appState.activeTab !== 'documents' && appState.activeTab !== 'home') {
+          appState.setActiveTab('documents');
+        }
+        appState.toggleOperationsDrawer();
+      }}
+    >
+      <span class="btn-icon">⚙️</span>
+      <span class="btn-text">Tools</span>
+    </button>
+    <button
+      class="control-btn action-control-btn"
+      aria-label="Reload Application"
+      title="Reload Application"
+      onclick={() => window.location.reload()}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+      </svg>
+      <span class="btn-text">Reload</span>
+    </button>
+    <div class="controls-divider"></div>
     <button class="control-btn" aria-label="Minimize window" onclick={() => getCurrentWindow().minimize()}>
       <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="4" width="8" height="1" fill="currentColor"/></svg>
     </button>
@@ -221,7 +249,43 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: default;
+    cursor: pointer;
+  }
+
+  .action-control-btn {
+    width: auto;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+
+  .action-control-btn .btn-icon {
+    font-size: 12px;
+  }
+
+  .action-control-btn .btn-text {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+
+  .action-control-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-surface-hover);
+  }
+
+  .action-control-btn.active {
+    color: var(--accent-primary, #6366f1);
+    background-color: rgba(99, 102, 241, 0.15);
+  }
+
+  .controls-divider {
+    width: 1px;
+    height: 16px;
+    background-color: var(--border-color, rgba(255, 255, 255, 0.1));
+    margin: auto 4px;
   }
 
   .control-btn:hover {

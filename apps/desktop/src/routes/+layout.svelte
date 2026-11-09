@@ -7,6 +7,7 @@
   import CommandPalette from '$lib/components/layout/CommandPalette.svelte';
   import ModularSetupModal from '$lib/components/onboarding/ModularSetupModal.svelte';
   import WorkspaceSearchModal from '$lib/components/workspace/WorkspaceSearchModal.svelte';
+  import ExportCodeModal from '$lib/components/pipeline/ExportCodeModal.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
@@ -179,6 +180,11 @@
 <WorkspaceSearchModal />
 <BottomNav />
 <ToastContainer />
+<ExportCodeModal
+  isOpen={appState.exportCodeModalOpen}
+  target={appState.exportCodeTarget}
+  onClose={() => appState.closeExportCode()}
+/>
 
 {#if !appState.onboardingCompleted}
   <ModularSetupModal />
