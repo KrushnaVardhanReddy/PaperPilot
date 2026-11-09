@@ -97,12 +97,12 @@
     .modal-drawer {
         width: 450px;
         height: 100%;
-        background: #0f172a;
+        background: var(--bg-surface, #0f172a);
         box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
         display: flex;
         flex-direction: column;
-        color: #f8fafc;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary, #f8fafc);
+        border-left: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     }
 
     .modal-header {

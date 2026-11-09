@@ -209,14 +209,14 @@
     }
 
     .flow-select optgroup {
-        background: #0f172a;
-        color: #94a3b8;
+        background: var(--bg-surface, #0f172a);
+        color: var(--text-secondary, #94a3b8);
         font-weight: 600;
     }
 
     .flow-select option {
-        background: #0f172a;
-        color: white;
+        background: var(--bg-surface, #0f172a);
+        color: var(--text-primary, white);
         font-weight: normal;
     }
 

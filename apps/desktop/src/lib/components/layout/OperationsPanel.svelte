@@ -201,8 +201,22 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     rankToolsByContext(allTools, appState.documents, activePackIds)
   );
 
+  // Unique list of tools for UI presentation (prevents duplicate alias cards in All/Ready)
+  let uniqueAllTools = $derived.by(() => {
+    const seen = new Set<string>();
+    const res: ToolDefinition[] = [];
+    for (const tool of allTools) {
+      const canonicalId = resolveToolName(tool.id);
+      if (!seen.has(canonicalId)) {
+        seen.add(canonicalId);
+        res.push(tool);
+      }
+    }
+    return res;
+  });
+
   let readyToolsCount = $derived(
-    allTools.filter(t => t.releaseStatus !== 'preview').length
+    uniqueAllTools.filter(t => t.releaseStatus !== 'preview').length
   );
 
   let contextFilter = $state('recommended'); // 'recommended', 'ready', 'all', 'pdf', 'office', 'ai'
@@ -219,25 +233,34 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     let tools: ToolDefinition[] = [];
 
     if (q) {
-      tools = allTools.filter(t =>
-        t.title.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q) ||
-        t.tags.some(tag => tag.toLowerCase().includes(q))
-      );
+      const seen = new Set<string>();
+      for (const t of allTools) {
+        if (
+          t.title.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          t.tags.some(tag => tag.toLowerCase().includes(q))
+        ) {
+          const canonicalId = resolveToolName(t.id);
+          if (!seen.has(canonicalId)) {
+            seen.add(canonicalId);
+            tools.push(t);
+          }
+        }
+      }
     } else {
        if (contextFilter === 'recommended') {
          tools = ranked.recommended;
        } else if (contextFilter === 'ready') {
          // Shows all production-ready tools (v0.5-core, and future wave-core releases)
-         tools = allTools.filter(t => t.releaseStatus !== 'preview');
+         tools = uniqueAllTools.filter(t => t.releaseStatus !== 'preview');
        } else if (contextFilter === 'all') {
-         tools = allTools;
+         tools = uniqueAllTools;
        } else if (contextFilter === 'pdf') {
-         tools = allTools.filter(t => t.context === 'pdf');
+         tools = uniqueAllTools.filter(t => t.context === 'pdf');
        } else if (contextFilter === 'office') {
-         tools = allTools.filter(t => t.context === 'office');
+         tools = uniqueAllTools.filter(t => t.context === 'office');
        } else if (contextFilter === 'ai') {
-         tools = allTools.filter(t => t.context === 'ai' || t.category === 'ai' || t.tags.includes('ocr') || t.tags.includes('ai'));
+         tools = uniqueAllTools.filter(t => t.context === 'ai' || t.category === 'ai' || t.tags.includes('ocr') || t.tags.includes('ai'));
        }
     }
     if (selectedCategory !== 'all') {
@@ -935,7 +958,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool.id === 'merge'}
+      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge'}
         <div class="operation-config">
           <p class="section-desc">Reorder open documents for merging:</p>
           {#if appState.documents.length === 0}
@@ -1462,7 +1485,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         {#each [
           { id: 'recommended', label: `⚡ Recommended (${ranked.recommended.length})` },
           { id: 'ready', label: `✅ Ready (${readyToolsCount})` },
-          { id: 'all', label: `All Tools (${allTools.length})` },
+          { id: 'all', label: `All Tools (${uniqueAllTools.length})` },
           { id: 'pdf', label: 'PDF' },
           { id: 'office', label: 'Office' },
           { id: 'ai', label: 'AI & OCR' }

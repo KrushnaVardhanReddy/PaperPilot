@@ -68,10 +68,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
     let args: Record<string, any> = {};
 
     switch (toolId) {
-        case 'office_to_markdown':
-        case 'office_extract_text':
         case 'office_modernize_legacy':
-            args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_output`) };
+            args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_modernized`) };
             break;
         case 'merge': {
             let outputPath: string | null = customOutputPath;
@@ -600,12 +598,20 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.zip`)
             };
             break;
-        case 'pdf_merge_alternate':
+        case 'pdf_merge_alternate': {
+            const inputA = appState.documentPaths[0] || docPath;
+            const inputB = appState.documentPaths[1] || (appState.documentPaths.length > 1 ? appState.documentPaths[1] : docPath);
             args = {
-                input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                input_a: inputA,
+                input_b: inputB,
+                reverse_a: false,
+                reverse_b: true,
+                step: 1,
+                step_b: 1,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_interleaved.pdf`)
             };
             break;
+        }
         case 'pdf_posterize':
             args = {
                 input: docPath,

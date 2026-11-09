@@ -10,6 +10,7 @@
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
+  import { getCurrentWindow } from '@tauri-apps/api/window';
 
   import { appState } from '$lib/state/app.svelte';
 
@@ -27,6 +28,43 @@
     let unlistenZoomIn: () => void;
     let unlistenZoomOut: () => void;
     let unlistenFitWidth: () => void;
+    let unlistenDragDrop: (() => void) | undefined;
+
+    // Listen to native Tauri OS drag-drop events
+    (async () => {
+      try {
+        const currentWin = getCurrentWindow();
+        if (currentWin && typeof currentWin.onDragDropEvent === 'function') {
+          unlistenDragDrop = await currentWin.onDragDropEvent(async (event) => {
+            if (event.payload.type === 'drop' && event.payload.paths && event.payload.paths.length > 0) {
+              const { getMimeType } = await import('$lib/utils/fileType');
+              const filesArray: File[] = [];
+              for (const filePath of event.payload.paths) {
+                try {
+                  const meta = await invoke<{ name: string; size_bytes: number; path: string }>('get_file_metadata', { path: filePath });
+                  const mime = getMimeType(meta.name);
+                  const blob = new Blob([], { type: mime });
+                  const file = new File([blob], meta.name, { type: mime });
+                  Object.defineProperty(file, 'size', { value: meta.size_bytes, writable: false });
+                  (file as any)._localPath = meta.path;
+                  (file as any)._isLoaded = false;
+                  filesArray.push(file);
+                } catch (metaErr) {
+                  console.error('Failed to get metadata for dropped file:', filePath, metaErr);
+                }
+              }
+              if (filesArray.length > 0) {
+                const startIndex = appState.documents.length;
+                appState.addDocuments(filesArray);
+                appState.selectDocument(startIndex);
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Native drag-drop event registration skipped:', err);
+      }
+    })();
 
     // We use an async IIFE because `listen` returns a promise containing the unlisten function
     (async () => {
@@ -109,6 +147,7 @@
       if (unlistenZoomIn) unlistenZoomIn();
       if (unlistenZoomOut) unlistenZoomOut();
       if (unlistenFitWidth) unlistenFitWidth();
+      if (unlistenDragDrop) unlistenDragDrop();
     };
   });
 

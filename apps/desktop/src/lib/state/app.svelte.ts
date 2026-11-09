@@ -56,6 +56,11 @@ export class AppState {
           this.isTauriMobile = true;
       }
 
+      const storedTheme = localStorage.getItem('paperpilot_theme');
+      if (storedTheme === 'light' || storedTheme === 'dark') {
+        this.theme = storedTheme;
+      }
+
       const storedLayout = localStorage.getItem('paperpilot_workspace_layout') as WorkspaceLayoutMode;
       if (storedLayout === 'studio' || storedLayout === 'split' || storedLayout === 'hero') {
         this.workspaceLayout = storedLayout;
@@ -174,6 +179,9 @@ export class AppState {
 
   async setTheme(theme: string) {
     this.theme = theme;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot_theme', theme);
+    }
     try {
       await getCurrentWindow().setTheme(theme === 'dark' ? 'dark' : 'light');
     } catch (err) {

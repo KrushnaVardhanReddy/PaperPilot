@@ -17,7 +17,7 @@
     let pagesMode = 'all'; // 'all', 'current', 'custom'
     let customPages = '';
 
-    let isExportCodeModalOpen = false;
+    let isExportCodeModalOpen = $state(false);
 
     let angle = 90;
     let textInput = '';
