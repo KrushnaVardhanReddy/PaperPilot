@@ -864,10 +864,10 @@
   .drawer-tab-btn.active {
     background: var(--bg-surface);
     color: var(--text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   .drawer-tab-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
   .collapse-btn {
