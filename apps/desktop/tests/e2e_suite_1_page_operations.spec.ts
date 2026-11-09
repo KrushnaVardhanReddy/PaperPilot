@@ -111,7 +111,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
     const cliBin = path.resolve(process.cwd(), '../../target/debug/paperpilot');
     const fixtureDir = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real');
     const fixtureSingle = path.join(fixtureDir, 'single_page.pdf');
+    const fixtureRotatedLandscape = path.join(fixtureDir, 'rotated_landscape.pdf');
+    const fixtureWithBlanks = path.join(fixtureDir, 'with_blank_pages.pdf');
     const fixtureMulti = path.join(fixtureDir, 'multi_page.pdf');
+    const fixtureFourPages = path.join(fixtureDir, 'four_pages.pdf');
     const fixtureMergeA = path.join(fixtureDir, 'merge_a.pdf');
     const fixtureMergeB = path.join(fixtureDir, 'merge_b.pdf');
     const fixtureTwoUpBook = path.join(fixtureDir, 'two_up_book.pdf');
@@ -221,10 +224,32 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
             }
           }
           if (op.name === 'pdf_rotate') {
+             const angleSelect = page.locator('#rotateAngle');
+             if (await angleSelect.isVisible()) {
+               await angleSelect.selectOption('90');
+             }
              const angleInput = page.locator('#angle');
              if (await angleInput.isVisible()) {
                await angleInput.fill('90');
              }
+          }
+          if (op.name === 'pdf_remove_blank') {
+            const sensInput = page.locator('#blankSensitivity');
+            if (await sensInput.isVisible()) {
+              await sensInput.fill('95');
+            }
+          }
+          if (op.name === 'pdf_scale_pages') {
+            const scaleSelect = page.locator('#scaleTargetSize');
+            if (await scaleSelect.isVisible()) {
+              await scaleSelect.selectOption('A4');
+            }
+          }
+          if (op.name === 'pdf_nup') {
+            const nupBtn = page.getByRole('button', { name: '4-Up' });
+            if (await nupBtn.isVisible()) {
+              await nupBtn.click();
+            }
           }
           if (op.name === 'pdf_encrypt') {
              const passInput = page.locator('#passwordField');
@@ -286,16 +311,16 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" rotate --input "${fixtureSingle}" --degrees 90 --output "${outputFile}"`;
               break;
             case 'pdf_auto_rotate':
-              cliCmd = `"${cliBin}" pdf-auto-rotate --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-auto-rotate --input "${fixtureRotatedLandscape}" --output "${outputFile}"`;
               break;
             case 'pdf_remove_blank':
-              cliCmd = `"${cliBin}" remove-blank --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" remove-blank --input "${fixtureWithBlanks}" --sensitivity 95 --output "${outputFile}"`;
               break;
             case 'pdf_scale_pages':
               cliCmd = `"${cliBin}" pdf-scale-pages --input "${fixtureSingle}" --output "${outputFile}"`;
               break;
             case 'pdf_nup':
-              cliCmd = `"${cliBin}" pdf-nup --input "${fixtureMulti}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-nup --input "${fixtureFourPages}" --output "${outputFile}"`;
               break;
             case 'pdf_booklet':
               cliCmd = `"${cliBin}" pdf-booklet --input "${fixtureMulti}" --output "${outputFile}"`;
@@ -488,38 +513,47 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               const rawLatin = fs.readFileSync(outputFile, 'latin1');
               expect(rawLatin).toContain('/Rotate 90');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Rotation invariant: dictionary contains /Rotate 90 with verified page count 1';
+              expect(res.pageDimensions).toBeDefined();
+              expect(res.pageDimensions![0].width).toBeCloseTo(792, 0);
+              expect(res.pageDimensions![0].height).toBeCloseTo(612, 0);
+              invariantNote = 'Rotation invariant: dictionary contains /Rotate 90; dimensions swapped to 792x612 pt';
               break;
             }
             case 'pdf_auto_rotate': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              expect(res.hasText('ROTATED_LANDSCAPE_CONTENT')).toBe(true);
+              const rawLatin = fs.readFileSync(outputFile, 'latin1');
+              expect(rawLatin).toContain('/Rotate 90');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Orientation normalized: text preserved in valid PDF with verified page count 1';
+              invariantNote = 'Auto-rotate invariant: upright orientation detected and /Rotate 90 applied';
               break;
             }
             case 'pdf_remove_blank': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              expect(res.numPages).toBe(2);
+              expect(res.textByPage[0]).toContain('CONTENT_PAGE_1');
+              expect(res.textByPage[1]).toContain('CONTENT_PAGE_3');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Content density: non-blank content preserved with verified page count 1';
+              invariantNote = 'Blank removal invariant: exactly 2 blank pages removed, leaving 2 content pages';
               break;
             }
             case 'pdf_scale_pages': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              expect(res.hasText('SINGLE_PAGE_CONTENT')).toBe(true);
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'MediaBox scaled: text content intact with verified page count 1';
+              expect(res.pageDimensions).toBeDefined();
+              expect(res.pageDimensions![0].width).toBeCloseTo(595, 0);
+              expect(res.pageDimensions![0].height).toBeCloseTo(842, 0);
+              invariantNote = 'Scaling invariant: MediaBox scaled to A4 dimensions (595x842 pt)';
               break;
             }
             case 'pdf_nup': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(4);
+              expect(res.numPages).toBe(1);
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'N-Up imposition: 8 input pages compressed to 4 sheets (2-up)';
+              invariantNote = 'N-Up imposition: 4 input pages combined onto 1 sheet (2x2 grid layout)';
               break;
             }
             case 'pdf_booklet': {

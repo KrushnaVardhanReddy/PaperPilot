@@ -37,6 +37,8 @@ export interface OperationContext {
     pageNumberFormat: string;
     pageNumberStart: number;
     convertPreset: string;
+    scaleTargetSize?: string;
+    scaleFactor?: number;
     reorderList: string;
     signCertPath: string;
     headerText: string;
@@ -252,6 +254,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'rotate':
+        case 'pdf_rotate':
             args = {
                 input: docPath,
                 pages: context.rotatePages && context.rotatePages.trim() !== '' ? context.rotatePages.trim() : 'all',
@@ -315,6 +318,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'remove_blank':
+        case 'pdf_remove_blank':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_cleaned.pdf`),
@@ -539,7 +543,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_scale_pages':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_scaled.pdf`),
+                target_size: context.scaleTargetSize || 'A4',
+                scale_factor: context.scaleFactor ?? 1.0,
+                maintain_aspect_ratio: true,
+                center_content: true
             };
             break;
         case 'pdf_remove_signatures':
@@ -563,7 +571,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_auto_rotate':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_autorotated.pdf`),
+                target_orientation: 'portrait'
             };
             break;
         case 'pdf_stitch_canvas':

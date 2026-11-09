@@ -139,15 +139,27 @@ pub fn handle_reorder(
 
 pub fn handle_rotate(
     input: &std::path::Path,
-    _pages: &str,
+    pages: &str,
     degrees: i32,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
+
+    let target_pages = if pages.trim().is_empty() || pages.trim().eq_ignore_ascii_case("all") {
+        None
+    } else {
+        let parsed = parse_page_indices(pages, total_pages);
+        if parsed.is_empty() {
+            None
+        } else {
+            Some(parsed)
+        }
+    };
 
     let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(
         degrees.try_into().unwrap_or(0),
-        None,
+        target_pages,
     );
     op.execute(&mut doc)?;
     doc.save(output)
@@ -206,10 +218,11 @@ pub fn handle_burst(input: &std::path::Path, output: &std::path::Path) -> Operat
 
 pub fn handle_remove_blank(
     input: &std::path::Path,
+    sensitivity: u8,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(90);
+    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(sensitivity);
     op.execute(&mut doc)?;
     doc.save(output)
 }

@@ -141,6 +141,8 @@ pub enum Commands {
     RemoveBlank {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long, default_value = "95")]
+        sensitivity: u8,
         #[arg(long)]
         output: PathBuf,
     },
@@ -1001,8 +1003,9 @@ mod tests {
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::RemoveBlank { input, output } => {
+            Commands::RemoveBlank { input, sensitivity, output } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(sensitivity, 95);
                 assert_eq!(output, PathBuf::from("out.pdf"));
             }
             _ => panic!("Expected RemoveBlank command"),

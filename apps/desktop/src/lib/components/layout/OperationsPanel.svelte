@@ -110,6 +110,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
+  let scaleTargetSize = $state('A4');
+  let scaleFactor = $state(1.0);
   let autoRotateOrientation = $state('portrait');
 
   // PDF Attachments parameter states
@@ -367,6 +369,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'delete_pages':
       case 'pdf_delete_pages':  customOutputPath = getOutputPath(`${base}_deleted.pdf`);    break;
+      case 'remove_blank':
+      case 'pdf_remove_blank':  customOutputPath = getOutputPath(`${base}_cleaned.pdf`);    break;
+      case 'pdf_scale_pages':   customOutputPath = getOutputPath(`${base}_scaled.pdf`);     break;
+      case 'pdf_nup':           customOutputPath = getOutputPath(`${base}_nup.pdf`);        break;
+      case 'pdf_auto_rotate':   customOutputPath = getOutputPath(`${base}_autorotated.pdf`); break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
         if (ocrOutputFormat === 'txt') {
@@ -462,6 +469,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             pageNumberStart: 1,
             pageNumberFormat: "1",
             convertPreset,
+            scaleTargetSize,
+            scaleFactor,
             reorderList,
             signCertPath,
             headerText,
@@ -619,6 +628,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           pageNumberFormat: "1",
 
           convertPreset,
+          scaleTargetSize,
+          scaleFactor,
           reorderList,
           signCertPath,
           headerText,
@@ -1327,14 +1338,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       {:else if activeTool.id === 'pdf_scale_pages'}
         <div class="operation-config">
           <label for="scaleTargetSize" class="section-desc">Target Paper Size:</label>
-          <select id="scaleTargetSize" bind:value={convertPreset} class="form-input" style="margin-bottom: 12px;">
+          <select id="scaleTargetSize" bind:value={scaleTargetSize} class="form-input" style="margin-bottom: 12px;">
             <option value="A4">A4 (210 × 297 mm)</option>
             <option value="Letter">US Letter (8.5 × 11 in)</option>
             <option value="Legal">US Legal (8.5 × 14 in)</option>
             <option value="A3">A3 (297 × 420 mm)</option>
             <option value="A5">A5 (148 × 210 mm)</option>
             <option value="Tabloid">Tabloid (11 × 17 in)</option>
+            <option value="Custom">Custom Scale</option>
           </select>
+          <div style="margin-bottom: 12px;">
+            <label for="scaleFactor" class="section-desc">Scale Factor: {scaleFactor}x</label>
+            <input id="scaleFactor" type="range" min="0.25" max="3.0" step="0.05" bind:value={scaleFactor} class="range-input" />
+          </div>
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
             Scales page dimensions uniformly while preserving original aspect ratio and centering contents.
           </p>

@@ -142,8 +142,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Burst { input, output } => {
             group_a::handle_burst(&resolve_input_path(input)?, output)
         }
-        Commands::RemoveBlank { input, output } => {
-            group_a::handle_remove_blank(&resolve_input_path(input)?, output)
+        Commands::RemoveBlank { input, sensitivity, output } => {
+            group_a::handle_remove_blank(&resolve_input_path(input)?, *sensitivity, output)
         }
 
         // Group B
