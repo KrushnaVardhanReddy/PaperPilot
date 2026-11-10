@@ -345,11 +345,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     if (q) {
       const seen = new Set<string>();
       for (const t of allTools) {
-        if (
-          t.title.toLowerCase().includes(q) ||
-          t.description.toLowerCase().includes(q) ||
-          t.tags.some(tag => tag.toLowerCase().includes(q))
-        ) {
+        const titleMatch = (t.title || '').toLowerCase().includes(q);
+        const descMatch = (t.description || '').toLowerCase().includes(q);
+        const tagsMatch = Array.isArray(t.tags) && t.tags.some(tag => (tag || '').toLowerCase().includes(q));
+
+        if (titleMatch || descMatch || tagsMatch) {
           const canonicalId = resolveToolName(t.id);
           if (!seen.has(canonicalId)) {
             seen.add(canonicalId);
@@ -2788,23 +2788,32 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
                 <span class="tool-card-icon">{tool.icon}</span>
                 <div class="tool-card-info">
-                  <span class="tool-card-title">
-                    {tool.title}
-                    {#if tool.releaseStatus === 'v0.5-core'}
-                      <span class="status-badge-v1">v0.5 Core</span>
-                    {:else if tool.releaseStatus === 'v0.6-core'}
-                      <span class="status-badge-v06">v0.6 Core</span>
-                    {:else}
-                      <span class="status-badge-preview">Preview</span>
-                    {/if}
-                    {#if appState.documents.length >= 2}
-                      {#if tool.rule?.minDocuments === 2}
-                        <span class="smart-badge">Multi-File Action</span>
-                      {:else if tool.rule?.isBatchable}
-                        <span class="smart-badge">Batch Action ({appState.documents.length} files)</span>
+                  <div class="tool-card-title-row">
+                    <div class="tool-title-with-badge">
+                      <span class="tool-card-title">{tool.title}</span>
+                      {#if tool.releaseStatus === 'v0.5-core'}
+                        <span class="status-badge-v1">v0.5 Core</span>
+                      {:else if tool.releaseStatus === 'v0.6-core'}
+                        <span class="status-badge-v06">v0.6 Core</span>
+                      {:else}
+                        <span class="status-badge-preview">Preview</span>
                       {/if}
+                      {#if appState.documents.length >= 2}
+                        {#if tool.rule?.minDocuments === 2}
+                          <span class="smart-badge">Multi-File Action</span>
+                        {:else if tool.rule?.isBatchable}
+                          <span class="smart-badge">Batch Action ({appState.documents.length} files)</span>
+                        {/if}
+                      {/if}
+                    </div>
+                    {#if tool.inputFormat && tool.outputFormat}
+                      <span class="format-pill">
+                        <span class="fmt-in">{tool.inputFormat}</span>
+                        <span class="fmt-arrow">➔</span>
+                        <span class="fmt-out">{tool.outputFormat}</span>
+                      </span>
                     {/if}
-                  </span>
+                  </div>
                   <span class="tool-card-desc">{tool.description}</span>
                 </div>
               </button>
