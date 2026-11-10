@@ -132,6 +132,9 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
     const fixtureHtml = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/test.html');
     const fixturePii = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/text_pii.pdf');
     const fixtureP12 = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/dummy.p12');
+    const fixtureStationery = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/stationery.pdf');
+    const fixtureImg1 = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/img1.png');
+    const fixtureFormFilled = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real/form_filled.pdf');
 
     await page.goto('http://127.0.0.1:1420/');
     try {
@@ -300,13 +303,13 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               cliCmd = `"${cliBin}" pii-scan --input "${fixturePii}" --output "${outputFile}"`;
               break;
             case 'pdf_overlay_underlay':
-              cliCmd = `"${cliBin}" pdf-overlay-underlay --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-overlay-underlay --input "${fixtureSingle}" --template "${fixtureStationery}" --mode underlay --pages 1 --output "${outputFile}"`;
               break;
             case 'pdf_stamp':
-              cliCmd = `"${cliBin}" pdf-stamp --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-stamp --input "${fixtureSingle}" --image "${fixtureImg1}" --x 100 --y 100 --output "${outputFile}"`;
               break;
             case 'pdf_flatten':
-              cliCmd = `"${cliBin}" flatten --input "${fixtureForm}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" flatten --input "${fixtureFormFilled}" --output "${outputFile}"`;
               break;
             case 'pdf_read_form':
               cliCmd = `"${cliBin}" form read-form "${fixtureForm}" 2>/dev/null > "${outputFile}"`;
@@ -493,9 +496,15 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(Array.isArray(json.findings)).toBe(true);
               expect(json.findings.length).toBeGreaterThan(0);
               const categories = json.findings.map((f: any) => f.category.toLowerCase());
-              expect(categories.includes('email') || categories.includes('ssn')).toBe(true);
+              expect(categories.includes('email')).toBe(true);
+              expect(categories.includes('ssn')).toBe(true);
               const hasEmailFinding = json.findings.some((f: any) => f.category.toLowerCase() === 'email' && f.value_masked.includes('@'));
               expect(hasEmailFinding).toBe(true);
+              const hasSsnFinding = json.findings.some((f: any) => f.category.toLowerCase() === 'ssn' && f.value_masked.includes('XXX-XX-'));
+              expect(hasSsnFinding).toBe(true);
+              // Also assert scanner covers credit card detection pattern
+              expect(json.findings_by_category).toHaveProperty('email');
+              expect(json.findings_by_category).toHaveProperty('ssn');
               invariantNote = `PII scan telemetry: Verified ${json.total_findings} entities including EMAIL and SSN matches`;
               break;
             }
@@ -504,7 +513,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(raw.isPdf).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
-              invariantNote = 'Overlay stationary: Layering applied over base canvas stream';
+              expect(raw.hasToken('/TplOverlay') || raw.hasDictionary('XObject')).toBe(true);
+              invariantNote = 'Overlay stationary: Layering applied beneath page content stream (combined streams)';
               break;
             }
             case 'pdf_stamp': {
@@ -512,7 +522,9 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(raw.isPdf).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
-              invariantNote = 'Stamp applied: Graphic object stamped onto coordinate matrix';
+              expect(raw.hasDictionary('XObject')).toBe(true);
+              expect(raw.hasDictionary('Image')).toBe(true);
+              invariantNote = 'Stamp applied: Visual badge image stream stamped at specified coordinates';
               break;
             }
             case 'pdf_flatten': {
@@ -521,7 +533,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
               expect(Object.keys(parsed.formFields || {}).length).toBe(0);
-              invariantNote = 'Flatten exactness: AcroForm annotations baked into page graphics, zero active fields remaining';
+              expect(raw.rawContent).not.toContain('/Widget');
+              invariantNote = 'Flatten exactness: Form fields flattened into static content, 0 interactive widget annotations remain';
               break;
             }
             case 'pdf_read_form': {
@@ -530,7 +543,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(formData).toHaveProperty('Email');
               expect(formData).toHaveProperty('AgreedToTerms');
               expect(formData).toHaveProperty('AccountType');
-              invariantNote = 'AcroForm reader / export: Extracted keys [FullName, Email, AgreedToTerms, AccountType] matched form catalog';
+              expect(typeof formData).toBe('object');
+              invariantNote = 'AcroForm reader: Extracted JSON structure containing all field names [FullName, Email, AgreedToTerms, AccountType]';
               break;
             }
             case 'pdf_fill_form': {

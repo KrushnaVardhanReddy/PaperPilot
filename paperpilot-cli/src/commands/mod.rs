@@ -401,10 +401,43 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfRemoveSignatures { input, output } => {
             pdf_remove_signatures::handle_pdf_remove_signatures_command(input, output)
         }
-        Commands::PdfStamp { input, output } => pdf_stamp::handle_pdf_stamp_command(input, output),
-        Commands::PdfOverlayUnderlay { input, output } => {
-            pdf_overlay_underlay::handle_pdf_overlay_underlay_command(input, output)
-        }
+        Commands::PdfStamp {
+            input,
+            output,
+            image,
+            x,
+            y,
+            width,
+            height,
+            opacity,
+            pages,
+        } => pdf_stamp::handle_pdf_stamp_command(
+            input,
+            output,
+            image.as_ref(),
+            *x,
+            *y,
+            *width,
+            *height,
+            *opacity,
+            pages.as_deref(),
+        ),
+        Commands::PdfOverlayUnderlay {
+            input,
+            output,
+            stationery,
+            template,
+            mode,
+            pages,
+            opacity,
+        } => pdf_overlay_underlay::handle_pdf_overlay_underlay_command(
+            input,
+            output,
+            stationery.as_ref().or(template.as_ref()),
+            mode.as_deref(),
+            pages.as_deref(),
+            *opacity,
+        ),
         Commands::PdfAutoRotate { input, output } => {
             pdf_auto_rotate::handle_pdf_auto_rotate_command(input, output)
         }

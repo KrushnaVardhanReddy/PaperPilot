@@ -121,6 +121,8 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let signed_pdf = workspace_root.join("tests/e2e_fixtures/real/signed.pdf").to_string_lossy().to_string();
     let dummy_p12 = workspace_root.join("tests/e2e_fixtures/real/dummy.p12").to_string_lossy().to_string();
     let img_png = workspace_root.join("tests/e2e_fixtures/real/img1.png").to_string_lossy().to_string();
+    let stationery_pdf = workspace_root.join("tests/e2e_fixtures/real/stationery.pdf").to_string_lossy().to_string();
+    let text_pii_pdf = workspace_root.join("tests/e2e_fixtures/real/text_pii.pdf").to_string_lossy().to_string();
 
     let tools = vec![
         "pdf_watermark",
@@ -129,10 +131,12 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_sanitize",
         "pdf_metadata",
         "pdf_redact",
+        "document_pii_scan",
+        "pdf_overlay_underlay",
+        "pdf_stamp",
+        "pdf_flatten",
         "pdf_read_form",
         "pdf_fill_form",
-        "pdf_flatten",
-        "pdf_stamp",
         "pdf_sign",
         "pdf_validate_signatures",
         "pdf_remove_signatures",
@@ -187,6 +191,16 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "query": "Smallpdf" });
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "query": "Smallpdf" });
             }
+            "document_pii_scan" => {
+                cli_args = vec!["pii-scan", "--input", &text_pii_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": text_pii_pdf, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": text_pii_pdf, "output": api_out.to_str().unwrap() });
+            }
+            "pdf_overlay_underlay" => {
+                cli_args = vec!["pdf-overlay-underlay", "--input", &single_page, "--template", &stationery_pdf, "--output", cli_out.to_str().unwrap(), "--mode", "underlay", "--pages", "1", "--json"];
+                mcp_payload = json!({ "input": single_page, "template_path": stationery_pdf, "output": mcp_out.to_str().unwrap(), "mode": "underlay", "pages": "1" });
+                api_payload = json!({ "input": single_page, "template_path": stationery_pdf, "output": api_out.to_str().unwrap(), "mode": "underlay", "pages": "1" });
+            }
             "pdf_read_form" => {
                 cli_args = vec!["read-form", "--input", &form_pdf, "--json"];
                 mcp_payload = json!({ "input": form_pdf });
@@ -204,7 +218,7 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": form_pdf, "output": api_out.to_str().unwrap() });
             }
             "pdf_stamp" => {
-                cli_args = vec!["stamp", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--image", &img_png, "--x", "100.0", "--y", "100.0", "--json"];
+                cli_args = vec!["pdf-stamp", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--image", &img_png, "--x", "100.0", "--y", "100.0", "--json"];
                 mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "image": img_png, "x": 100.0, "y": 100.0 });
                 api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "image": img_png, "x": 100.0, "y": 100.0 });
             }
@@ -267,7 +281,11 @@ async fn test_wave5_penta_interface() -> Result<()> {
             if cli_out.exists() {
                 size = fs::metadata(&cli_out).unwrap().len() as usize;
                 let content = fs::read(&cli_out).unwrap_or_default();
-                passed = size > 0 && content.starts_with(b"%PDF-");
+                if *tool_id == "document_pii_scan" {
+                    passed = size > 0 && (content.starts_with(b"{") || content.starts_with(b"["));
+                } else {
+                    passed = size > 0 && content.starts_with(b"%PDF-");
+                }
             } else {
                 passed = false;
             }
@@ -289,7 +307,11 @@ async fn test_wave5_penta_interface() -> Result<()> {
             if mcp_out.exists() {
                 size = fs::metadata(&mcp_out).unwrap().len() as usize;
                 let content = fs::read(&mcp_out).unwrap_or_default();
-                passed = size > 0 && content.starts_with(b"%PDF-");
+                if *tool_id == "document_pii_scan" {
+                    passed = size > 0 && (content.starts_with(b"{") || content.starts_with(b"["));
+                } else {
+                    passed = size > 0 && content.starts_with(b"%PDF-");
+                }
             } else {
                 passed = false;
             }
@@ -312,7 +334,11 @@ async fn test_wave5_penta_interface() -> Result<()> {
             if api_out.exists() {
                 size = fs::metadata(&api_out).unwrap().len() as usize;
                 let content = fs::read(&api_out).unwrap_or_default();
-                passed = size > 0 && content.starts_with(b"%PDF-");
+                if *tool_id == "document_pii_scan" {
+                    passed = size > 0 && (content.starts_with(b"{") || content.starts_with(b"["));
+                } else {
+                    passed = size > 0 && content.starts_with(b"%PDF-");
+                }
             } else {
                 passed = false;
             }

@@ -222,7 +222,7 @@ pub enum Commands {
     },
     /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
     /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
-    #[command(name = "pii-scan")]
+    #[command(name = "pii-scan", alias = "document-pii-scan", alias = "document_pii_scan", alias = "pii_scan")]
     PiiScan {
         #[arg(long)]
         input: PathBuf,
@@ -277,6 +277,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Flatten Annotations: Bake annotations and forms into page [Input: .pdf | Output: .pdf]
+    #[command(alias = "pdf-flatten", alias = "pdf_flatten")]
     Flatten {
         #[arg(long)]
         input: PathBuf,
@@ -445,6 +446,7 @@ pub enum Commands {
     },
 
     // --- Group E: Forms ---
+    #[command(alias = "pdf-form", alias = "pdf_form")]
     Form {
         #[command(subcommand)]
         command: FormCommands,
@@ -508,20 +510,44 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages.
-    #[command(name = "pdf-stamp")]
+    #[command(name = "pdf-stamp", alias = "stamp", alias = "pdf_stamp")]
     PdfStamp {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        image: Option<PathBuf>,
+        #[arg(long)]
+        x: Option<f32>,
+        #[arg(long)]
+        y: Option<f32>,
+        #[arg(long)]
+        width: Option<f32>,
+        #[arg(long)]
+        height: Option<f32>,
+        #[arg(long)]
+        opacity: Option<f32>,
+        #[arg(long)]
+        pages: Option<String>,
     },
     /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
-    #[command(name = "pdf-overlay-underlay")]
+    #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
     PdfOverlayUnderlay {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        stationery: Option<PathBuf>,
+        #[arg(long)]
+        template: Option<PathBuf>,
+        #[arg(long)]
+        mode: Option<String>,
+        #[arg(long)]
+        pages: Option<String>,
+        #[arg(long)]
+        opacity: Option<f32>,
     },
     /// Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages.
     #[command(name = "pdf-auto-rotate")]
@@ -875,11 +901,11 @@ pub enum WorkflowSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum FormCommands {
-    #[command(name = "read-form", alias = "read")]
+    #[command(name = "read-form", alias = "read", alias = "pdf_read_form", alias = "pdf-read-form")]
     Read {
         input: PathBuf,
     },
-    #[command(name = "fill-form", alias = "fill")]
+    #[command(name = "fill-form", alias = "fill", alias = "pdf_fill_form", alias = "pdf-fill-form")]
     Fill {
         input: PathBuf,
         #[arg(long)]
@@ -887,7 +913,7 @@ pub enum FormCommands {
         #[arg(short, long)]
         output: PathBuf,
     },
-    #[command(name = "create-form-field", alias = "add-field")]
+    #[command(name = "create-form-field", alias = "add-field", alias = "pdf_create_form_field", alias = "pdf-create-form-field")]
     AddField {
         input: PathBuf,
         #[arg(long)]

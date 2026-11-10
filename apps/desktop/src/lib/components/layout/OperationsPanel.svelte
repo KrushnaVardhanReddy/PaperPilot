@@ -169,6 +169,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let signLocation = $state('Local Secure Terminal');
   let hashAlgorithm = $state('sha256');
 
+  // Stationery, Stamp, PII, Forms & Redaction parameter states (Tools 41-45)
+  let stationeryPath = $state('tests/e2e_fixtures/real/stationery.pdf');
+  let overlayMode = $state('underlay');
+  let overlayPages = $state('1');
+  let overlayOpacity = $state(1.0);
+  let stampImagePath = $state('tests/e2e_fixtures/real/img1.png');
+  let stampX = $state(100.0);
+  let stampY = $state(100.0);
+  let stampWidth = $state(150.0);
+  let stampHeight = $state(50.0);
+  let stampOpacity = $state(1.0);
+  let stampPages = $state('all');
+  let piiScanSsn = $state(true);
+  let piiScanCreditCards = $state(true);
+  let piiScanEmails = $state(true);
+  let piiScanPhones = $state(true);
+  let piiScanIban = $state(true);
+  let redactQuery = $state('');
+
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -413,6 +432,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_hash':          customOutputPath = getOutputPath(`${base}_checksums.txt`);   break;
       case 'validate':
       case 'pdf_validate':      customOutputPath = getOutputPath(`${base}_validate_report.json`); break;
+      case 'document_pii_scan':
+      case 'pii_scan':
+      case 'pdf_document_pii_scan': customOutputPath = getOutputPath(`${base}_pii_report.json`); break;
+      case 'overlay_underlay':
+      case 'pdf_overlay_underlay': customOutputPath = getOutputPath(`${base}_stationery.pdf`); break;
+      case 'stamp':
+      case 'pdf_stamp':         customOutputPath = getOutputPath(`${base}_stamped.pdf`);     break;
+      case 'flatten':
+      case 'pdf_flatten':       customOutputPath = getOutputPath(`${base}_flattened.pdf`);   break;
+      case 'read_form':
+      case 'pdf_read_form':     customOutputPath = getOutputPath(`${base}_form_fields.json`); break;
       case 'extract_pages':
       case 'pdf_extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'delete_pages':
@@ -584,7 +614,24 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             signFieldName,
             signReason,
             signLocation,
-            hashAlgorithm
+            hashAlgorithm,
+            stationeryPath,
+            overlayMode,
+            overlayPages,
+            overlayOpacity,
+            stampImagePath,
+            stampX,
+            stampY,
+            stampWidth,
+            stampHeight,
+            stampOpacity,
+            stampPages,
+            piiScanSsn,
+            piiScanCreditCards,
+            piiScanEmails,
+            piiScanPhones,
+            piiScanIban,
+            redactQuery
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -769,7 +816,24 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           signFieldName,
           signReason,
           signLocation,
-          hashAlgorithm
+          hashAlgorithm,
+          stationeryPath,
+          overlayMode,
+          overlayPages,
+          overlayOpacity,
+          stampImagePath,
+          stampX,
+          stampY,
+          stampWidth,
+          stampHeight,
+          stampOpacity,
+          stampPages,
+          piiScanSsn,
+          piiScanCreditCards,
+          piiScanEmails,
+          piiScanPhones,
+          piiScanIban,
+          redactQuery
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1496,12 +1560,53 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             ⚠️ Strips cryptographic signature dictionaries, locks, and widget annotations to enable editing.
           </p>
         </div>
-      {:else if activeTool.id === 'pdf_stamp'}
+      {:else if activeTool.id === 'pdf_stamp' || activeTool.id === 'stamp'}
         <div class="operation-config">
-          <label for="stampText" class="section-desc">Stamp Label / Text:</label>
-          <input id="stampText" type="text" bind:value={watermarkText} class="form-input" placeholder="APPROVED / CONFIDENTIAL" style="margin-bottom: 12px;" />
+          <label for="stampImagePath" class="section-desc">Stamp Image Path:</label>
+          <input id="stampImagePath" type="text" bind:value={stampImagePath} class="form-input" placeholder="e.g. tests/e2e_fixtures/real/img1.png" style="margin-bottom: 8px;" />
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+              <label for="stampX" class="section-desc">X Origin (pt):</label>
+              <input id="stampX" type="number" bind:value={stampX} class="form-input" />
+            </div>
+            <div>
+              <label for="stampY" class="section-desc">Y Origin (pt):</label>
+              <input id="stampY" type="number" bind:value={stampY} class="form-input" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+              <label for="stampWidth" class="section-desc">Width (pt):</label>
+              <input id="stampWidth" type="number" bind:value={stampWidth} class="form-input" />
+            </div>
+            <div>
+              <label for="stampHeight" class="section-desc">Height (pt):</label>
+              <input id="stampHeight" type="number" bind:value={stampHeight} class="form-input" />
+            </div>
+          </div>
+          <label for="stampPages" class="section-desc">Target Pages:</label>
+          <input id="stampPages" type="text" bind:value={stampPages} class="form-input" placeholder="all or 1,3,5" style="margin-bottom: 8px;" />
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa;">
             Applies coordinate-exact visual stamps and branding onto target pages.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_overlay_underlay' || activeTool.id === 'overlay_underlay'}
+        <div class="operation-config">
+          <label for="stationeryPath" class="section-desc">Stationery / Letterhead PDF Path:</label>
+          <input id="stationeryPath" type="text" bind:value={stationeryPath} class="form-input" placeholder="e.g. tests/e2e_fixtures/real/stationery.pdf" style="margin-bottom: 8px;" />
+          <div style="margin-bottom: 8px;">
+            <label for="overlayMode" class="section-desc">Layering Mode:</label>
+            <select id="overlayMode" class="form-input" bind:value={overlayMode}>
+              <option value="underlay">Underlay (Background Stationery)</option>
+              <option value="overlay">Overlay (Foreground Watermark)</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <label for="overlayPages" class="section-desc">Target Pages:</label>
+            <input id="overlayPages" type="text" bind:value={overlayPages} class="form-input" placeholder="all, first, last, or 1" />
+          </div>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Applies stationery letterheads or templates beneath or above target page content streams.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_booklet'}
@@ -1667,6 +1772,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'redact' || activeTool.id === 'pdf_redact'}
         <div class="operation-config">
+          <label for="redactQuery" class="section-desc">Search Query / Pattern to Redact:</label>
+          <input id="redactQuery" type="text" class="form-input" bind:value={redactQuery} placeholder="e.g. SSN, CONFIDENTIAL, or regex pattern" style="margin-bottom: 8px;" />
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
             Permanently redacts matching sensitive patterns, text glyphs, and rectangular zones from the document stream.
           </p>
@@ -1767,6 +1874,48 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Validate PDF syntax, dictionary structures, cross-reference tables, and ISO 32000 standards conformance.
           </p>
           <span class="field-hint">Scans xref tables, page trees, stream lengths, and encryption dictionary flags to report syntax conformance.</span>
+        </div>
+      {:else if activeTool.id === 'document_pii_scan' || activeTool.id === 'pii_scan' || activeTool.id === 'pdf_document_pii_scan'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-bottom: 8px;">
+            Scan document for sensitive PII (SSN, credit cards, emails, phones, IBANs) and generate audit telemetry.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" bind:checked={piiScanSsn} />
+              <span>Scan Social Security Numbers (SSN)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" bind:checked={piiScanCreditCards} />
+              <span>Scan Credit Cards (Luhn validated)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" bind:checked={piiScanEmails} />
+              <span>Scan Email Addresses</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" bind:checked={piiScanPhones} />
+              <span>Scan Phone Numbers</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" bind:checked={piiScanIban} />
+              <span>Scan International Bank Account Numbers (IBAN)</span>
+            </label>
+          </div>
+        </div>
+      {:else if activeTool.id === 'flatten' || activeTool.id === 'pdf_flatten'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Permanently flatten interactive form fields, widget appearances, and annotations into static page graphics.
+          </p>
+          <span class="field-hint">Removes /AcroForm dictionaries; form fields become uneditable static page text.</span>
+        </div>
+      {:else if activeTool.id === 'read_form' || activeTool.id === 'pdf_read_form'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Extract all interactive AcroForm field values and widget definitions into structured JSON.
+          </p>
+          <span class="field-hint">Parses text fields, checkboxes, radio groups, and signature widgets across all pages.</span>
         </div>
       {:else}
         <div class="operation-config">

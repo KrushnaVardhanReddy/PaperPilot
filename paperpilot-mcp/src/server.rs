@@ -5804,7 +5804,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_read_form" => {
+            "pdf_read_form" | "read_form" => {
                 let input = get_string("input")?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
@@ -6406,7 +6406,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_flatten" => {
+            "pdf_flatten" | "flatten" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -6630,7 +6630,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_stamp" => {
+            "pdf_stamp" | "stamp" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -6638,7 +6638,11 @@ impl PaperPilotMcpServer {
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 let mut options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
-                if let Some(p) = args.get("image_path").and_then(|v| v.as_str()) {
+                if let Some(p) = args
+                    .get("image_path")
+                    .or_else(|| args.get("image"))
+                    .and_then(|v| v.as_str())
+                {
                     options.image_path = Some(p.to_string());
                 }
                 if let Some(d) = args.get("image_data").and_then(|v| v.as_str()) {
@@ -6680,14 +6684,34 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_overlay_underlay" => {
+            "pdf_overlay_underlay" | "overlay_underlay" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
+                if let Some(tpl) = args
+                    .get("template_path")
+                    .or_else(|| args.get("stationery"))
+                    .or_else(|| args.get("template"))
+                    .and_then(|v| v.as_str())
+                {
+                    options.template_path = Some(tpl.to_string());
+                }
+                if let Some(d) = args.get("template_data").and_then(|v| v.as_str()) {
+                    options.template_data = Some(d.to_string());
+                }
+                if let Some(m) = args.get("mode").and_then(|v| v.as_str()) {
+                    options.mode = m.to_string();
+                }
+                if let Some(p) = args.get("pages").and_then(|v| v.as_str()) {
+                    options.pages = p.to_string();
+                }
+                if let Some(op) = args.get("opacity").and_then(|v| v.as_f64()) {
+                    options.opacity = op as f32;
+                }
                 let result =
                     paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(
                         &input_bytes,

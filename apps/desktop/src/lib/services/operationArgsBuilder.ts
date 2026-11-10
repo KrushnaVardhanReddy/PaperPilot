@@ -96,6 +96,23 @@ export interface OperationContext {
     signReason?: string;
     signLocation?: string;
     hashAlgorithm?: string;
+    stationeryPath?: string;
+    overlayMode?: string;
+    overlayPages?: string;
+    overlayOpacity?: number;
+    stampImagePath?: string;
+    stampX?: number;
+    stampY?: number;
+    stampWidth?: number;
+    stampHeight?: number;
+    stampOpacity?: number;
+    stampPages?: string;
+    piiScanSsn?: boolean;
+    piiScanCreditCards?: boolean;
+    piiScanEmails?: boolean;
+    piiScanPhones?: boolean;
+    piiScanIban?: boolean;
+    redactQuery?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -352,9 +369,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'redact':
+        case 'pdf_redact':
             args = {
                 input: docPath,
-                regions: '0,0,100,100', // Provide a default/simple region or add an input if needed
+                query: context.redactQuery || searchQuery || 'CONFIDENTIAL',
+                regions: '0,0,100,100',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
             };
             break;
@@ -394,6 +413,19 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'read_form':
+        case 'pdf_read_form':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_form_fields.json`)
+            };
+            break;
+        case 'flatten':
+        case 'pdf_flatten':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_flattened.pdf`)
+            };
+            break;
         case 'bookmarks':
         case 'pdf_bookmarks':
         case 'classify_type':
@@ -631,8 +663,15 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'document_pii_scan':
+        case 'pii_scan':
+        case 'pdf_document_pii_scan':
             args = {
                 input: docPath,
+                scan_ssn: context.piiScanSsn !== undefined ? context.piiScanSsn : true,
+                scan_credit_cards: context.piiScanCreditCards !== undefined ? context.piiScanCreditCards : true,
+                scan_emails: context.piiScanEmails !== undefined ? context.piiScanEmails : true,
+                scan_phones: context.piiScanPhones !== undefined ? context.piiScanPhones : true,
+                scan_iban: context.piiScanIban !== undefined ? context.piiScanIban : true,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_pii_report.json`)
             };
             break;
@@ -671,16 +710,29 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
             };
             break;
+        case 'stamp':
         case 'pdf_stamp':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                image_path: context.stampImagePath || undefined,
+                x: context.stampX !== undefined ? context.stampX : 50.0,
+                y: context.stampY !== undefined ? context.stampY : 50.0,
+                width: context.stampWidth !== undefined ? context.stampWidth : 150.0,
+                height: context.stampHeight !== undefined ? context.stampHeight : 50.0,
+                opacity: context.stampOpacity !== undefined ? context.stampOpacity : 1.0,
+                pages: context.stampPages || 'all',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_stamped.pdf`)
             };
             break;
+        case 'overlay_underlay':
         case 'pdf_overlay_underlay':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                template_path: context.stationeryPath || undefined,
+                mode: context.overlayMode || 'underlay',
+                pages: context.overlayPages || 'all',
+                opacity: context.overlayOpacity !== undefined ? context.overlayOpacity : 1.0,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_stationery.pdf`)
             };
             break;
         case 'pdf_auto_rotate':
