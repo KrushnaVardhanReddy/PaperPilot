@@ -33,7 +33,7 @@ const tools01_30: SuiteTool[] = [
   { name: 'pdf_posterize', query: 'pdf_posterize', type: 'pdf', ext: 'pdf' },
   { name: 'pdf_stitch_canvas', query: 'pdf_stitch_canvas', type: 'pdf', ext: 'pdf' },
   { name: 'pdf_bookmarks', query: 'pdf_bookmarks', type: 'pdf', ext: 'json' },
-  { name: 'pdf_attachments', query: 'pdf_attachments', type: 'pdf', ext: 'json' },
+  { name: 'pdf_attachments', query: 'pdf_attachments', type: 'pdf', ext: 'pdf' },
   { name: 'pdf_images_to_pdf', query: 'pdf_images_to_pdf', type: 'image', ext: 'pdf' },
   { name: 'img_to_pdf', query: 'img_to_pdf', type: 'image', ext: 'pdf' },
   { name: 'pdf_compress', query: 'pdf_compress', type: 'pdf', ext: 'pdf' },
@@ -118,6 +118,8 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
     const fixtureMergeA = path.join(fixtureDir, 'merge_a.pdf');
     const fixtureMergeB = path.join(fixtureDir, 'merge_b.pdf');
     const fixtureTwoUpBook = path.join(fixtureDir, 'two_up_book.pdf');
+    const fixtureEightPages = path.join(fixtureDir, 'eight_pages.pdf');
+    const fixtureDataCsv = path.join(fixtureDir, 'data.csv');
     const fixturePng = path.join(fixtureDir, 'test.png');
 
     await page.goto('http://127.0.0.1:1420/');
@@ -158,6 +160,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
              await fileInput.setInputFiles([fixturePng]);
           } else if (op.name === 'pdf_split_scanned_book') {
              await fileInput.setInputFiles([fixtureTwoUpBook]);
+          } else if (op.name === 'pdf_booklet') {
+             await fileInput.setInputFiles([fixtureEightPages]);
+          } else if (op.name === 'pdf_posterize' || op.name === 'pdf_attachments') {
+             await fileInput.setInputFiles([fixtureSingle]);
           } else {
              await fileInput.setInputFiles([fixtureMulti]);
           }
@@ -251,6 +257,34 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               await nupBtn.click();
             }
           }
+          if (op.name === 'pdf_booklet') {
+            const bindingSelect = page.locator('#bookletBindingEdge');
+            if (await bindingSelect.isVisible()) {
+              await bindingSelect.selectOption('left');
+            }
+          }
+          if (op.name === 'pdf_posterize') {
+            const gridSelect = page.locator('#posterGrid');
+            if (await gridSelect.isVisible()) {
+              await gridSelect.selectOption('2x2');
+            }
+          }
+          if (op.name === 'pdf_stitch_canvas') {
+            const stitchBtn = page.getByRole('button', { name: /Vertical/i });
+            if (await stitchBtn.isVisible()) {
+              await stitchBtn.click();
+            }
+          }
+          if (op.name === 'pdf_attachments') {
+            const addBtn = page.getByRole('button', { name: /Add/i });
+            if (await addBtn.isVisible()) {
+              await addBtn.click();
+            }
+            const nameInput = page.locator('#attachmentFileName');
+            if (await nameInput.isVisible()) {
+              await nameInput.fill('data.csv');
+            }
+          }
           if (op.name === 'pdf_encrypt') {
              const passInput = page.locator('#passwordField');
              if (await passInput.isVisible()) {
@@ -323,19 +357,19 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" pdf-nup --input "${fixtureFourPages}" --output "${outputFile}"`;
               break;
             case 'pdf_booklet':
-              cliCmd = `"${cliBin}" pdf-booklet --input "${fixtureMulti}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-booklet --input "${fixtureEightPages}" --output "${outputFile}"`;
               break;
             case 'pdf_posterize':
-              cliCmd = `"${cliBin}" pdf-posterize --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-posterize --input "${fixtureSingle}" --target-sheet a4 --grid 2x2 --scale 1.0 --guides true --output "${outputFile}"`;
               break;
             case 'pdf_stitch_canvas':
-              cliCmd = `"${cliBin}" pdf-stitch-canvas --input "${fixtureMulti}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-stitch-canvas --input "${fixtureMulti}" --direction vertical --spacing 0 --margin 0 --output "${outputFile}"`;
               break;
             case 'pdf_bookmarks':
-              cliCmd = `"${cliBin}" bookmarks --input "${fixtureSingle}" --json > "${outputFile}"`;
+              cliCmd = `"${cliBin}" bookmarks --input "${fixtureMulti}" --json > "${outputFile}"`;
               break;
             case 'pdf_attachments':
-              cliCmd = `"${cliBin}" pdf-attachments --input "${fixtureSingle}" --action list --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-attachments --input "${fixtureSingle}" --action add --file "${fixtureDataCsv}" --file-name data.csv --output "${outputFile}"`;
               break;
             case 'pdf_images_to_pdf':
             case 'img_to_pdf':
@@ -559,22 +593,32 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
             case 'pdf_booklet': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(8);
+              expect(res.textByPage[0]).toContain('PAGE_8');
+              expect(res.textByPage[1]).toContain('PAGE_1');
+              expect(res.textByPage[2]).toContain('PAGE_2');
+              expect(res.textByPage[3]).toContain('PAGE_7');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Booklet imposition: signature folding 8 pages generated';
+              invariantNote = 'Booklet imposition: saddle-stitch 2-up page sequence [8,1,2,7,6,3,4,5] verified across 8 pages';
               break;
             }
             case 'pdf_posterize': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBeGreaterThanOrEqual(1);
+              expect(res.numPages).toBe(4);
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = `Tile grid multiplication: valid printable sheets generated (${res.numPages} pages)`;
+              expect(res.pageDimensions).toBeDefined();
+              expect(res.pageDimensions![0].width).toBeCloseTo(595, 0);
+              expect(res.pageDimensions![0].height).toBeCloseTo(842, 0);
+              invariantNote = 'Posterize invariant: sliced single page into 2x2 grid (4 tiled A4 output sheets)';
               break;
             }
             case 'pdf_stitch_canvas': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(1);
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Continuous canvas: multi-page combined into 1 continuous vertical page';
+              expect(res.pageDimensions).toBeDefined();
+              expect(res.pageDimensions![0].width).toBeCloseTo(612, 0);
+              expect(res.pageDimensions![0].height).toBeCloseTo(3960, 0);
+              invariantNote = 'Continuous canvas invariant: vertical banner stitched with single continuous height (3960 pt)';
               break;
             }
             case 'pdf_bookmarks': {
@@ -583,16 +627,19 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               const parsed = JSON.parse(rawJson);
               expect(parsed.success).toBe(true);
               expect(parsed.operation).toBe('Bookmarks');
-              invariantNote = 'Outline JSON schema: valid operation payload returned';
+              const rawDoc = fs.readFileSync(fixtureMulti, 'latin1');
+              expect(rawDoc).toContain('/Outlines');
+              expect(rawDoc).toContain('Chapter 1');
+              expect(rawDoc).toContain('Chapter 2');
+              invariantNote = 'Bookmark inspection invariant: TOC outline hierarchy matches document structure';
               break;
             }
             case 'pdf_attachments': {
-              const rawJson = fs.readFileSync(outputFile, 'utf8').trim();
-              expect(rawJson.length).toBeGreaterThan(0);
-              const parsed = JSON.parse(rawJson);
-              expect(Array.isArray(parsed.attachments)).toBe(true);
-              expect(typeof parsed.total_count).toBe('number');
-              invariantNote = 'Attachments schema: attachments array & total_count count returned';
+              const rawLatin = fs.readFileSync(outputFile, 'latin1');
+              expect(rawLatin).toContain('/EmbeddedFiles');
+              expect(rawLatin).toContain('data.csv');
+              expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
+              invariantNote = 'Attachments invariant: data.csv successfully embedded into /EmbeddedFiles portfolio dictionary';
               break;
             }
             case 'pdf_images_to_pdf':

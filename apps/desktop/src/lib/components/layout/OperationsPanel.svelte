@@ -120,6 +120,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let attachmentDescription = $state('');
   let attachmentBase64 = $state('');
 
+  // Tools 16-20 parameter states
+  let bookletBindingEdge = $state('left');
+  let bookletSheetOrdering = $state('standard');
+  let posterGrid = $state('2x2');
+  let posterScale = $state(1.0);
+  let posterTargetSheet = $state('a4');
+  let posterOverlap = $state(14.17);
+  let posterGuides = $state(true);
+  let stitchDirection = $state('vertical');
+  let stitchSpacing = $state(0.0);
+  let stitchMargin = $state(0.0);
+  let attachmentFilePath = $state('');
+
   // Additional 44 tools parameter states
   let batesPrefix = $state('CONF-');
   let batesStart = $state(1);
@@ -373,6 +386,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_remove_blank':  customOutputPath = getOutputPath(`${base}_cleaned.pdf`);    break;
       case 'pdf_scale_pages':   customOutputPath = getOutputPath(`${base}_scaled.pdf`);     break;
       case 'pdf_nup':           customOutputPath = getOutputPath(`${base}_nup.pdf`);        break;
+      case 'pdf_booklet':       customOutputPath = getOutputPath(`${base}_booklet.pdf`);    break;
+      case 'pdf_posterize':     customOutputPath = getOutputPath(`${base}_poster.pdf`);     break;
+      case 'pdf_stitch_canvas': customOutputPath = getOutputPath(`${base}_stitched.pdf`);   break;
+      case 'bookmarks':
+      case 'pdf_bookmarks':     customOutputPath = getOutputPath(`${base}_bookmarks.json`);  break;
+      case 'pdf_attachments':   customOutputPath = attachmentAction === 'add' ? getOutputPath(`${base}_with_attachment.pdf`) : getOutputPath(`${base}_attachments.json`); break;
       case 'pdf_auto_rotate':   customOutputPath = getOutputPath(`${base}_autorotated.pdf`); break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
@@ -496,7 +515,18 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             mergeAlternateDocB,
             mergeAlternateReverseB,
             mergeAlternateStep,
-            mergeAlternateStepB
+            mergeAlternateStepB,
+            bookletBindingEdge,
+            bookletSheetOrdering,
+            posterGrid,
+            posterScale,
+            posterTargetSheet,
+            posterOverlap,
+            posterGuides,
+            stitchDirection,
+            stitchSpacing,
+            stitchMargin,
+            filePath: attachmentFilePath
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -655,7 +685,18 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           mergeAlternateDocB,
           mergeAlternateReverseB,
           mergeAlternateStep,
-          mergeAlternateStepB
+          mergeAlternateStepB,
+          bookletBindingEdge,
+          bookletSheetOrdering,
+          posterGrid,
+          posterScale,
+          posterTargetSheet,
+          posterOverlap,
+          posterGuides,
+          stitchDirection,
+          stitchSpacing,
+          stitchMargin,
+          filePath: attachmentFilePath
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1367,6 +1408,95 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <input id="stampText" type="text" bind:value={watermarkText} class="form-input" placeholder="APPROVED / CONFIDENTIAL" style="margin-bottom: 12px;" />
           <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa;">
             Applies coordinate-exact visual stamps and branding onto target pages.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_booklet'}
+        <div class="operation-config">
+          <label for="bookletBindingEdge" class="section-desc">Binding Edge:</label>
+          <select id="bookletBindingEdge" bind:value={bookletBindingEdge} class="form-input" style="margin-bottom: 12px;">
+            <option value="left">Left Edge (Standard Book / Magazine)</option>
+            <option value="right">Right Edge (Manga / RTL)</option>
+            <option value="top">Top Edge (Calendar / Notepad)</option>
+          </select>
+
+          <label for="bookletSheetOrdering" class="section-desc">Sheet Ordering:</label>
+          <select id="bookletSheetOrdering" bind:value={bookletSheetOrdering} class="form-input" style="margin-bottom: 12px;">
+            <option value="standard">Standard Saddle-Stitch</option>
+            <option value="consecutive">Consecutive Sheets</option>
+          </select>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Rearranges and pairs pages into 2-up spreads so folding down the center creates a correctly ordered booklet.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_posterize'}
+        <div class="operation-config">
+          <label for="posterGrid" class="section-desc">Poster Split Grid:</label>
+          <select id="posterGrid" bind:value={posterGrid} class="form-input" style="margin-bottom: 12px;">
+            <option value="2x2">2 × 2 Grid (4 printable sheets)</option>
+            <option value="3x3">3 × 3 Grid (9 printable sheets)</option>
+            <option value="4x4">4 × 4 Grid (16 printable sheets)</option>
+            <option value="2x1">2 × 1 Grid (2 horizontal sheets)</option>
+            <option value="1x2">1 × 2 Grid (2 vertical sheets)</option>
+          </select>
+
+          <label for="posterTargetSheet" class="section-desc">Target Paper Size:</label>
+          <select id="posterTargetSheet" bind:value={posterTargetSheet} class="form-input" style="margin-bottom: 12px;">
+            <option value="a4">A4 (210 × 297 mm)</option>
+            <option value="letter">US Letter (8.5 × 11 in)</option>
+            <option value="legal">US Legal (8.5 × 14 in)</option>
+            <option value="a3">A3 (297 × 420 mm)</option>
+          </select>
+
+          <div style="margin-bottom: 12px;">
+            <label for="posterScale" class="section-desc">Scale Factor: {posterScale}x</label>
+            <input id="posterScale" type="range" min="0.5" max="5.0" step="0.1" bind:value={posterScale} class="range-input" />
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <input id="posterGuides" type="checkbox" bind:checked={posterGuides} />
+            <label for="posterGuides" class="section-desc" style="margin: 0; cursor: pointer;">Include Cut Guides & Overlap Margins</label>
+          </div>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Slices large documents or maps across a grid of printable sheets with alignment marks.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_stitch_canvas'}
+        <div class="operation-config">
+          <label class="section-desc">Stitching Direction:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {stitchDirection === 'vertical' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => stitchDirection = 'vertical'}
+            >
+              ⬇️ Vertical Banner
+            </button>
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {stitchDirection === 'horizontal' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => stitchDirection = 'horizontal'}
+            >
+              ➡️ Horizontal Strip
+            </button>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label for="stitchSpacing" class="section-desc">Spacing Between Pages: {stitchSpacing} pt</label>
+            <input id="stitchSpacing" type="number" min="0" max="100" step="1" bind:value={stitchSpacing} class="form-input" />
+          </div>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Stitches multiple consecutive pages end-to-end into a single continuous-flow canvas page.
+          </p>
+        </div>
+      {:else if activeTool.id === 'bookmarks' || activeTool.id === 'pdf_bookmarks'}
+        <div class="operation-config">
+          <p class="section-desc" style="font-size: 0.85rem; color: #38bdf8; line-height: 1.4; margin-bottom: 8px;">
+            📑 Extracts document outline bookmarks and TOC hierarchy into structured JSON format.
+          </p>
+          <p class="section-desc" style="font-size: 0.82rem; color: #a1a1aa; line-height: 1.4;">
+            Outputs outline entries including title, destination page, and indentation level.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_attachments'}

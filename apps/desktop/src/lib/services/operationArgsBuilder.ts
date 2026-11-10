@@ -61,6 +61,21 @@ export interface OperationContext {
     mergeAlternateReverseB?: boolean;
     mergeAlternateStep?: number;
     mergeAlternateStepB?: number;
+    bookletBindingEdge?: string;
+    bookletSheetOrdering?: string;
+    posterGrid?: string;
+    posterScale?: number;
+    posterTargetSheet?: string;
+    posterOverlap?: number;
+    posterGuides?: boolean;
+    stitchDirection?: string;
+    stitchSpacing?: number;
+    stitchMargin?: number;
+    action?: string;
+    file_name?: string;
+    description?: string;
+    file_data_base64?: string;
+    filePath?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -329,9 +344,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'hash':
         case 'read_form':
         case 'bookmarks':
+        case 'pdf_bookmarks':
         case 'classify_type':
             args = {
-                input: docPath
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_bookmarks.json`)
             };
             break;
         case 'search':
@@ -575,16 +592,35 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 target_orientation: 'portrait'
             };
             break;
+        case 'pdf_booklet':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_booklet.pdf`),
+                binding_edge: context.bookletBindingEdge || 'left',
+                sheet_ordering: context.bookletSheetOrdering || 'standard',
+                create_sheets: true
+            };
+            break;
         case 'pdf_stitch_canvas':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_stitched.pdf`),
+                direction: context.stitchDirection || 'vertical',
+                spacing: context.stitchSpacing ?? 0.0,
+                margin: context.stitchMargin ?? 0.0
             };
             break;
         case 'pdf_attachments':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.json`)
+                output: customOutputPath || (context.action === 'add'
+                    ? getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_with_attachment.pdf`)
+                    : getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_attachments.json`)),
+                action: context.action || 'list',
+                file_name: context.file_name,
+                description: context.description,
+                file_data_base64: context.file_data_base64,
+                file: context.filePath
             };
             break;
         case 'pdf_timestamp':
@@ -637,7 +673,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_posterize':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_poster.pdf`),
+                grid: context.posterGrid || '2x2',
+                scale: context.posterScale ?? 1.0,
+                target_sheet: context.posterTargetSheet || 'a4',
+                overlap: context.posterOverlap ?? 14.17,
+                guides: context.posterGuides ?? true
             };
             break;
         case 'pdf_dedup_streams':

@@ -126,6 +126,8 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let sample_pdf3 = workspace_root.join("tests/e2e_fixtures/real/merge_b.pdf").to_string_lossy().to_string();
     let sample_multi_page = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
     let sample_single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
+    let sample_eight_pages = workspace_root.join("tests/e2e_fixtures/real/eight_pages.pdf").to_string_lossy().to_string();
+    let sample_data_csv = workspace_root.join("tests/e2e_fixtures/real/data.csv").to_string_lossy().to_string();
     let sample_two_up_book = workspace_root.join("tests/e2e_fixtures/real/two_up_book.pdf").to_string_lossy().to_string();
     let _sample_pdf_photo = workspace_root.join("tests/e2e_fixtures/real/sample_photo_doc.pdf").to_string_lossy().to_string();
 
@@ -339,20 +341,20 @@ async fn test_wave6_penta_interface() -> Result<()> {
     // 14. pdf_booklet
     let tool_id = "pdf_booklet";
     let out_file = out_dir.join("booklet.pdf");
-    test_cli!(tool_id, &["pdf-booklet", "--input", &sample_pdf, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["pdf-booklet", "--input", &sample_eight_pages, "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_eight_pages, "output": out_file.to_str().unwrap()}), out_file);
 
     // 15. pdf_posterize
     let tool_id = "pdf_posterize";
     let out_file = out_dir.join("posterize.pdf");
-    test_cli!(tool_id, &["pdf-posterize", "--input", &sample_pdf, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["pdf-posterize", "--input", &sample_single_page, "--target-sheet", "a4", "--grid", "2x2", "--scale", "1.0", "--guides", "true", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_single_page, "grid_cols": 2, "grid_rows": 2, "target_sheet": "a4", "output": out_file.to_str().unwrap()}), out_file);
 
     // 16. pdf_stitch_canvas
     let tool_id = "pdf_stitch_canvas";
     let out_file = out_dir.join("stitch.pdf");
-    test_cli!(tool_id, &["pdf-stitch-canvas", "--input", &sample_pdf, "--output", out_file.to_str().unwrap(), "--json"], out_file);
-    test_mcp_api!(tool_id, json!({"input": sample_pdf, "output": out_file.to_str().unwrap()}), out_file);
+    test_cli!(tool_id, &["pdf-stitch-canvas", "--input", &sample_multi_page, "--direction", "vertical", "--spacing", "0", "--margin", "0", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_multi_page, "direction": "vertical", "spacing_pt": 0.0, "margin_pt": 0.0, "output": out_file.to_str().unwrap()}), out_file);
 
     // Cleanup API server
     let _ = api_child.kill();
