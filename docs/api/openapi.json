@@ -1381,6 +1381,33 @@
         ]
       }
     },
+    "/api/v1/pdf/extract-patterns": {
+      "post": {
+        "operationId": "pdf_extract_patterns",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Extract Keywords & Patterns completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Extract Keywords & Patterns [Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]] [Input: .pdf | Output: .json]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/extract-text": {
       "post": {
         "operationId": "extract_text",
