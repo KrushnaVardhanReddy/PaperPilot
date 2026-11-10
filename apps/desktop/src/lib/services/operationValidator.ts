@@ -6,7 +6,10 @@ export function validatePreconditions(toolId: string, documentsCount: number): {
         return { valid: true };
     }
 
-    const isCreationTool = ['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf'].includes(toolId);
+    const isCreationTool = [
+        'md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf',
+        'pdf_convert_excel', 'convert_excel', 'excel_to_pdf'
+    ].includes(toolId);
     if (!isCreationTool && documentsCount === 0) {
         return { valid: false, error: 'No documents available. Add or drop a PDF first.' };
     }

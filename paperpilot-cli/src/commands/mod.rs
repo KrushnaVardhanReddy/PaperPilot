@@ -592,6 +592,22 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 custom_css.as_deref(),
             )
         },
+        Commands::ConvertExcel {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+        } => {
+            group_d::handle_convert(
+                "excel_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+            )
+        },
         Commands::RagChunks { input } => {
             let resolved = resolve_input_path(input)?;
             let mut doc = paperpilot_pdf::document::LopdfDocument::load(&resolved)?;

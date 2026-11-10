@@ -8,7 +8,7 @@ import { OfficeInspector } from './helpers/officeInspector';
 
 // Suite 3: Tools 61–90 (Canonical IDs strictly matching MANUAL_TESTING_INDEX.md)
 const tools61_90 = [
-  { name: 'pdf_convert_excel', title: 'CSV to PDF', type: 'csv', ext: 'pdf' },
+  { name: 'pdf_convert_excel', title: 'CSV to PDF', type: 'xlsx', ext: 'pdf' },
   { name: 'pdf_comic_archive', title: 'Comic Archive Conversion', type: 'pdf', ext: 'cbz' },
   { name: 'pdf_to_epub', title: 'PDF to EPUB 3.0', type: 'pdf', ext: 'epub' },
   { name: 'pdf_to_pdf_a', title: 'Convert to PDF/A', type: 'pdf', ext: 'pdf' },
@@ -210,7 +210,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
           let cliCmd = '';
           switch (op.name) {
             case 'pdf_convert_excel':
-              cliCmd = `"${cliBin}" convert --format pdf --input "${fixtureCsv}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" convert --format pdf --input "${fixtureXlsx}" --output "${outputFile}"`;
               break;
             case 'pdf_comic_archive':
               cliCmd = `"${cliBin}" pdf-comic-archive --input "${fixtureSingle}" --output "${outputFile}"`;

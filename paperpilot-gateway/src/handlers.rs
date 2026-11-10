@@ -809,6 +809,11 @@ pub async fn handle_tool(
         || tool_name == "json_to_pdf"
         || tool_name == "html_to_pdf"
         || tool_name == "md_to_pdf"
+        || tool_name == "to_epub"
+        || tool_name == "to_pdf_a"
+        || tool_name == "comic_archive"
+        || tool_name == "extract_images"
+        || tool_name == "convert_excel"
         || tool_name == "workspace_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"

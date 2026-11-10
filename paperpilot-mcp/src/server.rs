@@ -5027,7 +5027,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_convert_excel" => {
+            "pdf_convert_excel" | "convert_excel" | "excel_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -5562,9 +5562,9 @@ impl PaperPilotMcpServer {
                 }
             }
 
-            "pdf_extract_images" => {
+            "pdf_extract_images" | "extract_images" => {
                 let input = get_string("input")?;
-                let output_dir = get_string("output_dir")?;
+                let output_dir = get_string("output_dir").or_else(|_| get_string("output"))?;
 
                 ensure_dir(&output_dir)?;
 
@@ -6455,7 +6455,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_to_pdf_a" => {
+            "pdf_to_pdf_a" | "to_pdf_a" | "pdf_a" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -6968,7 +6968,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_comic_archive" => {
+            "pdf_comic_archive" | "comic_archive" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -7163,7 +7163,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_to_epub" => {
+            "pdf_to_epub" | "to_epub" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;

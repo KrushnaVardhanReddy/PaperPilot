@@ -302,7 +302,7 @@ pub enum Commands {
         #[arg(long)]
         pages: Option<String>,
     },
-    #[command(alias = "to-pdf-a")]
+    #[command(name = "pdf-a", alias = "to-pdf-a", alias = "pdf-to-pdf-a", alias = "pdf_to_pdf_a")]
     PdfA {
         #[arg(long)]
         input: PathBuf,
@@ -363,10 +363,11 @@ pub enum Commands {
         #[arg(long, default_value = "all")]
         pages: String,
     },
+    #[command(name = "extract-images", alias = "pdf-extract-images", alias = "pdf_extract_images")]
     ExtractImages {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, alias = "output-dir")]
         output: PathBuf,
     },
     /// Search Text: Search for text across document [Input: .pdf | Output: .json]
@@ -661,7 +662,7 @@ pub enum Commands {
         split_horizontal: bool,
     },
     /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
-    #[command(name = "pdf-comic-archive")]
+    #[command(name = "pdf-comic-archive", alias = "comic-archive", alias = "pdf_comic_archive")]
     PdfComicArchive {
         #[arg(long)]
         input: PathBuf,
@@ -721,7 +722,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
-    #[command(name = "pdf-to-epub", alias = "to-epub")]
+    #[command(name = "pdf-to-epub", alias = "to-epub", alias = "pdf_to_epub")]
     PdfToEpub {
         #[arg(long)]
         input: PathBuf,
@@ -773,6 +774,20 @@ pub enum Commands {
     /// Convert HTML source code and web pages directly into styled PDF documents
     #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
     HtmlToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
+    },
+    /// Convert spreadsheet (Excel / CSV) to formatted PDF document
+    #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
+    ConvertExcel {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]

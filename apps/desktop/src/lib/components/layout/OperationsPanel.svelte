@@ -204,6 +204,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let formFieldRect = $state('50,50,200,80');
   let batchCsvPath = $state('tests/e2e_fixtures/real/batch_data.csv');
 
+  // Conversions & Packaging parameter states (Tools 61-65)
+  let conversionDpi = $state(150);
+  let imageFormat = $state('png');
+  let cbzArchiveName = $state('');
+  let pdfaConformance = $state('PDF/A-1b');
+
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -514,7 +520,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_to_html':     customOutputPath = getOutputPath(`${base}.html`);           break;
       case 'pdf_to_json':     customOutputPath = getOutputPath(`${base}.json`);           break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
-      case 'extract_images':  customOutputPath = getOutputPath(`${base}_images`);          break;
+      case 'extract_images':
+      case 'pdf_extract_images': customOutputPath = getOutputPath(`${base}_images`);       break;
+      case 'pdf_comic_archive': customOutputPath = getOutputPath(cbzArchiveName || `${base}_output.cbz`); break;
+      case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
+      case 'pdf_to_pdf_a':    customOutputPath = getOutputPath(`${base}_pdfa.pdf`);        break;
+      case 'pdf_convert_excel': customOutputPath = getOutputPath(`${base}_table.pdf`);     break;
       case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;
       case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);          break;
       case 'excel_to_json':   customOutputPath = getOutputPath(`${base}.json`);            break;
@@ -675,7 +686,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             formFieldType,
             formFieldPage,
             formFieldRect,
-            batchCsvPath
+            batchCsvPath,
+            dpi: conversionDpi,
+            imageFormat,
+            cbzArchiveName,
+            pdfaConformance
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -889,7 +904,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           formFieldType,
           formFieldPage,
           formFieldRect,
-          batchCsvPath
+          batchCsvPath,
+          dpi: conversionDpi,
+          imageFormat,
+          cbzArchiveName,
+          pdfaConformance
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1092,7 +1111,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   async function handleBrowseOutputPath() {
     if (!activeTool) return;
     try {
-      const isFolderOutput = activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' || activeTool.id === 'extract_images';
+      const isFolderOutput = activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' || activeTool.id === 'extract_images' || activeTool.id === 'pdf_extract_images';
       if (isFolderOutput) {
         const { open } = await import('@tauri-apps/plugin-dialog');
         const selected = await open({
@@ -2044,6 +2063,60 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             High-speed automated AcroForm batch engine with machine-readable audit receipt generation.
           </p>
         </div>
+      {:else if activeTool.id === 'pdf_comic_archive' || activeTool.id === 'comic_archive'}
+        <div class="operation-config">
+          <label for="cbzArchiveName" class="section-desc">Archive File Name (Optional):</label>
+          <input id="cbzArchiveName" type="text" class="form-input" bind:value={cbzArchiveName} placeholder="e.g. comic_volume_1.cbz" style="margin-bottom: 8px;" />
+          <div style="margin-top: 8px;">
+            <label for="conversionDpi" class="section-desc">Raster Resolution (DPI): {conversionDpi} DPI</label>
+            <input id="conversionDpi" type="range" min="72" max="600" step="10" bind:value={conversionDpi} class="range-input" />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Packages rendered sequential page image frames into a standard CBZ (ZIP) comic book archive container.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_to_epub' || activeTool.id === 'to_epub'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Transforms fixed-layout PDF pages into a valid reflowable EPUB 3.0 publication package with mimetype and container XML.
+          </p>
+          <span class="field-hint">Extracts text and logical structure into semantic XHTML documents inside an EPUB container.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_to_pdf_a' || activeTool.id === 'to_pdf_a' || activeTool.id === 'pdf_a'}
+        <div class="operation-config">
+          <label for="pdfaConformance" class="section-desc">PDF/A Conformance Profile:</label>
+          <select id="pdfaConformance" class="form-input" bind:value={pdfaConformance}>
+            <option value="PDF/A-1b">PDF/A-1b (ISO 19005-1 Basic Conformance)</option>
+            <option value="PDF/A-2b">PDF/A-2b (ISO 19005-2 Basic Conformance)</option>
+            <option value="PDF/A-3b">PDF/A-3b (ISO 19005-3 with File Attachments)</option>
+          </select>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Embeds GTS_PDFXVersion / OutputIntents conformance tags and verifies long-term archival suitability.
+          </p>
+        </div>
+      {:else if activeTool.id === 'extract_images' || activeTool.id === 'pdf_extract_images'}
+        <div class="operation-config">
+          <label for="imageFormat" class="section-desc">Extracted Image Format:</label>
+          <select id="imageFormat" class="form-input" bind:value={imageFormat}>
+            <option value="png">PNG (Lossless Portable Network Graphics)</option>
+            <option value="jpeg">JPEG (Compressed Joint Photographic Experts Group)</option>
+          </select>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Extracts all embedded raster image XObjects from PDF page resources into individual image files.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_convert_excel' || activeTool.id === 'convert_excel'}
+        <div class="operation-config">
+          <label for="convertPreset" class="section-desc">Visual Table Styling Preset:</label>
+          <select id="convertPreset" class="form-input" bind:value={convertPreset}>
+            <option value="academic">Academic (Crisp borders, Serif headers)</option>
+            <option value="corporate">Corporate (Modern blue banner, zebra striping)</option>
+            <option value="minimalist">Minimalist (Clean borders, airy layout)</option>
+          </select>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Parses tabular matrix cells, computes row bandings, and renders publication-ready PDF tables.
+          </p>
+        </div>
       {:else}
         <div class="operation-config">
           <p class="section-desc">Applies directly to the active document.</p>
@@ -2100,7 +2173,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           class="run-btn"
           class:run-btn--loading={isRunning}
           id="btn-run-operation"
-          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !isOcrDownloaded)}
+          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf', 'pdf_convert_excel', 'convert_excel', 'excel_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !isOcrDownloaded)}
           onclick={handleRunOperation}
         >
           {#if isRunning}

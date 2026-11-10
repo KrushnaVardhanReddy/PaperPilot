@@ -122,7 +122,7 @@ pub fn handle_convert(
             op.render()?;
             return Ok(());
         }
-        "excel_to_pdf" => {
+        "excel_to_pdf" | "excel-to-pdf" | "pdf_convert_excel" | "pdf-convert-excel" | "convert-excel" | "convert_excel" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(
                 input.to_path_buf(),

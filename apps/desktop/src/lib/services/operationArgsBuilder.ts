@@ -125,6 +125,10 @@ export interface OperationContext {
     formFieldType?: string;
     formFieldPage?: number;
     batchCsvPath?: string;
+    dpi?: number;
+    imageFormat?: string;
+    cbzArchiveName?: string;
+    pdfaConformance?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -711,9 +715,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'extract_images':
+        case 'pdf_extract_images':
             args = {
                 input: docPath,
-                output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_images`)
+                output_dir: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_images`),
+                format: context.imageFormat || 'png'
             };
             break;
         case 'office_to_markdown':
@@ -885,9 +891,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'pdf_comic_archive':
+        case 'comic_archive':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.cbr`)
+                output: customOutputPath || getOutputPath(context.cbzArchiveName || `${docName.replace(/\.[^.]+$/i, '')}_output.cbz`),
+                dpi: context.dpi ?? 150.0
             };
             break;
         case 'pdf_split_by_outline':
@@ -931,11 +939,59 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'pdf_to_epub':
+        case 'to_epub':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.epub`)
             };
             break;
+        case 'pdf_to_pdf_a':
+        case 'to_pdf_a':
+        case 'pdf_a':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_pdfa.pdf`),
+                conformance: context.pdfaConformance || 'PDF/A-1b'
+            };
+            break;
+        case 'pdf_convert_excel':
+        case 'convert_excel':
+        case 'excel_to_pdf': {
+            let inputPath = docPath && (docPath.endsWith('.xlsx') || docPath.endsWith('.xls') || docPath.endsWith('.csv')) ? docPath : null;
+            let outputPath = customOutputPath ? customOutputPath : null;
+
+            if (!inputPath || !outputPath) {
+                try {
+                    const { open, save } = await import('@tauri-apps/plugin-dialog');
+                    if (!inputPath) {
+                        const selected = await open({
+                            title: 'Select Spreadsheet File',
+                            multiple: false,
+                            filters: [{ name: 'Spreadsheet', extensions: ['xlsx', 'xls', 'csv'] }]
+                        });
+                        if (!selected) return null;
+                        inputPath = Array.isArray(selected) ? selected[0] : selected;
+                    }
+                    if (!outputPath) {
+                        const suggested = getOutputPath('output.pdf');
+                        outputPath = await save({
+                            title: 'Save PDF As...',
+                            defaultPath: suggested,
+                            filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+                        });
+                        if (!outputPath) return null;
+                    }
+                } catch(e) {
+                    return null;
+                }
+            }
+            args = {
+                input: inputPath,
+                output: outputPath,
+                preset: convertPreset
+            };
+            break;
+        }
         case 'pdf_extract_patterns': {
             const keywords = (context.extractPatternsKeywords || '')
                 .split(',')
