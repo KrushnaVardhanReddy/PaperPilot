@@ -136,6 +136,17 @@ export interface OperationContext {
     semanticQuery?: string;
     semanticLimit?: number;
     classifyDetail?: boolean;
+    ragChunkSize?: number;
+    workflowPreset?: string;
+    workflowRecipe?: string;
+    recipeId?: string;
+    askPrompt?: string;
+    askDryRun?: boolean;
+    watcherDir?: string;
+    watcherRecipe?: string;
+    watcherOutputDir?: string;
+    watcherSettleDelay?: number;
+    watcherId?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -1076,6 +1087,66 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 patterns,
                 case_sensitive: context.extractPatternsCaseSensitive || false,
                 context_len: context.extractPatternsContextLen ?? 30
+            };
+            break;
+        }
+        case 'pdf_rag_chunks':
+        case 'rag_chunks': {
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_rag_chunks.json`)
+            };
+            break;
+        }
+        case 'document_workflow':
+        case 'pdf_document_workflow':
+        case 'workflow': {
+            const preset = context.workflowPreset || 'preset-clean-scan';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_workflow.pdf`),
+                preset,
+                ...(context.workflowRecipe ? { recipe: context.workflowRecipe } : {})
+            };
+            break;
+        }
+        case 'recipe_run':
+        case 'recipe': {
+            const recipe = context.recipeId || context.workflowRecipe || context.workflowPreset || 'preset-clean-scan';
+            args = {
+                input: docPath,
+                recipe,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_recipe.pdf`)
+            };
+            break;
+        }
+        case 'cli_ask':
+        case 'ask': {
+            const prompt = (context.askPrompt && context.askPrompt.trim() !== '') ? context.askPrompt.trim() : 'rotate 90 degrees';
+            args = {
+                prompt,
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_ask_plan.txt`),
+                dry_run: context.askDryRun !== undefined ? context.askDryRun : true
+            };
+            break;
+        }
+        case 'watcher_start': {
+            const dir = context.watcherDir || context.docDir || (docPath && docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '.');
+            const recipe = context.watcherRecipe || context.workflowPreset || 'preset-legal-discovery';
+            args = {
+                dir,
+                recipe,
+                ...(context.watcherOutputDir ? { output_dir: context.watcherOutputDir } : {}),
+                settle_delay_ms: context.watcherSettleDelay || 500,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_watcher.json`)
+            };
+            break;
+        }
+        case 'watcher_stop': {
+            args = {
+                watcher_id: context.watcherId || 'default',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_watcher.json`)
             };
             break;
         }

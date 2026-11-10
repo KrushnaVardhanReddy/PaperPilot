@@ -112,6 +112,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let semanticSearchQuery = $state('');
   let semanticSearchLimit = $state(5);
   let classifyDetail = $state(false);
+  let ragChunkSize = $state(512);
+  let workflowPreset = $state('preset-clean-scan');
+  let workflowRecipe = $state('');
+  let recipeId = $state('preset-clean-scan');
+  let askPrompt = $state('');
+  let askDryRun = $state(true);
+  let watcherDir = $state('');
+  let watcherRecipe = $state('preset-legal-discovery');
+  let watcherOutputDir = $state('');
+  let watcherSettleDelay = $state(500);
+  let watcherId = $state('');
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
@@ -558,6 +569,27 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_classify_type':
         customOutputPath = getOutputPath(`${base}_classified.json`);
         break;
+      case 'pdf_rag_chunks':
+      case 'rag_chunks':
+        customOutputPath = getOutputPath(`${base}_rag_chunks.json`);
+        break;
+      case 'document_workflow':
+      case 'pdf_document_workflow':
+      case 'workflow':
+        customOutputPath = getOutputPath(`${base}_workflow.pdf`);
+        break;
+      case 'recipe_run':
+      case 'recipe':
+        customOutputPath = getOutputPath(`${base}_recipe.pdf`);
+        break;
+      case 'cli_ask':
+      case 'ask':
+        customOutputPath = getOutputPath(`${base}_ask_plan.txt`);
+        break;
+      case 'watcher_start':
+      case 'watcher_stop':
+        customOutputPath = getOutputPath(`${base}_watcher.json`);
+        break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
@@ -647,6 +679,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             semanticQuery: semanticSearchQuery,
             semanticLimit: semanticSearchLimit,
             classifyDetail,
+            ragChunkSize,
+            workflowPreset,
+            workflowRecipe,
+            recipeId,
+            askPrompt,
+            askDryRun,
+            watcherDir,
+            watcherRecipe,
+            watcherOutputDir,
+            watcherSettleDelay,
+            watcherId,
             nupPages,
             nupOrdering,
             nupMargin,
@@ -873,6 +916,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           semanticQuery: semanticSearchQuery,
           semanticLimit: semanticSearchLimit,
           classifyDetail,
+          ragChunkSize,
+          workflowPreset,
+          workflowRecipe,
+          recipeId,
+          askPrompt,
+          askDryRun,
+          watcherDir,
+          watcherRecipe,
+          watcherOutputDir,
+          watcherSettleDelay,
+          watcherId,
           nupPages,
           nupOrdering,
           nupMargin,
@@ -1109,8 +1163,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     const rawToolId = activeTool.id;
     const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
     let ext = '.pdf';
-    if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) ext = '.txt';
-    else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type'].includes(toolId)) ext = '.json';
+    if (['extract_text', 'pdf_extract_text', 'office_extract_text', 'cli_ask', 'ask'].includes(rawToolId) || ['extract_text', 'pdf_extract_text', 'cli_ask'].includes(toolId)) ext = '.txt';
+    else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'watcher_start', 'watcher_stop'].includes(toolId)) ext = '.json';
     else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
     else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
     else if (['pdf_to_docx'].includes(rawToolId) || ['pdf_to_docx'].includes(toolId)) ext = '.docx';
@@ -1181,9 +1235,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         const rawToolId = activeTool.id;
         const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
         let filters = [{ name: 'PDF Document', extensions: ['pdf'] }];
-        if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) {
+        if (['extract_text', 'pdf_extract_text', 'office_extract_text', 'cli_ask', 'ask'].includes(rawToolId) || ['extract_text', 'pdf_extract_text', 'cli_ask'].includes(toolId)) {
           filters = [{ name: 'Text File', extensions: ['txt'] }];
-        } else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type'].includes(toolId)) {
+        } else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'watcher_start', 'watcher_stop'].includes(toolId)) {
           filters = [{ name: 'JSON Document', extensions: ['json'] }, { name: 'Text File', extensions: ['txt'] }];
         } else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
           filters = [{ name: 'Markdown File', extensions: ['md'] }];
@@ -2382,6 +2436,143 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Analyzes document layout, typography, metadata, and form streams to classify the document type (e.g. invoice, contract, academic paper, presentation, form, scanned image) with confidence score.
           </p>
           <span class="field-hint">Output: <code>.json</code> — document classification category, features, and confidence rating.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_rag_chunks' || activeTool.id === 'rag_chunks'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="ragChunkSizeInput" class="section-desc">Target Token Chunk Size: {ragChunkSize}</label>
+            <input
+              id="ragChunkSizeInput"
+              type="range"
+              min="128"
+              max="2048"
+              step="128"
+              class="range-input"
+              bind:value={ragChunkSize}
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Segments document text into semantic chunks with token counts and heading hierarchy, optimized for vector database ingestion and LLM RAG pipelines.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — array of structured semantic chunks with token counts and metadata.</span>
+        </div>
+      {:else if activeTool.id === 'document_workflow' || activeTool.id === 'pdf_document_workflow' || activeTool.id === 'workflow'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="workflowPresetSelect" class="section-desc">Workflow Preset:</label>
+            <select id="workflowPresetSelect" class="form-input" bind:value={workflowPreset}>
+              <option value="preset-clean-scan">Clean Scanned Document (Rotate + Deskew + OCR)</option>
+              <option value="preset-legal-discovery">Legal Discovery Pipeline (Bates + Redact + Flatten)</option>
+              <option value="preset-invoice-archival">Invoice Archival (Metadata + PDF/A + Linearize)</option>
+              <option value="preset-bates-confidential">Bates & Confidential Watermark</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="workflowRecipeInput" class="section-desc">Custom Recipe File (Optional .ppflow):</label>
+            <input
+              id="workflowRecipeInput"
+              type="text"
+              class="form-input"
+              bind:value={workflowRecipe}
+              placeholder="Leave empty to use selected preset"
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Executes a declarative multi-step document workflow (.ppflow or preset) with condition checks, stage dependencies, and audit receipts.
+          </p>
+          <span class="field-hint">Output: <code>.pdf</code> — transformed multi-stage document artifact.</span>
+        </div>
+      {:else if activeTool.id === 'recipe_run' || activeTool.id === 'recipe'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="recipeIdSelect" class="section-desc">Instant Recipe Pipeline:</label>
+            <select id="recipeIdSelect" class="form-input" bind:value={recipeId}>
+              <option value="preset-clean-scan">preset-clean-scan — Scan Optimization</option>
+              <option value="preset-legal-discovery">preset-legal-discovery — Discovery Package</option>
+              <option value="preset-invoice-archival">preset-invoice-archival — Archival Conformance</option>
+            </select>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Executes an instant single-shot .ppflow recipe pipeline without daemon setup, preserving pages and generating verified processing receipts.
+          </p>
+          <span class="field-hint">Output: <code>.pdf</code> — processed recipe output document.</span>
+        </div>
+      {:else if activeTool.id === 'cli_ask' || activeTool.id === 'ask'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="askPromptInput" class="section-desc">Natural Language Instruction:</label>
+            <input
+              id="askPromptInput"
+              type="text"
+              class="form-input"
+              bind:value={askPrompt}
+              placeholder="e.g. rotate 90 degrees, extract pages 1-3 and compress..."
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="scope-option" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1;">
+              <input type="checkbox" bind:checked={askDryRun} />
+              <span>Dry-run preview (generate execution plan without modifying document)</span>
+            </label>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Natural language document assistant powered by local offline NLP. Translates natural language instructions into multi-step execution plans.
+          </p>
+          <span class="field-hint">Output: <code>.txt</code> — interpreted execution plan and results.</span>
+        </div>
+      {:else if activeTool.id === 'watcher_start'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="watcherDirInput" class="section-desc">Hot-Folder Directory to Monitor:</label>
+            <input
+              id="watcherDirInput"
+              type="text"
+              class="form-input"
+              bind:value={watcherDir}
+              placeholder="Directory path to watch for incoming PDFs..."
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="watcherRecipeSelect" class="section-desc">Auto-Processing Recipe:</label>
+            <select id="watcherRecipeSelect" class="form-input" bind:value={watcherRecipe}>
+              <option value="preset-legal-discovery">preset-legal-discovery</option>
+              <option value="preset-clean-scan">preset-clean-scan</option>
+              <option value="preset-invoice-archival">preset-invoice-archival</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="watcherSettleDelayInput" class="section-desc">Settle Inactivity Delay: {watcherSettleDelay}ms</label>
+            <input
+              id="watcherSettleDelayInput"
+              type="range"
+              min="100"
+              max="5000"
+              step="100"
+              class="range-input"
+              bind:value={watcherSettleDelay}
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Monitors a local hot-folder directory for incoming PDF files and automatically applies the chosen recipe pipeline as files arrive.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — hot-folder watcher status and daemon receipt telemetry.</span>
+        </div>
+      {:else if activeTool.id === 'watcher_stop'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="watcherIdInput" class="section-desc">Watcher Daemon ID:</label>
+            <input
+              id="watcherIdInput"
+              type="text"
+              class="form-input"
+              bind:value={watcherId}
+              placeholder="e.g. watcher_id or leave empty for active daemon"
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Gracefully shuts down active hot-folder watcher daemons and releases file system hooks cleanly.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — daemon shutdown confirmation and telemetry.</span>
         </div>
       {:else}
         <div class="operation-config">

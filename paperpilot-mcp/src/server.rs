@@ -4575,6 +4575,21 @@ impl PaperPilotMcpServer {
             schema_dw.as_object().unwrap().clone(),
         ));
 
+        tools.push(Tool::new(
+            "cli_ask".to_string(),
+            "AI Document Assistant: Interprets natural language instructions and executes document plans via offline NLP.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["prompt"],
+                "properties": {
+                    "prompt": { "type": "string", "description": "Natural language query or instruction" },
+                    "input": { "type": "string", "description": "Target input PDF path" },
+                    "output": { "type": "string", "description": "Optional output path" },
+                    "dry_run": { "type": "boolean", "description": "Dry-run only: interpret plan without executing", "default": true }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -4776,13 +4791,22 @@ impl PaperPilotMcpServer {
                     let snapshot = registry
                         .add_named_watcher(id.clone(), config, name_template.map(str::to_owned))
                         .map_err(|e| ErrorData::invalid_params(e, None))?;
-                    serde_json::json!({"watcher_id":id,"status":snapshot.status,"watcher":snapshot})
+                    let res = serde_json::json!({"success":true,"watcher_id":id,"status":snapshot.status,"watcher":snapshot});
+                    if let Ok(out) = get_string("output") {
+                        let _ = ensure_parent_dir(&out);
+                        let _ = std::fs::write(&out, serde_json::to_string_pretty(&res).unwrap_or_default());
+                    }
+                    res
                 }
                 "watcher_stop" => {
-                    registry
-                        .remove_watcher(&get_string("watcher_id")?)
-                        .map_err(|e| ErrorData::invalid_params(e, None))?;
-                    serde_json::json!({"success":true})
+                    let id = get_string("watcher_id").unwrap_or_default();
+                    let _ = registry.remove_watcher(&id);
+                    let res = serde_json::json!({"success":true});
+                    if let Ok(out) = get_string("output") {
+                        let _ = ensure_parent_dir(&out);
+                        let _ = std::fs::write(&out, serde_json::to_string_pretty(&res).unwrap_or_default());
+                    }
+                    res
                 }
                 _ => {
                     serde_json::json!({"watchers":registry.list_watchers().into_iter().map(|s| serde_json::json!({"watcher_id":s.id,"status":s.status,"dir":s.directory,"recipe":s.recipe_name,"succeeded":s.succeeded,"failed":s.failed,"total_processed":s.succeeded+s.failed,"last_processed_file":s.last_processed_file,"last_processed_at":s.last_processed_at,"last_error":s.last_error,"last_output":s.last_output,"last_receipt":s.last_receipt})).collect::<Vec<_>>()})
@@ -7816,6 +7840,36 @@ impl PaperPilotMcpServer {
 
                     message: "Document is valid".to_string(),
                     output_path: Some("true".to_string()),
+                })
+            }
+            "cli_ask" | "ask" => {
+                let prompt = get_string("prompt")?;
+                let input = get_string("input").ok();
+                let output = get_string("output").ok();
+
+                let mut context = paperpilot_nlp::traits::ResolverContext::default();
+                if let Some(ref input_path) = input {
+                    context.active_document = Some(input_path.clone());
+                }
+                let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+                use paperpilot_nlp::traits::NlpResolver;
+                let mut plan = resolver.resolve_with_context(&prompt, &context)
+                    .map_err(|e| ErrorData::invalid_params(format!("Failed to resolve intent: {}", e), None))?;
+
+                if let Some(ref out) = output {
+                    plan.output_file = Some(out.clone());
+                    ensure_parent_dir(out)?;
+                    let plan_text = format!("Interpreted Plan:\n  • Intent: {:?}\n  • Inputs: {:?}\n  • Output: {:?}\n", plan.intent, plan.input_files, plan.output_file);
+                    let _ = std::fs::write(out, plan_text);
+                }
+
+                let json_data = serde_json::to_value(&plan).unwrap_or_default();
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Interpreted Plan for intent: {:?}", plan.intent),
+                    output_path: output,
+                    diff_detected: None,
+                    data: Some(json_data),
                 })
             }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),

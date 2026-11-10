@@ -30,13 +30,15 @@ pub fn handle_ask(
     }
 
     if dry_run {
+        let plan_text = format!("📋 Interpreted Plan:\n  • Intent: {:?}\n  • Inputs: {:?}\n", plan.intent, plan.input_files);
+        if let Some(out) = &plan.output_file {
+            let _ = std::fs::write(out, &plan_text);
+        }
         if json {
             let out = serde_json::to_string_pretty(&plan).unwrap();
             println!("{}", out);
         } else {
-            println!("📋 Interpreted Plan:");
-            println!("  • Intent: {:?}", plan.intent);
-            println!("  • Inputs: {:?}", plan.input_files);
+            print!("{}", plan_text);
             if let Some(out) = &plan.output_file {
                 println!("  • Output: {}", out);
             }

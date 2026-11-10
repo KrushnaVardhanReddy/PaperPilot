@@ -375,4 +375,58 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_classified.json'
         });
     });
+
+    it('builds args for pdf_rag_chunks', async () => {
+        const args = await buildOperationArgs('pdf_rag_chunks', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_rag_chunks.json'
+        });
+    });
+
+    it('builds args for document_workflow', async () => {
+        const args = await buildOperationArgs('document_workflow', { ...defaultContext, workflowPreset: 'preset-legal-discovery' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_workflow.pdf',
+            preset: 'preset-legal-discovery'
+        });
+    });
+
+    it('builds args for recipe_run', async () => {
+        const args = await buildOperationArgs('recipe_run', { ...defaultContext, recipeId: 'preset-clean-scan' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            recipe: 'preset-clean-scan',
+            output: '/docs/test_recipe.pdf'
+        });
+    });
+
+    it('builds args for cli_ask', async () => {
+        const args = await buildOperationArgs('cli_ask', { ...defaultContext, askPrompt: 'rotate 90 degrees', askDryRun: true });
+        expect(args).toEqual({
+            prompt: 'rotate 90 degrees',
+            input: '/docs/test.pdf',
+            output: '/docs/test_ask_plan.txt',
+            dry_run: true
+        });
+    });
+
+    it('builds args for watcher_start', async () => {
+        const args = await buildOperationArgs('watcher_start', { ...defaultContext, watcherDir: '/watch', watcherRecipe: 'preset-legal-discovery' });
+        expect(args).toEqual({
+            dir: '/watch',
+            recipe: 'preset-legal-discovery',
+            settle_delay_ms: 500,
+            output: '/docs/test_watcher.json'
+        });
+    });
+
+    it('builds args for watcher_stop', async () => {
+        const args = await buildOperationArgs('watcher_stop', { ...defaultContext, watcherId: 'watcher_123' });
+        expect(args).toEqual({
+            watcher_id: 'watcher_123',
+            output: '/docs/test_watcher.json'
+        });
+    });
 });

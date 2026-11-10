@@ -806,10 +806,12 @@ pub enum Commands {
         #[arg(long)]
         custom_css: Option<String>,
     },
-    #[command(name = "rag-chunks")]
+    #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
     RagChunks {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     #[command(name = "workspace-search", alias = "workspace_search")]
     WorkspaceSearch {
@@ -868,6 +870,7 @@ pub enum Commands {
         name_template: Option<String>,
     },
     /// List, inspect, or execute a document workflow
+    #[command(name = "workflow", alias = "document-workflow", alias = "document_workflow", alias = "recipe-run", alias = "recipe_run")]
     Workflow {
         #[command(subcommand)]
         subcommand: Option<WorkflowSubcommand>,
@@ -901,6 +904,7 @@ pub enum Commands {
     },
 
     /// Ask in natural language: execute operations via natural language intent [e.g. "rotate 90 degrees" doc.pdf]
+    #[command(name = "ask", alias = "cli-ask", alias = "cli_ask")]
     Ask {
         /// Natural language instruction
         prompt: String,

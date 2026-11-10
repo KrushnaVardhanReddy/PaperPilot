@@ -818,6 +818,12 @@ pub async fn handle_tool(
         || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
+        || tool_name == "document_workflow"
+        || tool_name == "recipe_run"
+        || tool_name == "cli_ask"
+        || tool_name == "watcher_start"
+        || tool_name == "watcher_stop"
+        || tool_name == "watcher_list"
     {
         tool_name.clone()
     } else {
@@ -1013,6 +1019,32 @@ pub async fn handle_tool(
             if val.as_str().unwrap_or("") == "" {
                 args.remove("output");
             }
+        }
+    } else if resolved_name == "document_workflow" {
+        if !args.contains_key("preset") && !args.contains_key("recipe") {
+            args.insert("preset".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "recipe_run" {
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "cli_ask" {
+        if !args.contains_key("prompt") {
+            args.insert("prompt".to_string(), serde_json::Value::String("rotate 90 degrees".to_string()));
+        }
+        if !args.contains_key("dry_run") {
+            args.insert("dry_run".to_string(), serde_json::Value::Bool(true));
+        }
+    } else if resolved_name == "watcher_start" {
+        if !args.contains_key("dir") {
+            args.insert("dir".to_string(), serde_json::Value::String(".".to_string()));
+        }
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-legal-discovery".to_string()));
+        }
+    } else if resolved_name == "watcher_stop" {
+        if !args.contains_key("watcher_id") {
+            args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
         }
     }
 

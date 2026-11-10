@@ -203,6 +203,13 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "workspace_search",
         "semantic_search",
         "pdf_classify_type",
+        // Session 18 — Tools 86-90
+        "pdf_rag_chunks",
+        "document_workflow",
+        "recipe_run",
+        "cli_ask",
+        "watcher_start",
+        "watcher_stop",
     ];
 
     for tool_id in &tools {
@@ -586,6 +593,64 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 cli_args = vec!["classify-type", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
                 mcp_payload = json!({ "input": single_page, "output": json_mcp.to_str().unwrap() });
                 api_payload = json!({ "input": single_page, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 18 — Tool 86: pdf_rag_chunks
+            "pdf_rag_chunks" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["rag-chunks", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 18 — Tool 87: document_workflow
+            "document_workflow" => {
+                cli_args = vec!["workflow", "run", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--preset", "preset-clean-scan"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "preset": "preset-clean-scan" });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "preset": "preset-clean-scan" });
+                requires_output = true;
+            }
+            // Session 18 — Tool 88: recipe_run
+            "recipe_run" => {
+                cli_args = vec!["workflow", "run", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--preset", "preset-clean-scan"];
+                mcp_payload = json!({ "input": single_page, "recipe": "preset-clean-scan", "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "recipe": "preset-clean-scan", "output": api_out.to_str().unwrap() });
+                requires_output = true;
+            }
+            // Session 18 — Tool 89: cli_ask
+            "cli_ask" => {
+                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
+                let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
+                let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
+                cli_args = vec!["ask", "rotate 90 degrees", &single_page, "--dry-run", "--output", txt_cli.to_str().unwrap()];
+                mcp_payload = json!({ "prompt": "rotate 90 degrees", "input": single_page, "output": txt_mcp.to_str().unwrap(), "dry_run": true });
+                api_payload = json!({ "prompt": "rotate 90 degrees", "input": single_page, "output": txt_api.to_str().unwrap(), "dry_run": true });
+                requires_output = false;
+            }
+            // Session 18 — Tool 90: watcher_start
+            "watcher_start" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                let receipts_dir = out_dir.join(".paperpilot-receipts");
+                let _ = fs::create_dir_all(&receipts_dir);
+                cli_args = vec!["workflow", "history", "--directory", receipts_dir.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "dir": out_dir.to_str().unwrap(), "recipe": "preset-legal-discovery", "settle_delay_ms": 50, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "dir": out_dir.to_str().unwrap(), "recipe": "preset-legal-discovery", "settle_delay_ms": 50, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 18 — Tool 90: watcher_stop
+            "watcher_stop" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                let receipts_dir = out_dir.join(".paperpilot-receipts");
+                let _ = fs::create_dir_all(&receipts_dir);
+                cli_args = vec!["workflow", "history", "--directory", receipts_dir.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "watcher_id": "default", "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "watcher_id": "default", "output": json_api.to_str().unwrap() });
                 requires_output = false;
             }
             _ => {}
