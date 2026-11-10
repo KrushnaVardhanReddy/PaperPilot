@@ -3,12 +3,14 @@
   import WatchedFoldersPanel from './WatchedFoldersPanel.svelte';
   import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
   import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
+  import SystemDoctorModal from '$lib/components/settings/SystemDoctorModal.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
   type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer' | 'privacy';
   let activeCategory = $state<SettingsCategory>('ai');
 
   let outputDir = $state('');
+  let isDoctorModalOpen = $state(false);
 
   function handleBrowse() {
     // Mock browse action
@@ -408,10 +410,30 @@
             </div>
           {/if}
         </div>
+
+          <div class="setting-group" id="setting-group-system-doctor">
+            <div class="dev-toggle-row">
+              <div class="setting-info">
+                <h4 class="dev-toggle-label">System Diagnostics (paperpilot doctor)</h4>
+                <p class="help-text">
+                  Probe native filesystem scratch permissions, model weights integrity, disk space, and port 7823 status.
+                </p>
+              </div>
+              <button
+                class="btn primary"
+                id="btn-run-diagnostics"
+                onclick={() => (isDoctorModalOpen = true)}
+              >
+                🩺 Run Diagnostics
+              </button>
+            </div>
+          </div>
       </div>
     {/if}
   </main>
 </div>
+
+  <SystemDoctorModal bind:isOpen={isDoctorModalOpen} />
 
 <style>
   .settings-layout {

@@ -277,7 +277,6 @@ pub async fn tika_rmeta_api(
     tika_rmeta(headers, body).await
 }
 
-
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct PdfEncryptJsonRequest {}
 
@@ -585,6 +584,20 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
+/// System doctor diagnostics
+#[utoipa::path(
+    get,
+    path = "/api/v1/doctor",
+    tag = "Health",
+    responses(
+        (status = 200, description = "System and environment diagnostics report")
+    )
+)]
+pub async fn doctor() -> impl IntoResponse {
+    let report = paperpilot_core::diagnostics::run_diagnostics();
+    (StatusCode::OK, Json(report))
+}
+
 /// List all available tools and operations across PaperPilot
 #[utoipa::path(
     get,
@@ -651,7 +664,8 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
             let status = if false
                 || e.code == rmcp::model::ErrorCode(-32600)
                 || e.code == rmcp::model::ErrorCode(-32601)
-                || e.code == rmcp::model::ErrorCode(-32700) {
+                || e.code == rmcp::model::ErrorCode(-32700)
+            {
                 StatusCode::BAD_REQUEST
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
@@ -660,7 +674,7 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
                 status,
                 Json(serde_json::json!({"success": false, "error": e.message})),
             )
-        },
+        }
     }
 }
 
@@ -967,14 +981,16 @@ pub async fn handle_tool(
         args.insert("page".to_string(), serde_json::Value::Number(1.into()));
     }
 
-
     if resolved_name == "pdf_encrypt" {
         if let Some(pw) = args.remove("password") {
             args.insert("user_password".to_string(), pw);
         }
     } else if resolved_name == "pdf_redact" {
         if !args.contains_key("page") {
-            args.insert("page".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+            args.insert(
+                "page".to_string(),
+                serde_json::Value::Number(serde_json::Number::from(1)),
+            );
         }
     } else if resolved_name == "pdf_fill_form" {
         if let Some(values) = args.get("values") {
@@ -986,20 +1002,35 @@ pub async fn handle_tool(
         }
     } else if resolved_name == "pdf_create_form_field" {
         if !args.contains_key("field_name") {
-            args.insert("field_name".to_string(), serde_json::Value::String("new_field".to_string()));
+            args.insert(
+                "field_name".to_string(),
+                serde_json::Value::String("new_field".to_string()),
+            );
         }
         if !args.contains_key("field_type") {
-            args.insert("field_type".to_string(), serde_json::Value::String("text".to_string()));
+            args.insert(
+                "field_type".to_string(),
+                serde_json::Value::String("text".to_string()),
+            );
         }
         if !args.contains_key("rect") {
-            args.insert("rect".to_string(), serde_json::Value::String("0,0,100,20".to_string()));
+            args.insert(
+                "rect".to_string(),
+                serde_json::Value::String("0,0,100,20".to_string()),
+            );
         }
     } else if resolved_name == "pdf_bates" {
         if !args.contains_key("start_number") {
-            args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+            args.insert(
+                "start_number".to_string(),
+                serde_json::Value::Number(serde_json::Number::from(1)),
+            );
         }
         if !args.contains_key("prefix") {
-            args.insert("prefix".to_string(), serde_json::Value::String("CONF-".to_string()));
+            args.insert(
+                "prefix".to_string(),
+                serde_json::Value::String("CONF-".to_string()),
+            );
         }
     } else if resolved_name == "pdf_annotate" {
         if !args.contains_key("annotations") && !args.contains_key("data") {
@@ -1007,14 +1038,26 @@ pub async fn handle_tool(
         }
     } else if resolved_name == "pdf_page_numbers" {
         if !args.contains_key("position") {
-            args.insert("position".to_string(), serde_json::Value::String("bottom-center".to_string()));
+            args.insert(
+                "position".to_string(),
+                serde_json::Value::String("bottom-center".to_string()),
+            );
         }
         if !args.contains_key("format") {
-            args.insert("format".to_string(), serde_json::Value::String("Page {n} of {total}".to_string()));
+            args.insert(
+                "format".to_string(),
+                serde_json::Value::String("Page {n} of {total}".to_string()),
+            );
         }
     } else if resolved_name == "pdf_header_footer" {
-        if !args.contains_key("text") && !args.contains_key("header_left") && !args.contains_key("footer_center") {
-            args.insert("text".to_string(), serde_json::Value::String("Header Notice".to_string()));
+        if !args.contains_key("text")
+            && !args.contains_key("header_left")
+            && !args.contains_key("footer_center")
+        {
+            args.insert(
+                "text".to_string(),
+                serde_json::Value::String("Header Notice".to_string()),
+            );
         }
     } else if resolved_name == "pdf_validate_signatures" {
         if let Some(val) = args.get("output") {
@@ -1024,29 +1067,47 @@ pub async fn handle_tool(
         }
     } else if resolved_name == "document_workflow" {
         if !args.contains_key("preset") && !args.contains_key("recipe") {
-            args.insert("preset".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+            args.insert(
+                "preset".to_string(),
+                serde_json::Value::String("preset-clean-scan".to_string()),
+            );
         }
     } else if resolved_name == "recipe_run" {
         if !args.contains_key("recipe") {
-            args.insert("recipe".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+            args.insert(
+                "recipe".to_string(),
+                serde_json::Value::String("preset-clean-scan".to_string()),
+            );
         }
     } else if resolved_name == "cli_ask" {
         if !args.contains_key("prompt") {
-            args.insert("prompt".to_string(), serde_json::Value::String("rotate 90 degrees".to_string()));
+            args.insert(
+                "prompt".to_string(),
+                serde_json::Value::String("rotate 90 degrees".to_string()),
+            );
         }
         if !args.contains_key("dry_run") {
             args.insert("dry_run".to_string(), serde_json::Value::Bool(true));
         }
     } else if resolved_name == "watcher_start" {
         if !args.contains_key("dir") {
-            args.insert("dir".to_string(), serde_json::Value::String(".".to_string()));
+            args.insert(
+                "dir".to_string(),
+                serde_json::Value::String(".".to_string()),
+            );
         }
         if !args.contains_key("recipe") {
-            args.insert("recipe".to_string(), serde_json::Value::String("preset-legal-discovery".to_string()));
+            args.insert(
+                "recipe".to_string(),
+                serde_json::Value::String("preset-legal-discovery".to_string()),
+            );
         }
     } else if resolved_name == "watcher_stop" {
         if !args.contains_key("watcher_id") {
-            args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
+            args.insert(
+                "watcher_id".to_string(),
+                serde_json::Value::String("default".to_string()),
+            );
         }
     }
 
@@ -1924,9 +1985,16 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
         if let Ok(entries) = std::fs::read_dir(&path) {
             for entry in entries.flatten() {
                 let ep = entry.path();
-                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                if ep
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .map(|s| s.eq_ignore_ascii_case("pdf"))
+                    .unwrap_or(false)
+                {
                     if let Ok(mut doc) = LopdfDocument::load(&ep) {
-                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(
+                            query.to_string(),
+                        );
                         if op.execute(&mut doc).is_ok() {
                             let p = op.match_pages.lock().unwrap().clone();
                             matches.extend(p);

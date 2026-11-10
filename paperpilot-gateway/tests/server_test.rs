@@ -34,6 +34,30 @@ async fn test_health_endpoint() {
 }
 
 #[tokio::test]
+async fn test_doctor_endpoint() {
+    let app = build_app().await;
+
+    let request = Request::builder()
+        .uri("/api/v1/doctor")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    assert!(json["status"].is_string());
+    assert!(json["timestamp"].is_string());
+    assert!(json["checks"].is_array());
+    assert!(!json["checks"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
 async fn test_mcp_exec_tool() {
     let app = build_app().await;
 

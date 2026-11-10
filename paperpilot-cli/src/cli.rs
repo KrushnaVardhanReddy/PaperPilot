@@ -44,8 +44,21 @@ pub struct Cli {
 pub enum Commands {
     /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
     #[cfg(feature = "pdf")]
-    #[command(name = "fill-batch", alias = "batch-fill", alias = "batch_fill", alias = "cli-fill-batch", alias = "cli_fill_batch", alias = "pdf-fill-batch")]
+    #[command(
+        name = "fill-batch",
+        alias = "batch-fill",
+        alias = "batch_fill",
+        alias = "cli-fill-batch",
+        alias = "cli_fill_batch",
+        alias = "pdf-fill-batch"
+    )]
     FillBatch(FillBatchArgs),
+    /// Run system and environment health diagnostics
+    Doctor {
+        /// Output report as JSON
+        #[arg(long)]
+        json: bool,
+    },
     /// Launch the PaperPilot Graphical Desktop UI
     #[command(alias = "gui")]
     Ui,
@@ -227,7 +240,12 @@ pub enum Commands {
     },
     /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
     /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
-    #[command(name = "pii-scan", alias = "document-pii-scan", alias = "document_pii_scan", alias = "pii_scan")]
+    #[command(
+        name = "pii-scan",
+        alias = "document-pii-scan",
+        alias = "document_pii_scan",
+        alias = "pii_scan"
+    )]
     PiiScan {
         #[arg(long)]
         input: PathBuf,
@@ -302,7 +320,12 @@ pub enum Commands {
         #[arg(long)]
         pages: Option<String>,
     },
-    #[command(name = "pdf-a", alias = "to-pdf-a", alias = "pdf-to-pdf-a", alias = "pdf_to_pdf_a")]
+    #[command(
+        name = "pdf-a",
+        alias = "to-pdf-a",
+        alias = "pdf-to-pdf-a",
+        alias = "pdf_to_pdf_a"
+    )]
     PdfA {
         #[arg(long)]
         input: PathBuf,
@@ -310,7 +333,12 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
-    #[command(name = "header-footer", alias = "header_footer", alias = "pdf-header-footer", alias = "pdf_header_footer")]
+    #[command(
+        name = "header-footer",
+        alias = "header_footer",
+        alias = "pdf-header-footer",
+        alias = "pdf_header_footer"
+    )]
     HeaderFooter {
         #[arg(long)]
         input: PathBuf,
@@ -332,7 +360,12 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Add Page Numbers: Add dynamic page numbering [Input: .pdf | Output: .pdf]
-    #[command(name = "page-numbers", alias = "page_numbers", alias = "pdf-page-numbers", alias = "pdf_page_numbers")]
+    #[command(
+        name = "page-numbers",
+        alias = "page_numbers",
+        alias = "pdf-page-numbers",
+        alias = "pdf_page_numbers"
+    )]
     PageNumbers {
         #[arg(long)]
         input: PathBuf,
@@ -363,7 +396,11 @@ pub enum Commands {
         #[arg(long, default_value = "all")]
         pages: String,
     },
-    #[command(name = "extract-images", alias = "pdf-extract-images", alias = "pdf_extract_images")]
+    #[command(
+        name = "extract-images",
+        alias = "pdf-extract-images",
+        alias = "pdf_extract_images"
+    )]
     ExtractImages {
         #[arg(long)]
         input: PathBuf,
@@ -435,7 +472,12 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    #[command(name = "classify-type", alias = "classify", alias = "pdf-classify-type", alias = "pdf_classify_type")]
+    #[command(
+        name = "classify-type",
+        alias = "classify",
+        alias = "pdf-classify-type",
+        alias = "pdf_classify_type"
+    )]
     Classify {
         #[arg(long)]
         input: PathBuf,
@@ -483,7 +525,12 @@ pub enum Commands {
         inline_css: Option<String>,
     },
     /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
-    #[command(name = "pdf-validate-signatures", alias = "validate-signatures", alias = "validate_signatures", alias = "pdf_validate_signatures")]
+    #[command(
+        name = "pdf-validate-signatures",
+        alias = "validate-signatures",
+        alias = "validate_signatures",
+        alias = "pdf_validate_signatures"
+    )]
     PdfValidateSignatures {
         #[arg(long)]
         input: PathBuf,
@@ -518,7 +565,12 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
-    #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]
+    #[command(
+        name = "pdf-remove-signatures",
+        alias = "remove-signatures",
+        alias = "remove_signatures",
+        alias = "pdf_remove_signatures"
+    )]
     PdfRemoveSignatures {
         #[arg(long)]
         input: PathBuf,
@@ -558,7 +610,12 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Add AcroForm Field: Append interactive widget annotation with coordinates and field name to target page.
-    #[command(name = "pdf-create-form-field", alias = "create-form-field", alias = "pdf_create_form_field", alias = "add-field")]
+    #[command(
+        name = "pdf-create-form-field",
+        alias = "create-form-field",
+        alias = "pdf_create_form_field",
+        alias = "add-field"
+    )]
     PdfCreateFormField {
         #[arg(long)]
         input: PathBuf,
@@ -574,7 +631,12 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
-    #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
+    #[command(
+        name = "pdf-overlay-underlay",
+        alias = "overlay-underlay",
+        alias = "overlay_underlay",
+        alias = "pdf_overlay_underlay"
+    )]
     PdfOverlayUnderlay {
         #[arg(long)]
         input: PathBuf,
@@ -669,7 +731,11 @@ pub enum Commands {
         split_horizontal: bool,
     },
     /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
-    #[command(name = "pdf-comic-archive", alias = "comic-archive", alias = "pdf_comic_archive")]
+    #[command(
+        name = "pdf-comic-archive",
+        alias = "comic-archive",
+        alias = "pdf_comic_archive"
+    )]
     PdfComicArchive {
         #[arg(long)]
         input: PathBuf,
@@ -765,7 +831,13 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Render Markdown source documents into publication-ready styled PDF files
-    #[command(name = "md-to-pdf", alias = "md_to_pdf", alias = "convert-markdown", alias = "pdf-convert-markdown", alias = "pdf_convert_markdown")]
+    #[command(
+        name = "md-to-pdf",
+        alias = "md_to_pdf",
+        alias = "convert-markdown",
+        alias = "pdf-convert-markdown",
+        alias = "pdf_convert_markdown"
+    )]
     MdToPdf {
         #[arg(long)]
         input: PathBuf,
@@ -779,7 +851,13 @@ pub enum Commands {
         custom_css: Option<String>,
     },
     /// Convert HTML source code and web pages directly into styled PDF documents
-    #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
+    #[command(
+        name = "html-to-pdf",
+        alias = "html_to_pdf",
+        alias = "convert-html",
+        alias = "pdf-convert-html",
+        alias = "pdf_convert_html"
+    )]
     HtmlToPdf {
         #[arg(long)]
         input: PathBuf,
@@ -793,7 +871,14 @@ pub enum Commands {
         custom_css: Option<String>,
     },
     /// Convert spreadsheet (Excel / CSV) to formatted PDF document
-    #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
+    #[command(
+        name = "convert-excel",
+        alias = "convert_excel",
+        alias = "pdf-convert-excel",
+        alias = "pdf_convert_excel",
+        alias = "excel-to-pdf",
+        alias = "excel_to_pdf"
+    )]
     ConvertExcel {
         #[arg(long)]
         input: PathBuf,
@@ -806,7 +891,12 @@ pub enum Commands {
         #[arg(long)]
         custom_css: Option<String>,
     },
-    #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
+    #[command(
+        name = "rag-chunks",
+        alias = "rag_chunks",
+        alias = "pdf-rag-chunks",
+        alias = "pdf_rag_chunks"
+    )]
     RagChunks {
         #[arg(long)]
         input: PathBuf,
@@ -838,7 +928,12 @@ pub enum Commands {
         output: Option<PathBuf>,
     },
     /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
-    #[command(name = "pdf-extract-patterns", alias = "extract-patterns", alias = "extract_patterns", alias = "pdf_extract_patterns")]
+    #[command(
+        name = "pdf-extract-patterns",
+        alias = "extract-patterns",
+        alias = "extract_patterns",
+        alias = "pdf_extract_patterns"
+    )]
     PdfExtractPatterns {
         #[arg(long)]
         input: PathBuf,
@@ -870,7 +965,13 @@ pub enum Commands {
         name_template: Option<String>,
     },
     /// List, inspect, or execute a document workflow
-    #[command(name = "workflow", alias = "document-workflow", alias = "document_workflow", alias = "recipe-run", alias = "recipe_run")]
+    #[command(
+        name = "workflow",
+        alias = "document-workflow",
+        alias = "document_workflow",
+        alias = "recipe-run",
+        alias = "recipe_run"
+    )]
     Workflow {
         #[command(subcommand)]
         subcommand: Option<WorkflowSubcommand>,
@@ -1003,11 +1104,19 @@ pub enum WorkflowSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum FormCommands {
-    #[command(name = "read-form", alias = "read", alias = "pdf_read_form", alias = "pdf-read-form")]
-    Read {
-        input: PathBuf,
-    },
-    #[command(name = "fill-form", alias = "fill", alias = "pdf_fill_form", alias = "pdf-fill-form")]
+    #[command(
+        name = "read-form",
+        alias = "read",
+        alias = "pdf_read_form",
+        alias = "pdf-read-form"
+    )]
+    Read { input: PathBuf },
+    #[command(
+        name = "fill-form",
+        alias = "fill",
+        alias = "pdf_fill_form",
+        alias = "pdf-fill-form"
+    )]
     Fill {
         input: PathBuf,
         #[arg(long)]
@@ -1015,7 +1124,12 @@ pub enum FormCommands {
         #[arg(short, long)]
         output: PathBuf,
     },
-    #[command(name = "create-form-field", alias = "add-field", alias = "pdf_create_form_field", alias = "pdf-create-form-field")]
+    #[command(
+        name = "create-form-field",
+        alias = "add-field",
+        alias = "pdf_create_form_field",
+        alias = "pdf-create-form-field"
+    )]
     AddField {
         input: PathBuf,
         #[arg(long)]
@@ -1141,7 +1255,11 @@ mod tests {
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::RemoveBlank { input, sensitivity, output } => {
+            Commands::RemoveBlank {
+                input,
+                sensitivity,
+                output,
+            } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
                 assert_eq!(sensitivity, 95);
                 assert_eq!(output, PathBuf::from("out.pdf"));

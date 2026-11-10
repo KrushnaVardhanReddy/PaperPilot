@@ -83,7 +83,8 @@ pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
         .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
 
-    let is_zero_trace = no_log_env || cli_level == Some("off") || std::env::var("RUST_LOG").as_deref() == Ok("off");
+    let is_zero_trace =
+        no_log_env || cli_level == Some("off") || std::env::var("RUST_LOG").as_deref() == Ok("off");
 
     let log_level = if is_zero_trace {
         "off".to_string()
@@ -144,8 +145,12 @@ pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
 
 fn run_impl() {
     let mut args: Vec<String> = std::env::args().collect();
-    let is_log_level_off = args.iter().position(|a| a == "--log-level").and_then(|idx| args.get(idx + 1)).map_or(false, |l| l == "off");
-    
+    let is_log_level_off = args
+        .iter()
+        .position(|a| a == "--log-level")
+        .and_then(|idx| args.get(idx + 1))
+        .map_or(false, |l| l == "off");
+
     let is_watch = args.len() > 1 && args[1] == "watch" || args.len() > 3 && args[3] == "watch";
     if is_watch {
         init_logging(None, if is_log_level_off { Some("off") } else { None });
@@ -167,8 +172,11 @@ fn run_impl() {
             None,
             watch_cli.name_template,
         )) {
-            let no_log_env = std::env::var("NO_LOG").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
-            let is_zero_trace = no_log_env || is_log_level_off || std::env::var("RUST_LOG").as_deref() == Ok("off");
+            let no_log_env = std::env::var("NO_LOG")
+                .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+                .unwrap_or(false);
+            let is_zero_trace =
+                no_log_env || is_log_level_off || std::env::var("RUST_LOG").as_deref() == Ok("off");
             if !is_zero_trace {
                 tracing::error!(error = %e, "Watch loop failed");
             }
@@ -180,7 +188,9 @@ fn run_impl() {
     let is_ui = args.len() > 1 && (args[1] == "ui" || args[1] == "gui");
     if is_ui {
         let exe_path = std::env::current_exe().unwrap_or_default();
-        let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let exe_dir = exe_path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."));
         let candidates = [
             exe_dir.join("PaperPilot"),
             exe_dir.join("PaperPilot.AppImage"),
@@ -201,8 +211,13 @@ fn run_impl() {
                 }
             }
         }
-        eprintln!("PaperPilot Desktop GUI executable not found in {:?}", exe_dir);
-        eprintln!("To launch desktop UI in development mode, run: 'cd apps/desktop && pnpm tauri dev'");
+        eprintln!(
+            "PaperPilot Desktop GUI executable not found in {:?}",
+            exe_dir
+        );
+        eprintln!(
+            "To launch desktop UI in development mode, run: 'cd apps/desktop && pnpm tauri dev'"
+        );
         std::process::exit(1);
     }
 
@@ -213,6 +228,13 @@ fn run_impl() {
 
     let mut workflow = None;
     let (result, batch) = match &cli.command {
+        cli::Commands::Doctor { json } => {
+            let json_mode = *json || cli.json;
+            match commands::doctor::handle_doctor(json_mode) {
+                Ok(_) => std::process::exit(0),
+                Err(_) => std::process::exit(1),
+            }
+        }
         cli::Commands::Workflow { .. } | cli::Commands::Run { .. } => {
             let (result, report) = commands::workflow::execute(&cli.command, cli.json);
             workflow = report;

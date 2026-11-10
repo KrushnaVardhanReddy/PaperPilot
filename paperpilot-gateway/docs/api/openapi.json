@@ -1005,6 +1005,20 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/doctor": {
+      "get": {
+        "operationId": "doctor",
+        "responses": {
+          "200": {
+            "description": "System and environment diagnostics report"
+          }
+        },
+        "summary": "System doctor diagnostics",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
     "/api/v1/office/convert": {
       "post": {
         "operationId": "office_convert",

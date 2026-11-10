@@ -125,10 +125,12 @@ fn validate_condition(
                     stage_id
                 )));
             }
-            if let Some(NumericComparator::Between { between: [min, max] }) = &c.file_size_bytes {
-                if min > max {
-                    return Err(invalid("between: min must be <= max".into()));
-                }
+            if let Some(NumericComparator::Between {
+                between: [min, max],
+            }) = &c.file_size_bytes
+                && min > max
+            {
+                return Err(invalid("between: min must be <= max".into()));
             }
         }
     }

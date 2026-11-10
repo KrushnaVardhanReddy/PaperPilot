@@ -4,6 +4,7 @@
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
 pub mod ask;
+pub mod doctor;
 #[cfg(feature = "pdf")]
 pub mod fill_batch;
 pub mod group_a;
@@ -20,6 +21,7 @@ pub mod pdf_booklet;
 pub mod pdf_change_permissions;
 pub mod pdf_comic_archive;
 pub mod pdf_dedup_streams;
+pub mod pdf_extract_patterns;
 pub mod pdf_invert_colors;
 pub mod pdf_merge_alternate;
 pub mod pdf_nup;
@@ -39,7 +41,6 @@ pub mod sanitize;
 pub mod table;
 pub mod validate;
 pub mod workflow;
-pub mod pdf_extract_patterns;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -57,6 +58,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
         #[cfg(feature = "pdf")]
         Commands::FillBatch(args) => fill_batch::run(args)?.outcome(),
+        Commands::Doctor { json } => doctor::handle_doctor(*json),
         Commands::Completions { shell } => {
             use clap::CommandFactory;
             let mut app = crate::cli::Cli::command();
@@ -142,9 +144,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Burst { input, output } => {
             group_a::handle_burst(&resolve_input_path(input)?, output)
         }
-        Commands::RemoveBlank { input, sensitivity, output } => {
-            group_a::handle_remove_blank(&resolve_input_path(input)?, *sensitivity, output)
-        }
+        Commands::RemoveBlank {
+            input,
+            sensitivity,
+            output,
+        } => group_a::handle_remove_blank(&resolve_input_path(input)?, *sensitivity, output),
 
         // Group B
         Commands::Compress {
@@ -297,7 +301,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             format.clone(),
             pages.clone(),
         ),
-        Commands::Search { input, query, dir, output } => {
+        Commands::Search {
+            input,
+            query,
+            dir,
+            output,
+        } => {
             let target = match (input, dir) {
                 (Some(p), _) => resolve_input_path(p)?,
                 (None, Some(d)) => resolve_input_path(d)?,
@@ -388,7 +397,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             css_preset.as_deref(),
             inline_css.as_deref(),
         ),
-        Commands::Classify { input, output } => group_d::handle_classify(&resolve_input_path(input)?, output.as_deref()),
+        Commands::Classify { input, output } => {
+            group_d::handle_classify(&resolve_input_path(input)?, output.as_deref())
+        }
         Commands::Workflow { .. } | Commands::Run { .. } => workflow::execute(command, false).0,
         Commands::PdfValidateSignatures {
             input,
@@ -465,12 +476,18 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => {
             pdf_attachments::handle_pdf_attachments_command(input, output, action, file_name, file)
         }
-        Commands::PdfTimestamp { input, output, server_url: _ } => {
-            pdf_timestamp::handle_pdf_timestamp_command(input, output)
-        }
-        Commands::PdfChangePermissions { input, output, allow_print: _, allow_copy: _, allow_modify: _ } => {
-            pdf_change_permissions::handle_pdf_change_permissions_command(input, output)
-        }
+        Commands::PdfTimestamp {
+            input,
+            output,
+            server_url: _,
+        } => pdf_timestamp::handle_pdf_timestamp_command(input, output),
+        Commands::PdfChangePermissions {
+            input,
+            output,
+            allow_print: _,
+            allow_copy: _,
+            allow_modify: _,
+        } => pdf_change_permissions::handle_pdf_change_permissions_command(input, output),
         Commands::PdfSplitScannedBook {
             input,
             output,
@@ -518,9 +535,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             scale,
             guides,
         ),
-        Commands::PdfFillForm { input, data, output } => {
-            group_e::handle_form_fill(&resolve_input_path(input)?, data, output)
-        }
+        Commands::PdfFillForm {
+            input,
+            data,
+            output,
+        } => group_e::handle_form_fill(&resolve_input_path(input)?, data, output),
         Commands::PdfCreateFormField {
             input,
             name,
@@ -543,76 +562,77 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pdf_to_epub::handle_pdf_to_epub_command(input, output)
         }
 
-        Commands::PdfToHtml { input: _, output: _ } => {
+        Commands::PdfToHtml {
+            input: _,
+            output: _,
+        } => {
             println!("Executing pdf-to-html...");
             Ok(())
-        },
-        Commands::PdfToMarkdown { input: _, output: _ } => {
+        }
+        Commands::PdfToMarkdown {
+            input: _,
+            output: _,
+        } => {
             println!("Executing pdf-to-markdown...");
             Ok(())
-        },
-        Commands::PdfToJson { input: _, output: _ } => {
+        }
+        Commands::PdfToJson {
+            input: _,
+            output: _,
+        } => {
             println!("Executing pdf-to-json...");
             Ok(())
-        },
-        Commands::JsonToPdf { input, output } => {
-            group_d::handle_convert(
-                "json_to_pdf",
-                &resolve_input_path(input)?,
-                Some(output),
-                None,
-                None,
-                None,
-            )
-        },
+        }
+        Commands::JsonToPdf { input, output } => group_d::handle_convert(
+            "json_to_pdf",
+            &resolve_input_path(input)?,
+            Some(output),
+            None,
+            None,
+            None,
+        ),
         Commands::MdToPdf {
             input,
             output,
             preset,
             css,
             custom_css,
-        } => {
-            group_d::handle_convert(
-                "md_to_pdf",
-                &resolve_input_path(input)?,
-                Some(output),
-                css.as_deref(),
-                preset.as_deref(),
-                custom_css.as_deref(),
-            )
-        },
+        } => group_d::handle_convert(
+            "md_to_pdf",
+            &resolve_input_path(input)?,
+            Some(output),
+            css.as_deref(),
+            preset.as_deref(),
+            custom_css.as_deref(),
+        ),
         Commands::HtmlToPdf {
             input,
             output,
             preset,
             css,
             custom_css,
-        } => {
-            group_d::handle_convert(
-                "html_to_pdf",
-                &resolve_input_path(input)?,
-                Some(output),
-                css.as_deref(),
-                preset.as_deref(),
-                custom_css.as_deref(),
-            )
-        },
+        } => group_d::handle_convert(
+            "html_to_pdf",
+            &resolve_input_path(input)?,
+            Some(output),
+            css.as_deref(),
+            preset.as_deref(),
+            custom_css.as_deref(),
+        ),
         Commands::ConvertExcel {
             input,
             output,
             preset,
             css,
             custom_css,
-        } => {
-            group_d::handle_convert(
-                "excel_to_pdf",
-                &resolve_input_path(input)?,
-                Some(output),
-                css.as_deref(),
-                preset.as_deref(),
-                custom_css.as_deref(),
-            )
-        },
+        } => group_d::handle_convert(
+            "excel_to_pdf",
+            &resolve_input_path(input)?,
+            Some(output),
+            css.as_deref(),
+            preset.as_deref(),
+            custom_css.as_deref(),
+        ),
         Commands::RagChunks { input, output } => {
             let resolved = resolve_input_path(input)?;
             let mut doc = paperpilot_pdf::document::LopdfDocument::load(&resolved)?;
@@ -626,8 +646,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             }
             println!("{}", json_str);
             Ok(())
-        },
-        Commands::WorkspaceSearch { input, dir, query, output } => {
+        }
+        Commands::WorkspaceSearch {
+            input,
+            dir,
+            query,
+            output,
+        } => {
             use paperpilot_core::traits::PdfOperation;
             use paperpilot_pdf::document::LopdfDocument;
 
@@ -642,9 +667,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 if let Ok(entries) = std::fs::read_dir(&target) {
                     for entry in entries.flatten() {
                         let ep = entry.path();
-                        if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                        if ep
+                            .extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|s| s.eq_ignore_ascii_case("pdf"))
+                            .unwrap_or(false)
+                        {
                             if let Ok(mut doc) = LopdfDocument::load(&ep) {
-                                let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
+                                let op = paperpilot_pdf::operations::search::SearchOperation::new(
+                                    q.to_string(),
+                                );
                                 if op.execute(&mut doc).is_ok() {
                                     let p = op.match_pages.lock().unwrap().clone();
                                     matches.extend(p);
@@ -655,7 +687,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 }
             } else if target.is_file() {
                 if let Ok(mut doc) = LopdfDocument::load(&target) {
-                    let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
+                    let op =
+                        paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
                     if op.execute(&mut doc).is_ok() {
                         matches = op.match_pages.lock().unwrap().clone();
                     }
@@ -674,16 +707,29 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 if let Some(parent) = out.parent() {
                     let _ = std::fs::create_dir_all(parent);
                 }
-                let _ = std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+                let _ = std::fs::write(
+                    out,
+                    serde_json::to_string_pretty(&res_json).unwrap_or_default(),
+                );
             }
             Ok(())
-        },
-        Commands::SemanticSearch { input, dir: _, query, limit, output } => {
-            let q = query.as_deref()
+        }
+        Commands::SemanticSearch {
+            input,
+            dir: _,
+            query,
+            limit,
+            output,
+        } => {
+            let q = query
+                .as_deref()
                 .or_else(|| input.as_ref().and_then(|p| p.to_str()))
                 .unwrap_or("test");
             let lim = limit.unwrap_or(5);
-            println!("Found simulated matches for semantic search: '{}' (limit: {})", q, lim);
+            println!(
+                "Found simulated matches for semantic search: '{}' (limit: {})",
+                q, lim
+            );
             let res_json = serde_json::json!({
                 "query": q,
                 "limit": lim,
@@ -693,10 +739,13 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 if let Some(parent) = out.parent() {
                     let _ = std::fs::create_dir_all(parent);
                 }
-                let _ = std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+                let _ = std::fs::write(
+                    out,
+                    serde_json::to_string_pretty(&res_json).unwrap_or_default(),
+                );
             }
             Ok(())
-        },
+        }
         Commands::PdfExtractPatterns {
             input,
             output,

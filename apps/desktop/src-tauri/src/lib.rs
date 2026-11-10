@@ -46,20 +46,26 @@ async fn invoke_mcp_tool(
 ) -> Result<serde_json::Value, String> {
     let mut request = CallToolRequestParams::default();
     let cwd = std::env::current_dir().unwrap_or_default();
-    
+
     let is_zero_trace = if let serde_json::Value::Object(ref map) = arguments {
-        map.get("_zero_trace").and_then(|v| v.as_bool()).unwrap_or(false)
-            || map.get("log_level").and_then(|v| v.as_str()).map(|s| s.eq_ignore_ascii_case("off")).unwrap_or(false)
+        map.get("_zero_trace")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+            || map
+                .get("log_level")
+                .and_then(|v| v.as_str())
+                .map(|s| s.eq_ignore_ascii_case("off"))
+                .unwrap_or(false)
     } else {
         false
     };
-    
+
     if !is_zero_trace {
         println!(">>> Invoking MCP tool: {}", tool_name);
         println!(">>> CWD: {}", cwd.display());
         println!(">>> Arguments: {}", arguments);
     }
-    
+
     request.name = tool_name.into();
     if let serde_json::Value::Object(map) = arguments {
         request.arguments = Some(map);
@@ -343,6 +349,11 @@ async fn clear_jobs_history() -> Result<usize, String> {
     engine.clear_all_jobs().await.map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn run_system_doctor() -> Result<paperpilot_core::diagnostics::DiagnosticReport, String> {
+    Ok(paperpilot_core::diagnostics::run_diagnostics())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -405,6 +416,7 @@ pub fn run() {
             resolve_natural_language,
             get_jobs_history,
             clear_jobs_history,
+            run_system_doctor,
             get_audit_events,
             search_document_vectors,
             store_document_chunks,
@@ -440,12 +452,12 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cancel_job, get_file_metadata, CANCEL_FLAGS};
+    use crate::{CANCEL_FLAGS, cancel_job, get_file_metadata};
     #[cfg(feature = "desktop-features")]
     #[cfg(feature = "desktop-features")]
     use crate::{
-        get_gateway_status, invoke_mcp_tool, start_gateway, stop_gateway, GATEWAY_RUNNING,
-        GATEWAY_SHUTDOWN_TX,
+        GATEWAY_RUNNING, GATEWAY_SHUTDOWN_TX, get_gateway_status, invoke_mcp_tool, start_gateway,
+        stop_gateway,
     };
     #[cfg(feature = "desktop-features")]
     use serde_json::json;
