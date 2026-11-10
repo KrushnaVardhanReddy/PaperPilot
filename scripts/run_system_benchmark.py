@@ -98,9 +98,10 @@ def extract_tools_definitions():
 def run_command(cmd, input_data=None):
     start_time = time.perf_counter()
     try:
+        args = shlex.split(cmd) if isinstance(cmd, str) else cmd
         process = subprocess.Popen(
-            cmd,
-            shell=True,
+            args,
+            shell=False,
             stdin=subprocess.PIPE if input_data else None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
