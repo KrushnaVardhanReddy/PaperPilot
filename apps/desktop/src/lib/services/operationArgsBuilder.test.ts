@@ -418,6 +418,34 @@ describe('operationArgsBuilder', () => {
         });
     });
 
+    it('builds args for pdf_chunk with defaults and custom parameters', async () => {
+        const defaultArgs = await buildOperationArgs('pdf_chunk', defaultContext);
+        expect(defaultArgs).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_chunks.json',
+            target_tokens: 500,
+            overlap_tokens: 50,
+            strip_boilerplate: true,
+            break_on_headings: true
+        });
+
+        const customArgs = await buildOperationArgs('pdf_chunk', {
+            ...defaultContext,
+            chunkTargetTokens: 800,
+            chunkOverlapTokens: 100,
+            chunkStripBoilerplate: false,
+            chunkBreakOnHeadings: false
+        });
+        expect(customArgs).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_chunks.json',
+            target_tokens: 800,
+            overlap_tokens: 100,
+            strip_boilerplate: false,
+            break_on_headings: false
+        });
+    });
+
     it('builds args for document_workflow', async () => {
         const args = await buildOperationArgs('document_workflow', { ...defaultContext, workflowPreset: 'preset-legal-discovery' });
         expect(args).toEqual({

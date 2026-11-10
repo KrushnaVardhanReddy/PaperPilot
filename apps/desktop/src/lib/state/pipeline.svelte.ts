@@ -56,6 +56,7 @@ export type OperationId =
   | 'pdf_page_numbers'
   | 'pdf_posterize'
   | 'pdf_rag_chunks'
+  | 'pdf_chunk'
   | 'pdf_read_form'
   | 'pdf_redact'
   | 'pdf_remove_blank'
@@ -940,6 +941,13 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     icon: "\ud83e\udde9",
     description: "Extract structure-aware semantic text chunks optimized for LLM RAG vector indexing",
     defaultParams: { input: '__input__', output: '__output__' },
+    paramSchema: []
+  },
+  pdf_chunk: {
+    label: "Semantic Chunking",
+    icon: "\ud83e\udde9",
+    description: "Intelligent structure-aware semantic chunking with dynamic overlap",
+    defaultParams: { input: '__input__', output: '__output__', target_tokens: 500, overlap_tokens: 50, strip_boilerplate: true, break_on_headings: true },
     paramSchema: []
   },
   pdf_read_form: {

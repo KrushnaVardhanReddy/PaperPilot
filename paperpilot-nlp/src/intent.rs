@@ -40,6 +40,7 @@ pub enum Intent {
     Validate,
     Watermark,
     Classify,
+    Chunk,
 }
 
 pub struct IntentDefinition {
@@ -92,6 +93,7 @@ impl Intent {
             Intent::Validate,
             Intent::Watermark,
             Intent::Classify,
+            Intent::Chunk,
         ]
     }
 
@@ -558,6 +560,20 @@ impl Intent {
                     "identify type",
                     "what kind of document",
                     "detect type",
+                ],
+            },
+            Intent::Chunk => IntentDefinition {
+                intent: *self,
+                canonical_name: "Chunk",
+                description: "Semantic chunking for LLMs and AI agent context windows.",
+                aliases: &[
+                    "chunk",
+                    "chunks",
+                    "semantic chunk",
+                    "semantic chunking",
+                    "split into chunks",
+                    "rag chunks",
+                    "context chunk",
                 ],
             },
         }

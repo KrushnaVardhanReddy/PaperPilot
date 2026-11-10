@@ -1012,6 +1012,31 @@ impl PaperPilotMcpServer {
         tool_rag.input_schema = std::sync::Arc::new(schema_rag);
         tools.push(tool_rag);
 
+        let mut tool_chunk = Tool::default();
+        tool_chunk.name = "pdf_chunk".into();
+        tool_chunk.description = Some(
+            "Structure-aware semantic chunking with dynamic overlap for AI agents and LLM context windows. [Input: PDF (.pdf) | Output: JSON]".into(),
+        );
+        let mut schema_chunk = serde_json::Map::new();
+        schema_chunk.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_chunk = serde_json::Map::new();
+        prop_chunk.insert("input".to_string(), serde_json::json!({ "type": "string", "description": "Path to input PDF file" }));
+        prop_chunk.insert("output".to_string(), serde_json::json!({ "type": "string", "description": "Optional destination path for JSON output" }));
+        prop_chunk.insert("target_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Target tokens per chunk (default: 500, range: 50-4000)" }));
+        prop_chunk.insert("overlap_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Overlap tokens between chunks (default: 50, range: 0-500)" }));
+        prop_chunk.insert("strip_boilerplate".to_string(), serde_json::json!({ "type": "boolean", "description": "Strip repetitive headers/footers across consecutive pages (default: true)" }));
+        prop_chunk.insert("break_on_headings".to_string(), serde_json::json!({ "type": "boolean", "description": "Trigger hard boundary split on # / ## headings (default: true)" }));
+        schema_chunk.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_chunk),
+        );
+        schema_chunk.insert("required".to_string(), serde_json::json!(["input"]));
+        tool_chunk.input_schema = std::sync::Arc::new(schema_chunk);
+        tools.push(tool_chunk);
+
         let mut tool_o2m = Tool::default();
         tool_o2m.name = "office_to_markdown".into();
         tool_o2m.description = Some("Convert Office document to Markdown. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]".into());
@@ -4690,8 +4715,13 @@ impl PaperPilotMcpServer {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
-        let _get_u64 = |key: &str| -> Result<u64, ErrorData> {
+        let get_u64 = |key: &str| -> Result<u64, ErrorData> {
             args.get(key).and_then(|v| v.as_u64()).ok_or_else(|| {
+                ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
+            })
+        };
+        let get_bool = |key: &str| -> Result<bool, ErrorData> {
+            args.get(key).and_then(|v| v.as_bool()).ok_or_else(|| {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
@@ -6106,6 +6136,47 @@ impl PaperPilotMcpServer {
                         data: Some(serde_json::to_value(&chunks).unwrap_or_default()),
                     })
                 }
+            }
+            "pdf_chunk" => {
+                let input = get_string("input")?;
+                let output = get_string("output").ok();
+                let target_tokens = get_u64("target_tokens").map(|v| v as usize).unwrap_or(500);
+                let overlap_tokens = get_u64("overlap_tokens").map(|v| v as usize).unwrap_or(50);
+                let strip_boilerplate = get_bool("strip_boilerplate").unwrap_or(true);
+                let break_on_headings = get_bool("break_on_headings").unwrap_or(true);
+
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                }
+
+                let doc_source = paperpilot_core::document_source::DocumentSource::open(&input, None)
+                    .map_err(|e| ErrorData::invalid_params(format!("Failed to open PDF document: {}", e), None))?;
+
+                let options = paperpilot_pdf::operations::pdf_chunk::ChunkOptions {
+                    target_tokens,
+                    overlap_tokens,
+                    strip_boilerplate,
+                    break_on_headings,
+                };
+
+                let result = paperpilot_pdf::operations::pdf_chunk::PdfChunkOperation::chunk_source(&doc_source, options)
+                    .map_err(|e| ErrorData::internal_error(format!("Chunking operation failed: {}", e), None))?;
+
+                if let Some(ref out) = output {
+                    let json_data = serde_json::to_string_pretty(&result).unwrap_or_default();
+                    std::fs::write(out, json_data).map_err(|e| {
+                        ErrorData::invalid_params(format!("Failed to write chunks JSON: {}", e), None)
+                    })?;
+                }
+
+                let data_val = serde_json::to_value(&result).unwrap_or_default();
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Generated {} semantic chunks ({} total tokens)", result.total_chunks, result.total_tokens),
+                    output_path: output,
+                    diff_detected: None,
+                    data: Some(data_val),
+                })
             }
             "office_to_markdown" => {
                 let input = get_string("input")?;

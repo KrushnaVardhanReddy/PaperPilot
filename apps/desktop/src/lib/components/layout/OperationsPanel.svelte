@@ -113,6 +113,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let semanticSearchLimit = $state(5);
   let classifyDetail = $state(false);
   let ragChunkSize = $state(512);
+  let chunkTargetTokens = $state(500);
+  let chunkOverlapTokens = $state(50);
+  let chunkStripBoilerplate = $state(true);
+  let chunkBreakOnHeadings = $state(true);
   let workflowPreset = $state('preset-clean-scan');
   let workflowRecipe = $state('');
   let recipeId = $state('preset-clean-scan');
@@ -573,6 +577,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'rag_chunks':
         customOutputPath = getOutputPath(`${base}_rag_chunks.json`);
         break;
+      case 'pdf_chunk':
+      case 'chunk':
+        customOutputPath = getOutputPath(`${base}_chunks.json`);
+        break;
       case 'document_workflow':
       case 'pdf_document_workflow':
       case 'workflow':
@@ -680,6 +688,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             semanticLimit: semanticSearchLimit,
             classifyDetail,
             ragChunkSize,
+            chunkTargetTokens,
+            chunkOverlapTokens,
+            chunkStripBoilerplate,
+            chunkBreakOnHeadings,
+            targetTokens: chunkTargetTokens,
+            overlapTokens: chunkOverlapTokens,
+            stripBoilerplate: chunkStripBoilerplate,
+            breakOnHeadings: chunkBreakOnHeadings,
             workflowPreset,
             workflowRecipe,
             recipeId,
@@ -917,6 +933,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           semanticLimit: semanticSearchLimit,
           classifyDetail,
           ragChunkSize,
+          chunkTargetTokens,
+          chunkOverlapTokens,
+          chunkStripBoilerplate,
+          chunkBreakOnHeadings,
+          targetTokens: chunkTargetTokens,
+          overlapTokens: chunkOverlapTokens,
+          stripBoilerplate: chunkStripBoilerplate,
+          breakOnHeadings: chunkBreakOnHeadings,
           workflowPreset,
           workflowRecipe,
           recipeId,
@@ -1164,7 +1188,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
     let ext = '.pdf';
     if (['extract_text', 'pdf_extract_text', 'office_extract_text', 'cli_ask', 'ask'].includes(rawToolId) || ['extract_text', 'pdf_extract_text', 'cli_ask'].includes(toolId)) ext = '.txt';
-    else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'watcher_start', 'watcher_stop'].includes(toolId)) ext = '.json';
+    else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'pdf_chunk', 'chunk', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'pdf_chunk', 'watcher_start', 'watcher_stop'].includes(toolId)) ext = '.json';
     else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
     else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
     else if (['pdf_to_docx'].includes(rawToolId) || ['pdf_to_docx'].includes(toolId)) ext = '.docx';
@@ -1237,7 +1261,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         let filters = [{ name: 'PDF Document', extensions: ['pdf'] }];
         if (['extract_text', 'pdf_extract_text', 'office_extract_text', 'cli_ask', 'ask'].includes(rawToolId) || ['extract_text', 'pdf_extract_text', 'cli_ask'].includes(toolId)) {
           filters = [{ name: 'Text File', extensions: ['txt'] }];
-        } else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'watcher_start', 'watcher_stop'].includes(toolId)) {
+        } else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify', 'pdf_rag_chunks', 'rag_chunks', 'pdf_chunk', 'chunk', 'watcher_start', 'watcher_stop'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'pdf_rag_chunks', 'pdf_chunk', 'watcher_start', 'watcher_stop'].includes(toolId)) {
           filters = [{ name: 'JSON Document', extensions: ['json'] }, { name: 'Text File', extensions: ['txt'] }];
         } else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
           filters = [{ name: 'Markdown File', extensions: ['md'] }];
@@ -2455,6 +2479,49 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Segments document text into semantic chunks with token counts and heading hierarchy, optimized for vector database ingestion and LLM RAG pipelines.
           </p>
           <span class="field-hint">Output: <code>.json</code> — array of structured semantic chunks with token counts and metadata.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_chunk' || activeTool.id === 'chunk'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="chunkTargetTokensInput" class="section-desc">Target Tokens per Chunk: {chunkTargetTokens}</label>
+            <input
+              id="chunkTargetTokensInput"
+              type="range"
+              min="100"
+              max="2000"
+              step="50"
+              class="range-input"
+              bind:value={chunkTargetTokens}
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="chunkOverlapTokensInput" class="section-desc">Dynamic Overlap Tokens: {chunkOverlapTokens}</label>
+            <input
+              id="chunkOverlapTokensInput"
+              type="range"
+              min="0"
+              max="200"
+              step="10"
+              class="range-input"
+              bind:value={chunkOverlapTokens}
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="scope-option" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1;">
+              <input id="chunkStripBoilerplateToggle" type="checkbox" bind:checked={chunkStripBoilerplate} />
+              <span>Strip recurring headers &amp; footers across consecutive pages</span>
+            </label>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="scope-option" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1;">
+              <input id="chunkBreakOnHeadingsToggle" type="checkbox" bind:checked={chunkBreakOnHeadings} />
+              <span>Hard break on Markdown headings (#, ##)</span>
+            </label>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Intelligent semantic chunker for AI agents and LLM context windows. Preserves headings context, table integrity, and dynamically overlaps sentences across boundaries.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — array of structured document chunks with token metrics and heading hierarchy.</span>
         </div>
       {:else if activeTool.id === 'document_workflow' || activeTool.id === 'pdf_document_workflow' || activeTool.id === 'workflow'}
         <div class="operation-config">

@@ -63,7 +63,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::start_watcher,
         handlers::list_watchers,
         handlers::stop_watcher,
-        handlers::run_recipe_once
+        handlers::run_recipe_once,
+        handlers::pdf_chunk_endpoint
     ),
     components(
         schemas(
@@ -99,7 +100,10 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::StartWatcherResponse,
             handlers::WatcherListResponse,
             handlers::WatcherSummary,
-            handlers::RunRecipeOnceResponse
+            handlers::RunRecipeOnceResponse,
+            handlers::PdfChunkJsonRequest,
+            handlers::ChunkResultSchema,
+            handlers::DocumentChunkSchema
         ,
             handlers::PdfEncryptJsonRequest,
             handlers::PdfDecryptJsonRequest,
@@ -495,6 +499,8 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/pdf_validate", post(handlers::pdf_validate))
         .route("/api/v1/pdf/pdf_render", post(handlers::pdf_render))
         .route("/api/v1/pdf/pdf_rag_chunks", post(handlers::pdf_rag_chunks))
+        .route("/api/v1/pdf/chunk", post(handlers::pdf_chunk_endpoint))
+        .route("/api/v1/pdf/pdf_chunk", post(handlers::pdf_chunk_endpoint))
 
         .route("/api/v1/search/semantic_search", post(handlers::semantic_search))
 

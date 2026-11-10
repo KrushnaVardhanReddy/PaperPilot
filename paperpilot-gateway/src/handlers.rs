@@ -445,6 +445,39 @@ pub struct RagChunksJsonRequest {
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
+pub struct PdfChunkJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    #[schema(example = 500)]
+    pub target_tokens: Option<usize>,
+    #[schema(example = 50)]
+    pub overlap_tokens: Option<usize>,
+    #[schema(example = true)]
+    pub strip_boilerplate: Option<bool>,
+    #[schema(example = true)]
+    pub break_on_headings: Option<bool>,
+    pub output: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct DocumentChunkSchema {
+    pub chunk_index: usize,
+    pub page_start: u32,
+    pub page_end: u32,
+    pub estimated_tokens: usize,
+    pub text: String,
+    pub headings_context: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ChunkResultSchema {
+    pub total_chunks: usize,
+    pub total_tokens: usize,
+    pub chunks: Vec<DocumentChunkSchema>,
+    pub execution_time_ms: f64,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct McpExecRequest {
     #[schema(example = "pdf_metadata")]
     pub tool: String,
@@ -3319,6 +3352,112 @@ pub async fn pdf_render(req: axum::extract::Request) -> impl IntoResponse {
 )]
 pub async fn pdf_rag_chunks(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_rag_chunks".to_string()), req).await
+}
+
+/// Execute pdf_chunk operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/chunk",
+    tag = "PDF Operations",
+    request_body(content = PdfChunkJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ChunkResultSchema),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoResponse {
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.starts_with("application/json") {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+            Ok(b) => b,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to read request body: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let payload: PdfChunkJsonRequest = match serde_json::from_slice(&body_bytes) {
+            Ok(p) => p,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Invalid JSON payload: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let target_tokens = payload.target_tokens.unwrap_or(500);
+        let overlap_tokens = payload.overlap_tokens.unwrap_or(50);
+        let strip_boilerplate = payload.strip_boilerplate.unwrap_or(true);
+        let break_on_headings = payload.break_on_headings.unwrap_or(true);
+
+        let options = paperpilot_pdf::operations::pdf_chunk::ChunkOptions {
+            target_tokens,
+            overlap_tokens,
+            strip_boilerplate,
+            break_on_headings,
+        };
+
+        let doc_source = match paperpilot_core::document_source::DocumentSource::open(&payload.input, None) {
+            Ok(ds) => ds,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to open document: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let result = match paperpilot_pdf::operations::pdf_chunk::PdfChunkOperation::chunk_source(&doc_source, options) {
+            Ok(r) => r,
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Chunking failed: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        if let Some(ref out_path) = payload.output {
+            let out_p = std::path::Path::new(out_path);
+            if let Some(parent) = out_p.parent() {
+                if !parent.as_os_str().is_empty() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+            }
+            if let Ok(json_str) = serde_json::to_string_pretty(&result) {
+                let _ = std::fs::write(out_p, json_str);
+            }
+        }
+
+        (StatusCode::OK, Json(result)).into_response()
+    } else {
+        handle_tool(Path("pdf_chunk".to_string()), req).await.into_response()
+    }
 }
 
 /// Execute workspace_search operation

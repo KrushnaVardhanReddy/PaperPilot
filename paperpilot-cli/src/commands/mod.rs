@@ -41,6 +41,7 @@ pub mod table;
 pub mod validate;
 pub mod workflow;
 pub mod pdf_extract_patterns;
+pub mod pdf_chunk;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -629,6 +630,37 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             println!("{}", json_str);
             Ok(())
         },
+        Commands::PdfChunk {
+            input,
+            target_tokens,
+            overlap,
+            strip_boilerplate,
+            no_strip_boilerplate,
+            break_on_headings,
+            no_break_on_headings,
+            output,
+        } => {
+            let resolved = resolve_input_path(input)?;
+            let final_strip = if *no_strip_boilerplate {
+                false
+            } else {
+                *strip_boilerplate
+            };
+            let final_break = if *no_break_on_headings {
+                false
+            } else {
+                *break_on_headings
+            };
+            pdf_chunk::handle_pdf_chunk_command(
+                &resolved,
+                *target_tokens,
+                *overlap,
+                final_strip,
+                final_break,
+                output.as_ref(),
+            )?;
+            Ok(())
+        },
         Commands::WorkspaceSearch { input, dir, query, output } => {
             use paperpilot_core::traits::PdfOperation;
             use paperpilot_pdf::document::LopdfDocument;
@@ -914,6 +946,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "pdf_rag_chunks",
                     "Stable (v0.5)",
                     "Chunk document text for AI RAG embedding pipelines",
+                ),
+                (
+                    "pdf_chunk",
+                    "Stable (v0.6)",
+                    "Structure-aware semantic chunking with dynamic overlap for AI agents",
                 ),
                 (
                     "pdf_ocr",

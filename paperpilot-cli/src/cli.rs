@@ -818,6 +818,26 @@ pub enum Commands {
         #[arg(long)]
         output: Option<PathBuf>,
     },
+    /// Intelligent structure-aware semantic chunking with dynamic overlap for AI agents [Input: .pdf | Output: .json]
+    #[command(name = "pdf-chunk", alias = "pdf_chunk", alias = "chunk")]
+    PdfChunk {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value_t = 500)]
+        target_tokens: usize,
+        #[arg(long, alias = "overlap-tokens", default_value_t = 50)]
+        overlap: usize,
+        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+        strip_boilerplate: bool,
+        #[arg(long, action = clap::ArgAction::SetTrue)]
+        no_strip_boilerplate: bool,
+        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+        break_on_headings: bool,
+        #[arg(long, action = clap::ArgAction::SetTrue)]
+        no_break_on_headings: bool,
+        #[arg(long, alias = "json-out")]
+        output: Option<PathBuf>,
+    },
     #[command(name = "workspace-search", alias = "workspace_search")]
     WorkspaceSearch {
         #[arg(long)]

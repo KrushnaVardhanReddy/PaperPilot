@@ -528,6 +528,21 @@ pub fn handle_ask(
             }
             crate::commands::group_d::handle_classify(&inputs_paths[0], output_path.as_deref())
         }
+        Intent::Chunk => {
+            if inputs_paths.is_empty() {
+                return Err(PdfError::InvalidInput(
+                    "Chunk requires an input file".into(),
+                ));
+            }
+            crate::commands::pdf_chunk::handle_pdf_chunk_command(
+                &inputs_paths[0],
+                500,
+                50,
+                true,
+                true,
+                output_path.as_ref(),
+            )
+        }
         _ => Err(PdfError::UnsupportedOperation(
             "Unsupported NLP intent".into(),
         )),

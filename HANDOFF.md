@@ -64,10 +64,11 @@
 ### 🥈 Tier 2: Agent Performance & Scalability Moat (Next Priority)
 *Goal: Solidify PaperPilot as the highest-performance local document engine for AI agents and RAG pipelines.*
 
-4. **Spec 159: Semantic Chunking Engine (`pdf_chunk`) (`specs/159-agent-semantic-chunking/`)**
-   - Implement structure-aware boundary detection (`#`, `##`, `\n\n`, tables `|...|`) and token estimation (~4 chars/token).
-   - Support `--strip-boilerplate` to remove running headers/footers across consecutive pages.
-   - Expose CLI `paperpilot pdf-chunk`, MCP `pdf_chunk`, and Gateway `POST /api/v1/pdf/chunk`.
+4. **Spec 159: Semantic Chunking Engine (`pdf_chunk`) (`specs/159-agent-semantic-chunking/`)** — ✅ **100% MERGED**
+   - Implemented multi-level structure-aware boundary detection (`#`, `##`, `\n\n`, tables `|...|`), configurable `target_tokens` and `overlap_tokens`, and BPE estimation.
+   - Built boilerplate suppression removing recurring headers/footers across $\ge 3$ consecutive pages.
+   - Zero-copy `DocumentSource` integration natively in `paperpilot-pdf`.
+   - Full Penta-Interface coverage: CLI (`paperpilot pdf-chunk`), MCP tool (`pdf_chunk`), REST Gateway (`POST /api/v1/pdf/chunk`), Desktop Svelte 5 UI with sliders in `OperationsPanel.svelte`, and Vitest + Rust integration test suites (180/180 Vitest passing, 6/6 Rust chunk tests passing).
 5. **Spec 163: Zero-Copy Memory-Mapped Document Handling (`specs/163-zero-copy-mmap-large-doc-handling/`)** — ✅ **100% MERGED** (Commit `5663728`)
    - Implemented `DocumentSource` using `memmap2` for files $\ge 10\text{ MB}$ to keep resident memory flat (< 100 MB) during search, chunking, and PII scanning of huge PDFs.
    - Implemented `PageBatchIterator` for streaming batch execution without loading entire documents into memory.

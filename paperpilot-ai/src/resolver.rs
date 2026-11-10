@@ -166,6 +166,7 @@ impl LlmNlpResolver {
             "pdf_watermark" => Intent::Watermark,
             "pdf_hash" => Intent::Hash,
             "pdf_linearize" => Intent::Linearize,
+            "pdf_chunk" => Intent::Chunk,
             _ => return Err(NlpError::AmbiguousIntent(format!("Unknown tool: {}", name))),
         };
 

@@ -56,6 +56,14 @@ export interface OperationContext {
     extractPatternsRegex?: string;
     extractPatternsCaseSensitive?: boolean;
     extractPatternsContextLen?: number;
+    chunkTargetTokens?: number;
+    chunkOverlapTokens?: number;
+    chunkStripBoilerplate?: boolean;
+    chunkBreakOnHeadings?: boolean;
+    targetTokens?: number;
+    overlapTokens?: number;
+    stripBoilerplate?: boolean;
+    breakOnHeadings?: boolean;
     mergeAlternateDocA?: string;
     mergeAlternateDocB?: string;
     mergeAlternateReverseB?: boolean;
@@ -1095,6 +1103,18 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_rag_chunks.json`)
+            };
+            break;
+        }
+        case 'pdf_chunk':
+        case 'chunk': {
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_chunks.json`),
+                target_tokens: context.targetTokens ?? context.chunkTargetTokens ?? 500,
+                overlap_tokens: context.overlapTokens ?? context.chunkOverlapTokens ?? 50,
+                strip_boilerplate: context.stripBoilerplate ?? context.chunkStripBoilerplate ?? true,
+                break_on_headings: context.breakOnHeadings ?? context.chunkBreakOnHeadings ?? true
             };
             break;
         }
