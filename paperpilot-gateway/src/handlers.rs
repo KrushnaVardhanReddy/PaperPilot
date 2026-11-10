@@ -807,9 +807,25 @@ pub async fn handle_tool(
         || tool_name == "excel_to_json"
         || tool_name == "excel_to_csv"
         || tool_name == "json_to_pdf"
+        || tool_name == "html_to_pdf"
+        || tool_name == "md_to_pdf"
+        || tool_name == "to_epub"
+        || tool_name == "to_pdf_a"
+        || tool_name == "comic_archive"
+        || tool_name == "extract_images"
+        || tool_name == "convert_excel"
         || tool_name == "workspace_search"
+        || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
+        || tool_name == "batch_fill"
+        || tool_name == "cli_fill_batch"
+        || tool_name == "document_workflow"
+        || tool_name == "recipe_run"
+        || tool_name == "cli_ask"
+        || tool_name == "watcher_start"
+        || tool_name == "watcher_stop"
+        || tool_name == "watcher_list"
     {
         tool_name.clone()
     } else {
@@ -982,11 +998,55 @@ pub async fn handle_tool(
         if !args.contains_key("start_number") {
             args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
         }
+        if !args.contains_key("prefix") {
+            args.insert("prefix".to_string(), serde_json::Value::String("CONF-".to_string()));
+        }
+    } else if resolved_name == "pdf_annotate" {
+        if !args.contains_key("annotations") && !args.contains_key("data") {
+            args.insert("annotations".to_string(), serde_json::Value::Array(vec![]));
+        }
+    } else if resolved_name == "pdf_page_numbers" {
+        if !args.contains_key("position") {
+            args.insert("position".to_string(), serde_json::Value::String("bottom-center".to_string()));
+        }
+        if !args.contains_key("format") {
+            args.insert("format".to_string(), serde_json::Value::String("Page {n} of {total}".to_string()));
+        }
+    } else if resolved_name == "pdf_header_footer" {
+        if !args.contains_key("text") && !args.contains_key("header_left") && !args.contains_key("footer_center") {
+            args.insert("text".to_string(), serde_json::Value::String("Header Notice".to_string()));
+        }
     } else if resolved_name == "pdf_validate_signatures" {
         if let Some(val) = args.get("output") {
             if val.as_str().unwrap_or("") == "" {
                 args.remove("output");
             }
+        }
+    } else if resolved_name == "document_workflow" {
+        if !args.contains_key("preset") && !args.contains_key("recipe") {
+            args.insert("preset".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "recipe_run" {
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "cli_ask" {
+        if !args.contains_key("prompt") {
+            args.insert("prompt".to_string(), serde_json::Value::String("rotate 90 degrees".to_string()));
+        }
+        if !args.contains_key("dry_run") {
+            args.insert("dry_run".to_string(), serde_json::Value::Bool(true));
+        }
+    } else if resolved_name == "watcher_start" {
+        if !args.contains_key("dir") {
+            args.insert("dir".to_string(), serde_json::Value::String(".".to_string()));
+        }
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-legal-discovery".to_string()));
+        }
+    } else if resolved_name == "watcher_stop" {
+        if !args.contains_key("watcher_id") {
+            args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
         }
     }
 
@@ -1859,10 +1919,62 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
     use paperpilot_pdf::document::LopdfDocument;
 
     let path = std::path::PathBuf::from(input);
-    let mut doc = match LopdfDocument::load(&path) {
-        Ok(d) => d,
-        Err(e) => {
-            return (
+    let mut matches = Vec::new();
+    if path.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(&path) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+        (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({ "matches": matches })),
+                error: None,
+            }),
+        )
+            .into_response()
+    } else {
+        let mut doc = match LopdfDocument::load(&path) {
+            Ok(d) => d,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse {
+                        success: false,
+                        result: None,
+                        error: Some(e.to_string()),
+                    }),
+                )
+                    .into_response();
+            }
+        };
+
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        match op.execute(&mut doc) {
+            Ok(_) => {
+                let matches = op.match_pages.lock().unwrap().clone();
+                (
+                    StatusCode::OK,
+                    Json(ApiResponse {
+                        success: true,
+                        result: Some(serde_json::json!({ "matches": matches })),
+                        error: None,
+                    }),
+                )
+                    .into_response()
+            }
+            Err(e) => (
                 StatusCode::BAD_REQUEST,
                 Json(ApiResponse {
                     success: false,
@@ -1870,33 +1982,8 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
                     error: Some(e.to_string()),
                 }),
             )
-                .into_response();
+                .into_response(),
         }
-    };
-
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    match op.execute(&mut doc) {
-        Ok(_) => {
-            let matches = op.match_pages.lock().unwrap().clone();
-            (
-                StatusCode::OK,
-                Json(ApiResponse {
-                    success: true,
-                    result: Some(serde_json::json!({ "matches": matches })),
-                    error: None,
-                }),
-            )
-                .into_response()
-        }
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(ApiResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        )
-            .into_response(),
     }
 }
 

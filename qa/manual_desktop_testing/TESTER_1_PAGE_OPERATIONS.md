@@ -59,7 +59,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   2. Use drag-and-drop to adjust order.
   3. Click **Merge Documents** and save as `merged_test.pdf`.
 - **Expected Result:** Combined document opens or is written to disk; total page count matches sum of inputs.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -71,7 +71,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   2. Toggle **Reverse order for Doc B** (e.g. for duplex backside scans).
   3. Click **Interleave Pages**.
 - **Expected Result:** Pages are interleaved (A1, B1, A2, B2...) cleanly into a new PDF.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `Unable to locate file-File not found___________________`
 
 ---
 
@@ -82,7 +82,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   1. Enter range: `1-2, 3-5`.
   2. Click **Split PDF** and choose destination directory.
 - **Expected Result:** Output folder contains `split_1.pdf` (2 pages) and `split_2.pdf` (3 pages).
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -93,7 +93,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   1. Set outline level to `1`.
   2. Click **Split by Outline**.
 - **Expected Result:** Produces chapter PDFs named after TOC titles packed in a ZIP or folder, or falls back cleanly to page split if bookmarks are absent.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_Unexpected error unable to lcoate doc___________________`
 
 ---
 
@@ -105,7 +105,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   2. Select reading order: **Left to Right**.
   3. Click **Split Book Spine**.
 - **Expected Result:** Each spread is split into two half-width single pages (page count doubles).
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -115,7 +115,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Click **Burst PDF** and pick output directory.
 - **Expected Result:** Creates individual single-page PDFs (`page_001.pdf`, `page_002.pdf`, etc.).
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -126,7 +126,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   1. Drag crop rectangle on the canvas or enter margin insets.
   2. Verify bounding coordinates populate. Click **Apply Crop**.
 - **Expected Result:** Canvas re-renders immediately showing trimmed margins.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_Un expected issue-not working___________________`
 
 ---
 
@@ -136,7 +136,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Enter `2, 4` in Delete Pages input. Click **Delete**.
 - **Expected Result:** Pages 2 and 4 are removed; remaining 3 pages re-index.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `UI is working, tool is not working____________________`
 
 ---
 
@@ -146,7 +146,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Enter `2-3`. Click **Extract Pages**.
 - **Expected Result:** New document is generated containing only pages 2 and 3. Original file remains intact.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `_Tool 2 is working but not 1, we should remove 1___________________`
 
 ---
 
@@ -156,7 +156,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Click and drag thumbnail Page 4 above Page 1 (or specify order `4,1,2,3,5`).
 - **Expected Result:** Page order updates instantly in both thumbnail rail and canvas.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `Out of bound error____________________`
 
 ---
 
@@ -166,7 +166,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select `90° Clockwise`, page scope: `All`. Click **Apply Rotation**.
 - **Expected Result:** Canvas and thumbnail preview rotate 90° clockwise.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `Ui is working and tool 2 is working, need to remove tool 1____________________`
 
 ---
 
@@ -176,7 +176,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Click **Auto Upright Pages**.
 - **Expected Result:** Sideways text is heuristically rotated upright; correctly oriented pages are untouched.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_Same as input no change___________________`
 
 ---
 
@@ -186,7 +186,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Set sensitivity to 95%. Click **Remove Blank Pages**.
 - **Expected Result:** Blank pages are excised; toast announces count of removed pages (or confirms 0 blank pages removed without corrupting document).
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `_working - need to seee 2 tools___________________`
 
 ---
 
@@ -196,7 +196,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Choose target size: `A3` (or scale percentage: `150%`). Click **Scale**.
 - **Expected Result:** MediaBox dimensions expand proportionally; vector content stays sharp.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `____________________`
 
 ---
 
@@ -206,7 +206,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select `4-Up (2x2 Grid)`. Toggle **Draw Border Lines**. Click **Impose Pages**.
 - **Expected Result:** 4 consecutive pages are tiled onto a single composite sheet.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `generating empty document only with no borders and unable to do selection like 2up, 6up,9up__- no borders also__________________`
 
 ---
 
@@ -216,7 +216,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select `Saddle-Stitch Folding Booklet`. Click **Generate Booklet**.
 - **Expected Result:** Sheets are paired for center-fold printing with proper outer/inner signature ordering.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `Document generated , need to validate it____________________`
 
 ---
 
@@ -226,7 +226,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Set grid: `2x2 Sheets`, overlap: `0.5 in`. Click **Slice Poster**.
 - **Expected Result:** Outputs 4 printable pages with dashed cut/alignment guides.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `generated a document seems to be working fine____________________`
 
 ---
 
@@ -236,7 +236,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Choose `Vertical Scroll Stitch`. Click **Stitch Pages**.
 - **Expected Result:** All pages merge into one tall continuous canvas page.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `Looks good____________________`
 
 ---
 
@@ -246,7 +246,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Open Bookmarks sidebar or tool. Inspect or add/navigate a chapter bookmark item.
 - **Expected Result:** Bookmarks are extracted cleanly and clicking a bookmark jumps to its target page.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_Generated file but need to validate___________________`
 
 ---
 
@@ -257,7 +257,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   1. Click **Add Attachment** and attach `img1.png`.
   2. Click **Download / Extract Attachment**.
 - **Expected Result:** Embedded file is listed in the portfolio and can be extracted byte-for-byte.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `Unable to select screenshot/Image - Drag and drop also not working for pdf and image____________________`
 
 ---
 
@@ -267,7 +267,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Drop both PNG files into the queue. Set orientation: **Auto**. Click **Create PDF**.
 - **Expected Result:** Generates a 2-page PDF where each page embeds one image at full resolution.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_Unable to select any image___________________`
 
 ---
 
@@ -277,7 +277,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select `img1.png` and click **Convert**.
 - **Expected Result:** Produces a 1-page PDF matching the image dimensions.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_image selection is not showing up___________________`
 
 ---
 
@@ -287,7 +287,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select preset: **eBook (150 DPI)**. Click **Compress PDF**.
 - **Expected Result:** Toast reports compression completion and size metrics; output file opens cleanly.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `_Working well and fast___________________`
 
 ---
 
@@ -297,7 +297,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Click **Deduplicate Streams**.
 - **Expected Result:** Redundant image/font objects are merged into single indirect references with zero visual quality loss.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `_working fine___________________`
 
 ---
 
@@ -307,7 +307,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Click **Linearize Document**.
 - **Expected Result:** Output PDF is optimized with a `/Linearized` header dictionary for progressive byte-range loading.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `File generated but same size ____________________`
 
 ---
 
@@ -317,7 +317,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Load file into Repair PDF tool. Click **Rebuild XREF Tables**.
 - **Expected Result:** Damaged XREF tables/dictionaries are reconstructed or cleanly reported without crashing.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `unable to test usecase____________________`
 
 ---
 
@@ -327,7 +327,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Select **High-Contrast Dark Mode**. Click **Invert Colors**.
 - **Expected Result:** White backgrounds become dark charcoal; black text inverts to clear white.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `file generated but no difference____________________`
 
 ---
 
@@ -337,7 +337,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
 - **Manual Steps:**
   1. Set DPI: `300 DPI`. Select Page 1. Click **Render & Save PNG**.
 - **Expected Result:** High-resolution `.png` file is created on disk with valid PNG header bytes.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `_generated pdf, but no png___________________`
 
 ---
 
@@ -349,7 +349,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   2. Launch **Compare PDFs**. Drag the interactive center split curtain.
   3. Toggle **Color-Coded Highlights**.
 - **Expected Result:** Real-time visual comparison reveals differences between revisions with color highlights.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[ ] PASS` | `[X] FAIL` | Notes: `Not working ____________________`
 
 ---
 
@@ -360,7 +360,7 @@ cp tests/fixtures/malformed.pdf ~/Desktop/tester1_fixtures/
   1. Enter User Password: `pass123`. Click **Encrypt & Save**.
   2. Reopen the saved document in PaperPilot.
 - **Expected Result:** Unlock password modal appears blocking canvas. Entering `pass123` unlocks the document.
-- **Sign-off:** `[ ] PASS` | `[ ] FAIL` | Notes: `____________________`
+- **Sign-off:** `[X] PASS` | `[ ] FAIL` | Notes: `_File generated with Encrypted___________________`
 
 ---
 

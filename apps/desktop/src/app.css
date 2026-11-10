@@ -11,6 +11,7 @@
   --bg-secondary: #191B22;
   --bg-surface: #22252E;
   --bg-surface-hover: #2D313C;
+  --bg-surface-elevated: #2D313C;
 
   --surface-0: #0d0d0f; /* Base window background */
   --surface-1: #141416; /* Sidebar, panels, tab bar */
@@ -53,6 +54,7 @@
   --bg-secondary: #FFFFFF;
   --bg-surface: #F0F2F5;
   --bg-surface-hover: #E4E7EB;
+  --bg-surface-elevated: #FFFFFF;
 
   --surface-0: #fcfcfc; /* Base window background */
   --surface-1: #f3f3f3; /* Sidebar, panels, tab bar */

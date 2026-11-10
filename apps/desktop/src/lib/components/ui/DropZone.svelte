@@ -377,16 +377,16 @@
     font-weight: 600;
     font-family: var(--font-mono, monospace);
     border-radius: 6px;
-    background: var(--bg-surface-elevated, #27272a);
-    color: var(--text-secondary, #a1a1aa);
-    border: 1px solid var(--border-color, #3f3f46);
+    background: var(--bg-surface-elevated, var(--bg-surface));
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
     text-transform: lowercase;
     transition: all 0.15s ease;
   }
 
   .format-pill:hover {
-    border-color: var(--accent-primary, #6366f1);
-    color: var(--text-primary, #ffffff);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
   }
 
   .actions {

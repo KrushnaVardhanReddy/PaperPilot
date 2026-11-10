@@ -192,9 +192,11 @@
 
   function deletePage(e: MouseEvent, page: number) {
     e.stopPropagation();
-    window.dispatchEvent(new CustomEvent('paperpilot:delete-single-page', {
-      detail: { page }
-    }));
+    confirmDialog = {
+      visible: true,
+      action: 'delete',
+      page
+    };
   }
 
   function handleContextMenu(e: MouseEvent, page: number) {
@@ -227,10 +229,27 @@
         window.dispatchEvent(new CustomEvent('paperpilot:extract-single-page', { detail: { page } }));
         break;
       case 'delete':
-        window.dispatchEvent(new CustomEvent('paperpilot:delete-single-page', { detail: { page } }));
+        confirmDialog = {
+          visible: true,
+          action: 'delete',
+          page
+        };
         break;
     }
     closeContextMenu();
+  }
+
+  function handleConfirmAction() {
+    if (confirmDialog.action === 'delete' && confirmDialog.page !== null) {
+      window.dispatchEvent(new CustomEvent('paperpilot:delete-single-page', {
+        detail: { page: confirmDialog.page }
+      }));
+    }
+    confirmDialog = { visible: false, action: null, page: null };
+  }
+
+  function handleCancelConfirm() {
+    confirmDialog = { visible: false, action: null, page: null };
   }
 </script>
 
@@ -317,6 +336,27 @@
       <button class="menu-item danger" onclick={() => handleContextAction('delete', contextMenu.page)}>
         <span>🗑️</span> Delete Page
       </button>
+    </div>
+  {/if}
+
+  {#if confirmDialog.visible}
+    <!-- Confirmation Dialog Overlay -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="confirm-overlay" onclick={handleCancelConfirm}>
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div class="confirm-dialog" onclick={(e) => e.stopPropagation()}>
+        <div class="confirm-title">
+          <span>⚠️</span> Delete Page {confirmDialog.page}?
+        </div>
+        <p class="confirm-desc">
+          Are you sure you want to permanently delete page {confirmDialog.page}? This cannot be undone.
+        </p>
+        <div class="confirm-actions">
+          <button class="confirm-btn cancel" onclick={handleCancelConfirm}>Cancel</button>
+          <button class="confirm-btn danger" onclick={handleConfirmAction}>Delete</button>
+        </div>
+      </div>
     </div>
   {/if}
 </div>
@@ -497,5 +537,85 @@
     height: 1px;
     background-color: var(--border-color, #2a2a35);
     margin: 4px 0;
+  }
+
+  /* Confirmation Dialog */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+
+  .confirm-dialog {
+    background: var(--bg-surface-elevated, var(--bg-surface, #1e293b));
+    border: 1px solid var(--border-color, #334155);
+    border-radius: var(--border-radius-md, 8px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    max-width: 320px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .confirm-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .confirm-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .confirm-btn {
+    padding: 6px 14px;
+    border-radius: var(--border-radius-sm, 6px);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+  }
+
+  .confirm-btn.cancel {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+  }
+
+  .confirm-btn.cancel:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
+
+  .confirm-btn.danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+  }
+
+  .confirm-btn.danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
   }
 </style>

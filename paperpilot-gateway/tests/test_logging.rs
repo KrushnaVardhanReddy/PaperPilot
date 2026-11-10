@@ -18,7 +18,7 @@ async fn test_gateway_logging_and_request_id() {
 
     tokio::time::sleep(Duration::from_millis(100)).await;
 
-    let client = Client::new();
+    let client = Client::builder().no_proxy().build().unwrap();
     let url = format!("http://{}/health", addr);
 
     // Test 1: Auto-generated Request-ID header

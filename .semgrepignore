@@ -2,6 +2,8 @@
 # Ignore test/benchmark scripts using urllib for local assertions
 scripts/fetch_test_pdfs.py
 scripts/test_tri_interface_e2e.py
+scripts/run_system_benchmark.py
+scripts/gif_generators/
 apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
 apps/desktop/tests/e2e_real_desktop_execution.spec.ts
 apps/desktop/tests/e2e_all_tools_real_execution.spec.ts

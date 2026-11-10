@@ -3,51 +3,56 @@
     import ExportCodeModal from './pipeline/ExportCodeModal.svelte';
     import { type SnippetTarget } from '$lib/utils/snippetGenerator';
 
-    // The raw plan from NLP
-    export let plan: any;
-    // Callback when user clicks execute
-    export let onExecute: (args: Record<string, any>) => void;
+    let {
+        plan,
+        onExecute
+    }: {
+        plan: any;
+        onExecute: (args: Record<string, any>) => void;
+    } = $props();
 
-    let activeDoc = appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null;
+    let activeDoc = $derived(appState.selectedDocumentIndex !== null ? appState.documents[appState.selectedDocumentIndex] : null);
     let totalPages = 1; // Default fallback
     // We would ideally fetch the true page count if needed, but for the badge we can just show activeDoc exists
     let maxPagesDisplay = "Active Document";
 
     // Extracted state for editable UI
-    let pagesMode = 'all'; // 'all', 'current', 'custom'
-    let customPages = '';
+    let pagesMode = $state('all'); // 'all', 'current', 'custom'
+    let customPages = $state('');
 
-    let isExportCodeModalOpen = false;
+    let isExportCodeModalOpen = $state(false);
 
-    let angle = 90;
-    let textInput = '';
-    let watermarkOrientation = 'diagonal';
-    let password = '';
-    let regions = '';
-    let cropBox = '';
-    let batesPrefix = '';
-    let batesStart = 1;
-    let batesPadding = 6;
+    let angle = $state(90);
+    let textInput = $state('');
+    let watermarkOrientation = $state('diagonal');
+    let password = $state('');
+    let regions = $state('');
+    let cropBox = $state('');
+    let batesPrefix = $state('');
+    let batesStart = $state(1);
+    let batesPadding = $state(6);
 
-    let outputPath = '';
-    let isExecuting = false;
+    let outputPath = $state('');
+    let isExecuting = $state(false);
 
     // Initialize state from plan
-    if (plan) {
-        if (plan.page_ranges && plan.page_ranges.length > 0) {
-            pagesMode = 'custom';
-            customPages = plan.page_ranges.join(', ');
+    $effect(() => {
+        if (plan) {
+            if (plan.page_ranges && plan.page_ranges.length > 0) {
+                pagesMode = 'custom';
+                customPages = plan.page_ranges.join(', ');
+            }
+            if (plan.angles && plan.angles.length > 0) {
+                angle = plan.angles[0];
+            }
+            if (plan.passwords && plan.passwords.length > 0) {
+                password = plan.passwords[0];
+            }
+            if (plan.output_file) {
+                outputPath = plan.output_file;
+            }
         }
-        if (plan.angles && plan.angles.length > 0) {
-            angle = plan.angles[0];
-        }
-        if (plan.passwords && plan.passwords.length > 0) {
-            password = plan.passwords[0];
-        }
-        if (plan.output_file) {
-            outputPath = plan.output_file;
-        }
-    }
+    });
 
     function getArgs(): Record<string, any> {
         const args: Record<string, any> = { intent: plan.intent };
@@ -139,7 +144,7 @@
         return args;
     }
 
-    $: currentSnippetTarget = (() => {
+    let currentSnippetTarget = $derived.by(() => {
         const intent = plan.intent;
         const toolId = `pdf_${intent.toLowerCase()}`;
         const args = getArgs();
@@ -152,7 +157,7 @@
             outputFile: args.output,
             inputs: args.inputs
         } as SnippetTarget;
-    })();
+    });
 
     function execute() {
         // Collect args based on intent and edited state

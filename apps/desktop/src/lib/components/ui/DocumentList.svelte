@@ -59,23 +59,25 @@
               <span class="doc-pages">{fileInfo.isPdf ? (appState.inspections.get(doc)?.facts?.pageCount ? `${appState.inspections.get(doc)?.facts?.pageCount} pages` : 'PDF') : fileInfo.label.split(' ')[0]}</span>
             </div>
           </div>
-          <button
-            class="view-btn"
-            id="view-doc-{index}"
-            title="View document"
-            aria-label="View {doc.name}"
-            onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-          <button class="remove-btn" onclick={(e) => { e.stopPropagation(); appState.removeDocument(index); }} title="Remove Document">
-            ❌
-          </button>
+          <div class="doc-actions">
+            <button
+              class="view-btn"
+              id="view-doc-{index}"
+              title="View document"
+              aria-label="View {doc.name}"
+              onclick={(e) => { e.stopPropagation(); appState.selectDocument(index); }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="remove-btn" onclick={(e) => { e.stopPropagation(); appState.removeDocument(index); }} title="Remove Document">
+              ✕
+            </button>
+          </div>
         </div>
       {/each}
     </div>
@@ -88,9 +90,28 @@
     flex-direction: column;
     gap: 8px;
   }
-  .filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
-  .filter-pills button { border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); border-radius: 20px; padding: 7px 12px; cursor: pointer; }
-  .filter-pills button.active { border-color: var(--accent-primary); background: var(--bg-surface-hover); }
+  .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filter-pills button {
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border-radius: 20px;
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .filter-pills button:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+  }
+  .filter-pills button.active {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent-primary);
+    font-weight: 600;
+  }
   .filter-pills button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
   .clear-all-btn {
     align-self: flex-start;
@@ -169,23 +190,34 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-width: 0;
   }
 
   .doc-name {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
   .doc-meta {
     display: flex;
-    gap: 12px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .doc-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    flex-shrink: 0;
   }
 
   .view-btn {
@@ -193,40 +225,39 @@
     border: none;
     cursor: pointer;
     color: var(--text-muted);
-    padding: 8px;
-    margin-left: 4px;
+    padding: 6px;
     border-radius: var(--border-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    opacity: 0.6;
+    opacity: 0.7;
   }
 
   .view-btn:hover {
     opacity: 1;
     color: var(--accent-primary);
-    background-color: rgba(94, 106, 210, 0.1);
+    background-color: var(--bg-surface-hover);
   }
 
   .remove-btn {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
-    padding: 8px;
-    margin-left: 8px;
+    padding: 6px;
     border-radius: var(--border-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    opacity: 0.6;
+    opacity: 0.7;
   }
 
   .remove-btn:hover {
     opacity: 1;
-    background-color: rgba(255, 0, 0, 0.1);
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
   }
 </style>

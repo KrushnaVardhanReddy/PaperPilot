@@ -56,7 +56,7 @@ async function run() {
     // Find the most recently created webm file
     const webmFiles = files
       .filter(f => f.endsWith('.webm'))
-      .map(f => path.join(OUTPUT_DIR, f))
+      .map(f => path.join(OUTPUT_DIR, path.basename(f)))
       .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
 
     if (webmFiles.length === 0) {

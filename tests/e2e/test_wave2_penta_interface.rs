@@ -3,7 +3,7 @@ use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, ContentBlock};
 use serde_json::json;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 
@@ -24,7 +24,8 @@ fn call_mcp_tool(name: &str, args: serde_json::Value) -> Result<(bool, serde_jso
     }
 
     let start = Instant::now();
-    let res = PaperPilotMcpServer::execute_call_tool(params);
+    let mcp_server = PaperPilotMcpServer::new(None);
+    let res = mcp_server.execute_call_tool(params);
     let latency = start.elapsed().as_secs_f64() * 1000.0;
 
     if let Ok(rmcp::model::CallToolResponse::Complete(result)) = res {
@@ -41,9 +42,9 @@ fn call_mcp_tool(name: &str, args: serde_json::Value) -> Result<(bool, serde_jso
 fn run_cli(args: &[&str]) -> Result<(bool, String, f64)> {
     // Determine CLI path
     let candidates = [
-        PathBuf::from("target/debug/paperpilot"),
-        PathBuf::from("target/release/paperpilot"),
-        PathBuf::from("target/debug/paperpilot-cli"),
+        get_workspace_root().join("target/debug/paperpilot"),
+        get_workspace_root().join("target/release/paperpilot"),
+        get_workspace_root().join("target/debug/paperpilot-cli"),
     ];
     let mut bin_path = candidates[0].clone();
     for p in &candidates {
@@ -116,10 +117,18 @@ async fn test_wave2_penta_interface() -> Result<()> {
     let mut results: Vec<TestExecutionResult> = Vec::new();
 
     // Spawn API server in background for testing
-    let mut api_child = Command::new("cargo")
-        .args(&["run", "-p", "paperpilot-gateway"])
-        .spawn()
-        .expect("Failed to start gateway");
+    let gateway_bin = workspace_root.join("target/debug/paperpilot-gateway");
+    let mut api_child = if gateway_bin.exists() {
+        Command::new(&gateway_bin)
+            .spawn()
+            .expect("Failed to start gateway binary")
+    } else {
+        Command::new("cargo")
+            .args(&["run", "-p", "paperpilot-gateway"])
+            .current_dir(&workspace_root)
+            .spawn()
+            .expect("Failed to start gateway")
+    };
 
     // Give it a moment to start
     tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;

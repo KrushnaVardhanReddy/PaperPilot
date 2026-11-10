@@ -121,29 +121,34 @@
     {edges}
     {nodeTypes}
     fitView
-    colorMode="dark"
+    colorMode={appState.theme === 'light' ? 'light' : 'dark'}
     onnodedragstop={onNodeDragStop}
     onconnect={onConnect}
     onnodeclick={onNodeClick}
     onpaneclick={onPaneClick}
   >
-    <Background variant={BackgroundVariant.Dots} gap={16} size={1} patternColor="#334155" />
+    <Background
+      variant={BackgroundVariant.Dots}
+      gap={16}
+      size={1}
+      patternColor={appState.theme === 'light' ? '#cbd5e1' : '#334155'}
+    />
     <Panel position="top-right">
       <AutoLayoutButton />
     </Panel>
     <Controls
-      buttonBgColor="#1e293b"
-      buttonBgColorHover="#334155"
-      buttonColor="#f8fafc"
-      buttonColorHover="#60a5fa"
-      buttonBorderColor="#334155"
+      buttonBgColor="var(--bg-surface)"
+      buttonBgColorHover="var(--bg-surface-hover)"
+      buttonColor="var(--text-primary)"
+      buttonColorHover="var(--accent-primary)"
+      buttonBorderColor="var(--border-color)"
     />
     <MiniMap
-      bgColor="#0f172a"
-      nodeColor="#334155"
-      nodeStrokeColor="#475569"
-      maskColor="rgba(15, 23, 42, 0.75)"
-      maskStrokeColor="#3b82f6"
+      bgColor="var(--bg-surface)"
+      nodeColor={appState.theme === 'light' ? '#cbd5e1' : '#334155'}
+      nodeStrokeColor={appState.theme === 'light' ? '#94a3b8' : '#475569'}
+      maskColor={appState.theme === 'light' ? 'rgba(240, 242, 245, 0.75)' : 'rgba(15, 23, 42, 0.75)'}
+      maskStrokeColor="var(--accent-primary)"
     />
   </SvelteFlow>
 </div>

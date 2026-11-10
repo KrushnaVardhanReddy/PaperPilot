@@ -30,6 +30,11 @@ export class AppState {
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
+  isOperationsDrawerOpen = $state(false);
+
+  // Global Export Code Modal state
+  exportCodeModalOpen = $state(false);
+  exportCodeTarget = $state<any | null>(null);
 
   // Developer Mode
   developerMode = $state(false);
@@ -54,6 +59,11 @@ export class AppState {
       const ua = navigator.userAgent.toLowerCase();
       if (ua.includes('android') || ua.includes('iphone') || ua.includes('ipad')) {
           this.isTauriMobile = true;
+      }
+
+      const storedTheme = localStorage.getItem('paperpilot_theme');
+      if (storedTheme === 'light' || storedTheme === 'dark') {
+        this.theme = storedTheme;
       }
 
       const storedLayout = localStorage.getItem('paperpilot_workspace_layout') as WorkspaceLayoutMode;
@@ -168,12 +178,29 @@ export class AppState {
     this.showDiffView = typeof show === 'boolean' ? show : !this.showDiffView;
   }
 
+  toggleOperationsDrawer(show?: boolean) {
+    this.isOperationsDrawerOpen = typeof show === 'boolean' ? show : !this.isOperationsDrawerOpen;
+  }
+
+  openExportCode(target: any = null) {
+    this.exportCodeTarget = target;
+    this.exportCodeModalOpen = true;
+  }
+
+  closeExportCode() {
+    this.exportCodeModalOpen = false;
+    this.exportCodeTarget = null;
+  }
+
   setLoading(loading: boolean) {
     this.isLoading = loading;
   }
 
   async setTheme(theme: string) {
     this.theme = theme;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paperpilot_theme', theme);
+    }
     try {
       await getCurrentWindow().setTheme(theme === 'dark' ? 'dark' : 'light');
     } catch (err) {

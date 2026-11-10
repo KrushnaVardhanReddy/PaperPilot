@@ -51,7 +51,11 @@ pub fn find_model(file_name: &str) -> Option<PathBuf> {
             .join("ppocrv6")
             .join(file_name),
         PathBuf::from("../models").join("ocr").join(file_name),
+        PathBuf::from("../models").join("ocr").join("ppocrv4").join(file_name),
         PathBuf::from("../../models").join("ocr").join(file_name),
+        PathBuf::from("../../models").join("ocr").join("ppocrv4").join(file_name),
+        PathBuf::from("../../../models").join("ocr").join(file_name),
+        PathBuf::from("../../../models").join("ocr").join("ppocrv4").join(file_name),
     ] {
         if candidate.exists() {
             return Some(candidate);

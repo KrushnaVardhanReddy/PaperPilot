@@ -30,13 +30,15 @@ pub fn handle_ask(
     }
 
     if dry_run {
+        let plan_text = format!("📋 Interpreted Plan:\n  • Intent: {:?}\n  • Inputs: {:?}\n", plan.intent, plan.input_files);
+        if let Some(out) = &plan.output_file {
+            let _ = std::fs::write(out, &plan_text);
+        }
         if json {
             let out = serde_json::to_string_pretty(&plan).unwrap();
             println!("{}", out);
         } else {
-            println!("📋 Interpreted Plan:");
-            println!("  • Intent: {:?}", plan.intent);
-            println!("  • Inputs: {:?}", plan.input_files);
+            print!("{}", plan_text);
             if let Some(out) = &plan.output_file {
                 println!("  • Output: {}", out);
             }
@@ -344,7 +346,7 @@ pub fn handle_ask(
                     "Search requires an input file".into(),
                 ));
             }
-            crate::commands::group_c::handle_search(&inputs_paths[0], "query")
+            crate::commands::group_c::handle_search(&inputs_paths[0], "query", output_path.as_deref())
         }
         Intent::Render => {
             if inputs_paths.is_empty() {
@@ -524,7 +526,7 @@ pub fn handle_ask(
                     "Classify requires an input file".into(),
                 ));
             }
-            crate::commands::group_d::handle_classify(&inputs_paths[0])
+            crate::commands::group_d::handle_classify(&inputs_paths[0], output_path.as_deref())
         }
         _ => Err(PdfError::UnsupportedOperation(
             "Unsupported NLP intent".into(),

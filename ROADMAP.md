@@ -297,3 +297,14 @@ Spec 140's V2 workspace remains reverted. Phase 3/4 still have open Community ta
 | **10.4** | Multi-Format Penta-Interface Parity | Expose all document formats over CLI, MCP, REST, and Edge | Universal API & AI Gateway |
 | **10.5** | Universal AI Document Gateway | Multimodal asset extraction & normalization for LLM agents | Default AI Document Engine |
 | **10.6** | Enterprise Universal Studio UI | Side-by-side preview, edit, annotate, split, and merge any format | Next-Gen Office Workstation |
+
+---
+
+### 11. Browser Extensions & Web Integrations (Phase 11)
+*Brings PaperPilot's document engine directly into browser tabs with zero friction.*
+
+| Task # | Feature Name | Core Functionality | Impact / Market Need |
+|---|---|---|---|
+| **11.1** | PaperPilot Browser Extension (MV3) | Manifest V3 companion extension (Chrome/Edge/Firefox) with context menu & toolbar actions for in-tab PDFs (arXiv, invoices, web articles). Native Messaging / local REST bridge to PaperPilot daemon for instant sign, OCR, summarize, convert, and redact. | Zero-Friction User Acquisition & In-Tab Workflows |
+| **11.2** | Web Clean-Article to PDF/A Exporter | One-click web page to sanitized PDF/A or clean Markdown export. Strips ads, generates table of contents, and embeds metadata. | Research & Archival Capture |
+| **11.3** | In-Browser Client WASM Toolkit | Lightweight pure-Rust WASM compilation for client-side merge, split, watermark, and form inspection without native backend required. | Privacy-Preserving Instant Tools |
