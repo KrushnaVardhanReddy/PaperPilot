@@ -49,20 +49,18 @@
 [Tier 1: Distribution & DX] ➔ [Tier 2: Agent Moat & Scalability] ➔ [Tier 3: Browser Extension] ➔ [Tier 4: Enterprise Moats]
 ```
 
-### 🥇 Tier 1: Distribution & Developer Onboarding (Immediate Priority)
+### 🥇 Tier 1: Distribution & Developer Onboarding (🚀 IN PROGRESS via Jules)
 *Goal: Remove all friction so any developer can install PaperPilot in 10 seconds and connect it to Claude, Cursor, or Python.*
 
-1. **Spec 161: Package Distribution & One-Line Installers (`specs/161-package-distribution-and-installers/`)**
-   - Create POSIX `scripts/install.sh` for one-command install: `curl -fsSL https://paperpilot.app/install.sh | sh` (detects Linux/macOS and x86_64/arm64, downloads binary, verifies SHA256).
-   - Create Windows PowerShell `scripts/install.ps1`.
-   - Create Homebrew formula `packaging/homebrew/paperpilot.rb`.
-2. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)**
-   - Implement `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage (`models/ocr/ppocrv4`), and disk space.
-   - Expose CLI command `paperpilot doctor`, REST endpoint `GET /api/v1/doctor`, and "Run System Diagnostics" button in Desktop Settings.
-3. **Spec 162: AI Framework Integration Recipes (`specs/162-framework-integration-recipes/`)**
-   - Create `recipes/langchain/paperpilot_loader.py` and `recipes/llamaindex/paperpilot_reader.py`.
-   - Create `recipes/mcp-presets/claude_desktop_config.json` and `cursor_mcp_config.json`.
-   - Create `recipes/n8n/invoice-auto-ocr-pipeline.json`.
+1. **Spec 161: Package Distribution & One-Line Installers (`specs/161-package-distribution-and-installers/`)** — 🚀 **IN PROGRESS**
+   - Jules Session: [`14380280216481973858`](https://jules.google.com/session/14380280216481973858)
+   - Scope: POSIX `scripts/install.sh`, Windows PowerShell `scripts/install.ps1`, Homebrew formula `packaging/homebrew/paperpilot.rb`.
+2. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)** — 🚀 **IN PROGRESS**
+   - Jules Session: [`308936918267204628`](https://jules.google.com/session/308936918267204628)
+   - Scope: `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage, and disk space. CLI `paperpilot doctor`, REST `GET /health` & `GET /api/v1/doctor`, and Settings UI modal.
+3. **Spec 162: AI Framework Integration Recipes (`specs/162-framework-integration-recipes/`)** — 🚀 **IN PROGRESS**
+   - Jules Session: [`17905418285765948360`](https://jules.google.com/session/17905418285765948360)
+   - Scope: Turnkey Python adapters for LangChain & LlamaIndex, Claude/Cursor MCP configs, and n8n invoice auto-OCR pipeline.
 
 ---
 
