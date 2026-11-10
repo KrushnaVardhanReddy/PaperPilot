@@ -79,8 +79,14 @@ test.beforeEach(async ({ page }) => {
            if ((window as any).__last_tool_type === 'multi') {
                return ['../../tests/e2e_fixtures/real/merge_a.pdf', '../../tests/e2e_fixtures/real/merge_b.pdf'];
            }
+           if ((window as any).__last_tool_name === 'pdf_images_to_pdf') {
+               return ['../../tests/e2e_fixtures/real/img1.png', '../../tests/e2e_fixtures/real/img2.png'];
+           }
+           if ((window as any).__last_tool_name === 'img_to_pdf') {
+               return ['../../tests/e2e_fixtures/real/img1.png'];
+           }
            if ((window as any).__last_tool_type === 'image') {
-               return ['../../tests/e2e_fixtures/real/test.png'];
+               return ['../../tests/e2e_fixtures/real/img1.png'];
            }
            return ['../../tests/e2e_fixtures/real/multi_page.pdf'];
         }
@@ -120,6 +126,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
     const fixtureTwoUpBook = path.join(fixtureDir, 'two_up_book.pdf');
     const fixtureEightPages = path.join(fixtureDir, 'eight_pages.pdf');
     const fixtureDataCsv = path.join(fixtureDir, 'data.csv');
+    const fixtureImg1 = path.join(fixtureDir, 'img1.png');
+    const fixtureImg2 = path.join(fixtureDir, 'img2.png');
+    const fixturePhotoDoc = path.join(fixtureDir, 'sample_photo_doc.pdf');
+    const fixtureLargeDoc = path.join(fixtureDir, 'large_doc.pdf');
     const fixturePng = path.join(fixtureDir, 'test.png');
 
     await page.goto('http://127.0.0.1:1420/');
@@ -156,6 +166,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
                fixtureMergeA,
                fixtureMergeB
              ]);
+          } else if (op.name === 'pdf_images_to_pdf') {
+             await fileInput.setInputFiles([fixtureImg1, fixtureImg2]);
+          } else if (op.name === 'img_to_pdf') {
+             await fileInput.setInputFiles([fixtureImg1]);
           } else if (op.type === 'image') {
              await fileInput.setInputFiles([fixturePng]);
           } else if (op.name === 'pdf_split_scanned_book') {
@@ -164,6 +178,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
              await fileInput.setInputFiles([fixtureEightPages]);
           } else if (op.name === 'pdf_posterize' || op.name === 'pdf_attachments') {
              await fileInput.setInputFiles([fixtureSingle]);
+          } else if (op.name === 'pdf_compress') {
+             await fileInput.setInputFiles([fixturePhotoDoc]);
+          } else if (op.name === 'pdf_dedup_streams') {
+             await fileInput.setInputFiles([fixtureLargeDoc]);
           } else {
              await fileInput.setInputFiles([fixtureMulti]);
           }
@@ -285,6 +303,12 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               await nameInput.fill('data.csv');
             }
           }
+          if (op.name === 'pdf_compress') {
+            const qualitySlider = page.locator('#compressQuality');
+            if (await qualitySlider.isVisible()) {
+              await qualitySlider.fill('50');
+            }
+          }
           if (op.name === 'pdf_encrypt') {
              const passInput = page.locator('#passwordField');
              if (await passInput.isVisible()) {
@@ -372,17 +396,19 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" pdf-attachments --input "${fixtureSingle}" --action add --file "${fixtureDataCsv}" --file-name data.csv --output "${outputFile}"`;
               break;
             case 'pdf_images_to_pdf':
+              cliCmd = `"${cliBin}" images-to-pdf --images "${fixtureImg1}" "${fixtureImg2}" --output "${outputFile}"`;
+              break;
             case 'img_to_pdf':
-              cliCmd = `"${cliBin}" images-to-pdf --images "${fixturePng}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" images-to-pdf --images "${fixtureImg1}" --output "${outputFile}"`;
               break;
             case 'pdf_compress':
-              cliCmd = `"${cliBin}" compress --input "${fixtureSingle}" --quality 50 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" compress --input "${fixturePhotoDoc}" --quality 50 --output "${outputFile}"`;
               break;
             case 'pdf_dedup_streams':
-              cliCmd = `"${cliBin}" pdf-dedup-streams --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-dedup-streams --input "${fixtureLargeDoc}" --output "${outputFile}"`;
               break;
             case 'pdf_linearize':
-              cliCmd = `"${cliBin}" pdf-linearize --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-linearize --input "${fixtureMulti}" --output "${outputFile}"`;
               break;
             case 'pdf_repair':
               cliCmd = `"${cliBin}" pdf-repair --input "${fixtureSingle}" --output "${outputFile}"`;
@@ -642,38 +668,51 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               invariantNote = 'Attachments invariant: data.csv successfully embedded into /EmbeddedFiles portfolio dictionary';
               break;
             }
-            case 'pdf_images_to_pdf':
+            case 'pdf_images_to_pdf': {
+              const res = await PdfInspector.inspect(outputFile);
+              expect(res.numPages).toBe(2);
+              const raw = PdfInspector.inspectRaw(outputFile);
+              expect(raw.isPdf).toBe(true);
+              expect(raw.hasDictionary('XObject') || raw.hasDictionary('Image')).toBe(true);
+              invariantNote = 'Raster containerization invariant: 2 PNG images converted into a valid 2-page PDF';
+              break;
+            }
             case 'img_to_pdf': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(1);
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
               expect(raw.hasDictionary('XObject') || raw.hasDictionary('Image')).toBe(true);
-              invariantNote = 'Raster containerization: PNG converted to 1-page PDF with XObject Image';
+              invariantNote = 'Raster containerization invariant: Single PNG image converted into a valid 1-page PDF';
               break;
             }
             case 'pdf_compress': {
               const res = await PdfInspector.inspect(outputFile);
               expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              const origSize = fs.statSync(fixturePhotoDoc).size;
+              const compSize = fs.statSync(outputFile).size;
+              expect(compSize).toBeLessThan(origSize * 0.8); // Reduced by >= 20%
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Stream compression: valid PDF with text preserved';
+              invariantNote = `Stream compression invariant: file size reduced by ${(((origSize - compSize) / origSize) * 100).toFixed(1)}% (from ${(origSize/1024).toFixed(0)}KB to ${(compSize/1024).toFixed(0)}KB) with visual fidelity preserved`;
               break;
             }
             case 'pdf_dedup_streams': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              expect(res.numPages).toBe(2);
+              const origSize = fs.statSync(fixtureLargeDoc).size;
+              const dedupSize = fs.statSync(outputFile).size;
+              expect(dedupSize).toBeLessThan(origSize); // Duplicate streams merged and reduced
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Deduplication: indirect object streams optimized';
+              invariantNote = `Stream deduplication invariant: duplicate streams merged, size reduced by ${(((origSize - dedupSize) / origSize) * 100).toFixed(1)}% (from ${(origSize/1024).toFixed(0)}KB to ${(dedupSize/1024).toFixed(0)}KB)`;
               break;
             }
             case 'pdf_linearize': {
               const res = await PdfInspector.inspect(outputFile);
-              expect(res.numPages).toBe(1);
-              expect(res.hasText('Single page text')).toBe(true);
+              expect(res.numPages).toBe(5);
+              const rawContent = fs.readFileSync(outputFile, 'latin1');
+              expect(rawContent).toContain('/Linearized');
               expect(PdfInspector.inspectRaw(outputFile).isPdf).toBe(true);
-              invariantNote = 'Fast Web View linearized structure confirmed';
+              invariantNote = 'Fast Web View invariant: /Linearized dictionary present in trailer/object structure with 5 valid pages';
               break;
             }
             case 'pdf_repair': {

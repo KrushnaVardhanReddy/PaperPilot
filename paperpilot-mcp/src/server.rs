@@ -3990,8 +3990,17 @@ impl PaperPilotMcpServer {
             "Converts a list of images to a PDF. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
                 .into(),
         );
-        tool_itp.input_schema = Arc::new(schema_itp);
+        tool_itp.input_schema = Arc::new(schema_itp.clone());
         tools.push(tool_itp);
+
+        let mut tool_single_itp = Tool::default();
+        tool_single_itp.name = "img_to_pdf".into();
+        tool_single_itp.description = Some(
+            "Converts image(s) to a PDF document. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
+                .into(),
+        );
+        tool_single_itp.input_schema = Arc::new(schema_itp);
+        tools.push(tool_single_itp);
 
         // Tool: pdf_compare
         let mut schema_compare = serde_json::Map::new();
@@ -7439,8 +7448,9 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_images_to_pdf" => {
-                let inputs = get_string_array("inputs")?;
+            "pdf_images_to_pdf" | "img_to_pdf" => {
+                let inputs = get_string_array("inputs")
+                    .or_else(|_| get_string("input").map(|s| vec![s]))?;
                 let output = get_string("output")?;
 
                 ensure_parent_dir(&output)?;

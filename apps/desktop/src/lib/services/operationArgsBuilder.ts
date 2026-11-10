@@ -199,27 +199,39 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         }
-        case 'img_to_pdf': {
-            let selected: any, outputPath: string | null = null;
-            try {
-                const { open, save } = await import('@tauri-apps/plugin-dialog');
-                selected = await open({
-                    title: 'Select Images',
-                    multiple: true,
-                    filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }]
-                });
-                if (!selected || selected.length === 0) return null;
-                const suggested = getOutputPath('output.pdf');
-                outputPath = await save({
-                    title: 'Save PDF As...',
-                    defaultPath: suggested,
-                    filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
-                });
-                if (!outputPath) return null;
-            } catch(e) {
-                return null;
+        case 'img_to_pdf':
+        case 'pdf_images_to_pdf': {
+            let inputPaths: string[] = [];
+            if (docPath && (docPath.match(/\.(png|jpg|jpeg|webp)$/i))) {
+                inputPaths = [docPath];
             }
-            const inputPaths = Array.isArray(selected) ? selected : [selected];
+            let outputPath = customOutputPath ? customOutputPath : null;
+
+            if (inputPaths.length === 0 || !outputPath) {
+                try {
+                    const { open, save } = await import('@tauri-apps/plugin-dialog');
+                    if (inputPaths.length === 0) {
+                        const selected = await open({
+                            title: 'Select Images',
+                            multiple: true,
+                            filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+                        });
+                        if (!selected || selected.length === 0) return null;
+                        inputPaths = Array.isArray(selected) ? selected : [selected];
+                    }
+                    if (!outputPath) {
+                        const suggested = getOutputPath('output.pdf');
+                        outputPath = await save({
+                            title: 'Save PDF As...',
+                            defaultPath: suggested,
+                            filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+                        });
+                        if (!outputPath) return null;
+                    }
+                } catch(e) {
+                    return null;
+                }
+            }
             args = {
                 inputs: inputPaths,
                 output: outputPath
@@ -262,6 +274,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         }
         case 'compress':
+        case 'pdf_compress':
             args = {
                 input: docPath,
                 quality: compressQuality.toString(),
@@ -401,6 +414,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'linearize':
+        case 'pdf_linearize':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_linearized.pdf`)
