@@ -43,11 +43,12 @@
 
 ---
 
-## 🎯 Active Development Focus
-- **Hexagonal DatabasePort Architecture (Spec 150)**: Decoupled database domain models into `paperpilot-core::storage` and introduced `pub trait DatabasePort: Send + Sync` (PR #324). Implemented on `paperpilot-storage` with embedded libSQL, enabling `PaperPilot-Enterprise` to implement PostgreSQL/Supabase without upstream code changes.
-- **Production Desktop & Release Packaging Hardening**: Fixed production WebKitGTK PDF blank canvas failure by passing raw `Uint8Array` buffers and updating Tauri CSP. Resolved desktop window/dock icon configuration (`#[cfg(all(not(target_os = "android"), not(target_os = "ios")))]`) and added `PaperPilot.desktop` launcher to release archives.
-- **WASM & CI Runner Stability**: Gated native dependencies for zero-network WASM compilation, modernized GitHub Actions workflows to `@v4`/`@v2`, and resolved macOS runner clang target incompatibility.
-- **Multi-Agent Delegation Framework**: Enhanced `tools/jules-submit` and `scripts/gemini_pair.sh` to support both Cloud Jules API and local Gemini CLI pair programming (`agy`). Developers can run prompts autonomously (`make gemini-run FILE=...`) or interactively (`make gemini-pair FILE=...`) with zero cloud latency or session timeout risks.
+## 🎯 Active Development Focus & Parallel Jules Sprints
+- **Phase 6.1 (Tier 1 Quick Wins) — Ready for Autonomous Jules Execution**:
+  - **Task 6.1.1 (Spec 161)**: Universal one-line install scripts (`install.sh`, `install.ps1`, Homebrew formula `paperpilot.rb`).
+  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal).
+  - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow).
+  *(These 3 tasks have non-overlapping directory boundaries and can safely execute in parallel via Jules).*
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 
