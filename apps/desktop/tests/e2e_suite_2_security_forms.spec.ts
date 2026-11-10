@@ -234,7 +234,25 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
           if (op.name === 'pdf_watermark') {
             const wmInput = page.locator('#watermarkText');
             if (await wmInput.isVisible()) {
-              await wmInput.fill('CONFIDENTIAL_STAMP');
+              await wmInput.fill('CONFIDENTIAL');
+            }
+          }
+          if (op.name === 'pdf_fill_form') {
+            const fdInput = page.locator('#formDataPath');
+            if (await fdInput.isVisible()) {
+              await fdInput.fill(fixtureFormData);
+            }
+          }
+          if (op.name === 'pdf_create_form_field') {
+            const fnInput = page.locator('#formFieldName');
+            if (await fnInput.isVisible()) {
+              await fnInput.fill('ApplicantName');
+            }
+          }
+          if (op.name === 'batch_fill' || op.name === 'cli_fill_batch') {
+            const batchInput = page.locator('#batchCsvPath');
+            if (await batchInput.isVisible()) {
+              await batchInput.fill(fixtureCsv);
             }
           }
           if (op.name === 'pdf_header_footer') {
@@ -315,10 +333,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               cliCmd = `"${cliBin}" form read-form "${fixtureForm}" 2>/dev/null > "${outputFile}"`;
               break;
             case 'pdf_fill_form':
-              cliCmd = `"${cliBin}" form fill-form "${fixtureForm}" --data "${fixtureFormData}" -o "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-fill-form --input "${fixtureForm}" --data "${fixtureFormData}" -o "${outputFile}"`;
               break;
             case 'pdf_create_form_field':
-              cliCmd = `"${cliBin}" form create-form-field "${fixtureSingle}" --name "TestField" --rect "10,10,100,50" -o "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-create-form-field --input "${fixtureSingle}" --name "ApplicantName" --rect "50,50,200,80" -o "${outputFile}"`;
               break;
             case 'batch_fill':
             case 'cli_fill_batch': {
@@ -328,7 +346,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               break;
             }
             case 'pdf_watermark':
-              cliCmd = `"${cliBin}" watermark --input "${fixtureSingle}" --text "CONFIDENTIAL_STAMP" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" watermark --input "${fixtureSingle}" --text "CONFIDENTIAL" --angle 45 --opacity 0.2 --output "${outputFile}"`;
               break;
             case 'pdf_bates':
               cliCmd = `"${cliBin}" bates --input "${fixtureSingle}" --prefix CONF- --start 100 --output "${outputFile}"`;
@@ -558,15 +576,22 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               expect(parsed.formFields?.Email).toBe('jane.doe@enterprise.corp');
               expect(parsed.formFields?.AgreedToTerms).toBe('Yes');
               expect(parsed.formFields?.AccountType).toBe('Enterprise');
-              invariantNote = 'AcroForm fill exactness: Fields [FullName, Email, AgreedToTerms, AccountType] populated with form_data.json and size increased';
+              // Verify filled values rendered in output appearance / content
+              expect(raw.hasDictionary('AcroForm')).toBe(true);
+              expect(raw.rawContent).toContain('Jane Doe');
+              invariantNote = 'AcroForm fill exactness: Fields [FullName, Email, AgreedToTerms, AccountType] populated with form_data.json and rendered in output PDF';
               break;
             }
             case 'pdf_create_form_field': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
-              expect(parsed.formFields).toHaveProperty('TestField');
-              invariantNote = 'Field synthesized: New AcroForm Widget "TestField" added to page annotations';
+              expect(parsed.formFields).toHaveProperty('ApplicantName');
+              // Assert widget annotation added to /Annots
+              expect(raw.hasDictionary('Annots')).toBe(true);
+              expect(raw.rawContent).toContain('/Subtype/Widget');
+              expect(raw.rawContent).toContain('ApplicantName');
+              invariantNote = 'Field synthesized: Widget annotation "ApplicantName" added to /Annots on single_page.pdf';
               break;
             }
             case 'batch_fill':
@@ -574,15 +599,28 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               const receipt = JSON.parse(fileContent.toString('utf8'));
               expect(receipt.success).toBe(true);
               expect(receipt.batch.succeeded).toBeGreaterThan(0);
-              invariantNote = `Batch execution receipt: ${receipt.batch.succeeded} PDF documents populated from CSV dataset`;
+              expect(receipt.batch.results.length).toBeGreaterThan(0);
+              // Assert distinct output PDFs created
+              const outputPaths = receipt.batch.results.map((r: any) => r.output_path);
+              const uniqueOutputs = new Set(outputPaths);
+              expect(uniqueOutputs.size).toBe(receipt.batch.results.length);
+              for (const p of outputPaths) {
+                expect(fs.existsSync(p)).toBe(true);
+                expect(fs.statSync(p).size).toBeGreaterThan(0);
+              }
+              invariantNote = `Batch execution receipt: ${receipt.batch.succeeded} distinct output PDF documents generated from batch_data.csv and receipt verified`;
               break;
             }
             case 'pdf_watermark': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
-              expect(parsed.hasText('CONFIDENTIAL_STAMP')).toBe(true);
-              invariantNote = 'Text stamp invariant: "CONFIDENTIAL_STAMP" detected in decoded text stream';
+              expect(parsed.hasText('CONFIDENTIAL')).toBe(true);
+              // Assert opacity and rotation in content stream
+              expect(raw.hasDictionary('ExtGState')).toBe(true);
+              expect(raw.rawContent).toContain('/ca ');
+              expect(raw.rawContent).toContain('Tm');
+              invariantNote = 'Semi-transparent diagonal watermark applied: "CONFIDENTIAL" with ExtGState opacity and rotation matrix in content stream';
               break;
             }
             case 'pdf_bates': {

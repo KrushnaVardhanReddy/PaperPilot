@@ -3,7 +3,7 @@ use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, ContentBlock};
 use serde_json::json;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 
@@ -89,7 +89,12 @@ async fn run_api(endpoint: &str, payload: serde_json::Value) -> Result<(bool, se
 }
 
 pub fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf()
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    if manifest.ends_with("paperpilot-mcp") {
+        manifest.parent().unwrap().to_path_buf()
+    } else {
+        manifest.parent().unwrap().parent().unwrap().to_path_buf()
+    }
 }
 
 pub fn setup_test_env() -> PathBuf {
@@ -123,6 +128,8 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let img_png = workspace_root.join("tests/e2e_fixtures/real/img1.png").to_string_lossy().to_string();
     let stationery_pdf = workspace_root.join("tests/e2e_fixtures/real/stationery.pdf").to_string_lossy().to_string();
     let text_pii_pdf = workspace_root.join("tests/e2e_fixtures/real/text_pii.pdf").to_string_lossy().to_string();
+    let form_data_json = workspace_root.join("tests/e2e_fixtures/real/form_data.json").to_string_lossy().to_string();
+    let batch_data_csv = workspace_root.join("tests/e2e_fixtures/real/batch_data.csv").to_string_lossy().to_string();
 
     let tools = vec![
         "pdf_watermark",
@@ -137,13 +144,15 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_flatten",
         "pdf_read_form",
         "pdf_fill_form",
+        "pdf_create_form_field",
+        "batch_fill",
+        "cli_fill_batch",
         "pdf_sign",
         "pdf_validate_signatures",
         "pdf_remove_signatures",
         "pdf_hash",
         "pdf_validate",
         "pdf_change_permissions",
-        "pdf_create_form_field",
         "pdf_timestamp",
         "pdf_bates",
     ];
@@ -154,6 +163,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
         let cli_out = out_dir.join(format!("{}_cli.pdf", tool_id));
         let mcp_out = out_dir.join(format!("{}_mcp.pdf", tool_id));
         let api_out = out_dir.join(format!("{}_api.pdf", tool_id));
+        let batch_cli_dir = out_dir.join(format!("{}_cli_batch", tool_id));
+        let batch_mcp_dir = out_dir.join(format!("{}_mcp_batch", tool_id));
+        let batch_api_dir = out_dir.join(format!("{}_api_batch", tool_id));
 
         let mut cli_args: Vec<&str> = vec![];
         let mut mcp_payload = json!({});
@@ -162,9 +174,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
 
         match *tool_id {
             "pdf_watermark" => {
-                cli_args = vec!["watermark", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--text", "CONFIDENTIAL", "--json"];
-                mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "text": "CONFIDENTIAL" });
-                api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "text": "CONFIDENTIAL" });
+                cli_args = vec!["watermark", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--text", "CONFIDENTIAL", "--opacity", "0.3", "--angle", "45", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "text": "CONFIDENTIAL", "opacity": 0.3, "angle": 45.0 });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "text": "CONFIDENTIAL", "opacity": 0.3, "angle": 45.0 });
             }
             "pdf_encrypt" => {
                 cli_args = vec!["encrypt", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--user-password", "pass", "--owner-password", "pass", "--json"];
@@ -208,9 +220,30 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 requires_output = false;
             }
             "pdf_fill_form" => {
-                cli_args = vec!["fill-form", "--input", &form_pdf, "--output", cli_out.to_str().unwrap(), "--data", "{\"Name\": \"John Doe\"}", "--json"];
-                mcp_payload = json!({ "input": form_pdf, "output": mcp_out.to_str().unwrap(), "data": {"Name": "John Doe"} });
-                api_payload = json!({ "input": form_pdf, "output": api_out.to_str().unwrap(), "data": {"Name": "John Doe"} });
+                cli_args = vec!["pdf-fill-form", "--input", &form_pdf, "--output", cli_out.to_str().unwrap(), "--data", &form_data_json, "--json"];
+                mcp_payload = json!({ "input": form_pdf, "output": mcp_out.to_str().unwrap(), "data": { "FullName": "Jane Doe", "Email": "jane.doe@enterprise.corp", "AgreedToTerms": "Yes", "AccountType": "Enterprise" } });
+                api_payload = json!({ "input": form_pdf, "output": api_out.to_str().unwrap(), "data": { "FullName": "Jane Doe", "Email": "jane.doe@enterprise.corp", "AgreedToTerms": "Yes", "AccountType": "Enterprise" } });
+            }
+            "pdf_create_form_field" => {
+                cli_args = vec!["pdf-create-form-field", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--name", "ApplicantName", "--type", "text", "--rect", "50,50,200,80", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "name": "ApplicantName", "type": "text", "rect": [50.0, 50.0, 200.0, 80.0] });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "name": "ApplicantName", "type": "text", "rect": [50.0, 50.0, 200.0, 80.0] });
+            }
+            "batch_fill" => {
+                fs::create_dir_all(&batch_cli_dir).unwrap();
+                fs::create_dir_all(&batch_mcp_dir).unwrap();
+                cli_args = vec!["fill-batch", "--template", &form_pdf, "--data", &batch_data_csv, "--output-dir", batch_cli_dir.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "template": form_pdf, "data": batch_data_csv, "output_dir": batch_mcp_dir.to_str().unwrap() });
+                api_payload = json!({ "template": form_pdf, "data": batch_data_csv, "output_dir": batch_api_dir.to_str().unwrap() });
+                requires_output = false;
+            }
+            "cli_fill_batch" => {
+                fs::create_dir_all(&batch_cli_dir).unwrap();
+                fs::create_dir_all(&batch_mcp_dir).unwrap();
+                cli_args = vec!["cli-fill-batch", "--template", &form_pdf, "--data", &batch_data_csv, "--output-dir", batch_cli_dir.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "template": form_pdf, "data": batch_data_csv, "output_dir": batch_mcp_dir.to_str().unwrap() });
+                api_payload = json!({ "template": form_pdf, "data": batch_data_csv, "output_dir": batch_api_dir.to_str().unwrap() });
+                requires_output = false;
             }
             "pdf_flatten" => {
                 cli_args = vec!["flatten", "--input", &form_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
@@ -255,11 +288,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "allow_print": true });
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "allow_print": true });
             }
-            "pdf_create_form_field" => {
-                cli_args = vec!["create-form-field", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--name", "Signature", "--type", "text", "--json"];
-                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "name": "Signature", "type": "text" });
-                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "name": "Signature", "type": "text" });
-            }
             "pdf_timestamp" => {
                 cli_args = vec!["timestamp", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--server-url", "http://test.tsa", "--json"];
                 mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "server_url": "http://test.tsa" });
@@ -277,7 +305,13 @@ async fn test_wave5_penta_interface() -> Result<()> {
         let (success, out, latency) = run_cli(&cli_args)?;
         let mut passed = success;
         let mut size = 0;
-        if passed && requires_output {
+        if *tool_id == "batch_fill" || *tool_id == "cli_fill_batch" {
+            let receipt_file = batch_cli_dir.join("execution_receipt.json");
+            passed = success && receipt_file.exists();
+            if passed {
+                size = fs::metadata(&receipt_file).map(|m| m.len() as usize).unwrap_or(0);
+            }
+        } else if passed && requires_output {
             if cli_out.exists() {
                 size = fs::metadata(&cli_out).unwrap().len() as usize;
                 let content = fs::read(&cli_out).unwrap_or_default();
@@ -303,7 +337,13 @@ async fn test_wave5_penta_interface() -> Result<()> {
         let (success, resp, latency) = call_mcp_tool(tool_id, mcp_payload)?;
         let mut passed = success;
         let mut size = 0;
-        if passed && requires_output {
+        if *tool_id == "batch_fill" || *tool_id == "cli_fill_batch" {
+            let receipt_file = batch_mcp_dir.join("execution_receipt.json");
+            passed = success && (receipt_file.exists() || resp.to_string().contains("\"success\":true"));
+            if passed {
+                size = fs::metadata(&receipt_file).map(|m| m.len() as usize).unwrap_or(resp.to_string().len());
+            }
+        } else if passed && requires_output {
             if mcp_out.exists() {
                 size = fs::metadata(&mcp_out).unwrap().len() as usize;
                 let content = fs::read(&mcp_out).unwrap_or_default();

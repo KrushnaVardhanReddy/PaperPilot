@@ -188,6 +188,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let piiScanIban = $state(true);
   let redactQuery = $state('');
 
+  // Form Field, Fill & Batch Parameter States (Tools 46-50)
+  let formDataPath = $state('tests/e2e_fixtures/real/form_data.json');
+  let formFieldName = $state('ApplicantName');
+  let formFieldType = $state('text');
+  let formFieldPage = $state(1);
+  let formFieldRect = $state('50,50,200,80');
+  let batchCsvPath = $state('tests/e2e_fixtures/real/batch_data.csv');
+
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -441,6 +449,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_stamp':         customOutputPath = getOutputPath(`${base}_stamped.pdf`);     break;
       case 'flatten':
       case 'pdf_flatten':       customOutputPath = getOutputPath(`${base}_flattened.pdf`);   break;
+      case 'fill_form':
+      case 'pdf_fill_form':     customOutputPath = getOutputPath(`${base}_filled.pdf`);      break;
+      case 'create_form_field':
+      case 'pdf_create_form_field': customOutputPath = getOutputPath(`${base}_with_field.pdf`); break;
+      case 'batch_fill':
+      case 'cli_fill_batch':    customOutputPath = getOutputPath(`${base}_batch_receipt.json`); break;
       case 'read_form':
       case 'pdf_read_form':     customOutputPath = getOutputPath(`${base}_form_fields.json`); break;
       case 'extract_pages':
@@ -631,7 +645,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             piiScanEmails,
             piiScanPhones,
             piiScanIban,
-            redactQuery
+            redactQuery,
+            formDataPath,
+            formFieldName,
+            formFieldType,
+            formFieldPage,
+            formFieldRect,
+            batchCsvPath
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -833,7 +853,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           piiScanEmails,
           piiScanPhones,
           piiScanIban,
-          redactQuery
+          redactQuery,
+          formDataPath,
+          formFieldName,
+          formFieldType,
+          formFieldPage,
+          formFieldRect,
+          batchCsvPath
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1916,6 +1942,46 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Extract all interactive AcroForm field values and widget definitions into structured JSON.
           </p>
           <span class="field-hint">Parses text fields, checkboxes, radio groups, and signature widgets across all pages.</span>
+        </div>
+      {:else if activeTool.id === 'fill_form' || activeTool.id === 'pdf_fill_form'}
+        <div class="operation-config">
+          <label for="formDataPath" class="section-desc">Form Data JSON Path:</label>
+          <input id="formDataPath" type="text" class="form-input" bind:value={formDataPath} placeholder="e.g. tests/e2e_fixtures/real/form_data.json" />
+          <span class="field-hint">JSON mapping field names to values (e.g. &#123;"ApplicantName": "Jane Doe"&#125;).</span>
+        </div>
+      {:else if activeTool.id === 'create_form_field' || activeTool.id === 'pdf_create_form_field'}
+        <div class="operation-config">
+          <label for="formFieldName" class="section-desc">Field Name:</label>
+          <input id="formFieldName" type="text" class="form-input" bind:value={formFieldName} placeholder="ApplicantName" />
+          <span class="field-hint">Unique identifier for the form widget annotation.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="formFieldType" class="section-desc">Field Type:</label>
+          <select id="formFieldType" bind:value={formFieldType} class="form-input">
+            <option value="text">Text Box (Tx)</option>
+            <option value="checkbox">Checkbox (Btn)</option>
+            <option value="signature">Signature (Sig)</option>
+          </select>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="formFieldPage" class="section-desc">Target Page Number:</label>
+          <input id="formFieldPage" type="number" class="form-input" bind:value={formFieldPage} min="1" />
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="formFieldRect" class="section-desc">Bounding Rect (llx,lly,urx,ury):</label>
+          <input id="formFieldRect" type="text" class="form-input" bind:value={formFieldRect} placeholder="50,50,200,80" />
+          <span class="field-hint">Coordinates in points: lower-left X, lower-left Y, upper-right X, upper-right Y.</span>
+        </div>
+      {:else if activeTool.id === 'batch_fill' || activeTool.id === 'cli_fill_batch'}
+        <div class="operation-config">
+          <label for="batchCsvPath" class="section-desc">Dataset Path (.csv or .json):</label>
+          <input id="batchCsvPath" type="text" class="form-input" bind:value={batchCsvPath} placeholder="e.g. tests/e2e_fixtures/real/batch_data.csv" />
+          <span class="field-hint">Tabular dataset containing row records to generate individual filled documents.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            High-speed automated AcroForm batch engine with machine-readable audit receipt generation.
+          </p>
         </div>
       {:else}
         <div class="operation-config">

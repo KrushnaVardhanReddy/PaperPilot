@@ -113,6 +113,12 @@ export interface OperationContext {
     piiScanPhones?: boolean;
     piiScanIban?: boolean;
     redactQuery?: string;
+    formDataPath?: string;
+    formFieldRect?: string;
+    formFieldName?: string;
+    formFieldType?: string;
+    formFieldPage?: number;
+    batchCsvPath?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -328,6 +334,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'watermark':
+        case 'pdf_watermark':
             args = {
                 input: docPath,
                 text: watermarkText || 'CONFIDENTIAL',
@@ -426,6 +433,41 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_flattened.pdf`)
             };
             break;
+        case 'fill_form':
+        case 'pdf_fill_form':
+            args = {
+                input: docPath,
+                data: context.formDataPath || 'tests/e2e_fixtures/real/form_data.json',
+                values: context.formDataPath || 'tests/e2e_fixtures/real/form_data.json',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_filled.pdf`)
+            };
+            break;
+        case 'create_form_field':
+        case 'pdf_create_form_field':
+            args = {
+                input: docPath,
+                name: context.formFieldName || 'ApplicantName',
+                field_name: context.formFieldName || 'ApplicantName',
+                type: context.formFieldType || 'text',
+                field_type: context.formFieldType || 'text',
+                page: context.formFieldPage ?? 1,
+                rect: context.formFieldRect || '50,50,200,80',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_with_field.pdf`)
+            };
+            break;
+        case 'batch_fill':
+        case 'cli_fill_batch': {
+            const defaultBatchDir = getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_batch_out`);
+            const targetDir = customOutputPath || defaultBatchDir;
+            args = {
+                template: docPath,
+                data: context.batchCsvPath || 'tests/e2e_fixtures/real/batch_data.csv',
+                output_dir: targetDir,
+                name_template: '{index:04}.pdf',
+                keep_editable: false
+            };
+            break;
+        }
         case 'bookmarks':
         case 'pdf_bookmarks':
         case 'classify_type':

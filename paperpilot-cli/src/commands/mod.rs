@@ -512,6 +512,24 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             scale,
             guides,
         ),
+        Commands::PdfFillForm { input, data, output } => {
+            group_e::handle_form_fill(&resolve_input_path(input)?, data, output)
+        }
+        Commands::PdfCreateFormField {
+            input,
+            name,
+            r#type,
+            page,
+            rect,
+            output,
+        } => group_e::handle_form_add_field(
+            &resolve_input_path(input)?,
+            name,
+            r#type,
+            *page,
+            rect,
+            output,
+        ),
         Commands::PdfDedupStreams { input, output } => {
             pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
         }

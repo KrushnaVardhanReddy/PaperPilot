@@ -88,6 +88,20 @@ impl PaperPilotMcpServer {
                     "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
                 }}).as_object().unwrap().clone()));
 
+        tools.push(Tool::new("cli_fill_batch".to_string(),
+            "Automated batch AcroForm fill engine generating populated PDFs and machine-readable receipts.".to_string(),
+            serde_json::json!({"type":"object", "additionalProperties":false,
+                "required":["template","output_dir"],
+                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
+                "properties": {
+                    "template":{"type":"string"}, "output_dir":{"type":"string"},
+                    "data":{"type":"string","description":"Local .csv or .json data path"},
+                    "records":{"type":"array","items":{"type":"object"}},
+                    "name_template":{"type":"string","default":"{index:04}.pdf"},
+                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
+                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
+                }}).as_object().unwrap().clone()));
+
         let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
             let schema = serde_json::json!({
                 "type": "object",
@@ -4577,7 +4591,7 @@ impl PaperPilotMcpServer {
             tracing::debug!(tool = %request.name, "Executing MCP agent tool");
         }
         let tool_name = request.name.clone();
-        if request.name == "batch_fill" {
+        if request.name == "batch_fill" || request.name == "cli_fill_batch" {
             let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
                 serde_json::from_value(serde_json::Value::Object(args.clone()))
                     .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
@@ -5704,7 +5718,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_watermark" => {
+            "pdf_watermark" | "watermark" => {
                 let input = get_string("input")?;
                 let text = get_string("text")?;
                 let output = get_string("output")?;
@@ -5830,7 +5844,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_fill_form" => {
+            "pdf_fill_form" | "fill_form" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -5875,7 +5889,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_create_form_field" => {
+            "pdf_create_form_field" | "create_form_field" => {
                 let input = get_string("input")?;
                 let field_name = get_string("field_name").or_else(|_| get_string("name"))?;
                 let field_type = get_string("field_type").or_else(|_| get_string("type"))?;

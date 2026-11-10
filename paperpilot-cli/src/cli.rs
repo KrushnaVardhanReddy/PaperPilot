@@ -44,6 +44,7 @@ pub struct Cli {
 pub enum Commands {
     /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
     #[cfg(feature = "pdf")]
+    #[command(name = "fill-batch", alias = "batch-fill", alias = "batch_fill", alias = "cli-fill-batch", alias = "cli_fill_batch", alias = "pdf-fill-batch")]
     FillBatch(FillBatchArgs),
     /// Launch the PaperPilot Graphical Desktop UI
     #[command(alias = "gui")]
@@ -193,6 +194,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Add Watermark: Stamp text or branding [Input: .pdf | Output: .pdf]
+    #[command(name = "watermark", alias = "pdf-watermark", alias = "pdf_watermark")]
     Watermark {
         #[arg(long)]
         input: std::path::PathBuf,
@@ -530,6 +532,32 @@ pub enum Commands {
         opacity: Option<f32>,
         #[arg(long)]
         pages: Option<String>,
+    },
+    /// Fill AcroForm Interactive Form: Populate text boxes, checkboxes and choices with JSON dataset.
+    #[command(name = "pdf-fill-form", alias = "fill-form", alias = "pdf_fill_form")]
+    PdfFillForm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        data: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+    /// Add AcroForm Field: Append interactive widget annotation with coordinates and field name to target page.
+    #[command(name = "pdf-create-form-field", alias = "create-form-field", alias = "pdf_create_form_field", alias = "add-field")]
+    PdfCreateFormField {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long, default_value = "text")]
+        r#type: String,
+        #[arg(long, default_value = "1")]
+        page: i32,
+        #[arg(long)]
+        rect: String,
+        #[arg(short, long)]
+        output: PathBuf,
     },
     /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
     #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
