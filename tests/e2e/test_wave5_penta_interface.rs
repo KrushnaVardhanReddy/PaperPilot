@@ -54,7 +54,14 @@ fn run_cli(args: &[&str]) -> Result<(bool, String, f64)> {
     }
 
     let start = Instant::now();
-    let output = match Command::new(&bin_path).args(args).output() {
+    let mut cmd = Command::new(&bin_path);
+    cmd.args(args);
+    let workspace_root = get_workspace_root();
+    let ocr_models_dir = workspace_root.join("models/ocr/ppocrv4");
+    if ocr_models_dir.exists() {
+        cmd.env("PAPERPILOT_OCR_MODELS_DIR", &ocr_models_dir);
+    }
+    let output = match cmd.output() {
         Ok(out) => out,
         Err(e) => return Ok((false, e.to_string(), start.elapsed().as_secs_f64() * 1000.0)),
     };
@@ -114,14 +121,21 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let workspace_root = get_workspace_root();
     let mut results: Vec<TestExecutionResult> = Vec::new();
 
+    let ocr_models_dir = workspace_root.join("models/ocr/ppocrv4");
+    if ocr_models_dir.exists() {
+        std::env::set_var("PAPERPILOT_OCR_MODELS_DIR", &ocr_models_dir);
+    }
+
     let gateway_bin = workspace_root.join("target/debug/paperpilot-gateway");
     let mut api_child = if gateway_bin.exists() {
         Command::new(&gateway_bin)
+            .env("PAPERPILOT_OCR_MODELS_DIR", &ocr_models_dir)
             .spawn()
             .expect("Failed to start gateway binary")
     } else {
         Command::new("cargo")
             .args(&["run", "-p", "paperpilot-gateway"])
+            .env("PAPERPILOT_OCR_MODELS_DIR", &ocr_models_dir)
             .spawn()
             .expect("Failed to start gateway")
     };
