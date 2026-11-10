@@ -2,6 +2,7 @@
 .env.*
 target/
 node_modules/
+.pnpm-store/
 dist/
 dist-portable/
 build/

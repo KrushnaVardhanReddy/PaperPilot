@@ -221,6 +221,19 @@ async fn test_wave5_penta_interface() -> Result<()> {
         let batch_cli_dir = out_dir.join(format!("{}_cli_batch", tool_id));
         let batch_mcp_dir = out_dir.join(format!("{}_mcp_batch", tool_id));
         let batch_api_dir = out_dir.join(format!("{}_api_batch", tool_id));
+        let docx_cli = out_dir.join(format!("{}_cli.docx", tool_id));
+        let xlsx_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
+        let pptx_cli = out_dir.join(format!("{}_cli.pptx", tool_id));
+        let html_cli = out_dir.join(format!("{}_cli.html", tool_id));
+        let md_cli = out_dir.join(format!("{}_cli.md", tool_id));
+        let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+        let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
+        let tbl_cli = out_dir.join(format!("{}_cli.csv", tool_id));
+        let csv_cli = out_dir.join(format!("{}_cli.csv", tool_id));
+        let mod_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
+        let extract_images_dir = out_dir.join(format!("{}_out_dir", tool_id));
+        let receipts_dir = out_dir.join(".paperpilot-receipts");
+        let image_pdf = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
 
         let mut cli_args: Vec<&str> = vec![];
         let mut mcp_payload = json!({});
@@ -269,7 +282,7 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": single_page, "template_path": stationery_pdf, "output": api_out.to_str().unwrap(), "mode": "underlay", "pages": "1" });
             }
             "pdf_read_form" => {
-                cli_args = vec!["read-form", "--input", &form_pdf, "--json"];
+                cli_args = vec!["form", "read", &form_pdf, "--json"];
                 mcp_payload = json!({ "input": form_pdf });
                 api_payload = json!({ "input": form_pdf });
                 requires_output = false;
@@ -400,9 +413,7 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 14 — Tool 66: pdf_extract_images
             "pdf_extract_images" => {
-                let extract_images_dir = out_dir.join(format!("{}_out_dir", tool_id));
                 fs::create_dir_all(&extract_images_dir).unwrap_or_default();
-                let image_pdf = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
                 cli_args = vec!["extract-images", "--input", &image_pdf, "--output", extract_images_dir.to_str().unwrap(), "--json"];
                 mcp_payload = json!({ "input": image_pdf, "output_dir": extract_images_dir.to_str().unwrap(), "format": "png" });
                 api_payload = json!({ "input": image_pdf, "output_dir": extract_images_dir.to_str().unwrap(), "format": "png" });
@@ -410,7 +421,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 14 — Tool 67: pdf_to_docx
             "pdf_to_docx" => {
-                let docx_cli = out_dir.join(format!("{}_cli.docx", tool_id));
                 let docx_mcp = out_dir.join(format!("{}_mcp.docx", tool_id));
                 let docx_api = out_dir.join(format!("{}_api.docx", tool_id));
                 cli_args = vec!["convert", "--format", "docx", "--input", &single_page, "--output", docx_cli.to_str().unwrap(), "--json"];
@@ -420,7 +430,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 14 — Tool 68: pdf_to_xlsx
             "pdf_to_xlsx" => {
-                let xlsx_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
                 let xlsx_mcp = out_dir.join(format!("{}_mcp.xlsx", tool_id));
                 let xlsx_api = out_dir.join(format!("{}_api.xlsx", tool_id));
                 cli_args = vec!["convert", "--format", "xlsx", "--input", &single_page, "--output", xlsx_cli.to_str().unwrap(), "--json"];
@@ -430,7 +439,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 14 — Tool 69: pdf_to_pptx
             "pdf_to_pptx" => {
-                let pptx_cli = out_dir.join(format!("{}_cli.pptx", tool_id));
                 let pptx_mcp = out_dir.join(format!("{}_mcp.pptx", tool_id));
                 let pptx_api = out_dir.join(format!("{}_api.pptx", tool_id));
                 cli_args = vec!["convert", "--format", "pptx", "--input", &single_page, "--output", pptx_cli.to_str().unwrap(), "--json"];
@@ -440,7 +448,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 14 — Tool 70: pdf_to_html
             "pdf_to_html" => {
-                let html_cli = out_dir.join(format!("{}_cli.html", tool_id));
                 let html_mcp = out_dir.join(format!("{}_mcp.html", tool_id));
                 let html_api = out_dir.join(format!("{}_api.html", tool_id));
                 cli_args = vec!["convert", "--format", "html", "--input", &single_page, "--output", html_cli.to_str().unwrap(), "--json"];
@@ -450,7 +457,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 15 — Tool 71: pdf_to_markdown
             "pdf_to_markdown" => {
-                let md_cli = out_dir.join(format!("{}_cli.md", tool_id));
                 let md_mcp = out_dir.join(format!("{}_mcp.md", tool_id));
                 let md_api = out_dir.join(format!("{}_api.md", tool_id));
                 cli_args = vec!["convert", "--format", "markdown", "--input", &single_page, "--output", md_cli.to_str().unwrap(), "--json"];
@@ -460,7 +466,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 15 — Tool 72: pdf_to_json
             "pdf_to_json" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["convert", "--format", "json", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
@@ -470,7 +475,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 15 — Tool 73: pdf_extract_text
             "pdf_extract_text" => {
-                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
                 let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
                 let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
                 cli_args = vec!["extract-text", "--input", &single_page, "--output", txt_cli.to_str().unwrap(), "--json"];
@@ -480,7 +484,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 15 — Tool 74: pdf_extract_tables
             "pdf_extract_tables" => {
-                let tbl_cli = out_dir.join(format!("{}_cli.csv", tool_id));
                 let tbl_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let tbl_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["extract-tables", "--input", &single_page, "--output", tbl_cli.to_str().unwrap(), "--format", "csv", "--pages", "all", "--json"];
@@ -497,7 +500,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 16 — Tool 76: office_to_markdown
             "office_to_markdown" => {
-                let md_cli = out_dir.join(format!("{}_cli.md", tool_id));
                 let md_mcp = out_dir.join(format!("{}_mcp.md", tool_id));
                 let md_api = out_dir.join(format!("{}_api.md", tool_id));
                 cli_args = vec!["office", "to-markdown", "--input", &test_docx, "--output", md_cli.to_str().unwrap(), "--json"];
@@ -507,7 +509,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 16 — Tool 77: office_extract_text
             "office_extract_text" => {
-                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
                 let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
                 let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
                 cli_args = vec!["office", "extract", "--input", &test_docx, "--output", txt_cli.to_str().unwrap(), "--json"];
@@ -517,7 +518,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 16 — Tool 78: office_modernize_legacy
             "office_modernize_legacy" => {
-                let mod_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
                 let mod_mcp = out_dir.join(format!("{}_mcp.xlsx", tool_id));
                 let mod_api = out_dir.join(format!("{}_api.xlsx", tool_id));
                 cli_args = vec!["office", "modernize", "--input", &test_xls, "--output", mod_cli.to_str().unwrap(), "--json"];
@@ -527,7 +527,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 16 — Tool 79: excel_to_json
             "excel_to_json" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["office", "excel-to-json", "--input", &test_xlsx, "--output", json_cli.to_str().unwrap(), "--json"];
@@ -537,7 +536,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 16 — Tool 80: excel_to_csv
             "excel_to_csv" => {
-                let csv_cli = out_dir.join(format!("{}_cli.csv", tool_id));
                 let csv_mcp = out_dir.join(format!("{}_mcp.csv", tool_id));
                 let csv_api = out_dir.join(format!("{}_api.csv", tool_id));
                 cli_args = vec!["office", "excel-to-csv", "--input", &test_xlsx, "--output", csv_cli.to_str().unwrap(), "--json"];
@@ -547,7 +545,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 17 — Tool 81: pdf_extract_patterns
             "pdf_extract_patterns" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["pdf-extract-patterns", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--keywords", "PDF,Single", "--json"];
@@ -557,7 +554,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 17 — Tool 82: pdf_search
             "pdf_search" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["search", "--input", &single_page, "--query", "PDF", "--output", json_cli.to_str().unwrap(), "--json"];
@@ -567,7 +563,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 17 — Tool 83: workspace_search
             "workspace_search" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["workspace-search", "--input", &single_page, "--query", "PDF", "--output", json_cli.to_str().unwrap(), "--json"];
@@ -577,7 +572,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 17 — Tool 84: semantic_search
             "semantic_search" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["semantic-search", "--input", &single_page, "--query", "document", "--output", json_cli.to_str().unwrap(), "--json"];
@@ -587,7 +581,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 17 — Tool 85: pdf_classify_type
             "pdf_classify_type" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["classify-type", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
@@ -597,7 +590,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 18 — Tool 86: pdf_rag_chunks
             "pdf_rag_chunks" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
                 cli_args = vec!["rag-chunks", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
@@ -621,7 +613,6 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 18 — Tool 89: cli_ask
             "cli_ask" => {
-                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
                 let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
                 let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
                 cli_args = vec!["ask", "rotate 90 degrees", &single_page, "--dry-run", "--output", txt_cli.to_str().unwrap()];
@@ -631,10 +622,8 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 18 — Tool 90: watcher_start
             "watcher_start" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
-                let receipts_dir = out_dir.join(".paperpilot-receipts");
                 let _ = fs::create_dir_all(&receipts_dir);
                 cli_args = vec!["workflow", "history", "--directory", receipts_dir.to_str().unwrap(), "--json"];
                 mcp_payload = json!({ "dir": out_dir.to_str().unwrap(), "recipe": "preset-legal-discovery", "settle_delay_ms": 50, "output": json_mcp.to_str().unwrap() });
@@ -643,10 +632,8 @@ async fn test_wave5_penta_interface() -> Result<()> {
             }
             // Session 18 — Tool 90: watcher_stop
             "watcher_stop" => {
-                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
                 let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
                 let json_api = out_dir.join(format!("{}_api.json", tool_id));
-                let receipts_dir = out_dir.join(".paperpilot-receipts");
                 let _ = fs::create_dir_all(&receipts_dir);
                 cli_args = vec!["workflow", "history", "--directory", receipts_dir.to_str().unwrap(), "--json"];
                 mcp_payload = json!({ "watcher_id": "default", "output": json_mcp.to_str().unwrap() });

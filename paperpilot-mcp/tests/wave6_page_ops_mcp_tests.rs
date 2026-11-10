@@ -3,7 +3,7 @@ use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, ContentBlock};
 use serde_json::json;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 
@@ -24,7 +24,7 @@ fn call_mcp_tool(name: &str, args: serde_json::Value) -> Result<(bool, serde_jso
     }
 
     let start = Instant::now();
-    let mut server = PaperPilotMcpServer::new(None);
+    let server = PaperPilotMcpServer::new(None);
     let res = server.execute_call_tool(params);
     let latency = start.elapsed().as_secs_f64() * 1000.0;
 
@@ -127,7 +127,7 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let sample_multi_page = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
     let sample_single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
     let sample_eight_pages = workspace_root.join("tests/e2e_fixtures/real/eight_pages.pdf").to_string_lossy().to_string();
-    let sample_data_csv = workspace_root.join("tests/e2e_fixtures/real/data.csv").to_string_lossy().to_string();
+    let _sample_data_csv = workspace_root.join("tests/e2e_fixtures/real/data.csv").to_string_lossy().to_string();
     let sample_two_up_book = workspace_root.join("tests/e2e_fixtures/real/two_up_book.pdf").to_string_lossy().to_string();
     let sample_pdf_photo = workspace_root.join("tests/e2e_fixtures/real/sample_photo_doc.pdf").to_string_lossy().to_string();
     let sample_large_doc = workspace_root.join("tests/e2e_fixtures/real/large_doc.pdf").to_string_lossy().to_string();

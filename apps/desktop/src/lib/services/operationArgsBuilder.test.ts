@@ -136,6 +136,7 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('search', { ...defaultContext, searchQuery: 'Confidential' });
         expect(args).toEqual({
             input: '/docs/test.pdf',
+            output: '/docs/test_search.json',
             query: 'Confidential'
         });
     });
@@ -159,7 +160,12 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('document_pii_scan', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_pii_report.json'
+            output: '/docs/test_pii_report.json',
+            scan_emails: true,
+            scan_phones: true,
+            scan_ssn: true,
+            scan_credit_cards: true,
+            scan_iban: true
         });
     });
 
@@ -198,7 +204,11 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_scale_pages', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_scaled.pdf',
+            target_size: 'A4',
+            scale_factor: 1.0,
+            maintain_aspect_ratio: true,
+            center_content: true
         });
     });
 
@@ -214,7 +224,13 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_stamp', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_stamped.pdf',
+            x: 50.0,
+            y: 50.0,
+            width: 150.0,
+            height: 50.0,
+            opacity: 1.0,
+            pages: 'all'
         });
     });
 
@@ -222,7 +238,10 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_overlay_underlay', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_stationery.pdf',
+            mode: 'underlay',
+            pages: 'all',
+            opacity: 1.0
         });
     });
 
@@ -230,7 +249,8 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_auto_rotate', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_autorotated.pdf',
+            target_orientation: 'portrait'
         });
     });
 
@@ -238,7 +258,10 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_stitch_canvas', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_stitched.pdf',
+            direction: 'vertical',
+            spacing: 0.0,
+            margin: 0.0
         });
     });
 
@@ -246,7 +269,8 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_attachments', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.json'
+            output: '/docs/test_attachments.json',
+            action: 'list'
         });
     });
 
@@ -254,7 +278,8 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_timestamp', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_timestamped.pdf',
+            server_url: 'http://timestamp.digicert.com'
         });
     });
 
@@ -262,7 +287,10 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_change_permissions', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_permissions.pdf',
+            allow_print: false,
+            allow_copy: false,
+            allow_modify: false
         });
     });
 
@@ -278,7 +306,8 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_comic_archive', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.cbr'
+            output: '/docs/test_output.cbz',
+            dpi: 150.0
         });
     });
 
@@ -307,7 +336,12 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_posterize', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.pdf'
+            output: '/docs/test_poster.pdf',
+            grid: '2x2',
+            scale: 1.0,
+            target_sheet: 'a4',
+            overlap: 14.17,
+            guides: true
         });
     });
 

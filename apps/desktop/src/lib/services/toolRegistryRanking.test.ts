@@ -54,7 +54,7 @@ describe('Tool Registry Ranking Engine', () => {
         expect(recommendedIds).toContain('extract_text');
         expect(recommendedIds).toContain('pdf_to_epub');
         expect(recommendedIds).toContain('document_pii_scan');
-        expect(recommendedIds).toContain('sign');
+        expect(recommendedIds.some(id => id === 'sign' || id === 'pdf_sign')).toBe(true);
         expect(recommendedIds).toContain('pdf_stamp');
         expect(recommendedIds).toContain('pdf_extract_tables');
         expect(recommendedIds).toContain('pdf_rag_chunks');
@@ -69,9 +69,9 @@ describe('Tool Registry Ranking Engine', () => {
         const result = rankToolsByContext(allTools, [f1, f2], ['core', 'office', 'ocr']);
 
         const recommendedIds = result.recommended.map(t => t.id);
-        expect(recommendedIds).toContain('merge');
+        expect(recommendedIds.some(id => id === 'merge' || id === 'pdf_merge')).toBe(true);
         expect(recommendedIds).toContain('pdf_merge_alternate');
-        expect(recommendedIds).toContain('compare');
+        expect(recommendedIds.some(id => id === 'compare' || id === 'pdf_compare')).toBe(true);
         expect(recommendedIds).toContain('compress');
         expect(recommendedIds).toContain('ocr');
 

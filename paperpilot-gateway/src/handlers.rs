@@ -818,6 +818,8 @@ pub async fn handle_tool(
         || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
+        || tool_name == "batch_fill"
+        || tool_name == "cli_fill_batch"
         || tool_name == "document_workflow"
         || tool_name == "recipe_run"
         || tool_name == "cli_ask"
