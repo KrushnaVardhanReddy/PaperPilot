@@ -143,6 +143,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let json_doc = workspace_root.join("tests/e2e_fixtures/real/json_doc.json").to_string_lossy().to_string();
     let test_md = workspace_root.join("tests/e2e_fixtures/real/test.md").to_string_lossy().to_string();
     let test_html = workspace_root.join("tests/e2e_fixtures/real/test.html").to_string_lossy().to_string();
+    let test_docx = workspace_root.join("tests/e2e_fixtures/real/test.docx").to_string_lossy().to_string();
+    let test_xlsx = workspace_root.join("tests/e2e_fixtures/real/test.xlsx").to_string_lossy().to_string();
+    let test_xls = workspace_root.join("tests/e2e_fixtures/real/test.xls").to_string_lossy().to_string();
 
     let tools = vec![
         "pdf_watermark",
@@ -188,6 +191,12 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_extract_text",
         "pdf_extract_tables",
         "pdf_ocr",
+        // Session 16 — Tools 76-80
+        "office_to_markdown",
+        "office_extract_text",
+        "office_modernize_legacy",
+        "excel_to_json",
+        "excel_to_csv",
     ];
 
     for tool_id in &tools {
@@ -472,6 +481,56 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap() });
                 api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap() });
                 requires_output = true;
+            }
+            // Session 16 — Tool 76: office_to_markdown
+            "office_to_markdown" => {
+                let md_cli = out_dir.join(format!("{}_cli.md", tool_id));
+                let md_mcp = out_dir.join(format!("{}_mcp.md", tool_id));
+                let md_api = out_dir.join(format!("{}_api.md", tool_id));
+                cli_args = vec!["office", "to-markdown", "--input", &test_docx, "--output", md_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": test_docx, "output": md_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": test_docx, "output": md_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 16 — Tool 77: office_extract_text
+            "office_extract_text" => {
+                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
+                let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
+                let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
+                cli_args = vec!["office", "extract", "--input", &test_docx, "--output", txt_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": test_docx, "output": txt_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": test_docx, "output": txt_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 16 — Tool 78: office_modernize_legacy
+            "office_modernize_legacy" => {
+                let mod_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
+                let mod_mcp = out_dir.join(format!("{}_mcp.xlsx", tool_id));
+                let mod_api = out_dir.join(format!("{}_api.xlsx", tool_id));
+                cli_args = vec!["office", "modernize", "--input", &test_xls, "--output", mod_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": test_xls, "output": mod_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": test_xls, "output": mod_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 16 — Tool 79: excel_to_json
+            "excel_to_json" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["office", "excel-to-json", "--input", &test_xlsx, "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": test_xlsx, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": test_xlsx, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 16 — Tool 80: excel_to_csv
+            "excel_to_csv" => {
+                let csv_cli = out_dir.join(format!("{}_cli.csv", tool_id));
+                let csv_mcp = out_dir.join(format!("{}_mcp.csv", tool_id));
+                let csv_api = out_dir.join(format!("{}_api.csv", tool_id));
+                cli_args = vec!["office", "excel-to-csv", "--input", &test_xlsx, "--output", csv_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": test_xlsx, "output": csv_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": test_xlsx, "output": csv_api.to_str().unwrap() });
+                requires_output = false;
             }
             _ => {}
         }

@@ -129,6 +129,8 @@ export interface OperationContext {
     imageFormat?: string;
     cbzArchiveName?: string;
     pdfaConformance?: string;
+    excelSheet?: string;
+    hasHeaders?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -143,9 +145,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
     let args: Record<string, any> = {};
 
     switch (toolId) {
-        case 'office_modernize_legacy':
-            args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_modernized`) };
+        case 'office_modernize_legacy': {
+            const srcExt = docPath ? docPath.split('.').pop()?.toLowerCase() ?? 'docx' : 'docx';
+            const modernExt = srcExt === 'doc' ? 'docx' : srcExt === 'xls' ? 'xlsx' : srcExt === 'ppt' ? 'pptx' : 'docx';
+            args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_modernized.${modernExt}`) };
             break;
+        }
         case 'merge': {
             let outputPath: string | null = customOutputPath;
             const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
@@ -741,13 +746,15 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.json`),
-                has_headers: true
+                has_headers: context.hasHeaders !== undefined ? context.hasHeaders : true,
+                ...(context.excelSheet ? { sheet: context.excelSheet } : {})
             };
             break;
         case 'excel_to_csv':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.csv`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}.csv`),
+                ...(context.excelSheet ? { sheet: context.excelSheet } : {})
             };
             break;
 

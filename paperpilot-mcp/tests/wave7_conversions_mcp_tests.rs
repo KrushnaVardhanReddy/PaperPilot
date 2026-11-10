@@ -114,6 +114,8 @@ async fn test_wave7_penta_interface() -> Result<()> {
 
     let sample_pdf = workspace_root.join("fixtures/Get_Started_With_Smallpdf.pdf").to_string_lossy().to_string();
     let sample_xlsx = workspace_root.join("tests/e2e_fixtures/real/test.xlsx").to_string_lossy().to_string();
+    let sample_docx = workspace_root.join("tests/e2e_fixtures/real/test.docx").to_string_lossy().to_string();
+    let sample_xls = workspace_root.join("tests/e2e_fixtures/real/test.xls").to_string_lossy().to_string();
     let _sample_csv = workspace_root.join("tests/e2e_fixtures/real/test.csv").to_string_lossy().to_string();
     let sample_json = workspace_root.join("tests/e2e_fixtures/real/json_doc.json").to_string_lossy().to_string();
 
@@ -845,6 +847,111 @@ async fn test_wave7_penta_interface() -> Result<()> {
     } else { passed = false; }
     results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
 
+    // 19. office_to_markdown (Tool 76)
+    let tool_id = "office_to_markdown";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_office.md");
+    let (success, out, latency) = run_cli(&["office", "to-markdown", "--input", &sample_docx, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_office.md");
+    let payload = json!({"input": sample_docx, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_office.md");
+    let payload = json!({"input": sample_docx, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 20. office_extract_text (Tool 77)
+    let tool_id = "office_extract_text";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_office.txt");
+    let (success, out, latency) = run_cli(&["office", "extract", "--input", &sample_docx, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_office.txt");
+    let payload = json!({"input": sample_docx, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_office.txt");
+    let payload = json!({"input": sample_docx, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 21. office_modernize_legacy (Tool 78)
+    let tool_id = "office_modernize_legacy";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_office.xlsx");
+    let (success, out, latency) = run_cli(&["office", "modernize", "--input", &sample_xls, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_office.xlsx");
+    let payload = json!({"input": sample_xls, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_office.xlsx");
+    let payload = json!({"input": sample_xls, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
     // Cleanup API server
     let _ = api_child.kill();
 
@@ -856,7 +963,8 @@ async fn test_wave7_penta_interface() -> Result<()> {
         "pdf_to_pdf_a", "pdf_comic_archive", "excel_to_json", "excel_to_csv",
         "pdf_dedup_streams", "pdf_invert_colors", "pdf_linearize", "pdf_repair",
         "pdf_convert_excel", "pdf_to_docx", "pdf_to_xlsx", "pdf_to_pptx", "extract_images",
-        "pdf_extract_text", "pdf_extract_tables", "pdf_ocr"
+        "pdf_extract_text", "pdf_extract_tables", "pdf_ocr",
+        "office_to_markdown", "office_extract_text", "office_modernize_legacy"
     ];
 
     let passed_count = results.iter().filter(|r| r.passed).count();

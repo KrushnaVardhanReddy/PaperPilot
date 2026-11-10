@@ -210,6 +210,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let tableFormat = $state('json');
   let cbzArchiveName = $state('');
   let pdfaConformance = $state('PDF/A-1b');
+  let excelSheet = $state('');
+  let hasHeaders = $state(true);
 
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
@@ -405,13 +407,15 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
     switch (activeTool.id) {
       case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
-      case 'office_extract_text': customOutputPath = getOutputPath(`${base}_text.txt`); break;
+      case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);      break;
       case 'office_modernize_legacy': {
         const srcExt = docPath.split('.').pop()?.toLowerCase() ?? 'docx';
         const modernExt = srcExt === 'doc' ? 'docx' : srcExt === 'xls' ? 'xlsx' : srcExt === 'ppt' ? 'pptx' : srcExt;
         customOutputPath = getOutputPath(`${base}_modern.${modernExt}`);
         break;
       }
+      case 'excel_to_json':       customOutputPath = getOutputPath(`${base}.json`);     break;
+      case 'excel_to_csv':        customOutputPath = getOutputPath(`${base}.csv`);      break;
       case 'merge':
         customOutputPath = ''; // handled by native dialog
         break;
@@ -530,10 +534,6 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
       case 'pdf_to_pdf_a':    customOutputPath = getOutputPath(`${base}_pdfa.pdf`);        break;
       case 'pdf_convert_excel': customOutputPath = getOutputPath(`${base}_table.pdf`);     break;
-      case 'office_to_markdown': customOutputPath = getOutputPath(`${base}.md`);           break;
-      case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);          break;
-      case 'excel_to_json':   customOutputPath = getOutputPath(`${base}.json`);            break;
-      case 'excel_to_csv':    customOutputPath = getOutputPath(`${base}.csv`);             break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
@@ -695,7 +695,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             imageFormat,
             tableFormat,
             cbzArchiveName,
-            pdfaConformance
+            pdfaConformance,
+            excelSheet: excelSheet.trim() || undefined,
+            hasHeaders
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -914,7 +916,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           imageFormat,
           tableFormat,
           cbzArchiveName,
-          pdfaConformance
+          pdfaConformance,
+          excelSheet: excelSheet.trim() || undefined,
+          hasHeaders
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1066,15 +1070,20 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
     const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
 
-    const toolId = activeTool.id.startsWith('pdf_') ? activeTool.id : `pdf_${activeTool.id}`;
+    const rawToolId = activeTool.id;
+    const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
     let ext = '.pdf';
-    if (['extract_text', 'pdf_extract_text'].includes(toolId)) ext = '.txt';
-    else if (['pdf_to_json', 'excel_to_json'].includes(toolId)) ext = '.json';
-    else if (['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
-    else if (['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
-    else if (['pdf_to_docx'].includes(toolId)) ext = '.docx';
-    else if (['pdf_to_xlsx', 'excel_to_csv'].includes(toolId)) ext = toolId.includes('csv') ? '.csv' : '.xlsx';
-    else if (['pdf_extract_tables'].includes(toolId)) ext = tableFormat === 'csv' ? '.csv' : '.json';
+    if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) ext = '.txt';
+    else if (['pdf_to_json', 'excel_to_json'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json'].includes(toolId)) ext = '.json';
+    else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
+    else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
+    else if (['pdf_to_docx'].includes(rawToolId) || ['pdf_to_docx'].includes(toolId)) ext = '.docx';
+    else if (['pdf_to_xlsx', 'excel_to_csv'].includes(rawToolId) || ['pdf_to_xlsx', 'excel_to_csv'].includes(toolId)) ext = rawToolId.includes('csv') ? '.csv' : '.xlsx';
+    else if (['pdf_extract_tables'].includes(toolId) || rawToolId === 'pdf_extract_tables') ext = tableFormat === 'csv' ? '.csv' : '.json';
+    else if (rawToolId === 'office_modernize_legacy') {
+      const srcExt = docPath.split('.').pop()?.toLowerCase() ?? 'docx';
+      ext = srcExt === 'doc' ? '.docx' : srcExt === 'xls' ? '.xlsx' : srcExt === 'ppt' ? '.pptx' : '.docx';
+    }
 
     const defaultOutput = docPath ? docPath.replace(/\.[^/.]+$/, `_${activeTool.id.replace('pdf_', '')}${ext}`) : `output${ext}`;
     const output = customOutputPath || defaultOutput;
@@ -1133,27 +1142,30 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       } else {
         const { save } = await import('@tauri-apps/plugin-dialog');
         // Determine file extensions based on active tool
-        const toolId = activeTool.id.startsWith('pdf_') ? activeTool.id : `pdf_${activeTool.id}`;
+        const rawToolId = activeTool.id;
+        const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
         let filters = [{ name: 'PDF Document', extensions: ['pdf'] }];
-        if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(toolId)) {
+        if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) {
           filters = [{ name: 'Text File', extensions: ['txt'] }];
-        } else if (['pdf_to_json', 'excel_to_json'].includes(toolId)) {
+        } else if (['pdf_to_json', 'excel_to_json'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json'].includes(toolId)) {
           filters = [{ name: 'JSON Document', extensions: ['json'] }];
-        } else if (['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
+        } else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
           filters = [{ name: 'Markdown File', extensions: ['md'] }];
-        } else if (['pdf_to_html', 'excel_to_html'].includes(toolId)) {
+        } else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) {
           filters = [{ name: 'HTML Document', extensions: ['html'] }];
-        } else if (['pdf_to_docx'].includes(toolId)) {
+        } else if (['pdf_to_docx'].includes(rawToolId) || ['pdf_to_docx'].includes(toolId)) {
           filters = [{ name: 'Word Document', extensions: ['docx'] }];
-        } else if (['pdf_to_xlsx'].includes(toolId)) {
+        } else if (['pdf_to_xlsx'].includes(rawToolId) || ['pdf_to_xlsx'].includes(toolId)) {
           filters = [{ name: 'Excel Spreadsheet', extensions: ['xlsx'] }];
-        } else if (['excel_to_csv'].includes(toolId)) {
+        } else if (['excel_to_csv'].includes(rawToolId) || ['excel_to_csv'].includes(toolId)) {
           filters = [{ name: 'CSV File', extensions: ['csv'] }];
-        } else if (['pdf_extract_tables'].includes(toolId)) {
+        } else if (rawToolId === 'office_modernize_legacy') {
+          filters = [{ name: 'Modern Office Document', extensions: ['docx', 'xlsx', 'pptx'] }];
+        } else if (['pdf_extract_tables'].includes(toolId) || rawToolId === 'pdf_extract_tables') {
           filters = [{ name: 'JSON Document', extensions: ['json'] }, { name: 'CSV File', extensions: ['csv'] }];
-        } else if (['pdf_comic_archive'].includes(toolId)) {
+        } else if (['pdf_comic_archive'].includes(toolId) || rawToolId === 'pdf_comic_archive') {
           filters = [{ name: 'Comic Book Archive', extensions: ['cbz'] }];
-        } else if (['pdf_to_epub'].includes(toolId)) {
+        } else if (['pdf_to_epub'].includes(toolId) || rawToolId === 'pdf_to_epub') {
           filters = [{ name: 'EPUB E-Book', extensions: ['epub'] }];
         }
 
@@ -2199,6 +2211,72 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Parses tabular matrix cells, computes row bandings, and renders publication-ready PDF tables.
           </p>
+        </div>
+      {:else if activeTool.id === 'office_to_markdown'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Converts Microsoft Office documents (Word DOCX, PowerPoint PPTX, Excel XLSX) into structured Markdown (.md).
+            Headings, bullet lists, tables, and formatted text paragraphs are recognized and transcribed into clean CommonMark.
+          </p>
+          <span class="field-hint">Output: <code>.md</code> — standard Markdown text file.</span>
+        </div>
+      {:else if activeTool.id === 'office_extract_text'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Rapidly extracts all plain text content from Microsoft Office documents (.docx, .xlsx, .pptx).
+            Strips internal XML formatting tags and layout schemas while preserving document paragraphs in natural reading order.
+          </p>
+          <span class="field-hint">Output: <code>.txt</code> — clean UTF-8 plain text file.</span>
+        </div>
+      {:else if activeTool.id === 'office_modernize_legacy'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Upgrades legacy binary Microsoft Office files (.doc, .xls, .ppt) to modern OpenXML formats (.docx, .xlsx, .pptx).
+            Repairs vintage binary streams and modernizes file structure without requiring Microsoft Office installation.
+          </p>
+          <span class="field-hint">Output: <code>.docx</code> / <code>.xlsx</code> / <code>.pptx</code> — modern Office OpenXML container.</span>
+        </div>
+      {:else if activeTool.id === 'excel_to_json'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="excelSheet" class="section-desc">Target Worksheet (Optional):</label>
+            <input
+              id="excelSheet"
+              type="text"
+              class="form-input"
+              placeholder="All sheets (or enter e.g. Sheet1)"
+              bind:value={excelSheet}
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="scope-option" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1;">
+              <input type="checkbox" bind:checked={hasHeaders} />
+              <span>First row contains column headers</span>
+            </label>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Ingests Microsoft Excel spreadsheets (.xlsx, .xls) and generates structured JSON records.
+            Maps worksheet rows to key-value objects or arrays suitable for programmatic ingestion and LLM context.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — structured JSON document data.</span>
+        </div>
+      {:else if activeTool.id === 'excel_to_csv'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="excelCsvSheet" class="section-desc">Target Worksheet (Optional):</label>
+            <input
+              id="excelCsvSheet"
+              type="text"
+              class="form-input"
+              placeholder="First sheet (or enter e.g. Sheet1)"
+              bind:value={excelSheet}
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Exports Microsoft Excel spreadsheet worksheets (.xlsx, .xls) into standard RFC 4180 comma-separated values (CSV).
+            Preserves tabular data grids, cell strings, and numeric records with proper quoting and UTF-8 encoding.
+          </p>
+          <span class="field-hint">Output: <code>.csv</code> — standard comma-separated values file.</span>
         </div>
       {:else}
         <div class="operation-config">
