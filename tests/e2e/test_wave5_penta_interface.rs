@@ -176,6 +176,12 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "html_to_pdf",
         "pdf_convert_html",
         "pdf_convert_markdown",
+        // Session 14 — Tools 66-70
+        "pdf_extract_images",
+        "pdf_to_docx",
+        "pdf_to_xlsx",
+        "pdf_to_pptx",
+        "pdf_to_html",
     ];
 
     for tool_id in &tools {
@@ -363,6 +369,56 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 cli_args = vec!["html-to-pdf", "--input", &test_html, "--output", cli_out.to_str().unwrap(), "--preset", "corporate", "--json"];
                 mcp_payload = json!({ "input": test_html, "output": mcp_out.to_str().unwrap(), "preset": "corporate" });
                 api_payload = json!({ "input": test_html, "output": api_out.to_str().unwrap(), "preset": "corporate" });
+            }
+            // Session 14 — Tool 66: pdf_extract_images
+            "pdf_extract_images" => {
+                let extract_images_dir = out_dir.join(format!("{}_out_dir", tool_id));
+                fs::create_dir_all(&extract_images_dir).unwrap_or_default();
+                let image_pdf = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
+                cli_args = vec!["extract-images", "--input", &image_pdf, "--output", extract_images_dir.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": image_pdf, "output_dir": extract_images_dir.to_str().unwrap(), "format": "png" });
+                api_payload = json!({ "input": image_pdf, "output_dir": extract_images_dir.to_str().unwrap(), "format": "png" });
+                requires_output = false;
+            }
+            // Session 14 — Tool 67: pdf_to_docx
+            "pdf_to_docx" => {
+                let docx_cli = out_dir.join(format!("{}_cli.docx", tool_id));
+                let docx_mcp = out_dir.join(format!("{}_mcp.docx", tool_id));
+                let docx_api = out_dir.join(format!("{}_api.docx", tool_id));
+                cli_args = vec!["convert", "--format", "docx", "--input", &single_page, "--output", docx_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": docx_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": docx_api.to_str().unwrap() });
+                requires_output = false; // docx output path differs from cli_out; skip generic check
+            }
+            // Session 14 — Tool 68: pdf_to_xlsx
+            "pdf_to_xlsx" => {
+                let xlsx_cli = out_dir.join(format!("{}_cli.xlsx", tool_id));
+                let xlsx_mcp = out_dir.join(format!("{}_mcp.xlsx", tool_id));
+                let xlsx_api = out_dir.join(format!("{}_api.xlsx", tool_id));
+                cli_args = vec!["convert", "--format", "xlsx", "--input", &single_page, "--output", xlsx_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": xlsx_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": xlsx_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 14 — Tool 69: pdf_to_pptx
+            "pdf_to_pptx" => {
+                let pptx_cli = out_dir.join(format!("{}_cli.pptx", tool_id));
+                let pptx_mcp = out_dir.join(format!("{}_mcp.pptx", tool_id));
+                let pptx_api = out_dir.join(format!("{}_api.pptx", tool_id));
+                cli_args = vec!["convert", "--format", "pptx", "--input", &single_page, "--output", pptx_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": pptx_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": pptx_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 14 — Tool 70: pdf_to_html
+            "pdf_to_html" => {
+                let html_cli = out_dir.join(format!("{}_cli.html", tool_id));
+                let html_mcp = out_dir.join(format!("{}_mcp.html", tool_id));
+                let html_api = out_dir.join(format!("{}_api.html", tool_id));
+                cli_args = vec!["convert", "--format", "html", "--input", &single_page, "--output", html_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": html_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": html_api.to_str().unwrap() });
+                requires_output = false;
             }
             _ => {}
         }

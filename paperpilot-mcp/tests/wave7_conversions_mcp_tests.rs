@@ -578,6 +578,129 @@ async fn test_wave7_penta_interface() -> Result<()> {
     } else { passed = false; }
     results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
 
+    // 14b. pdf_to_docx (Tool 67)
+    let tool_id = "pdf_to_docx";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli.docx");
+    let (success, out, latency) = run_cli(&["convert", "--format", "docx", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        let bytes = fs::read(&cli_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp.docx");
+    let payload = json!({"input": sample_pdf, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        let bytes = fs::read(&mcp_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api.docx");
+    let payload = json!({"input": sample_pdf, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        let bytes = fs::read(&api_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 14c. pdf_to_xlsx (Tool 68)
+    let tool_id = "pdf_to_xlsx";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli.xlsx");
+    let (success, out, latency) = run_cli(&["convert", "--format", "xlsx", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        let bytes = fs::read(&cli_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp.xlsx");
+    let payload = json!({"input": sample_pdf, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        let bytes = fs::read(&mcp_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api.xlsx");
+    let payload = json!({"input": sample_pdf, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        let bytes = fs::read(&api_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 14d. pdf_to_pptx (Tool 69)
+    let tool_id = "pdf_to_pptx";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli.pptx");
+    let (success, out, latency) = run_cli(&["convert", "--format", "pptx", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        let bytes = fs::read(&cli_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp.pptx");
+    let payload = json!({"input": sample_pdf, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        let bytes = fs::read(&mcp_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api.pptx");
+    let payload = json!({"input": sample_pdf, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        let bytes = fs::read(&api_out).unwrap_or_default();
+        let is_pkzip = bytes.len() >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+        size = bytes.len();
+        passed = size > 0 && is_pkzip;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
     // 15. extract_images / pdf_extract_images (Extract embedded raster images)
     let tool_id = "extract_images";
     println!("Testing tool: {}...", tool_id);
@@ -636,7 +759,7 @@ async fn test_wave7_penta_interface() -> Result<()> {
         "pdf_to_html", "pdf_to_markdown", "pdf_to_json", "json_to_pdf", "pdf_to_epub",
         "pdf_to_pdf_a", "pdf_comic_archive", "excel_to_json", "excel_to_csv",
         "pdf_dedup_streams", "pdf_invert_colors", "pdf_linearize", "pdf_repair",
-        "pdf_convert_excel", "extract_images"
+        "pdf_convert_excel", "pdf_to_docx", "pdf_to_xlsx", "pdf_to_pptx", "extract_images"
     ];
 
     for tool in tools {

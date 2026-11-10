@@ -2105,6 +2105,42 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Extracts all embedded raster image XObjects from PDF page resources into individual image files.
           </p>
         </div>
+      {:else if activeTool.id === 'pdf_to_docx'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Converts the active PDF into a fully editable Microsoft Word document (.docx) using an OpenXML
+            paragraph-mapping engine. Text blocks, headings, and inline formatting are preserved as
+            native Word paragraph styles.
+          </p>
+          <span class="field-hint">Output: <code>.docx</code> — compatible with Microsoft Word 2016 and later (OOXML ECMA-376).</span>
+        </div>
+      {:else if activeTool.id === 'pdf_to_xlsx'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Extracts tabular content from the active PDF and writes it into a Microsoft Excel spreadsheet
+            (.xlsx). Each detected table region is mapped to a worksheet with its original row/column
+            structure intact.
+          </p>
+          <span class="field-hint">Output: <code>.xlsx</code> — compatible with Microsoft Excel 2016 and later (Office Open XML).</span>
+        </div>
+      {:else if activeTool.id === 'pdf_to_pptx'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Converts each PDF page into a Microsoft PowerPoint slide (.pptx). Page graphics are rasterized
+            at high DPI and embedded as full-bleed slide backgrounds, preserving the visual layout of the
+            original document.
+          </p>
+          <span class="field-hint">Output: <code>.pptx</code> — compatible with Microsoft PowerPoint 2016 and later (ECMA-376 PresentationML).</span>
+        </div>
+      {:else if activeTool.id === 'pdf_to_html'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Converts the active PDF into a semantic HTML document. Text is extracted with positional
+            layout awareness and wrapped in semantic heading and paragraph elements. Images are embedded
+            as inline base-64 data URIs for single-file portability.
+          </p>
+          <span class="field-hint">Output: <code>.html</code> — self-contained responsive page renderable in any modern browser.</span>
+        </div>
       {:else if activeTool.id === 'pdf_convert_excel' || activeTool.id === 'convert_excel'}
         <div class="operation-config">
           <label for="convertPreset" class="section-desc">Visual Table Styling Preset:</label>
