@@ -139,6 +139,7 @@ impl PaperPilotMcpServer {
         };
 
         add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
+        add_styled_tool(&mut tools, "html_to_pdf", "Convert HTML to styled PDF");
         add_styled_tool(
             &mut tools,
             "json_to_pdf",
@@ -207,6 +208,11 @@ impl PaperPilotMcpServer {
         add_styled_tool(
             &mut tools,
             "pdf_convert_markdown",
+            "Convert Markdown to styled PDF",
+        );
+        add_styled_tool(
+            &mut tools,
+            "md_to_pdf",
             "Convert Markdown to styled PDF",
         );
         add_styled_tool(
@@ -4929,7 +4935,7 @@ impl PaperPilotMcpServer {
                     data: Some(report_json),
                 })
             }
-            "pdf_convert_html" => {
+            "pdf_convert_html" | "html_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -4975,7 +4981,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_convert_markdown" => {
+            "pdf_convert_markdown" | "md_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;

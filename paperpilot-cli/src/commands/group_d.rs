@@ -70,7 +70,7 @@ pub fn handle_convert(
     };
 
     match actual_format {
-        "json_to_pdf" => {
+        "json_to_pdf" | "json-to-pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = if input == Path::new("-") {
                 use std::io::Read;
@@ -96,7 +96,7 @@ pub fn handle_convert(
             })?;
             return Ok(());
         }
-        "html_to_pdf" => {
+        "html_to_pdf" | "html-to-pdf" | "pdf_convert_html" | "pdf-convert-html" | "convert-html" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input).map_err(|e| {
                 paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))
@@ -109,7 +109,7 @@ pub fn handle_convert(
             op.render()?;
             return Ok(());
         }
-        "md_to_pdf" => {
+        "md_to_pdf" | "md-to-pdf" | "pdf_convert_markdown" | "pdf-convert-markdown" | "convert-markdown" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input).map_err(|e| {
                 paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))

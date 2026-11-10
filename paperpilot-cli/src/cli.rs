@@ -749,12 +749,40 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    #[command(name = "json-to-pdf")]
+    #[command(name = "json-to-pdf", alias = "json_to_pdf")]
     JsonToPdf {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+    },
+    /// Render Markdown source documents into publication-ready styled PDF files
+    #[command(name = "md-to-pdf", alias = "md_to_pdf", alias = "convert-markdown", alias = "pdf-convert-markdown", alias = "pdf_convert_markdown")]
+    MdToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
+    },
+    /// Convert HTML source code and web pages directly into styled PDF documents
+    #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
+    HtmlToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
     },
     #[command(name = "rag-chunks")]
     RagChunks {

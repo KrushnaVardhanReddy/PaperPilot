@@ -140,6 +140,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let multi_page_pdf = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
     let form_data_json = workspace_root.join("tests/e2e_fixtures/real/form_data.json").to_string_lossy().to_string();
     let batch_data_csv = workspace_root.join("tests/e2e_fixtures/real/batch_data.csv").to_string_lossy().to_string();
+    let json_doc = workspace_root.join("tests/e2e_fixtures/real/json_doc.json").to_string_lossy().to_string();
+    let test_md = workspace_root.join("tests/e2e_fixtures/real/test.md").to_string_lossy().to_string();
+    let test_html = workspace_root.join("tests/e2e_fixtures/real/test.html").to_string_lossy().to_string();
 
     let tools = vec![
         "pdf_watermark",
@@ -168,6 +171,11 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_page_numbers",
         "pdf_header_footer",
         "pdf_annotate",
+        "json_to_pdf",
+        "md_to_pdf",
+        "html_to_pdf",
+        "pdf_convert_html",
+        "pdf_convert_markdown",
     ];
 
     for tool_id in &tools {
@@ -340,6 +348,21 @@ async fn test_wave5_penta_interface() -> Result<()> {
                         {"id": "anno-2", "type": "note", "page": 1, "x": 100.0, "y": 100.0, "color": "#FF0000", "content": "Sticky Note"}
                     ]
                 });
+            }
+            "json_to_pdf" => {
+                cli_args = vec!["json-to-pdf", "--input", &json_doc, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": json_doc, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": json_doc, "output": api_out.to_str().unwrap() });
+            }
+            "md_to_pdf" | "pdf_convert_markdown" => {
+                cli_args = vec!["md-to-pdf", "--input", &test_md, "--output", cli_out.to_str().unwrap(), "--preset", "academic", "--json"];
+                mcp_payload = json!({ "input": test_md, "output": mcp_out.to_str().unwrap(), "preset": "academic" });
+                api_payload = json!({ "input": test_md, "output": api_out.to_str().unwrap(), "preset": "academic" });
+            }
+            "html_to_pdf" | "pdf_convert_html" => {
+                cli_args = vec!["html-to-pdf", "--input", &test_html, "--output", cli_out.to_str().unwrap(), "--preset", "corporate", "--json"];
+                mcp_payload = json!({ "input": test_html, "output": mcp_out.to_str().unwrap(), "preset": "corporate" });
+                api_payload = json!({ "input": test_html, "output": api_out.to_str().unwrap(), "preset": "corporate" });
             }
             _ => {}
         }

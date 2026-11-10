@@ -560,6 +560,38 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 None,
             )
         },
+        Commands::MdToPdf {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+        } => {
+            group_d::handle_convert(
+                "md_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+            )
+        },
+        Commands::HtmlToPdf {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+        } => {
+            group_d::handle_convert(
+                "html_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+            )
+        },
         Commands::RagChunks { input } => {
             let resolved = resolve_input_path(input)?;
             let mut doc = paperpilot_pdf::document::LopdfDocument::load(&resolved)?;
