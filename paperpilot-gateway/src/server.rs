@@ -305,6 +305,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/doctor", get(handlers::doctor))
         .route("/tika", put(handlers::tika))
         .route("/tika/text", put(handlers::tika_text))
         .route("/tika/json/md", put(handlers::tika_markdown))

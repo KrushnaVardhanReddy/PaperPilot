@@ -47,6 +47,11 @@ pub enum Commands {
     #[command(name = "fill-batch", alias = "batch-fill", alias = "batch_fill", alias = "cli-fill-batch", alias = "cli_fill_batch", alias = "pdf-fill-batch")]
     FillBatch(FillBatchArgs),
     /// Launch the PaperPilot Graphical Desktop UI
+    /// Run system diagnostics to check offline dependencies
+    Doctor {
+        #[arg(long)]
+        json: bool,
+    },
     #[command(alias = "gui")]
     Ui,
     /// Generate shell completions

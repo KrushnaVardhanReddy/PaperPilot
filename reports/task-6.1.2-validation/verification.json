@@ -1,0 +1,31 @@
+{
+  "timestamp": "1794339983",
+  "status": "Healthy",
+  "checks": [
+    {
+      "name": "Temp Directory: /tmp (writable & ephemeral cleanup verified)",
+      "passed": true,
+      "message": "Temp directory is writable and files can be deleted.",
+      "suggestion": null
+    },
+    {
+      "name": "Gateway Port: 7823 available",
+      "passed": true,
+      "message": "Port 7823 is available.",
+      "suggestion": null
+    },
+    {
+      "name": "OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)",
+      "passed": true,
+      "message": "OCR models found.",
+      "suggestion": null
+    },
+    {
+      "name": "Disk Space: > 5 GB available",
+      "passed": true,
+      "message": "> 5 GB available (83 GB found)",
+      "suggestion": null
+    }
+  ]
+}
+{"success":true,"operation":"Doctor","error":null}

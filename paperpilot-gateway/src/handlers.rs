@@ -3366,3 +3366,8 @@ pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn pdf_extract_patterns(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_extract_patterns".to_string()), req).await
 }
+
+pub async fn doctor() -> impl IntoResponse {
+    let report = paperpilot_core::diagnostics::run_diagnostics();
+    (axum::http::StatusCode::OK, Json(report))
+}
