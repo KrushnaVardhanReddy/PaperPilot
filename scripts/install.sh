@@ -34,15 +34,17 @@ esac
 
 echo "Target architecture identified as: ${TARGET}"
 
-echo "Fetching latest release version..."
-VERSION=$(curl -sSL "${GITHUB_API}" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-
 if [ -z "${VERSION}" ]; then
-    echo "Warning: Rate limited or unable to fetch from GitHub API. Defaulting to a stable tag (e.g. v1.0.0)"
-    VERSION="v1.0.0"
+    echo "Fetching latest release version..."
+    VERSION=$(curl -sSL "${GITHUB_API}" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 fi
 
-echo "Latest release: ${VERSION}"
+if [ -z "${VERSION}" ]; then
+    echo "Warning: Rate limited or unable to fetch from GitHub API. Defaulting to stable tag v0.6.1"
+    VERSION="v0.6.1"
+fi
+
+echo "Installing version: ${VERSION}"
 
 FILENAME="${TARGET}.tar.gz"
 DOWNLOAD_URL="${GITHUB_DL}/${VERSION}/${FILENAME}"

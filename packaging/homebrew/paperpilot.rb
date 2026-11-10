@@ -1,7 +1,7 @@
 class Paperpilot < Formula
   desc "100% Private, Local-First, Pure-Rust PDF & Document Workstation"
   homepage "https://paperpilot.app"
-  version "1.0.0"
+  version "0.6.1"
 
   on_macos do
     if Hardware::CPU.arm?
