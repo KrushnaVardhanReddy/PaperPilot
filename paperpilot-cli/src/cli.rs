@@ -49,6 +49,11 @@ pub enum Commands {
     /// Launch the PaperPilot Graphical Desktop UI
     #[command(alias = "gui")]
     Ui,
+    /// Run system diagnostics to check offline dependencies
+    Doctor {
+        #[arg(long)]
+        json: bool,
+    },
     /// Generate shell completions
     Completions {
         #[arg(value_enum)]

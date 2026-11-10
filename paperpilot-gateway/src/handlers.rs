@@ -3366,3 +3366,38 @@ pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
 pub async fn pdf_extract_patterns(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_extract_patterns".to_string()), req).await
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorCheckResultSchema {
+    #[schema(example = "Temp Directory: /tmp (writable & ephemeral cleanup verified)")]
+    pub name: String,
+    #[schema(example = true)]
+    pub passed: bool,
+    #[schema(example = "Temp directory is writable and files can be cleanly deleted.")]
+    pub message: String,
+    #[schema(nullable)]
+    pub suggestion: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorReportSchema {
+    #[schema(example = "1794345649")]
+    pub timestamp: String,
+    #[schema(example = "Healthy")]
+    pub status: String,
+    pub checks: Vec<DoctorCheckResultSchema>,
+}
+
+/// Run system diagnostics and offline dependency checks
+#[utoipa::path(
+    get,
+    path = "/api/v1/doctor",
+    tag = "Health",
+    responses(
+        (status = 200, description = "System diagnostics report", body = DoctorReportSchema)
+    )
+)]
+pub async fn doctor() -> impl IntoResponse {
+    let report = paperpilot_core::diagnostics::run_diagnostics();
+    (StatusCode::OK, Json(report))
+}

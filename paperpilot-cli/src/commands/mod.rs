@@ -4,6 +4,7 @@
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
 pub mod ask;
+pub mod doctor;
 #[cfg(feature = "pdf")]
 pub mod fill_batch;
 pub mod group_a;
@@ -55,6 +56,7 @@ fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::Path
 
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
+        Commands::Doctor { json } => doctor::run(*json).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string())),
         #[cfg(feature = "pdf")]
         Commands::FillBatch(args) => fill_batch::run(args)?.outcome(),
         Commands::Completions { shell } => {

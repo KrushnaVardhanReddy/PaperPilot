@@ -86,6 +86,58 @@
         ],
         "type": "object"
       },
+      "DoctorCheckResultSchema": {
+        "properties": {
+          "message": {
+            "example": "Temp directory is writable and files can be cleanly deleted.",
+            "type": "string"
+          },
+          "name": {
+            "example": "Temp Directory: /tmp (writable & ephemeral cleanup verified)",
+            "type": "string"
+          },
+          "passed": {
+            "example": true,
+            "type": "boolean"
+          },
+          "suggestion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "passed",
+          "message"
+        ],
+        "type": "object"
+      },
+      "DoctorReportSchema": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/DoctorCheckResultSchema"
+            },
+            "type": "array"
+          },
+          "status": {
+            "example": "Healthy",
+            "type": "string"
+          },
+          "timestamp": {
+            "example": "1794345649",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "status",
+          "checks"
+        ],
+        "type": "object"
+      },
       "DocumentPiiScanJsonRequest": {
         "type": "object"
       },
@@ -1005,6 +1057,27 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/doctor": {
+      "get": {
+        "operationId": "doctor",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorReportSchema"
+                }
+              }
+            },
+            "description": "System diagnostics report"
+          }
+        },
+        "summary": "Run system diagnostics and offline dependency checks",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
     "/api/v1/office/convert": {
       "post": {
         "operationId": "office_convert",

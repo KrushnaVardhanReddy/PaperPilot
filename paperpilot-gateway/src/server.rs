@@ -11,6 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 #[openapi(
     paths(
         handlers::health,
+        handlers::doctor,
         handlers::tika,
         handlers::tika_text,
         handlers::tika_markdown,
@@ -69,6 +70,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::PdfInvertColorsJsonRequest,
             handlers::PdfSplitScannedBookJsonRequest,
             handlers::HealthResponse,
+            handlers::DoctorReportSchema,
+            handlers::DoctorCheckResultSchema,
             handlers::McpExecRequest,
             handlers::ApiResponse,
             handlers::TikaMetadata,
@@ -305,6 +308,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/doctor", get(handlers::doctor))
         .route("/tika", put(handlers::tika))
         .route("/tika/text", put(handlers::tika_text))
         .route("/tika/json/md", put(handlers::tika_markdown))
