@@ -212,13 +212,16 @@ pub enum Commands {
         output: std::path::PathBuf,
     },
     /// Redact Text: Permanently remove sensitive information [Input: .pdf | Output: .pdf]
+    #[command(name = "redact", alias = "pdf-redact", alias = "pdf_redact")]
     Redact {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "1")]
         pages: String,
-        #[arg(long)]
+        #[arg(long, default_value = "0,0,100,100")]
         rect: String,
+        #[arg(long)]
+        query: Option<String>,
         #[arg(long)]
         output: PathBuf,
     },
@@ -307,6 +310,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "header-footer", alias = "header_footer", alias = "pdf-header-footer", alias = "pdf_header_footer")]
     HeaderFooter {
         #[arg(long)]
         input: PathBuf,
@@ -316,18 +320,19 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Bates Numbering: Apply Bates stamps to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "bates", alias = "pdf-bates", alias = "pdf_bates")]
     Bates {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "CONF-")]
         prefix: String,
-        #[arg(long)]
+        #[arg(long, default_value_t = 1)]
         start: u32,
         #[arg(long)]
         output: PathBuf,
     },
     /// Add Page Numbers: Add dynamic page numbering [Input: .pdf | Output: .pdf]
-    #[command(name = "page-numbers")]
+    #[command(name = "page-numbers", alias = "page_numbers", alias = "pdf-page-numbers", alias = "pdf_page_numbers")]
     PageNumbers {
         #[arg(long)]
         input: PathBuf,
@@ -415,10 +420,11 @@ pub enum Commands {
 
     // --- Validate ---
     /// Add Annotations: Programmatically add annotations [Input: .pdf | Output: .pdf]
+    #[command(name = "annotate", alias = "pdf-annotate", alias = "pdf_annotate")]
     Annotate {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "[]")]
         data: PathBuf,
         #[arg(long)]
         output: PathBuf,

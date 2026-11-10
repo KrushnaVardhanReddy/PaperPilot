@@ -187,6 +187,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let piiScanPhones = $state(true);
   let piiScanIban = $state(true);
   let redactQuery = $state('');
+  let redactRect = $state('0,0,100,100');
+
+  // Stamping & Annotation Parameter States (Tools 51-55)
+  let annotationType = $state('highlight');
+  let annotationContent = $state('Review Notice');
+  let annotationColor = $state('#FFFF00');
+  let annotationRect = $state('50,50,150,20');
+  let annotationPage = $state(1);
 
   // Form Field, Fill & Batch Parameter States (Tools 46-50)
   let formDataPath = $state('tests/e2e_fixtures/real/form_data.json');
@@ -443,6 +451,16 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'document_pii_scan':
       case 'pii_scan':
       case 'pdf_document_pii_scan': customOutputPath = getOutputPath(`${base}_pii_report.json`); break;
+      case 'bates':
+      case 'pdf_bates':         customOutputPath = getOutputPath(`${base}_bates.pdf`);       break;
+      case 'page_numbers':
+      case 'pdf_page_numbers':  customOutputPath = getOutputPath(`${base}_page_numbered.pdf`); break;
+      case 'header_footer':
+      case 'pdf_header_footer': customOutputPath = getOutputPath(`${base}_header.pdf`);      break;
+      case 'annotate':
+      case 'pdf_annotate':      customOutputPath = getOutputPath(`${base}_annotated.pdf`);   break;
+      case 'redact':
+      case 'pdf_redact':        customOutputPath = getOutputPath(`${base}_redacted.pdf`);    break;
       case 'overlay_underlay':
       case 'pdf_overlay_underlay': customOutputPath = getOutputPath(`${base}_stationery.pdf`); break;
       case 'stamp':
@@ -571,9 +589,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             ocrOutputFormat,
             ocrLanguage: "eng",
             cropBox,
-            pageNumberPosition: "bottom_right",
+            pageNumberPosition: pageNumberPos,
             pageNumberStart: 1,
-            pageNumberFormat: "1",
+            pageNumberFormat,
             convertPreset,
             scaleTargetSize,
             scaleFactor,
@@ -646,6 +664,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             piiScanPhones,
             piiScanIban,
             redactQuery,
+            redactRect,
+            annotationType,
+            annotationContent,
+            annotationColor,
+            annotationRect,
+            annotationPage,
             formDataPath,
             formFieldName,
             formFieldType,
@@ -777,10 +801,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           ocrLanguage: "eng",
 
           cropBox,
-          pageNumberPosition: "bottom_right",
+          pageNumberPosition: pageNumberPos,
           pageNumberStart: 1,
 
-          pageNumberFormat: "1",
+          pageNumberFormat,
 
           convertPreset,
           scaleTargetSize,
@@ -854,6 +878,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           piiScanPhones,
           piiScanIban,
           redactQuery,
+          redactRect,
+          annotationType,
+          annotationContent,
+          annotationColor,
+          annotationRect,
+          annotationPage,
           formDataPath,
           formFieldName,
           formFieldType,
@@ -1796,11 +1826,42 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Interactive comparison tool to visually inspect differences, slide between document revisions, or generate pixel discrepancy maps between two open PDFs.
           </p>
         </div>
+      {:else if activeTool.id === 'annotate' || activeTool.id === 'pdf_annotate'}
+        <div class="operation-config">
+          <label for="annotationType" class="section-desc">Annotation Type:</label>
+          <select id="annotationType" bind:value={annotationType} class="form-input">
+            <option value="highlight">Highlight</option>
+            <option value="underline">Underline</option>
+            <option value="strikethrough">Strikethrough</option>
+            <option value="note">Sticky Note</option>
+            <option value="pen">Ink / Pen</option>
+          </select>
+          <span class="field-hint">PDF standard annotation dictionary /Subtype entry.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="annotationContent" class="section-desc">Note / Comment Content:</label>
+          <input id="annotationContent" type="text" class="form-input" bind:value={annotationContent} placeholder="e.g. Legal review requested" />
+          <span class="field-hint">Content text attached to the note /Contents attribute.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="annotationColor" class="section-desc">Color Hex:</label>
+          <input id="annotationColor" type="text" class="form-input" bind:value={annotationColor} placeholder="#FFFF00" />
+          <span class="field-hint">Hex color code formatted as #RRGGBB.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="annotationRect" class="section-desc">Bounding Coordinates (x,y,w,h):</label>
+          <input id="annotationRect" type="text" class="form-input" bind:value={annotationRect} placeholder="50,50,150,20" />
+          <span class="field-hint">Rectangular boundary [x, y, width, height] in PDF points.</span>
+        </div>
       {:else if activeTool.id === 'redact' || activeTool.id === 'pdf_redact'}
         <div class="operation-config">
           <label for="redactQuery" class="section-desc">Search Query / Pattern to Redact:</label>
           <input id="redactQuery" type="text" class="form-input" bind:value={redactQuery} placeholder="e.g. SSN, CONFIDENTIAL, or regex pattern" style="margin-bottom: 8px;" />
-          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+          <div style="margin-top: 8px;">
+            <label for="redactRect" class="section-desc">Redaction Box (x,y,w,h):</label>
+            <input id="redactRect" type="text" class="form-input" bind:value={redactRect} placeholder="0,0,100,100" />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Permanently redacts matching sensitive patterns, text glyphs, and rectangular zones from the document stream.
           </p>
           <span class="field-hint">Redacted text is permanently stripped and cannot be recovered from the output file.</span>

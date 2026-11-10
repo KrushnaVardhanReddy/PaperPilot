@@ -982,6 +982,24 @@ pub async fn handle_tool(
         if !args.contains_key("start_number") {
             args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
         }
+        if !args.contains_key("prefix") {
+            args.insert("prefix".to_string(), serde_json::Value::String("CONF-".to_string()));
+        }
+    } else if resolved_name == "pdf_annotate" {
+        if !args.contains_key("annotations") && !args.contains_key("data") {
+            args.insert("annotations".to_string(), serde_json::Value::Array(vec![]));
+        }
+    } else if resolved_name == "pdf_page_numbers" {
+        if !args.contains_key("position") {
+            args.insert("position".to_string(), serde_json::Value::String("bottom-center".to_string()));
+        }
+        if !args.contains_key("format") {
+            args.insert("format".to_string(), serde_json::Value::String("Page {n} of {total}".to_string()));
+        }
+    } else if resolved_name == "pdf_header_footer" {
+        if !args.contains_key("text") && !args.contains_key("header_left") && !args.contains_key("footer_center") {
+            args.insert("text".to_string(), serde_json::Value::String("Header Notice".to_string()));
+        }
     } else if resolved_name == "pdf_validate_signatures" {
         if let Some(val) = args.get("output") {
             if val.as_str().unwrap_or("") == "" {

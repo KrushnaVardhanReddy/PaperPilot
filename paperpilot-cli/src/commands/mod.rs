@@ -195,6 +195,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             input,
             pages,
             rect,
+            query: _,
             output,
         } => group_b::handle_redact(&resolve_input_path(input)?, pages, rect, output),
         Commands::PiiScan {

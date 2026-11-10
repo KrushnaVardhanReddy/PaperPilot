@@ -72,7 +72,9 @@ fn run_cli(args: &[&str]) -> Result<(bool, String, f64)> {
 }
 
 async fn run_api(endpoint: &str, payload: serde_json::Value) -> Result<(bool, serde_json::Value, f64)> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()?;
     let start = Instant::now();
     let url = format!("http://127.0.0.1:7823{}", endpoint);
     let resp = client.post(&url).json(&payload).send().await;
@@ -112,10 +114,17 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let workspace_root = get_workspace_root();
     let mut results: Vec<TestExecutionResult> = Vec::new();
 
-    let mut api_child = Command::new("cargo")
-        .args(&["run", "-p", "paperpilot-gateway"])
-        .spawn()
-        .expect("Failed to start gateway");
+    let gateway_bin = workspace_root.join("target/debug/paperpilot-gateway");
+    let mut api_child = if gateway_bin.exists() {
+        Command::new(&gateway_bin)
+            .spawn()
+            .expect("Failed to start gateway binary")
+    } else {
+        Command::new("cargo")
+            .args(&["run", "-p", "paperpilot-gateway"])
+            .spawn()
+            .expect("Failed to start gateway")
+    };
 
     tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
 
@@ -128,6 +137,7 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let img_png = workspace_root.join("tests/e2e_fixtures/real/img1.png").to_string_lossy().to_string();
     let stationery_pdf = workspace_root.join("tests/e2e_fixtures/real/stationery.pdf").to_string_lossy().to_string();
     let text_pii_pdf = workspace_root.join("tests/e2e_fixtures/real/text_pii.pdf").to_string_lossy().to_string();
+    let multi_page_pdf = workspace_root.join("tests/e2e_fixtures/real/multi_page.pdf").to_string_lossy().to_string();
     let form_data_json = workspace_root.join("tests/e2e_fixtures/real/form_data.json").to_string_lossy().to_string();
     let batch_data_csv = workspace_root.join("tests/e2e_fixtures/real/batch_data.csv").to_string_lossy().to_string();
 
@@ -155,6 +165,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_change_permissions",
         "pdf_timestamp",
         "pdf_bates",
+        "pdf_page_numbers",
+        "pdf_header_footer",
+        "pdf_annotate",
     ];
 
     for tool_id in &tools {
@@ -199,9 +212,9 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "title": "Verified Release 2026", "author": "Tester 2", "subject": "Protocol Testing", "keywords": "test,release,qa" });
             }
             "pdf_redact" => {
-                cli_args = vec!["redact", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--query", "Smallpdf", "--json"];
-                mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "query": "Smallpdf" });
-                api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "query": "Smallpdf" });
+                cli_args = vec!["redact", "--input", &text_pii_pdf, "--output", cli_out.to_str().unwrap(), "--query", "CONFIDENTIAL", "--rect", "50,50,200,50", "--pages", "1", "--json"];
+                mcp_payload = json!({ "input": text_pii_pdf, "output": mcp_out.to_str().unwrap(), "query": "CONFIDENTIAL", "rect": [50.0, 50.0, 200.0, 50.0], "page": 1 });
+                api_payload = json!({ "input": text_pii_pdf, "output": api_out.to_str().unwrap(), "query": "CONFIDENTIAL", "rect": [50.0, 50.0, 200.0, 50.0], "page": 1 });
             }
             "document_pii_scan" => {
                 cli_args = vec!["pii-scan", "--input", &text_pii_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
@@ -294,9 +307,39 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "server_url": "http://test.tsa" });
             }
             "pdf_bates" => {
-                cli_args = vec!["bates", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--prefix", "EXH-", "--json"];
-                mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap(), "prefix": "EXH-" });
-                api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "prefix": "EXH-" });
+                cli_args = vec!["bates", "--input", &multi_page_pdf, "--output", cli_out.to_str().unwrap(), "--prefix", "CONF-", "--start", "1", "--json"];
+                mcp_payload = json!({ "input": multi_page_pdf, "output": mcp_out.to_str().unwrap(), "prefix": "CONF-", "start_number": 1 });
+                api_payload = json!({ "input": multi_page_pdf, "output": api_out.to_str().unwrap(), "prefix": "CONF-", "start_number": 1 });
+            }
+            "pdf_page_numbers" => {
+                cli_args = vec!["page-numbers", "--input", &multi_page_pdf, "--output", cli_out.to_str().unwrap(), "--position", "bottom-center", "--json"];
+                mcp_payload = json!({ "input": multi_page_pdf, "output": mcp_out.to_str().unwrap(), "position": "bottom-center", "format": "Page {n} of {total}" });
+                api_payload = json!({ "input": multi_page_pdf, "output": api_out.to_str().unwrap(), "position": "bottom-center", "format": "Page {n} of {total}" });
+            }
+            "pdf_header_footer" => {
+                cli_args = vec!["header-footer", "--input", &multi_page_pdf, "--output", cli_out.to_str().unwrap(), "--text", "Official Header Notice", "--json"];
+                mcp_payload = json!({ "input": multi_page_pdf, "output": mcp_out.to_str().unwrap(), "text": "Official Header Notice" });
+                api_payload = json!({ "input": multi_page_pdf, "output": api_out.to_str().unwrap(), "text": "Official Header Notice" });
+            }
+            "pdf_annotate" => {
+                let anno_json = "[{\"id\":\"anno-1\",\"type\":\"highlight\",\"page\":1,\"x\":50.0,\"y\":50.0,\"w\":120.0,\"h\":20.0,\"color\":\"#FFFF00\",\"content\":\"Review\"},{\"id\":\"anno-2\",\"type\":\"note\",\"page\":1,\"x\":100.0,\"y\":100.0,\"color\":\"#FF0000\",\"content\":\"Sticky Note\"}]";
+                cli_args = vec!["annotate", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--data", anno_json, "--json"];
+                mcp_payload = json!({
+                    "input": single_page,
+                    "output": mcp_out.to_str().unwrap(),
+                    "annotations": [
+                        {"id": "anno-1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 120.0, "h": 20.0, "color": "#FFFF00", "content": "Review"},
+                        {"id": "anno-2", "type": "note", "page": 1, "x": 100.0, "y": 100.0, "color": "#FF0000", "content": "Sticky Note"}
+                    ]
+                });
+                api_payload = json!({
+                    "input": single_page,
+                    "output": api_out.to_str().unwrap(),
+                    "annotations": [
+                        {"id": "anno-1", "type": "highlight", "page": 1, "x": 50.0, "y": 50.0, "w": 120.0, "h": 20.0, "color": "#FFFF00", "content": "Review"},
+                        {"id": "anno-2", "type": "note", "page": 1, "x": 100.0, "y": 100.0, "color": "#FF0000", "content": "Sticky Note"}
+                    ]
+                });
             }
             _ => {}
         }

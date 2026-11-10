@@ -5121,7 +5121,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_page_numbers" => {
+            "pdf_page_numbers" | "page_numbers" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -5679,21 +5679,28 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_annotate" => {
+            "pdf_annotate" | "annotate" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
+                let default_annots = serde_json::Value::Array(vec![]);
                 let annotations_value = args
                     .get("annotations")
-                    .ok_or_else(|| ErrorData::invalid_params("Missing 'annotations'", None))?;
+                    .or_else(|| args.get("data"))
+                    .unwrap_or(&default_annots);
 
                 let annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> =
-                    serde_json::from_value(annotations_value.clone()).map_err(|e| {
-                        ErrorData::invalid_params(
-                            "Invalid 'annotations' array",
-                            Some(serde_json::Value::String(e.to_string())),
-                        )
-                    })?;
+                    if let Some(s) = annotations_value.as_str() {
+                        if s.starts_with('[') || s.starts_with('{') {
+                            serde_json::from_str(s).unwrap_or_default()
+                        } else if let Ok(content) = std::fs::read_to_string(s) {
+                            serde_json::from_str(&content).unwrap_or_default()
+                        } else {
+                            vec![]
+                        }
+                    } else {
+                        serde_json::from_value(annotations_value.clone()).unwrap_or_default()
+                    };
 
                 ensure_parent_dir(&output)?;
 
@@ -6464,7 +6471,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_redact" => {
+            "pdf_redact" | "redact" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 let page = args.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
@@ -6480,12 +6487,21 @@ impl PaperPilotMcpServer {
                     } else {
                         return Err(ErrorData::invalid_params("rect must be an array of 4 numbers", None));
                     }
-                } else {
-                    let x = get_f64("x")? as f32;
-                    let y = get_f64("y")? as f32;
-                    let width = get_f64("width")? as f32;
-                    let height = get_f64("height")? as f32;
+                } else if let Some(rect_str) = args.get("rect").and_then(|v| v.as_str()) {
+                    let parts: Vec<f32> = rect_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
+                    if parts.len() == 4 {
+                        (parts[0], parts[1], parts[2], parts[3])
+                    } else {
+                        (0.0, 0.0, 100.0, 100.0)
+                    }
+                } else if args.get("x").is_some() && args.get("y").is_some() {
+                    let x = get_f64("x").unwrap_or(0.0) as f32;
+                    let y = get_f64("y").unwrap_or(0.0) as f32;
+                    let width = get_f64("width").unwrap_or(100.0) as f32;
+                    let height = get_f64("height").unwrap_or(100.0) as f32;
                     (x, y, width, height)
+                } else {
+                    (0.0, 0.0, 100.0, 100.0)
                 };
 
                 let _color = args.get("color").and_then(|v| v.as_str());
@@ -7343,7 +7359,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_header_footer" => {
+            "pdf_header_footer" | "header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 let text = args
@@ -7391,11 +7407,25 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_bates" => {
+            "pdf_bates" | "bates" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let start_number = args.get("start_number").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
-                let prefix = get_string("prefix")?;
+                let start_number = args
+                    .get("start_number")
+                    .or_else(|| args.get("start"))
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<u64>().ok()
+                        } else {
+                            v.as_u64()
+                        }
+                    })
+                    .unwrap_or(1) as u32;
+                let prefix = args
+                    .get("prefix")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("CONF-")
+                    .to_string();
                 let padding = args.get("padding").and_then(|v| v.as_u64()).unwrap_or(6) as usize;
 
                 ensure_parent_dir(&output)?;

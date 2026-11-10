@@ -113,6 +113,12 @@ export interface OperationContext {
     piiScanPhones?: boolean;
     piiScanIban?: boolean;
     redactQuery?: string;
+    redactRect?: string;
+    annotationType?: string;
+    annotationContent?: string;
+    annotationColor?: string;
+    annotationRect?: string;
+    annotationPage?: number;
     formDataPath?: string;
     formFieldRect?: string;
     formFieldName?: string;
@@ -380,7 +386,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: docPath,
                 query: context.redactQuery || searchQuery || 'CONFIDENTIAL',
-                regions: '0,0,100,100',
+                rect: context.redactRect || '0,0,100,100',
+                regions: context.redactRect || '0,0,100,100',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
             };
             break;
@@ -483,17 +490,30 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'bates':
+        case 'pdf_bates':
             args = {
                 input: docPath,
-                prefix: batesPrefix,
-                start_number: batesStart,
-                padding: batesPadding,
+                prefix: batesPrefix || 'CONF-',
+                start_number: batesStart || 1,
+                start: batesStart || 1,
+                padding: batesPadding || 6,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_bates.pdf`)
             };
             break;
-        case 'header_footer':
+        case 'page_numbers':
+        case 'pdf_page_numbers':
             args = {
                 input: docPath,
+                position: context.pageNumberPosition || 'bottom-center',
+                format: context.pageNumberFormat || 'Page {n} of {total}',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_page_numbered.pdf`)
+            };
+            break;
+        case 'header_footer':
+        case 'pdf_header_footer':
+            args = {
+                input: docPath,
+                text: headerText || footerText || 'Header Notice',
                 header_left: headerText,
                 footer_center: footerText,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_header.pdf`)
@@ -561,12 +581,37 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         }
         case 'annotate':
+        case 'pdf_annotate': {
+            const annoType = context.annotationType || 'highlight';
+            const annoContent = context.annotationContent || 'Note';
+            const annoColor = context.annotationColor || '#FFFF00';
+            const pageNum = context.annotationPage || 1;
+            const rectParts = (context.annotationRect || '50,50,150,20').split(',').map(s => parseFloat(s.trim()) || 0);
+            const x = rectParts[0] || 50;
+            const y = rectParts[1] || 50;
+            const w = rectParts[2] || 150;
+            const h = rectParts[3] || 20;
+
+            const annotations = [{
+                id: 'anno-1',
+                type: annoType,
+                page: pageNum,
+                x,
+                y,
+                w,
+                h,
+                color: annoColor,
+                content: annoContent
+            }];
+
             args = {
                 input: docPath,
-                annotations: [], // Placeholder for annotations
+                annotations,
+                data: annotations,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_annotated.pdf`)
             };
             break;
+        }
         case 'encrypt':
         case 'pdf_encrypt':
             args = {
