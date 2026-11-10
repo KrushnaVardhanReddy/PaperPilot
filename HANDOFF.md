@@ -56,9 +56,8 @@
    - POSIX `scripts/install.sh`, Windows PowerShell `scripts/install.ps1`, Homebrew formula `packaging/homebrew/paperpilot.rb`.
 2. **Spec 162: AI Framework Integration Recipes (`specs/162-framework-integration-recipes/`)** — ✅ **100% MERGED** (PR #338)
    - Turnkey Python adapters for LangChain & LlamaIndex, Claude/Cursor MCP configs, and n8n invoice auto-OCR pipeline.
-3. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)** — 🚀 **IN PROGRESS**
-   - Jules Session: [`308936918267204628`](https://jules.google.com/session/308936918267204628)
-   - Scope: `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage, and disk space. CLI `paperpilot doctor`, REST `GET /health` & `GET /api/v1/doctor`, and Settings UI modal.
+3. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)** — ✅ **100% MERGED** (Commit `db12ffd`)
+   - Scope: `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage, and disk space. CLI `paperpilot doctor` (`--json`), REST `GET /health` & `GET /api/v1/doctor`, Tauri command `run_system_doctor`, and Settings UI `SystemDoctorModal.svelte`.
 
 ---
 
